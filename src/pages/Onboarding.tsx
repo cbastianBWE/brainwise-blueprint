@@ -20,17 +20,34 @@ const Onboarding = () => {
     if (!user) return;
     setLoading(true);
 
-    const { error } = await supabase
-      .from("users")
-      .update({ account_type: accountType })
-      .eq("id", user.id);
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData?.session?.access_token;
+      if (!accessToken) throw new Error("No active session.");
 
-    setLoading(false);
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/set-account-type`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          },
+          body: JSON.stringify({ account_type: accountType }),
+        }
+      );
 
-    if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
-    } else {
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error || "Failed to set account type");
+      }
+
       navigate("/demographic-consent");
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -39,7 +56,6 @@ const Onboarding = () => {
       toast({ title: "Error", description: "Please enter an invitation code.", variant: "destructive" });
       return;
     }
-    // For now, accept any code and set as corporate_employee
     await selectAccountType("corporate_employee");
   };
 
@@ -83,7 +99,7 @@ const Onboarding = () => {
         <div className="grid gap-4 md:grid-cols-3">
           <Card
             className="cursor-pointer hover:border-primary hover:shadow-md transition-all"
-            onClick={() => selectAccountType("individual")}
+            onClick={() => !loading && selectAccountType("individual")}
           >
             <CardContent className="pt-6 text-center">
               <User className="mx-auto h-10 w-10 text-primary mb-3" />
@@ -105,7 +121,7 @@ const Onboarding = () => {
 
           <Card
             className="cursor-pointer hover:border-primary hover:shadow-md transition-all"
-            onClick={() => selectAccountType("coach")}
+            onClick={() => !loading && selectAccountType("coach")}
           >
             <CardContent className="pt-6 text-center">
               <GraduationCap className="mx-auto h-10 w-10 text-primary mb-3" />
