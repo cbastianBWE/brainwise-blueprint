@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/hooks/useAuth";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import RoleGuard from "@/components/RoleGuard";
+import { SuperAdminSessionProvider } from "@/hooks/useSuperAdminSession";
 import AppLayout from "@/components/AppLayout";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
