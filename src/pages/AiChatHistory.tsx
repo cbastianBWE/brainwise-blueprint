@@ -199,7 +199,7 @@ export default function AiChatHistory() {
                         {!session.ended_at && (
                           <>
                             <span>·</span>
-                            <span className="text-amber-500">In progress</span>
+                            <span className="text-destructive/70">In progress</span>
                           </>
                         )}
                       </div>
