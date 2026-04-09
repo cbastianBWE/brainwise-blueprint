@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
+import { useAiUsage } from "@/hooks/useAiUsage";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -15,7 +16,8 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Shield, Lock, Eye, Users, Building2, UserCircle, Pencil } from "lucide-react";
+import { Shield, Lock, Eye, Users, Building2, UserCircle, Pencil, MessageSquare } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 
 type PermissionLevel = "score_summary" | "full_results" | "full_results_with_history" | "participation_only";
 
