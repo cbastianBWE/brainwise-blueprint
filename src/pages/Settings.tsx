@@ -1,4 +1,4 @@
 import { Navigate } from "react-router-dom";
 export default function SettingsPage() {
-  return <Navigate to="/settings/privacy" replace />;
+  return <Navigate to="/settings/billing" replace />;
 }
