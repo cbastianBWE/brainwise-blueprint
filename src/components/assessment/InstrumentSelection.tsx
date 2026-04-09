@@ -10,15 +10,15 @@ const INSTRUMENTS = [
   {
     instrument_id: "PTP",
     short_name: "PTP",
-    instrument_name: "Primal Threat Profile",
-    description: "Measures your unconscious threat responses to understand how primal survival mechanisms influence your behavior and decision-making.",
+    instrument_name: "Personal Threat Profile",
+    description: "Measures your nonconscious threat responses to understand how personal survival mechanisms influence your behavior and decision-making.",
     tier: "base" as const,
   },
   {
     instrument_id: "NAI",
     short_name: "NAI",
     instrument_name: "Neuroscience Adoption Index",
-    description: "Evaluates how effectively you integrate neuroscience principles into your leadership and professional practices.",
+    description: "Measures your nonconscious beliefs and threat responses related to AI adoption to understand what may be driving resistance or readiness.",
     tier: "premium" as const,
   },
   {
@@ -32,7 +32,7 @@ const INSTRUMENTS = [
     instrument_id: "HSS",
     short_name: "HSS",
     instrument_name: "Habit Stabilization Scorecard",
-    description: "Measures the stability and sustainability of behavioral changes you've made based on previous assessment insights.",
+    description: "Measures the stability and sustainability of behavioral changes related to AI adoption, helping you understand the degree to which new behaviors are stabilizing and becoming normalized.",
     tier: "premium" as const,
   },
 ];
