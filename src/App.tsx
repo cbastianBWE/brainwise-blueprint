@@ -57,13 +57,14 @@ const App = () => (
             <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
             <Route path="/demographic-consent" element={<ProtectedRoute><DemographicConsent /></ProtectedRoute>} />
             <Route path="/demographic-form" element={<ProtectedRoute><DemographicForm /></ProtectedRoute>} />
+            <Route path="/assessment" element={<ProtectedRoute><Assessment /></ProtectedRoute>} />
 
             {/* Protected routes with sidebar layout */}
             <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
               {/* Individual / Corporate Employee */}
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/my-results" element={<MyResults />} />
-              <Route path="/assessment" element={<Assessment />} />
+              {/* Assessment is now a standalone route without sidebar */}
               <Route path="/ai-chat" element={<AiChat />} />
               <Route path="/resources" element={<Resources />} />
               <Route path="/settings" element={<SettingsPage />} />
