@@ -86,16 +86,17 @@ export default function DrivingFacetScores({ assessmentId }: Props) {
       const upperThreshold = mean + stdDev;
       const lowerThreshold = mean - stdDev;
 
-      setElevated(
-        scoredItems
-          .filter((s) => s.value > upperThreshold)
-          .sort((a, b) => b.value - a.value)
-      );
-      setSuppressed(
-        scoredItems
-          .filter((s) => s.value < lowerThreshold)
-          .sort((a, b) => a.value - b.value)
-      );
+      const allElevated = scoredItems
+        .filter((s) => s.value > upperThreshold)
+        .sort((a, b) => (b.value - mean) - (a.value - mean));
+      const allSuppressed = scoredItems
+        .filter((s) => s.value < lowerThreshold)
+        .sort((a, b) => (a.value - mean) - (b.value - mean));
+
+      setElevated(allElevated.slice(0, 10));
+      setSuppressed(allSuppressed.slice(0, 10));
+      setTotalElevated(allElevated.length);
+      setTotalSuppressed(allSuppressed.length);
       setLoading(false);
     };
 
