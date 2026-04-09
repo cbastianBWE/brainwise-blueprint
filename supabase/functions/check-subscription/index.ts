@@ -80,9 +80,18 @@ serve(async (req) => {
 
     if (hasActive) {
       const sub = subscriptions.data[0];
-      subscriptionEnd = new Date(sub.current_period_end * 1000).toISOString();
+
+      // Safely convert current_period_end (Unix seconds → ms)
+      try {
+        if (sub.current_period_end && typeof sub.current_period_end === "number") {
+          subscriptionEnd = new Date(sub.current_period_end * 1000).toISOString();
+        }
+      } catch (e) {
+        logStep("Warning: could not convert current_period_end", { value: sub.current_period_end });
+        subscriptionEnd = null;
+      }
+
       const productId = sub.items.data[0].price.product as string;
-      // Fetch the product from Stripe to determine tier dynamically
       const product = await stripe.products.retrieve(productId);
       tier = determineTier(product.name, (product.metadata || {}) as Record<string, string>);
       logStep("Active subscription", { tier, productId, productName: product.name, subscriptionEnd });
