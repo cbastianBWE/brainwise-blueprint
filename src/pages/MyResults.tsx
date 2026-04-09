@@ -579,7 +579,7 @@ export default function MyResults() {
               <CardContent className="space-y-3">
                 {selected.result.ai_narrative ? (
                   <>
-                    <div className="prose prose-sm max-w-none text-foreground">
+                    <div className="max-w-none text-foreground text-sm">
                       <NarrativeRenderer text={selected.result.ai_narrative} />
                     </div>
                     {selected.result.ai_version && (
