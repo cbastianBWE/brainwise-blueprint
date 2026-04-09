@@ -133,10 +133,10 @@ export default function DrivingFacetScores({ assessmentId }: Props) {
         ) : (
           <>
             {elevated.length > 0 && (
-              <FacetSection title="Elevated Facets" items={elevated} />
+              <FacetSection title="Elevated Facets" items={elevated} total={totalElevated} />
             )}
             {suppressed.length > 0 && (
-              <FacetSection title="Suppressed Facets" items={suppressed} />
+              <FacetSection title="Suppressed Facets" items={suppressed} total={totalSuppressed} />
             )}
           </>
         )}
