@@ -479,6 +479,45 @@ export default function PrivacySettings() {
           )}
         </CardContent>
       </Card>
+
+      {/* AI Usage Section */}
+      {usage && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <MessageSquare className="h-4 w-4" /> AI Usage
+            </CardTitle>
+            <CardDescription>Your monthly AI chat message usage</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <div className="flex justify-between text-sm mb-1">
+                <span className="text-foreground font-medium">
+                  {usage.current_count} of {usage.limit} messages used
+                </span>
+                <span className="text-muted-foreground capitalize">{userTier} tier</span>
+              </div>
+              <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
+                {(() => {
+                  const pct = usage.limit > 0 ? Math.round((usage.current_count / usage.limit) * 100) : 0;
+                  let color = "bg-accent";
+                  if (pct >= 80) color = "bg-[hsl(30,90%,50%)]";
+                  else if (pct >= 50) color = "bg-[hsl(45,90%,50%)]";
+                  return <div className={`h-full rounded-full transition-all ${color}`} style={{ width: `${Math.min(pct, 100)}%` }} />;
+                })()}
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Resets {new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
+            </p>
+            {userTier === "base" && (
+              <Button variant="outline" size="sm" onClick={() => navigate("/pricing")}>
+                Upgrade to Premium for more messages
+              </Button>
+            )}
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
