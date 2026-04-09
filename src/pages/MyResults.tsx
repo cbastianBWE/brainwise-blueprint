@@ -393,7 +393,11 @@ export default function MyResults() {
                             {chartData.map((entry, idx) => (
                               <Cell
                                 key={idx}
-                                fill={BAND_COLORS[entry.band] ?? BAND_COLORS.moderate}
+                                fill={
+                                  selected.isPTP
+                                    ? PTP_DIMENSION_COLORS[entry.dimensionId] ?? BAND_COLORS.moderate
+                                    : BAND_COLORS[entry.band] ?? BAND_COLORS.moderate
+                                }
                               />
                             ))}
                             <LabelList
@@ -412,6 +416,13 @@ export default function MyResults() {
               </CardContent>
             </Card>
           </section>
+
+          {/* SECTION 2b - Driving Facet Scores (PTP only) */}
+          {selected.isPTP && (
+            <section>
+              <DrivingFacetScores assessmentId={selected.result.assessment_id} />
+            </section>
+          )}
 
           {/* SECTION 3 - Cross-Instrument Recommendations */}
           {recommendations.length > 0 && (
