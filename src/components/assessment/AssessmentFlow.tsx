@@ -220,23 +220,23 @@ export default function AssessmentFlow({ instrument, onExit }: Props) {
   const handleSubmit = async () => {
     if (!assessmentId) return;
     setSubmitting(true);
-    const { error } = await supabase
-      .from("assessments")
-      .update({ status: "completed", completed_at: new Date().toISOString() })
-      .eq("id", assessmentId);
+    const { data, error } = await supabase.functions.invoke("calculate-scores", {
+      body: { assessment_id: assessmentId },
+    });
 
-    if (error) {
-      toast({ title: "Error", description: "Failed to submit assessment.", variant: "destructive" });
+    if (error || data?.error) {
+      toast({ title: "Error", description: data?.error || "Failed to calculate results.", variant: "destructive" });
       setSubmitting(false);
       return;
     }
     navigate(`/my-results`);
   };
 
-  if (loading) {
+  if (loading || submitting) {
     return (
-      <div className="fixed inset-0 bg-background flex items-center justify-center">
+      <div className="fixed inset-0 bg-background flex flex-col items-center justify-center gap-4">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+        {submitting && <p className="text-muted-foreground">Calculating your results...</p>}
       </div>
     );
   }
