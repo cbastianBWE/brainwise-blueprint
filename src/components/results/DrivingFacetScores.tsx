@@ -142,6 +142,23 @@ export default function DrivingFacetScores({ assessmentId }: Props) {
   );
 }
 
+function truncate(text: string, max = 50) {
+  return text.length > max ? text.slice(0, max) + "…" : text;
+}
+
+function CustomTooltip({ active, payload }: any) {
+  if (!active || !payload?.length) return null;
+  const { fullText, value, color } = payload[0].payload;
+  return (
+    <div className="rounded-md border bg-popover p-3 shadow-md max-w-xs">
+      <p className="text-xs text-muted-foreground mb-1">{fullText}</p>
+      <p className="text-sm font-semibold" style={{ color }}>
+        Score: {value}
+      </p>
+    </div>
+  );
+}
+
 function FacetSection({
   title,
   items,
@@ -150,7 +167,8 @@ function FacetSection({
   items: FacetItem[];
 }) {
   const chartData = items.map((item) => ({
-    name: item.item_text,
+    name: truncate(item.item_text),
+    fullText: item.item_text,
     value: Number(item.value.toFixed(1)),
     color: PTP_DIMENSION_COLORS[item.dimension_id] ?? "#8EA9C1",
   }));
@@ -161,27 +179,25 @@ function FacetSection({
       <ScrollArea className="w-full">
         <div
           style={{
-            minWidth: 600,
-            height: Math.max(200, items.length * 48),
+            minWidth: 500,
+            height: Math.max(200, items.length * 40),
           }}
         >
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
               data={chartData}
               layout="vertical"
-              margin={{ left: 380, right: 50, top: 4, bottom: 4 }}
+              margin={{ left: 200, right: 50, top: 4, bottom: 4 }}
             >
               <CartesianGrid strokeDasharray="3 3" horizontal={false} />
               <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 11 }} />
               <YAxis
                 dataKey="name"
                 type="category"
-                width={370}
-                tick={{ fontSize: 13 }}
+                width={190}
+                tick={{ fontSize: 11 }}
               />
-              <Tooltip
-                formatter={(value: number) => [value.toFixed(1), "Score"]}
-              />
+              <Tooltip content={<CustomTooltip />} cursor={{ fill: "hsl(var(--muted))" }} />
               <Bar dataKey="value" radius={[0, 4, 4, 0]}>
                 {chartData.map((entry, idx) => (
                   <Cell key={idx} fill={entry.color} />
