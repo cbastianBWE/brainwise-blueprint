@@ -65,6 +65,8 @@ export default function PrivacySettings() {
   const { user } = useAuth();
   const { profile } = useUserProfile();
   const navigate = useNavigate();
+  const { usage, fetchUsage } = useAiUsage();
+  const [userTier, setUserTier] = useState("base");
 
   // Permission state for each target type
   const [coach, setCoach] = useState<PermRow>({ enabled: false, level: "score_summary" });
