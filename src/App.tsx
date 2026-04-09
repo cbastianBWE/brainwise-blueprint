@@ -22,6 +22,7 @@ import Assessment from "./pages/Assessment";
 import AiChat from "./pages/AiChat";
 import Resources from "./pages/Resources";
 import SettingsPage from "./pages/Settings";
+import PrivacySettings from "./pages/PrivacySettings";
 import CoachClients from "./pages/coach/CoachClients";
 import OrderAssessment from "./pages/coach/OrderAssessment";
 import ClientResults from "./pages/coach/ClientResults";
@@ -68,6 +69,7 @@ const App = () => (
               <Route path="/ai-chat" element={<AiChat />} />
               <Route path="/resources" element={<Resources />} />
               <Route path="/settings" element={<SettingsPage />} />
+              <Route path="/settings/privacy" element={<PrivacySettings />} />
 
               {/* Coach */}
               <Route path="/coach/clients" element={<RoleGuard allowedRoles={["coach"]}><CoachClients /></RoleGuard>} />
