@@ -165,9 +165,11 @@ function CustomTooltip({ active, payload }: any) {
 function FacetSection({
   title,
   items,
+  total,
 }: {
   title: string;
   items: FacetItem[];
+  total: number;
 }) {
   const chartData = items.map((item) => ({
     name: truncate(item.item_text),
