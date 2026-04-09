@@ -750,17 +750,29 @@ function NarrativeRenderer({ text }: { text: string }) {
       continue;
     }
 
-    // ### Subheading
+    // ### Subheading (facet name etc.)
     if (trimmed.startsWith("### ")) {
       flushParagraph();
       elements.push(
         <h4
           key={key++}
-          className="text-base font-semibold mt-5 mb-2"
+          className="text-base font-semibold mt-8 mb-3 pt-4 border-t border-border/40 first:border-t-0 first:pt-0 first:mt-5"
           style={{ color: "hsl(var(--primary))" }}
         >
           {renderInlineMarkdown(trimmed.replace(/^###\s*/, ""))}
         </h4>
+      );
+      continue;
+    }
+
+    // Labeled subsection: "Impact on Self:" / "Impact on Others:"
+    const labelMatch = trimmed.match(/^\*\*(.+?:)\*\*$/);
+    if (labelMatch) {
+      flushParagraph();
+      elements.push(
+        <p key={key++} className="text-sm font-semibold text-muted-foreground mt-4 mb-2 uppercase tracking-wide">
+          {labelMatch[1]}
+        </p>
       );
       continue;
     }
@@ -773,7 +785,7 @@ function NarrativeRenderer({ text }: { text: string }) {
       flushParagraph();
       const content = bulletMatch ? bulletMatch[1] : trimmed;
       elements.push(
-        <div key={key++} className="flex items-start gap-2 mb-2 ml-1">
+        <div key={key++} className="flex items-start gap-2 mb-3 ml-2">
           {bulletMatch && !emojiMatch && (
             <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
           )}
