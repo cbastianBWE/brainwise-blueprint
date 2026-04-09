@@ -99,6 +99,7 @@ export default function MyResults() {
   const [selectedId, setSelectedId] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [pollingNarrative, setPollingNarrative] = useState(false);
+  const [dimensionNameMap, setDimensionNameMap] = useState<Map<string, string>>(new Map());
 
   // Fetch all completed assessment results
   useEffect(() => {
@@ -135,6 +136,17 @@ export default function MyResults() {
         .select("instrument_id, instrument_name, scale_type")
         .in("instrument_id", instrumentIds);
 
+      // Fetch dimension names for display
+      const { data: dimensionRows } = await supabase
+        .from("dimensions")
+        .select("dimension_id, dimension_name")
+        .in("instrument_id", instrumentIds);
+
+      const dimNameMap = new Map(
+        (dimensionRows ?? []).map((d) => [d.dimension_id, d.dimension_name])
+      );
+      setDimensionNameMap(dimNameMap);
+
       const instrumentMap = new Map(
         (instruments ?? []).map((i) => [i.instrument_id, i])
       );
@@ -150,6 +162,7 @@ export default function MyResults() {
           completed_at: assessment?.completed_at ?? r.created_at,
           instrument_name: instrument?.instrument_name ?? r.instrument_id ?? "Unknown",
           scale_type: instrument?.scale_type ?? null,
+          isPTP: (r.instrument_id ?? "").toUpperCase().includes("INST-001"),
         };
       });
 
@@ -222,6 +235,9 @@ export default function MyResults() {
   const lowestDimension =
     sortedDimensions[sortedDimensions.length - 1]?.[0] ?? "—";
 
+  const resolveDimensionName = (id: string) =>
+    dimensionNameMap.get(id) ?? formatDimensionName(id);
+
   const isSliderInstrument =
     selected?.scale_type?.includes("slider") ||
     selected?.scale_type?.includes("0-100") ||
@@ -241,11 +257,12 @@ export default function MyResults() {
   const chartData = useMemo(() => {
     if (!isSliderInstrument && !(!isAIRSA && !isSliderInstrument)) return [];
     return sortedDimensions.map(([name, score]) => ({
-      name: formatDimensionName(name),
+      name: dimensionNameMap.get(name) ?? formatDimensionName(name),
+      dimensionId: name,
       value: score.mean ?? score.level_mean ?? 0,
       band: score.band ?? "moderate",
     }));
-  }, [sortedDimensions, isSliderInstrument, isAIRSA]);
+  }, [sortedDimensions, isSliderInstrument, isAIRSA, dimensionNameMap]);
 
   if (loading) {
     return (
