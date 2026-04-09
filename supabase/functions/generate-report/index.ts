@@ -278,7 +278,7 @@ Deno.serve(async (req: Request) => {
       },
       body: JSON.stringify({
         model: aiVersion.model_id,
-        max_tokens: 2500,
+        max_tokens: 4000,
         system: aiVersion.system_prompt,
         messages: [{ role: "user", content: userPrompt }],
       }),
