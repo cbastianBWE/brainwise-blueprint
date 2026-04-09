@@ -43,13 +43,15 @@ serve(async (req) => {
       );
     }
 
-    // Parse input — subscription_tier can come from body or we fetch it
-    let subscriptionTier: string;
+    // Parse input
+    let subscriptionTier = "base";
+    let checkOnly = false;
     try {
       const body = await req.json();
       subscriptionTier = body.subscription_tier || "base";
+      checkOnly = body.check_only === true;
     } catch {
-      subscriptionTier = "base";
+      // defaults
     }
 
     const tier = subscriptionTier in LIMITS ? subscriptionTier : "base";
@@ -99,7 +101,19 @@ serve(async (req) => {
       );
     }
 
-    // Under limit — upsert to increment count
+    // Check-only mode: return current usage without incrementing
+    if (checkOnly) {
+      return new Response(
+        JSON.stringify({
+          allowed: true,
+          current_count: currentCount,
+          limit,
+          remaining: limit - currentCount,
+          tier,
+        }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
     const { error: upsertError } = await serviceClient.rpc("increment_ai_usage", {
       p_user_id: userId,
       p_usage_type: "chat_message",
