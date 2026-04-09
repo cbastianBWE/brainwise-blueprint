@@ -29,6 +29,7 @@ import {
 } from "recharts";
 import { FileText, MessageSquare, RefreshCw, ArrowRight } from "lucide-react";
 import { format } from "date-fns";
+import DrivingFacetScores from "@/components/results/DrivingFacetScores";
 
 // Types
 interface DimensionScore {
