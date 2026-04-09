@@ -22,6 +22,7 @@ import Dashboard from "./pages/Dashboard";
 import MyResults from "./pages/MyResults";
 import Assessment from "./pages/Assessment";
 import AiChat from "./pages/AiChat";
+import AiChatHistory from "./pages/AiChatHistory";
 import Resources from "./pages/Resources";
 import Pricing from "./pages/Pricing";
 import SettingsPage from "./pages/Settings";
@@ -72,6 +73,7 @@ const App = () => (
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/my-results" element={<MyResults />} />
               <Route path="/ai-chat" element={<SubscriptionGate><AiChat /></SubscriptionGate>} />
+              <Route path="/ai-chat/history" element={<SubscriptionGate><AiChatHistory /></SubscriptionGate>} />
               <Route path="/resources" element={<SubscriptionGate><Resources /></SubscriptionGate>} />
               <Route path="/settings" element={<SettingsPage />} />
               <Route path="/settings/privacy" element={<PrivacySettings />} />
