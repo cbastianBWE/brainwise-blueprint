@@ -323,6 +323,47 @@ export type Database = {
           },
         ]
       }
+      chat_sessions: {
+        Row: {
+          assessment_result_ids: string[]
+          created_at: string | null
+          ended_at: string | null
+          id: string
+          message_count: number | null
+          messages: Json
+          started_at: string
+          user_id: string
+        }
+        Insert: {
+          assessment_result_ids?: string[]
+          created_at?: string | null
+          ended_at?: string | null
+          id?: string
+          message_count?: number | null
+          messages?: Json
+          started_at?: string
+          user_id: string
+        }
+        Update: {
+          assessment_result_ids?: string[]
+          created_at?: string | null
+          ended_at?: string | null
+          id?: string
+          message_count?: number | null
+          messages?: Json
+          started_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_sessions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       coach_clients: {
         Row: {
           assessment_id: string | null
