@@ -96,6 +96,44 @@ export type Database = {
           },
         ]
       }
+      assessment_purchases: {
+        Row: {
+          amount_paid: number
+          id: string
+          instrument_id: string
+          purchased_at: string
+          stripe_payment_intent_id: string | null
+          stripe_session_id: string | null
+          user_id: string
+        }
+        Insert: {
+          amount_paid: number
+          id?: string
+          instrument_id: string
+          purchased_at?: string
+          stripe_payment_intent_id?: string | null
+          stripe_session_id?: string | null
+          user_id: string
+        }
+        Update: {
+          amount_paid?: number
+          id?: string
+          instrument_id?: string
+          purchased_at?: string
+          stripe_payment_intent_id?: string | null
+          stripe_session_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assessment_purchases_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       assessment_responses: {
         Row: {
           assessment_id: string
