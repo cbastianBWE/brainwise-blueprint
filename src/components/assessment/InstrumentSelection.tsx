@@ -8,28 +8,28 @@ import { Brain, Star } from "lucide-react";
 
 const INSTRUMENTS = [
   {
-    instrument_id: "PTP",
+    instrument_id: "INST-001",
     short_name: "PTP",
     instrument_name: "Personal Threat Profile",
     description: "Measures your nonconscious threat responses to understand how personal survival mechanisms influence your behavior and decision-making.",
     tier: "base" as const,
   },
   {
-    instrument_id: "NAI",
+    instrument_id: "INST-002",
     short_name: "NAI",
     instrument_name: "Neuroscience Adoption Index",
     description: "Measures your nonconscious beliefs and threat responses related to AI adoption to understand what may be driving resistance or readiness.",
     tier: "premium" as const,
   },
   {
-    instrument_id: "AIRSA",
+    instrument_id: "INST-003",
     short_name: "AIRSA",
     instrument_name: "AI Readiness Skills Assessment",
     description: "Assesses your readiness to adopt and leverage AI tools effectively in your role and organization.",
     tier: "premium" as const,
   },
   {
-    instrument_id: "HSS",
+    instrument_id: "INST-004",
     short_name: "HSS",
     instrument_name: "Habit Stabilization Scorecard",
     description: "Measures the stability and sustainability of behavioral changes related to AI adoption, helping you understand the degree to which new behaviors are stabilizing and becoming normalized.",
