@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/hooks/useAuth";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import RoleGuard from "@/components/RoleGuard";
+import SubscriptionGate from "@/components/SubscriptionGate";
 import { SuperAdminSessionProvider } from "@/hooks/useSuperAdminSession";
 import AppLayout from "@/components/AppLayout";
 import Index from "./pages/Index";
@@ -22,8 +23,10 @@ import MyResults from "./pages/MyResults";
 import Assessment from "./pages/Assessment";
 import AiChat from "./pages/AiChat";
 import Resources from "./pages/Resources";
+import Pricing from "./pages/Pricing";
 import SettingsPage from "./pages/Settings";
 import PrivacySettings from "./pages/PrivacySettings";
+import BillingSettings from "./pages/BillingSettings";
 import CoachClients from "./pages/coach/CoachClients";
 import OrderAssessment from "./pages/coach/OrderAssessment";
 import ClientResults from "./pages/coach/ClientResults";
@@ -55,6 +58,7 @@ const App = () => (
             <Route path="/login" element={<Login />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/pricing" element={<Pricing />} />
 
             {/* Protected routes without sidebar */}
             <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
@@ -67,11 +71,11 @@ const App = () => (
               {/* Individual / Corporate Employee */}
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/my-results" element={<MyResults />} />
-              {/* Assessment is now a standalone route without sidebar */}
-              <Route path="/ai-chat" element={<AiChat />} />
-              <Route path="/resources" element={<Resources />} />
+              <Route path="/ai-chat" element={<SubscriptionGate><AiChat /></SubscriptionGate>} />
+              <Route path="/resources" element={<SubscriptionGate><Resources /></SubscriptionGate>} />
               <Route path="/settings" element={<SettingsPage />} />
               <Route path="/settings/privacy" element={<PrivacySettings />} />
+              <Route path="/settings/billing" element={<BillingSettings />} />
 
               {/* Coach */}
               <Route path="/coach/clients" element={<RoleGuard allowedRoles={["coach"]}><CoachClients /></RoleGuard>} />
