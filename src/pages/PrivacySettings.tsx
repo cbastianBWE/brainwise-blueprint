@@ -152,10 +152,20 @@ export default function PrivacySettings() {
         .eq("user_id", user.id)
         .single();
       if (demoData) setDemo(demoData as DemoData);
+
+      // Fetch AI usage + tier
+      const { data: tierData } = await supabase
+        .from("users")
+        .select("subscription_tier")
+        .eq("id", user.id)
+        .single();
+      const t = tierData?.subscription_tier || "base";
+      setUserTier(t);
+      await fetchUsage(t);
     };
 
     load();
-  }, [user]);
+  }, [user, fetchUsage]);
 
   const showSaved = (key: string) => {
     setSavedKey(key);
