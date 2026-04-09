@@ -312,6 +312,21 @@ Deno.serve(async (req: Request) => {
       .update({ status: "completed", completed_at: new Date().toISOString() })
       .eq("id", assessment_id);
 
+    // ── Trigger narrative report generation (fire-and-forget) ──
+    try {
+      const reportUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/generate-report`;
+      fetch(reportUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${Deno.env.get("SUPABASE_ANON_KEY")}`,
+        },
+        body: JSON.stringify({ assessment_result_id: result!.id }),
+      }).catch((e) => console.error("generate-report fire-and-forget error:", e));
+    } catch (e) {
+      console.error("Failed to trigger generate-report:", e);
+    }
+
     // ── Step 12: Upsert ai_usage ──
     const now = new Date();
     const monthYear = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
