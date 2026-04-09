@@ -12,12 +12,13 @@ const logStep = (step: string, details?: unknown) => {
   console.log(`[CHECK-SUBSCRIPTION] ${step}${details ? ` - ${JSON.stringify(details)}` : ""}`);
 };
 
-// Map Stripe product IDs to our tiers
-const PRODUCT_TO_TIER: Record<string, string> = {
-  prod_UJ0cysJxUCxn4a: "base",
-  prod_UJ0eLA4SN7O3aK: "base",
-  prod_UJ0fZEaEn6S9Vu: "premium",
-  prod_UJ0fymvPeKTbcG: "premium",
+// Determine tier dynamically from product name/metadata
+const determineTier = (productName: string, metadata: Record<string, string>): string => {
+  if (metadata.tier) return metadata.tier.toLowerCase();
+  const name = productName.toLowerCase();
+  if (name.includes("premium")) return "premium";
+  if (name.includes("base")) return "base";
+  return "base";
 };
 
 serve(async (req) => {
