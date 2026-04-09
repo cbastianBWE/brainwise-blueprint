@@ -6,6 +6,8 @@ export interface UserProfile {
   full_name: string | null;
   account_type: string | null;
   email: string;
+  subscription_status: string;
+  subscription_tier: string;
 }
 
 export const useUserProfile = () => {
@@ -23,7 +25,7 @@ export const useUserProfile = () => {
     const fetchProfile = async () => {
       const { data } = await supabase
         .from("users")
-        .select("full_name, account_type, email")
+        .select("full_name, account_type, email, subscription_status, subscription_tier")
         .eq("id", user.id)
         .single();
 
