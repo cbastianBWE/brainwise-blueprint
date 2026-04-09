@@ -756,7 +756,7 @@ function NarrativeRenderer({ text }: { text: string }) {
       elements.push(
         <h4
           key={key++}
-          className="text-base font-semibold mt-8 mb-4 pt-4 border-t border-border/40 first:border-t-0 first:pt-0 first:mt-5"
+          className="text-base font-semibold mt-8 mb-2 pt-4 border-t border-border/40 first:border-t-0 first:pt-0 first:mt-5"
           style={{ color: "hsl(var(--primary))" }}
         >
           {renderInlineMarkdown(trimmed.replace(/^###\s*/, ""))}
@@ -769,9 +769,11 @@ function NarrativeRenderer({ text }: { text: string }) {
     const labelMatch = trimmed.match(/^\*\*(.+?:)\*\*$/);
     if (labelMatch) {
       flushParagraph();
+      const labelText = labelMatch[1];
+      const isImpactOnOthers = /impact on others/i.test(labelText);
       elements.push(
-        <p key={key++} className="text-sm font-semibold text-muted-foreground mt-6 mb-3 uppercase tracking-wide">
-          {labelMatch[1]}
+        <p key={key++} className={`text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wide ${isImpactOnOthers ? "mt-5" : "mt-2"}`}>
+          {labelText}
         </p>
       );
       continue;
