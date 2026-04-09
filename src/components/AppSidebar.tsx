@@ -1,7 +1,7 @@
 import {
   LayoutDashboard, BarChart3, ClipboardList, MessageSquare, BookOpen, Settings,
   Users, Building2, UsersRound, Activity, Heart, Award, UserCircle,
-  ShieldCheck, Briefcase, GitBranch, FlaskConical, LogOut,
+  ShieldCheck, Briefcase, GitBranch, FlaskConical, LogOut, History,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -35,6 +35,7 @@ const individualNav: NavItem[] = [
   { title: "My Results", url: "/my-results", icon: BarChart3 },
   { title: "Assessment", url: "/assessment", icon: ClipboardList },
   { title: "AI Chat", url: "/ai-chat", icon: MessageSquare },
+  { title: "Chat History", url: "/ai-chat/history", icon: History },
   { title: "Resources", url: "/resources", icon: BookOpen },
   { title: "Settings", url: "/settings", icon: Settings },
 ];
@@ -43,6 +44,8 @@ const coachNav: NavItem[] = [
   { title: "My Clients", url: "/coach/clients", icon: Users },
   { title: "Order Assessment", url: "/coach/order-assessment", icon: ClipboardList },
   { title: "Client Results", url: "/coach/client-results", icon: BarChart3 },
+  { title: "AI Chat", url: "/ai-chat", icon: MessageSquare },
+  { title: "Chat History", url: "/ai-chat/history", icon: History },
   { title: "Resources", url: "/coach/resources", icon: BookOpen },
   { title: "My Profile", url: "/coach/profile", icon: UserCircle },
   { title: "Certification", url: "/coach/certification", icon: Award },
@@ -54,6 +57,8 @@ const adminNav: NavItem[] = [
   { title: "Organizations", url: "/admin/organizations", icon: Building2 },
   { title: "Teams", url: "/admin/teams", icon: UsersRound },
   { title: "Participation", url: "/admin/participation", icon: Activity },
+  { title: "AI Chat", url: "/ai-chat", icon: MessageSquare },
+  { title: "Chat History", url: "/ai-chat/history", icon: History },
   { title: "Resources", url: "/admin/resources", icon: BookOpen },
   { title: "Settings", url: "/settings", icon: Settings },
 ];
@@ -62,6 +67,8 @@ const superAdminNav: NavItem[] = [
   { title: "Platform Health", url: "/super-admin/health", icon: Heart },
   { title: "Company Accounts", url: "/super-admin/companies", icon: Briefcase },
   { title: "Version Management", url: "/super-admin/versions", icon: GitBranch },
+  { title: "AI Chat", url: "/ai-chat", icon: MessageSquare },
+  { title: "Chat History", url: "/ai-chat/history", icon: History },
   { title: "AI Research", url: "/super-admin/ai-research", icon: FlaskConical, disabled: true, badge: "Phase 2" },
   { title: "Settings", url: "/settings", icon: Settings },
 ];
