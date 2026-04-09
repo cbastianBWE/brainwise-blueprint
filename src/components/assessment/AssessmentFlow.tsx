@@ -232,10 +232,11 @@ export default function AssessmentFlow({ instrument, onExit }: Props) {
     navigate(`/my-results`);
   };
 
-  if (loading) {
+  if (loading || submitting) {
     return (
-      <div className="fixed inset-0 bg-background flex items-center justify-center">
+      <div className="fixed inset-0 bg-background flex flex-col items-center justify-center gap-4">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+        {submitting && <p className="text-muted-foreground">Calculating your results...</p>}
       </div>
     );
   }
