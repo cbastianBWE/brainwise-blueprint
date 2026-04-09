@@ -37,6 +37,7 @@ import AdminResources from "./pages/admin/AdminResources";
 import PlatformHealth from "./pages/super-admin/PlatformHealth";
 import CompanyAccounts from "./pages/super-admin/CompanyAccounts";
 import VersionManagement from "./pages/super-admin/VersionManagement";
+import CompanyDetail from "./pages/super-admin/CompanyDetail";
 
 const queryClient = new QueryClient();
 
