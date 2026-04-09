@@ -583,7 +583,7 @@ export default function MyResults() {
                       <NarrativeRenderer text={selected.result.ai_narrative} />
                     </div>
                     {selected.result.ai_version && (
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-xs text-gray-500 mt-4">
                         Generated with {selected.result.ai_version}
                       </p>
                     )}
@@ -613,7 +613,7 @@ export default function MyResults() {
                     ) : (
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
-                          <Button variant="ghost" size="sm" className="text-xs text-muted-foreground mt-1">
+                          <Button variant="outline" size="sm" className="text-xs text-foreground border-border mt-1">
                             <RefreshCw className="mr-1 h-3 w-3" /> Regenerate Interpretation
                           </Button>
                         </AlertDialogTrigger>
@@ -770,7 +770,7 @@ function NarrativeRenderer({ text }: { text: string }) {
     if (labelMatch) {
       flushParagraph();
       elements.push(
-        <p key={key++} className="text-sm font-semibold text-muted-foreground mt-4 mb-2 uppercase tracking-wide">
+        <p key={key++} className="text-sm font-semibold text-muted-foreground mt-6 mb-3 uppercase tracking-wide">
           {labelMatch[1]}
         </p>
       );
