@@ -510,6 +510,42 @@ export type Database = {
           },
         ]
       }
+      organization_instruments: {
+        Row: {
+          created_at: string | null
+          id: string
+          instrument_id: string
+          organization_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          instrument_id: string
+          organization_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          instrument_id?: string
+          organization_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_instruments_instrument_id_fkey"
+            columns: ["instrument_id"]
+            isOneToOne: false
+            referencedRelation: "instruments"
+            referencedColumns: ["instrument_id"]
+          },
+          {
+            foreignKeyName: "organization_instruments_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organizations: {
         Row: {
           admin_user_id: string | null
