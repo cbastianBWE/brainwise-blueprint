@@ -64,6 +64,7 @@ interface AssessmentWithResult {
   completed_at: string | null;
   instrument_name: string;
   scale_type: string | null;
+  isPTP: boolean;
 }
 
 const BAND_COLORS: Record<string, string> = {
@@ -72,6 +73,14 @@ const BAND_COLORS: Record<string, string> = {
   moderate: "#8EA9C1",
   moderate_low: "#F4B942",
   low: "#E07B00",
+};
+
+const PTP_DIMENSION_COLORS: Record<string, string> = {
+  "DIM-PTP-01": "#1F4E79",
+  "DIM-PTP-02": "#2E75B6",
+  "DIM-PTP-03": "#4BACC6",
+  "DIM-PTP-04": "#70AD47",
+  "DIM-PTP-05": "#ED7D31",
 };
 
 const READINESS_COLORS: Record<string, { bg: string; text: string; border: string }> = {
