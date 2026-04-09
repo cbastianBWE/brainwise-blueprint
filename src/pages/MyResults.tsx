@@ -756,7 +756,7 @@ function NarrativeRenderer({ text }: { text: string }) {
       elements.push(
         <h4
           key={key++}
-          className="text-base font-semibold mt-8 mb-3 pt-4 border-t border-border/40 first:border-t-0 first:pt-0 first:mt-5"
+          className="text-base font-semibold mt-8 mb-4 pt-4 border-t border-border/40 first:border-t-0 first:pt-0 first:mt-5"
           style={{ color: "hsl(var(--primary))" }}
         >
           {renderInlineMarkdown(trimmed.replace(/^###\s*/, ""))}
