@@ -43,13 +43,15 @@ serve(async (req) => {
       );
     }
 
-    // Parse input — subscription_tier can come from body or we fetch it
-    let subscriptionTier: string;
+    // Parse input
+    let subscriptionTier = "base";
+    let checkOnly = false;
     try {
       const body = await req.json();
       subscriptionTier = body.subscription_tier || "base";
+      checkOnly = body.check_only === true;
     } catch {
-      subscriptionTier = "base";
+      // defaults
     }
 
     const tier = subscriptionTier in LIMITS ? subscriptionTier : "base";
