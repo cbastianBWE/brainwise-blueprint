@@ -101,7 +101,19 @@ serve(async (req) => {
       );
     }
 
-    // Under limit — upsert to increment count
+    // Check-only mode: return current usage without incrementing
+    if (checkOnly) {
+      return new Response(
+        JSON.stringify({
+          allowed: true,
+          current_count: currentCount,
+          limit,
+          remaining: limit - currentCount,
+          tier,
+        }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
     const { error: upsertError } = await serviceClient.rpc("increment_ai_usage", {
       p_user_id: userId,
       p_usage_type: "chat_message",
