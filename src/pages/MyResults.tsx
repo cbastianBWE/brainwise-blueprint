@@ -339,11 +339,11 @@ export default function MyResults() {
               />
               <StatCard
                 label="Highest Dimension"
-                value={formatDimensionName(highestDimension)}
+                value={resolveDimensionName(highestDimension)}
               />
               <StatCard
                 label="Lowest Dimension"
-                value={formatDimensionName(lowestDimension)}
+                value={resolveDimensionName(lowestDimension)}
               />
             </div>
           </section>
