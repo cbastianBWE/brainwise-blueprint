@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/hooks/useAuth";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import RoleGuard from "@/components/RoleGuard";
+import { SuperAdminSessionProvider } from "@/hooks/useSuperAdminSession";
 import AppLayout from "@/components/AppLayout";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
@@ -36,6 +37,7 @@ import AdminResources from "./pages/admin/AdminResources";
 import PlatformHealth from "./pages/super-admin/PlatformHealth";
 import CompanyAccounts from "./pages/super-admin/CompanyAccounts";
 import VersionManagement from "./pages/super-admin/VersionManagement";
+import CompanyDetail from "./pages/super-admin/CompanyDetail";
 
 const queryClient = new QueryClient();
 
@@ -87,9 +89,10 @@ const App = () => (
               <Route path="/admin/resources" element={<RoleGuard allowedRoles={["admin"]}><AdminResources /></RoleGuard>} />
 
               {/* Super Admin */}
-              <Route path="/super-admin/health" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><PlatformHealth /></RoleGuard>} />
-              <Route path="/super-admin/companies" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><CompanyAccounts /></RoleGuard>} />
-              <Route path="/super-admin/versions" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><VersionManagement /></RoleGuard>} />
+              <Route path="/super-admin/health" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><PlatformHealth /></SuperAdminSessionProvider></RoleGuard>} />
+              <Route path="/super-admin/companies" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><CompanyAccounts /></SuperAdminSessionProvider></RoleGuard>} />
+              <Route path="/super-admin/company/:orgId" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><CompanyDetail /></SuperAdminSessionProvider></RoleGuard>} />
+              <Route path="/super-admin/versions" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><VersionManagement /></SuperAdminSessionProvider></RoleGuard>} />
             </Route>
 
             {/* Legacy redirects */}
