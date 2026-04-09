@@ -509,11 +509,7 @@ export default function MyResults() {
                 {selected.result.ai_narrative ? (
                   <>
                     <div className="prose prose-sm max-w-none text-foreground">
-                      {selected.result.ai_narrative
-                        .split("\n\n")
-                        .map((para, i) => (
-                          <p key={i}>{para}</p>
-                        ))}
+                      <NarrativeRenderer text={selected.result.ai_narrative} />
                     </div>
                     {selected.result.ai_version && (
                       <p className="text-xs text-muted-foreground">
@@ -591,6 +587,64 @@ function AIRSACards({
       })}
     </div>
   );
+}
+
+function NarrativeRenderer({ text }: { text: string }) {
+  const blocks = text.split("\n\n");
+  return (
+    <>
+      {blocks.map((block, i) => {
+        const trimmed = block.trim();
+        // ## Heading
+        if (trimmed.startsWith("## ")) {
+          return (
+            <h3
+              key={i}
+              className="text-lg font-semibold mt-6 mb-2"
+              style={{ color: "hsl(var(--primary))" }}
+            >
+              {trimmed.replace(/^##\s*/, "")}
+            </h3>
+          );
+        }
+        // ### Subheading
+        if (trimmed.startsWith("### ")) {
+          return (
+            <h4
+              key={i}
+              className="text-base font-semibold mt-4 mb-1"
+              style={{ color: "hsl(var(--primary))" }}
+            >
+              {trimmed.replace(/^###\s*/, "")}
+            </h4>
+          );
+        }
+        // Lines with emoji bullets or plain text
+        const lines = trimmed.split("\n");
+        return (
+          <p key={i} className="mb-3 leading-relaxed">
+            {lines.map((line, j) => (
+              <span key={j}>
+                {j > 0 && <br />}
+                {renderInlineMarkdown(line)}
+              </span>
+            ))}
+          </p>
+        );
+      })}
+    </>
+  );
+}
+
+function renderInlineMarkdown(text: string): React.ReactNode {
+  // Split on **bold** markers
+  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+  return parts.map((part, i) => {
+    if (part.startsWith("**") && part.endsWith("**")) {
+      return <strong key={i}>{part.slice(2, -2)}</strong>;
+    }
+    return part;
+  });
 }
 
 function formatDimensionName(id: string): string {

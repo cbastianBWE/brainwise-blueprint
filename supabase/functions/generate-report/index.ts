@@ -89,6 +89,54 @@ Deno.serve(async (req: Request) => {
       };
     }
 
+    // ── 4b. Fetch driving facet scores (elevated/suppressed) ──
+    const { data: responses } = await admin
+      .from("assessment_responses")
+      .select("response_value_numeric, is_reverse_scored, item_id")
+      .eq("assessment_id", result.assessment_id);
+
+    let elevatedFacets: Array<{ item_text: string; value: number; dimension_id: string }> = [];
+    let suppressedFacets: Array<{ item_text: string; value: number; dimension_id: string }> = [];
+
+    if (responses && responses.length > 0) {
+      const itemIds = responses.map((r) => r.item_id);
+      const { data: items } = await admin
+        .from("items")
+        .select("item_id, item_text, dimension_id")
+        .in("item_id", itemIds);
+
+      const itemMap: Record<string, { item_text: string; dimension_id: string }> = {};
+      for (const it of items ?? []) {
+        itemMap[it.item_id] = { item_text: it.item_text, dimension_id: it.dimension_id ?? "" };
+      }
+
+      const scoredItems = responses.map((r) => {
+        const item = itemMap[r.item_id];
+        const raw = Number(r.response_value_numeric);
+        const value = r.is_reverse_scored ? 100 - raw : raw;
+        return {
+          item_text: item?.item_text ?? r.item_id,
+          dimension_id: item?.dimension_id ?? "",
+          value,
+        };
+      });
+
+      const values = scoredItems.map((s) => s.value);
+      const mean = values.reduce((a, b) => a + b, 0) / values.length;
+      const variance = values.reduce((sum, v) => sum + (v - mean) ** 2, 0) / values.length;
+      const stdDev = Math.sqrt(variance);
+
+      elevatedFacets = scoredItems
+        .filter((s) => s.value > mean + stdDev)
+        .sort((a, b) => b.value - a.value)
+        .slice(0, 10);
+
+      suppressedFacets = scoredItems
+        .filter((s) => s.value < mean - stdDev)
+        .sort((a, b) => a.value - b.value)
+        .slice(0, 10);
+    }
+
     // ── 5. Fetch triggered recommendations ──
     const overallProfile = result.overall_profile as Record<string, unknown> | null;
     const triggeredIds: string[] =
@@ -186,6 +234,21 @@ Deno.serve(async (req: Request) => {
       triggered_recommendations: triggeredRecommendations,
       other_instrument_scores: otherInstrumentScores,
     };
+
+    if (elevatedFacets.length > 0 || suppressedFacets.length > 0) {
+      context.driving_facets = {
+        elevated: elevatedFacets.map((f) => ({
+          facet_text: f.item_text,
+          score: f.value,
+          dimension: dimLookup[f.dimension_id]?.dimension_name ?? f.dimension_id,
+        })),
+        suppressed: suppressedFacets.map((f) => ({
+          facet_text: f.item_text,
+          score: f.value,
+          dimension: dimLookup[f.dimension_id]?.dimension_name ?? f.dimension_id,
+        })),
+      };
+    }
 
     if (result.manager_dimension_scores) {
       context.manager_dimensions = result.manager_dimension_scores;
