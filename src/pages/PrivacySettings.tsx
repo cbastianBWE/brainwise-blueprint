@@ -253,9 +253,11 @@ export default function PrivacySettings() {
   const handleFieldSave = async (fieldKey: string, value: string) => {
     if (!user) return;
     setSaving(true);
-    await supabase.from("user_demographics").update({
-      [fieldKey]: value || null,
-    }).eq("user_id", user.id);
+    const updateObj: Record<string, string | null> = {};
+    updateObj[fieldKey] = value || null;
+    await supabase.from("user_demographics").update(
+      updateObj as any
+    ).eq("user_id", user.id);
 
     if (demo) setDemo({ ...demo, [fieldKey]: value || null });
     setEditingField(null);
@@ -402,7 +404,7 @@ export default function PrivacySettings() {
                   <div>
                     <p className="text-sm font-medium text-foreground">{label}</p>
                     <p className="text-sm text-muted-foreground">
-                      {(demo as Record<string, unknown>)[key] as string || "Not provided"}
+                      {(demo as unknown as Record<string, unknown>)[key] as string || "Not provided"}
                     </p>
                   </div>
                   {editingField === key ? (
@@ -421,7 +423,7 @@ export default function PrivacySettings() {
                     <Button
                       size="sm"
                       variant="ghost"
-                      onClick={() => { setEditingField(key); setEditValue(((demo as Record<string, unknown>)[key] as string) || ""); }}
+                      onClick={() => { setEditingField(key); setEditValue(((demo as unknown as Record<string, unknown>)[key] as string) || ""); }}
                     >
                       <Pencil className="h-3 w-3 mr-1" /> Edit
                     </Button>
