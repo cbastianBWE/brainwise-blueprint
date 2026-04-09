@@ -320,7 +320,7 @@ export default function MyResults() {
           <section className="space-y-4">
             <div>
               <h2 className="text-xl font-semibold text-foreground">
-                Your {selected.instrument_name} Profile
+                Your {selected.instrument_name.replace(/\s*Profile$/i, '')} Profile
               </h2>
               {profile?.full_name && (
                 <p className="text-muted-foreground">{profile.full_name}</p>
