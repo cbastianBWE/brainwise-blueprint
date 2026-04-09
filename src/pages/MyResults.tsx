@@ -29,6 +29,7 @@ import {
 } from "recharts";
 import { FileText, MessageSquare, RefreshCw, ArrowRight } from "lucide-react";
 import { format } from "date-fns";
+import DrivingFacetScores from "@/components/results/DrivingFacetScores";
 
 // Types
 interface DimensionScore {
@@ -63,6 +64,7 @@ interface AssessmentWithResult {
   completed_at: string | null;
   instrument_name: string;
   scale_type: string | null;
+  isPTP: boolean;
 }
 
 const BAND_COLORS: Record<string, string> = {
@@ -71,6 +73,14 @@ const BAND_COLORS: Record<string, string> = {
   moderate: "#8EA9C1",
   moderate_low: "#F4B942",
   low: "#E07B00",
+};
+
+const PTP_DIMENSION_COLORS: Record<string, string> = {
+  "DIM-PTP-01": "#1F4E79",
+  "DIM-PTP-02": "#2E75B6",
+  "DIM-PTP-03": "#4BACC6",
+  "DIM-PTP-04": "#70AD47",
+  "DIM-PTP-05": "#ED7D31",
 };
 
 const READINESS_COLORS: Record<string, { bg: string; text: string; border: string }> = {
@@ -89,6 +99,7 @@ export default function MyResults() {
   const [selectedId, setSelectedId] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [pollingNarrative, setPollingNarrative] = useState(false);
+  const [dimensionNameMap, setDimensionNameMap] = useState<Map<string, string>>(new Map());
 
   // Fetch all completed assessment results
   useEffect(() => {
@@ -125,6 +136,17 @@ export default function MyResults() {
         .select("instrument_id, instrument_name, scale_type")
         .in("instrument_id", instrumentIds);
 
+      // Fetch dimension names for display
+      const { data: dimensionRows } = await supabase
+        .from("dimensions")
+        .select("dimension_id, dimension_name")
+        .in("instrument_id", instrumentIds);
+
+      const dimNameMap = new Map(
+        (dimensionRows ?? []).map((d) => [d.dimension_id, d.dimension_name])
+      );
+      setDimensionNameMap(dimNameMap);
+
       const instrumentMap = new Map(
         (instruments ?? []).map((i) => [i.instrument_id, i])
       );
@@ -140,6 +162,7 @@ export default function MyResults() {
           completed_at: assessment?.completed_at ?? r.created_at,
           instrument_name: instrument?.instrument_name ?? r.instrument_id ?? "Unknown",
           scale_type: instrument?.scale_type ?? null,
+          isPTP: (r.instrument_id ?? "").toUpperCase().includes("INST-001"),
         };
       });
 
@@ -212,6 +235,9 @@ export default function MyResults() {
   const lowestDimension =
     sortedDimensions[sortedDimensions.length - 1]?.[0] ?? "—";
 
+  const resolveDimensionName = (id: string) =>
+    dimensionNameMap.get(id) ?? formatDimensionName(id);
+
   const isSliderInstrument =
     selected?.scale_type?.includes("slider") ||
     selected?.scale_type?.includes("0-100") ||
@@ -231,11 +257,12 @@ export default function MyResults() {
   const chartData = useMemo(() => {
     if (!isSliderInstrument && !(!isAIRSA && !isSliderInstrument)) return [];
     return sortedDimensions.map(([name, score]) => ({
-      name: formatDimensionName(name),
+      name: dimensionNameMap.get(name) ?? formatDimensionName(name),
+      dimensionId: name,
       value: score.mean ?? score.level_mean ?? 0,
       band: score.band ?? "moderate",
     }));
-  }, [sortedDimensions, isSliderInstrument, isAIRSA]);
+  }, [sortedDimensions, isSliderInstrument, isAIRSA, dimensionNameMap]);
 
   if (loading) {
     return (
@@ -312,11 +339,11 @@ export default function MyResults() {
               />
               <StatCard
                 label="Highest Dimension"
-                value={formatDimensionName(highestDimension)}
+                value={resolveDimensionName(highestDimension)}
               />
               <StatCard
                 label="Lowest Dimension"
-                value={formatDimensionName(lowestDimension)}
+                value={resolveDimensionName(lowestDimension)}
               />
             </div>
           </section>
@@ -366,7 +393,11 @@ export default function MyResults() {
                             {chartData.map((entry, idx) => (
                               <Cell
                                 key={idx}
-                                fill={BAND_COLORS[entry.band] ?? BAND_COLORS.moderate}
+                                fill={
+                                  selected.isPTP
+                                    ? PTP_DIMENSION_COLORS[entry.dimensionId] ?? BAND_COLORS.moderate
+                                    : BAND_COLORS[entry.band] ?? BAND_COLORS.moderate
+                                }
                               />
                             ))}
                             <LabelList
@@ -385,6 +416,13 @@ export default function MyResults() {
               </CardContent>
             </Card>
           </section>
+
+          {/* SECTION 2b - Driving Facet Scores (PTP only) */}
+          {selected.isPTP && (
+            <section>
+              <DrivingFacetScores assessmentId={selected.result.assessment_id} />
+            </section>
+          )}
 
           {/* SECTION 3 - Cross-Instrument Recommendations */}
           {recommendations.length > 0 && (
