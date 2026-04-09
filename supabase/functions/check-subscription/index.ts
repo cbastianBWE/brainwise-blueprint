@@ -82,8 +82,10 @@ serve(async (req) => {
       const sub = subscriptions.data[0];
       subscriptionEnd = new Date(sub.current_period_end * 1000).toISOString();
       const productId = sub.items.data[0].price.product as string;
-      tier = PRODUCT_TO_TIER[productId] || "base";
-      logStep("Active subscription", { tier, subscriptionEnd });
+      // Fetch the product from Stripe to determine tier dynamically
+      const product = await stripe.products.retrieve(productId);
+      tier = determineTier(product.name, (product.metadata || {}) as Record<string, string>);
+      logStep("Active subscription", { tier, productId, productName: product.name, subscriptionEnd });
     } else {
       logStep("No active subscription");
     }
