@@ -112,6 +112,10 @@ export default function MyResults() {
   const [loading, setLoading] = useState(true);
   const [pollingNarrative, setPollingNarrative] = useState(false);
   const [dimensionNameMap, setDimensionNameMap] = useState<Map<string, string>>(new Map());
+  const [regenerating, setRegenerating] = useState(false);
+  const [regeneratedVersion, setRegeneratedVersion] = useState<string | null>(null);
+  const [limitReached, setLimitReached] = useState<{ limit: number; tier: string } | null>(null);
+  const { fetchUsage } = useAiUsage();
 
   // Fetch all completed assessment results
   useEffect(() => {
