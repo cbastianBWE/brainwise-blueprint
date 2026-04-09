@@ -69,13 +69,13 @@ export const useRoleRedirect = () => {
 
     switch (accountType) {
       case "coach":
-        navigate("/coach-portal");
+        navigate("/coach/clients");
         break;
       case "admin":
-        navigate("/admin");
+        navigate("/admin/users");
         break;
       case "brainwise_super_admin":
-        navigate("/super-admin");
+        navigate("/super-admin/health");
         break;
       case "individual":
       case "corporate_employee":
