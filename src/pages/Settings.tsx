@@ -1,2 +1,4 @@
-import PlaceholderPage from "@/components/PlaceholderPage";
-export default function SettingsPage() { return <PlaceholderPage title="Settings" />; }
+import { Navigate } from "react-router-dom";
+export default function SettingsPage() {
+  return <Navigate to="/settings/privacy" replace />;
+}
