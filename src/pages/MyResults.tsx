@@ -115,7 +115,7 @@ export default function MyResults() {
   const [regenerating, setRegenerating] = useState(false);
   const [regeneratedVersion, setRegeneratedVersion] = useState<string | null>(null);
   const [limitReached, setLimitReached] = useState<{ limit: number; tier: string } | null>(null);
-  const { fetchUsage } = useAiUsage();
+  const { fetchUsage, consumeMessage } = useAiUsage();
 
   // Fetch all completed assessment results
   useEffect(() => {
@@ -240,10 +240,10 @@ export default function MyResults() {
     setRegeneratedVersion(null);
     setLimitReached(null);
 
-    // Check usage first
-    const usageData = await fetchUsage(profile?.subscription_tier ?? "base");
-    if (usageData && !usageData.allowed) {
-      setLimitReached({ limit: usageData.limit, tier: usageData.tier ?? "base" });
+    // Consume one message from usage limit
+    const usageData = await consumeMessage(profile?.subscription_tier ?? "base");
+    if (!usageData || !usageData.allowed) {
+      setLimitReached({ limit: usageData?.limit ?? 30, tier: usageData?.tier ?? profile?.subscription_tier ?? "base" });
       setRegenerating(false);
       return;
     }
@@ -286,7 +286,7 @@ export default function MyResults() {
       clearInterval(poll);
       setRegenerating(false);
     }, 120000);
-  }, [selected, fetchUsage, profile?.subscription_tier, toast]);
+  }, [selected, consumeMessage, profile?.subscription_tier, toast]);
 
   // Derived data
   const dimensionScores = selected
