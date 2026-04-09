@@ -705,50 +705,93 @@ function AIRSACards({
 }
 
 function NarrativeRenderer({ text }: { text: string }) {
-  const blocks = text.split("\n\n");
-  return (
-    <>
-      {blocks.map((block, i) => {
-        const trimmed = block.trim();
-        // ## Heading
-        if (trimmed.startsWith("## ")) {
-          return (
-            <h3
-              key={i}
-              className="text-lg font-semibold mt-6 mb-2"
-              style={{ color: "hsl(var(--primary))" }}
-            >
-              {trimmed.replace(/^##\s*/, "")}
-            </h3>
-          );
-        }
-        // ### Subheading
-        if (trimmed.startsWith("### ")) {
-          return (
-            <h4
-              key={i}
-              className="text-base font-semibold mt-4 mb-1"
-              style={{ color: "hsl(var(--primary))" }}
-            >
-              {trimmed.replace(/^###\s*/, "")}
-            </h4>
-          );
-        }
-        // Lines with emoji bullets or plain text
-        const lines = trimmed.split("\n");
-        return (
-          <p key={i} className="mb-3 leading-relaxed">
-            {lines.map((line, j) => (
-              <span key={j}>
-                {j > 0 && <br />}
-                {renderInlineMarkdown(line)}
-              </span>
-            ))}
-          </p>
-        );
-      })}
-    </>
-  );
+  const lines = text.split("\n");
+  const elements: React.ReactNode[] = [];
+  let paragraphBuffer: string[] = [];
+  let key = 0;
+
+  const flushParagraph = () => {
+    if (paragraphBuffer.length === 0) return;
+    elements.push(
+      <p key={key++} className="mb-4 leading-relaxed text-foreground">
+        {paragraphBuffer.map((line, j) => (
+          <span key={j}>
+            {j > 0 && <br />}
+            {renderInlineMarkdown(line)}
+          </span>
+        ))}
+      </p>
+    );
+    paragraphBuffer = [];
+  };
+
+  for (const raw of lines) {
+    const line = raw;
+    const trimmed = line.trim();
+
+    // Empty line → flush paragraph
+    if (trimmed === "") {
+      flushParagraph();
+      continue;
+    }
+
+    // ## Heading
+    if (trimmed.startsWith("## ")) {
+      flushParagraph();
+      elements.push(
+        <h3
+          key={key++}
+          className="text-lg font-bold mt-8 mb-3 pb-1 border-b"
+          style={{ color: "hsl(var(--primary))", borderColor: "hsl(var(--primary) / 0.2)" }}
+        >
+          {renderInlineMarkdown(trimmed.replace(/^##\s*/, ""))}
+        </h3>
+      );
+      continue;
+    }
+
+    // ### Subheading
+    if (trimmed.startsWith("### ")) {
+      flushParagraph();
+      elements.push(
+        <h4
+          key={key++}
+          className="text-base font-semibold mt-5 mb-2"
+          style={{ color: "hsl(var(--primary))" }}
+        >
+          {renderInlineMarkdown(trimmed.replace(/^###\s*/, ""))}
+        </h4>
+      );
+      continue;
+    }
+
+    // Bullet lines: - text, * text, or emoji-prefixed (✅ ❌)
+    const bulletMatch = trimmed.match(/^[-*]\s+(.+)$/);
+    const emojiMatch = trimmed.match(/^(✅|❌)\s*(.+)$/);
+
+    if (bulletMatch || emojiMatch) {
+      flushParagraph();
+      const content = bulletMatch ? bulletMatch[1] : trimmed;
+      elements.push(
+        <div key={key++} className="flex items-start gap-2 mb-2 ml-1">
+          {bulletMatch && !emojiMatch && (
+            <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
+          )}
+          <span className="text-foreground leading-relaxed">
+            {renderInlineMarkdown(content)}
+          </span>
+        </div>
+      );
+      continue;
+    }
+
+    // Regular text → accumulate into paragraph
+    paragraphBuffer.push(trimmed);
+  }
+
+  flushParagraph();
+
+  return <div className="space-y-0">{elements}</div>;
 }
 
 function renderInlineMarkdown(text: string): React.ReactNode {
@@ -756,7 +799,7 @@ function renderInlineMarkdown(text: string): React.ReactNode {
   const parts = text.split(/(\*\*[^*]+\*\*)/g);
   return parts.map((part, i) => {
     if (part.startsWith("**") && part.endsWith("**")) {
-      return <strong key={i}>{part.slice(2, -2)}</strong>;
+      return <strong key={i} className="font-semibold">{part.slice(2, -2)}</strong>;
     }
     return part;
   });
