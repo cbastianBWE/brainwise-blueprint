@@ -233,6 +233,61 @@ export default function MyResults() {
     return () => clearInterval(interval);
   }, [selected?.result.id, selected?.result.ai_narrative]);
 
+  // Regenerate handler
+  const handleRegenerate = useCallback(async () => {
+    if (!selected) return;
+    setRegenerating(true);
+    setRegeneratedVersion(null);
+    setLimitReached(null);
+
+    // Check usage first
+    const usageData = await fetchUsage(profile?.subscription_tier ?? "base");
+    if (usageData && !usageData.allowed) {
+      setLimitReached({ limit: usageData.limit, tier: usageData.tier ?? "base" });
+      setRegenerating(false);
+      return;
+    }
+
+    // Call generate-report
+    const { error } = await supabase.functions.invoke("generate-report", {
+      body: { assessment_result_id: selected.result.id },
+    });
+
+    if (error) {
+      toast({ title: "Error", description: "Failed to regenerate interpretation.", variant: "destructive" });
+      setRegenerating(false);
+      return;
+    }
+
+    // Poll for updated narrative
+    const poll = setInterval(async () => {
+      const { data } = await supabase
+        .from("assessment_results")
+        .select("ai_narrative, ai_version")
+        .eq("id", selected.result.id)
+        .single();
+
+      if (data?.ai_narrative && data.ai_narrative !== selected.result.ai_narrative) {
+        setAssessments((prev) =>
+          prev.map((a) =>
+            a.result.id === selected.result.id
+              ? { ...a, result: { ...a.result, ai_narrative: data.ai_narrative, ai_version: data.ai_version } }
+              : a
+          )
+        );
+        setRegeneratedVersion(data.ai_version);
+        setRegenerating(false);
+        clearInterval(poll);
+      }
+    }, 5000);
+
+    // Timeout after 2 minutes
+    setTimeout(() => {
+      clearInterval(poll);
+      setRegenerating(false);
+    }, 120000);
+  }, [selected, fetchUsage, profile?.subscription_tier, toast]);
+
   // Derived data
   const dimensionScores = selected
     ? Object.entries(selected.result.dimension_scores)
