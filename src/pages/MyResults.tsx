@@ -348,6 +348,47 @@ export default function MyResults() {
             </div>
           </section>
 
+          {/* SECTION 1b - Actions */}
+          <section className="flex flex-wrap gap-3">
+            <Button
+              variant="outline"
+              onClick={() =>
+                toast({
+                  title: "Coming Soon",
+                  description: "PDF export will be available soon.",
+                })
+              }
+            >
+              <FileText className="mr-2 h-4 w-4" /> Export PDF
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() =>
+                toast({
+                  title: "Coming Soon",
+                  description:
+                    "AI chat about results will be available soon.",
+                })
+              }
+            >
+              <MessageSquare className="mr-2 h-4 w-4" /> Ask AI About My
+              Results
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() =>
+                navigate(
+                  `/assessment?instrument=${selected.result.instrument_id}`
+                )
+              }
+            >
+              <RefreshCw className="mr-2 h-4 w-4" /> Retake Assessment
+            </Button>
+            <Button onClick={() => navigate("/assessment")}>
+              Take Another Assessment
+            </Button>
+          </section>
+
           {/* SECTION 2 - Profile Chart */}
           <section>
             <Card>
@@ -495,46 +536,6 @@ export default function MyResults() {
             </Card>
           </section>
 
-          {/* SECTION 5 - Actions */}
-          <section className="flex flex-wrap gap-3">
-            <Button
-              variant="outline"
-              onClick={() =>
-                toast({
-                  title: "Coming Soon",
-                  description: "PDF export will be available soon.",
-                })
-              }
-            >
-              <FileText className="mr-2 h-4 w-4" /> Export PDF
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() =>
-                toast({
-                  title: "Coming Soon",
-                  description:
-                    "AI chat about results will be available soon.",
-                })
-              }
-            >
-              <MessageSquare className="mr-2 h-4 w-4" /> Ask AI About My
-              Results
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() =>
-                navigate(
-                  `/assessment?instrument=${selected.result.instrument_id}`
-                )
-              }
-            >
-              <RefreshCw className="mr-2 h-4 w-4" /> Retake Assessment
-            </Button>
-            <Button onClick={() => navigate("/assessment")}>
-              Take Another Assessment
-            </Button>
-          </section>
         </>
       )}
     </div>

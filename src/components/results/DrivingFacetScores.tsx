@@ -150,10 +150,7 @@ function FacetSection({
   items: FacetItem[];
 }) {
   const chartData = items.map((item) => ({
-    name:
-      item.item_text.length > 60
-        ? item.item_text.slice(0, 57) + "..."
-        : item.item_text,
+    name: item.item_text,
     value: Number(item.value.toFixed(1)),
     color: PTP_DIMENSION_COLORS[item.dimension_id] ?? "#8EA9C1",
   }));
@@ -164,23 +161,23 @@ function FacetSection({
       <ScrollArea className="w-full">
         <div
           style={{
-            minWidth: 400,
-            height: Math.max(200, items.length * 40),
+            minWidth: 600,
+            height: Math.max(200, items.length * 48),
           }}
         >
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
               data={chartData}
               layout="vertical"
-              margin={{ left: 200, right: 50, top: 4, bottom: 4 }}
+              margin={{ left: 380, right: 50, top: 4, bottom: 4 }}
             >
               <CartesianGrid strokeDasharray="3 3" horizontal={false} />
               <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 11 }} />
               <YAxis
                 dataKey="name"
                 type="category"
-                width={190}
-                tick={{ fontSize: 11 }}
+                width={370}
+                tick={{ fontSize: 13 }}
               />
               <Tooltip
                 formatter={(value: number) => [value.toFixed(1), "Score"]}
