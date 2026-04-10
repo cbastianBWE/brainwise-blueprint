@@ -42,6 +42,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { format } from "date-fns";
 import DrivingFacetScores from "@/components/results/DrivingFacetScores";
+import ExportPdfModal, { type PdfSections } from "@/components/results/ExportPdfModal";
+import { generateResultsPdf, type PdfData } from "@/lib/generateResultsPdf";
 
 // Types
 interface DimensionScore {
