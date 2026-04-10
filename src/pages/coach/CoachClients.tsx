@@ -245,9 +245,79 @@ export default function CoachClients() {
     }
 
     if (!hasError) {
-      toast.success("Invitation created", {
-        description: `An invitation for ${firstName} ${lastName} (${email}) has been recorded for ${instrumentUuids.length} instrument(s). Email delivery will be available once email integration is configured.`,
-      });
+      // Build and send invitation email
+      const selectedNames = selectedInstruments
+        .map(id => INSTRUMENTS.find(i => i.id === id)?.name)
+        .filter(Boolean) as string[];
+
+      const instrumentListHtml = selectedNames
+        .map(n => `<li style="margin-bottom:6px;">${n}</li>`)
+        .join("");
+
+      const coachNoteHtml = note
+        ? `<blockquote style="border-left:4px solid #3B82F6;margin:20px 0;padding:12px 16px;background:#F0F4FF;border-radius:4px;font-style:italic;color:#374151;">"${note}"</blockquote>`
+        : "";
+
+      const signupUrl = `${window.location.origin}/signup`;
+
+      const html = `
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"></head>
+<body style="margin:0;padding:0;background:#f9fafb;font-family:Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f9fafb;padding:40px 0;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+        <tr><td style="background:#1e40af;padding:24px 32px;">
+          <h1 style="margin:0;color:#ffffff;font-size:22px;">BrainWise</h1>
+        </td></tr>
+        <tr><td style="padding:32px;">
+          <p style="font-size:16px;color:#111827;margin:0 0 16px;">Hi ${firstName || "there"},</p>
+          <p style="font-size:15px;color:#374151;line-height:1.6;margin:0 0 16px;">
+            Your coach has invited you to complete the following BrainWise assessment${selectedNames.length > 1 ? "s" : ""}. When you register, you'll be able to choose your preferred payment method.
+          </p>
+          <ul style="font-size:15px;color:#374151;line-height:1.8;padding-left:20px;margin:0 0 16px;">
+            ${instrumentListHtml}
+          </ul>
+          ${coachNoteHtml}
+          <p style="font-size:14px;color:#6b7280;margin:0 0 24px;">
+            Please complete your assessment${selectedNames.length > 1 ? "s" : ""} within <strong>14 days</strong> of receiving this invitation.
+          </p>
+          <table cellpadding="0" cellspacing="0" style="margin:0 0 24px;"><tr><td style="background:#2563eb;border-radius:6px;padding:12px 28px;">
+            <a href="${signupUrl}" style="color:#ffffff;text-decoration:none;font-size:15px;font-weight:600;">Get Started</a>
+          </td></tr></table>
+          <p style="font-size:14px;color:#6b7280;margin:0;">Best regards,<br/><strong>The BrainWise Team</strong></p>
+        </td></tr>
+        <tr><td style="background:#f3f4f6;padding:16px 32px;text-align:center;">
+          <p style="font-size:12px;color:#9ca3af;margin:0;">© ${new Date().getFullYear()} BrainWise. All rights reserved.</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`.trim();
+
+      try {
+        const { error: emailError } = await supabase.functions.invoke("send-email", {
+          body: {
+            to: email,
+            subject: "You've Been Invited to Complete a BrainWise Assessment",
+            html,
+          },
+        });
+        if (emailError) {
+          console.error("[CoachClients] send-email error:", emailError);
+          toast.warning("Client records created but invitation email failed to send.");
+        } else {
+          toast.success("Invitation sent!", {
+            description: `${firstName} ${lastName} (${email}) has been invited for ${selectedNames.length} assessment${selectedNames.length > 1 ? "s" : ""}.`,
+          });
+        }
+      } catch (emailErr) {
+        console.error("[CoachClients] send-email exception:", emailErr);
+        toast.warning("Client records created but invitation email failed to send.");
+      }
+
       resetForm();
       setModalOpen(false);
       fetchClients();
