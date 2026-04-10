@@ -1161,6 +1161,17 @@ export type Database = {
     Functions: {
       current_user_account_type: { Args: never; Returns: string }
       current_user_org_id: { Args: never; Returns: string }
+      get_own_immutable_fields: {
+        Args: never
+        Returns: {
+          account_type: string
+          created_at: string
+          email: string
+          organization_id: string
+          subscription_status: string
+          subscription_tier: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
