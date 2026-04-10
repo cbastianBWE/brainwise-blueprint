@@ -43,13 +43,13 @@ serve(async (req) => {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) throw new Error("No authorization header");
 
-    // Create a user-context client to validate the JWT
-    const userClient = createClient(supabaseUrl, supabaseAnonKey, {
-      global: { headers: { Authorization: authHeader } },
-      auth: { persistSession: false },
-    });
+    logStep("Auth header present", { length: authHeader.length, prefix: authHeader.substring(0, 20) });
+    logStep("Anon key present", { hasAnonKey: !!supabaseAnonKey, length: supabaseAnonKey.length });
 
-    const { data: userData, error: userError } = await userClient.auth.getUser();
+    // Extract token and use admin client to validate
+    const token = authHeader.replace("Bearer ", "");
+    const { data: userData, error: userError } = await supabaseAdmin.auth.getUser(token);
+    logStep("getUser result", { hasData: !!userData?.user, error: userError?.message });
     if (userError) throw new Error(`Auth error: ${userError.message}`);
     const user = userData.user;
     if (!user?.email) throw new Error("User not authenticated");
