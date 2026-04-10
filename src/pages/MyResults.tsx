@@ -77,6 +77,7 @@ interface AssessmentWithResult {
   result: AssessmentResult;
   completed_at: string | null;
   instrument_name: string;
+  instrument_short_name: string | null;
   scale_type: string | null;
   isPTP: boolean;
 }
@@ -152,7 +153,7 @@ export default function MyResults() {
       ] as string[];
       const { data: instruments } = await supabase
         .from("instruments")
-        .select("instrument_id, instrument_name, scale_type")
+        .select("instrument_id, instrument_name, scale_type, short_name")
         .in("instrument_id", instrumentIds);
 
       // Fetch dimension names for display
@@ -180,6 +181,7 @@ export default function MyResults() {
           result: r as unknown as AssessmentResult,
           completed_at: assessment?.completed_at ?? r.created_at,
           instrument_name: instrument?.instrument_name ?? r.instrument_id ?? "Unknown",
+          instrument_short_name: instrument?.short_name ?? null,
           scale_type: instrument?.scale_type ?? null,
           isPTP: (r.instrument_id ?? "").toUpperCase().includes("INST-001"),
         };
@@ -381,7 +383,7 @@ export default function MyResults() {
     const pdfData: PdfData = {
       userName: profile?.full_name ?? "Participant",
       instrumentName: selected.instrument_name,
-      instrumentShortName: selected.result.instrument_id ?? selected.instrument_name.replace(/\s+/g, ""),
+      instrumentShortName: selected.instrument_short_name ?? selected.result.instrument_id ?? selected.instrument_name.replace(/\s+/g, ""),
       instrumentVersion: selected.result.instrument_version ?? "—",
       dateTaken: selected.completed_at ? format(new Date(selected.completed_at), "MMMM d, yyyy") : "—",
       dimensions: sortedDimensions.map(([id, score]) => ({
