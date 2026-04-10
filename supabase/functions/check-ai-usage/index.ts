@@ -7,11 +7,13 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-// Hardcoded monthly limits per tier
+// Hardcoded monthly limits per tier (shared across all usage types)
 const LIMITS: Record<string, number> = {
   base: 30,
   premium: 150,
 };
+
+const VALID_USAGE_TYPES = ["chat_message", "report_generation"];
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -46,10 +48,14 @@ serve(async (req) => {
     // Parse input
     let subscriptionTier = "base";
     let checkOnly = false;
+    let usageType = "chat_message";
     try {
       const body = await req.json();
       subscriptionTier = body.subscription_tier || "base";
       checkOnly = body.check_only === true;
+      if (body.usage_type && VALID_USAGE_TYPES.includes(body.usage_type)) {
+        usageType = body.usage_type;
+      }
     } catch {
       // defaults
     }
@@ -64,14 +70,13 @@ serve(async (req) => {
 
     const serviceClient = createClient(supabaseUrl, serviceRoleKey);
 
-    // Check current usage
-    const { data: usageRow, error: selectError } = await serviceClient
+    // Sum usage across ALL usage types for this user+month (shared limit)
+    const { data: usageRows, error: selectError } = await serviceClient
       .from("ai_usage")
-      .select("message_count")
+      .select("usage_type, message_count")
       .eq("user_id", userId)
-      .eq("usage_type", "chat_message")
       .eq("month_year", monthYear)
-      .maybeSingle();
+      .in("usage_type", VALID_USAGE_TYPES);
 
     if (selectError) {
       return new Response(
@@ -80,21 +85,30 @@ serve(async (req) => {
       );
     }
 
-    const currentCount = usageRow?.message_count ?? 0;
+    // Calculate combined total and per-type counts
+    let totalCount = 0;
+    const countByType: Record<string, number> = {};
+    for (const row of usageRows ?? []) {
+      const count = row.message_count ?? 0;
+      totalCount += count;
+      countByType[row.usage_type ?? "chat_message"] = count;
+    }
 
     // If at or over limit, deny
-    if (currentCount >= limit) {
+    if (totalCount >= limit) {
       const upgradeMsg =
         tier === "base"
-          ? `You have reached your monthly AI chat limit of ${limit} messages. Upgrade to Premium for ${LIMITS.premium} messages per month.`
-          : `You have reached your monthly AI chat limit of ${limit} messages.`;
+          ? `You have reached your monthly AI interaction limit of ${limit}. Upgrade to Premium for ${LIMITS.premium} interactions per month.`
+          : `You have reached your monthly AI interaction limit of ${limit}.`;
 
       return new Response(
         JSON.stringify({
           allowed: false,
-          current_count: currentCount,
+          current_count: totalCount,
           limit,
+          remaining: 0,
           tier,
+          counts_by_type: countByType,
           message: upgradeMsg,
         }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -106,31 +120,34 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({
           allowed: true,
-          current_count: currentCount,
+          current_count: totalCount,
           limit,
-          remaining: limit - currentCount,
+          remaining: limit - totalCount,
           tier,
+          counts_by_type: countByType,
         }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    // Increment the specific usage_type row
+    const currentTypeCount = countByType[usageType] ?? 0;
     const { error: upsertError } = await serviceClient.rpc("increment_ai_usage", {
       p_user_id: userId,
-      p_usage_type: "chat_message",
+      p_usage_type: usageType,
       p_month_year: monthYear,
     });
 
     // Fallback: if RPC doesn't exist, do manual upsert
     if (upsertError) {
-      // Try direct upsert via insert + on conflict
       const { error: insertError } = await serviceClient
         .from("ai_usage")
         .upsert(
           {
             user_id: userId,
-            usage_type: "chat_message",
+            usage_type: usageType,
             month_year: monthYear,
-            message_count: currentCount + 1,
+            message_count: currentTypeCount + 1,
             last_used_at: new Date().toISOString(),
           },
           { onConflict: "user_id,usage_type,month_year" }
@@ -144,14 +161,17 @@ serve(async (req) => {
       }
     }
 
-    const newCount = currentCount + 1;
+    const newTotal = totalCount + 1;
+    const newCountByType = { ...countByType, [usageType]: currentTypeCount + 1 };
 
     return new Response(
       JSON.stringify({
         allowed: true,
-        current_count: newCount,
+        current_count: newTotal,
         limit,
-        remaining: limit - newCount,
+        remaining: limit - newTotal,
+        tier,
+        counts_by_type: newCountByType,
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

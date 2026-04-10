@@ -15,7 +15,7 @@ export default function UsageCounter({ currentCount, limit }: Props) {
   return (
     <div className="space-y-1">
       <p className="text-xs text-muted-foreground">
-        {currentCount} of {limit} messages used this month
+        {currentCount} of {limit} AI interactions used this month
       </p>
       <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
         <div
