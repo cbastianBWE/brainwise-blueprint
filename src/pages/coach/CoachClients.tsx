@@ -53,6 +53,7 @@ export default function CoachClients() {
   const [selectedInstruments, setSelectedInstruments] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [instrumentError, setInstrumentError] = useState(false);
+  const [sendingReminderId, setSendingReminderId] = useState<string | null>(null);
 
   const fetchClients = async () => {
     if (!user) return;
@@ -351,6 +352,71 @@ export default function CoachClients() {
     }
   };
 
+  const handleRemind = async (client: ClientRow) => {
+    setSendingReminderId(client.id);
+    const instrumentName = client.instrument_name || "your assessment";
+    const signupUrl = `${window.location.origin}/signup`;
+    const clientName = client.client_name?.split(" ")[0] || client.client_email.split("@")[0];
+
+    const html = `
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"></head>
+<body style="margin:0;padding:0;background:#f9fafb;font-family:Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f9fafb;padding:40px 0;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+        <tr><td style="background:#1e40af;padding:24px 32px;">
+          <h1 style="margin:0;color:#ffffff;font-size:22px;">BrainWise</h1>
+        </td></tr>
+        <tr><td style="padding:32px;">
+          <p style="font-size:16px;color:#111827;margin:0 0 16px;">Hi ${clientName},</p>
+          <p style="font-size:15px;color:#374151;line-height:1.6;margin:0 0 16px;">
+            This is a friendly reminder that you have a BrainWise assessment waiting for you.
+          </p>
+          <p style="font-size:15px;color:#374151;line-height:1.6;margin:0 0 8px;font-weight:600;">Don't Forget Your Assessment:</p>
+          <ul style="font-size:15px;color:#374151;line-height:1.8;padding-left:20px;margin:0 0 16px;">
+            <li>${instrumentName}</li>
+          </ul>
+          <p style="font-size:14px;color:#6b7280;margin:0 0 24px;">
+            Please complete your assessment within <strong>14 days</strong> of your original invitation.
+          </p>
+          <table cellpadding="0" cellspacing="0" style="margin:0 0 24px;"><tr><td style="background:#2563eb;border-radius:6px;padding:12px 28px;">
+            <a href="${signupUrl}" style="color:#ffffff;text-decoration:none;font-size:15px;font-weight:600;">Get Started</a>
+          </td></tr></table>
+          <p style="font-size:14px;color:#6b7280;margin:0;">Best regards,<br/><strong>The BrainWise Team</strong></p>
+        </td></tr>
+        <tr><td style="background:#f3f4f6;padding:16px 32px;text-align:center;">
+          <p style="font-size:12px;color:#9ca3af;margin:0;">© ${new Date().getFullYear()} BrainWise. All rights reserved.</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`.trim();
+
+    try {
+      const { error } = await supabase.functions.invoke("send-email", {
+        body: {
+          to: client.client_email,
+          subject: "Friendly Reminder: Your BrainWise Assessment is Waiting",
+          html,
+        },
+      });
+      if (error) {
+        console.error("[CoachClients] remind send-email error:", error);
+        toast.warning("Failed to send reminder email.");
+      } else {
+        toast.success(`Reminder sent to ${client.client_email}`);
+      }
+    } catch (err) {
+      console.error("[CoachClients] remind exception:", err);
+      toast.warning("Failed to send reminder email.");
+    } finally {
+      setSendingReminderId(null);
+    }
+  };
+
   return (
     <div className="py-8 px-4 max-w-7xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
@@ -537,10 +603,10 @@ export default function CoachClients() {
                           size="sm"
                           variant="ghost"
                           className="gap-1"
-                          disabled={c.invitation_status !== "sent" && c.invitation_status !== "opened"}
-                          onClick={() => toast.success("Reminder sent", { description: `Reminder sent to ${c.client_email} for ${c.instrument_name || "assessment"}` })}
+                          disabled={(c.invitation_status !== "sent" && c.invitation_status !== "opened") || sendingReminderId === c.id}
+                          onClick={() => handleRemind(c)}
                         >
-                          <Mail className="h-3 w-3" /> Remind
+                          <Mail className="h-3 w-3" /> {sendingReminderId === c.id ? "Sending..." : "Remind"}
                         </Button>
                       </TableCell>
                     </TableRow>
