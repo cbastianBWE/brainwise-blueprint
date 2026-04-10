@@ -449,7 +449,7 @@ function isFacetInsightsTopHeading(text: string): boolean {
 }
 
 function isFacetScoreGroupHeading(text: string): boolean {
-  return /^###\s+(elevated|suppressed)\s+facets\b/i.test(text);
+  return /^#{2,3}\s+(elevated|suppressed)\s+facets\b/i.test(text);
 }
 
 function formatBand(band: string): string {
@@ -482,6 +482,10 @@ function extractFacetInsights(narrative: string): string | null {
     }
     if (trimmed.startsWith("### ")) {
       if (isFacetScoreGroupHeading(trimmed)) {
+        inInsightFacet = false;
+        continue;
+      }
+      if (isFacetInsightsTopHeading(trimmed)) {
         inInsightFacet = false;
         continue;
       }
