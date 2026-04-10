@@ -1,50 +1,37 @@
 
 
-# Plan: Two-Level Client Results Browser for Coach Portal
+# Plan: Update Billing Page for Free/Inactive Users
 
-## What This Does
+## What Changes
 
-Transforms `/coach/client-results` from a "No client specified" dead-end into a drill-down browser:
-- **Level 1**: Lists all unique clients the coach has a relationship with (name + email)
-- **Level 2**: Shows viewable assessments for a selected client (respecting `share_results_with_coach` filtering)
-- **Level 3**: Existing full results view (unchanged)
+When `subscription.subscribed` is false (no active subscription), the billing page will show:
+- **Current Plan**: "Free Account" with subtitle "No active subscription" and a short list of what free accounts get (per-assessment purchases, no AI chat, no resources)
+- **Upgrade section**: A visually distinct card below with "Upgrade to Premium" header, $24/mo pricing, Premium feature list, and a "Get Started" button linking to `/pricing`
 
-Direct navigation via `?user_id=...&assessment_id=...` continues to work as before.
+When active on Base tier: show Base plan info + "Upgrade to Premium" CTA (existing behavior, unchanged).
+When active on Premium tier: show Premium plan info, no upgrade CTA (existing behavior, unchanged).
 
 ## Changes
 
-### Single file: `src/pages/coach/ClientResults.tsx`
+### Single file: `src/pages/BillingSettings.tsx`
 
-Expand this component to handle three states based on query params:
+Replace the content inside the `!isActive` branch (lines 61–112) with three-way logic:
 
-**State 1 — No `user_id` param (Client List)**
-- Query `coach_clients` where `coach_user_id = user.id`
-- Deduplicate by `client_user_id` (skip null entries — uninvited clients)
-- For each unique `client_user_id`, fetch name/email from `users` table
-- Display as a card list with client name, email, and a clickable row
-- Clicking sets `?user_id=<client_user_id>` via `setSearchParams`
+**If `!isActive`:**
+- Title: "Free Account" (no badge)
+- Subtitle: "No active subscription"
+- Feature list: "Per-assessment purchases available ($29.99 each)", "No AI chat included", "No resources access"
+- Remove the AI chat limit line
+- Replace "View Plans" button with the upgrade card below
 
-**State 2 — `user_id` present, no `assessment_id` (Assessment List)**
-- Fetch client's `share_results_with_coach` from `users` table
-- If `true`: fetch all completed `assessment_results` for that user
-- If `false`: fetch `coach_clients` rows for this coach/client pair where `assessment_id IS NOT NULL`, then fetch only those `assessment_results`
-- Join with `instruments` table for display names
-- Show each assessment as a clickable card (instrument name, date)
-- Clicking sets `?assessment_id=<id>` via `setSearchParams`
-- Back button clears `user_id` to return to Level 1
+**Add a second `<Card>` after the Current Plan card** (only shown when `!isActive` or `tier === "base"`):
+- Header: "Upgrade to Premium"
+- Price line: "$24/mo or $220/yr"
+- Feature list from `PLANS.premium.features`
+- "Get Started" button → `navigate("/pricing")`
+- Styled with a subtle border accent or background to be visually distinct
 
-**State 3 — Both `user_id` and `assessment_id` present (Full Results)**
-- Existing behavior: renders `<MyResults isCoachView .../>` (unchanged)
-- Back button clears `assessment_id` to return to Level 2
+**If `isActive && tier === "premium"`:** no upgrade card shown (current behavior preserved).
 
-### No other files change
-- `MyResults.tsx` — untouched
-- Routing — untouched
-- RLS — already supports all needed queries (coaches can read their clients' users, assessment_results, coach_clients)
-
-## Technical Notes
-- Uses existing `useSearchParams` for state management — bookmarkable URLs
-- The `users: coaches can read their clients` RLS policy already allows reading client name/email
-- The `assessment_results: coaches read client results` RLS policy already allows reading all client results
-- The `share_results_with_coach` filtering is done client-side (same pattern as MyResults)
+**If `isActive && tier === "base"`:** current plan card shows Base info as-is, plus the Premium upgrade card below.
 
