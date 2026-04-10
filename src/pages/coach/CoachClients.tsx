@@ -37,6 +37,7 @@ interface ClientRow {
   completed_at: string | null;
   instrument_name: string | null;
   created_at: string;
+  stripe_payment_intent_id: string | null;
 }
 
 export default function CoachClients() {
@@ -61,7 +62,7 @@ export default function CoachClients() {
 
     const { data: ccRows } = await supabase
       .from("coach_clients")
-      .select("id, client_email, client_user_id, invitation_status, assessment_id, instrument_id, coach_notes, created_at")
+      .select("id, client_email, client_user_id, invitation_status, assessment_id, instrument_id, coach_notes, created_at, stripe_payment_intent_id")
       .eq("coach_user_id", user.id)
       .order("created_at", { ascending: false });
 
@@ -128,6 +129,7 @@ export default function CoachClients() {
         completed_at: completedAt,
         instrument_name: instrumentName,
         created_at: cc.created_at,
+        stripe_payment_intent_id: cc.stripe_payment_intent_id,
       });
     }
 
@@ -357,6 +359,11 @@ export default function CoachClients() {
     const instrumentName = client.instrument_name || "your assessment";
     const signupUrl = `${window.location.origin}/signup`;
     const clientName = client.client_name?.split(" ")[0] || client.client_email.split("@")[0];
+    const coachPaid = !!client.stripe_payment_intent_id;
+
+    const bodyText = coachPaid
+      ? "This is a friendly reminder that your coach has purchased a BrainWise assessment for you and it's waiting to be completed."
+      : "This is a friendly reminder that you have a BrainWise assessment waiting. When you register, you'll be able to choose your preferred payment method.";
 
     const html = `
 <!DOCTYPE html>
@@ -371,10 +378,11 @@ export default function CoachClients() {
         </td></tr>
         <tr><td style="padding:32px;">
           <p style="font-size:16px;color:#111827;margin:0 0 16px;">Hi ${clientName},</p>
+          <h2 style="font-size:18px;color:#111827;margin:0 0 16px;">Don't Forget Your Assessment</h2>
           <p style="font-size:15px;color:#374151;line-height:1.6;margin:0 0 16px;">
-            This is a friendly reminder that you have a BrainWise assessment waiting for you.
+            ${bodyText}
           </p>
-          <p style="font-size:15px;color:#374151;line-height:1.6;margin:0 0 8px;font-weight:600;">Don't Forget Your Assessment:</p>
+          <p style="font-size:15px;color:#374151;line-height:1.6;margin:0 0 8px;font-weight:600;">Your Assessment:</p>
           <ul style="font-size:15px;color:#374151;line-height:1.8;padding-left:20px;margin:0 0 16px;">
             <li>${instrumentName}</li>
           </ul>
