@@ -701,31 +701,33 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
                         </span>
                       </div>
                     )}
-                    {regenerating ? (
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <RefreshCw className="h-4 w-4 animate-spin" />
-                        Regenerating interpretation…
-                      </div>
-                    ) : (
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button variant="outline" size="sm" className="text-xs text-foreground border-border mt-1">
-                            <RefreshCw className="mr-1 h-3 w-3" /> Regenerate Interpretation
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Regenerate Interpretation?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              This will regenerate your interpretation using the latest AI version. Your current interpretation will be replaced. This will use 1 of your monthly AI messages. Continue?
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={handleRegenerate}>Continue</AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
+                    {!isCoachView && (
+                      regenerating ? (
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <RefreshCw className="h-4 w-4 animate-spin" />
+                          Regenerating interpretation…
+                        </div>
+                      ) : (
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="outline" size="sm" className="text-xs text-foreground border-border mt-1">
+                              <RefreshCw className="mr-1 h-3 w-3" /> Regenerate Interpretation
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Regenerate Interpretation?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This will regenerate your interpretation using the latest AI version. Your current interpretation will be replaced. This will use 1 of your monthly AI messages. Continue?
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction onClick={handleRegenerate}>Continue</AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      )
                     )}
                   </>
                 ) : pollingNarrative ? (
