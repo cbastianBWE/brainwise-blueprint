@@ -154,12 +154,24 @@ export default function CoachClients() {
       const { data, error } = await supabase.functions.invoke("create-checkout", {
         body: payload,
       });
-      console.log("[CoachClients] create-checkout response:", { data, error });
-      if (error) throw error;
+      console.log("[CoachClients] create-checkout response:", JSON.stringify({ data, error }));
+      if (error) {
+        // Try to extract the actual error message from FunctionsHttpError
+        let errorMsg = "Edge function error";
+        try {
+          if (error instanceof Error) errorMsg = error.message;
+          if (typeof error === "object" && "context" in error) {
+            const body = await (error as any).context?.json?.();
+            if (body?.error) errorMsg = body.error;
+          }
+        } catch { /* ignore parse errors */ }
+        throw new Error(errorMsg);
+      }
       if (data?.url) {
         window.location.href = data.url;
       } else {
-        throw new Error("No checkout URL returned");
+        console.error("[CoachClients] No URL in response data:", data);
+        throw new Error("No checkout URL returned. Response: " + JSON.stringify(data));
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Unknown error";
