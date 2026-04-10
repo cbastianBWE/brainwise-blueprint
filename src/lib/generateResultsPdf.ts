@@ -257,25 +257,24 @@ export function generateResultsPdf(data: PdfData, sections: PdfSections): void {
   // ── Inner render helpers (closure over doc, y, checkPageBreak) ──
   function renderNarrative(d: jsPDF, text: string, insightsOnly: boolean) {
     const lines = text.split("\n");
-    let inInsightsSection = !insightsOnly;
+    let inFacetSection = false; // tracks whether we're inside a ### facet insight section
 
     for (const raw of lines) {
       const trimmed = raw.trim();
       if (!trimmed) { y += 2; continue; }
 
-      // Track insights sections (### headings with ✅/❌ content)
-      if (insightsOnly) {
-        if (trimmed.startsWith("### ")) inInsightsSection = true;
-        if (trimmed.startsWith("## ") && inInsightsSection && !trimmed.startsWith("### ")) {
-          inInsightsSection = false;
-        }
-        if (!inInsightsSection) continue;
+      // Detect ### facet sections boundaries
+      if (trimmed.startsWith("### ")) {
+        inFacetSection = true;
+      } else if (trimmed.startsWith("## ")) {
+        inFacetSection = false;
       }
 
-      // Skip insights sections when rendering main narrative
-      if (!insightsOnly && (trimmed.startsWith("### ") || /^[✅❌]/.test(trimmed))) {
-        continue;
-      }
+      // insights-only mode: only render lines inside ### sections
+      if (insightsOnly && !inFacetSection) continue;
+
+      // main narrative mode: skip everything inside ### facet sections
+      if (!insightsOnly && inFacetSection) continue;
 
       if (trimmed.startsWith("## ")) {
         checkPageBreak(12);
