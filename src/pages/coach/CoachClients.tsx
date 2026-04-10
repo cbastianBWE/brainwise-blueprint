@@ -137,29 +137,24 @@ export default function CoachClients() {
     try {
       // Map selected instrument to its UUID
       const selectedInstrument = INSTRUMENTS.find(i => i.id === instrument);
-      if (!selectedInstrument) throw new Error("Could not find instrument");
+      if (!selectedInstrument) throw new Error("Could not find instrument: " + instrument);
 
-      // First create the coach_clients record
-      const { error: insertError } = await supabase.from("coach_clients").insert({
-        coach_user_id: user.id,
+      const payload = {
+        price_id: "price_1TKOeMCMQX1silSQ7tzQLso6",
+        mode: "coach_order",
+        instrument_id: selectedInstrument.uuid,
         client_email: email,
-        invitation_status: "pending_payment",
-        coach_notes: note || null,
-      });
-      if (insertError) throw insertError;
+        client_first_name: firstName,
+        client_last_name: lastName,
+        coach_note: note,
+      };
+      console.log("[CoachClients] create-checkout payload:", JSON.stringify(payload, null, 2));
 
       // Then redirect to Stripe checkout for assessment purchase
       const { data, error } = await supabase.functions.invoke("create-checkout", {
-        body: {
-          price_id: ASSESSMENT_PURCHASE.price_id,
-          mode: "coach_order",
-          instrument_id: selectedInstrument.uuid,
-          client_email: email,
-          client_first_name: firstName,
-          client_last_name: lastName,
-          coach_note: note,
-        },
+        body: payload,
       });
+      console.log("[CoachClients] create-checkout response:", { data, error });
       if (error) throw error;
       if (data?.url) {
         window.location.href = data.url;
