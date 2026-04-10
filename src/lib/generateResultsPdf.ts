@@ -468,45 +468,29 @@ function hexToRgb(hex: string): [number, number, number] {
 }
 
 function extractFacetInsights(narrative: string): string | null {
-  const lines = narrative.split("\n");
-  const insightLines: string[] = [];
-  let inInsightFacet = false;
+  const lines = narrative.split('\n');
+  const result: string[] = [];
+  let inInsightsSection = false;
 
   for (const line of lines) {
     const trimmed = line.trim();
 
-    // Skip top-level ## headings and score-group ### headings
-    if (trimmed.startsWith("## ")) {
-      inInsightFacet = false;
-      continue;
-    }
-    if (trimmed.startsWith("### ")) {
-      if (isFacetScoreGroupHeading(trimmed)) {
-        inInsightFacet = false;
-        continue;
-      }
-      if (isFacetInsightsTopHeading(trimmed)) {
-        inInsightFacet = false;
-        continue;
-      }
-      // This is an individual facet question heading — include it
-      inInsightFacet = true;
-      insightLines.push(line);
+    // Start capturing after ## Driving Facet Insights
+    if (trimmed === '## Driving Facet Insights') {
+      inInsightsSection = true;
       continue;
     }
 
-    if (!inInsightFacet) continue;
+    if (!inInsightsSection) continue;
 
-    // Only include lines that are insight content
-    if (
-      !trimmed ||
-      /[✅❌]/.test(trimmed) ||
-      /^\*\*(Impact on|Behavioral)/i.test(trimmed) ||
-      /^[-*]\s+/.test(trimmed)
-    ) {
-      insightLines.push(line);
-    }
+    // Skip these exact lines
+    if (trimmed === '## Elevated Facets') continue;
+    if (trimmed === '## Suppressed Facets') continue;
+    if (trimmed === '## Driving Facet Insights') continue;
+
+    result.push(line);
   }
 
-  return insightLines.length > 0 ? insightLines.join("\n") : null;
+  const hasContent = result.some(l => /[✅❌]/.test(l));
+  return hasContent ? result.join('\n') : null;
 }
