@@ -5,7 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import MyResults from "@/pages/MyResults";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, User, FileText, Loader2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { ArrowLeft, User, FileText, Loader2, Search } from "lucide-react";
 
 interface ClientInfo {
   id: string;
@@ -93,6 +94,7 @@ function ClientList({
 }) {
   const [clients, setClients] = useState<ClientInfo[]>([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     if (!coachUserId) return;
@@ -138,17 +140,39 @@ function ClientList({
     );
   }
 
+  const q = search.toLowerCase();
+  const filtered = clients.filter(
+    (c) =>
+      (c.full_name ?? "").toLowerCase().includes(q) ||
+      c.email.toLowerCase().includes(q)
+  );
+
   return (
     <div className="p-6 max-w-3xl mx-auto">
-      <h1 className="text-2xl font-bold mb-6">Client Results</h1>
+      <h1 className="text-2xl font-bold mb-4">Client Results</h1>
+      {clients.length > 0 && (
+        <div className="relative mb-4">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search by name or email…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+      )}
       {clients.length === 0 ? (
         <p className="text-muted-foreground text-center py-10">
           No clients found. Add clients from the{" "}
           <span className="font-medium">Clients</span> page first.
         </p>
+      ) : filtered.length === 0 ? (
+        <p className="text-muted-foreground text-center py-10">
+          No clients match your search.
+        </p>
       ) : (
         <div className="space-y-3">
-          {clients.map((c) => (
+          {filtered.map((c) => (
             <Card
               key={c.id}
               className="cursor-pointer hover:bg-accent/50 transition-colors"
