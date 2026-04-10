@@ -259,6 +259,7 @@ export function generateResultsPdf(data: PdfData, sections: PdfSections): void {
     const lines = text.split("\n");
     let inFacetSection = false;
     let skipFacetInsightsBlock = false;
+    let firstFacetFound = false;
 
     for (const raw of lines) {
       const trimmed = raw.trim();
@@ -280,6 +281,9 @@ export function generateResultsPdf(data: PdfData, sections: PdfSections): void {
       }
 
       if (!trimmed) {
+        if (insightsOnly && !firstFacetFound) {
+          continue;
+        }
         if (!insightsOnly || inFacetSection) {
           y += 2;
         }
@@ -291,6 +295,7 @@ export function generateResultsPdf(data: PdfData, sections: PdfSections): void {
           inFacetSection = false;
           continue;
         }
+        firstFacetFound = true;
         inFacetSection = true;
       } else if (trimmed.startsWith("## ")) {
         inFacetSection = false;
