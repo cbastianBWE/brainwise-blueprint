@@ -1081,6 +1081,7 @@ export type Database = {
           id: string
           onboarding_instrument_version: string | null
           organization_id: string | null
+          stripe_subscription_id: string | null
           subscription_status: string
           subscription_tier: string
         }
@@ -1092,6 +1093,7 @@ export type Database = {
           id?: string
           onboarding_instrument_version?: string | null
           organization_id?: string | null
+          stripe_subscription_id?: string | null
           subscription_status?: string
           subscription_tier?: string
         }
@@ -1103,6 +1105,7 @@ export type Database = {
           id?: string
           onboarding_instrument_version?: string | null
           organization_id?: string | null
+          stripe_subscription_id?: string | null
           subscription_status?: string
           subscription_tier?: string
         }

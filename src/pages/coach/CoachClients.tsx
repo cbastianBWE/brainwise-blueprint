@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { ASSESSMENT_PURCHASE } from "@/lib/stripe";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -51,8 +50,9 @@ export default function CoachClients() {
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [note, setNote] = useState("");
-  const [instrument, setInstrument] = useState("PTP");
+  const [selectedInstruments, setSelectedInstruments] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const [instrumentError, setInstrumentError] = useState(false);
 
   const fetchClients = async () => {
     if (!user) return;
@@ -60,13 +60,12 @@ export default function CoachClients() {
 
     const { data: ccRows } = await supabase
       .from("coach_clients")
-      .select("id, client_email, client_user_id, invitation_status, assessment_id, coach_notes, created_at")
+      .select("id, client_email, client_user_id, invitation_status, assessment_id, instrument_id, coach_notes, created_at")
       .eq("coach_user_id", user.id)
       .order("created_at", { ascending: false });
 
     if (!ccRows) { setLoading(false); return; }
 
-    // Enrich with client names, assessment info, instrument names
     const enriched: ClientRow[] = [];
 
     for (const cc of ccRows) {
@@ -93,7 +92,6 @@ export default function CoachClients() {
         if (a) {
           assessmentStatus = a.status;
           completedAt = a.completed_at;
-          // Get instrument name
           const { data: inst } = await supabase
             .from("instruments")
             .select("instrument_name")
@@ -101,6 +99,20 @@ export default function CoachClients() {
             .limit(1)
             .single();
           instrumentName = inst?.instrument_name || a.instrument_id;
+        }
+      } else if (cc.instrument_id) {
+        // No assessment yet, but we have the instrument_id from coach_clients
+        const instMatch = INSTRUMENTS.find(i => i.uuid === cc.instrument_id);
+        instrumentName = instMatch?.name || null;
+        if (!instrumentName) {
+          // Try DB lookup by UUID id column
+          const { data: inst } = await supabase
+            .from("instruments")
+            .select("instrument_name")
+            .eq("id", cc.instrument_id)
+            .limit(1)
+            .single();
+          instrumentName = inst?.instrument_name || null;
         }
       }
 
@@ -125,7 +137,24 @@ export default function CoachClients() {
   useEffect(() => { fetchClients(); }, [user]);
 
   const resetForm = () => {
-    setFirstName(""); setLastName(""); setEmail(""); setNote(""); setInstrument("PTP");
+    setFirstName(""); setLastName(""); setEmail(""); setNote("");
+    setSelectedInstruments([]); setInstrumentError(false);
+  };
+
+  const toggleInstrument = (instrumentId: string) => {
+    setInstrumentError(false);
+    setSelectedInstruments(prev =>
+      prev.includes(instrumentId)
+        ? prev.filter(id => id !== instrumentId)
+        : [...prev, instrumentId]
+    );
+  };
+
+  const getSelectedUuids = (): string => {
+    return selectedInstruments
+      .map(id => INSTRUMENTS.find(i => i.id === id)?.uuid)
+      .filter(Boolean)
+      .join(",");
   };
 
   const handleOrderCoachPays = async () => {
@@ -133,16 +162,19 @@ export default function CoachClients() {
       toast.error("Please fill in client email.");
       return;
     }
+    if (selectedInstruments.length === 0) {
+      setInstrumentError(true);
+      toast.error("Please select at least one assessment instrument.");
+      return;
+    }
     setSubmitting(true);
     try {
-      // Map selected instrument to its UUID
-      const selectedInstrument = INSTRUMENTS.find(i => i.id === instrument);
-      if (!selectedInstrument) throw new Error("Could not find instrument: " + instrument);
-
+      const instrumentIds = getSelectedUuids();
       const payload = {
         price_id: "price_1TKOeMCMQX1silSQ7tzQLso6",
         mode: "coach_order",
-        instrument_id: selectedInstrument.uuid,
+        instrument_ids: instrumentIds,
+        quantity: selectedInstruments.length,
         client_email: email,
         client_first_name: firstName,
         client_last_name: lastName,
@@ -150,13 +182,11 @@ export default function CoachClients() {
       };
       console.log("[CoachClients] create-checkout payload:", JSON.stringify(payload, null, 2));
 
-      // Then redirect to Stripe checkout for assessment purchase
       const { data, error } = await supabase.functions.invoke("create-checkout", {
         body: payload,
       });
       console.log("[CoachClients] create-checkout response:", JSON.stringify({ data, error }));
       if (error) {
-        // Try to extract the actual error message from FunctionsHttpError
         let errorMsg = "Edge function error";
         try {
           if (error instanceof Error) errorMsg = error.message;
@@ -186,44 +216,62 @@ export default function CoachClients() {
       toast.error("Please fill in client email.");
       return;
     }
-    setSubmitting(true);
-
-    const { error } = await supabase.from("coach_clients").insert({
-      coach_user_id: user.id,
-      client_email: email,
-      invitation_status: "sent",
-      coach_notes: note || null,
-    });
-
-    if (error) {
-      toast.error("Failed to create client record: " + error.message);
-      setSubmitting(false);
+    if (selectedInstruments.length === 0) {
+      setInstrumentError(true);
+      toast.error("Please select at least one assessment instrument.");
       return;
     }
+    setSubmitting(true);
 
-    toast.success("Invitation created", {
-      description: `An invitation for ${firstName} ${lastName} (${email}) has been recorded. Email delivery will be available once email integration is configured.`,
-    });
+    // Create one coach_clients record per selected instrument
+    const instrumentUuids = selectedInstruments
+      .map(id => INSTRUMENTS.find(i => i.id === id)?.uuid)
+      .filter(Boolean) as string[];
 
-    resetForm();
-    setModalOpen(false);
+    let hasError = false;
+    for (const uuid of instrumentUuids) {
+      const { error } = await supabase.from("coach_clients").insert({
+        coach_user_id: user.id,
+        client_email: email,
+        invitation_status: "sent",
+        coach_notes: note || null,
+        instrument_id: uuid,
+      });
+      if (error) {
+        toast.error("Failed to create client record: " + error.message);
+        hasError = true;
+        break;
+      }
+    }
+
+    if (!hasError) {
+      toast.success("Invitation created", {
+        description: `An invitation for ${firstName} ${lastName} (${email}) has been recorded for ${instrumentUuids.length} instrument(s). Email delivery will be available once email integration is configured.`,
+      });
+      resetForm();
+      setModalOpen(false);
+      fetchClients();
+    }
+
     setSubmitting(false);
-    fetchClients();
   };
 
-  // Stats
-  const totalClients = clients.length;
+  // Stats — one row per assessment (coach_clients record)
+  const totalUniqueClients = new Set(clients.map(c => c.client_email)).size;
   const completedThisMonth = clients.filter(c => {
     if (!c.completed_at) return false;
     const d = new Date(c.completed_at);
     const now = new Date();
     return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
   }).length;
-  const pending = clients.filter(c => c.assessment_status !== "completed").length;
+  const pending = clients.filter(c =>
+    c.invitation_status === "sent" || c.invitation_status === "opened"
+  ).length;
 
   const getStatusBadge = (status: string | null, invitationStatus: string) => {
     if (!status) {
       if (invitationStatus === "sent") return <Badge variant="secondary">Invited</Badge>;
+      if (invitationStatus === "opened") return <Badge variant="secondary">Opened</Badge>;
       return <Badge variant="outline">Pending</Badge>;
     }
     switch (status) {
@@ -277,22 +325,33 @@ export default function CoachClients() {
                   <Label className="text-sm">Personal Note <span className="text-muted-foreground">(optional)</span></Label>
                   <Textarea value={note} onChange={e => setNote(e.target.value)} placeholder="A brief message to your client..." rows={2} />
                 </div>
-                <div className="space-y-1">
-                  <Label className="text-sm">Assessment Instrument</Label>
-                  <Select value={instrument} onValueChange={setInstrument}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {INSTRUMENTS.map(i => (
-                        <SelectItem key={i.id} value={i.id}>
-                          <span className="font-medium">{i.id}</span>
-                          <span className="text-muted-foreground ml-2 text-xs">— {i.name}</span>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {INSTRUMENTS.find(i => i.id === instrument)?.desc}
-                  </p>
+                <div className="space-y-2">
+                  <Label className="text-sm">Assessment Instruments <span className="text-muted-foreground">(select at least one)</span></Label>
+                  <div className={`space-y-2 rounded-md border p-3 ${instrumentError ? "border-destructive" : "border-border"}`}>
+                    {INSTRUMENTS.map(inst => (
+                      <label key={inst.id} className="flex items-start gap-3 cursor-pointer">
+                        <Checkbox
+                          checked={selectedInstruments.includes(inst.id)}
+                          onCheckedChange={() => toggleInstrument(inst.id)}
+                          className="mt-0.5"
+                        />
+                        <div className="flex-1">
+                          <span className="font-medium text-sm">{inst.id}</span>
+                          <span className="text-muted-foreground text-xs ml-2">— {inst.name}</span>
+                          <p className="text-xs text-muted-foreground mt-0.5">{inst.desc}</p>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                  {instrumentError && (
+                    <p className="text-xs text-destructive">Please select at least one instrument.</p>
+                  )}
+                  {selectedInstruments.length > 0 && (
+                    <p className="text-xs text-muted-foreground">
+                      {selectedInstruments.length} instrument{selectedInstruments.length !== 1 ? "s" : ""} selected
+                      {" "}— ${(selectedInstruments.length * 29.99).toFixed(2)} total
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -303,7 +362,7 @@ export default function CoachClients() {
               </TabsContent>
 
               <TabsContent value="client-pays" className="mt-4">
-                <Button className="w-full gap-2" onClick={handleOrderClientPays} disabled={submitting}>
+                <Button className="w-full gap-2" onClick={handleOrderClientPays} disabled={submitting || !email}>
                   <Send className="h-4 w-4" /> {submitting ? "Sending..." : "Send Invitation"}
                 </Button>
               </TabsContent>
@@ -318,7 +377,7 @@ export default function CoachClients() {
           <CardContent className="flex items-center gap-3 py-4">
             <div className="rounded-lg bg-primary/10 p-2"><Users className="h-5 w-5 text-primary" /></div>
             <div>
-              <p className="text-2xl font-bold text-foreground">{totalClients}</p>
+              <p className="text-2xl font-bold text-foreground">{totalUniqueClients}</p>
               <p className="text-xs text-muted-foreground">Total Clients</p>
             </div>
           </CardContent>
@@ -367,15 +426,16 @@ export default function CoachClients() {
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">Client Roster</CardTitle>
-            <CardDescription>{clients.length} client{clients.length !== 1 ? "s" : ""}</CardDescription>
+            <CardDescription>
+              {clients.length} assessment{clients.length !== 1 ? "s" : ""} across {totalUniqueClients} client{totalUniqueClients !== 1 ? "s" : ""}
+            </CardDescription>
           </CardHeader>
           <CardContent className="p-0">
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Client Name</TableHead>
-                    <TableHead>Email</TableHead>
+                    <TableHead>Client</TableHead>
                     <TableHead>Instrument</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Completed</TableHead>
@@ -386,9 +446,8 @@ export default function CoachClients() {
                   {clients.map(c => (
                     <TableRow key={c.id}>
                       <TableCell className="font-medium">
-                        {c.client_name || <span className="text-muted-foreground italic">Pending</span>}
+                        {c.client_name || c.client_email}
                       </TableCell>
-                      <TableCell className="text-sm">{c.client_email}</TableCell>
                       <TableCell className="text-sm">{c.instrument_name || "—"}</TableCell>
                       <TableCell>{getStatusBadge(c.assessment_status, c.invitation_status)}</TableCell>
                       <TableCell className="text-sm">
@@ -409,7 +468,7 @@ export default function CoachClients() {
                           variant="ghost"
                           className="gap-1"
                           disabled={c.invitation_status !== "sent" && c.invitation_status !== "opened"}
-                          onClick={() => toast.success("Reminder sent", { description: `Reminder sent to ${c.client_email}` })}
+                          onClick={() => toast.success("Reminder sent", { description: `Reminder sent to ${c.client_email} for ${c.instrument_name || "assessment"}` })}
                         >
                           <Mail className="h-3 w-3" /> Remind
                         </Button>

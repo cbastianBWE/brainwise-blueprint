@@ -33,11 +33,16 @@ serve(async (req) => {
 
     logStep("User authenticated", { userId: user.id, email: user.email });
 
-    const { price_id, mode, instrument_id, client_email, client_first_name, client_last_name, coach_note } = await req.json();
+    const body = await req.json();
+    const { price_id, mode, instrument_id, instrument_ids, quantity, client_email, client_first_name, client_last_name, coach_note } = body;
     if (!price_id) throw new Error("price_id is required");
 
+    // Support both single instrument_id and multi instrument_ids
+    const resolvedInstrumentIds = instrument_ids || instrument_id || "";
+    const resolvedQuantity = quantity || 1;
+
     const checkoutMode = mode === "payment" || mode === "coach_order" ? "payment" : "subscription";
-    logStep("Checkout params", { price_id, mode, checkoutMode, instrument_id });
+    logStep("Checkout params", { price_id, mode, checkoutMode, instrument_ids: resolvedInstrumentIds, quantity: resolvedQuantity });
 
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
       apiVersion: "2025-08-27.basil",
@@ -55,16 +60,21 @@ serve(async (req) => {
     const sessionParams: Stripe.Checkout.SessionCreateParams = {
       customer: customerId,
       customer_email: customerId ? undefined : user.email,
-      line_items: [{ price: price_id, quantity: 1 }],
+      line_items: [{ price: price_id, quantity: resolvedQuantity }],
       mode: checkoutMode,
       success_url:
-        checkoutMode === "subscription"
-          ? `${origin}/dashboard?checkout=success`
-          : `${origin}/assessment?checkout=success&instrument=${instrument_id || ""}`,
-      cancel_url: `${origin}/pricing?checkout=cancelled`,
+        mode === "coach_order"
+          ? `${origin}/coach/clients?checkout=success`
+          : checkoutMode === "subscription"
+            ? `${origin}/dashboard?checkout=success`
+            : `${origin}/assessment?checkout=success&instrument=${resolvedInstrumentIds}`,
+      cancel_url:
+        mode === "coach_order"
+          ? `${origin}/coach/clients?checkout=cancelled`
+          : `${origin}/pricing?checkout=cancelled`,
       metadata: {
         user_id: user.id,
-        instrument_id: instrument_id || "",
+        instrument_ids: resolvedInstrumentIds,
         checkout_type: mode === "coach_order" ? "coach_order" : checkoutMode,
         ...(mode === "coach_order" ? {
           client_email: client_email || "",
