@@ -1,45 +1,50 @@
 
 
-# Plan: Sidebar Privacy Link + Coach Toggle Wiring + Coach Results Filtering
+# Plan: Two-Level Client Results Browser for Coach Portal
 
 ## What This Does
 
-1. **Sidebar**: Adds "Privacy & Permissions" nav link under Settings for individual/corporate users
-2. **My Coach toggle**: Reads/writes `share_results_with_coach` from the `users` table
-3. **Coach results filtering**: When `share_results_with_coach` is false, only shows assessments linked via `coach_clients`; when true, shows all completed assessments
+Transforms `/coach/client-results` from a "No client specified" dead-end into a drill-down browser:
+- **Level 1**: Lists all unique clients the coach has a relationship with (name + email)
+- **Level 2**: Shows viewable assessments for a selected client (respecting `share_results_with_coach` filtering)
+- **Level 3**: Existing full results view (unchanged)
+
+Direct navigation via `?user_id=...&assessment_id=...` continues to work as before.
 
 ## Changes
 
-### 1. `src/components/AppSidebar.tsx`
-Add a new nav item to `individualNav` array after the Settings entry:
-```ts
-{ title: "Privacy & Permissions", url: "/settings/privacy", icon: Shield },
-```
-Import `Shield` from lucide-react (already imported in PrivacySettings but not in AppSidebar).
+### Single file: `src/pages/coach/ClientResults.tsx`
 
-### 2. `src/pages/PrivacySettings.tsx`
-Wire the "My Coach" toggle to `share_results_with_coach`:
-- In the `load` function, also fetch `share_results_with_coach` from the users table (already fetching `organization_id`)
-- Initialize the `coach` state's `enabled` from `share_results_with_coach`
-- In `handleToggle`, when the key is `"coach"`, also update `users.share_results_with_coach` to match the new toggle state
-- Keep existing permissions logic unchanged — just add the column write alongside it
+Expand this component to handle three states based on query params:
 
-### 3. `src/pages/MyResults.tsx`
-Add coach-side filtering when `isCoachView` is true:
-- Accept an additional prop: `coachUserId` (the logged-in coach's user ID)
-- After fetching `assessment_results`, check the client's `share_results_with_coach` value (already fetching from `users` table for `clientName`)
-- If `share_results_with_coach` is false:
-  - Fetch `coach_clients` rows where `coach_user_id = coachUserId` and `client_user_id = targetUserId` and `assessment_id IS NOT NULL`
-  - Filter the results to only include those whose `assessment_id` matches a `coach_clients.assessment_id`
-- If `share_results_with_coach` is true: show all results (current behavior)
+**State 1 — No `user_id` param (Client List)**
+- Query `coach_clients` where `coach_user_id = user.id`
+- Deduplicate by `client_user_id` (skip null entries — uninvited clients)
+- For each unique `client_user_id`, fetch name/email from `users` table
+- Display as a card list with client name, email, and a clickable row
+- Clicking sets `?user_id=<client_user_id>` via `setSearchParams`
 
-### 4. `src/pages/coach/ClientResults.tsx`
-Pass the coach's user ID to `MyResults`:
-- Import `useAuth` and pass `coachUserId={user?.id}` to `MyResults`
+**State 2 — `user_id` present, no `assessment_id` (Assessment List)**
+- Fetch client's `share_results_with_coach` from `users` table
+- If `true`: fetch all completed `assessment_results` for that user
+- If `false`: fetch `coach_clients` rows for this coach/client pair where `assessment_id IS NOT NULL`, then fetch only those `assessment_results`
+- Join with `instruments` table for display names
+- Show each assessment as a clickable card (instrument name, date)
+- Clicking sets `?assessment_id=<id>` via `setSearchParams`
+- Back button clears `user_id` to return to Level 1
+
+**State 3 — Both `user_id` and `assessment_id` present (Full Results)**
+- Existing behavior: renders `<MyResults isCoachView .../>` (unchanged)
+- Back button clears `assessment_id` to return to Level 2
+
+### No other files change
+- `MyResults.tsx` — untouched
+- Routing — untouched
+- RLS — already supports all needed queries (coaches can read their clients' users, assessment_results, coach_clients)
 
 ## Technical Notes
-- The `users` table already has `share_results_with_coach` (boolean, default false)
-- The existing RLS policy `users: update own safe fields` allows updating this column (it's not in the immutable fields list, and the `enforce_immutable_user_fields` trigger doesn't block it)
-- No database migration needed
-- The coach can already read client user rows via `users: coaches can read their clients` RLS policy
+- Uses existing `useSearchParams` for state management — bookmarkable URLs
+- The `users: coaches can read their clients` RLS policy already allows reading client name/email
+- The `assessment_results: coaches read client results` RLS policy already allows reading all client results
+- The `share_results_with_coach` filtering is done client-side (same pattern as MyResults)
 
