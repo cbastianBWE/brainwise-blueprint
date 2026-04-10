@@ -1,20 +1,34 @@
 
 
-# Plan: Assessment Page Sidebar + Continue Button
+# Plan: Gate "Regenerate Interpretation" Behind Subscription Check
 
-## Changes
+## What Changes
 
-### 1. `src/App.tsx` — Move `/assessment` route inside AppLayout
+**Single file**: `src/pages/MyResults.tsx`
 
-Move line 68 (`/assessment`) from the "without sidebar" group into the AppLayout-wrapped group (after line 74, alongside `/dashboard`). The `AssessmentFlow` component will still render inside the layout — users can exit via the existing `onExit` callback.
+The "Regenerate Interpretation" button currently always shows the confirmation dialog. We'll add a subscription gate so that users without an active subscription see an upgrade prompt instead.
 
-### 2. `src/components/assessment/InstrumentSelection.tsx` — Add "Continue Assessment" state
+## Implementation
 
-- Add `inProgressInstrumentIds` state (a `Set<string>`, same pattern as `completedInstrumentIds`)
-- In the existing `Promise.all` load block, add a query: `supabase.from("assessments").select("instrument_id").eq("user_id", user.id).eq("status", "in_progress")`
-- Build the set from results
-- In the button rendering logic, when an instrument is accessible (subscription, coach-paid, or purchase access) AND `inProgressInstrumentIds.has(inst.instrument_id)`, show "Continue Assessment" instead of "Start Assessment"
-- No other button logic changes — locked/upgrade buttons remain identical
+1. **Add state**: `showUpgradeDialog` (boolean, default false)
 
-### No other files change
+2. **Replace the AlertDialog trigger pattern**: Instead of wrapping the button in `<AlertDialog>` directly, use two separate dialogs controlled by state:
+   - Extract the button's `onClick` to check `profile?.subscription_status === 'active'`
+   - If active → open the existing confirmation dialog (set `showConfirmDialog` to true)
+   - If not active → open the upgrade dialog (set `showUpgradeDialog` to true)
+
+3. **Upgrade dialog content**:
+   - Title: "Subscription Required"
+   - Description: "Regenerating your interpretation requires an active subscription."
+   - A prominent "Upgrade to Premium" button → `navigate("/pricing")`
+   - Below it, a muted note: "Base plan also includes interpretation regeneration."
+   - A "Cancel" button to close
+
+4. **Confirmation dialog**: The existing confirmation dialog and `handleRegenerate` flow remain identical, just controlled via state instead of nested `AlertDialogTrigger`.
+
+## Lines affected
+
+~743–768 in `MyResults.tsx` — the `!isCoachView` block containing the AlertDialog. Plus two new state variables near the top of the component.
+
+No other files change. No edge function changes.
 
