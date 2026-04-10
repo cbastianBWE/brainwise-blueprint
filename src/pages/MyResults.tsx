@@ -127,6 +127,20 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
   const [limitReached, setLimitReached] = useState<{ limit: number; tier: string } | null>(null);
   const { fetchUsage, consumeMessage } = useAiUsage();
   const [exportModalOpen, setExportModalOpen] = useState(false);
+  const [clientName, setClientName] = useState<string | null>(null);
+
+  // Fetch client name when in coach view
+  useEffect(() => {
+    if (!isCoachView || !targetUserId) return;
+    supabase
+      .from("users")
+      .select("full_name")
+      .eq("id", targetUserId)
+      .single()
+      .then(({ data }) => setClientName(data?.full_name ?? null));
+  }, [isCoachView, targetUserId]);
+
+  const displayName = isCoachView ? clientName : profile?.full_name;
 
   // Fetch all completed assessment results
   useEffect(() => {
