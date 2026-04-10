@@ -506,12 +506,7 @@ export default function MyResults() {
           <section className="flex flex-wrap gap-3">
             <Button
               variant="outline"
-              onClick={() =>
-                toast({
-                  title: "Coming Soon",
-                  description: "PDF export will be available soon.",
-                })
-              }
+              onClick={() => setExportModalOpen(true)}
             >
               <FileText className="mr-2 h-4 w-4" /> Export PDF
             </Button>
