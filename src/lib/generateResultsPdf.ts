@@ -280,10 +280,18 @@ export function generateResultsPdf(data: PdfData, sections: PdfSections): void {
         continue;
       }
 
-      if (!trimmed) {
-        if (insightsOnly && !firstFacetFound) {
+      // When insightsOnly, skip everything until the first ### heading
+      if (insightsOnly && !firstFacetFound) {
+        if (trimmed.startsWith("### ") && !isFacetScoreGroupHeading(trimmed)) {
+          firstFacetFound = true;
+          inFacetSection = true;
+          // fall through to ### rendering below
+        } else {
           continue;
         }
+      }
+
+      if (!trimmed) {
         if (!insightsOnly || inFacetSection) {
           y += 2;
         }
@@ -295,7 +303,6 @@ export function generateResultsPdf(data: PdfData, sections: PdfSections): void {
           inFacetSection = false;
           continue;
         }
-        firstFacetFound = true;
         inFacetSection = true;
       } else if (trimmed.startsWith("## ")) {
         inFacetSection = false;
@@ -325,8 +332,13 @@ export function generateResultsPdf(data: PdfData, sections: PdfSections): void {
         d.setFontSize(9.5);
         d.setTextColor(...PRIMARY);
         d.setFont("helvetica", "bold");
-        d.text(trimmed.replace(/^###\s*/, "").replace(/\*\*/g, ""), MARGIN_L, y);
-        y += 5;
+        const headingContent = trimmed.replace(/^###\s*/, "").replace(/\*\*/g, "");
+        const wrappedHeading = d.splitTextToSize(headingContent, CONTENT_W);
+        for (const hl of wrappedHeading) {
+          checkPageBreak(5);
+          d.text(hl, MARGIN_L, y);
+          y += 5;
+        }
         continue;
       }
 
