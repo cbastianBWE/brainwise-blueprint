@@ -449,13 +449,17 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
   if (!assessments.length) {
     return (
       <div className="p-6 max-w-5xl mx-auto text-center space-y-4">
-        <h1 className="text-2xl font-bold text-foreground">My Results</h1>
+        <h1 className="text-2xl font-bold text-foreground">
+          {isCoachView ? "Client Results" : "My Results"}
+        </h1>
         <p className="text-muted-foreground">
-          You haven't completed any assessments yet.
+          {isCoachView ? "No completed assessments found for this client." : "You haven't completed any assessments yet."}
         </p>
-        <Button onClick={() => navigate("/assessment")}>
-          Take an Assessment
-        </Button>
+        {!isCoachView && (
+          <Button onClick={() => navigate("/assessment")}>
+            Take an Assessment
+          </Button>
+        )}
       </div>
     );
   }
@@ -464,7 +468,9 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
     <div className="p-6 space-y-8 max-w-5xl mx-auto">
       {/* Assessment selector */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h1 className="text-2xl font-bold text-foreground">My Results</h1>
+        <h1 className="text-2xl font-bold text-foreground">
+          {isCoachView ? "Client Results" : "My Results"}
+        </h1>
         {assessments.length > 1 && (
           <Select value={selectedId} onValueChange={setSelectedId}>
             <SelectTrigger className="w-full sm:w-72">
