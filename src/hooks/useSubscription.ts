@@ -19,7 +19,12 @@ export function useSubscription() {
       return;
     }
     try {
-      const { data, error } = await supabase.functions.invoke("check-subscription");
+      const { data: { session } } = await supabase.auth.getSession();
+      const { data, error } = await supabase.functions.invoke("check-subscription", {
+        headers: {
+          Authorization: `Bearer ${session?.access_token}`,
+        },
+      });
       if (!error && data) {
         setSubscription(data as SubscriptionData);
       }

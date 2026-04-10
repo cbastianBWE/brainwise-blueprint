@@ -21,7 +21,12 @@ export const useAuth = () => useContext(AuthContext);
 
 const syncSubscription = async () => {
   try {
-    await supabase.functions.invoke("check-subscription");
+    const { data: { session } } = await supabase.auth.getSession();
+    await supabase.functions.invoke("check-subscription", {
+      headers: {
+        Authorization: `Bearer ${session?.access_token}`,
+      },
+    });
   } catch {
     // silently ignore
   }
