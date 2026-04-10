@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useCallback } from "react";
+import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserProfile } from "@/hooks/useUserProfile";
@@ -42,6 +42,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { format } from "date-fns";
 import DrivingFacetScores from "@/components/results/DrivingFacetScores";
+import ExportPdfModal, { type PdfSections } from "@/components/results/ExportPdfModal";
+import { generateResultsPdf, type PdfData } from "@/lib/generateResultsPdf";
 
 // Types
 interface DimensionScore {
@@ -116,6 +118,7 @@ export default function MyResults() {
   const [regeneratedVersion, setRegeneratedVersion] = useState<string | null>(null);
   const [limitReached, setLimitReached] = useState<{ limit: number; tier: string } | null>(null);
   const { fetchUsage, consumeMessage } = useAiUsage();
+  const [exportModalOpen, setExportModalOpen] = useState(false);
 
   // Fetch all completed assessment results
   useEffect(() => {
@@ -324,6 +327,86 @@ export default function MyResults() {
     (selected?.result.overall_profile as OverallProfile)
       ?.triggered_cross_instrument_recommendations ?? [];
 
+  // PDF export handler
+  const handlePdfExport = useCallback(async (sections: PdfSections) => {
+    if (!selected) return;
+    // Fetch facet data for PDF
+    let elevatedFacets: { text: string; score: number; color: string }[] = [];
+    let suppressedFacets: { text: string; score: number; color: string }[] = [];
+
+    if (sections.drivingFacetScores && selected.isPTP) {
+      const { data: responses } = await supabase
+        .from("assessment_responses")
+        .select("response_value_numeric, is_reverse_scored, item_id")
+        .eq("assessment_id", selected.result.assessment_id);
+
+      if (responses?.length) {
+        const itemIds = responses.map((r) => r.item_id);
+        const { data: items } = await supabase
+          .from("items")
+          .select("item_id, item_text, dimension_id")
+          .in("item_id", itemIds);
+
+        const itemMap = new Map((items ?? []).map((i) => [i.item_id, i]));
+        const scored = responses.map((r) => {
+          const item = itemMap.get(r.item_id);
+          const raw = Number(r.response_value_numeric);
+          const value = r.is_reverse_scored ? 100 - raw : raw;
+          return { text: item?.item_text ?? r.item_id, dimension_id: item?.dimension_id ?? "", value };
+        });
+
+        const vals = scored.map((s) => s.value);
+        const mean = vals.reduce((a, b) => a + b, 0) / vals.length;
+        const stdDev = Math.sqrt(vals.reduce((sum, v) => sum + (v - mean) ** 2, 0) / vals.length);
+
+        const PTP_DIM_COLORS: Record<string, string> = {
+          "DIM-PTP-01": "#1F4E79", "DIM-PTP-02": "#2E75B6", "DIM-PTP-03": "#4BACC6",
+          "DIM-PTP-04": "#70AD47", "DIM-PTP-05": "#ED7D31",
+        };
+
+        elevatedFacets = scored
+          .filter((s) => s.value > mean + stdDev)
+          .sort((a, b) => b.value - a.value)
+          .slice(0, 10)
+          .map((f) => ({ text: f.text, score: f.value, color: PTP_DIM_COLORS[f.dimension_id] ?? "#8EA9C1" }));
+
+        suppressedFacets = scored
+          .filter((s) => s.value < mean - stdDev)
+          .sort((a, b) => a.value - b.value)
+          .slice(0, 10)
+          .map((f) => ({ text: f.text, score: f.value, color: PTP_DIM_COLORS[f.dimension_id] ?? "#8EA9C1" }));
+      }
+    }
+
+    const pdfData: PdfData = {
+      userName: profile?.full_name ?? "Participant",
+      instrumentName: selected.instrument_name,
+      instrumentShortName: selected.result.instrument_id ?? selected.instrument_name.replace(/\s+/g, ""),
+      instrumentVersion: selected.result.instrument_version ?? "—",
+      dateTaken: selected.completed_at ? format(new Date(selected.completed_at), "MMMM d, yyyy") : "—",
+      dimensions: sortedDimensions.map(([id, score]) => ({
+        name: resolveDimensionName(id),
+        score: score.mean ?? score.level_mean ?? 0,
+        band: score.band ?? score.readiness_level ?? "moderate",
+        color: selected.isPTP
+          ? (PTP_DIMENSION_COLORS[id] ?? "#8EA9C1")
+          : (BAND_COLORS[score.band ?? "moderate"] ?? "#8EA9C1"),
+      })),
+      statCards: [
+        { label: "Dimensions Assessed", value: String(dimensionScores.length) },
+        { label: "Highest Dimension", value: resolveDimensionName(highestDimension) },
+        { label: "Lowest Dimension", value: resolveDimensionName(lowestDimension) },
+      ],
+      narrative: selected.result.ai_narrative,
+      elevatedFacets,
+      suppressedFacets,
+      recommendations,
+      isSliderInstrument: !!isSliderInstrument,
+    };
+
+    generateResultsPdf(pdfData, sections);
+  }, [selected, sortedDimensions, dimensionScores, dimensionNameMap, profile, recommendations, isSliderInstrument, highestDimension, lowestDimension]);
+
   // Chart data for bar chart
   const chartData = useMemo(() => {
     if (!isSliderInstrument && !(!isAIRSA && !isSliderInstrument)) return [];
@@ -423,12 +506,7 @@ export default function MyResults() {
           <section className="flex flex-wrap gap-3">
             <Button
               variant="outline"
-              onClick={() =>
-                toast({
-                  title: "Coming Soon",
-                  description: "PDF export will be available soon.",
-                })
-              }
+              onClick={() => setExportModalOpen(true)}
             >
               <FileText className="mr-2 h-4 w-4" /> Export PDF
             </Button>
@@ -647,6 +725,15 @@ export default function MyResults() {
             </Card>
           </section>
 
+          {/* Export PDF Modal */}
+          <ExportPdfModal
+            open={exportModalOpen}
+            onOpenChange={setExportModalOpen}
+            onExport={handlePdfExport}
+            hasNarrative={!!selected.result.ai_narrative}
+            hasFacets={selected.isPTP}
+            hasRecommendations={recommendations.length > 0}
+          />
         </>
       )}
     </div>
