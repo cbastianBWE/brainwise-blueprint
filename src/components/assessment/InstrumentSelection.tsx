@@ -153,7 +153,7 @@ export default function InstrumentSelection({ onSelect }: Props) {
                 <p className="text-sm text-muted-foreground">{inst.description}</p>
                 {purchaseRequired ? (
                   <Button variant="outline" className="w-full" onClick={() => navigate("/pricing")}>
-                    {userStatus === "inactive" || !userStatus ? "Subscribe to Access" : "Upgrade to Premium"}
+                    {userStatus === "inactive" || !userStatus ? "Purchase to Access" : "Upgrade to Premium"}
                   </Button>
                 ) : (
                   <Button className="w-full" onClick={() => handleSelect(inst)}>
