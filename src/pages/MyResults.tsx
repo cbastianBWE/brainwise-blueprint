@@ -725,6 +725,15 @@ export default function MyResults() {
             </Card>
           </section>
 
+          {/* Export PDF Modal */}
+          <ExportPdfModal
+            open={exportModalOpen}
+            onOpenChange={setExportModalOpen}
+            onExport={handlePdfExport}
+            hasNarrative={!!selected.result.ai_narrative}
+            hasFacets={selected.isPTP}
+            hasRecommendations={recommendations.length > 0}
+          />
         </>
       )}
     </div>
