@@ -300,7 +300,8 @@ export function generateResultsPdf(data: PdfData, sections: PdfSections): void {
       if (!insightsOnly && inFacetSection) continue;
 
       if (trimmed.startsWith("## ")) {
-        if (trimmed === '## Elevated Facets' || trimmed === '## Suppressed Facets' || trimmed === 'Elevated Facets' || trimmed === 'Suppressed Facets') {
+        const headingText = trimmed.replace(/^##\s*/, '');
+        if (headingText === 'Elevated Facets' || headingText === 'Suppressed Facets' || headingText === 'Driving Facet Insights') {
           continue;
         }
         checkPageBreak(12);
