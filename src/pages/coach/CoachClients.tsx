@@ -129,8 +129,41 @@ export default function CoachClients() {
   };
 
   const handleOrderCoachPays = async () => {
-    if (!user || !email) return;
-    toast("Coming Soon", { description: "Payment via Stripe is not yet available. This feature will be enabled soon." });
+    if (!user || !email) {
+      toast.error("Please fill in client email.");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      // First create the coach_clients record
+      const { error: insertError } = await supabase.from("coach_clients").insert({
+        coach_user_id: user.id,
+        client_email: email,
+        invitation_status: "pending_payment",
+        coach_notes: note || null,
+      });
+      if (insertError) throw insertError;
+
+      // Then redirect to Stripe checkout for assessment purchase
+      const { data, error } = await supabase.functions.invoke("create-checkout", {
+        body: {
+          price_id: ASSESSMENT_PURCHASE.price_id,
+          mode: "payment",
+          instrument_id: instrument,
+        },
+      });
+      if (error) throw error;
+      if (data?.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error("No checkout URL returned");
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Unknown error";
+      toast.error("Failed to start checkout: " + msg);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleOrderClientPays = async () => {
