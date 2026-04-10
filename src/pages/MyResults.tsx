@@ -130,7 +130,7 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
 
   // Fetch all completed assessment results
   useEffect(() => {
-    if (!user) return;
+    if (!effectiveUserId) return;
 
     const fetchResults = async () => {
       setLoading(true);
@@ -139,7 +139,7 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
       const { data: results, error: resultsErr } = await supabase
         .from("assessment_results")
         .select("*")
-        .eq("user_id", user.id)
+        .eq("user_id", effectiveUserId)
         .order("created_at", { ascending: false });
 
       if (resultsErr || !results?.length) {
@@ -195,12 +195,17 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
       });
 
       setAssessments(combined);
-      setSelectedId(combined[0]?.result.id ?? "");
+      if (preSelectedAssessmentId) {
+        const preSelected = combined.find(a => a.result.assessment_id === preSelectedAssessmentId);
+        setSelectedId(preSelected?.result.id ?? combined[0]?.result.id ?? "");
+      } else {
+        setSelectedId(combined[0]?.result.id ?? "");
+      }
       setLoading(false);
     };
 
     fetchResults();
-  }, [user]);
+  }, [effectiveUserId, preSelectedAssessmentId]);
 
   // Selected assessment
   const selected = useMemo(
