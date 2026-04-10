@@ -57,23 +57,33 @@ export default function BillingSettings() {
         <CardContent className="space-y-4">
           {loading ? (
             <p className="text-sm text-muted-foreground">Loading…</p>
+          ) : !isActive ? (
+            <>
+              <div>
+                <p className="text-lg font-semibold text-foreground">Free Account</p>
+                <p className="text-sm text-muted-foreground">No active subscription</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-foreground">What's included:</p>
+                <ul className="text-sm text-muted-foreground space-y-1 ml-4 list-disc">
+                  <li>Per-assessment purchases available ($29.99 each)</li>
+                  <li>No AI chat included</li>
+                  <li>No resources access</li>
+                </ul>
+              </div>
+            </>
           ) : (
             <>
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-lg font-semibold text-foreground">
                     {plan.name} Plan
-                    {isActive && (
-                      <Badge variant="secondary" className="ml-2">Active</Badge>
-                    )}
+                    <Badge variant="secondary" className="ml-2">Active</Badge>
                   </p>
                   {endDate && (
                     <p className="text-sm text-muted-foreground">
                       Next billing date: {endDate}
                     </p>
-                  )}
-                  {!isActive && (
-                    <p className="text-sm text-muted-foreground">No active subscription</p>
                   )}
                 </div>
               </div>
@@ -93,26 +103,36 @@ export default function BillingSettings() {
               </div>
 
               <div className="flex gap-3 pt-2">
-                {isActive ? (
-                  <Button onClick={handleManage} disabled={portalLoading} variant="outline" className="gap-2">
-                    <ExternalLink className="h-4 w-4" />
-                    {portalLoading ? "Loading…" : "Manage Subscription"}
-                  </Button>
-                ) : (
-                  <Button onClick={() => navigate("/pricing")}>
-                    View Plans
-                  </Button>
-                )}
-                {isActive && tier === "base" && (
-                  <Button onClick={() => navigate("/pricing")} variant="default">
-                    Upgrade to Premium
-                  </Button>
-                )}
+                <Button onClick={handleManage} disabled={portalLoading} variant="outline" className="gap-2">
+                  <ExternalLink className="h-4 w-4" />
+                  {portalLoading ? "Loading…" : "Manage Subscription"}
+                </Button>
               </div>
             </>
           )}
         </CardContent>
       </Card>
+
+      {!loading && (!isActive || tier === "base") && (
+        <Card className="border-primary/30 bg-primary/5">
+          <CardHeader>
+            <CardTitle className="text-lg">Upgrade to Premium</CardTitle>
+            <CardDescription>
+              ${PLANS.premium.monthly.price}/mo or ${PLANS.premium.annual.price}/yr
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <ul className="text-sm text-muted-foreground space-y-1 ml-4 list-disc">
+              {PLANS.premium.features.map((f) => (
+                <li key={f}>{f}</li>
+              ))}
+            </ul>
+            <Button onClick={() => navigate("/pricing")} className="w-full sm:w-auto">
+              Get Started
+            </Button>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
