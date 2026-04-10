@@ -64,12 +64,13 @@ export default function InstrumentSelection({ onSelect }: Props) {
   const [coachPaidInstrumentIds, setCoachPaidInstrumentIds] = useState<Set<string>>(new Set());
   const [purchasedInstrumentIds, setPurchasedInstrumentIds] = useState<Set<string>>(new Set());
   const [completedInstrumentIds, setCompletedInstrumentIds] = useState<Set<string>>(new Set());
+  const [inProgressInstrumentIds, setInProgressInstrumentIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!user) return;
     const load = async () => {
-      const [userRes, versionRes, resultsRes, coachClientsRes, purchasesRes, completedRes] = await Promise.all([
+      const [userRes, versionRes, resultsRes, coachClientsRes, purchasesRes, completedRes, inProgressRes] = await Promise.all([
         supabase.from("users").select("subscription_tier, subscription_status").eq("id", user.id).single(),
         supabase.from("platform_versions").select("version_string").eq("is_active", true).limit(1).single(),
         supabase.from("assessment_results").select("overall_profile").eq("user_id", user.id).order("created_at", { ascending: false }).limit(1),
@@ -81,6 +82,7 @@ export default function InstrumentSelection({ onSelect }: Props) {
           .neq("invitation_status", "completed"),
         supabase.from("assessment_purchases").select("instrument_id").eq("user_id", user.id),
         supabase.from("assessments").select("instrument_id").eq("user_id", user.id).eq("status", "completed"),
+        supabase.from("assessments").select("instrument_id").eq("user_id", user.id).eq("status", "in_progress"),
       ]);
 
       if (userRes.data) {
@@ -123,6 +125,15 @@ export default function InstrumentSelection({ onSelect }: Props) {
           if (row.instrument_id) ids.add(row.instrument_id);
         });
         setCompletedInstrumentIds(ids);
+      }
+
+      // Build set of in-progress instrument IDs
+      if (inProgressRes.data) {
+        const ids = new Set<string>();
+        inProgressRes.data.forEach((row) => {
+          if (row.instrument_id) ids.add(row.instrument_id);
+        });
+        setInProgressInstrumentIds(ids);
       }
 
       setLoading(false);
