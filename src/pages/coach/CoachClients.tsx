@@ -379,7 +379,7 @@ export default function CoachClients() {
         </td></tr>
         <tr><td style="padding:32px;">
           <p style="font-size:16px;color:#111827;margin:0 0 16px;">Hi ${clientName},</p>
-          <h2 style="font-size:18px;color:#111827;margin:0 0 16px;">Don't Forget Your Assessment</h2>
+          <h2 style="font-size:18px;color:#111827;margin:0 0 16px;">Don't Forget to Complete Your Assessment</h2>
           <p style="font-size:15px;color:#374151;line-height:1.6;margin:0 0 16px;">
             ${bodyText}
           </p>
