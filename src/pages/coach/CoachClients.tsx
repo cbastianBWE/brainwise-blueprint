@@ -282,8 +282,8 @@ export default function CoachClients() {
               </div>
 
               <TabsContent value="coach-pays" className="mt-4">
-                <Button className="w-full gap-2" onClick={handleOrderCoachPays}>
-                  <ClipboardCheck className="h-4 w-4" /> Proceed to Payment
+                <Button className="w-full gap-2" onClick={handleOrderCoachPays} disabled={submitting || !email}>
+                  <ClipboardCheck className="h-4 w-4" /> {submitting ? "Processing..." : "Proceed to Payment"}
                 </Button>
               </TabsContent>
 
