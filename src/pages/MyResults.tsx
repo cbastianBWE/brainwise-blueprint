@@ -118,6 +118,7 @@ export default function MyResults() {
   const [regeneratedVersion, setRegeneratedVersion] = useState<string | null>(null);
   const [limitReached, setLimitReached] = useState<{ limit: number; tier: string } | null>(null);
   const { fetchUsage, consumeMessage } = useAiUsage();
+  const [exportModalOpen, setExportModalOpen] = useState(false);
 
   // Fetch all completed assessment results
   useEffect(() => {
