@@ -49,6 +49,7 @@ interface Props {
 
 export default function InstrumentSelection({ onSelect }: Props) {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [userTier, setUserTier] = useState<string>("base");
   const [userStatus, setUserStatus] = useState<string>("inactive");
   const [recommendations, setRecommendations] = useState<string[]>([]);
