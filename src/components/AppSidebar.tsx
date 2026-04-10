@@ -1,7 +1,7 @@
 import {
   LayoutDashboard, BarChart3, ClipboardList, MessageSquare, BookOpen, Settings,
   Users, Building2, UsersRound, Activity, Heart, Award, UserCircle,
-  ShieldCheck, Briefcase, GitBranch, FlaskConical, LogOut, History,
+  ShieldCheck, Briefcase, GitBranch, FlaskConical, LogOut, History, Shield,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -38,6 +38,7 @@ const individualNav: NavItem[] = [
   { title: "Chat History", url: "/ai-chat/history", icon: History },
   { title: "Resources", url: "/resources", icon: BookOpen },
   { title: "Settings", url: "/settings", icon: Settings },
+  { title: "Privacy & Permissions", url: "/settings/privacy", icon: Shield },
 ];
 
 const coachNav: NavItem[] = [

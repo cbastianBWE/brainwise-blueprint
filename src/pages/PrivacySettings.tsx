@@ -104,12 +104,15 @@ export default function PrivacySettings() {
         .limit(1);
       if (cc && cc.length > 0) setCoachId(cc[0].coach_user_id);
 
-      // Get user's org and team info
+      // Get user's org and team info + share_results_with_coach
       const { data: userData } = await supabase
         .from("users")
-        .select("organization_id")
+        .select("organization_id, share_results_with_coach")
         .eq("id", user.id)
         .single();
+      if (userData) {
+        setCoach(prev => ({ ...prev, enabled: userData.share_results_with_coach ?? false }));
+      }
       if (userData?.organization_id) {
         setOrgId(userData.organization_id);
         // Get team membership
@@ -219,6 +222,13 @@ export default function PrivacySettings() {
     } else if (current.id) {
       await deletePermission(current.id);
       setter({ ...current, enabled: false });
+    }
+    // Sync share_results_with_coach column when toggling coach
+    if (key === "coach" && user) {
+      await supabase
+        .from("users")
+        .update({ share_results_with_coach: newEnabled })
+        .eq("id", user.id);
     }
     showSaved(key);
   };
