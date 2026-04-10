@@ -300,6 +300,9 @@ export function generateResultsPdf(data: PdfData, sections: PdfSections): void {
       if (!insightsOnly && inFacetSection) continue;
 
       if (trimmed.startsWith("## ")) {
+        if (trimmed === '## Elevated Facets' || trimmed === '## Suppressed Facets' || trimmed === 'Elevated Facets' || trimmed === 'Suppressed Facets') {
+          continue;
+        }
         checkPageBreak(12);
         y += 3;
         d.setFontSize(11);
@@ -487,6 +490,7 @@ function extractFacetInsights(narrative: string): string | null {
     if (trimmed === '## Elevated Facets') continue;
     if (trimmed === '## Suppressed Facets') continue;
     if (trimmed === '## Driving Facet Insights') continue;
+    if (trimmed === 'Elevated Facets' || trimmed === 'Suppressed Facets') continue;
 
     result.push(line);
   }
