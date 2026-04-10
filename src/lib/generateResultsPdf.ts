@@ -285,6 +285,10 @@ export function generateResultsPdf(data: PdfData, sections: PdfSections): void {
       }
 
       if (trimmed.startsWith("### ")) {
+        if (isFacetScoreGroupHeading(trimmed)) {
+          inFacetSection = false;
+          continue;
+        }
         inFacetSection = true;
       } else if (trimmed.startsWith("## ")) {
         inFacetSection = false;
