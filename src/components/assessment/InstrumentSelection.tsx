@@ -183,11 +183,14 @@ export default function InstrumentSelection({ onSelect }: Props) {
           // Purchase grants one attempt; if completed, need new purchase
           const purchaseAccess = hasPurchase && !hasCompleted;
 
+          const isInProgress = inProgressInstrumentIds.has(inst.instrument_id);
+          const startLabel = isInProgress ? "Continue Assessment" : "Start Assessment";
+
           let buttonContent: React.ReactNode;
           if (subscriptionAccess) {
             buttonContent = (
               <Button className="w-full" onClick={() => handleSelect(inst)}>
-                Start Assessment
+                {startLabel}
               </Button>
             );
           } else if (coachPaid) {
@@ -196,13 +199,13 @@ export default function InstrumentSelection({ onSelect }: Props) {
                 className="w-full bg-accent text-accent-foreground hover:bg-accent/90 border border-primary"
                 onClick={() => handleSelect(inst)}
               >
-                Start Assessment (Coach Paid)
+                {isInProgress ? "Continue Assessment" : "Start Assessment (Coach Paid)"}
               </Button>
             );
           } else if (purchaseAccess) {
             buttonContent = (
               <Button className="w-full" onClick={() => handleSelect(inst)}>
-                Start Assessment
+                {startLabel}
               </Button>
             );
           } else {
