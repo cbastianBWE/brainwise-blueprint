@@ -7,6 +7,13 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Brain, Star } from "lucide-react";
 
+const INSTRUMENT_UUID_MAP: Record<string, string> = {
+  "INST-001": "02618e9a-d411-44cf-b316-fe368edeac03",
+  "INST-002": "77d1290f-1daf-44e0-931f-b9b8ad185520",
+  "INST-003": "abb62120-8cc8-435f-babc-dd6a27fbc235",
+  "INST-004": "90216d9d-153c-4b7b-abe0-1d7845c9e6e0",
+};
+
 const INSTRUMENTS = [
   {
     instrument_id: "INST-001",
@@ -54,15 +61,17 @@ export default function InstrumentSelection({ onSelect }: Props) {
   const [userStatus, setUserStatus] = useState<string>("inactive");
   const [recommendations, setRecommendations] = useState<string[]>([]);
   const [platformVersion, setPlatformVersion] = useState<string>("");
+  const [coachPaidInstrumentIds, setCoachPaidInstrumentIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!user) return;
     const load = async () => {
-      const [userRes, versionRes, resultsRes] = await Promise.all([
+      const [userRes, versionRes, resultsRes, coachClientsRes] = await Promise.all([
         supabase.from("users").select("subscription_tier, subscription_status").eq("id", user.id).single(),
         supabase.from("platform_versions").select("version_string").eq("is_active", true).limit(1).single(),
         supabase.from("assessment_results").select("overall_profile").eq("user_id", user.id).order("created_at", { ascending: false }).limit(1),
+        supabase.from("coach_clients").select("instrument_id").eq("client_user_id", user.id).eq("invitation_status", "opened"),
       ]);
 
       if (userRes.data) {
@@ -80,21 +89,24 @@ export default function InstrumentSelection({ onSelect }: Props) {
         }
       }
 
+      // Build set of coach-paid instrument UUIDs
+      if (coachClientsRes.data) {
+        const ids = new Set<string>();
+        coachClientsRes.data.forEach((row) => {
+          if (row.instrument_id) ids.add(row.instrument_id);
+        });
+        setCoachPaidInstrumentIds(ids);
+      }
+
       setLoading(false);
     };
     load();
   }, [user]);
 
-  const canAccess = (tier: "base" | "premium") => {
+  const canAccessBySubscription = (tier: "base" | "premium") => {
     if (userStatus === "inactive" || !userStatus) return false;
     if (tier === "base") return true;
     return userTier === "premium";
-  };
-
-  const needsPurchase = (tier: "base" | "premium") => {
-    if (userStatus === "inactive" || !userStatus) return true;
-    if (tier === "premium" && userTier !== "premium") return true;
-    return false;
   };
 
   const handleSelect = (inst: (typeof INSTRUMENTS)[0]) => {
@@ -125,13 +137,38 @@ export default function InstrumentSelection({ onSelect }: Props) {
       <div className="grid gap-4 md:grid-cols-2">
         {INSTRUMENTS.map((inst) => {
           const isRecommended = recommendations.includes(inst.instrument_id);
-          const purchaseRequired = needsPurchase(inst.tier);
-          const accessible = canAccess(inst.tier);
+          const subscriptionAccess = canAccessBySubscription(inst.tier);
+          const instrumentUuid = INSTRUMENT_UUID_MAP[inst.instrument_id] || "";
+          const coachPaid = coachPaidInstrumentIds.has(instrumentUuid);
+
+          let buttonContent: React.ReactNode;
+          if (subscriptionAccess) {
+            buttonContent = (
+              <Button className="w-full" onClick={() => handleSelect(inst)}>
+                Start Assessment
+              </Button>
+            );
+          } else if (coachPaid) {
+            buttonContent = (
+              <Button
+                className="w-full bg-accent text-accent-foreground hover:bg-accent/90 border border-primary"
+                onClick={() => handleSelect(inst)}
+              >
+                Start Assessment (Coach Paid)
+              </Button>
+            );
+          } else {
+            buttonContent = (
+              <Button variant="outline" className="w-full" onClick={() => navigate("/pricing")}>
+                {userStatus === "inactive" || !userStatus ? "Purchase to Access" : "Upgrade to Premium"}
+              </Button>
+            );
+          }
 
           return (
             <Card
               key={inst.instrument_id}
-              className={`relative transition-all ${isRecommended ? "ring-2 ring-primary" : ""} ${accessible ? "hover:shadow-md" : "opacity-80"}`}
+              className={`relative transition-all ${isRecommended ? "ring-2 ring-primary" : ""} ${subscriptionAccess || coachPaid ? "hover:shadow-md" : "opacity-80"}`}
             >
               {isRecommended && (
                 <div className="absolute -top-3 left-4">
@@ -151,15 +188,7 @@ export default function InstrumentSelection({ onSelect }: Props) {
               </CardHeader>
               <CardContent className="space-y-4">
                 <p className="text-sm text-muted-foreground">{inst.description}</p>
-                {purchaseRequired ? (
-                  <Button variant="outline" className="w-full" onClick={() => navigate("/pricing")}>
-                    {userStatus === "inactive" || !userStatus ? "Purchase to Access" : "Upgrade to Premium"}
-                  </Button>
-                ) : (
-                  <Button className="w-full" onClick={() => handleSelect(inst)}>
-                    Start Assessment
-                  </Button>
-                )}
+                {buttonContent}
               </CardContent>
             </Card>
           );
