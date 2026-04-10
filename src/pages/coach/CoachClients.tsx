@@ -21,10 +21,10 @@ import {
 import { format } from "date-fns";
 
 const INSTRUMENTS = [
-  { id: "PTP", name: "Personal Threat Profile", desc: "Measures nonconscious threat responses influencing behavior." },
-  { id: "NAI", name: "Neuroscience Adoption Index", desc: "Measures beliefs and threat responses related to AI adoption." },
-  { id: "AIRSA", name: "AI Readiness Skills Assessment", desc: "Assesses readiness to adopt and leverage AI tools." },
-  { id: "HSS", name: "Habit Stabilization Scorecard", desc: "Measures stability of behavioral changes related to AI." },
+  { id: "PTP", uuid: "02618e9a-d411-44cf-b316-fe368edeac03", name: "Personal Threat Profile", desc: "Measures nonconscious threat responses influencing behavior." },
+  { id: "NAI", uuid: "77d1290f-1daf-44e0-931f-b9b8ad185520", name: "Neuroscience Adoption Index", desc: "Measures beliefs and threat responses related to AI adoption." },
+  { id: "AIRSA", uuid: "abb62120-8cc8-435f-babc-dd6a27fbc235", name: "AI Readiness Skills Assessment", desc: "Assesses readiness to adopt and leverage AI tools." },
+  { id: "HSS", uuid: "90216d9d-153c-4b7b-abe0-1d7845c9e6e0", name: "Habit Stabilization Scorecard", desc: "Measures stability of behavioral changes related to AI." },
 ];
 
 interface ClientRow {
@@ -135,14 +135,9 @@ export default function CoachClients() {
     }
     setSubmitting(true);
     try {
-      // Look up the instrument UUID from the instruments table
-      const { data: instRow, error: instError } = await supabase
-        .from("instruments")
-        .select("id")
-        .eq("instrument_id", instrument)
-        .limit(1)
-        .single();
-      if (instError || !instRow) throw new Error("Could not find instrument");
+      // Map selected instrument to its UUID
+      const selectedInstrument = INSTRUMENTS.find(i => i.id === instrument);
+      if (!selectedInstrument) throw new Error("Could not find instrument");
 
       // First create the coach_clients record
       const { error: insertError } = await supabase.from("coach_clients").insert({
