@@ -468,44 +468,39 @@ function hexToRgb(hex: string): [number, number, number] {
 function extractFacetInsights(narrative: string): string | null {
   const lines = narrative.split("\n");
   const insightLines: string[] = [];
-  let inSection = false;
-  let currentSectionHasInsights = false;
-  let currentSectionIsScoreGroup = false;
-  let currentSectionLines: string[] = [];
-
-  const flushSection = () => {
-    if (currentSectionHasInsights && !currentSectionIsScoreGroup) {
-      insightLines.push(...currentSectionLines);
-    }
-    currentSectionLines = [];
-    currentSectionHasInsights = false;
-    currentSectionIsScoreGroup = false;
-  };
+  let inInsightFacet = false;
 
   for (const line of lines) {
     const trimmed = line.trim();
+
+    // Skip top-level ## headings and score-group ### headings
+    if (trimmed.startsWith("## ")) {
+      inInsightFacet = false;
+      continue;
+    }
     if (trimmed.startsWith("### ")) {
-      if (inSection) flushSection();
-      inSection = true;
-      currentSectionLines = [line];
-      currentSectionHasInsights = false;
-      currentSectionIsScoreGroup = isFacetScoreGroupHeading(trimmed);
-      continue;
-    }
-    if (inSection && trimmed.startsWith("## ")) {
-      flushSection();
-      inSection = false;
-      continue;
-    }
-    if (inSection) {
-      currentSectionLines.push(line);
-      if (/[✅❌]/.test(trimmed) || /^\*\*(Impact on|Behavioral)/i.test(trimmed)) {
-        currentSectionHasInsights = true;
+      if (isFacetScoreGroupHeading(trimmed)) {
+        inInsightFacet = false;
+        continue;
       }
+      // This is an individual facet question heading — include it
+      inInsightFacet = true;
+      insightLines.push(line);
+      continue;
+    }
+
+    if (!inInsightFacet) continue;
+
+    // Only include lines that are insight content
+    if (
+      !trimmed ||
+      /[✅❌]/.test(trimmed) ||
+      /^\*\*(Impact on|Behavioral)/i.test(trimmed) ||
+      /^[-*]\s+/.test(trimmed)
+    ) {
+      insightLines.push(line);
     }
   }
-
-  if (inSection) flushSection();
 
   return insightLines.length > 0 ? insightLines.join("\n") : null;
 }
