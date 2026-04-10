@@ -53,6 +53,7 @@ export default function CoachClients() {
   const [selectedInstruments, setSelectedInstruments] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [instrumentError, setInstrumentError] = useState(false);
+  const [sendingReminderId, setSendingReminderId] = useState<string | null>(null);
 
   const fetchClients = async () => {
     if (!user) return;
@@ -537,10 +538,10 @@ export default function CoachClients() {
                           size="sm"
                           variant="ghost"
                           className="gap-1"
-                          disabled={c.invitation_status !== "sent" && c.invitation_status !== "opened"}
-                          onClick={() => toast.success("Reminder sent", { description: `Reminder sent to ${c.client_email} for ${c.instrument_name || "assessment"}` })}
+                          disabled={(c.invitation_status !== "sent" && c.invitation_status !== "opened") || sendingReminderId === c.id}
+                          onClick={() => handleRemind(c)}
                         >
-                          <Mail className="h-3 w-3" /> Remind
+                          <Mail className="h-3 w-3" /> {sendingReminderId === c.id ? "Sending..." : "Remind"}
                         </Button>
                       </TableCell>
                     </TableRow>
