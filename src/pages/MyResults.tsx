@@ -555,8 +555,6 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
               </>
             )}
           </section>
-            </Button>
-          </section>
 
           {/* SECTION 2 - Profile Chart */}
           <section>
