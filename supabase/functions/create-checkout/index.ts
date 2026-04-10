@@ -63,7 +63,13 @@ serve(async (req) => {
       metadata: {
         user_id: user.id,
         instrument_id: instrument_id || "",
-        checkout_type: checkoutMode,
+        checkout_type: mode === "coach_order" ? "coach_order" : checkoutMode,
+        ...(mode === "coach_order" ? {
+          client_email: client_email || "",
+          client_first_name: client_first_name || "",
+          client_last_name: client_last_name || "",
+          coach_note: coach_note || "",
+        } : {}),
       },
     };
 
