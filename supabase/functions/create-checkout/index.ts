@@ -31,11 +31,11 @@ serve(async (req) => {
 
     logStep("User authenticated", { userId: user.id, email: user.email });
 
-    const { price_id, mode, instrument_id } = await req.json();
+    const { price_id, mode, instrument_id, client_email, client_first_name, client_last_name, coach_note } = await req.json();
     if (!price_id) throw new Error("price_id is required");
 
-    const checkoutMode = mode === "payment" ? "payment" : "subscription";
-    logStep("Checkout params", { price_id, mode: checkoutMode, instrument_id });
+    const checkoutMode = mode === "payment" || mode === "coach_order" ? "payment" : "subscription";
+    logStep("Checkout params", { price_id, mode, checkoutMode, instrument_id });
 
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
       apiVersion: "2025-08-27.basil",
@@ -63,7 +63,13 @@ serve(async (req) => {
       metadata: {
         user_id: user.id,
         instrument_id: instrument_id || "",
-        checkout_type: checkoutMode,
+        checkout_type: mode === "coach_order" ? "coach_order" : checkoutMode,
+        ...(mode === "coach_order" ? {
+          client_email: client_email || "",
+          client_first_name: client_first_name || "",
+          client_last_name: client_last_name || "",
+          coach_note: coach_note || "",
+        } : {}),
       },
     };
 

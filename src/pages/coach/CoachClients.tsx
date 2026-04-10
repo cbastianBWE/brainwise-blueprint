@@ -135,6 +135,15 @@ export default function CoachClients() {
     }
     setSubmitting(true);
     try {
+      // Look up the instrument UUID from the instruments table
+      const { data: instRow, error: instError } = await supabase
+        .from("instruments")
+        .select("id")
+        .eq("instrument_id", instrument)
+        .limit(1)
+        .single();
+      if (instError || !instRow) throw new Error("Could not find instrument");
+
       // First create the coach_clients record
       const { error: insertError } = await supabase.from("coach_clients").insert({
         coach_user_id: user.id,
@@ -148,8 +157,12 @@ export default function CoachClients() {
       const { data, error } = await supabase.functions.invoke("create-checkout", {
         body: {
           price_id: ASSESSMENT_PURCHASE.price_id,
-          mode: "payment",
-          instrument_id: instrument,
+          mode: "coach_order",
+          instrument_id: instRow.id,
+          client_email: email,
+          client_first_name: firstName,
+          client_last_name: lastName,
+          coach_note: note,
         },
       });
       if (error) throw error;
