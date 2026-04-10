@@ -104,11 +104,18 @@ const READINESS_COLORS: Record<string, { bg: string; text: string; border: strin
   Advanced: { bg: "hsl(142 71% 95%)", text: "hsl(142 71% 25%)", border: "hsl(142 71% 45%)" },
 };
 
-export default function MyResults() {
+interface MyResultsProps {
+  isCoachView?: boolean;
+  targetUserId?: string;
+  preSelectedAssessmentId?: string;
+}
+
+export default function MyResults({ isCoachView = false, targetUserId, preSelectedAssessmentId }: MyResultsProps) {
   const { user } = useAuth();
   const { profile } = useUserProfile();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const effectiveUserId = isCoachView && targetUserId ? targetUserId : user?.id;
 
   const [assessments, setAssessments] = useState<AssessmentWithResult[]>([]);
   const [selectedId, setSelectedId] = useState<string>("");
@@ -123,7 +130,7 @@ export default function MyResults() {
 
   // Fetch all completed assessment results
   useEffect(() => {
-    if (!user) return;
+    if (!effectiveUserId) return;
 
     const fetchResults = async () => {
       setLoading(true);
@@ -132,7 +139,7 @@ export default function MyResults() {
       const { data: results, error: resultsErr } = await supabase
         .from("assessment_results")
         .select("*")
-        .eq("user_id", user.id)
+        .eq("user_id", effectiveUserId)
         .order("created_at", { ascending: false });
 
       if (resultsErr || !results?.length) {
@@ -188,12 +195,17 @@ export default function MyResults() {
       });
 
       setAssessments(combined);
-      setSelectedId(combined[0]?.result.id ?? "");
+      if (preSelectedAssessmentId) {
+        const preSelected = combined.find(a => a.result.assessment_id === preSelectedAssessmentId);
+        setSelectedId(preSelected?.result.id ?? combined[0]?.result.id ?? "");
+      } else {
+        setSelectedId(combined[0]?.result.id ?? "");
+      }
       setLoading(false);
     };
 
     fetchResults();
-  }, [user]);
+  }, [effectiveUserId, preSelectedAssessmentId]);
 
   // Selected assessment
   const selected = useMemo(
@@ -437,13 +449,17 @@ export default function MyResults() {
   if (!assessments.length) {
     return (
       <div className="p-6 max-w-5xl mx-auto text-center space-y-4">
-        <h1 className="text-2xl font-bold text-foreground">My Results</h1>
+        <h1 className="text-2xl font-bold text-foreground">
+          {isCoachView ? "Client Results" : "My Results"}
+        </h1>
         <p className="text-muted-foreground">
-          You haven't completed any assessments yet.
+          {isCoachView ? "No completed assessments found for this client." : "You haven't completed any assessments yet."}
         </p>
-        <Button onClick={() => navigate("/assessment")}>
-          Take an Assessment
-        </Button>
+        {!isCoachView && (
+          <Button onClick={() => navigate("/assessment")}>
+            Take an Assessment
+          </Button>
+        )}
       </div>
     );
   }
@@ -452,7 +468,9 @@ export default function MyResults() {
     <div className="p-6 space-y-8 max-w-5xl mx-auto">
       {/* Assessment selector */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h1 className="text-2xl font-bold text-foreground">My Results</h1>
+        <h1 className="text-2xl font-bold text-foreground">
+          {isCoachView ? "Client Results" : "My Results"}
+        </h1>
         {assessments.length > 1 && (
           <Select value={selectedId} onValueChange={setSelectedId}>
             <SelectTrigger className="w-full sm:w-72">
@@ -512,32 +530,36 @@ export default function MyResults() {
             >
               <FileText className="mr-2 h-4 w-4" /> Export PDF
             </Button>
-            <Button
-              variant="outline"
-              onClick={() =>
-                toast({
-                  title: "Coming Soon",
-                  description:
-                    "AI chat about results will be available soon.",
-                })
-              }
-            >
-              <MessageSquare className="mr-2 h-4 w-4" /> Ask AI About My
-              Results
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() =>
-                navigate(
-                  `/assessment?instrument=${selected.result.instrument_id}`
-                )
-              }
-            >
-              <RefreshCw className="mr-2 h-4 w-4" /> Retake Assessment
-            </Button>
-            <Button onClick={() => navigate("/assessment")}>
-              Take Another Assessment
-            </Button>
+            {!isCoachView && (
+              <>
+                <Button
+                  variant="outline"
+                  onClick={() =>
+                    toast({
+                      title: "Coming Soon",
+                      description:
+                        "AI chat about results will be available soon.",
+                    })
+                  }
+                >
+                  <MessageSquare className="mr-2 h-4 w-4" /> Ask AI About My
+                  Results
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() =>
+                    navigate(
+                      `/assessment?instrument=${selected.result.instrument_id}`
+                    )
+                  }
+                >
+                  <RefreshCw className="mr-2 h-4 w-4" /> Retake Assessment
+                </Button>
+                <Button onClick={() => navigate("/assessment")}>
+                  Take Another Assessment
+                </Button>
+              </>
+            )}
           </section>
 
           {/* SECTION 2 - Profile Chart */}
@@ -685,31 +707,33 @@ export default function MyResults() {
                         </span>
                       </div>
                     )}
-                    {regenerating ? (
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <RefreshCw className="h-4 w-4 animate-spin" />
-                        Regenerating interpretation…
-                      </div>
-                    ) : (
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button variant="outline" size="sm" className="text-xs text-foreground border-border mt-1">
-                            <RefreshCw className="mr-1 h-3 w-3" /> Regenerate Interpretation
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Regenerate Interpretation?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              This will regenerate your interpretation using the latest AI version. Your current interpretation will be replaced. This will use 1 of your monthly AI messages. Continue?
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={handleRegenerate}>Continue</AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
+                    {!isCoachView && (
+                      regenerating ? (
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <RefreshCw className="h-4 w-4 animate-spin" />
+                          Regenerating interpretation…
+                        </div>
+                      ) : (
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="outline" size="sm" className="text-xs text-foreground border-border mt-1">
+                              <RefreshCw className="mr-1 h-3 w-3" /> Regenerate Interpretation
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Regenerate Interpretation?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This will regenerate your interpretation using the latest AI version. Your current interpretation will be replaced. This will use 1 of your monthly AI messages. Continue?
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction onClick={handleRegenerate}>Continue</AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      )
                     )}
                   </>
                 ) : pollingNarrative ? (
