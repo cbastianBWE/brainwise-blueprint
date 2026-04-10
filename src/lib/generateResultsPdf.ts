@@ -257,23 +257,40 @@ export function generateResultsPdf(data: PdfData, sections: PdfSections): void {
   // ── Inner render helpers (closure over doc, y, checkPageBreak) ──
   function renderNarrative(d: jsPDF, text: string, insightsOnly: boolean) {
     const lines = text.split("\n");
-    let inFacetSection = false; // tracks whether we're inside a ### facet insight section
+    let inFacetSection = false;
+    let skipFacetInsightsBlock = false;
 
     for (const raw of lines) {
       const trimmed = raw.trim();
-      if (!trimmed) { y += 2; continue; }
 
-      // Detect ### facet sections boundaries
+      if (trimmed.startsWith("## ")) {
+        if (!insightsOnly) {
+          skipFacetInsightsBlock = isFacetInsightsTopHeading(trimmed);
+          if (skipFacetInsightsBlock) {
+            inFacetSection = false;
+            continue;
+          }
+        } else {
+          skipFacetInsightsBlock = false;
+        }
+      }
+
+      if (!insightsOnly && skipFacetInsightsBlock) {
+        continue;
+      }
+
+      if (!trimmed) {
+        y += 2;
+        continue;
+      }
+
       if (trimmed.startsWith("### ")) {
         inFacetSection = true;
       } else if (trimmed.startsWith("## ")) {
         inFacetSection = false;
       }
 
-      // insights-only mode: only render lines inside ### sections
       if (insightsOnly && !inFacetSection) continue;
-
-      // main narrative mode: skip everything inside ### facet sections
       if (!insightsOnly && inFacetSection) continue;
 
       if (trimmed.startsWith("## ")) {
@@ -421,6 +438,14 @@ function cleanMarkdown(text: string): string {
   return text.replace(/\*\*(.+?)\*\*/g, "$1");
 }
 
+function isFacetInsightsTopHeading(text: string): boolean {
+  return /^##\s+driving facet insights\b/i.test(text);
+}
+
+function isFacetScoreGroupHeading(text: string): boolean {
+  return /^###\s+(elevated|suppressed)\s+facets\b/i.test(text);
+}
+
 function formatBand(band: string): string {
   return band
     .replace(/_/g, " ")
@@ -441,24 +466,26 @@ function extractFacetInsights(narrative: string): string | null {
   const insightLines: string[] = [];
   let inSection = false;
   let currentSectionHasInsights = false;
+  let currentSectionIsScoreGroup = false;
   let currentSectionLines: string[] = [];
 
   const flushSection = () => {
-    if (currentSectionHasInsights) {
+    if (currentSectionHasInsights && !currentSectionIsScoreGroup) {
       insightLines.push(...currentSectionLines);
     }
     currentSectionLines = [];
     currentSectionHasInsights = false;
+    currentSectionIsScoreGroup = false;
   };
 
   for (const line of lines) {
     const trimmed = line.trim();
     if (trimmed.startsWith("### ")) {
-      // Flush previous ### section
       if (inSection) flushSection();
       inSection = true;
       currentSectionLines = [line];
       currentSectionHasInsights = false;
+      currentSectionIsScoreGroup = isFacetScoreGroupHeading(trimmed);
       continue;
     }
     if (inSection && trimmed.startsWith("## ")) {
@@ -468,13 +495,12 @@ function extractFacetInsights(narrative: string): string | null {
     }
     if (inSection) {
       currentSectionLines.push(line);
-      // Mark section as having insights if it contains behavioral analysis content
       if (/[✅❌]/.test(trimmed) || /^\*\*(Impact on|Behavioral)/i.test(trimmed)) {
         currentSectionHasInsights = true;
       }
     }
   }
-  // Flush last section
+
   if (inSection) flushSection();
 
   return insightLines.length > 0 ? insightLines.join("\n") : null;
