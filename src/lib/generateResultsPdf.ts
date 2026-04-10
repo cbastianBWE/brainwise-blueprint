@@ -440,23 +440,42 @@ function extractFacetInsights(narrative: string): string | null {
   const lines = narrative.split("\n");
   const insightLines: string[] = [];
   let inSection = false;
+  let currentSectionHasInsights = false;
+  let currentSectionLines: string[] = [];
+
+  const flushSection = () => {
+    if (currentSectionHasInsights) {
+      insightLines.push(...currentSectionLines);
+    }
+    currentSectionLines = [];
+    currentSectionHasInsights = false;
+  };
 
   for (const line of lines) {
     const trimmed = line.trim();
     if (trimmed.startsWith("### ")) {
+      // Flush previous ### section
+      if (inSection) flushSection();
       inSection = true;
-      insightLines.push(line);
+      currentSectionLines = [line];
+      currentSectionHasInsights = false;
       continue;
     }
     if (inSection && trimmed.startsWith("## ")) {
+      flushSection();
       inSection = false;
       continue;
     }
     if (inSection) {
-      insightLines.push(line);
+      currentSectionLines.push(line);
+      // Mark section as having insights if it contains behavioral analysis content
+      if (/[✅❌]/.test(trimmed) || /^\*\*(Impact on|Behavioral)/i.test(trimmed)) {
+        currentSectionHasInsights = true;
+      }
     }
   }
+  // Flush last section
+  if (inSection) flushSection();
 
-  const hasContent = insightLines.some((l) => /[✅❌]/.test(l));
-  return hasContent ? insightLines.join("\n") : null;
+  return insightLines.length > 0 ? insightLines.join("\n") : null;
 }
