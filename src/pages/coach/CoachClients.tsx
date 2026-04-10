@@ -44,6 +44,7 @@ export default function CoachClients() {
   const { user } = useAuth();
   const [clients, setClients] = useState<ClientRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
 
   // Form state
@@ -378,7 +379,7 @@ export default function CoachClients() {
         </td></tr>
         <tr><td style="padding:32px;">
           <p style="font-size:16px;color:#111827;margin:0 0 16px;">Hi ${clientName},</p>
-          <h2 style="font-size:18px;color:#111827;margin:0 0 16px;">Don't Forget Your Assessment</h2>
+          <h2 style="font-size:18px;color:#111827;margin:0 0 16px;">Don't Forget to Complete Your Assessment</h2>
           <p style="font-size:15px;color:#374151;line-height:1.6;margin:0 0 16px;">
             ${bodyText}
           </p>
@@ -573,6 +574,14 @@ export default function CoachClients() {
             <CardDescription>
               {clients.length} assessment{clients.length !== 1 ? "s" : ""} across {totalUniqueClients} client{totalUniqueClients !== 1 ? "s" : ""}
             </CardDescription>
+            <div className="pt-2">
+              <Input
+                placeholder="Search by name or email..."
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                className="max-w-sm"
+              />
+            </div>
           </CardHeader>
           <CardContent className="p-0">
             <div className="overflow-x-auto">
@@ -582,12 +591,20 @@ export default function CoachClients() {
                     <TableHead>Client</TableHead>
                     <TableHead>Instrument</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead>Date Sent</TableHead>
                     <TableHead>Completed</TableHead>
+                    <TableHead>Payment</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {clients.map(c => (
+                  {clients
+                    .filter(c => {
+                      if (!searchQuery.trim()) return true;
+                      const q = searchQuery.toLowerCase();
+                      return (c.client_name?.toLowerCase().includes(q) || c.client_email.toLowerCase().includes(q));
+                    })
+                    .map(c => (
                     <TableRow key={c.id}>
                       <TableCell className="font-medium">
                         {c.client_name || c.client_email}
@@ -595,7 +612,17 @@ export default function CoachClients() {
                       <TableCell className="text-sm">{c.instrument_name || "—"}</TableCell>
                       <TableCell>{getStatusBadge(c.assessment_status, c.invitation_status)}</TableCell>
                       <TableCell className="text-sm">
+                        {c.created_at ? format(new Date(c.created_at), "MMM d, yyyy") : "—"}
+                      </TableCell>
+                      <TableCell className="text-sm">
                         {c.completed_at ? format(new Date(c.completed_at), "MMM d, yyyy") : "—"}
+                      </TableCell>
+                      <TableCell>
+                        {c.stripe_payment_intent_id ? (
+                          <Badge variant="default" className="text-xs">Coach Paid</Badge>
+                        ) : (
+                          <Badge variant="outline" className="text-xs">Self Pay</Badge>
+                        )}
                       </TableCell>
                       <TableCell className="text-right space-x-2">
                         <Button
