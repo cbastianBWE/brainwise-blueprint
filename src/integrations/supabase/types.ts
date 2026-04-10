@@ -373,7 +373,9 @@ export type Database = {
           coach_user_id: string
           created_at: string
           id: string
+          instrument_id: string | null
           invitation_status: string
+          stripe_payment_intent_id: string | null
         }
         Insert: {
           assessment_id?: string | null
@@ -383,7 +385,9 @@ export type Database = {
           coach_user_id: string
           created_at?: string
           id?: string
+          instrument_id?: string | null
           invitation_status?: string
+          stripe_payment_intent_id?: string | null
         }
         Update: {
           assessment_id?: string | null
@@ -393,7 +397,9 @@ export type Database = {
           coach_user_id?: string
           created_at?: string
           id?: string
+          instrument_id?: string | null
           invitation_status?: string
+          stripe_payment_intent_id?: string | null
         }
         Relationships: [
           {
@@ -415,6 +421,13 @@ export type Database = {
             columns: ["coach_user_id"]
             isOneToOne: false
             referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coach_clients_instrument_id_fkey"
+            columns: ["instrument_id"]
+            isOneToOne: false
+            referencedRelation: "instruments"
             referencedColumns: ["id"]
           },
         ]
