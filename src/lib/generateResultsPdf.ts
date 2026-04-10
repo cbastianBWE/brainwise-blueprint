@@ -280,7 +280,9 @@ export function generateResultsPdf(data: PdfData, sections: PdfSections): void {
       }
 
       if (!trimmed) {
-        y += 2;
+        if (!insightsOnly || inFacetSection) {
+          y += 2;
+        }
         continue;
       }
 
