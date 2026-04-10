@@ -153,7 +153,7 @@ export default function CoachClients() {
         body: {
           price_id: ASSESSMENT_PURCHASE.price_id,
           mode: "coach_order",
-          instrument_id: instRow.id,
+          instrument_id: selectedInstrument.uuid,
           client_email: email,
           client_first_name: firstName,
           client_last_name: lastName,
