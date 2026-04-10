@@ -167,7 +167,7 @@ export default function InstrumentSelection({ onSelect }: Props) {
           const subscriptionAccess = canAccessBySubscription(inst.tier);
           const instrumentUuid = INSTRUMENT_UUID_MAP[inst.instrument_id] || "";
           const coachPaid = coachPaidInstrumentIds.has(instrumentUuid);
-          const hasPurchase = purchasedInstrumentIds.has(inst.instrument_id);
+          const hasPurchase = purchasedInstrumentIds.has(inst.instrument_id) || purchasedInstrumentIds.has(inst.short_name);
           const hasCompleted = completedInstrumentIds.has(inst.instrument_id);
           // Purchase grants one attempt; if completed, need new purchase
           const purchaseAccess = hasPurchase && !hasCompleted;
