@@ -74,7 +74,7 @@ Deno.serve(async (req: Request) => {
         "Content-Type": "application/json",
         apikey: anonKey,
       },
-      body: JSON.stringify({ subscription_tier }),
+      body: JSON.stringify({ subscription_tier, usage_type: "chat_message" }),
     });
     const usage = await usageRes.json();
 

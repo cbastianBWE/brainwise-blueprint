@@ -240,8 +240,8 @@ export default function MyResults() {
     setRegeneratedVersion(null);
     setLimitReached(null);
 
-    // Consume one message from usage limit
-    const usageData = await consumeMessage(profile?.subscription_tier ?? "base");
+    // Consume one AI interaction from usage limit (report_generation type)
+    const usageData = await consumeMessage(profile?.subscription_tier ?? "base", "report_generation");
     if (!usageData || !usageData.allowed) {
       setLimitReached({ limit: usageData?.limit ?? 30, tier: usageData?.tier ?? profile?.subscription_tier ?? "base" });
       setRegenerating(false);

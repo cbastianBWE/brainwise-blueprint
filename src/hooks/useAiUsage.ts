@@ -8,6 +8,7 @@ export interface UsageData {
   remaining: number;
   tier?: string;
   message?: string;
+  counts_by_type?: Record<string, number>;
 }
 
 export function useAiUsage() {
@@ -24,9 +25,9 @@ export function useAiUsage() {
     return data as UsageData | null;
   }, []);
 
-  const consumeMessage = useCallback(async (subscriptionTier = "base") => {
+  const consumeMessage = useCallback(async (subscriptionTier = "base", usageType = "chat_message") => {
     const { data, error } = await supabase.functions.invoke("check-ai-usage", {
-      body: { subscription_tier: subscriptionTier },
+      body: { subscription_tier: subscriptionTier, usage_type: usageType },
     });
     if (!error && data) setUsage(data as UsageData);
     return data as UsageData | null;
