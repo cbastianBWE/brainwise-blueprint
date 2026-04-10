@@ -108,9 +108,10 @@ interface MyResultsProps {
   isCoachView?: boolean;
   targetUserId?: string;
   preSelectedAssessmentId?: string;
+  coachUserId?: string;
 }
 
-export default function MyResults({ isCoachView = false, targetUserId, preSelectedAssessmentId }: MyResultsProps) {
+export default function MyResults({ isCoachView = false, targetUserId, preSelectedAssessmentId, coachUserId }: MyResultsProps) {
   const { user } = useAuth();
   const { profile } = useUserProfile();
   const { toast } = useToast();
@@ -129,15 +130,20 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
   const [exportModalOpen, setExportModalOpen] = useState(false);
   const [clientName, setClientName] = useState<string | null>(null);
 
-  // Fetch client name when in coach view
+  const [shareWithCoach, setShareWithCoach] = useState<boolean | null>(null);
+
+  // Fetch client name and share preference when in coach view
   useEffect(() => {
     if (!isCoachView || !targetUserId) return;
     supabase
       .from("users")
-      .select("full_name")
+      .select("full_name, share_results_with_coach")
       .eq("id", targetUserId)
       .single()
-      .then(({ data }) => setClientName(data?.full_name ?? null));
+      .then(({ data }) => {
+        setClientName(data?.full_name ?? null);
+        setShareWithCoach(data?.share_results_with_coach ?? false);
+      });
   }, [isCoachView, targetUserId]);
 
   const displayName = isCoachView ? clientName : profile?.full_name;
@@ -208,7 +214,20 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
         };
       });
 
-      setAssessments(combined);
+      // Coach filtering: if share_results_with_coach is false, only show linked assessments
+      let filtered = combined;
+      if (isCoachView && coachUserId && shareWithCoach === false) {
+        const { data: linkedRows } = await supabase
+          .from("coach_clients")
+          .select("assessment_id")
+          .eq("coach_user_id", coachUserId)
+          .eq("client_user_id", effectiveUserId)
+          .not("assessment_id", "is", null);
+        const linkedIds = new Set((linkedRows ?? []).map(r => r.assessment_id));
+        filtered = combined.filter(a => linkedIds.has(a.result.assessment_id));
+      }
+
+      setAssessments(filtered);
       if (preSelectedAssessmentId) {
         const preSelected = combined.find(a => a.result.assessment_id === preSelectedAssessmentId);
         setSelectedId(preSelected?.result.id ?? combined[0]?.result.id ?? "");
@@ -219,7 +238,7 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
     };
 
     fetchResults();
-  }, [effectiveUserId, preSelectedAssessmentId]);
+  }, [effectiveUserId, preSelectedAssessmentId, isCoachView, coachUserId, shareWithCoach]);
 
   // Selected assessment
   const selected = useMemo(

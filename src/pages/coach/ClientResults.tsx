@@ -1,8 +1,10 @@
 import { useSearchParams } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 import MyResults from "@/pages/MyResults";
 
 export default function ClientResults() {
   const [searchParams] = useSearchParams();
+  const { user } = useAuth();
   const userId = searchParams.get("user_id") ?? "";
   const assessmentId = searchParams.get("assessment_id") ?? undefined;
 
@@ -19,6 +21,7 @@ export default function ClientResults() {
       isCoachView
       targetUserId={userId}
       preSelectedAssessmentId={assessmentId}
+      coachUserId={user?.id}
     />
   );
 }
