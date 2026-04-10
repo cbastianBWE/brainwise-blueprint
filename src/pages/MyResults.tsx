@@ -117,6 +117,8 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
   const { toast } = useToast();
   const navigate = useNavigate();
   const effectiveUserId = isCoachView && targetUserId ? targetUserId : user?.id;
+  const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
   const [assessments, setAssessments] = useState<AssessmentWithResult[]>([]);
   const [selectedId, setSelectedId] = useState<string>("");
@@ -747,25 +749,59 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
                           Regenerating interpretation…
                         </div>
                       ) : (
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="outline" size="sm" className="text-xs text-foreground border-border mt-1">
-                              <RefreshCw className="mr-1 h-3 w-3" /> Regenerate Interpretation
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Regenerate Interpretation?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                This will regenerate your interpretation using the latest AI version. Your current interpretation will be replaced. This will use 1 of your monthly AI messages. Continue?
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction onClick={handleRegenerate}>Continue</AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
+                        <>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-xs text-foreground border-border mt-1"
+                            onClick={() => {
+                              if (profile?.subscription_status === "active") {
+                                setShowConfirmDialog(true);
+                              } else {
+                                setShowUpgradeDialog(true);
+                              }
+                            }}
+                          >
+                            <RefreshCw className="mr-1 h-3 w-3" /> Regenerate Interpretation
+                          </Button>
+
+                          {/* Upgrade dialog for users without active subscription */}
+                          <AlertDialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog}>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Subscription Required</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Regenerating your interpretation requires an active subscription.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter className="flex flex-col items-center gap-2 sm:flex-col">
+                                <AlertDialogAction onClick={() => { setShowUpgradeDialog(false); navigate("/pricing"); }}>
+                                  Upgrade to Premium
+                                </AlertDialogAction>
+                                <p className="text-xs text-muted-foreground text-center">
+                                  Base plan also includes interpretation regeneration.
+                                </p>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+
+                          {/* Existing confirmation dialog for active subscribers */}
+                          <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Regenerate Interpretation?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  This will regenerate your interpretation using the latest AI version. Your current interpretation will be replaced. This will use 1 of your monthly AI messages. Continue?
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={handleRegenerate}>Continue</AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </>
                       )
                     )}
                   </>
