@@ -44,6 +44,7 @@ export default function CoachClients() {
   const { user } = useAuth();
   const [clients, setClients] = useState<ClientRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
 
   // Form state
