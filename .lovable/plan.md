@@ -1,37 +1,20 @@
 
 
-# Plan: Update Billing Page for Free/Inactive Users
-
-## What Changes
-
-When `subscription.subscribed` is false (no active subscription), the billing page will show:
-- **Current Plan**: "Free Account" with subtitle "No active subscription" and a short list of what free accounts get (per-assessment purchases, no AI chat, no resources)
-- **Upgrade section**: A visually distinct card below with "Upgrade to Premium" header, $24/mo pricing, Premium feature list, and a "Get Started" button linking to `/pricing`
-
-When active on Base tier: show Base plan info + "Upgrade to Premium" CTA (existing behavior, unchanged).
-When active on Premium tier: show Premium plan info, no upgrade CTA (existing behavior, unchanged).
+# Plan: Assessment Page Sidebar + Continue Button
 
 ## Changes
 
-### Single file: `src/pages/BillingSettings.tsx`
+### 1. `src/App.tsx` — Move `/assessment` route inside AppLayout
 
-Replace the content inside the `!isActive` branch (lines 61–112) with three-way logic:
+Move line 68 (`/assessment`) from the "without sidebar" group into the AppLayout-wrapped group (after line 74, alongside `/dashboard`). The `AssessmentFlow` component will still render inside the layout — users can exit via the existing `onExit` callback.
 
-**If `!isActive`:**
-- Title: "Free Account" (no badge)
-- Subtitle: "No active subscription"
-- Feature list: "Per-assessment purchases available ($29.99 each)", "No AI chat included", "No resources access"
-- Remove the AI chat limit line
-- Replace "View Plans" button with the upgrade card below
+### 2. `src/components/assessment/InstrumentSelection.tsx` — Add "Continue Assessment" state
 
-**Add a second `<Card>` after the Current Plan card** (only shown when `!isActive` or `tier === "base"`):
-- Header: "Upgrade to Premium"
-- Price line: "$24/mo or $220/yr"
-- Feature list from `PLANS.premium.features`
-- "Get Started" button → `navigate("/pricing")`
-- Styled with a subtle border accent or background to be visually distinct
+- Add `inProgressInstrumentIds` state (a `Set<string>`, same pattern as `completedInstrumentIds`)
+- In the existing `Promise.all` load block, add a query: `supabase.from("assessments").select("instrument_id").eq("user_id", user.id).eq("status", "in_progress")`
+- Build the set from results
+- In the button rendering logic, when an instrument is accessible (subscription, coach-paid, or purchase access) AND `inProgressInstrumentIds.has(inst.instrument_id)`, show "Continue Assessment" instead of "Start Assessment"
+- No other button logic changes — locked/upgrade buttons remain identical
 
-**If `isActive && tier === "premium"`:** no upgrade card shown (current behavior preserved).
-
-**If `isActive && tier === "base"`:** current plan card shows Base info as-is, plus the Premium upgrade card below.
+### No other files change
 
