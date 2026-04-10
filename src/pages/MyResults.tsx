@@ -407,7 +407,7 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
     }
 
     const pdfData: PdfData = {
-      userName: profile?.full_name ?? "Participant",
+      userName: displayName ?? "Participant",
       instrumentName: selected.instrument_name,
       instrumentShortName: selected.instrument_short_name ?? selected.result.instrument_id ?? selected.instrument_name.replace(/\s+/g, ""),
       instrumentVersion: selected.result.instrument_version ?? "—",
@@ -510,8 +510,8 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
               <h2 className="text-xl font-semibold text-foreground">
                 Your {selected.instrument_name.replace(/\s*Profile$/i, '')} Profile
               </h2>
-              {profile?.full_name && (
-                <p className="text-muted-foreground">{profile.full_name}</p>
+              {displayName && (
+                <p className="text-muted-foreground">{displayName}</p>
               )}
               <p className="text-sm text-muted-foreground">
                 Taken{" "}
