@@ -62,16 +62,25 @@ export default function InstrumentSelection({ onSelect }: Props) {
   const [recommendations, setRecommendations] = useState<string[]>([]);
   const [platformVersion, setPlatformVersion] = useState<string>("");
   const [coachPaidInstrumentIds, setCoachPaidInstrumentIds] = useState<Set<string>>(new Set());
+  const [purchasedInstrumentIds, setPurchasedInstrumentIds] = useState<Set<string>>(new Set());
+  const [completedInstrumentIds, setCompletedInstrumentIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!user) return;
     const load = async () => {
-      const [userRes, versionRes, resultsRes, coachClientsRes] = await Promise.all([
+      const [userRes, versionRes, resultsRes, coachClientsRes, purchasesRes, completedRes] = await Promise.all([
         supabase.from("users").select("subscription_tier, subscription_status").eq("id", user.id).single(),
         supabase.from("platform_versions").select("version_string").eq("is_active", true).limit(1).single(),
         supabase.from("assessment_results").select("overall_profile").eq("user_id", user.id).order("created_at", { ascending: false }).limit(1),
-        supabase.from("coach_clients").select("instrument_id, stripe_payment_intent_id").eq("client_user_id", user.id).not("stripe_payment_intent_id", "is", null).neq("invitation_status", "completed"),
+        supabase.from("coach_clients")
+          .select("instrument_id, stripe_payment_intent_id, assessment_id")
+          .eq("client_user_id", user.id)
+          .not("stripe_payment_intent_id", "is", null)
+          .is("assessment_id", null)
+          .neq("invitation_status", "completed"),
+        supabase.from("assessment_purchases").select("instrument_id").eq("user_id", user.id),
+        supabase.from("assessments").select("instrument_id").eq("user_id", user.id).eq("status", "completed"),
       ]);
 
       if (userRes.data) {
@@ -96,6 +105,24 @@ export default function InstrumentSelection({ onSelect }: Props) {
           if (row.instrument_id) ids.add(row.instrument_id);
         });
         setCoachPaidInstrumentIds(ids);
+      }
+
+      // Build set of purchased instrument IDs
+      if (purchasesRes.data) {
+        const ids = new Set<string>();
+        purchasesRes.data.forEach((row) => {
+          if (row.instrument_id) ids.add(row.instrument_id);
+        });
+        setPurchasedInstrumentIds(ids);
+      }
+
+      // Build set of completed instrument IDs
+      if (completedRes.data) {
+        const ids = new Set<string>();
+        completedRes.data.forEach((row) => {
+          if (row.instrument_id) ids.add(row.instrument_id);
+        });
+        setCompletedInstrumentIds(ids);
       }
 
       setLoading(false);
@@ -140,6 +167,10 @@ export default function InstrumentSelection({ onSelect }: Props) {
           const subscriptionAccess = canAccessBySubscription(inst.tier);
           const instrumentUuid = INSTRUMENT_UUID_MAP[inst.instrument_id] || "";
           const coachPaid = coachPaidInstrumentIds.has(instrumentUuid);
+          const hasPurchase = purchasedInstrumentIds.has(inst.instrument_id);
+          const hasCompleted = completedInstrumentIds.has(inst.instrument_id);
+          // Purchase grants one attempt; if completed, need new purchase
+          const purchaseAccess = hasPurchase && !hasCompleted;
 
           let buttonContent: React.ReactNode;
           if (subscriptionAccess) {
@@ -157,6 +188,12 @@ export default function InstrumentSelection({ onSelect }: Props) {
                 Start Assessment (Coach Paid)
               </Button>
             );
+          } else if (purchaseAccess) {
+            buttonContent = (
+              <Button className="w-full" onClick={() => handleSelect(inst)}>
+                Start Assessment
+              </Button>
+            );
           } else {
             buttonContent = (
               <Button variant="outline" className="w-full" onClick={() => navigate("/pricing")}>
@@ -168,7 +205,7 @@ export default function InstrumentSelection({ onSelect }: Props) {
           return (
             <Card
               key={inst.instrument_id}
-              className={`relative transition-all ${isRecommended ? "ring-2 ring-primary" : ""} ${subscriptionAccess || coachPaid ? "hover:shadow-md" : "opacity-80"}`}
+              className={`relative transition-all ${isRecommended ? "ring-2 ring-primary" : ""} ${subscriptionAccess || coachPaid || purchaseAccess ? "hover:shadow-md" : "opacity-80"}`}
             >
               {isRecommended && (
                 <div className="absolute -top-3 left-4">

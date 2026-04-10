@@ -67,7 +67,7 @@ serve(async (req) => {
           ? `${origin}/coach/clients?checkout=success`
           : checkoutMode === "subscription"
             ? `${origin}/dashboard?checkout=success`
-            : `${origin}/assessment?checkout=success&instrument=${resolvedInstrumentIds}`,
+            : `${origin}/assessment?checkout=success&instrument=${resolvedInstrumentIds}&autostart=true`,
       cancel_url:
         mode === "coach_order"
           ? `${origin}/coach/clients?checkout=cancelled`
