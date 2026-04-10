@@ -43,6 +43,7 @@ interface ClientRow {
 
 export default function CoachClients() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [clients, setClients] = useState<ClientRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -631,7 +632,7 @@ export default function CoachClients() {
                           variant="outline"
                           className="gap-1"
                           disabled={c.assessment_status !== "completed"}
-                          onClick={() => toast.info("Client results view coming soon.")}
+                          onClick={() => navigate(`/coach/client-results?user_id=${c.client_user_id}&assessment_id=${c.assessment_id}`)}
                         >
                           <Eye className="h-3 w-3" /> Results
                         </Button>
