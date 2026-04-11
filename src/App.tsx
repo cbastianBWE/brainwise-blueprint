@@ -59,7 +59,7 @@ const App = () => (
             <Route path="/login" element={<Login />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/pricing" element={<Pricing />} />
+            
 
             {/* Protected routes without sidebar */}
             <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
@@ -70,6 +70,7 @@ const App = () => (
             {/* Protected routes with sidebar layout */}
             <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
               {/* Individual / Corporate Employee */}
+              <Route path="/pricing" element={<Pricing />} />
               <Route path="/assessment" element={<Assessment />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/my-results" element={<MyResults />} />
