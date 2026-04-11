@@ -371,10 +371,14 @@ export type Database = {
           client_user_id: string | null
           coach_notes: string | null
           coach_user_id: string
+          coupon_amount: number | null
+          coupon_expires_at: string | null
+          coupon_redeemed: boolean
           created_at: string
           id: string
           instrument_id: string | null
           invitation_status: string
+          stripe_coupon_id: string | null
           stripe_payment_intent_id: string | null
         }
         Insert: {
@@ -383,10 +387,14 @@ export type Database = {
           client_user_id?: string | null
           coach_notes?: string | null
           coach_user_id: string
+          coupon_amount?: number | null
+          coupon_expires_at?: string | null
+          coupon_redeemed?: boolean
           created_at?: string
           id?: string
           instrument_id?: string | null
           invitation_status?: string
+          stripe_coupon_id?: string | null
           stripe_payment_intent_id?: string | null
         }
         Update: {
@@ -395,10 +403,14 @@ export type Database = {
           client_user_id?: string | null
           coach_notes?: string | null
           coach_user_id?: string
+          coupon_amount?: number | null
+          coupon_expires_at?: string | null
+          coupon_redeemed?: boolean
           created_at?: string
           id?: string
           instrument_id?: string | null
           invitation_status?: string
+          stripe_coupon_id?: string | null
           stripe_payment_intent_id?: string | null
         }
         Relationships: [
@@ -1075,6 +1087,8 @@ export type Database = {
       users: {
         Row: {
           account_type: string | null
+          coupon_amount: number | null
+          coupon_expires_at: string | null
           created_at: string
           email: string
           full_name: string | null
@@ -1082,12 +1096,15 @@ export type Database = {
           onboarding_instrument_version: string | null
           organization_id: string | null
           share_results_with_coach: boolean
+          stripe_coupon_id: string | null
           stripe_subscription_id: string | null
           subscription_status: string
           subscription_tier: string
         }
         Insert: {
           account_type?: string | null
+          coupon_amount?: number | null
+          coupon_expires_at?: string | null
           created_at?: string
           email: string
           full_name?: string | null
@@ -1095,12 +1112,15 @@ export type Database = {
           onboarding_instrument_version?: string | null
           organization_id?: string | null
           share_results_with_coach?: boolean
+          stripe_coupon_id?: string | null
           stripe_subscription_id?: string | null
           subscription_status?: string
           subscription_tier?: string
         }
         Update: {
           account_type?: string | null
+          coupon_amount?: number | null
+          coupon_expires_at?: string | null
           created_at?: string
           email?: string
           full_name?: string | null
@@ -1108,6 +1128,7 @@ export type Database = {
           onboarding_instrument_version?: string | null
           organization_id?: string | null
           share_results_with_coach?: boolean
+          stripe_coupon_id?: string | null
           stripe_subscription_id?: string | null
           subscription_status?: string
           subscription_tier?: string
