@@ -1,34 +1,34 @@
 
 
-# Plan: Gate "Regenerate Interpretation" Behind Subscription Check
+# Plan: Coach Credit Banner on Dashboard
 
 ## What Changes
 
-**Single file**: `src/pages/MyResults.tsx`
+**Single file**: `src/pages/Dashboard.tsx`
 
-The "Regenerate Interpretation" button currently always shows the confirmation dialog. We'll add a subscription gate so that users without an active subscription see an upgrade prompt instead.
+Add a dismissible banner at the top of the dashboard when the logged-in user has an unused coach credit (stripe_coupon_id is not null and coupon_expires_at is in the future).
 
 ## Implementation
 
-1. **Add state**: `showUpgradeDialog` (boolean, default false)
+1. **Fetch coupon data**: Use `supabase` client to query `users` table for `stripe_coupon_id`, `coupon_amount`, `coupon_expires_at` where `id = user.id`. Run this in a `useEffect`.
 
-2. **Replace the AlertDialog trigger pattern**: Instead of wrapping the button in `<AlertDialog>` directly, use two separate dialogs controlled by state:
-   - Extract the button's `onClick` to check `profile?.subscription_status === 'active'`
-   - If active → open the existing confirmation dialog (set `showConfirmDialog` to true)
-   - If not active → open the upgrade dialog (set `showUpgradeDialog` to true)
+2. **State**: `couponData` (the fetched row or null), `dismissed` (boolean, default false).
 
-3. **Upgrade dialog content**:
-   - Title: "Subscription Required"
-   - Description: "Regenerating your interpretation requires an active subscription."
-   - A prominent "Upgrade to Premium" button → `navigate("/pricing")`
-   - Below it, a muted note: "Base plan also includes interpretation regeneration."
-   - A "Cancel" button to close
+3. **Banner display condition**: Show banner when all are true:
+   - `couponData.stripe_coupon_id` is not null
+   - `couponData.coupon_expires_at` is in the future (`new Date(coupon_expires_at) > new Date()`)
+   - `!dismissed`
 
-4. **Confirmation dialog**: The existing confirmation dialog and `handleRegenerate` flow remain identical, just controlled via state instead of nested `AlertDialogTrigger`.
+4. **Banner UI**: A styled `div` (or `Alert`) at the top of the page, before the existing Card:
+   - Text: "🎉 You have a $[coupon_amount] coach credit toward an annual subscription! Upgrade and save before it expires on [formatted date]."
+   - "Upgrade Now" button → `navigate("/pricing")`
+   - X/close button → `setDismissed(true)`
+   - Styled with a highlight background (e.g. `bg-primary/10 border-primary`)
 
-## Lines affected
+5. **No other changes** to the dashboard content.
 
-~743–768 in `MyResults.tsx` — the `!isCoachView` block containing the AlertDialog. Plus two new state variables near the top of the component.
+## Technical Details
 
-No other files change. No edge function changes.
+- Imports added: `useState`, `useEffect` from React; `supabase` from client; `useNavigate` from react-router-dom; `Button` from ui; `X` from lucide-react
+- Date formatted with `toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })`
 
