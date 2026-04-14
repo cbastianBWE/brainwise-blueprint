@@ -1,23 +1,21 @@
 
 
-# Plan: Add debrief gate to MyResults.tsx
+# Plan: Add coachIdRef and use it in handlers in PrivacySettings.tsx
 
-## Single file: `src/pages/MyResults.tsx`
+## Single file: `src/pages/PrivacySettings.tsx`
 
-### 1. Add `debriefPendingIds` state (after line 134)
-```typescript
-const [debriefPendingIds, setDebriefPendingIds] = useState<Set<string>>(new Set());
-```
+### 1. Add `useRef` to import (line 1)
+Change `import { useEffect, useState, useCallback }` to `import { useEffect, useState, useCallback, useRef }`.
 
-### 2. Add debrief check in fetchResults (after line 231, before `setAssessments(filtered)` on line 233)
-Insert the coach_clients query block that checks `results_released === false` for the user's assessments, building a `Set<string>` of pending assessment IDs. Only runs when `!isCoachView && effectiveUserId`.
+### 2. Add `coachIdRef` after `coachId` state (line 77)
+Insert `const coachIdRef = useRef<string | null>(null);` after the existing `coachId` state declaration.
 
-### 3. Wrap sections inside `selected && (` block (lines 529–836)
-- **Before** SECTION 1 (line 529), insert the debrief pending card and open `{!debriefPendingIds.has(selected.result.assessment_id) && (`
-- **After** the ExportPdfModal (line 836), close with `)}`
+### 3. Update coach ID assignment in load (line 105)
+Replace the single-line `setCoachId(cc[0].coach_user_id)` with a block that also sets `coachIdRef.current`.
 
-This means when a result has `results_released = false`, only the pending-debrief card shows. When released, all existing sections render as before.
+### 4. Update `handleToggle` (lines 218–220)
+After `const newEnabled = !current.enabled;`, add `const resolvedViewerUserId = key === 'coach' ? coachIdRef.current : viewerUserId;` and use `resolvedViewerUserId` in the `upsertPermission` call (line 220), in the `deletePermission` else-if path, and in the `share_results_with_coach` sync block.
 
-### No other changes
-No imports needed (Card/CardContent already imported). No other files touched.
+### 5. Update `handleLevelChange` (lines 244–246)
+Add `const resolvedViewerUserId = key === 'coach' ? coachIdRef.current : viewerUserId;` and use it in the `upsertPermission` call.
 
