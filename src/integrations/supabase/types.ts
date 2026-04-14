@@ -364,6 +364,124 @@ export type Database = {
           },
         ]
       }
+      coach_certification_actors: {
+        Row: {
+          access_code: string
+          actor_email: string
+          actor_first_name: string | null
+          actor_type: string
+          certification_id: string
+          coach_user_id: string
+          completed_at: string | null
+          created_at: string
+          id: string
+          instrument_id: string
+          status: string
+        }
+        Insert: {
+          access_code?: string
+          actor_email: string
+          actor_first_name?: string | null
+          actor_type: string
+          certification_id: string
+          coach_user_id: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          instrument_id: string
+          status?: string
+        }
+        Update: {
+          access_code?: string
+          actor_email?: string
+          actor_first_name?: string | null
+          actor_type?: string
+          certification_id?: string
+          coach_user_id?: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          instrument_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coach_certification_actors_certification_id_fkey"
+            columns: ["certification_id"]
+            isOneToOne: false
+            referencedRelation: "coach_certifications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coach_certification_actors_coach_user_id_fkey"
+            columns: ["coach_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      coach_certifications: {
+        Row: {
+          certification_type: string
+          certified_at: string | null
+          certified_by: string | null
+          created_at: string
+          enrolled_by: string
+          free_assessment_uses: Json
+          id: string
+          notes: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          certification_type: string
+          certified_at?: string | null
+          certified_by?: string | null
+          created_at?: string
+          enrolled_by: string
+          free_assessment_uses?: Json
+          id?: string
+          notes?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          certification_type?: string
+          certified_at?: string | null
+          certified_by?: string | null
+          created_at?: string
+          enrolled_by?: string
+          free_assessment_uses?: Json
+          id?: string
+          notes?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coach_certifications_certified_by_fkey"
+            columns: ["certified_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coach_certifications_enrolled_by_fkey"
+            columns: ["enrolled_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coach_certifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       coach_clients: {
         Row: {
           assessment_id: string | null
@@ -446,6 +564,56 @@ export type Database = {
             columns: ["instrument_id"]
             isOneToOne: false
             referencedRelation: "instruments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      coach_invitations: {
+        Row: {
+          accepted_at: string | null
+          certification_type: string
+          created_at: string
+          email: string
+          expires_at: string
+          first_name: string
+          id: string
+          invited_by: string
+          last_name: string
+          status: string
+          token: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          certification_type?: string
+          created_at?: string
+          email: string
+          expires_at?: string
+          first_name: string
+          id?: string
+          invited_by: string
+          last_name: string
+          status?: string
+          token?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          certification_type?: string
+          created_at?: string
+          email?: string
+          expires_at?: string
+          first_name?: string
+          id?: string
+          invited_by?: string
+          last_name?: string
+          status?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coach_invitations_invited_by_fkey"
+            columns: ["invited_by"]
+            isOneToOne: false
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
