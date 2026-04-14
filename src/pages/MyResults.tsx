@@ -132,6 +132,7 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
   const { fetchUsage, consumeMessage } = useAiUsage();
   const [exportModalOpen, setExportModalOpen] = useState(false);
   const [clientName, setClientName] = useState<string | null>(null);
+  const [debriefPendingIds, setDebriefPendingIds] = useState<Set<string>>(new Set());
 
   const [shareWithCoach, setShareWithCoach] = useState<boolean | null>(null);
 
@@ -228,6 +229,26 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
           .not("assessment_id", "is", null);
         const linkedIds = new Set((linkedRows ?? []).map(r => r.assessment_id));
         filtered = combined.filter(a => linkedIds.has(a.result.assessment_id));
+      }
+
+      // Check which coach-invited assessments have results_released = false
+      if (!isCoachView && effectiveUserId) {
+        const assessmentIds = filtered.map(a => a.result.assessment_id);
+        if (assessmentIds.length > 0) {
+          const { data: ccRows } = await supabase
+            .from('coach_clients')
+            .select('assessment_id, results_released')
+            .eq('client_user_id', effectiveUserId)
+            .in('assessment_id', assessmentIds);
+
+          const pendingIds = new Set<string>(
+            (ccRows ?? [])
+              .filter(r => r.results_released === false)
+              .map(r => r.assessment_id)
+              .filter(Boolean) as string[]
+          );
+          setDebriefPendingIds(pendingIds);
+        }
       }
 
       setAssessments(filtered);
@@ -526,6 +547,19 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
 
       {selected && (
         <>
+          {debriefPendingIds.has(selected.result.assessment_id) && (
+            <Card className="border-primary/30 bg-primary/5">
+              <CardContent className="flex flex-col items-center justify-center py-12 space-y-3 text-center">
+                <p className="text-lg font-semibold text-foreground">Results Pending Coach Debrief</p>
+                <p className="text-sm text-muted-foreground max-w-md">
+                  Your coach has asked to review your results with you before they are released.
+                  Please connect with your coach to schedule your debrief session.
+                </p>
+              </CardContent>
+            </Card>
+          )}
+          {!debriefPendingIds.has(selected.result.assessment_id) && (
+            <>
           {/* SECTION 1 - Profile Overview */}
           <section className="space-y-4">
             <div>
@@ -834,6 +868,8 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
             hasFacets={selected.isPTP}
             hasRecommendations={recommendations.length > 0}
           />
+            </>
+          )}
         </>
       )}
     </div>
