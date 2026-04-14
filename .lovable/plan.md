@@ -1,21 +1,19 @@
 
 
-# Plan: Remove Coach Card from Onboarding
+# Plan: Add z-50 to AssessmentFlow Root Element
 
-## Single file: `src/pages/Onboarding.tsx`
+## Single file: `src/components/assessment/AssessmentFlow.tsx`
 
-### Change 1 — Remove `GraduationCap` from import (line 8)
+Add `z-50` to the outermost div's className to ensure the assessment overlay renders above sidebar/navigation elements.
+
+### Change (line ~186)
 ```tsx
-import { Brain, User, Building2 } from "lucide-react";
-```
+// Before
+<div className="fixed inset-0 bg-background flex flex-col">
 
-### Change 2 — Update grid to `md:grid-cols-2` (line 99)
-```tsx
-<div className="grid gap-4 md:grid-cols-2">
+// After
+<div className="fixed inset-0 bg-background flex flex-col z-50">
 ```
-
-### Change 3 — Remove coach Card block (lines 122–131)
-Delete the entire third `<Card>` with GraduationCap/"I am a coach".
 
 No other files changed.
 
