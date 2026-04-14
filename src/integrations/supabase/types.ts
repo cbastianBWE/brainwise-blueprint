@@ -375,9 +375,11 @@ export type Database = {
           coupon_expires_at: string | null
           coupon_redeemed: boolean
           created_at: string
+          debrief_completed: boolean
           id: string
           instrument_id: string | null
           invitation_status: string
+          results_released: boolean
           stripe_coupon_id: string | null
           stripe_payment_intent_id: string | null
         }
@@ -391,9 +393,11 @@ export type Database = {
           coupon_expires_at?: string | null
           coupon_redeemed?: boolean
           created_at?: string
+          debrief_completed?: boolean
           id?: string
           instrument_id?: string | null
           invitation_status?: string
+          results_released?: boolean
           stripe_coupon_id?: string | null
           stripe_payment_intent_id?: string | null
         }
@@ -407,9 +411,11 @@ export type Database = {
           coupon_expires_at?: string | null
           coupon_redeemed?: boolean
           created_at?: string
+          debrief_completed?: boolean
           id?: string
           instrument_id?: string | null
           invitation_status?: string
+          results_released?: boolean
           stripe_coupon_id?: string | null
           stripe_payment_intent_id?: string | null
         }
