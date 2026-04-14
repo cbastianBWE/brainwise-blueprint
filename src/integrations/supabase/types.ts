@@ -1096,9 +1096,11 @@ export type Database = {
           coupon_amount: number | null
           coupon_expires_at: string | null
           created_at: string
+          date_format: string | null
           email: string
           full_name: string | null
           id: string
+          notifications: Json | null
           onboarding_instrument_version: string | null
           organization_id: string | null
           share_results_with_coach: boolean
@@ -1106,15 +1108,18 @@ export type Database = {
           stripe_subscription_id: string | null
           subscription_status: string
           subscription_tier: string
+          timezone: string | null
         }
         Insert: {
           account_type?: string | null
           coupon_amount?: number | null
           coupon_expires_at?: string | null
           created_at?: string
+          date_format?: string | null
           email: string
           full_name?: string | null
           id?: string
+          notifications?: Json | null
           onboarding_instrument_version?: string | null
           organization_id?: string | null
           share_results_with_coach?: boolean
@@ -1122,15 +1127,18 @@ export type Database = {
           stripe_subscription_id?: string | null
           subscription_status?: string
           subscription_tier?: string
+          timezone?: string | null
         }
         Update: {
           account_type?: string | null
           coupon_amount?: number | null
           coupon_expires_at?: string | null
           created_at?: string
+          date_format?: string | null
           email?: string
           full_name?: string | null
           id?: string
+          notifications?: Json | null
           onboarding_instrument_version?: string | null
           organization_id?: string | null
           share_results_with_coach?: boolean
@@ -1138,6 +1146,7 @@ export type Database = {
           stripe_subscription_id?: string | null
           subscription_status?: string
           subscription_tier?: string
+          timezone?: string | null
         }
         Relationships: [
           {
