@@ -14,7 +14,10 @@ import { toast } from "sonner";
 export default function Pricing() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [interval, setInterval] = useState<BillingInterval>("monthly");
+  const searchParams = new URLSearchParams(window.location.search);
+  const [interval, setInterval] = useState<BillingInterval>(
+    searchParams.get("billing") === "annual" ? "annual" : "monthly"
+  );
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
 
   const handleSubscribe = async (tier: PlanTier) => {
