@@ -2,7 +2,7 @@ import {
   LayoutDashboard, BarChart3, ClipboardList, MessageSquare, BookOpen, Settings,
   Users, Building2, UsersRound, Activity, Heart, Award, UserCircle,
   ShieldCheck, Briefcase, GitBranch, FlaskConical, LogOut, History, Shield,
-  CreditCard,
+  CreditCard, Receipt,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -47,6 +47,7 @@ const coachNav: NavItem[] = [
   { title: "My Results", url: "/my-results", icon: BarChart3 },
   { title: "My Clients", url: "/coach/clients", icon: Users },
   { title: "Client Results", url: "/coach/client-results", icon: BarChart3 },
+  { title: "Orders & Invoices", url: "/coach/invoices", icon: Receipt },
   { title: "AI Chat", url: "/ai-chat", icon: MessageSquare },
   { title: "Chat History", url: "/ai-chat/history", icon: History },
   { title: "Resources", url: "/coach/resources", icon: BookOpen, disabled: true, badge: "Coming Soon" },
