@@ -1,38 +1,23 @@
 
 
-# Plan: Add results release toggle, debrief button, and related fields
+# Plan: Add debrief gate to MyResults.tsx
 
-## Changes (single file: `src/pages/coach/CoachClients.tsx`)
+## Single file: `src/pages/MyResults.tsx`
 
-### 1. Import Switch (line 1 area)
-Add `import { Switch } from "@/components/ui/switch";`
-
-### 2. Add fields to ClientRow interface (after line 42)
-Add `debrief_completed: boolean;` and `results_released: boolean;` to the interface.
-
-### 3. Add resultsReleased state (after line 71)
+### 1. Add `debriefPendingIds` state (after line 134)
 ```typescript
-const [resultsReleased, setResultsReleased] = useState(false);
+const [debriefPendingIds, setDebriefPendingIds] = useState<Set<string>>(new Set());
 ```
 
-### 4. Update resetForm (line 179)
-Add `setResultsReleased(false);` to resetForm.
+### 2. Add debrief check in fetchResults (after line 231, before `setAssessments(filtered)` on line 233)
+Insert the coach_clients query block that checks `results_released === false` for the user's assessments, building a `Set<string>` of pending assessment IDs. Only runs when `!isCoachView && effectiveUserId`.
 
-### 5. Update fetchClients select query (line 79)
-Add `debrief_completed, results_released` to the select string.
+### 3. Wrap sections inside `selected && (` block (lines 529–836)
+- **Before** SECTION 1 (line 529), insert the debrief pending card and open `{!debriefPendingIds.has(selected.result.assessment_id) && (`
+- **After** the ExportPdfModal (line 836), close with `)}`
 
-### 6. Update enriched.push (lines 135-147)
-Add `debrief_completed: cc.debrief_completed,` and `results_released: cc.results_released,` to the pushed object.
+This means when a result has `results_released = false`, only the pending-debrief card shows. When released, all existing sections render as before.
 
-### 7. Add Switch toggle to order modal (after line 535, before TabsContent)
-Insert a toggle with label "Allow client to see results immediately" and helper text "If off, client must wait for coach debrief before viewing results", using the `resultsReleased` state.
-
-### 8. Add results_released to coach-pays payload (line 212-221)
-Add `results_released: resultsReleased` to the payload object.
-
-### 9. Add results_released to client-pays insert (lines 272-278)
-Add `results_released: resultsReleased` to the insert object.
-
-### 10. Add debrief button in Level 2 Actions column (after line 746)
-After the Remind button, add a conditional block: when `c.invitation_status === 'completed' && c.assessment_status === 'completed'`, render a Button that calls `supabase.from('coach_clients').update({ debrief_completed: true }).eq('id', c.id)` then refetches. Shows "Debrief Done" (disabled) if already done, otherwise "Mark Debrief Complete".
+### No other changes
+No imports needed (Card/CardContent already imported). No other files touched.
 
