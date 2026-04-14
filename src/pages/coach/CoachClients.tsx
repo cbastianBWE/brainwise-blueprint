@@ -147,7 +147,29 @@ export default function CoachClients() {
       });
     }
 
+    // Derive unique clients
+    const clientMap: Record<string, UniqueClient> = {};
+    for (const row of enriched) {
+      const e = row.client_email;
+      if (!clientMap[e]) {
+        clientMap[e] = {
+          client_email: e,
+          client_user_id: row.client_user_id,
+          client_name: row.client_name,
+          assessment_count: 0,
+          completed_count: 0,
+          pending_count: 0,
+        };
+      }
+      clientMap[e].assessment_count++;
+      if (row.assessment_status === "completed") clientMap[e].completed_count++;
+      if (row.invitation_status === "sent" || row.invitation_status === "opened") clientMap[e].pending_count++;
+      if (!clientMap[e].client_name && row.client_name) clientMap[e].client_name = row.client_name;
+      if (!clientMap[e].client_user_id && row.client_user_id) clientMap[e].client_user_id = row.client_user_id;
+    }
+
     setClients(enriched);
+    setUniqueClients(Object.values(clientMap));
     setLoading(false);
   };
 
