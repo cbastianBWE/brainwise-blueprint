@@ -390,12 +390,36 @@ function SliderControl({
 
   return (
     <div className="space-y-8 text-center">
+      <style>{`
+        .assessment-slider [role="slider"] {
+          width: 22px;
+          height: 22px;
+          transition: transform 0.15s ease, box-shadow 0.15s ease;
+          cursor: grab;
+        }
+        .assessment-slider [role="slider"]:hover {
+          transform: scale(1.25);
+          box-shadow: 0 0 0 6px rgba(37, 99, 235, 0.15);
+        }
+        .assessment-slider [role="slider"]:active {
+          cursor: grabbing;
+          transform: scale(1.1);
+          box-shadow: 0 0 0 8px rgba(37, 99, 235, 0.2);
+        }
+        .assessment-slider [data-orientation="horizontal"] {
+          height: 8px;
+        }
+      `}</style>
       <p className="text-xl font-medium text-foreground leading-relaxed">{item.item_text}</p>
-      <div className="space-y-6">
-        {/* Slider with 0 and 100 labels on ends */}
-        <div className="flex items-center gap-3">
-          <span className="text-sm font-medium text-muted-foreground w-6 text-right flex-shrink-0">0</span>
-          <div className="relative flex-1">
+      <div className="space-y-4 px-2">
+        <div className="flex justify-center">
+          <span className="text-3xl font-bold text-primary min-w-16">
+            {touched ? localVal : '—'}
+          </span>
+        </div>
+        <div className="flex items-center gap-4">
+          <span className="text-sm font-medium text-muted-foreground w-6 text-center flex-shrink-0">0</span>
+          <div className="flex-1 assessment-slider">
             <Slider
               min={0}
               max={100}
@@ -406,33 +430,15 @@ function SliderControl({
                 setTouched(true);
               }}
               onValueCommit={([v]) => onSelect(v)}
-              className="h-4 [&_[role=slider]]:h-5 [&_[role=slider]]:w-5 [&_[data-orientation=horizontal]]:h-2"
             />
-            {/* Score indicator always centered above thumb */}
-            <div
-              className="absolute -top-7 flex items-center justify-center"
-              style={{
-                left: `calc(${localVal}% - 16px)`,
-                width: '32px',
-              }}
-            >
-              <span className="text-sm font-semibold text-primary">
-                {touched ? localVal : '—'}
-              </span>
-            </div>
           </div>
-          <span className="text-sm font-medium text-muted-foreground w-8 text-left flex-shrink-0">100</span>
+          <span className="text-sm font-medium text-muted-foreground w-8 text-center flex-shrink-0">100</span>
         </div>
-        {/* Fixed-width anchor labels */}
-        <div className="flex items-start gap-3 mt-2">
+        <div className="flex items-start gap-4">
           <div className="w-6 flex-shrink-0" />
-          <div className="flex-1 flex justify-between">
-            <div className="w-36 text-left">
-              <span className="text-sm text-muted-foreground">{item.anchor_low || 'Low'}</span>
-            </div>
-            <div className="w-36 text-right">
-              <span className="text-sm text-muted-foreground">{item.anchor_high || 'High'}</span>
-            </div>
+          <div className="flex-1 flex justify-between gap-4">
+            <span className="text-sm text-muted-foreground text-left w-1/2">{item.anchor_low || 'Low'}</span>
+            <span className="text-sm text-muted-foreground text-right w-1/2">{item.anchor_high || 'High'}</span>
           </div>
           <div className="w-8 flex-shrink-0" />
         </div>
