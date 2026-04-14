@@ -43,16 +43,16 @@ const individualNav: NavItem[] = [
 ];
 
 const coachNav: NavItem[] = [
-  { title: "My Clients", url: "/coach/clients", icon: Users },
   { title: "My Assessments", url: "/assessment", icon: ClipboardList },
   { title: "My Results", url: "/my-results", icon: BarChart3 },
+  { title: "My Clients", url: "/coach/clients", icon: Users },
   { title: "Client Results", url: "/coach/client-results", icon: BarChart3 },
   { title: "AI Chat", url: "/ai-chat", icon: MessageSquare },
   { title: "Chat History", url: "/ai-chat/history", icon: History },
   { title: "Resources", url: "/coach/resources", icon: BookOpen, disabled: true, badge: "Coming Soon" },
-  { title: "My Profile", url: "/coach/profile", icon: UserCircle, disabled: true, badge: "Coming Soon" },
   { title: "Certification", url: "/coach/certification", icon: Award, disabled: true, badge: "Coming Soon" },
-  { title: "Billing", url: "/settings/billing", icon: CreditCard },
+  { title: "My Profile", url: "/coach/profile", icon: UserCircle, disabled: true, badge: "Coming Soon" },
+  { title: "Billing", url: "/settings/billing", icon: CreditCard, disabled: true, badge: "Coming Soon" },
   { title: "Settings", url: "/settings", icon: Settings },
 ];
 
