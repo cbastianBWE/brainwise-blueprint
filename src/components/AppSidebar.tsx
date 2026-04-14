@@ -51,8 +51,6 @@ const coachNav: NavItem[] = [
   { title: "Resources", url: "/coach/resources", icon: BookOpen, disabled: true, badge: "Coming Soon" },
   { title: "Certification", url: "/coach/certification", icon: Award, disabled: true, badge: "Coming Soon" },
   { title: "My Profile", url: "/coach/profile", icon: UserCircle, disabled: true, badge: "Coming Soon" },
-  { title: "Billing", url: "/settings/billing", icon: CreditCard, disabled: true, badge: "Coming Soon" },
-  { title: "Settings", url: "/settings", icon: Settings },
 ];
 
 const adminNav: NavItem[] = [
@@ -63,7 +61,6 @@ const adminNav: NavItem[] = [
   { title: "AI Chat", url: "/ai-chat", icon: MessageSquare },
   { title: "Chat History", url: "/ai-chat/history", icon: History },
   { title: "Resources", url: "/admin/resources", icon: BookOpen },
-  { title: "Settings", url: "/settings", icon: Settings },
 ];
 
 const superAdminNav: NavItem[] = [
@@ -73,7 +70,6 @@ const superAdminNav: NavItem[] = [
   { title: "AI Chat", url: "/ai-chat", icon: MessageSquare },
   { title: "Chat History", url: "/ai-chat/history", icon: History },
   { title: "AI Research", url: "/super-admin/ai-research", icon: FlaskConical, disabled: true, badge: "Phase 2" },
-  { title: "Settings", url: "/settings", icon: Settings },
 ];
 
 function getNavItems(accountType: string | null | undefined): NavItem[] {
