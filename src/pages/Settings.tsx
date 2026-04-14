@@ -121,7 +121,8 @@ export default function SettingsPage() {
   const savePreference = async (field: "timezone" | "date_format", value: string) => {
     if (field === "timezone") setTimezone(value);
     else setDateFormat(value);
-    const { error } = await supabase.from("users").update({ [field]: value }).eq("id", user!.id);
+    const updatePayload = field === "timezone" ? { timezone: value } : { date_format: value };
+    const { error } = await supabase.from("users").update(updatePayload).eq("id", user!.id);
     if (error) { toast.error("Failed to save preference"); return; }
     showSaved(field);
   };
