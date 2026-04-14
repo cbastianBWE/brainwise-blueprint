@@ -2,7 +2,7 @@ import {
   LayoutDashboard, BarChart3, ClipboardList, MessageSquare, BookOpen, Settings,
   Users, Building2, UsersRound, Activity, Heart, Award, UserCircle,
   ShieldCheck, Briefcase, GitBranch, FlaskConical, LogOut, History, Shield,
-  CreditCard, Receipt,
+  CreditCard, Receipt, ChevronDown, ChevronRight,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -38,8 +38,6 @@ const individualNav: NavItem[] = [
   { title: "AI Chat", url: "/ai-chat", icon: MessageSquare },
   { title: "Chat History", url: "/ai-chat/history", icon: History },
   { title: "Resources", url: "/resources", icon: BookOpen },
-  { title: "Settings", url: "/settings", icon: Settings },
-  { title: "Privacy & Permissions", url: "/settings/privacy", icon: Shield },
 ];
 
 const coachNav: NavItem[] = [
@@ -53,8 +51,6 @@ const coachNav: NavItem[] = [
   { title: "Resources", url: "/coach/resources", icon: BookOpen, disabled: true, badge: "Coming Soon" },
   { title: "Certification", url: "/coach/certification", icon: Award, disabled: true, badge: "Coming Soon" },
   { title: "My Profile", url: "/coach/profile", icon: UserCircle, disabled: true, badge: "Coming Soon" },
-  { title: "Billing", url: "/settings/billing", icon: CreditCard, disabled: true, badge: "Coming Soon" },
-  { title: "Settings", url: "/settings", icon: Settings },
 ];
 
 const adminNav: NavItem[] = [
@@ -65,7 +61,6 @@ const adminNav: NavItem[] = [
   { title: "AI Chat", url: "/ai-chat", icon: MessageSquare },
   { title: "Chat History", url: "/ai-chat/history", icon: History },
   { title: "Resources", url: "/admin/resources", icon: BookOpen },
-  { title: "Settings", url: "/settings", icon: Settings },
 ];
 
 const superAdminNav: NavItem[] = [
@@ -75,7 +70,6 @@ const superAdminNav: NavItem[] = [
   { title: "AI Chat", url: "/ai-chat", icon: MessageSquare },
   { title: "Chat History", url: "/ai-chat/history", icon: History },
   { title: "AI Research", url: "/super-admin/ai-research", icon: FlaskConical, disabled: true, badge: "Phase 2" },
-  { title: "Settings", url: "/settings", icon: Settings },
 ];
 
 function getNavItems(accountType: string | null | undefined): NavItem[] {
@@ -112,6 +106,12 @@ export function AppSidebar() {
   const { profile } = useUserProfile();
 
   const navItems = getNavItems(profile?.account_type);
+  const isSettingsOpen = location.pathname.startsWith('/settings');
+  const settingsSubItems = [
+    { title: 'General Settings', url: '/settings', icon: Settings },
+    { title: 'Privacy & Permissions', url: '/settings/privacy', icon: Shield },
+    { title: 'Billing & Receipts', url: '/settings/billing', icon: CreditCard },
+  ];
 
   return (
     <Sidebar collapsible="icon">
@@ -164,6 +164,40 @@ export function AppSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  className="hover:bg-sidebar-accent cursor-pointer"
+                  onClick={() => {}}
+                >
+                  <Settings className="h-4 w-4 shrink-0" />
+                  {!collapsed && (
+                    <div className="flex items-center justify-between flex-1">
+                      <span>Settings</span>
+                      {isSettingsOpen
+                        ? <ChevronDown className="h-3 w-3" />
+                        : <ChevronRight className="h-3 w-3" />
+                      }
+                    </div>
+                  )}
+                </SidebarMenuButton>
+                {isSettingsOpen && !collapsed && (
+                  <div className="ml-4 mt-1 space-y-1">
+                    {settingsSubItems.map(item => (
+                      <SidebarMenuButton key={item.url} asChild>
+                        <NavLink
+                          to={item.url}
+                          end
+                          className="hover:bg-sidebar-accent text-sm"
+                          activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                        >
+                          <item.icon className="h-3.5 w-3.5 shrink-0" />
+                          <span>{item.title}</span>
+                        </NavLink>
+                      </SidebarMenuButton>
+                    ))}
+                  </div>
+                )}
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
