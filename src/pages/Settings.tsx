@@ -136,8 +136,14 @@ export default function SettingsPage() {
   };
 
   const deleteAccount = async () => {
-    await signOut();
-    navigate("/");
+    try {
+      const { error } = await supabase.functions.invoke('delete-account');
+      if (error) throw error;
+      await signOut();
+      navigate('/');
+    } catch (err) {
+      toast.error('Failed to delete account. Please try again.');
+    }
   };
 
   if (loading) {
