@@ -1092,11 +1092,13 @@ export type Database = {
       }
       users: {
         Row: {
+          account_status: string
           account_type: string | null
           coupon_amount: number | null
           coupon_expires_at: string | null
           created_at: string
           date_format: string | null
+          deleted_at: string | null
           email: string
           full_name: string | null
           id: string
@@ -1111,11 +1113,13 @@ export type Database = {
           timezone: string | null
         }
         Insert: {
+          account_status?: string
           account_type?: string | null
           coupon_amount?: number | null
           coupon_expires_at?: string | null
           created_at?: string
           date_format?: string | null
+          deleted_at?: string | null
           email: string
           full_name?: string | null
           id?: string
@@ -1130,11 +1134,13 @@ export type Database = {
           timezone?: string | null
         }
         Update: {
+          account_status?: string
           account_type?: string | null
           coupon_amount?: number | null
           coupon_expires_at?: string | null
           created_at?: string
           date_format?: string | null
+          deleted_at?: string | null
           email?: string
           full_name?: string | null
           id?: string
