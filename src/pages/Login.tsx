@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Brain } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useRoleRedirect } from "@/hooks/useAuth";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -15,6 +16,8 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const { redirectByRole } = useRoleRedirect();
+  const [showReactivate, setShowReactivate] = useState(false);
+  const [reactivating, setReactivating] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,9 +31,40 @@ const Login = () => {
     setLoading(false);
 
     if (error) {
-      toast({ title: "Login Failed", description: error.message, variant: "destructive" });
+      // Check if this is a deleted account within grace period
+      const { data: userRow } = await supabase
+        .from('users')
+        .select('account_status, deleted_at')
+        .eq('email', email.trim())
+        .single();
+
+      if (
+        userRow?.account_status === 'deleted' &&
+        userRow?.deleted_at &&
+        new Date(userRow.deleted_at) > new Date(Date.now() - 90 * 24 * 60 * 60 * 1000)
+      ) {
+        setShowReactivate(true);
+      } else {
+        toast({ title: "Login Failed", description: error.message, variant: "destructive" });
+      }
     } else if (data.user) {
       await redirectByRole(data.user.id);
+    }
+  };
+
+  const handleReactivate = async () => {
+    setReactivating(true);
+    try {
+      const { error } = await supabase.functions.invoke('reactivate-account', {
+        body: { email: email.trim() },
+      });
+      if (error) throw error;
+      setShowReactivate(false);
+      toast({ title: 'Account Reactivated', description: 'Your account has been restored. Please log in.' });
+    } catch {
+      toast({ title: 'Reactivation Failed', description: 'Please contact support.', variant: 'destructive' });
+    } finally {
+      setReactivating(false);
     }
   };
 
@@ -67,6 +101,22 @@ const Login = () => {
           </div>
         </CardContent>
       </Card>
+      <AlertDialog open={showReactivate} onOpenChange={setShowReactivate}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Account Scheduled for Deletion</AlertDialogTitle>
+            <AlertDialogDescription>
+              Your account was scheduled for deletion but is still within the 90-day recovery period. Would you like to reactivate your account and restore full access?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleReactivate} disabled={reactivating}>
+              {reactivating ? 'Reactivating...' : 'Reactivate My Account'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
