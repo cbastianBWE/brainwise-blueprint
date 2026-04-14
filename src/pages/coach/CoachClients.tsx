@@ -41,10 +41,21 @@ interface ClientRow {
   stripe_payment_intent_id: string | null;
 }
 
+interface UniqueClient {
+  client_email: string;
+  client_user_id: string | null;
+  client_name: string | null;
+  assessment_count: number;
+  completed_count: number;
+  pending_count: number;
+}
+
 export default function CoachClients() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [clients, setClients] = useState<ClientRow[]>([]);
+  const [uniqueClients, setUniqueClients] = useState<UniqueClient[]>([]);
+  const [selectedClientEmail, setSelectedClientEmail] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
