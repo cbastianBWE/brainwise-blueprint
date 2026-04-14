@@ -753,3 +753,6 @@ export default function CoachClients() {
           </CardContent>
         </Card>
       )}
+    </div>
+  );
+}
