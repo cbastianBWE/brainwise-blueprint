@@ -109,9 +109,10 @@ interface MyResultsProps {
   targetUserId?: string;
   preSelectedAssessmentId?: string;
   coachUserId?: string;
+  permissionLevel?: 'full_results' | 'score_summary' | null;
 }
 
-export default function MyResults({ isCoachView = false, targetUserId, preSelectedAssessmentId, coachUserId }: MyResultsProps) {
+export default function MyResults({ isCoachView = false, targetUserId, preSelectedAssessmentId, coachUserId, permissionLevel = null }: MyResultsProps) {
   const { user } = useAuth();
   const { profile } = useUserProfile();
   const { toast } = useToast();
@@ -714,7 +715,11 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                {selected.result.ai_narrative ? (
+                {isCoachView && permissionLevel === 'score_summary' ? (
+                  <p className="text-sm text-muted-foreground">
+                    The client has limited coach access to scores only.
+                  </p>
+                ) : selected.result.ai_narrative ? (
                   <>
                     <div className="max-w-none text-foreground text-sm">
                       <NarrativeRenderer text={selected.result.ai_narrative} />
