@@ -1,40 +1,44 @@
 
 
-# Plan: Add Coach Invitation Flow to SignUp
+# Plan: Add Coach Management Page for Super Admins
 
-## Single file: `src/pages/SignUp.tsx`
+## Overview
+Three files changed: sidebar nav item, route registration, and a new page with invite/pending/active coach management.
 
-### Change 1: Update imports (lines 1–2)
-- Add `useEffect` to the React import
-- Add `useSearchParams` to the router import
-- Add `Loader2, Info` from lucide-react
-
-### Change 2: Add CERT_LABELS constant (before the component, after imports ~line 11)
+## File 1: `src/components/AppSidebar.tsx`
+**Line 68**: Insert after Platform Health line:
 ```tsx
-const CERT_LABELS: Record<string, string> = {
-  ptp_coach: 'PTP Certified Coach',
-  ai_transformation_coach: 'AI Transformation Certified Coach',
-  ai_transformation_ptp_coach: 'AI Transformation + PTP Certified Coach',
-  my_brainwise_coach: 'My BrainWise Coach',
-};
+{ title: "Coach Management", url: "/super-admin/coaches", icon: Users },
 ```
 
-### Change 3: Add coach invitation state (after line 21)
-- `searchParams` via `useSearchParams()`
-- `coachToken` (string | null)
-- `coachInvitation` (object | null with first_name, last_name, email, certification_type)
-- `tokenLoading` (boolean)
+## File 2: `src/App.tsx`
+- Add import for `CoachManagement` from `./pages/super-admin/CoachManagement`
+- Add route after line 102 (after PlatformHealth route):
+```tsx
+<Route path="/super-admin/coaches" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><CoachManagement /></SuperAdminSessionProvider></RoleGuard>} />
+```
 
-### Change 4: Add useEffect to load invitation (after state declarations)
-On mount, check `searchParams.get('coach_token')`. If present, query `coach_invitations` table for matching pending token. Pre-fill firstName, lastName, email from result.
+## File 3: `src/pages/super-admin/CoachManagement.tsx` (new)
+Full page with three card sections:
 
-### Change 5: Update handleSignUp success block (line 60)
-After `setSuccess(true)`, if `coachToken && coachInvitation`, invoke `accept-coach-invitation` edge function with the token.
+### Section 1 — Invite Coaches
+Card with `Tabs` component (three tabs):
+- **Single Invite**: Form fields (first_name, last_name, email, certification_type dropdown). Calls `supabase.functions.invoke('invite-coach', { body })`. Success toast.
+- **Bulk Invite**: Dynamic rows with Add Another button. Send All button loops through rows calling invite-coach. Summary toast "X sent, Y failed".
+- **Upload Excel**: File input for .xlsx. Uses `xlsx` package (SheetJS) to parse. Preview table. Send button. Download Template button generates blank .xlsx with 4 headers.
 
-### Change 6: Update form UI (lines 85–136)
-- If `tokenLoading`, show a centered `Loader2` spinner
-- If `coachInvitation` is set, show a blue info banner above the form with the certification label
-- Make firstName, lastName, and email inputs `readOnly` with `className="bg-muted"` when `coachInvitation` is present
+### Section 2 — Pending Invitations
+Query `coach_invitations` where `status = 'pending'`. Table with Name, Email, Certification, Invited Date, Expires, Actions (Resend / Cancel). Resend re-invokes invite-coach. Cancel updates status to 'expired'.
 
-### No other files changed
+### Section 3 — Active Coaches
+Query `users` where `account_type = 'coach'`. For each coach, also fetch `coach_certifications`. Table with Name, Email, Certifications (badges), Status. "Mark Certified" button opens a Dialog to select certification type, then updates `coach_certifications` setting `status = 'certified'`, `certified_at = now()`, `certified_by = auth.uid()`.
+
+### Technical details
+- Uses existing UI components: Card, Tabs, Table, Button, Select, Dialog, Badge, Input, Label
+- `CERT_LABELS` constant maps internal keys to display names (same as SignUp.tsx)
+- `xlsx` package needed — will add via import (already available or will be installed)
+- Pending invitations RLS already allows super admin full access
+- Users table allows super admin read access
+- Coach certifications table allows super admin full access (read + write)
+- No database migrations needed
 
