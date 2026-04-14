@@ -16,7 +16,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription,
 } from "@/components/ui/dialog";
 import {
-  Users, ClipboardCheck, Clock, Plus, Send, Eye, Mail,
+  Users, ClipboardCheck, Clock, Plus, Send, Eye, Mail, ArrowLeft,
 } from "lucide-react";
 import { format } from "date-fns";
 
