@@ -107,13 +107,13 @@ export function AppSidebar() {
 
   const navItems = getNavItems(profile?.account_type);
   const isSettingsOpen = location.pathname.startsWith('/settings');
-  const settingsSubItems = [
+  const settingsSubItems: { title: string; url: string; icon: React.ElementType; disabled?: boolean; badge?: string }[] = [
     { title: 'General Settings', url: '/settings', icon: Settings },
     { title: 'Privacy & Permissions', url: '/settings/privacy', icon: Shield },
     { title: 'Billing & Receipts', url: '/settings/billing', icon: CreditCard },
   ];
 
-  const coachSettingsSubItems = [
+  const coachSettingsSubItems: typeof settingsSubItems = [
     { title: 'General Settings', url: '/settings', icon: Settings },
     { title: 'Privacy & Permissions', url: '/settings/privacy', icon: Shield },
     { title: 'Billing & Receipts', url: '/settings/billing', icon: CreditCard, disabled: true, badge: 'Coming Soon' },
