@@ -95,7 +95,7 @@ const Login = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>Account Scheduled for Deletion</AlertDialogTitle>
             <AlertDialogDescription>
-              Your account was scheduled for deletion but is still within the 90-day recovery period. Would you like to reactivate your account and restore full access?
+              Your account was scheduled for deletion but is still within the 90-day recovery period. You can restore your account and all your previous assessment data. Note: any previous subscription has been cancelled and will need to be reactivated separately if desired.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
