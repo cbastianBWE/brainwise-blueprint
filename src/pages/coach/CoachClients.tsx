@@ -776,8 +776,7 @@ export default function CoachClients() {
                           >
                             {c.debrief_completed ? "Debrief Done" : "Mark Debrief Complete"}
                           </Button>
-                        )
-                        </Button>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))}
