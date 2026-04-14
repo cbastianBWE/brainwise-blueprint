@@ -602,12 +602,13 @@ export default function CoachClients() {
             </Button>
           </CardContent>
         </Card>
-      ) : (
+      ) : selectedClientEmail === null ? (
+        /* Level 1 — Client List */
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">Client Roster</CardTitle>
             <CardDescription>
-              {clients.length} assessment{clients.length !== 1 ? "s" : ""} across {totalUniqueClients} client{totalUniqueClients !== 1 ? "s" : ""}
+              {uniqueClients.length} client{uniqueClients.length !== 1 ? "s" : ""}
             </CardDescription>
             <div className="pt-2">
               <Input
@@ -624,6 +625,78 @@ export default function CoachClients() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Client</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Assessments</TableHead>
+                    <TableHead>Completed</TableHead>
+                    <TableHead>Pending</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {uniqueClients
+                    .filter(uc => {
+                      if (!searchQuery.trim()) return true;
+                      const q = searchQuery.toLowerCase();
+                      return (uc.client_name?.toLowerCase().includes(q) || uc.client_email.toLowerCase().includes(q));
+                    })
+                    .map(uc => (
+                    <TableRow key={uc.client_email}>
+                      <TableCell className="font-medium">
+                        {uc.client_name || uc.client_email}
+                      </TableCell>
+                      <TableCell className="text-sm">{uc.client_email}</TableCell>
+                      <TableCell className="text-sm">{uc.assessment_count}</TableCell>
+                      <TableCell className="text-sm">{uc.completed_count}</TableCell>
+                      <TableCell className="text-sm">{uc.pending_count}</TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="gap-1"
+                          onClick={() => { setSelectedClientEmail(uc.client_email); setSearchQuery(""); }}
+                        >
+                          <Eye className="h-3 w-3" /> View Assessments
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        /* Level 2 — Assessment Detail for selected client */
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-3 mb-2">
+              <Button variant="ghost" size="sm" className="gap-1" onClick={() => setSelectedClientEmail(null)}>
+                <ArrowLeft className="h-4 w-4" /> Back to Clients
+              </Button>
+            </div>
+            <CardTitle className="text-lg">
+              {clients.find(c => c.client_email === selectedClientEmail)?.client_name || selectedClientEmail}
+            </CardTitle>
+            <CardDescription>{selectedClientEmail}</CardDescription>
+            <div className="pt-2">
+              <Button
+                size="sm"
+                className="gap-1"
+                onClick={() => {
+                  resetForm();
+                  setEmail(selectedClientEmail);
+                  setModalOpen(true);
+                }}
+              >
+                <Plus className="h-3 w-3" /> Order Assessment for This Client
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
                     <TableHead>Instrument</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Date Sent</TableHead>
@@ -634,16 +707,9 @@ export default function CoachClients() {
                 </TableHeader>
                 <TableBody>
                   {clients
-                    .filter(c => {
-                      if (!searchQuery.trim()) return true;
-                      const q = searchQuery.toLowerCase();
-                      return (c.client_name?.toLowerCase().includes(q) || c.client_email.toLowerCase().includes(q));
-                    })
+                    .filter(c => c.client_email === selectedClientEmail)
                     .map(c => (
                     <TableRow key={c.id}>
-                      <TableCell className="font-medium">
-                        {c.client_name || c.client_email}
-                      </TableCell>
                       <TableCell className="text-sm">{c.instrument_name || "—"}</TableCell>
                       <TableCell>{getStatusBadge(c.assessment_status, c.invitation_status)}</TableCell>
                       <TableCell className="text-sm">
@@ -687,6 +753,3 @@ export default function CoachClients() {
           </CardContent>
         </Card>
       )}
-    </div>
-  );
-}
