@@ -164,6 +164,40 @@ export function AppSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  className="hover:bg-sidebar-accent cursor-pointer"
+                  onClick={() => {}}
+                >
+                  <Settings className="h-4 w-4 shrink-0" />
+                  {!collapsed && (
+                    <div className="flex items-center justify-between flex-1">
+                      <span>Settings</span>
+                      {isSettingsOpen
+                        ? <ChevronDown className="h-3 w-3" />
+                        : <ChevronRight className="h-3 w-3" />
+                      }
+                    </div>
+                  )}
+                </SidebarMenuButton>
+                {isSettingsOpen && !collapsed && (
+                  <div className="ml-4 mt-1 space-y-1">
+                    {settingsSubItems.map(item => (
+                      <SidebarMenuButton key={item.url} asChild>
+                        <NavLink
+                          to={item.url}
+                          end
+                          className="hover:bg-sidebar-accent text-sm"
+                          activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                        >
+                          <item.icon className="h-3.5 w-3.5 shrink-0" />
+                          <span>{item.title}</span>
+                        </NavLink>
+                      </SidebarMenuButton>
+                    ))}
+                  </div>
+                )}
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
