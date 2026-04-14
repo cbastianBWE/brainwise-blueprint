@@ -31,18 +31,7 @@ const Login = () => {
     setLoading(false);
 
     if (error) {
-      // Check if this is a deleted account within grace period
-      const { data: userRow } = await supabase
-        .from('users')
-        .select('account_status, deleted_at')
-        .eq('email', email.trim())
-        .single();
-
-      if (
-        userRow?.account_status === 'deleted' &&
-        userRow?.deleted_at &&
-        new Date(userRow.deleted_at) > new Date(Date.now() - 90 * 24 * 60 * 60 * 1000)
-      ) {
+      if (error.message.toLowerCase().includes('banned') || error.message.toLowerCase().includes('user is banned')) {
         setShowReactivate(true);
       } else {
         toast({ title: "Login Failed", description: error.message, variant: "destructive" });
