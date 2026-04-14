@@ -868,6 +868,8 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
             hasFacets={selected.isPTP}
             hasRecommendations={recommendations.length > 0}
           />
+            </>
+          )}
         </>
       )}
     </div>
