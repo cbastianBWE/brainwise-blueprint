@@ -1,44 +1,41 @@
 
 
-# Plan: Build General Settings Page in `src/pages/Settings.tsx`
+# Plan: Add Purchase History Section to BillingSettings
 
-## Summary
-Replace the current redirect-only Settings page with a full General Settings page containing Profile, Preferences, Notifications, and Account sections.
+## Single file: `src/pages/BillingSettings.tsx`
 
-## Single file: `src/pages/Settings.tsx`
+### 1. Add imports (after line 11)
+- `Dialog, DialogContent, DialogHeader, DialogTitle` from ui/dialog
+- `Input` from ui/input
+- `Table, TableBody, TableCell, TableHead, TableHeader, TableRow` from ui/table
+- `FileText, Search` from lucide-react
+- `format, parseISO` from date-fns
+- `jsPDF` from jspdf
 
-### Data Loading
-- Single `useEffect` fetches `full_name, email, account_type, timezone, date_format, notifications` from `users` table where `id = user.id`
-- Loading spinner (Loader2 from lucide) while fetching
+### 2. Add state variables (after line 17, `portalLoading`)
+- `purchases` array state with typed shape (id, instrument_id, instrument_name, amount_paid, stripe_payment_intent_id, purchased_at)
+- `purchasesLoading` (default true)
+- `purchaseSearch` (default '')
+- `receiptItem` (default null)
 
-### Section 1 — Profile (Card)
-- **Full Name**: text input + Save button → updates `users.full_name`
-- **Email**: text input + Save button → updates via `supabase.auth.updateUser({ email })` AND `users.email`
-- **Change Password**: button → calls `supabase.auth.resetPasswordForEmail(email)`, shows success toast
-- **Account Type**: read-only Badge using `formatAccountType()` helper (maps `individual` → "Individual", `coach` → "Coach", `admin` → "Admin", `brainwise_super_admin` → "Super Admin", `corporate_employee` → "Corporate Employee")
+### 3. Add useEffect to load purchases (after new state vars)
+- Fetch from `assessment_purchases` filtered by `user_id`
+- Fetch `instruments` to build a name lookup map
+- Map instrument names onto purchase rows
 
-### Section 2 — Preferences (Card)
-- **Timezone**: Select with ~15 common timezones (America/New_York, America/Chicago, America/Denver, America/Los_Angeles, America/Anchorage, Pacific/Honolulu, Europe/London, Europe/Paris, Europe/Berlin, Asia/Tokyo, Asia/Shanghai, Asia/Kolkata, Australia/Sydney, Pacific/Auckland). Saves to `users.timezone` on change.
-- **Date Format**: Select with MM/DD/YYYY, DD/MM/YYYY, YYYY-MM-DD. Saves to `users.date_format`.
-- **Language**: Disabled select showing "English (Default)" with "Coming Soon" badge.
+### 4. Add `filteredPurchases` derived variable (after useEffect)
+- Filter by instrument_name or formatted date matching `purchaseSearch`
 
-### Section 3 — Notifications (Card)
-- Four Switch toggles loaded from `users.notifications` JSONB:
-  - `assessment_reminders` → "Assessment Reminders"
-  - `coach_messages` → "Coach Messages"
-  - `platform_updates` → "Platform Updates"
-  - `new_results` → "New Results Available"
-- Each toggle saves immediately via full JSONB update to `users.notifications`
+### 5. Add `exportPurchasesPdf` function (after `handleManage`)
+- Uses jsPDF to generate a clean PDF with BrainWise header, table of filtered purchases, and confidential footer
 
-### Section 4 — Account (Card)
-- "Delete Account" destructive button → AlertDialog with warning text
-- On confirm: `supabase.auth.signOut()` + `navigate("/")`
-
-### UX Details
-- "Saved" badge appears for 2s after any successful save (state: `savedField` string, cleared via setTimeout)
-- Toast on errors
-- Uses existing project patterns: shadcn Card, Button, Badge, Switch, Select, AlertDialog, Input, Label
-- Imports: useAuth, supabase client, sonner toast, lucide icons (Loader2, User, Globe, Bell, Trash2)
+### 6. Add Purchase History Card in JSX (after the Upgrade to Premium card, before closing `</div>`)
+- Card with header containing title + Export PDF button
+- Search input with Search icon
+- Table with columns: Date, Assessment, Amount, Transaction, Actions
+- Each row has a Receipt button that opens a Dialog
+- Receipt Dialog shows BrainWise header, date, transaction ID, line item with amount, total, and description text
+- Empty/loading states handled
 
 ### No other files changed
 
