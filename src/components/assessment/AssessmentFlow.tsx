@@ -247,7 +247,7 @@ export default function AssessmentFlow({ instrument, onExit }: Props) {
   const currentResponse = responses[currentItem?.item_id];
 
   return (
-    <div className="fixed inset-0 bg-background flex flex-col">
+    <div className="fixed inset-0 bg-background flex flex-col z-50">
       {/* Header */}
       <div className="border-b px-4 py-3 flex items-center justify-between">
         <div className="text-sm text-muted-foreground">
