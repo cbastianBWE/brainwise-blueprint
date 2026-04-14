@@ -40,6 +40,8 @@ interface ClientRow {
   instrument_name: string | null;
   created_at: string;
   stripe_payment_intent_id: string | null;
+  debrief_completed: boolean;
+  results_released: boolean;
 }
 
 interface UniqueClient {
@@ -70,6 +72,7 @@ export default function CoachClients() {
   const [submitting, setSubmitting] = useState(false);
   const [instrumentError, setInstrumentError] = useState(false);
   const [sendingReminderId, setSendingReminderId] = useState<string | null>(null);
+  const [resultsReleased, setResultsReleased] = useState(false);
 
   const fetchClients = async () => {
     if (!user) return;
@@ -77,7 +80,7 @@ export default function CoachClients() {
 
     const { data: ccRows } = await supabase
       .from("coach_clients")
-      .select("id, client_email, client_user_id, invitation_status, assessment_id, instrument_id, coach_notes, created_at, stripe_payment_intent_id")
+      .select("id, client_email, client_user_id, invitation_status, assessment_id, instrument_id, coach_notes, created_at, stripe_payment_intent_id, debrief_completed, results_released")
       .eq("coach_user_id", user.id)
       .order("created_at", { ascending: false });
 
@@ -145,6 +148,8 @@ export default function CoachClients() {
         instrument_name: instrumentName,
         created_at: cc.created_at,
         stripe_payment_intent_id: cc.stripe_payment_intent_id,
+        debrief_completed: cc.debrief_completed,
+        results_released: cc.results_released,
       });
     }
 
@@ -179,6 +184,7 @@ export default function CoachClients() {
   const resetForm = () => {
     setFirstName(""); setLastName(""); setEmail(""); setNote("");
     setSelectedInstruments([]); setInstrumentError(false);
+    setResultsReleased(false);
   };
 
   const toggleInstrument = (instrumentId: string) => {
@@ -219,6 +225,7 @@ export default function CoachClients() {
         client_first_name: firstName,
         client_last_name: lastName,
         coach_note: note,
+        results_released: resultsReleased,
       };
       console.log("[CoachClients] create-checkout payload:", JSON.stringify(payload, null, 2));
 
@@ -276,6 +283,7 @@ export default function CoachClients() {
         invitation_status: "sent",
         coach_notes: note || null,
         instrument_id: uuid,
+        results_released: resultsReleased,
       });
       if (error) {
         toast.error("Failed to create client record: " + error.message);
@@ -534,6 +542,13 @@ export default function CoachClients() {
                     </p>
                   )}
                 </div>
+                <div className="flex items-center justify-between rounded-md border p-3">
+                  <div className="space-y-0.5">
+                    <Label className="text-sm">Allow client to see results immediately</Label>
+                    <p className="text-xs text-muted-foreground">If off, client must wait for coach debrief before viewing results</p>
+                  </div>
+                  <Switch checked={resultsReleased} onCheckedChange={setResultsReleased} />
+                </div>
               </div>
 
               <TabsContent value="coach-pays" className="mt-4">
@@ -744,6 +759,24 @@ export default function CoachClients() {
                           onClick={() => handleRemind(c)}
                         >
                           <Mail className="h-3 w-3" /> {sendingReminderId === c.id ? "Sending..." : "Remind"}
+                        </Button>
+                        {c.invitation_status === "completed" && c.assessment_status === "completed" && (
+                          <Button
+                            size="sm"
+                            variant={c.debrief_completed ? "secondary" : "default"}
+                            className="gap-1"
+                            disabled={c.debrief_completed}
+                            onClick={async () => {
+                              const { error } = await supabase
+                                .from("coach_clients")
+                                .update({ debrief_completed: true })
+                                .eq("id", c.id);
+                              if (!error) fetchClients();
+                            }}
+                          >
+                            {c.debrief_completed ? "Debrief Done" : "Mark Debrief Complete"}
+                          </Button>
+                        )
                         </Button>
                       </TableCell>
                     </TableRow>
