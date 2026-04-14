@@ -65,6 +65,7 @@ const adminNav: NavItem[] = [
 
 const superAdminNav: NavItem[] = [
   { title: "Platform Health", url: "/super-admin/health", icon: Heart },
+  { title: "Coach Management", url: "/super-admin/coaches", icon: Users },
   { title: "Company Accounts", url: "/super-admin/companies", icon: Briefcase },
   { title: "Version Management", url: "/super-admin/versions", icon: GitBranch },
   { title: "AI Chat", url: "/ai-chat", icon: MessageSquare },
