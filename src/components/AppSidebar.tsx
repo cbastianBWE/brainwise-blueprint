@@ -106,6 +106,12 @@ export function AppSidebar() {
   const { profile } = useUserProfile();
 
   const navItems = getNavItems(profile?.account_type);
+  const isSettingsOpen = location.pathname.startsWith('/settings');
+  const settingsSubItems = [
+    { title: 'General Settings', url: '/settings', icon: Settings },
+    { title: 'Privacy & Permissions', url: '/settings/privacy', icon: Shield },
+    { title: 'Billing & Receipts', url: '/settings/billing', icon: CreditCard },
+  ];
 
   return (
     <Sidebar collapsible="icon">
