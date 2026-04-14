@@ -346,7 +346,7 @@ export default function CoachClients() {
 
   const getStatusBadge = (status: string | null, invitationStatus: string) => {
     if (!status) {
-      if (invitationStatus === "sent") return <Badge variant="secondary">Invited</Badge>;
+      if (invitationStatus === "sent") return <Badge variant="secondary">Sent</Badge>;
       if (invitationStatus === "opened") return <Badge variant="secondary">Opened</Badge>;
       return <Badge variant="outline">Pending</Badge>;
     }
