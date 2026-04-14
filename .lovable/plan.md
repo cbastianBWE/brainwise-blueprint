@@ -1,33 +1,25 @@
 
 
-# Plan: Update deleteAccount to invoke Edge Function
+# Plan: Add Account Reactivation Flow to Login
 
-## Single file: `src/pages/Settings.tsx`
+## Single file: `src/pages/Login.tsx`
 
-### Change (lines 138–141)
-Replace the `deleteAccount` function with a version that calls `supabase.functions.invoke('delete-account')` before signing out, with error handling via try/catch and `toast.error`.
+### 1. Add imports (top of file)
+Add `AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle` from `@/components/ui/alert-dialog`.
 
-**Before:**
-```tsx
-const deleteAccount = async () => {
-  await signOut();
-  navigate("/");
-};
-```
+### 2. Add state variables (after existing state, ~line 18)
+- `showReactivate` (boolean, default false)
+- `reactivating` (boolean, default false)
 
-**After:**
-```tsx
-const deleteAccount = async () => {
-  try {
-    const { error } = await supabase.functions.invoke('delete-account');
-    if (error) throw error;
-    await signOut();
-    navigate('/');
-  } catch (err) {
-    toast.error('Failed to delete account. Please try again.');
-  }
-};
-```
+### 3. Update error handling in `handleLogin` (lines 30–31)
+Replace the simple toast with a check against `users` table for `account_status === 'deleted'` within 90-day grace period. Show reactivation dialog if match, otherwise show original error toast.
 
-No other files changed. Note: the `delete-account` edge function does not exist yet — this wires up the client-side call only.
+### 4. Add `handleReactivate` function (after `handleLogin`)
+Calls `supabase.functions.invoke('reactivate-account', { body: { email } })`, shows success/error toast, toggles dialog state.
+
+### 5. Add AlertDialog JSX (before closing `</div>` of return)
+Reactivation dialog with title, description about 90-day recovery, Cancel and Reactivate buttons with loading state.
+
+### No other files changed
+Note: `reactivate-account` edge function does not exist yet — this wires up the client-side only.
 
