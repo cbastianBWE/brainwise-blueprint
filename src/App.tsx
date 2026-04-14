@@ -86,6 +86,7 @@ const App = () => (
               <Route path="/coach/clients" element={<RoleGuard allowedRoles={["coach"]}><CoachClients /></RoleGuard>} />
               <Route path="/coach/order-assessment" element={<RoleGuard allowedRoles={["coach"]}><OrderAssessment /></RoleGuard>} />
               <Route path="/coach/client-results" element={<RoleGuard allowedRoles={["coach"]}><ClientResults /></RoleGuard>} />
+              <Route path="/coach/invoices" element={<RoleGuard allowedRoles={["coach"]}><CoachInvoices /></RoleGuard>} />
               <Route path="/coach/resources" element={<RoleGuard allowedRoles={["coach"]}><Resources /></RoleGuard>} />
               <Route path="/coach/profile" element={<RoleGuard allowedRoles={["coach"]}><CoachProfile /></RoleGuard>} />
               <Route path="/coach/certification" element={<RoleGuard allowedRoles={["coach"]}><Certification /></RoleGuard>} />
