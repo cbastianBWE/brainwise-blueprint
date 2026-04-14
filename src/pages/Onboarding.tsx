@@ -5,7 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Brain, User, Building2, GraduationCap } from "lucide-react";
+import { Brain, User, Building2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const Onboarding = () => {
@@ -96,7 +96,7 @@ const Onboarding = () => {
           <h1 className="text-2xl font-semibold text-foreground">Welcome to BrainWise</h1>
           <p className="text-muted-foreground mt-1">Tell us how you'll be using the platform</p>
         </div>
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-2">
           <Card
             className="cursor-pointer hover:border-primary hover:shadow-md transition-all"
             onClick={() => !loading && selectAccountType("individual")}
@@ -119,16 +119,6 @@ const Onboarding = () => {
             </CardContent>
           </Card>
 
-          <Card
-            className="cursor-pointer hover:border-primary hover:shadow-md transition-all"
-            onClick={() => !loading && selectAccountType("coach")}
-          >
-            <CardContent className="pt-6 text-center">
-              <GraduationCap className="mx-auto h-10 w-10 text-primary mb-3" />
-              <h3 className="font-semibold text-foreground">I am a coach</h3>
-              <p className="text-sm text-muted-foreground mt-2">Manage and support your clients</p>
-            </CardContent>
-          </Card>
         </div>
       </div>
     </div>
