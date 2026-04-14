@@ -325,3 +325,81 @@ function AssessmentList({
     </div>
   );
 }
+
+/* ───── Level 3: Coach Results View (permission resolver) ───── */
+
+function CoachResultsView({
+  userId,
+  assessmentId,
+  coachUserId,
+  onBack,
+}: {
+  userId: string;
+  assessmentId: string;
+  coachUserId: string;
+  onBack: () => void;
+}) {
+  const [permissionLevel, setPermissionLevel] = useState<'full_results' | 'score_summary' | null>(null);
+  const [permLoading, setPermLoading] = useState(true);
+
+  useEffect(() => {
+    if (!userId || !assessmentId || !coachUserId) return;
+    (async () => {
+      setPermLoading(true);
+
+      // Check if assessment was ordered through coach flow
+      const { data: coachClient } = await supabase
+        .from("coach_clients")
+        .select("id")
+        .eq("coach_user_id", coachUserId)
+        .eq("assessment_id", assessmentId)
+        .maybeSingle();
+
+      if (coachClient) {
+        setPermissionLevel("full_results");
+        setPermLoading(false);
+        return;
+      }
+
+      // Fallback: check permissions table
+      const { data: perm } = await supabase
+        .from("permissions")
+        .select("permission_level")
+        .eq("owner_user_id", userId)
+        .eq("viewer_user_id", coachUserId)
+        .maybeSingle();
+
+      const level = perm?.permission_level as 'full_results' | 'score_summary' | null;
+      setPermissionLevel(level ?? "score_summary");
+      setPermLoading(false);
+    })();
+  }, [userId, assessmentId, coachUserId]);
+
+  if (permLoading) {
+    return (
+      <div className="p-6 max-w-5xl mx-auto flex justify-center py-20">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-6 max-w-5xl mx-auto">
+      <Button
+        variant="ghost"
+        size="sm"
+        className="mb-4"
+        onClick={onBack}
+      >
+        <ArrowLeft className="h-4 w-4 mr-1" /> Back to assessments
+      </Button>
+      <MyResults
+        isCoachView
+        targetUserId={userId}
+        preSelectedAssessmentId={assessmentId}
+        coachUserId={coachUserId}
+        permissionLevel={permissionLevel}
+      />
+    </div>
+  );
+}
