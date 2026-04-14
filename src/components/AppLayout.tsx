@@ -63,7 +63,7 @@ export default function AppLayout() {
                   🎉 You have a ${couponData.coupon_amount} coach credit toward an annual subscription! Upgrade and save before it expires on {formattedExpiry}.
                 </p>
                 <div className="flex items-center gap-2 shrink-0">
-                  <Button size="sm" onClick={() => navigate("/pricing")}>
+                  <Button size="sm" onClick={() => navigate("/pricing?billing=annual")}>
                     Upgrade Now
                   </Button>
                   <Button
