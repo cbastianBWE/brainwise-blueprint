@@ -1,17 +1,33 @@
 
 
-# Plan: Coach-specific Settings Sub-items
+# Plan: Update deleteAccount to invoke Edge Function
 
-## Single file: `src/components/AppSidebar.tsx`
+## Single file: `src/pages/Settings.tsx`
 
-### Change 1: Replace `settingsSubItems` constant (lines 110–114)
-Replace with two constants: `settingsSubItems` (unchanged) and `coachSettingsSubItems` (Billing item has `disabled: true, badge: 'Coming Soon'`).
+### Change (lines 138–141)
+Replace the `deleteAccount` function with a version that calls `supabase.functions.invoke('delete-account')` before signing out, with error handling via try/catch and `toast.error`.
 
-### Change 2: Replace the sub-items map block (lines 187–201)
-Replace `settingsSubItems.map(...)` with a conditional that picks `coachSettingsSubItems` when `profile?.account_type === 'coach'`, otherwise `settingsSubItems`. Each item renders either a disabled `<span>` with badge or a `<NavLink>`, wrapped in `<SidebarMenuItem>`.
+**Before:**
+```tsx
+const deleteAccount = async () => {
+  await signOut();
+  navigate("/");
+};
+```
 
-### Technical detail
-- The `coachSettingsSubItems` array items include optional `disabled?: boolean` and `badge?: string` fields
-- Disabled items render as a styled `<span>` with opacity-50 and cursor-not-allowed, matching the pattern already used for disabled nav items in the main nav section
-- No other files changed
+**After:**
+```tsx
+const deleteAccount = async () => {
+  try {
+    const { error } = await supabase.functions.invoke('delete-account');
+    if (error) throw error;
+    await signOut();
+    navigate('/');
+  } catch (err) {
+    toast.error('Failed to delete account. Please try again.');
+  }
+};
+```
+
+No other files changed. Note: the `delete-account` edge function does not exist yet — this wires up the client-side call only.
 
