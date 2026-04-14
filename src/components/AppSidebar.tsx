@@ -2,6 +2,7 @@ import {
   LayoutDashboard, BarChart3, ClipboardList, MessageSquare, BookOpen, Settings,
   Users, Building2, UsersRound, Activity, Heart, Award, UserCircle,
   ShieldCheck, Briefcase, GitBranch, FlaskConical, LogOut, History, Shield,
+  CreditCard,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -43,13 +44,15 @@ const individualNav: NavItem[] = [
 
 const coachNav: NavItem[] = [
   { title: "My Clients", url: "/coach/clients", icon: Users },
-  { title: "Order Assessment", url: "/coach/order-assessment", icon: ClipboardList },
+  { title: "My Assessments", url: "/assessment", icon: ClipboardList },
+  { title: "My Results", url: "/my-results", icon: BarChart3 },
   { title: "Client Results", url: "/coach/client-results", icon: BarChart3 },
   { title: "AI Chat", url: "/ai-chat", icon: MessageSquare },
   { title: "Chat History", url: "/ai-chat/history", icon: History },
-  { title: "Resources", url: "/coach/resources", icon: BookOpen },
-  { title: "My Profile", url: "/coach/profile", icon: UserCircle },
-  { title: "Certification", url: "/coach/certification", icon: Award },
+  { title: "Resources", url: "/coach/resources", icon: BookOpen, disabled: true, badge: "Coming Soon" },
+  { title: "My Profile", url: "/coach/profile", icon: UserCircle, disabled: true, badge: "Coming Soon" },
+  { title: "Certification", url: "/coach/certification", icon: Award, disabled: true, badge: "Coming Soon" },
+  { title: "Billing", url: "/settings/billing", icon: CreditCard },
   { title: "Settings", url: "/settings", icon: Settings },
 ];
 
