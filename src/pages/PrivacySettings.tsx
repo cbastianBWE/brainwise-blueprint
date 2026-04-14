@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useAiUsage } from "@/hooks/useAiUsage";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -75,6 +75,7 @@ export default function PrivacySettings() {
   const [org, setOrg] = useState<PermRow>({ enabled: false, level: "participation_only" });
 
   const [coachId, setCoachId] = useState<string | null>(null);
+  const coachIdRef = useRef<string | null>(null);
   const [orgId, setOrgId] = useState<string | null>(null);
   const [managerId, setManagerId] = useState<string | null>(null);
   const [teamId, setTeamId] = useState<string | null>(null);
@@ -102,7 +103,10 @@ export default function PrivacySettings() {
         .select("coach_user_id")
         .eq("client_user_id", user.id)
         .limit(1);
-      if (cc && cc.length > 0) setCoachId(cc[0].coach_user_id);
+      if (cc && cc.length > 0) {
+        setCoachId(cc[0].coach_user_id);
+        coachIdRef.current = cc[0].coach_user_id;
+      }
 
       // Get user's org and team info + share_results_with_coach
       const { data: userData } = await supabase
@@ -216,8 +220,9 @@ export default function PrivacySettings() {
     viewerOrgId: string | null,
   ) => {
     const newEnabled = !current.enabled;
+    const resolvedViewerUserId = key === 'coach' ? coachIdRef.current : viewerUserId;
     if (newEnabled) {
-      const id = await upsertPermission(viewerUserId, viewerOrgId, current.level, current.id);
+      const id = await upsertPermission(resolvedViewerUserId, viewerOrgId, current.level, current.id);
       setter({ ...current, enabled: true, id: id || current.id });
     } else if (current.id) {
       await deletePermission(current.id);
@@ -242,8 +247,9 @@ export default function PrivacySettings() {
     newLevel: PermissionLevel,
   ) => {
     setter({ ...current, level: newLevel });
+    const resolvedViewerUserId = key === 'coach' ? coachIdRef.current : viewerUserId;
     if (current.enabled) {
-      await upsertPermission(viewerUserId, viewerOrgId, newLevel, current.id);
+      await upsertPermission(resolvedViewerUserId, viewerOrgId, newLevel, current.id);
       showSaved(key);
     }
   };
