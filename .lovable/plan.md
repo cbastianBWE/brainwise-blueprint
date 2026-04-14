@@ -1,33 +1,46 @@
 
 
-# Plan: Collapsible Settings Group in Sidebar
+# Plan: Replace Settings button with NavLink
 
-## Summary
-Replace flat Settings/Privacy/Billing items in all nav arrays with a collapsible Settings group driven by `location.pathname.startsWith('/settings')`. The `/coach/invoices` route already exists in App.tsx — no changes needed there.
+## Single file: `src/components/AppSidebar.tsx`
 
-## Changes (single file: `src/components/AppSidebar.tsx`)
+### Change (lines 168–182)
+Replace the `SidebarMenuButton` with `onClick={() => {}}` with an `asChild` version wrapping a `NavLink to="/settings"`.
 
-### 1. Add `ChevronDown`, `ChevronRight` to lucide-react imports (line 2-5)
-
-### 2. Remove Settings-related items from all nav arrays
-- **individualNav**: Remove lines 41-42 (`Settings` and `Privacy & Permissions`)
-- **coachNav**: Remove lines 56-57 (`Billing` and `Settings`)
-- **adminNav**: Remove line 68 (`Settings`)
-- **superAdminNav**: Remove line 78 (`Settings`)
-
-### 3. Add settings state and sub-items in AppSidebar (after line 114)
-```typescript
-const isSettingsOpen = location.pathname.startsWith('/settings');
-const settingsSubItems = [
-  { title: 'General Settings', url: '/settings', icon: Settings },
-  { title: 'Privacy & Permissions', url: '/settings/privacy', icon: Shield },
-  { title: 'Billing & Receipts', url: '/settings/billing', icon: CreditCard },
-];
+**Before:**
+```tsx
+<SidebarMenuButton
+  className="hover:bg-sidebar-accent cursor-pointer"
+  onClick={() => {}}
+>
+  <Settings className="h-4 w-4 shrink-0" />
+  {!collapsed && (
+    <div className="flex items-center justify-between flex-1">
+      <span>Settings</span>
+      {isSettingsOpen ? <ChevronDown /> : <ChevronRight />}
+    </div>
+  )}
+</SidebarMenuButton>
 ```
 
-### 4. Add collapsible Settings group after navItems.map (after line 166, before `</SidebarMenu>`)
-Insert a `SidebarMenuItem` with a Settings button showing chevron, and a conditionally rendered sub-menu when `isSettingsOpen && !collapsed`.
+**After:**
+```tsx
+<SidebarMenuButton asChild>
+  <NavLink
+    to="/settings"
+    className="hover:bg-sidebar-accent"
+    activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+  >
+    <Settings className="h-4 w-4 shrink-0" />
+    {!collapsed && (
+      <div className="flex items-center justify-between flex-1">
+        <span>Settings</span>
+        {isSettingsOpen ? <ChevronDown /> : <ChevronRight />}
+      </div>
+    )}
+  </NavLink>
+</SidebarMenuButton>
+```
 
-## App.tsx
-No changes needed — `CoachInvoices` import (line 34) and route (line 89) already exist.
+No other changes.
 
