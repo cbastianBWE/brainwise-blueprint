@@ -1,13 +1,20 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Brain } from "lucide-react";
+import { Brain, Loader2, Info } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+
+const CERT_LABELS: Record<string, string> = {
+  ptp_coach: 'PTP Certified Coach',
+  ai_transformation_coach: 'AI Transformation Certified Coach',
+  ai_transformation_ptp_coach: 'AI Transformation + PTP Certified Coach',
+  my_brainwise_coach: 'My BrainWise Coach',
+};
 
 const SignUp = () => {
   const [firstName, setFirstName] = useState("");
@@ -19,6 +26,38 @@ const SignUp = () => {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const { toast } = useToast();
+
+  const [searchParams] = useSearchParams();
+  const [coachToken, setCoachToken] = useState<string | null>(null);
+  const [coachInvitation, setCoachInvitation] = useState<{
+    first_name: string;
+    last_name: string;
+    email: string;
+    certification_type: string;
+  } | null>(null);
+  const [tokenLoading, setTokenLoading] = useState(false);
+
+  useEffect(() => {
+    const token = searchParams.get('coach_token');
+    if (!token) return;
+    setCoachToken(token);
+    setTokenLoading(true);
+    (async () => {
+      const { data } = await supabase
+        .from('coach_invitations')
+        .select('first_name, last_name, email, certification_type')
+        .eq('token', token)
+        .eq('status', 'pending')
+        .single();
+      if (data) {
+        setCoachInvitation(data);
+        setFirstName(data.first_name);
+        setLastName(data.last_name);
+        setEmail(data.email);
+      }
+      setTokenLoading(false);
+    })();
+  }, [searchParams]);
 
   const validatePassword = (pw: string) => pw.length >= 8 && /\d/.test(pw);
 
@@ -58,6 +97,11 @@ const SignUp = () => {
       toast({ title: "Sign Up Failed", description: error.message, variant: "destructive" });
     } else {
       setSuccess(true);
+      if (coachToken && coachInvitation) {
+        await supabase.functions.invoke('accept-coach-invitation', {
+          body: { token: coachToken },
+        });
+      }
     }
   };
 
@@ -82,6 +126,14 @@ const SignUp = () => {
     );
   }
 
+  if (tokenLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
@@ -91,20 +143,52 @@ const SignUp = () => {
           <CardDescription>Join BrainWise to get started</CardDescription>
         </CardHeader>
         <CardContent>
+          {coachInvitation && (
+            <div className="flex items-start gap-2 rounded-md border border-primary/30 bg-primary/5 p-3 mb-4">
+              <Info className="h-5 w-5 text-primary mt-0.5 shrink-0" />
+              <p className="text-sm text-foreground">
+                You have been invited to join BrainWise as a{' '}
+                <strong>{CERT_LABELS[coachInvitation.certification_type] || coachInvitation.certification_type}</strong>.
+                Your details have been pre-filled.
+              </p>
+            </div>
+          )}
           <form onSubmit={handleSignUp} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="firstName">First Name</Label>
-                <Input id="firstName" value={firstName} onChange={(e) => setFirstName(e.target.value)} required />
+                <Input
+                  id="firstName"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  required
+                  readOnly={!!coachInvitation}
+                  className={coachInvitation ? "bg-muted" : ""}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="lastName">Last Name</Label>
-                <Input id="lastName" value={lastName} onChange={(e) => setLastName(e.target.value)} required />
+                <Input
+                  id="lastName"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  required
+                  readOnly={!!coachInvitation}
+                  className={coachInvitation ? "bg-muted" : ""}
+                />
               </div>
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email Address</Label>
-              <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                readOnly={!!coachInvitation}
+                className={coachInvitation ? "bg-muted" : ""}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
