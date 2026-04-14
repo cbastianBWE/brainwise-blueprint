@@ -107,10 +107,16 @@ export function AppSidebar() {
 
   const navItems = getNavItems(profile?.account_type);
   const isSettingsOpen = location.pathname.startsWith('/settings');
-  const settingsSubItems = [
+  const settingsSubItems: { title: string; url: string; icon: React.ElementType; disabled?: boolean; badge?: string }[] = [
     { title: 'General Settings', url: '/settings', icon: Settings },
     { title: 'Privacy & Permissions', url: '/settings/privacy', icon: Shield },
     { title: 'Billing & Receipts', url: '/settings/billing', icon: CreditCard },
+  ];
+
+  const coachSettingsSubItems: typeof settingsSubItems = [
+    { title: 'General Settings', url: '/settings', icon: Settings },
+    { title: 'Privacy & Permissions', url: '/settings/privacy', icon: Shield },
+    { title: 'Billing & Receipts', url: '/settings/billing', icon: CreditCard, disabled: true, badge: 'Coming Soon' },
   ];
 
   return (
@@ -185,18 +191,32 @@ export function AppSidebar() {
                 </SidebarMenuButton>
                 {isSettingsOpen && !collapsed && (
                   <div className="ml-4 mt-1 space-y-1">
-                    {settingsSubItems.map(item => (
-                      <SidebarMenuButton key={item.url} asChild>
-                        <NavLink
-                          to={item.url}
-                          end
-                          className="hover:bg-sidebar-accent text-sm"
-                          activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                        >
-                          <item.icon className="h-3.5 w-3.5 shrink-0" />
-                          <span>{item.title}</span>
-                        </NavLink>
-                      </SidebarMenuButton>
+                    {(profile?.account_type === 'coach' ? coachSettingsSubItems : settingsSubItems).map(item => (
+                      <SidebarMenuItem key={item.url}>
+                        <SidebarMenuButton asChild disabled={item.disabled}>
+                          {item.disabled ? (
+                            <span className="flex items-center gap-2 opacity-50 cursor-not-allowed px-2 py-1.5 text-sm">
+                              <item.icon className="h-3.5 w-3.5 shrink-0" />
+                              <span>{item.title}</span>
+                              {item.badge && (
+                                <span className="ml-auto text-[10px] bg-muted text-muted-foreground rounded px-1.5 py-0.5">
+                                  {item.badge}
+                                </span>
+                              )}
+                            </span>
+                          ) : (
+                            <NavLink
+                              to={item.url}
+                              end
+                              className="hover:bg-sidebar-accent text-sm"
+                              activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                            >
+                              <item.icon className="h-3.5 w-3.5 shrink-0" />
+                              <span>{item.title}</span>
+                            </NavLink>
+                          )}
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
                     ))}
                   </div>
                 )}
