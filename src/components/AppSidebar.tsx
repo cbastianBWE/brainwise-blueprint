@@ -38,8 +38,6 @@ const individualNav: NavItem[] = [
   { title: "AI Chat", url: "/ai-chat", icon: MessageSquare },
   { title: "Chat History", url: "/ai-chat/history", icon: History },
   { title: "Resources", url: "/resources", icon: BookOpen },
-  { title: "Settings", url: "/settings", icon: Settings },
-  { title: "Privacy & Permissions", url: "/settings/privacy", icon: Shield },
 ];
 
 const coachNav: NavItem[] = [
