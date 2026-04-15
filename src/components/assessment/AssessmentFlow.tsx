@@ -354,8 +354,20 @@ export default function AssessmentFlow({ instrument, onExit }: Props) {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Go Back</AlertDialogCancel>
+            {Object.keys(responses).length < items.length && (
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowSubmitDialog(false);
+                  const firstUnanswered = items.findIndex((it) => !responses[it.item_id]);
+                  if (firstUnanswered >= 0) setCurrentIndex(firstUnanswered);
+                }}
+              >
+                Go to First Unanswered
+              </Button>
+            )}
             <AlertDialogAction onClick={handleSubmit} disabled={submitting}>
-              {submitting ? "Submitting..." : "Submit"}
+              {submitting ? 'Submitting...' : 'Submit'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
