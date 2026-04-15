@@ -1,17 +1,37 @@
 
 
-# Plan: Update SliderControl with Custom Styles and New Layout
+# Plan: Add "Go to First Unanswered" Button in Submit Dialog
 
 ## Single file: `src/components/assessment/AssessmentFlow.tsx`
 
-### Change: Replace the entire `return (...)` block in `SliderControl`
+### Change (lines 355–359)
+Replace the `AlertDialogFooter` contents with three elements: Go Back cancel button, a conditional "Go to First Unanswered" button (shown only when incomplete), and the Submit action button.
 
-Replace the current return statement with the new version that:
-- Adds a `<style>` tag with custom CSS for `.assessment-slider` (hover/active thumb effects, track height)
-- Moves the score display above the slider as a large centered `3xl` number
-- Wraps the `Slider` in a `.assessment-slider` div
-- Removes the inline Tailwind slider sizing classes
-- Adjusts spacing (`space-y-4`, `px-2`, `gap-4`) and anchor label layout (`w-1/2`)
+```tsx
+// Before (lines 356-359)
+<AlertDialogCancel>Go Back</AlertDialogCancel>
+<AlertDialogAction onClick={handleSubmit} disabled={submitting}>
+  {submitting ? "Submitting..." : "Submit"}
+</AlertDialogAction>
+
+// After
+<AlertDialogCancel>Go Back</AlertDialogCancel>
+{Object.keys(responses).length < items.length && (
+  <Button
+    variant="outline"
+    onClick={() => {
+      setShowSubmitDialog(false);
+      const firstUnanswered = items.findIndex((it) => !responses[it.item_id]);
+      if (firstUnanswered >= 0) setCurrentIndex(firstUnanswered);
+    }}
+  >
+    Go to First Unanswered
+  </Button>
+)}
+<AlertDialogAction onClick={handleSubmit} disabled={submitting}>
+  {submitting ? 'Submitting...' : 'Submit'}
+</AlertDialogAction>
+```
 
 No other files changed.
 
