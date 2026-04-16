@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo, useCallback, useRef } from "react";
+
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserProfile } from "@/hooks/useUserProfile";
@@ -41,6 +42,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { format } from "date-fns";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import DrivingFacetScores from "@/components/results/DrivingFacetScores";
 import ExportPdfModal, { type PdfSections } from "@/components/results/ExportPdfModal";
 import { generateResultsPdf, type PdfData } from "@/lib/generateResultsPdf";
@@ -124,6 +126,8 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
 
   const [assessments, setAssessments] = useState<AssessmentWithResult[]>([]);
   const [selectedId, setSelectedId] = useState<string>("");
+  const [ptpContextTab, setPtpContextTab] = useState<'professional' | 'personal' | 'combined' | null>(null);
+  const [ptpTabOverrideId, setPtpTabOverrideId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [pollingNarrative, setPollingNarrative] = useState(false);
   const [dimensionNameMap, setDimensionNameMap] = useState<Map<string, string>>(new Map());
@@ -275,6 +279,12 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
       } else {
         setSelectedId(combined[0]?.result.id ?? "");
       }
+      // Initialize PTP context tab based on most recent PTP result
+      const mostRecentPtp = filtered.find(a => a.isPTP);
+      if (mostRecentPtp?.context_type === 'professional') setPtpContextTab('professional');
+      else if (mostRecentPtp?.context_type === 'personal') setPtpContextTab('personal');
+      else setPtpContextTab(null);
+
       setLoading(false);
     };
 
@@ -286,6 +296,64 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
     () => assessments.find((a) => a.result.id === selectedId),
     [assessments, selectedId]
   );
+
+  // PTP tab logic
+  const ptpProfessionalResults = useMemo(() =>
+    assessments.filter(a => a.isPTP && a.context_type === 'professional')
+      .sort((a, b) => new Date(b.completed_at!).getTime() - new Date(a.completed_at!).getTime()),
+    [assessments]);
+
+  const ptpPersonalResults = useMemo(() =>
+    assessments.filter(a => a.isPTP && a.context_type === 'personal')
+      .sort((a, b) => new Date(b.completed_at!).getTime() - new Date(a.completed_at!).getTime()),
+    [assessments]);
+
+  const hasPtpTabs = ptpProfessionalResults.length > 0 && ptpPersonalResults.length > 0;
+  const showPtpTabs = selected?.isPTP && hasPtpTabs;
+
+  // For combined tab: merge dimension scores from most recent professional + personal
+  const combinedDimensionScores = useMemo(() => {
+    if (!hasPtpTabs) return null;
+    const profScores = ptpProfessionalResults[0].result.dimension_scores;
+    const persScores = ptpPersonalResults[0].result.dimension_scores;
+    const allDims = new Set([...Object.keys(profScores), ...Object.keys(persScores)]);
+    const merged: Record<string, DimensionScore> = {};
+    allDims.forEach(dim => {
+      const profMean = profScores[dim]?.mean ?? null;
+      const persMean = persScores[dim]?.mean ?? null;
+      if (profMean !== null && persMean !== null) {
+        merged[dim] = { mean: (profMean + persMean) / 2, band: profScores[dim]?.band ?? persScores[dim]?.band };
+      } else if (profMean !== null) {
+        merged[dim] = profScores[dim];
+      } else {
+        merged[dim] = persScores[dim];
+      }
+    });
+    return merged;
+  }, [hasPtpTabs, ptpProfessionalResults, ptpPersonalResults]);
+
+  // Effective selected based on tab
+  const effectiveSelected = useMemo(() => {
+    if (!selected?.isPTP || !hasPtpTabs) return selected;
+    if (ptpContextTab === 'professional') {
+      const override = ptpTabOverrideId ? ptpProfessionalResults.find(a => a.result.id === ptpTabOverrideId) : null;
+      return override ?? ptpProfessionalResults[0] ?? selected;
+    }
+    if (ptpContextTab === 'personal') {
+      const override = ptpTabOverrideId ? ptpPersonalResults.find(a => a.result.id === ptpTabOverrideId) : null;
+      return override ?? ptpPersonalResults[0] ?? selected;
+    }
+    if (ptpContextTab === 'combined') return ptpProfessionalResults[0] ?? selected;
+    return selected;
+  }, [selected, hasPtpTabs, ptpContextTab, ptpTabOverrideId, ptpProfessionalResults, ptpPersonalResults]);
+
+  // Effective dimension scores
+  const effectiveDimensionScores = useMemo(() => {
+    if (ptpContextTab === 'combined' && combinedDimensionScores) {
+      return Object.entries(combinedDimensionScores);
+    }
+    return effectiveSelected ? Object.entries(effectiveSelected.result.dimension_scores) : [];
+  }, [ptpContextTab, combinedDimensionScores, effectiveSelected]);
 
   // Poll for AI narrative
   useEffect(() => {
@@ -380,9 +448,7 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
   }, [selected, consumeMessage, profile?.subscription_tier, toast]);
 
   // Derived data
-  const dimensionScores = selected
-    ? Object.entries(selected.result.dimension_scores)
-    : [];
+  const dimensionScores = effectiveDimensionScores;
 
   const sortedDimensions = useMemo(() => {
     if (!dimensionScores.length) return [];
@@ -649,6 +715,56 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
           )}
           {!debriefPendingIds.has(selected.result.assessment_id) && (
             <>
+          {/* PTP Context Tabs */}
+          {showPtpTabs && (
+            <section>
+              <Tabs value={ptpContextTab ?? 'professional'} onValueChange={(v) => { setPtpContextTab(v as any); setPtpTabOverrideId(null); }}>
+                <TabsList>
+                  <TabsTrigger value="professional">Professional</TabsTrigger>
+                  <TabsTrigger value="personal">Personal</TabsTrigger>
+                  <TabsTrigger value="combined">Combined</TabsTrigger>
+                </TabsList>
+              </Tabs>
+              {ptpContextTab === 'professional' && ptpProfessionalResults.length > 1 && (
+                <div className="mt-2">
+                  <Select value={ptpTabOverrideId ?? ptpProfessionalResults[0].result.id} onValueChange={setPtpTabOverrideId}>
+                    <SelectTrigger className="w-full sm:w-72">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ptpProfessionalResults.map(a => (
+                        <SelectItem key={a.result.id} value={a.result.id}>
+                          Professional — {format(new Date(a.completed_at!), 'MMM yyyy')}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+              {ptpContextTab === 'personal' && ptpPersonalResults.length > 1 && (
+                <div className="mt-2">
+                  <Select value={ptpTabOverrideId ?? ptpPersonalResults[0].result.id} onValueChange={setPtpTabOverrideId}>
+                    <SelectTrigger className="w-full sm:w-72">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ptpPersonalResults.map(a => (
+                        <SelectItem key={a.result.id} value={a.result.id}>
+                          Personal — {format(new Date(a.completed_at!), 'MMM yyyy')}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+              {ptpContextTab === 'combined' && (
+                <p className="text-xs text-muted-foreground mt-2">
+                  Showing averaged scores across your most recent Professional and Personal assessments.
+                </p>
+              )}
+            </section>
+          )}
+
           {/* SECTION 1 - Profile Overview */}
           <section className="space-y-4">
             <div>
@@ -709,7 +825,7 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
           </section>
 
           {/* Complete other half prompt — PTP only */}
-          {selected.isPTP && (selected.context_type === 'professional' || selected.context_type === 'personal') && (
+          {selected.isPTP && !hasPtpTabs && (selected.context_type === 'professional' || selected.context_type === 'personal') && (
             <section>
               <Card className="border-primary/30 bg-primary/5">
                 <CardContent className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 py-4">
@@ -782,7 +898,7 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
                               <Cell
                                 key={idx}
                                 fill={
-                                  selected.isPTP
+                                  effectiveSelected?.isPTP
                                     ? PTP_DIMENSION_COLORS[entry.dimensionId] ?? BAND_COLORS.moderate
                                     : BAND_COLORS[entry.band] ?? BAND_COLORS.moderate
                                 }
@@ -806,9 +922,12 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
           </section>
 
           {/* SECTION 2b - Driving Facet Scores (PTP only) */}
-          {selected.isPTP && (
+          {effectiveSelected?.isPTP && (
             <section>
-              <DrivingFacetScores assessmentId={selected.result.assessment_id} />
+              <DrivingFacetScores
+                assessmentId={effectiveSelected.result.assessment_id}
+                additionalAssessmentId={ptpContextTab === 'combined' ? ptpPersonalResults[0]?.result.assessment_id : undefined}
+              />
             </section>
           )}
 

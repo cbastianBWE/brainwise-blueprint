@@ -31,9 +31,10 @@ interface FacetItem {
 
 interface Props {
   assessmentId: string;
+  additionalAssessmentId?: string;
 }
 
-export default function DrivingFacetScores({ assessmentId }: Props) {
+export default function DrivingFacetScores({ assessmentId, additionalAssessmentId }: Props) {
   const [loading, setLoading] = useState(true);
   const [elevated, setElevated] = useState<FacetItem[]>([]);
   const [suppressed, setSuppressed] = useState<FacetItem[]>([]);
@@ -55,8 +56,19 @@ export default function DrivingFacetScores({ assessmentId }: Props) {
         return;
       }
 
+      let allResponses = responses ?? [];
+      if (additionalAssessmentId) {
+        const { data: additionalResponses } = await supabase
+          .from("assessment_responses")
+          .select("response_value_numeric, is_reverse_scored, item_id")
+          .eq("assessment_id", additionalAssessmentId);
+        if (additionalResponses?.length) {
+          allResponses = [...allResponses, ...additionalResponses];
+        }
+      }
+
       // Get item details
-      const itemIds = responses.map((r) => r.item_id);
+      const itemIds = allResponses.map((r) => r.item_id);
       const { data: items } = await supabase
         .from("items")
         .select("item_id, item_text, dimension_id")
@@ -67,7 +79,7 @@ export default function DrivingFacetScores({ assessmentId }: Props) {
       );
 
       // Build scored values with reverse scoring applied
-      const scoredItems = responses.map((r) => {
+      const scoredItems = allResponses.map((r) => {
         const item = itemMap.get(r.item_id);
         const raw = Number(r.response_value_numeric);
         const value = r.is_reverse_scored ? 100 - raw : raw;
@@ -103,7 +115,7 @@ export default function DrivingFacetScores({ assessmentId }: Props) {
     };
 
     fetch();
-  }, [assessmentId]);
+  }, [assessmentId, additionalAssessmentId]);
 
   if (loading) {
     return (
