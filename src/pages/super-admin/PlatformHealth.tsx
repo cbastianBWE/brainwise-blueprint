@@ -12,6 +12,7 @@ interface Stats {
   tierCounts: Record<string, number>;
   activePlatformVersion: string;
   activeAiVersion: string;
+  certificationCounts: Record<string, { in_progress: number; certified: number }>;
 }
 
 export default function PlatformHealth() {
