@@ -145,11 +145,11 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
 
   useEffect(() => {
     return () => {
-      if (chatSessionId) {
-        supabase.rpc('close_chat_session', { p_session_id: chatSessionId });
+      if (chatSessionIdRef.current) {
+        supabase.rpc('close_chat_session', { p_session_id: chatSessionIdRef.current });
       }
     };
-  }, [chatSessionId]);
+  }, []);
 
   // Fetch client name and share preference when in coach view
   useEffect(() => {
@@ -494,6 +494,7 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
   }, [selected, sortedDimensions, dimensionScores, dimensionNameMap, profile, recommendations, isSliderInstrument, highestDimension, lowestDimension]);
 
   const chatMessagesRef = useRef<Array<{role: 'user' | 'assistant'; content: string; timestamp: Date}>>([]);
+  const chatSessionIdRef = useRef<string | null>(null);
 
   const sendChatMessage = useCallback(async () => {
     if (!chatInput.trim() || !selected || chatLoading) return;
@@ -518,6 +519,7 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
       if (session) {
         sessionId = session.id;
         setChatSessionId(session.id);
+        chatSessionIdRef.current = session.id;
       }
     }
 
