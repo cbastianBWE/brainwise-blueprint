@@ -143,6 +143,14 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
   const [chatSessionId, setChatSessionId] = useState<string | null>(null);
   const [showChatUpgradeDialog, setShowChatUpgradeDialog] = useState(false);
 
+  useEffect(() => {
+    return () => {
+      if (chatSessionId) {
+        supabase.rpc('close_chat_session', { p_session_id: chatSessionId });
+      }
+    };
+  }, [chatSessionId]);
+
   // Fetch client name and share preference when in coach view
   useEffect(() => {
     if (!isCoachView || !targetUserId) return;
