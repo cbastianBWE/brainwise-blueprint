@@ -10,6 +10,42 @@ const PTP_DIMENSION_COLORS: Record<string, string> = {
   "DIM-PTP-05": "#FFB703",
 };
 
+const PTP_DIMENSION_PASTEL: Record<string, string> = {
+  "DIM-PTP-01": "#E8EDF1",
+  "DIM-PTP-02": "#E6F2F3",
+  "DIM-PTP-03": "#F0EFF1",
+  "DIM-PTP-04": "#EEE8F5",
+  "DIM-PTP-05": "#FFF8E6",
+};
+
+const PTP_DIMENSION_DESCRIPTIONS: Record<string, { high: string; moderate: string; low: string }> = {
+  "DIM-PTP-01": {
+    high: "Safety and security concerns are a strong driver for you. You are highly attuned to potential risks — physical, emotional, or professional — and tend to respond strongly when these feel threatened.",
+    moderate: "Safety and security play a consistent but balanced role in how you navigate your world. You are thoughtful about potential risks without being overwhelmed by them.",
+    low: "You have a relatively low sensitivity to safety and security threats. You tend to feel comfortable in uncertain or risky situations that others might find unsettling.",
+  },
+  "DIM-PTP-02": {
+    high: "Social belonging and reputation are powerful motivators for you. Threats to your standing, acceptance, or influence in groups tend to activate your stress responses strongly.",
+    moderate: "Social belonging matters to you in a balanced way. You value connection and reputation but can manage situations where these feel uncertain.",
+    low: "You have a low sensitivity to social participation threats. You tend not to be strongly affected by concerns about belonging, reputation, or social standing.",
+  },
+  "DIM-PTP-03": {
+    high: "Uncertainty and unpredictability are significant sources of stress for you. You invest considerable energy in anticipating outcomes and maintaining a sense of control over your environment.",
+    moderate: "You prefer clarity and predictability but can manage reasonable levels of uncertainty. Ambiguity activates mild stress responses without overwhelming you.",
+    low: "You are comfortable with uncertainty and change. Unpredictability tends not to trigger strong stress responses, and you can adapt fluidly to new situations.",
+  },
+  "DIM-PTP-04": {
+    high: "Meaning, values, and purpose are central to your motivation. When your work or relationships feel misaligned with your deeper values, it creates significant internal tension.",
+    moderate: "Purpose and meaning are important to you but balanced with practical considerations. You seek alignment between your values and your actions without it dominating everything.",
+    low: "You have a low sensitivity to purpose-related threats. Meaning and values alignment is less of a stress trigger for you, and you can function well in varied contexts.",
+  },
+  "DIM-PTP-05": {
+    high: "Enjoyment, stimulation, and pleasure are strong motivators. You respond strongly to situations that feel joyless, monotonous, or that deprive you of experiences you value.",
+    moderate: "Pleasure and enjoyment are meaningful to you in a balanced way. You appreciate positive experiences without being strongly destabilized when they are absent.",
+    low: "You have a low sensitivity to pleasure-related threats. You can sustain motivation and wellbeing even in situations that lack stimulation or enjoyment.",
+  },
+};
+
 const PTP_ITEM_FACET_NAMES: Record<number, string> = {
   1: "Physical safety orientation",
   2: "Emotional safety (work)",
@@ -115,11 +151,18 @@ interface FacetItem {
   item_number: number | null;
   value: number;
   dimension_id: string;
+  context_type?: string | null;
 }
 
 interface DimensionScore {
   mean?: number;
   band?: string;
+}
+
+interface OtherAssessment {
+  instrument_name: string;
+  completed_at: string | null;
+  result: { id: string };
 }
 
 interface PTPNarrativeSectionsProps {
@@ -131,17 +174,19 @@ interface PTPNarrativeSectionsProps {
   recommendations: string[];
   permissionLevel?: "full_results" | "score_summary" | null;
   isCoachView?: boolean;
+  ptpContextTab?: "professional" | "personal" | "combined" | null;
+  otherAssessments?: OtherAssessment[];
 }
 
 export default function PTPNarrativeSections({
   assessmentResultId,
   assessmentId,
-  narrative,
   dimensionScores,
   dimensionNameMap,
-  recommendations,
   permissionLevel,
   isCoachView,
+  ptpContextTab,
+  otherAssessments = [],
 }: PTPNarrativeSectionsProps) {
   const [elevatedFacets, setElevatedFacets] = useState<FacetItem[]>([]);
   const [suppressedFacets, setSuppressedFacets] = useState<FacetItem[]>([]);
@@ -153,6 +198,9 @@ export default function PTPNarrativeSections({
   useEffect(() => {
     const fetchFacets = async () => {
       setLoadingFacets(true);
+      setElevatedFacets([]);
+      setSuppressedFacets([]);
+
       const { data: responses } = await supabase
         .from("assessment_responses")
         .select("response_value_numeric, is_reverse_scored, item_id")
@@ -166,12 +214,12 @@ export default function PTPNarrativeSections({
       const itemIds = responses.map((r) => r.item_id);
       const { data: items } = await supabase
         .from("items")
-        .select("item_id, item_text, item_number, dimension_id")
+        .select("item_id, item_text, item_number, dimension_id, context_type")
         .in("item_id", itemIds);
 
       const itemMap = new Map((items ?? []).map((i) => [i.item_id, i]));
 
-      const scored: FacetItem[] = responses.map((r) => {
+      let scored: FacetItem[] = responses.map((r) => {
         const item = itemMap.get(r.item_id);
         const raw = Number(r.response_value_numeric);
         const value = r.is_reverse_scored ? 100 - raw : raw;
@@ -179,9 +227,15 @@ export default function PTPNarrativeSections({
           item_text: item?.item_text ?? "",
           item_number: item?.item_number ?? null,
           dimension_id: item?.dimension_id ?? "",
+          context_type: item?.context_type ?? null,
           value,
         };
       });
+
+      if (ptpContextTab === "professional" || ptpContextTab === "personal") {
+        const filtered = scored.filter((s) => s.context_type === ptpContextTab);
+        if (filtered.length > 0) scored = filtered;
+      }
 
       const values = scored.map((s) => s.value);
       const mean = values.reduce((a, b) => a + b, 0) / values.length;
@@ -246,7 +300,7 @@ export default function PTPNarrativeSections({
       }
     };
     fetchFacets();
-  }, [assessmentId, assessmentResultId]);
+  }, [assessmentId, assessmentResultId, ptpContextTab]);
 
   const toggleFacet = (key: string) => {
     setExpandedFacets((prev) => {
@@ -260,13 +314,34 @@ export default function PTPNarrativeSections({
   const getFacetInterpretation = (facetName: string) =>
     facetInterpretations.find((f) => f.name === facetName);
 
-  const profileOverview = narrative
-    ? extractSection(narrative, "Profile Overview", "Dimension Highlights")
-    : null;
-  const dimensionHighlights = narrative
-    ? extractSection(narrative, "Dimension Highlights", "Cross-Assessment")
-    : null;
-  const crossAssessment = narrative ? extractSection(narrative, "Cross-Assessment") : null;
+  const sortedDims = [...dimensionScores].sort((a, b) => (b[1].mean ?? 0) - (a[1].mean ?? 0));
+  const highestDim = sortedDims[0];
+  const lowestDim = sortedDims[sortedDims.length - 1];
+  const contextLabel =
+    ptpContextTab === "professional"
+      ? "professional"
+      : ptpContextTab === "personal"
+        ? "personal"
+        : "overall";
+  const scores = dimensionScores.map(([, s]) => s.mean ?? 0);
+  const scoreRange = scores.length > 0 ? Math.max(...scores) - Math.min(...scores) : 0;
+  const profilePattern =
+    scoreRange < 8
+      ? "Your scores cluster closely together across all five dimensions, suggesting a broadly distributed threat sensitivity rather than one dominant area."
+      : "Your scores show meaningful variation across dimensions, suggesting some areas activate your threat responses more readily than others.";
+
+  const profileOverviewText =
+    dimensionScores.length > 0
+      ? `Your ${contextLabel} Personal Threat Profile shows ${dimensionScores.length} dimensions assessed. ${profilePattern} Your highest sensitivity in this context is ${dimensionNameMap.get(highestDim?.[0] ?? "") ?? highestDim?.[0] ?? "—"} (${Math.round(highestDim?.[1]?.mean ?? 0)}), while ${dimensionNameMap.get(lowestDim?.[0] ?? "") ?? lowestDim?.[0] ?? "—"} (${Math.round(lowestDim?.[1]?.mean ?? 0)}) shows the lowest activation.`
+      : null;
+
+  const getDimDescriptor = (dimId: string, mean: number) => {
+    const desc = PTP_DIMENSION_DESCRIPTIONS[dimId];
+    if (!desc) return null;
+    if (mean >= 65) return desc.high;
+    if (mean >= 40) return desc.moderate;
+    return desc.low;
+  };
 
   if (isCoachView && permissionLevel === "score_summary") {
     return (
@@ -292,23 +367,28 @@ export default function PTPNarrativeSections({
           <div key={key} className="rounded-lg border border-border overflow-hidden">
             <button
               onClick={() => toggleFacet(key)}
-              className="w-full text-left p-4 flex items-center gap-3 hover:bg-muted/30 transition-colors"
+              className="w-full text-left p-4 flex items-start gap-3 hover:bg-muted/30 transition-colors"
             >
               <div
-                className="w-2 h-8 rounded-sm shrink-0"
+                className="w-2 h-8 rounded-sm shrink-0 mt-0.5"
                 style={{ backgroundColor: color }}
               />
-              <span className="flex-1 font-medium text-sm">{facetName}</span>
+              <div className="flex-1 min-w-0">
+                <div className="font-medium text-sm">{facetName}</div>
+                <div className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
+                  {facet.item_text}
+                </div>
+              </div>
               <span
-                className="px-2 py-1 rounded text-xs font-semibold text-white"
+                className="px-2 py-1 rounded text-xs font-semibold text-white shrink-0"
                 style={{ backgroundColor: color }}
               >
                 {score}
               </span>
               {isExpanded ? (
-                <ChevronUp className="w-4 h-4 text-muted-foreground" />
+                <ChevronUp className="w-4 h-4 text-muted-foreground shrink-0 mt-1" />
               ) : (
-                <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0 mt-1" />
               )}
             </button>
             {isExpanded && (
@@ -363,33 +443,34 @@ export default function PTPNarrativeSections({
 
   return (
     <div className="space-y-8">
-      {profileOverview && (
+      {profileOverviewText && (
         <section>
           <h3 className="text-lg font-semibold mb-3">Profile overview</h3>
-          <p className="text-sm text-muted-foreground leading-relaxed">{profileOverview}</p>
+          <p className="text-sm text-muted-foreground leading-relaxed">{profileOverviewText}</p>
         </section>
       )}
 
-      {dimensionHighlights && (
+      {dimensionScores.length > 0 && (
         <section>
           <h3 className="text-lg font-semibold mb-3">Dimension highlights</h3>
           <div className="space-y-3">
-            {dimensionScores.slice(0, 3).map(([dimId, score]) => {
+            {sortedDims.map(([dimId, score]) => {
               const color = PTP_DIMENSION_COLORS[dimId] ?? "#021F36";
+              const pastel = PTP_DIMENSION_PASTEL[dimId] ?? "#F9F7F1";
               const name = dimensionNameMap.get(dimId) ?? dimId;
               const mean = Math.round(score.mean ?? 0);
-              const dimText = extractDimensionText(dimensionHighlights, name);
+              const descriptor = getDimDescriptor(dimId, mean);
               return (
                 <div
                   key={dimId}
-                  className="rounded-lg border border-border p-4 border-l-4"
-                  style={{ borderLeftColor: color }}
+                  className="rounded-lg p-4 border-l-4"
+                  style={{ backgroundColor: pastel, borderLeftColor: color }}
                 >
                   <h4 className="font-semibold text-sm mb-1">
                     {name} — {mean}
                   </h4>
-                  {dimText && (
-                    <p className="text-sm text-muted-foreground leading-relaxed">{dimText}</p>
+                  {descriptor && (
+                    <p className="text-sm text-muted-foreground leading-relaxed">{descriptor}</p>
                   )}
                 </div>
               );
@@ -412,41 +493,27 @@ export default function PTPNarrativeSections({
         </section>
       )}
 
-      {crossAssessment && recommendations.length > 0 && (
+      {otherAssessments.length > 0 && (
         <section>
           <h3 className="text-lg font-semibold mb-3">Cross-assessment connections</h3>
-          <p className="text-sm text-muted-foreground leading-relaxed">{crossAssessment}</p>
+          <p className="text-sm text-muted-foreground leading-relaxed mb-3">
+            You have completed {otherAssessments.length} other assessment
+            {otherAssessments.length > 1 ? "s" : ""} alongside your PTP. Patterns across these
+            instruments can reveal deeper insights into how your threat sensitivities show up in
+            different areas of your life.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {otherAssessments.map((a) => (
+              <span
+                key={a.result.id}
+                className="px-3 py-1 rounded-full text-xs font-medium bg-muted text-foreground border border-border"
+              >
+                {a.instrument_name}
+              </span>
+            ))}
+          </div>
         </section>
       )}
     </div>
   );
-}
-
-function extractSection(
-  narrative: string,
-  startMarker: string,
-  endMarker?: string,
-): string | null {
-  const lines = narrative.split("\n");
-  let capturing = false;
-  const captured: string[] = [];
-  for (const line of lines) {
-    const trimmed = line.trim();
-    if (trimmed.includes(startMarker)) {
-      capturing = true;
-      continue;
-    }
-    if (endMarker && trimmed.includes(endMarker) && capturing) break;
-    if (capturing && trimmed) captured.push(trimmed);
-  }
-  return captured.length > 0 ? captured.join(" ") : null;
-}
-
-function extractDimensionText(text: string, dimensionName: string): string | null {
-  const idx = text.indexOf(dimensionName);
-  if (idx === -1) return null;
-  const after = text.slice(idx + dimensionName.length);
-  const nextDim = after.search(/\b(Protection|Participation|Prediction|Purpose|Pleasure)\b/);
-  const chunk = nextDim > 0 ? after.slice(0, nextDim) : after.slice(0, 400);
-  return chunk.replace(/^[\s—:]+/, "").trim() || null;
 }
