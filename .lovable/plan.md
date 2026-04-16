@@ -1,11 +1,13 @@
 
-# Plan: Persist context_type on resumed PTP assessments
+# Plan: Three UI tweaks in MyResults.tsx
 
-## Single file: `src/components/assessment/AssessmentFlow.tsx`
+## Change 1 — Hide "complete other half" banner for coaches (line 828)
+Add `!isCoachView &&` at the start of the condition.
 
-### Change — Update existing assessment with `context_type` on resume
-In the branch where an in-progress assessment is found (`existing && existing.length > 0`), after assigning `aId`, add a guarded `update` call to set `context_type` on that assessment row when `contextType` is provided.
+## Change 2 — Add context label to page heading (lines 771-773)
+After the profile name text, append a muted span showing "— Professional", "— Personal", or "— Combined" when PTP tabs are active.
 
-This ensures that when a user resumes a PTP assessment, the chosen context (professional/personal/both) is persisted to the existing row rather than only being saved on newly inserted rows.
+## Change 3 — Fix dropdown labels to show context type (lines 692-697)
+For PTP assessments with a `context_type`, show "PTP Professional — MMM yyyy" instead of the generic instrument name.
 
 No other files changed.
