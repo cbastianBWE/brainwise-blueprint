@@ -31,9 +31,10 @@ interface FacetItem {
 
 interface Props {
   assessmentId: string;
+  additionalAssessmentId?: string;
 }
 
-export default function DrivingFacetScores({ assessmentId }: Props) {
+export default function DrivingFacetScores({ assessmentId, additionalAssessmentId }: Props) {
   const [loading, setLoading] = useState(true);
   const [elevated, setElevated] = useState<FacetItem[]>([]);
   const [suppressed, setSuppressed] = useState<FacetItem[]>([]);
