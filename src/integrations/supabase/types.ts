@@ -1401,6 +1401,14 @@ export type Database = {
           subscription_tier: string
         }[]
       }
+      update_chat_session: {
+        Args: {
+          p_message_count: number
+          p_messages: Json
+          p_session_id: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
