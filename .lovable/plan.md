@@ -1,20 +1,17 @@
 
 
-# Plan: Add useEffect cleanup for chat session on unmount
+# Plan: Add chatSessionIdRef for reliable unmount cleanup in MyResults.tsx
 
-## Single file: `src/pages/MyResults.tsx`
+## Changes (single file: `src/pages/MyResults.tsx`)
 
-Add a `useEffect` with a cleanup function after line 144 (after `chatSessionId` state declaration) that calls `close_chat_session` RPC when the component unmounts.
+### 1. Add `chatSessionIdRef` after `chatMessagesRef` (line 496)
+Add `const chatSessionIdRef = useRef<string | null>(null);` after the `chatMessagesRef` declaration.
 
-```tsx
-useEffect(() => {
-  return () => {
-    if (chatSessionId) {
-      supabase.rpc('close_chat_session', { p_session_id: chatSessionId });
-    }
-  };
-}, [chatSessionId]);
-```
+### 2. Sync ref after session creation (line 520)
+After `setChatSessionId(session.id);`, add `chatSessionIdRef.current = session.id;`.
+
+### 3. Replace unmount useEffect (lines 146–152)
+Change the cleanup effect to use `chatSessionIdRef.current` instead of `chatSessionId`, and set dependency array to `[]` so it only runs on unmount.
 
 No other files changed.
 
