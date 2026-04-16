@@ -116,10 +116,10 @@ export default function DrivingFacetScores({ assessmentId, additionalAssessmentI
       const upperThreshold = mean + stdDev;
       const lowerThreshold = mean - stdDev;
 
-      const allElevated = scoredItems
+      const allElevated = filteredItems
         .filter((s) => s.value > upperThreshold)
         .sort((a, b) => (b.value - mean) - (a.value - mean));
-      const allSuppressed = scoredItems
+      const allSuppressed = filteredItems
         .filter((s) => s.value < lowerThreshold)
         .sort((a, b) => (a.value - mean) - (b.value - mean));
 
@@ -131,7 +131,7 @@ export default function DrivingFacetScores({ assessmentId, additionalAssessmentI
     };
 
     fetch();
-  }, [assessmentId, additionalAssessmentId]);
+  }, [assessmentId, additionalAssessmentId, contextFilter]);
 
   if (loading) {
     return (
