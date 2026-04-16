@@ -40,6 +40,12 @@ const SignUp = () => {
   const [tokenLoading, setTokenLoading] = useState(false);
 
   useEffect(() => {
+    // Pre-fill email from ?email= query param (client invitation flow)
+    const emailParam = searchParams.get('email');
+    if (emailParam) {
+      setEmail(decodeURIComponent(emailParam));
+    }
+
     const token = searchParams.get('coach_token');
     if (!token) return;
     setCoachToken(token);
