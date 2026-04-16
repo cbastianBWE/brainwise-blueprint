@@ -82,6 +82,12 @@ export default function AssessmentFlow({ instrument, onExit, contextType }: Prop
       let aId: string;
       if (existing && existing.length > 0) {
         aId = existing[0].id;
+        if (contextType) {
+          await supabase
+            .from('assessments')
+            .update({ context_type: contextType })
+            .eq('id', aId);
+        }
       } else {
         const { data: newA, error } = await supabase
           .from("assessments")
