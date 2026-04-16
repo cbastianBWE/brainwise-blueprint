@@ -1,24 +1,12 @@
 
-# Plan: Add PTPNarrativeSections component
+# Plan: Wire PTPNarrativeSections into MyResults
 
-## New file: `src/components/results/PTPNarrativeSections.tsx`
+## Single file: `src/pages/MyResults.tsx`
 
-Create a new client component that renders the structured PTP narrative + facet insights view. Responsibilities:
+### Change 1 — Import
+Add `import PTPNarrativeSections from "@/components/results/PTPNarrativeSections";` with the other component imports at the top.
 
-- **Props**: `assessmentResultId`, `assessmentId`, `narrative`, `dimensionScores`, `dimensionNameMap`, `recommendations`, `permissionLevel`, `isCoachView`.
-- **Constants**: brand `PTP_DIMENSION_COLORS` (matching `MyResults.tsx`) and the full 89-entry `PTP_ITEM_FACET_NAMES` map.
-- **Data load** (effect on mount):
-  1. Fetch all `assessment_responses` for the assessment, then their `items`.
-  2. Apply reverse scoring (`100 - raw` when flagged) to compute per-item values.
-  3. Compute mean + standard deviation across all values; pick top 10 elevated (> mean + SD) and bottom 10 suppressed (< mean − SD).
-  4. Look up cached `facet_interpretations` row by `assessment_result_id`; if missing, invoke the `generate-facet-interpretations` edge function with the elevated+suppressed facet payload and store the returned `facet_data` in state.
-- **Sections rendered**:
-  - Profile Overview (parsed from narrative)
-  - Dimension Highlights (top 3 dims with brand color + extracted text)
-  - Driving facet insights — elevated (collapsible rows, color-coded by dimension, score chip, expanded "impact on self/others" lists)
-  - Driving facet insights — suppressed (same pattern)
-  - Cross-Assessment Connections (parsed from narrative, gated on having recommendations)
-- **Coach guard**: when `isCoachView && permissionLevel === 'score_summary'`, render a short "scores only" notice instead of narrative content.
-- **Helpers**: `extractSection(narrative, start, end?)` and `extractDimensionText(text, dimensionName)` for narrative parsing.
+### Change 2 — SECTION 4 branch on PTP
+Wrap SECTION 4 so that when `effectiveSelected?.isPTP` is true, render `<PTPNarrativeSections>` (passing `assessmentResultId`, `assessmentId`, `narrative`, `dimensionScores`, `dimensionNameMap`, `recommendations`, `permissionLevel`, `isCoachView`) instead of the existing AI Narrative card. For all non-PTP results, keep the current card UI exactly as-is (coach guard, narrative render, version labels, limit-reached banner, regenerate button + both AlertDialogs, polling state, empty state).
 
-No other files changed. (Note: this only creates the component — wiring it into `MyResults.tsx` and adding the `generate-facet-interpretations` edge function / `facet_interpretations` table are separate follow-ups.)
+No other files changed.
