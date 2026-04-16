@@ -522,6 +522,18 @@ export default function PTPNarrativeSections({
         ) : null}
       </section>
 
+      <section>
+        <div
+          className="rounded-lg p-5"
+          style={{ backgroundColor: "#F9F7F1", borderLeft: "4px solid #021F36", borderRadius: "0 8px 8px 0" }}
+        >
+          <h3 className="text-lg font-semibold mb-2" style={{ color: "#021F36" }}>PTP and Brain Overview</h3>
+          <p className="text-sm leading-relaxed" style={{ color: "#6D6875" }}>
+            Content coming soon. This section will provide a brief introduction to the Personal Threat Profile framework and its neuroscientific basis, including links to supporting resources and a video overview.
+          </p>
+        </div>
+      </section>
+
       {dimensionScores.length > 0 && (
         <section>
           <h3 className="text-lg font-semibold mb-3">Dimension highlights</h3>
