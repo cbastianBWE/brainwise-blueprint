@@ -1,12 +1,10 @@
 
 
-# Plan: Add markdown rendering for assistant chat messages in MyResults.tsx
+# Plan: Add email query param pre-fill to SignUp.tsx useEffect
 
-## Single file: `src/pages/MyResults.tsx`
+## Single file: `src/pages/SignUp.tsx`
 
-Replace lines 987–989 (the chat message bubble content) with enhanced markdown rendering for assistant messages. User messages continue using `renderInlineMarkdown` directly. Assistant messages get line-by-line parsing for headings (`#`, `##`, `###`), bullet points (`-` or `*`), and regular paragraphs.
-
-The new rendering splits assistant message content by newlines and renders each line as the appropriate element (heading, bullet with dot indicator, or paragraph), while user messages remain unchanged.
+Replace the existing `useEffect` that reads `searchParams` (lines ~45–61) with the updated version that first checks for an `?email=` query parameter and pre-fills the email field, then continues with the existing coach token logic unchanged.
 
 No other files changed.
 
