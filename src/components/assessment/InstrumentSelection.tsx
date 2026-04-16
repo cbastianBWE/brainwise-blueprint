@@ -6,6 +6,13 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Brain, Star } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 
 const INSTRUMENT_UUID_MAP: Record<string, string> = {
   "INST-001": "02618e9a-d411-44cf-b316-fe368edeac03",
@@ -66,11 +73,15 @@ export default function InstrumentSelection({ onSelect }: Props) {
   const [completedInstrumentIds, setCompletedInstrumentIds] = useState<Set<string>>(new Set());
   const [inProgressInstrumentIds, setInProgressInstrumentIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
+  const [showSelfPayDialog, setShowSelfPayDialog] = useState(false);
+  const [selfPayDialogLoading, setSelfPayDialogLoading] = useState(false);
+  const [subscriptionPlans, setSubscriptionPlans] = useState<Array<{ plan_name: string; tier: string; billing_period: string; price_usd: number | null; stripe_price_id: string }>>([]);
+  const [selfPayCoachInstrumentIds, setSelfPayCoachInstrumentIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (!user) return;
     const load = async () => {
-      const [userRes, versionRes, resultsRes, coachClientsRes, purchasesRes, completedRes, inProgressRes] = await Promise.all([
+      const [userRes, versionRes, resultsRes, coachClientsRes, purchasesRes, completedRes, inProgressRes, plansRes, selfPayCoachClientsRes] = await Promise.all([
         supabase.from("users").select("subscription_tier, subscription_status").eq("id", user.id).single(),
         supabase.from("platform_versions").select("version_string").eq("is_active", true).limit(1).single(),
         supabase.from("assessment_results").select("overall_profile").eq("user_id", user.id).order("created_at", { ascending: false }).limit(1),
@@ -83,6 +94,13 @@ export default function InstrumentSelection({ onSelect }: Props) {
         supabase.from("assessment_purchases").select("instrument_id").eq("user_id", user.id),
         supabase.from("assessments").select("instrument_id").eq("user_id", user.id).eq("status", "completed"),
         supabase.from("assessments").select("instrument_id").eq("user_id", user.id).eq("status", "in_progress"),
+        supabase.from("subscription_plans").select("plan_name, tier, billing_period, price_usd, stripe_price_id").eq("is_active", true),
+        supabase.from("coach_clients")
+          .select("instrument_id")
+          .eq("client_user_id", user.id)
+          .is("stripe_payment_intent_id", null)
+          .is("assessment_id", null)
+          .in("invitation_status", ["sent", "opened"]),
       ]);
 
       if (userRes.data) {
@@ -91,7 +109,6 @@ export default function InstrumentSelection({ onSelect }: Props) {
       }
       if (versionRes.data) setPlatformVersion(versionRes.data.version_string);
 
-      // Extract recommendations from latest result
       if (resultsRes.data && resultsRes.data.length > 0) {
         const profile = resultsRes.data[0].overall_profile as Record<string, unknown> | null;
         if (profile?.triggered_cross_instrument_recommendations) {
@@ -100,7 +117,6 @@ export default function InstrumentSelection({ onSelect }: Props) {
         }
       }
 
-      // Build set of coach-paid instrument UUIDs
       if (coachClientsRes.data) {
         const ids = new Set<string>();
         coachClientsRes.data.forEach((row) => {
@@ -109,7 +125,6 @@ export default function InstrumentSelection({ onSelect }: Props) {
         setCoachPaidInstrumentIds(ids);
       }
 
-      // Build set of purchased instrument IDs
       if (purchasesRes.data) {
         const ids = new Set<string>();
         purchasesRes.data.forEach((row) => {
@@ -118,7 +133,6 @@ export default function InstrumentSelection({ onSelect }: Props) {
         setPurchasedInstrumentIds(ids);
       }
 
-      // Build set of completed instrument IDs
       if (completedRes.data) {
         const ids = new Set<string>();
         completedRes.data.forEach((row) => {
@@ -127,13 +141,22 @@ export default function InstrumentSelection({ onSelect }: Props) {
         setCompletedInstrumentIds(ids);
       }
 
-      // Build set of in-progress instrument IDs
       if (inProgressRes.data) {
         const ids = new Set<string>();
         inProgressRes.data.forEach((row) => {
           if (row.instrument_id) ids.add(row.instrument_id);
         });
         setInProgressInstrumentIds(ids);
+      }
+
+      if (plansRes.data) setSubscriptionPlans(plansRes.data);
+
+      if (selfPayCoachClientsRes.data) {
+        const ids = new Set<string>();
+        selfPayCoachClientsRes.data.forEach((row) => {
+          if (row.instrument_id) ids.add(row.instrument_id);
+        });
+        setSelfPayCoachInstrumentIds(ids);
       }
 
       setLoading(false);
@@ -154,6 +177,46 @@ export default function InstrumentSelection({ onSelect }: Props) {
       instrument_version: platformVersion || "1.0",
       short_name: inst.short_name,
     });
+  };
+
+  const hasPremiumInvitedInstrument = () => {
+    const premiumUuids = [
+      "77d1290f-1daf-44e0-931f-b9b8ad185520",
+      "abb62120-8cc8-435f-babc-dd6a27fbc235",
+      "90216d9d-153c-4b7b-abe0-1d7845c9e6e0",
+    ];
+    return premiumUuids.some(uuid => selfPayCoachInstrumentIds.has(uuid));
+  };
+
+  const getSelfPayTotal = () => {
+    return selfPayCoachInstrumentIds.size * 29.99;
+  };
+
+  const handleSelfPayPerAssessment = async () => {
+    setSelfPayDialogLoading(true);
+    const instrumentIds = Array.from(selfPayCoachInstrumentIds).join(",");
+    const { data } = await supabase.functions.invoke("create-checkout", {
+      body: {
+        price_id: "price_1TKOeMCMQX1silSQ7tzQLso6",
+        mode: "payment",
+        instrument_ids: instrumentIds,
+        quantity: selfPayCoachInstrumentIds.size,
+      },
+    });
+    setSelfPayDialogLoading(false);
+    if (data?.url) window.location.href = data.url;
+  };
+
+  const handleSubscribe = async (priceId: string) => {
+    setSelfPayDialogLoading(true);
+    const { data } = await supabase.functions.invoke("create-checkout", {
+      body: {
+        price_id: priceId,
+        mode: "subscription",
+      },
+    });
+    setSelfPayDialogLoading(false);
+    if (data?.url) window.location.href = data.url;
   };
 
   if (loading) {
@@ -180,8 +243,8 @@ export default function InstrumentSelection({ onSelect }: Props) {
           const coachPaid = coachPaidInstrumentIds.has(instrumentUuid);
           const hasPurchase = purchasedInstrumentIds.has(inst.instrument_id) || purchasedInstrumentIds.has(inst.short_name);
           const hasCompleted = completedInstrumentIds.has(inst.instrument_id);
-          // Purchase grants one attempt; if completed, need new purchase
           const purchaseAccess = hasPurchase && !hasCompleted;
+          const selfPayCoachInvited = selfPayCoachInstrumentIds.has(instrumentUuid);
 
           const isInProgress = inProgressInstrumentIds.has(inst.instrument_id);
           const startLabel = isInProgress ? "Continue Assessment" : "Start Assessment";
@@ -208,6 +271,12 @@ export default function InstrumentSelection({ onSelect }: Props) {
                 {startLabel}
               </Button>
             );
+          } else if (selfPayCoachInvited) {
+            buttonContent = (
+              <Button className="w-full" onClick={() => setShowSelfPayDialog(true)}>
+                Your Coach Wants You to Take This
+              </Button>
+            );
           } else {
             buttonContent = (
               <Button variant="outline" className="w-full" onClick={() => navigate("/pricing")}>
@@ -219,7 +288,7 @@ export default function InstrumentSelection({ onSelect }: Props) {
           return (
             <Card
               key={inst.instrument_id}
-              className={`relative transition-all ${isRecommended ? "ring-2 ring-primary" : ""} ${subscriptionAccess || coachPaid || purchaseAccess ? "hover:shadow-md" : "opacity-80"}`}
+              className={`relative transition-all ${isRecommended ? "ring-2 ring-primary" : ""} ${subscriptionAccess || coachPaid || selfPayCoachInvited || purchaseAccess ? "hover:shadow-md" : "opacity-80"}`}
             >
               {isRecommended && (
                 <div className="absolute -top-3 left-4">
@@ -245,6 +314,62 @@ export default function InstrumentSelection({ onSelect }: Props) {
           );
         })}
       </div>
+
+      <Dialog open={showSelfPayDialog} onOpenChange={setShowSelfPayDialog}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Your Coach Has Invited You</DialogTitle>
+            <DialogDescription>
+              Your coach has ordered {selfPayCoachInstrumentIds.size} assessment{selfPayCoachInstrumentIds.size !== 1 ? "s" : ""} for you.
+              Choose how you'd like to access them.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 mt-2">
+            {!hasPremiumInvitedInstrument() && subscriptionPlans.filter(p => p.tier === "base" && p.billing_period === "monthly").map(plan => (
+              <Card key={plan.stripe_price_id}>
+                <CardContent className="pt-4 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="font-semibold">Base Plan</p>
+                    <p className="text-sm font-medium">${plan.price_usd}/mo</p>
+                  </div>
+                  <p className="text-sm text-muted-foreground">Includes PTP + unlimited retakes. Billed monthly.</p>
+                  <Button className="w-full" onClick={() => handleSubscribe(plan.stripe_price_id)} disabled={selfPayDialogLoading}>
+                    Subscribe to Base
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+            {subscriptionPlans.filter(p => p.tier === "premium" && p.billing_period === "monthly").map(plan => (
+              <Card key={plan.stripe_price_id}>
+                <CardContent className="pt-4 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="font-semibold">Premium Plan</p>
+                    <p className="text-sm font-medium">${plan.price_usd}/mo</p>
+                  </div>
+                  <p className="text-sm text-muted-foreground">Includes all 4 instruments + unlimited retakes + AI chat. Billed monthly.</p>
+                  <Button className="w-full" onClick={() => handleSubscribe(plan.stripe_price_id)} disabled={selfPayDialogLoading}>
+                    Subscribe to Premium
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+            <Card>
+              <CardContent className="pt-4 space-y-2">
+                <div className="flex items-center justify-between">
+                  <p className="font-semibold">Pay Per Assessment</p>
+                  <p className="text-sm font-medium">${getSelfPayTotal().toFixed(2)}</p>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  One-time payment for the {selfPayCoachInstrumentIds.size} assessment{selfPayCoachInstrumentIds.size !== 1 ? "s" : ""} your coach ordered. No subscription required.
+                </p>
+                <Button className="w-full" variant="outline" onClick={handleSelfPayPerAssessment} disabled={selfPayDialogLoading}>
+                  {selfPayDialogLoading ? "Processing..." : `Pay $${getSelfPayTotal().toFixed(2)} Once`}
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
