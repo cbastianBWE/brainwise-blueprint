@@ -126,6 +126,8 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
 
   const [assessments, setAssessments] = useState<AssessmentWithResult[]>([]);
   const [selectedId, setSelectedId] = useState<string>("");
+  const [ptpContextTab, setPtpContextTab] = useState<'professional' | 'personal' | 'combined' | null>(null);
+  const [ptpTabOverrideId, setPtpTabOverrideId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [pollingNarrative, setPollingNarrative] = useState(false);
   const [dimensionNameMap, setDimensionNameMap] = useState<Map<string, string>>(new Map());
