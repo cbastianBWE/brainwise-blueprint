@@ -45,9 +45,10 @@ interface Props {
     short_name: string;
   };
   onExit: () => void;
+  contextType?: 'professional' | 'personal' | 'both' | null;
 }
 
-export default function AssessmentFlow({ instrument, onExit }: Props) {
+export default function AssessmentFlow({ instrument, onExit, contextType }: Props) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
