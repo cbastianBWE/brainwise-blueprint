@@ -111,6 +111,17 @@ export default function PlatformHealth() {
                 <div>
                   <p className="text-2xl font-bold text-foreground">{count}</p>
                   <p className="text-xs text-muted-foreground capitalize">{tier} Tier Active</p>
+                </div>
+              </CardContent>
+            </Card>
+          ))
+        ) : (
+          <Card>
+            <CardContent className="py-4">
+              <p className="text-sm text-muted-foreground">No active subscriptions</p>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       <div>
@@ -146,16 +157,6 @@ export default function PlatformHealth() {
               </Card>
             ))}
           </div>
-        )}
-              </CardContent>
-            </Card>
-          ))
-        ) : (
-          <Card>
-            <CardContent className="py-4">
-              <p className="text-sm text-muted-foreground">No active subscriptions</p>
-            </CardContent>
-          </Card>
         )}
       </div>
 
