@@ -28,7 +28,7 @@ import {
   Cell,
   LabelList,
 } from "recharts";
-import { FileText, MessageSquare, RefreshCw, ArrowRight, AlertTriangle } from "lucide-react";
+import { FileText, MessageSquare, RefreshCw, ArrowRight, AlertTriangle, Brain, X } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -135,6 +135,13 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
   const [debriefPendingIds, setDebriefPendingIds] = useState<Set<string>>(new Set());
 
   const [shareWithCoach, setShareWithCoach] = useState<boolean | null>(null);
+
+  const [chatOpen, setChatOpen] = useState(false);
+  const [chatMessages, setChatMessages] = useState<Array<{role: 'user' | 'assistant'; content: string; timestamp: Date}>>([]);
+  const [chatInput, setChatInput] = useState('');
+  const [chatLoading, setChatLoading] = useState(false);
+  const [chatSessionId, setChatSessionId] = useState<string | null>(null);
+  const [showChatUpgradeDialog, setShowChatUpgradeDialog] = useState(false);
 
   // Fetch client name and share preference when in coach view
   useEffect(() => {
@@ -478,6 +485,64 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
     generateResultsPdf(pdfData, sections);
   }, [selected, sortedDimensions, dimensionScores, dimensionNameMap, profile, recommendations, isSliderInstrument, highestDimension, lowestDimension]);
 
+  const sendChatMessage = useCallback(async () => {
+    if (!chatInput.trim() || !selected || chatLoading) return;
+    const userMessage = chatInput.trim();
+    setChatInput('');
+    const newUserMsg = { role: 'user' as const, content: userMessage, timestamp: new Date() };
+    setChatMessages(prev => [...prev, newUserMsg]);
+    setChatLoading(true);
+
+    let sessionId = chatSessionId;
+    if (!sessionId) {
+      const { data: session } = await supabase.from('chat_sessions').insert({
+        user_id: user!.id,
+        assessment_result_ids: [selected.result.id],
+        messages: [],
+        started_at: new Date().toISOString(),
+      }).select('id').single();
+      if (session) {
+        sessionId = session.id;
+        setChatSessionId(session.id);
+      }
+    }
+
+    try {
+      const { data: { session: authSession } } = await supabase.auth.getSession();
+      const response = await supabase.functions.invoke('ai-chat', {
+        body: {
+          message: userMessage,
+          conversation_history: chatMessages.map(m => ({ role: m.role, content: m.content })),
+          assessment_result_ids: [selected.result.id],
+          subscription_tier: profile?.subscription_tier ?? 'base',
+        },
+        headers: { Authorization: `Bearer ${authSession?.access_token}` },
+      });
+
+      if (response.error || response.data?.limit_reached) {
+        const errMsg = response.data?.limit_reached
+          ? "You've reached your monthly AI message limit."
+          : "Failed to get a response. Please try again.";
+        setChatMessages(prev => [...prev, { role: 'assistant', content: errMsg, timestamp: new Date() }]);
+      } else {
+        const assistantMsg = { role: 'assistant' as const, content: response.data.response, timestamp: new Date() };
+        setChatMessages(prev => {
+          const updated = [...prev, assistantMsg];
+          if (sessionId) {
+            supabase.from('chat_sessions').update({
+              messages: updated.map(m => ({ role: m.role, content: m.content, timestamp: m.timestamp.toISOString() })),
+              message_count: updated.length,
+            }).eq('id', sessionId);
+          }
+          return updated;
+        });
+      }
+    } catch {
+      setChatMessages(prev => [...prev, { role: 'assistant', content: 'Something went wrong. Please try again.', timestamp: new Date() }]);
+    }
+    setChatLoading(false);
+  }, [chatInput, chatMessages, chatLoading, selected, chatSessionId, user, profile]);
+
   // Chart data for bar chart
   const chartData = useMemo(() => {
     if (!isSliderInstrument && !(!isAIRSA && !isSliderInstrument)) return [];
@@ -602,19 +667,6 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
             </Button>
             {!isCoachView && (
               <>
-                <Button
-                  variant="outline"
-                  onClick={() =>
-                    toast({
-                      title: "Coming Soon",
-                      description:
-                        "AI chat about results will be available soon.",
-                    })
-                  }
-                >
-                  <MessageSquare className="mr-2 h-4 w-4" /> Ask AI About My
-                  Results
-                </Button>
                 <Button
                   variant="outline"
                   onClick={() =>
@@ -871,6 +923,108 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
             </>
           )}
         </>
+      )}
+
+      {!isCoachView && selected && (
+        <div className="fixed bottom-6 right-6 z-40 flex flex-col items-end gap-2">
+          {chatOpen && profile?.subscription_status === 'active' && (
+            <div className="w-80 sm:w-96 h-[480px] bg-background border border-border rounded-2xl shadow-2xl flex flex-col overflow-hidden">
+              {/* Chat header */}
+              <div className="bg-primary px-4 py-3 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Brain className="h-4 w-4 text-primary-foreground" />
+                  <span className="text-sm font-semibold text-primary-foreground">Ask AI</span>
+                </div>
+                <button onClick={() => setChatOpen(false)} className="text-primary-foreground/70 hover:text-primary-foreground">
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+              {/* Context note */}
+              <div className="px-3 py-2 bg-muted/50 border-b border-border">
+                <p className="text-xs text-muted-foreground">
+                  Chatting about your <strong>{selected.instrument_name}</strong> results.{' '}
+                  <button onClick={() => navigate('/ai-chat')} className="text-primary underline">Multi-assessment chat →</button>
+                </p>
+              </div>
+              {/* Messages */}
+              <div className="flex-1 overflow-y-auto p-3 space-y-3">
+                {chatMessages.length === 0 && (
+                  <div className="text-center text-xs text-muted-foreground mt-8 space-y-1">
+                    <Brain className="h-8 w-8 text-primary/30 mx-auto" />
+                    <p>Ask me anything about your {selected.instrument_name} results.</p>
+                  </div>
+                )}
+                {chatMessages.map((msg, i) => (
+                  <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`max-w-[85%] rounded-xl px-3 py-2 text-sm ${msg.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted text-foreground'}`}>
+                      {msg.content}
+                    </div>
+                  </div>
+                ))}
+                {chatLoading && (
+                  <div className="flex justify-start">
+                    <div className="bg-muted rounded-xl px-3 py-2 text-sm text-muted-foreground flex items-center gap-1">
+                      <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground animate-bounce" style={{animationDelay:'0ms'}} />
+                      <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground animate-bounce" style={{animationDelay:'150ms'}} />
+                      <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground animate-bounce" style={{animationDelay:'300ms'}} />
+                    </div>
+                  </div>
+                )}
+              </div>
+              {/* Input */}
+              <div className="p-3 border-t border-border flex gap-2">
+                <input
+                  className="flex-1 text-sm rounded-lg border border-border bg-background px-3 py-2 focus:outline-none focus:ring-1 focus:ring-primary"
+                  placeholder="Ask about your results..."
+                  value={chatInput}
+                  onChange={e => setChatInput(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && !e.shiftKey && sendChatMessage()}
+                />
+                <button
+                  onClick={sendChatMessage}
+                  disabled={!chatInput.trim() || chatLoading}
+                  className="bg-primary text-primary-foreground rounded-lg px-3 py-2 text-sm font-medium disabled:opacity-50 hover:bg-primary/90"
+                >
+                  Send
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Bubble toggle button */}
+          <button
+            onClick={() => {
+              if (profile?.subscription_status !== 'active') {
+                setShowChatUpgradeDialog(true);
+              } else {
+                setChatOpen(prev => !prev);
+              }
+            }}
+            className="flex items-center gap-2 bg-primary text-primary-foreground rounded-full px-4 py-3 shadow-lg hover:bg-primary/90 transition-all"
+          >
+            <Brain className="h-5 w-5" />
+            <span className="text-sm font-semibold">Ask AI</span>
+          </button>
+
+          {/* Upgrade dialog for non-subscribers */}
+          <AlertDialog open={showChatUpgradeDialog} onOpenChange={setShowChatUpgradeDialog}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Subscription Required</AlertDialogTitle>
+                <AlertDialogDescription>
+                  AI chat requires an active subscription. Upgrade to Base or higher to start chatting about your results.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter className="flex flex-col items-center gap-2 sm:flex-col">
+                <AlertDialogAction onClick={() => { setShowChatUpgradeDialog(false); navigate('/pricing'); }}>
+                  Upgrade to Premium
+                </AlertDialogAction>
+                <p className="text-xs text-muted-foreground text-center">Base plan also includes AI chat.</p>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
       )}
     </div>
   );
