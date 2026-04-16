@@ -963,7 +963,7 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
                           />
                           <Tooltip
                             formatter={(value: number) => [
-                              value.toFixed(1),
+                              String(Math.round(value)),
                               "Score",
                             ]}
                           />
@@ -981,7 +981,7 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
                             <LabelList
                               dataKey="value"
                               position="right"
-                              formatter={(v: number) => v.toFixed(1)}
+                              formatter={(v: number) => String(Math.round(v))}
                               style={{ fontSize: 12, fill: "hsl(var(--foreground))" }}
                             />
                           </Bar>

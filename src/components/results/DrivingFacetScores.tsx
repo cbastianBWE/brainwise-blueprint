@@ -202,7 +202,7 @@ function FacetSection({
   const chartData = items.map((item) => ({
     name: truncate(item.item_text),
     fullText: item.item_text,
-    value: Number(item.value.toFixed(1)),
+    value: Math.round(item.value),
     color: PTP_DIMENSION_COLORS[item.dimension_id] ?? "#8EA9C1",
   }));
 
@@ -238,7 +238,7 @@ function FacetSection({
                 <LabelList
                   dataKey="value"
                   position="right"
-                  formatter={(v: number) => v.toFixed(1)}
+                  formatter={(v: number) => String(Math.round(v))}
                   style={{ fontSize: 11, fill: "hsl(var(--foreground))" }}
                 />
               </Bar>
