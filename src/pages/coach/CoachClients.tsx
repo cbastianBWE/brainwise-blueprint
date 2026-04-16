@@ -306,7 +306,7 @@ export default function CoachClients() {
         ? `<blockquote style="border-left:4px solid #3B82F6;margin:20px 0;padding:12px 16px;background:#F0F4FF;border-radius:4px;font-style:italic;color:#374151;">"${note}"</blockquote>`
         : "";
 
-      const signupUrl = `${window.location.origin}/signup`;
+      const signupUrl = `${window.location.origin}/signup?email=${encodeURIComponent(email)}`;
 
       const html = `
 <!DOCTYPE html>
@@ -402,7 +402,7 @@ export default function CoachClients() {
   const handleRemind = async (client: ClientRow) => {
     setSendingReminderId(client.id);
     const instrumentName = client.instrument_name || "your assessment";
-    const signupUrl = `${window.location.origin}/signup`;
+    const signupUrl = `${window.location.origin}/signup?email=${encodeURIComponent(client.client_email)}`;
     const clientName = client.client_name?.split(" ")[0] || client.client_email.split("@")[0];
     const coachPaid = !!client.stripe_payment_intent_id;
 
