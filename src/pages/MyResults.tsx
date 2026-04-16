@@ -319,7 +319,7 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
 
   // For combined tab: merge dimension scores from most recent professional + personal
   const combinedDimensionScores = useMemo(() => {
-    if (!hasPtpTabs) return null;
+    if (!hasPtpTabs || !ptpProfessionalResults[0] || !ptpPersonalResults[0]) return null;
     const profScores = ptpProfessionalResults[0].result.dimension_scores;
     const persScores = ptpPersonalResults[0].result.dimension_scores;
     const allDims = new Set([...Object.keys(profScores), ...Object.keys(persScores)]);
