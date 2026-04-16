@@ -539,7 +539,7 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
         chatMessagesRef.current = updatedWithAssistant;
         setChatMessages(updatedWithAssistant);
         if (sessionId) {
-          supabase.from('chat_sessions').update({
+          await supabase.from('chat_sessions').update({
             messages: updatedWithAssistant.map(m => ({ role: m.role, content: m.content, timestamp: m.timestamp.toISOString() })),
             message_count: updatedWithAssistant.length,
           }).eq('id', sessionId);
