@@ -985,7 +985,25 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
                 {chatMessages.map((msg, i) => (
                   <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                     <div className={`max-w-[85%] rounded-xl px-3 py-2 text-sm ${msg.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted text-foreground'}`}>
-                      {renderInlineMarkdown(msg.content)}
+                      {msg.role === 'assistant' ? (
+                        <div className="space-y-1">
+                          {msg.content.split('\n').map((line, li) => {
+                            const t = line.trim();
+                            if (!t) return null;
+                            if (t.startsWith('### ')) return <p key={li} className="font-semibold text-primary">{renderInlineMarkdown(t.replace(/^###\s*/, ''))}</p>;
+                            if (t.startsWith('## ')) return <p key={li} className="font-semibold text-primary">{renderInlineMarkdown(t.replace(/^##\s*/, ''))}</p>;
+                            if (t.startsWith('# ')) return <p key={li} className="font-semibold text-primary">{renderInlineMarkdown(t.replace(/^#\s*/, ''))}</p>;
+                            const bulletMatch = t.match(/^[-*]\s+(.+)$/);
+                            if (bulletMatch) return (
+                              <div key={li} className="flex items-start gap-1.5">
+                                <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-foreground/50 shrink-0" />
+                                <span>{renderInlineMarkdown(bulletMatch[1])}</span>
+                              </div>
+                            );
+                            return <p key={li}>{renderInlineMarkdown(t)}</p>;
+                          })}
+                        </div>
+                      ) : renderInlineMarkdown(msg.content)}
                     </div>
                   </div>
                 ))}
