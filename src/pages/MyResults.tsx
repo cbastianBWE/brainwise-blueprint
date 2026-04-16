@@ -44,6 +44,7 @@ import {
 import { format } from "date-fns";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import DrivingFacetScores from "@/components/results/DrivingFacetScores";
+import PTPNarrativeSections from "@/components/results/PTPNarrativeSections";
 import ExportPdfModal, { type PdfSections } from "@/components/results/ExportPdfModal";
 import { generateResultsPdf, type PdfData } from "@/lib/generateResultsPdf";
 
@@ -1056,123 +1057,136 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
             </section>
           )}
 
-          {/* SECTION 4 - AI Narrative */}
+          {/* SECTION 4 - Profile Interpretation */}
           <section>
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">
-                  Your Profile Interpretation
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {isCoachView && permissionLevel === 'score_summary' ? (
-                  <p className="text-sm text-muted-foreground">
-                    The client has limited coach access to scores only.
-                  </p>
-                ) : selected.result.ai_narrative ? (
-                  <>
-                    <div className="max-w-none text-foreground text-sm">
-                      <NarrativeRenderer text={selected.result.ai_narrative} />
-                    </div>
-                    {selected.result.ai_version && (
-                      <p className="text-xs text-gray-500 mt-4">
-                        Generated with {selected.result.ai_version}
-                      </p>
-                    )}
-                    {regeneratedVersion && (
-                      <p className="text-xs text-accent-foreground bg-accent/10 rounded px-2 py-1 inline-block">
-                        Regenerated with {regeneratedVersion}
-                      </p>
-                    )}
-                    {limitReached && (
-                      <div className="rounded-md border border-destructive/30 bg-destructive/5 p-3 flex items-center gap-2 text-sm">
-                        <AlertTriangle className="h-4 w-4 text-destructive shrink-0" />
-                        <span className="text-muted-foreground">
-                          You've used all {limitReached.limit} monthly AI messages.{" "}
-                          {limitReached.tier === "base" && (
-                            <Button variant="link" size="sm" className="h-auto p-0" onClick={() => navigate("/pricing")}>
-                              Upgrade to Premium
-                            </Button>
-                          )}
-                        </span>
+            {effectiveSelected?.isPTP ? (
+              <PTPNarrativeSections
+                assessmentResultId={effectiveSelected.result.id}
+                assessmentId={effectiveSelected.result.assessment_id}
+                narrative={selected.result.ai_narrative}
+                dimensionScores={dimensionScores as [string, { mean?: number; band?: string }][]}
+                dimensionNameMap={dimensionNameMap}
+                recommendations={recommendations}
+                permissionLevel={permissionLevel}
+                isCoachView={isCoachView}
+              />
+            ) : (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">
+                    Your Profile Interpretation
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {isCoachView && permissionLevel === 'score_summary' ? (
+                    <p className="text-sm text-muted-foreground">
+                      The client has limited coach access to scores only.
+                    </p>
+                  ) : selected.result.ai_narrative ? (
+                    <>
+                      <div className="max-w-none text-foreground text-sm">
+                        <NarrativeRenderer text={selected.result.ai_narrative} />
                       </div>
-                    )}
-                    {!isCoachView && (
-                      regenerating ? (
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <RefreshCw className="h-4 w-4 animate-spin" />
-                          Regenerating interpretation…
+                      {selected.result.ai_version && (
+                        <p className="text-xs text-gray-500 mt-4">
+                          Generated with {selected.result.ai_version}
+                        </p>
+                      )}
+                      {regeneratedVersion && (
+                        <p className="text-xs text-accent-foreground bg-accent/10 rounded px-2 py-1 inline-block">
+                          Regenerated with {regeneratedVersion}
+                        </p>
+                      )}
+                      {limitReached && (
+                        <div className="rounded-md border border-destructive/30 bg-destructive/5 p-3 flex items-center gap-2 text-sm">
+                          <AlertTriangle className="h-4 w-4 text-destructive shrink-0" />
+                          <span className="text-muted-foreground">
+                            You've used all {limitReached.limit} monthly AI messages.{" "}
+                            {limitReached.tier === "base" && (
+                              <Button variant="link" size="sm" className="h-auto p-0" onClick={() => navigate("/pricing")}>
+                                Upgrade to Premium
+                              </Button>
+                            )}
+                          </span>
                         </div>
-                      ) : (
-                        <>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="text-xs text-foreground border-border mt-1"
-                            onClick={() => {
-                              if (profile?.subscription_status === "active") {
-                                setShowConfirmDialog(true);
-                              } else {
-                                setShowUpgradeDialog(true);
-                              }
-                            }}
-                          >
-                            <RefreshCw className="mr-1 h-3 w-3" /> Regenerate Interpretation
-                          </Button>
+                      )}
+                      {!isCoachView && (
+                        regenerating ? (
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <RefreshCw className="h-4 w-4 animate-spin" />
+                            Regenerating interpretation…
+                          </div>
+                        ) : (
+                          <>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-xs text-foreground border-border mt-1"
+                              onClick={() => {
+                                if (profile?.subscription_status === "active") {
+                                  setShowConfirmDialog(true);
+                                } else {
+                                  setShowUpgradeDialog(true);
+                                }
+                              }}
+                            >
+                              <RefreshCw className="mr-1 h-3 w-3" /> Regenerate Interpretation
+                            </Button>
 
-                          {/* Upgrade dialog for users without active subscription */}
-                          <AlertDialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog}>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Subscription Required</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  Regenerating your interpretation requires an active subscription.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter className="flex flex-col items-center gap-2 sm:flex-col">
-                                <AlertDialogAction onClick={() => { setShowUpgradeDialog(false); navigate("/pricing"); }}>
-                                  Upgrade to Premium
-                                </AlertDialogAction>
-                                <p className="text-xs text-muted-foreground text-center">
-                                  Base plan also includes interpretation regeneration.
-                                </p>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
+                            {/* Upgrade dialog for users without active subscription */}
+                            <AlertDialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog}>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Subscription Required</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Regenerating your interpretation requires an active subscription.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter className="flex flex-col items-center gap-2 sm:flex-col">
+                                  <AlertDialogAction onClick={() => { setShowUpgradeDialog(false); navigate("/pricing"); }}>
+                                    Upgrade to Premium
+                                  </AlertDialogAction>
+                                  <p className="text-xs text-muted-foreground text-center">
+                                    Base plan also includes interpretation regeneration.
+                                  </p>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
 
-                          {/* Existing confirmation dialog for active subscribers */}
-                          <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Regenerate Interpretation?</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  This will regenerate your interpretation using the latest AI version. Your current interpretation will be replaced. This will use 1 of your monthly AI messages. Continue?
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction onClick={handleRegenerate}>Continue</AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </>
-                      )
-                    )}
-                  </>
-                ) : pollingNarrative ? (
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <RefreshCw className="h-4 w-4 animate-spin" />
-                    Your personalized interpretation is being generated. This
-                    takes about 30 seconds.
-                  </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground">
-                    No narrative available for this assessment.
-                  </p>
-                )}
-              </CardContent>
-            </Card>
+                            {/* Existing confirmation dialog for active subscribers */}
+                            <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Regenerate Interpretation?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    This will regenerate your interpretation using the latest AI version. Your current interpretation will be replaced. This will use 1 of your monthly AI messages. Continue?
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction onClick={handleRegenerate}>Continue</AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </>
+                        )
+                      )}
+                    </>
+                  ) : pollingNarrative ? (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <RefreshCw className="h-4 w-4 animate-spin" />
+                      Your personalized interpretation is being generated. This
+                      takes about 30 seconds.
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      No narrative available for this assessment.
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+            )}
           </section>
 
           {/* Export PDF Modal */}
