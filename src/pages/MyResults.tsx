@@ -297,6 +297,64 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
     [assessments, selectedId]
   );
 
+  // PTP tab logic
+  const ptpProfessionalResults = useMemo(() =>
+    assessments.filter(a => a.isPTP && a.context_type === 'professional')
+      .sort((a, b) => new Date(b.completed_at!).getTime() - new Date(a.completed_at!).getTime()),
+    [assessments]);
+
+  const ptpPersonalResults = useMemo(() =>
+    assessments.filter(a => a.isPTP && a.context_type === 'personal')
+      .sort((a, b) => new Date(b.completed_at!).getTime() - new Date(a.completed_at!).getTime()),
+    [assessments]);
+
+  const hasPtpTabs = ptpProfessionalResults.length > 0 && ptpPersonalResults.length > 0;
+  const showPtpTabs = selected?.isPTP && hasPtpTabs;
+
+  // For combined tab: merge dimension scores from most recent professional + personal
+  const combinedDimensionScores = useMemo(() => {
+    if (!hasPtpTabs) return null;
+    const profScores = ptpProfessionalResults[0].result.dimension_scores;
+    const persScores = ptpPersonalResults[0].result.dimension_scores;
+    const allDims = new Set([...Object.keys(profScores), ...Object.keys(persScores)]);
+    const merged: Record<string, DimensionScore> = {};
+    allDims.forEach(dim => {
+      const profMean = profScores[dim]?.mean ?? null;
+      const persMean = persScores[dim]?.mean ?? null;
+      if (profMean !== null && persMean !== null) {
+        merged[dim] = { mean: (profMean + persMean) / 2, band: profScores[dim]?.band ?? persScores[dim]?.band };
+      } else if (profMean !== null) {
+        merged[dim] = profScores[dim];
+      } else {
+        merged[dim] = persScores[dim];
+      }
+    });
+    return merged;
+  }, [hasPtpTabs, ptpProfessionalResults, ptpPersonalResults]);
+
+  // Effective selected based on tab
+  const effectiveSelected = useMemo(() => {
+    if (!selected?.isPTP || !hasPtpTabs) return selected;
+    if (ptpContextTab === 'professional') {
+      const override = ptpTabOverrideId ? ptpProfessionalResults.find(a => a.result.id === ptpTabOverrideId) : null;
+      return override ?? ptpProfessionalResults[0] ?? selected;
+    }
+    if (ptpContextTab === 'personal') {
+      const override = ptpTabOverrideId ? ptpPersonalResults.find(a => a.result.id === ptpTabOverrideId) : null;
+      return override ?? ptpPersonalResults[0] ?? selected;
+    }
+    if (ptpContextTab === 'combined') return ptpProfessionalResults[0] ?? selected;
+    return selected;
+  }, [selected, hasPtpTabs, ptpContextTab, ptpTabOverrideId, ptpProfessionalResults, ptpPersonalResults]);
+
+  // Effective dimension scores
+  const effectiveDimensionScores = useMemo(() => {
+    if (ptpContextTab === 'combined' && combinedDimensionScores) {
+      return Object.entries(combinedDimensionScores);
+    }
+    return effectiveSelected ? Object.entries(effectiveSelected.result.dimension_scores) : [];
+  }, [ptpContextTab, combinedDimensionScores, effectiveSelected]);
+
   // Poll for AI narrative
   useEffect(() => {
     if (!selected || selected.result.ai_narrative) {
