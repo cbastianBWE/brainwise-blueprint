@@ -1,18 +1,35 @@
 import jsPDF from "jspdf";
 import type { PdfSections } from "@/components/results/ExportPdfModal";
 
-// ── Types ──
 interface DimensionRow {
   name: string;
   score: number;
   band: string;
   color: string;
+  pastelColor: string;
+  dimensionId: string;
 }
 
-interface FacetRow {
-  text: string;
+interface FacetWithInterpretation {
+  itemNumber: number;
+  facetName: string;
+  itemText: string;
   score: number;
-  color: string;
+  dimensionId: string;
+  interpretation: {
+    positive_self: string[];
+    negative_self: string[];
+    positive_others: string[];
+    negative_others: string[];
+  } | null;
+}
+
+interface AssessmentResponse {
+  itemNumber: number;
+  facetName: string;
+  itemText: string;
+  score: number;
+  dimensionId: string;
 }
 
 export interface PdfData {
@@ -21,16 +38,23 @@ export interface PdfData {
   instrumentShortName: string;
   instrumentVersion: string;
   dateTaken: string;
+  contextLabel: string;
   dimensions: DimensionRow[];
   statCards: { label: string; value: string }[];
-  narrative: string | null;
-  elevatedFacets: FacetRow[];
-  suppressedFacets: FacetRow[];
+  narrativeSections: {
+    profile_overview?: string;
+    dimension_highlights?: Record<string, string>;
+    cross_assessment?: string;
+  } | null;
+  elevatedFacets: FacetWithInterpretation[];
+  suppressedFacets: FacetWithInterpretation[];
+  assessmentResponses: AssessmentResponse[];
   recommendations: string[];
   isSliderInstrument: boolean;
+  isPTP: boolean;
 }
 
-const PAGE_W = 210; // A4 mm
+const PAGE_W = 210;
 const PAGE_H = 297;
 const MARGIN_L = 15;
 const MARGIN_R = 15;
@@ -39,21 +63,43 @@ const MARGIN_B = 25;
 const CONTENT_W = PAGE_W - MARGIN_L - MARGIN_R;
 const FOOTER_Y = PAGE_H - 12;
 
-const PRIMARY = [31, 78, 121] as const; // #1F4E79
-const MUTED = [120, 120, 120] as const;
+const NAVY = [2, 31, 54] as const;
+const MUTED = [109, 104, 117] as const;
 const BLACK = [30, 30, 30] as const;
-const WHITE = [255, 255, 255] as const;
+const SAND_BG = [249, 247, 241] as const;
 const LIGHT_BG = [245, 247, 250] as const;
+const GREEN = [34, 139, 34] as const;
+const RED = [200, 50, 50] as const;
+
+function hexToRgb(hex: string): [number, number, number] {
+  const h = hex.replace("#", "");
+  return [parseInt(h.substring(0, 2), 16), parseInt(h.substring(2, 4), 16), parseInt(h.substring(4, 6), 16)];
+}
+
+function cleanMarkdown(text: string): string {
+  return text.replace(/\*\*(.+?)\*\*/g, "$1").replace(/\*(.+?)\*/g, "$1");
+}
+
+function formatBand(band: string): string {
+  return band.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+function PTP_DIM_COLOR(dimId: string): string {
+  const colors: Record<string, string> = {
+    "DIM-PTP-01": "#021F36",
+    "DIM-PTP-02": "#006D77",
+    "DIM-PTP-03": "#6D6875",
+    "DIM-PTP-04": "#3C096C",
+    "DIM-PTP-05": "#FFB703",
+  };
+  return colors[dimId] ?? "#021F36";
+}
 
 export function generateResultsPdf(data: PdfData, sections: PdfSections): void {
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   let y = MARGIN_T;
+  const today = new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
 
-  const today = new Date().toLocaleDateString("en-US", {
-    year: "numeric", month: "long", day: "numeric",
-  });
-
-  // ── Helpers ──
   const addFooter = () => {
     doc.setFontSize(7);
     doc.setTextColor(...MUTED);
@@ -62,7 +108,7 @@ export function generateResultsPdf(data: PdfData, sections: PdfSections): void {
     doc.line(MARGIN_L, FOOTER_Y - 3, PAGE_W - MARGIN_R, FOOTER_Y - 3);
   };
 
-  const checkPageBreak = (needed: number): void => {
+  const checkPageBreak = (needed: number) => {
     if (y + needed > PAGE_H - MARGIN_B) {
       addFooter();
       doc.addPage();
@@ -74,56 +120,94 @@ export function generateResultsPdf(data: PdfData, sections: PdfSections): void {
     checkPageBreak(15);
     y += 4;
     doc.setFontSize(13);
-    doc.setTextColor(...PRIMARY);
+    doc.setTextColor(...NAVY);
     doc.setFont("helvetica", "bold");
     doc.text(title, MARGIN_L, y);
     y += 2;
-    doc.setDrawColor(...PRIMARY);
+    doc.setDrawColor(...NAVY);
     doc.setLineWidth(0.5);
     doc.line(MARGIN_L, y, MARGIN_L + CONTENT_W, y);
     y += 6;
   };
 
-  const wrapText = (text: string, fontSize: number, maxWidth: number, bold = false): string[] => {
-    doc.setFontSize(fontSize);
-    doc.setFont("helvetica", bold ? "bold" : "normal");
-    return doc.splitTextToSize(text, maxWidth);
+  const bodyText = (text: string, indent = 0) => {
+    doc.setFontSize(8.5);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(...BLACK);
+    const lines = doc.splitTextToSize(cleanMarkdown(text), CONTENT_W - indent);
+    for (const line of lines) {
+      checkPageBreak(5);
+      doc.text(line, MARGIN_L + indent, y);
+      y += 4.5;
+    }
   };
 
-  // ── Header ──
-  doc.setFontSize(20);
-  doc.setTextColor(...PRIMARY);
-  doc.setFont("helvetica", "bold");
-  doc.text("BrainWise", MARGIN_L, y);
-  y += 8;
+  // ── COVER PAGE ──
+  doc.setFillColor(...NAVY);
+  doc.rect(0, 0, PAGE_W, 80, "F");
 
-  doc.setFontSize(11);
-  doc.setTextColor(...BLACK);
+  doc.setFontSize(28);
+  doc.setTextColor(255, 255, 255);
+  doc.setFont("helvetica", "bold");
+  doc.text("BrainWise", MARGIN_L, 35);
+
+  doc.setFontSize(14);
   doc.setFont("helvetica", "normal");
-  doc.text(data.userName, MARGIN_L, y);
-  y += 5;
+  doc.text(data.instrumentName, MARGIN_L, 48);
+
+  if (data.contextLabel) {
+    doc.setFontSize(11);
+    doc.setTextColor(200, 220, 235);
+    doc.text(data.contextLabel + " Context", MARGIN_L, 58);
+  }
+
+  const coverY = 110;
   doc.setFontSize(9);
   doc.setTextColor(...MUTED);
-  doc.text(`${data.instrumentName}  |  ${data.dateTaken}  |  Version ${data.instrumentVersion}`, MARGIN_L, y);
-  y += 8;
+  doc.text("Participant", MARGIN_L, coverY);
+  doc.setFontSize(12);
+  doc.setTextColor(...BLACK);
+  doc.setFont("helvetica", "bold");
+  doc.text(data.userName, MARGIN_L, coverY + 7);
 
-  // ── Disclaimer ──
-  doc.setDrawColor(220, 220, 220);
-  doc.setFillColor(...LIGHT_BG);
+  doc.setFontSize(9);
+  doc.setTextColor(...MUTED);
+  doc.setFont("helvetica", "normal");
+  doc.text("Date Completed", MARGIN_L, coverY + 20);
+  doc.setFontSize(11);
+  doc.setTextColor(...BLACK);
+  doc.text(data.dateTaken, MARGIN_L, coverY + 27);
+
+  doc.setFontSize(9);
+  doc.setTextColor(...MUTED);
+  doc.text("Version", MARGIN_L, coverY + 40);
+  doc.setFontSize(11);
+  doc.setTextColor(...BLACK);
+  doc.text(data.instrumentVersion, MARGIN_L, coverY + 47);
+
+  doc.setFontSize(7);
+  doc.setTextColor(...MUTED);
+  doc.text("Cover page design pending final branding guidelines.", MARGIN_L, PAGE_H - 20);
+
+  addFooter();
+  doc.addPage();
+  y = MARGIN_T;
+
+  // ── DISCLAIMER ──
+  doc.setFillColor(...SAND_BG);
   const disclaimerText = "This report is generated by an AI model and is intended for personal reflection only. It does not constitute clinical diagnosis or professional psychological advice. Results should be interpreted in conjunction with qualified professional guidance.";
-  const disclaimerLines = wrapText(disclaimerText, 7.5, CONTENT_W - 8);
-  const disclaimerH = disclaimerLines.length * 3.5 + 4;
-  doc.roundedRect(MARGIN_L, y, CONTENT_W, disclaimerH, 2, 2, "FD");
+  const disclaimerLines = doc.splitTextToSize(disclaimerText, CONTENT_W - 8);
+  const disclaimerH = disclaimerLines.length * 3.8 + 6;
+  doc.roundedRect(MARGIN_L, y, CONTENT_W, disclaimerH, 2, 2, "F");
   doc.setFontSize(7.5);
   doc.setTextColor(...MUTED);
-  doc.text(disclaimerLines, MARGIN_L + 4, y + 4);
-  y += disclaimerH + 6;
+  doc.text(disclaimerLines, MARGIN_L + 4, y + 5);
+  y += disclaimerH + 8;
 
-  // ── Profile Overview ──
+  // ── PROFILE OVERVIEW ──
   if (sections.profileOverview) {
     sectionHeading("Profile Overview");
 
-    // Stat cards row
     const cardW = (CONTENT_W - 6) / 3;
     data.statCards.forEach((card, i) => {
       const x = MARGIN_L + i * (cardW + 3);
@@ -135,384 +219,287 @@ export function generateResultsPdf(data: PdfData, sections: PdfSections): void {
       doc.setFontSize(9);
       doc.setTextColor(...BLACK);
       doc.setFont("helvetica", "bold");
-      // Truncate value to fit card
       const truncVal = card.value.length > 22 ? card.value.slice(0, 20) + "…" : card.value;
       doc.text(truncVal, x + 3, y + 11);
       doc.setFont("helvetica", "normal");
     });
     y += 20;
 
-    // Dimension scores table
-    checkPageBreak(15 + data.dimensions.length * 8);
-    doc.setFontSize(9);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(...BLACK);
-
-    // Table header
-    const colName = MARGIN_L;
-    const colScore = MARGIN_L + CONTENT_W * 0.5;
-    const colBar = MARGIN_L + CONTENT_W * 0.62;
-    const colBand = MARGIN_L + CONTENT_W * 0.87;
-
-    doc.text("Dimension", colName, y);
-    doc.text("Score", colScore, y);
-    doc.text("", colBar, y);
-    doc.text("Band", colBand, y);
-    y += 2;
-    doc.setDrawColor(200, 200, 200);
-    doc.line(MARGIN_L, y, MARGIN_L + CONTENT_W, y);
-    y += 4;
-
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(8.5);
-    const maxScore = data.isSliderInstrument ? 100 : 4;
-    const barMaxW = CONTENT_W * 0.22;
-
-    for (const dim of data.dimensions) {
-      checkPageBreak(8);
-      // Alternate row bg
-      const rowIdx = data.dimensions.indexOf(dim);
-      if (rowIdx % 2 === 0) {
-        doc.setFillColor(250, 250, 252);
-        doc.rect(MARGIN_L, y - 3.5, CONTENT_W, 7, "F");
-      }
-
-      doc.setTextColor(...BLACK);
-      const nameLines = wrapText(dim.name, 8.5, CONTENT_W * 0.48);
-      doc.text(nameLines[0], colName, y);
-
-      doc.text(dim.score.toFixed(1), colScore, y);
-
-      // Score bar
-      const barW = Math.max(1, (dim.score / maxScore) * barMaxW);
-      const rgb = hexToRgb(dim.color);
-      doc.setFillColor(rgb[0], rgb[1], rgb[2]);
-      doc.roundedRect(colBar, y - 2.5, barW, 4, 1, 1, "F");
-
-      // Band label
-      doc.setFontSize(7.5);
-      doc.setTextColor(...MUTED);
-      doc.text(formatBand(dim.band), colBand, y);
-      doc.setFontSize(8.5);
-
-      y += 7;
+    if (data.isPTP && data.dimensions.length > 0) {
+      checkPageBreak(40);
+      const dimCardW = (CONTENT_W - (data.dimensions.length - 1) * 3) / data.dimensions.length;
+      data.dimensions.forEach((dim, i) => {
+        const x = MARGIN_L + i * (dimCardW + 3);
+        const rgb = hexToRgb(dim.color);
+        const pastelRgb = hexToRgb(dim.pastelColor);
+        doc.setFillColor(pastelRgb[0], pastelRgb[1], pastelRgb[2]);
+        doc.roundedRect(x, y, dimCardW, 30, 2, 2, "F");
+        doc.setFillColor(rgb[0], rgb[1], rgb[2]);
+        doc.circle(x + dimCardW / 2, y + 5, 2, "F");
+        doc.setFontSize(7);
+        doc.setTextColor(...BLACK);
+        doc.setFont("helvetica", "bold");
+        const nameLines = doc.splitTextToSize(dim.name, dimCardW - 4);
+        doc.text(nameLines[0], x + dimCardW / 2, y + 11, { align: "center" });
+        if (nameLines[1]) doc.text(nameLines[1], x + dimCardW / 2, y + 15, { align: "center" });
+        doc.setFontSize(14);
+        doc.setTextColor(rgb[0], rgb[1], rgb[2]);
+        doc.setFont("helvetica", "bold");
+        doc.text(String(dim.score), x + dimCardW / 2, y + 23, { align: "center" });
+        doc.setFontSize(6.5);
+        doc.setTextColor(...MUTED);
+        doc.setFont("helvetica", "normal");
+        doc.text(formatBand(dim.band), x + dimCardW / 2, y + 28, { align: "center" });
+      });
+      y += 36;
     }
-    y += 4;
   }
 
-  // ── AI Narrative ──
-  if (sections.aiNarrative && data.narrative) {
-    sectionHeading("Profile Interpretation");
-    renderNarrative(doc, data.narrative, false);
-  }
-
-  // ── Driving Facet Scores ──
+  // ── DRIVING FACET SCORES ──
   if (sections.drivingFacetScores && (data.elevatedFacets.length > 0 || data.suppressedFacets.length > 0)) {
     sectionHeading("Driving Facet Scores");
 
-    if (data.elevatedFacets.length > 0) {
-      renderFacetTable(doc, "Elevated Facets", data.elevatedFacets);
-    }
-    if (data.suppressedFacets.length > 0) {
-      renderFacetTable(doc, "Suppressed Facets", data.suppressedFacets);
-    }
+    const renderFacetScoreTable = (title: string, facets: FacetWithInterpretation[]) => {
+      checkPageBreak(12 + facets.length * 7);
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(...BLACK);
+      doc.text(title, MARGIN_L, y);
+      y += 5;
+      doc.setFontSize(7.5);
+      doc.setTextColor(...MUTED);
+      doc.text("Facet", MARGIN_L, y);
+      doc.text("Score", MARGIN_L + CONTENT_W * 0.82, y);
+      y += 2;
+      doc.setDrawColor(200, 200, 200);
+      doc.line(MARGIN_L, y, MARGIN_L + CONTENT_W, y);
+      y += 4;
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8);
+      for (let i = 0; i < facets.length; i++) {
+        checkPageBreak(7);
+        const f = facets[i];
+        if (i % 2 === 0) {
+          doc.setFillColor(250, 250, 252);
+          doc.rect(MARGIN_L, y - 3, CONTENT_W, 6, "F");
+        }
+        const rgb = hexToRgb(PTP_DIM_COLOR(f.dimensionId));
+        doc.setFillColor(rgb[0], rgb[1], rgb[2]);
+        doc.circle(MARGIN_L + 2, y - 1, 1.5, "F");
+        const truncText = f.itemText.length > 85 ? f.itemText.slice(0, 82) + "…" : f.itemText;
+        doc.setTextColor(...BLACK);
+        doc.text(truncText, MARGIN_L + 6, y);
+        doc.text(String(f.score), MARGIN_L + CONTENT_W * 0.82, y);
+        y += 6;
+      }
+      y += 6;
+    };
+
+    if (data.elevatedFacets.length > 0) renderFacetScoreTable("Elevated Facets", data.elevatedFacets);
+    if (data.suppressedFacets.length > 0) renderFacetScoreTable("Suppressed Facets", data.suppressedFacets);
   }
 
-  // ── Driving Facet Insights (from narrative) ──
-  if (sections.drivingFacetInsights && data.narrative) {
-    const insightsText = extractFacetInsights(data.narrative);
-    if (insightsText) {
-      sectionHeading("Driving Facet Insights");
-      renderNarrative(doc, insightsText, true);
-    }
+  // ── PROFILE OVERVIEW NARRATIVE ──
+  if (sections.profileOverviewNarrative && data.narrativeSections?.profile_overview) {
+    sectionHeading("Profile Overview Narrative");
+    bodyText(data.narrativeSections.profile_overview);
+    y += 4;
   }
 
-  // ── Cross-Assessment Recommendations ──
-  if (sections.crossAssessmentRecs && data.recommendations.length > 0) {
-    sectionHeading("Cross-Assessment Recommendations");
-    checkPageBreak(10);
+  // ── PTP AND BRAIN OVERVIEW ──
+  if (sections.ptpBrainOverview) {
+    sectionHeading("PTP and Brain Overview");
+    const overviewText = "Content coming soon. This section will provide a brief introduction to the Personal Threat Profile framework and its neuroscientific basis, including links to supporting resources and a video overview.";
+    const overviewLines = doc.splitTextToSize(overviewText, CONTENT_W - 12);
+    const overviewH = overviewLines.length * 4.5 + 8;
+    checkPageBreak(overviewH + 4);
+    doc.setFillColor(...SAND_BG);
+    doc.rect(MARGIN_L + 1.5, y, CONTENT_W - 1.5, overviewH, "F");
+    doc.setFillColor(...NAVY);
+    doc.rect(MARGIN_L, y, 1.5, overviewH, "F");
     doc.setFontSize(8.5);
     doc.setTextColor(...BLACK);
-    doc.text("Based on your results, we recommend exploring:", MARGIN_L, y);
-    y += 6;
-    for (const rec of data.recommendations) {
-      checkPageBreak(8);
-      doc.setFillColor(...PRIMARY);
-      doc.circle(MARGIN_L + 2, y - 1, 1, "F");
+    doc.text(overviewLines, MARGIN_L + 6, y + 5);
+    y += overviewH + 6;
+  }
+
+  // ── DIMENSION HIGHLIGHTS ──
+  if (sections.dimensionHighlights && data.narrativeSections?.dimension_highlights) {
+    sectionHeading("Dimension Highlights");
+    for (const dim of data.dimensions) {
+      const text = data.narrativeSections.dimension_highlights[dim.dimensionId];
+      if (!text) continue;
+      const rgb = hexToRgb(dim.color);
+      const pastelRgb = hexToRgb(dim.pastelColor);
+      const textLines = doc.splitTextToSize(cleanMarkdown(text), CONTENT_W - 12);
+      const cardH = textLines.length * 4.5 + 14;
+      checkPageBreak(cardH + 4);
+      doc.setFillColor(pastelRgb[0], pastelRgb[1], pastelRgb[2]);
+      doc.roundedRect(MARGIN_L, y, CONTENT_W, cardH, 2, 2, "F");
+      doc.setFillColor(rgb[0], rgb[1], rgb[2]);
+      doc.rect(MARGIN_L, y, 1.5, cardH, "F");
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "bold");
       doc.setTextColor(...BLACK);
-      doc.text(rec, MARGIN_L + 6, y);
-      y += 6;
+      doc.text(`${dim.name} — ${dim.score}`, MARGIN_L + 6, y + 7);
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(...MUTED);
+      doc.text(textLines, MARGIN_L + 6, y + 13);
+      y += cardH + 4;
+    }
+    y += 2;
+  }
+
+  // ── DRIVING FACET INSIGHTS ──
+  if (sections.drivingFacetInsights && (data.elevatedFacets.length > 0 || data.suppressedFacets.length > 0)) {
+    sectionHeading("Driving Facet Insights");
+
+    const renderFacetInsights = (title: string, facets: FacetWithInterpretation[]) => {
+      if (!facets.length) return;
+      checkPageBreak(12);
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(...NAVY);
+      doc.text(title, MARGIN_L, y);
+      y += 7;
+
+      for (const f of facets) {
+        if (!f.interpretation) continue;
+        const rgb = hexToRgb(PTP_DIM_COLOR(f.dimensionId));
+
+        checkPageBreak(20);
+        doc.setFillColor(rgb[0], rgb[1], rgb[2]);
+        doc.rect(MARGIN_L, y, 1.5, 12, "F");
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(...BLACK);
+        doc.text(f.facetName, MARGIN_L + 5, y + 5);
+        doc.setFontSize(7.5);
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(...MUTED);
+        const qLines = doc.splitTextToSize(f.itemText, CONTENT_W - 20);
+        doc.text(qLines[0] ?? "", MARGIN_L + 5, y + 10);
+        doc.setFillColor(rgb[0], rgb[1], rgb[2]);
+        doc.roundedRect(MARGIN_L + CONTENT_W - 12, y + 2, 12, 8, 1, 1, "F");
+        doc.setFontSize(8);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(255, 255, 255);
+        doc.text(String(f.score), MARGIN_L + CONTENT_W - 6, y + 7, { align: "center" });
+        y += 15;
+
+        const colW = (CONTENT_W - 4) / 2;
+
+        doc.setFontSize(7.5);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(...NAVY);
+        doc.text("Impact on self", MARGIN_L, y);
+        doc.text("Impact on others", MARGIN_L + colW + 4, y);
+        y += 5;
+
+        const selfItems = [
+          ...f.interpretation.positive_self.map((t) => ({ text: t, positive: true })),
+          ...f.interpretation.negative_self.map((t) => ({ text: t, positive: false })),
+        ];
+        const othersItems = [
+          ...f.interpretation.positive_others.map((t) => ({ text: t, positive: true })),
+          ...f.interpretation.negative_others.map((t) => ({ text: t, positive: false })),
+        ];
+        const maxItems = Math.max(selfItems.length, othersItems.length);
+
+        for (let i = 0; i < maxItems; i++) {
+          const selfItem = selfItems[i];
+          const othersItem = othersItems[i];
+          const selfLines = selfItem ? doc.splitTextToSize(cleanMarkdown(selfItem.text), colW - 6) : [];
+          const othersLines = othersItem ? doc.splitTextToSize(cleanMarkdown(othersItem.text), colW - 6) : [];
+          const rowH = Math.max(selfLines.length, othersLines.length) * 4 + 3;
+          checkPageBreak(rowH + 2);
+
+          if (selfItem) {
+            doc.setFontSize(8);
+            doc.setFont("helvetica", "bold");
+            doc.setTextColor(selfItem.positive ? GREEN[0] : RED[0], selfItem.positive ? GREEN[1] : RED[1], selfItem.positive ? GREEN[2] : RED[2]);
+            doc.text(selfItem.positive ? "+" : "-", MARGIN_L, y + 3);
+            doc.setFont("helvetica", "normal");
+            doc.setTextColor(...BLACK);
+            doc.text(selfLines, MARGIN_L + 5, y + 3);
+          }
+
+          if (othersItem) {
+            doc.setFontSize(8);
+            doc.setFont("helvetica", "bold");
+            doc.setTextColor(othersItem.positive ? GREEN[0] : RED[0], othersItem.positive ? GREEN[1] : RED[1], othersItem.positive ? GREEN[2] : RED[2]);
+            doc.text(othersItem.positive ? "+" : "-", MARGIN_L + colW + 4, y + 3);
+            doc.setFont("helvetica", "normal");
+            doc.setTextColor(...BLACK);
+            doc.text(othersLines, MARGIN_L + colW + 9, y + 3);
+          }
+
+          y += rowH;
+        }
+        y += 6;
+      }
+    };
+
+    renderFacetInsights("Elevated Facets", data.elevatedFacets);
+    renderFacetInsights("Suppressed Facets", data.suppressedFacets);
+  }
+
+  // ── CROSS-ASSESSMENT CONNECTIONS ──
+  if (sections.crossAssessmentConnections && data.narrativeSections?.cross_assessment) {
+    sectionHeading("Cross-Assessment Connections");
+    bodyText(data.narrativeSections.cross_assessment);
+    y += 4;
+  }
+
+  // ── ASSESSMENT RESPONSES ──
+  if (sections.assessmentResponses && data.assessmentResponses.length > 0) {
+    sectionHeading("Assessment Responses");
+    const contextNote = data.contextLabel
+      ? `${data.assessmentResponses.length} responses — ${data.contextLabel} context`
+      : `${data.assessmentResponses.length} responses`;
+    doc.setFontSize(7.5);
+    doc.setTextColor(...MUTED);
+    doc.text(contextNote, MARGIN_L, y);
+    y += 6;
+
+    for (const r of data.assessmentResponses) {
+      const rgb = hexToRgb(PTP_DIM_COLOR(r.dimensionId));
+      const labelText = `Q${r.itemNumber} — ${r.facetName}`;
+      const questionLines = doc.splitTextToSize(r.itemText, CONTENT_W - 20);
+      const rowH = questionLines.length * 4 + 8;
+      checkPageBreak(rowH + 2);
+
+      doc.setFillColor(rgb[0], rgb[1], rgb[2]);
+      doc.rect(MARGIN_L, y, 1.5, rowH, "F");
+
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(...BLACK);
+      doc.text(labelText, MARGIN_L + 5, y + 5);
+
+      doc.setFontSize(7.5);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(...MUTED);
+      doc.text(questionLines, MARGIN_L + 5, y + 10);
+
+      doc.setFillColor(rgb[0], rgb[1], rgb[2]);
+      doc.roundedRect(MARGIN_L + CONTENT_W - 12, y + rowH / 2 - 4, 12, 8, 1, 1, "F");
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(255, 255, 255);
+      doc.text(String(r.score), MARGIN_L + CONTENT_W - 6, y + rowH / 2 + 1, { align: "center" });
+
+      doc.setDrawColor(230, 230, 230);
+      doc.line(MARGIN_L, y + rowH, MARGIN_L + CONTENT_W, y + rowH);
+      y += rowH + 1;
     }
   }
 
-  // Final footer
   addFooter();
 
-  // ── Save ──
   const lastName = data.userName.split(" ").pop() || "User";
   const dateStr = new Date().toISOString().slice(0, 10);
-  const shortName = data.instrumentShortName || data.instrumentName.replace(/\s+/g, "");
-  doc.save(`BrainWise-${shortName}-${lastName}-${dateStr}.pdf`);
-
-  // ── Inner render helpers (closure over doc, y, checkPageBreak) ──
-  function renderNarrative(d: jsPDF, text: string, insightsOnly: boolean) {
-    const lines = text.split("\n");
-    let inFacetSection = false;
-    let skipFacetInsightsBlock = false;
-    let firstFacetFound = false;
-
-    for (const raw of lines) {
-      const trimmed = raw.trim();
-
-      if (trimmed.startsWith("## ")) {
-        if (!insightsOnly) {
-          skipFacetInsightsBlock = isFacetInsightsTopHeading(trimmed);
-          if (skipFacetInsightsBlock) {
-            inFacetSection = false;
-            continue;
-          }
-        } else {
-          skipFacetInsightsBlock = false;
-        }
-      }
-
-      if (!insightsOnly && skipFacetInsightsBlock) {
-        continue;
-      }
-
-      // When insightsOnly, skip everything until the first ### heading
-      if (insightsOnly && !firstFacetFound) {
-        if (trimmed.startsWith("### ") && !isFacetScoreGroupHeading(trimmed)) {
-          firstFacetFound = true;
-          inFacetSection = true;
-          // fall through to ### rendering below
-        } else {
-          continue;
-        }
-      }
-
-      if (!trimmed) {
-        if (!insightsOnly || inFacetSection) {
-          y += 2;
-        }
-        continue;
-      }
-
-      if (trimmed.startsWith("### ")) {
-        if (isFacetScoreGroupHeading(trimmed)) {
-          inFacetSection = false;
-          continue;
-        }
-        inFacetSection = true;
-      } else if (trimmed.startsWith("## ")) {
-        inFacetSection = false;
-      }
-
-      if (insightsOnly && !inFacetSection) continue;
-      if (!insightsOnly && inFacetSection) continue;
-
-      if (trimmed.startsWith("## ")) {
-        const headingText = trimmed.replace(/^##\s*/, '');
-        if (headingText === 'Elevated Facets' || headingText === 'Suppressed Facets' || headingText === 'Driving Facet Insights') {
-          continue;
-        }
-        checkPageBreak(12);
-        y += 3;
-        d.setFontSize(11);
-        d.setTextColor(...PRIMARY);
-        d.setFont("helvetica", "bold");
-        d.text(trimmed.replace(/^##\s*/, "").replace(/\*\*/g, ""), MARGIN_L, y);
-        y += 6;
-        continue;
-      }
-
-      if (trimmed.startsWith("### ")) {
-        checkPageBreak(10);
-        y += 2;
-        d.setFontSize(9.5);
-        d.setTextColor(...PRIMARY);
-        d.setFont("helvetica", "bold");
-        const headingContent = trimmed.replace(/^###\s*/, "").replace(/\*\*/g, "");
-        const wrappedHeading = d.splitTextToSize(headingContent, CONTENT_W);
-        for (const hl of wrappedHeading) {
-          checkPageBreak(5);
-          d.text(hl, MARGIN_L, y);
-          y += 5;
-        }
-        continue;
-      }
-
-      // Bold label lines like **Impact on Self:**
-      const labelMatch = trimmed.match(/^\*\*(.+?:)\*\*$/);
-      if (labelMatch) {
-        checkPageBreak(8);
-        d.setFontSize(8);
-        d.setTextColor(...MUTED);
-        d.setFont("helvetica", "bold");
-        d.text(labelMatch[1].toUpperCase(), MARGIN_L, y);
-        d.setFont("helvetica", "normal");
-        y += 5;
-        continue;
-      }
-
-      // Emoji bullets
-      const emojiMatch = trimmed.match(/^(✅|❌)\s*(.+)$/);
-      if (emojiMatch) {
-        checkPageBreak(8);
-        d.setFontSize(8.5);
-        d.setTextColor(...BLACK);
-        d.setFont("helvetica", "normal");
-        const icon = emojiMatch[1] === "✅" ? "+" : "-";
-        const rgb = emojiMatch[1] === "✅" ? [34, 139, 34] as const : [200, 50, 50] as const;
-        d.setTextColor(rgb[0], rgb[1], rgb[2]);
-        d.setFont("helvetica", "bold");
-        d.text(icon, MARGIN_L + 2, y);
-        d.setTextColor(...BLACK);
-        d.setFont("helvetica", "normal");
-        const bulletLines = wrapText(cleanMarkdown(emojiMatch[2]), 8.5, CONTENT_W - 10);
-        for (const bl of bulletLines) {
-          checkPageBreak(5);
-          d.text(bl, MARGIN_L + 7, y);
-          y += 4;
-        }
-        y += 1;
-        continue;
-      }
-
-      // Bullet lines
-      const bulletMatch = trimmed.match(/^[-*]\s+(.+)$/);
-      if (bulletMatch) {
-        checkPageBreak(8);
-        d.setFontSize(8.5);
-        d.setTextColor(...BLACK);
-        d.setFont("helvetica", "normal");
-        d.setFillColor(...PRIMARY);
-        d.circle(MARGIN_L + 2, y - 1, 0.8, "F");
-        const bulletLines = wrapText(cleanMarkdown(bulletMatch[1]), 8.5, CONTENT_W - 10);
-        for (const bl of bulletLines) {
-          checkPageBreak(5);
-          d.text(bl, MARGIN_L + 7, y);
-          y += 4;
-        }
-        y += 1;
-        continue;
-      }
-
-      // Regular text
-      d.setFontSize(8.5);
-      d.setTextColor(...BLACK);
-      d.setFont("helvetica", "normal");
-      const textLines = wrapText(cleanMarkdown(trimmed), 8.5, CONTENT_W);
-      for (const tl of textLines) {
-        checkPageBreak(5);
-        d.text(tl, MARGIN_L, y);
-        y += 4;
-      }
-      y += 1;
-    }
-    y += 4;
-  }
-
-  function renderFacetTable(d: jsPDF, title: string, facets: FacetRow[]) {
-    checkPageBreak(12 + facets.length * 7);
-    d.setFontSize(9);
-    d.setFont("helvetica", "bold");
-    d.setTextColor(...BLACK);
-    d.text(title, MARGIN_L, y);
-    y += 5;
-
-    // Table header
-    d.setFontSize(7.5);
-    d.setTextColor(...MUTED);
-    d.text("Facet", MARGIN_L, y);
-    d.text("Score", MARGIN_L + CONTENT_W * 0.75, y);
-    y += 2;
-    d.setDrawColor(200, 200, 200);
-    d.line(MARGIN_L, y, MARGIN_L + CONTENT_W, y);
-    y += 4;
-
-    d.setFont("helvetica", "normal");
-    d.setFontSize(8);
-
-    for (let i = 0; i < facets.length; i++) {
-      checkPageBreak(7);
-      const f = facets[i];
-      if (i % 2 === 0) {
-        d.setFillColor(250, 250, 252);
-        d.rect(MARGIN_L, y - 3, CONTENT_W, 6, "F");
-      }
-
-      // Color indicator
-      const rgb = hexToRgb(f.color);
-      d.setFillColor(rgb[0], rgb[1], rgb[2]);
-      d.circle(MARGIN_L + 2, y - 1, 1.5, "F");
-
-      // Truncated text
-      const truncText = f.text.length > 80 ? f.text.slice(0, 77) + "…" : f.text;
-      d.setTextColor(...BLACK);
-      d.text(truncText, MARGIN_L + 6, y);
-
-      d.text(f.score.toFixed(1), MARGIN_L + CONTENT_W * 0.75, y);
-      y += 6;
-    }
-    y += 6;
-  }
-}
-
-// ── Utilities ──
-
-function cleanMarkdown(text: string): string {
-  return text.replace(/\*\*(.+?)\*\*/g, "$1");
-}
-
-function isFacetInsightsTopHeading(text: string): boolean {
-  return /^##\s+driving facet insights\b/i.test(text);
-}
-
-function isFacetScoreGroupHeading(text: string): boolean {
-  return /^#{2,3}\s+(elevated|suppressed)\s+facets\b/i.test(text);
-}
-
-function formatBand(band: string): string {
-  return band
-    .replace(/_/g, " ")
-    .replace(/\b\w/g, (c) => c.toUpperCase());
-}
-
-function hexToRgb(hex: string): [number, number, number] {
-  const h = hex.replace("#", "");
-  return [
-    parseInt(h.substring(0, 2), 16),
-    parseInt(h.substring(2, 4), 16),
-    parseInt(h.substring(4, 6), 16),
-  ];
-}
-
-function extractFacetInsights(narrative: string): string | null {
-  const lines = narrative.split('\n');
-  const result: string[] = [];
-  let inInsightsSection = false;
-
-  for (const line of lines) {
-    const trimmed = line.trim();
-
-    // Start capturing after ## Driving Facet Insights
-    if (trimmed === '## Driving Facet Insights') {
-      inInsightsSection = true;
-      continue;
-    }
-
-    if (!inInsightsSection) continue;
-
-    // Skip these exact lines
-    if (trimmed === '## Elevated Facets') continue;
-    if (trimmed === '## Suppressed Facets') continue;
-    if (trimmed === '## Driving Facet Insights') continue;
-    if (trimmed === 'Elevated Facets' || trimmed === 'Suppressed Facets') continue;
-
-    result.push(line);
-  }
-
-  const hasContent = result.some(l => /[✅❌]/.test(l));
-  return hasContent ? result.join('\n') : null;
+  const contextSuffix = data.contextLabel ? `-${data.contextLabel}` : "";
+  doc.save(`BrainWise-${data.instrumentShortName}${contextSuffix}-${lastName}-${dateStr}.pdf`);
 }

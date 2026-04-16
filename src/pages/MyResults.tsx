@@ -568,50 +568,110 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
   // PDF export handler
   const handlePdfExport = useCallback(async (sections: PdfSections) => {
     if (!selected) return;
-    // Fetch facet data for PDF
-    let elevatedFacets: { text: string; score: number; color: string }[] = [];
-    let suppressedFacets: { text: string; score: number; color: string }[] = [];
 
-    if (sections.drivingFacetScores && selected.isPTP) {
+    const PTP_ITEM_FACET_NAMES: Record<number, string> = {
+      1:"Physical safety orientation",2:"Emotional safety (work)",3:"Financial security orientation",4:"Short-term loss aversion",5:"Status and standing vigilance",6:"Personal fairness sensitivity",7:"Equality and reciprocity need",8:"Resilience and recovery capacity",9:"Physical health vigilance",10:"Need to be trusted",11:"Need to trust others",12:"Similarity-based affiliation",13:"Group belonging need",14:"Need for individual differentiation",15:"Contrarian opinion drive",16:"Team orientation",17:"Self-esteem and self-respect",18:"Social comparison drive",19:"Recognition need",20:"Approval and respect need",21:"Power and influence need (work)",22:"Status and prestige need (work)",23:"Embarrassment avoidance",24:"Impostor sensitivity",25:"Future certainty need (work)",26:"Expectation clarity need (work)",27:"Evaluation criteria need",28:"Reward predictability need",29:"Autonomy and control need (work)",30:"Action orientation (work)",31:"Information and situational awareness",32:"Correctness need",33:"Perfectionism",34:"Status quo and stability need (work)",35:"Sense-making need (work)",36:"Consistency need",37:"Ambiguity tolerance (work)",38:"Surprise aversion (work)",39:"Conformity need",40:"Doubt tolerance",41:"Authenticity need",42:"Risk tolerance (work)",43:"Curiosity",44:"Voice and influence need",45:"Flexibility and flow capacity (work)",46:"Commitment reliability need (work)",47:"Well-being vigilance for close others",48:"Emotional safety (social)",49:"Financial loss aversion",50:"Environmental safety scanning",51:"Other-directed fairness sensitivity",52:"Animal welfare sensitivity",53:"Social equality vigilance",54:"Mental health vigilance",55:"Emotional health vigilance",56:"Spiritual health vigilance",57:"Power and influence need (social)",58:"Status and prestige need (social)",59:"Benevolence drive",60:"Future certainty need (social)",61:"Expectation clarity need (social)",62:"Autonomy and control need (social)",63:"Action orientation (social)",64:"Status quo and stability need (social)",65:"Sense-making need (social)",66:"Ambiguity tolerance (social)",67:"Surprise aversion (social)",68:"Risk tolerance (social)",69:"Self-directed independence need",70:"Tradition and ritual orientation",71:"Harmony and stability need",72:"Flexibility and flow capacity (social)",73:"Commitment reliability need (social)",74:"Mastery and craft orientation",75:"Self-development drive",76:"Mission and meaning orientation",77:"Values alignment (personal)",78:"Values alignment (organisational)",79:"Artistic and creative expression",80:"Spiritual orientation",81:"Passionate pursuit orientation",82:"Challenge and growth orientation",83:"Truth-seeking orientation",84:"Happiness pursuit",85:"Sensory and sensual gratification",86:"Instant gratification orientation",87:"Stimulation and excitement need",88:"Play orientation",89:"Love and attachment need"
+    };
+
+    let elevatedFacets: { itemNumber: number; facetName: string; itemText: string; score: number; dimensionId: string; interpretation: { positive_self: string[]; negative_self: string[]; positive_others: string[]; negative_others: string[] } | null }[] = [];
+    let suppressedFacets: typeof elevatedFacets = [];
+    let assessmentResponses: { itemNumber: number; facetName: string; itemText: string; score: number; dimensionId: string }[] = [];
+    let narrativeSections: { profile_overview?: string; dimension_highlights?: Record<string, string>; cross_assessment?: string } | null = null;
+
+    // Fetch narrative sections for active context
+    if (effectiveSelected?.isPTP && ptpContextTab) {
+      const { data: narrativeRow } = await supabase
+        .from("facet_interpretations")
+        .select("facet_data")
+        .eq("assessment_result_id", effectiveSelected.result.id)
+        .eq("section_type", `narrative_${ptpContextTab}`)
+        .maybeSingle();
+      if (narrativeRow?.facet_data) {
+        narrativeSections = narrativeRow.facet_data as typeof narrativeSections;
+      }
+    }
+
+    if (selected.isPTP && effectiveSelected) {
+      // Fetch facet interpretations
+      const { data: facetRow } = await supabase
+        .from("facet_interpretations")
+        .select("facet_data")
+        .eq("assessment_result_id", effectiveSelected.result.id)
+        .eq("section_type", "facet_insights")
+        .maybeSingle();
+
+      const facetInterpretations: { name: string; positive_self: string[]; negative_self: string[]; positive_others: string[]; negative_others: string[] }[] = (facetRow?.facet_data as any) ?? [];
+
       const { data: responses } = await supabase
         .from("assessment_responses")
         .select("response_value_numeric, is_reverse_scored, item_id")
-        .eq("assessment_id", selected.result.assessment_id);
+        .eq("assessment_id", effectiveSelected.result.assessment_id);
 
       if (responses?.length) {
         const itemIds = responses.map((r) => r.item_id);
         const { data: items } = await supabase
           .from("items")
-          .select("item_id, item_text, dimension_id")
+          .select("item_id, item_text, item_number, dimension_id, context_type")
           .in("item_id", itemIds);
 
         const itemMap = new Map((items ?? []).map((i) => [i.item_id, i]));
-        const scored = responses.map((r) => {
+
+        let scored = responses.map((r) => {
           const item = itemMap.get(r.item_id);
           const raw = Number(r.response_value_numeric);
           const value = r.is_reverse_scored ? 100 - raw : raw;
-          return { text: item?.item_text ?? r.item_id, dimension_id: item?.dimension_id ?? "", value };
+          return {
+            itemNumber: item?.item_number ?? 0,
+            facetName: PTP_ITEM_FACET_NAMES[item?.item_number ?? 0] ?? item?.item_text?.slice(0, 40) ?? "",
+            itemText: item?.item_text ?? "",
+            score: Math.round(value),
+            dimensionId: item?.dimension_id ?? "",
+            contextType: item?.context_type ?? null,
+          };
         });
 
-        const vals = scored.map((s) => s.value);
-        const mean = vals.reduce((a, b) => a + b, 0) / vals.length;
-        const stdDev = Math.sqrt(vals.reduce((sum, v) => sum + (v - mean) ** 2, 0) / vals.length);
+        if (ptpContextTab === "professional" || ptpContextTab === "personal") {
+          const filtered = scored.filter((s) => s.contextType === ptpContextTab);
+          if (filtered.length > 0) scored = filtered;
+        }
 
-        const PTP_DIM_COLORS = PTP_DIMENSION_COLORS;
+        const values = scored.map((s) => s.score);
+        if (values.length > 0) {
+          const mean = values.reduce((a, b) => a + b, 0) / values.length;
+          const stdDev = Math.sqrt(values.reduce((sum, v) => sum + (v - mean) ** 2, 0) / values.length);
 
-        elevatedFacets = scored
-          .filter((s) => s.value > mean + stdDev)
-          .sort((a, b) => b.value - a.value)
-          .slice(0, 10)
-          .map((f) => ({ text: f.text, score: f.value, color: PTP_DIM_COLORS[f.dimension_id] ?? "#8EA9C1" }));
+          elevatedFacets = scored
+            .filter((s) => s.score > mean + stdDev)
+            .sort((a, b) => b.score - a.score)
+            .slice(0, 10)
+            .map(({ contextType, ...rest }) => ({
+              ...rest,
+              interpretation: facetInterpretations.find((fi) => fi.name === rest.facetName) ?? null,
+            }));
 
-        suppressedFacets = scored
-          .filter((s) => s.value < mean - stdDev)
-          .sort((a, b) => a.value - b.value)
-          .slice(0, 10)
-          .map((f) => ({ text: f.text, score: f.value, color: PTP_DIM_COLORS[f.dimension_id] ?? "#8EA9C1" }));
+          suppressedFacets = scored
+            .filter((s) => s.score < mean - stdDev)
+            .sort((a, b) => a.score - b.score)
+            .slice(0, 10)
+            .map(({ contextType, ...rest }) => ({
+              ...rest,
+              interpretation: facetInterpretations.find((fi) => fi.name === rest.facetName) ?? null,
+            }));
+        }
+
+        if (sections.assessmentResponses) {
+          assessmentResponses = scored
+            .sort((a, b) => a.itemNumber - b.itemNumber)
+            .map(({ contextType, ...rest }) => rest);
+        }
       }
     }
+
+    const contextLabel =
+      ptpContextTab === "professional" ? "Professional"
+      : ptpContextTab === "personal" ? "Personal"
+      : ptpContextTab === "combined" ? "Combined"
+      : "";
 
     const pdfData: PdfData = {
       userName: displayName ?? "Participant",
@@ -619,28 +679,31 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
       instrumentShortName: selected.instrument_short_name ?? selected.result.instrument_id ?? selected.instrument_name.replace(/\s+/g, ""),
       instrumentVersion: selected.result.instrument_version ?? "—",
       dateTaken: selected.completed_at ? format(new Date(selected.completed_at), "MMMM d, yyyy") : "—",
+      contextLabel,
       dimensions: sortedDimensions.map(([id, score]) => ({
         name: resolveDimensionName(id),
-        score: score.mean ?? score.level_mean ?? 0,
+        score: Math.round(score.mean ?? score.level_mean ?? 0),
         band: score.band ?? score.readiness_level ?? "moderate",
-        color: selected.isPTP
-          ? (PTP_DIMENSION_COLORS[id] ?? "#8EA9C1")
-          : (BAND_COLORS[score.band ?? "moderate"] ?? "#8EA9C1"),
+        color: selected.isPTP ? (PTP_DIMENSION_COLORS[id] ?? "#8EA9C1") : (BAND_COLORS[score.band ?? "moderate"] ?? "#8EA9C1"),
+        pastelColor: selected.isPTP ? (PTP_DIMENSION_PASTEL[id] ?? "#F9F7F1") : "#F9F7F1",
+        dimensionId: id,
       })),
       statCards: [
         { label: "Dimensions Assessed", value: String(dimensionScores.length) },
         { label: "Highest Dimension", value: resolveDimensionName(highestDimension) },
         { label: "Lowest Dimension", value: resolveDimensionName(lowestDimension) },
       ],
-      narrative: selected.result.ai_narrative,
+      narrativeSections,
       elevatedFacets,
       suppressedFacets,
+      assessmentResponses,
       recommendations,
       isSliderInstrument: !!isSliderInstrument,
+      isPTP: !!selected.isPTP,
     };
 
     generateResultsPdf(pdfData, sections);
-  }, [selected, sortedDimensions, dimensionScores, dimensionNameMap, profile, recommendations, isSliderInstrument, highestDimension, lowestDimension]);
+  }, [selected, effectiveSelected, ptpContextTab, sortedDimensions, dimensionScores, dimensionNameMap, displayName, recommendations, isSliderInstrument, highestDimension, lowestDimension]);
 
   const chatMessagesRef = useRef<Array<{role: 'user' | 'assistant'; content: string; timestamp: Date}>>([]);
   const chatSessionIdRef = useRef<string | null>(null);
@@ -1196,9 +1259,6 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
             open={exportModalOpen}
             onOpenChange={setExportModalOpen}
             onExport={handlePdfExport}
-            hasNarrative={!!selected.result.ai_narrative}
-            hasFacets={selected.isPTP}
-            hasRecommendations={recommendations.length > 0}
           />
             </>
           )}
