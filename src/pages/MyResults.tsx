@@ -128,6 +128,10 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
   const [selectedId, setSelectedId] = useState<string>("");
   const [ptpContextTab, setPtpContextTab] = useState<'professional' | 'personal' | 'combined' | null>(null);
   const [ptpTabOverrideId, setPtpTabOverrideId] = useState<string | null>(null);
+  const [bothSplitScores, setBothSplitScores] = useState<{
+    professional: Record<string, DimensionScore>;
+    personal: Record<string, DimensionScore>;
+  } | null>(null);
   const [loading, setLoading] = useState(true);
   const [pollingNarrative, setPollingNarrative] = useState(false);
   const [dimensionNameMap, setDimensionNameMap] = useState<Map<string, string>>(new Map());
@@ -283,6 +287,7 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
       const mostRecentPtp = filtered.find(a => a.isPTP);
       if (mostRecentPtp?.context_type === 'professional') setPtpContextTab('professional');
       else if (mostRecentPtp?.context_type === 'personal') setPtpContextTab('personal');
+      else if (mostRecentPtp?.context_type === 'both') setPtpContextTab('combined');
       else setPtpContextTab(null);
 
       setLoading(false);
@@ -308,7 +313,8 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
       .sort((a, b) => new Date(b.completed_at!).getTime() - new Date(a.completed_at!).getTime()),
     [assessments]);
 
-  const hasPtpTabs = ptpProfessionalResults.length > 0 && ptpPersonalResults.length > 0;
+  const isBothAssessment = selected?.isPTP && selected.context_type === 'both';
+  const hasPtpTabs = (ptpProfessionalResults.length > 0 && ptpPersonalResults.length > 0) || isBothAssessment;
   const showPtpTabs = selected?.isPTP && hasPtpTabs;
 
   // For combined tab: merge dimension scores from most recent professional + personal
@@ -349,11 +355,16 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
 
   // Effective dimension scores
   const effectiveDimensionScores = useMemo(() => {
+    if (isBothAssessment && bothSplitScores) {
+      if (ptpContextTab === 'professional') return Object.entries(bothSplitScores.professional);
+      if (ptpContextTab === 'personal') return Object.entries(bothSplitScores.personal);
+      if (ptpContextTab === 'combined') return effectiveSelected ? Object.entries(effectiveSelected.result.dimension_scores) : [];
+    }
     if (ptpContextTab === 'combined' && combinedDimensionScores) {
       return Object.entries(combinedDimensionScores);
     }
     return effectiveSelected ? Object.entries(effectiveSelected.result.dimension_scores) : [];
-  }, [ptpContextTab, combinedDimensionScores, effectiveSelected]);
+  }, [ptpContextTab, combinedDimensionScores, effectiveSelected, isBothAssessment, bothSplitScores]);
 
   // Poll for AI narrative
   useEffect(() => {
@@ -391,6 +402,62 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
 
     return () => clearInterval(interval);
   }, [selected?.result.id, selected?.result.ai_narrative]);
+
+  // Split scores by context for "both" PTP assessments
+  useEffect(() => {
+    if (!selected?.isPTP || selected.context_type !== 'both') {
+      setBothSplitScores(null);
+      return;
+    }
+    const fetchSplitScores = async () => {
+      const { data: responses } = await supabase
+        .from('assessment_responses')
+        .select('response_value_numeric, is_reverse_scored, item_id')
+        .eq('assessment_id', selected.result.assessment_id);
+      if (!responses?.length) return;
+
+      const itemIds = responses.map(r => r.item_id);
+      const { data: items } = await supabase
+        .from('items')
+        .select('item_id, dimension_id, context_type')
+        .in('item_id', itemIds);
+
+      const itemMap = new Map((items ?? []).map(i => [i.item_id, i]));
+
+      const profDims: Record<string, number[]> = {};
+      const persDims: Record<string, number[]> = {};
+
+      responses.forEach(r => {
+        const item = itemMap.get(r.item_id);
+        if (!item?.dimension_id) return;
+        const raw = Number(r.response_value_numeric);
+        const value = r.is_reverse_scored ? 100 - raw : raw;
+        const ctx = item.context_type;
+        const dim = item.dimension_id;
+        if (ctx === 'professional') {
+          if (!profDims[dim]) profDims[dim] = [];
+          profDims[dim].push(value);
+        } else if (ctx === 'personal') {
+          if (!persDims[dim]) persDims[dim] = [];
+          persDims[dim].push(value);
+        }
+      });
+
+      const toScores = (dimMap: Record<string, number[]>): Record<string, DimensionScore> => {
+        const result: Record<string, DimensionScore> = {};
+        Object.entries(dimMap).forEach(([dim, vals]) => {
+          result[dim] = { mean: Math.round(vals.reduce((a, b) => a + b, 0) / vals.length * 10) / 10 };
+        });
+        return result;
+      };
+
+      setBothSplitScores({
+        professional: toScores(profDims),
+        personal: toScores(persDims),
+      });
+    };
+    fetchSplitScores();
+  }, [selected?.result.assessment_id, selected?.context_type]);
 
   // Regenerate handler
   const handleRegenerate = useCallback(async () => {
@@ -933,7 +1000,8 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
             <section>
               <DrivingFacetScores
                 assessmentId={effectiveSelected.result.assessment_id}
-                additionalAssessmentId={ptpContextTab === 'combined' ? ptpPersonalResults[0]?.result.assessment_id : undefined}
+                additionalAssessmentId={ptpContextTab === 'combined' && !isBothAssessment && hasPtpTabs ? ptpPersonalResults[0]?.result.assessment_id : undefined}
+                contextFilter={isBothAssessment && ptpContextTab !== 'combined' ? ptpContextTab as 'professional' | 'personal' : undefined}
               />
             </section>
           )}
