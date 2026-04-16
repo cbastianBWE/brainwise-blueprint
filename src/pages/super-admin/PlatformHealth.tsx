@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import {
-  Users, ClipboardCheck, Calendar, CreditCard, GitBranch, Brain,
+  Users, ClipboardCheck, Calendar, CreditCard, GitBranch, Brain, Award,
 } from "lucide-react";
 
 interface Stats {
@@ -12,6 +12,7 @@ interface Stats {
   tierCounts: Record<string, number>;
   activePlatformVersion: string;
   activeAiVersion: string;
+  certificationCounts: Record<string, { in_progress: number; certified: number }>;
 }
 
 export default function PlatformHealth() {
@@ -20,7 +21,7 @@ export default function PlatformHealth() {
 
   useEffect(() => {
     const load = async () => {
-      const [usersRes, completedRes, monthRes, tiersRes, pvRes, aiRes] = await Promise.all([
+      const [usersRes, completedRes, monthRes, tiersRes, pvRes, aiRes, certRes] = await Promise.all([
         supabase.from("users").select("id", { count: "exact", head: true }),
         supabase.from("assessments").select("id", { count: "exact", head: true }).eq("status", "completed"),
         supabase.from("assessments").select("id", { count: "exact", head: true })
@@ -29,6 +30,7 @@ export default function PlatformHealth() {
         supabase.from("users").select("subscription_tier").eq("subscription_status", "active"),
         supabase.from("platform_versions").select("version_string").eq("is_active", true).limit(1).single(),
         supabase.from("ai_versions").select("version_string").eq("is_active", true).limit(1).single(),
+        supabase.from("coach_certifications").select("certification_type, status"),
       ]);
 
       const tierCounts: Record<string, number> = {};
@@ -39,6 +41,16 @@ export default function PlatformHealth() {
         }
       }
 
+      const certificationCounts: Record<string, { in_progress: number; certified: number }> = {};
+      if (certRes.data) {
+        for (const row of certRes.data) {
+          const type = row.certification_type || "unknown";
+          if (!certificationCounts[type]) certificationCounts[type] = { in_progress: 0, certified: 0 };
+          if (row.status === "certified") certificationCounts[type].certified++;
+          else if (row.status === "in_progress") certificationCounts[type].in_progress++;
+        }
+      }
+
       setStats({
         totalUsers: usersRes.count || 0,
         totalCompleted: completedRes.count || 0,
@@ -46,6 +58,7 @@ export default function PlatformHealth() {
         tierCounts,
         activePlatformVersion: pvRes.data?.version_string || "None",
         activeAiVersion: aiRes.data?.version_string || "None",
+        certificationCounts,
       });
       setLoading(false);
     };
@@ -108,6 +121,42 @@ export default function PlatformHealth() {
               <p className="text-sm text-muted-foreground">No active subscriptions</p>
             </CardContent>
           </Card>
+        )}
+      </div>
+
+      <div>
+        <h2 className="text-lg font-semibold text-foreground mb-3">Coach Certifications</h2>
+        {Object.keys(stats.certificationCounts).length === 0 ? (
+          <Card>
+            <CardContent className="py-4">
+              <p className="text-sm text-muted-foreground">No coach certifications found.</p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {Object.entries(stats.certificationCounts).map(([type, counts]) => (
+              <Card key={type}>
+                <CardContent className="py-4 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <div className="rounded-lg bg-primary/10 p-2">
+                      <Award className="h-5 w-5 text-primary" />
+                    </div>
+                    <p className="text-sm font-medium text-foreground capitalize">
+                      {type.replace(/_/g, " ")}
+                    </p>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">In Progress</span>
+                    <span className="font-semibold text-foreground">{counts.in_progress}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Certified</span>
+                    <span className="font-semibold text-green-600">{counts.certified}</span>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         )}
       </div>
 
