@@ -924,6 +924,108 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
           )}
         </>
       )}
+
+      {!isCoachView && selected && (
+        <div className="fixed bottom-6 right-6 z-40 flex flex-col items-end gap-2">
+          {chatOpen && profile?.subscription_status === 'active' && (
+            <div className="w-80 sm:w-96 h-[480px] bg-background border border-border rounded-2xl shadow-2xl flex flex-col overflow-hidden">
+              {/* Chat header */}
+              <div className="bg-primary px-4 py-3 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Brain className="h-4 w-4 text-primary-foreground" />
+                  <span className="text-sm font-semibold text-primary-foreground">Ask AI</span>
+                </div>
+                <button onClick={() => setChatOpen(false)} className="text-primary-foreground/70 hover:text-primary-foreground">
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+              {/* Context note */}
+              <div className="px-3 py-2 bg-muted/50 border-b border-border">
+                <p className="text-xs text-muted-foreground">
+                  Chatting about your <strong>{selected.instrument_name}</strong> results.{' '}
+                  <button onClick={() => navigate('/ai-chat')} className="text-primary underline">Multi-assessment chat →</button>
+                </p>
+              </div>
+              {/* Messages */}
+              <div className="flex-1 overflow-y-auto p-3 space-y-3">
+                {chatMessages.length === 0 && (
+                  <div className="text-center text-xs text-muted-foreground mt-8 space-y-1">
+                    <Brain className="h-8 w-8 text-primary/30 mx-auto" />
+                    <p>Ask me anything about your {selected.instrument_name} results.</p>
+                  </div>
+                )}
+                {chatMessages.map((msg, i) => (
+                  <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`max-w-[85%] rounded-xl px-3 py-2 text-sm ${msg.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted text-foreground'}`}>
+                      {msg.content}
+                    </div>
+                  </div>
+                ))}
+                {chatLoading && (
+                  <div className="flex justify-start">
+                    <div className="bg-muted rounded-xl px-3 py-2 text-sm text-muted-foreground flex items-center gap-1">
+                      <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground animate-bounce" style={{animationDelay:'0ms'}} />
+                      <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground animate-bounce" style={{animationDelay:'150ms'}} />
+                      <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground animate-bounce" style={{animationDelay:'300ms'}} />
+                    </div>
+                  </div>
+                )}
+              </div>
+              {/* Input */}
+              <div className="p-3 border-t border-border flex gap-2">
+                <input
+                  className="flex-1 text-sm rounded-lg border border-border bg-background px-3 py-2 focus:outline-none focus:ring-1 focus:ring-primary"
+                  placeholder="Ask about your results..."
+                  value={chatInput}
+                  onChange={e => setChatInput(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && !e.shiftKey && sendChatMessage()}
+                />
+                <button
+                  onClick={sendChatMessage}
+                  disabled={!chatInput.trim() || chatLoading}
+                  className="bg-primary text-primary-foreground rounded-lg px-3 py-2 text-sm font-medium disabled:opacity-50 hover:bg-primary/90"
+                >
+                  Send
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Bubble toggle button */}
+          <button
+            onClick={() => {
+              if (profile?.subscription_status !== 'active') {
+                setShowChatUpgradeDialog(true);
+              } else {
+                setChatOpen(prev => !prev);
+              }
+            }}
+            className="flex items-center gap-2 bg-primary text-primary-foreground rounded-full px-4 py-3 shadow-lg hover:bg-primary/90 transition-all"
+          >
+            <Brain className="h-5 w-5" />
+            <span className="text-sm font-semibold">Ask AI</span>
+          </button>
+
+          {/* Upgrade dialog for non-subscribers */}
+          <AlertDialog open={showChatUpgradeDialog} onOpenChange={setShowChatUpgradeDialog}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Subscription Required</AlertDialogTitle>
+                <AlertDialogDescription>
+                  AI chat requires an active subscription. Upgrade to Base or higher to start chatting about your results.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter className="flex flex-col items-center gap-2 sm:flex-col">
+                <AlertDialogAction onClick={() => { setShowChatUpgradeDialog(false); navigate('/pricing'); }}>
+                  Upgrade to Premium
+                </AlertDialogAction>
+                <p className="text-xs text-muted-foreground text-center">Base plan also includes AI chat.</p>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
+      )}
     </div>
   );
 }
