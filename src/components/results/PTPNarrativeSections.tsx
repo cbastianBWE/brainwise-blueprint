@@ -200,6 +200,60 @@ export default function PTPNarrativeSections({
     cross_assessment?: string;
   } | null>(null);
   const [loadingNarrativeSections, setLoadingNarrativeSections] = useState(false);
+  const [responsesExpanded, setResponsesExpanded] = useState(false);
+  const [assessmentResponses, setAssessmentResponses] = useState<{
+    itemNumber: number;
+    facetName: string;
+    itemText: string;
+    score: number;
+    dimensionId: string;
+  }[]>([]);
+
+  useEffect(() => {
+    const fetchResponses = async () => {
+      const { data: responses } = await supabase
+        .from("assessment_responses")
+        .select("response_value_numeric, is_reverse_scored, item_id")
+        .eq("assessment_id", assessmentId);
+
+      if (!responses?.length) return;
+
+      const itemIds = responses.map((r) => r.item_id);
+      const { data: items } = await supabase
+        .from("items")
+        .select("item_id, item_text, item_number, dimension_id, context_type")
+        .in("item_id", itemIds);
+
+      const itemMap = new Map((items ?? []).map((i) => [i.item_id, i]));
+
+      let scored = responses.map((r) => {
+        const item = itemMap.get(r.item_id);
+        const raw = Number(r.response_value_numeric);
+        const value = r.is_reverse_scored ? 100 - raw : raw;
+        return {
+          itemNumber: item?.item_number ?? 0,
+          facetName:
+            PTP_ITEM_FACET_NAMES[item?.item_number ?? 0] ??
+            item?.item_text?.slice(0, 40) ??
+            "",
+          itemText: item?.item_text ?? "",
+          score: Math.round(value),
+          dimensionId: item?.dimension_id ?? "",
+          contextType: item?.context_type ?? null,
+        };
+      });
+
+      if (ptpContextTab === "professional" || ptpContextTab === "personal") {
+        const filtered = scored.filter((s) => s.contextType === ptpContextTab);
+        if (filtered.length > 0) scored = filtered;
+      }
+
+      scored.sort((a, b) => a.itemNumber - b.itemNumber);
+      setAssessmentResponses(scored);
+    };
+
+    fetchResponses();
+  }, [assessmentId, ptpContextTab]);
 
   useEffect(() => {
     const fetchNarrativeSections = async () => {
