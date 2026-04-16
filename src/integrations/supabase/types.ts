@@ -1030,6 +1030,42 @@ export type Database = {
         }
         Relationships: []
       }
+      subscription_plans: {
+        Row: {
+          billing_period: string
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          plan_name: string
+          price_usd: number | null
+          stripe_price_id: string
+          tier: string
+          updated_at: string | null
+        }
+        Insert: {
+          billing_period: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          plan_name: string
+          price_usd?: number | null
+          stripe_price_id: string
+          tier: string
+          updated_at?: string | null
+        }
+        Update: {
+          billing_period?: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          plan_name?: string
+          price_usd?: number | null
+          stripe_price_id?: string
+          tier?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       super_admin_audit_log: {
         Row: {
           action_type: string
