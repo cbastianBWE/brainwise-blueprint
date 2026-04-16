@@ -91,6 +91,7 @@ export default function AssessmentFlow({ instrument, onExit, contextType }: Prop
             instrument_version: instrument.instrument_version,
             rater_type: "self",
             status: "in_progress",
+            context_type: contextType ?? null,
           })
           .select("id")
           .single();
