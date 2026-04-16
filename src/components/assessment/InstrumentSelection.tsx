@@ -128,7 +128,9 @@ export default function InstrumentSelection({ onSelect }: Props) {
       if (purchasesRes.data) {
         const ids = new Set<string>();
         purchasesRes.data.forEach((row) => {
-          if (row.instrument_id) ids.add(row.instrument_id);
+          if (row.instrument_id) {
+            row.instrument_id.split(",").forEach((id: string) => ids.add(id.trim()));
+          }
         });
         setPurchasedInstrumentIds(ids);
       }
@@ -248,7 +250,7 @@ export default function InstrumentSelection({ onSelect }: Props) {
           const subscriptionAccess = canAccessBySubscription(inst.tier);
           const instrumentUuid = INSTRUMENT_UUID_MAP[inst.instrument_id] || "";
           const coachPaid = coachPaidInstrumentIds.has(instrumentUuid);
-          const hasPurchase = purchasedInstrumentIds.has(inst.instrument_id) || purchasedInstrumentIds.has(inst.short_name);
+          const hasPurchase = purchasedInstrumentIds.has(instrumentUuid) || purchasedInstrumentIds.has(inst.instrument_id) || purchasedInstrumentIds.has(inst.short_name);
           const hasCompleted = completedInstrumentIds.has(inst.instrument_id);
           const purchaseAccess = hasPurchase && !hasCompleted;
           const selfPayCoachInvited = selfPayCoachInstrumentIds.has(instrumentUuid);
