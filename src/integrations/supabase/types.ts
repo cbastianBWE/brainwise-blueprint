@@ -1388,6 +1388,7 @@ export type Database = {
       }
     }
     Functions: {
+      close_chat_session: { Args: { p_session_id: string }; Returns: undefined }
       current_user_account_type: { Args: never; Returns: string }
       current_user_org_id: { Args: never; Returns: string }
       get_own_immutable_fields: {
