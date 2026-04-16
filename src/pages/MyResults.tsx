@@ -715,6 +715,56 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
           )}
           {!debriefPendingIds.has(selected.result.assessment_id) && (
             <>
+          {/* PTP Context Tabs */}
+          {showPtpTabs && (
+            <section>
+              <Tabs value={ptpContextTab ?? 'professional'} onValueChange={(v) => { setPtpContextTab(v as any); setPtpTabOverrideId(null); }}>
+                <TabsList>
+                  <TabsTrigger value="professional">Professional</TabsTrigger>
+                  <TabsTrigger value="personal">Personal</TabsTrigger>
+                  <TabsTrigger value="combined">Combined</TabsTrigger>
+                </TabsList>
+              </Tabs>
+              {ptpContextTab === 'professional' && ptpProfessionalResults.length > 1 && (
+                <div className="mt-2">
+                  <Select value={ptpTabOverrideId ?? ptpProfessionalResults[0].result.id} onValueChange={setPtpTabOverrideId}>
+                    <SelectTrigger className="w-full sm:w-72">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ptpProfessionalResults.map(a => (
+                        <SelectItem key={a.result.id} value={a.result.id}>
+                          Professional — {format(new Date(a.completed_at!), 'MMM yyyy')}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+              {ptpContextTab === 'personal' && ptpPersonalResults.length > 1 && (
+                <div className="mt-2">
+                  <Select value={ptpTabOverrideId ?? ptpPersonalResults[0].result.id} onValueChange={setPtpTabOverrideId}>
+                    <SelectTrigger className="w-full sm:w-72">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ptpPersonalResults.map(a => (
+                        <SelectItem key={a.result.id} value={a.result.id}>
+                          Personal — {format(new Date(a.completed_at!), 'MMM yyyy')}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+              {ptpContextTab === 'combined' && (
+                <p className="text-xs text-muted-foreground mt-2">
+                  Showing averaged scores across your most recent Professional and Personal assessments.
+                </p>
+              )}
+            </section>
+          )}
+
           {/* SECTION 1 - Profile Overview */}
           <section className="space-y-4">
             <div>
@@ -775,7 +825,7 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
           </section>
 
           {/* Complete other half prompt — PTP only */}
-          {selected.isPTP && (selected.context_type === 'professional' || selected.context_type === 'personal') && (
+          {selected.isPTP && !hasPtpTabs && (selected.context_type === 'professional' || selected.context_type === 'personal') && (
             <section>
               <Card className="border-primary/30 bg-primary/5">
                 <CardContent className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 py-4">
@@ -848,7 +898,7 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
                               <Cell
                                 key={idx}
                                 fill={
-                                  selected.isPTP
+                                  effectiveSelected?.isPTP
                                     ? PTP_DIMENSION_COLORS[entry.dimensionId] ?? BAND_COLORS.moderate
                                     : BAND_COLORS[entry.band] ?? BAND_COLORS.moderate
                                 }
@@ -872,9 +922,12 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
           </section>
 
           {/* SECTION 2b - Driving Facet Scores (PTP only) */}
-          {selected.isPTP && (
+          {effectiveSelected?.isPTP && (
             <section>
-              <DrivingFacetScores assessmentId={selected.result.assessment_id} />
+              <DrivingFacetScores
+                assessmentId={effectiveSelected.result.assessment_id}
+                additionalAssessmentId={ptpContextTab === 'combined' ? ptpPersonalResults[0]?.result.assessment_id : undefined}
+              />
             </section>
           )}
 
