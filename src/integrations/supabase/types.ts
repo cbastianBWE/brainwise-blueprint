@@ -703,7 +703,7 @@ export type Database = {
           {
             foreignKeyName: "facet_interpretations_assessment_result_id_fkey"
             columns: ["assessment_result_id"]
-            isOneToOne: true
+            isOneToOne: false
             referencedRelation: "assessment_results"
             referencedColumns: ["id"]
           },
