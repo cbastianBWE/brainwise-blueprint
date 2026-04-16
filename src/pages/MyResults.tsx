@@ -279,6 +279,12 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
       } else {
         setSelectedId(combined[0]?.result.id ?? "");
       }
+      // Initialize PTP context tab based on most recent PTP result
+      const mostRecentPtp = filtered.find(a => a.isPTP);
+      if (mostRecentPtp?.context_type === 'professional') setPtpContextTab('professional');
+      else if (mostRecentPtp?.context_type === 'personal') setPtpContextTab('personal');
+      else setPtpContextTab(null);
+
       setLoading(false);
     };
 
