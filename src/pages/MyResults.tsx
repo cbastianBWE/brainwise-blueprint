@@ -80,6 +80,7 @@ interface AssessmentWithResult {
   instrument_short_name: string | null;
   scale_type: string | null;
   isPTP: boolean;
+  context_type: string | null;
 }
 
 const BAND_COLORS: Record<string, string> = {
@@ -190,7 +191,7 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
       const assessmentIds = results.map((r) => r.assessment_id);
       const { data: assessmentRows } = await supabase
         .from("assessments")
-        .select("id, completed_at, instrument_id")
+        .select("id, completed_at, instrument_id, context_type")
         .in("id", assessmentIds);
 
       // Get unique instrument IDs
@@ -230,6 +231,7 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
           instrument_short_name: instrument?.short_name ?? null,
           scale_type: instrument?.scale_type ?? null,
           isPTP: (r.instrument_id ?? "").toUpperCase().includes("INST-001"),
+          context_type: assessmentMap.get(r.assessment_id)?.context_type ?? null,
         };
       });
 
@@ -705,6 +707,34 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
               </>
             )}
           </section>
+
+          {/* Complete other half prompt — PTP only */}
+          {selected.isPTP && (selected.context_type === 'professional' || selected.context_type === 'personal') && (
+            <section>
+              <Card className="border-primary/30 bg-primary/5">
+                <CardContent className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 py-4">
+                  <div>
+                    <p className="font-semibold text-foreground text-sm">
+                      {selected.context_type === 'professional'
+                        ? 'Complete your Personal / Social Profile'
+                        : 'Complete your Corporate / Professional Profile'}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {selected.context_type === 'professional'
+                        ? 'You completed the professional context. Take the personal half to get your full PTP picture.'
+                        : 'You completed the personal context. Take the professional half to get your full PTP picture.'}
+                    </p>
+                  </div>
+                  <Button
+                    size="sm"
+                    onClick={() => navigate('/assessment?instrument=INST-001&autostart=true')}
+                  >
+                    Start Now
+                  </Button>
+                </CardContent>
+              </Card>
+            </section>
+          )}
 
           {/* SECTION 2 - Profile Chart */}
           <section>
