@@ -1,12 +1,10 @@
 
-# Plan: Three targeted fixes to PDF generator
+# Plan: Force page breaks after two PDF sections
 
 Single file: `src/lib/generateResultsPdf.ts`
 
-1. **Move disclaimer to cover page** — Insert a sand-colored disclaimer card near the bottom of the cover page (above the footer), then remove the duplicate disclaimer block currently rendered at the top of page 2.
+1. **After Driving Facet Scores** — add `addFooter(); doc.addPage(); y = MARGIN_T;` immediately after the `renderFacetScoreTable("Suppressed Facets", ...)` call, inside the closing brace of the `drivingFacetScores` section.
 
-2. **Prevent orphaned facet headers** — In `renderFacetInsights`, replace the fixed `checkPageBreak(20)` at the top of each facet loop with a height estimate (header + impact column header + impact rows) so the entire facet block stays together on one page.
-
-3. **Keep "Dimension Highlights" intact** — Before its section heading, force a page break when fewer than 80mm remain on the current page.
+2. **After PTP and Brain Overview** — append the same three lines after `y += overviewH + 6;`, and remove the now-redundant `if (y > MARGIN_T + 10)` page-break guard that currently precedes Dimension Highlights.
 
 No other changes.
