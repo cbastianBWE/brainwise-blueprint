@@ -358,6 +358,9 @@ export function generateResultsPdf(data: PdfData, sections: PdfSections): void {
 
   // ── DRIVING FACET INSIGHTS ──
   if (sections.drivingFacetInsights && (data.elevatedFacets.length > 0 || data.suppressedFacets.length > 0)) {
+    addFooter();
+    doc.addPage();
+    y = MARGIN_T;
     sectionHeading("Driving Facet Insights");
 
     const renderFacetInsights = (title: string, facets: FacetWithInterpretation[]) => {
