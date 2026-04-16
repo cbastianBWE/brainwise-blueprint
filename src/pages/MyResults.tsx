@@ -448,9 +448,7 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
   }, [selected, consumeMessage, profile?.subscription_tier, toast]);
 
   // Derived data
-  const dimensionScores = selected
-    ? Object.entries(selected.result.dimension_scores)
-    : [];
+  const dimensionScores = effectiveDimensionScores;
 
   const sortedDimensions = useMemo(() => {
     if (!dimensionScores.length) return [];
