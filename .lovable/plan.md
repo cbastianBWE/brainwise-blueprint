@@ -1,9 +1,13 @@
 
-# Plan: Guard combinedDimensionScores against missing PTP halves
+# Plan: Round score displays to whole numbers
 
-## Single file: `src/pages/MyResults.tsx`
+## File 1: `src/pages/MyResults.tsx`
+- Replace the chart `Tooltip` formatter `value.toFixed(1)` with `String(Math.round(value))`.
+- Replace the `LabelList` formatter `v.toFixed(1)` with `String(Math.round(v))`.
 
-### Change — Add null guards to `combinedDimensionScores`
-Update the early-return in the `combinedDimensionScores` useMemo so it also bails out when either `ptpProfessionalResults[0]` or `ptpPersonalResults[0]` is undefined. This prevents a runtime crash now that `hasPtpTabs` can be true for `both` assessments where the separate professional/personal result rows may not exist.
+## File 2: `src/components/results/DrivingFacetScores.tsx`
+- In `chartData` mapping, replace `Number(item.value.toFixed(1))` with `Math.round(item.value)` so bars carry integer values.
+- Replace the `LabelList` formatter `v.toFixed(1)` with `String(Math.round(v))`.
+- Tooltip already reads from `chartData` so no further change needed there.
 
 No other files changed.
