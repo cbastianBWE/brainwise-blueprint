@@ -296,6 +296,9 @@ export function generateResultsPdf(data: PdfData, sections: PdfSections): void {
 
     if (data.elevatedFacets.length > 0) renderFacetScoreTable("Elevated Facets", data.elevatedFacets);
     if (data.suppressedFacets.length > 0) renderFacetScoreTable("Suppressed Facets", data.suppressedFacets);
+    addFooter();
+    doc.addPage();
+    y = MARGIN_T;
   }
 
   // ── PROFILE OVERVIEW NARRATIVE ──
@@ -320,16 +323,13 @@ export function generateResultsPdf(data: PdfData, sections: PdfSections): void {
     doc.setTextColor(...BLACK);
     doc.text(overviewLines, MARGIN_L + 6, y + 5);
     y += overviewH + 6;
+    addFooter();
+    doc.addPage();
+    y = MARGIN_T;
   }
 
   // ── DIMENSION HIGHLIGHTS ──
   if (sections.dimensionHighlights && data.narrativeSections?.dimension_highlights) {
-    // Force dimension highlights to start on a new page if less than 80mm remain
-    if (y > MARGIN_T + 10) {
-      addFooter();
-      doc.addPage();
-      y = MARGIN_T;
-    }
     sectionHeading("Dimension Highlights");
     for (const dim of data.dimensions) {
       const text = data.narrativeSections.dimension_highlights[dim.dimensionId];
