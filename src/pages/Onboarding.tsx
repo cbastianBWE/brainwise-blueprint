@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -15,6 +15,20 @@ const Onboarding = () => {
   const [showInviteCode, setShowInviteCode] = useState(false);
   const [inviteCode, setInviteCode] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      const { data } = await supabase
+        .from("coach_clients")
+        .select("id")
+        .eq("client_user_id", user.id)
+        .limit(1);
+      if (data && data.length > 0) {
+        await selectAccountType("individual");
+      }
+    })();
+  }, [user]);
 
   const selectAccountType = async (accountType: string) => {
     if (!user) return;
