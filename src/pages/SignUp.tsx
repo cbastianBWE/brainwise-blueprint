@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Brain, Loader2, Info } from "lucide-react";
+import { Brain, Loader2, Info, Eye, EyeOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const CERT_LABELS: Record<string, string> = {
@@ -25,6 +25,8 @@ const SignUp = () => {
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const { toast } = useToast();
 
   const [searchParams] = useSearchParams();
@@ -59,7 +61,13 @@ const SignUp = () => {
     })();
   }, [searchParams]);
 
-  const validatePassword = (pw: string) => pw.length >= 8 && /\d/.test(pw);
+  const validatePassword = (pw: string) => ({
+    length: pw.length >= 8,
+    uppercase: /[A-Z]/.test(pw),
+    number: /\d/.test(pw),
+    symbol: /[^A-Za-z0-9]/.test(pw),
+  });
+  const isPasswordValid = (pw: string) => Object.values(validatePassword(pw)).every(Boolean);
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -68,8 +76,8 @@ const SignUp = () => {
       toast({ title: "Error", description: "Please enter your full name.", variant: "destructive" });
       return;
     }
-    if (!validatePassword(password)) {
-      toast({ title: "Error", description: "Password must be at least 8 characters with at least one number.", variant: "destructive" });
+    if (!isPasswordValid(password)) {
+      toast({ title: "Error", description: "Password must be at least 8 characters with one capital letter, one number, and one symbol.", variant: "destructive" });
       return;
     }
     if (password !== confirmPassword) {
@@ -192,11 +200,71 @@ const SignUp = () => {
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
-              <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required placeholder="Min 8 chars, at least one number" />
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  onMouseDown={() => setShowPassword(true)}
+                  onMouseUp={() => setShowPassword(false)}
+                  onMouseLeave={() => setShowPassword(false)}
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+              {password.length > 0 && (() => {
+                const checks = validatePassword(password);
+                return (
+                  <div className="space-y-1 mt-2">
+                    {[
+                      { key: 'length', label: 'At least 8 characters' },
+                      { key: 'uppercase', label: 'At least one capital letter' },
+                      { key: 'number', label: 'At least one number' },
+                      { key: 'symbol', label: 'At least one symbol' },
+                    ].map(({ key, label }) => (
+                      <div key={key} className={`flex items-center gap-1.5 text-xs ${checks[key as keyof typeof checks] ? 'text-green-600' : 'text-muted-foreground'}`}>
+                        <div className={`w-1.5 h-1.5 rounded-full ${checks[key as keyof typeof checks] ? 'bg-green-600' : 'bg-muted-foreground/40'}`} />
+                        {label}
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
             </div>
             <div className="space-y-2">
               <Label htmlFor="confirmPassword">Confirm Password</Label>
-              <Input id="confirmPassword" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required />
+              <div className="relative">
+                <Input
+                  id="confirmPassword"
+                  type={showConfirm ? 'text' : 'password'}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  onMouseDown={() => setShowConfirm(true)}
+                  onMouseUp={() => setShowConfirm(false)}
+                  onMouseLeave={() => setShowConfirm(false)}
+                >
+                  {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+              {confirmPassword.length > 0 && (
+                <p className={`text-xs flex items-center gap-1.5 mt-1 ${password === confirmPassword ? 'text-green-600' : 'text-red-500'}`}>
+                  <span className={`inline-block w-1.5 h-1.5 rounded-full ${password === confirmPassword ? 'bg-green-600' : 'bg-red-500'}`} />
+                  {password === confirmPassword ? 'Passwords match' : 'Passwords do not match'}
+                </p>
+              )}
             </div>
             <div className="flex items-start space-x-2">
               <Checkbox id="terms" checked={agreedToTerms} onCheckedChange={(c) => setAgreedToTerms(c === true)} />
