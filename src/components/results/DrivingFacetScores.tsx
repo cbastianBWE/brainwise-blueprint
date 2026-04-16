@@ -56,6 +56,17 @@ export default function DrivingFacetScores({ assessmentId, additionalAssessmentI
         return;
       }
 
+      let allResponses = responses ?? [];
+      if (additionalAssessmentId) {
+        const { data: additionalResponses } = await supabase
+          .from("assessment_responses")
+          .select("response_value_numeric, is_reverse_scored, item_id")
+          .eq("assessment_id", additionalAssessmentId);
+        if (additionalResponses?.length) {
+          allResponses = [...allResponses, ...additionalResponses];
+        }
+      }
+
       // Get item details
       const itemIds = responses.map((r) => r.item_id);
       const { data: items } = await supabase
