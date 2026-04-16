@@ -1,10 +1,12 @@
 
-# Plan: Force page breaks after two PDF sections
+# Plan: Three PDF layout fixes
 
 Single file: `src/lib/generateResultsPdf.ts`
 
-1. **After Driving Facet Scores** — add `addFooter(); doc.addPage(); y = MARGIN_T;` immediately after the `renderFacetScoreTable("Suppressed Facets", ...)` call, inside the closing brace of the `drivingFacetScores` section.
+1. **Force page break before Driving Facet Insights** — Insert `addFooter(); doc.addPage(); y = MARGIN_T;` before `sectionHeading("Driving Facet Insights")`.
 
-2. **After PTP and Brain Overview** — append the same three lines after `y += overviewH + 6;`, and remove the now-redundant `if (y > MARGIN_T + 10)` page-break guard that currently precedes Dimension Highlights.
+2. **Force page break before Cross-Assessment Connections** — Same three lines before `sectionHeading("Cross-Assessment Connections")`.
+
+3. **Prevent orphaned subsection title in `renderFacetInsights`** — Change `checkPageBreak(12)` to `checkPageBreak(40)` so the "Elevated Facets" / "Suppressed Facets" subheading carries enough following content with it.
 
 No other changes.
