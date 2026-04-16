@@ -1,10 +1,16 @@
 
 
-# Plan: Add email query param pre-fill to SignUp.tsx useEffect
+# Plan: Append email param to signup URLs in CoachClients.tsx
 
-## Single file: `src/pages/SignUp.tsx`
+## Single file: `src/pages/coach/CoachClients.tsx`
 
-Replace the existing `useEffect` that reads `searchParams` (lines ~45–61) with the updated version that first checks for an `?email=` query parameter and pre-fills the email field, then continues with the existing coach token logic unchanged.
+### Change 1 — Line 309 (inside `handleOrderClientPays`)
+Replace `const signupUrl = \`\${window.location.origin}/signup\`;`
+with `const signupUrl = \`\${window.location.origin}/signup?email=\${encodeURIComponent(email)}\`;`
+
+### Change 2 — Line 405 (inside `handleRemind`)
+Replace `const signupUrl = \`\${window.location.origin}/signup\`;`
+with `const signupUrl = \`\${window.location.origin}/signup?email=\${encodeURIComponent(client.client_email)}\`;`
 
 No other files changed.
 
