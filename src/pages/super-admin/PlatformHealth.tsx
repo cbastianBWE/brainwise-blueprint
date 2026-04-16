@@ -41,6 +41,16 @@ export default function PlatformHealth() {
         }
       }
 
+      const certificationCounts: Record<string, { in_progress: number; certified: number }> = {};
+      if (certRes.data) {
+        for (const row of certRes.data) {
+          const type = row.certification_type || "unknown";
+          if (!certificationCounts[type]) certificationCounts[type] = { in_progress: 0, certified: 0 };
+          if (row.status === "certified") certificationCounts[type].certified++;
+          else if (row.status === "in_progress") certificationCounts[type].in_progress++;
+        }
+      }
+
       setStats({
         totalUsers: usersRes.count || 0,
         totalCompleted: completedRes.count || 0,
@@ -48,6 +58,7 @@ export default function PlatformHealth() {
         tierCounts,
         activePlatformVersion: pvRes.data?.version_string || "None",
         activeAiVersion: aiRes.data?.version_string || "None",
+        certificationCounts,
       });
       setLoading(false);
     };
