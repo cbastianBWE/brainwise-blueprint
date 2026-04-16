@@ -1,11 +1,11 @@
 
-# Plan: Broaden cross-assessment list to include all other completed assessments
+# Plan: Remove line clamp from facet description
 
-## Single file: `src/pages/MyResults.tsx`
+## Single file: `src/components/results/PTPNarrativeSections.tsx`
 
-Update the `otherAssessments` prop on `<PTPNarrativeSections />`:
+Change the facet description `<div>` to remove the `line-clamp-2` utility so the full description text is visible (no two-line truncation).
 
-- From: `otherAssessments={assessments.filter(a => !a.isPTP)}`
-- To: `otherAssessments={assessments.filter(a => a.result.id !== effectiveSelected?.result.id)}`
+- From: `<div className="text-xs text-muted-foreground mt-0.5 line-clamp-2">`
+- To: `<div className="text-xs text-muted-foreground mt-0.5">`
 
-This makes the cross-assessment chips show every other assessment the user has completed (including other PTP runs), excluding only the one currently being viewed. No other changes.
+No other changes.
