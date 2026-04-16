@@ -670,19 +670,6 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
                 <Button
                   variant="outline"
                   onClick={() =>
-                    toast({
-                      title: "Coming Soon",
-                      description:
-                        "AI chat about results will be available soon.",
-                    })
-                  }
-                >
-                  <MessageSquare className="mr-2 h-4 w-4" /> Ask AI About My
-                  Results
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() =>
                     navigate(
                       `/assessment?instrument=${selected.result.instrument_id}`
                     )
