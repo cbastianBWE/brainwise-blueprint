@@ -115,7 +115,7 @@ export default function DrivingFacetScores({ assessmentId, additionalAssessmentI
     };
 
     fetch();
-  }, [assessmentId]);
+  }, [assessmentId, additionalAssessmentId]);
 
   if (loading) {
     return (
