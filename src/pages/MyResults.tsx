@@ -691,8 +691,10 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
             <SelectContent>
               {assessments.map((a) => (
                 <SelectItem key={a.result.id} value={a.result.id}>
-                  {a.instrument_name} —{" "}
-                  {format(new Date(a.completed_at!), "MMM yyyy")}
+                  {a.isPTP && a.context_type
+                    ? `PTP ${a.context_type.charAt(0).toUpperCase() + a.context_type.slice(1)} — ${format(new Date(a.completed_at!), "MMM yyyy")}`
+                    : `${a.instrument_name} — ${format(new Date(a.completed_at!), "MMM yyyy")}`
+                  }
                 </SelectItem>
               ))}
             </SelectContent>
