@@ -1,11 +1,10 @@
 
-# Plan: Remove line clamp from facet description
+# Plan: Insert "PTP and Brain Overview" placeholder section
 
 ## Single file: `src/components/results/PTPNarrativeSections.tsx`
 
-Change the facet description `<div>` to remove the `line-clamp-2` utility so the full description text is visible (no two-line truncation).
+Insert a new static `<section>` immediately before the `{dimensionScores.length > 0 && (` Dimension highlights block.
 
-- From: `<div className="text-xs text-muted-foreground mt-0.5 line-clamp-2">`
-- To: `<div className="text-xs text-muted-foreground mt-0.5">`
+The new section is a pastel card (bg `#F9F7F1`, left border `#021F36`) with heading "PTP and Brain Overview" and placeholder copy noting that an intro to the PTP framework, neuroscientific basis, supporting resources, and video overview is coming soon.
 
-No other changes.
+No other code changes.
