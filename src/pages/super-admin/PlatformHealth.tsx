@@ -111,7 +111,42 @@ export default function PlatformHealth() {
                 <div>
                   <p className="text-2xl font-bold text-foreground">{count}</p>
                   <p className="text-xs text-muted-foreground capitalize">{tier} Tier Active</p>
-                </div>
+      </div>
+
+      <div>
+        <h2 className="text-lg font-semibold text-foreground mb-3">Coach Certifications</h2>
+        {Object.keys(stats.certificationCounts).length === 0 ? (
+          <Card>
+            <CardContent className="py-4">
+              <p className="text-sm text-muted-foreground">No coach certifications found.</p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {Object.entries(stats.certificationCounts).map(([type, counts]) => (
+              <Card key={type}>
+                <CardContent className="py-4 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <div className="rounded-lg bg-primary/10 p-2">
+                      <Award className="h-5 w-5 text-primary" />
+                    </div>
+                    <p className="text-sm font-medium text-foreground capitalize">
+                      {type.replace(/_/g, " ")}
+                    </p>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">In Progress</span>
+                    <span className="font-semibold text-foreground">{counts.in_progress}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Certified</span>
+                    <span className="font-semibold text-green-600">{counts.certified}</span>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
               </CardContent>
             </Card>
           ))
