@@ -667,6 +667,63 @@ export default function PTPNarrativeSections({
           </div>
         </section>
       )}
+
+      <section>
+        <button
+          onClick={() => setResponsesExpanded((prev) => !prev)}
+          className="w-full flex items-center justify-between p-4 rounded-lg border border-border hover:bg-muted/30 transition-colors text-left"
+        >
+          <h3 className="text-lg font-semibold">Your assessment responses</h3>
+          {responsesExpanded ? (
+            <ChevronUp className="w-4 h-4 text-muted-foreground shrink-0" />
+          ) : (
+            <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0" />
+          )}
+        </button>
+
+        {responsesExpanded && (
+          <div className="border border-border rounded-lg overflow-hidden mt-2">
+            <div className="px-4 py-2 bg-muted/30 border-b border-border">
+              <p className="text-xs text-muted-foreground">
+                {assessmentResponses.length} responses —{" "}
+                {ptpContextTab === "professional"
+                  ? "Professional context"
+                  : ptpContextTab === "personal"
+                    ? "Personal context"
+                    : "All contexts"}
+              </p>
+            </div>
+            {assessmentResponses.map((r, idx) => {
+              const color = PTP_DIMENSION_COLORS[r.dimensionId] ?? "#021F36";
+              return (
+                <div
+                  key={idx}
+                  className="flex items-start gap-3 px-4 py-3 border-b border-border last:border-b-0"
+                >
+                  <div
+                    className="w-1 shrink-0 self-stretch rounded-sm"
+                    style={{ backgroundColor: color, minHeight: "40px" }}
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-foreground">
+                      Q{r.itemNumber} — {r.facetName}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
+                      {r.itemText}
+                    </p>
+                  </div>
+                  <span
+                    className="px-2 py-1 rounded text-xs font-semibold text-white shrink-0 mt-0.5"
+                    style={{ backgroundColor: color }}
+                  >
+                    {r.score}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </section>
     </div>
   );
 }
