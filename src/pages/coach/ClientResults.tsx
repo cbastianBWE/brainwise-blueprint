@@ -1,4 +1,4 @@
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -339,6 +339,7 @@ function CoachResultsView({
   coachUserId: string;
   onBack: () => void;
 }) {
+  const navigate = useNavigate();
   const [permissionLevel, setPermissionLevel] = useState<'full_results' | 'score_summary' | null>(null);
   const [permLoading, setPermLoading] = useState(true);
 
@@ -389,9 +390,9 @@ function CoachResultsView({
         variant="ghost"
         size="sm"
         className="mb-4"
-        onClick={onBack}
+        onClick={() => navigate(-1)}
       >
-        <ArrowLeft className="h-4 w-4 mr-1" /> Back to assessments
+        <ArrowLeft className="h-4 w-4 mr-1" /> Back
       </Button>
       <MyResults
         isCoachView
