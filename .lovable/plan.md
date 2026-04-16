@@ -1,26 +1,14 @@
 
 
-# Plan: Add Coach Certifications section to PlatformHealth.tsx
+# Plan: Auto-detect coach-invited clients in Onboarding.tsx
 
-## Single file: `src/pages/super-admin/PlatformHealth.tsx`
+## Single file: `src/pages/Onboarding.tsx`
 
-### Change 1 — Add `Award` to lucide import (line 5)
-Add `Award` to the existing icon imports.
+### Change 1 — Add `useEffect` to React import (line 1)
+Change `import { useState } from "react"` to `import { useState, useEffect } from "react"`.
 
-### Change 2 — Add `certificationCounts` to Stats interface (line 13)
-Add: `certificationCounts: Record<string, { in_progress: number; certified: number }>;`
-
-### Change 3 — Add certification query to Promise.all (line 31)
-Add `supabase.from("coach_certifications").select("certification_type, status")` and add `certRes` to destructuring.
-
-### Change 4 — Process certification data (after line 40)
-Build `certificationCounts` object by iterating `certRes.data`, counting `in_progress` and `certified` statuses per certification type.
-
-### Change 5 — Add `certificationCounts` to setStats (line 46)
-Include the new field in the stats object.
-
-### Change 6 — Add Coach Certifications UI section (after line 112, the tier counts grid)
-New section with heading "Coach Certifications", showing cards per certification type with in-progress and certified counts, using the `Award` icon.
+### Change 2 — Add useEffect after state declarations (after line 20)
+Add a `useEffect` that checks `coach_clients` for the current user. If a matching row exists, automatically call `selectAccountType("individual")` to skip the onboarding choice and route directly to demographic consent.
 
 No other files changed.
 
