@@ -772,6 +772,11 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
             <div>
               <h2 className="text-xl font-semibold text-foreground">
                 Your {selected.instrument_name.replace(/\s*Profile$/i, '')} Profile
+                {showPtpTabs && ptpContextTab && (
+                  <span className="text-muted-foreground font-normal">
+                    {' '}— {ptpContextTab === 'professional' ? 'Professional' : ptpContextTab === 'personal' ? 'Personal' : 'Combined'}
+                  </span>
+                )}
               </h2>
               {displayName && (
                 <p className="text-muted-foreground">{displayName}</p>
@@ -827,7 +832,7 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
           </section>
 
           {/* Complete other half prompt — PTP only */}
-          {selected.isPTP && !hasPtpTabs && (selected.context_type === 'professional' || selected.context_type === 'personal') && (
+          {!isCoachView && selected.isPTP && !hasPtpTabs && (selected.context_type === 'professional' || selected.context_type === 'personal') && (
             <section>
               <Card className="border-primary/30 bg-primary/5">
                 <CardContent className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 py-4">
