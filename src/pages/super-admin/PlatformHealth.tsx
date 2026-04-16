@@ -21,7 +21,7 @@ export default function PlatformHealth() {
 
   useEffect(() => {
     const load = async () => {
-      const [usersRes, completedRes, monthRes, tiersRes, pvRes, aiRes] = await Promise.all([
+      const [usersRes, completedRes, monthRes, tiersRes, pvRes, aiRes, certRes] = await Promise.all([
         supabase.from("users").select("id", { count: "exact", head: true }),
         supabase.from("assessments").select("id", { count: "exact", head: true }).eq("status", "completed"),
         supabase.from("assessments").select("id", { count: "exact", head: true })
@@ -30,6 +30,7 @@ export default function PlatformHealth() {
         supabase.from("users").select("subscription_tier").eq("subscription_status", "active"),
         supabase.from("platform_versions").select("version_string").eq("is_active", true).limit(1).single(),
         supabase.from("ai_versions").select("version_string").eq("is_active", true).limit(1).single(),
+        supabase.from("coach_certifications").select("certification_type, status"),
       ]);
 
       const tierCounts: Record<string, number> = {};
