@@ -410,6 +410,19 @@ export function generateResultsPdf(data: PdfData, sections: PdfSections): void {
 
         const colW = (CONTENT_W - 4) / 2;
 
+        // Estimate total height of all impact rows for this facet
+        const selfItemsAll = [
+          ...f.interpretation.positive_self.map(t => t),
+          ...f.interpretation.negative_self.map(t => t),
+        ];
+        const othersItemsAll = [
+          ...f.interpretation.positive_others.map(t => t),
+          ...f.interpretation.negative_others.map(t => t),
+        ];
+        const maxRowsAll = Math.max(selfItemsAll.length, othersItemsAll.length);
+        const estimatedImpactH = 5 + maxRowsAll * 14;
+        checkPageBreak(estimatedImpactH);
+
         doc.setFontSize(7.5);
         doc.setFont("helvetica", "bold");
         doc.setTextColor(...NAVY);
