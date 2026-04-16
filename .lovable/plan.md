@@ -1,32 +1,26 @@
 
 
-# Plan: Add My Clients collapsible nav + update ClientResults back button
+# Plan: Add Coach Certifications section to PlatformHealth.tsx
 
-## File 1: `src/components/AppSidebar.tsx`
+## Single file: `src/pages/super-admin/PlatformHealth.tsx`
 
-### Change A — Add `isClientsOpen` variable (after line 110)
-Add: `const isClientsOpen = location.pathname.startsWith('/coach/clients') || location.pathname.startsWith('/coach/client-results');`
+### Change 1 — Add `Award` to lucide import (line 5)
+Add `Award` to the existing icon imports.
 
-### Change B — Remove Client Results from coachNav (line 47)
-Delete: `{ title: "Client Results", url: "/coach/client-results", icon: BarChart3 },`
+### Change 2 — Add `certificationCounts` to Stats interface (line 13)
+Add: `certificationCounts: Record<string, { in_progress: number; certified: number }>;`
 
-### Change C — Replace the "My Clients" nav item render with collapsible pattern
-In the `navItems.map` loop (lines 143–173), the "My Clients" item currently renders as a regular NavLink. We need to intercept it: when `item.title === "My Clients"`, render the collapsible pattern with a "Client Results" sub-item instead of the default NavLink. This mirrors the existing Settings collapsible block.
+### Change 3 — Add certification query to Promise.all (line 31)
+Add `supabase.from("coach_certifications").select("certification_type, status")` and add `certRes` to destructuring.
 
-The collapsible block includes:
-- A NavLink to `/coach/clients` with chevron toggle
-- When `isClientsOpen && !collapsed`, a sub-menu with "Client Results" linking to `/coach/client-results`
+### Change 4 — Process certification data (after line 40)
+Build `certificationCounts` object by iterating `certRes.data`, counting `in_progress` and `certified` statuses per certification type.
 
-## File 2: `src/pages/coach/ClientResults.tsx`
+### Change 5 — Add `certificationCounts` to setStats (line 46)
+Include the new field in the stats object.
 
-### Change D — Add `useNavigate` to imports (line 1)
-Change `import { useSearchParams } from "react-router-dom"` to `import { useSearchParams, useNavigate } from "react-router-dom"`
-
-### Change E — Add navigate inside CoachResultsView (after line 341)
-Add: `const navigate = useNavigate();`
-
-### Change F — Replace back button (lines 388–395)
-Replace `onClick={onBack}` and "Back to assessments" with `onClick={() => navigate(-1)}` and "Back".
+### Change 6 — Add Coach Certifications UI section (after line 112, the tier counts grid)
+New section with heading "Coach Certifications", showing cards per certification type with in-progress and certified counts, using the `Award` icon.
 
 No other files changed.
 
