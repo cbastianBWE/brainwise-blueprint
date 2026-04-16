@@ -441,7 +441,7 @@ export default function PTPNarrativeSections({
               />
               <div className="flex-1 min-w-0">
                 <div className="font-medium text-sm">{facetName}</div>
-                <div className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
+                <div className="text-xs text-muted-foreground mt-0.5">
                   {facet.item_text}
                 </div>
               </div>
