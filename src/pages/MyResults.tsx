@@ -485,6 +485,64 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
     generateResultsPdf(pdfData, sections);
   }, [selected, sortedDimensions, dimensionScores, dimensionNameMap, profile, recommendations, isSliderInstrument, highestDimension, lowestDimension]);
 
+  const sendChatMessage = useCallback(async () => {
+    if (!chatInput.trim() || !selected || chatLoading) return;
+    const userMessage = chatInput.trim();
+    setChatInput('');
+    const newUserMsg = { role: 'user' as const, content: userMessage, timestamp: new Date() };
+    setChatMessages(prev => [...prev, newUserMsg]);
+    setChatLoading(true);
+
+    let sessionId = chatSessionId;
+    if (!sessionId) {
+      const { data: session } = await supabase.from('chat_sessions').insert({
+        user_id: user!.id,
+        assessment_result_ids: [selected.result.id],
+        messages: [],
+        started_at: new Date().toISOString(),
+      }).select('id').single();
+      if (session) {
+        sessionId = session.id;
+        setChatSessionId(session.id);
+      }
+    }
+
+    try {
+      const { data: { session: authSession } } = await supabase.auth.getSession();
+      const response = await supabase.functions.invoke('ai-chat', {
+        body: {
+          message: userMessage,
+          conversation_history: chatMessages.map(m => ({ role: m.role, content: m.content })),
+          assessment_result_ids: [selected.result.id],
+          subscription_tier: profile?.subscription_tier ?? 'base',
+        },
+        headers: { Authorization: `Bearer ${authSession?.access_token}` },
+      });
+
+      if (response.error || response.data?.limit_reached) {
+        const errMsg = response.data?.limit_reached
+          ? "You've reached your monthly AI message limit."
+          : "Failed to get a response. Please try again.";
+        setChatMessages(prev => [...prev, { role: 'assistant', content: errMsg, timestamp: new Date() }]);
+      } else {
+        const assistantMsg = { role: 'assistant' as const, content: response.data.response, timestamp: new Date() };
+        setChatMessages(prev => {
+          const updated = [...prev, assistantMsg];
+          if (sessionId) {
+            supabase.from('chat_sessions').update({
+              messages: updated.map(m => ({ role: m.role, content: m.content, timestamp: m.timestamp.toISOString() })),
+              message_count: updated.length,
+            }).eq('id', sessionId);
+          }
+          return updated;
+        });
+      }
+    } catch {
+      setChatMessages(prev => [...prev, { role: 'assistant', content: 'Something went wrong. Please try again.', timestamp: new Date() }]);
+    }
+    setChatLoading(false);
+  }, [chatInput, chatMessages, chatLoading, selected, chatSessionId, user, profile]);
+
   // Chart data for bar chart
   const chartData = useMemo(() => {
     if (!isSliderInstrument && !(!isAIRSA && !isSliderInstrument)) return [];
