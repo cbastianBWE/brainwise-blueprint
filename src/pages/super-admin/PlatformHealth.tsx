@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import {
-  Users, ClipboardCheck, Calendar, CreditCard, GitBranch, Brain,
+  Users, ClipboardCheck, Calendar, CreditCard, GitBranch, Brain, Award,
 } from "lucide-react";
 
 interface Stats {
