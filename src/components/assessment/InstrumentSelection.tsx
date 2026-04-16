@@ -189,7 +189,14 @@ export default function InstrumentSelection({ onSelect }: Props) {
   };
 
   const getSelfPayTotal = () => {
-    return selfPayCoachInstrumentIds.size * 29.99;
+    const perAssessmentPlan = subscriptionPlans.find(p => p.tier === "individual");
+    const price = perAssessmentPlan?.price_usd ?? 29.99;
+    return selfPayCoachInstrumentIds.size * price;
+  };
+
+  const getPerAssessmentPrice = () => {
+    const perAssessmentPlan = subscriptionPlans.find(p => p.tier === "individual");
+    return perAssessmentPlan?.price_usd ?? 29.99;
   };
 
   const handleSelfPayPerAssessment = async () => {
@@ -325,34 +332,50 @@ export default function InstrumentSelection({ onSelect }: Props) {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 mt-2">
-            {!hasPremiumInvitedInstrument() && subscriptionPlans.filter(p => p.tier === "base" && p.billing_period === "monthly").map(plan => (
-              <Card key={plan.stripe_price_id}>
-                <CardContent className="pt-4 space-y-2">
-                  <div className="flex items-center justify-between">
+            {!hasPremiumInvitedInstrument() && (
+              <Card>
+                <CardContent className="pt-4 space-y-3">
+                  <div>
                     <p className="font-semibold">Base Plan</p>
-                    <p className="text-sm font-medium">${plan.price_usd}/mo</p>
+                    <p className="text-sm text-muted-foreground">Includes PTP + unlimited retakes.</p>
                   </div>
-                  <p className="text-sm text-muted-foreground">Includes PTP + unlimited retakes. Billed monthly.</p>
-                  <Button className="w-full" onClick={() => handleSubscribe(plan.stripe_price_id)} disabled={selfPayDialogLoading}>
-                    Subscribe to Base
-                  </Button>
+                  <div className="grid grid-cols-2 gap-2">
+                    {subscriptionPlans.filter(p => p.tier === "base").map(plan => (
+                      <Button
+                        key={plan.stripe_price_id}
+                        className="w-full flex flex-col h-auto py-2"
+                        onClick={() => handleSubscribe(plan.stripe_price_id)}
+                        disabled={selfPayDialogLoading}
+                      >
+                        <span className="text-xs font-normal capitalize">{plan.billing_period}</span>
+                        <span className="font-bold">${plan.price_usd}{plan.billing_period === "monthly" ? "/mo" : "/yr"}</span>
+                      </Button>
+                    ))}
+                  </div>
                 </CardContent>
               </Card>
-            ))}
-            {subscriptionPlans.filter(p => p.tier === "premium" && p.billing_period === "monthly").map(plan => (
-              <Card key={plan.stripe_price_id}>
-                <CardContent className="pt-4 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <p className="font-semibold">Premium Plan</p>
-                    <p className="text-sm font-medium">${plan.price_usd}/mo</p>
-                  </div>
-                  <p className="text-sm text-muted-foreground">Includes all 4 instruments + unlimited retakes + AI chat. Billed monthly.</p>
-                  <Button className="w-full" onClick={() => handleSubscribe(plan.stripe_price_id)} disabled={selfPayDialogLoading}>
-                    Subscribe to Premium
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
+            )}
+            <Card>
+              <CardContent className="pt-4 space-y-3">
+                <div>
+                  <p className="font-semibold">Premium Plan</p>
+                  <p className="text-sm text-muted-foreground">Includes all 4 instruments + unlimited retakes + AI chat.</p>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  {subscriptionPlans.filter(p => p.tier === "premium").map(plan => (
+                    <Button
+                      key={plan.stripe_price_id}
+                      className="w-full flex flex-col h-auto py-2"
+                      onClick={() => handleSubscribe(plan.stripe_price_id)}
+                      disabled={selfPayDialogLoading}
+                    >
+                      <span className="text-xs font-normal capitalize">{plan.billing_period}</span>
+                      <span className="font-bold">${plan.price_usd}{plan.billing_period === "monthly" ? "/mo" : "/yr"}</span>
+                    </Button>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
             <Card>
               <CardContent className="pt-4 space-y-2">
                 <div className="flex items-center justify-between">
@@ -360,7 +383,7 @@ export default function InstrumentSelection({ onSelect }: Props) {
                   <p className="text-sm font-medium">${getSelfPayTotal().toFixed(2)}</p>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  One-time payment for the {selfPayCoachInstrumentIds.size} assessment{selfPayCoachInstrumentIds.size !== 1 ? "s" : ""} your coach ordered. No subscription required.
+                  One-time payment of ${getPerAssessmentPrice().toFixed(2)} × {selfPayCoachInstrumentIds.size} assessment{selfPayCoachInstrumentIds.size !== 1 ? "s" : ""} your coach ordered. No subscription required.
                 </p>
                 <Button className="w-full" variant="outline" onClick={handleSelfPayPerAssessment} disabled={selfPayDialogLoading}>
                   {selfPayDialogLoading ? "Processing..." : `Pay $${getSelfPayTotal().toFixed(2)} Once`}
