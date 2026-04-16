@@ -16,11 +16,11 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 
 const PTP_DIMENSION_COLORS: Record<string, string> = {
-  "DIM-PTP-01": "#1F4E79",
-  "DIM-PTP-02": "#2E75B6",
-  "DIM-PTP-03": "#4BACC6",
-  "DIM-PTP-04": "#70AD47",
-  "DIM-PTP-05": "#ED7D31",
+  "DIM-PTP-01": "#021F36",
+  "DIM-PTP-02": "#006D77",
+  "DIM-PTP-03": "#F5741A",
+  "DIM-PTP-04": "#3C096C",
+  "DIM-PTP-05": "#FFB703",
 };
 
 interface FacetItem {
