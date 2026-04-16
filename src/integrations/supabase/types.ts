@@ -677,6 +677,35 @@ export type Database = {
           },
         ]
       }
+      facet_interpretations: {
+        Row: {
+          assessment_result_id: string
+          facet_data: Json
+          generated_at: string | null
+          id: string
+        }
+        Insert: {
+          assessment_result_id: string
+          facet_data: Json
+          generated_at?: string | null
+          id?: string
+        }
+        Update: {
+          assessment_result_id?: string
+          facet_data?: Json
+          generated_at?: string | null
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "facet_interpretations_assessment_result_id_fkey"
+            columns: ["assessment_result_id"]
+            isOneToOne: true
+            referencedRelation: "assessment_results"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       instruments: {
         Row: {
           created_at: string
