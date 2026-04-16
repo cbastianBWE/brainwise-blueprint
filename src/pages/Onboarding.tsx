@@ -15,6 +15,7 @@ const Onboarding = () => {
   const [showInviteCode, setShowInviteCode] = useState(false);
   const [inviteCode, setInviteCode] = useState("");
   const [loading, setLoading] = useState(false);
+  const [checkingCoach, setCheckingCoach] = useState(true);
 
   useEffect(() => {
     if (!user) return;
@@ -26,6 +27,8 @@ const Onboarding = () => {
         .limit(1);
       if (data && data.length > 0) {
         await selectAccountType("individual");
+      } else {
+        setCheckingCoach(false);
       }
     })();
   }, [user]);
@@ -72,6 +75,14 @@ const Onboarding = () => {
     }
     await selectAccountType("corporate_employee");
   };
+
+  if (checkingCoach) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+      </div>
+    );
+  }
 
   if (showInviteCode) {
     return (
