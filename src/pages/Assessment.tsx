@@ -111,7 +111,7 @@ function PTPContextSelection({
             <CardContent className="p-6">
               <h3 className="text-lg font-semibold text-foreground mb-1">Personal / Social</h3>
               <p className="text-sm text-muted-foreground">
-                Assess your threat responses in personal and social contexts.
+                Assess your threat and reward responses in personal and social contexts.
               </p>
             </CardContent>
           </Card>
