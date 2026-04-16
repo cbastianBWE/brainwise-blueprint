@@ -1,16 +1,20 @@
 
 
-# Plan: Two Small Fixes in MyResults.tsx
+# Plan: Fix Message Count + Markdown Rendering in MyResults.tsx
 
-## Fix 1 — Move session update outside setChatMessages updater
+## Single file: `src/pages/MyResults.tsx`
 
-**Lines 498–538**: Two changes:
-- Add `message_count: 0` to the `chat_sessions.insert` call (line 498–503)
-- Replace the `else` block (lines 528–538) to move the DB update outside the state updater
+### Fix 1 — Use ref for reliable message tracking (lines 487–543)
 
-## Fix 2 — Markdown rendering in chat bubble
+1. Add `chatMessagesRef` declaration before `sendChatMessage` (line 487)
+2. Replace the entire `sendChatMessage` useCallback (lines 488–543) with the ref-based version that:
+   - Tracks messages via `chatMessagesRef.current` instead of stale closure `chatMessages`
+   - Removes `chatMessages` from the dependency array
+   - Correctly computes `message_count` from the ref
 
-**Line 960**: Replace `{msg.content}` with `{renderInlineMarkdown(msg.content)}`
+### Fix 2 — Enhanced `renderInlineMarkdown` (lines 1187–1196)
+
+Replace with version that handles `# headings`, `*italic*`, and `` `code` `` in addition to `**bold**`.
 
 No other files changed.
 
