@@ -683,18 +683,21 @@ export type Database = {
           facet_data: Json
           generated_at: string | null
           id: string
+          section_type: string | null
         }
         Insert: {
           assessment_result_id: string
           facet_data: Json
           generated_at?: string | null
           id?: string
+          section_type?: string | null
         }
         Update: {
           assessment_result_id?: string
           facet_data?: Json
           generated_at?: string | null
           id?: string
+          section_type?: string | null
         }
         Relationships: [
           {
