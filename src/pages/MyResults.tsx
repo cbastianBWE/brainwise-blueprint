@@ -94,11 +94,27 @@ const BAND_COLORS: Record<string, string> = {
 };
 
 const PTP_DIMENSION_COLORS: Record<string, string> = {
-  "DIM-PTP-01": "#1F4E79",
-  "DIM-PTP-02": "#2E75B6",
-  "DIM-PTP-03": "#4BACC6",
-  "DIM-PTP-04": "#70AD47",
-  "DIM-PTP-05": "#ED7D31",
+  "DIM-PTP-01": "#021F36",
+  "DIM-PTP-02": "#006D77",
+  "DIM-PTP-03": "#F5741A",
+  "DIM-PTP-04": "#2D6A4F",
+  "DIM-PTP-05": "#FFB703",
+};
+
+const PTP_DIMENSION_PASTEL: Record<string, string> = {
+  "DIM-PTP-01": "#E8EDF1",
+  "DIM-PTP-02": "#E6F2F3",
+  "DIM-PTP-03": "#FEF0E7",
+  "DIM-PTP-04": "#EAF2EE",
+  "DIM-PTP-05": "#FFF8E6",
+};
+
+const PTP_DIMENSION_NAMES: Record<string, string> = {
+  "DIM-PTP-01": "Protection",
+  "DIM-PTP-02": "Participation",
+  "DIM-PTP-03": "Prediction",
+  "DIM-PTP-04": "Purpose",
+  "DIM-PTP-05": "Pleasure",
 };
 
 const READINESS_COLORS: Record<string, { bg: string; text: string; border: string }> = {
@@ -580,10 +596,7 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
         const mean = vals.reduce((a, b) => a + b, 0) / vals.length;
         const stdDev = Math.sqrt(vals.reduce((sum, v) => sum + (v - mean) ** 2, 0) / vals.length);
 
-        const PTP_DIM_COLORS: Record<string, string> = {
-          "DIM-PTP-01": "#1F4E79", "DIM-PTP-02": "#2E75B6", "DIM-PTP-03": "#4BACC6",
-          "DIM-PTP-04": "#70AD47", "DIM-PTP-05": "#ED7D31",
-        };
+        const PTP_DIM_COLORS = PTP_DIMENSION_COLORS;
 
         elevatedFacets = scored
           .filter((s) => s.value > mean + stdDev)
@@ -935,6 +948,11 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
               <CardContent>
                 {isAIRSA ? (
                   <AIRSACards dimensions={dimensionScores} />
+                ) : effectiveSelected?.isPTP ? (
+                  <PTPDomainCards
+                    dimensions={dimensionScores}
+                    dimensionNameMap={dimensionNameMap}
+                  />
                 ) : (
                   <ScrollArea className="w-full">
                     <div
@@ -1474,6 +1492,57 @@ function renderInlineMarkdown(text: string): React.ReactNode {
     }
     return part;
   });
+}
+
+function PTPDomainCards({
+  dimensions,
+  dimensionNameMap,
+}: {
+  dimensions: [string, DimensionScore][];
+  dimensionNameMap: Map<string, string>;
+}) {
+  const getBand = (score: number) => {
+    if (score >= 70) return "High";
+    if (score >= 40) return "Moderate";
+    return "Low";
+  };
+
+  return (
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+      {dimensions.map(([dimId, score]) => {
+        const mean = Math.round(score.mean ?? score.level_mean ?? 0);
+        const color = PTP_DIMENSION_COLORS[dimId] ?? "#021F36";
+        const pastel = PTP_DIMENSION_PASTEL[dimId] ?? "#F9F7F1";
+        const name = dimensionNameMap.get(dimId) ?? PTP_DIMENSION_NAMES[dimId] ?? formatDimensionName(dimId);
+        const band = getBand(mean);
+        return (
+          <div
+            key={dimId}
+            className="rounded-xl p-4 flex flex-col items-center text-center space-y-2 border"
+            style={{ backgroundColor: pastel, borderColor: color + "40" }}
+          >
+            <div
+              className="w-3 h-3 rounded-full"
+              style={{ backgroundColor: color }}
+            />
+            <p className="text-sm font-semibold text-foreground leading-tight">{name}</p>
+            <p
+              className="text-3xl font-bold"
+              style={{ color }}
+            >
+              {mean}
+            </p>
+            <span
+              className="text-xs font-medium px-2 py-0.5 rounded-full"
+              style={{ backgroundColor: color + "20", color }}
+            >
+              {band}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
 }
 
 function formatDimensionName(id: string): string {
