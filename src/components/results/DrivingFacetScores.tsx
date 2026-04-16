@@ -68,7 +68,7 @@ export default function DrivingFacetScores({ assessmentId, additionalAssessmentI
       }
 
       // Get item details
-      const itemIds = responses.map((r) => r.item_id);
+      const itemIds = allResponses.map((r) => r.item_id);
       const { data: items } = await supabase
         .from("items")
         .select("item_id, item_text, dimension_id")
@@ -79,7 +79,7 @@ export default function DrivingFacetScores({ assessmentId, additionalAssessmentI
       );
 
       // Build scored values with reverse scoring applied
-      const scoredItems = responses.map((r) => {
+      const scoredItems = allResponses.map((r) => {
         const item = itemMap.get(r.item_id);
         const raw = Number(r.response_value_numeric);
         const value = r.is_reverse_scored ? 100 - raw : raw;
