@@ -194,6 +194,71 @@ export default function PTPNarrativeSections({
   const [loadingFacets, setLoadingFacets] = useState(true);
   const [loadingInterpretations, setLoadingInterpretations] = useState(false);
   const [expandedFacets, setExpandedFacets] = useState<Set<string>>(new Set());
+  const [narrativeSections, setNarrativeSections] = useState<{
+    profile_overview?: string;
+    dimension_highlights?: Record<string, string>;
+    cross_assessment?: string;
+  } | null>(null);
+  const [loadingNarrativeSections, setLoadingNarrativeSections] = useState(false);
+
+  useEffect(() => {
+    const fetchNarrativeSections = async () => {
+      if (!ptpContextTab) return;
+
+      setLoadingNarrativeSections(true);
+      setNarrativeSections(null);
+
+      const { data: existing } = await supabase
+        .from("facet_interpretations")
+        .select("facet_data")
+        .eq("assessment_result_id", assessmentResultId)
+        .eq("section_type", `narrative_${ptpContextTab}`)
+        .single();
+
+      if (existing?.facet_data) {
+        setNarrativeSections(existing.facet_data as any);
+        setLoadingNarrativeSections(false);
+        return;
+      }
+
+      const dimensionScoresObj = Object.fromEntries(dimensionScores);
+      const otherAssessmentsData = otherAssessments.map((a) => ({
+        instrument_name: a.instrument_name,
+        completed_at: a.completed_at,
+      }));
+
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const { error } = await supabase.functions.invoke("generate-facet-interpretations", {
+        body: {
+          assessment_result_id: assessmentResultId,
+          facets: [],
+          context_tab: ptpContextTab,
+          dimension_scores: dimensionScoresObj,
+          other_assessments: otherAssessmentsData,
+        },
+        headers: { Authorization: `Bearer ${session?.access_token}` },
+      });
+
+      if (!error) {
+        const { data: newNarrative } = await supabase
+          .from("facet_interpretations")
+          .select("facet_data")
+          .eq("assessment_result_id", assessmentResultId)
+          .eq("section_type", `narrative_${ptpContextTab}`)
+          .single();
+
+        if (newNarrative?.facet_data) {
+          setNarrativeSections(newNarrative.facet_data as any);
+        }
+      }
+
+      setLoadingNarrativeSections(false);
+    };
+
+    fetchNarrativeSections();
+  }, [assessmentResultId, ptpContextTab, dimensionScores, otherAssessments]);
 
   useEffect(() => {
     const fetchFacets = async () => {
@@ -262,6 +327,7 @@ export default function PTPNarrativeSections({
           .from("facet_interpretations")
           .select("facet_data")
           .eq("assessment_result_id", assessmentResultId)
+          .eq("section_type", "facet_insights")
           .single();
 
         if (existing?.facet_data) {
@@ -443,39 +509,52 @@ export default function PTPNarrativeSections({
 
   return (
     <div className="space-y-8">
-      {profileOverviewText && (
-        <section>
-          <h3 className="text-lg font-semibold mb-3">Profile overview</h3>
+      <section>
+        <h3 className="text-lg font-semibold mb-3">Profile overview</h3>
+        {loadingNarrativeSections ? (
+          <p className="text-sm text-muted-foreground">Generating profile overview...</p>
+        ) : narrativeSections?.profile_overview ? (
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            {narrativeSections.profile_overview}
+          </p>
+        ) : profileOverviewText ? (
           <p className="text-sm text-muted-foreground leading-relaxed">{profileOverviewText}</p>
-        </section>
-      )}
+        ) : null}
+      </section>
 
       {dimensionScores.length > 0 && (
         <section>
           <h3 className="text-lg font-semibold mb-3">Dimension highlights</h3>
-          <div className="space-y-3">
-            {sortedDims.map(([dimId, score]) => {
-              const color = PTP_DIMENSION_COLORS[dimId] ?? "#021F36";
-              const pastel = PTP_DIMENSION_PASTEL[dimId] ?? "#F9F7F1";
-              const name = dimensionNameMap.get(dimId) ?? dimId;
-              const mean = Math.round(score.mean ?? 0);
-              const descriptor = getDimDescriptor(dimId, mean);
-              return (
-                <div
-                  key={dimId}
-                  className="rounded-lg p-4 border-l-4"
-                  style={{ backgroundColor: pastel, borderLeftColor: color }}
-                >
-                  <h4 className="font-semibold text-sm mb-1">
-                    {name} — {mean}
-                  </h4>
-                  {descriptor && (
-                    <p className="text-sm text-muted-foreground leading-relaxed">{descriptor}</p>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+          {loadingNarrativeSections ? (
+            <p className="text-sm text-muted-foreground">Generating dimension highlights...</p>
+          ) : (
+            <div className="space-y-3">
+              {sortedDims.map(([dimId, score]) => {
+                const color = PTP_DIMENSION_COLORS[dimId] ?? "#021F36";
+                const pastel = PTP_DIMENSION_PASTEL[dimId] ?? "#F9F7F1";
+                const name = dimensionNameMap.get(dimId) ?? dimId;
+                const mean = Math.round(score.mean ?? 0);
+                const aiDescription = narrativeSections?.dimension_highlights?.[dimId];
+                const fallbackDescription = getDimDescriptor(dimId, mean);
+                return (
+                  <div
+                    key={dimId}
+                    className="rounded-lg p-4 border-l-4"
+                    style={{ backgroundColor: pastel, borderLeftColor: color }}
+                  >
+                    <h4 className="font-semibold text-sm mb-1">
+                      {name} — {mean}
+                    </h4>
+                    {(aiDescription || fallbackDescription) && (
+                      <p className="text-sm text-muted-foreground leading-relaxed">
+                        {aiDescription || fallbackDescription}
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </section>
       )}
 
@@ -496,12 +575,20 @@ export default function PTPNarrativeSections({
       {otherAssessments.length > 0 && (
         <section>
           <h3 className="text-lg font-semibold mb-3">Cross-assessment connections</h3>
-          <p className="text-sm text-muted-foreground leading-relaxed mb-3">
-            You have completed {otherAssessments.length} other assessment
-            {otherAssessments.length > 1 ? "s" : ""} alongside your PTP. Patterns across these
-            instruments can reveal deeper insights into how your threat sensitivities show up in
-            different areas of your life.
-          </p>
+          {loadingNarrativeSections ? (
+            <p className="text-sm text-muted-foreground">Generating cross-assessment analysis...</p>
+          ) : narrativeSections?.cross_assessment ? (
+            <p className="text-sm text-muted-foreground leading-relaxed mb-3">
+              {narrativeSections.cross_assessment}
+            </p>
+          ) : (
+            <p className="text-sm text-muted-foreground leading-relaxed mb-3">
+              You have completed {otherAssessments.length} other assessment
+              {otherAssessments.length > 1 ? "s" : ""} alongside your PTP. Patterns across these
+              instruments can reveal deeper insights into how your threat sensitivities show up in
+              different areas of your life.
+            </p>
+          )}
           <div className="flex flex-wrap gap-2">
             {otherAssessments.map((a) => (
               <span
