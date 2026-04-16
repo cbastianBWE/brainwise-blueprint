@@ -325,7 +325,7 @@ export function generateResultsPdf(data: PdfData, sections: PdfSections): void {
   // ── DIMENSION HIGHLIGHTS ──
   if (sections.dimensionHighlights && data.narrativeSections?.dimension_highlights) {
     // Force dimension highlights to start on a new page if less than 80mm remain
-    if (y > PAGE_H - MARGIN_B - 80) {
+    if (y > MARGIN_T + 10) {
       addFooter();
       doc.addPage();
       y = MARGIN_T;
