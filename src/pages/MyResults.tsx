@@ -28,7 +28,7 @@ import {
   Cell,
   LabelList,
 } from "recharts";
-import { FileText, MessageSquare, RefreshCw, ArrowRight, AlertTriangle } from "lucide-react";
+import { FileText, MessageSquare, RefreshCw, ArrowRight, AlertTriangle, Brain, X } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
