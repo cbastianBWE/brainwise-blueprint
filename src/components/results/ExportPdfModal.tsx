@@ -14,40 +14,44 @@ import { Download, Loader2 } from "lucide-react";
 
 export interface PdfSections {
   profileOverview: boolean;
-  aiNarrative: boolean;
   drivingFacetScores: boolean;
+  profileOverviewNarrative: boolean;
+  ptpBrainOverview: boolean;
+  dimensionHighlights: boolean;
   drivingFacetInsights: boolean;
-  crossAssessmentRecs: boolean;
+  crossAssessmentConnections: boolean;
+  assessmentResponses: boolean;
 }
 
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onExport: (sections: PdfSections) => Promise<void>;
-  hasNarrative: boolean;
-  hasFacets: boolean;
-  hasRecommendations: boolean;
 }
 
-const SECTION_OPTIONS: { key: keyof PdfSections; label: string; needsCheck: keyof Props | null }[] = [
-  { key: "profileOverview", label: "Profile Overview (dimension scores & stat cards)", needsCheck: null },
-  { key: "aiNarrative", label: "AI Narrative (full Profile Interpretation text)", needsCheck: "hasNarrative" },
-  { key: "drivingFacetScores", label: "Driving Facet Scores (elevated & suppressed facets)", needsCheck: "hasFacets" },
-  { key: "drivingFacetInsights", label: "Driving Facet Insights (✅/❌ behavioral impact analysis)", needsCheck: "hasNarrative" },
-  { key: "crossAssessmentRecs", label: "Cross-Assessment Recommendations", needsCheck: "hasRecommendations" },
+const SECTION_OPTIONS: { key: keyof PdfSections; label: string }[] = [
+  { key: "profileOverview", label: "Profile Overview (stat cards + dimension score cards)" },
+  { key: "drivingFacetScores", label: "Driving Facet Scores (elevated & suppressed bar charts)" },
+  { key: "profileOverviewNarrative", label: "Profile Overview Narrative (AI-generated profile summary)" },
+  { key: "ptpBrainOverview", label: "PTP and Brain Overview (framework introduction)" },
+  { key: "dimensionHighlights", label: "Dimension Highlights (AI-generated dimension cards)" },
+  { key: "drivingFacetInsights", label: "Driving Facet Insights (elevated & suppressed behavioral impacts)" },
+  { key: "crossAssessmentConnections", label: "Cross-Assessment Connections (AI-generated analysis)" },
+  { key: "assessmentResponses", label: "Assessment Responses (all questions and scores)" },
 ];
 
-export default function ExportPdfModal({ open, onOpenChange, onExport, hasNarrative, hasFacets, hasRecommendations }: Props) {
+export default function ExportPdfModal({ open, onOpenChange, onExport }: Props) {
   const [sections, setSections] = useState<PdfSections>({
     profileOverview: true,
-    aiNarrative: true,
     drivingFacetScores: true,
+    profileOverviewNarrative: true,
+    ptpBrainOverview: true,
+    dimensionHighlights: true,
     drivingFacetInsights: true,
-    crossAssessmentRecs: true,
+    crossAssessmentConnections: true,
+    assessmentResponses: true,
   });
   const [exporting, setExporting] = useState(false);
-
-  const checkProps = { hasNarrative, hasFacets, hasRecommendations } as Record<string, boolean>;
 
   const toggle = (key: keyof PdfSections) => {
     setSections((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -73,26 +77,18 @@ export default function ExportPdfModal({ open, onOpenChange, onExport, hasNarrat
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">
-          {SECTION_OPTIONS.map((opt) => {
-            const available = opt.needsCheck ? checkProps[opt.needsCheck] !== false : true;
-            return (
-              <div key={opt.key} className="flex items-center space-x-3">
-                <Checkbox
-                  id={opt.key}
-                  checked={sections[opt.key] && available}
-                  disabled={!available}
-                  onCheckedChange={() => toggle(opt.key)}
-                />
-                <Label
-                  htmlFor={opt.key}
-                  className={`text-sm leading-tight ${!available ? "text-muted-foreground/50" : "text-foreground"}`}
-                >
-                  {opt.label}
-                  {!available && " (not available)"}
-                </Label>
-              </div>
-            );
-          })}
+          {SECTION_OPTIONS.map((opt) => (
+            <div key={opt.key} className="flex items-center space-x-3">
+              <Checkbox
+                id={opt.key}
+                checked={sections[opt.key]}
+                onCheckedChange={() => toggle(opt.key)}
+              />
+              <Label htmlFor={opt.key} className="text-sm leading-tight text-foreground">
+                {opt.label}
+              </Label>
+            </div>
+          ))}
         </div>
         <DialogFooter>
           <Button onClick={handleExport} disabled={exporting}>
