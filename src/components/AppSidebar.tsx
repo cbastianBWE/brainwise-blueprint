@@ -44,7 +44,7 @@ const coachNav: NavItem[] = [
   { title: "My Assessments", url: "/assessment", icon: ClipboardList },
   { title: "My Results", url: "/my-results", icon: BarChart3 },
   { title: "My Clients", url: "/coach/clients", icon: Users },
-  { title: "Client Results", url: "/coach/client-results", icon: BarChart3 },
+  
   { title: "Orders & Invoices", url: "/coach/invoices", icon: Receipt },
   { title: "AI Chat", url: "/ai-chat", icon: MessageSquare },
   { title: "Chat History", url: "/ai-chat/history", icon: History },
@@ -108,6 +108,7 @@ export function AppSidebar() {
 
   const navItems = getNavItems(profile?.account_type);
   const isSettingsOpen = location.pathname.startsWith('/settings');
+  const isClientsOpen = location.pathname.startsWith('/coach/clients') || location.pathname.startsWith('/coach/client-results');
   const settingsSubItems: { title: string; url: string; icon: React.ElementType; disabled?: boolean; badge?: string }[] = [
     { title: 'General Settings', url: '/settings', icon: Settings },
     { title: 'Privacy & Permissions', url: '/settings/privacy', icon: Shield },
@@ -140,37 +141,80 @@ export function AppSidebar() {
           <SidebarGroupLabel>Navigation</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {navItems.map((item) => (
-                <SidebarMenuItem key={item.title + item.url}>
-                  <SidebarMenuButton asChild disabled={item.disabled}>
-                    {item.disabled ? (
-                      <span className="flex items-center gap-2 opacity-50 cursor-not-allowed px-2 py-1.5">
-                        <item.icon className="h-4 w-4 shrink-0" />
-                        {!collapsed && (
-                          <>
-                            <span>{item.title}</span>
-                            {item.badge && (
-                              <span className="ml-auto text-[10px] bg-muted text-muted-foreground rounded px-1.5 py-0.5">
-                                {item.badge}
-                              </span>
-                            )}
-                          </>
-                        )}
-                      </span>
-                    ) : (
-                      <NavLink
-                        to={item.url}
-                        end
-                        className="hover:bg-sidebar-accent"
-                        activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                      >
-                        <item.icon className="h-4 w-4 shrink-0" />
-                        {!collapsed && <span>{item.title}</span>}
-                      </NavLink>
-                    )}
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              {navItems.map((item) => {
+                if (item.title === "My Clients") {
+                  return (
+                    <SidebarMenuItem key="my-clients">
+                      <SidebarMenuButton asChild>
+                        <NavLink
+                          to="/coach/clients"
+                          className="hover:bg-sidebar-accent"
+                          activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                        >
+                          <Users className="h-4 w-4 shrink-0" />
+                          {!collapsed && (
+                            <div className="flex items-center justify-between flex-1">
+                              <span>My Clients</span>
+                              {isClientsOpen
+                                ? <ChevronDown className="h-3 w-3" />
+                                : <ChevronRight className="h-3 w-3" />
+                              }
+                            </div>
+                          )}
+                        </NavLink>
+                      </SidebarMenuButton>
+                      {isClientsOpen && !collapsed && (
+                        <div className="ml-4 mt-1 space-y-1">
+                          <SidebarMenuItem key="/coach/client-results">
+                            <SidebarMenuButton asChild>
+                              <NavLink
+                                to="/coach/client-results"
+                                end
+                                className="hover:bg-sidebar-accent text-sm"
+                                activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                              >
+                                <BarChart3 className="h-3.5 w-3.5 shrink-0" />
+                                <span>Client Results</span>
+                              </NavLink>
+                            </SidebarMenuButton>
+                          </SidebarMenuItem>
+                        </div>
+                      )}
+                    </SidebarMenuItem>
+                  );
+                }
+                return (
+                  <SidebarMenuItem key={item.title + item.url}>
+                    <SidebarMenuButton asChild disabled={item.disabled}>
+                      {item.disabled ? (
+                        <span className="flex items-center gap-2 opacity-50 cursor-not-allowed px-2 py-1.5">
+                          <item.icon className="h-4 w-4 shrink-0" />
+                          {!collapsed && (
+                            <>
+                              <span>{item.title}</span>
+                              {item.badge && (
+                                <span className="ml-auto text-[10px] bg-muted text-muted-foreground rounded px-1.5 py-0.5">
+                                  {item.badge}
+                                </span>
+                              )}
+                            </>
+                          )}
+                        </span>
+                      ) : (
+                        <NavLink
+                          to={item.url}
+                          end
+                          className="hover:bg-sidebar-accent"
+                          activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                        >
+                          <item.icon className="h-4 w-4 shrink-0" />
+                          {!collapsed && <span>{item.title}</span>}
+                        </NavLink>
+                      )}
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
                   <NavLink
