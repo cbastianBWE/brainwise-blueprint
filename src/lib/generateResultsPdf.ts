@@ -365,7 +365,7 @@ export function generateResultsPdf(data: PdfData, sections: PdfSections): void {
 
     const renderFacetInsights = (title: string, facets: FacetWithInterpretation[]) => {
       if (!facets.length) return;
-      checkPageBreak(12);
+      checkPageBreak(40);
       doc.setFontSize(10);
       doc.setFont("helvetica", "bold");
       doc.setTextColor(...NAVY);
@@ -467,6 +467,9 @@ export function generateResultsPdf(data: PdfData, sections: PdfSections): void {
 
   // ── CROSS-ASSESSMENT CONNECTIONS ──
   if (sections.crossAssessmentConnections && data.narrativeSections?.cross_assessment) {
+    addFooter();
+    doc.addPage();
+    y = MARGIN_T;
     sectionHeading("Cross-Assessment Connections");
     bodyText(data.narrativeSections.cross_assessment);
     y += 4;
