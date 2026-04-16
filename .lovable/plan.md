@@ -1,17 +1,12 @@
 
 
-# Plan: Add chatSessionIdRef for reliable unmount cleanup in MyResults.tsx
+# Plan: Add markdown rendering for assistant chat messages in MyResults.tsx
 
-## Changes (single file: `src/pages/MyResults.tsx`)
+## Single file: `src/pages/MyResults.tsx`
 
-### 1. Add `chatSessionIdRef` after `chatMessagesRef` (line 496)
-Add `const chatSessionIdRef = useRef<string | null>(null);` after the `chatMessagesRef` declaration.
+Replace lines 987–989 (the chat message bubble content) with enhanced markdown rendering for assistant messages. User messages continue using `renderInlineMarkdown` directly. Assistant messages get line-by-line parsing for headings (`#`, `##`, `###`), bullet points (`-` or `*`), and regular paragraphs.
 
-### 2. Sync ref after session creation (line 520)
-After `setChatSessionId(session.id);`, add `chatSessionIdRef.current = session.id;`.
-
-### 3. Replace unmount useEffect (lines 146–152)
-Change the cleanup effect to use `chatSessionIdRef.current` instead of `chatSessionId`, and set dependency array to `[]` so it only runs on unmount.
+The new rendering splits assistant message content by newlines and renders each line as the appropriate element (heading, bullet with dot indicator, or paragraph), while user messages remain unchanged.
 
 No other files changed.
 
