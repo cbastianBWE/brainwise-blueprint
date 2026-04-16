@@ -1,17 +1,18 @@
 
 
-# Plan: Add loading spinner to Onboarding.tsx during coach check
+# Plan: Add PTP context selection step
 
-## Single file: `src/pages/Onboarding.tsx`
+## File 1: `src/pages/Assessment.tsx`
+- Import `Card`, `CardContent` from `@/components/ui/card`.
+- Add `contextType` state (`'professional' | 'personal' | 'both' | null`, default `null`).
+- In the render, when `selectedInstrument` is set and is `INST-001` with `contextType === null`, render a new `PTPContextSelection` component (three cards: Corporate/Professional, Personal/Social, Both).
+- Otherwise render `AssessmentFlow`, passing `contextType` and resetting both states on exit.
+- Define `PTPContextSelection` at the bottom of the file.
 
-### Change 1 — Add `checkingCoach` state (after line 17)
-Add: `const [checkingCoach, setCheckingCoach] = useState(true);`
+## File 2: `src/components/assessment/AssessmentFlow.tsx`
+- Add optional `contextType?: 'professional' | 'personal' | 'both' | null` to `Props` and destructure it.
+- When inserting a new assessment row, include `context_type: contextType ?? null`.
+- Convert the items query to a mutable builder; if `instrument_id === 'INST-001'` and `contextType` is set and not `'both'`, append `.eq('context_type', contextType)` before awaiting.
 
-### Change 2 — Update useEffect (lines 19–31)
-Replace the existing useEffect to add `setCheckingCoach(false)` in the else branch when no coach_clients record is found.
-
-### Change 3 — Add loading spinner guard (before line 76)
-Insert a `if (checkingCoach)` block that returns a centered spinner, preventing the onboarding UI from flashing before the coach check completes.
-
-No other files changed.
+Both `items.context_type` and `assessments.context_type` columns already exist in the DB — no migration needed.
 
