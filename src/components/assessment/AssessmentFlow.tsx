@@ -105,12 +105,18 @@ export default function AssessmentFlow({ instrument, onExit, contextType }: Prop
       setAssessmentId(aId);
 
       // Load items
-      const { data: itemsData } = await supabase
+      let itemsQuery = supabase
         .from("items")
         .select("item_id, item_number, item_text, anchor_low, anchor_high, scale_type, reverse_scored, dimension_id")
         .eq("instrument_id", instrument.instrument_id)
         .eq("rater_type", "Self")
         .order("item_number", { ascending: true });
+
+      if (instrument.instrument_id === "INST-001" && contextType && contextType !== "both") {
+        itemsQuery = itemsQuery.eq("context_type", contextType);
+      }
+
+      const { data: itemsData } = await itemsQuery;
 
       if (!itemsData || itemsData.length === 0) {
         toast({ title: "No items found", description: "This instrument has no items configured yet.", variant: "destructive" });
