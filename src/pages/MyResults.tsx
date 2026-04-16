@@ -947,7 +947,13 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
                   <Brain className="h-4 w-4 text-primary-foreground" />
                   <span className="text-sm font-semibold text-primary-foreground">Ask AI</span>
                 </div>
-                <button onClick={() => setChatOpen(false)} className="text-primary-foreground/70 hover:text-primary-foreground">
+                <button onClick={async () => {
+                  setChatOpen(false);
+                  if (chatSessionId) {
+                    await supabase.rpc('close_chat_session', { p_session_id: chatSessionId });
+                    setChatSessionId(null);
+                  }
+                }} className="text-primary-foreground/70 hover:text-primary-foreground">
                   <X className="h-4 w-4" />
                 </button>
               </div>
