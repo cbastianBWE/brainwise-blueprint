@@ -485,12 +485,17 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
     generateResultsPdf(pdfData, sections);
   }, [selected, sortedDimensions, dimensionScores, dimensionNameMap, profile, recommendations, isSliderInstrument, highestDimension, lowestDimension]);
 
+  const chatMessagesRef = useRef<Array<{role: 'user' | 'assistant'; content: string; timestamp: Date}>>([]);
+
   const sendChatMessage = useCallback(async () => {
     if (!chatInput.trim() || !selected || chatLoading) return;
     const userMessage = chatInput.trim();
     setChatInput('');
     const newUserMsg = { role: 'user' as const, content: userMessage, timestamp: new Date() };
-    setChatMessages(prev => [...prev, newUserMsg]);
+
+    const updatedWithUser = [...chatMessagesRef.current, newUserMsg];
+    chatMessagesRef.current = updatedWithUser;
+    setChatMessages(updatedWithUser);
     setChatLoading(true);
 
     let sessionId = chatSessionId;
@@ -513,7 +518,7 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
       const response = await supabase.functions.invoke('ai-chat', {
         body: {
           message: userMessage,
-          conversation_history: chatMessages.map(m => ({ role: m.role, content: m.content })),
+          conversation_history: chatMessagesRef.current.slice(0, -1).map(m => ({ role: m.role, content: m.content })),
           assessment_result_ids: [selected.result.id],
           subscription_tier: profile?.subscription_tier ?? 'base',
         },
@@ -524,23 +529,30 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
         const errMsg = response.data?.limit_reached
           ? "You've reached your monthly AI message limit."
           : "Failed to get a response. Please try again.";
-        setChatMessages(prev => [...prev, { role: 'assistant', content: errMsg, timestamp: new Date() }]);
+        const errMsgObj = { role: 'assistant' as const, content: errMsg, timestamp: new Date() };
+        const updatedWithErr = [...chatMessagesRef.current, errMsgObj];
+        chatMessagesRef.current = updatedWithErr;
+        setChatMessages(updatedWithErr);
       } else {
         const assistantMsg = { role: 'assistant' as const, content: response.data.response, timestamp: new Date() };
-        setChatMessages(prev => [...prev, assistantMsg]);
-        const updatedMessages = [...chatMessages, newUserMsg, assistantMsg];
+        const updatedWithAssistant = [...chatMessagesRef.current, assistantMsg];
+        chatMessagesRef.current = updatedWithAssistant;
+        setChatMessages(updatedWithAssistant);
         if (sessionId) {
           supabase.from('chat_sessions').update({
-            messages: updatedMessages.map(m => ({ role: m.role, content: m.content, timestamp: m.timestamp.toISOString() })),
-            message_count: updatedMessages.length,
+            messages: updatedWithAssistant.map(m => ({ role: m.role, content: m.content, timestamp: m.timestamp.toISOString() })),
+            message_count: updatedWithAssistant.length,
           }).eq('id', sessionId);
         }
       }
     } catch {
-      setChatMessages(prev => [...prev, { role: 'assistant', content: 'Something went wrong. Please try again.', timestamp: new Date() }]);
+      const errMsgObj = { role: 'assistant' as const, content: 'Something went wrong. Please try again.', timestamp: new Date() };
+      const updatedWithErr = [...chatMessagesRef.current, errMsgObj];
+      chatMessagesRef.current = updatedWithErr;
+      setChatMessages(updatedWithErr);
     }
     setChatLoading(false);
-  }, [chatInput, chatMessages, chatLoading, selected, chatSessionId, user, profile]);
+  }, [chatInput, chatLoading, selected, chatSessionId, user, profile]);
 
   // Chart data for bar chart
   const chartData = useMemo(() => {
@@ -1185,11 +1197,21 @@ function NarrativeRenderer({ text }: { text: string }) {
 }
 
 function renderInlineMarkdown(text: string): React.ReactNode {
-  // Split on **bold** markers
-  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+  // Strip heading markers (# ## ###) at start of line
+  const stripped = text.replace(/^#{1,3}\s+/, '');
+
+  // Split on **bold**, *italic*, and `code` markers
+  const parts = stripped.split(/(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`)/g);
+
   return parts.map((part, i) => {
-    if (part.startsWith("**") && part.endsWith("**")) {
+    if (part.startsWith('**') && part.endsWith('**')) {
       return <strong key={i} className="font-semibold">{part.slice(2, -2)}</strong>;
+    }
+    if (part.startsWith('*') && part.endsWith('*') && !part.startsWith('**')) {
+      return <em key={i}>{part.slice(1, -1)}</em>;
+    }
+    if (part.startsWith('`') && part.endsWith('`')) {
+      return <code key={i} className="bg-muted px-1 py-0.5 rounded text-xs font-mono">{part.slice(1, -1)}</code>;
     }
     return part;
   });
