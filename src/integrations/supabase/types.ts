@@ -258,6 +258,7 @@ export type Database = {
       assessments: {
         Row: {
           completed_at: string | null
+          context_type: string | null
           id: string
           instrument_id: string
           instrument_version: string
@@ -270,6 +271,7 @@ export type Database = {
         }
         Insert: {
           completed_at?: string | null
+          context_type?: string | null
           id?: string
           instrument_id: string
           instrument_version: string
@@ -282,6 +284,7 @@ export type Database = {
         }
         Update: {
           completed_at?: string | null
+          context_type?: string | null
           id?: string
           instrument_id?: string
           instrument_version?: string
@@ -723,6 +726,7 @@ export type Database = {
         Row: {
           anchor_high: string | null
           anchor_low: string | null
+          context_type: string | null
           created_at: string
           dimension_id: string | null
           facet_ref: string | null
@@ -740,6 +744,7 @@ export type Database = {
         Insert: {
           anchor_high?: string | null
           anchor_low?: string | null
+          context_type?: string | null
           created_at?: string
           dimension_id?: string | null
           facet_ref?: string | null
@@ -757,6 +762,7 @@ export type Database = {
         Update: {
           anchor_high?: string | null
           anchor_low?: string | null
+          context_type?: string | null
           created_at?: string
           dimension_id?: string | null
           facet_ref?: string | null
