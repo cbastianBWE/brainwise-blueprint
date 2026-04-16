@@ -499,6 +499,7 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
         user_id: user!.id,
         assessment_result_ids: [selected.result.id],
         messages: [],
+        message_count: 0,
         started_at: new Date().toISOString(),
       }).select('id').single();
       if (session) {
@@ -526,16 +527,14 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
         setChatMessages(prev => [...prev, { role: 'assistant', content: errMsg, timestamp: new Date() }]);
       } else {
         const assistantMsg = { role: 'assistant' as const, content: response.data.response, timestamp: new Date() };
-        setChatMessages(prev => {
-          const updated = [...prev, assistantMsg];
-          if (sessionId) {
-            supabase.from('chat_sessions').update({
-              messages: updated.map(m => ({ role: m.role, content: m.content, timestamp: m.timestamp.toISOString() })),
-              message_count: updated.length,
-            }).eq('id', sessionId);
-          }
-          return updated;
-        });
+        setChatMessages(prev => [...prev, assistantMsg]);
+        const updatedMessages = [...chatMessages, newUserMsg, assistantMsg];
+        if (sessionId) {
+          supabase.from('chat_sessions').update({
+            messages: updatedMessages.map(m => ({ role: m.role, content: m.content, timestamp: m.timestamp.toISOString() })),
+            message_count: updatedMessages.length,
+          }).eq('id', sessionId);
+        }
       }
     } catch {
       setChatMessages(prev => [...prev, { role: 'assistant', content: 'Something went wrong. Please try again.', timestamp: new Date() }]);
@@ -957,7 +956,7 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
                 {chatMessages.map((msg, i) => (
                   <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                     <div className={`max-w-[85%] rounded-xl px-3 py-2 text-sm ${msg.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted text-foreground'}`}>
-                      {msg.content}
+                      {renderInlineMarkdown(msg.content)}
                     </div>
                   </div>
                 ))}
