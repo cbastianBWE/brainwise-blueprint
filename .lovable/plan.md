@@ -1,11 +1,11 @@
 
-# Plan: Update Purpose dimension to purple brand color
+# Plan: Recolor Prediction dimension to muted gray
 
 ## File 1: `src/pages/MyResults.tsx`
-- Change `DIM-PTP-04` in `PTP_DIMENSION_COLORS` from `#2D6A4F` (green) to `#3C096C` (purple).
-- Change `DIM-PTP-04` in `PTP_DIMENSION_PASTEL` from `#EAF2EE` to `#EEE8F5` to match the new purple tone.
+- In `PTP_DIMENSION_COLORS`, change `DIM-PTP-03` from `#F5741A` (orange) to `#6D6875` (gray).
+- In `PTP_DIMENSION_PASTEL`, change `DIM-PTP-03` from `#FEF0E7` to `#F0EFF1` to match the new gray tone.
 
 ## File 2: `src/components/results/DrivingFacetScores.tsx`
-- Replace the entire `PTP_DIMENSION_COLORS` map with the new official brand palette, matching what `MyResults.tsx` already uses (so facet bars and domain cards stay visually consistent).
+- In `PTP_DIMENSION_COLORS`, change `DIM-PTP-03` from `#F5741A` to `#6D6875` so facet bars stay consistent with the domain cards.
 
 No other files changed.
