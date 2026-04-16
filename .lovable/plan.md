@@ -1,13 +1,19 @@
 
-# Plan: Three UI tweaks in MyResults.tsx
+# Plan: Split "both" PTP assessments by context across tabs
 
-## Change 1 — Hide "complete other half" banner for coaches (line 828)
-Add `!isCoachView &&` at the start of the condition.
+## File 1: `src/pages/MyResults.tsx`
 
-## Change 2 — Add context label to page heading (lines 771-773)
-After the profile name text, append a muted span showing "— Professional", "— Personal", or "— Combined" when PTP tabs are active.
+1. **New state** `bothSplitScores` after `ptpTabOverrideId` to hold professional/personal dimension score maps recalculated from a single "both" assessment's responses.
+2. **New useEffect** after the polling effect: when selected is a PTP `both` assessment, fetch responses + items, split by item `context_type`, average per dimension, store in `bothSplitScores`. Clear when not applicable.
+3. **`hasPtpTabs`/`showPtpTabs`** updated: introduce `isBothAssessment` and treat `both` as automatically having tabs even without separate prof/personal records.
+4. **`effectiveDimensionScores`** updated to return split scores for prof/personal tabs when viewing a `both` assessment, and full dimension_scores for the combined tab.
+5. **Tab init** extended to default to `'combined'` when most recent PTP is `both`.
+6. **`DrivingFacetScores` call** gains a new `contextFilter` prop when a `both` assessment is being viewed in prof/personal tab; `additionalAssessmentId` is only passed in the dual-assessment combined case.
 
-## Change 3 — Fix dropdown labels to show context type (lines 692-697)
-For PTP assessments with a `context_type`, show "PTP Professional — MMM yyyy" instead of the generic instrument name.
+## File 2: `src/components/results/DrivingFacetScores.tsx`
+
+1. Add `contextFilter?: 'professional' | 'personal'` to `Props` and destructure it.
+2. After building `scoredItems`, when `contextFilter` is set, fetch each item's `context_type`, filter `scoredItems` to that context (fallback to all if empty), and use `filteredItems` for mean/stdDev/threshold logic.
+3. Add `contextFilter` to the `useEffect` dependency array.
 
 No other files changed.
