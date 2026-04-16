@@ -136,6 +136,13 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
 
   const [shareWithCoach, setShareWithCoach] = useState<boolean | null>(null);
 
+  const [chatOpen, setChatOpen] = useState(false);
+  const [chatMessages, setChatMessages] = useState<Array<{role: 'user' | 'assistant'; content: string; timestamp: Date}>>([]);
+  const [chatInput, setChatInput] = useState('');
+  const [chatLoading, setChatLoading] = useState(false);
+  const [chatSessionId, setChatSessionId] = useState<string | null>(null);
+  const [showChatUpgradeDialog, setShowChatUpgradeDialog] = useState(false);
+
   // Fetch client name and share preference when in coach view
   useEffect(() => {
     if (!isCoachView || !targetUserId) return;
