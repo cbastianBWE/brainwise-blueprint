@@ -32,9 +32,10 @@ interface FacetItem {
 interface Props {
   assessmentId: string;
   additionalAssessmentId?: string;
+  contextFilter?: 'professional' | 'personal';
 }
 
-export default function DrivingFacetScores({ assessmentId, additionalAssessmentId }: Props) {
+export default function DrivingFacetScores({ assessmentId, additionalAssessmentId, contextFilter }: Props) {
   const [loading, setLoading] = useState(true);
   const [elevated, setElevated] = useState<FacetItem[]>([]);
   const [suppressed, setSuppressed] = useState<FacetItem[]>([]);
@@ -90,8 +91,23 @@ export default function DrivingFacetScores({ assessmentId, additionalAssessmentI
         };
       });
 
+      // Filter by context if specified (for 'both' assessments shown in split tab)
+      let filteredItems = scoredItems;
+      if (contextFilter) {
+        const { data: contextItems } = await supabase
+          .from('items')
+          .select('item_id, context_type')
+          .in('item_id', allResponses.map(r => r.item_id));
+        const contextItemMap = new Map((contextItems ?? []).map(i => [i.item_id, i.context_type]));
+        filteredItems = scoredItems.filter((_, i) => {
+          const itemId = allResponses[i]?.item_id;
+          return contextItemMap.get(itemId) === contextFilter;
+        });
+        if (!filteredItems.length) filteredItems = scoredItems;
+      }
+
       // Calculate mean and std dev
-      const values = scoredItems.map((s) => s.value);
+      const values = filteredItems.map((s) => s.value);
       const mean = values.reduce((a, b) => a + b, 0) / values.length;
       const variance =
         values.reduce((sum, v) => sum + (v - mean) ** 2, 0) / values.length;
