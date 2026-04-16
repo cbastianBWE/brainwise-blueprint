@@ -1070,7 +1070,7 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
                 permissionLevel={permissionLevel}
                 isCoachView={isCoachView}
                 ptpContextTab={ptpContextTab}
-                otherAssessments={assessments.filter(a => !a.isPTP)}
+                otherAssessments={assessments.filter(a => a.result.id !== effectiveSelected?.result.id)}
               />
             ) : (
               <Card>
