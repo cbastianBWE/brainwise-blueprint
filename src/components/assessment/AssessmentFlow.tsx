@@ -232,7 +232,7 @@ export default function AssessmentFlow({ instrument, onExit, contextType }: Prop
   );
 
   const handleSubmit = async () => {
-    if (!assessmentId) return;
+    if (!assessmentId || !user) return;
     setSubmitting(true);
     const { data, error } = await supabase.functions.invoke("calculate-scores", {
       body: { assessment_id: assessmentId },
@@ -243,6 +243,19 @@ export default function AssessmentFlow({ instrument, onExit, contextType }: Prop
       setSubmitting(false);
       return;
     }
+
+    // Consume an unconsumed per-assessment purchase for this instrument, if one exists.
+    // Non-blocking: returns NULL when user is on a subscription or coach-paid, which is fine.
+    try {
+      await supabase.rpc("consume_assessment_purchase", {
+        p_user_id: user.id,
+        p_instrument_short_name: instrument.short_name,
+        p_assessment_id: assessmentId,
+      });
+    } catch (err) {
+      console.error("consume_assessment_purchase failed (non-fatal):", err);
+    }
+
     navigate(`/my-results`);
   };
 
