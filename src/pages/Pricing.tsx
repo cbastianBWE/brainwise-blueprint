@@ -48,11 +48,19 @@ export default function Pricing() {
     }
     setLoadingPlan(instrumentId);
     try {
+      const INSTRUMENT_SHORT_TO_UUID: Record<string, string> = {
+        "PTP": "02618e9a-d411-44cf-b316-fe368edeac03",
+        "NAI": "77d1290f-1daf-44e0-931f-b9b8ad185520",
+        "AIRSA": "abb62120-8cc8-435f-babc-dd6a27fbc235",
+        "HSS": "90216d9d-153c-4b7b-abe0-1d7845c9e6e0",
+      };
+      const resolvedId = INSTRUMENT_SHORT_TO_UUID[instrumentId] ?? instrumentId;
       const { data, error } = await supabase.functions.invoke("create-checkout", {
         body: {
           price_id: ASSESSMENT_PURCHASE.price_id,
           mode: "payment",
-          instrument_id: instrumentId,
+          instrument_id: resolvedId,
+          instrument_ids: resolvedId,
         },
       });
       if (error) throw error;
