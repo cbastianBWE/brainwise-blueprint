@@ -45,6 +45,7 @@ import { format } from "date-fns";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import DrivingFacetScores from "@/components/results/DrivingFacetScores";
 import PTPNarrativeSections from "@/components/results/PTPNarrativeSections";
+import NAINarrativeSections from "@/components/results/NAINarrativeSections";
 import ExportPdfModal, { type PdfSections } from "@/components/results/ExportPdfModal";
 import { generateResultsPdf, type PdfData } from "@/lib/generateResultsPdf";
 
@@ -116,6 +117,22 @@ const PTP_DIMENSION_NAMES: Record<string, string> = {
   "DIM-PTP-03": "Prediction",
   "DIM-PTP-04": "Purpose",
   "DIM-PTP-05": "Pleasure",
+};
+
+const NAI_DIMENSION_COLORS: Record<string, string> = {
+  "DIM-NAI-01": "#021F36",
+  "DIM-NAI-02": "#F5741A",
+  "DIM-NAI-03": "#006D77",
+  "DIM-NAI-04": "#3C096C",
+  "DIM-NAI-05": "#FFB703",
+};
+
+const NAI_DIMENSION_PASTEL: Record<string, string> = {
+  "DIM-NAI-01": "#E8EDF1",
+  "DIM-NAI-02": "#FEF0E7",
+  "DIM-NAI-03": "#E0F0F2",
+  "DIM-NAI-04": "#EDE5F4",
+  "DIM-NAI-05": "#FFF8E1",
 };
 
 const READINESS_COLORS: Record<string, { bg: string; text: string; border: string }> = {
@@ -318,6 +335,8 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
     () => assessments.find((a) => a.result.id === selectedId),
     [assessments, selectedId]
   );
+
+  const isNAI = (selected?.result.instrument_id ?? "").includes("INST-002");
 
   // PTP tab logic
   const ptpProfessionalResults = useMemo(() =>
@@ -1017,6 +1036,11 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
                     dimensions={dimensionScores}
                     dimensionNameMap={dimensionNameMap}
                   />
+                ) : isNAI ? (
+                  <NAIDomainCards
+                    dimensions={dimensionScores}
+                    dimensionNameMap={dimensionNameMap}
+                  />
                 ) : (
                   <ScrollArea className="w-full">
                     <div
@@ -1078,7 +1102,7 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
           </section>
 
           {/* SECTION 2b - Driving Facet Scores (PTP only) */}
-          {effectiveSelected?.isPTP && (
+          {effectiveSelected?.isPTP && !isNAI && (
             <section>
               <DrivingFacetScores
                 assessmentId={effectiveSelected.result.assessment_id}
@@ -1134,6 +1158,16 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
                 isCoachView={isCoachView}
                 ptpContextTab={ptpContextTab}
                 otherAssessments={assessments.filter(a => a.result.id !== effectiveSelected?.result.id)}
+              />
+            ) : isNAI ? (
+              <NAINarrativeSections
+                assessmentResultId={selected.result.id}
+                assessmentId={selected.result.assessment_id}
+                dimensionScores={dimensionScores as [string, { mean?: number; band?: string }][]}
+                dimensionNameMap={dimensionNameMap}
+                isCoachView={isCoachView}
+                permissionLevel={permissionLevel}
+                otherAssessments={assessments.filter(a => a.result.id !== selected?.result.id)}
               />
             ) : (
               <Card>
@@ -1590,6 +1624,66 @@ function PTPDomainCards({
         const color = PTP_DIMENSION_COLORS[dimId] ?? "#021F36";
         const pastel = PTP_DIMENSION_PASTEL[dimId] ?? "#F9F7F1";
         const name = dimensionNameMap.get(dimId) ?? PTP_DIMENSION_NAMES[dimId] ?? formatDimensionName(dimId);
+        const band = getBand(mean);
+        return (
+          <div
+            key={dimId}
+            className="rounded-xl p-4 flex flex-col items-center text-center space-y-2 border"
+            style={{ backgroundColor: pastel, borderColor: color + "40" }}
+          >
+            <div
+              className="w-3 h-3 rounded-full"
+              style={{ backgroundColor: color }}
+            />
+            <p className="text-sm font-semibold text-foreground leading-tight">{name}</p>
+            <p
+              className="text-3xl font-bold"
+              style={{ color }}
+            >
+              {mean}
+            </p>
+            <span
+              className="text-xs font-medium px-2 py-0.5 rounded-full"
+              style={{ backgroundColor: color + "20", color }}
+            >
+              {band}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function NAIDomainCards({
+  dimensions,
+  dimensionNameMap,
+}: {
+  dimensions: [string, DimensionScore][];
+  dimensionNameMap: Map<string, string>;
+}) {
+  const getBand = (score: number) => {
+    if (score >= 76) return "High";
+    if (score >= 51) return "Elevated";
+    if (score >= 26) return "Moderate";
+    return "Low";
+  };
+
+  const NAI_NAMES: Record<string, string> = {
+    "DIM-NAI-01": "Certainty",
+    "DIM-NAI-02": "Agency",
+    "DIM-NAI-03": "Fairness",
+    "DIM-NAI-04": "Ego Stability",
+    "DIM-NAI-05": "Saturation Threshold",
+  };
+
+  return (
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+      {dimensions.map(([dimId, score]) => {
+        const mean = Math.round(score.mean ?? score.level_mean ?? 0);
+        const color = NAI_DIMENSION_COLORS[dimId] ?? "#021F36";
+        const pastel = NAI_DIMENSION_PASTEL[dimId] ?? "#F9F7F1";
+        const name = dimensionNameMap.get(dimId) ?? NAI_NAMES[dimId] ?? formatDimensionName(dimId);
         const band = getBand(mean);
         return (
           <div
