@@ -326,6 +326,36 @@ export type Database = {
           },
         ]
       }
+      cafes_ptp_mapping: {
+        Row: {
+          coaching_questions: Json
+          created_at: string | null
+          facets: Json
+          id: string
+          nai_dimension_id: string
+          primary_ptp_domain: string
+          secondary_ptp_domain: string
+        }
+        Insert: {
+          coaching_questions: Json
+          created_at?: string | null
+          facets: Json
+          id?: string
+          nai_dimension_id: string
+          primary_ptp_domain: string
+          secondary_ptp_domain: string
+        }
+        Update: {
+          coaching_questions?: Json
+          created_at?: string | null
+          facets?: Json
+          id?: string
+          nai_dimension_id?: string
+          primary_ptp_domain?: string
+          secondary_ptp_domain?: string
+        }
+        Relationships: []
+      }
       chat_sessions: {
         Row: {
           assessment_result_ids: string[]
@@ -761,6 +791,7 @@ export type Database = {
           context_type: string | null
           created_at: string
           dimension_id: string | null
+          facet_name: string | null
           facet_ref: string | null
           id: string
           instrument_id: string
@@ -779,6 +810,7 @@ export type Database = {
           context_type?: string | null
           created_at?: string
           dimension_id?: string | null
+          facet_name?: string | null
           facet_ref?: string | null
           id?: string
           instrument_id: string
@@ -797,6 +829,7 @@ export type Database = {
           context_type?: string | null
           created_at?: string
           dimension_id?: string | null
+          facet_name?: string | null
           facet_ref?: string | null
           id?: string
           instrument_id?: string
