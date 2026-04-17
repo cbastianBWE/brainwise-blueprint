@@ -178,6 +178,7 @@ export default function NAINarrativeSections({
         setOutlierItems(outliers);
       }
 
+      const elevatedDimCount = dimensionScores.filter(([, s]) => (s.mean ?? 0) >= 51).length;
       const requiredSections = [
         "nai_profile_overview",
         ...Object.keys(NAI_DIMENSION_NAMES).map((d) => `nai_dimension_highlight_${d}`),
@@ -186,6 +187,7 @@ export default function NAINarrativeSections({
         ...(isCoachView
           ? Object.keys(NAI_DIMENSION_NAMES).map((d) => `nai_coach_questions_${d}`)
           : []),
+        ...(isCoachView && elevatedDimCount >= 3 ? ["nai_pattern_alert"] : []),
       ];
 
       const { data: existing } = await supabase
