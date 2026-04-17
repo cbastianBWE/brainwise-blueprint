@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -23,13 +23,28 @@ export interface PdfSections {
   assessmentResponses: boolean;
 }
 
+export interface NaiPdfSectionsUi {
+  profileOverview: boolean;
+  profileOverviewNarrative: boolean;
+  naiOverview: boolean;
+  dimensionHighlights: boolean;
+  patternAlert: boolean;
+  individualResponses: boolean;
+  cafesPtpMapping: boolean;
+  crossAssessmentInterpretation: boolean;
+  assessmentResponses: boolean;
+}
+
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onExport: (sections: PdfSections) => Promise<void>;
+  instrumentType: "PTP" | "NAI" | "OTHER";
+  isCoachView?: boolean;
+  onExportPtp?: (sections: PdfSections) => Promise<void>;
+  onExportNai?: (sections: NaiPdfSectionsUi) => Promise<void>;
 }
 
-const SECTION_OPTIONS: { key: keyof PdfSections; label: string }[] = [
+const PTP_SECTION_OPTIONS: { key: keyof PdfSections; label: string }[] = [
   { key: "profileOverview", label: "Profile Overview (stat cards + dimension score cards)" },
   { key: "drivingFacetScores", label: "Driving Facet Scores (elevated & suppressed bar charts)" },
   { key: "profileOverviewNarrative", label: "Profile Overview Narrative (AI-generated profile summary)" },
@@ -40,8 +55,20 @@ const SECTION_OPTIONS: { key: keyof PdfSections; label: string }[] = [
   { key: "assessmentResponses", label: "Assessment Responses (all questions and scores)" },
 ];
 
-export default function ExportPdfModal({ open, onOpenChange, onExport }: Props) {
-  const [sections, setSections] = useState<PdfSections>({
+const NAI_SECTION_OPTIONS: { key: keyof NaiPdfSectionsUi; label: string; coachOnly?: boolean }[] = [
+  { key: "profileOverview", label: "Profile Overview (stat cards + dimension score cards)" },
+  { key: "profileOverviewNarrative", label: "Profile Overview Narrative (AI-generated profile summary)" },
+  { key: "naiOverview", label: "NAI Overview (framework introduction)" },
+  { key: "dimensionHighlights", label: "Dimension Highlights (all 5 C.A.F.E.S. dimensions)" },
+  { key: "patternAlert", label: "Pattern Alert (coach coaching guidance)", coachOnly: true },
+  { key: "individualResponses", label: "Individual Responses That Warrant Attention (items scoring 75+)" },
+  { key: "cafesPtpMapping", label: "C.A.F.E.S.–PTP Mapping (coach coaching materials)", coachOnly: true },
+  { key: "crossAssessmentInterpretation", label: "Cross-Assessment Interpretation (AI-generated analysis)" },
+  { key: "assessmentResponses", label: "Assessment Responses (all 25 questions and scores)" },
+];
+
+export default function ExportPdfModal({ open, onOpenChange, instrumentType, isCoachView = false, onExportPtp, onExportNai }: Props) {
+  const [ptpSections, setPtpSections] = useState<PdfSections>({
     profileOverview: true,
     drivingFacetScores: true,
     profileOverviewNarrative: true,
@@ -51,21 +78,51 @@ export default function ExportPdfModal({ open, onOpenChange, onExport }: Props) 
     crossAssessmentConnections: true,
     assessmentResponses: true,
   });
+
+  const [naiSections, setNaiSections] = useState<NaiPdfSectionsUi>({
+    profileOverview: true,
+    profileOverviewNarrative: true,
+    naiOverview: true,
+    dimensionHighlights: true,
+    patternAlert: true,
+    individualResponses: true,
+    cafesPtpMapping: true,
+    crossAssessmentInterpretation: true,
+    assessmentResponses: true,
+  });
+
   const [exporting, setExporting] = useState(false);
 
-  const toggle = (key: keyof PdfSections) => {
-    setSections((prev) => ({ ...prev, [key]: !prev[key] }));
+  useEffect(() => {
+    if (!isCoachView) {
+      setNaiSections((prev) => ({ ...prev, patternAlert: false, cafesPtpMapping: false }));
+    }
+  }, [isCoachView]);
+
+  const togglePtp = (key: keyof PdfSections) => {
+    setPtpSections((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const toggleNai = (key: keyof NaiPdfSectionsUi) => {
+    setNaiSections((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
   const handleExport = async () => {
     setExporting(true);
     try {
-      await onExport(sections);
+      if (instrumentType === "NAI" && onExportNai) {
+        await onExportNai(naiSections);
+      } else if (onExportPtp) {
+        await onExportPtp(ptpSections);
+      }
     } finally {
       setExporting(false);
       onOpenChange(false);
     }
   };
+
+  const isNai = instrumentType === "NAI";
+  const naiVisibleOptions = NAI_SECTION_OPTIONS.filter((opt) => !opt.coachOnly || isCoachView);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -77,18 +134,31 @@ export default function ExportPdfModal({ open, onOpenChange, onExport }: Props) 
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">
-          {SECTION_OPTIONS.map((opt) => (
-            <div key={opt.key} className="flex items-center space-x-3">
-              <Checkbox
-                id={opt.key}
-                checked={sections[opt.key]}
-                onCheckedChange={() => toggle(opt.key)}
-              />
-              <Label htmlFor={opt.key} className="text-sm leading-tight text-foreground">
-                {opt.label}
-              </Label>
-            </div>
-          ))}
+          {isNai
+            ? naiVisibleOptions.map((opt) => (
+                <div key={opt.key} className="flex items-center space-x-3">
+                  <Checkbox
+                    id={opt.key}
+                    checked={naiSections[opt.key]}
+                    onCheckedChange={() => toggleNai(opt.key)}
+                  />
+                  <Label htmlFor={opt.key} className="text-sm leading-tight text-foreground">
+                    {opt.label}
+                  </Label>
+                </div>
+              ))
+            : PTP_SECTION_OPTIONS.map((opt) => (
+                <div key={opt.key} className="flex items-center space-x-3">
+                  <Checkbox
+                    id={opt.key}
+                    checked={ptpSections[opt.key]}
+                    onCheckedChange={() => togglePtp(opt.key)}
+                  />
+                  <Label htmlFor={opt.key} className="text-sm leading-tight text-foreground">
+                    {opt.label}
+                  </Label>
+                </div>
+              ))}
         </div>
         <DialogFooter>
           <Button onClick={handleExport} disabled={exporting}>
