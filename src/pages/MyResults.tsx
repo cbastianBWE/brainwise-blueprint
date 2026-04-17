@@ -48,6 +48,7 @@ import PTPNarrativeSections from "@/components/results/PTPNarrativeSections";
 import NAINarrativeSections from "@/components/results/NAINarrativeSections";
 import ExportPdfModal, { type PdfSections } from "@/components/results/ExportPdfModal";
 import { generateResultsPdf, type PdfData } from "@/lib/generateResultsPdf";
+import { generateNaiPdf, type NaiPdfData } from "@/lib/generateNaiPdf";
 
 // Types
 interface DimensionScore {
@@ -730,6 +731,222 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
     generateResultsPdf(pdfData, sections);
   }, [selected, effectiveSelected, ptpContextTab, sortedDimensions, dimensionScores, dimensionNameMap, displayName, recommendations, isSliderInstrument, highestDimension, lowestDimension]);
 
+  const handleNaiPdfExport = useCallback(async (sections: import("@/components/results/ExportPdfModal").NaiPdfSectionsUi) => {
+    if (!selected || !isNAI) return;
+
+    const NAI_DIMENSION_NAMES_LOCAL: Record<string, string> = {
+      "DIM-NAI-01": "Certainty",
+      "DIM-NAI-02": "Agency",
+      "DIM-NAI-03": "Fairness",
+      "DIM-NAI-04": "Ego Stability",
+      "DIM-NAI-05": "Saturation Threshold",
+    };
+
+    const bandOf = (score: number): string => {
+      if (score >= 76) return "High";
+      if (score >= 51) return "Elevated";
+      if (score >= 26) return "Moderate";
+      return "Low";
+    };
+
+    const dimensionsForPdf = Object.keys(NAI_DIMENSION_NAMES_LOCAL).map((dimId) => {
+      const found = dimensionScores.find(([id]) => id === dimId);
+      const score = Math.round(found?.[1]?.mean ?? 0);
+      return {
+        dimensionId: dimId,
+        name: dimensionNameMap.get(dimId) ?? NAI_DIMENSION_NAMES_LOCAL[dimId] ?? dimId,
+        score,
+        band: bandOf(score),
+        color: NAI_DIMENSION_COLORS[dimId] ?? "#021F36",
+        pastelColor: NAI_DIMENSION_PASTEL[dimId] ?? "#F9F7F1",
+      };
+    });
+
+    const { data: allItems } = await supabase
+      .from("items")
+      .select("item_id, item_text, item_number, dimension_id, facet_name")
+      .eq("instrument_id", "INST-002")
+      .order("item_number");
+
+    const { data: responsesData } = await supabase
+      .from("assessment_responses")
+      .select("response_value_numeric, is_reverse_scored, item_id")
+      .eq("assessment_id", selected.result.assessment_id);
+
+    const responseByItem = new Map((responsesData ?? []).map((r) => [r.item_id, r]));
+
+    const assessmentResponses = (allItems ?? []).map((item) => {
+      const r = responseByItem.get(item.item_id);
+      let score: number | null = null;
+      if (r) {
+        const raw = Number(r.response_value_numeric);
+        score = Math.round(r.is_reverse_scored ? 100 - raw : raw);
+      }
+      return {
+        itemNumber: item.item_number ?? 0,
+        facetName: item.facet_name ?? item.item_text?.slice(0, 40) ?? "",
+        itemText: item.item_text ?? "",
+        score,
+        dimensionId: item.dimension_id ?? "",
+        hasResponse: !!r,
+      };
+    }).sort((a, b) => a.itemNumber - b.itemNumber);
+
+    const outliersRaw = assessmentResponses
+      .filter(r => r.hasResponse && (r.score ?? 0) >= 75)
+      .sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
+
+    const requiredSections = [
+      "nai_profile_overview",
+      ...Object.keys(NAI_DIMENSION_NAMES_LOCAL).map(d => `nai_dimension_highlight_${d}`),
+      ...outliersRaw.map(o => `nai_item_interpretation_${o.itemNumber}`),
+      "nai_cross_assessment",
+      "nai_pattern_alert",
+      ...Object.keys(NAI_DIMENSION_NAMES_LOCAL).map(d => `nai_coach_questions_${d}`),
+    ];
+
+    const { data: interpRows } = await supabase
+      .from("facet_interpretations")
+      .select("section_type, facet_data")
+      .eq("assessment_result_id", selected.result.id)
+      .in("section_type", requiredSections);
+
+    const interpMap: Record<string, any> = {};
+    (interpRows ?? []).forEach(row => { if (row.section_type) interpMap[row.section_type] = row.facet_data; });
+
+    let cafesMappings: any[] = [];
+    if (coachViewActive) {
+      const elevatedDimIds = dimensionScores
+        .filter(([, s]) => (s.mean ?? 0) >= 51)
+        .map(([id]) => id);
+      if (elevatedDimIds.length > 0) {
+        const { data: maps } = await supabase
+          .from("cafes_ptp_mapping")
+          .select("nai_dimension_id, primary_ptp_domain, secondary_ptp_domain, facets, coaching_questions")
+          .in("nai_dimension_id", elevatedDimIds);
+        cafesMappings = maps ?? [];
+      }
+    }
+
+    const buildRelatedPtpFacets = (dimensionId: string): string | null => {
+      if (!coachViewActive) return null;
+      const mapping = cafesMappings.find(m => m.nai_dimension_id === dimensionId);
+      if (!mapping) return null;
+      const facets = Array.isArray(mapping.facets) ? mapping.facets : [];
+      if (facets.length === 0) return null;
+      return facets
+        .map((f: any) => {
+          const workRef = Array.isArray(f.work_items) ? f.work_items[0] : f.work_item;
+          const socialRef = Array.isArray(f.social_items) ? f.social_items[0] : f.social_item;
+          const refs = [workRef, socialRef].filter(Boolean).join(", ");
+          const name = f.name ?? f.facet_name;
+          return refs ? `${name} (${refs})` : name;
+        })
+        .filter(Boolean)
+        .join("; ");
+    };
+
+    const outlierItems = outliersRaw.map(o => ({
+      itemNumber: o.itemNumber,
+      facetName: o.facetName,
+      itemText: o.itemText,
+      score: o.score ?? 0,
+      dimensionId: o.dimensionId,
+      dimensionName: dimensionNameMap.get(o.dimensionId) ?? NAI_DIMENSION_NAMES_LOCAL[o.dimensionId] ?? o.dimensionId,
+      interpretation: interpMap[`nai_item_interpretation_${o.itemNumber}`]?.text ?? null,
+      relatedPtpFacets: buildRelatedPtpFacets(o.dimensionId),
+    }));
+
+    const cafesMappingForPdf = coachViewActive
+      ? Object.keys(NAI_DIMENSION_NAMES_LOCAL)
+          .map(dimId => {
+            const found = dimensionScores.find(([id]) => id === dimId);
+            const score = Math.round(found?.[1]?.mean ?? 0);
+            if (score < 51) return null;
+            const mapping = cafesMappings.find(m => m.nai_dimension_id === dimId);
+            if (!mapping) return null;
+            const facets = Array.isArray(mapping.facets) ? mapping.facets : [];
+            const aiQuestions = interpMap[`nai_coach_questions_${dimId}`]?.questions;
+            const fallbackQuestions = Array.isArray(mapping.coaching_questions) ? mapping.coaching_questions : [];
+            const questions: string[] = Array.isArray(aiQuestions) && aiQuestions.length > 0 ? aiQuestions : fallbackQuestions;
+            return {
+              dimensionId: dimId,
+              dimensionName: dimensionNameMap.get(dimId) ?? NAI_DIMENSION_NAMES_LOCAL[dimId] ?? dimId,
+              score,
+              band: bandOf(score),
+              color: NAI_DIMENSION_COLORS[dimId] ?? "#021F36",
+              pastelColor: NAI_DIMENSION_PASTEL[dimId] ?? "#F9F7F1",
+              primaryPtpDomain: mapping.primary_ptp_domain,
+              secondaryPtpDomain: mapping.secondary_ptp_domain,
+              ptpFacets: facets.map((f: any) => {
+                const workRef = Array.isArray(f.work_items) ? f.work_items[0] : f.work_item;
+                const socialRef = Array.isArray(f.social_items) ? f.social_items[0] : f.social_item;
+                return {
+                  name: f.name ?? f.facet_name,
+                  refs: [workRef, socialRef].filter(Boolean).join(", "),
+                };
+              }),
+              coachingQuestions: questions,
+            };
+          })
+          .filter((m): m is NonNullable<typeof m> => m !== null)
+      : [];
+
+    const highlightsForPdf = dimensionsForPdf.map(d => {
+      const highlight = interpMap[`nai_dimension_highlight_${d.dimensionId}`];
+      return {
+        dimensionId: d.dimensionId,
+        name: d.name,
+        score: d.score,
+        band: d.band,
+        color: d.color,
+        pastelColor: d.pastelColor,
+        highlight: highlight?.highlight ?? null,
+        areasOfFocus: highlight?.areas_of_focus ?? null,
+      };
+    });
+
+    const crossAssessmentData = interpMap.nai_cross_assessment;
+    const crossAssessment = crossAssessmentData
+      ? {
+          interpretation: crossAssessmentData.interpretation ?? "",
+          suggestions: Array.isArray(crossAssessmentData.suggestions) ? crossAssessmentData.suggestions : [],
+        }
+      : null;
+
+    const patternAlertData = interpMap.nai_pattern_alert;
+    const patternAlert = coachViewActive && patternAlertData
+      ? {
+          body: patternAlertData.body ?? "",
+          suggestions: Array.isArray(patternAlertData.suggestions) ? patternAlertData.suggestions : [],
+        }
+      : null;
+
+    const pdfData: NaiPdfData = {
+      userName: displayName ?? "Participant",
+      instrumentName: selected.instrument_name,
+      instrumentShortName: selected.instrument_short_name ?? "NAI",
+      instrumentVersion: selected.result.instrument_version ?? "—",
+      dateTaken: selected.completed_at ? format(new Date(selected.completed_at), "MMMM d, yyyy") : "—",
+      isCoachView: coachViewActive,
+      statCards: [
+        { label: "Dimensions Assessed", value: String(dimensionScores.length) },
+        { label: "Highest Dimension", value: resolveDimensionName(highestDimension) },
+        { label: "Lowest Dimension", value: resolveDimensionName(lowestDimension) },
+      ],
+      dimensions: dimensionsForPdf,
+      profileOverviewText: interpMap.nai_profile_overview?.text ?? null,
+      dimensionHighlights: highlightsForPdf,
+      patternAlert,
+      outlierItems,
+      cafesPtpMapping: cafesMappingForPdf,
+      crossAssessment,
+      assessmentResponses,
+    };
+
+    generateNaiPdf(pdfData, sections);
+  }, [selected, isNAI, coachViewActive, dimensionScores, dimensionNameMap, displayName, highestDimension, lowestDimension]);
+
   const chatMessagesRef = useRef<Array<{role: 'user' | 'assistant'; content: string; timestamp: Date}>>([]);
   const chatSessionIdRef = useRef<string | null>(null);
 
@@ -1318,7 +1535,10 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
           <ExportPdfModal
             open={exportModalOpen}
             onOpenChange={setExportModalOpen}
-            onExport={handlePdfExport}
+            instrumentType={isNAI ? "NAI" : (effectiveSelected?.isPTP ? "PTP" : "OTHER")}
+            isCoachView={coachViewActive}
+            onExportPtp={handlePdfExport}
+            onExportNai={handleNaiPdfExport}
           />
             </>
           )}
