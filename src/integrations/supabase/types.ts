@@ -99,6 +99,8 @@ export type Database = {
       assessment_purchases: {
         Row: {
           amount_paid: number
+          consumed_at: string | null
+          consumed_by_assessment_id: string | null
           id: string
           instrument_id: string
           purchased_at: string
@@ -108,6 +110,8 @@ export type Database = {
         }
         Insert: {
           amount_paid: number
+          consumed_at?: string | null
+          consumed_by_assessment_id?: string | null
           id?: string
           instrument_id: string
           purchased_at?: string
@@ -117,6 +121,8 @@ export type Database = {
         }
         Update: {
           amount_paid?: number
+          consumed_at?: string | null
+          consumed_by_assessment_id?: string | null
           id?: string
           instrument_id?: string
           purchased_at?: string
@@ -125,6 +131,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "assessment_purchases_consumed_by_assessment_id_fkey"
+            columns: ["consumed_by_assessment_id"]
+            isOneToOne: false
+            referencedRelation: "assessments"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "assessment_purchases_user_id_fkey"
             columns: ["user_id"]
@@ -1496,6 +1509,14 @@ export type Database = {
     }
     Functions: {
       close_chat_session: { Args: { p_session_id: string }; Returns: undefined }
+      consume_assessment_purchase: {
+        Args: {
+          p_assessment_id: string
+          p_instrument_short_name: string
+          p_user_id: string
+        }
+        Returns: string
+      }
       current_user_account_type: { Args: never; Returns: string }
       current_user_org_id: { Args: never; Returns: string }
       get_own_immutable_fields: {
