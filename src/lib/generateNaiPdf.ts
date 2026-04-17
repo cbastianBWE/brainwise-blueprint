@@ -109,16 +109,35 @@ export function generateNaiPdf(data: NaiPdfData, sections: NaiPdfSections): void
     doc.line(MARGIN_L, FOOTER_Y - 3, PAGE_W - MARGIN_R, FOOTER_Y - 3);
   };
 
+  let currentSectionTitle: string | null = null;
+
+  const renderContinuationHeader = () => {
+    if (!currentSectionTitle) return;
+    doc.setFontSize(10);
+    doc.setTextColor(...MUTED);
+    doc.setFont("helvetica", "italic");
+    doc.text(`${currentSectionTitle} (cont.)`, MARGIN_L, y);
+    y += 2;
+    doc.setDrawColor(220, 220, 220);
+    doc.setLineWidth(0.3);
+    doc.line(MARGIN_L, y, MARGIN_L + CONTENT_W, y);
+    y += 5;
+    doc.setFont("helvetica", "normal");
+  };
+
   const checkPageBreak = (needed: number) => {
     if (y + needed > PAGE_H - MARGIN_B) {
       addFooter();
       doc.addPage();
       y = MARGIN_T;
+      if (currentSectionTitle) renderContinuationHeader();
     }
   };
 
-  const sectionHeading = (title: string) => {
-    checkPageBreak(15);
+  const sectionHeading = (title: string, minContentNeeded = 25) => {
+    // Require enough room for heading + at least the start of first content card
+    checkPageBreak(15 + minContentNeeded);
+    currentSectionTitle = title;
     y += 4;
     doc.setFontSize(13);
     doc.setTextColor(...NAVY);
@@ -357,9 +376,10 @@ export function generateNaiPdf(data: NaiPdfData, sections: NaiPdfSections): void
     for (const item of data.outlierItems) {
       const rgb = hexToRgb(item.dimensionId ? (data.dimensions.find(d => d.dimensionId === item.dimensionId)?.color ?? "#021F36") : "#021F36");
       const threshold = item.score >= 85 ? "Significant (85+)" : "Notable (75+)";
-      const itemTextLines = doc.splitTextToSize(`"${item.itemText}"`, CONTENT_W - 20);
-      const interpLines = item.interpretation ? doc.splitTextToSize(cleanMarkdown(item.interpretation), CONTENT_W - 20) : [];
-      const relatedLine = item.relatedPtpFacets ? doc.splitTextToSize(`Related PTP facets: ${item.relatedPtpFacets}`, CONTENT_W - 20) : [];
+      // Italic quote: below the badge area, so it can use the full card width
+      const itemTextLines = doc.splitTextToSize(`"${item.itemText}"`, CONTENT_W - 10);
+      const interpLines = item.interpretation ? doc.splitTextToSize(cleanMarkdown(item.interpretation), CONTENT_W - 10) : [];
+      const relatedLine = item.relatedPtpFacets ? doc.splitTextToSize(`Related PTP facets: ${item.relatedPtpFacets}`, CONTENT_W - 10) : [];
       const cardH = 15 + itemTextLines.length * 4 + relatedLine.length * 4 + interpLines.length * 4.5 + 10;
       checkPageBreak(cardH + 4);
       doc.setFillColor(rgb[0], rgb[1], rgb[2]);
@@ -373,7 +393,9 @@ export function generateNaiPdf(data: NaiPdfData, sections: NaiPdfSections): void
       doc.setFontSize(9);
       doc.setFont("helvetica", "bold");
       doc.setTextColor(...BLACK);
-      doc.text(item.facetName, MARGIN_L + 5, y + 5);
+      // Name uses narrow width (badge is present)
+      const nameLines = doc.splitTextToSize(item.facetName, CONTENT_W - 20);
+      doc.text(nameLines[0] ?? item.facetName, MARGIN_L + 5, y + 5);
       doc.setFontSize(7.5);
       doc.setFont("helvetica", "normal");
       doc.setTextColor(rgb[0], rgb[1], rgb[2]);
@@ -481,12 +503,18 @@ export function generateNaiPdf(data: NaiPdfData, sections: NaiPdfSections): void
       doc.setFont("helvetica", "normal");
       doc.setTextColor(...BLACK);
       for (const s of data.crossAssessment.suggestions) {
-        const lines = doc.splitTextToSize(`• ${cleanMarkdown(s)}`, CONTENT_W - 6);
-        for (const l of lines) {
-          checkPageBreak(5);
-          doc.text(l, MARGIN_L + 3, y);
+        // Render bullet with hanging indent: text below first line aligns with text, not bullet
+        const bulletX = MARGIN_L + 3;
+        const textX = MARGIN_L + 7;
+        const textWidth = CONTENT_W - 10;
+        const textLines = doc.splitTextToSize(cleanMarkdown(s), textWidth);
+        checkPageBreak(5);
+        doc.text("•", bulletX, y);
+        textLines.forEach((line: string, idx: number) => {
+          if (idx > 0) checkPageBreak(5);
+          doc.text(line, textX, y);
           y += 4.5;
-        }
+        });
       }
       y += 4;
     }
