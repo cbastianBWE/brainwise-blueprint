@@ -109,16 +109,35 @@ export function generateNaiPdf(data: NaiPdfData, sections: NaiPdfSections): void
     doc.line(MARGIN_L, FOOTER_Y - 3, PAGE_W - MARGIN_R, FOOTER_Y - 3);
   };
 
+  let currentSectionTitle: string | null = null;
+
+  const renderContinuationHeader = () => {
+    if (!currentSectionTitle) return;
+    doc.setFontSize(10);
+    doc.setTextColor(...MUTED);
+    doc.setFont("helvetica", "italic");
+    doc.text(`${currentSectionTitle} (cont.)`, MARGIN_L, y);
+    y += 2;
+    doc.setDrawColor(220, 220, 220);
+    doc.setLineWidth(0.3);
+    doc.line(MARGIN_L, y, MARGIN_L + CONTENT_W, y);
+    y += 5;
+    doc.setFont("helvetica", "normal");
+  };
+
   const checkPageBreak = (needed: number) => {
     if (y + needed > PAGE_H - MARGIN_B) {
       addFooter();
       doc.addPage();
       y = MARGIN_T;
+      if (currentSectionTitle) renderContinuationHeader();
     }
   };
 
-  const sectionHeading = (title: string) => {
-    checkPageBreak(15);
+  const sectionHeading = (title: string, minContentNeeded = 25) => {
+    // Require enough room for heading + at least the start of first content card
+    checkPageBreak(15 + minContentNeeded);
+    currentSectionTitle = title;
     y += 4;
     doc.setFontSize(13);
     doc.setTextColor(...NAVY);
