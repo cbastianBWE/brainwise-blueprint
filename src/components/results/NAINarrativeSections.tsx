@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, ChevronUp, AlertTriangle } from "lucide-react";
 
+
 const NAI_DIMENSION_COLORS: Record<string, string> = {
   "DIM-NAI-01": "#021F36",
   "DIM-NAI-02": "#F5741A",
