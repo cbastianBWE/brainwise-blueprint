@@ -252,7 +252,7 @@ export default function InstrumentSelection({ onSelect }: Props) {
           const coachPaid = coachPaidInstrumentIds.has(instrumentUuid);
           const hasPurchase = purchasedInstrumentIds.has(instrumentUuid) || purchasedInstrumentIds.has(inst.instrument_id) || purchasedInstrumentIds.has(inst.short_name);
           const hasCompleted = completedInstrumentIds.has(inst.instrument_id);
-          const purchaseAccess = hasPurchase && !hasCompleted;
+          const purchaseAccess = hasPurchase;
           const selfPayCoachInvited = selfPayCoachInstrumentIds.has(instrumentUuid);
 
           const isInProgress = inProgressInstrumentIds.has(inst.instrument_id);
