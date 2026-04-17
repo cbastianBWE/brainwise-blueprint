@@ -376,9 +376,10 @@ export function generateNaiPdf(data: NaiPdfData, sections: NaiPdfSections): void
     for (const item of data.outlierItems) {
       const rgb = hexToRgb(item.dimensionId ? (data.dimensions.find(d => d.dimensionId === item.dimensionId)?.color ?? "#021F36") : "#021F36");
       const threshold = item.score >= 85 ? "Significant (85+)" : "Notable (75+)";
-      const itemTextLines = doc.splitTextToSize(`"${item.itemText}"`, CONTENT_W - 20);
-      const interpLines = item.interpretation ? doc.splitTextToSize(cleanMarkdown(item.interpretation), CONTENT_W - 20) : [];
-      const relatedLine = item.relatedPtpFacets ? doc.splitTextToSize(`Related PTP facets: ${item.relatedPtpFacets}`, CONTENT_W - 20) : [];
+      // Italic quote: below the badge area, so it can use the full card width
+      const itemTextLines = doc.splitTextToSize(`"${item.itemText}"`, CONTENT_W - 10);
+      const interpLines = item.interpretation ? doc.splitTextToSize(cleanMarkdown(item.interpretation), CONTENT_W - 10) : [];
+      const relatedLine = item.relatedPtpFacets ? doc.splitTextToSize(`Related PTP facets: ${item.relatedPtpFacets}`, CONTENT_W - 10) : [];
       const cardH = 15 + itemTextLines.length * 4 + relatedLine.length * 4 + interpLines.length * 4.5 + 10;
       checkPageBreak(cardH + 4);
       doc.setFillColor(rgb[0], rgb[1], rgb[2]);
@@ -392,7 +393,9 @@ export function generateNaiPdf(data: NaiPdfData, sections: NaiPdfSections): void
       doc.setFontSize(9);
       doc.setFont("helvetica", "bold");
       doc.setTextColor(...BLACK);
-      doc.text(item.facetName, MARGIN_L + 5, y + 5);
+      // Name uses narrow width (badge is present)
+      const nameLines = doc.splitTextToSize(item.facetName, CONTENT_W - 20);
+      doc.text(nameLines[0] ?? item.facetName, MARGIN_L + 5, y + 5);
       doc.setFontSize(7.5);
       doc.setFont("helvetica", "normal");
       doc.setTextColor(rgb[0], rgb[1], rgb[2]);
