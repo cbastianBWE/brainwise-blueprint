@@ -134,8 +134,11 @@ export function generateNaiPdf(data: NaiPdfData, sections: NaiPdfSections): void
     }
   };
 
-  const sectionHeading = (title: string, minContentNeeded = 25) => {
-    // Require enough room for heading + at least the start of first content card
+  const sectionHeading = (title: string, minContentNeeded = 50) => {
+    // Clear previous section title BEFORE the page-break check so we don't
+    // render the previous section's continuation header on a new page.
+    currentSectionTitle = null;
+    // Require enough room for heading + at least the start of first content card.
     checkPageBreak(15 + minContentNeeded);
     currentSectionTitle = title;
     y += 4;
@@ -300,7 +303,7 @@ export function generateNaiPdf(data: NaiPdfData, sections: NaiPdfSections): void
 
   // ── DIMENSION HIGHLIGHTS ──
   if (sections.dimensionHighlights && data.dimensionHighlights.length > 0) {
-    sectionHeading("Dimension Highlights");
+    sectionHeading("Dimension Highlights", 55);
     for (const dim of data.dimensionHighlights) {
       const rgb = hexToRgb(dim.color);
       const pastelRgb = hexToRgb(dim.pastelColor);
@@ -376,9 +379,15 @@ export function generateNaiPdf(data: NaiPdfData, sections: NaiPdfSections): void
     for (const item of data.outlierItems) {
       const rgb = hexToRgb(item.dimensionId ? (data.dimensions.find(d => d.dimensionId === item.dimensionId)?.color ?? "#021F36") : "#021F36");
       const threshold = item.score >= 85 ? "Significant (85+)" : "Notable (75+)";
-      // Italic quote: below the badge area, so it can use the full card width
+      // IMPORTANT: splitTextToSize uses the CURRENT font for width calc.
+      // Set font to match rendering font BEFORE splitting, or wrap widths come out wrong.
+      doc.setFontSize(7.5);
+      doc.setFont("helvetica", "italic");
       const itemTextLines = doc.splitTextToSize(`"${item.itemText}"`, CONTENT_W - 10);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8);
       const interpLines = item.interpretation ? doc.splitTextToSize(cleanMarkdown(item.interpretation), CONTENT_W - 10) : [];
+      doc.setFontSize(7.5);
       const relatedLine = item.relatedPtpFacets ? doc.splitTextToSize(`Related PTP facets: ${item.relatedPtpFacets}`, CONTENT_W - 10) : [];
       const cardH = 15 + itemTextLines.length * 4 + relatedLine.length * 4 + interpLines.length * 4.5 + 10;
       checkPageBreak(cardH + 4);
