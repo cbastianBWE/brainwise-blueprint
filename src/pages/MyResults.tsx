@@ -179,6 +179,8 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
 
   const [shareWithCoach, setShareWithCoach] = useState<boolean | null>(null);
 
+  const [coachViewActive, setCoachViewActive] = useState(isCoachView);
+
   const [chatOpen, setChatOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState<Array<{role: 'user' | 'assistant'; content: string; timestamp: Date}>>([]);
   const [chatInput, setChatInput] = useState('');
@@ -207,6 +209,10 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
         setShareWithCoach(data?.share_results_with_coach ?? false);
       });
   }, [isCoachView, targetUserId]);
+
+  useEffect(() => {
+    setCoachViewActive(isCoachView);
+  }, [isCoachView]);
 
   const displayName = isCoachView ? clientName : profile?.full_name;
 
@@ -930,6 +936,26 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
             </section>
           )}
 
+          {/* Coach/Client view toggle — only when coach is viewing client's NAI result */}
+          {isCoachView && isNAI && (
+            <section>
+              <Tabs
+                value={coachViewActive ? "coach" : "client"}
+                onValueChange={(v) => setCoachViewActive(v === "coach")}
+              >
+                <TabsList>
+                  <TabsTrigger value="coach">Coach Report</TabsTrigger>
+                  <TabsTrigger value="client">Client Report</TabsTrigger>
+                </TabsList>
+              </Tabs>
+              <p className="text-xs text-muted-foreground mt-2">
+                {coachViewActive
+                  ? "Coach view — includes pattern alert, coaching questions, and C.A.F.E.S.–PTP mapping."
+                  : "Client view — shows only what the client sees. PDF export will reflect this view."}
+              </p>
+            </section>
+          )}
+
           {/* SECTION 1 - Profile Overview */}
           <section className="space-y-4">
             <div>
@@ -1165,7 +1191,7 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
                 assessmentId={selected.result.assessment_id}
                 dimensionScores={dimensionScores as [string, { mean?: number; band?: string }][]}
                 dimensionNameMap={dimensionNameMap}
-                isCoachView={isCoachView}
+                isCoachView={coachViewActive}
                 permissionLevel={permissionLevel}
                 otherAssessments={assessments.filter(a => a.result.id !== selected?.result.id)}
               />

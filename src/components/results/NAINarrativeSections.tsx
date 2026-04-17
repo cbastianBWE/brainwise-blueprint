@@ -4,7 +4,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, ChevronUp, AlertTriangle } from "lucide-react";
 
-
 const NAI_DIMENSION_COLORS: Record<string, string> = {
   "DIM-NAI-01": "#021F36",
   "DIM-NAI-02": "#F5741A",
@@ -49,7 +48,14 @@ interface OutlierItem {
   dimension_id: string;
 }
 
-interface ResponseRow extends OutlierItem {}
+interface ResponseRow {
+  item_number: number;
+  facet_name: string;
+  item_text: string;
+  score: number | null;
+  dimension_id: string;
+  has_response: boolean;
+}
 
 interface OtherAssessment {
   instrument_name: string;
@@ -87,11 +93,12 @@ export default function NAINarrativeSections({
   const [responses, setResponses] = useState<ResponseRow[]>([]);
   const [outlierItems, setOutlierItems] = useState<OutlierItem[]>([]);
   const [interpretations, setInterpretations] = useState<Record<string, any>>({});
-  const [ptpScores, setPtpScores] = useState<Record<string, DimensionScore> | null>(null);
+  const [ptpScores, setPtpScores] = useState<Record<string, any> | null>(null);
   const [mappings, setMappings] = useState<Record<string, MappingRow>>({});
   const [loading, setLoading] = useState(true);
   const [responsesExpanded, setResponsesExpanded] = useState(false);
   const [expandedMapping, setExpandedMapping] = useState<Set<string>>(new Set());
+  const [expandedResponseId, setExpandedResponseId] = useState<number | null>(null);
 
   const dimNameOf = (dimId: string) =>
     dimensionNameMap.get(dimId) ?? NAI_DIMENSION_NAMES[dimId] ?? dimId;
@@ -102,27 +109,24 @@ export default function NAINarrativeSections({
     const run = async () => {
       setLoading(true);
 
-      // Parallel initial fetches
-      const [respRes, ptpResultRes] = await Promise.all([
-        supabase
-          .from("assessment_responses")
-          .select("response_value_numeric, is_reverse_scored, item_id")
-          .eq("assessment_id", assessmentId),
-        supabase
-          .from("assessment_results")
-          .select("dimension_scores, instrument_id")
-          .eq("instrument_id", "INST-002") // placeholder will be replaced below
-          .limit(0), // not used directly
-      ]);
+      const { data: allItems } = await supabase
+        .from("items")
+        .select("item_id, item_text, item_number, dimension_id, facet_name")
+        .eq("instrument_id", "INST-002")
+        .order("item_number");
 
-      // Fetch PTP via assessments → results lookup using the user owning this NAI result
+      const { data: responsesData } = await supabase
+        .from("assessment_responses")
+        .select("response_value_numeric, is_reverse_scored, item_id")
+        .eq("assessment_id", assessmentId);
+
       const { data: thisResult } = await supabase
         .from("assessment_results")
         .select("user_id")
         .eq("id", assessmentResultId)
         .maybeSingle();
 
-      let ptp: Record<string, DimensionScore> | null = null;
+      let ptp: Record<string, any> | null = null;
       if (thisResult?.user_id) {
         const { data: ptpRow } = await supabase
           .from("assessment_results")
@@ -133,46 +137,47 @@ export default function NAINarrativeSections({
           .limit(1)
           .maybeSingle();
         if (ptpRow?.dimension_scores) {
-          ptp = ptpRow.dimension_scores as Record<string, DimensionScore>;
+          ptp = ptpRow.dimension_scores as Record<string, any>;
         }
       }
       if (!cancelled) setPtpScores(ptp);
 
-      // Build responses & outliers
-      let allResponses: ResponseRow[] = [];
-      let outliers: OutlierItem[] = [];
-      const responsesData = respRes.data;
-      if (responsesData?.length) {
-        const itemIds = responsesData.map((r) => r.item_id);
-        const { data: items } = await supabase
-          .from("items")
-          .select("item_id, item_text, item_number, dimension_id, facet_name")
-          .in("item_id", itemIds);
-        const itemMap = new Map((items ?? []).map((i) => [i.item_id, i]));
-
-        allResponses = responsesData.map((r) => {
-          const item = itemMap.get(r.item_id);
+      const responseByItem = new Map(
+        (responsesData ?? []).map((r) => [r.item_id, r])
+      );
+      const allResponses: ResponseRow[] = (allItems ?? []).map((item) => {
+        const r = responseByItem.get(item.item_id);
+        let score: number | null = null;
+        if (r) {
           const raw = Number(r.response_value_numeric);
-          const value = r.is_reverse_scored ? 100 - raw : raw;
-          return {
-            item_number: item?.item_number ?? 0,
-            facet_name: item?.facet_name ?? item?.item_text?.slice(0, 40) ?? "",
-            item_text: item?.item_text ?? "",
-            score: Math.round(value),
-            dimension_id: item?.dimension_id ?? "",
-          };
-        });
+          score = Math.round(r.is_reverse_scored ? 100 - raw : raw);
+        }
+        return {
+          item_number: item.item_number ?? 0,
+          facet_name: item.facet_name ?? item.item_text?.slice(0, 40) ?? "",
+          item_text: item.item_text ?? "",
+          score,
+          dimension_id: item.dimension_id ?? "",
+          has_response: !!r,
+        };
+      });
 
-        outliers = allResponses
-          .filter((r) => r.score >= 75)
-          .sort((a, b) => b.score - a.score);
-      }
+      const outliers: OutlierItem[] = allResponses
+        .filter((r) => r.has_response && (r.score ?? 0) >= 75)
+        .map((r) => ({
+          item_number: r.item_number,
+          facet_name: r.facet_name,
+          item_text: r.item_text,
+          score: r.score ?? 0,
+          dimension_id: r.dimension_id,
+        }))
+        .sort((a, b) => b.score - a.score);
+
       if (!cancelled) {
         setResponses(allResponses);
         setOutlierItems(outliers);
       }
 
-      // Required section_types
       const requiredSections = [
         "nai_profile_overview",
         ...Object.keys(NAI_DIMENSION_NAMES).map((d) => `nai_dimension_highlight_${d}`),
@@ -224,7 +229,6 @@ export default function NAINarrativeSections({
 
       if (!cancelled) setInterpretations(interpMap);
 
-      // Coach-only mappings for elevated dimensions
       if (isCoachView) {
         const elevatedDimIds = dimensionScores
           .filter(([, s]) => (s.mean ?? 0) >= 51)
@@ -239,6 +243,8 @@ export default function NAINarrativeSections({
             m[row.nai_dimension_id] = row as MappingRow;
           });
           if (!cancelled) setMappings(m);
+        } else {
+          if (!cancelled) setMappings({});
         }
       }
 
@@ -269,11 +275,11 @@ export default function NAINarrativeSections({
 
   if (isCoachView && permissionLevel === "score_summary") {
     return (
-      <div className="rounded-lg border border-border bg-muted/30 p-6">
-        <p className="text-sm text-muted-foreground">
+      <section>
+        <div className="rounded-lg border border-border bg-muted/30 p-4 text-sm text-muted-foreground">
           The client has limited coach access to scores only.
-        </p>
-      </div>
+        </div>
+      </section>
     );
   }
 
@@ -289,63 +295,133 @@ export default function NAINarrativeSections({
     });
   };
 
+  const toggleResponseCard = (itemNumber: number) => {
+    setExpandedResponseId((prev) => (prev === itemNumber ? null : itemNumber));
+  };
+
+  const renderOutlierSection = () => {
+    if (outlierItems.length === 0) return null;
+    return (
+      <section className="space-y-3">
+        <h3 className="text-lg font-semibold text-foreground">Individual responses that warrant attention</h3>
+        <div className="space-y-2">
+          {outlierItems.map((item) => {
+            const color = NAI_DIMENSION_COLORS[item.dimension_id] ?? "#021F36";
+            const significant = item.score >= 85;
+            const interp = interpretations[`nai_item_interpretation_${item.item_number}`];
+            const mapping = mappings[item.dimension_id];
+            const relatedFacets: any[] = Array.isArray(mapping?.facets) ? mapping.facets : [];
+            const isOpen = expandedResponseId === item.item_number;
+
+            return (
+              <div key={item.item_number} className="rounded-lg border border-border overflow-hidden bg-card">
+                <button
+                  onClick={() => toggleResponseCard(item.item_number)}
+                  className="w-full text-left p-4 flex gap-3 items-start hover:bg-muted/20 transition-colors"
+                >
+                  <div
+                    className="flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center text-white font-semibold text-sm"
+                    style={{ backgroundColor: color }}
+                  >
+                    {item.score}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium text-foreground">{item.facet_name}</div>
+                    <div className="text-xs text-muted-foreground mt-1 flex items-center gap-2 flex-wrap">
+                      <span>{dimNameOf(item.dimension_id)}</span>
+                      <span>•</span>
+                      <span className={significant ? "font-semibold text-foreground" : ""}>
+                        {significant ? "Significant (85+)" : "Notable (75+)"}
+                      </span>
+                    </div>
+                  </div>
+                  {isOpen ? (
+                    <ChevronUp className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-1" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-1" />
+                  )}
+                </button>
+                {isOpen && (
+                  <div className="px-4 pb-4 pt-0 space-y-3 border-t border-border bg-muted/10">
+                    <p className="text-sm text-foreground italic mt-3">"{item.item_text}"</p>
+                    {isCoachView && relatedFacets.length > 0 && (
+                      <p className="text-xs text-muted-foreground">
+                        <span className="font-medium">Related PTP facets:</span>{" "}
+                        {relatedFacets
+                          .map((f: any) => {
+                            const workRef = Array.isArray(f.work_items) ? f.work_items[0] : f.work_item;
+                            const socialRef = Array.isArray(f.social_items) ? f.social_items[0] : f.social_item;
+                            const refs = [workRef, socialRef].filter(Boolean).join(", ");
+                            const name = f.name ?? f.facet_name;
+                            return refs ? `${name} (${refs})` : name;
+                          })
+                          .filter(Boolean)
+                          .join("; ")}
+                      </p>
+                    )}
+                    {loading || !interp?.text ? (
+                      <p className="text-sm text-muted-foreground italic">Generating interpretation...</p>
+                    ) : (
+                      <p className="text-sm text-foreground whitespace-pre-line">{interp.text}</p>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </section>
+    );
+  };
+
   return (
-    <div className="space-y-8">
-      {/* Pattern alert (coach view) */}
+    <div className="space-y-6">
       {showPatternAlert && (
-        <section>
-          <div
-            className="rounded-lg p-4 border-l-4 flex gap-3"
-            style={{ backgroundColor: "#FEF2F2", borderLeftColor: "#DC2626" }}
-          >
-            <AlertTriangle className="h-5 w-5 shrink-0 mt-0.5" style={{ color: "#DC2626" }} />
-            <div>
-              <p className="font-semibold text-sm" style={{ color: "#7F1D1D" }}>
+        <div
+          className="rounded-lg p-4 border-l-4"
+          style={{ backgroundColor: "#F9F7F1", borderLeftColor: "#021F36" }}
+        >
+          <div className="flex gap-3">
+            <AlertTriangle className="h-5 w-5 flex-shrink-0 mt-0.5" style={{ color: "#021F36" }} />
+            <div className="space-y-1">
+              <p className="font-semibold text-foreground">
                 Pattern alert — broad Protection activation.
               </p>
-              <p className="text-sm mt-1" style={{ color: "#7F1D1D" }}>
+              <p className="text-sm text-foreground">
                 {elevatedCount} dimensions are elevated. Address the Protection system directly before working through individual dimensions.
                 {egoElevated && " Ego Stability is among the elevated dimensions — begin there."}
               </p>
             </div>
           </div>
-        </section>
+        </div>
       )}
 
-      {/* Section 1: Profile overview */}
-      <section>
-        <h3 className="text-lg font-semibold mb-3">Profile overview</h3>
+      <section className="space-y-3">
+        <h3 className="text-lg font-semibold text-foreground">Profile overview</h3>
         <div
-          className="rounded-lg p-5"
-          style={{ backgroundColor: "#F9F7F1", borderLeft: "4px solid #021F36", borderRadius: "0 8px 8px 0" }}
+          className="rounded-lg p-5 border-l-4"
+          style={{ backgroundColor: "#F9F7F1", borderLeftColor: "#021F36" }}
         >
           {loading || !profileOverview ? (
-            <p className="text-sm text-muted-foreground">Generating profile overview...</p>
+            <p className="text-sm text-muted-foreground italic">Generating profile overview...</p>
           ) : (
-            <p className="text-sm leading-relaxed" style={{ color: "#021F36" }}>
-              {profileOverview}
-            </p>
+            <p className="text-sm text-foreground whitespace-pre-line">{profileOverview}</p>
           )}
         </div>
       </section>
 
-      {/* Section 2: NAI Overview placeholder */}
-      <section>
-        <div
-          className="rounded-lg p-5"
-          style={{ backgroundColor: "#F9F7F1", borderLeft: "4px solid #021F36", borderRadius: "0 8px 8px 0" }}
-        >
-          <h3 className="text-lg font-semibold mb-2" style={{ color: "#021F36" }}>NAI Overview</h3>
-          <p className="text-sm leading-relaxed" style={{ color: "#6D6875" }}>
+      <section className="space-y-3">
+        <div className="rounded-lg border border-border bg-card p-5">
+          <h3 className="text-lg font-semibold text-foreground mb-2">NAI Overview</h3>
+          <p className="text-sm text-muted-foreground">
             Content coming soon. This section will provide a brief introduction to the Neuroscience Adoption Index framework, its neuroscientific basis, and how the five C.A.F.E.S. dimensions connect to the brain's protection system.
           </p>
         </div>
       </section>
 
-      {/* Section 3: Dimension highlights */}
-      <section>
-        <h3 className="text-lg font-semibold mb-3">Dimension highlights</h3>
-        <div className="space-y-3">
+      <section className="space-y-3">
+        <h3 className="text-lg font-semibold text-foreground">Dimension highlights</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {sortedDims.map(([dimId, score]) => {
             const mean = Math.round(score.mean ?? 0);
             const color = NAI_DIMENSION_COLORS[dimId] ?? "#021F36";
@@ -358,33 +434,31 @@ export default function NAINarrativeSections({
             return (
               <div
                 key={dimId}
-                className="rounded-lg p-4 border-l-4"
+                className="rounded-lg p-4 border-l-4 space-y-2"
                 style={{ backgroundColor: pastel, borderLeftColor: color }}
               >
-                <div className="flex items-center gap-2 mb-2 flex-wrap">
-                  <h4 className="font-semibold text-sm" style={{ color }}>
+                <div className="flex items-start justify-between gap-2">
+                  <div className="font-semibold" style={{ color }}>
                     {name} — {mean}
-                  </h4>
+                  </div>
                   <span
-                    className="text-xs font-medium px-2 py-0.5 rounded-full"
-                    style={{ backgroundColor: color + "20", color }}
+                    className="text-xs px-2 py-0.5 rounded-full font-medium text-white flex-shrink-0"
+                    style={{ backgroundColor: color }}
                   >
                     {band}
                   </span>
                 </div>
                 {loading ? (
-                  <p className="text-sm text-muted-foreground">Generating...</p>
+                  <p className="text-xs text-muted-foreground italic">Generating...</p>
                 ) : (
                   <>
-                    {highlight && (
-                      <p className="text-sm leading-relaxed text-foreground mb-2">{highlight}</p>
-                    )}
+                    {highlight && <p className="text-sm text-foreground">{highlight}</p>}
                     {focus && (
                       <>
-                        <p className="text-xs font-semibold uppercase tracking-wide mt-2 mb-1" style={{ color }}>
+                        <div className="text-xs font-semibold text-foreground mt-2 uppercase tracking-wide">
                           Areas of focus
-                        </p>
-                        <p className="text-sm leading-relaxed text-muted-foreground">{focus}</p>
+                        </div>
+                        <p className="text-sm text-foreground">{focus}</p>
                       </>
                     )}
                   </>
@@ -395,14 +469,13 @@ export default function NAINarrativeSections({
         </div>
       </section>
 
-      {/* Section 4: PTP prompt (client only) */}
       {!isCoachView && !ptpCompleted && anyDim50Plus && (
         <section>
           <div
-            className="rounded-lg p-5 border"
-            style={{ backgroundColor: "hsl(217 91% 97%)", borderColor: "hsl(217 91% 80%)" }}
+            className="rounded-lg p-5 border-l-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
+            style={{ backgroundColor: "#F9F7F1", borderLeftColor: "#021F36" }}
           >
-            <p className="text-sm text-foreground leading-relaxed mb-3">
+            <p className="text-sm text-foreground flex-1">
               One or more of your C.A.F.E.S. dimensions are elevated. Completing the Personal Threat Profile (PTP) will unlock a cross-assessment analysis giving you significantly more insight into what is driving your scores.
             </p>
             <Button onClick={() => navigate("/assessment?instrument=INST-001")}>
@@ -412,113 +485,12 @@ export default function NAINarrativeSections({
         </section>
       )}
 
-      {/* Section 5: Items needing attention (client) */}
-      {!isCoachView && outlierItems.length > 0 && (
-        <section>
-          <h3 className="text-lg font-semibold mb-3">Individual responses that warrant attention</h3>
-          <div className="space-y-3">
-            {outlierItems.map((item) => {
-              const color = NAI_DIMENSION_COLORS[item.dimension_id] ?? "#021F36";
-              const significant = item.score >= 85;
-              const interp = interpretations[`nai_item_interpretation_${item.item_number}`];
-              return (
-                <div
-                  key={item.item_number}
-                  className="rounded-lg border-l-4 border border-border p-4 flex gap-3"
-                  style={{ borderLeftColor: color }}
-                >
-                  <span
-                    className="px-2 py-1 rounded text-sm font-bold text-white shrink-0 h-fit"
-                    style={{ backgroundColor: color }}
-                  >
-                    {item.score}
-                  </span>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-sm text-foreground">{item.facet_name}</p>
-                    <p className="text-xs mt-0.5">
-                      <span style={{ color }}>{dimNameOf(item.dimension_id)}</span>
-                      <span className="mx-2 text-muted-foreground">•</span>
-                      <span style={{ color: significant ? "#DC2626" : "#F59E0B", fontWeight: 600 }}>
-                        {significant ? "Significant (85+)" : "Notable (75+)"}
-                      </span>
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-1 italic">{item.item_text}</p>
-                    {loading || !interp?.text ? (
-                      <p className="text-sm text-muted-foreground mt-2">Generating interpretation...</p>
-                    ) : (
-                      <p className="text-sm text-foreground mt-2 leading-relaxed">{interp.text}</p>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </section>
-      )}
+      {renderOutlierSection()}
 
-      {/* Section 6: Item outliers (coach view) */}
-      {isCoachView && outlierItems.length > 0 && (
-        <section>
-          <h3 className="text-lg font-semibold mb-3">Individual item outliers</h3>
-          <div className="space-y-3">
-            {outlierItems.map((item) => {
-              const color = NAI_DIMENSION_COLORS[item.dimension_id] ?? "#021F36";
-              const significant = item.score >= 85;
-              const interp = interpretations[`nai_item_interpretation_${item.item_number}`];
-              const mapping = mappings[item.dimension_id];
-              const relatedFacets: any[] = Array.isArray(mapping?.facets) ? mapping.facets : [];
-              return (
-                <div
-                  key={item.item_number}
-                  className="rounded-lg border-l-4 border border-border p-4 flex gap-3"
-                  style={{ borderLeftColor: color }}
-                >
-                  <span
-                    className="px-2 py-1 rounded text-sm font-bold text-white shrink-0 h-fit"
-                    style={{ backgroundColor: color }}
-                  >
-                    {item.score}
-                  </span>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-sm text-foreground">{item.facet_name}</p>
-                    <p className="text-xs mt-0.5">
-                      <span style={{ color }}>{dimNameOf(item.dimension_id)}</span>
-                      <span className="mx-2 text-muted-foreground">•</span>
-                      <span style={{ color: significant ? "#DC2626" : "#F59E0B", fontWeight: 600 }}>
-                        {significant ? "Significant (85+)" : "Notable (75+)"}
-                      </span>
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-1 italic">{item.item_text}</p>
-                    {relatedFacets.length > 0 && (
-                      <p className="text-xs text-muted-foreground mt-2">
-                        <span className="font-semibold">Related PTP facets:</span>{" "}
-                        {relatedFacets
-                          .map((f: any) => {
-                            const refs = [f.work_item, f.social_item].filter(Boolean).join(", ");
-                            return refs ? `${f.name ?? f.facet_name} (${refs})` : (f.name ?? f.facet_name);
-                          })
-                          .filter(Boolean)
-                          .join("; ")}
-                      </p>
-                    )}
-                    {loading || !interp?.text ? (
-                      <p className="text-sm text-muted-foreground mt-2">Generating interpretation...</p>
-                    ) : (
-                      <p className="text-sm text-foreground mt-2 leading-relaxed">{interp.text}</p>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </section>
-      )}
-
-      {/* Section 7: C.A.F.E.S.-PTP mapping (coach view) */}
       {isCoachView && Object.keys(mappings).length > 0 && (
-        <section>
-          <h3 className="text-lg font-semibold mb-3">C.A.F.E.S.–PTP mapping</h3>
-          <div className="space-y-3">
+        <section className="space-y-3">
+          <h3 className="text-lg font-semibold text-foreground">C.A.F.E.S.–PTP mapping</h3>
+          <div className="space-y-2">
             {sortedDims
               .filter(([dimId, s]) => (s.mean ?? 0) >= 51 && mappings[dimId])
               .map(([dimId, score]) => {
@@ -537,51 +509,47 @@ export default function NAINarrativeSections({
                   : fallbackQuestions;
                 const facets: any[] = Array.isArray(mapping.facets) ? mapping.facets : [];
                 return (
-                  <div key={dimId} className="rounded-lg border overflow-hidden" style={{ borderColor: color + "40" }}>
+                  <div key={dimId} className="rounded-lg border border-border overflow-hidden">
                     <button
                       onClick={() => toggleMapping(dimId)}
-                      className="w-full text-left p-4 flex items-center gap-3 hover:bg-muted/30 transition-colors"
-                      style={{ backgroundColor: pastel }}
+                      className="w-full text-left p-4 flex items-center gap-3 hover:opacity-90 transition-opacity"
+                      style={{ backgroundColor: pastel, borderLeft: `4px solid ${color}` }}
                     >
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-semibold text-sm" style={{ color }}>
-                            {dimNameOf(dimId)} — {mean}
-                          </span>
-                          <span
-                            className="text-xs font-medium px-2 py-0.5 rounded-full"
-                            style={{ backgroundColor: color + "20", color }}
-                          >
-                            {band}
-                          </span>
-                        </div>
+                      <div className="flex-1 flex items-center gap-3 flex-wrap">
+                        <span className="font-semibold" style={{ color }}>
+                          {dimNameOf(dimId)} — {mean}
+                        </span>
+                        <span
+                          className="text-xs px-2 py-0.5 rounded-full font-medium text-white"
+                          style={{ backgroundColor: color }}
+                        >
+                          {band}
+                        </span>
                       </div>
                       {isOpen ? (
-                        <ChevronUp className="w-4 h-4 text-muted-foreground shrink-0" />
+                        <ChevronUp className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                       ) : (
-                        <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0" />
+                        <ChevronDown className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                       )}
                     </button>
                     {isOpen && (
-                      <div className="p-4 border-t border-border space-y-4 bg-background">
-                        <div className="flex flex-wrap gap-2">
-                          <span className="text-xs px-2 py-1 rounded-full bg-muted font-medium">
-                            Primary: {mapping.primary_ptp_domain}
-                          </span>
-                          <span className="text-xs px-2 py-1 rounded-full bg-muted font-medium">
-                            Secondary: {mapping.secondary_ptp_domain}
-                          </span>
+                      <div className="p-4 space-y-3 bg-card border-t border-border">
+                        <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
+                          <span><span className="font-medium text-foreground">Primary:</span> <span className="text-muted-foreground">{mapping.primary_ptp_domain}</span></span>
+                          <span><span className="font-medium text-foreground">Secondary:</span> <span className="text-muted-foreground">{mapping.secondary_ptp_domain}</span></span>
                         </div>
                         {facets.length > 0 && (
                           <div>
-                            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
+                            <div className="text-xs font-semibold text-foreground uppercase tracking-wide mb-1">
                               PTP facets
-                            </p>
-                            <ul className="space-y-1">
+                            </div>
+                            <ul className="text-sm text-foreground space-y-0.5">
                               {facets.map((f: any, i: number) => {
-                                const refs = [f.work_item, f.social_item].filter(Boolean).join(", ");
+                                const workRef = Array.isArray(f.work_items) ? f.work_items[0] : f.work_item;
+                                const socialRef = Array.isArray(f.social_items) ? f.social_items[0] : f.social_item;
+                                const refs = [workRef, socialRef].filter(Boolean).join(", ");
                                 return (
-                                  <li key={i} className="text-sm text-foreground">
+                                  <li key={i}>
                                     • {f.name ?? f.facet_name}
                                     {refs && <span className="text-muted-foreground"> ({refs})</span>}
                                   </li>
@@ -592,16 +560,14 @@ export default function NAINarrativeSections({
                         )}
                         {questions.length > 0 && (
                           <div>
-                            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
+                            <div className="text-xs font-semibold text-foreground uppercase tracking-wide mb-1">
                               Opening coaching questions
-                            </p>
-                            <ul className="space-y-2">
+                            </div>
+                            <ol className="text-sm text-foreground space-y-1">
                               {questions.map((q, i) => (
-                                <li key={i} className="text-sm text-foreground leading-relaxed">
-                                  {i + 1}. {q}
-                                </li>
+                                <li key={i}>{i + 1}. {q}</li>
                               ))}
-                            </ul>
+                            </ol>
                           </div>
                         )}
                       </div>
@@ -613,32 +579,29 @@ export default function NAINarrativeSections({
         </section>
       )}
 
-      {/* Section 8: Cross-assessment interpretation */}
       {ptpCompleted && (
-        <section>
-          <h3 className="text-lg font-semibold mb-3">Cross-assessment interpretation</h3>
+        <section className="space-y-3">
+          <h3 className="text-lg font-semibold text-foreground">Cross-assessment interpretation</h3>
           <div
-            className="rounded-lg p-5"
-            style={{ backgroundColor: "#F9F7F1", borderLeft: "4px solid #021F36", borderRadius: "0 8px 8px 0" }}
+            className="rounded-lg p-5 border-l-4 space-y-3"
+            style={{ backgroundColor: "#F9F7F1", borderLeftColor: "#021F36" }}
           >
             {loading || !crossAssessment ? (
-              <p className="text-sm text-muted-foreground">Generating cross-assessment analysis...</p>
+              <p className="text-sm text-muted-foreground italic">Generating cross-assessment analysis...</p>
             ) : (
               <>
                 {crossAssessment.interpretation && (
-                  <p className="text-sm leading-relaxed text-foreground mb-4">
-                    {crossAssessment.interpretation}
-                  </p>
+                  <p className="text-sm text-foreground whitespace-pre-line">{crossAssessment.interpretation}</p>
                 )}
                 {Array.isArray(crossAssessment.suggestions) && crossAssessment.suggestions.length > 0 && (
                   <>
-                    <h4 className="text-sm font-semibold mb-2" style={{ color: "#021F36" }}>
+                    <div className="text-xs font-semibold text-foreground uppercase tracking-wide">
                       Suggested ways to support yourself
-                    </h4>
-                    <ul className="space-y-1.5">
+                    </div>
+                    <ul className="text-sm text-foreground space-y-1">
                       {crossAssessment.suggestions.map((s: string, i: number) => (
-                        <li key={i} className="text-sm text-foreground flex gap-2">
-                          <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-foreground/50 shrink-0" />
+                        <li key={i} className="flex gap-2">
+                          <span className="text-muted-foreground">•</span>
                           <span>{s}</span>
                         </li>
                       ))}
@@ -651,24 +614,23 @@ export default function NAINarrativeSections({
         </section>
       )}
 
-      {/* Section 9: All responses (collapsible) */}
       {responses.length > 0 && (
         <section>
           <button
             onClick={() => setResponsesExpanded((p) => !p)}
             className="w-full flex items-center justify-between p-4 rounded-lg border border-border hover:bg-muted/30 transition-colors text-left"
           >
-            <h3 className="text-lg font-semibold">
+            <span className="font-medium text-foreground">
               Your assessment responses — all {responses.length} questions
-            </h3>
+            </span>
             {responsesExpanded ? (
-              <ChevronUp className="w-4 h-4 text-muted-foreground shrink-0" />
+              <ChevronUp className="h-4 w-4 text-muted-foreground" />
             ) : (
-              <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0" />
+              <ChevronDown className="h-4 w-4 text-muted-foreground" />
             )}
           </button>
           {responsesExpanded && (
-            <div className="border border-border rounded-lg overflow-hidden mt-2">
+            <div className="mt-3 space-y-2">
               {[...responses]
                 .sort((a, b) => a.item_number - b.item_number)
                 .map((r) => {
@@ -676,26 +638,30 @@ export default function NAINarrativeSections({
                   return (
                     <div
                       key={r.item_number}
-                      className="flex items-start gap-3 px-4 py-3 border-b border-border last:border-b-0"
+                      className="flex items-start gap-3 p-3 rounded-lg border border-border bg-card"
                     >
                       <div
-                        className="w-1 shrink-0 self-stretch rounded-sm"
-                        style={{ backgroundColor: color, minHeight: "40px" }}
+                        className="flex-shrink-0 w-1 self-stretch rounded-full"
+                        style={{ backgroundColor: color }}
                       />
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-foreground">
-                          Q{r.item_number} — <span style={{ color }}>{r.facet_name}</span>
-                        </p>
-                        <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed truncate">
-                          {r.item_text}
-                        </p>
+                        <div className="text-xs font-semibold text-muted-foreground">
+                          Q{r.item_number} — {r.facet_name}
+                        </div>
+                        <div className="text-sm text-foreground mt-0.5">{r.item_text}</div>
                       </div>
-                      <span
-                        className="px-2 py-1 rounded text-xs font-semibold text-white shrink-0 mt-0.5"
-                        style={{ backgroundColor: color }}
-                      >
-                        {r.score}
-                      </span>
+                      {r.has_response && r.score !== null ? (
+                        <div
+                          className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center text-white text-xs font-semibold"
+                          style={{ backgroundColor: color }}
+                        >
+                          {r.score}
+                        </div>
+                      ) : (
+                        <div className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center bg-muted text-muted-foreground text-xs font-semibold">
+                          —
+                        </div>
+                      )}
                     </div>
                   );
                 })}
