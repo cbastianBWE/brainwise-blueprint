@@ -385,14 +385,31 @@ export default function NAINarrativeSections({
         >
           <div className="flex gap-3">
             <AlertTriangle className="h-5 w-5 flex-shrink-0 mt-0.5" style={{ color: "#021F36" }} />
-            <div className="space-y-1">
+            <div className="space-y-2 flex-1 min-w-0">
               <p className="font-semibold text-foreground">
                 Pattern alert — broad Protection activation.
               </p>
-              <p className="text-sm text-foreground">
-                {elevatedCount} dimensions are elevated. Address the Protection system directly before working through individual dimensions.
-                {egoElevated && " Ego Stability is among the elevated dimensions — begin there."}
-              </p>
+              {loading || !interpretations.nai_pattern_alert ? (
+                <p className="text-sm text-muted-foreground italic">Generating pattern alert...</p>
+              ) : (
+                <>
+                  {interpretations.nai_pattern_alert.body && (
+                    <p className="text-sm text-foreground leading-relaxed">
+                      {interpretations.nai_pattern_alert.body}
+                    </p>
+                  )}
+                  {Array.isArray(interpretations.nai_pattern_alert.suggestions) &&
+                    interpretations.nai_pattern_alert.suggestions.length > 0 && (
+                      <ol className="text-sm text-foreground space-y-1 mt-2">
+                        {interpretations.nai_pattern_alert.suggestions.map((s: string, i: number) => (
+                          <li key={i} className="leading-relaxed">
+                            {i + 1}. {s}
+                          </li>
+                        ))}
+                      </ol>
+                    )}
+                </>
+              )}
             </div>
           </div>
         </div>
