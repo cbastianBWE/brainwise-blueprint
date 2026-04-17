@@ -134,8 +134,11 @@ export function generateNaiPdf(data: NaiPdfData, sections: NaiPdfSections): void
     }
   };
 
-  const sectionHeading = (title: string, minContentNeeded = 25) => {
-    // Require enough room for heading + at least the start of first content card
+  const sectionHeading = (title: string, minContentNeeded = 50) => {
+    // Clear previous section title BEFORE the page-break check so we don't
+    // render the previous section's continuation header on a new page.
+    currentSectionTitle = null;
+    // Require enough room for heading + at least the start of first content card.
     checkPageBreak(15 + minContentNeeded);
     currentSectionTitle = title;
     y += 4;
