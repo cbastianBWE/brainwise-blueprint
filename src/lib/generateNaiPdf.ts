@@ -503,12 +503,18 @@ export function generateNaiPdf(data: NaiPdfData, sections: NaiPdfSections): void
       doc.setFont("helvetica", "normal");
       doc.setTextColor(...BLACK);
       for (const s of data.crossAssessment.suggestions) {
-        const lines = doc.splitTextToSize(`• ${cleanMarkdown(s)}`, CONTENT_W - 6);
-        for (const l of lines) {
-          checkPageBreak(5);
-          doc.text(l, MARGIN_L + 3, y);
+        // Render bullet with hanging indent: text below first line aligns with text, not bullet
+        const bulletX = MARGIN_L + 3;
+        const textX = MARGIN_L + 7;
+        const textWidth = CONTENT_W - 10;
+        const textLines = doc.splitTextToSize(cleanMarkdown(s), textWidth);
+        checkPageBreak(5);
+        doc.text("•", bulletX, y);
+        textLines.forEach((line: string, idx: number) => {
+          if (idx > 0) checkPageBreak(5);
+          doc.text(line, textX, y);
           y += 4.5;
-        }
+        });
       }
       y += 4;
     }
