@@ -91,7 +91,7 @@ export default function InstrumentSelection({ onSelect }: Props) {
           .not("stripe_payment_intent_id", "is", null)
           .is("assessment_id", null)
           .neq("invitation_status", "completed"),
-        supabase.from("assessment_purchases").select("instrument_id").eq("user_id", user.id),
+        supabase.from("assessment_purchases").select("instrument_id").eq("user_id", user.id).is("consumed_at", null),
         supabase.from("assessments").select("instrument_id").eq("user_id", user.id).eq("status", "completed"),
         supabase.from("assessments").select("instrument_id").eq("user_id", user.id).eq("status", "in_progress"),
         supabase.from("subscription_plans").select("plan_name, tier, billing_period, price_usd, stripe_price_id").eq("is_active", true),
