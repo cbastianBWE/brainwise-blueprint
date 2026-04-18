@@ -559,7 +559,7 @@ export default function AdminUsers() {
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from("users")
-        .select("id, email, full_name, account_type, department_name, org_level, deactivated_at, reactivation_deadline, deactivation_reason")
+        .select("id, email, full_name, account_type, department_id, org_level, deactivated_at, reactivation_deadline, deactivation_reason, department:departments!department_id(id, name)")
         .eq("organization_id", orgId!)
         .order("email", { ascending: true });
       if (error) throw error;
@@ -568,7 +568,8 @@ export default function AdminUsers() {
         email: string;
         full_name: string | null;
         account_type: string | null;
-        department_name: string | null;
+        department_id: string | null;
+        department: { id: string; name: string } | null;
         org_level: string | null;
         deactivated_at: string | null;
         reactivation_deadline: string | null;
@@ -1049,7 +1050,7 @@ export default function AdminUsers() {
               (u) =>
                 u.email.toLowerCase().includes(q) ||
                 (u.full_name?.toLowerCase().includes(q) ?? false) ||
-                (u.department_name?.toLowerCase().includes(q) ?? false)
+                (u.department?.name?.toLowerCase().includes(q) ?? false)
             );
         return (
           <Card>
@@ -1116,7 +1117,7 @@ export default function AdminUsers() {
                               <Badge variant="destructive">Grace expired</Badge>
                             )}
                           </TableCell>
-                          <TableCell>{u.department_name || "—"}</TableCell>
+                          <TableCell>{u.department?.name || "—"}</TableCell>
                           <TableCell>{u.org_level || "—"}</TableCell>
                           <TableCell className="text-right">
                             {isSelf || graceExpired ? (

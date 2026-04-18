@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Brain } from "lucide-react";
@@ -33,7 +33,7 @@ const DemographicForm = () => {
   const [role, setRole] = useState("");
   const [industry, setIndustry] = useState("");
   const [experience, setExperience] = useState("");
-  const [departmentName, setDepartmentName] = useState("");
+  
   const [orgLevel, setOrgLevel] = useState("");
 
   useEffect(() => {
@@ -51,7 +51,7 @@ const DemographicForm = () => {
   const isCorporate = accountType ? CORPORATE_TYPES.includes(accountType) : false;
 
   const requiredMissing =
-    !role || !industry || !experience || (isCorporate && (!departmentName.trim() || !orgLevel));
+    !role || !industry || !experience || (isCorporate && !orgLevel);
 
   const handleSave = async () => {
     if (!user || requiredMissing) return;
@@ -73,7 +73,7 @@ const DemographicForm = () => {
     if (isCorporate) {
       const { error: userErr } = await supabase
         .from("users")
-        .update({ department_name: departmentName.trim(), org_level: orgLevel })
+        .update({ org_level: orgLevel })
         .eq("id", user.id);
       if (userErr) {
         setLoading(false);
@@ -122,24 +122,13 @@ const DemographicForm = () => {
           </div>
 
           {isCorporate && (
-            <>
-              <div className="space-y-2">
-                <Label>Department Name</Label>
-                <Input
-                  placeholder="e.g., Engineering, Marketing, Sales"
-                  value={departmentName}
-                  onChange={(e) => setDepartmentName(e.target.value)}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label>Organization Level</Label>
-                <Select value={orgLevel} onValueChange={setOrgLevel}>
-                  <SelectTrigger><SelectValue placeholder="Select level" /></SelectTrigger>
-                  <SelectContent>{ORG_LEVELS.map(l => <SelectItem key={l} value={l}>{l}</SelectItem>)}</SelectContent>
-                </Select>
-              </div>
-            </>
+            <div className="space-y-2">
+              <Label>Organization Level</Label>
+              <Select value={orgLevel} onValueChange={setOrgLevel}>
+                <SelectTrigger><SelectValue placeholder="Select level" /></SelectTrigger>
+                <SelectContent>{ORG_LEVELS.map(l => <SelectItem key={l} value={l}>{l}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
           )}
 
           <div className="pt-2">
