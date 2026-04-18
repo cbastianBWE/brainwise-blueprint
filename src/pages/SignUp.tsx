@@ -46,6 +46,12 @@ const SignUp = () => {
       setEmail(decodeURIComponent(emailParam));
     }
 
+    // Stash corporate invite code for the onboarding flow
+    const inviteParam = searchParams.get('invite');
+    if (inviteParam && inviteParam.trim()) {
+      sessionStorage.setItem('pending_invite_code', inviteParam.trim().toUpperCase());
+    }
+
     const token = searchParams.get('coach_token');
     if (!token) return;
     setCoachToken(token);
