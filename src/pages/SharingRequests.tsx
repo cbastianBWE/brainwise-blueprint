@@ -54,6 +54,9 @@ export default function SharingRequests() {
   const [sent, setSent] = useState<PeerRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [acting, setActing] = useState<string | null>(null);
+  const [orgUsers, setOrgUsers] = useState<Array<{ id: string; email: string; full_name: string | null }>>([]);
+  const [selectedTargetId, setSelectedTargetId] = useState<string>("");
+  const [sending, setSending] = useState(false);
 
   const loadAll = useCallback(async () => {
     if (!user) return;
