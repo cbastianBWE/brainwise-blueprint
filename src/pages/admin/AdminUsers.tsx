@@ -1411,6 +1411,64 @@ export default function AdminUsers() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog
+        open={supervisorDialog.open}
+        onOpenChange={(open) => {
+          if (supervisorDialog.sending) return;
+          if (!open) {
+            setSupervisorDialog({ open: false, userId: null, userEmail: null, userName: null, currentSupervisorId: null, selectedSupervisorId: "", sending: false });
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Change supervisor</DialogTitle>
+            <DialogDescription>
+              Select a new supervisor for {supervisorDialog.userName || supervisorDialog.userEmail}, or clear the supervisor assignment.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="supervisor-select">Supervisor</Label>
+            <Select
+              value={supervisorDialog.selectedSupervisorId}
+              onValueChange={(v) => setSupervisorDialog((s) => ({ ...s, selectedSupervisorId: v }))}
+              disabled={supervisorDialog.sending}
+            >
+              <SelectTrigger id="supervisor-select">
+                <SelectValue placeholder="Select a supervisor" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__unset__">— No supervisor —</SelectItem>
+                {(orgUsersQuery.data || [])
+                  .filter((cand) => cand.id !== supervisorDialog.userId && !cand.deactivated_at)
+                  .slice()
+                  .sort((a, b) => (a.full_name || a.email).localeCompare(b.full_name || b.email))
+                  .map((cand) => (
+                    <SelectItem key={cand.id} value={cand.id}>
+                      {cand.full_name || cand.email}
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() =>
+                setSupervisorDialog({ open: false, userId: null, userEmail: null, userName: null, currentSupervisorId: null, selectedSupervisorId: "", sending: false })
+              }
+              disabled={supervisorDialog.sending}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleSaveSupervisor} disabled={supervisorDialog.sending}>
+              {supervisorDialog.sending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Save
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
