@@ -1212,6 +1212,7 @@ export default function AdminUsers() {
                             )}
                           </TableCell>
                           <TableCell>{u.department?.name || "—"}</TableCell>
+                          <TableCell>{u.supervisor?.full_name || u.supervisor?.email || "—"}</TableCell>
                           <TableCell>{u.org_level || "—"}</TableCell>
                           <TableCell className="text-right">
                             {isSelf || graceExpired ? (
@@ -1232,6 +1233,14 @@ export default function AdminUsers() {
                                 >
                                   <KeyRound className="h-3.5 w-3.5 mr-1.5" />
                                   Reset password
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => openSupervisorDialog(u)}
+                                >
+                                  <Users2 className="h-3.5 w-3.5 mr-1.5" />
+                                  Change supervisor
                                 </Button>
                                 <Button variant="destructive" size="sm" onClick={() => openDeactivateDialog(u)}>
                                   <UserX className="h-3.5 w-3.5 mr-1.5" />
