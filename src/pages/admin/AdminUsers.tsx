@@ -300,7 +300,7 @@ function BulkInviteCard({
       </CardHeader>
       <CardContent className="space-y-4">
         {bulkStage === "idle" && (
-          <div>
+          <div className="space-y-3">
             <input
               ref={fileInputRef}
               type="file"
@@ -308,10 +308,20 @@ function BulkInviteCard({
               className="hidden"
               onChange={handleFile}
             />
-            <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
-              <Upload className="h-4 w-4 mr-2" />
-              Choose file to upload
-            </Button>
+            <div className="flex gap-2 flex-wrap">
+              <Button variant="outline" onClick={handleDownloadTemplate}>
+                <Download className="h-4 w-4 mr-2" />
+                Download template
+              </Button>
+              <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
+                <Upload className="h-4 w-4 mr-2" />
+                Choose file to upload
+              </Button>
+            </div>
+            <div className="text-xs text-muted-foreground space-y-1">
+              <p>Required column: email. Optional: department, supervisor, level.</p>
+              <p>Accepted level values: IC, Manager, Director, VP, C-Suite, Other.</p>
+            </div>
           </div>
         )}
 
