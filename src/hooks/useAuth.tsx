@@ -105,7 +105,8 @@ export const useRoleRedirect = () => {
       case "coach":
         navigate("/coach/clients");
         break;
-      case "admin":
+      case "company_admin":
+      case "org_admin":
         navigate("/admin/users");
         break;
       case "brainwise_super_admin":

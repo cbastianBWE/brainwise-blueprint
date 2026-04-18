@@ -93,11 +93,11 @@ const App = () => (
               <Route path="/coach/certification" element={<RoleGuard allowedRoles={["coach"]}><Certification /></RoleGuard>} />
 
               {/* Admin */}
-              <Route path="/admin/users" element={<RoleGuard allowedRoles={["admin"]}><AdminUsers /></RoleGuard>} />
-              <Route path="/admin/organizations" element={<RoleGuard allowedRoles={["admin"]}><AdminOrganizations /></RoleGuard>} />
-              <Route path="/admin/teams" element={<RoleGuard allowedRoles={["admin"]}><AdminTeams /></RoleGuard>} />
-              <Route path="/admin/participation" element={<RoleGuard allowedRoles={["admin"]}><AdminParticipation /></RoleGuard>} />
-              <Route path="/admin/resources" element={<RoleGuard allowedRoles={["admin"]}><AdminResources /></RoleGuard>} />
+              <Route path="/admin/users" element={<RoleGuard allowedRoles={["company_admin", "org_admin"]}><AdminUsers /></RoleGuard>} />
+              <Route path="/admin/organizations" element={<RoleGuard allowedRoles={["company_admin", "org_admin"]}><AdminOrganizations /></RoleGuard>} />
+              <Route path="/admin/teams" element={<RoleGuard allowedRoles={["company_admin", "org_admin"]}><AdminTeams /></RoleGuard>} />
+              <Route path="/admin/participation" element={<RoleGuard allowedRoles={["company_admin", "org_admin"]}><AdminParticipation /></RoleGuard>} />
+              <Route path="/admin/resources" element={<RoleGuard allowedRoles={["company_admin", "org_admin"]}><AdminResources /></RoleGuard>} />
 
               {/* Super Admin */}
               <Route path="/super-admin/health" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><PlatformHealth /></SuperAdminSessionProvider></RoleGuard>} />

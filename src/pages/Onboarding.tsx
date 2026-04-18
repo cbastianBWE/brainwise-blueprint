@@ -60,7 +60,7 @@ const Onboarding = () => {
         throw new Error(err.error || "Failed to set account type");
       }
 
-      navigate("/demographic-consent");
+      navigate("/demographic-form");
     } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
     } finally {
