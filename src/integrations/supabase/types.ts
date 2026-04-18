@@ -1821,6 +1821,10 @@ export type Database = {
           invitation_id: string
         }[]
       }
+      admin_log_password_reset: {
+        Args: { p_target_user_id: string }
+        Returns: undefined
+      }
       admin_promote_to_company_admin: {
         Args: { p_target_user_id: string }
         Returns: undefined
@@ -1834,6 +1838,19 @@ export type Database = {
         Returns: undefined
       }
       assert_super_admin: { Args: never; Returns: undefined }
+      bulk_invitation_create: {
+        Args: { p_organization_id: string; p_rows: Json }
+        Returns: {
+          code: string
+          department_created: boolean
+          error_code: string
+          error_message: string
+          invitation_id: string
+          invitee_email: string
+          row_index: number
+          success: boolean
+        }[]
+      }
       close_chat_session: { Args: { p_session_id: string }; Returns: undefined }
       consume_assessment_purchase: {
         Args: {
@@ -1848,6 +1865,41 @@ export type Database = {
       department_create: {
         Args: { p_name: string; p_organization_id: string }
         Returns: string
+      }
+      department_delete: {
+        Args: {
+          p_action: string
+          p_dept_id: string
+          p_reassign_to_dept_id?: string
+        }
+        Returns: undefined
+      }
+      department_find_or_create: {
+        Args: { p_name: string; p_organization_id: string }
+        Returns: {
+          canonical_name: string
+          dept_id: string
+          was_created: boolean
+        }[]
+      }
+      department_reassign_user: {
+        Args: { p_target_dept_id?: string; p_user_id: string }
+        Returns: undefined
+      }
+      department_reconcile: {
+        Args: { p_org_id: string }
+        Returns: {
+          account_type: string
+          current_department_name: string
+          email: string
+          suggested_match_dept_id: string
+          suggested_match_name: string
+          user_id: string
+        }[]
+      }
+      department_rename: {
+        Args: { p_dept_id: string; p_new_name: string }
+        Returns: undefined
       }
       generate_invitation_code: { Args: never; Returns: string }
       get_own_immutable_fields: {
