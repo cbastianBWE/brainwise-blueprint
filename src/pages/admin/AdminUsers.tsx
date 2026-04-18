@@ -1129,19 +1129,33 @@ export default function AdminUsers() {
               (u) =>
                 u.email.toLowerCase().includes(q) ||
                 (u.full_name?.toLowerCase().includes(q) ?? false) ||
-                (u.department?.name?.toLowerCase().includes(q) ?? false)
+                (u.department?.name?.toLowerCase().includes(q) ?? false) ||
+                (u.supervisor?.full_name?.toLowerCase().includes(q) ?? false) ||
+                (u.supervisor?.email?.toLowerCase().includes(q) ?? false)
             );
         return (
           <Card>
             <CardHeader>
-              <CardTitle>Users in your organization</CardTitle>
-              <CardDescription>All users currently linked to your organization.</CardDescription>
+              <div className="flex items-start justify-between gap-2 flex-wrap">
+                <div>
+                  <CardTitle>Users in your organization</CardTitle>
+                  <CardDescription>All users currently linked to your organization.</CardDescription>
+                </div>
+                <Button variant="outline" size="sm" onClick={handleReconcileSupervisors} disabled={reconciling}>
+                  {reconciling ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                  )}
+                  Reconcile supervisors
+                </Button>
+              </div>
               <div className="relative max-w-sm pt-2">
                 <Search className="absolute left-2 top-1/2 -translate-y-1/2 mt-1 h-4 w-4 text-muted-foreground pointer-events-none" />
                 <Input
                   value={usersSearch}
                   onChange={(e) => setUsersSearch(e.target.value)}
-                  placeholder="Search by email, name, or department…"
+                  placeholder="Search by email, name, department, or supervisor…"
                   className="pl-8"
                 />
               </div>
