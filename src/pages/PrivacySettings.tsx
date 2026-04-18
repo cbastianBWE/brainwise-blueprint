@@ -16,8 +16,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Shield, Lock, Eye, Users, Building2, UserCircle, Pencil, MessageSquare } from "lucide-react";
-import { Progress } from "@/components/ui/progress";
+import { Shield, Lock, UserCircle, Pencil, MessageSquare, Users2, Inbox } from "lucide-react";
 
 type PermissionLevel = "score_summary" | "full_results" | "full_results_with_history" | "participation_only";
 
@@ -45,12 +44,6 @@ const LEVEL_OPTIONS_STANDARD: { value: PermissionLevel; label: string }[] = [
   { value: "full_results", label: "Full results including narrative" },
 ];
 
-const LEVEL_OPTIONS_ORG: { value: PermissionLevel; label: string }[] = [
-  { value: "participation_only", label: "Participation status only" },
-  { value: "score_summary", label: "Scores only" },
-  { value: "full_results", label: "Full results including narrative" },
-];
-
 const DEMO_FIELDS: { key: keyof DemoData; label: string }[] = [
   { key: "role_in_org", label: "Role in Organization" },
   { key: "industry", label: "Industry" },
@@ -61,6 +54,26 @@ const DEMO_FIELDS: { key: keyof DemoData; label: string }[] = [
   { key: "national_origin", label: "National Origin" },
 ];
 
+const CORPORATE_ROLES = ["corporate_employee", "company_admin", "org_admin", "brainwise_super_admin"];
+
+type PeerKey = "company_admin" | "supervisor" | "team" | "organization" | "direct_reports";
+
+interface PeerPrefs {
+  share_ptp_with_company_admin: boolean;
+  share_ptp_with_supervisor: boolean;
+  share_ptp_with_team: boolean;
+  share_ptp_with_organization: boolean;
+  share_ptp_with_direct_reports: boolean;
+}
+
+const PEER_TOGGLES: { key: PeerKey; field: keyof PeerPrefs; title: string; description: string }[] = [
+  { key: "company_admin", field: "share_ptp_with_company_admin", title: "Share my PTP with my Company Admin", description: "HR and admin roles in your organization can view your PTP results." },
+  { key: "supervisor", field: "share_ptp_with_supervisor", title: "Share my PTP with my Supervisor", description: "Your direct supervisor can view your PTP results." },
+  { key: "team", field: "share_ptp_with_team", title: "Share my PTP with my Team", description: "Peers who share your supervisor can view your PTP results." },
+  { key: "organization", field: "share_ptp_with_organization", title: "Share my PTP with my Organization", description: "Everyone in your organization can view your PTP results." },
+  { key: "direct_reports", field: "share_ptp_with_direct_reports", title: "Share my PTP with my Direct Reports", description: "People who report to you can view your PTP results." },
+];
+
 export default function PrivacySettings() {
   const { user } = useAuth();
   const { profile } = useUserProfile();
@@ -68,17 +81,21 @@ export default function PrivacySettings() {
   const { usage, fetchUsage } = useAiUsage();
   const [userTier, setUserTier] = useState("base");
 
-  // Permission state for each target type
+  // Coach permission state (only remaining toggle from old data-sharing model)
   const [coach, setCoach] = useState<PermRow>({ enabled: false, level: "score_summary" });
-  const [manager, setManager] = useState<PermRow>({ enabled: false, level: "score_summary" });
-  const [team, setTeam] = useState<PermRow>({ enabled: false, level: "score_summary" });
-  const [org, setOrg] = useState<PermRow>({ enabled: false, level: "participation_only" });
-
   const [coachId, setCoachId] = useState<string | null>(null);
   const coachIdRef = useRef<string | null>(null);
-  const [orgId, setOrgId] = useState<string | null>(null);
-  const [managerId, setManagerId] = useState<string | null>(null);
-  const [teamId, setTeamId] = useState<string | null>(null);
+
+  const [accountType, setAccountType] = useState<string | null>(null);
+  const [hasDirectReports, setHasDirectReports] = useState(false);
+  const [peerPrefs, setPeerPrefs] = useState<PeerPrefs>({
+    share_ptp_with_company_admin: false,
+    share_ptp_with_supervisor: false,
+    share_ptp_with_team: false,
+    share_ptp_with_organization: false,
+    share_ptp_with_direct_reports: false,
+  });
+  const [pendingReceivedCount, setPendingReceivedCount] = useState(0);
 
   const [demo, setDemo] = useState<DemoData | null>(null);
   const [editingField, setEditingField] = useState<string | null>(null);
@@ -87,17 +104,14 @@ export default function PrivacySettings() {
   const [savedKey, setSavedKey] = useState<string | null>(null);
 
   const hasCoach = coachId !== null;
-  const hasOrg = orgId !== null;
-  const hasManager = managerId !== null;
-  const hasTeam = teamId !== null;
   const hasConsent = demo !== null && demo.consent_granted_at !== null && demo.consent_withdrawn_at === null;
+  const isCorporate = accountType !== null && CORPORATE_ROLES.includes(accountType);
 
-  // Load related IDs and existing permissions
   useEffect(() => {
     if (!user) return;
 
     const load = async () => {
-      // Get coach association
+      // Coach association
       const { data: cc } = await supabase
         .from("coach_clients")
         .select("coach_user_id")
@@ -108,51 +122,66 @@ export default function PrivacySettings() {
         coachIdRef.current = cc[0].coach_user_id;
       }
 
-      // Get user's org and team info + share_results_with_coach
+      // User row: organization, share_results_with_coach, account_type
       const { data: userData } = await supabase
         .from("users")
-        .select("organization_id, share_results_with_coach")
+        .select("organization_id, share_results_with_coach, account_type")
         .eq("id", user.id)
         .single();
       if (userData) {
         setCoach(prev => ({ ...prev, enabled: userData.share_results_with_coach ?? false }));
+        setAccountType(userData.account_type);
       }
-      if (userData?.organization_id) {
-        setOrgId(userData.organization_id);
-        // Get team membership
-        const { data: tm } = await supabase
-          .from("team_members")
-          .select("team_id, teams(manager_user_id)")
+
+      // Existing coach permission row
+      if (cc && cc.length > 0) {
+        const { data: perms } = await supabase
+          .from("permissions")
+          .select("*")
+          .eq("owner_user_id", user.id)
+          .eq("viewer_user_id", cc[0].coach_user_id);
+        if (perms && perms.length > 0) {
+          const p = perms[0];
+          setCoach({ id: p.id, enabled: true, level: (p.permission_level || "score_summary") as PermissionLevel });
+        }
+      }
+
+      // Corporate-only loads
+      if (userData?.account_type && CORPORATE_ROLES.includes(userData.account_type)) {
+        // Sharing preferences
+        const { data: prefs } = await (supabase as any)
+          .from("sharing_preferences")
+          .select("*")
           .eq("user_id", user.id)
+          .single();
+        if (prefs) {
+          setPeerPrefs({
+            share_ptp_with_company_admin: !!prefs.share_ptp_with_company_admin,
+            share_ptp_with_supervisor: !!prefs.share_ptp_with_supervisor,
+            share_ptp_with_team: !!prefs.share_ptp_with_team,
+            share_ptp_with_organization: !!prefs.share_ptp_with_organization,
+            share_ptp_with_direct_reports: !!prefs.share_ptp_with_direct_reports,
+          });
+        }
+
+        // Direct reports check
+        const { data: reports } = await supabase
+          .from("users")
+          .select("id")
+          .eq("supervisor_user_id", user.id)
           .limit(1);
-        if (tm && tm.length > 0) {
-          setTeamId(tm[0].team_id);
-          const teamData = tm[0].teams as unknown as { manager_user_id: string | null };
-          if (teamData?.manager_user_id) setManagerId(teamData.manager_user_id);
-        }
+        setHasDirectReports(!!reports && reports.length > 0);
+
+        // Pending peer access requests count
+        const { count } = await (supabase as any)
+          .from("peer_access_requests")
+          .select("id", { count: "exact", head: true })
+          .eq("target_user_id", user.id)
+          .eq("status", "pending");
+        setPendingReceivedCount(count || 0);
       }
 
-      // Load existing permissions
-      const { data: perms } = await supabase
-        .from("permissions")
-        .select("*")
-        .eq("owner_user_id", user.id);
-
-      if (perms) {
-        for (const p of perms) {
-          const level = (p.permission_level || "score_summary") as PermissionLevel;
-          if (p.viewer_user_id && cc && cc.length > 0 && p.viewer_user_id === cc[0].coach_user_id) {
-            setCoach({ id: p.id, enabled: true, level });
-          } else if (p.viewer_user_id && p.viewer_user_id === managerId) {
-            setManager({ id: p.id, enabled: true, level });
-          } else if (p.viewer_organization_id && userData?.organization_id && p.viewer_organization_id === userData.organization_id) {
-            setOrg({ id: p.id, enabled: true, level });
-          }
-          // Team permissions stored as org-level with a note; simplified here
-        }
-      }
-
-      // Load demographics
+      // Demographics
       const { data: demoData } = await supabase
         .from("user_demographics")
         .select("*")
@@ -160,7 +189,7 @@ export default function PrivacySettings() {
         .single();
       if (demoData) setDemo(demoData as DemoData);
 
-      // Fetch AI usage + tier
+      // AI tier
       const { data: tierData } = await supabase
         .from("users")
         .select("subscription_tier")
@@ -212,46 +241,43 @@ export default function PrivacySettings() {
     await supabase.from("permissions").delete().eq("id", id);
   }, []);
 
-  const handleToggle = async (
-    key: string,
-    current: PermRow,
-    setter: React.Dispatch<React.SetStateAction<PermRow>>,
-    viewerUserId: string | null,
-    viewerOrgId: string | null,
-  ) => {
-    const newEnabled = !current.enabled;
-    const resolvedViewerUserId = key === 'coach' ? coachIdRef.current : viewerUserId;
+  const handleCoachToggle = async () => {
+    const newEnabled = !coach.enabled;
+    const resolvedViewerUserId = coachIdRef.current;
     if (newEnabled) {
-      const id = await upsertPermission(resolvedViewerUserId, viewerOrgId, current.level, current.id);
-      setter({ ...current, enabled: true, id: id || current.id });
-    } else if (current.id) {
-      await deletePermission(current.id);
-      setter({ ...current, enabled: false });
+      const id = await upsertPermission(resolvedViewerUserId, null, coach.level, coach.id);
+      setCoach({ ...coach, enabled: true, id: id || coach.id });
+    } else if (coach.id) {
+      await deletePermission(coach.id);
+      setCoach({ ...coach, enabled: false });
     }
-    // Sync share_results_with_coach column when toggling coach
-    if (key === "coach" && user) {
-      await supabase
-        .from("users")
-        .update({ share_results_with_coach: newEnabled })
-        .eq("id", user.id);
+    if (user) {
+      await supabase.from("users").update({ share_results_with_coach: newEnabled }).eq("id", user.id);
     }
-    showSaved(key);
+    showSaved("coach");
   };
 
-  const handleLevelChange = async (
-    key: string,
-    current: PermRow,
-    setter: React.Dispatch<React.SetStateAction<PermRow>>,
-    viewerUserId: string | null,
-    viewerOrgId: string | null,
-    newLevel: PermissionLevel,
-  ) => {
-    setter({ ...current, level: newLevel });
-    const resolvedViewerUserId = key === 'coach' ? coachIdRef.current : viewerUserId;
-    if (current.enabled) {
-      await upsertPermission(resolvedViewerUserId, viewerOrgId, newLevel, current.id);
-      showSaved(key);
+  const handleCoachLevelChange = async (newLevel: PermissionLevel) => {
+    setCoach({ ...coach, level: newLevel });
+    if (coach.enabled) {
+      await upsertPermission(coachIdRef.current, null, newLevel, coach.id);
+      showSaved("coach");
     }
+  };
+
+  const handlePeerToggle = async (key: PeerKey, field: keyof PeerPrefs) => {
+    const newValue = !peerPrefs[field];
+    const previous = peerPrefs[field];
+    setPeerPrefs((p) => ({ ...p, [field]: newValue }));
+    const param: Record<string, boolean> = {};
+    param[`p_${field}`] = newValue;
+    const { error } = await (supabase as any).rpc("sharing_preferences_upsert", param);
+    if (error) {
+      toast.error("Failed to save");
+      setPeerPrefs((p) => ({ ...p, [field]: previous }));
+      return;
+    }
+    showSaved(`peer_${key}`);
   };
 
   const handleWithdrawConsent = async () => {
@@ -285,71 +311,14 @@ export default function PrivacySettings() {
     setSaving(true);
     const updateObj: Record<string, string | null> = {};
     updateObj[fieldKey] = value || null;
-    await supabase.from("user_demographics").update(
-      updateObj as any
-    ).eq("user_id", user.id);
-
+    await supabase.from("user_demographics").update(updateObj as any).eq("user_id", user.id);
     if (demo) setDemo({ ...demo, [fieldKey]: value || null });
     setEditingField(null);
     setSaving(false);
     toast.success("Field updated.");
   };
 
-  const renderToggleRow = (
-    key: string,
-    icon: React.ReactNode,
-    title: string,
-    description: string,
-    current: PermRow,
-    setter: React.Dispatch<React.SetStateAction<PermRow>>,
-    viewerUserId: string | null,
-    viewerOrgId: string | null,
-    applicable: boolean,
-    levelOptions: { value: PermissionLevel; label: string }[],
-  ) => (
-    <div key={key} className={`p-4 rounded-lg border ${!applicable ? "opacity-50" : ""}`}>
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          {icon}
-          <div>
-            <p className="font-medium text-foreground">{title}</p>
-            <p className="text-sm text-muted-foreground">{description}</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          {savedKey === key && (
-            <Badge variant="secondary" className="text-xs animate-in fade-in">Saved</Badge>
-          )}
-          <Switch
-            checked={current.enabled}
-            disabled={!applicable}
-            onCheckedChange={() => handleToggle(key, current, setter, viewerUserId, viewerOrgId)}
-          />
-        </div>
-      </div>
-      {!applicable && (
-        <p className="text-xs text-muted-foreground mt-2 italic">Not applicable to your account</p>
-      )}
-      {applicable && current.enabled && (
-        <div className="mt-3 ml-9">
-          <Label className="text-xs text-muted-foreground">Sharing level</Label>
-          <Select
-            value={current.level}
-            onValueChange={(v) => handleLevelChange(key, current, setter, viewerUserId, viewerOrgId, v as PermissionLevel)}
-          >
-            <SelectTrigger className="w-full max-w-xs mt-1 h-8 text-sm">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {levelOptions.map(o => (
-                <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      )}
-    </div>
-  );
+  const visiblePeerToggles = PEER_TOGGLES.filter(t => t.key !== "direct_reports" || hasDirectReports);
 
   return (
     <div className="max-w-2xl mx-auto py-8 px-4 space-y-6">
@@ -368,7 +337,7 @@ export default function PrivacySettings() {
         </CardContent>
       </Card>
 
-      {/* Permission toggles */}
+      {/* Data Sharing card — Coach only */}
       <Card>
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
@@ -377,48 +346,106 @@ export default function PrivacySettings() {
           <CardDescription>Choose who can view your assessment results</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
-          {renderToggleRow(
-            "coach",
-            <UserCircle className="h-5 w-5 text-muted-foreground" />,
-            "My Coach",
-            "Allow your assigned coach to view your results",
-            coach, setCoach,
-            coachId, null,
-            hasCoach,
-            LEVEL_OPTIONS_STANDARD,
-          )}
-          {renderToggleRow(
-            "manager",
-            <Eye className="h-5 w-5 text-muted-foreground" />,
-            "My Manager",
-            "Allow your team manager to view your results",
-            manager, setManager,
-            managerId, null,
-            hasManager,
-            LEVEL_OPTIONS_STANDARD,
-          )}
-          {renderToggleRow(
-            "team",
-            <Users className="h-5 w-5 text-muted-foreground" />,
-            "My Team",
-            "Allow team members to view your results",
-            team, setTeam,
-            null, orgId,
-            hasTeam,
-            LEVEL_OPTIONS_STANDARD,
-          )}
-          {renderToggleRow(
-            "org",
-            <Building2 className="h-5 w-5 text-muted-foreground" />,
-            "My Organization",
-            "Allow your organization to view your results",
-            org, setOrg,
-            null, orgId,
-            hasOrg,
-            LEVEL_OPTIONS_ORG,
-          )}
+          <div className={`p-4 rounded-lg border ${!hasCoach ? "opacity-50" : ""}`}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <UserCircle className="h-5 w-5 text-muted-foreground" />
+                <div>
+                  <p className="font-medium text-foreground">My Coach</p>
+                  <p className="text-sm text-muted-foreground">Allow your assigned coach to view your results</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                {savedKey === "coach" && (
+                  <Badge variant="secondary" className="text-xs animate-in fade-in">Saved</Badge>
+                )}
+                <Switch
+                  checked={coach.enabled}
+                  disabled={!hasCoach}
+                  onCheckedChange={handleCoachToggle}
+                />
+              </div>
+            </div>
+            {!hasCoach && (
+              <p className="text-xs text-muted-foreground mt-2 italic">Not applicable to your account</p>
+            )}
+            {hasCoach && coach.enabled && (
+              <div className="mt-3 ml-9">
+                <Label className="text-xs text-muted-foreground">Sharing level</Label>
+                <Select
+                  value={coach.level}
+                  onValueChange={(v) => handleCoachLevelChange(v as PermissionLevel)}
+                >
+                  <SelectTrigger className="w-full max-w-xs mt-1 h-8 text-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {LEVEL_OPTIONS_STANDARD.map(o => (
+                      <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
         </CardContent>
       </Card>
+
+      {/* Corporate Peer Sharing */}
+      {isCorporate && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Users2 className="h-4 w-4" /> Corporate Peer Sharing
+            </CardTitle>
+            <CardDescription>
+              These settings apply only to your PTP (Personal Threat Profile) results. Your NAI and HSS results are never shared with peers. Your AIRSA results are always visible to your direct supervisor and company admins.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {visiblePeerToggles.map(({ key, field, title, description }) => (
+              <div key={key} className="p-4 rounded-lg border">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex-1">
+                    <p className="font-medium text-foreground">{title}</p>
+                    <p className="text-sm text-muted-foreground">{description}</p>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    {savedKey === `peer_${key}` && (
+                      <Badge variant="secondary" className="text-xs animate-in fade-in">Saved</Badge>
+                    )}
+                    <Switch
+                      checked={peerPrefs[field]}
+                      onCheckedChange={() => handlePeerToggle(key, field)}
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Peer Access Requests */}
+      {isCorporate && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Inbox className="h-4 w-4" /> Peer Access Requests
+            </CardTitle>
+            <CardDescription>Manage requests from peers asking to view your PTP results.</CardDescription>
+          </CardHeader>
+          <CardContent className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-foreground">Pending requests</span>
+              <Badge variant={pendingReceivedCount > 0 ? "default" : "secondary"}>{pendingReceivedCount}</Badge>
+            </div>
+            <Button variant="outline" onClick={() => navigate("/settings/sharing-requests")}>
+              Manage Requests
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Demographic section */}
       <Card>
