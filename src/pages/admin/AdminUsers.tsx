@@ -871,6 +871,71 @@ export default function AdminUsers() {
     toast({ title: "User reactivated", description: `${targetLabel} is active again.` });
     await qc.invalidateQueries({ queryKey: ["admin-org-users", orgId] });
   };
+
+  const openSupervisorDialog = (u: {
+    id: string;
+    email: string;
+    full_name: string | null;
+    supervisor_user_id: string | null;
+  }) => {
+    setSupervisorDialog({
+      open: true,
+      userId: u.id,
+      userEmail: u.email,
+      userName: u.full_name,
+      currentSupervisorId: u.supervisor_user_id,
+      selectedSupervisorId: u.supervisor_user_id ?? "__unset__",
+      sending: false,
+    });
+  };
+
+  const handleSaveSupervisor = async () => {
+    if (!supervisorDialog.userId) return;
+    setSupervisorDialog((s) => ({ ...s, sending: true }));
+    const supervisorId = supervisorDialog.selectedSupervisorId === "__unset__" ? null : supervisorDialog.selectedSupervisorId;
+    const { error } = await (supabase.rpc as any)("user_assign_supervisor", {
+      p_target_user_id: supervisorDialog.userId,
+      p_supervisor_user_id: supervisorId,
+    });
+    if (error) {
+      setSupervisorDialog((s) => ({ ...s, sending: false }));
+      const code = (error as any).code;
+      if (code === "42501") {
+        toast({ title: "Forbidden", description: "You don't have permission to change this user's supervisor.", variant: "destructive" });
+      } else if (code === "22023") {
+        toast({ title: "Cannot assign", description: error.message, variant: "destructive" });
+      } else {
+        toast({ title: "Error", description: error.message, variant: "destructive" });
+      }
+      return;
+    }
+    const targetLabel = supervisorDialog.userName || supervisorDialog.userEmail;
+    setSupervisorDialog({ open: false, userId: null, userEmail: null, userName: null, currentSupervisorId: null, selectedSupervisorId: "", sending: false });
+    toast({ title: "Supervisor updated", description: supervisorId ? `${targetLabel}'s supervisor has been changed.` : `${targetLabel}'s supervisor has been cleared.` });
+    await qc.invalidateQueries({ queryKey: ["admin-org-users", orgId] });
+  };
+
+  const handleReconcileSupervisors = async () => {
+    if (!orgId) return;
+    setReconciling(true);
+    const { data, error } = await (supabase.rpc as any)("reconcile_supervisors_for_org", {
+      p_organization_id: orgId,
+    });
+    setReconciling(false);
+    if (error) {
+      toast({ title: "Reconcile failed", description: error.message, variant: "destructive" });
+      return;
+    }
+    const row = Array.isArray(data) ? data[0] : data;
+    const n: number = row?.out_users_patched ?? 0;
+    if (n === 0) {
+      toast({ title: "No supervisor changes", description: "All supervisor assignments are already in place." });
+    } else {
+      toast({ title: "Supervisors reconciled", description: `${n} user${n === 1 ? "" : "s"} updated from pending invitation data.` });
+    }
+    await qc.invalidateQueries({ queryKey: ["admin-org-users", orgId] });
+  };
+
   if (orgId === undefined) {
     return (
       <div className="p-6 flex items-center justify-center">
