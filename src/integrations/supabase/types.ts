@@ -1204,6 +1204,51 @@ export type Database = {
           },
         ]
       }
+      peer_access_requests: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          requester_user_id: string
+          responded_at: string | null
+          status: string
+          target_user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          requester_user_id: string
+          responded_at?: string | null
+          status?: string
+          target_user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          requester_user_id?: string
+          responded_at?: string | null
+          status?: string
+          target_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "peer_access_requests_requester_user_id_fkey"
+            columns: ["requester_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "peer_access_requests_target_user_id_fkey"
+            columns: ["target_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       permissions: {
         Row: {
           expires_at: string | null
@@ -1371,6 +1416,47 @@ export type Database = {
           score_band_label?: string | null
         }
         Relationships: []
+      }
+      sharing_preferences: {
+        Row: {
+          created_at: string
+          share_ptp_with_company_admin: boolean
+          share_ptp_with_direct_reports: boolean
+          share_ptp_with_organization: boolean
+          share_ptp_with_supervisor: boolean
+          share_ptp_with_team: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          share_ptp_with_company_admin?: boolean
+          share_ptp_with_direct_reports?: boolean
+          share_ptp_with_organization?: boolean
+          share_ptp_with_supervisor?: boolean
+          share_ptp_with_team?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          share_ptp_with_company_admin?: boolean
+          share_ptp_with_direct_reports?: boolean
+          share_ptp_with_organization?: boolean
+          share_ptp_with_supervisor?: boolean
+          share_ptp_with_team?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sharing_preferences_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       subscription_plans: {
         Row: {
@@ -1648,7 +1734,6 @@ export type Database = {
           deactivation_reason: string | null
           deleted_at: string | null
           department_id: string | null
-          department_name: string | null
           email: string
           full_name: string | null
           id: string
@@ -1676,7 +1761,6 @@ export type Database = {
           deactivation_reason?: string | null
           deleted_at?: string | null
           department_id?: string | null
-          department_name?: string | null
           email: string
           full_name?: string | null
           id?: string
@@ -1704,7 +1788,6 @@ export type Database = {
           deactivation_reason?: string | null
           deleted_at?: string | null
           department_id?: string | null
-          department_name?: string | null
           email?: string
           full_name?: string | null
           id?: string
@@ -1856,6 +1939,10 @@ export type Database = {
         Args: { p_target_user_id: string }
         Returns: undefined
       }
+      airsa_role_access: {
+        Args: { p_owner_user_id: string; p_viewer_user_id: string }
+        Returns: boolean
+      }
       assert_super_admin: { Args: never; Returns: undefined }
       bulk_invitation_create: {
         Args: { p_organization_id: string; p_rows: Json }
@@ -1880,7 +1967,9 @@ export type Database = {
         Returns: string
       }
       current_user_account_type: { Args: never; Returns: string }
+      current_user_department_id: { Args: never; Returns: string }
       current_user_org_id: { Args: never; Returns: string }
+      current_user_supervisor_id: { Args: never; Returns: string }
       department_create: {
         Args: { p_name: string; p_organization_id: string }
         Returns: string
@@ -1899,21 +1988,6 @@ export type Database = {
           canonical_name: string
           dept_id: string
           was_created: boolean
-        }[]
-      }
-      department_reassign_user: {
-        Args: { p_target_dept_id?: string; p_user_id: string }
-        Returns: undefined
-      }
-      department_reconcile: {
-        Args: { p_org_id: string }
-        Returns: {
-          account_type: string
-          current_department_name: string
-          email: string
-          suggested_match_dept_id: string
-          suggested_match_name: string
-          user_id: string
         }[]
       }
       department_rename: {
@@ -1955,10 +2029,57 @@ export type Database = {
         Args: { p_invite_code: string; p_user_id: string }
         Returns: {
           account_type: string
+          department_id: string
           department_name: string
           org_level: string
           organization_id: string
           user_id: string
+        }[]
+      }
+      peer_access_request_create: {
+        Args: { p_target_user_id: string }
+        Returns: {
+          out_created_at: string
+          out_expires_at: string
+          out_request_id: string
+          out_requester_full_name: string
+          out_target_email: string
+          out_target_full_name: string
+          out_target_user_id: string
+        }[]
+      }
+      peer_access_request_respond: {
+        Args: { p_accept: boolean; p_request_id: string }
+        Returns: {
+          out_request_id: string
+          out_responded_at: string
+          out_status: string
+        }[]
+      }
+      peer_ptp_request_granted: {
+        Args: { p_owner_user_id: string; p_viewer_user_id: string }
+        Returns: boolean
+      }
+      peer_ptp_visible: {
+        Args: { p_owner_user_id: string; p_viewer_user_id: string }
+        Returns: boolean
+      }
+      sharing_preferences_upsert: {
+        Args: {
+          p_share_ptp_with_company_admin?: boolean
+          p_share_ptp_with_direct_reports?: boolean
+          p_share_ptp_with_organization?: boolean
+          p_share_ptp_with_supervisor?: boolean
+          p_share_ptp_with_team?: boolean
+        }
+        Returns: {
+          out_share_ptp_with_company_admin: boolean
+          out_share_ptp_with_direct_reports: boolean
+          out_share_ptp_with_organization: boolean
+          out_share_ptp_with_supervisor: boolean
+          out_share_ptp_with_team: boolean
+          out_updated_at: string
+          out_user_id: string
         }[]
       }
       sweep_expired_deactivations: {

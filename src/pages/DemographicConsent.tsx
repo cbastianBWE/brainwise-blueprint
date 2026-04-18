@@ -77,11 +77,21 @@ const DemographicConsent = () => {
       toast({ title: "Error", description: error.message, variant: "destructive" });
       return;
     }
-    navigate("/dashboard");
+    await routeNext();
   };
 
-  const handleSkip = () => {
-    navigate("/dashboard");
+  const handleSkip = async () => {
+    await routeNext();
+  };
+
+  const routeNext = async () => {
+    if (!user) {
+      navigate("/dashboard");
+      return;
+    }
+    const { data: u } = await supabase.from("users").select("account_type").eq("id", user.id).single();
+    const isCorporate = ["corporate_employee", "company_admin", "org_admin", "brainwise_super_admin"].includes(u?.account_type ?? "");
+    navigate(isCorporate ? "/peer-sharing-optin" : "/dashboard");
   };
 
   return (

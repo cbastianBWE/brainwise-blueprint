@@ -27,6 +27,8 @@ import Resources from "./pages/Resources";
 import Pricing from "./pages/Pricing";
 import SettingsPage from "./pages/Settings";
 import PrivacySettings from "./pages/PrivacySettings";
+import SharingRequests from "./pages/SharingRequests";
+import PeerSharingOptIn from "./pages/PeerSharingOptIn";
 import BillingSettings from "./pages/BillingSettings";
 import CoachClients from "./pages/coach/CoachClients";
 import OrderAssessment from "./pages/coach/OrderAssessment";
@@ -68,6 +70,7 @@ const App = () => (
             <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
             <Route path="/demographic-consent" element={<ProtectedRoute><DemographicConsent /></ProtectedRoute>} />
             <Route path="/demographic-form" element={<ProtectedRoute><DemographicForm /></ProtectedRoute>} />
+            <Route path="/peer-sharing-optin" element={<ProtectedRoute><PeerSharingOptIn /></ProtectedRoute>} />
             
 
             {/* Protected routes with sidebar layout */}
@@ -82,6 +85,7 @@ const App = () => (
               <Route path="/resources" element={<SubscriptionGate><Resources /></SubscriptionGate>} />
               <Route path="/settings" element={<SettingsPage />} />
               <Route path="/settings/privacy" element={<PrivacySettings />} />
+              <Route path="/settings/sharing-requests" element={<SharingRequests />} />
               <Route path="/settings/billing" element={<BillingSettings />} />
 
               {/* Coach */}
