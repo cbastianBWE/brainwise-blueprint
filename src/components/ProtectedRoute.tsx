@@ -3,7 +3,7 @@ import { Navigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
-const EXEMPT_PATHS = ["/onboarding", "/demographic-form", "/demographic-consent"];
+const EXEMPT_PATHS = ["/onboarding", "/demographic-form", "/demographic-consent", "/peer-sharing-optin"];
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { session, loading } = useAuth();
