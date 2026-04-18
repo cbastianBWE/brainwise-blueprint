@@ -1,12 +1,14 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import * as XLSX from "xlsx";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
@@ -17,7 +19,7 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Loader2, AlertTriangle, X } from "lucide-react";
+import { Loader2, AlertTriangle, X, Upload, Download, KeyRound } from "lucide-react";
 
 const ADD_DEPT_VALUE = "__add_department__";
 
@@ -30,6 +32,18 @@ const ORG_LEVELS = [
   { value: "Other", label: "Other" },
 ];
 
+const ROLE_LABELS: Record<string, string> = {
+  corporate_employee: "Employee",
+  company_admin: "Company Admin",
+  org_admin: "Org Admin",
+  brainwise_super_admin: "Super Admin",
+};
+
+function formatRole(accountType: string | null) {
+  if (!accountType) return "Other";
+  return ROLE_LABELS[accountType] || "Other";
+}
+
 function formatDate(iso: string | null) {
   if (!iso) return "—";
   try {
@@ -39,12 +53,287 @@ function formatDate(iso: string | null) {
   }
 }
 
+type ParsedRow = {
+  invitee_email: string;
+  department_name: string | null;
+  supervisor_email: string | null;
+  org_level: string | null;
+};
+
+type BulkResultRow = {
+  row_index: number;
+  invitee_email: string;
+  success: boolean;
+  invitation_id: string | null;
+  code: string | null;
+  department_created: boolean;
+  error_code: string | null;
+  error_message: string | null;
+};
+
+type BulkStage = "idle" | "preview" | "sending" | "results";
+
+function BulkInviteCard({ orgId }: { orgId: string }) {
+  const { toast } = useToast();
+  const qc = useQueryClient();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [bulkStage, setBulkStage] = useState<BulkStage>("idle");
+  const [parsedRows, setParsedRows] = useState<ParsedRow[]>([]);
+  const [bulkResults, setBulkResults] = useState<BulkResultRow[]>([]);
+  const [fileName, setFileName] = useState<string>("");
+
+  const reset = () => {
+    setBulkStage("idle");
+    setParsedRows([]);
+    setBulkResults([]);
+    setFileName("");
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setFileName(file.name);
+    try {
+      const data = await file.arrayBuffer();
+      const workbook = XLSX.read(data);
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      const rawRows = XLSX.utils.sheet_to_json<Record<string, any>>(sheet, { defval: null });
+
+      if (rawRows.length === 0) {
+        toast({ title: "No rows found in file", variant: "destructive" });
+        reset();
+        return;
+      }
+      if (rawRows.length > 500) {
+        toast({ title: `Max 500 rows per upload. Got ${rawRows.length}.`, variant: "destructive" });
+        reset();
+        return;
+      }
+
+      // Normalize headers per row
+      const normalized: ParsedRow[] = rawRows.map((row) => {
+        const map: Record<string, any> = {};
+        for (const k of Object.keys(row)) {
+          map[k.toLowerCase().trim()] = row[k];
+        }
+        const email = (map["email"] ?? "").toString().trim();
+        const dept = map["department"];
+        const supervisor = map["supervisor"];
+        const level = map["level"] ?? map["org_level"];
+        return {
+          invitee_email: email,
+          department_name: dept ? String(dept).trim() : null,
+          supervisor_email: supervisor ? String(supervisor).trim() : null,
+          org_level: level ? String(level).trim() : null,
+        };
+      });
+
+      const missing = normalized.filter((r) => !r.invitee_email).length;
+      if (missing > 0) {
+        toast({
+          title: `${missing} rows missing email — fix file and retry`,
+          variant: "destructive",
+        });
+        reset();
+        return;
+      }
+
+      setParsedRows(normalized);
+      setBulkStage("preview");
+    } catch (err: any) {
+      toast({ title: "Failed to parse file", description: err.message, variant: "destructive" });
+      reset();
+    }
+  };
+
+  const handleSend = async () => {
+    setBulkStage("sending");
+    const { data, error } = await (supabase.rpc as any)("bulk_invitation_create", {
+      p_organization_id: orgId,
+      p_rows: parsedRows,
+    });
+    if (error) {
+      toast({ title: "Bulk invite failed", description: error.message, variant: "destructive" });
+      setBulkStage("preview");
+      return;
+    }
+    setBulkResults((data || []) as BulkResultRow[]);
+    setBulkStage("results");
+    await Promise.all([
+      qc.invalidateQueries({ queryKey: ["admin-pending-invitations", orgId] }),
+      qc.invalidateQueries({ queryKey: ["admin-departments", orgId] }),
+    ]);
+  };
+
+  const downloadFailedCsv = () => {
+    const failed = bulkResults.filter((r) => !r.success);
+    if (failed.length === 0) return;
+    const header = ["email", "department", "supervisor", "level", "error_code", "error_message"];
+    const csvLines = [header.join(",")];
+    for (const r of failed) {
+      const orig = parsedRows[r.row_index] || ({} as ParsedRow);
+      const fields = [
+        r.invitee_email,
+        orig.department_name ?? "",
+        orig.supervisor_email ?? "",
+        orig.org_level ?? "",
+        r.error_code ?? "",
+        r.error_message ?? "",
+      ].map((v) => {
+        const s = String(v ?? "");
+        return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+      });
+      csvLines.push(fields.join(","));
+    }
+    const blob = new Blob([csvLines.join("\n")], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "failed-invitations.csv";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const successCount = bulkResults.filter((r) => r.success).length;
+  const failCount = bulkResults.filter((r) => !r.success).length;
+  const deptCreatedCount = bulkResults.filter((r) => r.department_created).length;
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Bulk invite</CardTitle>
+        <CardDescription>
+          Upload a CSV or Excel file with columns: email (required), department, supervisor, level.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {bulkStage === "idle" && (
+          <div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".csv,.xlsx,.xls"
+              className="hidden"
+              onChange={handleFile}
+            />
+            <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
+              <Upload className="h-4 w-4 mr-2" />
+              Choose file to upload
+            </Button>
+          </div>
+        )}
+
+        {(bulkStage === "preview" || bulkStage === "sending") && (
+          <div className="space-y-4">
+            <div className="text-sm">
+              Ready to send <strong>{parsedRows.length}</strong> invitations
+              {fileName && <> from <span className="text-muted-foreground">{fileName}</span></>}.
+              Review and confirm.
+            </div>
+            <div className="border rounded-md overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Department</TableHead>
+                    <TableHead>Supervisor</TableHead>
+                    <TableHead>Org Level</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {parsedRows.slice(0, 10).map((r, i) => (
+                    <TableRow key={i}>
+                      <TableCell className="font-medium">{r.invitee_email}</TableCell>
+                      <TableCell>{r.department_name || "—"}</TableCell>
+                      <TableCell>{r.supervisor_email || "—"}</TableCell>
+                      <TableCell>{r.org_level || "—"}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              {parsedRows.length > 10 && (
+                <div className="px-4 py-2 text-sm text-muted-foreground border-t">
+                  + {parsedRows.length - 10} more
+                </div>
+              )}
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={reset} disabled={bulkStage === "sending"}>
+                Cancel
+              </Button>
+              <Button onClick={handleSend} disabled={bulkStage === "sending"}>
+                {bulkStage === "sending" && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                Send invitations
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {bulkStage === "results" && (
+          <div className="space-y-4">
+            <div className="text-sm">
+              <strong>{successCount}</strong> succeeded, <strong>{failCount}</strong> failed,{" "}
+              <strong>{deptCreatedCount}</strong> departments auto-created
+            </div>
+            <div className="border rounded-md overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-16">Row #</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Details</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {bulkResults.map((r) => (
+                    <TableRow key={r.row_index}>
+                      <TableCell>{r.row_index + 1}</TableCell>
+                      <TableCell className="font-medium">{r.invitee_email}</TableCell>
+                      <TableCell>
+                        {r.success ? (
+                          <Badge variant="default">Sent</Badge>
+                        ) : (
+                          <Badge variant="destructive">Failed</Badge>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {r.success && r.code ? (
+                          <code className="font-mono bg-muted px-1.5 py-0.5 rounded text-sm">{r.code}</code>
+                        ) : (
+                          <span className="text-sm text-muted-foreground">{r.error_message || "—"}</span>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+            <div className="flex justify-end gap-2">
+              {failCount > 0 && (
+                <Button variant="outline" onClick={downloadFailedCsv}>
+                  <Download className="h-4 w-4 mr-2" />
+                  Download failed rows as CSV
+                </Button>
+              )}
+              <Button onClick={reset}>Upload another file</Button>
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function AdminUsers() {
   const { user } = useAuth();
   const { toast } = useToast();
   const qc = useQueryClient();
 
-  const [orgId, setOrgId] = useState<string | null | undefined>(undefined); // undefined = loading
+  const [orgId, setOrgId] = useState<string | null | undefined>(undefined);
   const [email, setEmail] = useState("");
   const [department, setDepartment] = useState<string>("");
   const [supervisor, setSupervisor] = useState("");
@@ -56,6 +345,14 @@ export default function AdminUsers() {
   const [creatingDept, setCreatingDept] = useState(false);
 
   const [manualCodeAlert, setManualCodeAlert] = useState<{ email: string; code: string } | null>(null);
+
+  const [resetDialog, setResetDialog] = useState<{
+    open: boolean;
+    userId: string | null;
+    userEmail: string | null;
+    userName: string | null;
+    sending: boolean;
+  }>({ open: false, userId: null, userEmail: null, userName: null, sending: false });
 
   // Load org_id for current admin
   useEffect(() => {
@@ -103,6 +400,27 @@ export default function AdminUsers() {
         org_level: string | null;
         expires_at: string;
         created_at: string;
+      }>;
+    },
+  });
+
+  const orgUsersQuery = useQuery({
+    queryKey: ["admin-org-users", orgId],
+    enabled: !!orgId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("users")
+        .select("id, email, full_name, account_type, department_name, org_level")
+        .eq("organization_id", orgId!)
+        .order("email", { ascending: true });
+      if (error) throw error;
+      return (data || []) as Array<{
+        id: string;
+        email: string;
+        full_name: string | null;
+        account_type: string | null;
+        department_name: string | null;
+        org_level: string | null;
       }>;
     },
   });
@@ -199,7 +517,6 @@ export default function AdminUsers() {
     setSending(false);
 
     if (response.ok) {
-      // Invalidate pending invites regardless
       await qc.invalidateQueries({ queryKey: ["admin-pending-invitations", orgId] });
 
       if (result?.email_sent) {
@@ -210,7 +527,6 @@ export default function AdminUsers() {
       } else {
         setManualCodeAlert({ email: cleanedEmail, code: result?.code || "(no code returned)" });
       }
-      // Clear email + supervisor; keep dept + org_level
       setEmail("");
       setSupervisor("");
       return;
@@ -228,6 +544,83 @@ export default function AdminUsers() {
       toast({ title: "Invalid request", description: errMsg || "Bad request", variant: "destructive" });
     } else {
       toast({ title: "Error", description: errMsg || "Something went wrong, please try again.", variant: "destructive" });
+    }
+  };
+
+  const openResetDialog = (u: { id: string; email: string; full_name: string | null }) => {
+    setResetDialog({
+      open: true,
+      userId: u.id,
+      userEmail: u.email,
+      userName: u.full_name,
+      sending: false,
+    });
+  };
+
+  const handleSendPasswordReset = async () => {
+    if (!resetDialog.userId) return;
+    setResetDialog((s) => ({ ...s, sending: true }));
+
+    const { data: sessionData } = await supabase.auth.getSession();
+    const token = sessionData?.session?.access_token;
+    if (!token) {
+      setResetDialog((s) => ({ ...s, sending: false }));
+      toast({ title: "Not signed in", description: "Please log in again.", variant: "destructive" });
+      return;
+    }
+
+    let response: Response;
+    let result: any = {};
+    try {
+      response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin_trigger_password_reset`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          },
+          body: JSON.stringify({ target_user_id: resetDialog.userId }),
+        }
+      );
+      try {
+        result = await response.json();
+      } catch {
+        // ignore
+      }
+    } catch (err: any) {
+      setResetDialog((s) => ({ ...s, sending: false }));
+      toast({ title: "Network error", description: err.message, variant: "destructive" });
+      return;
+    }
+
+    if (response.ok && result?.email_sent === true) {
+      const target = result?.target_email || resetDialog.userEmail;
+      setResetDialog({ open: false, userId: null, userEmail: null, userName: null, sending: false });
+      toast({ title: "Password reset email sent", description: `Sent to ${target}` });
+      return;
+    }
+
+    if (response.ok && result?.email_sent === false) {
+      setResetDialog({ open: false, userId: null, userEmail: null, userName: null, sending: false });
+      toast({
+        title: "Password reset link created, email delivery failed",
+        description: "Contact the user directly.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setResetDialog((s) => ({ ...s, sending: false }));
+    const status = response.status;
+    const errCode = result?.code;
+    if (status === 403 || errCode === "42501") {
+      toast({ title: "Forbidden", description: "You don't have permission to reset this user's password.", variant: "destructive" });
+    } else if (status === 404) {
+      toast({ title: "User not found", variant: "destructive" });
+    } else {
+      toast({ title: "Error", description: result?.error || "Something went wrong", variant: "destructive" });
     }
   };
 
@@ -351,6 +744,8 @@ export default function AdminUsers() {
         </CardContent>
       </Card>
 
+      <BulkInviteCard orgId={orgId} />
+
       <Card>
         <CardHeader>
           <CardTitle>Pending invitations</CardTitle>
@@ -390,6 +785,62 @@ export default function AdminUsers() {
         </CardContent>
       </Card>
 
+      <Card>
+        <CardHeader>
+          <CardTitle>Users in your organization</CardTitle>
+          <CardDescription>All users currently linked to your organization.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {orgUsersQuery.isLoading ? (
+            <div className="py-8 flex items-center justify-center">
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            </div>
+          ) : (orgUsersQuery.data?.length ?? 0) === 0 ? (
+            <p className="text-sm text-muted-foreground py-4 text-center">
+              No users in your organization yet.
+            </p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead>Department</TableHead>
+                  <TableHead>Org Level</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {orgUsersQuery.data!.map((u) => (
+                  <TableRow key={u.id}>
+                    <TableCell className="font-medium">{u.email}</TableCell>
+                    <TableCell>{u.full_name || "—"}</TableCell>
+                    <TableCell>{formatRole(u.account_type)}</TableCell>
+                    <TableCell>{u.department_name || "—"}</TableCell>
+                    <TableCell>{u.org_level || "—"}</TableCell>
+                    <TableCell className="text-right">
+                      {u.id === user?.id ? (
+                        <span className="text-muted-foreground">—</span>
+                      ) : (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => openResetDialog(u)}
+                        >
+                          <KeyRound className="h-3.5 w-3.5 mr-1.5" />
+                          Reset password
+                        </Button>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+
       <Dialog open={deptDialogOpen} onOpenChange={(open) => !creatingDept && setDeptDialogOpen(open)}>
         <DialogContent>
           <DialogHeader>
@@ -413,6 +864,41 @@ export default function AdminUsers() {
             <Button onClick={handleCreateDepartment} disabled={creatingDept || !newDeptName.trim()}>
               {creatingDept && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               {creatingDept ? "Creating..." : "Create"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={resetDialog.open}
+        onOpenChange={(open) => {
+          if (resetDialog.sending) return;
+          if (!open) {
+            setResetDialog({ open: false, userId: null, userEmail: null, userName: null, sending: false });
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reset password</DialogTitle>
+            <DialogDescription>
+              Send a password reset email to {resetDialog.userName || resetDialog.userEmail}? They'll
+              receive an email with a link to set a new password. The link expires in 1 hour.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() =>
+                setResetDialog({ open: false, userId: null, userEmail: null, userName: null, sending: false })
+              }
+              disabled={resetDialog.sending}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleSendPasswordReset} disabled={resetDialog.sending}>
+              {resetDialog.sending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Send reset email
             </Button>
           </DialogFooter>
         </DialogContent>
