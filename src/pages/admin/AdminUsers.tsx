@@ -1084,35 +1084,70 @@ export default function AdminUsers() {
                       <TableHead>Email</TableHead>
                       <TableHead>Name</TableHead>
                       <TableHead>Role</TableHead>
+                      <TableHead>Status</TableHead>
                       <TableHead>Department</TableHead>
                       <TableHead>Org Level</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredUsers.map((u) => (
-                      <TableRow key={u.id}>
-                        <TableCell className="font-medium">{u.email}</TableCell>
-                        <TableCell>{u.full_name || "—"}</TableCell>
-                        <TableCell>{formatRole(u.account_type)}</TableCell>
-                        <TableCell>{u.department_name || "—"}</TableCell>
-                        <TableCell>{u.org_level || "—"}</TableCell>
-                        <TableCell className="text-right">
-                          {u.id === user?.id ? (
-                            <span className="text-muted-foreground">—</span>
-                          ) : (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => openResetDialog(u)}
-                            >
-                              <KeyRound className="h-3.5 w-3.5 mr-1.5" />
-                              Reset password
-                            </Button>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                    {filteredUsers.map((u) => {
+                      const isDeactivated = !!u.deactivated_at;
+                      const inGrace = isDeactivated && u.reactivation_deadline && new Date(u.reactivation_deadline).getTime() > Date.now();
+                      const graceExpired = isDeactivated && !inGrace;
+                      const daysRemaining = u.reactivation_deadline
+                        ? Math.max(0, Math.ceil((new Date(u.reactivation_deadline).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
+                        : 0;
+                      const isSelf = u.id === user?.id;
+                      return (
+                        <TableRow key={u.id} className={isDeactivated ? "opacity-60" : undefined}>
+                          <TableCell className="font-medium">{u.email}</TableCell>
+                          <TableCell>{u.full_name || "—"}</TableCell>
+                          <TableCell>{formatRole(u.account_type)}</TableCell>
+                          <TableCell>
+                            {!isDeactivated ? null : inGrace ? (
+                              <div className="space-y-0.5">
+                                <Badge variant="secondary">Deactivated</Badge>
+                                <div className={`text-xs ${daysRemaining <= 7 ? "text-destructive" : "text-muted-foreground"}`}>
+                                  {daysRemaining} days remaining
+                                </div>
+                              </div>
+                            ) : (
+                              <Badge variant="destructive">Grace expired</Badge>
+                            )}
+                          </TableCell>
+                          <TableCell>{u.department_name || "—"}</TableCell>
+                          <TableCell>{u.org_level || "—"}</TableCell>
+                          <TableCell className="text-right">
+                            {isSelf || graceExpired ? (
+                              <span className="text-muted-foreground">—</span>
+                            ) : inGrace ? (
+                              <div className="flex justify-end gap-2">
+                                <Button variant="default" size="sm" onClick={() => openReactivateDialog(u)}>
+                                  <UserCheck className="h-3.5 w-3.5 mr-1.5" />
+                                  Reactivate
+                                </Button>
+                              </div>
+                            ) : (
+                              <div className="flex justify-end gap-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => openResetDialog(u)}
+                                >
+                                  <KeyRound className="h-3.5 w-3.5 mr-1.5" />
+                                  Reset password
+                                </Button>
+                                <Button variant="destructive" size="sm" onClick={() => openDeactivateDialog(u)}>
+                                  <UserX className="h-3.5 w-3.5 mr-1.5" />
+                                  Deactivate
+                                </Button>
+                              </div>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
               )}
