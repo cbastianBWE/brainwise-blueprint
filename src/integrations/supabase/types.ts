@@ -1045,34 +1045,50 @@ export type Database = {
         Row: {
           admin_user_id: string | null
           created_at: string
+          created_by_user_id: string | null
           id: string
           name: string
+          primary_contact_email: string | null
           seat_count: number
           seats_used: number
+          status: string
           subscription_status: string | null
         }
         Insert: {
           admin_user_id?: string | null
           created_at?: string
+          created_by_user_id?: string | null
           id?: string
           name: string
+          primary_contact_email?: string | null
           seat_count?: number
           seats_used?: number
+          status?: string
           subscription_status?: string | null
         }
         Update: {
           admin_user_id?: string | null
           created_at?: string
+          created_by_user_id?: string | null
           id?: string
           name?: string
+          primary_contact_email?: string | null
           seat_count?: number
           seats_used?: number
+          status?: string
           subscription_status?: string | null
         }
         Relationships: [
           {
             foreignKeyName: "organizations_admin_user_id_fkey"
             columns: ["admin_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "organizations_created_by_user_id_fkey"
+            columns: ["created_by_user_id"]
             isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
@@ -1657,6 +1673,29 @@ export type Database = {
       }
     }
     Functions: {
+      admin_assign_org_admin: {
+        Args: {
+          p_is_transfer: boolean
+          p_organization_id: string
+          p_target_email: string
+        }
+        Returns: string
+      }
+      admin_create_organization: {
+        Args: {
+          p_ai_chat_enabled: boolean
+          p_ai_monthly_message_allowance: number
+          p_ai_report_regeneration_allowance: number
+          p_contract_end_date: string
+          p_contract_notes: string
+          p_contract_start_date: string
+          p_data_retention_mode: string
+          p_license_count: number
+          p_name: string
+          p_primary_contact_email: string
+        }
+        Returns: string
+      }
       admin_promote_to_company_admin: {
         Args: { p_target_user_id: string }
         Returns: undefined
