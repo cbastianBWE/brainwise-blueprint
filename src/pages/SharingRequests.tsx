@@ -82,6 +82,135 @@ export default function SharingRequests() {
     loadAll();
   }, [loadAll]);
 
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      const { data: me } = await (supabase as any)
+        .from("users")
+        .select("organization_id")
+        .eq("id", user.id)
+        .single();
+      if (!me?.organization_id) return;
+
+      const { data } = await (supabase as any)
+        .from("users")
+        .select("id, email, full_name")
+        .eq("organization_id", me.organization_id)
+        .is("deactivated_at", null)
+        .neq("id", user.id)
+        .order("email", { ascending: true });
+
+      setOrgUsers((data as Array<{ id: string; email: string; full_name: string | null }>) || []);
+    })();
+  }, [user]);
+
+  const handleSendRequest = async () => {
+    if (!selectedTargetId) return;
+    setSending(true);
+
+    const { data: rpcData, error: rpcError } = await (supabase as any).rpc(
+      "peer_access_request_create",
+      { p_target_user_id: selectedTargetId }
+    );
+
+    if (rpcError) {
+      setSending(false);
+      const code = (rpcError as any).code;
+      if (code === "23505") {
+        toast.error("You already have a pending request to this person.");
+      } else if (code === "42501") {
+        toast.error("You don't have permission to request access from this user.");
+      } else if (code === "22023") {
+        toast.error(rpcError.message || "Invalid request.");
+      } else {
+        toast.error("Could not send request. Please try again.");
+      }
+      return;
+    }
+
+    const row = Array.isArray(rpcData) ? rpcData[0] : rpcData;
+    if (!row) {
+      setSending(false);
+      toast.error("Unexpected response from server.");
+      return;
+    }
+
+    const targetEmail = row.out_target_email as string;
+    const targetName = (row.out_target_full_name as string | null) || targetEmail;
+    const requesterName = (row.out_requester_full_name as string | null) || "A BrainWise user";
+    const actionToken = row.out_action_token as string;
+    const expiresAt = new Date(row.out_expires_at as string);
+    const expiresLabel = expiresAt.toLocaleDateString("en-US", {
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    });
+
+    const baseUrl = "https://svprhtzawnbzmumxnhsq.supabase.co/functions/v1/peer-access-respond";
+    const acceptUrl = `${baseUrl}?token=${encodeURIComponent(actionToken)}&action=accept`;
+    const declineUrl = `${baseUrl}?token=${encodeURIComponent(actionToken)}&action=decline`;
+
+    const subject = `${requesterName} is requesting access to your PTP results`;
+
+    const html = `
+<!DOCTYPE html>
+<html>
+  <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f6f7f9; padding: 24px;">
+    <div style="max-width: 560px; margin: 0 auto; background: #ffffff; padding: 32px; border-radius: 8px;">
+      <h2 style="margin: 0 0 16px; color: #111;">Peer access request</h2>
+      <p style="color: #333; line-height: 1.5;">Hi ${targetName},</p>
+      <p style="color: #333; line-height: 1.5;">${requesterName} is requesting access to view your PTP assessment results on BrainWise.</p>
+      <p style="color: #333; line-height: 1.5;">You can accept or decline this request below. If you prefer to review your privacy settings first, you can open BrainWise and respond from there. This request expires on ${expiresLabel}.</p>
+      <div style="margin: 24px 0;">
+        <a href="${acceptUrl}" style="display: inline-block; background: #2563eb; color: #fff; padding: 10px 20px; border-radius: 6px; text-decoration: none; margin-right: 8px;">Accept</a>
+        <a href="${declineUrl}" style="display: inline-block; background: #e5e7eb; color: #111; padding: 10px 20px; border-radius: 6px; text-decoration: none;">Decline</a>
+      </div>
+      <p style="color: #666; font-size: 13px; line-height: 1.5;">If you don't recognize this request or believe it was sent in error, you can safely ignore this email.</p>
+      <hr style="border: none; border-top: 1px solid #eee; margin: 24px 0;" />
+      <p style="color: #999; font-size: 12px;">BrainWise Enterprise Platform</p>
+    </div>
+  </body>
+</html>
+`.trim();
+
+    const { data: sessionData } = await supabase.auth.getSession();
+    const token = sessionData?.session?.access_token;
+
+    let emailOk = false;
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-email`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          },
+          body: JSON.stringify({
+            to: targetEmail,
+            subject,
+            html,
+          }),
+        }
+      );
+      emailOk = response.ok;
+    } catch {
+      emailOk = false;
+    }
+
+    setSending(false);
+    setSelectedTargetId("");
+
+    if (emailOk) {
+      toast.success(`Request sent to ${targetName}.`);
+    } else {
+      toast.success(`Request created for ${targetName}, but the email could not be sent. They'll still see it in their inbox when they log in.`);
+    }
+
+    await loadAll();
+  };
+
   const handleRespond = async (requestId: string, accept: boolean) => {
     setActing(requestId);
     const { error } = await (supabase as any).rpc("peer_access_request_respond", {
