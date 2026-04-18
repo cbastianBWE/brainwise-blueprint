@@ -776,7 +776,86 @@ export default function AdminUsers() {
     }
   };
 
-  // Render states
+  const openDeactivateDialog = (u: { id: string; email: string; full_name: string | null; account_type: string | null }) => {
+    setDeactivateDialog({
+      open: true,
+      userId: u.id,
+      userEmail: u.email,
+      userName: u.full_name,
+      targetRole: u.account_type,
+      reason: "",
+      sending: false,
+    });
+  };
+
+  const handleConfirmDeactivate = async () => {
+    if (!deactivateDialog.userId) return;
+    setDeactivateDialog((s) => ({ ...s, sending: true }));
+    const trimmedReason = deactivateDialog.reason.trim();
+    const { error } = await (supabase.rpc as any)("user_deactivate", {
+      p_target_user_id: deactivateDialog.userId,
+      p_reason: trimmedReason.length > 0 ? trimmedReason : null,
+    });
+    if (error) {
+      setDeactivateDialog((s) => ({ ...s, sending: false }));
+      const code = (error as any).code;
+      if (code === "42501") {
+        toast({ title: "Forbidden", description: "You don't have permission to deactivate this user.", variant: "destructive" });
+      } else if (code === "P0002") {
+        toast({ title: "User not found", variant: "destructive" });
+      } else {
+        toast({ title: "Error", description: error.message, variant: "destructive" });
+      }
+      return;
+    }
+    const targetLabel = deactivateDialog.userName || deactivateDialog.userEmail;
+    setDeactivateDialog({ open: false, userId: null, userEmail: null, userName: null, targetRole: null, reason: "", sending: false });
+    toast({ title: "User deactivated", description: `${targetLabel} has been deactivated with a 90-day reactivation window.` });
+    await qc.invalidateQueries({ queryKey: ["admin-org-users", orgId] });
+  };
+
+  const openReactivateDialog = (u: {
+    id: string;
+    email: string;
+    full_name: string | null;
+    reactivation_deadline: string | null;
+  }) => {
+    const days = u.reactivation_deadline
+      ? Math.max(0, Math.ceil((new Date(u.reactivation_deadline).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
+      : 0;
+    setReactivateDialog({
+      open: true,
+      userId: u.id,
+      userEmail: u.email,
+      userName: u.full_name,
+      daysRemaining: days,
+      sending: false,
+    });
+  };
+
+  const handleConfirmReactivate = async () => {
+    if (!reactivateDialog.userId) return;
+    setReactivateDialog((s) => ({ ...s, sending: true }));
+    const { error } = await (supabase.rpc as any)("user_reactivate", {
+      p_target_user_id: reactivateDialog.userId,
+    });
+    if (error) {
+      setReactivateDialog((s) => ({ ...s, sending: false }));
+      const code = (error as any).code;
+      if (code === "42501") {
+        toast({ title: "Forbidden", description: "You don't have permission to reactivate this user.", variant: "destructive" });
+      } else if (code === "22023") {
+        toast({ title: "Cannot reactivate", description: error.message, variant: "destructive" });
+      } else {
+        toast({ title: "Error", description: error.message, variant: "destructive" });
+      }
+      return;
+    }
+    const targetLabel = reactivateDialog.userName || reactivateDialog.userEmail;
+    setReactivateDialog({ open: false, userId: null, userEmail: null, userName: null, daysRemaining: 0, sending: false });
+    toast({ title: "User reactivated", description: `${targetLabel} is active again.` });
+    await qc.invalidateQueries({ queryKey: ["admin-org-users", orgId] });
+  };
   if (orgId === undefined) {
     return (
       <div className="p-6 flex items-center justify-center">
