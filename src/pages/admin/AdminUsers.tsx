@@ -568,7 +568,8 @@ export default function AdminUsers() {
         email: string;
         full_name: string | null;
         account_type: string | null;
-        department_name: string | null;
+        department_id: string | null;
+        department: { id: string; name: string } | null;
         org_level: string | null;
         deactivated_at: string | null;
         reactivation_deadline: string | null;
