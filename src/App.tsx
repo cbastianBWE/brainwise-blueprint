@@ -29,6 +29,7 @@ import SettingsPage from "./pages/Settings";
 import PrivacySettings from "./pages/PrivacySettings";
 import SharingRequests from "./pages/SharingRequests";
 import PeerSharingOptIn from "./pages/PeerSharingOptIn";
+import PeerAccessResponded from "./pages/PeerAccessResponded";
 import BillingSettings from "./pages/BillingSettings";
 import CoachClients from "./pages/coach/CoachClients";
 import OrderAssessment from "./pages/coach/OrderAssessment";
