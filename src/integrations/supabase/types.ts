@@ -664,6 +664,139 @@ export type Database = {
           },
         ]
       }
+      company_admin_audit_log: {
+        Row: {
+          action_details: Json | null
+          action_type: string
+          actor_role: string
+          actor_user_id: string | null
+          created_at: string
+          id: string
+          ip_address: unknown
+          organization_id: string
+          target_entity_id: string | null
+          target_entity_type: string | null
+          target_user_id: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          action_details?: Json | null
+          action_type: string
+          actor_role: string
+          actor_user_id?: string | null
+          created_at?: string
+          id?: string
+          ip_address?: unknown
+          organization_id: string
+          target_entity_id?: string | null
+          target_entity_type?: string | null
+          target_user_id?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          action_details?: Json | null
+          action_type?: string
+          actor_role?: string
+          actor_user_id?: string | null
+          created_at?: string
+          id?: string
+          ip_address?: unknown
+          organization_id?: string
+          target_entity_id?: string | null
+          target_entity_type?: string | null
+          target_user_id?: string | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_admin_audit_log_actor_user_id_fkey"
+            columns: ["actor_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_admin_audit_log_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_admin_audit_log_target_user_id_fkey"
+            columns: ["target_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      corporate_contracts: {
+        Row: {
+          ai_chat_enabled: boolean
+          ai_monthly_message_allowance: number | null
+          ai_report_regeneration_allowance: number | null
+          contract_end_date: string
+          contract_notes: string | null
+          contract_start_date: string
+          created_at: string
+          created_by_user_id: string | null
+          data_retention_mode: string
+          id: string
+          license_count: number
+          organization_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          ai_chat_enabled?: boolean
+          ai_monthly_message_allowance?: number | null
+          ai_report_regeneration_allowance?: number | null
+          contract_end_date: string
+          contract_notes?: string | null
+          contract_start_date: string
+          created_at?: string
+          created_by_user_id?: string | null
+          data_retention_mode?: string
+          id?: string
+          license_count: number
+          organization_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          ai_chat_enabled?: boolean
+          ai_monthly_message_allowance?: number | null
+          ai_report_regeneration_allowance?: number | null
+          contract_end_date?: string
+          contract_notes?: string | null
+          contract_start_date?: string
+          created_at?: string
+          created_by_user_id?: string | null
+          data_retention_mode?: string
+          id?: string
+          license_count?: number
+          organization_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "corporate_contracts_created_by_user_id_fkey"
+            columns: ["created_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "corporate_contracts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dimensions: {
         Row: {
           created_at: string
@@ -1387,17 +1520,20 @@ export type Database = {
           created_at: string
           date_format: string | null
           deleted_at: string | null
+          department_name: string | null
           email: string
           full_name: string | null
           id: string
           notifications: Json | null
           onboarding_instrument_version: string | null
+          org_level: string | null
           organization_id: string | null
           share_results_with_coach: boolean
           stripe_coupon_id: string | null
           stripe_subscription_id: string | null
           subscription_status: string
           subscription_tier: string
+          supervisor_user_id: string | null
           timezone: string | null
         }
         Insert: {
@@ -1408,17 +1544,20 @@ export type Database = {
           created_at?: string
           date_format?: string | null
           deleted_at?: string | null
+          department_name?: string | null
           email: string
           full_name?: string | null
           id?: string
           notifications?: Json | null
           onboarding_instrument_version?: string | null
+          org_level?: string | null
           organization_id?: string | null
           share_results_with_coach?: boolean
           stripe_coupon_id?: string | null
           stripe_subscription_id?: string | null
           subscription_status?: string
           subscription_tier?: string
+          supervisor_user_id?: string | null
           timezone?: string | null
         }
         Update: {
@@ -1429,17 +1568,20 @@ export type Database = {
           created_at?: string
           date_format?: string | null
           deleted_at?: string | null
+          department_name?: string | null
           email?: string
           full_name?: string | null
           id?: string
           notifications?: Json | null
           onboarding_instrument_version?: string | null
+          org_level?: string | null
           organization_id?: string | null
           share_results_with_coach?: boolean
           stripe_coupon_id?: string | null
           stripe_subscription_id?: string | null
           subscription_status?: string
           subscription_tier?: string
+          supervisor_user_id?: string | null
           timezone?: string | null
         }
         Relationships: [
@@ -1448,6 +1590,13 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "users_supervisor_user_id_fkey"
+            columns: ["supervisor_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
@@ -1508,6 +1657,19 @@ export type Database = {
       }
     }
     Functions: {
+      admin_promote_to_company_admin: {
+        Args: { p_target_user_id: string }
+        Returns: undefined
+      }
+      admin_promote_to_org_admin: {
+        Args: { p_target_user_id: string }
+        Returns: undefined
+      }
+      admin_revoke_company_admin: {
+        Args: { p_target_user_id: string }
+        Returns: undefined
+      }
+      assert_super_admin: { Args: never; Returns: undefined }
       close_chat_session: { Args: { p_session_id: string }; Returns: undefined }
       consume_assessment_purchase: {
         Args: {
@@ -1529,6 +1691,10 @@ export type Database = {
           subscription_status: string
           subscription_tier: string
         }[]
+      }
+      has_required_demographics: {
+        Args: { p_user_id: string }
+        Returns: boolean
       }
       update_chat_session: {
         Args: {
