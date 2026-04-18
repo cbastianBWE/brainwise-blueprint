@@ -294,6 +294,33 @@ export default function SharingRequests() {
         </TabsContent>
 
         <TabsContent value="sent" className="space-y-3 mt-4">
+          <Card>
+            <CardContent className="py-4 space-y-3">
+              <Label className="text-sm font-medium">Send a new request</Label>
+              <Select value={selectedTargetId} onValueChange={setSelectedTargetId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a colleague" />
+                </SelectTrigger>
+                <SelectContent>
+                  {orgUsers.length === 0 ? (
+                    <div className="py-2 px-3 text-sm text-muted-foreground">No colleagues available.</div>
+                  ) : (
+                    orgUsers.map((u) => (
+                      <SelectItem key={u.id} value={u.id}>
+                        {u.full_name || u.email}
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
+              <div className="flex justify-end">
+                <Button onClick={handleSendRequest} disabled={!selectedTargetId || sending}>
+                  {sending && <Loader2 className="h-3 w-3 mr-1 animate-spin" />}
+                  Send Request
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
           {loading ? (
             <div className="flex justify-center py-8"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
           ) : sent.length === 0 ? (
