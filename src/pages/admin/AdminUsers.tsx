@@ -1050,7 +1050,7 @@ export default function AdminUsers() {
               (u) =>
                 u.email.toLowerCase().includes(q) ||
                 (u.full_name?.toLowerCase().includes(q) ?? false) ||
-                (u.department_name?.toLowerCase().includes(q) ?? false)
+                (u.department?.name?.toLowerCase().includes(q) ?? false)
             );
         return (
           <Card>
@@ -1117,7 +1117,7 @@ export default function AdminUsers() {
                               <Badge variant="destructive">Grace expired</Badge>
                             )}
                           </TableCell>
-                          <TableCell>{u.department_name || "—"}</TableCell>
+                          <TableCell>{u.department?.name || "—"}</TableCell>
                           <TableCell>{u.org_level || "—"}</TableCell>
                           <TableCell className="text-right">
                             {isSelf || graceExpired ? (
