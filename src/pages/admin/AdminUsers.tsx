@@ -538,9 +538,9 @@ export default function AdminUsers() {
     queryKey: ["admin-org-users", orgId],
     enabled: !!orgId,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("users")
-        .select("id, email, full_name, account_type, department_name, org_level")
+        .select("id, email, full_name, account_type, department_name, org_level, deactivated_at, reactivation_deadline, deactivation_reason")
         .eq("organization_id", orgId!)
         .order("email", { ascending: true });
       if (error) throw error;
@@ -551,6 +551,9 @@ export default function AdminUsers() {
         account_type: string | null;
         department_name: string | null;
         org_level: string | null;
+        deactivated_at: string | null;
+        reactivation_deadline: string | null;
+        deactivation_reason: string | null;
       }>;
     },
   });
