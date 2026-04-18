@@ -874,7 +874,7 @@ export default function AdminUsers() {
         </CardContent>
       </Card>
 
-      <BulkInviteCard orgId={orgId} />
+      <BulkInviteCard orgId={orgId} departments={departments} />
 
       {(() => {
         const allPending = invitationsQuery.data || [];
