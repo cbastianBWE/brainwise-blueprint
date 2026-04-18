@@ -132,11 +132,15 @@ function BulkInviteCard({ orgId }: { orgId: string }) {
         const dept = map["department"];
         const supervisor = map["supervisor"];
         const level = map["level"] ?? map["org_level"];
+        const levelStr = level ? String(level).trim() : "";
+        const normalizedLevel = levelStr
+          ? (ORG_LEVEL_NORMALIZE[levelStr.toLowerCase()] ?? levelStr)
+          : null;
         return {
           invitee_email: email,
           department_name: dept ? String(dept).trim() : null,
           supervisor_email: supervisor ? String(supervisor).trim() : null,
-          org_level: level ? String(level).trim() : null,
+          org_level: normalizedLevel,
         };
       });
 
