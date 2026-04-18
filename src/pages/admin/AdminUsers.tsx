@@ -86,7 +86,13 @@ const ORG_LEVEL_NORMALIZE: Record<string, string> = {
   "other": "Other",
 };
 
-function BulkInviteCard({ orgId }: { orgId: string }) {
+function BulkInviteCard({
+  orgId,
+  departments,
+}: {
+  orgId: string;
+  departments: Array<{ id: string; name: string }>;
+}) {
   const { toast } = useToast();
   const qc = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -94,6 +100,35 @@ function BulkInviteCard({ orgId }: { orgId: string }) {
   const [parsedRows, setParsedRows] = useState<ParsedRow[]>([]);
   const [bulkResults, setBulkResults] = useState<BulkResultRow[]>([]);
   const [fileName, setFileName] = useState<string>("");
+
+  const escapeCsv = (value: string) => {
+    if (/[",\n]/.test(value)) {
+      return `"${value.replace(/"/g, '""')}"`;
+    }
+    return value;
+  };
+
+  const handleDownloadTemplate = () => {
+    const exampleDept1 = departments[0]?.name ?? "Engineering";
+    const exampleDept2 = departments[1]?.name ?? departments[0]?.name ?? "Marketing";
+
+    const csv = [
+      "email,department,supervisor,level",
+      `alice@example.com,${escapeCsv(exampleDept1)},bob@example.com,IC`,
+      `bob@example.com,${escapeCsv(exampleDept1)},,Manager`,
+      `carol@example.com,${escapeCsv(exampleDept2)},,Director`,
+    ].join("\n");
+
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "brainwise-invite-template.csv";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
 
   const reset = () => {
     setBulkStage("idle");
@@ -265,7 +300,7 @@ function BulkInviteCard({ orgId }: { orgId: string }) {
       </CardHeader>
       <CardContent className="space-y-4">
         {bulkStage === "idle" && (
-          <div>
+          <div className="space-y-3">
             <input
               ref={fileInputRef}
               type="file"
@@ -273,10 +308,20 @@ function BulkInviteCard({ orgId }: { orgId: string }) {
               className="hidden"
               onChange={handleFile}
             />
-            <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
-              <Upload className="h-4 w-4 mr-2" />
-              Choose file to upload
-            </Button>
+            <div className="flex gap-2 flex-wrap">
+              <Button variant="outline" onClick={handleDownloadTemplate}>
+                <Download className="h-4 w-4 mr-2" />
+                Download template
+              </Button>
+              <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
+                <Upload className="h-4 w-4 mr-2" />
+                Choose file to upload
+              </Button>
+            </div>
+            <div className="text-xs text-muted-foreground space-y-1">
+              <p>Required column: email. Optional: department, supervisor, level.</p>
+              <p>Accepted level values: IC, Manager, Director, VP, C-Suite, Other.</p>
+            </div>
           </div>
         )}
 
@@ -829,7 +874,7 @@ export default function AdminUsers() {
         </CardContent>
       </Card>
 
-      <BulkInviteCard orgId={orgId} />
+      <BulkInviteCard orgId={orgId} departments={departments} />
 
       {(() => {
         const allPending = invitationsQuery.data || [];
