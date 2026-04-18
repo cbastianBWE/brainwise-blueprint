@@ -73,6 +73,17 @@ type BulkResultRow = {
 
 type BulkStage = "idle" | "preview" | "sending" | "results";
 
+const ORG_LEVEL_NORMALIZE: Record<string, string> = {
+  "ic": "IC",
+  "manager": "Manager",
+  "director": "Director",
+  "vp": "VP",
+  "c-suite": "C-Suite",
+  "csuite": "C-Suite",
+  "c suite": "C-Suite",
+  "other": "Other",
+};
+
 function BulkInviteCard({ orgId }: { orgId: string }) {
   const { toast } = useToast();
   const qc = useQueryClient();
@@ -121,11 +132,15 @@ function BulkInviteCard({ orgId }: { orgId: string }) {
         const dept = map["department"];
         const supervisor = map["supervisor"];
         const level = map["level"] ?? map["org_level"];
+        const levelStr = level ? String(level).trim() : "";
+        const normalizedLevel = levelStr
+          ? (ORG_LEVEL_NORMALIZE[levelStr.toLowerCase()] ?? levelStr)
+          : null;
         return {
           invitee_email: email,
           department_name: dept ? String(dept).trim() : null,
           supervisor_email: supervisor ? String(supervisor).trim() : null,
-          org_level: level ? String(level).trim() : null,
+          org_level: normalizedLevel,
         };
       });
 
