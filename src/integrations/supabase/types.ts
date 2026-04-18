@@ -797,6 +797,115 @@ export type Database = {
           },
         ]
       }
+      corporate_invitations: {
+        Row: {
+          account_type: string
+          code: string
+          created_at: string
+          created_by_user_id: string
+          department_name: string | null
+          expires_at: string
+          id: string
+          invitee_email: string
+          org_level: string | null
+          organization_id: string
+          redeemed_at: string | null
+          redeemed_by_user_id: string | null
+          supervisor_email: string | null
+        }
+        Insert: {
+          account_type?: string
+          code: string
+          created_at?: string
+          created_by_user_id: string
+          department_name?: string | null
+          expires_at?: string
+          id?: string
+          invitee_email: string
+          org_level?: string | null
+          organization_id: string
+          redeemed_at?: string | null
+          redeemed_by_user_id?: string | null
+          supervisor_email?: string | null
+        }
+        Update: {
+          account_type?: string
+          code?: string
+          created_at?: string
+          created_by_user_id?: string
+          department_name?: string | null
+          expires_at?: string
+          id?: string
+          invitee_email?: string
+          org_level?: string | null
+          organization_id?: string
+          redeemed_at?: string | null
+          redeemed_by_user_id?: string | null
+          supervisor_email?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "corporate_invitations_created_by_user_id_fkey"
+            columns: ["created_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "corporate_invitations_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "corporate_invitations_redeemed_by_user_id_fkey"
+            columns: ["redeemed_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      departments: {
+        Row: {
+          created_at: string
+          created_by_user_id: string | null
+          id: string
+          name: string
+          organization_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by_user_id?: string | null
+          id?: string
+          name: string
+          organization_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by_user_id?: string | null
+          id?: string
+          name?: string
+          organization_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "departments_created_by_user_id_fkey"
+            columns: ["created_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "departments_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dimensions: {
         Row: {
           created_at: string
@@ -1696,6 +1805,22 @@ export type Database = {
         }
         Returns: string
       }
+      admin_invitation_create: {
+        Args: {
+          p_account_type?: string
+          p_department_name?: string
+          p_invitee_email: string
+          p_org_level?: string
+          p_organization_id: string
+          p_session_id: string
+          p_supervisor_email?: string
+        }
+        Returns: {
+          code: string
+          expires_at: string
+          invitation_id: string
+        }[]
+      }
       admin_promote_to_company_admin: {
         Args: { p_target_user_id: string }
         Returns: undefined
@@ -1720,6 +1845,11 @@ export type Database = {
       }
       current_user_account_type: { Args: never; Returns: string }
       current_user_org_id: { Args: never; Returns: string }
+      department_create: {
+        Args: { p_name: string; p_organization_id: string }
+        Returns: string
+      }
+      generate_invitation_code: { Args: never; Returns: string }
       get_own_immutable_fields: {
         Args: never
         Returns: {
@@ -1734,6 +1864,31 @@ export type Database = {
       has_required_demographics: {
         Args: { p_user_id: string }
         Returns: boolean
+      }
+      invitation_create: {
+        Args: {
+          p_account_type?: string
+          p_department_name?: string
+          p_invitee_email: string
+          p_org_level?: string
+          p_organization_id: string
+          p_supervisor_email?: string
+        }
+        Returns: {
+          code: string
+          expires_at: string
+          invitation_id: string
+        }[]
+      }
+      invitation_redeem: {
+        Args: { p_invite_code: string; p_user_id: string }
+        Returns: {
+          account_type: string
+          department_name: string
+          org_level: string
+          organization_id: string
+          user_id: string
+        }[]
       }
       update_chat_session: {
         Args: {
