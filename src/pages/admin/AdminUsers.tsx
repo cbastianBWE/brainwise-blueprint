@@ -19,7 +19,7 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Loader2, AlertTriangle, X, Upload, Download, KeyRound, Search } from "lucide-react";
+import { Loader2, AlertTriangle, X, Upload, Download, KeyRound, Search, UserX, UserCheck } from "lucide-react";
 
 const ADD_DEPT_VALUE = "__add_department__";
 
@@ -481,6 +481,25 @@ export default function AdminUsers() {
     sending: boolean;
   }>({ open: false, userId: null, userEmail: null, userName: null, sending: false });
 
+  const [deactivateDialog, setDeactivateDialog] = useState<{
+    open: boolean;
+    userId: string | null;
+    userEmail: string | null;
+    userName: string | null;
+    targetRole: string | null;
+    reason: string;
+    sending: boolean;
+  }>({ open: false, userId: null, userEmail: null, userName: null, targetRole: null, reason: "", sending: false });
+
+  const [reactivateDialog, setReactivateDialog] = useState<{
+    open: boolean;
+    userId: string | null;
+    userEmail: string | null;
+    userName: string | null;
+    daysRemaining: number;
+    sending: boolean;
+  }>({ open: false, userId: null, userEmail: null, userName: null, daysRemaining: 0, sending: false });
+
   const [pendingSearch, setPendingSearch] = useState("");
   const [usersSearch, setUsersSearch] = useState("");
 
@@ -538,9 +557,9 @@ export default function AdminUsers() {
     queryKey: ["admin-org-users", orgId],
     enabled: !!orgId,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("users")
-        .select("id, email, full_name, account_type, department_name, org_level")
+        .select("id, email, full_name, account_type, department_name, org_level, deactivated_at, reactivation_deadline, deactivation_reason")
         .eq("organization_id", orgId!)
         .order("email", { ascending: true });
       if (error) throw error;
@@ -551,6 +570,9 @@ export default function AdminUsers() {
         account_type: string | null;
         department_name: string | null;
         org_level: string | null;
+        deactivated_at: string | null;
+        reactivation_deadline: string | null;
+        deactivation_reason: string | null;
       }>;
     },
   });
@@ -754,7 +776,86 @@ export default function AdminUsers() {
     }
   };
 
-  // Render states
+  const openDeactivateDialog = (u: { id: string; email: string; full_name: string | null; account_type: string | null }) => {
+    setDeactivateDialog({
+      open: true,
+      userId: u.id,
+      userEmail: u.email,
+      userName: u.full_name,
+      targetRole: u.account_type,
+      reason: "",
+      sending: false,
+    });
+  };
+
+  const handleConfirmDeactivate = async () => {
+    if (!deactivateDialog.userId) return;
+    setDeactivateDialog((s) => ({ ...s, sending: true }));
+    const trimmedReason = deactivateDialog.reason.trim();
+    const { error } = await (supabase.rpc as any)("user_deactivate", {
+      p_target_user_id: deactivateDialog.userId,
+      p_reason: trimmedReason.length > 0 ? trimmedReason : null,
+    });
+    if (error) {
+      setDeactivateDialog((s) => ({ ...s, sending: false }));
+      const code = (error as any).code;
+      if (code === "42501") {
+        toast({ title: "Forbidden", description: "You don't have permission to deactivate this user.", variant: "destructive" });
+      } else if (code === "P0002") {
+        toast({ title: "User not found", variant: "destructive" });
+      } else {
+        toast({ title: "Error", description: error.message, variant: "destructive" });
+      }
+      return;
+    }
+    const targetLabel = deactivateDialog.userName || deactivateDialog.userEmail;
+    setDeactivateDialog({ open: false, userId: null, userEmail: null, userName: null, targetRole: null, reason: "", sending: false });
+    toast({ title: "User deactivated", description: `${targetLabel} has been deactivated with a 90-day reactivation window.` });
+    await qc.invalidateQueries({ queryKey: ["admin-org-users", orgId] });
+  };
+
+  const openReactivateDialog = (u: {
+    id: string;
+    email: string;
+    full_name: string | null;
+    reactivation_deadline: string | null;
+  }) => {
+    const days = u.reactivation_deadline
+      ? Math.max(0, Math.ceil((new Date(u.reactivation_deadline).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
+      : 0;
+    setReactivateDialog({
+      open: true,
+      userId: u.id,
+      userEmail: u.email,
+      userName: u.full_name,
+      daysRemaining: days,
+      sending: false,
+    });
+  };
+
+  const handleConfirmReactivate = async () => {
+    if (!reactivateDialog.userId) return;
+    setReactivateDialog((s) => ({ ...s, sending: true }));
+    const { error } = await (supabase.rpc as any)("user_reactivate", {
+      p_target_user_id: reactivateDialog.userId,
+    });
+    if (error) {
+      setReactivateDialog((s) => ({ ...s, sending: false }));
+      const code = (error as any).code;
+      if (code === "42501") {
+        toast({ title: "Forbidden", description: "You don't have permission to reactivate this user.", variant: "destructive" });
+      } else if (code === "22023") {
+        toast({ title: "Cannot reactivate", description: error.message, variant: "destructive" });
+      } else {
+        toast({ title: "Error", description: error.message, variant: "destructive" });
+      }
+      return;
+    }
+    const targetLabel = reactivateDialog.userName || reactivateDialog.userEmail;
+    setReactivateDialog({ open: false, userId: null, userEmail: null, userName: null, daysRemaining: 0, sending: false });
+    toast({ title: "User reactivated", description: `${targetLabel} is active again.` });
+    await qc.invalidateQueries({ queryKey: ["admin-org-users", orgId] });
+  };
   if (orgId === undefined) {
     return (
       <div className="p-6 flex items-center justify-center">
@@ -983,35 +1084,70 @@ export default function AdminUsers() {
                       <TableHead>Email</TableHead>
                       <TableHead>Name</TableHead>
                       <TableHead>Role</TableHead>
+                      <TableHead>Status</TableHead>
                       <TableHead>Department</TableHead>
                       <TableHead>Org Level</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredUsers.map((u) => (
-                      <TableRow key={u.id}>
-                        <TableCell className="font-medium">{u.email}</TableCell>
-                        <TableCell>{u.full_name || "—"}</TableCell>
-                        <TableCell>{formatRole(u.account_type)}</TableCell>
-                        <TableCell>{u.department_name || "—"}</TableCell>
-                        <TableCell>{u.org_level || "—"}</TableCell>
-                        <TableCell className="text-right">
-                          {u.id === user?.id ? (
-                            <span className="text-muted-foreground">—</span>
-                          ) : (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => openResetDialog(u)}
-                            >
-                              <KeyRound className="h-3.5 w-3.5 mr-1.5" />
-                              Reset password
-                            </Button>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                    {filteredUsers.map((u) => {
+                      const isDeactivated = !!u.deactivated_at;
+                      const inGrace = isDeactivated && u.reactivation_deadline && new Date(u.reactivation_deadline).getTime() > Date.now();
+                      const graceExpired = isDeactivated && !inGrace;
+                      const daysRemaining = u.reactivation_deadline
+                        ? Math.max(0, Math.ceil((new Date(u.reactivation_deadline).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
+                        : 0;
+                      const isSelf = u.id === user?.id;
+                      return (
+                        <TableRow key={u.id} className={isDeactivated ? "opacity-60" : undefined}>
+                          <TableCell className="font-medium">{u.email}</TableCell>
+                          <TableCell>{u.full_name || "—"}</TableCell>
+                          <TableCell>{formatRole(u.account_type)}</TableCell>
+                          <TableCell>
+                            {!isDeactivated ? null : inGrace ? (
+                              <div className="space-y-0.5">
+                                <Badge variant="secondary">Deactivated</Badge>
+                                <div className={`text-xs ${daysRemaining <= 7 ? "text-destructive" : "text-muted-foreground"}`}>
+                                  {daysRemaining} days remaining
+                                </div>
+                              </div>
+                            ) : (
+                              <Badge variant="destructive">Grace expired</Badge>
+                            )}
+                          </TableCell>
+                          <TableCell>{u.department_name || "—"}</TableCell>
+                          <TableCell>{u.org_level || "—"}</TableCell>
+                          <TableCell className="text-right">
+                            {isSelf || graceExpired ? (
+                              <span className="text-muted-foreground">—</span>
+                            ) : inGrace ? (
+                              <div className="flex justify-end gap-2">
+                                <Button variant="default" size="sm" onClick={() => openReactivateDialog(u)}>
+                                  <UserCheck className="h-3.5 w-3.5 mr-1.5" />
+                                  Reactivate
+                                </Button>
+                              </div>
+                            ) : (
+                              <div className="flex justify-end gap-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => openResetDialog(u)}
+                                >
+                                  <KeyRound className="h-3.5 w-3.5 mr-1.5" />
+                                  Reset password
+                                </Button>
+                                <Button variant="destructive" size="sm" onClick={() => openDeactivateDialog(u)}>
+                                  <UserX className="h-3.5 w-3.5 mr-1.5" />
+                                  Deactivate
+                                </Button>
+                              </div>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
               )}
@@ -1078,6 +1214,95 @@ export default function AdminUsers() {
             <Button onClick={handleSendPasswordReset} disabled={resetDialog.sending}>
               {resetDialog.sending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               Send reset email
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={deactivateDialog.open}
+        onOpenChange={(open) => {
+          if (deactivateDialog.sending) return;
+          if (!open) {
+            setDeactivateDialog({ open: false, userId: null, userEmail: null, userName: null, targetRole: null, reason: "", sending: false });
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Deactivate user</DialogTitle>
+            <DialogDescription>
+              This will deactivate {deactivateDialog.userName || deactivateDialog.userEmail}. They will lose access immediately and can be reactivated within 90 days. After that, their account data is scheduled for permanent removal.
+            </DialogDescription>
+          </DialogHeader>
+          {deactivateDialog.targetRole === "brainwise_super_admin" && (
+            <Alert variant="destructive">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle>This user is a super admin</AlertTitle>
+              <AlertDescription>
+                You are about to deactivate a BrainWise super admin. Make sure this is intentional.
+              </AlertDescription>
+            </Alert>
+          )}
+          <div className="space-y-2">
+            <Label htmlFor="deactivate-reason">Reason (optional)</Label>
+            <Input
+              id="deactivate-reason"
+              placeholder="e.g. Left the company"
+              value={deactivateDialog.reason}
+              onChange={(e) => setDeactivateDialog((s) => ({ ...s, reason: e.target.value }))}
+              disabled={deactivateDialog.sending}
+              maxLength={500}
+            />
+            <p className="text-xs text-muted-foreground">Captured in the audit log for this action.</p>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() =>
+                setDeactivateDialog({ open: false, userId: null, userEmail: null, userName: null, targetRole: null, reason: "", sending: false })
+              }
+              disabled={deactivateDialog.sending}
+            >
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleConfirmDeactivate} disabled={deactivateDialog.sending}>
+              {deactivateDialog.sending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Deactivate
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={reactivateDialog.open}
+        onOpenChange={(open) => {
+          if (reactivateDialog.sending) return;
+          if (!open) {
+            setReactivateDialog({ open: false, userId: null, userEmail: null, userName: null, daysRemaining: 0, sending: false });
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reactivate user</DialogTitle>
+            <DialogDescription>
+              Restore access for {reactivateDialog.userName || reactivateDialog.userEmail}? They have {reactivateDialog.daysRemaining} day{reactivateDialog.daysRemaining === 1 ? "" : "s"} remaining in their grace window. Reactivation will clear the deactivation state and restore their account immediately.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() =>
+                setReactivateDialog({ open: false, userId: null, userEmail: null, userName: null, daysRemaining: 0, sending: false })
+              }
+              disabled={reactivateDialog.sending}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleConfirmReactivate} disabled={reactivateDialog.sending}>
+              {reactivateDialog.sending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Reactivate
             </Button>
           </DialogFooter>
         </DialogContent>

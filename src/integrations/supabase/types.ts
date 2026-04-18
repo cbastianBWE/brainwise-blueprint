@@ -1644,6 +1644,8 @@ export type Database = {
           coupon_expires_at: string | null
           created_at: string
           date_format: string | null
+          deactivated_at: string | null
+          deactivation_reason: string | null
           deleted_at: string | null
           department_name: string | null
           email: string
@@ -1653,6 +1655,7 @@ export type Database = {
           onboarding_instrument_version: string | null
           org_level: string | null
           organization_id: string | null
+          reactivation_deadline: string | null
           share_results_with_coach: boolean
           stripe_coupon_id: string | null
           stripe_subscription_id: string | null
@@ -1668,6 +1671,8 @@ export type Database = {
           coupon_expires_at?: string | null
           created_at?: string
           date_format?: string | null
+          deactivated_at?: string | null
+          deactivation_reason?: string | null
           deleted_at?: string | null
           department_name?: string | null
           email: string
@@ -1677,6 +1682,7 @@ export type Database = {
           onboarding_instrument_version?: string | null
           org_level?: string | null
           organization_id?: string | null
+          reactivation_deadline?: string | null
           share_results_with_coach?: boolean
           stripe_coupon_id?: string | null
           stripe_subscription_id?: string | null
@@ -1692,6 +1698,8 @@ export type Database = {
           coupon_expires_at?: string | null
           created_at?: string
           date_format?: string | null
+          deactivated_at?: string | null
+          deactivation_reason?: string | null
           deleted_at?: string | null
           department_name?: string | null
           email?: string
@@ -1701,6 +1709,7 @@ export type Database = {
           onboarding_instrument_version?: string | null
           org_level?: string | null
           organization_id?: string | null
+          reactivation_deadline?: string | null
           share_results_with_coach?: boolean
           stripe_coupon_id?: string | null
           stripe_subscription_id?: string | null
@@ -1942,6 +1951,13 @@ export type Database = {
           user_id: string
         }[]
       }
+      sweep_expired_deactivations: {
+        Args: never
+        Returns: {
+          run_at: string
+          users_logged: number
+        }[]
+      }
       update_chat_session: {
         Args: {
           p_message_count: number
@@ -1949,6 +1965,21 @@ export type Database = {
           p_session_id: string
         }
         Returns: undefined
+      }
+      user_deactivate: {
+        Args: { p_reason?: string; p_target_user_id: string }
+        Returns: {
+          out_deactivated_at: string
+          out_reactivation_deadline: string
+          out_user_id: string
+        }[]
+      }
+      user_reactivate: {
+        Args: { p_target_user_id: string }
+        Returns: {
+          out_reactivated_at: string
+          out_user_id: string
+        }[]
       }
     }
     Enums: {
