@@ -19,7 +19,7 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Loader2, AlertTriangle, X, Upload, Download, KeyRound } from "lucide-react";
+import { Loader2, AlertTriangle, X, Upload, Download, KeyRound, Search } from "lucide-react";
 
 const ADD_DEPT_VALUE = "__add_department__";
 
@@ -368,6 +368,9 @@ export default function AdminUsers() {
     userName: string | null;
     sending: boolean;
   }>({ open: false, userId: null, userEmail: null, userName: null, sending: false });
+
+  const [pendingSearch, setPendingSearch] = useState("");
+  const [usersSearch, setUsersSearch] = useState("");
 
   // Load org_id for current admin
   useEffect(() => {
@@ -761,100 +764,149 @@ export default function AdminUsers() {
 
       <BulkInviteCard orgId={orgId} />
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Pending invitations</CardTitle>
-          <CardDescription>Unredeemed invitations that have not yet expired.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {invitationsQuery.isLoading ? (
-            <div className="py-8 flex items-center justify-center">
-              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-            </div>
-          ) : (invitationsQuery.data?.length ?? 0) === 0 ? (
-            <p className="text-sm text-muted-foreground py-4 text-center">No pending invitations.</p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Department</TableHead>
-                  <TableHead>Org Level</TableHead>
-                  <TableHead>Sent on</TableHead>
-                  <TableHead>Expires</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {invitationsQuery.data!.map((inv) => (
-                  <TableRow key={inv.id}>
-                    <TableCell className="font-medium">{inv.invitee_email}</TableCell>
-                    <TableCell>{inv.department_name || "—"}</TableCell>
-                    <TableCell>{inv.org_level || "—"}</TableCell>
-                    <TableCell>{formatDate(inv.created_at)}</TableCell>
-                    <TableCell>{formatDate(inv.expires_at)}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+      {(() => {
+        const allPending = invitationsQuery.data || [];
+        const q = pendingSearch.trim().toLowerCase();
+        const filteredPending = !q
+          ? allPending
+          : allPending.filter(
+              (inv) =>
+                inv.invitee_email.toLowerCase().includes(q) ||
+                (inv.department_name?.toLowerCase().includes(q) ?? false)
+            );
+        return (
+          <Card>
+            <CardHeader>
+              <CardTitle>Pending invitations</CardTitle>
+              <CardDescription>Unredeemed invitations that have not yet expired.</CardDescription>
+              <div className="relative max-w-sm pt-2">
+                <Search className="absolute left-2 top-1/2 -translate-y-1/2 mt-1 h-4 w-4 text-muted-foreground pointer-events-none" />
+                <Input
+                  value={pendingSearch}
+                  onChange={(e) => setPendingSearch(e.target.value)}
+                  placeholder="Search by email or department…"
+                  className="pl-8"
+                />
+              </div>
+            </CardHeader>
+            <CardContent>
+              {invitationsQuery.isLoading ? (
+                <div className="py-8 flex items-center justify-center">
+                  <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                </div>
+              ) : allPending.length === 0 ? (
+                <p className="text-sm text-muted-foreground py-4 text-center">No pending invitations.</p>
+              ) : filteredPending.length === 0 ? (
+                <p className="text-sm text-muted-foreground py-4 text-center">No invitations match your search.</p>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Email</TableHead>
+                      <TableHead>Department</TableHead>
+                      <TableHead>Org Level</TableHead>
+                      <TableHead>Sent on</TableHead>
+                      <TableHead>Expires</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredPending.map((inv) => (
+                      <TableRow key={inv.id}>
+                        <TableCell className="font-medium">{inv.invitee_email}</TableCell>
+                        <TableCell>{inv.department_name || "—"}</TableCell>
+                        <TableCell>{inv.org_level || "—"}</TableCell>
+                        <TableCell>{formatDate(inv.created_at)}</TableCell>
+                        <TableCell>{formatDate(inv.expires_at)}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        );
+      })()}
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Users in your organization</CardTitle>
-          <CardDescription>All users currently linked to your organization.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {orgUsersQuery.isLoading ? (
-            <div className="py-8 flex items-center justify-center">
-              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-            </div>
-          ) : (orgUsersQuery.data?.length ?? 0) === 0 ? (
-            <p className="text-sm text-muted-foreground py-4 text-center">
-              No users in your organization yet.
-            </p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Department</TableHead>
-                  <TableHead>Org Level</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {orgUsersQuery.data!.map((u) => (
-                  <TableRow key={u.id}>
-                    <TableCell className="font-medium">{u.email}</TableCell>
-                    <TableCell>{u.full_name || "—"}</TableCell>
-                    <TableCell>{formatRole(u.account_type)}</TableCell>
-                    <TableCell>{u.department_name || "—"}</TableCell>
-                    <TableCell>{u.org_level || "—"}</TableCell>
-                    <TableCell className="text-right">
-                      {u.id === user?.id ? (
-                        <span className="text-muted-foreground">—</span>
-                      ) : (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => openResetDialog(u)}
-                        >
-                          <KeyRound className="h-3.5 w-3.5 mr-1.5" />
-                          Reset password
-                        </Button>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+      {(() => {
+        const allUsers = orgUsersQuery.data || [];
+        const q = usersSearch.trim().toLowerCase();
+        const filteredUsers = !q
+          ? allUsers
+          : allUsers.filter(
+              (u) =>
+                u.email.toLowerCase().includes(q) ||
+                (u.full_name?.toLowerCase().includes(q) ?? false) ||
+                (u.department_name?.toLowerCase().includes(q) ?? false)
+            );
+        return (
+          <Card>
+            <CardHeader>
+              <CardTitle>Users in your organization</CardTitle>
+              <CardDescription>All users currently linked to your organization.</CardDescription>
+              <div className="relative max-w-sm pt-2">
+                <Search className="absolute left-2 top-1/2 -translate-y-1/2 mt-1 h-4 w-4 text-muted-foreground pointer-events-none" />
+                <Input
+                  value={usersSearch}
+                  onChange={(e) => setUsersSearch(e.target.value)}
+                  placeholder="Search by email, name, or department…"
+                  className="pl-8"
+                />
+              </div>
+            </CardHeader>
+            <CardContent>
+              {orgUsersQuery.isLoading ? (
+                <div className="py-8 flex items-center justify-center">
+                  <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                </div>
+              ) : allUsers.length === 0 ? (
+                <p className="text-sm text-muted-foreground py-4 text-center">
+                  No users in your organization yet.
+                </p>
+              ) : filteredUsers.length === 0 ? (
+                <p className="text-sm text-muted-foreground py-4 text-center">No users match your search.</p>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Email</TableHead>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Role</TableHead>
+                      <TableHead>Department</TableHead>
+                      <TableHead>Org Level</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredUsers.map((u) => (
+                      <TableRow key={u.id}>
+                        <TableCell className="font-medium">{u.email}</TableCell>
+                        <TableCell>{u.full_name || "—"}</TableCell>
+                        <TableCell>{formatRole(u.account_type)}</TableCell>
+                        <TableCell>{u.department_name || "—"}</TableCell>
+                        <TableCell>{u.org_level || "—"}</TableCell>
+                        <TableCell className="text-right">
+                          {u.id === user?.id ? (
+                            <span className="text-muted-foreground">—</span>
+                          ) : (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => openResetDialog(u)}
+                            >
+                              <KeyRound className="h-3.5 w-3.5 mr-1.5" />
+                              Reset password
+                            </Button>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        );
+      })()}
 
       <Dialog open={deptDialogOpen} onOpenChange={(open) => !creatingDept && setDeptDialogOpen(open)}>
         <DialogContent>
