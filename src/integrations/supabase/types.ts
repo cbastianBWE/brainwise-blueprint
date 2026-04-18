@@ -1647,6 +1647,7 @@ export type Database = {
           deactivated_at: string | null
           deactivation_reason: string | null
           deleted_at: string | null
+          department_id: string | null
           department_name: string | null
           email: string
           full_name: string | null
@@ -1674,6 +1675,7 @@ export type Database = {
           deactivated_at?: string | null
           deactivation_reason?: string | null
           deleted_at?: string | null
+          department_id?: string | null
           department_name?: string | null
           email: string
           full_name?: string | null
@@ -1701,6 +1703,7 @@ export type Database = {
           deactivated_at?: string | null
           deactivation_reason?: string | null
           deleted_at?: string | null
+          department_id?: string | null
           department_name?: string | null
           email?: string
           full_name?: string | null
@@ -1719,6 +1722,13 @@ export type Database = {
           timezone?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "users_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "users_organization_id_fkey"
             columns: ["organization_id"]
