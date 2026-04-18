@@ -1218,6 +1218,95 @@ export default function AdminUsers() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog
+        open={deactivateDialog.open}
+        onOpenChange={(open) => {
+          if (deactivateDialog.sending) return;
+          if (!open) {
+            setDeactivateDialog({ open: false, userId: null, userEmail: null, userName: null, targetRole: null, reason: "", sending: false });
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Deactivate user</DialogTitle>
+            <DialogDescription>
+              This will deactivate {deactivateDialog.userName || deactivateDialog.userEmail}. They will lose access immediately and can be reactivated within 90 days. After that, their account data is scheduled for permanent removal.
+            </DialogDescription>
+          </DialogHeader>
+          {deactivateDialog.targetRole === "brainwise_super_admin" && (
+            <Alert variant="destructive">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle>This user is a super admin</AlertTitle>
+              <AlertDescription>
+                You are about to deactivate a BrainWise super admin. Make sure this is intentional.
+              </AlertDescription>
+            </Alert>
+          )}
+          <div className="space-y-2">
+            <Label htmlFor="deactivate-reason">Reason (optional)</Label>
+            <Input
+              id="deactivate-reason"
+              placeholder="e.g. Left the company"
+              value={deactivateDialog.reason}
+              onChange={(e) => setDeactivateDialog((s) => ({ ...s, reason: e.target.value }))}
+              disabled={deactivateDialog.sending}
+              maxLength={500}
+            />
+            <p className="text-xs text-muted-foreground">Captured in the audit log for this action.</p>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() =>
+                setDeactivateDialog({ open: false, userId: null, userEmail: null, userName: null, targetRole: null, reason: "", sending: false })
+              }
+              disabled={deactivateDialog.sending}
+            >
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleConfirmDeactivate} disabled={deactivateDialog.sending}>
+              {deactivateDialog.sending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Deactivate
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={reactivateDialog.open}
+        onOpenChange={(open) => {
+          if (reactivateDialog.sending) return;
+          if (!open) {
+            setReactivateDialog({ open: false, userId: null, userEmail: null, userName: null, daysRemaining: 0, sending: false });
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reactivate user</DialogTitle>
+            <DialogDescription>
+              Restore access for {reactivateDialog.userName || reactivateDialog.userEmail}? They have {reactivateDialog.daysRemaining} day{reactivateDialog.daysRemaining === 1 ? "" : "s"} remaining in their grace window. Reactivation will clear the deactivation state and restore their account immediately.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() =>
+                setReactivateDialog({ open: false, userId: null, userEmail: null, userName: null, daysRemaining: 0, sending: false })
+              }
+              disabled={reactivateDialog.sending}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleConfirmReactivate} disabled={reactivateDialog.sending}>
+              {reactivateDialog.sending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Reactivate
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
