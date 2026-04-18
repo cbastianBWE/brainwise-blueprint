@@ -69,6 +69,8 @@ type BulkResultRow = {
   department_created: boolean;
   error_code: string | null;
   error_message: string | null;
+  email_sent: boolean;
+  email_error: string | null;
 };
 
 type BulkStage = "idle" | "preview" | "sending" | "results";
@@ -116,8 +118,8 @@ function BulkInviteCard({ orgId }: { orgId: string }) {
         reset();
         return;
       }
-      if (rawRows.length > 500) {
-        toast({ title: `Max 500 rows per upload. Got ${rawRows.length}.`, variant: "destructive" });
+      if (rawRows.length > 75) {
+        toast({ title: `Max 75 rows per upload. Got ${rawRows.length}.`, variant: "destructive" });
         reset();
         return;
       }
@@ -164,16 +166,51 @@ function BulkInviteCard({ orgId }: { orgId: string }) {
 
   const handleSend = async () => {
     setBulkStage("sending");
-    const { data, error } = await (supabase.rpc as any)("bulk_invitation_create", {
-      p_organization_id: orgId,
-      p_rows: parsedRows,
-    });
-    if (error) {
-      toast({ title: "Bulk invite failed", description: error.message, variant: "destructive" });
+
+    const { data: sessionData } = await supabase.auth.getSession();
+    const token = sessionData?.session?.access_token;
+    if (!token) {
+      toast({ title: "Not signed in", variant: "destructive" });
       setBulkStage("preview");
       return;
     }
-    setBulkResults((data || []) as BulkResultRow[]);
+
+    let response: Response;
+    let result: any = {};
+    try {
+      response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/bulk_invitation_send`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          },
+          body: JSON.stringify({
+            organization_id: orgId,
+            rows: parsedRows,
+          }),
+        }
+      );
+      result = await response.json().catch(() => ({}));
+    } catch (err: any) {
+      toast({ title: "Network error", description: err.message, variant: "destructive" });
+      setBulkStage("preview");
+      return;
+    }
+
+    if (!response.ok) {
+      toast({
+        title: "Bulk invite failed",
+        description: result?.error || `HTTP ${response.status}`,
+        variant: "destructive",
+      });
+      setBulkStage("preview");
+      return;
+    }
+
+    setBulkResults((result.results || []) as BulkResultRow[]);
     setBulkStage("results");
     await Promise.all([
       qc.invalidateQueries({ queryKey: ["admin-pending-invitations", orgId] }),
@@ -212,9 +249,11 @@ function BulkInviteCard({ orgId }: { orgId: string }) {
     URL.revokeObjectURL(url);
   };
 
-  const successCount = bulkResults.filter((r) => r.success).length;
-  const failCount = bulkResults.filter((r) => !r.success).length;
+  const emailSentCount = bulkResults.filter((r) => r.success && r.email_sent).length;
+  const emailFailedCount = bulkResults.filter((r) => r.success && !r.email_sent).length;
+  const createFailedCount = bulkResults.filter((r) => !r.success).length;
   const deptCreatedCount = bulkResults.filter((r) => r.department_created).length;
+  const failCount = createFailedCount;
 
   return (
     <Card>
@@ -289,10 +328,16 @@ function BulkInviteCard({ orgId }: { orgId: string }) {
 
         {bulkStage === "results" && (
           <div className="space-y-4">
-            <div className="text-sm">
-              <strong>{successCount}</strong> succeeded, <strong>{failCount}</strong> failed,{" "}
-              <strong>{deptCreatedCount}</strong> departments auto-created
-            </div>
+            <p className="text-sm">
+              <strong>{emailSentCount}</strong> sent
+              {emailFailedCount > 0 && (
+                <>, <strong>{emailFailedCount}</strong> created but email failed</>
+              )}
+              {createFailedCount > 0 && (
+                <>, <strong>{createFailedCount}</strong> failed</>
+              )}
+              , <strong>{deptCreatedCount}</strong> departments auto-created
+            </p>
             <div className="border rounded-md overflow-hidden">
               <Table>
                 <TableHeader>
@@ -304,26 +349,48 @@ function BulkInviteCard({ orgId }: { orgId: string }) {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {bulkResults.map((r) => (
-                    <TableRow key={r.row_index}>
-                      <TableCell>{r.row_index + 1}</TableCell>
-                      <TableCell className="font-medium">{r.invitee_email}</TableCell>
-                      <TableCell>
-                        {r.success ? (
-                          <Badge variant="default">Sent</Badge>
-                        ) : (
-                          <Badge variant="destructive">Failed</Badge>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {r.success && r.code ? (
-                          <code className="font-mono bg-muted px-1.5 py-0.5 rounded text-sm">{r.code}</code>
-                        ) : (
-                          <span className="text-sm text-muted-foreground">{r.error_message || "—"}</span>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {bulkResults.map((r) => {
+                    const emailFailed = r.success && !r.email_sent;
+                    return (
+                      <TableRow key={r.row_index}>
+                        <TableCell>{r.row_index}</TableCell>
+                        <TableCell className="font-medium">{r.invitee_email}</TableCell>
+                        <TableCell>
+                          {!r.success ? (
+                            <Badge variant="destructive">Failed</Badge>
+                          ) : emailFailed ? (
+                            <Badge variant="secondary">Created (email failed)</Badge>
+                          ) : (
+                            <Badge variant="default">Sent</Badge>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {!r.success ? (
+                            <span className="text-sm text-muted-foreground">
+                              {r.error_message || "—"}
+                            </span>
+                          ) : emailFailed ? (
+                            <div className="space-y-1">
+                              {r.code && (
+                                <code className="font-mono bg-muted px-1.5 py-0.5 rounded text-sm">
+                                  {r.code}
+                                </code>
+                              )}
+                              <div className="text-xs text-muted-foreground">
+                                Share code manually. Email error: {r.email_error || "unknown"}
+                              </div>
+                            </div>
+                          ) : r.code ? (
+                            <code className="font-mono bg-muted px-1.5 py-0.5 rounded text-sm">
+                              {r.code}
+                            </code>
+                          ) : (
+                            <span className="text-sm text-muted-foreground">—</span>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </div>
