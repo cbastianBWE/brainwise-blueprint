@@ -58,6 +58,13 @@ export type Database = {
             foreignKeyName: "ai_usage_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_usage_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
           },
@@ -114,6 +121,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "admin_org_users_view"
             referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "ai_versions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "ai_versions_created_by_fkey"
@@ -179,6 +193,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "admin_org_users_view"
             referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "assessment_purchases_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "assessment_purchases_user_id_fkey"
@@ -319,6 +340,13 @@ export type Database = {
             foreignKeyName: "assessment_results_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessment_results_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
           },
@@ -390,6 +418,13 @@ export type Database = {
             foreignKeyName: "assessments_ordered_by_coach_id_fkey"
             columns: ["ordered_by_coach_id"]
             isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessments_ordered_by_coach_id_fkey"
+            columns: ["ordered_by_coach_id"]
+            isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
           },
@@ -411,6 +446,13 @@ export type Database = {
             foreignKeyName: "assessments_target_user_id_fkey"
             columns: ["target_user_id"]
             isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessments_target_user_id_fkey"
+            columns: ["target_user_id"]
+            isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
           },
@@ -427,6 +469,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "admin_org_users_view"
             referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "assessments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "assessments_user_id_fkey"
@@ -517,6 +566,13 @@ export type Database = {
             foreignKeyName: "chat_sessions_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_sessions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
           },
@@ -588,6 +644,13 @@ export type Database = {
             foreignKeyName: "coach_certification_actors_coach_user_id_fkey"
             columns: ["coach_user_id"]
             isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coach_certification_actors_coach_user_id_fkey"
+            columns: ["coach_user_id"]
+            isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
           },
@@ -649,6 +712,13 @@ export type Database = {
             foreignKeyName: "coach_certifications_certified_by_fkey"
             columns: ["certified_by"]
             isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coach_certifications_certified_by_fkey"
+            columns: ["certified_by"]
+            isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
           },
@@ -670,6 +740,13 @@ export type Database = {
             foreignKeyName: "coach_certifications_enrolled_by_fkey"
             columns: ["enrolled_by"]
             isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coach_certifications_enrolled_by_fkey"
+            columns: ["enrolled_by"]
+            isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
           },
@@ -686,6 +763,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "admin_org_users_view"
             referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "coach_certifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "coach_certifications_user_id_fkey"
@@ -777,6 +861,13 @@ export type Database = {
             foreignKeyName: "coach_clients_client_user_id_fkey"
             columns: ["client_user_id"]
             isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coach_clients_client_user_id_fkey"
+            columns: ["client_user_id"]
+            isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
           },
@@ -793,6 +884,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "admin_org_users_view"
             referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "coach_clients_coach_user_id_fkey"
+            columns: ["coach_user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "coach_clients_coach_user_id_fkey"
@@ -869,6 +967,13 @@ export type Database = {
             foreignKeyName: "coach_invitations_invited_by_fkey"
             columns: ["invited_by"]
             isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coach_invitations_invited_by_fkey"
+            columns: ["invited_by"]
+            isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
           },
@@ -936,6 +1041,13 @@ export type Database = {
             foreignKeyName: "company_admin_audit_log_actor_user_id_fkey"
             columns: ["actor_user_id"]
             isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_admin_audit_log_actor_user_id_fkey"
+            columns: ["actor_user_id"]
+            isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
           },
@@ -959,6 +1071,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "admin_org_users_view"
             referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "company_admin_audit_log_target_user_id_fkey"
+            columns: ["target_user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "company_admin_audit_log_target_user_id_fkey"
@@ -1032,6 +1151,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "admin_org_users_view"
             referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "corporate_contracts_created_by_user_id_fkey"
+            columns: ["created_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "corporate_contracts_created_by_user_id_fkey"
@@ -1114,6 +1240,13 @@ export type Database = {
             foreignKeyName: "corporate_invitations_created_by_user_id_fkey"
             columns: ["created_by_user_id"]
             isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "corporate_invitations_created_by_user_id_fkey"
+            columns: ["created_by_user_id"]
+            isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
           },
@@ -1137,6 +1270,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "admin_org_users_view"
             referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "corporate_invitations_redeemed_by_user_id_fkey"
+            columns: ["redeemed_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "corporate_invitations_redeemed_by_user_id_fkey"
@@ -1183,6 +1323,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "admin_org_users_view"
             referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "departments_created_by_user_id_fkey"
+            columns: ["created_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "departments_created_by_user_id_fkey"
@@ -1500,6 +1647,13 @@ export type Database = {
             foreignKeyName: "organizations_admin_user_id_fkey"
             columns: ["admin_user_id"]
             isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "organizations_admin_user_id_fkey"
+            columns: ["admin_user_id"]
+            isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
           },
@@ -1516,6 +1670,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "admin_org_users_view"
             referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "organizations_created_by_user_id_fkey"
+            columns: ["created_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "organizations_created_by_user_id_fkey"
@@ -1576,6 +1737,13 @@ export type Database = {
             foreignKeyName: "peer_access_requests_requester_user_id_fkey"
             columns: ["requester_user_id"]
             isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "peer_access_requests_requester_user_id_fkey"
+            columns: ["requester_user_id"]
+            isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
           },
@@ -1592,6 +1760,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "admin_org_users_view"
             referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "peer_access_requests_target_user_id_fkey"
+            columns: ["target_user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "peer_access_requests_target_user_id_fkey"
@@ -1649,6 +1824,13 @@ export type Database = {
             foreignKeyName: "permissions_owner_user_id_fkey"
             columns: ["owner_user_id"]
             isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permissions_owner_user_id_fkey"
+            columns: ["owner_user_id"]
+            isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
           },
@@ -1672,6 +1854,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "admin_org_users_view"
             referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "permissions_viewer_user_id_fkey"
+            columns: ["viewer_user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "permissions_viewer_user_id_fkey"
@@ -1733,6 +1922,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "admin_org_users_view"
             referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "platform_versions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "platform_versions_created_by_fkey"
@@ -1862,6 +2058,13 @@ export type Database = {
             foreignKeyName: "sharing_preferences_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: true
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sharing_preferences_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
             referencedRelation: "users"
             referencedColumns: ["id"]
           },
@@ -1953,6 +2156,13 @@ export type Database = {
             foreignKeyName: "super_admin_audit_log_affected_user_id_fkey"
             columns: ["affected_user_id"]
             isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "super_admin_audit_log_affected_user_id_fkey"
+            columns: ["affected_user_id"]
+            isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
           },
@@ -1976,6 +2186,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "admin_org_users_view"
             referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "super_admin_audit_log_super_admin_user_id_fkey"
+            columns: ["super_admin_user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "super_admin_audit_log_super_admin_user_id_fkey"
@@ -2034,6 +2251,13 @@ export type Database = {
             foreignKeyName: "team_members_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_members_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
           },
@@ -2075,6 +2299,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "admin_org_users_view"
             referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "teams_manager_user_id_fkey"
+            columns: ["manager_user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "teams_manager_user_id_fkey"
@@ -2191,6 +2422,13 @@ export type Database = {
             isOneToOne: true
             referencedRelation: "admin_org_users_view"
             referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "user_demographics_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "user_demographics_user_id_fkey"
@@ -2323,6 +2561,13 @@ export type Database = {
             foreignKeyName: "users_supervisor_user_id_fkey"
             columns: ["supervisor_user_id"]
             isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "users_supervisor_user_id_fkey"
+            columns: ["supervisor_user_id"]
+            isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
           },
@@ -2389,6 +2634,13 @@ export type Database = {
             foreignKeyName: "users_supervisor_user_id_fkey"
             columns: ["supervisor_user_id"]
             isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "users_supervisor_user_id_fkey"
+            columns: ["supervisor_user_id"]
+            isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
           },
@@ -2448,6 +2700,13 @@ export type Database = {
             foreignKeyName: "coach_clients_client_user_id_fkey"
             columns: ["client_user_id"]
             isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coach_clients_client_user_id_fkey"
+            columns: ["client_user_id"]
+            isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
           },
@@ -2468,6 +2727,102 @@ export type Database = {
           {
             foreignKeyName: "coach_clients_coach_user_id_fkey"
             columns: ["coach_user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coach_clients_coach_user_id_fkey"
+            columns: ["coach_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      org_users_public: {
+        Row: {
+          account_type: string | null
+          created_at: string | null
+          deactivated_at: string | null
+          department_id: string | null
+          email: string | null
+          full_name: string | null
+          id: string | null
+          org_level: string | null
+          organization_id: string | null
+          supervisor_user_id: string | null
+        }
+        Insert: {
+          account_type?: string | null
+          created_at?: string | null
+          deactivated_at?: string | null
+          department_id?: string | null
+          email?: string | null
+          full_name?: string | null
+          id?: string | null
+          org_level?: string | null
+          organization_id?: string | null
+          supervisor_user_id?: string | null
+        }
+        Update: {
+          account_type?: string | null
+          created_at?: string | null
+          deactivated_at?: string | null
+          department_id?: string | null
+          email?: string | null
+          full_name?: string | null
+          id?: string | null
+          org_level?: string | null
+          organization_id?: string | null
+          supervisor_user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "users_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["department_joined_id"]
+          },
+          {
+            foreignKeyName: "users_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "users_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "users_supervisor_user_id_fkey"
+            columns: ["supervisor_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "users_supervisor_user_id_fkey"
+            columns: ["supervisor_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "users_supervisor_user_id_fkey"
+            columns: ["supervisor_user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "users_supervisor_user_id_fkey"
+            columns: ["supervisor_user_id"]
             isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]

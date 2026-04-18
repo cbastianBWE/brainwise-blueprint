@@ -28,8 +28,8 @@ interface PeerRequest {
 
 const SELECT_FIELDS = `
   id, status, created_at, responded_at, expires_at,
-  requester:users!requester_user_id (id, full_name, email),
-  target:users!target_user_id (id, full_name, email)
+  requester:org_users_public!requester_user_id (id, full_name, email),
+  target:org_users_public!target_user_id (id, full_name, email)
 `;
 
 function relativeTime(iso: string): string {
@@ -85,15 +85,17 @@ export default function SharingRequests() {
   useEffect(() => {
     if (!user) return;
     (async () => {
+      // Caller's own row is in org_users_public (same-org peer read covers self via existing "users: read own row" policy combined).
+      // Fetch the caller's organization_id first.
       const { data: me } = await (supabase as any)
-        .from("users")
+        .from("org_users_public")
         .select("organization_id")
         .eq("id", user.id)
         .single();
       if (!me?.organization_id) return;
 
       const { data } = await (supabase as any)
-        .from("users")
+        .from("org_users_public")
         .select("id, email, full_name")
         .eq("organization_id", me.organization_id)
         .is("deactivated_at", null)
