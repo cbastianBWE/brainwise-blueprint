@@ -1180,6 +1180,7 @@ export default function AdminUsers() {
                       <TableHead>Role</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Department</TableHead>
+                      <TableHead>Supervisor</TableHead>
                       <TableHead>Org Level</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
