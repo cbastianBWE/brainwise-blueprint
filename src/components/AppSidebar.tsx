@@ -2,7 +2,7 @@ import {
   LayoutDashboard, BarChart3, ClipboardList, MessageSquare, BookOpen, Settings,
   Users, Building2, UsersRound, Activity, Heart, Award, UserCircle,
   ShieldCheck, Briefcase, GitBranch, FlaskConical, LogOut, History, Shield,
-  CreditCard, Receipt, ChevronDown, ChevronRight,
+  CreditCard, Receipt, ChevronDown, ChevronRight, Plus,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -67,6 +67,7 @@ const superAdminNav: NavItem[] = [
   { title: "Platform Health", url: "/super-admin/health", icon: Heart },
   { title: "Coach Management", url: "/super-admin/coaches", icon: Users },
   { title: "Company Accounts", url: "/super-admin/companies", icon: Briefcase },
+  { title: "Create Organization", url: "/super-admin/create-organization", icon: Plus },
   { title: "Version Management", url: "/super-admin/versions", icon: GitBranch },
   { title: "AI Chat", url: "/ai-chat", icon: MessageSquare },
   { title: "Chat History", url: "/ai-chat/history", icon: History },
@@ -77,7 +78,8 @@ function getNavItems(accountType: string | null | undefined): NavItem[] {
   switch (accountType) {
     case "coach":
       return coachNav;
-    case "admin":
+    case "company_admin":
+    case "org_admin":
       return adminNav;
     case "brainwise_super_admin":
       return superAdminNav;
@@ -93,7 +95,8 @@ function formatAccountType(type: string | null | undefined): string {
     case "individual": return "Individual";
     case "corporate_employee": return "Corporate";
     case "coach": return "Coach";
-    case "admin": return "Admin";
+    case "company_admin": return "Company Admin";
+    case "org_admin": return "Org Admin";
     case "brainwise_super_admin": return "Super Admin";
     default: return "User";
   }
