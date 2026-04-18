@@ -571,7 +571,7 @@ export default function AdminUsers() {
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from("users")
-        .select("id, email, full_name, account_type, department_id, org_level, deactivated_at, reactivation_deadline, deactivation_reason, supervisor_user_id, department:departments!department_id(id, name), supervisor:users!supervisor_user_id(id, email, full_name)")
+        .select("id, email, full_name, account_type, department_id, org_level, deactivated_at, reactivation_deadline, deactivation_reason, supervisor_user_id, department:departments!department_id(id, name), supervisor:users!users_supervisor_user_id_fkey(id, email, full_name)")
         .eq("organization_id", orgId!)
         .order("email", { ascending: true });
       if (error) throw error;
