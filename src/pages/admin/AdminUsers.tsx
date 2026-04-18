@@ -500,6 +500,18 @@ export default function AdminUsers() {
     sending: boolean;
   }>({ open: false, userId: null, userEmail: null, userName: null, daysRemaining: 0, sending: false });
 
+  const [supervisorDialog, setSupervisorDialog] = useState<{
+    open: boolean;
+    userId: string | null;
+    userEmail: string | null;
+    userName: string | null;
+    currentSupervisorId: string | null;
+    selectedSupervisorId: string;
+    sending: boolean;
+  }>({ open: false, userId: null, userEmail: null, userName: null, currentSupervisorId: null, selectedSupervisorId: "", sending: false });
+
+  const [reconciling, setReconciling] = useState(false);
+
   const [pendingSearch, setPendingSearch] = useState("");
   const [usersSearch, setUsersSearch] = useState("");
 
