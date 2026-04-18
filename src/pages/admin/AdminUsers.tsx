@@ -73,6 +73,17 @@ type BulkResultRow = {
 
 type BulkStage = "idle" | "preview" | "sending" | "results";
 
+const ORG_LEVEL_NORMALIZE: Record<string, string> = {
+  "ic": "IC",
+  "manager": "Manager",
+  "director": "Director",
+  "vp": "VP",
+  "c-suite": "C-Suite",
+  "csuite": "C-Suite",
+  "c suite": "C-Suite",
+  "other": "Other",
+};
+
 function BulkInviteCard({ orgId }: { orgId: string }) {
   const { toast } = useToast();
   const qc = useQueryClient();
