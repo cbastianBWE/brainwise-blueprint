@@ -19,7 +19,7 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Loader2, AlertTriangle, X, Upload, Download, KeyRound, Search, UserX, UserCheck } from "lucide-react";
+import { Loader2, AlertTriangle, X, Upload, Download, KeyRound, Search, UserX, UserCheck, Users2, RefreshCw } from "lucide-react";
 
 const ADD_DEPT_VALUE = "__add_department__";
 
@@ -500,6 +500,18 @@ export default function AdminUsers() {
     sending: boolean;
   }>({ open: false, userId: null, userEmail: null, userName: null, daysRemaining: 0, sending: false });
 
+  const [supervisorDialog, setSupervisorDialog] = useState<{
+    open: boolean;
+    userId: string | null;
+    userEmail: string | null;
+    userName: string | null;
+    currentSupervisorId: string | null;
+    selectedSupervisorId: string;
+    sending: boolean;
+  }>({ open: false, userId: null, userEmail: null, userName: null, currentSupervisorId: null, selectedSupervisorId: "", sending: false });
+
+  const [reconciling, setReconciling] = useState(false);
+
   const [pendingSearch, setPendingSearch] = useState("");
   const [usersSearch, setUsersSearch] = useState("");
 
@@ -559,7 +571,7 @@ export default function AdminUsers() {
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from("users")
-        .select("id, email, full_name, account_type, department_id, org_level, deactivated_at, reactivation_deadline, deactivation_reason, department:departments!department_id(id, name)")
+        .select("id, email, full_name, account_type, department_id, org_level, deactivated_at, reactivation_deadline, deactivation_reason, supervisor_user_id, department:departments!department_id(id, name), supervisor:users!supervisor_user_id(id, email, full_name)")
         .eq("organization_id", orgId!)
         .order("email", { ascending: true });
       if (error) throw error;
@@ -574,6 +586,8 @@ export default function AdminUsers() {
         deactivated_at: string | null;
         reactivation_deadline: string | null;
         deactivation_reason: string | null;
+        supervisor_user_id: string | null;
+        supervisor: { id: string; email: string; full_name: string | null } | null;
       }>;
     },
   });
@@ -857,6 +871,71 @@ export default function AdminUsers() {
     toast({ title: "User reactivated", description: `${targetLabel} is active again.` });
     await qc.invalidateQueries({ queryKey: ["admin-org-users", orgId] });
   };
+
+  const openSupervisorDialog = (u: {
+    id: string;
+    email: string;
+    full_name: string | null;
+    supervisor_user_id: string | null;
+  }) => {
+    setSupervisorDialog({
+      open: true,
+      userId: u.id,
+      userEmail: u.email,
+      userName: u.full_name,
+      currentSupervisorId: u.supervisor_user_id,
+      selectedSupervisorId: u.supervisor_user_id ?? "__unset__",
+      sending: false,
+    });
+  };
+
+  const handleSaveSupervisor = async () => {
+    if (!supervisorDialog.userId) return;
+    setSupervisorDialog((s) => ({ ...s, sending: true }));
+    const supervisorId = supervisorDialog.selectedSupervisorId === "__unset__" ? null : supervisorDialog.selectedSupervisorId;
+    const { error } = await (supabase.rpc as any)("user_assign_supervisor", {
+      p_target_user_id: supervisorDialog.userId,
+      p_supervisor_user_id: supervisorId,
+    });
+    if (error) {
+      setSupervisorDialog((s) => ({ ...s, sending: false }));
+      const code = (error as any).code;
+      if (code === "42501") {
+        toast({ title: "Forbidden", description: "You don't have permission to change this user's supervisor.", variant: "destructive" });
+      } else if (code === "22023") {
+        toast({ title: "Cannot assign", description: error.message, variant: "destructive" });
+      } else {
+        toast({ title: "Error", description: error.message, variant: "destructive" });
+      }
+      return;
+    }
+    const targetLabel = supervisorDialog.userName || supervisorDialog.userEmail;
+    setSupervisorDialog({ open: false, userId: null, userEmail: null, userName: null, currentSupervisorId: null, selectedSupervisorId: "", sending: false });
+    toast({ title: "Supervisor updated", description: supervisorId ? `${targetLabel}'s supervisor has been changed.` : `${targetLabel}'s supervisor has been cleared.` });
+    await qc.invalidateQueries({ queryKey: ["admin-org-users", orgId] });
+  };
+
+  const handleReconcileSupervisors = async () => {
+    if (!orgId) return;
+    setReconciling(true);
+    const { data, error } = await (supabase.rpc as any)("reconcile_supervisors_for_org", {
+      p_organization_id: orgId,
+    });
+    setReconciling(false);
+    if (error) {
+      toast({ title: "Reconcile failed", description: error.message, variant: "destructive" });
+      return;
+    }
+    const row = Array.isArray(data) ? data[0] : data;
+    const n: number = row?.out_users_patched ?? 0;
+    if (n === 0) {
+      toast({ title: "No supervisor changes", description: "All supervisor assignments are already in place." });
+    } else {
+      toast({ title: "Supervisors reconciled", description: `${n} user${n === 1 ? "" : "s"} updated from pending invitation data.` });
+    }
+    await qc.invalidateQueries({ queryKey: ["admin-org-users", orgId] });
+  };
+
   if (orgId === undefined) {
     return (
       <div className="p-6 flex items-center justify-center">
@@ -1050,19 +1129,33 @@ export default function AdminUsers() {
               (u) =>
                 u.email.toLowerCase().includes(q) ||
                 (u.full_name?.toLowerCase().includes(q) ?? false) ||
-                (u.department?.name?.toLowerCase().includes(q) ?? false)
+                (u.department?.name?.toLowerCase().includes(q) ?? false) ||
+                (u.supervisor?.full_name?.toLowerCase().includes(q) ?? false) ||
+                (u.supervisor?.email?.toLowerCase().includes(q) ?? false)
             );
         return (
           <Card>
             <CardHeader>
-              <CardTitle>Users in your organization</CardTitle>
-              <CardDescription>All users currently linked to your organization.</CardDescription>
+              <div className="flex items-start justify-between gap-2 flex-wrap">
+                <div>
+                  <CardTitle>Users in your organization</CardTitle>
+                  <CardDescription>All users currently linked to your organization.</CardDescription>
+                </div>
+                <Button variant="outline" size="sm" onClick={handleReconcileSupervisors} disabled={reconciling}>
+                  {reconciling ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                  )}
+                  Reconcile supervisors
+                </Button>
+              </div>
               <div className="relative max-w-sm pt-2">
                 <Search className="absolute left-2 top-1/2 -translate-y-1/2 mt-1 h-4 w-4 text-muted-foreground pointer-events-none" />
                 <Input
                   value={usersSearch}
                   onChange={(e) => setUsersSearch(e.target.value)}
-                  placeholder="Search by email, name, or department…"
+                  placeholder="Search by email, name, department, or supervisor…"
                   className="pl-8"
                 />
               </div>
@@ -1087,6 +1180,7 @@ export default function AdminUsers() {
                       <TableHead>Role</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Department</TableHead>
+                      <TableHead>Supervisor</TableHead>
                       <TableHead>Org Level</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
@@ -1118,6 +1212,7 @@ export default function AdminUsers() {
                             )}
                           </TableCell>
                           <TableCell>{u.department?.name || "—"}</TableCell>
+                          <TableCell>{u.supervisor?.full_name || u.supervisor?.email || "—"}</TableCell>
                           <TableCell>{u.org_level || "—"}</TableCell>
                           <TableCell className="text-right">
                             {isSelf || graceExpired ? (
@@ -1138,6 +1233,14 @@ export default function AdminUsers() {
                                 >
                                   <KeyRound className="h-3.5 w-3.5 mr-1.5" />
                                   Reset password
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => openSupervisorDialog(u)}
+                                >
+                                  <Users2 className="h-3.5 w-3.5 mr-1.5" />
+                                  Change supervisor
                                 </Button>
                                 <Button variant="destructive" size="sm" onClick={() => openDeactivateDialog(u)}>
                                   <UserX className="h-3.5 w-3.5 mr-1.5" />
@@ -1304,6 +1407,64 @@ export default function AdminUsers() {
             <Button onClick={handleConfirmReactivate} disabled={reactivateDialog.sending}>
               {reactivateDialog.sending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               Reactivate
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={supervisorDialog.open}
+        onOpenChange={(open) => {
+          if (supervisorDialog.sending) return;
+          if (!open) {
+            setSupervisorDialog({ open: false, userId: null, userEmail: null, userName: null, currentSupervisorId: null, selectedSupervisorId: "", sending: false });
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Change supervisor</DialogTitle>
+            <DialogDescription>
+              Select a new supervisor for {supervisorDialog.userName || supervisorDialog.userEmail}, or clear the supervisor assignment.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="supervisor-select">Supervisor</Label>
+            <Select
+              value={supervisorDialog.selectedSupervisorId}
+              onValueChange={(v) => setSupervisorDialog((s) => ({ ...s, selectedSupervisorId: v }))}
+              disabled={supervisorDialog.sending}
+            >
+              <SelectTrigger id="supervisor-select">
+                <SelectValue placeholder="Select a supervisor" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__unset__">— No supervisor —</SelectItem>
+                {(orgUsersQuery.data || [])
+                  .filter((cand) => cand.id !== supervisorDialog.userId && !cand.deactivated_at)
+                  .slice()
+                  .sort((a, b) => (a.full_name || a.email).localeCompare(b.full_name || b.email))
+                  .map((cand) => (
+                    <SelectItem key={cand.id} value={cand.id}>
+                      {cand.full_name || cand.email}
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() =>
+                setSupervisorDialog({ open: false, userId: null, userEmail: null, userName: null, currentSupervisorId: null, selectedSupervisorId: "", sending: false })
+              }
+              disabled={supervisorDialog.sending}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleSaveSupervisor} disabled={supervisorDialog.sending}>
+              {supervisorDialog.sending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Save
             </Button>
           </DialogFooter>
         </DialogContent>
