@@ -571,7 +571,7 @@ export default function AdminUsers() {
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from("users")
-        .select("id, email, full_name, account_type, department_id, org_level, deactivated_at, reactivation_deadline, deactivation_reason, department:departments!department_id(id, name)")
+        .select("id, email, full_name, account_type, department_id, org_level, deactivated_at, reactivation_deadline, deactivation_reason, supervisor_user_id, department:departments!department_id(id, name), supervisor:users!supervisor_user_id(id, email, full_name)")
         .eq("organization_id", orgId!)
         .order("email", { ascending: true });
       if (error) throw error;
@@ -586,6 +586,8 @@ export default function AdminUsers() {
         deactivated_at: string | null;
         reactivation_deadline: string | null;
         deactivation_reason: string | null;
+        supervisor_user_id: string | null;
+        supervisor: { id: string; email: string; full_name: string | null } | null;
       }>;
     },
   });
