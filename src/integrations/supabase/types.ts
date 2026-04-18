@@ -1995,6 +1995,38 @@ export type Database = {
         Returns: undefined
       }
       generate_invitation_code: { Args: never; Returns: string }
+      get_chain_of_command: {
+        Args: { p_user_id?: string }
+        Returns: {
+          out_depth: number
+          out_email: string
+          out_full_name: string
+          out_org_level: string
+          out_user_id: string
+        }[]
+      }
+      get_my_direct_reports: {
+        Args: never
+        Returns: {
+          out_department_id: string
+          out_department_name: string
+          out_email: string
+          out_full_name: string
+          out_org_level: string
+          out_user_id: string
+        }[]
+      }
+      get_my_team: {
+        Args: never
+        Returns: {
+          out_department_id: string
+          out_department_name: string
+          out_email: string
+          out_full_name: string
+          out_org_level: string
+          out_user_id: string
+        }[]
+      }
       get_own_immutable_fields: {
         Args: never
         Returns: {
@@ -2064,6 +2096,17 @@ export type Database = {
         Args: { p_owner_user_id: string; p_viewer_user_id: string }
         Returns: boolean
       }
+      reconcile_supervisors_for_org: {
+        Args: { p_organization_id: string }
+        Returns: {
+          out_patched_user_ids: string[]
+          out_users_patched: number
+        }[]
+      }
+      reconcile_supervisors_for_user: {
+        Args: { p_new_user_id: string }
+        Returns: number
+      }
       sharing_preferences_upsert: {
         Args: {
           p_share_ptp_with_company_admin?: boolean
@@ -2096,6 +2139,14 @@ export type Database = {
           p_session_id: string
         }
         Returns: undefined
+      }
+      user_assign_supervisor: {
+        Args: { p_supervisor_user_id: string; p_target_user_id: string }
+        Returns: {
+          out_supervisor_user_id: string
+          out_target_user_id: string
+          out_updated_at: string
+        }[]
       }
       user_deactivate: {
         Args: { p_reason?: string; p_target_user_id: string }
