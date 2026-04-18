@@ -570,12 +570,34 @@ export default function AdminUsers() {
     enabled: !!orgId,
     queryFn: async () => {
       const { data, error } = await (supabase as any)
-        .from("users")
-        .select("id, email, full_name, account_type, department_id, org_level, deactivated_at, reactivation_deadline, deactivation_reason, supervisor_user_id, department:departments!department_id(id, name), supervisor:users!users_supervisor_user_id_fkey(id, email, full_name)")
+        .from("admin_org_users_view")
+        .select("id, email, full_name, account_type, organization_id, department_id, org_level, deactivated_at, reactivation_deadline, deactivation_reason, supervisor_user_id, department_joined_id, department_joined_name, supervisor_joined_id, supervisor_joined_email, supervisor_joined_full_name")
         .eq("organization_id", orgId!)
         .order("email", { ascending: true });
       if (error) throw error;
-      return (data || []) as Array<{
+      const rows = (data || []) as Array<Record<string, unknown>>;
+      return rows.map((r) => ({
+        id: r.id as string,
+        email: r.email as string,
+        full_name: (r.full_name as string | null) ?? null,
+        account_type: (r.account_type as string | null) ?? null,
+        department_id: (r.department_id as string | null) ?? null,
+        org_level: (r.org_level as string | null) ?? null,
+        deactivated_at: (r.deactivated_at as string | null) ?? null,
+        reactivation_deadline: (r.reactivation_deadline as string | null) ?? null,
+        deactivation_reason: (r.deactivation_reason as string | null) ?? null,
+        supervisor_user_id: (r.supervisor_user_id as string | null) ?? null,
+        department: r.department_joined_id
+          ? { id: r.department_joined_id as string, name: (r.department_joined_name as string) ?? "" }
+          : null,
+        supervisor: r.supervisor_joined_id
+          ? {
+              id: r.supervisor_joined_id as string,
+              email: (r.supervisor_joined_email as string) ?? "",
+              full_name: (r.supervisor_joined_full_name as string | null) ?? null,
+            }
+          : null,
+      })) as Array<{
         id: string;
         email: string;
         full_name: string | null;
