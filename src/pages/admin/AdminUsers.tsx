@@ -481,6 +481,25 @@ export default function AdminUsers() {
     sending: boolean;
   }>({ open: false, userId: null, userEmail: null, userName: null, sending: false });
 
+  const [deactivateDialog, setDeactivateDialog] = useState<{
+    open: boolean;
+    userId: string | null;
+    userEmail: string | null;
+    userName: string | null;
+    targetRole: string | null;
+    reason: string;
+    sending: boolean;
+  }>({ open: false, userId: null, userEmail: null, userName: null, targetRole: null, reason: "", sending: false });
+
+  const [reactivateDialog, setReactivateDialog] = useState<{
+    open: boolean;
+    userId: string | null;
+    userEmail: string | null;
+    userName: string | null;
+    daysRemaining: number;
+    sending: boolean;
+  }>({ open: false, userId: null, userEmail: null, userName: null, daysRemaining: 0, sending: false });
+
   const [pendingSearch, setPendingSearch] = useState("");
   const [usersSearch, setUsersSearch] = useState("");
 
