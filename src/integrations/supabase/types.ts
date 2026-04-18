@@ -1528,6 +1528,7 @@ export type Database = {
       }
       peer_access_requests: {
         Row: {
+          action_token: string | null
           created_at: string
           expires_at: string
           id: string
@@ -1537,6 +1538,7 @@ export type Database = {
           target_user_id: string
         }
         Insert: {
+          action_token?: string | null
           created_at?: string
           expires_at?: string
           id?: string
@@ -1546,6 +1548,7 @@ export type Database = {
           target_user_id: string
         }
         Update: {
+          action_token?: string | null
           created_at?: string
           expires_at?: string
           id?: string
@@ -2660,6 +2663,7 @@ export type Database = {
       peer_access_request_create: {
         Args: { p_target_user_id: string }
         Returns: {
+          out_action_token: string
           out_created_at: string
           out_expires_at: string
           out_request_id: string
