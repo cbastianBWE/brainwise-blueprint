@@ -3314,6 +3314,18 @@ export type Database = {
         Returns: undefined
       }
       generate_invitation_code: { Args: never; Returns: string }
+      get_accessible_peer_results: {
+        Args: { p_instrument: string }
+        Returns: {
+          department_id: string
+          department_name: string
+          email: string
+          full_name: string
+          org_level: number
+          supervisor_user_id: string
+          user_id: string
+        }[]
+      }
       get_chain_of_command: {
         Args: { p_user_id?: string }
         Returns: {

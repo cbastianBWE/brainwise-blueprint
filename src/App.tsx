@@ -21,6 +21,7 @@ import DemographicConsent from "./pages/DemographicConsent";
 import DemographicForm from "./pages/DemographicForm";
 import Dashboard from "./pages/Dashboard";
 import MyResults from "./pages/MyResults";
+import SharedResults from "./pages/SharedResults";
 import Assessment from "./pages/Assessment";
 import AiChat from "./pages/AiChat";
 import AiChatHistory from "./pages/AiChatHistory";
@@ -82,6 +83,7 @@ const App = () => (
               <Route path="/assessment" element={<Assessment />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/my-results" element={<MyResults />} />
+              <Route path="/shared-results" element={<SharedResults />} />
               <Route path="/ai-chat" element={<SubscriptionGate feature="ai_chat"><AiChat /></SubscriptionGate>} />
               <Route path="/ai-chat/history" element={<SubscriptionGate feature="ai_chat"><AiChatHistory /></SubscriptionGate>} />
               <Route path="/resources" element={<SubscriptionGate><Resources /></SubscriptionGate>} />

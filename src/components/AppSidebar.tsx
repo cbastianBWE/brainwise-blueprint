@@ -1,6 +1,6 @@
 import {
   LayoutDashboard, BarChart3, ClipboardList, MessageSquare, BookOpen, Settings,
-  Users, Building2, UsersRound, Activity, Heart, Award, UserCircle,
+  Users, Users2, Building2, UsersRound, Activity, Heart, Award, UserCircle,
   ShieldCheck, Briefcase, GitBranch, FlaskConical, LogOut, History, Shield,
   CreditCard, Receipt, ChevronDown, ChevronRight, Plus,
 } from "lucide-react";
@@ -35,6 +35,16 @@ interface NavItem {
 const individualNav: NavItem[] = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { title: "My Results", url: "/my-results", icon: BarChart3 },
+  { title: "Assessment", url: "/assessment", icon: ClipboardList },
+  { title: "AI Chat", url: "/ai-chat", icon: MessageSquare },
+  { title: "Chat History", url: "/ai-chat/history", icon: History },
+  { title: "Resources", url: "/resources", icon: BookOpen },
+];
+
+const corporateNav: NavItem[] = [
+  { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
+  { title: "My Results", url: "/my-results", icon: BarChart3 },
+  { title: "Shared Results", url: "/shared-results", icon: Users2 },
   { title: "Assessment", url: "/assessment", icon: ClipboardList },
   { title: "AI Chat", url: "/ai-chat", icon: MessageSquare },
   { title: "Chat History", url: "/ai-chat/history", icon: History },
@@ -83,8 +93,9 @@ function getNavItems(accountType: string | null | undefined): NavItem[] {
       return adminNav;
     case "brainwise_super_admin":
       return superAdminNav;
-    case "individual":
     case "corporate_employee":
+      return corporateNav;
+    case "individual":
     default:
       return individualNav;
   }
