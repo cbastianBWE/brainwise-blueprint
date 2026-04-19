@@ -276,85 +276,118 @@ export default function InstrumentSelection({ onSelect }: Props) {
         <p className="text-muted-foreground mt-1">Select an instrument to begin your self-assessment</p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        {INSTRUMENTS.map((inst) => {
-          const isRecommended = recommendations.includes(inst.instrument_id);
-          const subscriptionAccess = canAccessBySubscription(inst.tier);
-          const instrumentUuid = INSTRUMENT_UUID_MAP[inst.instrument_id] || "";
-          const coachPaid = coachPaidInstrumentIds.has(instrumentUuid);
-          const hasPurchase = purchasedInstrumentIds.has(instrumentUuid) || purchasedInstrumentIds.has(inst.instrument_id) || purchasedInstrumentIds.has(inst.short_name);
-          const hasCompleted = completedInstrumentIds.has(inst.instrument_id);
-          const purchaseAccess = hasPurchase;
-          const selfPayCoachInvited = selfPayCoachInstrumentIds.has(instrumentUuid);
-
-          const isInProgress = inProgressInstrumentIds.has(inst.instrument_id);
-          const startLabel = isInProgress ? "Continue Assessment" : "Start Assessment";
-
-          let buttonContent: React.ReactNode;
-          if (subscriptionAccess) {
-            buttonContent = (
-              <Button className="w-full" onClick={() => handleSelect(inst)}>
-                {startLabel}
-              </Button>
-            );
-          } else if (coachPaid) {
-            buttonContent = (
-              <Button
-                className="w-full bg-accent text-accent-foreground hover:bg-accent/90 border border-primary"
-                onClick={() => handleSelect(inst)}
-              >
-                {isInProgress ? "Continue Assessment" : "Start Assessment (Coach Paid)"}
-              </Button>
-            );
-          } else if (purchaseAccess) {
-            buttonContent = (
-              <Button className="w-full" onClick={() => handleSelect(inst)}>
-                {startLabel}
-              </Button>
-            );
-          } else if (selfPayCoachInvited) {
-            buttonContent = (
-              <Button className="w-full" onClick={() => setShowSelfPayDialog(true)}>
-                Your Coach Wants You to Take This
-              </Button>
-            );
-          } else {
-            buttonContent = (
-              <Button variant="outline" className="w-full" onClick={() => navigate("/pricing")}>
-                {userStatus === "inactive" || !userStatus ? "Purchase to Access" : "Upgrade to Premium"}
-              </Button>
+      {(() => {
+        if (isCorp && !roleLoading) {
+          const anyVisible = INSTRUMENTS.some((inst) => {
+            const uuid = INSTRUMENT_UUID_MAP[inst.instrument_id] || "";
+            return corpInstrumentAccess.get(uuid) === true;
+          });
+          if (!anyVisible && corpInstrumentAccess.size > 0) {
+            return (
+              <Card>
+                <CardContent className="py-8 text-center text-muted-foreground">
+                  No assessments are currently available for your account. Contact your organization admin if you believe this is an error.
+                </CardContent>
+              </Card>
             );
           }
+        }
 
-          return (
-            <Card
-              key={inst.instrument_id}
-              className={`relative transition-all ${isRecommended ? "ring-2 ring-primary" : ""} ${subscriptionAccess || coachPaid || selfPayCoachInvited || purchaseAccess ? "hover:shadow-md" : "opacity-80"}`}
-            >
-              {isRecommended && (
-                <div className="absolute -top-3 left-4">
-                  <Badge className="bg-primary text-primary-foreground gap-1">
-                    <Star className="h-3 w-3" /> Recommended based on your previous results
-                  </Badge>
-                </div>
-              )}
-              <CardHeader className={isRecommended ? "pt-8" : ""}>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg">{inst.short_name}</CardTitle>
-                  {inst.tier === "premium" && (
-                    <Badge variant="secondary" className="text-xs">Premium</Badge>
+        return (
+          <div className="grid gap-4 md:grid-cols-2">
+            {INSTRUMENTS.map((inst) => {
+              const isRecommended = recommendations.includes(inst.instrument_id);
+              const subscriptionAccess = canAccessBySubscription(inst.tier);
+              const instrumentUuid = INSTRUMENT_UUID_MAP[inst.instrument_id] || "";
+
+              // Corp users: hide cards they don't have access to (contract or override).
+              if (isCorp) {
+                const hasCorpAccess = corpInstrumentAccess.get(instrumentUuid);
+                if (hasCorpAccess !== true) return null;
+              }
+
+              const coachPaid = coachPaidInstrumentIds.has(instrumentUuid);
+              const hasPurchase = purchasedInstrumentIds.has(instrumentUuid) || purchasedInstrumentIds.has(inst.instrument_id) || purchasedInstrumentIds.has(inst.short_name);
+              const hasCompleted = completedInstrumentIds.has(inst.instrument_id);
+              const purchaseAccess = hasPurchase;
+              const selfPayCoachInvited = selfPayCoachInstrumentIds.has(instrumentUuid);
+
+              const isInProgress = inProgressInstrumentIds.has(inst.instrument_id);
+              const startLabel = isInProgress ? "Continue Assessment" : "Start Assessment";
+
+              let buttonContent: React.ReactNode;
+              if (isCorp) {
+                buttonContent = (
+                  <Button className="w-full" onClick={() => handleSelect(inst)}>
+                    {startLabel}
+                  </Button>
+                );
+              } else if (subscriptionAccess) {
+                buttonContent = (
+                  <Button className="w-full" onClick={() => handleSelect(inst)}>
+                    {startLabel}
+                  </Button>
+                );
+              } else if (coachPaid) {
+                buttonContent = (
+                  <Button
+                    className="w-full bg-accent text-accent-foreground hover:bg-accent/90 border border-primary"
+                    onClick={() => handleSelect(inst)}
+                  >
+                    {isInProgress ? "Continue Assessment" : "Start Assessment (Coach Paid)"}
+                  </Button>
+                );
+              } else if (purchaseAccess) {
+                buttonContent = (
+                  <Button className="w-full" onClick={() => handleSelect(inst)}>
+                    {startLabel}
+                  </Button>
+                );
+              } else if (selfPayCoachInvited) {
+                buttonContent = (
+                  <Button className="w-full" onClick={() => setShowSelfPayDialog(true)}>
+                    Your Coach Wants You to Take This
+                  </Button>
+                );
+              } else {
+                buttonContent = (
+                  <Button variant="outline" className="w-full" onClick={() => navigate("/pricing")}>
+                    {userStatus === "inactive" || !userStatus ? "Purchase to Access" : "Upgrade to Premium"}
+                  </Button>
+                );
+              }
+
+              return (
+                <Card
+                  key={inst.instrument_id}
+                  className={`relative transition-all ${isRecommended ? "ring-2 ring-primary" : ""} ${isCorp || subscriptionAccess || coachPaid || selfPayCoachInvited || purchaseAccess ? "hover:shadow-md" : "opacity-80"}`}
+                >
+                  {isRecommended && (
+                    <div className="absolute -top-3 left-4">
+                      <Badge className="bg-primary text-primary-foreground gap-1">
+                        <Star className="h-3 w-3" /> Recommended based on your previous results
+                      </Badge>
+                    </div>
                   )}
-                </div>
-                <CardDescription className="font-medium text-foreground">{inst.instrument_name}</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <p className="text-sm text-muted-foreground">{inst.description}</p>
-                {buttonContent}
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
+                  <CardHeader className={isRecommended ? "pt-8" : ""}>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-lg">{inst.short_name}</CardTitle>
+                      {inst.tier === "premium" && (
+                        <Badge variant="secondary" className="text-xs">Premium</Badge>
+                      )}
+                    </div>
+                    <CardDescription className="font-medium text-foreground">{inst.instrument_name}</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <p className="text-sm text-muted-foreground">{inst.description}</p>
+                    {buttonContent}
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        );
+      })()}
 
       <Dialog open={showSelfPayDialog} onOpenChange={setShowSelfPayDialog}>
         <DialogContent className="max-w-lg">
