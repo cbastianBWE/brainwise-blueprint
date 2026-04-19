@@ -425,7 +425,31 @@ export default function AiChat() {
       </ScrollArea>
 
       {/* Input area or limit card */}
-      {limitReached ? (
+      {isCorp && corpUsage && !corpUsage.ai_chat_enabled ? (
+        <Card>
+          <CardContent className="py-8 flex flex-col items-center text-center gap-3">
+            <AlertTriangle className="h-8 w-8 text-muted-foreground" />
+            <div>
+              <h3 className="font-semibold text-foreground">AI Chat Not Available</h3>
+              <p className="text-sm text-muted-foreground mt-1">
+                AI Chat is not part of your organization's contract. Contact your org admin for questions.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      ) : isCorp && corpUsage && corpUsage.chat_remaining <= 0 ? (
+        <Card>
+          <CardContent className="py-8 flex flex-col items-center text-center gap-3">
+            <AlertTriangle className="h-8 w-8 text-muted-foreground" />
+            <div>
+              <h3 className="font-semibold text-foreground">Monthly Message Limit Reached</h3>
+              <p className="text-sm text-muted-foreground mt-1">
+                Your monthly AI chat limit is reached. Contact your org admin.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      ) : limitReached ? (
         <LimitReached limit={usage.limit} tier={usage.tier || tier} />
       ) : (
         <div className="space-y-2">
@@ -472,7 +496,7 @@ export default function AiChat() {
             />
             <Button
               onClick={handleSend}
-              disabled={sending || !message.trim() || usageLoading}
+              disabled={sending || !message.trim() || usageLoading || (isCorp && corpUsage != null && (corpUsage.chat_remaining <= 0 || !corpUsage.ai_chat_enabled))}
               className="self-end"
             >
               {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
