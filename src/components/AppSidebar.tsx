@@ -65,6 +65,10 @@ const coachNav: NavItem[] = [
 ];
 
 const adminNav: NavItem[] = [
+  { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
+  { title: "My Results", url: "/my-results", icon: BarChart3 },
+  { title: "Shared Results", url: "/shared-results", icon: Users2 },
+  { title: "Assessment", url: "/assessment", icon: ClipboardList },
   { title: "Users", url: "/admin/users", icon: Users },
   { title: "Features", url: "/company/features", icon: ShieldCheck },
   { title: "Teams", url: "/admin/teams", icon: UsersRound },
