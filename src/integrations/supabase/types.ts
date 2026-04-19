@@ -70,6 +70,75 @@ export type Database = {
           },
         ]
       }
+      ai_usage_counters: {
+        Row: {
+          count: number
+          created_at: string
+          id: string
+          organization_id: string
+          period_start: string
+          pool_type: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          count?: number
+          created_at?: string
+          id?: string
+          organization_id: string
+          period_start: string
+          pool_type: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          count?: number
+          created_at?: string
+          id?: string
+          organization_id?: string
+          period_start?: string
+          pool_type?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_usage_counters_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_usage_counters_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_usage_counters_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "ai_usage_counters_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_usage_counters_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_versions: {
         Row: {
           activated_at: string | null
@@ -1090,6 +1159,112 @@ export type Database = {
       }
       corporate_contracts: {
         Row: {
+          ai_chat_enabled_override: boolean | null
+          created_at: string
+          created_by: string | null
+          dashboard_access_level_override: string | null
+          data_retention_mode: string
+          end_date: string | null
+          id: string
+          instruments_included_override: Json | null
+          monthly_ai_pulls_allowance_override: number | null
+          monthly_chat_allowance_per_user_override: number | null
+          monthly_coaching_query_allowance_override: number | null
+          notes: string | null
+          organization_id: string
+          seat_count: number
+          start_date: string
+          supervisor_dashboard_enabled: boolean
+          tier_id: string
+          updated_at: string
+        }
+        Insert: {
+          ai_chat_enabled_override?: boolean | null
+          created_at?: string
+          created_by?: string | null
+          dashboard_access_level_override?: string | null
+          data_retention_mode?: string
+          end_date?: string | null
+          id?: string
+          instruments_included_override?: Json | null
+          monthly_ai_pulls_allowance_override?: number | null
+          monthly_chat_allowance_per_user_override?: number | null
+          monthly_coaching_query_allowance_override?: number | null
+          notes?: string | null
+          organization_id: string
+          seat_count: number
+          start_date: string
+          supervisor_dashboard_enabled?: boolean
+          tier_id: string
+          updated_at?: string
+        }
+        Update: {
+          ai_chat_enabled_override?: boolean | null
+          created_at?: string
+          created_by?: string | null
+          dashboard_access_level_override?: string | null
+          data_retention_mode?: string
+          end_date?: string | null
+          id?: string
+          instruments_included_override?: Json | null
+          monthly_ai_pulls_allowance_override?: number | null
+          monthly_chat_allowance_per_user_override?: number | null
+          monthly_coaching_query_allowance_override?: number | null
+          notes?: string | null
+          organization_id?: string
+          seat_count?: number
+          start_date?: string
+          supervisor_dashboard_enabled?: boolean
+          tier_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "corporate_contracts_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "corporate_contracts_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "corporate_contracts_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "corporate_contracts_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "corporate_contracts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "corporate_contracts_tier_id_fkey"
+            columns: ["tier_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_tiers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      corporate_contracts_legacy: {
+        Row: {
           ai_chat_enabled: boolean
           ai_monthly_message_allowance: number | null
           ai_report_regeneration_allowance: number | null
@@ -1139,35 +1314,35 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "corporate_contracts_created_by_user_id_fkey"
+            foreignKeyName: "corporate_contracts_legacy_created_by_user_id_fkey"
             columns: ["created_by_user_id"]
             isOneToOne: false
             referencedRelation: "admin_org_users_view"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "corporate_contracts_created_by_user_id_fkey"
+            foreignKeyName: "corporate_contracts_legacy_created_by_user_id_fkey"
             columns: ["created_by_user_id"]
             isOneToOne: false
             referencedRelation: "admin_org_users_view"
             referencedColumns: ["supervisor_joined_id"]
           },
           {
-            foreignKeyName: "corporate_contracts_created_by_user_id_fkey"
+            foreignKeyName: "corporate_contracts_legacy_created_by_user_id_fkey"
             columns: ["created_by_user_id"]
             isOneToOne: false
             referencedRelation: "org_users_public"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "corporate_contracts_created_by_user_id_fkey"
+            foreignKeyName: "corporate_contracts_legacy_created_by_user_id_fkey"
             columns: ["created_by_user_id"]
             isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "corporate_contracts_organization_id_fkey"
+            foreignKeyName: "corporate_contracts_legacy_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
@@ -1552,6 +1727,93 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "instruments"
             referencedColumns: ["instrument_id"]
+          },
+        ]
+      }
+      member_feature_overrides: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          enabled: boolean
+          feature: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          enabled: boolean
+          feature: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          enabled?: boolean
+          feature?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "member_feature_overrides_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "member_feature_overrides_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "member_feature_overrides_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "member_feature_overrides_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "member_feature_overrides_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "member_feature_overrides_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "member_feature_overrides_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "member_feature_overrides_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -2103,6 +2365,54 @@ export type Database = {
           stripe_price_id?: string
           tier?: string
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      subscription_tiers: {
+        Row: {
+          ai_chat_enabled: boolean
+          created_at: string
+          dashboard_access_level: string
+          id: string
+          instruments_included: Json
+          is_active: boolean
+          monthly_ai_pulls_allowance: number
+          monthly_chat_allowance_per_user: number
+          monthly_coaching_query_allowance: number
+          name: string
+          price_per_user_annual: number | null
+          seat_count_default: number
+          updated_at: string
+        }
+        Insert: {
+          ai_chat_enabled?: boolean
+          created_at?: string
+          dashboard_access_level: string
+          id?: string
+          instruments_included: Json
+          is_active?: boolean
+          monthly_ai_pulls_allowance: number
+          monthly_chat_allowance_per_user: number
+          monthly_coaching_query_allowance: number
+          name: string
+          price_per_user_annual?: number | null
+          seat_count_default?: number
+          updated_at?: string
+        }
+        Update: {
+          ai_chat_enabled?: boolean
+          created_at?: string
+          dashboard_access_level?: string
+          id?: string
+          instruments_included?: Json
+          is_active?: boolean
+          monthly_ai_pulls_allowance?: number
+          monthly_chat_allowance_per_user?: number
+          monthly_coaching_query_allowance?: number
+          name?: string
+          price_per_user_annual?: number | null
+          seat_count_default?: number
+          updated_at?: string
         }
         Relationships: []
       }
@@ -2829,6 +3139,40 @@ export type Database = {
           },
         ]
       }
+      organization_features_view: {
+        Row: {
+          ai_chat_enabled: boolean | null
+          dashboard_access_level: string | null
+          data_retention_mode: string | null
+          end_date: string | null
+          instruments_included: Json | null
+          monthly_ai_pulls_allowance: number | null
+          monthly_chat_allowance_per_user: number | null
+          monthly_coaching_query_allowance: number | null
+          organization_id: string | null
+          seat_count: number | null
+          start_date: string | null
+          supervisor_dashboard_enabled: boolean | null
+          tier_id: string | null
+          tier_name: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "corporate_contracts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "corporate_contracts_tier_id_fkey"
+            columns: ["tier_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_tiers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       admin_assign_org_admin: {
@@ -2886,6 +3230,22 @@ export type Database = {
         Args: { p_target_user_id: string }
         Returns: undefined
       }
+      ai_counter_check: {
+        Args: { p_pool: string; p_user_id?: string }
+        Returns: {
+          out_limit: number
+          out_remaining: number
+          out_used: number
+        }[]
+      }
+      ai_counter_increment: {
+        Args: { p_pool: string; p_user_id?: string }
+        Returns: number
+      }
+      ai_counter_reset: {
+        Args: { p_org: string; p_pool: string; p_user_id?: string }
+        Returns: undefined
+      }
       airsa_role_access: {
         Args: { p_owner_user_id: string; p_viewer_user_id: string }
         Returns: boolean
@@ -2910,6 +3270,24 @@ export type Database = {
           p_assessment_id: string
           p_instrument_short_name: string
           p_user_id: string
+        }
+        Returns: string
+      }
+      contract_upsert: {
+        Args: {
+          p_ai_chat_enabled_override?: boolean
+          p_dashboard_access_level_override?: string
+          p_data_retention_mode: string
+          p_end_date: string
+          p_instruments_included_override?: Json
+          p_monthly_ai_pulls_allowance_override?: number
+          p_monthly_chat_allowance_per_user_override?: number
+          p_monthly_coaching_query_allowance_override?: number
+          p_notes: string
+          p_organization_id: string
+          p_seat_count: number
+          p_start_date: string
+          p_tier_id: string
         }
         Returns: string
       }
@@ -3015,6 +3393,10 @@ export type Database = {
           user_id: string
         }[]
       }
+      org_has_feature: {
+        Args: { p_feature: string; p_org: string }
+        Returns: boolean
+      }
       peer_access_request_create: {
         Args: { p_target_user_id: string }
         Returns: {
@@ -3055,6 +3437,8 @@ export type Database = {
         Args: { p_new_user_id: string }
         Returns: number
       }
+      seat_count_available: { Args: { p_org: string }; Returns: number }
+      seat_count_used: { Args: { p_org: string }; Returns: number }
       sharing_preferences_upsert: {
         Args: {
           p_share_ptp_with_company_admin?: boolean
@@ -3103,6 +3487,10 @@ export type Database = {
           out_reactivation_deadline: string
           out_user_id: string
         }[]
+      }
+      user_has_feature: {
+        Args: { p_feature: string; p_user: string }
+        Returns: boolean
       }
       user_reactivate: {
         Args: { p_target_user_id: string }
