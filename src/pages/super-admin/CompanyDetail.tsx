@@ -388,6 +388,11 @@ function ContractFeaturesSection({ orgId, onError, onSuccess }: ContractFeatures
   const [resetPool, setResetPool] = useState<"chat" | "org_interpretation" | "coaching_query" | null>(null);
   const [resetting, setResetting] = useState(false);
 
+  const [chatResetUsers, setChatResetUsers] = useState<Array<{ id: string; email: string; full_name: string | null }>>([]);
+  const [chatResetSelectedUserId, setChatResetSelectedUserId] = useState<string>("");
+  const [chatResetDialogOpen, setChatResetDialogOpen] = useState(false);
+  const [chatResetInFlight, setChatResetInFlight] = useState(false);
+
   const loadData = useCallback(async () => {
     setLoading(true);
     const [tiersRes, contractRes] = await Promise.all([
@@ -432,6 +437,21 @@ function ContractFeaturesSection({ orgId, onError, onSuccess }: ContractFeatures
   }, [orgId, onError]);
 
   useEffect(() => { loadData(); }, [loadData]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data } = await (supabase as any)
+        .from("admin_org_users_view")
+        .select("id, email, full_name, deactivated_at")
+        .eq("organization_id", orgId)
+        .is("deactivated_at", null)
+        .order("full_name", { nullsFirst: false });
+      if (cancelled) return;
+      setChatResetUsers((data ?? []).map((u: any) => ({ id: u.id, email: u.email, full_name: u.full_name })));
+    })();
+    return () => { cancelled = true; };
+  }, [orgId]);
 
   const selectedTier = tiers.find(t => t.id === tierId);
 
@@ -481,6 +501,24 @@ function ContractFeaturesSection({ orgId, onError, onSuccess }: ContractFeatures
     if (error) { onError(error.message); return; }
     onSuccess(`Counter reset: ${resetPool}`);
     setResetPool(null);
+  };
+
+  const handleChatReset = async () => {
+    if (!chatResetSelectedUserId || chatResetInFlight) return;
+    setChatResetInFlight(true);
+    const { error } = await (supabase.rpc as any)("ai_counter_reset", {
+      p_org: orgId,
+      p_pool: "chat",
+      p_user_id: chatResetSelectedUserId,
+    });
+    setChatResetInFlight(false);
+    if (error) {
+      onError(error.message || "Failed to reset chat counter.");
+      return;
+    }
+    onSuccess("Chat counter reset.");
+    setChatResetDialogOpen(false);
+    setChatResetSelectedUserId("");
   };
 
   if (loading) {
@@ -672,15 +710,51 @@ function ContractFeaturesSection({ orgId, onError, onSuccess }: ContractFeatures
           <CardTitle className="text-lg">Reset Monthly Counters</CardTitle>
           <CardDescription>Zero the current month's usage for this org. Writes audit entry.</CardDescription>
         </CardHeader>
-        <CardContent className="flex flex-wrap gap-3">
-          <Button variant="outline" size="sm" className="gap-2" onClick={() => setResetPool("org_interpretation")}>
-            <RotateCcw className="h-4 w-4" /> Reset AI Pulls
-          </Button>
-          <Button variant="outline" size="sm" className="gap-2" onClick={() => setResetPool("coaching_query")}>
-            <RotateCcw className="h-4 w-4" /> Reset Coaching Queries
-          </Button>
-          <div className="w-full text-xs text-muted-foreground">
-            Chat counter resets are per-user and handled in Session 17 UI.
+        <CardContent className="space-y-6">
+          <div className="flex flex-wrap gap-3">
+            <Button variant="outline" size="sm" className="gap-2" onClick={() => setResetPool("org_interpretation")}>
+              <RotateCcw className="h-4 w-4" /> Reset AI Pulls
+            </Button>
+            <Button variant="outline" size="sm" className="gap-2" onClick={() => setResetPool("coaching_query")}>
+              <RotateCcw className="h-4 w-4" /> Reset Coaching Queries
+            </Button>
+          </div>
+
+          <div className="border-t pt-4 space-y-3">
+            <div className="space-y-1">
+              <Label>Reset Chat Counter (per user)</Label>
+              <p className="text-xs text-muted-foreground">
+                Chat is a per-user pool. Pick a member to zero their chat counter for the current month.
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-3">
+              <Select
+                value={chatResetSelectedUserId}
+                onValueChange={setChatResetSelectedUserId}
+                disabled={chatResetInFlight}
+              >
+                <SelectTrigger className="w-full sm:w-[360px]">
+                  <SelectValue placeholder="Select a member..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {chatResetUsers.map((u) => (
+                    <SelectItem key={u.id} value={u.id}>
+                      {u.full_name || u.email} ({u.email})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setChatResetDialogOpen(true)}
+                disabled={!chatResetSelectedUserId || chatResetInFlight}
+                className="gap-2"
+              >
+                <RotateCcw className="h-4 w-4" />
+                Reset
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -705,6 +779,30 @@ function ContractFeaturesSection({ orgId, onError, onSuccess }: ContractFeatures
             <Button onClick={handleResetCounter} disabled={resetting}>
               {resetting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               Reset
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={chatResetDialogOpen}
+        onOpenChange={(open) => !chatResetInFlight && setChatResetDialogOpen(open)}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reset chat counter for this user?</DialogTitle>
+            <DialogDescription>
+              This will zero the selected member's chat counter for the current month.
+              Their monthly message quota resets immediately. This action is audit-logged.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setChatResetDialogOpen(false)} disabled={chatResetInFlight}>
+              Cancel
+            </Button>
+            <Button onClick={handleChatReset} disabled={chatResetInFlight}>
+              {chatResetInFlight && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              {chatResetInFlight ? "Resetting..." : "Reset Counter"}
             </Button>
           </DialogFooter>
         </DialogContent>
