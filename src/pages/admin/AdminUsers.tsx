@@ -1222,7 +1222,9 @@ export default function AdminUsers() {
                           <TableCell>{u.full_name || "—"}</TableCell>
                           <TableCell>{formatRole(u.account_type)}</TableCell>
                           <TableCell>
-                            {!isDeactivated ? null : inGrace ? (
+                            {!isDeactivated ? (
+                              <Badge variant="outline">Active</Badge>
+                            ) : inGrace ? (
                               <div className="space-y-0.5">
                                 <Badge variant="secondary">Deactivated</Badge>
                                 <div className={`text-xs ${daysRemaining <= 7 ? "text-destructive" : "text-muted-foreground"}`}>
