@@ -710,18 +710,103 @@ function ContractFeaturesSection({ orgId, onError, onSuccess }: ContractFeatures
           <CardTitle className="text-lg">Reset Monthly Counters</CardTitle>
           <CardDescription>Zero the current month's usage for this org. Writes audit entry.</CardDescription>
         </CardHeader>
-        <CardContent className="flex flex-wrap gap-3">
-          <Button variant="outline" size="sm" className="gap-2" onClick={() => setResetPool("org_interpretation")}>
-            <RotateCcw className="h-4 w-4" /> Reset AI Pulls
-          </Button>
-          <Button variant="outline" size="sm" className="gap-2" onClick={() => setResetPool("coaching_query")}>
-            <RotateCcw className="h-4 w-4" /> Reset Coaching Queries
-          </Button>
-          <div className="w-full text-xs text-muted-foreground">
-            Chat counter resets are per-user and handled in Session 17 UI.
+        <CardContent className="space-y-6">
+          <div className="flex flex-wrap gap-3">
+            <Button variant="outline" size="sm" className="gap-2" onClick={() => setResetPool("org_interpretation")}>
+              <RotateCcw className="h-4 w-4" /> Reset AI Pulls
+            </Button>
+            <Button variant="outline" size="sm" className="gap-2" onClick={() => setResetPool("coaching_query")}>
+              <RotateCcw className="h-4 w-4" /> Reset Coaching Queries
+            </Button>
+          </div>
+
+          <div className="border-t pt-4 space-y-3">
+            <div className="space-y-1">
+              <Label>Reset Chat Counter (per user)</Label>
+              <p className="text-xs text-muted-foreground">
+                Chat is a per-user pool. Pick a member to zero their chat counter for the current month.
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-3">
+              <Select
+                value={chatResetSelectedUserId}
+                onValueChange={setChatResetSelectedUserId}
+                disabled={chatResetInFlight}
+              >
+                <SelectTrigger className="w-full sm:w-[360px]">
+                  <SelectValue placeholder="Select a member..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {chatResetUsers.map((u) => (
+                    <SelectItem key={u.id} value={u.id}>
+                      {u.full_name || u.email} ({u.email})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setChatResetDialogOpen(true)}
+                disabled={!chatResetSelectedUserId || chatResetInFlight}
+                className="gap-2"
+              >
+                <RotateCcw className="h-4 w-4" />
+                Reset
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
+
+      <div className="flex justify-end">
+        <Button onClick={handleSave} disabled={saving} className="gap-2">
+          {saving && <Loader2 className="h-4 w-4 animate-spin" />}
+          <Save className="h-4 w-4" /> Save Contract
+        </Button>
+      </div>
+
+      <Dialog open={resetPool !== null} onOpenChange={(open) => !resetting && !open && setResetPool(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reset counter?</DialogTitle>
+            <DialogDescription>
+              This will zero the current month's {resetPool} counter for this organization. An audit entry will be created. This cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setResetPool(null)} disabled={resetting}>Cancel</Button>
+            <Button onClick={handleResetCounter} disabled={resetting}>
+              {resetting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Reset
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={chatResetDialogOpen}
+        onOpenChange={(open) => !chatResetInFlight && setChatResetDialogOpen(open)}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reset chat counter for this user?</DialogTitle>
+            <DialogDescription>
+              This will zero the selected member's chat counter for the current month.
+              Their monthly message quota resets immediately. This action is audit-logged.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setChatResetDialogOpen(false)} disabled={chatResetInFlight}>
+              Cancel
+            </Button>
+            <Button onClick={handleChatReset} disabled={chatResetInFlight}>
+              {chatResetInFlight && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              {chatResetInFlight ? "Resetting..." : "Reset Counter"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <div className="flex justify-end">
         <Button onClick={handleSave} disabled={saving} className="gap-2">
