@@ -17,7 +17,7 @@ interface Peer {
   department_id: string | null;
   department_name: string | null;
   supervisor_user_id: string | null;
-  org_level: number | null;
+  org_level: string | null;
 }
 
 export default function SharedResults() {
