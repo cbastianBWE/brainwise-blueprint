@@ -22,11 +22,8 @@ export default function CompanyAccounts() {
 
   useEffect(() => {
     const load = async () => {
-      const { data } = await supabase
-        .from("organizations")
-        .select("id, name, subscription_status, seat_count, seats_used")
-        .order("name");
-      setOrgs(data || []);
+      const { data } = await (supabase.rpc as any)("super_admin_list_orgs_with_usage");
+      setOrgs((data as OrgRow[]) || []);
       setLoading(false);
     };
     load();
