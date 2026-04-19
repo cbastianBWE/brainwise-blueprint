@@ -3321,7 +3321,7 @@ export type Database = {
           department_name: string
           email: string
           full_name: string
-          org_level: number
+          org_level: string
           supervisor_user_id: string
           user_id: string
         }[]
