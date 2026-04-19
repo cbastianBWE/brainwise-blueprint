@@ -58,7 +58,7 @@ export default function CompanyDetail() {
     // Fetch users in org
     const { data: orgUsers } = await supabase
       .from("users")
-      .select("id, full_name, email, account_type, subscription_status")
+      .select("id, full_name, email, account_type")
       .eq("organization_id", orgId);
 
     if (!orgUsers) { setLoading(false); return; }
