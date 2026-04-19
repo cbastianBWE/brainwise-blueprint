@@ -265,6 +265,10 @@ export default function AiChat() {
       const allMessages = [...updatedMessages, assistantMsg];
       setMessages(allMessages);
 
+      if (isCorp) {
+        fetchCorpUsage();
+      }
+
       // Auto-save session
       const newSessionId = await saveSession(allMessages, sessionId, selectedIds);
       if (newSessionId) setSessionId(newSessionId);
@@ -311,7 +315,12 @@ export default function AiChat() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          {usage && !limitReached && (
+          {isCorp && corpUsage && corpUsage.ai_chat_enabled && corpUsage.chat_remaining > 0 && (
+            <div className="w-48">
+              <CorpUsageCounter currentCount={corpUsage.chat_used} limit={corpUsage.chat_allowance} />
+            </div>
+          )}
+          {!isCorp && usage && !limitReached && (
             <div className="w-48">
               <UsageCounter currentCount={usage.current_count} limit={usage.limit} />
             </div>
