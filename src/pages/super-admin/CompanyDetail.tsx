@@ -807,31 +807,6 @@ function ContractFeaturesSection({ orgId, onError, onSuccess }: ContractFeatures
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      <div className="flex justify-end">
-        <Button onClick={handleSave} disabled={saving} className="gap-2">
-          {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-          <Save className="h-4 w-4" /> Save Contract
-        </Button>
-      </div>
-
-      <Dialog open={resetPool !== null} onOpenChange={(open) => !resetting && !open && setResetPool(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Reset counter?</DialogTitle>
-            <DialogDescription>
-              This will zero the current month's {resetPool} counter for this organization. An audit entry will be created. This cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setResetPool(null)} disabled={resetting}>Cancel</Button>
-            <Button onClick={handleResetCounter} disabled={resetting}>
-              {resetting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              Reset
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
