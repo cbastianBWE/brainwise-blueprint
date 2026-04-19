@@ -438,6 +438,21 @@ function ContractFeaturesSection({ orgId, onError, onSuccess }: ContractFeatures
 
   useEffect(() => { loadData(); }, [loadData]);
 
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data } = await (supabase as any)
+        .from("admin_org_users_view")
+        .select("id, email, full_name, deactivated_at")
+        .eq("organization_id", orgId)
+        .is("deactivated_at", null)
+        .order("full_name", { nullsFirst: false });
+      if (cancelled) return;
+      setChatResetUsers((data ?? []).map((u: any) => ({ id: u.id, email: u.email, full_name: u.full_name })));
+    })();
+    return () => { cancelled = true; };
+  }, [orgId]);
+
   const selectedTier = tiers.find(t => t.id === tierId);
 
   const handleSave = async () => {
