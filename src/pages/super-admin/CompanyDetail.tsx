@@ -503,6 +503,24 @@ function ContractFeaturesSection({ orgId, onError, onSuccess }: ContractFeatures
     setResetPool(null);
   };
 
+  const handleChatReset = async () => {
+    if (!chatResetSelectedUserId || chatResetInFlight) return;
+    setChatResetInFlight(true);
+    const { error } = await (supabase.rpc as any)("ai_counter_reset", {
+      p_org: orgId,
+      p_pool: "chat",
+      p_user_id: chatResetSelectedUserId,
+    });
+    setChatResetInFlight(false);
+    if (error) {
+      onError(error.message || "Failed to reset chat counter.");
+      return;
+    }
+    onSuccess("Chat counter reset.");
+    setChatResetDialogOpen(false);
+    setChatResetSelectedUserId("");
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-16">
