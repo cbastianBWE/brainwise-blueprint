@@ -233,7 +233,6 @@ export default function CompanyDetail() {
                       <TableHead>Name</TableHead>
                       <TableHead>Email</TableHead>
                       <TableHead>Account Type</TableHead>
-                      <TableHead>Subscription</TableHead>
                       <TableHead>Assessment</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -246,11 +245,6 @@ export default function CompanyDetail() {
                         <TableCell className="text-sm">{u.email}</TableCell>
                         <TableCell>
                           <Badge variant="secondary" className="capitalize">{u.account_type || "—"}</Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={u.subscription_status === "active" ? "default" : "outline"}>
-                            {u.subscription_status}
-                          </Badge>
                         </TableCell>
                         <TableCell>
                           {u.has_completed ? (
