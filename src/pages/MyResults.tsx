@@ -148,9 +148,10 @@ interface MyResultsProps {
   preSelectedAssessmentId?: string;
   coachUserId?: string;
   permissionLevel?: 'full_results' | 'score_summary' | null;
+  viewLabel?: string; // optional override for the page heading
 }
 
-export default function MyResults({ isCoachView = false, targetUserId, preSelectedAssessmentId, coachUserId, permissionLevel = null }: MyResultsProps) {
+export default function MyResults({ isCoachView = false, targetUserId, preSelectedAssessmentId, coachUserId, permissionLevel = null, viewLabel }: MyResultsProps) {
   const { user } = useAuth();
   const { profile } = useUserProfile();
   const { toast } = useToast();
