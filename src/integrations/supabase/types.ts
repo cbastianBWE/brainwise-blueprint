@@ -1862,9 +1862,7 @@ export type Database = {
           name: string
           primary_contact_email: string | null
           seat_count: number
-          seats_used: number
           status: string
-          subscription_status: string | null
         }
         Insert: {
           admin_user_id?: string | null
@@ -1874,9 +1872,7 @@ export type Database = {
           name: string
           primary_contact_email?: string | null
           seat_count?: number
-          seats_used?: number
           status?: string
-          subscription_status?: string | null
         }
         Update: {
           admin_user_id?: string | null
@@ -1886,9 +1882,7 @@ export type Database = {
           name?: string
           primary_contact_email?: string | null
           seat_count?: number
-          seats_used?: number
           status?: string
-          subscription_status?: string | null
         }
         Relationships: [
           {
@@ -3464,7 +3458,7 @@ export type Database = {
           name: string
           seat_count: number
           seats_used: number
-          subscription_status: string
+          status: string
         }[]
       }
       supervisor_dashboard_set: {
