@@ -1817,6 +1817,141 @@ export type Database = {
           },
         ]
       }
+      org_dashboard_narratives: {
+        Row: {
+          dimension_scores: Json
+          generated_at: string
+          generated_by: string | null
+          id: string
+          index_score: number | null
+          instrument_id: string
+          narrative_text: Json
+          organization_id: string
+          participant_count: number
+          slice_type: string
+          slice_value: string
+        }
+        Insert: {
+          dimension_scores?: Json
+          generated_at?: string
+          generated_by?: string | null
+          id?: string
+          index_score?: number | null
+          instrument_id: string
+          narrative_text?: Json
+          organization_id: string
+          participant_count: number
+          slice_type?: string
+          slice_value?: string
+        }
+        Update: {
+          dimension_scores?: Json
+          generated_at?: string
+          generated_by?: string | null
+          id?: string
+          index_score?: number | null
+          instrument_id?: string
+          narrative_text?: Json
+          organization_id?: string
+          participant_count?: number
+          slice_type?: string
+          slice_value?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_dashboard_narratives_generated_by_fkey"
+            columns: ["generated_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_dashboard_narratives_generated_by_fkey"
+            columns: ["generated_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "org_dashboard_narratives_generated_by_fkey"
+            columns: ["generated_by"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_dashboard_narratives_generated_by_fkey"
+            columns: ["generated_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_dashboard_narratives_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      org_interventions: {
+        Row: {
+          created_at: string
+          description: string
+          id: string
+          instrument_id: string
+          intervention_type: string
+          narrative_id: string
+          organization_id: string
+          priority: string
+          target_dimensions: string[]
+          time_horizon: string
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          id?: string
+          instrument_id: string
+          intervention_type?: string
+          narrative_id: string
+          organization_id: string
+          priority?: string
+          target_dimensions?: string[]
+          time_horizon?: string
+          title: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          id?: string
+          instrument_id?: string
+          intervention_type?: string
+          narrative_id?: string
+          organization_id?: string
+          priority?: string
+          target_dimensions?: string[]
+          time_horizon?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_interventions_narrative_id_fkey"
+            columns: ["narrative_id"]
+            isOneToOne: false
+            referencedRelation: "org_dashboard_narratives"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_interventions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organization_instruments: {
         Row: {
           created_at: string | null
@@ -3258,6 +3393,10 @@ export type Database = {
           success: boolean
         }[]
       }
+      calculate_nai_readiness_index: {
+        Args: { p_dimension_scores: Json }
+        Returns: number
+      }
       close_chat_session: { Args: { p_session_id: string }; Returns: undefined }
       consume_assessment_purchase: {
         Args: {
@@ -3336,6 +3475,22 @@ export type Database = {
           out_user_id: string
         }[]
       }
+      get_instrument_aggregate: {
+        Args: {
+          p_instrument: string
+          p_slice_type?: string
+          p_slice_value?: string
+        }
+        Returns: Json
+      }
+      get_item_aggregate: {
+        Args: {
+          p_instrument: string
+          p_slice_type?: string
+          p_slice_value?: string
+        }
+        Returns: Json
+      }
       get_my_direct_reports: {
         Args: never
         Returns: {
@@ -3358,6 +3513,16 @@ export type Database = {
           out_user_id: string
         }[]
       }
+      get_org_narrative_history: {
+        Args: {
+          p_instrument: string
+          p_limit?: number
+          p_slice_type?: string
+          p_slice_value?: string
+        }
+        Returns: Json
+      }
+      get_org_usage_summary: { Args: { p_instrument?: string }; Returns: Json }
       get_own_immutable_fields: {
         Args: never
         Returns: {
@@ -3446,6 +3611,19 @@ export type Database = {
       reconcile_supervisors_for_user: {
         Args: { p_new_user_id: string }
         Returns: number
+      }
+      save_org_intervention: {
+        Args: {
+          p_description: string
+          p_instrument_id: string
+          p_intervention_type?: string
+          p_narrative_id: string
+          p_priority?: string
+          p_target_dimensions: string[]
+          p_time_horizon?: string
+          p_title: string
+        }
+        Returns: string
       }
       seat_count_available: { Args: { p_org: string }; Returns: number }
       seat_count_used: { Args: { p_org: string }; Returns: number }

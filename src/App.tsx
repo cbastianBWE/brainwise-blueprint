@@ -43,6 +43,7 @@ import AdminUsers from "./pages/admin/AdminUsers";
 import AdminTeams from "./pages/admin/AdminTeams";
 import AdminResources from "./pages/admin/AdminResources";
 import Features from "./pages/company/Features";
+import CompanyDashboard from "./pages/company/CompanyDashboard";
 import PlatformHealth from "./pages/super-admin/PlatformHealth";
 import CompanyAccounts from "./pages/super-admin/CompanyAccounts";
 import VersionManagement from "./pages/super-admin/VersionManagement";
@@ -104,6 +105,7 @@ const App = () => (
               {/* Admin */}
               <Route path="/admin/users" element={<RoleGuard allowedRoles={["company_admin", "org_admin"]}><AdminUsers /></RoleGuard>} />
               <Route path="/company/features" element={<RoleGuard allowedRoles={["company_admin", "org_admin"]}><Features /></RoleGuard>} />
+              <Route path="/company/dashboard" element={<RoleGuard allowedRoles={["company_admin", "org_admin", "brainwise_super_admin"]}><CompanyDashboard /></RoleGuard>} />
               <Route path="/admin/teams" element={<RoleGuard allowedRoles={["company_admin", "org_admin"]}><AdminTeams /></RoleGuard>} />
               <Route path="/admin/resources" element={<RoleGuard allowedRoles={["company_admin", "org_admin"]}><AdminResources /></RoleGuard>} />
 
