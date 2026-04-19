@@ -148,9 +148,10 @@ interface MyResultsProps {
   preSelectedAssessmentId?: string;
   coachUserId?: string;
   permissionLevel?: 'full_results' | 'score_summary' | null;
+  viewLabel?: string; // optional override for the page heading
 }
 
-export default function MyResults({ isCoachView = false, targetUserId, preSelectedAssessmentId, coachUserId, permissionLevel = null }: MyResultsProps) {
+export default function MyResults({ isCoachView = false, targetUserId, preSelectedAssessmentId, coachUserId, permissionLevel = null, viewLabel }: MyResultsProps) {
   const { user } = useAuth();
   const { profile } = useUserProfile();
   const { toast } = useToast();
@@ -1048,7 +1049,7 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
     return (
       <div className="p-6 max-w-5xl mx-auto text-center space-y-4">
         <h1 className="text-2xl font-bold text-foreground">
-          {isCoachView ? "Client Results" : "My Results"}
+          {viewLabel ?? (isCoachView ? "Client Results" : "My Results")}
         </h1>
         <p className="text-muted-foreground">
           {isCoachView ? "No completed assessments found for this client." : "You haven't completed any assessments yet."}
@@ -1067,7 +1068,7 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
       {/* Assessment selector */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <h1 className="text-2xl font-bold text-foreground">
-          {isCoachView ? "Client Results" : "My Results"}
+          {viewLabel ?? (isCoachView ? "Client Results" : "My Results")}
         </h1>
         {assessments.length > 1 && (
           <Select value={selectedId} onValueChange={setSelectedId}>
