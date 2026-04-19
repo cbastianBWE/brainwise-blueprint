@@ -26,7 +26,6 @@ interface OrgUser {
   full_name: string | null;
   email: string;
   account_type: string | null;
-  subscription_status: string;
   has_completed: boolean;
 }
 
@@ -59,7 +58,7 @@ export default function CompanyDetail() {
     // Fetch users in org
     const { data: orgUsers } = await supabase
       .from("users")
-      .select("id, full_name, email, account_type, subscription_status")
+      .select("id, full_name, email, account_type")
       .eq("organization_id", orgId);
 
     if (!orgUsers) { setLoading(false); return; }
@@ -234,7 +233,6 @@ export default function CompanyDetail() {
                       <TableHead>Name</TableHead>
                       <TableHead>Email</TableHead>
                       <TableHead>Account Type</TableHead>
-                      <TableHead>Subscription</TableHead>
                       <TableHead>Assessment</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -247,11 +245,6 @@ export default function CompanyDetail() {
                         <TableCell className="text-sm">{u.email}</TableCell>
                         <TableCell>
                           <Badge variant="secondary" className="capitalize">{u.account_type || "—"}</Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={u.subscription_status === "active" ? "default" : "outline"}>
-                            {u.subscription_status}
-                          </Badge>
                         </TableCell>
                         <TableCell>
                           {u.has_completed ? (

@@ -3,14 +3,12 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Building2, Eye } from "lucide-react";
 
 interface OrgRow {
   id: string;
   name: string;
-  subscription_status: string | null;
   seat_count: number;
   seats_used: number;
 }
@@ -63,7 +61,6 @@ export default function CompanyAccounts() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Organization Name</TableHead>
-                    <TableHead>Status</TableHead>
                     <TableHead>Seats Purchased</TableHead>
                     <TableHead>Seats Used</TableHead>
                     <TableHead>Participation Rate</TableHead>
@@ -78,11 +75,6 @@ export default function CompanyAccounts() {
                     return (
                       <TableRow key={org.id}>
                         <TableCell className="font-medium">{org.name}</TableCell>
-                        <TableCell>
-                          <Badge variant={org.subscription_status === "active" ? "default" : "secondary"}>
-                            {org.subscription_status || "inactive"}
-                          </Badge>
-                        </TableCell>
                         <TableCell>{org.seat_count}</TableCell>
                         <TableCell>{org.seats_used}</TableCell>
                         <TableCell>{rate}%</TableCell>
