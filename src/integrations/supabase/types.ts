@@ -3457,6 +3457,20 @@ export type Database = {
           out_user_id: string
         }[]
       }
+      super_admin_list_orgs_with_usage: {
+        Args: never
+        Returns: {
+          id: string
+          name: string
+          seat_count: number
+          seats_used: number
+          subscription_status: string
+        }[]
+      }
+      supervisor_dashboard_set: {
+        Args: { p_enabled: boolean; p_org: string }
+        Returns: undefined
+      }
       sweep_expired_deactivations: {
         Args: never
         Returns: {
@@ -3486,6 +3500,15 @@ export type Database = {
           out_deactivated_at: string
           out_reactivation_deadline: string
           out_user_id: string
+        }[]
+      }
+      user_effective_allowances: {
+        Args: { p_user?: string }
+        Returns: {
+          ai_chat_enabled: boolean
+          chat_allowance_per_user: number
+          chat_remaining: number
+          chat_used_this_month: number
         }[]
       }
       user_has_feature: {
