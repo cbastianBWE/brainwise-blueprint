@@ -44,6 +44,32 @@ export default function AiChat() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { usage, loading: usageLoading, fetchUsage } = useAiUsage();
+  const { isCorp } = useAccountRole();
+
+  const [corpUsage, setCorpUsage] = useState<{
+    ai_chat_enabled: boolean;
+    chat_allowance: number;
+    chat_used: number;
+    chat_remaining: number;
+  } | null>(null);
+
+  const fetchCorpUsage = useCallback(async () => {
+    if (!user || !isCorp) return;
+    const { data, error } = await supabase.rpc("user_effective_allowances", { p_user: user.id });
+    if (error || !data) return;
+    const row = Array.isArray(data) ? data[0] : data;
+    if (!row) return;
+    setCorpUsage({
+      ai_chat_enabled: row.ai_chat_enabled,
+      chat_allowance: row.chat_allowance_per_user ?? 0,
+      chat_used: row.chat_used_this_month ?? 0,
+      chat_remaining: row.chat_remaining ?? 0,
+    });
+  }, [user, isCorp]);
+
+  useEffect(() => {
+    if (isCorp) fetchCorpUsage();
+  }, [isCorp, fetchCorpUsage]);
 
   const [tier, setTier] = useState("base");
   const [userName, setUserName] = useState("");
