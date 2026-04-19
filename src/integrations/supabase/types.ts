@@ -2197,7 +2197,7 @@ export type Database = {
       }
       resources: {
         Row: {
-          access_tier: string
+          audiences: string[]
           content_type: string | null
           id: string
           published_at: string
@@ -2206,7 +2206,7 @@ export type Database = {
           url_or_content: string | null
         }
         Insert: {
-          access_tier?: string
+          audiences: string[]
           content_type?: string | null
           id?: string
           published_at?: string
@@ -2215,7 +2215,7 @@ export type Database = {
           url_or_content?: string | null
         }
         Update: {
-          access_tier?: string
+          audiences?: string[]
           content_type?: string | null
           id?: string
           published_at?: string
@@ -3387,6 +3387,10 @@ export type Database = {
           user_id: string
         }[]
       }
+      member_feature_override_set: {
+        Args: { p_enabled: boolean; p_feature: string; p_user: string }
+        Returns: undefined
+      }
       org_has_feature: {
         Args: { p_feature: string; p_org: string }
         Returns: boolean
@@ -3516,6 +3520,7 @@ export type Database = {
           out_user_id: string
         }[]
       }
+      user_resource_audiences: { Args: { p_user: string }; Returns: string[] }
     }
     Enums: {
       [_ in never]: never
