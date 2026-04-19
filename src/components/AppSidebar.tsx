@@ -56,12 +56,11 @@ const coachNav: NavItem[] = [
 
 const adminNav: NavItem[] = [
   { title: "Users", url: "/admin/users", icon: Users },
-  { title: "Organizations", url: "/admin/organizations", icon: Building2 },
+  { title: "Features", url: "/company/features", icon: ShieldCheck },
   { title: "Teams", url: "/admin/teams", icon: UsersRound },
-  { title: "Participation", url: "/admin/participation", icon: Activity },
+  { title: "Resources", url: "/admin/resources", icon: BookOpen },
   { title: "AI Chat", url: "/ai-chat", icon: MessageSquare },
   { title: "Chat History", url: "/ai-chat/history", icon: History },
-  { title: "Resources", url: "/admin/resources", icon: BookOpen },
 ];
 
 const superAdminNav: NavItem[] = [
