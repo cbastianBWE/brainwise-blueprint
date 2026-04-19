@@ -18,11 +18,14 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { MessageSquare, Send, Brain, Loader2, History, Save } from "lucide-react";
+import { MessageSquare, Send, Brain, Loader2, History, Save, AlertTriangle } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { Link, useNavigate } from "react-router-dom";
 import UsageCounter from "@/components/ai/UsageCounter";
 import LimitReached from "@/components/ai/LimitReached";
+import CorpUsageCounter from "@/components/ai/CorpUsageCounter";
+import { useAccountRole } from "@/lib/accountRoles";
+import { Card, CardContent } from "@/components/ui/card";
 
 interface ChatMessage {
   role: "user" | "assistant";
@@ -41,6 +44,32 @@ export default function AiChat() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { usage, loading: usageLoading, fetchUsage } = useAiUsage();
+  const { isCorp } = useAccountRole();
+
+  const [corpUsage, setCorpUsage] = useState<{
+    ai_chat_enabled: boolean;
+    chat_allowance: number;
+    chat_used: number;
+    chat_remaining: number;
+  } | null>(null);
+
+  const fetchCorpUsage = useCallback(async () => {
+    if (!user || !isCorp) return;
+    const { data, error } = await supabase.rpc("user_effective_allowances", { p_user: user.id });
+    if (error || !data) return;
+    const row = Array.isArray(data) ? data[0] : data;
+    if (!row) return;
+    setCorpUsage({
+      ai_chat_enabled: row.ai_chat_enabled,
+      chat_allowance: row.chat_allowance_per_user ?? 0,
+      chat_used: row.chat_used_this_month ?? 0,
+      chat_remaining: row.chat_remaining ?? 0,
+    });
+  }, [user, isCorp]);
+
+  useEffect(() => {
+    if (isCorp) fetchCorpUsage();
+  }, [isCorp, fetchCorpUsage]);
 
   const [tier, setTier] = useState("base");
   const [userName, setUserName] = useState("");
@@ -236,6 +265,10 @@ export default function AiChat() {
       const allMessages = [...updatedMessages, assistantMsg];
       setMessages(allMessages);
 
+      if (isCorp) {
+        fetchCorpUsage();
+      }
+
       // Auto-save session
       const newSessionId = await saveSession(allMessages, sessionId, selectedIds);
       if (newSessionId) setSessionId(newSessionId);
@@ -282,7 +315,12 @@ export default function AiChat() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          {usage && !limitReached && (
+          {isCorp && corpUsage && corpUsage.ai_chat_enabled && corpUsage.chat_remaining > 0 && (
+            <div className="w-48">
+              <CorpUsageCounter currentCount={corpUsage.chat_used} limit={corpUsage.chat_allowance} />
+            </div>
+          )}
+          {!isCorp && usage && !limitReached && (
             <div className="w-48">
               <UsageCounter currentCount={usage.current_count} limit={usage.limit} />
             </div>
@@ -387,7 +425,31 @@ export default function AiChat() {
       </ScrollArea>
 
       {/* Input area or limit card */}
-      {limitReached ? (
+      {isCorp && corpUsage && !corpUsage.ai_chat_enabled ? (
+        <Card>
+          <CardContent className="py-8 flex flex-col items-center text-center gap-3">
+            <AlertTriangle className="h-8 w-8 text-muted-foreground" />
+            <div>
+              <h3 className="font-semibold text-foreground">AI Chat Not Available</h3>
+              <p className="text-sm text-muted-foreground mt-1">
+                AI Chat is not part of your organization's contract. Contact your org admin for questions.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      ) : isCorp && corpUsage && corpUsage.chat_remaining <= 0 ? (
+        <Card>
+          <CardContent className="py-8 flex flex-col items-center text-center gap-3">
+            <AlertTriangle className="h-8 w-8 text-muted-foreground" />
+            <div>
+              <h3 className="font-semibold text-foreground">Monthly Message Limit Reached</h3>
+              <p className="text-sm text-muted-foreground mt-1">
+                Your monthly AI chat limit is reached. Contact your org admin.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      ) : limitReached ? (
         <LimitReached limit={usage.limit} tier={usage.tier || tier} />
       ) : (
         <div className="space-y-2">
@@ -434,7 +496,7 @@ export default function AiChat() {
             />
             <Button
               onClick={handleSend}
-              disabled={sending || !message.trim() || usageLoading}
+              disabled={sending || !message.trim() || usageLoading || (isCorp && corpUsage != null && (corpUsage.chat_remaining <= 0 || !corpUsage.ai_chat_enabled))}
               className="self-end"
             >
               {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
