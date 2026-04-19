@@ -26,7 +26,6 @@ interface OrgUser {
   full_name: string | null;
   email: string;
   account_type: string | null;
-  subscription_status: string;
   has_completed: boolean;
 }
 
