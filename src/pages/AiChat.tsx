@@ -18,11 +18,14 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { MessageSquare, Send, Brain, Loader2, History, Save } from "lucide-react";
+import { MessageSquare, Send, Brain, Loader2, History, Save, AlertTriangle } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { Link, useNavigate } from "react-router-dom";
 import UsageCounter from "@/components/ai/UsageCounter";
 import LimitReached from "@/components/ai/LimitReached";
+import CorpUsageCounter from "@/components/ai/CorpUsageCounter";
+import { useAccountRole } from "@/lib/accountRoles";
+import { Card, CardContent } from "@/components/ui/card";
 
 interface ChatMessage {
   role: "user" | "assistant";
