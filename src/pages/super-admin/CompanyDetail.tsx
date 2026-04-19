@@ -388,6 +388,11 @@ function ContractFeaturesSection({ orgId, onError, onSuccess }: ContractFeatures
   const [resetPool, setResetPool] = useState<"chat" | "org_interpretation" | "coaching_query" | null>(null);
   const [resetting, setResetting] = useState(false);
 
+  const [chatResetUsers, setChatResetUsers] = useState<Array<{ id: string; email: string; full_name: string | null }>>([]);
+  const [chatResetSelectedUserId, setChatResetSelectedUserId] = useState<string>("");
+  const [chatResetDialogOpen, setChatResetDialogOpen] = useState(false);
+  const [chatResetInFlight, setChatResetInFlight] = useState(false);
+
   const loadData = useCallback(async () => {
     setLoading(true);
     const [tiersRes, contractRes] = await Promise.all([
