@@ -8,6 +8,7 @@ import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserProfile } from "@/hooks/useUserProfile";
+import { useAccountRole } from "@/lib/accountRoles";
 import { Button } from "@/components/ui/button";
 import {
   Sidebar,
@@ -108,6 +109,7 @@ export function AppSidebar() {
   const location = useLocation();
   const { signOut } = useAuth();
   const { profile } = useUserProfile();
+  const { isCorp } = useAccountRole();
 
   const navItems = getNavItems(profile?.account_type);
   const isSettingsOpen = location.pathname.startsWith('/settings');
@@ -115,7 +117,7 @@ export function AppSidebar() {
   const settingsSubItems: { title: string; url: string; icon: React.ElementType; disabled?: boolean; badge?: string }[] = [
     { title: 'General Settings', url: '/settings', icon: Settings },
     { title: 'Privacy & Permissions', url: '/settings/privacy', icon: Shield },
-    { title: 'Billing & Receipts', url: '/settings/billing', icon: CreditCard },
+    ...(isCorp ? [] : [{ title: 'Billing & Receipts', url: '/settings/billing', icon: CreditCard }]),
   ];
 
   const coachSettingsSubItems: typeof settingsSubItems = [

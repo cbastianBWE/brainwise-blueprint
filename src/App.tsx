@@ -7,6 +7,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import RoleGuard from "@/components/RoleGuard";
 import SubscriptionGate from "@/components/SubscriptionGate";
+import CorpRedirect from "@/components/CorpRedirect";
 import { SuperAdminSessionProvider } from "@/hooks/useSuperAdminSession";
 import AppLayout from "@/components/AppLayout";
 import Index from "./pages/Index";
@@ -78,17 +79,17 @@ const App = () => (
             {/* Protected routes with sidebar layout */}
             <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
               {/* Individual / Corporate Employee */}
-              <Route path="/pricing" element={<Pricing />} />
+              <Route path="/pricing" element={<CorpRedirect toastMessage="Your organization handles billing directly."><Pricing /></CorpRedirect>} />
               <Route path="/assessment" element={<Assessment />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/my-results" element={<MyResults />} />
-              <Route path="/ai-chat" element={<SubscriptionGate><AiChat /></SubscriptionGate>} />
-              <Route path="/ai-chat/history" element={<SubscriptionGate><AiChatHistory /></SubscriptionGate>} />
+              <Route path="/ai-chat" element={<SubscriptionGate feature="ai_chat"><AiChat /></SubscriptionGate>} />
+              <Route path="/ai-chat/history" element={<SubscriptionGate feature="ai_chat"><AiChatHistory /></SubscriptionGate>} />
               <Route path="/resources" element={<SubscriptionGate><Resources /></SubscriptionGate>} />
               <Route path="/settings" element={<SettingsPage />} />
               <Route path="/settings/privacy" element={<PrivacySettings />} />
               <Route path="/settings/sharing-requests" element={<SharingRequests />} />
-              <Route path="/settings/billing" element={<BillingSettings />} />
+              <Route path="/settings/billing" element={<CorpRedirect toastMessage="Your organization handles billing directly."><BillingSettings /></CorpRedirect>} />
 
               {/* Coach */}
               <Route path="/coach/clients" element={<RoleGuard allowedRoles={["coach"]}><CoachClients /></RoleGuard>} />
