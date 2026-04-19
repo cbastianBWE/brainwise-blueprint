@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useAccountRole } from "@/lib/accountRoles";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -64,6 +65,8 @@ interface Props {
 export default function InstrumentSelection({ onSelect }: Props) {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { isCorp, loading: roleLoading } = useAccountRole();
+  const [corpInstrumentAccess, setCorpInstrumentAccess] = useState<Map<string, boolean>>(new Map());
   const [userTier, setUserTier] = useState<string>("base");
   const [userStatus, setUserStatus] = useState<string>("inactive");
   const [recommendations, setRecommendations] = useState<string[]>([]);
@@ -159,6 +162,35 @@ export default function InstrumentSelection({ onSelect }: Props) {
           if (row.instrument_id) ids.add(row.instrument_id);
         });
         setSelfPayCoachInstrumentIds(ids);
+      }
+
+      // Corp feature check: for each instrument, call user_has_feature
+      if (user) {
+        const { data: userRow } = await supabase
+          .from("users")
+          .select("account_type")
+          .eq("id", user.id)
+          .maybeSingle();
+
+        const accountType = (userRow as { account_type?: string } | null)?.account_type;
+        const CORP_ROLES = ["corporate_employee", "company_admin", "org_admin"];
+
+        if (accountType && CORP_ROLES.includes(accountType)) {
+          const accessMap = new Map<string, boolean>();
+          const results = await Promise.all(
+            Object.values(INSTRUMENT_UUID_MAP).map(async (uuid) => {
+              const { data, error } = await supabase.rpc("user_has_feature", {
+                p_user: user.id,
+                p_feature: `instrument:${uuid}`,
+              });
+              return { uuid, allowed: !error && data === true };
+            })
+          );
+          for (const r of results) {
+            accessMap.set(r.uuid, r.allowed);
+          }
+          setCorpInstrumentAccess(accessMap);
+        }
       }
 
       setLoading(false);
