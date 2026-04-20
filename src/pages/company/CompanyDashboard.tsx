@@ -1080,7 +1080,7 @@ export default function CompanyDashboard() {
                 <option value="completed">Completed</option>
               </select>
             </div>
-            <div style={{ marginBottom: 10 }}>
+            <div style={{ marginBottom: 16 }}>
               <label style={{ fontSize: 11, fontWeight: 500, marginBottom: 4, display: "block", color: NAVY }}>Notes / next steps</label>
               <textarea value={trackingNote} onChange={e => setTrackingNote(e.target.value)}
                 placeholder="Add context, assigned teams, or first concrete next step..."
