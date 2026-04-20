@@ -347,15 +347,15 @@ export default function CompanyDashboard() {
     setExporting(true);
     setExportModal(false);
 
-    // Force all collapsed content open before capture
     const prevFlags = expandedFlags;
     const prevDims = expandedDims;
     const prevMethod = expandedMethod;
+    const prevTab = activeTab;
+
     setExpandedFlags(new Set(riskFlags.map(f => f.id)));
     setExpandedDims(new Set(DIMS_BY_WEIGHT));
     setExpandedMethod(true);
 
-    // Wait for render
     await new Promise(r => setTimeout(r, 400));
 
     try {
@@ -367,118 +367,234 @@ export default function CompanyDashboard() {
       const pageH = 297;
       const margin = 14;
       const contentW = pageW - margin * 2;
-      let isFirstPage = true;
-
-      // Cover header
-      pdf.setFillColor(2, 31, 54);
-      pdf.rect(0, 0, pageW, 36, "F");
-      pdf.setTextColor(255, 255, 255);
-      pdf.setFontSize(18);
-      pdf.setFont("helvetica", "bold");
-      pdf.text("BrainWise · NAI Company Dashboard", margin, 16);
-      pdf.setFontSize(10);
-      pdf.setFont("helvetica", "normal");
+      const today = new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+      const dateStr = new Date().toISOString().split("T")[0];
       const sliceLabel = sliceType === "all" ? "All organization" : `${sliceType}: ${sliceValue}`;
-      pdf.text(`${sliceLabel} · n=${participantCount} · Generated ${new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}`, margin, 24);
+
+      // ── COVER PAGE ───────────────────────────────────────────────────────
+      pdf.setFillColor(2, 31, 54);
+      pdf.rect(0, 0, pageW, 80, "F");
+
+      pdf.setFontSize(28);
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFont("helvetica", "bold");
+      pdf.text("BrainWise", margin, 35);
+
+      pdf.setFontSize(14);
+      pdf.setFont("helvetica", "normal");
+      pdf.text("NAI · AI Adoption Readiness Dashboard", margin, 48);
+
+      pdf.setFontSize(11);
+      pdf.setTextColor(200, 220, 235);
+      pdf.text("Company Dashboard", margin, 58);
+
       if (indexScore !== null) {
-        pdf.setFontSize(28);
+        pdf.setFontSize(32);
         pdf.setFont("helvetica", "bold");
-        pdf.text(`${indexScore}`, pageW - margin - 20, 20, { align: "right" });
+        pdf.setTextColor(255, 255, 255);
+        pdf.text(String(indexScore), pageW - margin, 38, { align: "right" });
         pdf.setFontSize(8);
         pdf.setFont("helvetica", "normal");
-        pdf.text("AI Readiness Index", pageW - margin - 20, 27, { align: "right" });
+        pdf.setTextColor(200, 220, 235);
+        pdf.text("AI Readiness Index", pageW - margin, 47, { align: "right" });
       }
-      let yPos = 44;
 
+      const coverY = 100;
+      pdf.setFontSize(9);
+      pdf.setTextColor(109, 104, 117);
+      pdf.setFont("helvetica", "normal");
+      pdf.text("Organization slice", margin, coverY);
+      pdf.setFontSize(12);
+      pdf.setTextColor(30, 30, 30);
+      pdf.setFont("helvetica", "bold");
+      pdf.text(sliceLabel, margin, coverY + 7);
+
+      pdf.setFontSize(9);
+      pdf.setTextColor(109, 104, 117);
+      pdf.setFont("helvetica", "normal");
+      pdf.text("Participants", margin, coverY + 20);
+      pdf.setFontSize(11);
+      pdf.setTextColor(30, 30, 30);
+      pdf.text(String(participantCount), margin, coverY + 27);
+
+      pdf.setFontSize(9);
+      pdf.setTextColor(109, 104, 117);
+      pdf.setFont("helvetica", "normal");
+      pdf.text("Generated", margin, coverY + 40);
+      pdf.setFontSize(11);
+      pdf.setTextColor(30, 30, 30);
+      pdf.text(today, margin, coverY + 47);
+
+      if (latestNarrative?.generated_at) {
+        pdf.setFontSize(9);
+        pdf.setTextColor(109, 104, 117);
+        pdf.setFont("helvetica", "normal");
+        pdf.text("AI interpretation date", margin, coverY + 60);
+        pdf.setFontSize(11);
+        pdf.setTextColor(30, 30, 30);
+        pdf.text(new Date(latestNarrative.generated_at).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }), margin, coverY + 67);
+      }
+
+      if (Object.keys(dims).length > 0) {
+        const dimTableY = coverY + 88;
+        pdf.setFontSize(8);
+        pdf.setTextColor(109, 104, 117);
+        pdf.setFont("helvetica", "normal");
+        pdf.text("C.A.F.E.S. DIMENSION SCORES", margin, dimTableY);
+        DIMS_BY_WEIGHT.forEach((dimId, i) => {
+          const dim = dims[dimId];
+          if (!dim) return;
+          const act = activationLabel(dim.avg_score);
+          const rowY = dimTableY + 7 + i * 9;
+          const colorHex = DIM_COLORS[dimId];
+          const r = parseInt(colorHex.slice(1,3),16);
+          const g = parseInt(colorHex.slice(3,5),16);
+          const b = parseInt(colorHex.slice(5,7),16);
+          pdf.setFillColor(r, g, b);
+          pdf.circle(margin + 2, rowY - 1.5, 2, "F");
+          pdf.setFontSize(8.5);
+          pdf.setFont("helvetica", "bold");
+          pdf.setTextColor(r, g, b);
+          pdf.text(`${DIM_NAMES[dimId]} (${Math.round(DIM_WEIGHTS[dimId] * 100)}%)`, margin + 7, rowY);
+          pdf.setFont("helvetica", "normal");
+          pdf.setTextColor(30, 30, 30);
+          pdf.text(String(Math.round(dim.avg_score)), margin + 82, rowY);
+          pdf.setFontSize(7.5);
+          pdf.setTextColor(109, 104, 117);
+          pdf.text(act.label, margin + 94, rowY);
+        });
+      }
+
+      const disclaimerText = "This report is generated by BrainWise's AI interpretation engine. Organizational data is aggregated across participants. Individual scores are suppressed below minimum thresholds. This report is intended for authorized HR and leadership use only. Confidential.";
+      const disclaimerLines = pdf.splitTextToSize(disclaimerText, contentW - 8);
+      const disclaimerH = disclaimerLines.length * 3.8 + 6;
+      const disclaimerY = pageH - 50;
+      pdf.setFillColor(249, 247, 241);
+      pdf.roundedRect(margin, disclaimerY, contentW, disclaimerH, 2, 2, "F");
+      pdf.setFontSize(7.5);
+      pdf.setTextColor(109, 104, 117);
+      pdf.setFont("helvetica", "normal");
+      pdf.text(disclaimerLines, margin + 4, disclaimerY + 5);
+
+      pdf.setFontSize(7);
+      pdf.setTextColor(150, 150, 150);
+      pdf.text(`BrainWise · NAI Company Dashboard · Confidential · Page 1`, pageW / 2, pageH - 6, { align: "center" });
+
+      // ── TAB CONTENT PAGES ────────────────────────────────────────────────
       const selectedTabs = tabs.filter(t => exportSections[t]);
+      let pageNum = 2;
 
       for (const tab of selectedTabs) {
-        // Section header
-        if (!isFirstPage) {
-          pdf.addPage();
-          yPos = 14;
-        }
-        pdf.setFillColor(249, 247, 241);
-        pdf.rect(margin, yPos, contentW, 8, "F");
-        pdf.setTextColor(2, 31, 54);
-        pdf.setFontSize(11);
-        pdf.setFont("helvetica", "bold");
-        pdf.text(tabLabels[tab].toUpperCase(), margin + 3, yPos + 5.5);
-        yPos += 12;
-        isFirstPage = false;
+        pdf.addPage();
 
-        // Temporarily switch to the tab to render it
         setActiveTab(tab);
-        await new Promise(r => setTimeout(r, 300));
+        await new Promise(r => setTimeout(r, 350));
 
-        // Find the tab content div and capture it
-        const contentDivs = document.querySelectorAll('[data-export-tab]');
-        const targetEl = contentDivs[0] as HTMLElement;
+        const targetEl = document.querySelector('[data-export-tab]') as HTMLElement;
         if (!targetEl) continue;
 
+        const actualHeight = targetEl.scrollHeight;
+        const captureWidth = targetEl.offsetWidth;
+
         const canvas = await html2canvas(targetEl, {
-          scale: 1.5,
+          scale: 1.0,
           useCORS: true,
           backgroundColor: "#ffffff",
           logging: false,
+          width: captureWidth,
+          height: actualHeight,
+          windowWidth: captureWidth,
+          windowHeight: actualHeight,
         });
 
-        const imgData = canvas.toDataURL("image/png");
+        // Crop to actual content — scan bottom-up for last non-white row
+        const ctx = canvas.getContext("2d")!;
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        let lastContentRow = canvas.height;
+        for (let row = canvas.height - 1; row >= canvas.height / 2; row--) {
+          let hasContent = false;
+          for (let col = 0; col < Math.min(canvas.width, 200); col++) {
+            const idx = (row * canvas.width + col) * 4;
+            if (imageData.data[idx] < 248 || imageData.data[idx+1] < 248 || imageData.data[idx+2] < 248) {
+              hasContent = true; break;
+            }
+          }
+          if (hasContent) { lastContentRow = Math.min(row + 30, canvas.height); break; }
+        }
+
+        // Section label bar (drawn by jsPDF, not screenshot)
+        let yPos = margin;
+        pdf.setFillColor(249, 247, 241);
+        pdf.rect(margin, yPos, contentW, 8, "F");
+        pdf.setTextColor(2, 31, 54);
+        pdf.setFontSize(10);
+        pdf.setFont("helvetica", "bold");
+        pdf.text(tabLabels[tab].toUpperCase(), margin + 3, yPos + 5.5);
+        yPos += 12;
+
+        // Render cropped canvas, paginated
         const imgW = contentW;
-        const imgH = (canvas.height * imgW) / canvas.width;
+        const scale = imgW / canvas.width;
+        const scaledTotalH = lastContentRow * scale;
+        const pageContentH = pageH - yPos - margin;
 
-        // Paginate tall content
-        let remainingH = imgH;
-        let srcY = 0;
-        while (remainingH > 0) {
-          const sliceH = Math.min(remainingH, pageH - yPos - margin);
-          const sliceRatio = sliceH / imgH;
-          const srcH = canvas.height * sliceRatio;
+        if (scaledTotalH <= pageContentH) {
+          const croppedCanvas = document.createElement("canvas");
+          croppedCanvas.width = canvas.width;
+          croppedCanvas.height = lastContentRow;
+          const cCtx = croppedCanvas.getContext("2d")!;
+          cCtx.drawImage(canvas, 0, 0, canvas.width, lastContentRow, 0, 0, canvas.width, lastContentRow);
+          pdf.addImage(croppedCanvas.toDataURL("image/jpeg", 0.88), "JPEG", margin, yPos, imgW, scaledTotalH);
+        } else {
+          let srcY = 0;
+          let remaining = lastContentRow;
+          while (remaining > 0) {
+            const availH = pageH - yPos - margin;
+            const srcSliceH = Math.min(remaining, Math.round(availH / scale));
+            const sliceScaledH = srcSliceH * scale;
 
-          const sliceCanvas = document.createElement("canvas");
-          sliceCanvas.width = canvas.width;
-          sliceCanvas.height = srcH;
-          const ctx = sliceCanvas.getContext("2d")!;
-          ctx.drawImage(canvas, 0, srcY * (canvas.height / imgH), canvas.width, srcH, 0, 0, canvas.width, srcH);
-          const sliceData = sliceCanvas.toDataURL("image/png");
+            const sliceCanvas = document.createElement("canvas");
+            sliceCanvas.width = canvas.width;
+            sliceCanvas.height = srcSliceH;
+            const sCtx = sliceCanvas.getContext("2d")!;
+            sCtx.drawImage(canvas, 0, srcY, canvas.width, srcSliceH, 0, 0, canvas.width, srcSliceH);
+            pdf.addImage(sliceCanvas.toDataURL("image/jpeg", 0.88), "JPEG", margin, yPos, imgW, sliceScaledH);
 
-          pdf.addImage(sliceData, "PNG", margin, yPos, imgW, sliceH);
-          remainingH -= sliceH;
-          srcY += sliceH;
-          yPos += sliceH;
+            remaining -= srcSliceH;
+            srcY += srcSliceH;
+            yPos += sliceScaledH;
 
-          if (remainingH > 0) {
-            pdf.addPage();
-            yPos = 14;
+            if (remaining > 0) {
+              pdf.setFontSize(7);
+              pdf.setTextColor(150, 150, 150);
+              pdf.setFont("helvetica", "normal");
+              pdf.text(`BrainWise · NAI Company Dashboard · Confidential · Page ${pageNum}`, pageW / 2, pageH - 6, { align: "center" });
+              pdf.addPage();
+              pageNum++;
+              yPos = margin;
+            }
           }
         }
-      }
 
-      // Footer on all pages
-      const totalPages = pdf.getNumberOfPages();
-      for (let i = 1; i <= totalPages; i++) {
-        pdf.setPage(i);
         pdf.setFontSize(7);
         pdf.setTextColor(150, 150, 150);
         pdf.setFont("helvetica", "normal");
-        pdf.text(
-          `BrainWise · NAI Company Dashboard · Confidential · Page ${i} of ${totalPages}`,
-          pageW / 2, pageH - 6, { align: "center" }
-        );
+        pdf.text(`BrainWise · NAI Company Dashboard · Confidential · Page ${pageNum}`, pageW / 2, pageH - 6, { align: "center" });
+        pageNum++;
       }
 
-      const dateStr = new Date().toISOString().split("T")[0];
       pdf.save(`BrainWise-NAI-CompanyDashboard-${dateStr}.pdf`);
       toast.success("Dashboard exported successfully");
+
     } catch (e: any) {
       toast.error("Export failed: " + (e.message ?? "unknown error"));
+      console.error(e);
     }
 
-    // Restore collapsed state
     setExpandedFlags(prevFlags);
     setExpandedDims(prevDims);
     setExpandedMethod(prevMethod);
-    setActiveTab(activeTab);
+    setActiveTab(prevTab);
     setExporting(false);
   };
 
