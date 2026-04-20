@@ -217,6 +217,20 @@ export default function CompanyDashboard() {
     setLoadingAgg(false);
   }, [user, sliceType, sliceValue]);
 
+  const loadInterventions = useCallback(async (narrativeId?: string) => {
+    if (!user) return;
+    const id = narrativeId ?? latestNarrative?.id;
+    if (!id) return;
+    setLoadingInterventions(true);
+    const { data } = await (supabase as any)
+      .from("org_interventions")
+      .select("id, title, description, target_dimensions, priority, time_horizon, intervention_type")
+      .eq("narrative_id", id)
+      .order("created_at", { ascending: true });
+    setInterventions((data ?? []) as Intervention[]);
+    setLoadingInterventions(false);
+  }, [user, latestNarrative?.id]);
+
   // Load latest stored narrative (for risk flags)
   const loadNarrative = useCallback(async () => {
     if (!user) return;
@@ -229,22 +243,13 @@ export default function CompanyDashboard() {
       .order("generated_at", { ascending: false })
       .limit(1)
       .maybeSingle();
-    if (!error && data) setLatestNarrative(data as StoredNarrative);
+    if (!error && data) {
+      setLatestNarrative(data as StoredNarrative);
+      await loadInterventions(data.id);
+    }
     else setLatestNarrative(null);
     setLoadingNarrative(false);
-  }, [user, sliceType, sliceValue]);
-
-  const loadInterventions = useCallback(async () => {
-    if (!user || !latestNarrative) return;
-    setLoadingInterventions(true);
-    const { data } = await (supabase as any)
-      .from("org_interventions")
-      .select("id, title, description, target_dimensions, priority, time_horizon, intervention_type")
-      .eq("narrative_id", latestNarrative.id)
-      .order("created_at", { ascending: true });
-    setInterventions((data ?? []) as Intervention[]);
-    setLoadingInterventions(false);
-  }, [user, latestNarrative]);
+  }, [user, sliceType, sliceValue, loadInterventions]);
 
   const loadNarrativeHistory = useCallback(async () => {
     if (!user) return;
@@ -261,7 +266,7 @@ export default function CompanyDashboard() {
   useEffect(() => { loadUsage(); }, [loadUsage]);
   useEffect(() => { loadAggregate(); }, [loadAggregate]);
   useEffect(() => { loadNarrative(); }, [loadNarrative]);
-  useEffect(() => { loadInterventions(); }, [loadInterventions]);
+  
   useEffect(() => { loadNarrativeHistory(); }, [loadNarrativeHistory]);
 
   const handleRegenerate = async () => {
@@ -281,7 +286,7 @@ export default function CompanyDashboard() {
       const result = await res.json();
       if (!res.ok) throw new Error(result.error ?? "Generation failed");
       toast.success("AI interpretation generated");
-      await Promise.all([loadUsage(), loadNarrative()]);
+      await Promise.all([loadUsage(), loadNarrative(), loadNarrativeHistory()]);
       
     } catch (e: any) {
       toast.error(e.message ?? "Failed to generate interpretation");
