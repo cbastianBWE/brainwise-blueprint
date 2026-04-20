@@ -789,7 +789,7 @@ export default function CompanyDashboard() {
           {!latestNarrative ? (
             <div style={{ padding: 48, textAlign: "center", background: "var(--muted)", borderRadius: 8 }}>
               <p style={{ fontSize: 14, fontWeight: 500, color: NAVY, marginBottom: 6 }}>No AI interpretation generated yet</p>
-              <p style={{ fontSize: 12, color: "var(--muted-foreground)", marginBottom: 16 }}>Generate one to unlock the full narrative analysis, risk flags, and structured interventions.</p>
+              <p style={{ fontSize: 14, color: "var(--muted-foreground)", marginBottom: 16 }}>Generate one to unlock the full narrative analysis, risk flags, and structured interventions.</p>
               <Button size="sm" onClick={handleRegenerate} disabled={regenerating || suppressed}>
                 <RefreshCw className={regenerating ? "animate-spin" : ""} style={{ marginRight: 6 }} />
                 {regenerating ? "Generating..." : "Generate now"}
