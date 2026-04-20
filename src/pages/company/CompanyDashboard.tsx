@@ -536,25 +536,25 @@ export default function CompanyDashboard() {
           {/* Risk flags — AI generated */}
           {riskFlags.length > 0 && (
             <>
-              <h3 style={{ fontSize: 13, fontWeight: 500, color: NAVY, margin: "0 0 10px", textTransform: "uppercase", letterSpacing: 0.5 }}>
+              <h3 style={{ fontSize: 15, fontWeight: 500, color: NAVY, margin: "0 0 10px", textTransform: "uppercase", letterSpacing: 0.5 }}>
                 Risk flags (generated {latestNarrative?.generated_at ? new Date(latestNarrative.generated_at).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : ""} · click to expand)
               </h3>
               {riskFlags.map(flag => (
                 <div key={flag.id} onClick={() => toggleFlag(flag.id)} style={{
                   borderLeft: `3px solid ${flag.level === "high" ? "#a32d2d" : ORANGE}`,
-                  background: "var(--muted)", borderRadius: "0 8px 8px 0",
-                  padding: "9px 12px", marginBottom: 8, cursor: "pointer",
+                  background: "#F9F7F1", borderRadius: "0 8px 8px 0",
+                  padding: "12px 16px", marginBottom: 12, cursor: "pointer",
                 }}>
                   <span style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: 0.5, color: flag.level === "high" ? "#a32d2d" : ORANGE, fontWeight: 500 }}>
                     {flag.level === "high" ? "High risk" : "Warning"}
                   </span>
-                  <p style={{ fontSize: 13, fontWeight: 500, color: NAVY, margin: "2px 0" }}>{flag.title}</p>
-                  <p style={{ fontSize: 12, color: "var(--foreground)", margin: 0 }}>{flag.summary}</p>
+                  <p style={{ fontSize: 15, fontWeight: 500, color: NAVY, margin: "2px 0" }}>{flag.title}</p>
+                  <p style={{ fontSize: 14, color: "var(--foreground)", margin: 0 }}>{flag.summary}</p>
                   <p style={{ fontSize: 10, color: "var(--muted-foreground)", margin: "4px 0 0" }}>
                     {expandedFlags.has(flag.id) ? "↑ collapse" : "↓ expand for detail"}
                   </p>
                   {expandedFlags.has(flag.id) && (
-                    <p style={{ fontSize: 12, color: "var(--foreground)", margin: "8px 0 0", whiteSpace: "pre-wrap" }}>
+                    <p style={{ fontSize: 14, color: "var(--foreground)", margin: "8px 0 0", whiteSpace: "pre-wrap" }}>
                       {flag.detail}
                     </p>
                   )}
