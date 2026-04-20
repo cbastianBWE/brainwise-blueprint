@@ -666,9 +666,9 @@ export default function CompanyDashboard() {
           )}
 
           {/* Cross-instrument snapshot placeholder */}
-          <div style={{ marginTop: 24, padding: 14, background: "var(--card)", border: "0.5px solid var(--border)", borderRadius: 8 }}>
-            <h3 style={{ fontSize: 13, fontWeight: 500, color: NAVY, margin: "0 0 6px", textTransform: "uppercase", letterSpacing: 0.5 }}>Cross-instrument snapshot</h3>
-            <p style={{ fontSize: 12, color: "var(--muted-foreground)", margin: 0 }}>
+          <div style={{ marginTop: 24, padding: 14, background: "#F9F7F1", border: "0.5px solid var(--border)", borderRadius: 8 }}>
+            <h3 style={{ fontSize: 15, fontWeight: 500, color: NAVY, margin: "0 0 6px", textTransform: "uppercase", letterSpacing: 0.5 }}>Cross-instrument snapshot</h3>
+            <p style={{ fontSize: 14, color: "var(--muted-foreground)", margin: 0 }}>
               PTP aggregate data will appear here once participants have completed both NAI and PTP. View the full analysis in the Cross-Instrument tab.
             </p>
           </div>
