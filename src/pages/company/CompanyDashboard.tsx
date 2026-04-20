@@ -573,10 +573,10 @@ export default function CompanyDashboard() {
           {/* Leadership compared to workforce */}
           {!suppressed && Object.keys(dims).length > 0 && (
             <>
-              <h3 style={{ fontSize: 13, fontWeight: 500, color: NAVY, margin: "24px 0 10px", textTransform: "uppercase", letterSpacing: 0.5 }}>
+              <h3 style={{ fontSize: 15, fontWeight: 500, color: NAVY, margin: "24px 0 10px", textTransform: "uppercase", letterSpacing: 0.5 }}>
                 Leadership compared to workforce · C.A.F.E.S.
               </h3>
-              <div style={{ padding: 14, background: "var(--card)", border: "0.5px solid var(--border)", borderRadius: 8 }}>
+              <div style={{ padding: 14, background: "#F9F7F1", border: "0.5px solid var(--border)", borderRadius: 8 }}>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", gap: 16 }}>
                   <div>
                     <p style={{ fontSize: 11, color: "var(--muted-foreground)", margin: "0 0 8px", textTransform: "uppercase", letterSpacing: 0.4 }}>Director · VP · C-Suite</p>
