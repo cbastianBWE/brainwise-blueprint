@@ -174,6 +174,16 @@ export default function CompanyDashboard() {
   const [trackingStatus, setTrackingStatus] = useState("not_started");
   const [savingTracking, setSavingTracking] = useState(false);
 
+  const [exportModal, setExportModal] = useState(false);
+  const [exportSections, setExportSections] = useState<Record<string, boolean>>({
+    overview: true,
+    dimensions: true,
+    interpretation: true,
+    trends: true,
+    "cross-instrument": true,
+  });
+  const [exporting, setExporting] = useState(false);
+
   // Load departments
   useEffect(() => {
     if (!user) return;
@@ -328,6 +338,145 @@ export default function CompanyDashboard() {
     setSavingTracking(false);
   };
 
+  const handleExport = async () => {
+    setExporting(true);
+    setExportModal(false);
+
+    // Force all collapsed content open before capture
+    const prevFlags = expandedFlags;
+    const prevDims = expandedDims;
+    const prevMethod = expandedMethod;
+    setExpandedFlags(new Set(riskFlags.map(f => f.id)));
+    setExpandedDims(new Set(DIMS_BY_WEIGHT));
+    setExpandedMethod(true);
+
+    // Wait for render
+    await new Promise(r => setTimeout(r, 400));
+
+    try {
+      const jsPDF = (await import("jspdf")).default;
+      const html2canvas = (await import("html2canvas")).default;
+
+      const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+      const pageW = 210;
+      const pageH = 297;
+      const margin = 14;
+      const contentW = pageW - margin * 2;
+      let isFirstPage = true;
+
+      // Cover header
+      pdf.setFillColor(2, 31, 54);
+      pdf.rect(0, 0, pageW, 36, "F");
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFontSize(18);
+      pdf.setFont("helvetica", "bold");
+      pdf.text("BrainWise · NAI Company Dashboard", margin, 16);
+      pdf.setFontSize(10);
+      pdf.setFont("helvetica", "normal");
+      const sliceLabel = sliceType === "all" ? "All organization" : `${sliceType}: ${sliceValue}`;
+      pdf.text(`${sliceLabel} · n=${participantCount} · Generated ${new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}`, margin, 24);
+      if (indexScore !== null) {
+        pdf.setFontSize(28);
+        pdf.setFont("helvetica", "bold");
+        pdf.text(`${indexScore}`, pageW - margin - 20, 20, { align: "right" });
+        pdf.setFontSize(8);
+        pdf.setFont("helvetica", "normal");
+        pdf.text("AI Readiness Index", pageW - margin - 20, 27, { align: "right" });
+      }
+      let yPos = 44;
+
+      const selectedTabs = tabs.filter(t => exportSections[t]);
+
+      for (const tab of selectedTabs) {
+        // Section header
+        if (!isFirstPage) {
+          pdf.addPage();
+          yPos = 14;
+        }
+        pdf.setFillColor(249, 247, 241);
+        pdf.rect(margin, yPos, contentW, 8, "F");
+        pdf.setTextColor(2, 31, 54);
+        pdf.setFontSize(11);
+        pdf.setFont("helvetica", "bold");
+        pdf.text(tabLabels[tab].toUpperCase(), margin + 3, yPos + 5.5);
+        yPos += 12;
+        isFirstPage = false;
+
+        // Temporarily switch to the tab to render it
+        setActiveTab(tab);
+        await new Promise(r => setTimeout(r, 300));
+
+        // Find the tab content div and capture it
+        const contentDivs = document.querySelectorAll('[data-export-tab]');
+        const targetEl = contentDivs[0] as HTMLElement;
+        if (!targetEl) continue;
+
+        const canvas = await html2canvas(targetEl, {
+          scale: 1.5,
+          useCORS: true,
+          backgroundColor: "#ffffff",
+          logging: false,
+        });
+
+        const imgData = canvas.toDataURL("image/png");
+        const imgW = contentW;
+        const imgH = (canvas.height * imgW) / canvas.width;
+
+        // Paginate tall content
+        let remainingH = imgH;
+        let srcY = 0;
+        while (remainingH > 0) {
+          const sliceH = Math.min(remainingH, pageH - yPos - margin);
+          const sliceRatio = sliceH / imgH;
+          const srcH = canvas.height * sliceRatio;
+
+          const sliceCanvas = document.createElement("canvas");
+          sliceCanvas.width = canvas.width;
+          sliceCanvas.height = srcH;
+          const ctx = sliceCanvas.getContext("2d")!;
+          ctx.drawImage(canvas, 0, srcY * (canvas.height / imgH), canvas.width, srcH, 0, 0, canvas.width, srcH);
+          const sliceData = sliceCanvas.toDataURL("image/png");
+
+          pdf.addImage(sliceData, "PNG", margin, yPos, imgW, sliceH);
+          remainingH -= sliceH;
+          srcY += sliceH;
+          yPos += sliceH;
+
+          if (remainingH > 0) {
+            pdf.addPage();
+            yPos = 14;
+          }
+        }
+      }
+
+      // Footer on all pages
+      const totalPages = pdf.getNumberOfPages();
+      for (let i = 1; i <= totalPages; i++) {
+        pdf.setPage(i);
+        pdf.setFontSize(7);
+        pdf.setTextColor(150, 150, 150);
+        pdf.setFont("helvetica", "normal");
+        pdf.text(
+          `BrainWise · NAI Company Dashboard · Confidential · Page ${i} of ${totalPages}`,
+          pageW / 2, pageH - 6, { align: "center" }
+        );
+      }
+
+      const dateStr = new Date().toISOString().split("T")[0];
+      pdf.save(`BrainWise-NAI-CompanyDashboard-${dateStr}.pdf`);
+      toast.success("Dashboard exported successfully");
+    } catch (e: any) {
+      toast.error("Export failed: " + (e.message ?? "unknown error"));
+    }
+
+    // Restore collapsed state
+    setExpandedFlags(prevFlags);
+    setExpandedDims(prevDims);
+    setExpandedMethod(prevMethod);
+    setActiveTab(activeTab);
+    setExporting(false);
+  };
+
   const priorityBadge = (priority: string) => {
     const styles: Record<string, { bg: string; color: string }> = {
       high: { bg: "#faece7", color: "#993c1d" },
@@ -407,7 +556,9 @@ export default function CompanyDashboard() {
             <span style={{ fontSize: 11, color: "var(--muted-foreground)" }}>
               {sliceType === "all" ? "All organization" : `${sliceType}: ${sliceValue}`} · n={participantCount}
             </span>
-            <Button variant="outline" size="sm">Export ↓</Button>
+            <Button variant="outline" size="sm" onClick={() => setExportModal(true)} disabled={exporting}>
+              {exporting ? "Exporting..." : "Export ↓"}
+            </Button>
             <Button size="sm" onClick={handleRegenerate} disabled={regenerating || suppressed}>
               <RefreshCw className={regenerating ? "animate-spin" : ""} />
               {regenerating ? "Generating..." : "↻ Regenerate AI"}
