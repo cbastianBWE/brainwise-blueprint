@@ -678,7 +678,7 @@ export default function CompanyDashboard() {
       {/* ── Dimensions tab ───────────────────────────────────────────────────── */}
       {activeTab === "dimensions" && (
         <div>
-          <p style={{ fontSize: 12, color: "var(--muted-foreground)", marginBottom: 14 }}>
+          <p style={{ fontSize: 14, color: "var(--muted-foreground)", marginBottom: 14 }}>
             Click any dimension card for interpretation and interventions. Ordered by index weight — highest impact first.
           </p>
           {suppressed ? (
