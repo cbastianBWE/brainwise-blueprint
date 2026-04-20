@@ -209,7 +209,7 @@ export default function CompanyDashboard() {
       if (!res.ok) throw new Error(result.error ?? "Generation failed");
       toast.success("AI interpretation generated");
       await Promise.all([loadUsage(), loadNarrative()]);
-      setActiveTab("interpretation");
+      
     } catch (e: any) {
       toast.error(e.message ?? "Failed to generate interpretation");
     }
