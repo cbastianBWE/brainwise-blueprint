@@ -900,7 +900,7 @@ export default function CompanyDashboard() {
       {activeTab === "trends" && (
         <div>
           <div style={{ marginBottom: 14, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-            <span style={{ fontSize: 11, color: "var(--muted-foreground)" }}>Showing trend across AI interpretation generations for this slice.</span>
+            <span style={{ fontSize: 13, color: "var(--muted-foreground)" }}>Showing trend across AI interpretation generations for this slice.</span>
           </div>
 
           {narrativeHistory.length === 0 ? (
