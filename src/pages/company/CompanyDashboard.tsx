@@ -135,7 +135,7 @@ export default function CompanyDashboard() {
   const [activeTab, setActiveTab] = useState<string>("overview");
   const [expandedFlags, setExpandedFlags] = useState<Set<string>>(new Set());
   const [expandedSplit, setExpandedSplit] = useState(false);
-  const [expandedMethod, setExpandedMethod] = useState(false);
+  const [expandedMethod, setExpandedMethod] = useState(true);
 
   // Load departments
   useEffect(() => {
@@ -341,6 +341,16 @@ export default function CompanyDashboard() {
             <option value="all">Level ▾</option>
             {["IC", "Manager", "Director", "VP", "C-Suite", "Other"].map(l => <option key={l} value={l}>{l}</option>)}
           </select>
+          <select
+            onChange={e => {
+              if (e.target.value !== "all") { setSliceType("team"); setSliceValue(e.target.value); }
+              else { setSliceType("all"); setSliceValue("all"); }
+            }}
+            style={{ fontSize: 11, padding: "3px 8px", borderRadius: 20, border: "0.5px solid var(--border)", background: "var(--card)", color: "var(--foreground)", cursor: "pointer" }}
+          >
+            <option value="all">Team ▾</option>
+            {departments.map(d => <option key={`team-${d.id}`} value={d.id}>{d.name}</option>)}
+          </select>
           <span style={{ fontSize: 10, color: "var(--muted-foreground)", marginLeft: 4 }}>min 5 per slice</span>
         </div>
       </div>
@@ -369,24 +379,18 @@ export default function CompanyDashboard() {
             </button>
             {expandedMethod && (
               <div style={{ marginTop: 10 }}>
-                <p style={{ fontSize: 12, color: "var(--foreground)", margin: "0 0 8px" }}>
-                  The AI Readiness Index is a single composite score (0–100) where higher means more ready. It is calculated as 100 minus the weighted average of the five C.A.F.E.S. dimension friction scores. Dimension scores measure activation — higher means more resistance. The index inverts this so improving readiness always moves the number up.
-                </p>
-                <p style={{ fontSize: 12, color: "var(--foreground)", margin: "0 0 10px" }}>
-                  Dimensions are weighted by their relative impact on sustained adoption behavior, based on 2025 NeuroLeadership Institute SCARF research (15,000+ respondents) and BrainWise's applied psychometric framework.
-                </p>
+                <p style={{ marginBottom: 8 }}>The AI Readiness Index is a single composite score (0–100) where <strong>higher means more ready</strong>. It is calculated as <strong>100 minus the weighted average of the five C.A.F.E.S. dimension friction scores</strong>. Dimension scores measure friction — higher dimension scores mean more activation. The index inverts this so improving readiness always moves the number up.</p>
+                <p style={{ marginBottom: 10 }}>Dimensions are weighted unequally based on their relative impact on AI adoption outcomes, grounded in the 2025 NeuroLeadership Institute SCARF model review (15,000+ respondents) and BrainWise's applied psychometric framework. Fairness and Agency carry the highest weights because they are the strongest drivers of sustained adoption behavior and the hardest to restore once damaged.</p>
                 {DIMS_BY_WEIGHT.map(dimId => (
-                  <div key={dimId} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
-                    <span style={{ fontSize: 11, width: 110, color: NAVY }}>{DIM_NAMES[dimId]} ({Math.round(DIM_WEIGHTS[dimId] * 100)}%)</span>
-                    <div style={{ flex: 1, height: 6, background: "var(--muted)", borderRadius: 3, overflow: "hidden" }}>
-                      <div style={{ width: `${DIM_WEIGHTS[dimId] * 100 * 3}%`, maxWidth: "100%", height: "100%", background: DIM_COLORS[dimId] }} />
+                  <div key={dimId} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 5 }}>
+                    <span style={{ fontSize: 10, minWidth: 130, color: DIM_COLORS[dimId], fontWeight: 500 }}>{DIM_NAMES[dimId]} ({Math.round(DIM_WEIGHTS[dimId] * 100)}%)</span>
+                    <div style={{ flex: 1, height: 5, background: "var(--muted)", borderRadius: 3, overflow: "hidden" }}>
+                      <div style={{ height: "100%", width: `${(DIM_WEIGHTS[dimId] / 0.28) * 100}%`, background: DIM_COLORS[dimId], borderRadius: 3 }} />
                     </div>
-                    <span style={{ fontSize: 11, color: "var(--muted-foreground)", width: 36, textAlign: "right" }}>{Math.round(DIM_WEIGHTS[dimId] * 100)}%</span>
+                    <span style={{ fontSize: 10, color: "var(--muted-foreground)", minWidth: 30, textAlign: "right" }}>{Math.round(DIM_WEIGHTS[dimId] * 100)}%</span>
                   </div>
                 ))}
-                <p style={{ fontSize: 10, color: "var(--muted-foreground)", margin: "10px 0 0", fontStyle: "italic" }}>
-                  Weights based on 2025 NLI research and will be recalibrated as BrainWise platform-wide outcome data accumulates.
-                </p>
+                <p style={{ fontSize: 9, color: "var(--muted-foreground)", marginTop: 8 }}>Weights are based on 2025 NLI research and BrainWise applied data. They will be recalibrated as platform-wide outcome data accumulates. Weights apply consistently to individual NAI reports and org-level dashboards.</p>
               </div>
             )}
           </div>
@@ -458,12 +462,10 @@ export default function CompanyDashboard() {
                       const score = dims[dimId]?.avg_score ?? 0;
                       const act = activationLabel(score);
                       return (
-                        <div key={dimId} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "4px 0", fontSize: 12 }}>
-                          <span style={{ color: "var(--foreground)" }}>{DIM_NAMES[dimId]}</span>
-                          <span style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                            <span style={{ color: NAVY, fontWeight: 500 }}>{Math.round(score)}</span>
-                            <span style={{ fontSize: 10, padding: "2px 6px", borderRadius: 10, background: act.bg, color: act.color }}>{act.label}</span>
-                          </span>
+                        <div key={dimId} style={{ display: "grid", gridTemplateColumns: "1fr 32px 56px", alignItems: "center", marginBottom: 8, gap: 4 }}>
+                          <span style={{ fontSize: 11, fontWeight: 500, color: DIM_COLORS[dimId] }}>{DIM_NAMES[dimId]}</span>
+                          <span style={{ fontSize: 13, fontWeight: 500, color: DIM_COLORS[dimId], textAlign: "right" }}>{Math.round(score)}</span>
+                          <span style={{ fontSize: 9, padding: "2px 5px", borderRadius: 3, background: act.bg, color: act.color, textAlign: "center" }}>{act.label}</span>
                         </div>
                       );
                     })}
@@ -480,20 +482,18 @@ export default function CompanyDashboard() {
                       const score = dims[dimId]?.avg_score ?? 0;
                       const act = activationLabel(score);
                       return (
-                        <div key={dimId} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "4px 0", fontSize: 12 }}>
-                          <span style={{ color: "var(--foreground)" }}>{DIM_NAMES[dimId]}</span>
-                          <span style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                            <span style={{ color: NAVY, fontWeight: 500 }}>{Math.round(score)}</span>
-                            <span style={{ fontSize: 10, padding: "2px 6px", borderRadius: 10, background: act.bg, color: act.color }}>{act.label}</span>
-                          </span>
+                        <div key={dimId} style={{ display: "grid", gridTemplateColumns: "1fr 32px 56px", alignItems: "center", marginBottom: 8, gap: 4 }}>
+                          <span style={{ fontSize: 11, fontWeight: 500, color: DIM_COLORS[dimId] }}>{DIM_NAMES[dimId]}</span>
+                          <span style={{ fontSize: 13, fontWeight: 500, color: DIM_COLORS[dimId], textAlign: "right" }}>{Math.round(score)}</span>
+                          <span style={{ fontSize: 9, padding: "2px 5px", borderRadius: 3, background: act.bg, color: act.color, textAlign: "center" }}>{act.label}</span>
                         </div>
                       );
                     })}
                   </div>
                 </div>
-                <p style={{ fontSize: 10, color: "var(--muted-foreground)", margin: "12px 0 0", fontStyle: "italic" }}>
-                  Delta view requires org_level slice data. Select "Level ▾" above to compare Director vs IC scores directly.
-                </p>
+                <div style={{ fontSize: 10, color: "var(--muted-foreground)", padding: "8px 14px", borderTop: "0.5px solid var(--border)", background: "var(--muted)", fontStyle: "italic" }}>
+                  Select "Level ▾" above to compare Director vs IC scores with real delta values. Item-level delta requires assessment response data.
+                </div>
               </div>
             </>
           )}
