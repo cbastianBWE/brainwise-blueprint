@@ -733,12 +733,12 @@ export default function CompanyDashboard() {
                   {isExpanded && (
                     <div onClick={e => e.stopPropagation()} style={{ marginTop: 12, paddingTop: 12, borderTop: "0.5px solid var(--border)" }}>
                       {!latestNarrative ? (
-                        <p style={{ fontSize: 12, color: "var(--muted-foreground)", fontStyle: "italic" }}>
+                        <p style={{ fontSize: 14, color: "var(--muted-foreground)", fontStyle: "italic" }}>
                           Generate an AI interpretation to see dimension insights and interventions.
                         </p>
                       ) : (
                         <>
-                          <p style={{ fontSize: 12, color: "var(--muted-foreground)", lineHeight: 1.65, marginBottom: 12 }}>
+                          <p style={{ fontSize: 14, color: "var(--muted-foreground)", lineHeight: 1.65, marginBottom: 12 }}>
                             {DIM_NAMES[dimId]} carries a {Math.round(DIM_WEIGHTS[dimId] * 100)}% weight in the readiness index — the {
                               ["DIM-NAI-03","DIM-NAI-04","DIM-NAI-02"].indexOf(dimId) >= 0 ? "highest tier" : "lower tier"
                             }. Current score of {Math.round(dim.avg_score)} places this dimension at {act.label.toLowerCase()} activation.
@@ -746,20 +746,20 @@ export default function CompanyDashboard() {
                           </p>
                           {dimInterventions.length > 0 ? (
                             <>
-                              <div style={{ fontSize: 11, fontWeight: 500, color: NAVY, marginBottom: 8 }}>
+                              <div style={{ fontSize: 13, fontWeight: 500, color: NAVY, marginBottom: 8 }}>
                                 Interventions targeting this dimension
                               </div>
                               {dimInterventions.map(iv => (
-                                <div key={iv.id} style={{ background: "var(--muted)", borderRadius: 8, padding: "10px 12px", marginBottom: 8 }}>
+                                <div key={iv.id} style={{ background: "#ede9df", borderRadius: 8, padding: "14px 16px", marginBottom: 8 }}>
                                   <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8, marginBottom: 6 }}>
-                                    <span style={{ fontSize: 12, fontWeight: 500, color: NAVY }}>{iv.title}</span>
+                                    <span style={{ fontSize: 14, fontWeight: 500, color: NAVY }}>{iv.title}</span>
                                     <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
                                       {priorityBadge(iv.priority)}
                                       {horizonBadge(iv.time_horizon)}
                                       {typeBadge(iv.intervention_type)}
                                     </div>
                                   </div>
-                                  <p style={{ fontSize: 11, color: "var(--muted-foreground)", margin: "0 0 8px", lineHeight: 1.55 }}>{iv.description}</p>
+                                  <p style={{ fontSize: 13, color: "var(--muted-foreground)", margin: "0 0 8px", lineHeight: 1.55 }}>{iv.description}</p>
                                   <button onClick={e => openTrackingModal(iv, e)} style={{
                                     fontSize: 10, padding: "3px 9px", border: `0.5px solid ${NAVY}`, borderRadius: 5,
                                     background: "transparent", color: NAVY, cursor: "pointer",
@@ -768,7 +768,7 @@ export default function CompanyDashboard() {
                               ))}
                             </>
                           ) : (
-                            <p style={{ fontSize: 11, color: "var(--muted-foreground)", fontStyle: "italic" }}>
+                            <p style={{ fontSize: 13, color: "var(--muted-foreground)", fontStyle: "italic" }}>
                               No interventions specifically target this dimension in the current generation. Regenerate to refresh.
                             </p>
                           )}
