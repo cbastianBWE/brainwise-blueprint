@@ -995,8 +995,8 @@ export default function CompanyDashboard() {
 
           {!suppressed && Object.keys(dims).length > 0 && (
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 16 }}>
-              <div style={{ background: "var(--card)", border: "0.5px solid var(--border)", borderRadius: 12, padding: 14 }}>
-                <div style={{ fontSize: 11, fontWeight: 500, color: "var(--muted-foreground)", textTransform: "uppercase" as const, letterSpacing: 0.04, marginBottom: 10 }}>
+              <div style={{ background: "#F9F7F1", border: "0.5px solid var(--border)", borderRadius: 12, padding: 14 }}>
+                <div style={{ fontSize: 13, fontWeight: 500, color: "var(--muted-foreground)", textTransform: "uppercase" as const, letterSpacing: 0.04, marginBottom: 10 }}>
                   NAI · C.A.F.E.S. (by weight)
                 </div>
                 {DIMS_BY_WEIGHT.map(dimId => {
@@ -1004,7 +1004,7 @@ export default function CompanyDashboard() {
                   if (!dim) return null;
                   const act = activationLabel(dim.avg_score);
                   return (
-                    <div key={dimId} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 7, fontSize: 11 }}>
+                    <div key={dimId} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 7, fontSize: 13 }}>
                       <span style={{ color: DIM_COLORS[dimId], fontWeight: 500 }}>{DIM_NAMES[dimId]}</span>
                       <span>
                         <span style={{ fontWeight: 500, color: DIM_COLORS[dimId], marginRight: 6 }}>{Math.round(dim.avg_score)}</span>
@@ -1013,7 +1013,7 @@ export default function CompanyDashboard() {
                     </div>
                   );
                 })}
-                <div style={{ marginTop: 12, paddingTop: 10, borderTop: "0.5px solid var(--border)", fontSize: 11, fontWeight: 500, color: NAVY }}>
+                <div style={{ marginTop: 12, paddingTop: 10, borderTop: "0.5px solid var(--border)", fontSize: 13, fontWeight: 500, color: NAVY }}>
                   AI Readiness Index: {indexScore !== null ? `${indexScore} / 100` : "—"}
                 </div>
               </div>
