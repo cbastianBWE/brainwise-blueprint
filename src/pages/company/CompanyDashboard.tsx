@@ -642,7 +642,7 @@ export default function CompanyDashboard() {
 
       {/* ── Overview tab ─────────────────────────────────────────────────────── */}
       {activeTab === "overview" && (
-        <div>
+        <div data-export-tab="true">
           {/* Methodology callout */}
           <div style={{ marginBottom: 16, padding: "10px 14px", background: SAND, borderRadius: 8, border: "0.5px solid var(--border)" }}>
             <button onClick={() => setExpandedMethod(!expandedMethod)}
@@ -828,7 +828,7 @@ export default function CompanyDashboard() {
 
       {/* ── Dimensions tab ───────────────────────────────────────────────────── */}
       {activeTab === "dimensions" && (
-        <div>
+        <div data-export-tab="true">
           <p style={{ fontSize: 14, color: "var(--muted-foreground)", marginBottom: 14 }}>
             Click any dimension card for interpretation and interventions. Ordered by index weight — highest impact first.
           </p>
@@ -936,7 +936,7 @@ export default function CompanyDashboard() {
 
       {/* ── AI Interpretation tab ─────────────────────────────────────────────── */}
       {activeTab === "interpretation" && (
-        <div>
+        <div data-export-tab="true">
           {!latestNarrative ? (
             <div style={{ padding: 48, textAlign: "center", background: "var(--muted)", borderRadius: 8 }}>
               <p style={{ fontSize: 14, fontWeight: 500, color: NAVY, marginBottom: 6 }}>No AI interpretation generated yet</p>
@@ -1049,7 +1049,7 @@ export default function CompanyDashboard() {
 
       {/* ── Trends tab ───────────────────────────────────────────────────────── */}
       {activeTab === "trends" && (
-        <div>
+        <div data-export-tab="true">
           <div style={{ marginBottom: 14, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
             <span style={{ fontSize: 13, color: "var(--muted-foreground)" }}>Showing trend across AI interpretation generations for this slice.</span>
           </div>
@@ -1139,7 +1139,7 @@ export default function CompanyDashboard() {
 
       {/* ── Cross-instrument tab ──────────────────────────────────────────────── */}
       {activeTab === "cross-instrument" && (
-        <div>
+        <div data-export-tab="true">
           <p style={{ fontSize: 14, color: "var(--muted-foreground)", marginBottom: 16 }}>
             Cross-instrument analysis requires participants to have completed both NAI and PTP assessments. Patterns between the two instruments reveal whether AI adoption barriers are specific to AI context or rooted in deeper threat-response patterns.
           </p>
@@ -1206,6 +1206,55 @@ export default function CompanyDashboard() {
       )}
 
       {/* ── Intervention tracking modal ───────────────────────────────────────── */}
+      {exportModal && (
+        <div onClick={() => setExportModal(false)} style={{
+          position: "fixed", inset: 0, background: "rgba(2,31,54,0.45)", zIndex: 100,
+          display: "flex", alignItems: "center", justifyContent: "center",
+        }}>
+          <div onClick={e => e.stopPropagation()} style={{
+            background: "var(--card)", borderRadius: 12, padding: 24, width: 380, maxWidth: "95vw",
+            border: "0.5px solid var(--border)",
+          }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+              <div>
+                <div style={{ fontSize: 9, color: "var(--muted-foreground)", textTransform: "uppercase" as const, letterSpacing: "0.05em", marginBottom: 3 }}>Export dashboard</div>
+                <div style={{ fontSize: 15, fontWeight: 500, color: NAVY }}>Select sections to include</div>
+              </div>
+              <button onClick={() => setExportModal(false)} style={{ background: "none", border: "none", fontSize: 20, cursor: "pointer", color: "var(--muted-foreground)", lineHeight: 1, padding: 0 }}>×</button>
+            </div>
+            <div style={{ marginBottom: 16 }}>
+              {tabs.map(tab => (
+                <label key={tab} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: "0.5px solid var(--border)", cursor: "pointer" }}>
+                  <input
+                    type="checkbox"
+                    checked={exportSections[tab]}
+                    onChange={e => setExportSections(prev => ({ ...prev, [tab]: e.target.checked }))}
+                    style={{ width: 14, height: 14, cursor: "pointer" }}
+                  />
+                  <span style={{ fontSize: 13, color: "var(--foreground)" }}>{tabLabels[tab]}</span>
+                  {tab === "interpretation" && !latestNarrative && (
+                    <span style={{ fontSize: 10, color: "var(--muted-foreground)", marginLeft: "auto" }}>No data yet</span>
+                  )}
+                </label>
+              ))}
+            </div>
+            <div style={{ fontSize: 11, color: "var(--muted-foreground)", marginBottom: 14, lineHeight: 1.5 }}>
+              All collapsed content (risk flags, dimension cards, methodology) will be automatically expanded in the export. Filename: BrainWise-NAI-CompanyDashboard-YYYY-MM-DD.pdf
+            </div>
+            <button
+              onClick={handleExport}
+              disabled={!Object.values(exportSections).some(Boolean)}
+              style={{
+                background: NAVY, color: "#fff", border: "none", borderRadius: 8,
+                padding: "10px 18px", fontSize: 13, cursor: "pointer", width: "100%", fontWeight: 500,
+              }}
+            >
+              Download PDF
+            </button>
+          </div>
+        </div>
+      )}
+
       {trackingModal.open && trackingModal.intervention && (
         <div onClick={closeTrackingModal} style={{
           position: "fixed", inset: 0, background: "rgba(2,31,54,0.45)", zIndex: 100,
