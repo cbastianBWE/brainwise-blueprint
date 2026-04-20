@@ -579,14 +579,14 @@ export default function CompanyDashboard() {
               <div style={{ padding: 14, background: "#F9F7F1", border: "0.5px solid var(--border)", borderRadius: 8 }}>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", gap: 16 }}>
                   <div>
-                    <p style={{ fontSize: 11, color: "var(--muted-foreground)", margin: "0 0 8px", textTransform: "uppercase", letterSpacing: 0.4 }}>Director · VP · C-Suite</p>
+                    <p style={{ fontSize: 13, color: "var(--muted-foreground)", margin: "0 0 8px", textTransform: "uppercase", letterSpacing: 0.4 }}>Director · VP · C-Suite</p>
                     {DIMS_BY_WEIGHT.map(dimId => {
                       const score = dims[dimId]?.avg_score ?? 0;
                       const act = activationLabel(score);
                       return (
                         <div key={dimId} style={{ display: "grid", gridTemplateColumns: "1fr 32px 56px", alignItems: "center", marginBottom: 8, gap: 4 }}>
-                          <span style={{ fontSize: 11, fontWeight: 500, color: DIM_COLORS[dimId] }}>{DIM_NAMES[dimId]}</span>
-                          <span style={{ fontSize: 13, fontWeight: 500, color: DIM_COLORS[dimId], textAlign: "right" }}>{Math.round(score)}</span>
+                          <span style={{ fontSize: 13, fontWeight: 500, color: DIM_COLORS[dimId] }}>{DIM_NAMES[dimId]}</span>
+                          <span style={{ fontSize: 15, fontWeight: 500, color: DIM_COLORS[dimId], textAlign: "right" }}>{Math.round(score)}</span>
                           <span style={{ fontSize: 9, padding: "2px 5px", borderRadius: 3, background: act.bg, color: act.color, textAlign: "center" }}>{act.label}</span>
                         </div>
                       );
@@ -595,18 +595,18 @@ export default function CompanyDashboard() {
                   <div style={{ alignSelf: "center", textAlign: "center" }}>
                     <p style={{ fontSize: 10, color: "var(--muted-foreground)", margin: "0 0 6px", textTransform: "uppercase" }}>delta</p>
                     {DIMS_BY_WEIGHT.map(dimId => (
-                      <div key={dimId} style={{ fontSize: 11, color: "var(--muted-foreground)", padding: "4px 0" }}>—</div>
+                      <div key={dimId} style={{ fontSize: 13, color: "var(--muted-foreground)", padding: "4px 0" }}>—</div>
                     ))}
                   </div>
                   <div>
-                    <p style={{ fontSize: 11, color: "var(--muted-foreground)", margin: "0 0 8px", textTransform: "uppercase", letterSpacing: 0.4 }}>Manager · IC</p>
+                    <p style={{ fontSize: 13, color: "var(--muted-foreground)", margin: "0 0 8px", textTransform: "uppercase", letterSpacing: 0.4 }}>Manager · IC</p>
                     {DIMS_BY_WEIGHT.map(dimId => {
                       const score = dims[dimId]?.avg_score ?? 0;
                       const act = activationLabel(score);
                       return (
                         <div key={dimId} style={{ display: "grid", gridTemplateColumns: "1fr 32px 56px", alignItems: "center", marginBottom: 8, gap: 4 }}>
-                          <span style={{ fontSize: 11, fontWeight: 500, color: DIM_COLORS[dimId] }}>{DIM_NAMES[dimId]}</span>
-                          <span style={{ fontSize: 13, fontWeight: 500, color: DIM_COLORS[dimId], textAlign: "right" }}>{Math.round(score)}</span>
+                          <span style={{ fontSize: 13, fontWeight: 500, color: DIM_COLORS[dimId] }}>{DIM_NAMES[dimId]}</span>
+                          <span style={{ fontSize: 15, fontWeight: 500, color: DIM_COLORS[dimId], textAlign: "right" }}>{Math.round(score)}</span>
                           <span style={{ fontSize: 9, padding: "2px 5px", borderRadius: 3, background: act.bg, color: act.color, textAlign: "center" }}>{act.label}</span>
                         </div>
                       );
