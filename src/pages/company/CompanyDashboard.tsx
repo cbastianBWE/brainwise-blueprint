@@ -847,11 +847,11 @@ export default function CompanyDashboard() {
                 const text = latestNarrative.narrative_text[section.key as keyof typeof latestNarrative.narrative_text] as string | undefined;
                 if (!text) return null;
                 return (
-                  <div key={section.key} style={{ background: "var(--card)", border: "0.5px solid var(--border)", borderRadius: 12, padding: 16, marginBottom: 12 }}>
+                  <div key={section.key} style={{ background: "#F9F7F1", border: "0.5px solid var(--border)", borderRadius: 12, padding: 16, marginBottom: 12 }}>
                     <div style={{ fontSize: 9, fontWeight: 500, color: NAVY, textTransform: "uppercase" as const, letterSpacing: "0.06em", marginBottom: 6, borderLeft: `3px solid ${ORANGE}`, paddingLeft: 7 }}>
                       {section.label}
                     </div>
-                    <div style={{ fontSize: 12, lineHeight: 1.7, color: "var(--foreground)", whiteSpace: "pre-wrap" }}>{text}</div>
+                    <div style={{ fontSize: 14, lineHeight: 1.75, color: "var(--foreground)", whiteSpace: "pre-wrap" }}>{text}</div>
                   </div>
                 );
               })}
