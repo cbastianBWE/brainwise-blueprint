@@ -798,12 +798,12 @@ export default function CompanyDashboard() {
           ) : (
             <>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16, flexWrap: "wrap", gap: 8 }}>
-                <div style={{ fontSize: 11, color: "var(--muted-foreground)" }}>
+                <div style={{ fontSize: 13, color: "var(--muted-foreground)" }}>
                   Generated {new Date(latestNarrative.generated_at).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })} · {latestNarrative.participant_count} participants · {sliceType === "all" ? "All organization" : `${sliceType}: ${sliceValue}`}
                 </div>
                 <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
                   {narrativeHistory.length > 1 && (
-                    <select style={{ fontSize: 11, padding: "4px 8px", border: "0.5px solid var(--border)", borderRadius: 7, background: "var(--card)", color: "var(--foreground)" }}>
+                    <select style={{ fontSize: 13, padding: "4px 8px", border: "0.5px solid var(--border)", borderRadius: 7, background: "var(--card)", color: "var(--foreground)" }}>
                       {narrativeHistory.map(h => (
                         <option key={h.id} value={h.id}>
                           {new Date(h.generated_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })} — {h.participant_count} participants
