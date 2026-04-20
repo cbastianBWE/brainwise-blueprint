@@ -174,6 +174,16 @@ export default function CompanyDashboard() {
   const [trackingStatus, setTrackingStatus] = useState("not_started");
   const [savingTracking, setSavingTracking] = useState(false);
 
+  const [exportModal, setExportModal] = useState(false);
+  const [exportSections, setExportSections] = useState<Record<string, boolean>>({
+    overview: true,
+    dimensions: true,
+    interpretation: true,
+    trends: true,
+    "cross-instrument": true,
+  });
+  const [exporting, setExporting] = useState(false);
+
   // Load departments
   useEffect(() => {
     if (!user) return;
@@ -328,6 +338,145 @@ export default function CompanyDashboard() {
     setSavingTracking(false);
   };
 
+  const handleExport = async () => {
+    setExporting(true);
+    setExportModal(false);
+
+    // Force all collapsed content open before capture
+    const prevFlags = expandedFlags;
+    const prevDims = expandedDims;
+    const prevMethod = expandedMethod;
+    setExpandedFlags(new Set(riskFlags.map(f => f.id)));
+    setExpandedDims(new Set(DIMS_BY_WEIGHT));
+    setExpandedMethod(true);
+
+    // Wait for render
+    await new Promise(r => setTimeout(r, 400));
+
+    try {
+      const jsPDF = (await import("jspdf")).default;
+      const html2canvas = (await import("html2canvas")).default;
+
+      const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+      const pageW = 210;
+      const pageH = 297;
+      const margin = 14;
+      const contentW = pageW - margin * 2;
+      let isFirstPage = true;
+
+      // Cover header
+      pdf.setFillColor(2, 31, 54);
+      pdf.rect(0, 0, pageW, 36, "F");
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFontSize(18);
+      pdf.setFont("helvetica", "bold");
+      pdf.text("BrainWise · NAI Company Dashboard", margin, 16);
+      pdf.setFontSize(10);
+      pdf.setFont("helvetica", "normal");
+      const sliceLabel = sliceType === "all" ? "All organization" : `${sliceType}: ${sliceValue}`;
+      pdf.text(`${sliceLabel} · n=${participantCount} · Generated ${new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}`, margin, 24);
+      if (indexScore !== null) {
+        pdf.setFontSize(28);
+        pdf.setFont("helvetica", "bold");
+        pdf.text(`${indexScore}`, pageW - margin - 20, 20, { align: "right" });
+        pdf.setFontSize(8);
+        pdf.setFont("helvetica", "normal");
+        pdf.text("AI Readiness Index", pageW - margin - 20, 27, { align: "right" });
+      }
+      let yPos = 44;
+
+      const selectedTabs = tabs.filter(t => exportSections[t]);
+
+      for (const tab of selectedTabs) {
+        // Section header
+        if (!isFirstPage) {
+          pdf.addPage();
+          yPos = 14;
+        }
+        pdf.setFillColor(249, 247, 241);
+        pdf.rect(margin, yPos, contentW, 8, "F");
+        pdf.setTextColor(2, 31, 54);
+        pdf.setFontSize(11);
+        pdf.setFont("helvetica", "bold");
+        pdf.text(tabLabels[tab].toUpperCase(), margin + 3, yPos + 5.5);
+        yPos += 12;
+        isFirstPage = false;
+
+        // Temporarily switch to the tab to render it
+        setActiveTab(tab);
+        await new Promise(r => setTimeout(r, 300));
+
+        // Find the tab content div and capture it
+        const contentDivs = document.querySelectorAll('[data-export-tab]');
+        const targetEl = contentDivs[0] as HTMLElement;
+        if (!targetEl) continue;
+
+        const canvas = await html2canvas(targetEl, {
+          scale: 1.5,
+          useCORS: true,
+          backgroundColor: "#ffffff",
+          logging: false,
+        });
+
+        const imgData = canvas.toDataURL("image/png");
+        const imgW = contentW;
+        const imgH = (canvas.height * imgW) / canvas.width;
+
+        // Paginate tall content
+        let remainingH = imgH;
+        let srcY = 0;
+        while (remainingH > 0) {
+          const sliceH = Math.min(remainingH, pageH - yPos - margin);
+          const sliceRatio = sliceH / imgH;
+          const srcH = canvas.height * sliceRatio;
+
+          const sliceCanvas = document.createElement("canvas");
+          sliceCanvas.width = canvas.width;
+          sliceCanvas.height = srcH;
+          const ctx = sliceCanvas.getContext("2d")!;
+          ctx.drawImage(canvas, 0, srcY * (canvas.height / imgH), canvas.width, srcH, 0, 0, canvas.width, srcH);
+          const sliceData = sliceCanvas.toDataURL("image/png");
+
+          pdf.addImage(sliceData, "PNG", margin, yPos, imgW, sliceH);
+          remainingH -= sliceH;
+          srcY += sliceH;
+          yPos += sliceH;
+
+          if (remainingH > 0) {
+            pdf.addPage();
+            yPos = 14;
+          }
+        }
+      }
+
+      // Footer on all pages
+      const totalPages = pdf.getNumberOfPages();
+      for (let i = 1; i <= totalPages; i++) {
+        pdf.setPage(i);
+        pdf.setFontSize(7);
+        pdf.setTextColor(150, 150, 150);
+        pdf.setFont("helvetica", "normal");
+        pdf.text(
+          `BrainWise · NAI Company Dashboard · Confidential · Page ${i} of ${totalPages}`,
+          pageW / 2, pageH - 6, { align: "center" }
+        );
+      }
+
+      const dateStr = new Date().toISOString().split("T")[0];
+      pdf.save(`BrainWise-NAI-CompanyDashboard-${dateStr}.pdf`);
+      toast.success("Dashboard exported successfully");
+    } catch (e: any) {
+      toast.error("Export failed: " + (e.message ?? "unknown error"));
+    }
+
+    // Restore collapsed state
+    setExpandedFlags(prevFlags);
+    setExpandedDims(prevDims);
+    setExpandedMethod(prevMethod);
+    setActiveTab(activeTab);
+    setExporting(false);
+  };
+
   const priorityBadge = (priority: string) => {
     const styles: Record<string, { bg: string; color: string }> = {
       high: { bg: "#faece7", color: "#993c1d" },
@@ -407,7 +556,9 @@ export default function CompanyDashboard() {
             <span style={{ fontSize: 11, color: "var(--muted-foreground)" }}>
               {sliceType === "all" ? "All organization" : `${sliceType}: ${sliceValue}`} · n={participantCount}
             </span>
-            <Button variant="outline" size="sm">Export ↓</Button>
+            <Button variant="outline" size="sm" onClick={() => setExportModal(true)} disabled={exporting}>
+              {exporting ? "Exporting..." : "Export ↓"}
+            </Button>
             <Button size="sm" onClick={handleRegenerate} disabled={regenerating || suppressed}>
               <RefreshCw className={regenerating ? "animate-spin" : ""} />
               {regenerating ? "Generating..." : "↻ Regenerate AI"}
@@ -491,7 +642,7 @@ export default function CompanyDashboard() {
 
       {/* ── Overview tab ─────────────────────────────────────────────────────── */}
       {activeTab === "overview" && (
-        <div>
+        <div data-export-tab="true">
           {/* Methodology callout */}
           <div style={{ marginBottom: 16, padding: "10px 14px", background: SAND, borderRadius: 8, border: "0.5px solid var(--border)" }}>
             <button onClick={() => setExpandedMethod(!expandedMethod)}
@@ -677,7 +828,7 @@ export default function CompanyDashboard() {
 
       {/* ── Dimensions tab ───────────────────────────────────────────────────── */}
       {activeTab === "dimensions" && (
-        <div>
+        <div data-export-tab="true">
           <p style={{ fontSize: 14, color: "var(--muted-foreground)", marginBottom: 14 }}>
             Click any dimension card for interpretation and interventions. Ordered by index weight — highest impact first.
           </p>
@@ -785,7 +936,7 @@ export default function CompanyDashboard() {
 
       {/* ── AI Interpretation tab ─────────────────────────────────────────────── */}
       {activeTab === "interpretation" && (
-        <div>
+        <div data-export-tab="true">
           {!latestNarrative ? (
             <div style={{ padding: 48, textAlign: "center", background: "var(--muted)", borderRadius: 8 }}>
               <p style={{ fontSize: 14, fontWeight: 500, color: NAVY, marginBottom: 6 }}>No AI interpretation generated yet</p>
@@ -898,7 +1049,7 @@ export default function CompanyDashboard() {
 
       {/* ── Trends tab ───────────────────────────────────────────────────────── */}
       {activeTab === "trends" && (
-        <div>
+        <div data-export-tab="true">
           <div style={{ marginBottom: 14, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
             <span style={{ fontSize: 13, color: "var(--muted-foreground)" }}>Showing trend across AI interpretation generations for this slice.</span>
           </div>
@@ -988,7 +1139,7 @@ export default function CompanyDashboard() {
 
       {/* ── Cross-instrument tab ──────────────────────────────────────────────── */}
       {activeTab === "cross-instrument" && (
-        <div>
+        <div data-export-tab="true">
           <p style={{ fontSize: 14, color: "var(--muted-foreground)", marginBottom: 16 }}>
             Cross-instrument analysis requires participants to have completed both NAI and PTP assessments. Patterns between the two instruments reveal whether AI adoption barriers are specific to AI context or rooted in deeper threat-response patterns.
           </p>
@@ -1055,6 +1206,55 @@ export default function CompanyDashboard() {
       )}
 
       {/* ── Intervention tracking modal ───────────────────────────────────────── */}
+      {exportModal && (
+        <div onClick={() => setExportModal(false)} style={{
+          position: "fixed", inset: 0, background: "rgba(2,31,54,0.45)", zIndex: 100,
+          display: "flex", alignItems: "center", justifyContent: "center",
+        }}>
+          <div onClick={e => e.stopPropagation()} style={{
+            background: "var(--card)", borderRadius: 12, padding: 24, width: 380, maxWidth: "95vw",
+            border: "0.5px solid var(--border)",
+          }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+              <div>
+                <div style={{ fontSize: 9, color: "var(--muted-foreground)", textTransform: "uppercase" as const, letterSpacing: "0.05em", marginBottom: 3 }}>Export dashboard</div>
+                <div style={{ fontSize: 15, fontWeight: 500, color: NAVY }}>Select sections to include</div>
+              </div>
+              <button onClick={() => setExportModal(false)} style={{ background: "none", border: "none", fontSize: 20, cursor: "pointer", color: "var(--muted-foreground)", lineHeight: 1, padding: 0 }}>×</button>
+            </div>
+            <div style={{ marginBottom: 16 }}>
+              {tabs.map(tab => (
+                <label key={tab} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: "0.5px solid var(--border)", cursor: "pointer" }}>
+                  <input
+                    type="checkbox"
+                    checked={exportSections[tab]}
+                    onChange={e => setExportSections(prev => ({ ...prev, [tab]: e.target.checked }))}
+                    style={{ width: 14, height: 14, cursor: "pointer" }}
+                  />
+                  <span style={{ fontSize: 13, color: "var(--foreground)" }}>{tabLabels[tab]}</span>
+                  {tab === "interpretation" && !latestNarrative && (
+                    <span style={{ fontSize: 10, color: "var(--muted-foreground)", marginLeft: "auto" }}>No data yet</span>
+                  )}
+                </label>
+              ))}
+            </div>
+            <div style={{ fontSize: 11, color: "var(--muted-foreground)", marginBottom: 14, lineHeight: 1.5 }}>
+              All collapsed content (risk flags, dimension cards, methodology) will be automatically expanded in the export. Filename: BrainWise-NAI-CompanyDashboard-YYYY-MM-DD.pdf
+            </div>
+            <button
+              onClick={handleExport}
+              disabled={!Object.values(exportSections).some(Boolean)}
+              style={{
+                background: NAVY, color: "#fff", border: "none", borderRadius: 8,
+                padding: "10px 18px", fontSize: 13, cursor: "pointer", width: "100%", fontWeight: 500,
+              }}
+            >
+              Download PDF
+            </button>
+          </div>
+        </div>
+      )}
+
       {trackingModal.open && trackingModal.intervention && (
         <div onClick={closeTrackingModal} style={{
           position: "fixed", inset: 0, background: "rgba(2,31,54,0.45)", zIndex: 100,
