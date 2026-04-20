@@ -442,7 +442,7 @@ export default function CompanyDashboard() {
         pdf.text("AI Readiness Index", PW-ML, 45, { align:"right" });
       }
 
-      const cy = 96;
+      const cy = 90;
       const field = (label: string, value: string, fy: number) => {
         pdf.setFontSize(8); pdf.setTextColor(109,104,117); pdf.setFont("helvetica","normal");
         pdf.text(label, ML, fy);
@@ -450,14 +450,14 @@ export default function CompanyDashboard() {
         pdf.text(value, ML, fy+7);
       };
       field("Organization slice", sliceLabel, cy);
-      field("Participants", String(participantCount), cy+20);
-      field("Generated", today, cy+40);
+      field("Participants", String(participantCount), cy+18);
+      field("Generated", today, cy+36);
       if (latestNarrative?.generated_at) {
-        field("AI interpretation date", new Date(latestNarrative.generated_at).toLocaleDateString("en-US",{month:"long",day:"numeric",year:"numeric"}), cy+60);
+        field("AI interpretation date", new Date(latestNarrative.generated_at).toLocaleDateString("en-US",{month:"long",day:"numeric",year:"numeric"}), cy+54);
       }
 
       if (Object.keys(dims).length > 0) {
-        const dy = cy + 85;
+        const dy = cy + 72;
         pdf.setFontSize(7.5); pdf.setTextColor(109,104,117); pdf.setFont("helvetica","normal");
         pdf.text("C.A.F.E.S. DIMENSION SCORES", ML, dy);
         DIMS_BY_WEIGHT.forEach((dimId, i) => {
@@ -494,25 +494,26 @@ export default function CompanyDashboard() {
         pdf.text("OVERVIEW", ML+3, y+5.5); y += 14;
 
         // Methodology callout
-        pdf.setFillColor(249,247,241); pdf.roundedRect(ML,y,CW,26,2,2,"F");
-        pdf.setFillColor(2,31,54); pdf.rect(ML,y,1.5,26,"F");
+        pdf.setFontSize(7.5); pdf.setFont("helvetica","normal");
+        const methText = "The AI Readiness Index (0–100) is calculated as 100 minus the weighted average of the five C.A.F.E.S. friction scores. Higher = more ready. Dimensions are weighted by their impact on sustained AI adoption behavior per 2025 NLI research.";
+        const methLines = pdf.splitTextToSize(methText, CW-10);
+        const methCardH = 8 + methLines.length*4 + 6 + DIMS_BY_WEIGHT.length*4.5 + 4;
+        pdf.setFillColor(249,247,241); pdf.roundedRect(ML,y,CW,methCardH,2,2,"F");
+        pdf.setFillColor(2,31,54); pdf.rect(ML,y,1.5,methCardH,"F");
         pdf.setFontSize(8); pdf.setFont("helvetica","bold"); pdf.setTextColor(2,31,54);
         pdf.text("About the AI Readiness Index · weighted methodology", ML+5, y+6);
         pdf.setFontSize(7.5); pdf.setFont("helvetica","normal"); pdf.setTextColor(50,50,50);
-        const methText = "The AI Readiness Index (0–100) is calculated as 100 minus the weighted average of the five C.A.F.E.S. friction scores. Higher = more ready. Dimensions are weighted by their impact on sustained AI adoption behavior per 2025 NLI research.";
-        const methLines = pdf.splitTextToSize(methText, CW-10);
         pdf.text(methLines, ML+5, y+12);
-        // Weight bars
-        const barY = y + 14 + methLines.length*3.5;
-        DIMS_BY_WEIGHT.forEach((dimId, i) => {
+        let barStartY = y + 12 + methLines.length*4 + 3;
+        DIMS_BY_WEIGHT.forEach((dimId) => {
           const [r,g,b] = hexRgb(DIM_COLORS[dimId]);
-          const bry = barY + i*4;
           pdf.setFontSize(6); pdf.setFont("helvetica","bold"); pdf.setTextColor(r,g,b);
-          pdf.text(`${DIM_NAMES[dimId]} ${Math.round(DIM_WEIGHTS[dimId]*100)}%`, ML+5, bry);
+          pdf.text(`${DIM_NAMES[dimId]} ${Math.round(DIM_WEIGHTS[dimId]*100)}%`, ML+5, barStartY);
           pdf.setFillColor(r,g,b);
-          pdf.rect(ML+52, bry-2.5, (DIM_WEIGHTS[dimId]/0.28)*35, 2.5, "F");
+          pdf.rect(ML+52, barStartY-2.5, (DIM_WEIGHTS[dimId]/0.28)*35, 2.5, "F");
+          barStartY += 4.5;
         });
-        y += 30; y += 6;
+        y += methCardH + 6;
 
         // Usage cards
         if (usage) {
@@ -542,10 +543,13 @@ export default function CompanyDashboard() {
           sectionRule(`Risk Flags · generated ${latestNarrative?.generated_at ? new Date(latestNarrative.generated_at).toLocaleDateString("en-US",{month:"short",day:"numeric"}) : ""}`);
           riskFlags.forEach(flag => {
             const borderColor = flag.level === "high" ? [163,45,45] as [number,number,number] : [245,116,26] as [number,number,number];
+            pdf.setFontSize(9); pdf.setFont("helvetica","bold");
             const titleLines = pdf.splitTextToSize(flag.title, CW-12);
+            pdf.setFontSize(8); pdf.setFont("helvetica","normal");
             const summaryLines = pdf.splitTextToSize(flag.summary, CW-12);
+            pdf.setFontSize(7.5); pdf.setFont("helvetica","normal");
             const detailLines = pdf.splitTextToSize(flag.detail, CW-12);
-            const cardH = 6 + titleLines.length*4.5 + summaryLines.length*4 + detailLines.length*4 + 6;
+            const cardH = 8 + titleLines.length*4.5 + 2 + summaryLines.length*4.2 + 2 + detailLines.length*4 + 4;
             checkY(cardH+4);
             pdf.setFillColor(249,247,241); pdf.roundedRect(ML,y,CW,cardH,2,2,"F");
             pdf.setFillColor(...borderColor); pdf.rect(ML,y,2,cardH,"F");
@@ -639,14 +643,20 @@ export default function CompanyDashboard() {
             const [r,g,b] = hexRgb(DIM_COLORS[dimId]);
             const dimInterventions = interventions.filter(iv => iv.target_dimensions?.includes(dimId));
 
-            // Estimate card height
+            // Calculate card height accurately with correct font sizes
+            pdf.setFontSize(8); pdf.setFont("helvetica","normal");
             const interpText = `${DIM_NAMES[dimId]} carries a ${Math.round(DIM_WEIGHTS[dimId]*100)}% weight. Score of ${Math.round(dim.avg_score)} — ${act.label.toLowerCase()} activation.`;
             const interpLines = pdf.splitTextToSize(interpText, CW-10);
-            let estH = 28 + interpLines.length*4.5;
-            dimInterventions.forEach(iv => {
-              const dl = pdf.splitTextToSize(iv.description, CW-14);
-              estH += 16 + dl.length*4;
-            });
+            let estH = 26 + interpLines.length*4.5;
+            if (dimInterventions.length > 0) {
+              estH += 7; // "Interventions targeting" label
+              dimInterventions.forEach(iv => {
+                pdf.setFontSize(7.5); pdf.setFont("helvetica","normal");
+                const dl = pdf.splitTextToSize(iv.description, CW-14);
+                estH += 14 + dl.length*4 + 4;
+              });
+            }
+            estH += 4; // bottom padding
             checkY(estH+6, "DIMENSIONS (cont.)");
 
             // Dimension card
@@ -755,6 +765,7 @@ export default function CompanyDashboard() {
         sections.forEach(s => {
           const text = latestNarrative.narrative_text[s.key];
           if (!text) return;
+          pdf.setFontSize(8); pdf.setFont("helvetica","normal");
           const lines = pdf.splitTextToSize(text, CW-12);
           const cardH = 12 + lines.length*4.5;
           checkY(cardH+4, "AI INTERPRETATION (cont.)");
@@ -873,6 +884,7 @@ export default function CompanyDashboard() {
 
         pdf.setFontSize(8); pdf.setFont("helvetica","normal"); pdf.setTextColor(80,80,80);
         const ciIntro = "Cross-instrument analysis requires participants to have completed both NAI and PTP. Patterns reveal whether AI adoption barriers are specific to AI context or rooted in deeper threat-response patterns.";
+        pdf.setFontSize(8); pdf.setFont("helvetica","normal");
         const ciLines = pdf.splitTextToSize(ciIntro, CW);
         pdf.text(ciLines, ML, y); y += ciLines.length*4.5+6;
 
@@ -931,9 +943,11 @@ export default function CompanyDashboard() {
           sectionRule("Cross-Instrument AI Interpretation");
           pdf.setFontSize(8); pdf.setFont("helvetica","normal"); pdf.setTextColor(80,80,80);
           const contextNote = "The interpretation below reflects available NAI data. When PTP data becomes available, regenerating will produce a richer cross-instrument analysis.";
+          pdf.setFontSize(8); pdf.setFont("helvetica","normal");
           const cnLines = pdf.splitTextToSize(contextNote, CW);
           checkY(cnLines.length*4+4);
           pdf.text(cnLines, ML, y); y += cnLines.length*4+5;
+          pdf.setFontSize(8); pdf.setFont("helvetica","normal");
           const bmLines = pdf.splitTextToSize(latestNarrative.narrative_text.business_meaning, CW);
           checkY(bmLines.length*4.5+4, "CROSS-INSTRUMENT (cont.)");
           pdf.setTextColor(40,40,40);
