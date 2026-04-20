@@ -696,14 +696,14 @@ export default function CompanyDashboard() {
               const dimInterventions = interventions.filter(iv => iv.target_dimensions?.includes(dimId));
               return (
                 <div key={dimId} onClick={() => toggleDim(dimId)} style={{
-                  background: "var(--card)", border: `0.5px solid ${isExpanded ? DIM_COLORS[dimId] : "var(--border)"}`,
-                  borderRadius: 12, padding: 14, marginBottom: 10, cursor: "pointer",
+                  background: "#F9F7F1", border: `0.5px solid ${isExpanded ? DIM_COLORS[dimId] : "var(--border)"}`,
+                  borderRadius: 12, padding: 14, marginBottom: 14, cursor: "pointer",
                   transition: "border-color 0.15s",
                 }}>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                       <div style={{ width: 10, height: 10, borderRadius: "50%", background: DIM_COLORS[dimId] }} />
-                      <span style={{ fontSize: 13, fontWeight: 500, color: DIM_COLORS[dimId] }}>{DIM_NAMES[dimId]}</span>
+                      <span style={{ fontSize: 15, fontWeight: 500, color: DIM_COLORS[dimId] }}>{DIM_NAMES[dimId]}</span>
                       <span style={{ fontSize: 9, padding: "1px 6px", borderRadius: 20, background: "#fef0e7", color: ORANGE, fontWeight: 500 }}>
                         Weight {Math.round(DIM_WEIGHTS[dimId] * 100)}%
                       </span>
@@ -713,7 +713,7 @@ export default function CompanyDashboard() {
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                       <span style={{ fontSize: 10, color: "var(--muted-foreground)" }}>{Math.round(dim.pct_at_75_plus)}% at 75+</span>
-                      <span style={{ fontSize: 22, fontWeight: 500, color: DIM_COLORS[dimId] }}>{Math.round(dim.avg_score)}</span>
+                      <span style={{ fontSize: 26, fontWeight: 500, color: DIM_COLORS[dimId] }}>{Math.round(dim.avg_score)}</span>
                       <span style={{ fontSize: 9, padding: "2px 5px", borderRadius: 3, background: act.bg, color: act.color }}>{act.label}</span>
                     </div>
                   </div>
