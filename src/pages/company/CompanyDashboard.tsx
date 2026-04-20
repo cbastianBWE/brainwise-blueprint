@@ -906,7 +906,7 @@ export default function CompanyDashboard() {
           {narrativeHistory.length === 0 ? (
             <div style={{ padding: 48, textAlign: "center", background: "var(--muted)", borderRadius: 8 }}>
               <p style={{ fontSize: 14, fontWeight: 500, color: NAVY, marginBottom: 6 }}>No history yet</p>
-              <p style={{ fontSize: 12, color: "var(--muted-foreground)" }}>Generate your first AI interpretation to start tracking dimension trends over time.</p>
+              <p style={{ fontSize: 14, color: "var(--muted-foreground)" }}>Generate your first AI interpretation to start tracking dimension trends over time.</p>
             </div>
           ) : (
             <>
