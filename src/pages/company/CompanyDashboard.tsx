@@ -989,7 +989,7 @@ export default function CompanyDashboard() {
       {/* ── Cross-instrument tab ──────────────────────────────────────────────── */}
       {activeTab === "cross-instrument" && (
         <div>
-          <p style={{ fontSize: 12, color: "var(--muted-foreground)", marginBottom: 16 }}>
+          <p style={{ fontSize: 14, color: "var(--muted-foreground)", marginBottom: 16 }}>
             Cross-instrument analysis requires participants to have completed both NAI and PTP assessments. Patterns between the two instruments reveal whether AI adoption barriers are specific to AI context or rooted in deeper threat-response patterns.
           </p>
 
