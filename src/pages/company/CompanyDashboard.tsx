@@ -864,20 +864,20 @@ export default function CompanyDashboard() {
 
               {interventions.length > 0 && (
                 <>
-                  <h3 style={{ fontSize: 13, fontWeight: 500, color: NAVY, margin: "24px 0 10px", textTransform: "uppercase" as const, letterSpacing: 0.5 }}>
+                  <h3 style={{ fontSize: 15, fontWeight: 500, color: NAVY, margin: "24px 0 10px", textTransform: "uppercase" as const, letterSpacing: 0.5 }}>
                     Structured interventions <span style={{ fontSize: 10, fontWeight: 400, color: "var(--muted-foreground)" }}>(click + to track without leaving this page)</span>
                   </h3>
                   {interventions.map(iv => (
-                    <div key={iv.id} style={{ border: "0.5px solid var(--border)", borderRadius: 8, padding: 12, marginBottom: 8, background: "var(--card)" }}>
+                    <div key={iv.id} style={{ border: "0.5px solid var(--border)", borderRadius: 8, padding: 16, marginBottom: 12, background: "#F9F7F1" }}>
                       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8, marginBottom: 6 }}>
-                        <span style={{ fontSize: 13, fontWeight: 500, color: NAVY }}>{iv.title}</span>
+                        <span style={{ fontSize: 15, fontWeight: 500, color: NAVY }}>{iv.title}</span>
                         <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
                           {priorityBadge(iv.priority)}
                           {horizonBadge(iv.time_horizon)}
                           {typeBadge(iv.intervention_type)}
                         </div>
                       </div>
-                      <p style={{ fontSize: 12, color: "var(--muted-foreground)", margin: "0 0 6px", lineHeight: 1.6 }}>{iv.description}</p>
+                      <p style={{ fontSize: 14, color: "var(--muted-foreground)", margin: "0 0 6px", lineHeight: 1.6 }}>{iv.description}</p>
                       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                         <span style={{ fontSize: 9, color: "var(--muted-foreground)" }}>
                           Targets: {iv.target_dimensions?.map(d => DIM_NAMES[d] ?? d).join(" · ")}
