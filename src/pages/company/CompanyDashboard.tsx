@@ -294,7 +294,7 @@ export default function CompanyDashboard() {
         </div>
 
         {/* Signal banner */}
-        {usage?.signal_banner?.show_banner && (
+        {usage?.signal_banner?.show_banner && latestNarrative && (
           <div style={{ marginTop: 12, padding: "10px 14px", background: "#fff7ed", border: `1px solid ${ORANGE}`, borderRadius: 8, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
             <span style={{ fontSize: 12, color: NAVY }}>
               {Math.round(usage.signal_banner.pct_new)}% of your organization has new NAI data since your last AI interpretation
