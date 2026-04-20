@@ -196,7 +196,7 @@ export default function CompanyDashboard() {
     setRegenerating(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      const supabaseUrl = (supabase as any).supabaseUrl;
+      const supabaseUrl = "https://svprhtzawnbzmumxnhsq.supabase.co";
       const res = await fetch(`${supabaseUrl}/functions/v1/generate-dashboard-narrative`, {
         method: "POST",
         headers: {
