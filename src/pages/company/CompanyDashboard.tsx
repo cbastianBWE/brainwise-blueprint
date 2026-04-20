@@ -356,7 +356,7 @@ export default function CompanyDashboard() {
       const ML = 14;
       const MR = 14;
       const CW = PW - ML - MR;
-      const MB = 20;
+      const MB = 18;
       let y = 0;
       let pageNum = 1;
 
@@ -369,14 +369,21 @@ export default function CompanyDashboard() {
         return [parseInt(h.slice(0,2),16), parseInt(h.slice(2,4),16), parseInt(h.slice(4,6),16)];
       };
 
+      // Always set font before splitTextToSize
+      const splitText = (text: string, maxW: number, size: number, style: string) => {
+        pdf.setFontSize(size);
+        pdf.setFont("helvetica", style);
+        return pdf.splitTextToSize(text, maxW);
+      };
+
       const addFooter = () => {
         pdf.setFontSize(7);
         pdf.setTextColor(160,160,160);
         pdf.setFont("helvetica","normal");
-        pdf.text(`BrainWise · NAI Company Dashboard · Confidential · Page ${pageNum}`, PW/2, PH-6, { align:"center" });
+        pdf.text(`BrainWise · NAI Company Dashboard · Confidential · Page ${pageNum}`, PW/2, PH-5, { align:"center" });
         pdf.setDrawColor(220,220,220);
         pdf.setLineWidth(0.2);
-        pdf.line(ML, PH-9, PW-MR, PH-9);
+        pdf.line(ML, PH-8, PW-MR, PH-8);
       };
 
       const newPage = (label?: string) => {
@@ -386,12 +393,12 @@ export default function CompanyDashboard() {
         y = 14;
         if (label) {
           pdf.setFillColor(249,247,241);
-          pdf.rect(ML, y, CW, 8, "F");
-          pdf.setFontSize(9);
+          pdf.rect(ML, y, CW, 7, "F");
+          pdf.setFontSize(8.5);
           pdf.setFont("helvetica","bold");
           pdf.setTextColor(2,31,54);
-          pdf.text(label, ML+3, y+5.5);
-          y += 12;
+          pdf.text(label, ML+3, y+5);
+          y += 11;
         }
       };
 
@@ -399,234 +406,216 @@ export default function CompanyDashboard() {
         if (y + needed > PH - MB) newPage(label);
       };
 
-      const bodyText = (text: string, x: number, maxW: number, size = 8.5, color: [number,number,number] = [30,30,30]) => {
-        pdf.setFontSize(size);
-        pdf.setFont("helvetica","normal");
-        pdf.setTextColor(...color);
-        const lines = pdf.splitTextToSize(text, maxW);
-        for (const line of lines) {
-          checkY(5);
-          pdf.text(line, x, y);
-          y += 4.5;
-        }
-      };
-
-      const sectionRule = (label: string) => {
-        checkY(14);
-        y += 3;
-        pdf.setFontSize(10);
-        pdf.setFont("helvetica","bold");
-        pdf.setTextColor(2,31,54);
-        pdf.text(label, ML, y);
-        y += 1.5;
-        pdf.setDrawColor(2,31,54);
-        pdf.setLineWidth(0.4);
-        pdf.line(ML, y, ML+CW, y);
-        y += 5;
-      };
-
       // ── COVER ────────────────────────────────────────────────────────────
       pdf.setFillColor(2,31,54);
-      pdf.rect(0,0,PW,80,"F");
+      pdf.rect(0,0,PW,72,"F");
+
       pdf.setFontSize(26); pdf.setFont("helvetica","bold"); pdf.setTextColor(255,255,255);
-      pdf.text("BrainWise", ML, 34);
-      pdf.setFontSize(13); pdf.setFont("helvetica","normal");
-      pdf.text("NAI · AI Adoption Readiness Dashboard", ML, 47);
+      pdf.text("BrainWise", ML, 30);
+      pdf.setFontSize(12); pdf.setFont("helvetica","normal");
+      pdf.text("NAI · AI Adoption Readiness Dashboard", ML, 42);
       pdf.setFontSize(10); pdf.setTextColor(200,220,235);
-      pdf.text("Company Dashboard", ML, 57);
+      pdf.text("Company Dashboard", ML, 53);
 
       if (indexScore !== null) {
-        pdf.setFontSize(30); pdf.setFont("helvetica","bold"); pdf.setTextColor(255,255,255);
-        pdf.text(String(indexScore), PW-ML, 37, { align:"right" });
-        pdf.setFontSize(7.5); pdf.setFont("helvetica","normal"); pdf.setTextColor(200,220,235);
-        pdf.text("AI Readiness Index", PW-ML, 45, { align:"right" });
+        pdf.setFontSize(28); pdf.setFont("helvetica","bold"); pdf.setTextColor(255,255,255);
+        pdf.text(String(indexScore), PW-ML, 34, { align:"right" });
+        pdf.setFontSize(7); pdf.setFont("helvetica","normal"); pdf.setTextColor(200,220,235);
+        pdf.text("AI Readiness Index", PW-ML, 42, { align:"right" });
       }
 
-      const cy = 90;
-      const field = (label: string, value: string, fy: number) => {
-        pdf.setFontSize(8); pdf.setTextColor(109,104,117); pdf.setFont("helvetica","normal");
-        pdf.text(label, ML, fy);
-        pdf.setFontSize(11); pdf.setTextColor(30,30,30); pdf.setFont("helvetica","bold");
-        pdf.text(value, ML, fy+7);
+      // Cover fields -- compact layout, two columns
+      let fy = 82;
+      const fldLabel = (lbl: string, val: string, fx: number, ffy: number) => {
+        pdf.setFontSize(7.5); pdf.setTextColor(130,120,130); pdf.setFont("helvetica","normal");
+        pdf.text(lbl, fx, ffy);
+        pdf.setFontSize(10.5); pdf.setTextColor(20,20,20); pdf.setFont("helvetica","bold");
+        pdf.text(val, fx, ffy+6);
       };
-      field("Organization slice", sliceLabel, cy);
-      field("Participants", String(participantCount), cy+18);
-      field("Generated", today, cy+36);
+      fldLabel("Organization slice", sliceLabel, ML, fy);
+      fldLabel("Participants", String(participantCount), ML+100, fy);
+      fy += 20;
+      fldLabel("Generated", today, ML, fy);
       if (latestNarrative?.generated_at) {
-        field("AI interpretation date", new Date(latestNarrative.generated_at).toLocaleDateString("en-US",{month:"long",day:"numeric",year:"numeric"}), cy+54);
+        fldLabel("AI interpretation date", new Date(latestNarrative.generated_at).toLocaleDateString("en-US",{month:"long",day:"numeric",year:"numeric"}), ML+100, fy);
       }
+      fy += 20;
 
+      // C.A.F.E.S. table -- compact
       if (Object.keys(dims).length > 0) {
-        const dy = cy + 72;
-        pdf.setFontSize(7.5); pdf.setTextColor(109,104,117); pdf.setFont("helvetica","normal");
-        pdf.text("C.A.F.E.S. DIMENSION SCORES", ML, dy);
-        DIMS_BY_WEIGHT.forEach((dimId, i) => {
+        pdf.setFontSize(7); pdf.setTextColor(130,120,130); pdf.setFont("helvetica","normal");
+        pdf.text("C.A.F.E.S. DIMENSION SCORES", ML, fy);
+        fy += 5;
+        DIMS_BY_WEIGHT.forEach((dimId) => {
           const dim = dims[dimId]; if (!dim) return;
           const act = activationLabel(dim.avg_score);
-          const ry = dy + 7 + i * 9;
           const [r,g,b] = hexRgb(DIM_COLORS[dimId]);
-          pdf.setFillColor(r,g,b); pdf.circle(ML+2, ry-1.5, 2, "F");
+          pdf.setFillColor(r,g,b); pdf.circle(ML+2, fy-1.2, 1.8, "F");
           pdf.setFontSize(8); pdf.setFont("helvetica","bold"); pdf.setTextColor(r,g,b);
-          pdf.text(`${DIM_NAMES[dimId]} (${Math.round(DIM_WEIGHTS[dimId]*100)}%)`, ML+7, ry);
-          pdf.setFont("helvetica","normal"); pdf.setTextColor(30,30,30);
-          pdf.text(String(Math.round(dim.avg_score)), ML+82, ry);
-          pdf.setFontSize(7.5); pdf.setTextColor(109,104,117);
-          pdf.text(act.label, ML+94, ry);
+          pdf.text(`${DIM_NAMES[dimId]} (${Math.round(DIM_WEIGHTS[dimId]*100)}%)`, ML+6, fy);
+          pdf.setFont("helvetica","normal"); pdf.setTextColor(20,20,20);
+          pdf.text(String(Math.round(dim.avg_score)), ML+75, fy);
+          pdf.setFontSize(7); pdf.setTextColor(130,120,130);
+          pdf.text(act.label, ML+86, fy);
+          fy += 7;
         });
       }
 
-      const disc = "This report is generated by BrainWise's AI interpretation engine. Data is aggregated across participants with a minimum of 5. For authorized HR and leadership use only. Confidential.";
-      const discLines = pdf.splitTextToSize(disc, CW-8);
-      const discH = discLines.length*3.8+6;
+      // Disclaimer -- anchored to bottom
+      const discText = "This report is generated by BrainWise's AI interpretation engine. Data is aggregated across participants with a minimum of 5. For authorized HR and leadership use only. Confidential.";
+      const discLines = splitText(discText, CW-8, 7, "normal");
+      const discH = discLines.length*3.5+6;
       const discY = PH-50;
       pdf.setFillColor(249,247,241); pdf.roundedRect(ML, discY, CW, discH, 2, 2, "F");
-      pdf.setFontSize(7.5); pdf.setTextColor(109,104,117); pdf.setFont("helvetica","normal");
-      pdf.text(discLines, ML+4, discY+5);
+      pdf.setFontSize(7); pdf.setTextColor(130,120,130); pdf.setFont("helvetica","normal");
+      pdf.text(discLines, ML+4, discY+4.5);
       addFooter();
-
-      const selectedTabs = tabs.filter(t => exportSections[t]);
 
       // ── OVERVIEW ─────────────────────────────────────────────────────────
       if (exportSections["overview"]) {
         pdf.addPage(); pageNum++; y = 14;
-        pdf.setFillColor(249,247,241); pdf.rect(ML,y,CW,8,"F");
-        pdf.setFontSize(9); pdf.setFont("helvetica","bold"); pdf.setTextColor(2,31,54);
-        pdf.text("OVERVIEW", ML+3, y+5.5); y += 14;
+        pdf.setFillColor(249,247,241); pdf.rect(ML,y,CW,7,"F");
+        pdf.setFontSize(8.5); pdf.setFont("helvetica","bold"); pdf.setTextColor(2,31,54);
+        pdf.text("OVERVIEW", ML+3, y+5); y += 11;
 
-        // Methodology callout
-        pdf.setFontSize(7.5); pdf.setFont("helvetica","normal");
-        const methText = "The AI Readiness Index (0–100) is calculated as 100 minus the weighted average of the five C.A.F.E.S. friction scores. Higher = more ready. Dimensions are weighted by their impact on sustained AI adoption behavior per 2025 NLI research.";
-        const methLines = pdf.splitTextToSize(methText, CW-10);
-        const methCardH = 8 + methLines.length*4 + 6 + DIMS_BY_WEIGHT.length*4.5 + 4;
-        pdf.setFillColor(249,247,241); pdf.roundedRect(ML,y,CW,methCardH,2,2,"F");
-        pdf.setFillColor(2,31,54); pdf.rect(ML,y,1.5,methCardH,"F");
-        pdf.setFontSize(8); pdf.setFont("helvetica","bold"); pdf.setTextColor(2,31,54);
-        pdf.text("About the AI Readiness Index · weighted methodology", ML+5, y+6);
+        // Methodology -- compute height dynamically
+        const methBody = "The AI Readiness Index (0–100) is calculated as 100 minus the weighted average of the five C.A.F.E.S. friction scores. Higher = more ready. Dimensions are weighted by their impact on sustained AI adoption behavior per 2025 NLI research.";
+        const methLines = splitText(methBody, CW-10, 7.5, "normal");
+        const barsH = DIMS_BY_WEIGHT.length * 4.5;
+        const methH = 5 + 4.5 + methLines.length*4 + 3 + barsH + 3;
+        pdf.setFillColor(249,247,241); pdf.roundedRect(ML,y,CW,methH,2,2,"F");
+        pdf.setFillColor(2,31,54); pdf.rect(ML,y,1.5,methH,"F");
+        pdf.setFontSize(7.5); pdf.setFont("helvetica","bold"); pdf.setTextColor(2,31,54);
+        pdf.text("About the AI Readiness Index · weighted methodology", ML+5, y+5);
         pdf.setFontSize(7.5); pdf.setFont("helvetica","normal"); pdf.setTextColor(50,50,50);
-        pdf.text(methLines, ML+5, y+12);
-        let barStartY = y + 12 + methLines.length*4 + 3;
+        pdf.text(methLines, ML+5, y+10);
+        let bsy = y + 10 + methLines.length*4 + 2;
         DIMS_BY_WEIGHT.forEach((dimId) => {
           const [r,g,b] = hexRgb(DIM_COLORS[dimId]);
           pdf.setFontSize(6); pdf.setFont("helvetica","bold"); pdf.setTextColor(r,g,b);
-          pdf.text(`${DIM_NAMES[dimId]} ${Math.round(DIM_WEIGHTS[dimId]*100)}%`, ML+5, barStartY);
+          pdf.text(`${DIM_NAMES[dimId]} ${Math.round(DIM_WEIGHTS[dimId]*100)}%`, ML+5, bsy);
           pdf.setFillColor(r,g,b);
-          pdf.rect(ML+52, barStartY-2.5, (DIM_WEIGHTS[dimId]/0.28)*35, 2.5, "F");
-          barStartY += 4.5;
+          pdf.rect(ML+50, bsy-2.2, (DIM_WEIGHTS[dimId]/0.28)*38, 2.2, "F");
+          bsy += 4.5;
         });
-        y += methCardH + 6;
+        y += methH + 5;
 
         // Usage cards
         if (usage) {
-          checkY(22);
+          checkY(18);
           const cards = [
-            { label: "Active users", value: `${usage.active_users}/${usage.seat_count}`, sub: `${Math.round((usage.active_users/usage.seat_count)*100)}% of seats` },
-            { label: "Completions (30d)", value: String(usage.completions_30d?.["INST-002"] ?? 0), sub: "NAI assessments" },
-            { label: "Completion rate", value: `${Math.round(usage.completion_rate?.pct ?? 0)}%`, sub: `${usage.completion_rate?.completed ?? 0} of ${usage.completion_rate?.eligible ?? 0} users` },
-            { label: "AI chat usage", value: `${usage.ai_usage?.chat_used ?? 0}/${usage.ai_usage?.chat_allowance ?? 0}`, sub: usage.ai_usage?.ai_chat_enabled ? "messages this month" : "not enabled" },
+            { label: "ACTIVE USERS", value: `${usage.active_users}/${usage.seat_count}`, sub: `${Math.round((usage.active_users/Math.max(usage.seat_count,1))*100)}% of seats` },
+            { label: "COMPLETIONS (30D)", value: String(usage.completions_30d?.["INST-002"] ?? 0), sub: "NAI assessments" },
+            { label: "COMPLETION RATE", value: `${Math.round(usage.completion_rate?.pct ?? 0)}%`, sub: `${usage.completion_rate?.completed ?? 0} of ${usage.completion_rate?.eligible ?? 0} users` },
+            { label: "AI CHAT USAGE", value: `${usage.ai_usage?.chat_used ?? 0}/${usage.ai_usage?.chat_allowance ?? 0}`, sub: usage.ai_usage?.ai_chat_enabled ? "messages this month" : "not enabled" },
           ];
           const cw = (CW-9)/4;
           cards.forEach((c,i) => {
             const cx2 = ML + i*(cw+3);
-            pdf.setFillColor(245,247,250); pdf.roundedRect(cx2, y, cw, 18, 1.5, 1.5, "F");
-            pdf.setFontSize(6.5); pdf.setFont("helvetica","normal"); pdf.setTextColor(109,104,117);
-            pdf.text(c.label.toUpperCase(), cx2+3, y+5);
-            pdf.setFontSize(11); pdf.setFont("helvetica","bold"); pdf.setTextColor(2,31,54);
-            pdf.text(c.value, cx2+3, y+12);
-            pdf.setFontSize(6.5); pdf.setFont("helvetica","normal"); pdf.setTextColor(109,104,117);
-            pdf.text(c.sub, cx2+3, y+17);
+            pdf.setFillColor(245,247,250); pdf.roundedRect(cx2, y, cw, 16, 1.5, 1.5, "F");
+            pdf.setFontSize(6); pdf.setFont("helvetica","normal"); pdf.setTextColor(130,120,130);
+            pdf.text(c.label, cx2+3, y+4.5);
+            pdf.setFontSize(10); pdf.setFont("helvetica","bold"); pdf.setTextColor(2,31,54);
+            pdf.text(c.value, cx2+3, y+10.5);
+            pdf.setFontSize(6.5); pdf.setFont("helvetica","normal"); pdf.setTextColor(130,120,130);
+            pdf.text(c.sub, cx2+3, y+15);
           });
-          y += 22;
+          y += 20;
         }
 
         // Risk flags
         if (riskFlags.length > 0) {
-          sectionRule(`Risk Flags · generated ${latestNarrative?.generated_at ? new Date(latestNarrative.generated_at).toLocaleDateString("en-US",{month:"short",day:"numeric"}) : ""}`);
+          checkY(12);
+          // Section rule
+          y += 2;
+          pdf.setFontSize(9); pdf.setFont("helvetica","bold"); pdf.setTextColor(2,31,54);
+          pdf.text(`Risk Flags · generated ${latestNarrative?.generated_at ? new Date(latestNarrative.generated_at).toLocaleDateString("en-US",{month:"short",day:"numeric"}) : ""}`, ML, y);
+          y += 1.5;
+          pdf.setDrawColor(2,31,54); pdf.setLineWidth(0.4);
+          pdf.line(ML, y, ML+CW, y); y += 5;
+
           riskFlags.forEach(flag => {
-            const borderColor = flag.level === "high" ? [163,45,45] as [number,number,number] : [245,116,26] as [number,number,number];
-            pdf.setFontSize(9); pdf.setFont("helvetica","bold");
-            const titleLines = pdf.splitTextToSize(flag.title, CW-12);
-            pdf.setFontSize(8); pdf.setFont("helvetica","normal");
-            const summaryLines = pdf.splitTextToSize(flag.summary, CW-12);
-            pdf.setFontSize(7.5); pdf.setFont("helvetica","normal");
-            const detailLines = pdf.splitTextToSize(flag.detail, CW-12);
-            const cardH = 8 + titleLines.length*4.5 + 2 + summaryLines.length*4.2 + 2 + detailLines.length*4 + 4;
+            const borderColor: [number,number,number] = flag.level === "high" ? [163,45,45] : [200,100,20];
+            // Measure content precisely before drawing card
+            const lvlLines = splitText(flag.level === "high" ? "HIGH RISK" : "WARNING", CW-8, 6.5, "bold");
+            const titleLns = splitText(flag.title, CW-8, 8.5, "bold");
+            const summLns = splitText(flag.summary, CW-8, 7.5, "normal");
+            const detLns = splitText(flag.detail, CW-8, 7.5, "normal");
+            const cardH = 4 + lvlLines.length*4 + titleLns.length*4.5 + 2 + summLns.length*4 + 2 + detLns.length*4 + 4;
             checkY(cardH+4);
             pdf.setFillColor(249,247,241); pdf.roundedRect(ML,y,CW,cardH,2,2,"F");
             pdf.setFillColor(...borderColor); pdf.rect(ML,y,2,cardH,"F");
-            pdf.setFontSize(7); pdf.setFont("helvetica","bold"); pdf.setTextColor(...borderColor);
-            pdf.text(flag.level === "high" ? "HIGH RISK" : "WARNING", ML+5, y+5);
-            pdf.setFontSize(9); pdf.setFont("helvetica","bold"); pdf.setTextColor(2,31,54);
-            pdf.text(titleLines, ML+5, y+10);
-            let fy = y+10+titleLines.length*4.5;
-            pdf.setFontSize(8); pdf.setFont("helvetica","normal"); pdf.setTextColor(50,50,50);
-            pdf.text(summaryLines, ML+5, fy);
-            fy += summaryLines.length*4;
-            pdf.setFontSize(7.5); pdf.setTextColor(80,80,80);
-            pdf.text(detailLines, ML+5, fy);
+            let cy2 = y+4;
+            pdf.setFontSize(6.5); pdf.setFont("helvetica","bold"); pdf.setTextColor(...borderColor);
+            pdf.text(flag.level === "high" ? "HIGH RISK" : "WARNING", ML+5, cy2); cy2 += lvlLines.length*4;
+            pdf.setFontSize(8.5); pdf.setFont("helvetica","bold"); pdf.setTextColor(2,31,54);
+            pdf.text(titleLns, ML+5, cy2); cy2 += titleLns.length*4.5+2;
+            pdf.setFontSize(7.5); pdf.setFont("helvetica","normal"); pdf.setTextColor(50,50,50);
+            pdf.text(summLns, ML+5, cy2); cy2 += summLns.length*4+2;
+            pdf.setTextColor(70,70,70);
+            pdf.text(detLns, ML+5, cy2);
             y += cardH+4;
           });
         }
 
         // C.A.F.E.S. table
         if (Object.keys(dims).length > 0) {
-          sectionRule("C.A.F.E.S. Dimension Summary");
-          checkY(8);
-          pdf.setFillColor(237,233,223);
-          pdf.rect(ML,y,CW,7,"F");
-          pdf.setFontSize(7); pdf.setFont("helvetica","bold"); pdf.setTextColor(109,104,117);
-          pdf.text("DIMENSION", ML+3, y+4.5);
-          pdf.text("SCORE", ML+80, y+4.5);
-          pdf.text("ACTIVATION", ML+100, y+4.5);
-          pdf.text("AT 75+", ML+135, y+4.5);
-          pdf.text("LOW %", ML+155, y+4.5);
-          pdf.text("ELEV %", ML+168, y+4.5);
-          y += 7;
+          checkY(14);
+          y += 2;
+          pdf.setFontSize(9); pdf.setFont("helvetica","bold"); pdf.setTextColor(2,31,54);
+          pdf.text("C.A.F.E.S. Dimension Summary", ML, y);
+          y += 1.5;
+          pdf.setDrawColor(2,31,54); pdf.setLineWidth(0.4); pdf.line(ML, y, ML+CW, y); y += 4;
+          pdf.setFillColor(237,233,223); pdf.rect(ML,y,CW,6,"F");
+          pdf.setFontSize(6.5); pdf.setFont("helvetica","bold"); pdf.setTextColor(109,104,117);
+          pdf.text("DIMENSION", ML+2, y+4); pdf.text("SCORE", ML+72, y+4);
+          pdf.text("ACTIVATION", ML+90, y+4); pdf.text("AT 75+", ML+122, y+4);
+          pdf.text("LOW %", ML+138, y+4); pdf.text("ELEV %", ML+155, y+4);
+          y += 6;
           DIMS_BY_WEIGHT.forEach((dimId,i) => {
             const dim = dims[dimId]; if (!dim) return;
             const act = activationLabel(dim.avg_score);
             const [r,g,b] = hexRgb(DIM_COLORS[dimId]);
-            checkY(9);
-            if (i%2===0) { pdf.setFillColor(250,250,252); pdf.rect(ML,y,CW,8,"F"); }
-            pdf.setFillColor(r,g,b); pdf.circle(ML+3,y+4,2,"F");
-            pdf.setFontSize(8); pdf.setFont("helvetica","bold"); pdf.setTextColor(r,g,b);
-            pdf.text(DIM_NAMES[dimId], ML+8, y+5);
-            pdf.setFont("helvetica","bold"); pdf.setTextColor(2,31,54);
-            pdf.text(String(Math.round(dim.avg_score)), ML+80, y+5);
-            // Activation badge
-            const actRgb = act.label === "High" ? [163,45,45] as [number,number,number] : act.label === "Elevated" ? [99,56,6] as [number,number,number] : [15,110,86] as [number,number,number];
-            pdf.setFontSize(7); pdf.setFont("helvetica","normal"); pdf.setTextColor(...actRgb);
-            pdf.text(act.label, ML+100, y+5);
+            if (i%2===0) { pdf.setFillColor(250,250,252); pdf.rect(ML,y,CW,7,"F"); }
+            pdf.setFillColor(r,g,b); pdf.circle(ML+3,y+3.5,1.8,"F");
+            pdf.setFontSize(7.5); pdf.setFont("helvetica","bold"); pdf.setTextColor(r,g,b);
+            pdf.text(DIM_NAMES[dimId], ML+8, y+4.5);
+            pdf.setTextColor(2,31,54);
+            pdf.text(String(Math.round(dim.avg_score)), ML+72, y+4.5);
+            const actCol: [number,number,number] = act.label === "High" ? [163,45,45] : act.label === "Elevated" ? [99,56,6] : [15,110,86];
+            pdf.setFontSize(7); pdf.setFont("helvetica","normal"); pdf.setTextColor(...actCol);
+            pdf.text(act.label, ML+90, y+4.5);
             pdf.setTextColor(80,80,80);
-            pdf.text(`${Math.round(dim.pct_at_75_plus)}%`, ML+135, y+5);
-            pdf.text(`${Math.round(dim.pct_low)}%`, ML+155, y+5);
-            pdf.text(`${Math.round(dim.pct_elevated)}%`, ML+168, y+5);
-            y += 8;
+            pdf.text(`${Math.round(dim.pct_at_75_plus)}%`, ML+122, y+4.5);
+            pdf.text(`${Math.round(dim.pct_low)}%`, ML+138, y+4.5);
+            pdf.text(`${Math.round(dim.pct_elevated)}%`, ML+155, y+4.5);
+            y += 7;
           });
           y += 4;
         }
 
-        // Participation by department
+        // Dept participation
         if (usage?.dept_participation && usage.dept_participation.length > 0) {
-          sectionRule("Participation by Department");
-          checkY(8);
-          pdf.setFillColor(237,233,223); pdf.rect(ML,y,CW,7,"F");
-          pdf.setFontSize(7); pdf.setFont("helvetica","bold"); pdf.setTextColor(109,104,117);
-          pdf.text("DEPARTMENT", ML+3, y+4.5);
-          pdf.text("COMPLETED", ML+75, y+4.5);
-          pdf.text("RATE", ML+110, y+4.5);
-          y += 7;
+          checkY(14);
+          y += 2;
+          pdf.setFontSize(9); pdf.setFont("helvetica","bold"); pdf.setTextColor(2,31,54);
+          pdf.text("Participation by Department", ML, y);
+          y += 1.5;
+          pdf.setDrawColor(2,31,54); pdf.setLineWidth(0.4); pdf.line(ML, y, ML+CW, y); y += 4;
+          pdf.setFillColor(237,233,223); pdf.rect(ML,y,CW,6,"F");
+          pdf.setFontSize(6.5); pdf.setFont("helvetica","bold"); pdf.setTextColor(109,104,117);
+          pdf.text("DEPARTMENT", ML+2, y+4); pdf.text("COMPLETED", ML+75, y+4); pdf.text("RATE", ML+105, y+4);
+          y += 6;
           usage.dept_participation.sort((a,b) => b.pct-a.pct).forEach((dept,i) => {
-            checkY(8);
-            if (i%2===0) { pdf.setFillColor(250,250,252); pdf.rect(ML,y,CW,8,"F"); }
-            pdf.setFontSize(8); pdf.setFont("helvetica","normal"); pdf.setTextColor(30,30,30);
-            pdf.text(dept.department_name, ML+3, y+5);
-            pdf.text(`${dept.completed}/${dept.eligible}`, ML+75, y+5);
+            if (i%2===0) { pdf.setFillColor(250,250,252); pdf.rect(ML,y,CW,7,"F"); }
+            pdf.setFontSize(7.5); pdf.setFont("helvetica","normal"); pdf.setTextColor(30,30,30);
+            pdf.text(dept.department_name, ML+2, y+4.5);
+            pdf.text(`${dept.completed}/${dept.eligible}`, ML+75, y+4.5);
             pdf.setFont("helvetica","bold"); pdf.setTextColor(2,31,54);
-            pdf.text(`${Math.round(dept.pct)}%`, ML+110, y+5);
-            // Progress bar
-            pdf.setFillColor(225,225,225); pdf.rect(ML+125, y+2, 45, 4, "F");
-            pdf.setFillColor(0,109,119); pdf.rect(ML+125, y+2, Math.min(45, dept.pct/100*45), 4, "F");
-            y += 8;
+            pdf.text(`${Math.round(dept.pct)}%`, ML+105, y+4.5);
+            pdf.setFillColor(225,225,225); pdf.rect(ML+118, y+2, 58, 3.5, "F");
+            pdf.setFillColor(0,109,119); pdf.rect(ML+118, y+2, Math.min(58, dept.pct/100*58), 3.5, "F");
+            y += 7;
           });
           y += 4;
         }
@@ -635,94 +624,92 @@ export default function CompanyDashboard() {
       // ── DIMENSIONS ───────────────────────────────────────────────────────
       if (exportSections["dimensions"]) {
         newPage("DIMENSIONS");
+        const descW = CW - 10;
 
-        if (Object.keys(dims).length > 0) {
-          DIMS_BY_WEIGHT.forEach(dimId => {
-            const dim = dims[dimId]; if (!dim) return;
-            const act = activationLabel(dim.avg_score);
-            const [r,g,b] = hexRgb(DIM_COLORS[dimId]);
-            const dimInterventions = interventions.filter(iv => iv.target_dimensions?.includes(dimId));
+        DIMS_BY_WEIGHT.forEach(dimId => {
+          const dim = dims[dimId]; if (!dim) return;
+          const act = activationLabel(dim.avg_score);
+          const [r,g,b] = hexRgb(DIM_COLORS[dimId]);
+          const dimInterventions = interventions.filter(iv => iv.target_dimensions?.includes(dimId));
 
-            // Calculate card height accurately with correct font sizes
-            pdf.setFontSize(8); pdf.setFont("helvetica","normal");
-            const interpText = `${DIM_NAMES[dimId]} carries a ${Math.round(DIM_WEIGHTS[dimId]*100)}% weight. Score of ${Math.round(dim.avg_score)} — ${act.label.toLowerCase()} activation.`;
-            const interpLines = pdf.splitTextToSize(interpText, CW-10);
-            let estH = 26 + interpLines.length*4.5;
-            if (dimInterventions.length > 0) {
-              estH += 7; // "Interventions targeting" label
-              dimInterventions.forEach(iv => {
-                pdf.setFontSize(7.5); pdf.setFont("helvetica","normal");
-                const dl = pdf.splitTextToSize(iv.description, CW-14);
-                estH += 14 + dl.length*4 + 4;
-              });
-            }
-            estH += 4; // bottom padding
-            checkY(estH+6, "DIMENSIONS (cont.)");
+          const interpText = `${DIM_NAMES[dimId]} carries a ${Math.round(DIM_WEIGHTS[dimId]*100)}% weight in the readiness index. Score of ${Math.round(dim.avg_score)} — ${act.label.toLowerCase()} activation.${dim.avg_score >= 60 ? " This is the most operationally significant finding in this slice." : dim.avg_score < 50 ? " This is currently an organizational asset — protect it." : " Monitor for upward movement."}`;
+          const interpLns = splitText(interpText, descW, 7.5, "normal");
 
-            // Dimension card
-            pdf.setFillColor(249,247,241); pdf.roundedRect(ML,y,CW,estH,2,2,"F");
-            pdf.setFillColor(r,g,b); pdf.rect(ML,y,2,estH,"F");
+          // Compute true card height
+          let cardH = 22; // header + bar + labels + interp label gap
+          cardH += interpLns.length * 4;
+          if (dimInterventions.length > 0) {
+            cardH += 8; // "Interventions targeting" label
+            dimInterventions.forEach(iv => {
+              const tl = splitText(iv.title, descW - 45, 7.5, "bold");
+              const dl = splitText(iv.description, descW, 7.5, "normal");
+              cardH += 6 + tl.length*4.5 + dl.length*4 + 4;
+            });
+          }
+          cardH += 4; // bottom pad
 
-            // Header row
-            pdf.setFillColor(r,g,b); pdf.circle(ML+6,y+6,2.5,"F");
-            pdf.setFontSize(9.5); pdf.setFont("helvetica","bold"); pdf.setTextColor(r,g,b);
-            pdf.text(DIM_NAMES[dimId], ML+11, y+7);
-            pdf.setFontSize(7.5); pdf.setFont("helvetica","normal"); pdf.setTextColor(245,116,26);
-            pdf.text(`Weight ${Math.round(DIM_WEIGHTS[dimId]*100)}%`, ML+11+pdf.getTextWidth(DIM_NAMES[dimId])+4, y+7);
+          checkY(cardH + 5, "DIMENSIONS (cont.)");
 
-            // Score badge top right
-            pdf.setFontSize(16); pdf.setFont("helvetica","bold"); pdf.setTextColor(r,g,b);
-            pdf.text(String(Math.round(dim.avg_score)), ML+CW-20, y+8, { align:"right" });
-            pdf.setFontSize(7); pdf.setFont("helvetica","normal");
-            const actCol: [number,number,number] = act.label === "High" ? [163,45,45] : act.label === "Elevated" ? [99,56,6] : [15,110,86];
-            pdf.setTextColor(...actCol);
-            pdf.text(act.label, ML+CW-5, y+8, { align:"right" });
+          // Draw card
+          pdf.setFillColor(249,247,241);
+          pdf.roundedRect(ML, y, CW, cardH, 2, 2, "F");
+          pdf.setFillColor(r,g,b); pdf.rect(ML, y, 2, cardH, "F");
 
-            // Distribution bar
-            const barY2 = y+13;
-            const barW = CW-10;
-            pdf.setFillColor(225,241,238); pdf.rect(ML+5,barY2,barW*(dim.pct_low/100),3,"F");
-            pdf.setFillColor(250,238,218); pdf.rect(ML+5+barW*(dim.pct_low/100),barY2,barW*(dim.pct_elevated/100),3,"F");
-            pdf.setFillColor(250,236,231); pdf.rect(ML+5+barW*((dim.pct_low+dim.pct_elevated)/100),barY2,barW*(dim.pct_high/100),3,"F");
-            pdf.setFontSize(6.5); pdf.setTextColor(109,104,117); pdf.setFont("helvetica","normal");
-            pdf.text(`Low ${Math.round(dim.pct_low)}%`, ML+5, barY2+7);
-            pdf.text(`Elevated ${Math.round(dim.pct_elevated)}%`, ML+CW/2, barY2+7, { align:"center"});
-            pdf.text(`High ${Math.round(dim.pct_high)}%`, ML+CW-5, barY2+7, { align:"right"});
+          // Header row
+          pdf.setFillColor(r,g,b); pdf.circle(ML+6, y+6, 2.5, "F");
+          pdf.setFontSize(9); pdf.setFont("helvetica","bold"); pdf.setTextColor(r,g,b);
+          pdf.text(DIM_NAMES[dimId], ML+11, y+7);
+          const nw = pdf.getTextWidth(DIM_NAMES[dimId]);
+          pdf.setFontSize(7); pdf.setFont("helvetica","normal"); pdf.setTextColor(245,116,26);
+          pdf.text(`Weight ${Math.round(DIM_WEIGHTS[dimId]*100)}%`, ML+11+nw+3, y+7);
 
-            let cy2 = barY2+12;
-            pdf.setFontSize(8); pdf.setFont("helvetica","normal"); pdf.setTextColor(50,50,50);
-            pdf.text(interpLines, ML+5, cy2);
-            cy2 += interpLines.length*4.5+2;
+          // Score right side
+          pdf.setFontSize(15); pdf.setFont("helvetica","bold"); pdf.setTextColor(r,g,b);
+          pdf.text(String(Math.round(dim.avg_score)), ML+CW-18, y+8, { align:"right" });
+          const actCol: [number,number,number] = act.label === "High" ? [163,45,45] : act.label === "Elevated" ? [99,56,6] : [15,110,86];
+          pdf.setFontSize(7); pdf.setFont("helvetica","normal"); pdf.setTextColor(...actCol);
+          pdf.text(act.label, ML+CW-4, y+8, { align:"right" });
 
-            // Interventions
-            if (dimInterventions.length > 0) {
+          // Distribution bar
+          const barY = y + 13;
+          const barW = CW - 10;
+          pdf.setFillColor(225,241,238); pdf.rect(ML+5, barY, barW*(dim.pct_low/100), 3, "F");
+          pdf.setFillColor(250,238,218); pdf.rect(ML+5+barW*(dim.pct_low/100), barY, barW*(dim.pct_elevated/100), 3, "F");
+          pdf.setFillColor(250,236,231); pdf.rect(ML+5+barW*((dim.pct_low+dim.pct_elevated)/100), barY, barW*(dim.pct_high/100), 3, "F");
+          pdf.setFontSize(6); pdf.setTextColor(130,120,130); pdf.setFont("helvetica","normal");
+          pdf.text(`Low ${Math.round(dim.pct_low)}%`, ML+5, barY+7);
+          pdf.text(`Elevated ${Math.round(dim.pct_elevated)}%`, ML+CW/2, barY+7, {align:"center"});
+          pdf.text(`High ${Math.round(dim.pct_high)}%`, ML+CW-5, barY+7, {align:"right"});
+
+          let cy2 = barY + 11;
+          pdf.setFontSize(7.5); pdf.setFont("helvetica","normal"); pdf.setTextColor(60,60,60);
+          pdf.text(interpLns, ML+5, cy2);
+          cy2 += interpLns.length * 4 + 2;
+
+          if (dimInterventions.length > 0) {
+            pdf.setFontSize(7); pdf.setFont("helvetica","bold"); pdf.setTextColor(2,31,54);
+            pdf.text("Interventions targeting this dimension", ML+5, cy2);
+            cy2 += 6;
+            dimInterventions.forEach(iv => {
+              const tl = splitText(iv.title, descW-45, 7.5, "bold");
+              const dl = splitText(iv.description, descW, 7.5, "normal");
+              const ivH = 5 + tl.length*4.5 + dl.length*4 + 3;
+              pdf.setFillColor(237,233,223); pdf.roundedRect(ML+5, cy2, CW-10, ivH, 1.5, 1.5, "F");
               pdf.setFontSize(7.5); pdf.setFont("helvetica","bold"); pdf.setTextColor(2,31,54);
-              pdf.text("Interventions targeting this dimension", ML+5, cy2);
-              cy2 += 5;
-              dimInterventions.forEach(iv => {
-                const dl = pdf.splitTextToSize(iv.description, CW-14);
-                const ivH = 6+dl.length*4+4;
-                pdf.setFillColor(237,233,223); pdf.roundedRect(ML+5,cy2,CW-10,ivH,1.5,1.5,"F");
-                pdf.setFontSize(7.5); pdf.setFont("helvetica","bold"); pdf.setTextColor(2,31,54);
-                pdf.text(iv.title, ML+8, cy2+5, { maxWidth: CW-40 });
-                // Priority / horizon / type badges
-                const bx = ML+CW-5;
-                pdf.setFontSize(6.5); pdf.setFont("helvetica","normal");
-                const pCol: [number,number,number] = iv.priority === "high" ? [153,60,29] : iv.priority === "medium" ? [99,56,6] : [15,110,86];
-                pdf.setTextColor(...pCol);
-                pdf.text(iv.priority, bx, cy2+5, { align:"right" });
-                pdf.setTextColor(60,9,108);
-                pdf.text(iv.time_horizon, bx-18, cy2+5, { align:"right" });
-                pdf.setTextColor(2,31,54);
-                pdf.text(iv.intervention_type, bx-36, cy2+5, { align:"right" });
-                pdf.setFontSize(7.5); pdf.setFont("helvetica","normal"); pdf.setTextColor(80,80,80);
-                pdf.text(dl, ML+8, cy2+10);
-                cy2 += ivH+2;
-              });
-            }
-            y += estH+6;
-          });
-        }
+              pdf.text(tl, ML+8, cy2+4.5);
+              // Badges right-aligned
+              const pCol: [number,number,number] = iv.priority === "high" ? [153,60,29] : iv.priority === "medium" ? [99,56,6] : [15,110,86];
+              pdf.setFontSize(6.5); pdf.setFont("helvetica","normal");
+              pdf.setTextColor(...pCol); pdf.text(iv.priority, ML+CW-7, cy2+4.5, {align:"right"});
+              pdf.setTextColor(60,9,108); pdf.text(iv.time_horizon, ML+CW-20, cy2+4.5, {align:"right"});
+              pdf.setTextColor(2,31,54); pdf.text(iv.intervention_type, ML+CW-38, cy2+4.5, {align:"right"});
+              pdf.setFontSize(7.5); pdf.setFont("helvetica","normal"); pdf.setTextColor(70,70,70);
+              pdf.text(dl, ML+8, cy2+4.5+tl.length*4.5);
+              cy2 += ivH + 2;
+            });
+          }
+          y += cardH + 5;
+        });
       }
 
       // ── AI INTERPRETATION ────────────────────────────────────────────────
@@ -731,88 +718,93 @@ export default function CompanyDashboard() {
 
         // C.A.F.E.S. score cards
         if (Object.keys(dims).length > 0) {
-          checkY(28);
+          checkY(24);
           const dw = (CW-16)/5;
           DIMS_BY_WEIGHT.forEach((dimId,i) => {
             const dim = dims[dimId]; if (!dim) return;
             const act = activationLabel(dim.avg_score);
             const [r,g,b] = hexRgb(DIM_COLORS[dimId]);
-            const actBg = act.label === "High" ? [250,236,231] as [number,number,number] : act.label === "Elevated" ? [250,238,218] as [number,number,number] : [225,245,238] as [number,number,number];
+            const actBg: [number,number,number] = act.label === "High" ? [250,236,231] : act.label === "Elevated" ? [250,238,218] : [225,245,238];
             const cx2 = ML + i*(dw+4);
-            pdf.setFillColor(...actBg); pdf.roundedRect(cx2,y,dw,22,2,2,"F");
-            pdf.setFontSize(6.5); pdf.setFont("helvetica","bold"); pdf.setTextColor(r,g,b);
-            const nameL = pdf.splitTextToSize(DIM_NAMES[dimId], dw-2);
-            pdf.text(nameL[0], cx2+dw/2, y+5, { align:"center" });
-            if (nameL[1]) pdf.text(nameL[1], cx2+dw/2, y+8.5, { align:"center" });
-            pdf.setFontSize(14); pdf.setFont("helvetica","bold"); pdf.setTextColor(r,g,b);
-            pdf.text(String(Math.round(dim.avg_score)), cx2+dw/2, y+16, { align:"center" });
-            pdf.setFontSize(6.5); pdf.setFont("helvetica","normal"); pdf.setTextColor(r,g,b);
-            pdf.text(act.label, cx2+dw/2, y+20.5, { align:"center" });
+            pdf.setFillColor(...actBg); pdf.roundedRect(cx2, y, dw, 20, 2, 2, "F");
+            pdf.setFontSize(6); pdf.setFont("helvetica","bold"); pdf.setTextColor(r,g,b);
+            pdf.text(DIM_NAMES[dimId], cx2+dw/2, y+5, {align:"center"});
+            pdf.setFontSize(13); pdf.setFont("helvetica","bold");
+            pdf.text(String(Math.round(dim.avg_score)), cx2+dw/2, y+13, {align:"center"});
+            pdf.setFontSize(6); pdf.setFont("helvetica","normal");
+            pdf.text(act.label, cx2+dw/2, y+18.5, {align:"center"});
           });
-          y += 26;
-          pdf.setFontSize(7); pdf.setTextColor(109,104,117); pdf.setFont("helvetica","normal");
-          pdf.text("Ordered by index weight: Fairness 28% · Ego Stability 25% · Agency 22% · Certainty 15% · Saturation 10%", ML+CW/2, y, { align:"center" });
-          y += 7;
+          y += 24;
+          pdf.setFontSize(6.5); pdf.setTextColor(130,120,130); pdf.setFont("helvetica","normal");
+          pdf.text("Ordered by index weight: Fairness 28% · Ego Stability 25% · Agency 22% · Certainty 15% · Saturation 10%", ML+CW/2, y, {align:"center"});
+          y += 6;
         }
 
-        const sections = [
-          { key: "business_meaning", label: "What this means for your business" },
-          { key: "benefits", label: "Potential benefits visible in the data" },
-          { key: "risks", label: "Potential risks if unaddressed" },
-          { key: "next_steps", label: "Recommended next steps" },
+        const narSections = [
+          { key: "business_meaning", label: "WHAT THIS MEANS FOR YOUR BUSINESS" },
+          { key: "benefits", label: "POTENTIAL BENEFITS VISIBLE IN THE DATA" },
+          { key: "risks", label: "POTENTIAL RISKS IF UNADDRESSED" },
+          { key: "next_steps", label: "RECOMMENDED NEXT STEPS" },
         ] as const;
 
-        sections.forEach(s => {
+        narSections.forEach(s => {
           const text = latestNarrative.narrative_text[s.key];
           if (!text) return;
-          pdf.setFontSize(8); pdf.setFont("helvetica","normal");
-          const lines = pdf.splitTextToSize(text, CW-12);
-          const cardH = 12 + lines.length*4.5;
+          const lines = splitText(text, CW-12, 8, "normal");
+          const cardH = 10 + lines.length*4.2 + 4;
           checkY(cardH+4, "AI INTERPRETATION (cont.)");
           pdf.setFillColor(249,247,241); pdf.roundedRect(ML,y,CW,cardH,2,2,"F");
           pdf.setFillColor(245,116,26); pdf.rect(ML,y,2,cardH,"F");
-          pdf.setFontSize(7.5); pdf.setFont("helvetica","bold"); pdf.setTextColor(2,31,54);
-          pdf.text(s.label.toUpperCase(), ML+5, y+6);
+          pdf.setFontSize(7); pdf.setFont("helvetica","bold"); pdf.setTextColor(2,31,54);
+          pdf.text(s.label, ML+5, y+6);
           pdf.setFontSize(8); pdf.setFont("helvetica","normal"); pdf.setTextColor(40,40,40);
           pdf.text(lines, ML+5, y+11);
-          y += cardH+5;
+          y += cardH+4;
         });
 
+        // Reassessment note
         if (latestNarrative.narrative_text.reassessment_note) {
-          const rLines = pdf.splitTextToSize(`Reassessment: ${latestNarrative.narrative_text.reassessment_note}`, CW-8);
-          checkY(rLines.length*4+6, "AI INTERPRETATION (cont.)");
-          pdf.setFillColor(249,247,241); pdf.roundedRect(ML,y,CW,rLines.length*4+6,2,2,"F");
-          pdf.setFontSize(8); pdf.setFont("helvetica","normal"); pdf.setTextColor(80,80,80);
+          const rLines = splitText(`Reassessment: ${latestNarrative.narrative_text.reassessment_note}`, CW-8, 7.5, "normal");
+          const rH = rLines.length*4+6;
+          checkY(rH+4, "AI INTERPRETATION (cont.)");
+          pdf.setFillColor(249,247,241); pdf.roundedRect(ML,y,CW,rH,2,2,"F");
+          pdf.setFontSize(7.5); pdf.setFont("helvetica","normal"); pdf.setTextColor(80,80,80);
           pdf.text(rLines, ML+4, y+5);
-          y += rLines.length*4+10;
+          y += rH+6;
         }
 
+        // Structured interventions
         if (interventions.length > 0) {
-          sectionRule("Structured Interventions");
+          checkY(14);
+          y += 2;
+          pdf.setFontSize(9); pdf.setFont("helvetica","bold"); pdf.setTextColor(2,31,54);
+          pdf.text("Structured Interventions", ML, y);
+          y += 1.5;
+          pdf.setDrawColor(2,31,54); pdf.setLineWidth(0.4); pdf.line(ML, y, ML+CW, y); y += 5;
+
           interventions.forEach(iv => {
-            const tLines = pdf.splitTextToSize(iv.title, CW-60);
-            const dLines = pdf.splitTextToSize(iv.description, CW-10);
-            const targLine = `Targets: ${iv.target_dimensions?.map(d => DIM_NAMES[d] ?? d).join(" · ")}`;
-            const ivH = 6+tLines.length*5+dLines.length*4+8;
+            const tLines = splitText(iv.title, CW-55, 8, "bold");
+            const dLines = splitText(iv.description, CW-8, 7.5, "normal");
+            const targText = `Targets: ${iv.target_dimensions?.map(d => DIM_NAMES[d] ?? d).join(" · ")}`;
+            const ivH = 5 + tLines.length*4.5 + dLines.length*4 + 5 + 4;
             checkY(ivH+4, "AI INTERPRETATION (cont.)");
             pdf.setFillColor(249,247,241); pdf.roundedRect(ML,y,CW,ivH,2,2,"F");
-            pdf.setDrawColor(225,225,225); pdf.setLineWidth(0.3);
+            pdf.setDrawColor(220,220,220); pdf.setLineWidth(0.3);
             pdf.roundedRect(ML,y,CW,ivH,2,2,"S");
-            pdf.setFontSize(8.5); pdf.setFont("helvetica","bold"); pdf.setTextColor(2,31,54);
-            pdf.text(tLines, ML+4, y+6);
+            pdf.setFontSize(8); pdf.setFont("helvetica","bold"); pdf.setTextColor(2,31,54);
+            pdf.text(tLines, ML+4, y+5);
+            // Badges
             const pCol: [number,number,number] = iv.priority === "high" ? [153,60,29] : iv.priority === "medium" ? [99,56,6] : [15,110,86];
-            pdf.setFontSize(6.5); pdf.setFont("helvetica","normal"); pdf.setTextColor(...pCol);
-            pdf.text(iv.priority, ML+CW-4, y+6, { align:"right" });
-            pdf.setTextColor(60,9,108);
-            pdf.text(iv.time_horizon, ML+CW-22, y+6, { align:"right" });
-            pdf.setTextColor(2,31,54);
-            pdf.text(iv.intervention_type, ML+CW-42, y+6, { align:"right" });
-            let iy = y+6+tLines.length*5;
-            pdf.setFontSize(8); pdf.setFont("helvetica","normal"); pdf.setTextColor(60,60,60);
+            pdf.setFontSize(6.5); pdf.setFont("helvetica","normal");
+            pdf.setTextColor(...pCol); pdf.text(iv.priority, ML+CW-4, y+5, {align:"right"});
+            pdf.setTextColor(60,9,108); pdf.text(iv.time_horizon, ML+CW-20, y+5, {align:"right"});
+            pdf.setTextColor(50,50,50); pdf.text(iv.intervention_type, ML+CW-40, y+5, {align:"right"});
+            let iy = y+5+tLines.length*4.5;
+            pdf.setFontSize(7.5); pdf.setFont("helvetica","normal"); pdf.setTextColor(60,60,60);
             pdf.text(dLines, ML+4, iy);
-            iy += dLines.length*4+2;
-            pdf.setFontSize(7); pdf.setTextColor(109,104,117);
-            pdf.text(targLine, ML+4, iy);
+            iy += dLines.length*4+3;
+            pdf.setFontSize(6.5); pdf.setTextColor(130,120,130);
+            pdf.text(targText, ML+4, iy);
             y += ivH+4;
           });
         }
@@ -821,137 +813,157 @@ export default function CompanyDashboard() {
       // ── TRENDS ───────────────────────────────────────────────────────────
       if (exportSections["trends"] && narrativeHistory.length > 0) {
         newPage("TRENDS");
+        pdf.setFontSize(7.5); pdf.setFont("helvetica","normal"); pdf.setTextColor(80,80,80);
+        pdf.text("Trend data across AI interpretation generations. Lower dimension scores = improving readiness.", ML, y); y += 7;
 
-        pdf.setFontSize(8); pdf.setFont("helvetica","normal"); pdf.setTextColor(80,80,80);
-        pdf.text("Trend data across AI interpretation generations for this slice. Lower dimension scores = improving readiness.", ML, y);
-        y += 8;
+        // Column positions -- carefully spaced to avoid overlap
+        const colGen = ML+2;
+        const colIdx = ML+52;
+        const colDims = [74, 94, 112, 130, 148]; // Fairness, Ego, Agency, Certainty, Saturation
+        const colN = ML+CW-2;
 
-        // Table header
-        checkY(8);
-        pdf.setFillColor(237,233,223); pdf.rect(ML,y,CW,7,"F");
+        checkY(7);
+        pdf.setFillColor(237,233,223); pdf.rect(ML,y,CW,6,"F");
         pdf.setFontSize(6.5); pdf.setFont("helvetica","bold"); pdf.setTextColor(109,104,117);
-        pdf.text("GENERATED", ML+3, y+4.5);
-        pdf.text("INDEX", ML+48, y+4.5);
-        const dimCols = [62, 84, 104, 124, 144];
+        pdf.text("GENERATED", colGen, y+4);
+        pdf.text("INDEX", colIdx, y+4);
         DIMS_BY_WEIGHT.forEach((dimId,i) => {
           const [r,g,b] = hexRgb(DIM_COLORS[dimId]);
           pdf.setTextColor(r,g,b);
-          pdf.text(DIM_NAMES[dimId].split(" ")[0], dimCols[i], y+4.5);
+          pdf.text(DIM_NAMES[dimId].substring(0,3).toUpperCase(), colDims[i], y+4);
         });
         pdf.setTextColor(109,104,117);
-        pdf.text("n", ML+CW-3, y+4.5, { align:"right" });
-        y += 7;
+        pdf.text("n", colN, y+4, {align:"right"});
+        y += 6;
 
         narrativeHistory.forEach((h,i) => {
-          checkY(8, "TRENDS (cont.)");
-          if (i%2===0) { pdf.setFillColor(250,250,252); pdf.rect(ML,y,CW,8,"F"); }
-          if (i===0) { pdf.setFillColor(0,109,119); pdf.roundedRect(ML+3,y+2,10,4,1,1,"F"); pdf.setFontSize(6); pdf.setTextColor(255,255,255); pdf.setFont("helvetica","bold"); pdf.text("Latest",ML+8,y+5,{align:"center"}); }
-          pdf.setFontSize(8); pdf.setFont("helvetica",i===0?"bold":"normal"); pdf.setTextColor(30,30,30);
+          checkY(7, "TRENDS (cont.)");
+          if (i%2===0) { pdf.setFillColor(250,250,252); pdf.rect(ML,y,CW,7,"F"); }
+          if (i===0) {
+            pdf.setFillColor(0,109,119); pdf.roundedRect(colGen, y+1.5, 11, 4, 1, 1, "F");
+            pdf.setFontSize(5.5); pdf.setTextColor(255,255,255); pdf.setFont("helvetica","bold");
+            pdf.text("Latest", colGen+5.5, y+4.5, {align:"center"});
+          }
+          pdf.setFontSize(7.5); pdf.setFont("helvetica", i===0 ? "bold" : "normal"); pdf.setTextColor(30,30,30);
           const genDate = new Date(h.generated_at).toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"});
-          pdf.text(genDate, i===0 ? ML+16 : ML+3, y+5);
+          pdf.text(genDate, i===0 ? colGen+14 : colGen, y+5);
           pdf.setFont("helvetica","bold"); pdf.setTextColor(0,109,119);
-          pdf.text(h.index_score?.toFixed(1) ?? "—", ML+48, y+5);
+          pdf.text(h.index_score?.toFixed(1) ?? "—", colIdx, y+5);
           const dimScores = (h as any).dimension_scores ?? {};
           DIMS_BY_WEIGHT.forEach((dimId,j) => {
             const score = dimScores[dimId]?.avg_score;
             const [r,g,b] = hexRgb(DIM_COLORS[dimId]);
-            pdf.setFont("helvetica","normal"); pdf.setTextColor(score !== undefined ? r : 150, score !== undefined ? g : 150, score !== undefined ? b : 150);
-            pdf.text(score !== undefined ? String(Math.round(score)) : "—", dimCols[j], y+5);
+            pdf.setFont("helvetica","normal");
+            pdf.setTextColor(score !== undefined ? r : 160, score !== undefined ? g : 160, score !== undefined ? b : 160);
+            pdf.text(score !== undefined ? String(Math.round(score)) : "—", colDims[j], y+5);
           });
-          pdf.setFont("helvetica","normal"); pdf.setTextColor(109,104,117);
-          pdf.text(String(h.participant_count), ML+CW-3, y+5, { align:"right" });
-          y += 8;
+          pdf.setFont("helvetica","normal"); pdf.setTextColor(130,120,130);
+          pdf.text(String(h.participant_count), colN, y+5, {align:"right"});
+          y += 7;
         });
         y += 4;
 
         // Legend
-        checkY(10);
-        pdf.setFontSize(7); pdf.setFont("helvetica","normal");
+        checkY(8);
         let lx = ML;
         DIMS_BY_WEIGHT.forEach(dimId => {
           const [r,g,b] = hexRgb(DIM_COLORS[dimId]);
-          pdf.setFillColor(r,g,b); pdf.rect(lx,y,10,2,"F");
-          pdf.setTextColor(80,80,80);
-          pdf.text(`${DIM_NAMES[dimId]} (${Math.round(DIM_WEIGHTS[dimId]*100)}%)`, lx+12, y+2);
+          pdf.setFillColor(r,g,b); pdf.rect(lx, y, 8, 2, "F");
+          pdf.setFontSize(6.5); pdf.setTextColor(80,80,80); pdf.setFont("helvetica","normal");
+          pdf.text(`${DIM_NAMES[dimId]} (${Math.round(DIM_WEIGHTS[dimId]*100)}%)`, lx+10, y+2);
           lx += 36;
         });
-        y += 8;
+        y += 7;
       }
 
       // ── CROSS-INSTRUMENT ─────────────────────────────────────────────────
       if (exportSections["cross-instrument"]) {
         newPage("CROSS-INSTRUMENT");
 
-        pdf.setFontSize(8); pdf.setFont("helvetica","normal"); pdf.setTextColor(80,80,80);
         const ciIntro = "Cross-instrument analysis requires participants to have completed both NAI and PTP. Patterns reveal whether AI adoption barriers are specific to AI context or rooted in deeper threat-response patterns.";
-        pdf.setFontSize(8); pdf.setFont("helvetica","normal");
-        const ciLines = pdf.splitTextToSize(ciIntro, CW);
-        pdf.text(ciLines, ML, y); y += ciLines.length*4.5+6;
+        const ciLines = splitText(ciIntro, CW, 7.5, "normal");
+        pdf.setFontSize(7.5); pdf.setFont("helvetica","normal"); pdf.setTextColor(80,80,80);
+        pdf.text(ciLines, ML, y); y += ciLines.length*4+6;
 
-        // NAI panel
         if (Object.keys(dims).length > 0) {
           const panelW = (CW-6)/2;
-          checkY(60);
-          // NAI card
-          pdf.setFillColor(249,247,241); pdf.roundedRect(ML,y,panelW,52,2,2,"F");
-          pdf.setFontSize(7.5); pdf.setFont("helvetica","bold"); pdf.setTextColor(109,104,117);
+          checkY(56);
+          // NAI panel
+          pdf.setFillColor(249,247,241); pdf.roundedRect(ML, y, panelW, 52, 2, 2, "F");
+          pdf.setFontSize(7); pdf.setFont("helvetica","bold"); pdf.setTextColor(130,120,130);
           pdf.text("NAI · C.A.F.E.S. (BY WEIGHT)", ML+4, y+6);
           let dy2 = y+12;
           DIMS_BY_WEIGHT.forEach(dimId => {
             const dim = dims[dimId]; if (!dim) return;
             const act = activationLabel(dim.avg_score);
             const [r,g,b] = hexRgb(DIM_COLORS[dimId]);
-            pdf.setFontSize(8); pdf.setFont("helvetica","bold"); pdf.setTextColor(r,g,b);
-            pdf.text(DIM_NAMES[dimId], ML+4, dy2);
-            pdf.text(String(Math.round(dim.avg_score)), ML+panelW-18, dy2);
             const actCol: [number,number,number] = act.label === "High" ? [163,45,45] : act.label === "Elevated" ? [99,56,6] : [15,110,86];
-            pdf.setFontSize(7); pdf.setFont("helvetica","normal"); pdf.setTextColor(...actCol);
-            pdf.text(act.label, ML+panelW-4, dy2, { align:"right" });
-            dy2 += 7;
+            pdf.setFontSize(7.5); pdf.setFont("helvetica","bold"); pdf.setTextColor(r,g,b);
+            pdf.text(DIM_NAMES[dimId], ML+4, dy2);
+            pdf.setTextColor(2,31,54);
+            pdf.text(String(Math.round(dim.avg_score)), ML+panelW-20, dy2);
+            pdf.setFontSize(6.5); pdf.setFont("helvetica","normal"); pdf.setTextColor(...actCol);
+            pdf.text(act.label, ML+panelW-4, dy2, {align:"right"});
+            dy2 += 6.5;
           });
-          pdf.setDrawColor(2,31,54); pdf.setLineWidth(0.3);
+          pdf.setDrawColor(200,200,200); pdf.setLineWidth(0.3);
           pdf.line(ML+4, dy2+1, ML+panelW-4, dy2+1);
-          pdf.setFontSize(8); pdf.setFont("helvetica","bold"); pdf.setTextColor(2,31,54);
+          pdf.setFontSize(7.5); pdf.setFont("helvetica","bold"); pdf.setTextColor(2,31,54);
           pdf.text(`AI Readiness Index: ${indexScore !== null ? `${indexScore}/100` : "—"}`, ML+4, dy2+6);
 
-          // PTP placeholder card
+          // PTP placeholder
           const px = ML+panelW+6;
-          pdf.setFillColor(245,245,245); pdf.roundedRect(px,y,panelW,52,2,2,"F");
-          pdf.setFontSize(7.5); pdf.setFont("helvetica","bold"); pdf.setTextColor(109,104,117);
+          pdf.setFillColor(245,245,245); pdf.roundedRect(px, y, panelW, 52, 2, 2, "F");
+          pdf.setFontSize(7); pdf.setFont("helvetica","bold"); pdf.setTextColor(130,120,130);
           pdf.text("PTP · THREAT RESPONSE", px+4, y+6);
-          pdf.setFontSize(8); pdf.setFont("helvetica","normal"); pdf.setTextColor(130,130,130);
           const ptpMsg = "PTP aggregate data will appear here once 5+ participants have completed both instruments.";
-          const ptpLines = pdf.splitTextToSize(ptpMsg, panelW-8);
-          pdf.text(ptpLines, px+4, y+18);
-          y += 58;
+          const ptpLines = splitText(ptpMsg, panelW-8, 7.5, "normal");
+          pdf.setFontSize(7.5); pdf.setFont("helvetica","normal"); pdf.setTextColor(150,150,150);
+          pdf.text(ptpLines, px+4, y+16);
+          y += 57;
         }
 
         // Co-elevation
-        sectionRule("Co-elevation Patterns");
+        checkY(12);
+        y += 2;
+        pdf.setFontSize(9); pdf.setFont("helvetica","bold"); pdf.setTextColor(2,31,54);
+        pdf.text("Co-elevation Patterns", ML, y);
+        y += 1.5;
+        pdf.setDrawColor(2,31,54); pdf.setLineWidth(0.4); pdf.line(ML, y, ML+CW, y); y += 5;
         const coText = "Co-elevation occurs when a dimension is simultaneously elevated in both NAI and PTP — for example, high Ego Stability (NAI) paired with high Protection (PTP). These compound patterns are the most operationally significant findings because barriers reinforce each other and require sequential intervention.";
-        const coLines = pdf.splitTextToSize(coText, CW);
-        checkY(coLines.length*4.5+14);
-        pdf.setFontSize(8); pdf.setFont("helvetica","normal"); pdf.setTextColor(60,60,60);
-        pdf.text(coLines, ML, y); y += coLines.length*4.5+4;
-        const pendingLines = pdf.splitTextToSize("Co-elevation pattern detection requires PTP aggregate data. Complete cross-instrument analysis will appear here once participants have completed both assessments.", CW-8);
-        pdf.setFillColor(245,247,250); pdf.roundedRect(ML,y,CW,pendingLines.length*4+6,2,2,"F");
-        pdf.setFontSize(7.5); pdf.setTextColor(109,104,117); pdf.setFont("helvetica","italic");
-        pdf.text(pendingLines, ML+4, y+5); y += pendingLines.length*4+10;
+        const coLines = splitText(coText, CW, 7.5, "normal");
+        pdf.setFontSize(7.5); pdf.setFont("helvetica","normal"); pdf.setTextColor(60,60,60);
+        pdf.text(coLines, ML, y); y += coLines.length*4+4;
+        const pendText = "Co-elevation pattern detection requires PTP aggregate data. Complete cross-instrument analysis will appear here once participants have completed both assessments.";
+        const pendLines = splitText(pendText, CW-8, 7.5, "italic");
+        const pendH = pendLines.length*4+6;
+        pdf.setFillColor(245,247,250); pdf.roundedRect(ML, y, CW, pendH, 2, 2, "F");
+        pdf.setFontSize(7.5); pdf.setFont("helvetica","italic"); pdf.setTextColor(130,120,130);
+        pdf.text(pendLines, ML+4, y+5); y += pendH+8;
 
-        // Cross-instrument AI interpretation (business_meaning reused)
+        // Cross-instrument AI interpretation
         if (latestNarrative?.narrative_text?.business_meaning) {
-          sectionRule("Cross-Instrument AI Interpretation");
-          pdf.setFontSize(8); pdf.setFont("helvetica","normal"); pdf.setTextColor(80,80,80);
-          const contextNote = "The interpretation below reflects available NAI data. When PTP data becomes available, regenerating will produce a richer cross-instrument analysis.";
-          pdf.setFontSize(8); pdf.setFont("helvetica","normal");
-          const cnLines = pdf.splitTextToSize(contextNote, CW);
-          checkY(cnLines.length*4+4);
-          pdf.text(cnLines, ML, y); y += cnLines.length*4+5;
-          pdf.setFontSize(8); pdf.setFont("helvetica","normal");
-          const bmLines = pdf.splitTextToSize(latestNarrative.narrative_text.business_meaning, CW);
-          checkY(bmLines.length*4.5+4, "CROSS-INSTRUMENT (cont.)");
-          pdf.setTextColor(40,40,40);
-          pdf.text(bmLines, ML, y); y += bmLines.length*4.5;
+          checkY(12);
+          y += 2;
+          pdf.setFontSize(9); pdf.setFont("helvetica","bold"); pdf.setTextColor(2,31,54);
+          pdf.text("Cross-Instrument AI Interpretation", ML, y);
+          y += 1.5;
+          pdf.setDrawColor(2,31,54); pdf.setLineWidth(0.4); pdf.line(ML, y, ML+CW, y); y += 5;
+          const noteText = "The interpretation below reflects available NAI data. When PTP data becomes available, regenerating will produce a richer cross-instrument analysis.";
+          const noteLines = splitText(noteText, CW, 7.5, "normal");
+          pdf.setFontSize(7.5); pdf.setFont("helvetica","normal"); pdf.setTextColor(100,100,100);
+          pdf.text(noteLines, ML, y); y += noteLines.length*4+5;
+          const bmLines = splitText(latestNarrative.narrative_text.business_meaning, CW, 8, "normal");
+          // Paginate long text
+          const lineH = 4.2;
+          const linesPerPage = Math.floor((PH - MB - y) / lineH);
+          for (let li = 0; li < bmLines.length; li += linesPerPage) {
+            const chunk = bmLines.slice(li, li + linesPerPage);
+            pdf.setFontSize(8); pdf.setFont("helvetica","normal"); pdf.setTextColor(40,40,40);
+            pdf.text(chunk, ML, y);
+            y += chunk.length * lineH;
+            if (li + linesPerPage < bmLines.length) newPage("CROSS-INSTRUMENT (cont.)");
+          }
         }
       }
 
