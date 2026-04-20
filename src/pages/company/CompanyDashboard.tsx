@@ -963,15 +963,15 @@ export default function CompanyDashboard() {
                 ))}
               </div>
 
-              <div style={{ fontSize: 11, color: "var(--muted-foreground)", background: "var(--muted)", borderRadius: 8, padding: "10px 12px", lineHeight: 1.6 }}>
+              <div style={{ fontSize: 13, color: "var(--muted-foreground)", background: "var(--muted)", borderRadius: 8, padding: "10px 12px", lineHeight: 1.6 }}>
                 Trend chart visualization (line chart per dimension over time) will be added in the next build. The table above shows the full history. Lower dimension scores mean improving readiness. A rising Index score means the organization is moving in the right direction.
               </div>
 
-              <h3 style={{ fontSize: 13, fontWeight: 500, color: NAVY, margin: "20px 0 10px", textTransform: "uppercase" as const, letterSpacing: 0.5 }}>
+              <h3 style={{ fontSize: 15, fontWeight: 500, color: NAVY, margin: "20px 0 10px", textTransform: "uppercase" as const, letterSpacing: 0.5 }}>
                 Prior AI interpretation history
               </h3>
               {narrativeHistory.map((h, i) => (
-                <div key={h.id} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8, fontSize: 12 }}>
+                <div key={h.id} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8, fontSize: 14 }}>
                   <div style={{ width: 7, height: 7, borderRadius: "50%", background: i === 0 ? TEAL : "var(--border)", flexShrink: 0 }} />
                   <span style={{ color: "var(--foreground)" }}>
                     {new Date(h.generated_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
