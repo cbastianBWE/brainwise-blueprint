@@ -525,10 +525,10 @@ export default function CompanyDashboard() {
               { label: "Completion rate", value: loadingUsage ? "—" : `${Math.round(usage?.completion_rate?.pct ?? 0)}%`, sub: loadingUsage ? "" : `${usage?.completion_rate?.completed ?? 0} of ${usage?.completion_rate?.eligible ?? 0} users` },
               { label: "AI chat usage", value: loadingUsage ? "—" : `${usage?.ai_usage?.chat_used ?? 0}/${usage?.ai_usage?.chat_allowance ?? 0}`, sub: usage?.ai_usage?.ai_chat_enabled ? "messages this month" : "AI chat not enabled" },
             ].map(card => (
-              <div key={card.label} style={{ padding: 14, background: "var(--card)", border: "0.5px solid var(--border)", borderRadius: 8 }}>
-                <p style={{ fontSize: 11, color: "var(--muted-foreground)", margin: 0, textTransform: "uppercase", letterSpacing: 0.4 }}>{card.label}</p>
+              <div key={card.label} style={{ padding: 14, background: "#F9F7F1", border: "0.5px solid var(--border)", borderRadius: 8 }}>
+                <p style={{ fontSize: 13, color: "var(--muted-foreground)", margin: 0, textTransform: "uppercase", letterSpacing: 0.4 }}>{card.label}</p>
                 <p style={{ fontSize: 22, fontWeight: 500, color: NAVY, margin: "4px 0 2px" }}>{card.value}</p>
-                <p style={{ fontSize: 11, color: "var(--muted-foreground)", margin: 0 }}>{card.sub}</p>
+                <p style={{ fontSize: 13, color: "var(--muted-foreground)", margin: 0 }}>{card.sub}</p>
               </div>
             ))}
           </div>
@@ -536,25 +536,25 @@ export default function CompanyDashboard() {
           {/* Risk flags — AI generated */}
           {riskFlags.length > 0 && (
             <>
-              <h3 style={{ fontSize: 13, fontWeight: 500, color: NAVY, margin: "0 0 10px", textTransform: "uppercase", letterSpacing: 0.5 }}>
+              <h3 style={{ fontSize: 15, fontWeight: 500, color: NAVY, margin: "0 0 10px", textTransform: "uppercase", letterSpacing: 0.5 }}>
                 Risk flags (generated {latestNarrative?.generated_at ? new Date(latestNarrative.generated_at).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : ""} · click to expand)
               </h3>
               {riskFlags.map(flag => (
                 <div key={flag.id} onClick={() => toggleFlag(flag.id)} style={{
                   borderLeft: `3px solid ${flag.level === "high" ? "#a32d2d" : ORANGE}`,
-                  background: "var(--muted)", borderRadius: "0 8px 8px 0",
-                  padding: "9px 12px", marginBottom: 8, cursor: "pointer",
+                  background: "#F9F7F1", borderRadius: "0 8px 8px 0",
+                  padding: "12px 16px", marginBottom: 12, cursor: "pointer",
                 }}>
                   <span style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: 0.5, color: flag.level === "high" ? "#a32d2d" : ORANGE, fontWeight: 500 }}>
                     {flag.level === "high" ? "High risk" : "Warning"}
                   </span>
-                  <p style={{ fontSize: 13, fontWeight: 500, color: NAVY, margin: "2px 0" }}>{flag.title}</p>
-                  <p style={{ fontSize: 12, color: "var(--foreground)", margin: 0 }}>{flag.summary}</p>
+                  <p style={{ fontSize: 15, fontWeight: 500, color: NAVY, margin: "2px 0" }}>{flag.title}</p>
+                  <p style={{ fontSize: 14, color: "var(--foreground)", margin: 0 }}>{flag.summary}</p>
                   <p style={{ fontSize: 10, color: "var(--muted-foreground)", margin: "4px 0 0" }}>
                     {expandedFlags.has(flag.id) ? "↑ collapse" : "↓ expand for detail"}
                   </p>
                   {expandedFlags.has(flag.id) && (
-                    <p style={{ fontSize: 12, color: "var(--foreground)", margin: "8px 0 0", whiteSpace: "pre-wrap" }}>
+                    <p style={{ fontSize: 14, color: "var(--foreground)", margin: "8px 0 0", whiteSpace: "pre-wrap" }}>
                       {flag.detail}
                     </p>
                   )}
@@ -573,20 +573,20 @@ export default function CompanyDashboard() {
           {/* Leadership compared to workforce */}
           {!suppressed && Object.keys(dims).length > 0 && (
             <>
-              <h3 style={{ fontSize: 13, fontWeight: 500, color: NAVY, margin: "24px 0 10px", textTransform: "uppercase", letterSpacing: 0.5 }}>
+              <h3 style={{ fontSize: 15, fontWeight: 500, color: NAVY, margin: "24px 0 10px", textTransform: "uppercase", letterSpacing: 0.5 }}>
                 Leadership compared to workforce · C.A.F.E.S.
               </h3>
-              <div style={{ padding: 14, background: "var(--card)", border: "0.5px solid var(--border)", borderRadius: 8 }}>
+              <div style={{ padding: 14, background: "#F9F7F1", border: "0.5px solid var(--border)", borderRadius: 8 }}>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", gap: 16 }}>
                   <div>
-                    <p style={{ fontSize: 11, color: "var(--muted-foreground)", margin: "0 0 8px", textTransform: "uppercase", letterSpacing: 0.4 }}>Director · VP · C-Suite</p>
+                    <p style={{ fontSize: 13, color: "var(--muted-foreground)", margin: "0 0 8px", textTransform: "uppercase", letterSpacing: 0.4 }}>Director · VP · C-Suite</p>
                     {DIMS_BY_WEIGHT.map(dimId => {
                       const score = dims[dimId]?.avg_score ?? 0;
                       const act = activationLabel(score);
                       return (
                         <div key={dimId} style={{ display: "grid", gridTemplateColumns: "1fr 32px 56px", alignItems: "center", marginBottom: 8, gap: 4 }}>
-                          <span style={{ fontSize: 11, fontWeight: 500, color: DIM_COLORS[dimId] }}>{DIM_NAMES[dimId]}</span>
-                          <span style={{ fontSize: 13, fontWeight: 500, color: DIM_COLORS[dimId], textAlign: "right" }}>{Math.round(score)}</span>
+                          <span style={{ fontSize: 13, fontWeight: 500, color: DIM_COLORS[dimId] }}>{DIM_NAMES[dimId]}</span>
+                          <span style={{ fontSize: 15, fontWeight: 500, color: DIM_COLORS[dimId], textAlign: "right" }}>{Math.round(score)}</span>
                           <span style={{ fontSize: 9, padding: "2px 5px", borderRadius: 3, background: act.bg, color: act.color, textAlign: "center" }}>{act.label}</span>
                         </div>
                       );
@@ -595,18 +595,18 @@ export default function CompanyDashboard() {
                   <div style={{ alignSelf: "center", textAlign: "center" }}>
                     <p style={{ fontSize: 10, color: "var(--muted-foreground)", margin: "0 0 6px", textTransform: "uppercase" }}>delta</p>
                     {DIMS_BY_WEIGHT.map(dimId => (
-                      <div key={dimId} style={{ fontSize: 11, color: "var(--muted-foreground)", padding: "4px 0" }}>—</div>
+                      <div key={dimId} style={{ fontSize: 13, color: "var(--muted-foreground)", padding: "4px 0" }}>—</div>
                     ))}
                   </div>
                   <div>
-                    <p style={{ fontSize: 11, color: "var(--muted-foreground)", margin: "0 0 8px", textTransform: "uppercase", letterSpacing: 0.4 }}>Manager · IC</p>
+                    <p style={{ fontSize: 13, color: "var(--muted-foreground)", margin: "0 0 8px", textTransform: "uppercase", letterSpacing: 0.4 }}>Manager · IC</p>
                     {DIMS_BY_WEIGHT.map(dimId => {
                       const score = dims[dimId]?.avg_score ?? 0;
                       const act = activationLabel(score);
                       return (
                         <div key={dimId} style={{ display: "grid", gridTemplateColumns: "1fr 32px 56px", alignItems: "center", marginBottom: 8, gap: 4 }}>
-                          <span style={{ fontSize: 11, fontWeight: 500, color: DIM_COLORS[dimId] }}>{DIM_NAMES[dimId]}</span>
-                          <span style={{ fontSize: 13, fontWeight: 500, color: DIM_COLORS[dimId], textAlign: "right" }}>{Math.round(score)}</span>
+                          <span style={{ fontSize: 13, fontWeight: 500, color: DIM_COLORS[dimId] }}>{DIM_NAMES[dimId]}</span>
+                          <span style={{ fontSize: 15, fontWeight: 500, color: DIM_COLORS[dimId], textAlign: "right" }}>{Math.round(score)}</span>
                           <span style={{ fontSize: 9, padding: "2px 5px", borderRadius: 3, background: act.bg, color: act.color, textAlign: "center" }}>{act.label}</span>
                         </div>
                       );
@@ -623,15 +623,15 @@ export default function CompanyDashboard() {
           {/* Participation by department */}
           {usage?.dept_participation && usage.dept_participation.length > 0 && (
             <>
-              <h3 style={{ fontSize: 13, fontWeight: 500, color: NAVY, margin: "24px 0 10px", textTransform: "uppercase", letterSpacing: 0.5 }}>
+              <h3 style={{ fontSize: 15, fontWeight: 500, color: NAVY, margin: "24px 0 10px", textTransform: "uppercase", letterSpacing: 0.5 }}>
                 Participation by department
               </h3>
               <div style={{ background: "var(--card)", border: "0.5px solid var(--border)", borderRadius: 8, overflow: "hidden" }}>
-                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}>
                   <thead>
-                    <tr style={{ background: "var(--muted)" }}>
+                    <tr style={{ background: "#ede9df" }}>
                       {["Department", "Completed", "Rate", "Progress"].map(h => (
-                        <th key={h} style={{ padding: "8px 12px", textAlign: "left", fontSize: 11, color: "var(--muted-foreground)", textTransform: "uppercase", letterSpacing: 0.4, fontWeight: 500 }}>{h}</th>
+                        <th key={h} style={{ padding: "8px 12px", textAlign: "left", fontSize: 13, color: "var(--muted-foreground)", textTransform: "uppercase", letterSpacing: 0.4, fontWeight: 500 }}>{h}</th>
                       ))}
                     </tr>
                   </thead>
@@ -666,9 +666,9 @@ export default function CompanyDashboard() {
           )}
 
           {/* Cross-instrument snapshot placeholder */}
-          <div style={{ marginTop: 24, padding: 14, background: "var(--card)", border: "0.5px solid var(--border)", borderRadius: 8 }}>
-            <h3 style={{ fontSize: 13, fontWeight: 500, color: NAVY, margin: "0 0 6px", textTransform: "uppercase", letterSpacing: 0.5 }}>Cross-instrument snapshot</h3>
-            <p style={{ fontSize: 12, color: "var(--muted-foreground)", margin: 0 }}>
+          <div style={{ marginTop: 24, padding: 14, background: "#F9F7F1", border: "0.5px solid var(--border)", borderRadius: 8 }}>
+            <h3 style={{ fontSize: 15, fontWeight: 500, color: NAVY, margin: "0 0 6px", textTransform: "uppercase", letterSpacing: 0.5 }}>Cross-instrument snapshot</h3>
+            <p style={{ fontSize: 14, color: "var(--muted-foreground)", margin: 0 }}>
               PTP aggregate data will appear here once participants have completed both NAI and PTP. View the full analysis in the Cross-Instrument tab.
             </p>
           </div>
@@ -678,7 +678,7 @@ export default function CompanyDashboard() {
       {/* ── Dimensions tab ───────────────────────────────────────────────────── */}
       {activeTab === "dimensions" && (
         <div>
-          <p style={{ fontSize: 12, color: "var(--muted-foreground)", marginBottom: 14 }}>
+          <p style={{ fontSize: 14, color: "var(--muted-foreground)", marginBottom: 14 }}>
             Click any dimension card for interpretation and interventions. Ordered by index weight — highest impact first.
           </p>
           {suppressed ? (
@@ -696,14 +696,14 @@ export default function CompanyDashboard() {
               const dimInterventions = interventions.filter(iv => iv.target_dimensions?.includes(dimId));
               return (
                 <div key={dimId} onClick={() => toggleDim(dimId)} style={{
-                  background: "var(--card)", border: `0.5px solid ${isExpanded ? DIM_COLORS[dimId] : "var(--border)"}`,
-                  borderRadius: 12, padding: 14, marginBottom: 10, cursor: "pointer",
+                  background: "#F9F7F1", border: `0.5px solid ${isExpanded ? DIM_COLORS[dimId] : "var(--border)"}`,
+                  borderRadius: 12, padding: 14, marginBottom: 14, cursor: "pointer",
                   transition: "border-color 0.15s",
                 }}>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                       <div style={{ width: 10, height: 10, borderRadius: "50%", background: DIM_COLORS[dimId] }} />
-                      <span style={{ fontSize: 13, fontWeight: 500, color: DIM_COLORS[dimId] }}>{DIM_NAMES[dimId]}</span>
+                      <span style={{ fontSize: 15, fontWeight: 500, color: DIM_COLORS[dimId] }}>{DIM_NAMES[dimId]}</span>
                       <span style={{ fontSize: 9, padding: "1px 6px", borderRadius: 20, background: "#fef0e7", color: ORANGE, fontWeight: 500 }}>
                         Weight {Math.round(DIM_WEIGHTS[dimId] * 100)}%
                       </span>
@@ -713,7 +713,7 @@ export default function CompanyDashboard() {
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                       <span style={{ fontSize: 10, color: "var(--muted-foreground)" }}>{Math.round(dim.pct_at_75_plus)}% at 75+</span>
-                      <span style={{ fontSize: 22, fontWeight: 500, color: DIM_COLORS[dimId] }}>{Math.round(dim.avg_score)}</span>
+                      <span style={{ fontSize: 26, fontWeight: 500, color: DIM_COLORS[dimId] }}>{Math.round(dim.avg_score)}</span>
                       <span style={{ fontSize: 9, padding: "2px 5px", borderRadius: 3, background: act.bg, color: act.color }}>{act.label}</span>
                     </div>
                   </div>
@@ -722,7 +722,7 @@ export default function CompanyDashboard() {
                     <div style={{ width: `${dim.pct_elevated}%`, background: "#faeeda", borderRadius: 3 }} />
                     <div style={{ width: `${dim.pct_high}%`, background: "#faece7", borderRadius: 3 }} />
                   </div>
-                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 9, color: "var(--muted-foreground)", marginBottom: 4 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "var(--muted-foreground)", marginBottom: 4 }}>
                     <span>Low {Math.round(dim.pct_low)}%</span>
                     <span>Elevated {Math.round(dim.pct_elevated)}%</span>
                     <span>High {Math.round(dim.pct_high)}%</span>
@@ -733,12 +733,12 @@ export default function CompanyDashboard() {
                   {isExpanded && (
                     <div onClick={e => e.stopPropagation()} style={{ marginTop: 12, paddingTop: 12, borderTop: "0.5px solid var(--border)" }}>
                       {!latestNarrative ? (
-                        <p style={{ fontSize: 12, color: "var(--muted-foreground)", fontStyle: "italic" }}>
+                        <p style={{ fontSize: 14, color: "var(--muted-foreground)", fontStyle: "italic" }}>
                           Generate an AI interpretation to see dimension insights and interventions.
                         </p>
                       ) : (
                         <>
-                          <p style={{ fontSize: 12, color: "var(--muted-foreground)", lineHeight: 1.65, marginBottom: 12 }}>
+                          <p style={{ fontSize: 14, color: "var(--muted-foreground)", lineHeight: 1.65, marginBottom: 12 }}>
                             {DIM_NAMES[dimId]} carries a {Math.round(DIM_WEIGHTS[dimId] * 100)}% weight in the readiness index — the {
                               ["DIM-NAI-03","DIM-NAI-04","DIM-NAI-02"].indexOf(dimId) >= 0 ? "highest tier" : "lower tier"
                             }. Current score of {Math.round(dim.avg_score)} places this dimension at {act.label.toLowerCase()} activation.
@@ -746,20 +746,20 @@ export default function CompanyDashboard() {
                           </p>
                           {dimInterventions.length > 0 ? (
                             <>
-                              <div style={{ fontSize: 11, fontWeight: 500, color: NAVY, marginBottom: 8 }}>
+                              <div style={{ fontSize: 13, fontWeight: 500, color: NAVY, marginBottom: 8 }}>
                                 Interventions targeting this dimension
                               </div>
                               {dimInterventions.map(iv => (
-                                <div key={iv.id} style={{ background: "var(--muted)", borderRadius: 8, padding: "10px 12px", marginBottom: 8 }}>
+                                <div key={iv.id} style={{ background: "#ede9df", borderRadius: 8, padding: "14px 16px", marginBottom: 8 }}>
                                   <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8, marginBottom: 6 }}>
-                                    <span style={{ fontSize: 12, fontWeight: 500, color: NAVY }}>{iv.title}</span>
+                                    <span style={{ fontSize: 14, fontWeight: 500, color: NAVY }}>{iv.title}</span>
                                     <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
                                       {priorityBadge(iv.priority)}
                                       {horizonBadge(iv.time_horizon)}
                                       {typeBadge(iv.intervention_type)}
                                     </div>
                                   </div>
-                                  <p style={{ fontSize: 11, color: "var(--muted-foreground)", margin: "0 0 8px", lineHeight: 1.55 }}>{iv.description}</p>
+                                  <p style={{ fontSize: 13, color: "var(--muted-foreground)", margin: "0 0 8px", lineHeight: 1.55 }}>{iv.description}</p>
                                   <button onClick={e => openTrackingModal(iv, e)} style={{
                                     fontSize: 10, padding: "3px 9px", border: `0.5px solid ${NAVY}`, borderRadius: 5,
                                     background: "transparent", color: NAVY, cursor: "pointer",
@@ -768,7 +768,7 @@ export default function CompanyDashboard() {
                               ))}
                             </>
                           ) : (
-                            <p style={{ fontSize: 11, color: "var(--muted-foreground)", fontStyle: "italic" }}>
+                            <p style={{ fontSize: 13, color: "var(--muted-foreground)", fontStyle: "italic" }}>
                               No interventions specifically target this dimension in the current generation. Regenerate to refresh.
                             </p>
                           )}
@@ -789,7 +789,7 @@ export default function CompanyDashboard() {
           {!latestNarrative ? (
             <div style={{ padding: 48, textAlign: "center", background: "var(--muted)", borderRadius: 8 }}>
               <p style={{ fontSize: 14, fontWeight: 500, color: NAVY, marginBottom: 6 }}>No AI interpretation generated yet</p>
-              <p style={{ fontSize: 12, color: "var(--muted-foreground)", marginBottom: 16 }}>Generate one to unlock the full narrative analysis, risk flags, and structured interventions.</p>
+              <p style={{ fontSize: 14, color: "var(--muted-foreground)", marginBottom: 16 }}>Generate one to unlock the full narrative analysis, risk flags, and structured interventions.</p>
               <Button size="sm" onClick={handleRegenerate} disabled={regenerating || suppressed}>
                 <RefreshCw className={regenerating ? "animate-spin" : ""} style={{ marginRight: 6 }} />
                 {regenerating ? "Generating..." : "Generate now"}
@@ -798,12 +798,12 @@ export default function CompanyDashboard() {
           ) : (
             <>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16, flexWrap: "wrap", gap: 8 }}>
-                <div style={{ fontSize: 11, color: "var(--muted-foreground)" }}>
+                <div style={{ fontSize: 13, color: "var(--muted-foreground)" }}>
                   Generated {new Date(latestNarrative.generated_at).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })} · {latestNarrative.participant_count} participants · {sliceType === "all" ? "All organization" : `${sliceType}: ${sliceValue}`}
                 </div>
                 <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
                   {narrativeHistory.length > 1 && (
-                    <select style={{ fontSize: 11, padding: "4px 8px", border: "0.5px solid var(--border)", borderRadius: 7, background: "var(--card)", color: "var(--foreground)" }}>
+                    <select style={{ fontSize: 13, padding: "4px 8px", border: "0.5px solid var(--border)", borderRadius: 7, background: "var(--card)", color: "var(--foreground)" }}>
                       {narrativeHistory.map(h => (
                         <option key={h.id} value={h.id}>
                           {new Date(h.generated_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })} — {h.participant_count} participants
@@ -827,7 +827,7 @@ export default function CompanyDashboard() {
                     return (
                       <div key={dimId} style={{ borderRadius: 8, padding: "10px 8px", textAlign: "center", background: act.bg }}>
                         <div style={{ fontSize: 9, fontWeight: 500, textTransform: "uppercase" as const, letterSpacing: "0.04em", color: DIM_COLORS[dimId], marginBottom: 3 }}>{DIM_NAMES[dimId]}</div>
-                        <div style={{ fontSize: 20, fontWeight: 500, color: DIM_COLORS[dimId] }}>{Math.round(dim.avg_score)}</div>
+                        <div style={{ fontSize: 26, fontWeight: 500, color: DIM_COLORS[dimId] }}>{Math.round(dim.avg_score)}</div>
                         <div style={{ fontSize: 9, color: DIM_COLORS[dimId], marginTop: 2, opacity: 0.8 }}>{act.label}</div>
                       </div>
                     );
@@ -847,37 +847,37 @@ export default function CompanyDashboard() {
                 const text = latestNarrative.narrative_text[section.key as keyof typeof latestNarrative.narrative_text] as string | undefined;
                 if (!text) return null;
                 return (
-                  <div key={section.key} style={{ background: "var(--card)", border: "0.5px solid var(--border)", borderRadius: 12, padding: 16, marginBottom: 12 }}>
+                  <div key={section.key} style={{ background: "#F9F7F1", border: "0.5px solid var(--border)", borderRadius: 12, padding: 16, marginBottom: 12 }}>
                     <div style={{ fontSize: 9, fontWeight: 500, color: NAVY, textTransform: "uppercase" as const, letterSpacing: "0.06em", marginBottom: 6, borderLeft: `3px solid ${ORANGE}`, paddingLeft: 7 }}>
                       {section.label}
                     </div>
-                    <div style={{ fontSize: 12, lineHeight: 1.7, color: "var(--foreground)", whiteSpace: "pre-wrap" }}>{text}</div>
+                    <div style={{ fontSize: 14, lineHeight: 1.75, color: "var(--foreground)", whiteSpace: "pre-wrap" }}>{text}</div>
                   </div>
                 );
               })}
 
               {latestNarrative.narrative_text.reassessment_note && (
-                <div style={{ fontSize: 11, color: "var(--muted-foreground)", background: "var(--muted)", borderRadius: 8, padding: "10px 12px", marginBottom: 16, lineHeight: 1.6 }}>
+                <div style={{ fontSize: 13, color: "var(--muted-foreground)", background: "#F9F7F1", borderRadius: 8, padding: "10px 12px", marginBottom: 16, lineHeight: 1.6 }}>
                   <strong style={{ color: NAVY }}>Reassessment: </strong>{latestNarrative.narrative_text.reassessment_note}
                 </div>
               )}
 
               {interventions.length > 0 && (
                 <>
-                  <h3 style={{ fontSize: 13, fontWeight: 500, color: NAVY, margin: "24px 0 10px", textTransform: "uppercase" as const, letterSpacing: 0.5 }}>
+                  <h3 style={{ fontSize: 15, fontWeight: 500, color: NAVY, margin: "24px 0 10px", textTransform: "uppercase" as const, letterSpacing: 0.5 }}>
                     Structured interventions <span style={{ fontSize: 10, fontWeight: 400, color: "var(--muted-foreground)" }}>(click + to track without leaving this page)</span>
                   </h3>
                   {interventions.map(iv => (
-                    <div key={iv.id} style={{ border: "0.5px solid var(--border)", borderRadius: 8, padding: 12, marginBottom: 8, background: "var(--card)" }}>
+                    <div key={iv.id} style={{ border: "0.5px solid var(--border)", borderRadius: 8, padding: 16, marginBottom: 12, background: "#F9F7F1" }}>
                       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8, marginBottom: 6 }}>
-                        <span style={{ fontSize: 13, fontWeight: 500, color: NAVY }}>{iv.title}</span>
+                        <span style={{ fontSize: 15, fontWeight: 500, color: NAVY }}>{iv.title}</span>
                         <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
                           {priorityBadge(iv.priority)}
                           {horizonBadge(iv.time_horizon)}
                           {typeBadge(iv.intervention_type)}
                         </div>
                       </div>
-                      <p style={{ fontSize: 12, color: "var(--muted-foreground)", margin: "0 0 6px", lineHeight: 1.6 }}>{iv.description}</p>
+                      <p style={{ fontSize: 14, color: "var(--muted-foreground)", margin: "0 0 6px", lineHeight: 1.6 }}>{iv.description}</p>
                       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                         <span style={{ fontSize: 9, color: "var(--muted-foreground)" }}>
                           Targets: {iv.target_dimensions?.map(d => DIM_NAMES[d] ?? d).join(" · ")}
@@ -900,13 +900,13 @@ export default function CompanyDashboard() {
       {activeTab === "trends" && (
         <div>
           <div style={{ marginBottom: 14, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-            <span style={{ fontSize: 11, color: "var(--muted-foreground)" }}>Showing trend across AI interpretation generations for this slice.</span>
+            <span style={{ fontSize: 13, color: "var(--muted-foreground)" }}>Showing trend across AI interpretation generations for this slice.</span>
           </div>
 
           {narrativeHistory.length === 0 ? (
             <div style={{ padding: 48, textAlign: "center", background: "var(--muted)", borderRadius: 8 }}>
               <p style={{ fontSize: 14, fontWeight: 500, color: NAVY, marginBottom: 6 }}>No history yet</p>
-              <p style={{ fontSize: 12, color: "var(--muted-foreground)" }}>Generate your first AI interpretation to start tracking dimension trends over time.</p>
+              <p style={{ fontSize: 14, color: "var(--muted-foreground)" }}>Generate your first AI interpretation to start tracking dimension trends over time.</p>
             </div>
           ) : (
             <>
@@ -914,7 +914,7 @@ export default function CompanyDashboard() {
                 <div style={{ overflowX: "auto" }}>
                   <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11 }}>
                     <thead>
-                      <tr style={{ background: "var(--muted)" }}>
+                      <tr style={{ background: "#ede9df" }}>
                         <th style={{ padding: "8px 12px", textAlign: "left", fontSize: 10, color: "var(--muted-foreground)", fontWeight: 500, textTransform: "uppercase" as const, letterSpacing: 0.4 }}>Generated</th>
                         <th style={{ padding: "8px 12px", textAlign: "center", fontSize: 10, color: "var(--muted-foreground)", fontWeight: 500 }}>Index</th>
                         {DIMS_BY_WEIGHT.map(dimId => (
@@ -963,15 +963,15 @@ export default function CompanyDashboard() {
                 ))}
               </div>
 
-              <div style={{ fontSize: 11, color: "var(--muted-foreground)", background: "var(--muted)", borderRadius: 8, padding: "10px 12px", lineHeight: 1.6 }}>
+              <div style={{ fontSize: 13, color: "var(--muted-foreground)", background: "var(--muted)", borderRadius: 8, padding: "10px 12px", lineHeight: 1.6 }}>
                 Trend chart visualization (line chart per dimension over time) will be added in the next build. The table above shows the full history. Lower dimension scores mean improving readiness. A rising Index score means the organization is moving in the right direction.
               </div>
 
-              <h3 style={{ fontSize: 13, fontWeight: 500, color: NAVY, margin: "20px 0 10px", textTransform: "uppercase" as const, letterSpacing: 0.5 }}>
+              <h3 style={{ fontSize: 15, fontWeight: 500, color: NAVY, margin: "20px 0 10px", textTransform: "uppercase" as const, letterSpacing: 0.5 }}>
                 Prior AI interpretation history
               </h3>
               {narrativeHistory.map((h, i) => (
-                <div key={h.id} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8, fontSize: 12 }}>
+                <div key={h.id} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8, fontSize: 14 }}>
                   <div style={{ width: 7, height: 7, borderRadius: "50%", background: i === 0 ? TEAL : "var(--border)", flexShrink: 0 }} />
                   <span style={{ color: "var(--foreground)" }}>
                     {new Date(h.generated_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
@@ -989,14 +989,14 @@ export default function CompanyDashboard() {
       {/* ── Cross-instrument tab ──────────────────────────────────────────────── */}
       {activeTab === "cross-instrument" && (
         <div>
-          <p style={{ fontSize: 12, color: "var(--muted-foreground)", marginBottom: 16 }}>
+          <p style={{ fontSize: 14, color: "var(--muted-foreground)", marginBottom: 16 }}>
             Cross-instrument analysis requires participants to have completed both NAI and PTP assessments. Patterns between the two instruments reveal whether AI adoption barriers are specific to AI context or rooted in deeper threat-response patterns.
           </p>
 
           {!suppressed && Object.keys(dims).length > 0 && (
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 16 }}>
-              <div style={{ background: "var(--card)", border: "0.5px solid var(--border)", borderRadius: 12, padding: 14 }}>
-                <div style={{ fontSize: 11, fontWeight: 500, color: "var(--muted-foreground)", textTransform: "uppercase" as const, letterSpacing: 0.04, marginBottom: 10 }}>
+              <div style={{ background: "#F9F7F1", border: "0.5px solid var(--border)", borderRadius: 12, padding: 14 }}>
+                <div style={{ fontSize: 13, fontWeight: 500, color: "var(--muted-foreground)", textTransform: "uppercase" as const, letterSpacing: 0.04, marginBottom: 10 }}>
                   NAI · C.A.F.E.S. (by weight)
                 </div>
                 {DIMS_BY_WEIGHT.map(dimId => {
@@ -1004,7 +1004,7 @@ export default function CompanyDashboard() {
                   if (!dim) return null;
                   const act = activationLabel(dim.avg_score);
                   return (
-                    <div key={dimId} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 7, fontSize: 11 }}>
+                    <div key={dimId} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 7, fontSize: 13 }}>
                       <span style={{ color: DIM_COLORS[dimId], fontWeight: 500 }}>{DIM_NAMES[dimId]}</span>
                       <span>
                         <span style={{ fontWeight: 500, color: DIM_COLORS[dimId], marginRight: 6 }}>{Math.round(dim.avg_score)}</span>
@@ -1013,16 +1013,16 @@ export default function CompanyDashboard() {
                     </div>
                   );
                 })}
-                <div style={{ marginTop: 12, paddingTop: 10, borderTop: "0.5px solid var(--border)", fontSize: 11, fontWeight: 500, color: NAVY }}>
+                <div style={{ marginTop: 12, paddingTop: 10, borderTop: "0.5px solid var(--border)", fontSize: 13, fontWeight: 500, color: NAVY }}>
                   AI Readiness Index: {indexScore !== null ? `${indexScore} / 100` : "—"}
                 </div>
               </div>
 
               <div style={{ background: "var(--muted)", border: "0.5px solid var(--border)", borderRadius: 12, padding: 14 }}>
-                <div style={{ fontSize: 11, fontWeight: 500, color: "var(--muted-foreground)", textTransform: "uppercase" as const, letterSpacing: 0.04, marginBottom: 10 }}>
+                <div style={{ fontSize: 13, fontWeight: 500, color: "var(--muted-foreground)", textTransform: "uppercase" as const, letterSpacing: 0.04, marginBottom: 10 }}>
                   PTP · Threat response
                 </div>
-                <div style={{ padding: 20, textAlign: "center", color: "var(--muted-foreground)", fontSize: 12 }}>
+                <div style={{ padding: 20, textAlign: "center", color: "var(--muted-foreground)", fontSize: 14 }}>
                   <p style={{ margin: "0 0 8px" }}>PTP aggregate data will appear here once 5+ participants have completed both instruments.</p>
                   <p style={{ margin: 0, fontSize: 10 }}>PTP measures threat response under uncertainty — a complement to NAI's AI-specific adoption readiness score.</p>
                 </div>
@@ -1030,23 +1030,23 @@ export default function CompanyDashboard() {
             </div>
           )}
 
-          <div style={{ background: "var(--card)", border: "0.5px solid var(--border)", borderRadius: 12, padding: 14, marginBottom: 14 }}>
-            <div style={{ fontSize: 12, fontWeight: 500, color: NAVY, marginBottom: 8 }}>Co-elevation patterns</div>
-            <p style={{ fontSize: 12, color: "var(--muted-foreground)", margin: "0 0 12px", lineHeight: 1.6 }}>
+          <div style={{ background: "#F9F7F1", border: "0.5px solid var(--border)", borderRadius: 12, padding: 14, marginBottom: 14 }}>
+            <div style={{ fontSize: 15, fontWeight: 500, color: NAVY, marginBottom: 8 }}>Co-elevation patterns</div>
+            <p style={{ fontSize: 14, color: "var(--muted-foreground)", margin: "0 0 12px", lineHeight: 1.6 }}>
               Co-elevation occurs when a dimension is simultaneously elevated in both NAI and PTP — for example, high Ego Stability (NAI) paired with high Protection (PTP). These compound patterns are the most operationally significant findings because the barriers reinforce each other and require sequential intervention.
             </p>
-            <div style={{ background: "var(--muted)", borderRadius: 8, padding: "10px 12px", fontSize: 11, color: "var(--muted-foreground)", fontStyle: "italic" }}>
+            <div style={{ background: "var(--muted)", borderRadius: 8, padding: "10px 12px", fontSize: 13, color: "var(--muted-foreground)", fontStyle: "italic" }}>
               Co-elevation pattern detection requires PTP aggregate data for this slice. Complete cross-instrument analysis will appear here once participants have completed both assessments.
             </div>
           </div>
 
           {latestNarrative?.narrative_text?.business_meaning && (
-            <div style={{ background: "var(--card)", border: "0.5px solid var(--border)", borderRadius: 12, padding: 14 }}>
-              <div style={{ fontSize: 12, fontWeight: 500, color: NAVY, marginBottom: 8 }}>Cross-instrument AI interpretation</div>
-              <p style={{ fontSize: 12, color: "var(--muted-foreground)", margin: "0 0 10px", lineHeight: 1.6 }}>
+            <div style={{ background: "#F9F7F1", border: "0.5px solid var(--border)", borderRadius: 12, padding: 14 }}>
+              <div style={{ fontSize: 15, fontWeight: 500, color: NAVY, marginBottom: 8 }}>Cross-instrument AI interpretation</div>
+              <p style={{ fontSize: 14, color: "var(--muted-foreground)", margin: "0 0 10px", lineHeight: 1.6 }}>
                 The AI interpretation below was generated {latestNarrative.narrative_text && "with available data at time of generation"}. When PTP data becomes available for this slice, regenerating will produce a richer cross-instrument analysis.
               </p>
-              <div style={{ fontSize: 12, lineHeight: 1.7, color: "var(--foreground)", whiteSpace: "pre-wrap" }}>
+              <div style={{ fontSize: 14, lineHeight: 1.75, color: "var(--foreground)", whiteSpace: "pre-wrap" }}>
                 {latestNarrative.narrative_text.business_meaning}
               </div>
             </div>
@@ -1071,7 +1071,7 @@ export default function CompanyDashboard() {
               </div>
               <button onClick={closeTrackingModal} style={{ background: "none", border: "none", fontSize: 20, cursor: "pointer", color: "var(--muted-foreground)", lineHeight: 1, padding: 0 }}>×</button>
             </div>
-            <div style={{ marginBottom: 10 }}>
+            <div style={{ marginBottom: 16 }}>
               <label style={{ fontSize: 11, fontWeight: 500, marginBottom: 4, display: "block", color: NAVY }}>Status</label>
               <select value={trackingStatus} onChange={e => setTrackingStatus(e.target.value)}
                 style={{ width: "100%", fontSize: 12, padding: "6px 9px", border: "0.5px solid var(--border)", borderRadius: 7, background: "var(--card)", color: "var(--foreground)" }}>
@@ -1080,7 +1080,7 @@ export default function CompanyDashboard() {
                 <option value="completed">Completed</option>
               </select>
             </div>
-            <div style={{ marginBottom: 10 }}>
+            <div style={{ marginBottom: 16 }}>
               <label style={{ fontSize: 11, fontWeight: 500, marginBottom: 4, display: "block", color: NAVY }}>Notes / next steps</label>
               <textarea value={trackingNote} onChange={e => setTrackingNote(e.target.value)}
                 placeholder="Add context, assigned teams, or first concrete next step..."
