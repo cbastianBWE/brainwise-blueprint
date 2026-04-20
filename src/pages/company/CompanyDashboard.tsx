@@ -1213,12 +1213,12 @@ export default function CompanyDashboard() {
       {/* ── Intervention tracking modal ───────────────────────────────────────── */}
       {exportModal && (
         <div onClick={() => setExportModal(false)} style={{
-          position: "fixed", inset: 0, background: "rgba(2,31,54,0.45)", zIndex: 100,
+          position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 1000,
           display: "flex", alignItems: "center", justifyContent: "center",
         }}>
           <div onClick={e => e.stopPropagation()} style={{
-            background: "var(--card)", borderRadius: 12, padding: 24, width: 380, maxWidth: "95vw",
-            border: "0.5px solid var(--border)",
+            background: "#ffffff", borderRadius: 12, padding: 24, width: 380, maxWidth: "95vw",
+            border: "0.5px solid var(--border)", boxShadow: "0 8px 32px rgba(0,0,0,0.18)", position: "relative" as const, zIndex: 1001,
           }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
               <div>
@@ -1262,12 +1262,12 @@ export default function CompanyDashboard() {
 
       {trackingModal.open && trackingModal.intervention && (
         <div onClick={closeTrackingModal} style={{
-          position: "fixed", inset: 0, background: "rgba(2,31,54,0.45)", zIndex: 100,
+          position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 1000,
           display: "flex", alignItems: "center", justifyContent: "center",
         }}>
           <div onClick={e => e.stopPropagation()} style={{
-            background: "var(--card)", borderRadius: 12, padding: 20, width: 400, maxWidth: "95vw",
-            border: "0.5px solid var(--border)",
+            background: "#ffffff", borderRadius: 12, padding: 20, width: 400, maxWidth: "95vw",
+            border: "0.5px solid var(--border)", boxShadow: "0 8px 32px rgba(0,0,0,0.18)", position: "relative" as const, zIndex: 1001,
           }}>
             <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 14 }}>
               <div>
