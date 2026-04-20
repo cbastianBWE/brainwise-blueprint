@@ -914,7 +914,7 @@ export default function CompanyDashboard() {
                 <div style={{ overflowX: "auto" }}>
                   <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11 }}>
                     <thead>
-                      <tr style={{ background: "var(--muted)" }}>
+                      <tr style={{ background: "#ede9df" }}>
                         <th style={{ padding: "8px 12px", textAlign: "left", fontSize: 10, color: "var(--muted-foreground)", fontWeight: 500, textTransform: "uppercase" as const, letterSpacing: 0.4 }}>Generated</th>
                         <th style={{ padding: "8px 12px", textAlign: "center", fontSize: 10, color: "var(--muted-foreground)", fontWeight: 500 }}>Index</th>
                         {DIMS_BY_WEIGHT.map(dimId => (
