@@ -1071,7 +1071,7 @@ export default function CompanyDashboard() {
               </div>
               <button onClick={closeTrackingModal} style={{ background: "none", border: "none", fontSize: 20, cursor: "pointer", color: "var(--muted-foreground)", lineHeight: 1, padding: 0 }}>×</button>
             </div>
-            <div style={{ marginBottom: 10 }}>
+            <div style={{ marginBottom: 16 }}>
               <label style={{ fontSize: 11, fontWeight: 500, marginBottom: 4, display: "block", color: NAVY }}>Status</label>
               <select value={trackingStatus} onChange={e => setTrackingStatus(e.target.value)}
                 style={{ width: "100%", fontSize: 12, padding: "6px 9px", border: "0.5px solid var(--border)", borderRadius: 7, background: "var(--card)", color: "var(--foreground)" }}>
