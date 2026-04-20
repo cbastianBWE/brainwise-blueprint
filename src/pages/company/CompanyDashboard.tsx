@@ -722,7 +722,7 @@ export default function CompanyDashboard() {
                     <div style={{ width: `${dim.pct_elevated}%`, background: "#faeeda", borderRadius: 3 }} />
                     <div style={{ width: `${dim.pct_high}%`, background: "#faece7", borderRadius: 3 }} />
                   </div>
-                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 9, color: "var(--muted-foreground)", marginBottom: 4 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "var(--muted-foreground)", marginBottom: 4 }}>
                     <span>Low {Math.round(dim.pct_low)}%</span>
                     <span>Elevated {Math.round(dim.pct_elevated)}%</span>
                     <span>High {Math.round(dim.pct_high)}%</span>
