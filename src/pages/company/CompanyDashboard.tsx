@@ -1041,12 +1041,12 @@ export default function CompanyDashboard() {
           </div>
 
           {latestNarrative?.narrative_text?.business_meaning && (
-            <div style={{ background: "var(--card)", border: "0.5px solid var(--border)", borderRadius: 12, padding: 14 }}>
-              <div style={{ fontSize: 12, fontWeight: 500, color: NAVY, marginBottom: 8 }}>Cross-instrument AI interpretation</div>
-              <p style={{ fontSize: 12, color: "var(--muted-foreground)", margin: "0 0 10px", lineHeight: 1.6 }}>
+            <div style={{ background: "#F9F7F1", border: "0.5px solid var(--border)", borderRadius: 12, padding: 14 }}>
+              <div style={{ fontSize: 15, fontWeight: 500, color: NAVY, marginBottom: 8 }}>Cross-instrument AI interpretation</div>
+              <p style={{ fontSize: 14, color: "var(--muted-foreground)", margin: "0 0 10px", lineHeight: 1.6 }}>
                 The AI interpretation below was generated {latestNarrative.narrative_text && "with available data at time of generation"}. When PTP data becomes available for this slice, regenerating will produce a richer cross-instrument analysis.
               </p>
-              <div style={{ fontSize: 12, lineHeight: 1.7, color: "var(--foreground)", whiteSpace: "pre-wrap" }}>
+              <div style={{ fontSize: 14, lineHeight: 1.75, color: "var(--foreground)", whiteSpace: "pre-wrap" }}>
                 {latestNarrative.narrative_text.business_meaning}
               </div>
             </div>
