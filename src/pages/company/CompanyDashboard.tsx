@@ -857,7 +857,7 @@ export default function CompanyDashboard() {
               })}
 
               {latestNarrative.narrative_text.reassessment_note && (
-                <div style={{ fontSize: 11, color: "var(--muted-foreground)", background: "var(--muted)", borderRadius: 8, padding: "10px 12px", marginBottom: 16, lineHeight: 1.6 }}>
+                <div style={{ fontSize: 13, color: "var(--muted-foreground)", background: "#F9F7F1", borderRadius: 8, padding: "10px 12px", marginBottom: 16, lineHeight: 1.6 }}>
                   <strong style={{ color: NAVY }}>Reassessment: </strong>{latestNarrative.narrative_text.reassessment_note}
                 </div>
               )}
