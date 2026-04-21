@@ -243,6 +243,7 @@ export default function SharedResults() {
             targetUserId={selectedPeerId}
             permissionLevel="full_results"
             viewLabel={peers.find(p => p.user_id === selectedPeerId)?.full_name ?? "Peer Results"}
+            defaultInstrumentId={instrument}
           />
         ) : (
           <div className="flex flex-col items-center justify-center h-full text-center p-8">
