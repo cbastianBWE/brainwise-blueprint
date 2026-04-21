@@ -127,10 +127,11 @@ export default function NAINarrativeSections({
         .maybeSingle();
 
       let ptp: Record<string, any> | null = null;
+      let ptpResult: { assessment_id: string; dimension_scores: any } | null = null;
       if (thisResult?.user_id) {
         const { data: ptpRow } = await supabase
           .from("assessment_results")
-          .select("dimension_scores")
+          .select("dimension_scores, assessment_id")
           .eq("user_id", thisResult.user_id)
           .eq("instrument_id", "INST-001")
           .order("created_at", { ascending: false })
@@ -138,9 +139,39 @@ export default function NAINarrativeSections({
           .maybeSingle();
         if (ptpRow?.dimension_scores) {
           ptp = ptpRow.dimension_scores as Record<string, any>;
+          ptpResult = ptpRow as any;
         }
       }
       if (!cancelled) setPtpScores(ptp);
+
+      // Fetch PTP item-level scores for cross-assessment enrichment
+      let ptpItemScores: Array<{ facetName: string; score: number; dimensionId: string }> | null = null;
+      if (ptpResult?.assessment_id) {
+        const { data: ptpResponses } = await supabase
+          .from("assessment_responses")
+          .select("response_value_numeric, is_reverse_scored, item_id")
+          .eq("assessment_id", ptpResult.assessment_id);
+
+        if (ptpResponses?.length) {
+          const ptpItemIds = ptpResponses.map((r) => r.item_id);
+          const { data: ptpItems } = await supabase
+            .from("items")
+            .select("item_id, facet_name, dimension_id")
+            .in("item_id", ptpItemIds);
+
+          const ptpItemMap = new Map((ptpItems ?? []).map((i) => [i.item_id, i]));
+          ptpItemScores = ptpResponses.map((r) => {
+            const item = ptpItemMap.get(r.item_id);
+            const raw = Number(r.response_value_numeric);
+            const value = r.is_reverse_scored ? 100 - raw : raw;
+            return {
+              facetName: item?.facet_name ?? r.item_id,
+              score: Math.round(value),
+              dimensionId: item?.dimension_id ?? "",
+            };
+          }).filter((s) => s.facetName);
+        }
+      }
 
       const responseByItem = new Map(
         (responsesData ?? []).map((r) => [r.item_id, r])
