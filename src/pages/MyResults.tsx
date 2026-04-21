@@ -323,6 +323,9 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
       if (preSelectedAssessmentId) {
         const preSelected = combined.find(a => a.result.assessment_id === preSelectedAssessmentId);
         setSelectedId(preSelected?.result.id ?? combined[0]?.result.id ?? "");
+      } else if (defaultInstrumentId) {
+        const match = filtered.find(a => (a.result.instrument_id ?? "") === defaultInstrumentId);
+        setSelectedId(match?.result.id ?? combined[0]?.result.id ?? "");
       } else {
         setSelectedId(combined[0]?.result.id ?? "");
       }
