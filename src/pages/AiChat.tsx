@@ -167,7 +167,7 @@ export default function AiChat() {
         .eq("instrument_id", peerInstrument);
       if (!results) return;
 
-      const instrumentIds: string[] = [...new Set(results.map((r: any) => r.instrument_id).filter(Boolean))];
+      const instrumentIds: string[] = [...new Set(results.map((r: any) => r.instrument_id as string).filter(Boolean))];
       let instrumentNames: Record<string, string> = {};
       if (instrumentIds.length > 0) {
         const { data: instruments } = await supabase
