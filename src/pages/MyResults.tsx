@@ -1182,7 +1182,7 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
           <section className="space-y-4">
             <div>
               <h2 className="text-xl font-semibold text-foreground">
-                Your {selected.instrument_name.replace(/\s*Profile$/i, '')} Profile
+                {!isCoachView && "Your "}{selected.instrument_name.replace(/\s*Profile$/i, '')} Profile
                 {showPtpTabs && ptpContextTab && (
                   <span className="text-muted-foreground font-normal">
                     {' '}— {ptpContextTab === 'professional' ? 'Professional' : ptpContextTab === 'personal' ? 'Personal' : 'Combined'}
