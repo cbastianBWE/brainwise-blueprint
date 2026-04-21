@@ -281,6 +281,17 @@ export default function PTPNarrativeSections({
         completed_at: a.completed_at,
       }));
 
+      const dimensionItemsMap: Record<string, Array<{ facetName: string; score: number; contextType: string | null }>> = {};
+      for (const item of assessmentResponses) {
+        if (!item.dimensionId) continue;
+        if (!dimensionItemsMap[item.dimensionId]) dimensionItemsMap[item.dimensionId] = [];
+        dimensionItemsMap[item.dimensionId].push({
+          facetName: item.facetName,
+          score: item.score,
+          contextType: (item as any).contextType ?? null,
+        });
+      }
+
       const {
         data: { session },
       } = await supabase.auth.getSession();
@@ -291,6 +302,7 @@ export default function PTPNarrativeSections({
           context_tab: ptpContextTab,
           dimension_scores: dimensionScoresObj,
           other_assessments: otherAssessmentsData,
+          dimension_items: dimensionItemsMap,
         },
         headers: { Authorization: `Bearer ${session?.access_token}` },
       });
