@@ -276,10 +276,6 @@ export default function PTPNarrativeSections({
       }
 
       const dimensionScoresObj = Object.fromEntries(dimensionScores);
-      const otherAssessmentsData = otherAssessments.map((a) => ({
-        instrument_name: a.instrument_name,
-        completed_at: a.completed_at,
-      }));
 
       const dimensionItemsMap: Record<string, Array<{ facetName: string; score: number; contextType: string | null }>> = {};
       for (const item of assessmentResponses) {
@@ -292,6 +288,52 @@ export default function PTPNarrativeSections({
         });
       }
 
+      const otherAssessmentsEnriched = await Promise.all(
+        otherAssessments.map(async (a) => {
+          const { data: otherResult } = await supabase
+            .from("assessment_results")
+            .select("instrument_id, dimension_scores, assessment_id")
+            .eq("id", a.result.id)
+            .single();
+
+          if (!otherResult) return { instrument_name: a.instrument_name, completed_at: a.completed_at, dimension_scores: null, item_scores: null };
+
+          const { data: otherResponses } = await supabase
+            .from("assessment_responses")
+            .select("response_value_numeric, is_reverse_scored, item_id")
+            .eq("assessment_id", otherResult.assessment_id);
+
+          let itemScores: Array<{ facetName: string; score: number; dimensionId: string }> | null = null;
+
+          if (otherResponses?.length) {
+            const itemIds = otherResponses.map((r) => r.item_id);
+            const { data: otherItems } = await supabase
+              .from("items")
+              .select("item_id, facet_name, dimension_id")
+              .in("item_id", itemIds);
+
+            const otherItemMap = new Map((otherItems ?? []).map((i) => [i.item_id, i]));
+            itemScores = otherResponses.map((r) => {
+              const item = otherItemMap.get(r.item_id);
+              const raw = Number(r.response_value_numeric);
+              const value = r.is_reverse_scored ? 100 - raw : raw;
+              return {
+                facetName: item?.facet_name ?? r.item_id,
+                score: Math.round(value),
+                dimensionId: item?.dimension_id ?? "",
+              };
+            }).filter(s => s.facetName);
+          }
+
+          return {
+            instrument_name: a.instrument_name,
+            completed_at: a.completed_at,
+            dimension_scores: otherResult.dimension_scores,
+            item_scores: itemScores,
+          };
+        })
+      );
+
       const {
         data: { session },
       } = await supabase.auth.getSession();
@@ -301,7 +343,7 @@ export default function PTPNarrativeSections({
           facets: [],
           context_tab: ptpContextTab,
           dimension_scores: dimensionScoresObj,
-          other_assessments: otherAssessmentsData,
+          other_assessments: otherAssessmentsEnriched,
           dimension_items: dimensionItemsMap,
         },
         headers: { Authorization: `Bearer ${session?.access_token}` },
