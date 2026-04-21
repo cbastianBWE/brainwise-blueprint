@@ -59,6 +59,9 @@ export default function SharedResults() {
     setLoadingPeers(true);
     setSelectedPeerId(null);
     setCheckedPeerIds(new Set());
+    setNameSearch("");
+    setDeptFilter("all");
+    setSupervisorFilter("all");
     (async () => {
       const { data, error } = await (supabase as any).rpc("get_accessible_peer_results", {
         p_instrument: instrument,
