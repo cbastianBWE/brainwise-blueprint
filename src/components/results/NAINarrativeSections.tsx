@@ -243,6 +243,7 @@ export default function NAINarrativeSections({
             nai_dimension_scores: Object.fromEntries(dimensionScores),
             nai_outlier_items: outliers,
             nai_ptp_scores: ptp ?? {},
+            nai_ptp_item_scores: ptpItemScores,
             nai_is_coach: isCoachView,
           },
           headers: session?.access_token
