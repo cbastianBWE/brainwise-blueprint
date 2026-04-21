@@ -324,7 +324,7 @@ export default function PTPNarrativeSections({
     };
 
     fetchNarrativeSections();
-  }, [assessmentResultId, ptpContextTab, dimensionScores, otherAssessments]);
+  }, [assessmentResultId, ptpContextTab, dimensionScores, otherAssessments, assessmentResponses]);
 
   useEffect(() => {
     const fetchFacets = async () => {
