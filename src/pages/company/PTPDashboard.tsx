@@ -443,6 +443,26 @@ export default function PTPDashboard() {
     setLoadingNaiAgg(false);
   }, [user, sliceType, sliceValue]);
 
+  const loadCrossInstrumentRecs = useCallback(async () => {
+    if (!user) return;
+    setLoadingCrossInstrument(true);
+    const PRIMARY_ID = "INST-001";
+    const { data: userRow } = await (supabase as any).from("users").select("organization_id").eq("id", user.id).single();
+    if (!userRow?.organization_id) { setCrossInstrumentRow(null); setLoadingCrossInstrument(false); return; }
+    const { data } = await (supabase as any)
+      .from("org_cross_instrument_recommendations")
+      .select("id, primary_narrative_id, input_narrative_ids, recommendations, summary, generated_at")
+      .eq("organization_id", userRow.organization_id)
+      .eq("slice_type", sliceType)
+      .eq("slice_value", sliceValue)
+      .eq("primary_instrument_id", PRIMARY_ID)
+      .order("generated_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    setCrossInstrumentRow((data ?? null) as CrossInstrumentRow | null);
+    setLoadingCrossInstrument(false);
+  }, [user, sliceType, sliceValue]);
+
   const loadNarrative = useCallback(async () => {
     if (!user) return;
     setLoadingNarrative(true);
