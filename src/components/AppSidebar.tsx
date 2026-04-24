@@ -66,7 +66,6 @@ const coachNav: NavItem[] = [
 
 const adminNav: NavItem[] = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
-  { title: "Company Dashboard", url: "/company/dashboard", icon: Building2 },
   { title: "My Results", url: "/my-results", icon: BarChart3 },
   { title: "Shared Results", url: "/shared-results", icon: Users2 },
   { title: "Assessment", url: "/assessment", icon: ClipboardList },
@@ -129,6 +128,8 @@ export function AppSidebar() {
   const navItems = getNavItems(profile?.account_type);
   const isSettingsOpen = location.pathname.startsWith('/settings');
   const isClientsOpen = location.pathname.startsWith('/coach/clients') || location.pathname.startsWith('/coach/client-results');
+  const isDashboardsOpen = location.pathname.startsWith('/company/nai-dashboard') || location.pathname.startsWith('/company/ptp-dashboard');
+  const showDashboardsMenu = profile?.account_type === 'company_admin' || profile?.account_type === 'org_admin' || profile?.account_type === 'brainwise_super_admin';
   const settingsSubItems: { title: string; url: string; icon: React.ElementType; disabled?: boolean; badge?: string }[] = [
     { title: 'General Settings', url: '/settings', icon: Settings },
     { title: 'Privacy & Permissions', url: '/settings/privacy', icon: Shield },
@@ -235,6 +236,58 @@ export function AppSidebar() {
                   </SidebarMenuItem>
                 );
               })}
+              {showDashboardsMenu && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <NavLink
+                      to="/company/nai-dashboard"
+                      className="hover:bg-sidebar-accent"
+                      activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                    >
+                      <LayoutDashboard className="h-4 w-4 shrink-0" />
+                      {!collapsed && (
+                        <div className="flex items-center justify-between flex-1">
+                          <span>Dashboards</span>
+                          {isDashboardsOpen
+                            ? <ChevronDown className="h-3 w-3" />
+                            : <ChevronRight className="h-3 w-3" />
+                          }
+                        </div>
+                      )}
+                    </NavLink>
+                  </SidebarMenuButton>
+                  {isDashboardsOpen && !collapsed && (
+                    <div className="ml-4 mt-1 space-y-1">
+                      <SidebarMenuItem key="/company/nai-dashboard">
+                        <SidebarMenuButton asChild>
+                          <NavLink
+                            to="/company/nai-dashboard"
+                            end
+                            className="hover:bg-sidebar-accent text-sm"
+                            activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                          >
+                            <BarChart3 className="h-3.5 w-3.5 shrink-0" />
+                            <span>NAI Dashboard</span>
+                          </NavLink>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                      <SidebarMenuItem key="/company/ptp-dashboard">
+                        <SidebarMenuButton asChild>
+                          <NavLink
+                            to="/company/ptp-dashboard"
+                            end
+                            className="hover:bg-sidebar-accent text-sm"
+                            activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                          >
+                            <BarChart3 className="h-3.5 w-3.5 shrink-0" />
+                            <span>PTP Dashboard</span>
+                          </NavLink>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    </div>
+                  )}
+                </SidebarMenuItem>
+              )}
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
                   <NavLink

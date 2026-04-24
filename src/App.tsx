@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -44,6 +44,7 @@ import AdminTeams from "./pages/admin/AdminTeams";
 import AdminResources from "./pages/admin/AdminResources";
 import Features from "./pages/company/Features";
 import CompanyDashboard from "./pages/company/CompanyDashboard";
+import PTPDashboard from "./pages/company/PTPDashboard";
 import PlatformHealth from "./pages/super-admin/PlatformHealth";
 import CompanyAccounts from "./pages/super-admin/CompanyAccounts";
 import VersionManagement from "./pages/super-admin/VersionManagement";
@@ -105,7 +106,9 @@ const App = () => (
               {/* Admin */}
               <Route path="/admin/users" element={<RoleGuard allowedRoles={["company_admin", "org_admin"]}><AdminUsers /></RoleGuard>} />
               <Route path="/company/features" element={<RoleGuard allowedRoles={["company_admin", "org_admin"]}><Features /></RoleGuard>} />
-              <Route path="/company/dashboard" element={<RoleGuard allowedRoles={["company_admin", "org_admin", "brainwise_super_admin"]}><CompanyDashboard /></RoleGuard>} />
+              <Route path="/company/nai-dashboard" element={<RoleGuard allowedRoles={["company_admin", "org_admin", "brainwise_super_admin"]}><CompanyDashboard /></RoleGuard>} />
+              <Route path="/company/dashboard" element={<Navigate to="/company/nai-dashboard" replace />} />
+              <Route path="/company/ptp-dashboard" element={<RoleGuard allowedRoles={["company_admin", "org_admin", "brainwise_super_admin"]}><PTPDashboard /></RoleGuard>} />
               <Route path="/admin/teams" element={<RoleGuard allowedRoles={["company_admin", "org_admin"]}><AdminTeams /></RoleGuard>} />
               <Route path="/admin/resources" element={<RoleGuard allowedRoles={["company_admin", "org_admin"]}><AdminResources /></RoleGuard>} />
 

@@ -1356,6 +1356,7 @@ export type Database = {
           code: string
           created_at: string
           created_by_user_id: string
+          department_id: string | null
           department_name: string | null
           expires_at: string
           id: string
@@ -1371,6 +1372,7 @@ export type Database = {
           code: string
           created_at?: string
           created_by_user_id: string
+          department_id?: string | null
           department_name?: string | null
           expires_at?: string
           id?: string
@@ -1386,6 +1388,7 @@ export type Database = {
           code?: string
           created_at?: string
           created_by_user_id?: string
+          department_id?: string | null
           department_name?: string | null
           expires_at?: string
           id?: string
@@ -1423,6 +1426,20 @@ export type Database = {
             columns: ["created_by_user_id"]
             isOneToOne: false
             referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "corporate_invitations_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["department_joined_id"]
+          },
+          {
+            foreignKeyName: "corporate_invitations_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
             referencedColumns: ["id"]
           },
           {
@@ -1828,8 +1845,10 @@ export type Database = {
           narrative_text: Json
           organization_id: string
           participant_count: number
+          rsi_score: number | null
           slice_type: string
           slice_value: string
+          tri_score: number | null
         }
         Insert: {
           dimension_scores?: Json
@@ -1841,8 +1860,10 @@ export type Database = {
           narrative_text?: Json
           organization_id: string
           participant_count: number
+          rsi_score?: number | null
           slice_type?: string
           slice_value?: string
+          tri_score?: number | null
         }
         Update: {
           dimension_scores?: Json
@@ -1854,8 +1875,10 @@ export type Database = {
           narrative_text?: Json
           organization_id?: string
           participant_count?: number
+          rsi_score?: number | null
           slice_type?: string
           slice_value?: string
+          tri_score?: number | null
         }
         Relationships: [
           {
@@ -3477,6 +3500,7 @@ export type Database = {
       }
       get_instrument_aggregate: {
         Args: {
+          p_context_type?: string
           p_instrument: string
           p_slice_type?: string
           p_slice_value?: string
