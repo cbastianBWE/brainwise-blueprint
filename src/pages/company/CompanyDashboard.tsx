@@ -1078,7 +1078,8 @@ export default function CompanyDashboard() {
               {sliceType === "all" ? "All organization" : `${sliceType}: ${sliceValue}`} · n={participantCount}
             </span>
             <Button variant="outline" size="sm" onClick={() => setExportModal(true)} disabled={exporting}>
-              {exporting ? "Exporting..." : "Export ↓"}
+              <Download style={{ marginRight: 6 }} />
+              {exporting ? "Exporting..." : "Export PDF"}
             </Button>
             <Button size="sm" onClick={handleRegenerate} disabled={regenerating || suppressed}>
               <RefreshCw className={regenerating ? "animate-spin" : ""} />

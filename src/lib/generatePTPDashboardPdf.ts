@@ -625,6 +625,10 @@ export function generatePTPDashboardPdf(data: PTPDashboardPdfData): void {
     }
 
     for (const iv of data.interventions) {
+      const titleLines = doc.splitTextToSize(
+        iv.title,
+        CONTENT_W - 12,
+      ) as string[];
       const descLines = doc.splitTextToSize(
         iv.description,
         CONTENT_W - 12,
@@ -632,21 +636,26 @@ export function generatePTPDashboardPdf(data: PTPDashboardPdfData): void {
       const targetNames = iv.targetDimensions
         .map((d) => DIM_NAME_MAP[d] || d)
         .join(" · ");
-      const cardH = 26 + descLines.length * 5 + 6;
+      const cardH =
+        10 + titleLines.length * 7 + 8 + descLines.length * 5 + 8;
 
       checkPageBreak(cardH + 4);
 
       setFill(SAND);
       doc.roundedRect(MARGIN_L, y, CONTENT_W, cardH, 2, 2, "F");
 
-      // Title
+      // Title (stacked)
       setText(NAVY);
       doc.setFont("helvetica", "bold");
       doc.setFontSize(13);
-      doc.text(iv.title, MARGIN_L + 6, y + 9);
+      let titleY = y + 9;
+      for (const line of titleLines) {
+        doc.text(line, MARGIN_L + 6, titleY);
+        titleY += 7;
+      }
 
       // Badges row
-      const badgeY = y + 14;
+      const badgeY = titleY + 2;
       let badgeX = MARGIN_L + 6;
 
       const drawBadge = (
@@ -684,7 +693,7 @@ export function generatePTPDashboardPdf(data: PTPDashboardPdfData): void {
       setText(TEXT);
       doc.setFont("helvetica", "normal");
       doc.setFontSize(11);
-      let dy = y + 20;
+      let dy = badgeY + 6;
       for (const line of descLines) {
         doc.text(line, MARGIN_L + 6, dy);
         dy += 5;
