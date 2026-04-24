@@ -8,7 +8,9 @@ export interface PTPDashboardPdfSections {
   overview: boolean;
   dimensions: boolean;
   interpretation: boolean;
+  trends: boolean;
   interventions: boolean;
+  crossInstrument: boolean;
 }
 
 export interface PTPDashboardPdfData {
@@ -49,6 +51,13 @@ export interface PTPDashboardPdfData {
     priority: string;
     timeHorizon: string;
     interventionType: string;
+  }>;
+  narrativeHistory: Array<{
+    generated_at: string;
+    tri_score: number | null;
+    rsi_score: number | null;
+    dimension_scores?: Record<string, { avg_score: number }>;
+    participant_count: number;
   }>;
   exportSections: PTPDashboardPdfSections;
 }
