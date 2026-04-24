@@ -169,6 +169,10 @@ export default function CompanyDashboard() {
 
   const [interventions, setInterventions] = useState<Intervention[]>([]);
   const [narrativeHistory, setNarrativeHistory] = useState<NarrativeHistory[]>([]);
+  const [compareEnabled, setCompareEnabled] = useState(false);
+  const [compareSliceType, setCompareSliceType] = useState<string>("all");
+  const [compareSliceValue, setCompareSliceValue] = useState<string>("all");
+  const [compareHistory, setCompareHistory] = useState<NarrativeHistory[]>([]);
   const [loadingInterventions, setLoadingInterventions] = useState(false);
   const [expandedDims, setExpandedDims] = useState<Set<string>>(new Set());
   const [trackingModal, setTrackingModal] = useState<{ open: boolean; intervention: Intervention | null }>({ open: false, intervention: null });
@@ -265,11 +269,24 @@ export default function CompanyDashboard() {
     setNarrativeHistory((data ?? []) as NarrativeHistory[]);
   }, [user, sliceType, sliceValue]);
 
+  const loadCompareHistory = useCallback(async () => {
+    if (!user || !compareEnabled) { setCompareHistory([]); return; }
+    const { data } = await (supabase as any)
+      .from("org_dashboard_narratives")
+      .select("id, generated_at, participant_count, index_score, slice_type, slice_value, dimension_scores, narrative_text")
+      .eq("slice_type", compareSliceType)
+      .eq("slice_value", compareSliceValue)
+      .order("generated_at", { ascending: false })
+      .limit(10);
+    setCompareHistory((data ?? []) as NarrativeHistory[]);
+  }, [user, compareEnabled, compareSliceType, compareSliceValue]);
+
   useEffect(() => { loadUsage(); }, [loadUsage]);
   useEffect(() => { loadAggregate(); }, [loadAggregate]);
   useEffect(() => { loadNarrative(); }, [loadNarrative]);
   
   useEffect(() => { loadNarrativeHistory(); }, [loadNarrativeHistory]);
+  useEffect(() => { loadCompareHistory(); }, [loadCompareHistory]);
 
   const handleRegenerate = async () => {
     if (!user) return;
@@ -1555,7 +1572,41 @@ export default function CompanyDashboard() {
       {activeTab === "trends" && (
         <div data-export-tab="true">
           <div style={{ marginBottom: 14, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-            <span style={{ fontSize: 13, color: "var(--muted-foreground)" }}>Showing trend across AI interpretation generations for this slice.</span>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+              <span style={{ fontSize: 13, color: "var(--muted-foreground)" }}>
+                Showing trend for: <strong>{sliceType === "all" ? "All organization" : `${sliceType}: ${sliceValue}`}</strong>
+              </span>
+              <button
+                onClick={() => { setCompareEnabled(v => !v); if (compareEnabled) setCompareHistory([]); }}
+                style={{
+                  fontSize: 11, padding: "3px 10px", borderRadius: 20, cursor: "pointer",
+                  border: `0.5px solid ${compareEnabled ? TEAL : "var(--border)"}`,
+                  background: compareEnabled ? "#e0f0f2" : "var(--muted)",
+                  color: compareEnabled ? TEAL : "var(--muted-foreground)",
+                }}
+              >
+                {compareEnabled ? "✕ Remove comparison" : "+ Compare cohort"}
+              </button>
+              {compareEnabled && (
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <span style={{ fontSize: 11, color: "var(--muted-foreground)" }}>vs.</span>
+                  <select
+                    value={compareSliceType === "department" ? `dept:${compareSliceValue}` : compareSliceType === "org_level" ? `level:${compareSliceValue}` : "all"}
+                    onChange={e => {
+                      const v = e.target.value;
+                      if (v === "all") { setCompareSliceType("all"); setCompareSliceValue("all"); }
+                      else if (v.startsWith("dept:")) { setCompareSliceType("department"); setCompareSliceValue(v.slice(5)); }
+                      else if (v.startsWith("level:")) { setCompareSliceType("org_level"); setCompareSliceValue(v.slice(6)); }
+                    }}
+                    style={{ fontSize: 11, padding: "3px 8px", borderRadius: 20, border: `0.5px solid ${TEAL}`, background: "var(--card)", color: "var(--foreground)", cursor: "pointer" }}
+                  >
+                    <option value="all">All organization</option>
+                    {departments.map(d => <option key={d.id} value={`dept:${d.id}`}>{d.name}</option>)}
+                    {["IC", "Manager", "Director", "VP", "C-Suite", "Other"].map(l => <option key={l} value={`level:${l}`}>{l}</option>)}
+                  </select>
+                </div>
+              )}
+            </div>
           </div>
 
           {narrativeHistory.length === 0 ? (
@@ -1618,40 +1669,83 @@ export default function CompanyDashboard() {
                 ))}
               </div>
 
-              {narrativeHistory.length > 0 && (
-                <div style={{ background: "var(--card)", border: "0.5px solid var(--border)", borderRadius: 12, padding: "16px 8px 8px", marginBottom: 16 }}>
-                  <div style={{ fontSize: 10, color: "var(--muted-foreground)", paddingLeft: 28, marginBottom: 4 }}>Avg score by dimension · lower = more ready</div>
-                  <ResponsiveContainer width="100%" height={260}>
-                    <LineChart data={[...narrativeHistory].reverse().map(h => ({
-                      date: new Date(h.generated_at).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
-                      "DIM-NAI-01": h.dimension_scores?.["DIM-NAI-01"]?.avg_score,
-                      "DIM-NAI-02": h.dimension_scores?.["DIM-NAI-02"]?.avg_score,
-                      "DIM-NAI-03": h.dimension_scores?.["DIM-NAI-03"]?.avg_score,
-                      "DIM-NAI-04": h.dimension_scores?.["DIM-NAI-04"]?.avg_score,
-                      "DIM-NAI-05": h.dimension_scores?.["DIM-NAI-05"]?.avg_score,
-                    }))}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                      <XAxis dataKey="date" tick={{ fontSize: 10 }} tickLine={false} />
-                      <YAxis domain={[0, 100]} tick={{ fontSize: 10 }} tickLine={false} axisLine={false} width={28} />
-                      <Tooltip
-                        contentStyle={{ fontSize: 11, border: "0.5px solid var(--border)", borderRadius: 8 }}
-                        formatter={(value: any, name: any) => [typeof value === "number" ? Math.round(value) : value, DIM_NAMES[name as string] ?? name]}
-                      />
-                      {DIMS_BY_WEIGHT.map(dimId => (
-                        <Line
-                          key={dimId}
-                          type="monotone"
-                          dataKey={dimId}
-                          stroke={DIM_COLORS[dimId]}
-                          strokeWidth={2}
-                          dot={{ r: 3, fill: DIM_COLORS[dimId] }}
-                          connectNulls
-                        />
-                      ))}
-                    </LineChart>
-                  </ResponsiveContainer>
+              {compareEnabled && compareHistory.length > 0 && (
+                <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginBottom: 8 }}>
+                  <span style={{ fontSize: 10, color: "var(--muted-foreground)", fontStyle: "italic" }}>
+                    Dashed = {compareSliceType === "all" ? "All organization" : `${compareSliceType}: ${compareSliceValue}`}
+                  </span>
                 </div>
               )}
+
+              {narrativeHistory.length > 0 && (() => {
+                const primaryChartData = [...narrativeHistory].reverse().map(h => ({
+                  date: new Date(h.generated_at).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+                  "DIM-NAI-01": h.dimension_scores?.["DIM-NAI-01"]?.avg_score,
+                  "DIM-NAI-02": h.dimension_scores?.["DIM-NAI-02"]?.avg_score,
+                  "DIM-NAI-03": h.dimension_scores?.["DIM-NAI-03"]?.avg_score,
+                  "DIM-NAI-04": h.dimension_scores?.["DIM-NAI-04"]?.avg_score,
+                  "DIM-NAI-05": h.dimension_scores?.["DIM-NAI-05"]?.avg_score,
+                }));
+                const compareChartData = [...compareHistory].reverse().map(h => ({
+                  date: new Date(h.generated_at).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+                  "CMP-NAI-01": h.dimension_scores?.["DIM-NAI-01"]?.avg_score,
+                  "CMP-NAI-02": h.dimension_scores?.["DIM-NAI-02"]?.avg_score,
+                  "CMP-NAI-03": h.dimension_scores?.["DIM-NAI-03"]?.avg_score,
+                  "CMP-NAI-04": h.dimension_scores?.["DIM-NAI-04"]?.avg_score,
+                  "CMP-NAI-05": h.dimension_scores?.["DIM-NAI-05"]?.avg_score,
+                }));
+                const maxLen = Math.max(primaryChartData.length, compareChartData.length);
+                const mergedChartData = Array.from({ length: maxLen }, (_, i) => ({
+                  ...(primaryChartData[i] ?? {}),
+                  ...(compareChartData[i] ?? {}),
+                  date: primaryChartData[i]?.date ?? compareChartData[i]?.date ?? "",
+                }));
+                return (
+                  <div style={{ background: "var(--card)", border: "0.5px solid var(--border)", borderRadius: 12, padding: "16px 8px 8px", marginBottom: 16 }}>
+                    <div style={{ fontSize: 10, color: "var(--muted-foreground)", paddingLeft: 28, marginBottom: 4 }}>Avg score by dimension · lower = more ready</div>
+                    <ResponsiveContainer width="100%" height={260}>
+                      <LineChart data={mergedChartData}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                        <XAxis dataKey="date" tick={{ fontSize: 10 }} tickLine={false} />
+                        <YAxis domain={[0, 100]} tick={{ fontSize: 10 }} tickLine={false} axisLine={false} width={28} />
+                        <Tooltip
+                          contentStyle={{ fontSize: 11, border: "0.5px solid var(--border)", borderRadius: 8 }}
+                          formatter={(value: any, name: any) => {
+                            const key = typeof name === "string" && name.startsWith("CMP-") ? name.replace("CMP-", "DIM-") : (name as string);
+                            const label = DIM_NAMES[key] ?? name;
+                            const suffix = typeof name === "string" && name.startsWith("CMP-") ? " (compare)" : "";
+                            return [typeof value === "number" ? Math.round(value) : value, `${label}${suffix}`];
+                          }}
+                        />
+                        {DIMS_BY_WEIGHT.map(dimId => (
+                          <Line
+                            key={dimId}
+                            type="monotone"
+                            dataKey={dimId}
+                            stroke={DIM_COLORS[dimId]}
+                            strokeWidth={2}
+                            dot={{ r: 3, fill: DIM_COLORS[dimId] }}
+                            connectNulls
+                          />
+                        ))}
+                        {compareEnabled && DIMS_BY_WEIGHT.map(dimId => (
+                          <Line
+                            key={`cmp-${dimId}`}
+                            type="monotone"
+                            dataKey={dimId.replace("DIM-", "CMP-")}
+                            stroke={DIM_COLORS[dimId]}
+                            strokeWidth={1.5}
+                            strokeDasharray="5 3"
+                            strokeOpacity={0.7}
+                            dot={{ r: 2, fill: DIM_COLORS[dimId], opacity: 0.7 }}
+                            connectNulls
+                          />
+                        ))}
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                );
+              })()}
 
               <h3 style={{ fontSize: 15, fontWeight: 500, color: NAVY, margin: "20px 0 10px", textTransform: "uppercase" as const, letterSpacing: 0.5 }}>
                 Prior AI interpretation history
