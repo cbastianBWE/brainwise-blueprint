@@ -468,7 +468,7 @@ export function generatePTPDashboardPdf(data: PTPDashboardPdfData): void {
       doc.setFont("helvetica", "normal");
       doc.setFontSize(9);
       doc.text(
-        `${dim.pctAt75.toFixed(0)}% scoring ≥ 75 (high activation)`,
+        `${dim.pctAt75.toFixed(0)}% scoring >= 75 (high activation)`,
         MARGIN_L + 50,
         y + 17,
       );
