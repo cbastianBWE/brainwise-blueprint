@@ -2127,17 +2127,82 @@ export default function CompanyDashboard() {
             })()}
           </div>
 
-          {latestNarrative?.narrative_text?.business_meaning && (
-            <div style={{ background: "#F9F7F1", border: "0.5px solid var(--border)", borderRadius: 12, padding: 14 }}>
-              <div style={{ fontSize: 15, fontWeight: 500, color: NAVY, marginBottom: 8 }}>Cross-instrument AI interpretation</div>
-              <p style={{ fontSize: 14, color: "var(--muted-foreground)", margin: "0 0 10px", lineHeight: 1.6 }}>
-                The AI interpretation below was generated {latestNarrative.narrative_text && "with available data at time of generation"}. When PTP data becomes available for this slice, regenerating will produce a richer cross-instrument analysis.
-              </p>
-              <div style={{ fontSize: 14, lineHeight: 1.75, color: "var(--foreground)", whiteSpace: "pre-wrap" }}>
-                {latestNarrative.narrative_text.business_meaning}
-              </div>
+          <div style={{
+            background: SAND,
+            border: "0.5px solid var(--border)",
+            borderRadius: 12,
+            padding: 14,
+            marginTop: 14,
+          }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8, flexWrap: "wrap", gap: 8 }}>
+              <div style={{ fontSize: 15, fontWeight: 500, color: NAVY }}>Recommended next steps · cross-instrument</div>
+              {crossInstrumentRow && (
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  {isCrossInstrumentStale() && (
+                    <span style={{ fontSize: 9, padding: "2px 8px", borderRadius: 12, background: "#fef0e7", color: ORANGE, fontWeight: 500, textTransform: "uppercase", letterSpacing: 0.4 }}>
+                      Outdated
+                    </span>
+                  )}
+                  <span style={{ fontSize: 11, color: "var(--muted-foreground)" }}>
+                    Generated {new Date(crossInstrumentRow.generated_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                  </span>
+                </div>
+              )}
             </div>
-          )}
+
+            {loadingCrossInstrument ? (
+              <p style={{ fontSize: 13, color: "var(--muted-foreground)", margin: 0, fontStyle: "italic" }}>Loading recommendations…</p>
+            ) : !crossInstrumentRow ? (
+              <p style={{ fontSize: 14, color: "var(--muted-foreground)", margin: 0, lineHeight: 1.6 }}>
+                No cross-instrument recommendations generated yet for this slice. Click "Regenerate AI" — recommendations will be generated as part of the regeneration if both NAI and PTP narratives exist for this slice.
+              </p>
+            ) : (
+              <>
+                {isCrossInstrumentStale() && (
+                  <div style={{ marginBottom: 10, padding: "8px 12px", background: "#fef0e7", border: `0.5px solid ${ORANGE}`, borderRadius: 8, fontSize: 12, color: NAVY }}>
+                    One or more underlying instrument narratives have been regenerated since these recommendations were created. Regenerate to refresh.
+                  </div>
+                )}
+                {crossInstrumentRow.summary && (
+                  <p style={{ fontSize: 14, color: "var(--foreground)", margin: "0 0 14px", lineHeight: 1.7, fontWeight: 400 }}>
+                    {crossInstrumentRow.summary}
+                  </p>
+                )}
+                {crossInstrumentRow.recommendations.map((rec, i) => (
+                  <div key={rec.id ?? i} style={{
+                    background: "var(--card)",
+                    border: "0.5px solid var(--border)",
+                    borderRadius: 8,
+                    padding: 14,
+                    marginBottom: 10,
+                  }}>
+                    <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8, marginBottom: 6 }}>
+                      <span style={{ fontSize: 14, fontWeight: 600, color: NAVY }}>{rec.title}</span>
+                      <div style={{ display: "flex", gap: 4, flexShrink: 0, flexWrap: "wrap" }}>
+                        <span style={{ fontSize: 9, padding: "2px 6px", borderRadius: 3, fontWeight: 500, textTransform: "uppercase", letterSpacing: 0.4,
+                          background: rec.priority === "high" ? "#faece7" : rec.priority === "medium" ? "#faeeda" : "#e1f5ee",
+                          color: rec.priority === "high" ? "#993c1d" : rec.priority === "medium" ? "#633806" : "#0f6e56",
+                        }}>{rec.priority}</span>
+                        <span style={{ fontSize: 9, padding: "2px 6px", borderRadius: 3, background: "#eeedfe", color: "#3C096C", fontWeight: 500, textTransform: "uppercase", letterSpacing: 0.4 }}>{rec.time_horizon}</span>
+                        {rec.anchor_co_elevation && (
+                          <span style={{ fontSize: 9, padding: "2px 6px", borderRadius: 3, background: "#e8edf1", color: NAVY, fontWeight: 500 }}>{rec.anchor_co_elevation}</span>
+                        )}
+                      </div>
+                    </div>
+                    <p style={{ fontSize: 13, color: "var(--foreground)", margin: "0 0 10px", lineHeight: 1.65 }}>{rec.rationale}</p>
+                    {rec.steps && rec.steps.length > 0 && (
+                      <div style={{ marginTop: 8 }}>
+                        <div style={{ fontSize: 10, fontWeight: 500, color: NAVY, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Steps</div>
+                        <ol style={{ margin: 0, paddingLeft: 18, fontSize: 13, color: "var(--muted-foreground)", lineHeight: 1.6 }}>
+                          {rec.steps.map((step, j) => <li key={j} style={{ marginBottom: 3 }}>{step}</li>)}
+                        </ol>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </>
+            )}
+          </div>
         </div>
       )}
 
