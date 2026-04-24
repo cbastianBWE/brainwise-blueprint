@@ -3,7 +3,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { RefreshCw, AlertTriangle } from "lucide-react";
+import { RefreshCw, AlertTriangle, Download } from "lucide-react";
+import {
+  generatePTPDashboardPdf,
+  type PTPDashboardPdfSections,
+} from "@/lib/generatePTPDashboardPdf";
 import {
   LineChart,
   Line,
@@ -238,6 +242,13 @@ export default function PTPDashboard() {
   const [trackingNote, setTrackingNote] = useState<string>("");
   const [trackingStatus, setTrackingStatus] = useState<string>("not_started");
   const [savingTracking, setSavingTracking] = useState<boolean>(false);
+  const [exportModal, setExportModal] = useState<boolean>(false);
+  const [exportSections, setExportSections] = useState<PTPDashboardPdfSections>({
+    overview: true,
+    dimensions: true,
+    interpretation: true,
+    interventions: true,
+  });
 
   // Load departments on mount
   useEffect(() => {
@@ -425,6 +436,66 @@ export default function PTPDashboard() {
     }
     setSavingTracking(false);
   };
+
+  const handleExport = () => {
+    const sliceLabel =
+      sliceType === "all" ? "All organization" : `${sliceType}: ${sliceValue}`;
+    const generatedAt = latestNarrative?.generated_at
+      ? new Date(latestNarrative.generated_at).toLocaleString()
+      : new Date().toLocaleString();
+
+    const dimensionsArr = ALL_DIMS.map((dimId) => {
+      const d = dims[dimId];
+      return {
+        dimId,
+        name: DIM_NAMES[dimId],
+        avgScore: d?.avg_score ?? 0,
+        pctAt75: d?.pct_at_75_plus ?? 0,
+        pctHigh: d?.pct_high ?? 0,
+        pctElevated: d?.pct_elevated ?? 0,
+        pctLow: d?.pct_low ?? 0,
+        color: DIM_COLORS[dimId],
+      };
+    });
+
+    const nt = (latestNarrative?.narrative_text ?? {}) as Record<string, unknown>;
+    const asStr = (v: unknown): string | null =>
+      typeof v === "string" && v.length > 0 ? v : null;
+
+    generatePTPDashboardPdf({
+      orgName: "Organization",
+      sliceLabel,
+      generatedAt,
+      participantCount,
+      triScore,
+      rsiScore,
+      archetypeName: archetype?.name ?? null,
+      archetypeDescription: archetype?.description ?? null,
+      dimensions: dimensionsArr,
+      riskFlags: riskFlags as Array<{
+        id: string;
+        level: string;
+        title: string;
+        summary: string;
+        detail: string;
+      }>,
+      businessMeaning: asStr(nt.business_meaning),
+      benefits: asStr(nt.benefits),
+      risks: asStr(nt.risks),
+      nextSteps: asStr(nt.next_steps),
+      reassessmentNote: asStr(nt.reassessment_note),
+      interventions: interventions.map((iv) => ({
+        title: iv.title,
+        description: iv.description,
+        targetDimensions: iv.target_dimensions,
+        priority: iv.priority,
+        timeHorizon: iv.time_horizon,
+        interventionType: iv.intervention_type,
+      })),
+      exportSections,
+    });
+  };
+
 
   const priorityBadge = (p: string) => {
     const map: Record<string, { bg: string; color: string }> = {
@@ -614,13 +685,19 @@ export default function PTPDashboard() {
           >
             {sliceType === "all" ? "All organization" : `${sliceType}: ${sliceValue}`}
           </div>
-          <Button size="sm" onClick={handleRegenerate} disabled={regenerating || suppressed}>
-            <RefreshCw
-              className={regenerating ? "animate-spin" : ""}
-              style={{ marginRight: 6 }}
-            />
-            {regenerating ? "Generating..." : "Regenerate AI"}
-          </Button>
+          <div style={{ display: "inline-flex", gap: 8 }}>
+            <Button size="sm" variant="outline" onClick={() => setExportModal(true)}>
+              <Download style={{ marginRight: 6 }} />
+              Export PDF
+            </Button>
+            <Button size="sm" onClick={handleRegenerate} disabled={regenerating || suppressed}>
+              <RefreshCw
+                className={regenerating ? "animate-spin" : ""}
+                style={{ marginRight: 6 }}
+              />
+              {regenerating ? "Generating..." : "Regenerate AI"}
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -2869,6 +2946,102 @@ export default function PTPDashboard() {
           </div>
         </div>
       )}
+
+      {/* EXPORT PDF MODAL */}
+      {exportModal && (
+        <div
+          onClick={() => setExportModal(false)}
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.5)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1000,
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: "#fff",
+              borderRadius: 12,
+              padding: 24,
+              width: 360,
+              maxWidth: "92vw",
+              position: "relative",
+            }}
+          >
+            <button
+              onClick={() => setExportModal(false)}
+              aria-label="Close"
+              style={{
+                position: "absolute",
+                top: 10,
+                right: 12,
+                background: "transparent",
+                border: "none",
+                fontSize: 20,
+                cursor: "pointer",
+                color: "var(--muted-foreground)",
+                lineHeight: 1,
+              }}
+            >
+              ×
+            </button>
+            <h2 style={{ margin: 0, marginBottom: 16, fontSize: 16, color: NAVY, fontWeight: 600 }}>
+              Export PTP Dashboard
+            </h2>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 16 }}>
+              {(
+                [
+                  { key: "overview", label: "Overview" },
+                  { key: "dimensions", label: "Dimensions" },
+                  { key: "interpretation", label: "AI Interpretation" },
+                  { key: "interventions", label: "Interventions" },
+                ] as Array<{ key: keyof PTPDashboardPdfSections; label: string }>
+              ).map(({ key, label }) => (
+                <label
+                  key={key}
+                  style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, cursor: "pointer" }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={exportSections[key]}
+                    onChange={(e) =>
+                      setExportSections((prev) => ({ ...prev, [key]: e.target.checked }))
+                    }
+                  />
+                  {label}
+                </label>
+              ))}
+            </div>
+            <div style={{ fontSize: 11, color: "var(--muted-foreground)", marginBottom: 14 }}>
+              All collapsed content will be automatically expanded in the export.
+            </div>
+            <button
+              onClick={() => {
+                handleExport();
+                setExportModal(false);
+              }}
+              style={{
+                background: NAVY,
+                color: "#fff",
+                border: "none",
+                borderRadius: 8,
+                padding: "10px 18px",
+                fontSize: 13,
+                cursor: "pointer",
+                width: "100%",
+                fontWeight: 500,
+              }}
+            >
+              Download PDF
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+
