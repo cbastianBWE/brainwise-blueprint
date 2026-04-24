@@ -243,6 +243,8 @@ export default function CompanyDashboard() {
 
   const [usage, setUsage] = useState<UsageSummary | null>(null);
   const [aggregate, setAggregate] = useState<AggregateResult | null>(null);
+  const [ptpAggregate, setPtpAggregate] = useState<AggregateResult | null>(null);
+  const [loadingPtpAgg, setLoadingPtpAgg] = useState(false);
   const [latestNarrative, setLatestNarrative] = useState<StoredNarrative | null>(null);
   const [loadingUsage, setLoadingUsage] = useState(true);
   const [loadingAgg, setLoadingAgg] = useState(true);
