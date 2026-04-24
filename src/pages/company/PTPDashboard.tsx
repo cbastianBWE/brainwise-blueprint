@@ -2890,18 +2890,39 @@ export default function PTPDashboard() {
               compound patterns require sequential intervention because the barriers reinforce
               each other.
             </p>
-            <div
-              style={{
-                background: "var(--muted)",
-                borderRadius: 8,
-                padding: "10px 12px",
-                fontSize: 13,
-                color: "var(--muted-foreground)",
-                fontStyle: "italic",
-              }}
-            >
-              Co-elevation pattern detection requires NAI aggregate data for this slice.
-            </div>
+            {(() => {
+              const havePtp = Object.keys(dims).length > 0;
+              const haveNai = !!naiAggregate?.dimensions && Object.keys(naiAggregate.dimensions).length > 0 && !naiAggregate?.suppressed;
+              if (!haveNai || !havePtp) {
+                return (
+                  <div style={{ background: "var(--muted)", borderRadius: 8, padding: "10px 12px", fontSize: 13, color: "var(--muted-foreground)", fontStyle: "italic" }}>
+                    Co-elevation pattern detection requires NAI aggregate data for this slice.
+                  </div>
+                );
+              }
+              const patterns = detectCoElevations(naiAggregate!.dimensions!, dims);
+              if (patterns.length === 0) {
+                return (
+                  <div style={{ background: "var(--muted)", borderRadius: 8, padding: "10px 12px", fontSize: 13, color: "var(--muted-foreground)" }}>
+                    No co-elevation patterns detected in current data — all cross-instrument dimension pairs are within normal range.
+                  </div>
+                );
+              }
+              return (
+                <div style={{ display: "flex", flexDirection: "column" as const, gap: 10 }}>
+                  {patterns.map((p, i) => (
+                    <div key={i} style={{ background: "var(--muted)", borderRadius: 8, padding: 12, border: "0.5px solid var(--border)" }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: NAVY, marginBottom: 6 }}>{p.label}</div>
+                      <div style={{ fontSize: 13, color: "var(--muted-foreground)", marginBottom: 8, lineHeight: 1.6 }}>{p.description}</div>
+                      <div style={{ display: "flex", gap: 16, fontSize: 12 }}>
+                        <span><span style={{ color: "var(--muted-foreground)" }}>NAI </span><span style={{ color: NAI_DIM_COLORS[p.naiDimId], fontWeight: 600 }}>{p.naiDimName} {Math.round(p.naiScore)}</span></span>
+                        <span><span style={{ color: "var(--muted-foreground)" }}>PTP </span><span style={{ color: DIM_COLORS[p.ptpDimId], fontWeight: 600 }}>{p.ptpDimName} {Math.round(p.ptpScore)}</span></span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
           </div>
           {latestNarrative?.narrative_text?.business_meaning && (
             <div
