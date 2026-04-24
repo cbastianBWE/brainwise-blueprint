@@ -1054,6 +1054,99 @@ export function generatePTPDashboardPdf(data: PTPDashboardPdfData): void {
         y += cardH + 4;
       }
     }
+
+    // Recommended next steps · cross-instrument
+    if (data.crossInstrumentRecommendations) {
+      const recs = data.crossInstrumentRecommendations;
+      checkPageBreak(30);
+      y += 6;
+      setText(NAVY);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(13);
+      doc.text("Recommended Next Steps · Cross-Instrument", MARGIN_L, y);
+      setDraw(ORANGE);
+      doc.setLineWidth(0.8);
+      doc.line(MARGIN_L, y + 2, MARGIN_L + 60, y + 2);
+      y += 8;
+
+      setText(MUTED);
+      doc.setFont("helvetica", "italic");
+      doc.setFontSize(8);
+      doc.text(
+        `Generated ${new Date(recs.generated_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`,
+        MARGIN_L,
+        y,
+      );
+      y += 6;
+
+      if (recs.summary) {
+        const sumLines = doc.splitTextToSize(recs.summary, CONTENT_W) as string[];
+        setText(TEXT);
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(10);
+        doc.text(sumLines, MARGIN_L, y);
+        y += sumLines.length * 5 + 4;
+      }
+
+      for (const rec of recs.recommendations) {
+        const titleLines = doc.splitTextToSize(rec.title, CONTENT_W - 50) as string[];
+        const ratLines = doc.splitTextToSize(rec.rationale, CONTENT_W - 12) as string[];
+        const stepLineCounts = (rec.steps ?? []).map((s, i) =>
+          (doc.splitTextToSize(`${i + 1}. ${s}`, CONTENT_W - 18) as string[]).length,
+        );
+        const stepsHeight = rec.steps && rec.steps.length > 0
+          ? 6 + stepLineCounts.reduce((a, c) => a + c * 4.5, 0) + 2
+          : 0;
+        const cardH = 8 + titleLines.length * 5 + 3 + ratLines.length * 4.5 + stepsHeight + 6;
+        checkPageBreak(cardH + 4);
+
+        setFill(SAND);
+        doc.roundedRect(MARGIN_L, y, CONTENT_W, cardH, 2, 2, "F");
+
+        // Title
+        setText(NAVY);
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(11);
+        doc.text(titleLines, MARGIN_L + 6, y + 7);
+
+        // Priority + horizon badges (right-aligned)
+        const prioColor: [number, number, number] =
+          rec.priority === "high" ? [153, 60, 29] : rec.priority === "medium" ? [99, 56, 6] : [15, 110, 86];
+        doc.setFontSize(8);
+        doc.setFont("helvetica", "bold");
+        setText(prioColor);
+        doc.text(rec.priority.toUpperCase(), MARGIN_L + CONTENT_W - 6, y + 7, { align: "right" });
+        setText(PURPLE);
+        doc.text(rec.time_horizon.toUpperCase(), MARGIN_L + CONTENT_W - 26, y + 7, { align: "right" });
+
+        // Rationale
+        let cy = y + 7 + titleLines.length * 5 + 3;
+        setText(TEXT);
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(9);
+        doc.text(ratLines, MARGIN_L + 6, cy);
+        cy += ratLines.length * 4.5 + 2;
+
+        // Steps
+        if (rec.steps && rec.steps.length > 0) {
+          setText(NAVY);
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(8);
+          doc.text("STEPS", MARGIN_L + 6, cy);
+          cy += 4;
+          setText(MUTED);
+          doc.setFont("helvetica", "normal");
+          doc.setFontSize(9);
+          rec.steps.forEach((step, idx) => {
+            const stepLines = doc.splitTextToSize(`${idx + 1}. ${step}`, CONTENT_W - 18) as string[];
+            doc.text(stepLines, MARGIN_L + 10, cy);
+            cy += stepLines.length * 4.5;
+          });
+        }
+
+        y += cardH + 4;
+      }
+    }
   }
 
   addFooter();
