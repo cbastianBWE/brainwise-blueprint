@@ -77,6 +77,21 @@ export interface PTPDashboardPdfData {
     naiColor: string;
     ptpColor: string;
   }> | null;
+  crossInstrumentRecommendations?: {
+    id: string;
+    primary_narrative_id: string;
+    recommendations: Array<{
+      id: string;
+      title: string;
+      rationale: string;
+      steps: string[];
+      priority: 'high' | 'medium' | 'low';
+      time_horizon: 'immediate' | '30-day' | '90-day';
+      anchor_co_elevation: string | null;
+    }>;
+    summary: string | null;
+    generated_at: string;
+  } | null;
 }
 
 // ============================================================
