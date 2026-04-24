@@ -95,6 +95,14 @@ const DIM_NAME_MAP: Record<string, string> = {
   "DIM-PTP-05": "Pleasure",
 };
 
+const DIM_RGB_MAP: Record<string, [number, number, number]> = {
+  "DIM-PTP-01": [2, 31, 54],
+  "DIM-PTP-02": [0, 109, 119],
+  "DIM-PTP-03": [109, 104, 117],
+  "DIM-PTP-04": [60, 9, 108],
+  "DIM-PTP-05": [255, 183, 3],
+};
+
 // ============================================================
 // Helpers
 // ============================================================
