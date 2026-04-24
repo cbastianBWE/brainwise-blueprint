@@ -386,6 +386,7 @@ export default function CompanyDashboard() {
 
   useEffect(() => { loadUsage(); }, [loadUsage]);
   useEffect(() => { loadAggregate(); }, [loadAggregate]);
+  useEffect(() => { if (activeTab === "cross-instrument") loadPTPAggregate(); }, [activeTab, loadPTPAggregate]);
   useEffect(() => { loadNarrative(); }, [loadNarrative]);
   
   useEffect(() => { loadNarrativeHistory(); }, [loadNarrativeHistory]);
