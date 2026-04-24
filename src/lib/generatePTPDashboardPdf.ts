@@ -864,7 +864,8 @@ export function generatePTPDashboardPdf(data: PTPDashboardPdfData): void {
   // CROSS-INSTRUMENT PAGE
   // ============================================================
   if (data.exportSections.crossInstrument) {
-    newPage();
+    checkPageBreak(60);
+    y += 6;
     sectionHeading("Cross-Instrument");
 
     const bodyText =
