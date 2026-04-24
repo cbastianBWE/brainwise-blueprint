@@ -1834,6 +1834,91 @@ export type Database = {
           },
         ]
       }
+      org_cross_instrument_recommendations: {
+        Row: {
+          generated_at: string
+          generated_by: string | null
+          id: string
+          input_narrative_ids: Json
+          organization_id: string
+          primary_instrument_id: string
+          primary_narrative_id: string
+          recommendations: Json
+          slice_type: string
+          slice_value: string
+          summary: string | null
+        }
+        Insert: {
+          generated_at?: string
+          generated_by?: string | null
+          id?: string
+          input_narrative_ids?: Json
+          organization_id: string
+          primary_instrument_id: string
+          primary_narrative_id: string
+          recommendations?: Json
+          slice_type?: string
+          slice_value?: string
+          summary?: string | null
+        }
+        Update: {
+          generated_at?: string
+          generated_by?: string | null
+          id?: string
+          input_narrative_ids?: Json
+          organization_id?: string
+          primary_instrument_id?: string
+          primary_narrative_id?: string
+          recommendations?: Json
+          slice_type?: string
+          slice_value?: string
+          summary?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_cross_instrument_recommendations_generated_by_fkey"
+            columns: ["generated_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_cross_instrument_recommendations_generated_by_fkey"
+            columns: ["generated_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "org_cross_instrument_recommendations_generated_by_fkey"
+            columns: ["generated_by"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_cross_instrument_recommendations_generated_by_fkey"
+            columns: ["generated_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_cross_instrument_recommendations_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_cross_instrument_recommendations_primary_narrative_id_fkey"
+            columns: ["primary_narrative_id"]
+            isOneToOne: false
+            referencedRelation: "org_dashboard_narratives"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       org_dashboard_narratives: {
         Row: {
           dimension_scores: Json
