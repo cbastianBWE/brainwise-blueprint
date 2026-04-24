@@ -295,6 +295,8 @@ export default function PTPDashboard() {
   const [departments, setDepartments] = useState<Department[]>([]);
   const [usage, setUsage] = useState<UsageSummary | null>(null);
   const [aggregate, setAggregate] = useState<AggregateResult | null>(null);
+  const [naiAggregate, setNaiAggregate] = useState<AggregateResult | null>(null);
+  const [loadingNaiAgg, setLoadingNaiAgg] = useState<boolean>(false);
   const [latestNarrative, setLatestNarrative] = useState<StoredNarrative | null>(null);
   const [loadingUsage, setLoadingUsage] = useState<boolean>(true);
   const [loadingAgg, setLoadingAgg] = useState<boolean>(true);
