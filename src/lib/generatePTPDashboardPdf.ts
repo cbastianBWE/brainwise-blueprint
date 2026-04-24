@@ -797,19 +797,19 @@ export function generatePTPDashboardPdf(data: PTPDashboardPdfData): void {
       cx = startX + 2;
 
       // Generated col + Latest badge
+      const rowY = y + 4.8;
       setText([30, 30, 35]);
       doc.setFont("helvetica", "normal");
       doc.setFontSize(8);
-      doc.text(dateStr, cx, y + 4.8);
+      doc.text(dateStr, cx, rowY);
       if (i === 0) {
-        const badgeText = "LATEST";
+        const badgeX = cx + doc.getTextWidth(dateStr) + 2;
+        setFill([0, 109, 119]);
+        doc.roundedRect(badgeX, rowY - 3.5, 12, 5, 1, 1, "F");
+        setText([255, 255, 255]);
         doc.setFont("helvetica", "bold");
         doc.setFontSize(6);
-        const bw = doc.getTextWidth(badgeText) + 3;
-        setFill(ORANGE);
-        doc.roundedRect(cx + 22, y + 1.5, bw, 3.5, 0.5, 0.5, "F");
-        setText([255, 255, 255]);
-        doc.text(badgeText, cx + 22 + 1.5, y + 4);
+        doc.text("LATEST", badgeX + 1.5, rowY);
       }
       cx += cols[0].w;
 
