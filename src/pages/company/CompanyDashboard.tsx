@@ -35,6 +35,93 @@ const DIM_WEIGHTS: Record<string, number> = {
 };
 const DIMS_BY_WEIGHT = ["DIM-NAI-03", "DIM-NAI-04", "DIM-NAI-02", "DIM-NAI-01", "DIM-NAI-05"];
 
+// ── PTP cross-instrument constants ──────────────────────────────────────────
+const PTP_DIM_COLORS: Record<string, string> = {
+  "DIM-PTP-01": "#021F36", "DIM-PTP-02": "#006D77",
+  "DIM-PTP-03": "#6D6875", "DIM-PTP-04": "#3C096C", "DIM-PTP-05": "#FFB703",
+};
+const PTP_DIM_NAMES: Record<string, string> = {
+  "DIM-PTP-01": "Protection", "DIM-PTP-02": "Participation",
+  "DIM-PTP-03": "Prediction", "DIM-PTP-04": "Purpose", "DIM-PTP-05": "Pleasure",
+};
+const PTP_TRI_WEIGHTS: Record<string, number> = {
+  "DIM-PTP-01": 0.25, "DIM-PTP-02": 0.30, "DIM-PTP-03": 0.45,
+};
+const PTP_RSI_WEIGHTS: Record<string, number> = {
+  "DIM-PTP-04": 0.60, "DIM-PTP-05": 0.40,
+};
+const ALL_PTP_DIMS = ["DIM-PTP-01", "DIM-PTP-02", "DIM-PTP-03", "DIM-PTP-04", "DIM-PTP-05"];
+
+function calcPTPTRI(d: Record<string, any>): number {
+  return Math.round((100 - Object.entries(PTP_TRI_WEIGHTS).reduce((a, [k, w]) => a + (d[k]?.avg_score ?? 50) * w, 0)) * 10) / 10;
+}
+function calcPTPRSI(d: Record<string, any>): number {
+  return Math.round(Object.entries(PTP_RSI_WEIGHTS).reduce((a, [k, w]) => a + (d[k]?.avg_score ?? 50) * w, 0) * 10) / 10;
+}
+function classifyPTPArchetype(d: Record<string, any>): string {
+  const p1 = d["DIM-PTP-01"]?.avg_score ?? 0, p2 = d["DIM-PTP-02"]?.avg_score ?? 0, p3 = d["DIM-PTP-03"]?.avg_score ?? 0;
+  const e = (s: number) => s >= 50;
+  if ([p1, p2, p3].filter(e).length >= 3) return "Broadly Activated";
+  if (e(p1) && e(p3)) return "High Guard";
+  if (e(p2) && e(p1)) return "Identity Fragile";
+  if (e(p3)) return "Uncertainty Sensitive";
+  return "Low Activation";
+}
+
+interface CoElevationPattern {
+  naiDimId: string;
+  naiDimName: string;
+  ptpDimId: string;
+  ptpDimName: string;
+  naiScore: number;
+  ptpScore: number;
+  label: string;
+  description: string;
+}
+
+function detectCoElevations(
+  naiDims: Record<string, any>,
+  ptpDims: Record<string, any>,
+): CoElevationPattern[] {
+  const results: CoElevationPattern[] = [];
+  const elevated = (s: number) => s >= 50;
+  const mappings = [
+    { naiId: "DIM-NAI-01", naiName: "Certainty", ptpId: "DIM-PTP-03", ptpName: "Prediction",
+      label: "Certainty–Prediction co-elevation",
+      description: "Both instruments show ambiguity intolerance. NAI Certainty measures AI-context uncertainty aversion; PTP Prediction measures the same drive in general behaviour. Co-elevation means the workforce resists uncertainty systemically, not just in AI adoption contexts." },
+    { naiId: "DIM-NAI-02", naiName: "Agency", ptpId: "DIM-PTP-02", ptpName: "Participation",
+      label: "Agency–Participation co-elevation",
+      description: "NAI Agency measures the need for control and influence in AI adoption; PTP Participation measures social belonging and status needs. Co-elevation indicates a workforce where loss of control in AI contexts compounds social threat — people feel both disempowered and relationally threatened simultaneously." },
+    { naiId: "DIM-NAI-03", naiName: "Fairness", ptpId: "DIM-PTP-02", ptpName: "Participation",
+      label: "Fairness–Participation co-elevation",
+      description: "NAI Fairness measures perceived equity in AI implementation; PTP Participation measures social belonging and recognition. Co-elevation means unfairness concerns are amplifying social threat — people are not just perceiving AI as unfair, they are interpreting it as a signal of exclusion or diminished standing." },
+    { naiId: "DIM-NAI-04", naiName: "Ego Stability", ptpId: "DIM-PTP-01", ptpName: "Protection",
+      label: "Ego Stability–Protection co-elevation",
+      description: "NAI Ego Stability measures identity threat from AI (fear of replacement, status loss); PTP Protection measures safety and security sensitivity. Co-elevation means AI adoption is triggering both identity-level and safety-level threat responses simultaneously — the most destabilising pattern for change initiatives." },
+    { naiId: "DIM-NAI-05", naiName: "Saturation", ptpId: "DIM-PTP-03", ptpName: "Prediction",
+      label: "Saturation–Prediction co-elevation",
+      description: "NAI Saturation measures cognitive overload capacity; PTP Prediction measures ambiguity and uncertainty tolerance. Co-elevation means the workforce is both overwhelmed and uncertainty-averse — a combination that makes any complex or ambiguous change initiative extremely high-risk." },
+    { naiId: "DIM-NAI-01", naiName: "Certainty", ptpId: "DIM-PTP-01", ptpName: "Protection",
+      label: "Certainty–Protection co-elevation",
+      description: "NAI Certainty and PTP Protection are both elevated. Uncertainty about AI outcomes is activating safety-level threat responses — people are not just uncomfortable with ambiguity, they feel unsafe." },
+    { naiId: "DIM-NAI-02", naiName: "Agency", ptpId: "DIM-PTP-01", ptpName: "Protection",
+      label: "Agency–Protection co-elevation",
+      description: "Loss of control in AI contexts (NAI Agency) is compounding with generalised safety threat (PTP Protection). This combination suggests AI adoption is being experienced as existentially threatening rather than merely inconvenient." },
+  ];
+  for (const m of mappings) {
+    const naiScore = naiDims[m.naiId]?.avg_score ?? 0;
+    const ptpScore = ptpDims[m.ptpId]?.avg_score ?? 0;
+    if (elevated(naiScore) && elevated(ptpScore)) {
+      results.push({
+        naiDimId: m.naiId, naiDimName: m.naiName,
+        ptpDimId: m.ptpId, ptpDimName: m.ptpName,
+        naiScore, ptpScore, label: m.label, description: m.description,
+      });
+    }
+  }
+  return results;
+}
+
 function activationLabel(score: number) {
   if (score >= 76) return { label: "High", bg: "#faece7", color: "#993c1d" };
   if (score >= 50) return { label: "Elevated", bg: "#faeeda", color: "#633806" };
