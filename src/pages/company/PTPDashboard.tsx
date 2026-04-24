@@ -55,6 +55,80 @@ const RSI_WEIGHTS: Record<string, number> = {
   "DIM-PTP-05": 0.40,
 };
 
+// ── NAI cross-instrument constants ──────────────────────────────────────────
+const NAI_DIM_COLORS: Record<string, string> = {
+  "DIM-NAI-01": "#021F36", "DIM-NAI-02": "#F5741A", "DIM-NAI-03": "#006D77",
+  "DIM-NAI-04": "#3C096C", "DIM-NAI-05": "#7a5800",
+};
+const NAI_DIM_NAMES: Record<string, string> = {
+  "DIM-NAI-01": "Certainty", "DIM-NAI-02": "Agency", "DIM-NAI-03": "Fairness",
+  "DIM-NAI-04": "Ego Stability", "DIM-NAI-05": "Saturation",
+};
+const NAI_DIM_WEIGHTS: Record<string, number> = {
+  "DIM-NAI-03": 0.28, "DIM-NAI-04": 0.25, "DIM-NAI-02": 0.22,
+  "DIM-NAI-01": 0.15, "DIM-NAI-05": 0.10,
+};
+const ALL_NAI_DIMS = ["DIM-NAI-03", "DIM-NAI-04", "DIM-NAI-02", "DIM-NAI-01", "DIM-NAI-05"];
+
+function calcNAIIndex(d: Record<string, any>): number {
+  const friction = Object.entries(NAI_DIM_WEIGHTS).reduce((acc, [k, w]) => acc + (d[k]?.avg_score ?? 50) * w, 0);
+  return Math.round((100 - friction) * 10) / 10;
+}
+
+interface CoElevationPattern {
+  naiDimId: string;
+  naiDimName: string;
+  ptpDimId: string;
+  ptpDimName: string;
+  naiScore: number;
+  ptpScore: number;
+  label: string;
+  description: string;
+}
+
+function detectCoElevations(
+  naiDims: Record<string, any>,
+  ptpDims: Record<string, any>,
+): CoElevationPattern[] {
+  const results: CoElevationPattern[] = [];
+  const elevated = (s: number) => s >= 50;
+  const mappings = [
+    { naiId: "DIM-NAI-01", naiName: "Certainty", ptpId: "DIM-PTP-03", ptpName: "Prediction",
+      label: "Certainty–Prediction co-elevation",
+      description: "Both instruments show ambiguity intolerance. NAI Certainty measures AI-context uncertainty aversion; PTP Prediction measures the same drive in general behaviour. Co-elevation means the workforce resists uncertainty systemically, not just in AI adoption contexts." },
+    { naiId: "DIM-NAI-02", naiName: "Agency", ptpId: "DIM-PTP-02", ptpName: "Participation",
+      label: "Agency–Participation co-elevation",
+      description: "NAI Agency measures the need for control and influence in AI adoption; PTP Participation measures social belonging and status needs. Co-elevation indicates a workforce where loss of control in AI contexts compounds social threat — people feel both disempowered and relationally threatened simultaneously." },
+    { naiId: "DIM-NAI-03", naiName: "Fairness", ptpId: "DIM-PTP-02", ptpName: "Participation",
+      label: "Fairness–Participation co-elevation",
+      description: "NAI Fairness measures perceived equity in AI implementation; PTP Participation measures social belonging and recognition. Co-elevation means unfairness concerns are amplifying social threat — people are not just perceiving AI as unfair, they are interpreting it as a signal of exclusion or diminished standing." },
+    { naiId: "DIM-NAI-04", naiName: "Ego Stability", ptpId: "DIM-PTP-01", ptpName: "Protection",
+      label: "Ego Stability–Protection co-elevation",
+      description: "NAI Ego Stability measures identity threat from AI (fear of replacement, status loss); PTP Protection measures safety and security sensitivity. Co-elevation means AI adoption is triggering both identity-level and safety-level threat responses simultaneously — the most destabilising pattern for change initiatives." },
+    { naiId: "DIM-NAI-05", naiName: "Saturation", ptpId: "DIM-PTP-03", ptpName: "Prediction",
+      label: "Saturation–Prediction co-elevation",
+      description: "NAI Saturation measures cognitive overload capacity; PTP Prediction measures ambiguity and uncertainty tolerance. Co-elevation means the workforce is both overwhelmed and uncertainty-averse — a combination that makes any complex or ambiguous change initiative extremely high-risk." },
+    { naiId: "DIM-NAI-01", naiName: "Certainty", ptpId: "DIM-PTP-01", ptpName: "Protection",
+      label: "Certainty–Protection co-elevation",
+      description: "NAI Certainty and PTP Protection are both elevated. Uncertainty about AI outcomes is activating safety-level threat responses — people are not just uncomfortable with ambiguity, they feel unsafe." },
+    { naiId: "DIM-NAI-02", naiName: "Agency", ptpId: "DIM-PTP-01", ptpName: "Protection",
+      label: "Agency–Protection co-elevation",
+      description: "Loss of control in AI contexts (NAI Agency) is compounding with generalised safety threat (PTP Protection). This combination suggests AI adoption is being experienced as existentially threatening rather than merely inconvenient." },
+  ];
+  for (const m of mappings) {
+    const naiScore = naiDims[m.naiId]?.avg_score ?? 0;
+    const ptpScore = ptpDims[m.ptpId]?.avg_score ?? 0;
+    if (elevated(naiScore) && elevated(ptpScore)) {
+      results.push({
+        naiDimId: m.naiId, naiDimName: m.naiName,
+        ptpDimId: m.ptpId, ptpDimName: m.ptpName,
+        naiScore, ptpScore, label: m.label, description: m.description,
+      });
+    }
+  }
+  return results;
+}
+
 interface DimAggregate {
   avg_score: number;
   pct_high: number;
@@ -221,6 +295,8 @@ export default function PTPDashboard() {
   const [departments, setDepartments] = useState<Department[]>([]);
   const [usage, setUsage] = useState<UsageSummary | null>(null);
   const [aggregate, setAggregate] = useState<AggregateResult | null>(null);
+  const [naiAggregate, setNaiAggregate] = useState<AggregateResult | null>(null);
+  const [loadingNaiAgg, setLoadingNaiAgg] = useState<boolean>(false);
   const [latestNarrative, setLatestNarrative] = useState<StoredNarrative | null>(null);
   const [loadingUsage, setLoadingUsage] = useState<boolean>(true);
   const [loadingAgg, setLoadingAgg] = useState<boolean>(true);
@@ -331,6 +407,19 @@ export default function PTPDashboard() {
     setLoadingAgg(false);
   }, [user, sliceType, sliceValue, contextType]);
 
+  const loadNAIAggregate = useCallback(async () => {
+    if (!user) return;
+    setLoadingNaiAgg(true);
+    const { data } = await (supabase as any).rpc("get_instrument_aggregate", {
+      p_instrument: "INST-002",
+      p_slice_type: sliceType,
+      p_slice_value: sliceValue,
+      p_context_type: "both",
+    });
+    setNaiAggregate((data ?? null) as AggregateResult | null);
+    setLoadingNaiAgg(false);
+  }, [user, sliceType, sliceValue]);
+
   const loadNarrative = useCallback(async () => {
     if (!user) return;
     setLoadingNarrative(true);
@@ -392,6 +481,9 @@ export default function PTPDashboard() {
   useEffect(() => {
     loadAggregate();
   }, [loadAggregate]);
+  useEffect(() => {
+    if (activeTab === "cross-instrument") loadNAIAggregate();
+  }, [activeTab, loadNAIAggregate]);
   useEffect(() => {
     loadNarrative();
   }, [loadNarrative]);
@@ -2732,23 +2824,44 @@ export default function PTPDashboard() {
                 >
                   NAI · C.A.F.E.S.
                 </div>
-                <div
-                  style={{
-                    padding: 20,
-                    textAlign: "center",
-                    color: "var(--muted-foreground)",
-                    fontSize: 14,
-                  }}
-                >
-                  <p style={{ margin: "0 0 8px" }}>
-                    NAI aggregate data will appear here once 5+ participants have completed both
-                    instruments.
-                  </p>
-                  <p style={{ margin: 0, fontSize: 10 }}>
-                    NAI measures AI adoption friction — a complement to PTP's threat response
-                    profile.
-                  </p>
-                </div>
+                {loadingNaiAgg ? (
+                  <div style={{ padding: 20, textAlign: "center", color: "var(--muted-foreground)", fontSize: 13 }}>Loading…</div>
+                ) : naiAggregate?.suppressed ? (
+                  <div style={{ padding: 20, textAlign: "center", color: "var(--muted-foreground)", fontSize: 13, fontStyle: "italic" }}>
+                    Insufficient data (5+ participants required)
+                  </div>
+                ) : naiAggregate?.dimensions && Object.keys(naiAggregate.dimensions).length > 0 ? (
+                  <>
+                    {ALL_NAI_DIMS.map((dimId) => {
+                      const dim = naiAggregate.dimensions![dimId];
+                      if (!dim) return null;
+                      const act = activationLabel(dim.avg_score);
+                      return (
+                        <div key={dimId} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 7, fontSize: 13 }}>
+                          <span style={{ color: NAI_DIM_COLORS[dimId], fontWeight: 500 }}>{NAI_DIM_NAMES[dimId]}</span>
+                          <span>
+                            <span style={{ fontWeight: 500, color: NAI_DIM_COLORS[dimId], marginRight: 6 }}>{Math.round(dim.avg_score)}</span>
+                            <span style={{ fontSize: 9, padding: "1px 5px", borderRadius: 3, background: act.bg, color: act.color }}>{act.label}</span>
+                          </span>
+                        </div>
+                      );
+                    })}
+                    <div style={{ marginTop: 12, paddingTop: 10, borderTop: "0.5px solid var(--border)", fontSize: 13, fontWeight: 500, color: NAVY }}>
+                      AI Readiness Index: {calcNAIIndex(naiAggregate.dimensions)} / 100
+                    </div>
+                  </>
+                ) : (
+                  <div style={{ padding: 20, textAlign: "center", color: "var(--muted-foreground)", fontSize: 14 }}>
+                    <p style={{ margin: "0 0 8px" }}>
+                      NAI aggregate data will appear here once 5+ participants have completed both
+                      instruments.
+                    </p>
+                    <p style={{ margin: 0, fontSize: 10 }}>
+                      NAI measures AI adoption friction — a complement to PTP's threat response
+                      profile.
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -2777,18 +2890,39 @@ export default function PTPDashboard() {
               compound patterns require sequential intervention because the barriers reinforce
               each other.
             </p>
-            <div
-              style={{
-                background: "var(--muted)",
-                borderRadius: 8,
-                padding: "10px 12px",
-                fontSize: 13,
-                color: "var(--muted-foreground)",
-                fontStyle: "italic",
-              }}
-            >
-              Co-elevation pattern detection requires NAI aggregate data for this slice.
-            </div>
+            {(() => {
+              const havePtp = Object.keys(dims).length > 0;
+              const haveNai = !!naiAggregate?.dimensions && Object.keys(naiAggregate.dimensions).length > 0 && !naiAggregate?.suppressed;
+              if (!haveNai || !havePtp) {
+                return (
+                  <div style={{ background: "var(--muted)", borderRadius: 8, padding: "10px 12px", fontSize: 13, color: "var(--muted-foreground)", fontStyle: "italic" }}>
+                    Co-elevation pattern detection requires NAI aggregate data for this slice.
+                  </div>
+                );
+              }
+              const patterns = detectCoElevations(naiAggregate!.dimensions!, dims);
+              if (patterns.length === 0) {
+                return (
+                  <div style={{ background: "var(--muted)", borderRadius: 8, padding: "10px 12px", fontSize: 13, color: "var(--muted-foreground)" }}>
+                    No co-elevation patterns detected in current data — all cross-instrument dimension pairs are within normal range.
+                  </div>
+                );
+              }
+              return (
+                <div style={{ display: "flex", flexDirection: "column" as const, gap: 10 }}>
+                  {patterns.map((p, i) => (
+                    <div key={i} style={{ background: "var(--muted)", borderRadius: 8, padding: 12, border: "0.5px solid var(--border)" }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: NAVY, marginBottom: 6 }}>{p.label}</div>
+                      <div style={{ fontSize: 13, color: "var(--muted-foreground)", marginBottom: 8, lineHeight: 1.6 }}>{p.description}</div>
+                      <div style={{ display: "flex", gap: 16, fontSize: 12 }}>
+                        <span><span style={{ color: "var(--muted-foreground)" }}>NAI </span><span style={{ color: NAI_DIM_COLORS[p.naiDimId], fontWeight: 600 }}>{p.naiDimName} {Math.round(p.naiScore)}</span></span>
+                        <span><span style={{ color: "var(--muted-foreground)" }}>PTP </span><span style={{ color: DIM_COLORS[p.ptpDimId], fontWeight: 600 }}>{p.ptpDimName} {Math.round(p.ptpScore)}</span></span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
           </div>
           {latestNarrative?.narrative_text?.business_meaning && (
             <div

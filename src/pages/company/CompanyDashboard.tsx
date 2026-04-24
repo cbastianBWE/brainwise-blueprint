@@ -35,6 +35,93 @@ const DIM_WEIGHTS: Record<string, number> = {
 };
 const DIMS_BY_WEIGHT = ["DIM-NAI-03", "DIM-NAI-04", "DIM-NAI-02", "DIM-NAI-01", "DIM-NAI-05"];
 
+// ── PTP cross-instrument constants ──────────────────────────────────────────
+const PTP_DIM_COLORS: Record<string, string> = {
+  "DIM-PTP-01": "#021F36", "DIM-PTP-02": "#006D77",
+  "DIM-PTP-03": "#6D6875", "DIM-PTP-04": "#3C096C", "DIM-PTP-05": "#FFB703",
+};
+const PTP_DIM_NAMES: Record<string, string> = {
+  "DIM-PTP-01": "Protection", "DIM-PTP-02": "Participation",
+  "DIM-PTP-03": "Prediction", "DIM-PTP-04": "Purpose", "DIM-PTP-05": "Pleasure",
+};
+const PTP_TRI_WEIGHTS: Record<string, number> = {
+  "DIM-PTP-01": 0.25, "DIM-PTP-02": 0.30, "DIM-PTP-03": 0.45,
+};
+const PTP_RSI_WEIGHTS: Record<string, number> = {
+  "DIM-PTP-04": 0.60, "DIM-PTP-05": 0.40,
+};
+const ALL_PTP_DIMS = ["DIM-PTP-01", "DIM-PTP-02", "DIM-PTP-03", "DIM-PTP-04", "DIM-PTP-05"];
+
+function calcPTPTRI(d: Record<string, any>): number {
+  return Math.round((100 - Object.entries(PTP_TRI_WEIGHTS).reduce((a, [k, w]) => a + (d[k]?.avg_score ?? 50) * w, 0)) * 10) / 10;
+}
+function calcPTPRSI(d: Record<string, any>): number {
+  return Math.round(Object.entries(PTP_RSI_WEIGHTS).reduce((a, [k, w]) => a + (d[k]?.avg_score ?? 50) * w, 0) * 10) / 10;
+}
+function classifyPTPArchetype(d: Record<string, any>): string {
+  const p1 = d["DIM-PTP-01"]?.avg_score ?? 0, p2 = d["DIM-PTP-02"]?.avg_score ?? 0, p3 = d["DIM-PTP-03"]?.avg_score ?? 0;
+  const e = (s: number) => s >= 50;
+  if ([p1, p2, p3].filter(e).length >= 3) return "Broadly Activated";
+  if (e(p1) && e(p3)) return "High Guard";
+  if (e(p2) && e(p1)) return "Identity Fragile";
+  if (e(p3)) return "Uncertainty Sensitive";
+  return "Low Activation";
+}
+
+interface CoElevationPattern {
+  naiDimId: string;
+  naiDimName: string;
+  ptpDimId: string;
+  ptpDimName: string;
+  naiScore: number;
+  ptpScore: number;
+  label: string;
+  description: string;
+}
+
+function detectCoElevations(
+  naiDims: Record<string, any>,
+  ptpDims: Record<string, any>,
+): CoElevationPattern[] {
+  const results: CoElevationPattern[] = [];
+  const elevated = (s: number) => s >= 50;
+  const mappings = [
+    { naiId: "DIM-NAI-01", naiName: "Certainty", ptpId: "DIM-PTP-03", ptpName: "Prediction",
+      label: "Certainty–Prediction co-elevation",
+      description: "Both instruments show ambiguity intolerance. NAI Certainty measures AI-context uncertainty aversion; PTP Prediction measures the same drive in general behaviour. Co-elevation means the workforce resists uncertainty systemically, not just in AI adoption contexts." },
+    { naiId: "DIM-NAI-02", naiName: "Agency", ptpId: "DIM-PTP-02", ptpName: "Participation",
+      label: "Agency–Participation co-elevation",
+      description: "NAI Agency measures the need for control and influence in AI adoption; PTP Participation measures social belonging and status needs. Co-elevation indicates a workforce where loss of control in AI contexts compounds social threat — people feel both disempowered and relationally threatened simultaneously." },
+    { naiId: "DIM-NAI-03", naiName: "Fairness", ptpId: "DIM-PTP-02", ptpName: "Participation",
+      label: "Fairness–Participation co-elevation",
+      description: "NAI Fairness measures perceived equity in AI implementation; PTP Participation measures social belonging and recognition. Co-elevation means unfairness concerns are amplifying social threat — people are not just perceiving AI as unfair, they are interpreting it as a signal of exclusion or diminished standing." },
+    { naiId: "DIM-NAI-04", naiName: "Ego Stability", ptpId: "DIM-PTP-01", ptpName: "Protection",
+      label: "Ego Stability–Protection co-elevation",
+      description: "NAI Ego Stability measures identity threat from AI (fear of replacement, status loss); PTP Protection measures safety and security sensitivity. Co-elevation means AI adoption is triggering both identity-level and safety-level threat responses simultaneously — the most destabilising pattern for change initiatives." },
+    { naiId: "DIM-NAI-05", naiName: "Saturation", ptpId: "DIM-PTP-03", ptpName: "Prediction",
+      label: "Saturation–Prediction co-elevation",
+      description: "NAI Saturation measures cognitive overload capacity; PTP Prediction measures ambiguity and uncertainty tolerance. Co-elevation means the workforce is both overwhelmed and uncertainty-averse — a combination that makes any complex or ambiguous change initiative extremely high-risk." },
+    { naiId: "DIM-NAI-01", naiName: "Certainty", ptpId: "DIM-PTP-01", ptpName: "Protection",
+      label: "Certainty–Protection co-elevation",
+      description: "NAI Certainty and PTP Protection are both elevated. Uncertainty about AI outcomes is activating safety-level threat responses — people are not just uncomfortable with ambiguity, they feel unsafe." },
+    { naiId: "DIM-NAI-02", naiName: "Agency", ptpId: "DIM-PTP-01", ptpName: "Protection",
+      label: "Agency–Protection co-elevation",
+      description: "Loss of control in AI contexts (NAI Agency) is compounding with generalised safety threat (PTP Protection). This combination suggests AI adoption is being experienced as existentially threatening rather than merely inconvenient." },
+  ];
+  for (const m of mappings) {
+    const naiScore = naiDims[m.naiId]?.avg_score ?? 0;
+    const ptpScore = ptpDims[m.ptpId]?.avg_score ?? 0;
+    if (elevated(naiScore) && elevated(ptpScore)) {
+      results.push({
+        naiDimId: m.naiId, naiDimName: m.naiName,
+        ptpDimId: m.ptpId, ptpDimName: m.ptpName,
+        naiScore, ptpScore, label: m.label, description: m.description,
+      });
+    }
+  }
+  return results;
+}
+
 function activationLabel(score: number) {
   if (score >= 76) return { label: "High", bg: "#faece7", color: "#993c1d" };
   if (score >= 50) return { label: "Elevated", bg: "#faeeda", color: "#633806" };
@@ -156,6 +243,8 @@ export default function CompanyDashboard() {
 
   const [usage, setUsage] = useState<UsageSummary | null>(null);
   const [aggregate, setAggregate] = useState<AggregateResult | null>(null);
+  const [ptpAggregate, setPtpAggregate] = useState<AggregateResult | null>(null);
+  const [loadingPtpAgg, setLoadingPtpAgg] = useState(false);
   const [latestNarrative, setLatestNarrative] = useState<StoredNarrative | null>(null);
   const [loadingUsage, setLoadingUsage] = useState(true);
   const [loadingAgg, setLoadingAgg] = useState(true);
@@ -224,6 +313,19 @@ export default function CompanyDashboard() {
     setLoadingAgg(false);
   }, [user, sliceType, sliceValue]);
 
+  const loadPTPAggregate = useCallback(async () => {
+    if (!user) return;
+    setLoadingPtpAgg(true);
+    const { data } = await (supabase as any).rpc("get_instrument_aggregate", {
+      p_instrument: "INST-001",
+      p_slice_type: sliceType,
+      p_slice_value: sliceValue,
+      p_context_type: "both",
+    });
+    setPtpAggregate((data ?? null) as AggregateResult | null);
+    setLoadingPtpAgg(false);
+  }, [user, sliceType, sliceValue]);
+
   const loadInterventions = useCallback(async (narrativeId?: string) => {
     if (!user) return;
     const id = narrativeId ?? latestNarrative?.id;
@@ -284,6 +386,7 @@ export default function CompanyDashboard() {
 
   useEffect(() => { loadUsage(); }, [loadUsage]);
   useEffect(() => { loadAggregate(); }, [loadAggregate]);
+  useEffect(() => { if (activeTab === "cross-instrument") loadPTPAggregate(); }, [activeTab, loadPTPAggregate]);
   useEffect(() => { loadNarrative(); }, [loadNarrative]);
   
   useEffect(() => { loadNarrativeHistory(); }, [loadNarrativeHistory]);
@@ -1805,10 +1908,44 @@ export default function CompanyDashboard() {
                 <div style={{ fontSize: 13, fontWeight: 500, color: "var(--muted-foreground)", textTransform: "uppercase" as const, letterSpacing: 0.04, marginBottom: 10 }}>
                   PTP · Threat response
                 </div>
-                <div style={{ padding: 20, textAlign: "center", color: "var(--muted-foreground)", fontSize: 14 }}>
-                  <p style={{ margin: "0 0 8px" }}>PTP aggregate data will appear here once 5+ participants have completed both instruments.</p>
-                  <p style={{ margin: 0, fontSize: 10 }}>PTP measures threat response under uncertainty — a complement to NAI's AI-specific adoption readiness score.</p>
-                </div>
+                {loadingPtpAgg ? (
+                  <div style={{ padding: 20, textAlign: "center", color: "var(--muted-foreground)", fontSize: 13 }}>Loading…</div>
+                ) : ptpAggregate?.suppressed ? (
+                  <div style={{ padding: 20, textAlign: "center", color: "var(--muted-foreground)", fontSize: 13, fontStyle: "italic" }}>
+                    Insufficient data (5+ participants required)
+                  </div>
+                ) : ptpAggregate?.dimensions && Object.keys(ptpAggregate.dimensions).length > 0 ? (
+                  <>
+                    {ALL_PTP_DIMS.map(dimId => {
+                      const dim = ptpAggregate.dimensions![dimId];
+                      if (!dim) return null;
+                      const act = activationLabel(dim.avg_score);
+                      return (
+                        <div key={dimId} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 7, fontSize: 13 }}>
+                          <span style={{ color: PTP_DIM_COLORS[dimId], fontWeight: 500 }}>{PTP_DIM_NAMES[dimId]}</span>
+                          <span>
+                            <span style={{ fontWeight: 500, color: PTP_DIM_COLORS[dimId], marginRight: 6 }}>{Math.round(dim.avg_score)}</span>
+                            <span style={{ fontSize: 9, padding: "1px 5px", borderRadius: 3, background: act.bg, color: act.color }}>{act.label}</span>
+                          </span>
+                        </div>
+                      );
+                    })}
+                    <div style={{ marginTop: 12, paddingTop: 10, borderTop: "0.5px solid var(--border)", fontSize: 13 }}>
+                      <span style={{ color: "var(--muted-foreground)" }}>TRI: </span>
+                      <strong style={{ color: NAVY }}>{calcPTPTRI(ptpAggregate.dimensions)}</strong>
+                      <span style={{ color: "var(--muted-foreground)", marginLeft: 12 }}>RSI: </span>
+                      <strong style={{ color: "#3C096C" }}>{calcPTPRSI(ptpAggregate.dimensions)}</strong>
+                      <div style={{ marginTop: 6, fontSize: 12, color: "var(--muted-foreground)" }}>
+                        Archetype: <strong style={{ color: NAVY }}>{classifyPTPArchetype(ptpAggregate.dimensions)}</strong>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div style={{ padding: 20, textAlign: "center", color: "var(--muted-foreground)", fontSize: 14 }}>
+                    <p style={{ margin: "0 0 8px" }}>PTP aggregate data will appear here once 5+ participants have completed both instruments.</p>
+                    <p style={{ margin: 0, fontSize: 10 }}>PTP measures threat response under uncertainty — a complement to NAI's AI-specific adoption readiness score.</p>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -1818,9 +1955,39 @@ export default function CompanyDashboard() {
             <p style={{ fontSize: 14, color: "var(--muted-foreground)", margin: "0 0 12px", lineHeight: 1.6 }}>
               Co-elevation occurs when a dimension is simultaneously elevated in both NAI and PTP — for example, high Ego Stability (NAI) paired with high Protection (PTP). These compound patterns are the most operationally significant findings because the barriers reinforce each other and require sequential intervention.
             </p>
-            <div style={{ background: "var(--muted)", borderRadius: 8, padding: "10px 12px", fontSize: 13, color: "var(--muted-foreground)", fontStyle: "italic" }}>
-              Co-elevation pattern detection requires PTP aggregate data for this slice. Complete cross-instrument analysis will appear here once participants have completed both assessments.
-            </div>
+            {(() => {
+              const haveNai = Object.keys(dims).length > 0;
+              const havePtp = !!ptpAggregate?.dimensions && Object.keys(ptpAggregate.dimensions).length > 0 && !ptpAggregate?.suppressed;
+              if (!haveNai || !havePtp) {
+                return (
+                  <div style={{ background: "var(--muted)", borderRadius: 8, padding: "10px 12px", fontSize: 13, color: "var(--muted-foreground)", fontStyle: "italic" }}>
+                    Co-elevation pattern detection requires PTP aggregate data for this slice. Complete cross-instrument analysis will appear here once participants have completed both assessments.
+                  </div>
+                );
+              }
+              const patterns = detectCoElevations(dims, ptpAggregate!.dimensions!);
+              if (patterns.length === 0) {
+                return (
+                  <div style={{ background: "var(--muted)", borderRadius: 8, padding: "10px 12px", fontSize: 13, color: "var(--muted-foreground)" }}>
+                    No co-elevation patterns detected in current data — all cross-instrument dimension pairs are within normal range.
+                  </div>
+                );
+              }
+              return (
+                <div style={{ display: "flex", flexDirection: "column" as const, gap: 10 }}>
+                  {patterns.map((p, i) => (
+                    <div key={i} style={{ background: "var(--muted)", borderRadius: 8, padding: 12, border: "0.5px solid var(--border)" }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: NAVY, marginBottom: 6 }}>{p.label}</div>
+                      <div style={{ fontSize: 13, color: "var(--muted-foreground)", marginBottom: 8, lineHeight: 1.6 }}>{p.description}</div>
+                      <div style={{ display: "flex", gap: 16, fontSize: 12 }}>
+                        <span><span style={{ color: "var(--muted-foreground)" }}>NAI </span><span style={{ color: DIM_COLORS[p.naiDimId], fontWeight: 600 }}>{p.naiDimName} {Math.round(p.naiScore)}</span></span>
+                        <span><span style={{ color: "var(--muted-foreground)" }}>PTP </span><span style={{ color: PTP_DIM_COLORS[p.ptpDimId], fontWeight: 600 }}>{p.ptpDimName} {Math.round(p.ptpScore)}</span></span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
           </div>
 
           {latestNarrative?.narrative_text?.business_meaning && (
