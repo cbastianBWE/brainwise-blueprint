@@ -631,11 +631,11 @@ export function generatePTPDashboardPdf(data: PTPDashboardPdfData): void {
       // Body text
       doc.setFont("helvetica", "normal");
       doc.setFontSize(11);
-      const bodyLines = doc.splitTextToSize(s.text, CONTENT_W) as string[];
+      const bodyLines = doc.splitTextToSize(s.text, CONTENT_W - 4) as string[];
       for (const line of bodyLines) {
         checkPageBreak(6);
         setText(TEXT);
-        doc.text(line, MARGIN_L, y);
+        doc.text(line, MARGIN_L + 4, y);
         y += 5.5;
       }
       y += 8;
