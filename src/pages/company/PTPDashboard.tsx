@@ -685,13 +685,19 @@ export default function PTPDashboard() {
           >
             {sliceType === "all" ? "All organization" : `${sliceType}: ${sliceValue}`}
           </div>
-          <Button size="sm" onClick={handleRegenerate} disabled={regenerating || suppressed}>
-            <RefreshCw
-              className={regenerating ? "animate-spin" : ""}
-              style={{ marginRight: 6 }}
-            />
-            {regenerating ? "Generating..." : "Regenerate AI"}
-          </Button>
+          <div style={{ display: "inline-flex", gap: 8 }}>
+            <Button size="sm" variant="outline" onClick={() => setExportModal(true)}>
+              <Download style={{ marginRight: 6 }} />
+              Export PDF
+            </Button>
+            <Button size="sm" onClick={handleRegenerate} disabled={regenerating || suppressed}>
+              <RefreshCw
+                className={regenerating ? "animate-spin" : ""}
+                style={{ marginRight: 6 }}
+              />
+              {regenerating ? "Generating..." : "Regenerate AI"}
+            </Button>
+          </div>
         </div>
       </div>
 
