@@ -127,6 +127,7 @@ interface NarrativeHistory {
   index_score: number;
   slice_type: string;
   slice_value: string;
+  dimension_scores?: Record<string, { avg_score: number; pct_at_75_plus: number }>;
   narrative_text: {
     risk_flags?: RiskFlag[];
     business_meaning?: string;
@@ -255,7 +256,7 @@ export default function CompanyDashboard() {
     if (!user) return;
     const { data } = await (supabase as any)
       .from("org_dashboard_narratives")
-      .select("id, generated_at, participant_count, index_score, slice_type, slice_value, narrative_text")
+      .select("id, generated_at, participant_count, index_score, slice_type, slice_value, dimension_scores, narrative_text")
       .eq("slice_type", sliceType)
       .eq("slice_value", sliceValue)
       .order("generated_at", { ascending: false })
