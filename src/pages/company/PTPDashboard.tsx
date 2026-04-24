@@ -217,6 +217,27 @@ interface Department {
   name: string;
 }
 
+interface CrossInstrumentRec {
+  id: string;
+  title: string;
+  rationale: string;
+  steps: string[];
+  priority: 'high' | 'medium' | 'low';
+  time_horizon: 'immediate' | '30-day' | '90-day';
+  anchor_co_elevation: string | null;
+  primary_targets: string[];
+  cross_targets: string[];
+}
+
+interface CrossInstrumentRow {
+  id: string;
+  primary_narrative_id: string;
+  input_narrative_ids: Array<{ instrument_id: string; narrative_id: string }>;
+  recommendations: CrossInstrumentRec[];
+  summary: string | null;
+  generated_at: string;
+}
+
 function calcTRI(dims: Record<string, DimAggregate>): number {
   const weighted = Object.entries(TRI_WEIGHTS).reduce(
     (acc, [d, w]) => acc + (dims[d]?.avg_score ?? 50) * w,
@@ -297,6 +318,8 @@ export default function PTPDashboard() {
   const [aggregate, setAggregate] = useState<AggregateResult | null>(null);
   const [naiAggregate, setNaiAggregate] = useState<AggregateResult | null>(null);
   const [loadingNaiAgg, setLoadingNaiAgg] = useState<boolean>(false);
+  const [crossInstrumentRow, setCrossInstrumentRow] = useState<CrossInstrumentRow | null>(null);
+  const [loadingCrossInstrument, setLoadingCrossInstrument] = useState<boolean>(false);
   const [latestNarrative, setLatestNarrative] = useState<StoredNarrative | null>(null);
   const [loadingUsage, setLoadingUsage] = useState<boolean>(true);
   const [loadingAgg, setLoadingAgg] = useState<boolean>(true);
@@ -420,6 +443,26 @@ export default function PTPDashboard() {
     setLoadingNaiAgg(false);
   }, [user, sliceType, sliceValue]);
 
+  const loadCrossInstrumentRecs = useCallback(async () => {
+    if (!user) return;
+    setLoadingCrossInstrument(true);
+    const PRIMARY_ID = "INST-001";
+    const { data: userRow } = await (supabase as any).from("users").select("organization_id").eq("id", user.id).single();
+    if (!userRow?.organization_id) { setCrossInstrumentRow(null); setLoadingCrossInstrument(false); return; }
+    const { data } = await (supabase as any)
+      .from("org_cross_instrument_recommendations")
+      .select("id, primary_narrative_id, input_narrative_ids, recommendations, summary, generated_at")
+      .eq("organization_id", userRow.organization_id)
+      .eq("slice_type", sliceType)
+      .eq("slice_value", sliceValue)
+      .eq("primary_instrument_id", PRIMARY_ID)
+      .order("generated_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    setCrossInstrumentRow((data ?? null) as CrossInstrumentRow | null);
+    setLoadingCrossInstrument(false);
+  }, [user, sliceType, sliceValue]);
+
   const loadNarrative = useCallback(async () => {
     if (!user) return;
     setLoadingNarrative(true);
@@ -485,6 +528,9 @@ export default function PTPDashboard() {
     if (activeTab === "cross-instrument") loadNAIAggregate();
   }, [activeTab, loadNAIAggregate]);
   useEffect(() => {
+    if (activeTab === "cross-instrument") loadCrossInstrumentRecs();
+  }, [activeTab, loadCrossInstrumentRecs]);
+  useEffect(() => {
     loadNarrative();
   }, [loadNarrative]);
   useEffect(() => {
@@ -497,29 +543,41 @@ export default function PTPDashboard() {
   const handleRegenerate = async () => {
     if (!user) return;
     setRegenerating(true);
+    const supabaseUrl = "https://svprhtzawnbzmumxnhsq.supabase.co";
     try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      const res = await fetch(
-        "https://svprhtzawnbzmumxnhsq.supabase.co/functions/v1/generate-dashboard-narrative",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${session?.access_token ?? ""}`,
-          },
-          body: JSON.stringify({
-            instrument_id: "INST-001",
-            slice_type: sliceType,
-            slice_value: sliceValue,
-          }),
-        },
-      );
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token ?? "";
+
+      toast.info("Generating dashboard narrative... (~140s)");
+      const res = await fetch(`${supabaseUrl}/functions/v1/generate-dashboard-narrative`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ instrument_id: "INST-001", slice_type: sliceType, slice_value: sliceValue }),
+      });
       const result = await res.json();
-      if (!res.ok) throw new Error(result?.error ?? "Generation failed");
-      toast.success("AI interpretation generated");
-      await Promise.all([loadUsage(), loadNarrative(), loadNarrativeHistory()]);
+      if (!res.ok) throw new Error(result?.error ?? "Dashboard generation failed");
+      toast.success("Dashboard narrative generated");
+
+      toast.info("Generating cross-instrument recommendations... (~75s)");
+      try {
+        const xRes = await fetch(`${supabaseUrl}/functions/v1/generate-cross-instrument-recommendations`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ primary_instrument_id: "INST-001", slice_type: sliceType, slice_value: sliceValue }),
+        });
+        const xResult = await xRes.json();
+        if (xRes.ok && xResult.generated) {
+          toast.success(`Cross-instrument recommendations generated (${xResult.recommendation_count} items)`);
+        } else if (xResult.reason === "other_instrument_narrative_missing") {
+          toast.info("Cross-instrument recommendations skipped (NAI narrative not yet generated for this slice).");
+        } else {
+          toast.warning(`Cross-instrument recommendations not generated: ${xResult.reason ?? xResult.error ?? "unknown"}`);
+        }
+      } catch (xe: any) {
+        toast.warning(`Cross-instrument recommendations failed: ${xe.message ?? "network error"}`);
+      }
+
+      await Promise.all([loadUsage(), loadNarrative(), loadNarrativeHistory(), loadCrossInstrumentRecs()]);
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Failed";
       toast.error(msg);
@@ -660,6 +718,13 @@ export default function PTPDashboard() {
       naiDimensions: naiDimensionsForPdf,
       naiReadinessIndex,
       coElevationPatterns: coElevationPatternsForPdf,
+      crossInstrumentRecommendations: crossInstrumentRow ? {
+        id: crossInstrumentRow.id,
+        primary_narrative_id: crossInstrumentRow.primary_narrative_id,
+        recommendations: crossInstrumentRow.recommendations,
+        summary: crossInstrumentRow.summary,
+        generated_at: crossInstrumentRow.generated_at,
+      } : null,
     });
   };
 
@@ -730,6 +795,12 @@ export default function PTPDashboard() {
   const participantCount = aggregate?.participant_count ?? 0;
   const suppressed = aggregate?.suppressed ?? false;
   const riskFlags: RiskFlag[] = latestNarrative?.narrative_text?.risk_flags ?? [];
+
+  const isCrossInstrumentStale = (): boolean => {
+    if (!crossInstrumentRow || !latestNarrative) return false;
+    if (crossInstrumentRow.primary_narrative_id !== latestNarrative.id) return true;
+    return false;
+  };
 
   const tabs = ["overview", "dimensions", "interpretation", "trends", "cross-instrument"];
   const tabLabels: Record<string, string> = {
@@ -2969,41 +3040,82 @@ export default function PTPDashboard() {
               );
             })()}
           </div>
-          {latestNarrative?.narrative_text?.business_meaning && (
-            <div
-              style={{
-                background: SAND,
-                border: "0.5px solid var(--border)",
-                borderRadius: 12,
-                padding: 14,
-              }}
-            >
-              <div style={{ fontSize: 15, fontWeight: 500, color: NAVY, marginBottom: 8 }}>
-                Cross-instrument AI interpretation
-              </div>
-              <p
-                style={{
-                  fontSize: 14,
-                  color: "var(--muted-foreground)",
-                  margin: "0 0 10px",
-                  lineHeight: 1.6,
-                }}
-              >
-                When NAI data becomes available, regenerating will produce a richer
-                cross-instrument analysis.
-              </p>
-              <div
-                style={{
-                  fontSize: 14,
-                  lineHeight: 1.75,
-                  color: "var(--foreground)",
-                  whiteSpace: "pre-wrap",
-                }}
-              >
-                {latestNarrative.narrative_text.business_meaning}
-              </div>
+          <div style={{
+            background: SAND,
+            border: "0.5px solid var(--border)",
+            borderRadius: 12,
+            padding: 14,
+            marginTop: 14,
+          }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8, flexWrap: "wrap", gap: 8 }}>
+              <div style={{ fontSize: 15, fontWeight: 500, color: NAVY }}>Recommended next steps · cross-instrument</div>
+              {crossInstrumentRow && (
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  {isCrossInstrumentStale() && (
+                    <span style={{ fontSize: 9, padding: "2px 8px", borderRadius: 12, background: "#fef0e7", color: ORANGE, fontWeight: 500, textTransform: "uppercase", letterSpacing: 0.4 }}>
+                      Outdated
+                    </span>
+                  )}
+                  <span style={{ fontSize: 11, color: "var(--muted-foreground)" }}>
+                    Generated {new Date(crossInstrumentRow.generated_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                  </span>
+                </div>
+              )}
             </div>
-          )}
+
+            {loadingCrossInstrument ? (
+              <p style={{ fontSize: 13, color: "var(--muted-foreground)", margin: 0, fontStyle: "italic" }}>Loading recommendations…</p>
+            ) : !crossInstrumentRow ? (
+              <p style={{ fontSize: 14, color: "var(--muted-foreground)", margin: 0, lineHeight: 1.6 }}>
+                No cross-instrument recommendations generated yet for this slice. Click "Regenerate AI" — recommendations will be generated as part of the regeneration if both NAI and PTP narratives exist for this slice.
+              </p>
+            ) : (
+              <>
+                {isCrossInstrumentStale() && (
+                  <div style={{ marginBottom: 10, padding: "8px 12px", background: "#fef0e7", border: `0.5px solid ${ORANGE}`, borderRadius: 8, fontSize: 12, color: NAVY }}>
+                    One or more underlying instrument narratives have been regenerated since these recommendations were created. Regenerate to refresh.
+                  </div>
+                )}
+                {crossInstrumentRow.summary && (
+                  <p style={{ fontSize: 14, color: "var(--foreground)", margin: "0 0 14px", lineHeight: 1.7, fontWeight: 400 }}>
+                    {crossInstrumentRow.summary}
+                  </p>
+                )}
+                {crossInstrumentRow.recommendations.map((rec, i) => (
+                  <div key={rec.id ?? i} style={{
+                    background: "var(--card)",
+                    border: "0.5px solid var(--border)",
+                    borderRadius: 8,
+                    padding: 14,
+                    marginBottom: 10,
+                  }}>
+                    <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8, marginBottom: 6 }}>
+                      <span style={{ fontSize: 14, fontWeight: 600, color: NAVY }}>{rec.title}</span>
+                      <div style={{ display: "flex", gap: 4, flexShrink: 0, flexWrap: "wrap" }}>
+                        <span style={{ fontSize: 9, padding: "2px 6px", borderRadius: 3, fontWeight: 500, textTransform: "uppercase", letterSpacing: 0.4,
+                          background: rec.priority === "high" ? "#faece7" : rec.priority === "medium" ? "#faeeda" : "#e1f5ee",
+                          color: rec.priority === "high" ? "#993c1d" : rec.priority === "medium" ? "#633806" : "#0f6e56",
+                        }}>{rec.priority}</span>
+                        <span style={{ fontSize: 9, padding: "2px 6px", borderRadius: 3, background: "#eeedfe", color: "#3C096C", fontWeight: 500, textTransform: "uppercase", letterSpacing: 0.4 }}>{rec.time_horizon}</span>
+                        {rec.anchor_co_elevation && (
+                          <span style={{ fontSize: 9, padding: "2px 6px", borderRadius: 3, background: "#e8edf1", color: NAVY, fontWeight: 500 }}>{rec.anchor_co_elevation}</span>
+                        )}
+                      </div>
+                    </div>
+                    <p style={{ fontSize: 13, color: "var(--foreground)", margin: "0 0 10px", lineHeight: 1.65 }}>{rec.rationale}</p>
+                    {rec.steps && rec.steps.length > 0 && (
+                      <div style={{ marginTop: 8 }}>
+                        <div style={{ fontSize: 10, fontWeight: 500, color: NAVY, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Steps</div>
+                        <ol style={{ margin: 0, paddingLeft: 18, fontSize: 13, color: "var(--muted-foreground)", lineHeight: 1.6 }}>
+                          {rec.steps.map((step, j) => <li key={j} style={{ marginBottom: 3 }}>{step}</li>)}
+                        </ol>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </>
+            )}
+          </div>
         </div>
       )}
 

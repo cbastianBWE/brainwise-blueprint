@@ -227,6 +227,27 @@ interface NarrativeHistory {
   interventions?: Intervention[];
 }
 
+interface CrossInstrumentRec {
+  id: string;
+  title: string;
+  rationale: string;
+  steps: string[];
+  priority: 'high' | 'medium' | 'low';
+  time_horizon: 'immediate' | '30-day' | '90-day';
+  anchor_co_elevation: string | null;
+  primary_targets: string[];
+  cross_targets: string[];
+}
+
+interface CrossInstrumentRow {
+  id: string;
+  primary_narrative_id: string;
+  input_narrative_ids: Array<{ instrument_id: string; narrative_id: string }>;
+  recommendations: CrossInstrumentRec[];
+  summary: string | null;
+  generated_at: string;
+}
+
 interface Department {
   id: string;
   name: string;
@@ -245,6 +266,8 @@ export default function CompanyDashboard() {
   const [aggregate, setAggregate] = useState<AggregateResult | null>(null);
   const [ptpAggregate, setPtpAggregate] = useState<AggregateResult | null>(null);
   const [loadingPtpAgg, setLoadingPtpAgg] = useState(false);
+  const [crossInstrumentRow, setCrossInstrumentRow] = useState<CrossInstrumentRow | null>(null);
+  const [loadingCrossInstrument, setLoadingCrossInstrument] = useState<boolean>(false);
   const [latestNarrative, setLatestNarrative] = useState<StoredNarrative | null>(null);
   const [loadingUsage, setLoadingUsage] = useState(true);
   const [loadingAgg, setLoadingAgg] = useState(true);
@@ -326,6 +349,26 @@ export default function CompanyDashboard() {
     setLoadingPtpAgg(false);
   }, [user, sliceType, sliceValue]);
 
+  const loadCrossInstrumentRecs = useCallback(async () => {
+    if (!user) return;
+    setLoadingCrossInstrument(true);
+    const PRIMARY_ID = "INST-002";
+    const { data: userRow } = await (supabase as any).from("users").select("organization_id").eq("id", user.id).single();
+    if (!userRow?.organization_id) { setCrossInstrumentRow(null); setLoadingCrossInstrument(false); return; }
+    const { data } = await (supabase as any)
+      .from("org_cross_instrument_recommendations")
+      .select("id, primary_narrative_id, input_narrative_ids, recommendations, summary, generated_at")
+      .eq("organization_id", userRow.organization_id)
+      .eq("slice_type", sliceType)
+      .eq("slice_value", sliceValue)
+      .eq("primary_instrument_id", PRIMARY_ID)
+      .order("generated_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    setCrossInstrumentRow((data ?? null) as CrossInstrumentRow | null);
+    setLoadingCrossInstrument(false);
+  }, [user, sliceType, sliceValue]);
+
   const loadInterventions = useCallback(async (narrativeId?: string) => {
     if (!user) return;
     const id = narrativeId ?? latestNarrative?.id;
@@ -387,6 +430,7 @@ export default function CompanyDashboard() {
   useEffect(() => { loadUsage(); }, [loadUsage]);
   useEffect(() => { loadAggregate(); }, [loadAggregate]);
   useEffect(() => { if (activeTab === "cross-instrument") loadPTPAggregate(); }, [activeTab, loadPTPAggregate]);
+  useEffect(() => { if (activeTab === "cross-instrument") loadCrossInstrumentRecs(); }, [activeTab, loadCrossInstrumentRecs]);
   useEffect(() => { loadNarrative(); }, [loadNarrative]);
   
   useEffect(() => { loadNarrativeHistory(); }, [loadNarrativeHistory]);
@@ -395,22 +439,43 @@ export default function CompanyDashboard() {
   const handleRegenerate = async () => {
     if (!user) return;
     setRegenerating(true);
+    const supabaseUrl = "https://svprhtzawnbzmumxnhsq.supabase.co";
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      const supabaseUrl = "https://svprhtzawnbzmumxnhsq.supabase.co";
+      const token = session?.access_token ?? "";
+
+      // Stage 1: dashboard narrative
+      toast.info("Generating dashboard narrative... (~140s)");
       const res = await fetch(`${supabaseUrl}/functions/v1/generate-dashboard-narrative`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session?.access_token}`,
-        },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ instrument_id: "INST-002", slice_type: sliceType, slice_value: sliceValue }),
       });
       const result = await res.json();
-      if (!res.ok) throw new Error(result.error ?? "Generation failed");
-      toast.success("AI interpretation generated");
-      await Promise.all([loadUsage(), loadNarrative(), loadNarrativeHistory()]);
-      
+      if (!res.ok) throw new Error(result.error ?? "Dashboard generation failed");
+      toast.success("Dashboard narrative generated");
+
+      // Stage 2: cross-instrument recommendations (graceful skip if PTP narrative missing)
+      toast.info("Generating cross-instrument recommendations... (~75s)");
+      try {
+        const xRes = await fetch(`${supabaseUrl}/functions/v1/generate-cross-instrument-recommendations`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ primary_instrument_id: "INST-002", slice_type: sliceType, slice_value: sliceValue }),
+        });
+        const xResult = await xRes.json();
+        if (xRes.ok && xResult.generated) {
+          toast.success(`Cross-instrument recommendations generated (${xResult.recommendation_count} items)`);
+        } else if (xResult.reason === "other_instrument_narrative_missing") {
+          toast.info("Cross-instrument recommendations skipped (PTP narrative not yet generated for this slice).");
+        } else {
+          toast.warning(`Cross-instrument recommendations not generated: ${xResult.reason ?? xResult.error ?? "unknown"}`);
+        }
+      } catch (xe: any) {
+        toast.warning(`Cross-instrument recommendations failed: ${xe.message ?? "network error"}`);
+      }
+
+      await Promise.all([loadUsage(), loadNarrative(), loadNarrativeHistory(), loadCrossInstrumentRecs()]);
     } catch (e: any) {
       toast.error(e.message ?? "Failed to generate interpretation");
     }
@@ -1130,28 +1195,62 @@ export default function CompanyDashboard() {
           }
         }
 
-        // Cross-instrument AI interpretation
-        if (latestNarrative?.narrative_text?.business_meaning) {
+        // Cross-instrument recommendations (replaces broken business_meaning rendering)
+        if (crossInstrumentRow) {
           checkY(12);
           y += 2;
           pdf.setFontSize(9); pdf.setFont("helvetica","bold"); pdf.setTextColor(2,31,54);
-          pdf.text("Cross-Instrument AI Interpretation", ML, y);
+          pdf.text("Recommended Next Steps · Cross-Instrument", ML, y);
           y += 1.5;
           pdf.setDrawColor(2,31,54); pdf.setLineWidth(0.4); pdf.line(ML, y, ML+CW, y); y += 5;
-          const noteText = "The interpretation below reflects available NAI data. When PTP data becomes available, regenerating will produce a richer cross-instrument analysis.";
-          const noteLines = splitText(noteText, CW, 7.5, "normal");
-          pdf.setFontSize(7.5); pdf.setFont("helvetica","normal"); pdf.setTextColor(100,100,100);
-          pdf.text(noteLines, ML, y); y += noteLines.length*4+5;
-          const bmLines = splitText(latestNarrative.narrative_text.business_meaning, CW, 8, "normal");
-          // Paginate long text
-          const lineH = 4.2;
-          const linesPerPage = Math.floor((PH - MB - y) / lineH);
-          for (let li = 0; li < bmLines.length; li += linesPerPage) {
-            const chunk = bmLines.slice(li, li + linesPerPage);
+
+          pdf.setFontSize(7); pdf.setTextColor(130,120,130); pdf.setFont("helvetica","normal");
+          pdf.text(`Generated ${new Date(crossInstrumentRow.generated_at).toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"})}`, ML, y);
+          y += 5;
+
+          if (crossInstrumentRow.summary) {
+            const sumLines = splitText(crossInstrumentRow.summary, CW, 8, "normal");
             pdf.setFontSize(8); pdf.setFont("helvetica","normal"); pdf.setTextColor(40,40,40);
-            pdf.text(chunk, ML, y);
-            y += chunk.length * lineH;
-            if (li + linesPerPage < bmLines.length) newPage("CROSS-INSTRUMENT (cont.)");
+            pdf.text(sumLines, ML, y);
+            y += sumLines.length * 4.2 + 4;
+          }
+
+          for (const rec of crossInstrumentRow.recommendations) {
+            const titleLns = splitText(rec.title, CW-50, 8.5, "bold");
+            const ratLns = splitText(rec.rationale, CW-8, 7.5, "normal");
+            const stepsHeight = rec.steps && rec.steps.length > 0
+              ? rec.steps.reduce((acc, s) => acc + splitText(s, CW-14, 7, "normal").length * 3.8, 5)
+              : 0;
+            const cardH = 5 + titleLns.length*4.5 + 2 + ratLns.length*4 + stepsHeight + 4;
+            checkY(cardH+4, "CROSS-INSTRUMENT (cont.)");
+
+            pdf.setFillColor(249,247,241); pdf.roundedRect(ML, y, CW, cardH, 2, 2, "F");
+            pdf.setFontSize(8.5); pdf.setFont("helvetica","bold"); pdf.setTextColor(2,31,54);
+            pdf.text(titleLns, ML+4, y+5);
+
+            const pCol: [number,number,number] = rec.priority === "high" ? [153,60,29] : rec.priority === "medium" ? [99,56,6] : [15,110,86];
+            pdf.setFontSize(6.5); pdf.setFont("helvetica","normal");
+            pdf.setTextColor(...pCol); pdf.text(rec.priority, ML+CW-4, y+5, {align:"right"});
+            pdf.setTextColor(60,9,108); pdf.text(rec.time_horizon, ML+CW-22, y+5, {align:"right"});
+
+            let cy = y + 5 + titleLns.length * 4.5 + 2;
+            pdf.setFontSize(7.5); pdf.setFont("helvetica","normal"); pdf.setTextColor(60,60,60);
+            pdf.text(ratLns, ML+4, cy);
+            cy += ratLns.length * 4 + 2;
+
+            if (rec.steps && rec.steps.length > 0) {
+              pdf.setFontSize(6.5); pdf.setFont("helvetica","bold"); pdf.setTextColor(2,31,54);
+              pdf.text("STEPS", ML+4, cy);
+              cy += 4;
+              pdf.setFontSize(7); pdf.setFont("helvetica","normal"); pdf.setTextColor(70,70,70);
+              rec.steps.forEach((step, idx) => {
+                const stepLns = splitText(`${idx+1}. ${step}`, CW-14, 7, "normal");
+                pdf.text(stepLns, ML+8, cy);
+                cy += stepLns.length * 3.8;
+              });
+            }
+
+            y += cardH + 4;
           }
         }
       }
@@ -1191,6 +1290,12 @@ export default function CompanyDashboard() {
   const participantCount = aggregate?.participant_count ?? 0;
   const suppressed = aggregate?.suppressed ?? false;
   const riskFlags: RiskFlag[] = latestNarrative?.narrative_text?.risk_flags ?? [];
+
+  const isCrossInstrumentStale = (): boolean => {
+    if (!crossInstrumentRow || !latestNarrative) return false;
+    if (crossInstrumentRow.primary_narrative_id !== latestNarrative.id) return true;
+    return false;
+  };
 
   const tabs = ["overview", "dimensions", "interpretation", "interventions", "trends", "cross-instrument"];
   const tabLabels: Record<string, string> = {
@@ -2056,17 +2161,82 @@ export default function CompanyDashboard() {
             })()}
           </div>
 
-          {latestNarrative?.narrative_text?.business_meaning && (
-            <div style={{ background: "#F9F7F1", border: "0.5px solid var(--border)", borderRadius: 12, padding: 14 }}>
-              <div style={{ fontSize: 15, fontWeight: 500, color: NAVY, marginBottom: 8 }}>Cross-instrument AI interpretation</div>
-              <p style={{ fontSize: 14, color: "var(--muted-foreground)", margin: "0 0 10px", lineHeight: 1.6 }}>
-                The AI interpretation below was generated {latestNarrative.narrative_text && "with available data at time of generation"}. When PTP data becomes available for this slice, regenerating will produce a richer cross-instrument analysis.
-              </p>
-              <div style={{ fontSize: 14, lineHeight: 1.75, color: "var(--foreground)", whiteSpace: "pre-wrap" }}>
-                {latestNarrative.narrative_text.business_meaning}
-              </div>
+          <div style={{
+            background: SAND,
+            border: "0.5px solid var(--border)",
+            borderRadius: 12,
+            padding: 14,
+            marginTop: 14,
+          }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8, flexWrap: "wrap", gap: 8 }}>
+              <div style={{ fontSize: 15, fontWeight: 500, color: NAVY }}>Recommended next steps · cross-instrument</div>
+              {crossInstrumentRow && (
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  {isCrossInstrumentStale() && (
+                    <span style={{ fontSize: 9, padding: "2px 8px", borderRadius: 12, background: "#fef0e7", color: ORANGE, fontWeight: 500, textTransform: "uppercase", letterSpacing: 0.4 }}>
+                      Outdated
+                    </span>
+                  )}
+                  <span style={{ fontSize: 11, color: "var(--muted-foreground)" }}>
+                    Generated {new Date(crossInstrumentRow.generated_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                  </span>
+                </div>
+              )}
             </div>
-          )}
+
+            {loadingCrossInstrument ? (
+              <p style={{ fontSize: 13, color: "var(--muted-foreground)", margin: 0, fontStyle: "italic" }}>Loading recommendations…</p>
+            ) : !crossInstrumentRow ? (
+              <p style={{ fontSize: 14, color: "var(--muted-foreground)", margin: 0, lineHeight: 1.6 }}>
+                No cross-instrument recommendations generated yet for this slice. Click "Regenerate AI" — recommendations will be generated as part of the regeneration if both NAI and PTP narratives exist for this slice.
+              </p>
+            ) : (
+              <>
+                {isCrossInstrumentStale() && (
+                  <div style={{ marginBottom: 10, padding: "8px 12px", background: "#fef0e7", border: `0.5px solid ${ORANGE}`, borderRadius: 8, fontSize: 12, color: NAVY }}>
+                    One or more underlying instrument narratives have been regenerated since these recommendations were created. Regenerate to refresh.
+                  </div>
+                )}
+                {crossInstrumentRow.summary && (
+                  <p style={{ fontSize: 14, color: "var(--foreground)", margin: "0 0 14px", lineHeight: 1.7, fontWeight: 400 }}>
+                    {crossInstrumentRow.summary}
+                  </p>
+                )}
+                {crossInstrumentRow.recommendations.map((rec, i) => (
+                  <div key={rec.id ?? i} style={{
+                    background: "var(--card)",
+                    border: "0.5px solid var(--border)",
+                    borderRadius: 8,
+                    padding: 14,
+                    marginBottom: 10,
+                  }}>
+                    <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8, marginBottom: 6 }}>
+                      <span style={{ fontSize: 14, fontWeight: 600, color: NAVY }}>{rec.title}</span>
+                      <div style={{ display: "flex", gap: 4, flexShrink: 0, flexWrap: "wrap" }}>
+                        <span style={{ fontSize: 9, padding: "2px 6px", borderRadius: 3, fontWeight: 500, textTransform: "uppercase", letterSpacing: 0.4,
+                          background: rec.priority === "high" ? "#faece7" : rec.priority === "medium" ? "#faeeda" : "#e1f5ee",
+                          color: rec.priority === "high" ? "#993c1d" : rec.priority === "medium" ? "#633806" : "#0f6e56",
+                        }}>{rec.priority}</span>
+                        <span style={{ fontSize: 9, padding: "2px 6px", borderRadius: 3, background: "#eeedfe", color: "#3C096C", fontWeight: 500, textTransform: "uppercase", letterSpacing: 0.4 }}>{rec.time_horizon}</span>
+                        {rec.anchor_co_elevation && (
+                          <span style={{ fontSize: 9, padding: "2px 6px", borderRadius: 3, background: "#e8edf1", color: NAVY, fontWeight: 500 }}>{rec.anchor_co_elevation}</span>
+                        )}
+                      </div>
+                    </div>
+                    <p style={{ fontSize: 13, color: "var(--foreground)", margin: "0 0 10px", lineHeight: 1.65 }}>{rec.rationale}</p>
+                    {rec.steps && rec.steps.length > 0 && (
+                      <div style={{ marginTop: 8 }}>
+                        <div style={{ fontSize: 10, fontWeight: 500, color: NAVY, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Steps</div>
+                        <ol style={{ margin: 0, paddingLeft: 18, fontSize: 13, color: "var(--muted-foreground)", lineHeight: 1.6 }}>
+                          {rec.steps.map((step, j) => <li key={j} style={{ marginBottom: 3 }}>{step}</li>)}
+                        </ol>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </>
+            )}
+          </div>
         </div>
       )}
 
