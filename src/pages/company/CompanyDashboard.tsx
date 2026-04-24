@@ -429,8 +429,8 @@ export default function CompanyDashboard() {
 
   useEffect(() => { loadUsage(); }, [loadUsage]);
   useEffect(() => { loadAggregate(); }, [loadAggregate]);
-  useEffect(() => { if (activeTab === "cross-instrument") loadPTPAggregate(); }, [activeTab, loadPTPAggregate]);
-  useEffect(() => { if (activeTab === "cross-instrument") loadCrossInstrumentRecs(); }, [activeTab, loadCrossInstrumentRecs]);
+  useEffect(() => { loadPTPAggregate(); }, [loadPTPAggregate]);
+  useEffect(() => { loadCrossInstrumentRecs(); }, [loadCrossInstrumentRecs]);
   useEffect(() => { loadNarrative(); }, [loadNarrative]);
   
   useEffect(() => { loadNarrativeHistory(); }, [loadNarrativeHistory]);
@@ -534,6 +534,8 @@ export default function CompanyDashboard() {
   const handleExport = async () => {
     setExporting(true);
     setExportModal(false);
+    // Belt-and-suspenders: ensure cross-instrument data is loaded
+    await Promise.all([loadPTPAggregate(), loadCrossInstrumentRecs()]);
 
     try {
       const jsPDF = (await import("jspdf")).default;

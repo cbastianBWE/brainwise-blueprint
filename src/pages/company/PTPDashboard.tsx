@@ -524,12 +524,8 @@ export default function PTPDashboard() {
   useEffect(() => {
     loadAggregate();
   }, [loadAggregate]);
-  useEffect(() => {
-    if (activeTab === "cross-instrument") loadNAIAggregate();
-  }, [activeTab, loadNAIAggregate]);
-  useEffect(() => {
-    if (activeTab === "cross-instrument") loadCrossInstrumentRecs();
-  }, [activeTab, loadCrossInstrumentRecs]);
+  useEffect(() => { loadNAIAggregate(); }, [loadNAIAggregate]);
+  useEffect(() => { loadCrossInstrumentRecs(); }, [loadCrossInstrumentRecs]);
   useEffect(() => {
     loadNarrative();
   }, [loadNarrative]);
@@ -610,7 +606,10 @@ export default function PTPDashboard() {
     setSavingTracking(false);
   };
 
-  const handleExport = () => {
+  const handleExport = async () => {
+    // Belt-and-suspenders: ensure cross-instrument data is loaded even if user
+    // hasn't visited the cross-instrument tab or just changed slice
+    await Promise.all([loadNAIAggregate(), loadCrossInstrumentRecs()]);
     const sliceLabel =
       sliceType === "all" ? "All organization" : `${sliceType}: ${sliceValue}`;
     const generatedAt = latestNarrative?.generated_at
