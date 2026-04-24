@@ -266,6 +266,8 @@ export default function CompanyDashboard() {
   const [aggregate, setAggregate] = useState<AggregateResult | null>(null);
   const [ptpAggregate, setPtpAggregate] = useState<AggregateResult | null>(null);
   const [loadingPtpAgg, setLoadingPtpAgg] = useState(false);
+  const [crossInstrumentRow, setCrossInstrumentRow] = useState<CrossInstrumentRow | null>(null);
+  const [loadingCrossInstrument, setLoadingCrossInstrument] = useState<boolean>(false);
   const [latestNarrative, setLatestNarrative] = useState<StoredNarrative | null>(null);
   const [loadingUsage, setLoadingUsage] = useState(true);
   const [loadingAgg, setLoadingAgg] = useState(true);
