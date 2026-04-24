@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { RefreshCw, AlertTriangle } from "lucide-react";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts";
 
 // ── Brand colors ─────────────────────────────────────────────────────────────
 const NAVY = "#021F36";
@@ -1617,9 +1618,40 @@ export default function CompanyDashboard() {
                 ))}
               </div>
 
-              <div style={{ fontSize: 13, color: "var(--muted-foreground)", background: "var(--muted)", borderRadius: 8, padding: "10px 12px", lineHeight: 1.6 }}>
-                Trend chart visualization (line chart per dimension over time) will be added in the next build. The table above shows the full history. Lower dimension scores mean improving readiness. A rising Index score means the organization is moving in the right direction.
-              </div>
+              {narrativeHistory.length > 0 && (
+                <div style={{ background: "var(--card)", border: "0.5px solid var(--border)", borderRadius: 12, padding: "16px 8px 8px", marginBottom: 16 }}>
+                  <div style={{ fontSize: 10, color: "var(--muted-foreground)", paddingLeft: 28, marginBottom: 4 }}>Avg score by dimension · lower = more ready</div>
+                  <ResponsiveContainer width="100%" height={260}>
+                    <LineChart data={[...narrativeHistory].reverse().map(h => ({
+                      date: new Date(h.generated_at).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+                      "DIM-NAI-01": h.dimension_scores?.["DIM-NAI-01"]?.avg_score,
+                      "DIM-NAI-02": h.dimension_scores?.["DIM-NAI-02"]?.avg_score,
+                      "DIM-NAI-03": h.dimension_scores?.["DIM-NAI-03"]?.avg_score,
+                      "DIM-NAI-04": h.dimension_scores?.["DIM-NAI-04"]?.avg_score,
+                      "DIM-NAI-05": h.dimension_scores?.["DIM-NAI-05"]?.avg_score,
+                    }))}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                      <XAxis dataKey="date" tick={{ fontSize: 10 }} tickLine={false} />
+                      <YAxis domain={[0, 100]} tick={{ fontSize: 10 }} tickLine={false} axisLine={false} width={28} />
+                      <Tooltip
+                        contentStyle={{ fontSize: 11, border: "0.5px solid var(--border)", borderRadius: 8 }}
+                        formatter={(value: any, name: any) => [typeof value === "number" ? Math.round(value) : value, DIM_NAMES[name as string] ?? name]}
+                      />
+                      {DIMS_BY_WEIGHT.map(dimId => (
+                        <Line
+                          key={dimId}
+                          type="monotone"
+                          dataKey={dimId}
+                          stroke={DIM_COLORS[dimId]}
+                          strokeWidth={2}
+                          dot={{ r: 3, fill: DIM_COLORS[dimId] }}
+                          connectNulls
+                        />
+                      ))}
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
 
               <h3 style={{ fontSize: 15, fontWeight: 500, color: NAVY, margin: "20px 0 10px", textTransform: "uppercase" as const, letterSpacing: 0.5 }}>
                 Prior AI interpretation history
