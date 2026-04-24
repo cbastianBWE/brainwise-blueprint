@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { RefreshCw, AlertTriangle } from "lucide-react";
+import { RefreshCw, AlertTriangle, Download } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts";
 
 // ── Brand colors ─────────────────────────────────────────────────────────────
@@ -1078,7 +1078,8 @@ export default function CompanyDashboard() {
               {sliceType === "all" ? "All organization" : `${sliceType}: ${sliceValue}`} · n={participantCount}
             </span>
             <Button variant="outline" size="sm" onClick={() => setExportModal(true)} disabled={exporting}>
-              {exporting ? "Exporting..." : "Export ↓"}
+              <Download style={{ marginRight: 6 }} />
+              {exporting ? "Exporting..." : "Export PDF"}
             </Button>
             <Button size="sm" onClick={handleRegenerate} disabled={regenerating || suppressed}>
               <RefreshCw className={regenerating ? "animate-spin" : ""} />
