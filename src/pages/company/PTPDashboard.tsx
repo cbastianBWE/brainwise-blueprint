@@ -796,6 +796,12 @@ export default function PTPDashboard() {
   const suppressed = aggregate?.suppressed ?? false;
   const riskFlags: RiskFlag[] = latestNarrative?.narrative_text?.risk_flags ?? [];
 
+  const isCrossInstrumentStale = (): boolean => {
+    if (!crossInstrumentRow || !latestNarrative) return false;
+    if (crossInstrumentRow.primary_narrative_id !== latestNarrative.id) return true;
+    return false;
+  };
+
   const tabs = ["overview", "dimensions", "interpretation", "trends", "cross-instrument"];
   const tabLabels: Record<string, string> = {
     overview: "Overview",
