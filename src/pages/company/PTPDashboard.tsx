@@ -407,6 +407,19 @@ export default function PTPDashboard() {
     setLoadingAgg(false);
   }, [user, sliceType, sliceValue, contextType]);
 
+  const loadNAIAggregate = useCallback(async () => {
+    if (!user) return;
+    setLoadingNaiAgg(true);
+    const { data } = await (supabase as any).rpc("get_instrument_aggregate", {
+      p_instrument: "INST-002",
+      p_slice_type: sliceType,
+      p_slice_value: sliceValue,
+      p_context_type: "both",
+    });
+    setNaiAggregate((data ?? null) as AggregateResult | null);
+    setLoadingNaiAgg(false);
+  }, [user, sliceType, sliceValue]);
+
   const loadNarrative = useCallback(async () => {
     if (!user) return;
     setLoadingNarrative(true);
