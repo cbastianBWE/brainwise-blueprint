@@ -169,6 +169,10 @@ export default function CompanyDashboard() {
 
   const [interventions, setInterventions] = useState<Intervention[]>([]);
   const [narrativeHistory, setNarrativeHistory] = useState<NarrativeHistory[]>([]);
+  const [compareEnabled, setCompareEnabled] = useState(false);
+  const [compareSliceType, setCompareSliceType] = useState<string>("all");
+  const [compareSliceValue, setCompareSliceValue] = useState<string>("all");
+  const [compareHistory, setCompareHistory] = useState<NarrativeHistory[]>([]);
   const [loadingInterventions, setLoadingInterventions] = useState(false);
   const [expandedDims, setExpandedDims] = useState<Set<string>>(new Set());
   const [trackingModal, setTrackingModal] = useState<{ open: boolean; intervention: Intervention | null }>({ open: false, intervention: null });
@@ -265,11 +269,24 @@ export default function CompanyDashboard() {
     setNarrativeHistory((data ?? []) as NarrativeHistory[]);
   }, [user, sliceType, sliceValue]);
 
+  const loadCompareHistory = useCallback(async () => {
+    if (!user || !compareEnabled) { setCompareHistory([]); return; }
+    const { data } = await (supabase as any)
+      .from("org_dashboard_narratives")
+      .select("id, generated_at, participant_count, index_score, slice_type, slice_value, dimension_scores, narrative_text")
+      .eq("slice_type", compareSliceType)
+      .eq("slice_value", compareSliceValue)
+      .order("generated_at", { ascending: false })
+      .limit(10);
+    setCompareHistory((data ?? []) as NarrativeHistory[]);
+  }, [user, compareEnabled, compareSliceType, compareSliceValue]);
+
   useEffect(() => { loadUsage(); }, [loadUsage]);
   useEffect(() => { loadAggregate(); }, [loadAggregate]);
   useEffect(() => { loadNarrative(); }, [loadNarrative]);
   
   useEffect(() => { loadNarrativeHistory(); }, [loadNarrativeHistory]);
+  useEffect(() => { loadCompareHistory(); }, [loadCompareHistory]);
 
   const handleRegenerate = async () => {
     if (!user) return;
@@ -1555,7 +1572,41 @@ export default function CompanyDashboard() {
       {activeTab === "trends" && (
         <div data-export-tab="true">
           <div style={{ marginBottom: 14, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-            <span style={{ fontSize: 13, color: "var(--muted-foreground)" }}>Showing trend across AI interpretation generations for this slice.</span>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+              <span style={{ fontSize: 13, color: "var(--muted-foreground)" }}>
+                Showing trend for: <strong>{sliceType === "all" ? "All organization" : `${sliceType}: ${sliceValue}`}</strong>
+              </span>
+              <button
+                onClick={() => { setCompareEnabled(v => !v); if (compareEnabled) setCompareHistory([]); }}
+                style={{
+                  fontSize: 11, padding: "3px 10px", borderRadius: 20, cursor: "pointer",
+                  border: `0.5px solid ${compareEnabled ? TEAL : "var(--border)"}`,
+                  background: compareEnabled ? "#e0f0f2" : "var(--muted)",
+                  color: compareEnabled ? TEAL : "var(--muted-foreground)",
+                }}
+              >
+                {compareEnabled ? "✕ Remove comparison" : "+ Compare cohort"}
+              </button>
+              {compareEnabled && (
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <span style={{ fontSize: 11, color: "var(--muted-foreground)" }}>vs.</span>
+                  <select
+                    value={compareSliceType === "department" ? `dept:${compareSliceValue}` : compareSliceType === "org_level" ? `level:${compareSliceValue}` : "all"}
+                    onChange={e => {
+                      const v = e.target.value;
+                      if (v === "all") { setCompareSliceType("all"); setCompareSliceValue("all"); }
+                      else if (v.startsWith("dept:")) { setCompareSliceType("department"); setCompareSliceValue(v.slice(5)); }
+                      else if (v.startsWith("level:")) { setCompareSliceType("org_level"); setCompareSliceValue(v.slice(6)); }
+                    }}
+                    style={{ fontSize: 11, padding: "3px 8px", borderRadius: 20, border: `0.5px solid ${TEAL}`, background: "var(--card)", color: "var(--foreground)", cursor: "pointer" }}
+                  >
+                    <option value="all">All organization</option>
+                    {departments.map(d => <option key={d.id} value={`dept:${d.id}`}>{d.name}</option>)}
+                    {["IC", "Manager", "Director", "VP", "C-Suite", "Other"].map(l => <option key={l} value={`level:${l}`}>{l}</option>)}
+                  </select>
+                </div>
+              )}
+            </div>
           </div>
 
           {narrativeHistory.length === 0 ? (
