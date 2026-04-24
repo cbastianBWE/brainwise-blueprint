@@ -656,39 +656,49 @@ export function generatePTPDashboardPdf(data: PTPDashboardPdfData): void {
     }
 
     for (const iv of data.interventions) {
+      // Set correct font BEFORE splitting so widths are accurate
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(12);
       const titleLines = doc.splitTextToSize(
         iv.title,
-        CONTENT_W - 12,
+        CONTENT_W - 16,
       ) as string[];
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
       const descLines = doc.splitTextToSize(
         iv.description,
-        CONTENT_W - 12,
+        CONTENT_W - 16,
       ) as string[];
+
       const targetNames = iv.targetDimensions
         .map((d) => DIM_NAME_MAP[d] || d)
         .join(" · ");
-      const cardH =
-        10 + titleLines.length * 7 + 8 + descLines.length * 5 + 8;
 
-      checkPageBreak(cardH + 4);
+      const titleH = titleLines.length * 6;
+      const badgeRowH = 10;
+      const descH = descLines.length * 5;
+      const targetH = 8;
+      const cardH = 8 + titleH + badgeRowH + descH + targetH;
+
+      checkPageBreak(cardH + 6);
 
       setFill(SAND);
       doc.roundedRect(MARGIN_L, y, CONTENT_W, cardH, 2, 2, "F");
 
-      // Title (stacked)
+      // Title (may wrap)
       setText(NAVY);
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(13);
-      let titleY = y + 9;
+      doc.setFontSize(12);
+      let cy = y + 8;
       for (const line of titleLines) {
-        doc.text(line, MARGIN_L + 6, titleY);
-        titleY += 7;
+        doc.text(line, MARGIN_L + 6, cy);
+        cy += 6;
       }
+      cy += 2;
 
-      // Badges row
-      const badgeY = titleY + 2;
+      // Badge row
       let badgeX = MARGIN_L + 6;
-
       const drawBadge = (
         text: string,
         bg: [number, number, number],
@@ -697,16 +707,15 @@ export function generatePTPDashboardPdf(data: PTPDashboardPdfData): void {
         doc.setFont("helvetica", "bold");
         doc.setFontSize(8);
         const textW = doc.getTextWidth(text);
-        const padX = 2.5;
+        const padX = 3;
         const w = textW + padX * 2;
-        const h = 5;
+        const h = 5.5;
         setFill(bg);
-        doc.roundedRect(badgeX, badgeY - 3.5, w, h, 1, 1, "F");
+        doc.roundedRect(badgeX, cy - 4, w, h, 1, 1, "F");
         setText(fg);
-        doc.text(text, badgeX + padX, badgeY);
-        badgeX += w + 2;
+        doc.text(text, badgeX + padX, cy);
+        badgeX += w + 3;
       };
-
       const priorityColors: Record<
         string,
         { bg: [number, number, number]; fg: [number, number, number] }
@@ -719,24 +728,25 @@ export function generatePTPDashboardPdf(data: PTPDashboardPdfData): void {
       drawBadge(iv.priority.toUpperCase(), pc.bg, pc.fg);
       drawBadge(iv.timeHorizon.toUpperCase(), PURPLE_PASTEL, PURPLE);
       drawBadge(iv.interventionType.toUpperCase(), NAVY_PASTEL, NAVY);
+      cy += 8;
 
       // Description
       setText(TEXT);
       doc.setFont("helvetica", "normal");
-      doc.setFontSize(11);
-      let dy = badgeY + 6;
+      doc.setFontSize(10);
       for (const line of descLines) {
-        doc.text(line, MARGIN_L + 6, dy);
-        dy += 5;
+        doc.text(line, MARGIN_L + 6, cy);
+        cy += 5;
       }
+      cy += 3;
 
       // Targets
       setText(MUTED);
       doc.setFont("helvetica", "normal");
       doc.setFontSize(9);
-      doc.text(`Targets: ${targetNames}`, MARGIN_L + 6, dy + 2);
+      doc.text(`Targets: ${targetNames}`, MARGIN_L + 6, cy);
 
-      y += cardH + 4;
+      y += cardH + 6;
     }
   }
 
