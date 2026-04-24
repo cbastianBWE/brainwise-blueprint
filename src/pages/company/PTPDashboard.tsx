@@ -606,7 +606,10 @@ export default function PTPDashboard() {
     setSavingTracking(false);
   };
 
-  const handleExport = () => {
+  const handleExport = async () => {
+    // Belt-and-suspenders: ensure cross-instrument data is loaded even if user
+    // hasn't visited the cross-instrument tab or just changed slice
+    await Promise.all([loadNAIAggregate(), loadCrossInstrumentRecs()]);
     const sliceLabel =
       sliceType === "all" ? "All organization" : `${sliceType}: ${sliceValue}`;
     const generatedAt = latestNarrative?.generated_at
