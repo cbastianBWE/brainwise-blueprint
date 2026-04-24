@@ -534,6 +534,8 @@ export default function CompanyDashboard() {
   const handleExport = async () => {
     setExporting(true);
     setExportModal(false);
+    // Belt-and-suspenders: ensure cross-instrument data is loaded
+    await Promise.all([loadPTPAggregate(), loadCrossInstrumentRecs()]);
 
     try {
       const jsPDF = (await import("jspdf")).default;
