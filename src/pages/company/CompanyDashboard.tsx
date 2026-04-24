@@ -313,7 +313,19 @@ export default function CompanyDashboard() {
     setLoadingAgg(false);
   }, [user, sliceType, sliceValue]);
 
-  const loadInterventions = useCallback(async (narrativeId?: string) => {
+  const loadPTPAggregate = useCallback(async () => {
+    if (!user) return;
+    setLoadingPtpAgg(true);
+    const { data } = await (supabase as any).rpc("get_instrument_aggregate", {
+      p_instrument: "INST-001",
+      p_slice_type: sliceType,
+      p_slice_value: sliceValue,
+      p_context_type: "both",
+    });
+    setPtpAggregate((data ?? null) as AggregateResult | null);
+    setLoadingPtpAgg(false);
+  }, [user, sliceType, sliceValue]);
+
     if (!user) return;
     const id = narrativeId ?? latestNarrative?.id;
     if (!id) return;
