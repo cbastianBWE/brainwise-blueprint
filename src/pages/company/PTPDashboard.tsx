@@ -2824,23 +2824,44 @@ export default function PTPDashboard() {
                 >
                   NAI · C.A.F.E.S.
                 </div>
-                <div
-                  style={{
-                    padding: 20,
-                    textAlign: "center",
-                    color: "var(--muted-foreground)",
-                    fontSize: 14,
-                  }}
-                >
-                  <p style={{ margin: "0 0 8px" }}>
-                    NAI aggregate data will appear here once 5+ participants have completed both
-                    instruments.
-                  </p>
-                  <p style={{ margin: 0, fontSize: 10 }}>
-                    NAI measures AI adoption friction — a complement to PTP's threat response
-                    profile.
-                  </p>
-                </div>
+                {loadingNaiAgg ? (
+                  <div style={{ padding: 20, textAlign: "center", color: "var(--muted-foreground)", fontSize: 13 }}>Loading…</div>
+                ) : naiAggregate?.suppressed ? (
+                  <div style={{ padding: 20, textAlign: "center", color: "var(--muted-foreground)", fontSize: 13, fontStyle: "italic" }}>
+                    Insufficient data (5+ participants required)
+                  </div>
+                ) : naiAggregate?.dimensions && Object.keys(naiAggregate.dimensions).length > 0 ? (
+                  <>
+                    {ALL_NAI_DIMS.map((dimId) => {
+                      const dim = naiAggregate.dimensions![dimId];
+                      if (!dim) return null;
+                      const act = activationLabel(dim.avg_score);
+                      return (
+                        <div key={dimId} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 7, fontSize: 13 }}>
+                          <span style={{ color: NAI_DIM_COLORS[dimId], fontWeight: 500 }}>{NAI_DIM_NAMES[dimId]}</span>
+                          <span>
+                            <span style={{ fontWeight: 500, color: NAI_DIM_COLORS[dimId], marginRight: 6 }}>{Math.round(dim.avg_score)}</span>
+                            <span style={{ fontSize: 9, padding: "1px 5px", borderRadius: 3, background: act.bg, color: act.color }}>{act.label}</span>
+                          </span>
+                        </div>
+                      );
+                    })}
+                    <div style={{ marginTop: 12, paddingTop: 10, borderTop: "0.5px solid var(--border)", fontSize: 13, fontWeight: 500, color: NAVY }}>
+                      AI Readiness Index: {calcNAIIndex(naiAggregate.dimensions)} / 100
+                    </div>
+                  </>
+                ) : (
+                  <div style={{ padding: 20, textAlign: "center", color: "var(--muted-foreground)", fontSize: 14 }}>
+                    <p style={{ margin: "0 0 8px" }}>
+                      NAI aggregate data will appear here once 5+ participants have completed both
+                      instruments.
+                    </p>
+                    <p style={{ margin: 0, fontSize: 10 }}>
+                      NAI measures AI adoption friction — a complement to PTP's threat response
+                      profile.
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           )}
