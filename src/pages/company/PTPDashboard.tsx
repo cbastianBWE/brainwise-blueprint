@@ -528,6 +528,9 @@ export default function PTPDashboard() {
     if (activeTab === "cross-instrument") loadNAIAggregate();
   }, [activeTab, loadNAIAggregate]);
   useEffect(() => {
+    if (activeTab === "cross-instrument") loadCrossInstrumentRecs();
+  }, [activeTab, loadCrossInstrumentRecs]);
+  useEffect(() => {
     loadNarrative();
   }, [loadNarrative]);
   useEffect(() => {
@@ -540,29 +543,41 @@ export default function PTPDashboard() {
   const handleRegenerate = async () => {
     if (!user) return;
     setRegenerating(true);
+    const supabaseUrl = "https://svprhtzawnbzmumxnhsq.supabase.co";
     try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      const res = await fetch(
-        "https://svprhtzawnbzmumxnhsq.supabase.co/functions/v1/generate-dashboard-narrative",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${session?.access_token ?? ""}`,
-          },
-          body: JSON.stringify({
-            instrument_id: "INST-001",
-            slice_type: sliceType,
-            slice_value: sliceValue,
-          }),
-        },
-      );
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token ?? "";
+
+      toast.info("Generating dashboard narrative... (~140s)");
+      const res = await fetch(`${supabaseUrl}/functions/v1/generate-dashboard-narrative`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ instrument_id: "INST-001", slice_type: sliceType, slice_value: sliceValue }),
+      });
       const result = await res.json();
-      if (!res.ok) throw new Error(result?.error ?? "Generation failed");
-      toast.success("AI interpretation generated");
-      await Promise.all([loadUsage(), loadNarrative(), loadNarrativeHistory()]);
+      if (!res.ok) throw new Error(result?.error ?? "Dashboard generation failed");
+      toast.success("Dashboard narrative generated");
+
+      toast.info("Generating cross-instrument recommendations... (~75s)");
+      try {
+        const xRes = await fetch(`${supabaseUrl}/functions/v1/generate-cross-instrument-recommendations`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ primary_instrument_id: "INST-001", slice_type: sliceType, slice_value: sliceValue }),
+        });
+        const xResult = await xRes.json();
+        if (xRes.ok && xResult.generated) {
+          toast.success(`Cross-instrument recommendations generated (${xResult.recommendation_count} items)`);
+        } else if (xResult.reason === "other_instrument_narrative_missing") {
+          toast.info("Cross-instrument recommendations skipped (NAI narrative not yet generated for this slice).");
+        } else {
+          toast.warning(`Cross-instrument recommendations not generated: ${xResult.reason ?? xResult.error ?? "unknown"}`);
+        }
+      } catch (xe: any) {
+        toast.warning(`Cross-instrument recommendations failed: ${xe.message ?? "network error"}`);
+      }
+
+      await Promise.all([loadUsage(), loadNarrative(), loadNarrativeHistory(), loadCrossInstrumentRecs()]);
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Failed";
       toast.error(msg);
