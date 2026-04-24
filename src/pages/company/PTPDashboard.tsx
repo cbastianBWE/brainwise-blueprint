@@ -437,6 +437,66 @@ export default function PTPDashboard() {
     setSavingTracking(false);
   };
 
+  const handleExport = () => {
+    const sliceLabel =
+      sliceType === "all" ? "All organization" : `${sliceType}: ${sliceValue}`;
+    const generatedAt = latestNarrative?.generated_at
+      ? new Date(latestNarrative.generated_at).toLocaleString()
+      : new Date().toLocaleString();
+
+    const dimensionsArr = ALL_DIMS.map((dimId) => {
+      const d = dims[dimId];
+      return {
+        dimId,
+        name: DIM_NAMES[dimId],
+        avgScore: d?.avg_score ?? 0,
+        pctAt75: d?.pct_at_75_plus ?? 0,
+        pctHigh: d?.pct_high ?? 0,
+        pctElevated: d?.pct_elevated ?? 0,
+        pctLow: d?.pct_low ?? 0,
+        color: DIM_COLORS[dimId],
+      };
+    });
+
+    const nt = (latestNarrative?.narrative_text ?? {}) as Record<string, unknown>;
+    const asStr = (v: unknown): string | null =>
+      typeof v === "string" && v.length > 0 ? v : null;
+
+    generatePTPDashboardPdf({
+      orgName: "Organization",
+      sliceLabel,
+      generatedAt,
+      participantCount,
+      triScore,
+      rsiScore,
+      archetypeName: archetype?.name ?? null,
+      archetypeDescription: archetype?.description ?? null,
+      dimensions: dimensionsArr,
+      riskFlags: riskFlags as Array<{
+        id: string;
+        level: string;
+        title: string;
+        summary: string;
+        detail: string;
+      }>,
+      businessMeaning: asStr(nt.business_meaning),
+      benefits: asStr(nt.benefits),
+      risks: asStr(nt.risks),
+      nextSteps: asStr(nt.next_steps),
+      reassessmentNote: asStr(nt.reassessment_note),
+      interventions: interventions.map((iv) => ({
+        title: iv.title,
+        description: iv.description,
+        targetDimensions: iv.target_dimensions,
+        priority: iv.priority,
+        timeHorizon: iv.time_horizon,
+        interventionType: iv.intervention_type,
+      })),
+      exportSections,
+    });
+  };
+
+
   const priorityBadge = (p: string) => {
     const map: Record<string, { bg: string; color: string }> = {
       high: { bg: "#faece7", color: "#993c1d" },
