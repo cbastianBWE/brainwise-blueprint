@@ -55,6 +55,80 @@ const RSI_WEIGHTS: Record<string, number> = {
   "DIM-PTP-05": 0.40,
 };
 
+// ── NAI cross-instrument constants ──────────────────────────────────────────
+const NAI_DIM_COLORS: Record<string, string> = {
+  "DIM-NAI-01": "#021F36", "DIM-NAI-02": "#F5741A", "DIM-NAI-03": "#006D77",
+  "DIM-NAI-04": "#3C096C", "DIM-NAI-05": "#7a5800",
+};
+const NAI_DIM_NAMES: Record<string, string> = {
+  "DIM-NAI-01": "Certainty", "DIM-NAI-02": "Agency", "DIM-NAI-03": "Fairness",
+  "DIM-NAI-04": "Ego Stability", "DIM-NAI-05": "Saturation",
+};
+const NAI_DIM_WEIGHTS: Record<string, number> = {
+  "DIM-NAI-03": 0.28, "DIM-NAI-04": 0.25, "DIM-NAI-02": 0.22,
+  "DIM-NAI-01": 0.15, "DIM-NAI-05": 0.10,
+};
+const ALL_NAI_DIMS = ["DIM-NAI-03", "DIM-NAI-04", "DIM-NAI-02", "DIM-NAI-01", "DIM-NAI-05"];
+
+function calcNAIIndex(d: Record<string, any>): number {
+  const friction = Object.entries(NAI_DIM_WEIGHTS).reduce((acc, [k, w]) => acc + (d[k]?.avg_score ?? 50) * w, 0);
+  return Math.round((100 - friction) * 10) / 10;
+}
+
+interface CoElevationPattern {
+  naiDimId: string;
+  naiDimName: string;
+  ptpDimId: string;
+  ptpDimName: string;
+  naiScore: number;
+  ptpScore: number;
+  label: string;
+  description: string;
+}
+
+function detectCoElevations(
+  naiDims: Record<string, any>,
+  ptpDims: Record<string, any>,
+): CoElevationPattern[] {
+  const results: CoElevationPattern[] = [];
+  const elevated = (s: number) => s >= 50;
+  const mappings = [
+    { naiId: "DIM-NAI-01", naiName: "Certainty", ptpId: "DIM-PTP-03", ptpName: "Prediction",
+      label: "Certainty–Prediction co-elevation",
+      description: "Both instruments show ambiguity intolerance. NAI Certainty measures AI-context uncertainty aversion; PTP Prediction measures the same drive in general behaviour. Co-elevation means the workforce resists uncertainty systemically, not just in AI adoption contexts." },
+    { naiId: "DIM-NAI-02", naiName: "Agency", ptpId: "DIM-PTP-02", ptpName: "Participation",
+      label: "Agency–Participation co-elevation",
+      description: "NAI Agency measures the need for control and influence in AI adoption; PTP Participation measures social belonging and status needs. Co-elevation indicates a workforce where loss of control in AI contexts compounds social threat — people feel both disempowered and relationally threatened simultaneously." },
+    { naiId: "DIM-NAI-03", naiName: "Fairness", ptpId: "DIM-PTP-02", ptpName: "Participation",
+      label: "Fairness–Participation co-elevation",
+      description: "NAI Fairness measures perceived equity in AI implementation; PTP Participation measures social belonging and recognition. Co-elevation means unfairness concerns are amplifying social threat — people are not just perceiving AI as unfair, they are interpreting it as a signal of exclusion or diminished standing." },
+    { naiId: "DIM-NAI-04", naiName: "Ego Stability", ptpId: "DIM-PTP-01", ptpName: "Protection",
+      label: "Ego Stability–Protection co-elevation",
+      description: "NAI Ego Stability measures identity threat from AI (fear of replacement, status loss); PTP Protection measures safety and security sensitivity. Co-elevation means AI adoption is triggering both identity-level and safety-level threat responses simultaneously — the most destabilising pattern for change initiatives." },
+    { naiId: "DIM-NAI-05", naiName: "Saturation", ptpId: "DIM-PTP-03", ptpName: "Prediction",
+      label: "Saturation–Prediction co-elevation",
+      description: "NAI Saturation measures cognitive overload capacity; PTP Prediction measures ambiguity and uncertainty tolerance. Co-elevation means the workforce is both overwhelmed and uncertainty-averse — a combination that makes any complex or ambiguous change initiative extremely high-risk." },
+    { naiId: "DIM-NAI-01", naiName: "Certainty", ptpId: "DIM-PTP-01", ptpName: "Protection",
+      label: "Certainty–Protection co-elevation",
+      description: "NAI Certainty and PTP Protection are both elevated. Uncertainty about AI outcomes is activating safety-level threat responses — people are not just uncomfortable with ambiguity, they feel unsafe." },
+    { naiId: "DIM-NAI-02", naiName: "Agency", ptpId: "DIM-PTP-01", ptpName: "Protection",
+      label: "Agency–Protection co-elevation",
+      description: "Loss of control in AI contexts (NAI Agency) is compounding with generalised safety threat (PTP Protection). This combination suggests AI adoption is being experienced as existentially threatening rather than merely inconvenient." },
+  ];
+  for (const m of mappings) {
+    const naiScore = naiDims[m.naiId]?.avg_score ?? 0;
+    const ptpScore = ptpDims[m.ptpId]?.avg_score ?? 0;
+    if (elevated(naiScore) && elevated(ptpScore)) {
+      results.push({
+        naiDimId: m.naiId, naiDimName: m.naiName,
+        ptpDimId: m.ptpId, ptpDimName: m.ptpName,
+        naiScore, ptpScore, label: m.label, description: m.description,
+      });
+    }
+  }
+  return results;
+}
+
 interface DimAggregate {
   avg_score: number;
   pct_high: number;
