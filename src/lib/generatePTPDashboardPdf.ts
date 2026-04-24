@@ -726,6 +726,174 @@ export function generatePTPDashboardPdf(data: PTPDashboardPdfData): void {
     }
   }
 
+  // ============================================================
+  // TRENDS PAGE
+  // ============================================================
+  if (data.exportSections.trends && data.narrativeHistory.length > 0) {
+    newPage();
+    sectionHeading("Trends");
+
+    const cols = [
+      { key: "generated", label: "Generated", w: 32 },
+      { key: "tri", label: "TRI", w: 14 },
+      { key: "rsi", label: "RSI", w: 14 },
+      { key: "DIM-PTP-01", label: "Protection", w: 22 },
+      { key: "DIM-PTP-02", label: "Particip.", w: 22 },
+      { key: "DIM-PTP-03", label: "Prediction", w: 22 },
+      { key: "DIM-PTP-04", label: "Purpose", w: 18 },
+      { key: "DIM-PTP-05", label: "Pleasure", w: 18 },
+      { key: "n", label: "n", w: 18 },
+    ];
+
+    const rowH = 7;
+    const startX = MARGIN_L;
+
+    // Header
+    setFill(SAND);
+    doc.rect(startX, y, CONTENT_W, rowH, "F");
+    setText(NAVY);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8);
+    let cx = startX + 2;
+    for (const c of cols) {
+      doc.text(c.label, cx, y + 4.8);
+      cx += c.w;
+    }
+    y += rowH;
+
+    // Sort most recent first
+    const sortedHistory = [...data.narrativeHistory].sort(
+      (a, b) =>
+        new Date(b.generated_at).getTime() - new Date(a.generated_at).getTime(),
+    );
+
+    sortedHistory.forEach((h, i) => {
+      checkPageBreak(8);
+      const dateStr = new Date(h.generated_at).toLocaleDateString();
+      cx = startX + 2;
+
+      // Generated col + Latest badge
+      setText([30, 30, 35]);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8);
+      doc.text(dateStr, cx, y + 4.8);
+      if (i === 0) {
+        const badgeText = "LATEST";
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(6);
+        const bw = doc.getTextWidth(badgeText) + 3;
+        setFill(ORANGE);
+        doc.roundedRect(cx + 22, y + 1.5, bw, 3.5, 0.5, 0.5, "F");
+        setText([255, 255, 255]);
+        doc.text(badgeText, cx + 22 + 1.5, y + 4);
+      }
+      cx += cols[0].w;
+
+      // TRI
+      setText(NAVY);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(8);
+      doc.text(h.tri_score != null ? h.tri_score.toFixed(1) : "—", cx, y + 4.8);
+      cx += cols[1].w;
+
+      // RSI
+      setText(PURPLE);
+      doc.text(h.rsi_score != null ? h.rsi_score.toFixed(1) : "—", cx, y + 4.8);
+      cx += cols[2].w;
+
+      // Dimension scores
+      doc.setFont("helvetica", "normal");
+      for (const dimId of [
+        "DIM-PTP-01",
+        "DIM-PTP-02",
+        "DIM-PTP-03",
+        "DIM-PTP-04",
+        "DIM-PTP-05",
+      ]) {
+        const colW = cols.find((c) => c.key === dimId)!.w;
+        const score = h.dimension_scores?.[dimId]?.avg_score;
+        setText(DIM_RGB_MAP[dimId]);
+        doc.text(score != null ? score.toFixed(1) : "—", cx, y + 4.8);
+        cx += colW;
+      }
+
+      // n
+      setText([30, 30, 35]);
+      doc.setFont("helvetica", "normal");
+      doc.text(String(h.participant_count), cx, y + 4.8);
+
+      y += rowH;
+    });
+
+    y += 4;
+    setText(MUTED);
+    doc.setFont("helvetica", "italic");
+    doc.setFontSize(9);
+    doc.text(
+      "Trend data reflects all AI interpretation generations for this slice.",
+      MARGIN_L,
+      y,
+    );
+  }
+
+  // ============================================================
+  // CROSS-INSTRUMENT PAGE
+  // ============================================================
+  if (data.exportSections.crossInstrument) {
+    newPage();
+    sectionHeading("Cross-Instrument");
+
+    const bodyText =
+      "Cross-instrument analysis compares PTP threat and reward dimensions against NAI adoption readiness scores to identify co-elevation patterns. This section will populate when NAI aggregate data is available for this slice.";
+    const bodyLines = doc.splitTextToSize(
+      bodyText,
+      CONTENT_W - 12,
+    ) as string[];
+    const cardH = 16 + bodyLines.length * 5 + 6;
+
+    setFill(SAND);
+    doc.roundedRect(MARGIN_L, y, CONTENT_W, cardH, 2, 2, "F");
+
+    setText(NAVY);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(13);
+    doc.text("Cross-Instrument Analysis", MARGIN_L + 6, y + 9);
+
+    setText(MUTED);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(11);
+    let by = y + 16;
+    for (const line of bodyLines) {
+      doc.text(line, MARGIN_L + 6, by);
+      by += 5;
+    }
+
+    y += cardH + 6;
+
+    if (data.triScore !== null) {
+      checkPageBreak(20);
+      setText(NAVY);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(11);
+      const rsiText =
+        data.rsiScore !== null ? data.rsiScore.toFixed(1) : "—";
+      doc.text(
+        `PTP TRI: ${data.triScore.toFixed(1)} · RSI: ${rsiText}`,
+        MARGIN_L,
+        y,
+      );
+      y += 6;
+      setText(MUTED);
+      doc.setFont("helvetica", "italic");
+      doc.setFontSize(10);
+      doc.text(
+        "NAI data required for co-elevation pattern detection.",
+        MARGIN_L,
+        y,
+      );
+    }
+  }
+
   addFooter();
 
   // ============================================================
