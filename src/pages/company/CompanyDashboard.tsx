@@ -1908,10 +1908,44 @@ export default function CompanyDashboard() {
                 <div style={{ fontSize: 13, fontWeight: 500, color: "var(--muted-foreground)", textTransform: "uppercase" as const, letterSpacing: 0.04, marginBottom: 10 }}>
                   PTP · Threat response
                 </div>
-                <div style={{ padding: 20, textAlign: "center", color: "var(--muted-foreground)", fontSize: 14 }}>
-                  <p style={{ margin: "0 0 8px" }}>PTP aggregate data will appear here once 5+ participants have completed both instruments.</p>
-                  <p style={{ margin: 0, fontSize: 10 }}>PTP measures threat response under uncertainty — a complement to NAI's AI-specific adoption readiness score.</p>
-                </div>
+                {loadingPtpAgg ? (
+                  <div style={{ padding: 20, textAlign: "center", color: "var(--muted-foreground)", fontSize: 13 }}>Loading…</div>
+                ) : ptpAggregate?.suppressed ? (
+                  <div style={{ padding: 20, textAlign: "center", color: "var(--muted-foreground)", fontSize: 13, fontStyle: "italic" }}>
+                    Insufficient data (5+ participants required)
+                  </div>
+                ) : ptpAggregate?.dimensions && Object.keys(ptpAggregate.dimensions).length > 0 ? (
+                  <>
+                    {ALL_PTP_DIMS.map(dimId => {
+                      const dim = ptpAggregate.dimensions![dimId];
+                      if (!dim) return null;
+                      const act = activationLabel(dim.avg_score);
+                      return (
+                        <div key={dimId} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 7, fontSize: 13 }}>
+                          <span style={{ color: PTP_DIM_COLORS[dimId], fontWeight: 500 }}>{PTP_DIM_NAMES[dimId]}</span>
+                          <span>
+                            <span style={{ fontWeight: 500, color: PTP_DIM_COLORS[dimId], marginRight: 6 }}>{Math.round(dim.avg_score)}</span>
+                            <span style={{ fontSize: 9, padding: "1px 5px", borderRadius: 3, background: act.bg, color: act.color }}>{act.label}</span>
+                          </span>
+                        </div>
+                      );
+                    })}
+                    <div style={{ marginTop: 12, paddingTop: 10, borderTop: "0.5px solid var(--border)", fontSize: 13 }}>
+                      <span style={{ color: "var(--muted-foreground)" }}>TRI: </span>
+                      <strong style={{ color: NAVY }}>{calcPTPTRI(ptpAggregate.dimensions)}</strong>
+                      <span style={{ color: "var(--muted-foreground)", marginLeft: 12 }}>RSI: </span>
+                      <strong style={{ color: "#3C096C" }}>{calcPTPRSI(ptpAggregate.dimensions)}</strong>
+                      <div style={{ marginTop: 6, fontSize: 12, color: "var(--muted-foreground)" }}>
+                        Archetype: <strong style={{ color: NAVY }}>{classifyPTPArchetype(ptpAggregate.dimensions)}</strong>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div style={{ padding: 20, textAlign: "center", color: "var(--muted-foreground)", fontSize: 14 }}>
+                    <p style={{ margin: "0 0 8px" }}>PTP aggregate data will appear here once 5+ participants have completed both instruments.</p>
+                    <p style={{ margin: 0, fontSize: 10 }}>PTP measures threat response under uncertainty — a complement to NAI's AI-specific adoption readiness score.</p>
+                  </div>
+                )}
               </div>
             </div>
           )}
