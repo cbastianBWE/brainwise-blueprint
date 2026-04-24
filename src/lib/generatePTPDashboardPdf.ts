@@ -504,18 +504,21 @@ export function generatePTPDashboardPdf(data: PTPDashboardPdfData): void {
       const barY = y + 28;
       const barW = CONTENT_W - 12;
       const barH = 6;
-      const total =
-        Math.max(dim.pctLow + dim.pctElevated + dim.pctHigh, 0.0001);
-      const lowW = (dim.pctLow / total) * barW;
-      const elevW = (dim.pctElevated / total) * barW;
-      const highW = (dim.pctHigh / total) * barW;
-
-      setFill(GREEN_PASTEL);
-      doc.rect(barX, barY, lowW, barH, "F");
-      setFill(AMBER_PASTEL);
-      doc.rect(barX + lowW, barY, elevW, barH, "F");
-      setFill(RED_PASTEL);
-      doc.rect(barX + lowW + elevW, barY, highW, barH, "F");
+      const sumPct = dim.pctLow + dim.pctElevated + dim.pctHigh;
+      if (sumPct <= 0.0001) {
+        setFill([220, 220, 225]);
+        doc.rect(barX, barY, barW, barH, "F");
+      } else {
+        const lowW = (dim.pctLow / sumPct) * barW;
+        const elevW = (dim.pctElevated / sumPct) * barW;
+        const highW = (dim.pctHigh / sumPct) * barW;
+        setFill(GREEN_PASTEL);
+        doc.rect(barX, barY, lowW, barH, "F");
+        setFill(AMBER_PASTEL);
+        doc.rect(barX + lowW, barY, elevW, barH, "F");
+        setFill(RED_PASTEL);
+        doc.rect(barX + lowW + elevW, barY, highW, barH, "F");
+      }
 
       y += cardH + 4;
     };
@@ -628,11 +631,11 @@ export function generatePTPDashboardPdf(data: PTPDashboardPdfData): void {
       // Body text
       doc.setFont("helvetica", "normal");
       doc.setFontSize(11);
-      const bodyLines = doc.splitTextToSize(s.text, CONTENT_W) as string[];
+      const bodyLines = doc.splitTextToSize(s.text, CONTENT_W - 4) as string[];
       for (const line of bodyLines) {
         checkPageBreak(6);
         setText(TEXT);
-        doc.text(line, MARGIN_L, y);
+        doc.text(line, MARGIN_L + 4, y);
         y += 5.5;
       }
       y += 8;
@@ -797,19 +800,19 @@ export function generatePTPDashboardPdf(data: PTPDashboardPdfData): void {
       cx = startX + 2;
 
       // Generated col + Latest badge
+      const rowY = y + 4.8;
       setText([30, 30, 35]);
       doc.setFont("helvetica", "normal");
       doc.setFontSize(8);
-      doc.text(dateStr, cx, y + 4.8);
+      doc.text(dateStr, cx, rowY);
       if (i === 0) {
-        const badgeText = "LATEST";
+        const badgeX = cx + doc.getTextWidth(dateStr) + 2;
+        setFill([0, 109, 119]);
+        doc.roundedRect(badgeX, rowY - 3.5, 12, 5, 1, 1, "F");
+        setText([255, 255, 255]);
         doc.setFont("helvetica", "bold");
         doc.setFontSize(6);
-        const bw = doc.getTextWidth(badgeText) + 3;
-        setFill(ORANGE);
-        doc.roundedRect(cx + 22, y + 1.5, bw, 3.5, 0.5, 0.5, "F");
-        setText([255, 255, 255]);
-        doc.text(badgeText, cx + 22 + 1.5, y + 4);
+        doc.text("LATEST", badgeX + 1.5, rowY);
       }
       cx += cols[0].w;
 
@@ -864,7 +867,8 @@ export function generatePTPDashboardPdf(data: PTPDashboardPdfData): void {
   // CROSS-INSTRUMENT PAGE
   // ============================================================
   if (data.exportSections.crossInstrument) {
-    newPage();
+    checkPageBreak(60);
+    y += 6;
     sectionHeading("Cross-Instrument");
 
     const bodyText =

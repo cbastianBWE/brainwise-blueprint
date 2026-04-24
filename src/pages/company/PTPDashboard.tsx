@@ -272,12 +272,19 @@ export default function PTPDashboard() {
   useEffect(() => {
     if (!user) return;
     (async () => {
-      const { data: userOrgData } = await (supabase as any)
+      const { data: userData } = await (supabase as any)
         .from("users")
-        .select("organization_id, organizations(name)")
+        .select("organization_id")
         .eq("id", user.id)
         .single();
-      setOrgName((userOrgData as any)?.organizations?.name ?? "");
+      if ((userData as any)?.organization_id) {
+        const { data: orgData } = await (supabase as any)
+          .from("organizations")
+          .select("name")
+          .eq("id", (userData as any).organization_id)
+          .single();
+        setOrgName((orgData as any)?.name ?? "");
+      }
     })();
   }, [user]);
 
