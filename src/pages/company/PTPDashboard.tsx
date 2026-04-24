@@ -718,6 +718,13 @@ export default function PTPDashboard() {
       naiDimensions: naiDimensionsForPdf,
       naiReadinessIndex,
       coElevationPatterns: coElevationPatternsForPdf,
+      crossInstrumentRecommendations: crossInstrumentRow ? {
+        id: crossInstrumentRow.id,
+        primary_narrative_id: crossInstrumentRow.primary_narrative_id,
+        recommendations: crossInstrumentRow.recommendations,
+        summary: crossInstrumentRow.summary,
+        generated_at: crossInstrumentRow.generated_at,
+      } : null,
     });
   };
 
