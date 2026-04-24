@@ -125,6 +125,7 @@ function activationLabel(score: number): string {
 export function generatePTPDashboardPdf(data: PTPDashboardPdfData): void {
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   let y = MARGIN_T;
+  let currentSectionTitle: string | null = null;
 
   const setFill = (rgb: [number, number, number]) =>
     doc.setFillColor(rgb[0], rgb[1], rgb[2]);
@@ -147,7 +148,22 @@ export function generatePTPDashboardPdf(data: PTPDashboardPdfData): void {
     );
   };
 
+  const renderContinuationHeader = () => {
+    if (!currentSectionTitle) return;
+    doc.setFontSize(10);
+    setText(MUTED);
+    doc.setFont("helvetica", "italic");
+    doc.text(`${currentSectionTitle} (cont.)`, MARGIN_L, y);
+    y += 2;
+    doc.setDrawColor(220, 220, 220);
+    doc.setLineWidth(0.3);
+    doc.line(MARGIN_L, y, MARGIN_L + CONTENT_W, y);
+    y += 5;
+    doc.setFont("helvetica", "normal");
+  };
+
   const newPage = () => {
+    currentSectionTitle = null;
     addFooter();
     doc.addPage();
     y = MARGIN_T;
@@ -155,12 +171,17 @@ export function generatePTPDashboardPdf(data: PTPDashboardPdfData): void {
 
   const checkPageBreak = (needed: number) => {
     if (y + needed > PAGE_H - MARGIN_B) {
-      newPage();
+      addFooter();
+      doc.addPage();
+      y = MARGIN_T;
+      if (currentSectionTitle) renderContinuationHeader();
     }
   };
 
-  const sectionHeading = (label: string) => {
-    checkPageBreak(15);
+  const sectionHeading = (label: string, minContentNeeded = 40) => {
+    currentSectionTitle = null;
+    checkPageBreak(15 + minContentNeeded);
+    currentSectionTitle = label;
     setText(NAVY);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(16);
@@ -505,8 +526,8 @@ export function generatePTPDashboardPdf(data: PTPDashboardPdfData): void {
       const barW = CONTENT_W - 12;
       const barH = 6;
       const sumPct = dim.pctLow + dim.pctElevated + dim.pctHigh;
-      if (sumPct <= 0.0001) {
-        setFill([220, 220, 225]);
+      if (sumPct < 1) {
+        setFill([220, 220, 220]);
         doc.rect(barX, barY, barW, barH, "F");
       } else {
         const lowW = (dim.pctLow / sumPct) * barW;
