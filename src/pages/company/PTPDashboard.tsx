@@ -212,6 +212,32 @@ interface UsageSummary {
   ai_usage: { chat_used: number; chat_allowance: number; ai_chat_enabled: boolean };
 }
 
+interface Department {
+  id: string;
+  name: string;
+}
+
+interface CrossInstrumentRec {
+  id: string;
+  title: string;
+  rationale: string;
+  steps: string[];
+  priority: 'high' | 'medium' | 'low';
+  time_horizon: 'immediate' | '30-day' | '90-day';
+  anchor_co_elevation: string | null;
+  primary_targets: string[];
+  cross_targets: string[];
+}
+
+interface CrossInstrumentRow {
+  id: string;
+  primary_narrative_id: string;
+  input_narrative_ids: Array<{ instrument_id: string; narrative_id: string }>;
+  recommendations: CrossInstrumentRec[];
+  summary: string | null;
+  generated_at: string;
+}
+
 interface CrossInstrumentRec {
   id: string;
   title: string;
