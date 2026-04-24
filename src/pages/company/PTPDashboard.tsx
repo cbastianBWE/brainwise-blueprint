@@ -318,6 +318,8 @@ export default function PTPDashboard() {
   const [aggregate, setAggregate] = useState<AggregateResult | null>(null);
   const [naiAggregate, setNaiAggregate] = useState<AggregateResult | null>(null);
   const [loadingNaiAgg, setLoadingNaiAgg] = useState<boolean>(false);
+  const [crossInstrumentRow, setCrossInstrumentRow] = useState<CrossInstrumentRow | null>(null);
+  const [loadingCrossInstrument, setLoadingCrossInstrument] = useState<boolean>(false);
   const [latestNarrative, setLatestNarrative] = useState<StoredNarrative | null>(null);
   const [loadingUsage, setLoadingUsage] = useState<boolean>(true);
   const [loadingAgg, setLoadingAgg] = useState<boolean>(true);
