@@ -477,7 +477,7 @@ export default function PTPDashboard() {
       typeof v === "string" && v.length > 0 ? v : null;
 
     generatePTPDashboardPdf({
-      orgName: "Organization",
+      orgName: orgName,
       sliceLabel,
       generatedAt,
       participantCount,
