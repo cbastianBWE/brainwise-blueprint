@@ -524,12 +524,8 @@ export default function PTPDashboard() {
   useEffect(() => {
     loadAggregate();
   }, [loadAggregate]);
-  useEffect(() => {
-    if (activeTab === "cross-instrument") loadNAIAggregate();
-  }, [activeTab, loadNAIAggregate]);
-  useEffect(() => {
-    if (activeTab === "cross-instrument") loadCrossInstrumentRecs();
-  }, [activeTab, loadCrossInstrumentRecs]);
+  useEffect(() => { loadNAIAggregate(); }, [loadNAIAggregate]);
+  useEffect(() => { loadCrossInstrumentRecs(); }, [loadCrossInstrumentRecs]);
   useEffect(() => {
     loadNarrative();
   }, [loadNarrative]);
