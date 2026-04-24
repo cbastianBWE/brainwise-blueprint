@@ -326,6 +326,7 @@ export default function CompanyDashboard() {
     setLoadingPtpAgg(false);
   }, [user, sliceType, sliceValue]);
 
+  const loadInterventions = useCallback(async (narrativeId?: string) => {
     if (!user) return;
     const id = narrativeId ?? latestNarrative?.id;
     if (!id) return;
