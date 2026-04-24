@@ -60,6 +60,23 @@ export interface PTPDashboardPdfData {
     participant_count: number;
   }>;
   exportSections: PTPDashboardPdfSections;
+  naiDimensions: Array<{
+    dimId: string;
+    name: string;
+    avgScore: number;
+    color: string;
+  }> | null;
+  naiReadinessIndex: number | null;
+  coElevationPatterns: Array<{
+    label: string;
+    description: string;
+    naiDimName: string;
+    naiScore: number;
+    ptpDimName: string;
+    ptpScore: number;
+    naiColor: string;
+    ptpColor: string;
+  }> | null;
 }
 
 // ============================================================
@@ -892,54 +909,136 @@ export function generatePTPDashboardPdf(data: PTPDashboardPdfData): void {
     y += 6;
     sectionHeading("Cross-Instrument");
 
-    const bodyText =
-      "Cross-instrument analysis compares PTP threat and reward dimensions against NAI adoption readiness scores to identify co-elevation patterns. This section will populate when NAI aggregate data is available for this slice.";
-    const bodyLines = doc.splitTextToSize(
-      bodyText,
-      CONTENT_W - 12,
-    ) as string[];
-    const cardH = 16 + bodyLines.length * 5 + 6;
+    const introText = "Cross-instrument analysis compares PTP threat and reward dimensions against NAI adoption readiness scores to identify co-elevation patterns. Co-elevation occurs when a dimension is simultaneously elevated in both instruments — these compound patterns require sequential intervention.";
+    const introLines = doc.splitTextToSize(introText, CONTENT_W) as string[];
+    setText(MUTED);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.text(introLines, MARGIN_L, y);
+    y += introLines.length * 5 + 6;
 
+    // Two-panel side-by-side
+    const panelW = (CONTENT_W - 6) / 2;
+    checkPageBreak(60);
+
+    // Left panel: PTP
     setFill(SAND);
-    doc.roundedRect(MARGIN_L, y, CONTENT_W, cardH, 2, 2, "F");
+    doc.roundedRect(MARGIN_L, y, panelW, 55, 2, 2, "F");
+    setText(MUTED);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8);
+    doc.text("PTP · THREAT & REWARD", MARGIN_L + 4, y + 6);
+    let py = y + 12;
+    data.dimensions.forEach(dim => {
+      const [r, g, b] = hexToRgb(dim.color);
+      setText([r, g, b]);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(8);
+      doc.text(dim.name, MARGIN_L + 4, py);
+      setText(NAVY);
+      doc.text(dim.avgScore.toFixed(1), MARGIN_L + panelW - 20, py);
+      py += 6.5;
+    });
+    doc.setDrawColor(200, 200, 200);
+    doc.setLineWidth(0.3);
+    doc.line(MARGIN_L + 4, py + 1, MARGIN_L + panelW - 4, py + 1);
+    setText(NAVY);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8);
+    if (data.triScore !== null) doc.text(`TRI: ${data.triScore.toFixed(1)}  RSI: ${data.rsiScore?.toFixed(1) ?? "—"}`, MARGIN_L + 4, py + 6);
 
+    // Right panel: NAI
+    const rx = MARGIN_L + panelW + 6;
+    if (data.naiDimensions && data.naiDimensions.length > 0) {
+      setFill(SAND);
+      doc.roundedRect(rx, y, panelW, 55, 2, 2, "F");
+      setText(MUTED);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(8);
+      doc.text("NAI · C.A.F.E.S.", rx + 4, y + 6);
+      let ny = y + 12;
+      data.naiDimensions.forEach(dim => {
+        const [r, g, b] = hexToRgb(dim.color);
+        setText([r, g, b]);
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(8);
+        doc.text(dim.name, rx + 4, ny);
+        setText(NAVY);
+        doc.text(dim.avgScore.toFixed(1), rx + panelW - 20, ny);
+        ny += 6.5;
+      });
+      doc.setDrawColor(200, 200, 200);
+      doc.setLineWidth(0.3);
+      doc.line(rx + 4, ny + 1, rx + panelW - 4, ny + 1);
+      setText(NAVY);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(8);
+      if (data.naiReadinessIndex !== null) doc.text(`AI Readiness Index: ${data.naiReadinessIndex}/100`, rx + 4, ny + 6);
+    } else {
+      setFill([245, 245, 245]);
+      doc.roundedRect(rx, y, panelW, 55, 2, 2, "F");
+      setText(MUTED);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(8);
+      doc.text("NAI · C.A.F.E.S.", rx + 4, y + 6);
+      const msg = doc.splitTextToSize("NAI data not yet available for this slice.", panelW - 8) as string[];
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8);
+      doc.text(msg, rx + 4, y + 18);
+    }
+    y += 60;
+
+    // Co-elevation patterns
+    checkPageBreak(20);
+    y += 4;
     setText(NAVY);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(13);
-    doc.text("Cross-Instrument Analysis", MARGIN_L + 6, y + 9);
+    doc.text("Co-elevation Patterns", MARGIN_L, y);
+    setDraw(ORANGE);
+    doc.setLineWidth(0.8);
+    doc.line(MARGIN_L, y + 2, MARGIN_L + 35, y + 2);
+    y += 10;
 
-    setText(MUTED);
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(11);
-    let by = y + 16;
-    for (const line of bodyLines) {
-      doc.text(line, MARGIN_L + 6, by);
-      by += 5;
-    }
-
-    y += cardH + 6;
-
-    if (data.triScore !== null) {
-      checkPageBreak(20);
-      setText(NAVY);
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(11);
-      const rsiText =
-        data.rsiScore !== null ? data.rsiScore.toFixed(1) : "—";
-      doc.text(
-        `PTP TRI: ${data.triScore.toFixed(1)} · RSI: ${rsiText}`,
-        MARGIN_L,
-        y,
-      );
-      y += 6;
+    if (!data.coElevationPatterns || data.coElevationPatterns.length === 0) {
+      const noPatText = data.naiDimensions
+        ? "No co-elevation patterns detected — all cross-instrument dimension pairs are within normal range."
+        : "Co-elevation pattern detection requires NAI aggregate data for this slice.";
+      setFill([245, 247, 250]);
+      const noLines = doc.splitTextToSize(noPatText, CONTENT_W - 8) as string[];
+      const noH = noLines.length * 5 + 8;
+      doc.roundedRect(MARGIN_L, y, CONTENT_W, noH, 2, 2, "F");
       setText(MUTED);
       doc.setFont("helvetica", "italic");
       doc.setFontSize(10);
-      doc.text(
-        "NAI data required for co-elevation pattern detection.",
-        MARGIN_L,
-        y,
-      );
+      doc.text(noLines, MARGIN_L + 4, y + 6);
+      y += noH + 6;
+    } else {
+      for (const p of data.coElevationPatterns) {
+        const descLines = doc.splitTextToSize(p.description, CONTENT_W - 12) as string[];
+        const cardH = 10 + descLines.length * 5 + 10;
+        checkPageBreak(cardH + 4);
+        setFill(SAND);
+        doc.roundedRect(MARGIN_L, y, CONTENT_W, cardH, 2, 2, "F");
+        setText(NAVY);
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(11);
+        doc.text(p.label, MARGIN_L + 6, y + 8);
+        setText(MUTED);
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(10);
+        doc.text(descLines, MARGIN_L + 6, y + 14);
+        let scY = y + 14 + descLines.length * 5 + 2;
+        const [nr, ng, nb] = hexToRgb(p.naiColor);
+        const [pr, pg, pb] = hexToRgb(p.ptpColor);
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(9);
+        setText([nr, ng, nb]);
+        doc.text(`NAI ${p.naiDimName} ${Math.round(p.naiScore)}`, MARGIN_L + 6, scY);
+        setText([pr, pg, pb]);
+        doc.text(`PTP ${p.ptpDimName} ${Math.round(p.ptpScore)}`, MARGIN_L + 60, scY);
+        y += cardH + 4;
+      }
     }
   }
 
