@@ -242,6 +242,13 @@ export default function PTPDashboard() {
   const [trackingNote, setTrackingNote] = useState<string>("");
   const [trackingStatus, setTrackingStatus] = useState<string>("not_started");
   const [savingTracking, setSavingTracking] = useState<boolean>(false);
+  const [exportModal, setExportModal] = useState<boolean>(false);
+  const [exportSections, setExportSections] = useState<PTPDashboardPdfSections>({
+    overview: true,
+    dimensions: true,
+    interpretation: true,
+    interventions: true,
+  });
 
   // Load departments on mount
   useEffect(() => {
