@@ -577,6 +577,48 @@ export default function PTPDashboard() {
     const asStr = (v: unknown): string | null =>
       typeof v === "string" && v.length > 0 ? v : null;
 
+    const ptpDims = aggregate?.dimensions ?? {};
+    const naiDims = naiAggregate?.dimensions;
+    const naiDimOrder = ["DIM-NAI-03", "DIM-NAI-04", "DIM-NAI-02", "DIM-NAI-01", "DIM-NAI-05"];
+    const naiDimColors: Record<string, string> = {
+      "DIM-NAI-01": "#021F36", "DIM-NAI-02": "#F5741A", "DIM-NAI-03": "#006D77",
+      "DIM-NAI-04": "#3C096C", "DIM-NAI-05": "#7a5800",
+    };
+    const naiDimNames: Record<string, string> = {
+      "DIM-NAI-01": "Certainty", "DIM-NAI-02": "Agency", "DIM-NAI-03": "Fairness",
+      "DIM-NAI-04": "Ego Stability", "DIM-NAI-05": "Saturation",
+    };
+    const naiDimWeights: Record<string, number> = {
+      "DIM-NAI-03": 0.28, "DIM-NAI-04": 0.25, "DIM-NAI-02": 0.22,
+      "DIM-NAI-01": 0.15, "DIM-NAI-05": 0.10,
+    };
+
+    const naiDimensionsForPdf = naiDims && !naiAggregate?.suppressed
+      ? naiDimOrder.map(dimId => ({
+          dimId,
+          name: naiDimNames[dimId],
+          avgScore: naiDims[dimId]?.avg_score ?? 0,
+          color: naiDimColors[dimId],
+        }))
+      : null;
+
+    const naiReadinessIndex = naiDims && !naiAggregate?.suppressed
+      ? Math.round((100 - Object.entries(naiDimWeights).reduce((a, [k, w]) => a + (naiDims[k]?.avg_score ?? 50) * w, 0)) * 10) / 10
+      : null;
+
+    const coElevationPatternsForPdf = naiDims && !naiAggregate?.suppressed
+      ? detectCoElevations(naiDims, ptpDims).map(p => ({
+          label: p.label,
+          description: p.description,
+          naiDimName: p.naiDimName,
+          naiScore: p.naiScore,
+          ptpDimName: p.ptpDimName,
+          ptpScore: p.ptpScore,
+          naiColor: NAI_DIM_COLORS[p.naiDimId],
+          ptpColor: DIM_COLORS[p.ptpDimId],
+        }))
+      : null;
+
     generatePTPDashboardPdf({
       orgName: orgName,
       sliceLabel,
@@ -615,6 +657,9 @@ export default function PTPDashboard() {
         participant_count: h.participant_count,
       })),
       exportSections,
+      naiDimensions: naiDimensionsForPdf,
+      naiReadinessIndex,
+      coElevationPatterns: coElevationPatternsForPdf,
     });
   };
 
