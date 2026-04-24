@@ -238,27 +238,6 @@ interface CrossInstrumentRow {
   generated_at: string;
 }
 
-interface CrossInstrumentRec {
-  id: string;
-  title: string;
-  rationale: string;
-  steps: string[];
-  priority: 'high' | 'medium' | 'low';
-  time_horizon: 'immediate' | '30-day' | '90-day';
-  anchor_co_elevation: string | null;
-  primary_targets: string[];
-  cross_targets: string[];
-}
-
-interface CrossInstrumentRow {
-  id: string;
-  primary_narrative_id: string;
-  input_narrative_ids: Array<{ instrument_id: string; narrative_id: string }>;
-  recommendations: CrossInstrumentRec[];
-  summary: string | null;
-  generated_at: string;
-}
-
 function calcTRI(dims: Record<string, DimAggregate>): number {
   const weighted = Object.entries(TRI_WEIGHTS).reduce(
     (acc, [d, w]) => acc + (dims[d]?.avg_score ?? 50) * w,
