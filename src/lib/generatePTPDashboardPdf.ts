@@ -614,17 +614,28 @@ export function generatePTPDashboardPdf(data: PTPDashboardPdfData): void {
       if (!s.text) continue;
       checkPageBreak(20);
 
-      // Orange left bar + label
+      // Orange left accent bar
       setFill(ORANGE);
-      doc.rect(MARGIN_L, y - 4, 1.2, 7, "F");
+      doc.rect(MARGIN_L, y, 1.2, 8, "F");
+
+      // Section label
       setText(NAVY);
       doc.setFont("helvetica", "bold");
       doc.setFontSize(11);
-      doc.text(s.label, MARGIN_L + 4, y);
-      y += 6;
+      doc.text(s.label, MARGIN_L + 5, y + 6);
+      y += 14;
 
-      y = wrappedText(s.text, MARGIN_L, y, CONTENT_W, 5, 11, TEXT);
-      y += 6;
+      // Body text
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(11);
+      const bodyLines = doc.splitTextToSize(s.text, CONTENT_W) as string[];
+      for (const line of bodyLines) {
+        checkPageBreak(6);
+        setText(TEXT);
+        doc.text(line, MARGIN_L, y);
+        y += 5.5;
+      }
+      y += 8;
     }
   }
 
