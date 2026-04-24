@@ -920,8 +920,7 @@ export function generatePTPDashboardPdf(data: PTPDashboardPdfData): void {
   // CROSS-INSTRUMENT PAGE
   // ============================================================
   if (data.exportSections.crossInstrument) {
-    checkPageBreak(60);
-    y += 6;
+    newPage();
     sectionHeading("Cross-Instrument");
 
     const introText = "Cross-instrument analysis compares PTP threat and reward dimensions against NAI adoption readiness scores to identify co-elevation patterns. Co-elevation occurs when a dimension is simultaneously elevated in both instruments — these compound patterns require sequential intervention.";
