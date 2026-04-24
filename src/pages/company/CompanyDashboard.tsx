@@ -1042,7 +1042,7 @@ export default function CompanyDashboard() {
               NAI · AI Adoption Readiness Dashboard
             </p>
             <h1 style={{ fontSize: 22, fontWeight: 600, color: "var(--foreground)", margin: "4px 0 0" }}>
-              Company Dashboard
+              NAI Dashboard
             </h1>
           </div>
 
