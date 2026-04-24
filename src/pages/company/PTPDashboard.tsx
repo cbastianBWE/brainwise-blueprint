@@ -247,7 +247,9 @@ export default function PTPDashboard() {
     overview: true,
     dimensions: true,
     interpretation: true,
+    trends: true,
     interventions: true,
+    crossInstrument: true,
   });
   const [orgName, setOrgName] = useState<string>("");
 
@@ -505,6 +507,13 @@ export default function PTPDashboard() {
         priority: iv.priority,
         timeHorizon: iv.time_horizon,
         interventionType: iv.intervention_type,
+      })),
+      narrativeHistory: narrativeHistory.map((h) => ({
+        generated_at: h.generated_at,
+        tri_score: h.tri_score,
+        rsi_score: h.rsi_score,
+        dimension_scores: h.dimension_scores,
+        participant_count: h.participant_count,
       })),
       exportSections,
     });
@@ -3012,7 +3021,9 @@ export default function PTPDashboard() {
                   { key: "overview", label: "Overview" },
                   { key: "dimensions", label: "Dimensions" },
                   { key: "interpretation", label: "AI Interpretation" },
+                  { key: "trends", label: "Trends" },
                   { key: "interventions", label: "Interventions" },
+                  { key: "crossInstrument", label: "Cross-Instrument" },
                 ] as Array<{ key: keyof PTPDashboardPdfSections; label: string }>
               ).map(({ key, label }) => (
                 <label

@@ -185,6 +185,7 @@ export default function CompanyDashboard() {
     overview: true,
     dimensions: true,
     interpretation: true,
+    interventions: true,
     trends: true,
     "cross-instrument": true,
   });
@@ -792,41 +793,41 @@ export default function CompanyDashboard() {
           y += rH+6;
         }
 
-        // Structured interventions
-        if (interventions.length > 0) {
-          checkY(14);
-          y += 2;
-          pdf.setFontSize(9); pdf.setFont("helvetica","bold"); pdf.setTextColor(2,31,54);
-          pdf.text("Structured Interventions", ML, y);
-          y += 1.5;
-          pdf.setDrawColor(2,31,54); pdf.setLineWidth(0.4); pdf.line(ML, y, ML+CW, y); y += 5;
+      }
 
-          interventions.forEach(iv => {
-            const tLines = splitText(iv.title, CW-55, 8, "bold");
-            const dLines = splitText(iv.description, CW-8, 7.5, "normal");
-            const targText = `Targets: ${iv.target_dimensions?.map(d => DIM_NAMES[d] ?? d).join(" · ")}`;
-            const ivH = 5 + tLines.length*4.5 + dLines.length*4 + 5 + 4;
-            checkY(ivH+4, "AI INTERPRETATION (cont.)");
-            pdf.setFillColor(249,247,241); pdf.roundedRect(ML,y,CW,ivH,2,2,"F");
-            pdf.setDrawColor(220,220,220); pdf.setLineWidth(0.3);
-            pdf.roundedRect(ML,y,CW,ivH,2,2,"S");
-            pdf.setFontSize(8); pdf.setFont("helvetica","bold"); pdf.setTextColor(2,31,54);
-            pdf.text(tLines, ML+4, y+5);
-            // Badges
-            const pCol: [number,number,number] = iv.priority === "high" ? [153,60,29] : iv.priority === "medium" ? [99,56,6] : [15,110,86];
-            pdf.setFontSize(6.5); pdf.setFont("helvetica","normal");
-            pdf.setTextColor(...pCol); pdf.text(iv.priority, ML+CW-4, y+5, {align:"right"});
-            pdf.setTextColor(60,9,108); pdf.text(iv.time_horizon, ML+CW-20, y+5, {align:"right"});
-            pdf.setTextColor(50,50,50); pdf.text(iv.intervention_type, ML+CW-40, y+5, {align:"right"});
-            let iy = y+5+tLines.length*4.5;
-            pdf.setFontSize(7.5); pdf.setFont("helvetica","normal"); pdf.setTextColor(60,60,60);
-            pdf.text(dLines, ML+4, iy);
-            iy += dLines.length*4+3;
-            pdf.setFontSize(6.5); pdf.setTextColor(130,120,130);
-            pdf.text(targText, ML+4, iy);
-            y += ivH+4;
-          });
-        }
+      // ── INTERVENTIONS ────────────────────────────────────────────────────
+      if (exportSections["interventions"] && interventions.length > 0) {
+        newPage("INTERVENTIONS");
+        pdf.setFontSize(9); pdf.setFont("helvetica","bold"); pdf.setTextColor(2,31,54);
+        pdf.text("Structured Interventions", ML, y);
+        y += 1.5;
+        pdf.setDrawColor(2,31,54); pdf.setLineWidth(0.4); pdf.line(ML, y, ML+CW, y); y += 5;
+
+        interventions.forEach(iv => {
+          const tLines = splitText(iv.title, CW-55, 8, "bold");
+          const dLines = splitText(iv.description, CW-8, 7.5, "normal");
+          const targText = `Targets: ${iv.target_dimensions?.map(d => DIM_NAMES[d] ?? d).join(" · ")}`;
+          const ivH = 5 + tLines.length*4.5 + dLines.length*4 + 5 + 4;
+          checkY(ivH+4, "INTERVENTIONS (cont.)");
+          pdf.setFillColor(249,247,241); pdf.roundedRect(ML,y,CW,ivH,2,2,"F");
+          pdf.setDrawColor(220,220,220); pdf.setLineWidth(0.3);
+          pdf.roundedRect(ML,y,CW,ivH,2,2,"S");
+          pdf.setFontSize(8); pdf.setFont("helvetica","bold"); pdf.setTextColor(2,31,54);
+          pdf.text(tLines, ML+4, y+5);
+          // Badges
+          const pCol: [number,number,number] = iv.priority === "high" ? [153,60,29] : iv.priority === "medium" ? [99,56,6] : [15,110,86];
+          pdf.setFontSize(6.5); pdf.setFont("helvetica","normal");
+          pdf.setTextColor(...pCol); pdf.text(iv.priority, ML+CW-4, y+5, {align:"right"});
+          pdf.setTextColor(60,9,108); pdf.text(iv.time_horizon, ML+CW-20, y+5, {align:"right"});
+          pdf.setTextColor(50,50,50); pdf.text(iv.intervention_type, ML+CW-40, y+5, {align:"right"});
+          let iy = y+5+tLines.length*4.5;
+          pdf.setFontSize(7.5); pdf.setFont("helvetica","normal"); pdf.setTextColor(60,60,60);
+          pdf.text(dLines, ML+4, iy);
+          iy += dLines.length*4+3;
+          pdf.setFontSize(6.5); pdf.setTextColor(130,120,130);
+          pdf.text(targText, ML+4, iy);
+          y += ivH+4;
+        });
       }
 
       // ── TRENDS ───────────────────────────────────────────────────────────
@@ -1022,11 +1023,12 @@ export default function CompanyDashboard() {
   const suppressed = aggregate?.suppressed ?? false;
   const riskFlags: RiskFlag[] = latestNarrative?.narrative_text?.risk_flags ?? [];
 
-  const tabs = ["overview", "dimensions", "interpretation", "trends", "cross-instrument"];
+  const tabs = ["overview", "dimensions", "interpretation", "interventions", "trends", "cross-instrument"];
   const tabLabels: Record<string, string> = {
     overview: "Overview",
     dimensions: "Dimensions",
     interpretation: "AI Interpretation",
+    interventions: "Interventions",
     trends: "Trends",
     "cross-instrument": "Cross-Instrument",
   };
