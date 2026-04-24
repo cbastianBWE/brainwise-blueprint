@@ -66,7 +66,6 @@ const coachNav: NavItem[] = [
 
 const adminNav: NavItem[] = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
-  { title: "Company Dashboard", url: "/company/dashboard", icon: Building2 },
   { title: "My Results", url: "/my-results", icon: BarChart3 },
   { title: "Shared Results", url: "/shared-results", icon: Users2 },
   { title: "Assessment", url: "/assessment", icon: ClipboardList },
