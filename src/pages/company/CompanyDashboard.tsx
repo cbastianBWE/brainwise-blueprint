@@ -1955,9 +1955,39 @@ export default function CompanyDashboard() {
             <p style={{ fontSize: 14, color: "var(--muted-foreground)", margin: "0 0 12px", lineHeight: 1.6 }}>
               Co-elevation occurs when a dimension is simultaneously elevated in both NAI and PTP — for example, high Ego Stability (NAI) paired with high Protection (PTP). These compound patterns are the most operationally significant findings because the barriers reinforce each other and require sequential intervention.
             </p>
-            <div style={{ background: "var(--muted)", borderRadius: 8, padding: "10px 12px", fontSize: 13, color: "var(--muted-foreground)", fontStyle: "italic" }}>
-              Co-elevation pattern detection requires PTP aggregate data for this slice. Complete cross-instrument analysis will appear here once participants have completed both assessments.
-            </div>
+            {(() => {
+              const haveNai = Object.keys(dims).length > 0;
+              const havePtp = !!ptpAggregate?.dimensions && Object.keys(ptpAggregate.dimensions).length > 0 && !ptpAggregate?.suppressed;
+              if (!haveNai || !havePtp) {
+                return (
+                  <div style={{ background: "var(--muted)", borderRadius: 8, padding: "10px 12px", fontSize: 13, color: "var(--muted-foreground)", fontStyle: "italic" }}>
+                    Co-elevation pattern detection requires PTP aggregate data for this slice. Complete cross-instrument analysis will appear here once participants have completed both assessments.
+                  </div>
+                );
+              }
+              const patterns = detectCoElevations(dims, ptpAggregate!.dimensions!);
+              if (patterns.length === 0) {
+                return (
+                  <div style={{ background: "var(--muted)", borderRadius: 8, padding: "10px 12px", fontSize: 13, color: "var(--muted-foreground)" }}>
+                    No co-elevation patterns detected in current data — all cross-instrument dimension pairs are within normal range.
+                  </div>
+                );
+              }
+              return (
+                <div style={{ display: "flex", flexDirection: "column" as const, gap: 10 }}>
+                  {patterns.map((p, i) => (
+                    <div key={i} style={{ background: "var(--muted)", borderRadius: 8, padding: 12, border: "0.5px solid var(--border)" }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: NAVY, marginBottom: 6 }}>{p.label}</div>
+                      <div style={{ fontSize: 13, color: "var(--muted-foreground)", marginBottom: 8, lineHeight: 1.6 }}>{p.description}</div>
+                      <div style={{ display: "flex", gap: 16, fontSize: 12 }}>
+                        <span><span style={{ color: "var(--muted-foreground)" }}>NAI </span><span style={{ color: DIM_COLORS[p.naiDimId], fontWeight: 600 }}>{p.naiDimName} {Math.round(p.naiScore)}</span></span>
+                        <span><span style={{ color: "var(--muted-foreground)" }}>PTP </span><span style={{ color: PTP_DIM_COLORS[p.ptpDimId], fontWeight: 600 }}>{p.ptpDimName} {Math.round(p.ptpScore)}</span></span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
           </div>
 
           {latestNarrative?.narrative_text?.business_meaning && (
