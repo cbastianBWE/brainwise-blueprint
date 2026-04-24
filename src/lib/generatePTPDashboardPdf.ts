@@ -388,16 +388,19 @@ export function generatePTPDashboardPdf(data: PTPDashboardPdfData): void {
       sectionHeading("Risk Flags");
       for (const flag of data.riskFlags) {
         const accent = flag.level === "high" ? RED : ORANGE;
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(11);
         const summaryLines = doc.splitTextToSize(
           flag.summary,
           CONTENT_W - 14,
         ) as string[];
+        doc.setFontSize(10);
         const detailLines = doc.splitTextToSize(
           flag.detail,
           CONTENT_W - 14,
         ) as string[];
         const blockH =
-          16 + summaryLines.length * 5 + detailLines.length * 4.5 + 6;
+          6 + 5 + 6 + summaryLines.length * 5.5 + detailLines.length * 5 + 8;
 
         checkPageBreak(blockH + 4);
 
