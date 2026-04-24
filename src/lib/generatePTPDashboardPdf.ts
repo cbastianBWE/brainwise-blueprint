@@ -504,18 +504,21 @@ export function generatePTPDashboardPdf(data: PTPDashboardPdfData): void {
       const barY = y + 28;
       const barW = CONTENT_W - 12;
       const barH = 6;
-      const total =
-        Math.max(dim.pctLow + dim.pctElevated + dim.pctHigh, 0.0001);
-      const lowW = (dim.pctLow / total) * barW;
-      const elevW = (dim.pctElevated / total) * barW;
-      const highW = (dim.pctHigh / total) * barW;
-
-      setFill(GREEN_PASTEL);
-      doc.rect(barX, barY, lowW, barH, "F");
-      setFill(AMBER_PASTEL);
-      doc.rect(barX + lowW, barY, elevW, barH, "F");
-      setFill(RED_PASTEL);
-      doc.rect(barX + lowW + elevW, barY, highW, barH, "F");
+      const sumPct = dim.pctLow + dim.pctElevated + dim.pctHigh;
+      if (sumPct <= 0.0001) {
+        setFill([220, 220, 225]);
+        doc.rect(barX, barY, barW, barH, "F");
+      } else {
+        const lowW = (dim.pctLow / sumPct) * barW;
+        const elevW = (dim.pctElevated / sumPct) * barW;
+        const highW = (dim.pctHigh / sumPct) * barW;
+        setFill(GREEN_PASTEL);
+        doc.rect(barX, barY, lowW, barH, "F");
+        setFill(AMBER_PASTEL);
+        doc.rect(barX + lowW, barY, elevW, barH, "F");
+        setFill(RED_PASTEL);
+        doc.rect(barX + lowW + elevW, barY, highW, barH, "F");
+      }
 
       y += cardH + 4;
     };
