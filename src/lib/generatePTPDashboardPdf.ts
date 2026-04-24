@@ -526,8 +526,8 @@ export function generatePTPDashboardPdf(data: PTPDashboardPdfData): void {
       const barW = CONTENT_W - 12;
       const barH = 6;
       const sumPct = dim.pctLow + dim.pctElevated + dim.pctHigh;
-      if (sumPct <= 0.0001) {
-        setFill([220, 220, 225]);
+      if (sumPct < 1) {
+        setFill([220, 220, 220]);
         doc.rect(barX, barY, barW, barH, "F");
       } else {
         const lowW = (dim.pctLow / sumPct) * barW;
