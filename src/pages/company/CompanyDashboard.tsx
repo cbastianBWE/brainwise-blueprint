@@ -1034,15 +1034,44 @@ export default function CompanyDashboard() {
           pdf.setFontSize(7.5); pdf.setFont("helvetica","bold"); pdf.setTextColor(2,31,54);
           pdf.text(`AI Readiness Index: ${indexScore !== null ? `${indexScore}/100` : "—"}`, ML+4, dy2+6);
 
-          // PTP placeholder
+          // PTP panel
           const px = ML+panelW+6;
-          pdf.setFillColor(245,245,245); pdf.roundedRect(px, y, panelW, 52, 2, 2, "F");
-          pdf.setFontSize(7); pdf.setFont("helvetica","bold"); pdf.setTextColor(130,120,130);
-          pdf.text("PTP · THREAT RESPONSE", px+4, y+6);
-          const ptpMsg = "PTP aggregate data will appear here once 5+ participants have completed both instruments.";
-          const ptpLines = splitText(ptpMsg, panelW-8, 7.5, "normal");
-          pdf.setFontSize(7.5); pdf.setFont("helvetica","normal"); pdf.setTextColor(150,150,150);
-          pdf.text(ptpLines, px+4, y+16);
+          const ptpDimsLocal = ptpAggregate?.dimensions;
+          const ptpAvailable = !!ptpDimsLocal && Object.keys(ptpDimsLocal).length > 0 && !ptpAggregate?.suppressed;
+          const PTP_COLORS_LOCAL: Record<string,string> = {"DIM-PTP-01":"#021F36","DIM-PTP-02":"#006D77","DIM-PTP-03":"#6D6875","DIM-PTP-04":"#3C096C","DIM-PTP-05":"#FFB703"};
+          const PTP_NAMES_LOCAL: Record<string,string> = {"DIM-PTP-01":"Protection","DIM-PTP-02":"Participation","DIM-PTP-03":"Prediction","DIM-PTP-04":"Purpose","DIM-PTP-05":"Pleasure"};
+          const PTP_TRI_W: Record<string,number> = {"DIM-PTP-01":0.25,"DIM-PTP-02":0.30,"DIM-PTP-03":0.45};
+          const PTP_RSI_W: Record<string,number> = {"DIM-PTP-04":0.60,"DIM-PTP-05":0.40};
+          const PTP_ORDER = ["DIM-PTP-01","DIM-PTP-02","DIM-PTP-03","DIM-PTP-04","DIM-PTP-05"];
+          if (ptpAvailable) {
+            pdf.setFillColor(249,247,241); pdf.roundedRect(px, y, panelW, 52, 2, 2, "F");
+            pdf.setFontSize(7); pdf.setFont("helvetica","bold"); pdf.setTextColor(130,120,130);
+            pdf.text("PTP · THREAT & REWARD", px+4, y+6);
+            let py2 = y+12;
+            PTP_ORDER.forEach(dimId => {
+              const dim = ptpDimsLocal![dimId]; if (!dim) return;
+              const [r,g,b] = hexRgb(PTP_COLORS_LOCAL[dimId]);
+              pdf.setFontSize(7.5); pdf.setFont("helvetica","bold"); pdf.setTextColor(r,g,b);
+              pdf.text(PTP_NAMES_LOCAL[dimId], px+4, py2);
+              pdf.setTextColor(2,31,54);
+              pdf.text(String(Math.round(dim.avg_score)), px+panelW-20, py2);
+              py2 += 6.5;
+            });
+            const triVal = Math.round((100 - Object.entries(PTP_TRI_W).reduce((a,[k,w]) => a + (ptpDimsLocal![k]?.avg_score ?? 50)*w, 0)) * 10)/10;
+            const rsiVal = Math.round(Object.entries(PTP_RSI_W).reduce((a,[k,w]) => a + (ptpDimsLocal![k]?.avg_score ?? 50)*w, 0) * 10)/10;
+            pdf.setDrawColor(200,200,200); pdf.setLineWidth(0.3);
+            pdf.line(px+4, py2+1, px+panelW-4, py2+1);
+            pdf.setFontSize(7.5); pdf.setFont("helvetica","bold"); pdf.setTextColor(2,31,54);
+            pdf.text(`TRI: ${triVal.toFixed(1)}  RSI: ${rsiVal.toFixed(1)}`, px+4, py2+6);
+          } else {
+            pdf.setFillColor(245,245,245); pdf.roundedRect(px, y, panelW, 52, 2, 2, "F");
+            pdf.setFontSize(7); pdf.setFont("helvetica","bold"); pdf.setTextColor(130,120,130);
+            pdf.text("PTP · THREAT RESPONSE", px+4, y+6);
+            const ptpMsg = "PTP aggregate data will appear here once 5+ participants have completed both instruments.";
+            const ptpLines = splitText(ptpMsg, panelW-8, 7.5, "normal");
+            pdf.setFontSize(7.5); pdf.setFont("helvetica","normal"); pdf.setTextColor(150,150,150);
+            pdf.text(ptpLines, px+4, y+16);
+          }
           y += 57;
         }
 
@@ -1057,12 +1086,49 @@ export default function CompanyDashboard() {
         const coLines = splitText(coText, CW, 7.5, "normal");
         pdf.setFontSize(7.5); pdf.setFont("helvetica","normal"); pdf.setTextColor(60,60,60);
         pdf.text(coLines, ML, y); y += coLines.length*4+4;
-        const pendText = "Co-elevation pattern detection requires PTP aggregate data. Complete cross-instrument analysis will appear here once participants have completed both assessments.";
-        const pendLines = splitText(pendText, CW-8, 7.5, "italic");
-        const pendH = pendLines.length*4+6;
-        pdf.setFillColor(245,247,250); pdf.roundedRect(ML, y, CW, pendH, 2, 2, "F");
-        pdf.setFontSize(7.5); pdf.setFont("helvetica","italic"); pdf.setTextColor(130,120,130);
-        pdf.text(pendLines, ML+4, y+5); y += pendH+8;
+
+        const ptpDimsForCo = ptpAggregate?.dimensions;
+        const ptpAvailForCo = !!ptpDimsForCo && Object.keys(ptpDimsForCo).length > 0 && !ptpAggregate?.suppressed;
+        const naiDimsForCo = aggregate?.dimensions ?? {};
+        const PTP_COLORS_CO: Record<string,string> = {"DIM-PTP-01":"#021F36","DIM-PTP-02":"#006D77","DIM-PTP-03":"#6D6875","DIM-PTP-04":"#3C096C","DIM-PTP-05":"#FFB703"};
+        if (!ptpAvailForCo) {
+          const pendText = "Co-elevation pattern detection requires PTP aggregate data. Complete cross-instrument analysis will appear here once participants have completed both assessments.";
+          const pendLines = splitText(pendText, CW-8, 7.5, "italic");
+          const pendH = pendLines.length*4+6;
+          pdf.setFillColor(245,247,250); pdf.roundedRect(ML, y, CW, pendH, 2, 2, "F");
+          pdf.setFontSize(7.5); pdf.setFont("helvetica","italic"); pdf.setTextColor(130,120,130);
+          pdf.text(pendLines, ML+4, y+5); y += pendH+8;
+        } else {
+          const patterns = detectCoElevations(naiDimsForCo, ptpDimsForCo!);
+          if (patterns.length === 0) {
+            const noneText = "No co-elevation patterns detected — all cross-instrument dimension pairs are within normal range.";
+            const noneLines = splitText(noneText, CW-8, 7.5, "italic");
+            const noneH = noneLines.length*4+6;
+            pdf.setFillColor(245,247,250); pdf.roundedRect(ML, y, CW, noneH, 2, 2, "F");
+            pdf.setFontSize(7.5); pdf.setFont("helvetica","italic"); pdf.setTextColor(130,120,130);
+            pdf.text(noneLines, ML+4, y+5); y += noneH+8;
+          } else {
+            for (const p of patterns) {
+              const dLines = splitText(p.description, CW-12, 7.5, "normal");
+              const cardH = 8 + dLines.length*4 + 10;
+              checkY(cardH+4);
+              pdf.setFillColor(249,247,241); pdf.roundedRect(ML, y, CW, cardH, 2, 2, "F");
+              pdf.setFontSize(8.5); pdf.setFont("helvetica","bold"); pdf.setTextColor(2,31,54);
+              pdf.text(p.label, ML+5, y+6);
+              pdf.setFontSize(7.5); pdf.setFont("helvetica","normal"); pdf.setTextColor(80,80,80);
+              pdf.text(dLines, ML+5, y+11);
+              const scY = y + 11 + dLines.length*4 + 2;
+              const [nr,ng,nb] = hexRgb(DIM_COLORS[p.naiDimId]);
+              const [pr,pg,pb] = hexRgb(PTP_COLORS_CO[p.ptpDimId]);
+              pdf.setFontSize(7.5); pdf.setFont("helvetica","bold");
+              pdf.setTextColor(nr,ng,nb);
+              pdf.text(`NAI ${p.naiDimName} ${Math.round(p.naiScore)}`, ML+5, scY);
+              pdf.setTextColor(pr,pg,pb);
+              pdf.text(`PTP ${p.ptpDimName} ${Math.round(p.ptpScore)}`, ML+60, scY);
+              y += cardH + 4;
+            }
+          }
+        }
 
         // Cross-instrument AI interpretation
         if (latestNarrative?.narrative_text?.business_meaning) {
