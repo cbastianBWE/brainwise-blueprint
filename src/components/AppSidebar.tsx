@@ -236,6 +236,58 @@ export function AppSidebar() {
                   </SidebarMenuItem>
                 );
               })}
+              {showDashboardsMenu && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <NavLink
+                      to="/company/nai-dashboard"
+                      className="hover:bg-sidebar-accent"
+                      activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                    >
+                      <LayoutDashboard className="h-4 w-4 shrink-0" />
+                      {!collapsed && (
+                        <div className="flex items-center justify-between flex-1">
+                          <span>Dashboards</span>
+                          {isDashboardsOpen
+                            ? <ChevronDown className="h-3 w-3" />
+                            : <ChevronRight className="h-3 w-3" />
+                          }
+                        </div>
+                      )}
+                    </NavLink>
+                  </SidebarMenuButton>
+                  {isDashboardsOpen && !collapsed && (
+                    <div className="ml-4 mt-1 space-y-1">
+                      <SidebarMenuItem key="/company/nai-dashboard">
+                        <SidebarMenuButton asChild>
+                          <NavLink
+                            to="/company/nai-dashboard"
+                            end
+                            className="hover:bg-sidebar-accent text-sm"
+                            activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                          >
+                            <BarChart3 className="h-3.5 w-3.5 shrink-0" />
+                            <span>NAI Dashboard</span>
+                          </NavLink>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                      <SidebarMenuItem key="/company/ptp-dashboard">
+                        <SidebarMenuButton asChild>
+                          <NavLink
+                            to="/company/ptp-dashboard"
+                            end
+                            className="hover:bg-sidebar-accent text-sm"
+                            activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                          >
+                            <BarChart3 className="h-3.5 w-3.5 shrink-0" />
+                            <span>PTP Dashboard</span>
+                          </NavLink>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    </div>
+                  )}
+                </SidebarMenuItem>
+              )}
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
                   <NavLink
