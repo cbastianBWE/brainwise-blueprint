@@ -274,10 +274,10 @@ export default function PTPDashboard() {
     (async () => {
       const { data: userOrgData } = await (supabase as any)
         .from("users")
-        .select("organizations(name)")
+        .select("organization_id, organizations(name)")
         .eq("id", user.id)
         .single();
-      setOrgName(userOrgData?.organizations?.name ?? "");
+      setOrgName((userOrgData as any)?.organizations?.name ?? "");
     })();
   }, [user]);
 
