@@ -249,6 +249,7 @@ export default function PTPDashboard() {
     interpretation: true,
     interventions: true,
   });
+  const [orgName, setOrgName] = useState<string>("");
 
   // Load departments on mount
   useEffect(() => {
@@ -262,6 +263,19 @@ export default function PTPDashboard() {
         id: d.id,
         name: d.name,
       })));
+    })();
+  }, [user]);
+
+  // Load org name on mount
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      const { data: userOrgData } = await (supabase as any)
+        .from("users")
+        .select("organizations(name)")
+        .eq("id", user.id)
+        .single();
+      setOrgName(userOrgData?.organizations?.name ?? "");
     })();
   }, [user]);
 
