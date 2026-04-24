@@ -3,7 +3,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { RefreshCw, AlertTriangle } from "lucide-react";
+import { RefreshCw, AlertTriangle, Download } from "lucide-react";
+import {
+  generatePTPDashboardPdf,
+  type PTPDashboardPdfSections,
+} from "@/lib/generatePTPDashboardPdf";
 import {
   LineChart,
   Line,
