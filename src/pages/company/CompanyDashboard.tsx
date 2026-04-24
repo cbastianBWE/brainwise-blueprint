@@ -1195,28 +1195,62 @@ export default function CompanyDashboard() {
           }
         }
 
-        // Cross-instrument AI interpretation
-        if (latestNarrative?.narrative_text?.business_meaning) {
+        // Cross-instrument recommendations (replaces broken business_meaning rendering)
+        if (crossInstrumentRow) {
           checkY(12);
           y += 2;
           pdf.setFontSize(9); pdf.setFont("helvetica","bold"); pdf.setTextColor(2,31,54);
-          pdf.text("Cross-Instrument AI Interpretation", ML, y);
+          pdf.text("Recommended Next Steps · Cross-Instrument", ML, y);
           y += 1.5;
           pdf.setDrawColor(2,31,54); pdf.setLineWidth(0.4); pdf.line(ML, y, ML+CW, y); y += 5;
-          const noteText = "The interpretation below reflects available NAI data. When PTP data becomes available, regenerating will produce a richer cross-instrument analysis.";
-          const noteLines = splitText(noteText, CW, 7.5, "normal");
-          pdf.setFontSize(7.5); pdf.setFont("helvetica","normal"); pdf.setTextColor(100,100,100);
-          pdf.text(noteLines, ML, y); y += noteLines.length*4+5;
-          const bmLines = splitText(latestNarrative.narrative_text.business_meaning, CW, 8, "normal");
-          // Paginate long text
-          const lineH = 4.2;
-          const linesPerPage = Math.floor((PH - MB - y) / lineH);
-          for (let li = 0; li < bmLines.length; li += linesPerPage) {
-            const chunk = bmLines.slice(li, li + linesPerPage);
+
+          pdf.setFontSize(7); pdf.setTextColor(130,120,130); pdf.setFont("helvetica","normal");
+          pdf.text(`Generated ${new Date(crossInstrumentRow.generated_at).toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"})}`, ML, y);
+          y += 5;
+
+          if (crossInstrumentRow.summary) {
+            const sumLines = splitText(crossInstrumentRow.summary, CW, 8, "normal");
             pdf.setFontSize(8); pdf.setFont("helvetica","normal"); pdf.setTextColor(40,40,40);
-            pdf.text(chunk, ML, y);
-            y += chunk.length * lineH;
-            if (li + linesPerPage < bmLines.length) newPage("CROSS-INSTRUMENT (cont.)");
+            pdf.text(sumLines, ML, y);
+            y += sumLines.length * 4.2 + 4;
+          }
+
+          for (const rec of crossInstrumentRow.recommendations) {
+            const titleLns = splitText(rec.title, CW-50, 8.5, "bold");
+            const ratLns = splitText(rec.rationale, CW-8, 7.5, "normal");
+            const stepsHeight = rec.steps && rec.steps.length > 0
+              ? rec.steps.reduce((acc, s) => acc + splitText(s, CW-14, 7, "normal").length * 3.8, 5)
+              : 0;
+            const cardH = 5 + titleLns.length*4.5 + 2 + ratLns.length*4 + stepsHeight + 4;
+            checkY(cardH+4, "CROSS-INSTRUMENT (cont.)");
+
+            pdf.setFillColor(249,247,241); pdf.roundedRect(ML, y, CW, cardH, 2, 2, "F");
+            pdf.setFontSize(8.5); pdf.setFont("helvetica","bold"); pdf.setTextColor(2,31,54);
+            pdf.text(titleLns, ML+4, y+5);
+
+            const pCol: [number,number,number] = rec.priority === "high" ? [153,60,29] : rec.priority === "medium" ? [99,56,6] : [15,110,86];
+            pdf.setFontSize(6.5); pdf.setFont("helvetica","normal");
+            pdf.setTextColor(...pCol); pdf.text(rec.priority, ML+CW-4, y+5, {align:"right"});
+            pdf.setTextColor(60,9,108); pdf.text(rec.time_horizon, ML+CW-22, y+5, {align:"right"});
+
+            let cy = y + 5 + titleLns.length * 4.5 + 2;
+            pdf.setFontSize(7.5); pdf.setFont("helvetica","normal"); pdf.setTextColor(60,60,60);
+            pdf.text(ratLns, ML+4, cy);
+            cy += ratLns.length * 4 + 2;
+
+            if (rec.steps && rec.steps.length > 0) {
+              pdf.setFontSize(6.5); pdf.setFont("helvetica","bold"); pdf.setTextColor(2,31,54);
+              pdf.text("STEPS", ML+4, cy);
+              cy += 4;
+              pdf.setFontSize(7); pdf.setFont("helvetica","normal"); pdf.setTextColor(70,70,70);
+              rec.steps.forEach((step, idx) => {
+                const stepLns = splitText(`${idx+1}. ${step}`, CW-14, 7, "normal");
+                pdf.text(stepLns, ML+8, cy);
+                cy += stepLns.length * 3.8;
+              });
+            }
+
+            y += cardH + 4;
           }
         }
       }
