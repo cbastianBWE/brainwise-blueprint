@@ -84,6 +84,7 @@ const App = () => (
               {/* Individual / Corporate Employee */}
               <Route path="/pricing" element={<CorpRedirect toastMessage="Your organization handles billing directly."><Pricing /></CorpRedirect>} />
               <Route path="/assessment" element={<Assessment />} />
+              <Route path="/epn-complete/:assignmentId" element={<EpnComplete />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/my-results" element={<MyResults />} />
               <Route path="/shared-results" element={<SharedResults />} />
