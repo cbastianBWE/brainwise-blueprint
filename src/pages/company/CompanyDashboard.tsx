@@ -649,11 +649,13 @@ export default function CompanyDashboard() {
           p_epn_delta_narrative_id: null,
           p_instrument_id: "INST-002",
           p_title: src.intervention.title,
-          p_description: trackingNote || src.intervention.description,
+          p_description: src.intervention.description,
           p_target_dimensions: src.intervention.target_dimensions,
           p_priority: src.intervention.priority,
           p_time_horizon: src.intervention.time_horizon,
           p_intervention_type: src.intervention.intervention_type,
+          p_status: trackingStatus,
+          p_tracking_notes: trackingNote || null,
         };
       } else if (src.kind === "delta") {
         if (!deltaNarrative) {
@@ -666,11 +668,13 @@ export default function CompanyDashboard() {
           p_epn_delta_narrative_id: deltaNarrative.id,
           p_instrument_id: "INST-002L",
           p_title: src.rec.title,
-          p_description: trackingNote || src.rec.rationale,
+          p_description: src.rec.rationale,
           p_target_dimensions: src.rec.target_dimensions,
           p_priority: src.rec.priority,
           p_time_horizon: src.rec.time_horizon,
           p_intervention_type: src.rec.intervention_type,
+          p_status: trackingStatus,
+          p_tracking_notes: trackingNote || null,
         };
       } else if (src.kind === "cross_instrument") {
         if (!latestNarrative) {
@@ -683,11 +687,13 @@ export default function CompanyDashboard() {
           p_epn_delta_narrative_id: null,
           p_instrument_id: "INST-002",
           p_title: src.rec.title,
-          p_description: trackingNote || src.rec.rationale,
+          p_description: src.rec.rationale,
           p_target_dimensions: [...(src.rec.primary_targets ?? []), ...(src.rec.cross_targets ?? [])],
           p_priority: src.rec.priority,
           p_time_horizon: src.rec.time_horizon,
           p_intervention_type: "cross_instrument",
+          p_status: trackingStatus,
+          p_tracking_notes: trackingNote || null,
         };
       } else {
         toast.error("Unknown intervention source");
