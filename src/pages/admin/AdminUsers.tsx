@@ -994,26 +994,71 @@ export default function AdminUsers() {
   const handleAssignExecutivePerspective = async () => {
     if (!orgId || epnSelectedIds.size === 0) return;
     setEpnSubmitting(true);
-    const { data, error } = await (supabase.rpc as any)("assign_executive_perspective_assessment", {
-      p_assignee_user_ids: Array.from(epnSelectedIds),
-      p_organization_id: orgId,
-      p_notes: epnNotes.trim() || null,
-    });
-    setEpnSubmitting(false);
-    if (error) {
-      toast({ title: "Assignment failed", description: error.message, variant: "destructive" });
+
+    const { data: sessionData } = await supabase.auth.getSession();
+    const token = sessionData?.session?.access_token;
+    if (!token) {
+      setEpnSubmitting(false);
+      toast({ title: "Not signed in", description: "Please log in again.", variant: "destructive" });
       return;
     }
-    const inserted = (data?.inserted_count ?? 0) as number;
-    const skipped = (data?.skipped_count ?? 0) as number;
-    const invalid = (data?.invalid_user_ids ?? []) as string[];
+
+    let response: Response;
+    let result: any = {};
+    try {
+      response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/assign_epn_send`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          },
+          body: JSON.stringify({
+            assignee_user_ids: Array.from(epnSelectedIds),
+            organization_id: orgId,
+            notes: epnNotes.trim() || null,
+          }),
+        }
+      );
+      try {
+        result = await response.json();
+      } catch {
+        // ignore
+      }
+    } catch (err: any) {
+      setEpnSubmitting(false);
+      toast({ title: "Network error", description: err.message, variant: "destructive" });
+      return;
+    }
+
+    setEpnSubmitting(false);
+
+    if (!response.ok) {
+      toast({
+        title: "Assignment failed",
+        description: result?.error || `HTTP ${response.status}`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const inserted = (result?.inserted_count ?? 0) as number;
+    const skipped = (result?.skipped_count ?? 0) as number;
+    const invalid = (result?.invalid_user_ids ?? []) as string[];
     const invalidCount = invalid.length;
+    const emailsSent = (result?.emails_sent ?? 0) as number;
+    const emailsFailed = (result?.emails_failed ?? 0) as number;
 
     if (inserted > 0) {
-      const parts: string[] = [`${inserted} new assignment${inserted === 1 ? "" : "s"}`];
-      if (skipped > 0) parts.push(`${skipped} already assigned`);
-      if (invalidCount > 0) parts.push(`${invalidCount} skipped (invalid)`);
-      toast({ title: "Executive Perspective assigned", description: parts.join(", ") });
+      let description = `${inserted} new assignment${inserted === 1 ? "" : "s"}`;
+      if (skipped > 0) description += `, ${skipped} already assigned`;
+      if (invalidCount > 0) description += `, ${invalidCount} skipped (invalid)`;
+      description += `. ${emailsSent} email${emailsSent === 1 ? "" : "s"} sent`;
+      if (emailsFailed > 0) description += `, ${emailsFailed} failed`;
+      description += ".";
+      toast({ title: "Executive Perspective NAI assigned", description });
       setEpnSelectedIds(new Set());
       setEpnNotes("");
       await qc.invalidateQueries({ queryKey: ["epn-assignments", orgId] });
