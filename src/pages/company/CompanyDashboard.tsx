@@ -707,7 +707,7 @@ export default function CompanyDashboard() {
     setExporting(true);
     setExportModal(false);
     // Belt-and-suspenders: ensure cross-instrument data is loaded
-    await Promise.all([loadPTPAggregate(), loadCrossInstrumentRecs()]);
+    await Promise.all([loadPTPAggregate(), loadCrossInstrumentRecs(), loadDeltaResult(), loadDeltaNarrative()]);
 
     try {
       const jsPDF = (await import("jspdf")).default;
