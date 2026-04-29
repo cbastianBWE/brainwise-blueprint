@@ -1393,10 +1393,10 @@ export default function CompanyDashboard() {
           }
 
           for (const rec of crossInstrumentRow.recommendations) {
-            const titleLns = splitText(rec.title, CW-50, 8.5, "bold");
-            const ratLns = splitText(rec.rationale, CW-8, 7.5, "normal");
+            const titleLns = splitText(rec.title, CW-58, 8.5, "bold");
+            const ratLns = splitText(rec.rationale, CW-12, 7.5, "normal");
             const stepsHeight = rec.steps && rec.steps.length > 0
-              ? rec.steps.reduce((acc, s) => acc + splitText(s, CW-14, 7, "normal").length * 3.8, 5)
+              ? rec.steps.reduce((acc, s) => acc + splitText(s, CW-18, 7, "normal").length * 3.8, 5)
               : 0;
             const cardH = 5 + titleLns.length*4.5 + 2 + ratLns.length*4 + stepsHeight + 4;
             checkY(cardH+4, "CROSS-INSTRUMENT (cont.)");
