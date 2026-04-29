@@ -2011,7 +2011,7 @@ export default function CompanyDashboard() {
                                     </div>
                                   </div>
                                   <p style={{ fontSize: 13, color: "var(--muted-foreground)", margin: "0 0 8px", lineHeight: 1.55 }}>{iv.description}</p>
-                                  <button onClick={e => openTrackingModal(iv, e)} style={{
+                                  <button onClick={e => openTrackingModal({ kind: "dashboard", intervention: iv }, e)} style={{
                                     fontSize: 10, padding: "3px 9px", border: `0.5px solid ${NAVY}`, borderRadius: 5,
                                     background: "transparent", color: NAVY, cursor: "pointer",
                                   }}>+ Add to intervention tracking</button>
