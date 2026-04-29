@@ -239,6 +239,55 @@ interface CrossInstrumentRow {
   generated_at: string;
 }
 
+interface PTPDeltaDimEntry {
+  workforce_mean: number | null;
+  leader_mean: number | null;
+  delta: number | null;
+  direction: 'leaders_higher' | 'workforce_higher' | 'aligned' | null;
+}
+
+interface PTPDeltaResult {
+  suppressed: boolean;
+  reason?: string;
+  message?: string;
+  leader_participant_count: number;
+  workforce_participant_count: number;
+  workforce_aggregate?: Record<string, { mean: number; n?: number }>;
+  leader_aggregate?: Record<string, { mean: number; n?: number }>;
+  delta?: Record<string, PTPDeltaDimEntry>;
+  minimum_required?: number;
+}
+
+interface PTPDeltaRecommendation {
+  id: string;
+  title: string;
+  rationale: string;
+  steps: string[];
+  priority: 'high' | 'medium' | 'low';
+  time_horizon: 'immediate' | '30-day' | '90-day';
+  intervention_type: 'process' | 'conversation' | 'structural' | 'measurement';
+  target_dimensions: string[];
+}
+
+interface StoredPTPDeltaNarrative {
+  id: string;
+  generated_at: string;
+  workforce_participant_count: number;
+  leader_participant_count: number;
+  narrative_text: {
+    summary?: string;
+    alignment_overview?: string;
+    dimension_insights?: Array<{
+      dimension_name: string;
+      dimension_id: string;
+      gap_direction: string;
+      interpretation: string;
+    }>;
+    key_gaps?: Array<{ title: string; description: string; primary_dimension: string }>;
+    recommendations?: PTPDeltaRecommendation[];
+  };
+}
+
 function calcTRI(dims: Record<string, DimAggregate>): number {
   const weighted = Object.entries(TRI_WEIGHTS).reduce(
     (acc, [d, w]) => acc + (dims[d]?.avg_score ?? 50) * w,
