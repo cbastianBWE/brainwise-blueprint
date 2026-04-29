@@ -727,7 +727,7 @@ function FragmentRow(props: {
         <td style={cellStyle}>
           <div style={{ fontWeight: 500, color: NAVY, lineHeight: 1.3 }}>{r.title}</div>
           <div style={{ fontSize: 10, color: "var(--muted-foreground)", marginTop: 2 }}>
-            {r.target_dimensions.length > 0 && r.target_dimensions.join(" · ")}
+            {r.target_dimensions.length > 0 && r.target_dimensions.map((d) => DIM_NAMES[d] ?? d).join(" · ")}
           </div>
         </td>
         <td style={cellStyle}>
