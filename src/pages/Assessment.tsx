@@ -1,9 +1,14 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
 import InstrumentSelection from "@/components/assessment/InstrumentSelection";
 import AssessmentFlow from "@/components/assessment/AssessmentFlow";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 const INSTRUMENT_ID_TO_SHORT_NAME: Record<string, string> = {
   "INST-001": "PTP",
@@ -19,15 +24,40 @@ const INSTRUMENT_ID_TO_NAME: Record<string, string> = {
   "INST-004": "Habit Stabilization Scorecard",
 };
 
+interface SelectedInstrument {
+  instrument_id: string;
+  instrument_name: string;
+  instrument_version: string;
+  short_name: string;
+  epnAssignmentId?: string;
+  preexistingAssessmentId?: string;
+}
+
 export default function Assessment() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [selectedInstrument, setSelectedInstrument] = useState<{
-    instrument_id: string;
-    instrument_name: string;
-    instrument_version: string;
-    short_name: string;
-  } | null>(null);
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [selectedInstrument, setSelectedInstrument] = useState<SelectedInstrument | null>(null);
   const [contextType, setContextType] = useState<'professional' | 'personal' | 'both' | null>(null);
+  const [epnStarting, setEpnStarting] = useState(false);
+
+  const epnAssignmentsQuery = useQuery({
+    queryKey: ["my-epn-assignments", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data, error } = await (supabase.rpc as any)("get_my_epn_assignments");
+      if (error) throw error;
+      return (data ?? []) as Array<{
+        assignment_id: string;
+        organization_id: string;
+        organization_name: string;
+        instrument_id: string;
+        status: string;
+        assigned_at: string;
+        notes: string | null;
+      }>;
+    },
+  });
 
   // Handle autostart from post-payment redirect
   useEffect(() => {
@@ -59,6 +89,41 @@ export default function Assessment() {
     init();
   }, [searchParams, setSearchParams]);
 
+  const handleStartEpn = async (assignmentId: string) => {
+    setEpnStarting(true);
+    const { data: assessmentId, error } = await (supabase.rpc as any)(
+      "start_epn_assessment",
+      { p_assignment_id: assignmentId }
+    );
+    setEpnStarting(false);
+    if (error) {
+      console.error("start_epn_assessment failed:", error);
+      toast({
+        title: "Could not start assessment",
+        description: error.message,
+        variant: "destructive",
+      });
+      return;
+    }
+    if (!assessmentId) return;
+
+    const { data: versionData } = await supabase
+      .from("platform_versions")
+      .select("version_string")
+      .eq("is_active", true)
+      .limit(1)
+      .single();
+
+    setSelectedInstrument({
+      instrument_id: "INST-002L",
+      instrument_name: "Executive Perspective NAI",
+      instrument_version: versionData?.version_string || "1.0",
+      short_name: "EPN",
+      epnAssignmentId: assignmentId,
+      preexistingAssessmentId: assessmentId as string,
+    });
+  };
+
   if (selectedInstrument) {
     if (selectedInstrument.instrument_id === "INST-001" && contextType === null) {
       return <PTPContextSelection onSelect={setContextType} />;
@@ -67,6 +132,8 @@ export default function Assessment() {
       <AssessmentFlow
         instrument={selectedInstrument}
         contextType={contextType}
+        preexistingAssessmentId={selectedInstrument.preexistingAssessmentId}
+        epnAssignmentId={selectedInstrument.epnAssignmentId}
         onExit={() => {
           setSelectedInstrument(null);
           setContextType(null);
@@ -75,7 +142,55 @@ export default function Assessment() {
     );
   }
 
-  return <InstrumentSelection onSelect={setSelectedInstrument} />;
+  const epnAssignments = epnAssignmentsQuery.data ?? [];
+
+  return (
+    <>
+      {epnAssignments.length > 0 && (
+        <div className="max-w-3xl mx-auto px-4 pt-8 space-y-4">
+          {epnAssignments.map((a) => {
+            const trimmedNotes = a.notes?.trim();
+            return (
+              <Card
+                key={a.assignment_id}
+                className="bg-[#F9F7F1] border-l-4"
+                style={{ borderLeftColor: "#F5741A" }}
+              >
+                <CardContent className="p-6 space-y-4">
+                  <div>
+                    <h2 className="text-xl font-semibold text-foreground">
+                      You've been asked to complete the Executive Perspective NAI
+                    </h2>
+                    <p className="text-sm text-muted-foreground mt-2">
+                      {a.organization_name} has asked you to complete a leader-perspective version of the NAI.
+                      Your responses will help compare leader perception to employee experience. About 8-10 minutes.
+                    </p>
+                  </div>
+                  {trimmedNotes && (
+                    <div className="space-y-1">
+                      <div className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">
+                        Note from your administrator
+                      </div>
+                      <div className="text-sm text-foreground">{trimmedNotes}</div>
+                    </div>
+                  )}
+                  <Button
+                    onClick={() => handleStartEpn(a.assignment_id)}
+                    disabled={epnStarting}
+                    style={{ backgroundColor: "#F5741A" }}
+                  >
+                    {epnStarting && <Loader2 className="h-4 w-4 animate-spin" />}
+                    {a.status === "in_progress" ? "Continue Assessment" : "Start Assessment"}
+                  </Button>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
+      <InstrumentSelection onSelect={setSelectedInstrument} />
+    </>
+  );
 }
 
 function PTPContextSelection({

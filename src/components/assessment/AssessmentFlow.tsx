@@ -46,9 +46,11 @@ interface Props {
   };
   onExit: () => void;
   contextType?: 'professional' | 'personal' | 'both' | null;
+  preexistingAssessmentId?: string;
+  epnAssignmentId?: string;
 }
 
-export default function AssessmentFlow({ instrument, onExit, contextType }: Props) {
+export default function AssessmentFlow({ instrument, onExit, contextType, preexistingAssessmentId, epnAssignmentId }: Props) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -70,43 +72,48 @@ export default function AssessmentFlow({ instrument, onExit, contextType }: Prop
   useEffect(() => {
     if (!user) return;
     const init = async () => {
-      // Check for in-progress assessment
-      const { data: existing } = await supabase
-        .from("assessments")
-        .select("id")
-        .eq("user_id", user.id)
-        .eq("instrument_id", instrument.instrument_id)
-        .eq("status", "in_progress")
-        .limit(1);
-
       let aId: string;
-      if (existing && existing.length > 0) {
-        aId = existing[0].id;
-        if (contextType) {
-          await supabase
-            .from('assessments')
-            .update({ context_type: contextType })
-            .eq('id', aId);
-        }
+
+      if (preexistingAssessmentId) {
+        aId = preexistingAssessmentId;
       } else {
-        const { data: newA, error } = await supabase
+        // Check for in-progress assessment
+        const { data: existing } = await supabase
           .from("assessments")
-          .insert({
-            user_id: user.id,
-            instrument_id: instrument.instrument_id,
-            instrument_version: instrument.instrument_version,
-            rater_type: "self",
-            status: "in_progress",
-            context_type: contextType ?? null,
-          })
           .select("id")
-          .single();
-        if (error || !newA) {
-          toast({ title: "Error", description: "Could not create assessment.", variant: "destructive" });
-          onExit();
-          return;
+          .eq("user_id", user.id)
+          .eq("instrument_id", instrument.instrument_id)
+          .eq("status", "in_progress")
+          .limit(1);
+
+        if (existing && existing.length > 0) {
+          aId = existing[0].id;
+          if (contextType) {
+            await supabase
+              .from('assessments')
+              .update({ context_type: contextType })
+              .eq('id', aId);
+          }
+        } else {
+          const { data: newA, error } = await supabase
+            .from("assessments")
+            .insert({
+              user_id: user.id,
+              instrument_id: instrument.instrument_id,
+              instrument_version: instrument.instrument_version,
+              rater_type: "self",
+              status: "in_progress",
+              context_type: contextType ?? null,
+            })
+            .select("id")
+            .single();
+          if (error || !newA) {
+            toast({ title: "Error", description: "Could not create assessment.", variant: "destructive" });
+            onExit();
+            return;
+          }
+          aId = newA.id;
         }
-        aId = newA.id;
       }
       setAssessmentId(aId);
 
@@ -234,6 +241,37 @@ export default function AssessmentFlow({ instrument, onExit, contextType }: Prop
   const handleSubmit = async () => {
     if (!assessmentId || !user) return;
     setSubmitting(true);
+
+    if (epnAssignmentId) {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/submit-epn-assessment`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          },
+          body: JSON.stringify({
+            assessment_id: assessmentId,
+            assignment_id: epnAssignmentId,
+          }),
+        }
+      );
+      const result = await response.json();
+
+      if (!response.ok || result.error) {
+        toast({ title: "Error", description: result.error || "Failed to submit EPN.", variant: "destructive" });
+        setSubmitting(false);
+        return;
+      }
+
+      navigate(`/epn-complete/${epnAssignmentId}`);
+      return;
+    }
+
     const { data, error } = await supabase.functions.invoke("calculate-scores", {
       body: { assessment_id: assessmentId },
     });

@@ -51,6 +51,7 @@ import VersionManagement from "./pages/super-admin/VersionManagement";
 import CompanyDetail from "./pages/super-admin/CompanyDetail";
 import CoachManagement from "./pages/super-admin/CoachManagement";
 import CreateOrganization from "./pages/super-admin/CreateOrganization";
+import EpnComplete from "./pages/EpnComplete";
 
 const queryClient = new QueryClient();
 
@@ -83,6 +84,7 @@ const App = () => (
               {/* Individual / Corporate Employee */}
               <Route path="/pricing" element={<CorpRedirect toastMessage="Your organization handles billing directly."><Pricing /></CorpRedirect>} />
               <Route path="/assessment" element={<Assessment />} />
+              <Route path="/epn-complete/:assignmentId" element={<EpnComplete />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/my-results" element={<MyResults />} />
               <Route path="/shared-results" element={<SharedResults />} />
