@@ -248,6 +248,56 @@ interface CrossInstrumentRow {
   generated_at: string;
 }
 
+interface DeltaDimEntry {
+  self_mean: number | null;
+  epn_mean: number | null;
+  delta: number | null;
+  direction: 'leaders_see_more_concern' | 'leaders_see_less_concern' | 'aligned' | null;
+}
+
+interface DeltaResult {
+  suppressed: boolean;
+  reason?: string;
+  self_participant_count: number;
+  epn_participant_count: number;
+  self_aggregate?: Record<string, { mean: number; n?: number }>;
+  epn_aggregate?: Record<string, { mean: number; n?: number }>;
+  delta?: Record<string, DeltaDimEntry>;
+  minimum_required?: number;
+}
+
+interface DeltaRecommendation {
+  id: string;
+  title: string;
+  rationale: string;
+  steps: string[];
+  priority: 'high' | 'medium' | 'low';
+  time_horizon: 'immediate' | '30-day' | '90-day';
+  intervention_type: 'process' | 'conversation' | 'structural' | 'measurement';
+  target_dimensions: string[];
+}
+
+interface StoredDeltaNarrative {
+  id: string;
+  generated_at: string;
+  self_participant_count: number;
+  epn_participant_count: number;
+  exclude_leaders_from_self: boolean;
+  narrative_text: {
+    summary?: string;
+    alignment_overview?: string;
+    dimension_insights?: Array<{
+      dimension_name: string;
+      dimension_id: string;
+      gap_direction: string;
+      interpretation: string;
+      interpretive_caution?: string;
+    }>;
+    key_gaps?: Array<{ title: string; description: string; primary_dimension: string }>;
+    recommendations?: DeltaRecommendation[];
+  };
+}
+
 interface Department {
   id: string;
   name: string;
@@ -297,11 +347,17 @@ export default function CompanyDashboard() {
     overview: true,
     dimensions: true,
     interpretation: true,
-    interventions: true,
     trends: true,
     "cross-instrument": true,
   });
   const [exporting, setExporting] = useState(false);
+
+  const [deltaResult, setDeltaResult] = useState<DeltaResult | null>(null);
+  const [loadingDelta, setLoadingDelta] = useState<boolean>(false);
+  const [deltaNarrative, setDeltaNarrative] = useState<StoredDeltaNarrative | null>(null);
+  const [loadingDeltaNarrative, setLoadingDeltaNarrative] = useState<boolean>(false);
+  const [generatingDelta, setGeneratingDelta] = useState<boolean>(false);
+  const [expandedLeaderWorkforce, setExpandedLeaderWorkforce] = useState<boolean>(false);
 
   // Load departments
   useEffect(() => {
@@ -436,6 +492,44 @@ export default function CompanyDashboard() {
   useEffect(() => { loadNarrativeHistory(); }, [loadNarrativeHistory]);
   useEffect(() => { loadCompareHistory(); }, [loadCompareHistory]);
 
+  const loadDeltaResult = useCallback(async () => {
+    if (!user) return;
+    setLoadingDelta(true);
+    const { data: userRow } = await (supabase as any).from("users").select("organization_id").eq("id", user.id).single();
+    if (!userRow?.organization_id) { setDeltaResult(null); setLoadingDelta(false); return; }
+    const { data, error } = await (supabase as any).rpc("get_nai_epn_delta", {
+      p_organization_id: userRow.organization_id,
+      p_slice_type: sliceType,
+      p_slice_value: sliceValue,
+      p_exclude_leaders_from_self: true,
+    });
+    if (error) { console.error("get_nai_epn_delta error:", error); setDeltaResult(null); }
+    else setDeltaResult(data as DeltaResult);
+    setLoadingDelta(false);
+  }, [user, sliceType, sliceValue]);
+
+  const loadDeltaNarrative = useCallback(async () => {
+    if (!user) return;
+    setLoadingDeltaNarrative(true);
+    const { data: userRow } = await (supabase as any).from("users").select("organization_id").eq("id", user.id).single();
+    if (!userRow?.organization_id) { setDeltaNarrative(null); setLoadingDeltaNarrative(false); return; }
+    const { data } = await (supabase as any)
+      .from("org_nai_delta_narratives")
+      .select("id, generated_at, self_participant_count, epn_participant_count, exclude_leaders_from_self, narrative_text")
+      .eq("organization_id", userRow.organization_id)
+      .eq("slice_type", sliceType)
+      .eq("slice_value", sliceValue)
+      .eq("exclude_leaders_from_self", true)
+      .order("generated_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    setDeltaNarrative((data ?? null) as StoredDeltaNarrative | null);
+    setLoadingDeltaNarrative(false);
+  }, [user, sliceType, sliceValue]);
+
+  useEffect(() => { loadDeltaResult(); }, [loadDeltaResult]);
+  useEffect(() => { loadDeltaNarrative(); }, [loadDeltaNarrative]);
+
   const handleRegenerate = async () => {
     if (!user) return;
     setRegenerating(true);
@@ -480,6 +574,37 @@ export default function CompanyDashboard() {
       toast.error(e.message ?? "Failed to generate interpretation");
     }
     setRegenerating(false);
+  };
+
+  const handleGenerateDelta = async () => {
+    if (!user) return;
+    setGeneratingDelta(true);
+    const supabaseUrl = "https://svprhtzawnbzmumxnhsq.supabase.co";
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token ?? "";
+      toast.info("Generating leader-vs-workforce narrative... (~60s)");
+      const res = await fetch(`${supabaseUrl}/functions/v1/generate-nai-delta-narrative`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          slice_type: sliceType,
+          slice_value: sliceValue,
+          exclude_leaders_from_self: true,
+        }),
+      });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error ?? "Generation failed");
+      if (result.suppressed || result.generated === false) {
+        toast.warning("Cannot generate: insufficient participants in one or both pools (minimum 5).");
+      } else {
+        toast.success("Leader-vs-workforce narrative generated");
+        await loadDeltaNarrative();
+      }
+    } catch (e: any) {
+      toast.error(e.message ?? "Failed to generate");
+    }
+    setGeneratingDelta(false);
   };
 
   const toggleFlag = (id: string) => {
@@ -529,6 +654,26 @@ export default function CompanyDashboard() {
       toast.error("Failed to save");
     }
     setSavingTracking(false);
+  };
+
+  const saveDeltaIntervention = async (rec: DeltaRecommendation) => {
+    if (!deltaNarrative) return;
+    try {
+      await (supabase as any).rpc("save_org_intervention", {
+        p_narrative_id: null,
+        p_epn_delta_narrative_id: deltaNarrative.id,
+        p_instrument_id: "INST-002L",
+        p_title: rec.title,
+        p_description: rec.rationale,
+        p_target_dimensions: rec.target_dimensions,
+        p_priority: rec.priority,
+        p_time_horizon: rec.time_horizon,
+        p_intervention_type: rec.intervention_type,
+      });
+      toast.success("Saved to intervention tracking");
+    } catch (e: any) {
+      toast.error("Failed to save: " + (e.message ?? "unknown"));
+    }
   };
 
   const handleExport = async () => {
@@ -1299,12 +1444,11 @@ export default function CompanyDashboard() {
     return false;
   };
 
-  const tabs = ["overview", "dimensions", "interpretation", "interventions", "trends", "cross-instrument"];
+  const tabs = ["overview", "dimensions", "interpretation", "trends", "cross-instrument"];
   const tabLabels: Record<string, string> = {
     overview: "Overview",
     dimensions: "Dimensions",
     interpretation: "AI Interpretation",
-    interventions: "Interventions",
     trends: "Trends",
     "cross-instrument": "Cross-Instrument",
   };
@@ -1521,52 +1665,204 @@ export default function CompanyDashboard() {
             </div>
           )}
 
-          {/* Leadership compared to workforce */}
+          {/* Leadership-vs-Workforce delta (EPN) */}
           {!suppressed && Object.keys(dims).length > 0 && (
             <>
               <h3 style={{ fontSize: 15, fontWeight: 500, color: NAVY, margin: "24px 0 10px", textTransform: "uppercase", letterSpacing: 0.5 }}>
                 Leadership compared to workforce · C.A.F.E.S.
               </h3>
-              <div style={{ padding: 14, background: "#F9F7F1", border: "0.5px solid var(--border)", borderRadius: 8 }}>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", gap: 16 }}>
-                  <div>
-                    <p style={{ fontSize: 13, color: "var(--muted-foreground)", margin: "0 0 8px", textTransform: "uppercase", letterSpacing: 0.4 }}>Director · VP · C-Suite</p>
-                    {DIMS_BY_WEIGHT.map(dimId => {
-                      const score = dims[dimId]?.avg_score ?? 0;
-                      const act = activationLabel(score);
-                      return (
-                        <div key={dimId} style={{ display: "grid", gridTemplateColumns: "1fr 32px 56px", alignItems: "center", marginBottom: 8, gap: 4 }}>
-                          <span style={{ fontSize: 13, fontWeight: 500, color: DIM_COLORS[dimId] }}>{DIM_NAMES[dimId]}</span>
-                          <span style={{ fontSize: 15, fontWeight: 500, color: DIM_COLORS[dimId], textAlign: "right" }}>{Math.round(score)}</span>
-                          <span style={{ fontSize: 9, padding: "2px 5px", borderRadius: 3, background: act.bg, color: act.color, textAlign: "center" }}>{act.label}</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                  <div style={{ alignSelf: "center", textAlign: "center" }}>
-                    <p style={{ fontSize: 10, color: "var(--muted-foreground)", margin: "0 0 6px", textTransform: "uppercase" }}>delta</p>
-                    {DIMS_BY_WEIGHT.map(dimId => (
-                      <div key={dimId} style={{ fontSize: 13, color: "var(--muted-foreground)", padding: "4px 0" }}>—</div>
-                    ))}
-                  </div>
-                  <div>
-                    <p style={{ fontSize: 13, color: "var(--muted-foreground)", margin: "0 0 8px", textTransform: "uppercase", letterSpacing: 0.4 }}>Manager · IC</p>
-                    {DIMS_BY_WEIGHT.map(dimId => {
-                      const score = dims[dimId]?.avg_score ?? 0;
-                      const act = activationLabel(score);
-                      return (
-                        <div key={dimId} style={{ display: "grid", gridTemplateColumns: "1fr 32px 56px", alignItems: "center", marginBottom: 8, gap: 4 }}>
-                          <span style={{ fontSize: 13, fontWeight: 500, color: DIM_COLORS[dimId] }}>{DIM_NAMES[dimId]}</span>
-                          <span style={{ fontSize: 15, fontWeight: 500, color: DIM_COLORS[dimId], textAlign: "right" }}>{Math.round(score)}</span>
-                          <span style={{ fontSize: 9, padding: "2px 5px", borderRadius: 3, background: act.bg, color: act.color, textAlign: "center" }}>{act.label}</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-                <div style={{ fontSize: 10, color: "var(--muted-foreground)", padding: "8px 14px", borderTop: "0.5px solid var(--border)", background: "var(--muted)", fontStyle: "italic" }}>
-                  Select "Level ▾" above to compare Director vs IC scores with real delta values. Item-level delta requires assessment response data.
-                </div>
+              <div
+                onClick={() => setExpandedLeaderWorkforce(v => !v)}
+                style={{
+                  padding: 14,
+                  background: "#F9F7F1",
+                  border: `0.5px solid ${expandedLeaderWorkforce ? NAVY : "var(--border)"}`,
+                  borderRadius: 8,
+                  cursor: "pointer",
+                  transition: "border-color 0.15s",
+                }}
+              >
+                {loadingDelta ? (
+                  <div style={{ padding: 20, textAlign: "center", color: "var(--muted-foreground)", fontSize: 13 }}>Loading delta data…</div>
+                ) : !deltaResult || deltaResult.suppressed ? (
+                  <>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", gap: 16 }}>
+                      <div>
+                        <p style={{ fontSize: 13, color: "var(--muted-foreground)", margin: "0 0 8px", textTransform: "uppercase", letterSpacing: 0.4 }}>Leaders (Director · VP · C-Suite, EPN)</p>
+                        {DIMS_BY_WEIGHT.map(dimId => (
+                          <div key={dimId} style={{ display: "grid", gridTemplateColumns: "1fr 32px", alignItems: "center", marginBottom: 8, gap: 4 }}>
+                            <span style={{ fontSize: 13, fontWeight: 500, color: DIM_COLORS[dimId] }}>{DIM_NAMES[dimId]}</span>
+                            <span style={{ fontSize: 13, color: "var(--muted-foreground)", textAlign: "right" }}>—</span>
+                          </div>
+                        ))}
+                      </div>
+                      <div style={{ alignSelf: "center", textAlign: "center" }}>
+                        <p style={{ fontSize: 10, color: "var(--muted-foreground)", margin: "0 0 6px", textTransform: "uppercase" }}>delta</p>
+                        {DIMS_BY_WEIGHT.map(dimId => (
+                          <div key={dimId} style={{ fontSize: 13, color: "var(--muted-foreground)", padding: "4px 0" }}>—</div>
+                        ))}
+                      </div>
+                      <div>
+                        <p style={{ fontSize: 13, color: "var(--muted-foreground)", margin: "0 0 8px", textTransform: "uppercase", letterSpacing: 0.4 }}>Employees (Manager · IC, NAI self)</p>
+                        {DIMS_BY_WEIGHT.map(dimId => (
+                          <div key={dimId} style={{ display: "grid", gridTemplateColumns: "1fr 32px", alignItems: "center", marginBottom: 8, gap: 4 }}>
+                            <span style={{ fontSize: 13, fontWeight: 500, color: DIM_COLORS[dimId] }}>{DIM_NAMES[dimId]}</span>
+                            <span style={{ fontSize: 13, color: "var(--muted-foreground)", textAlign: "right" }}>—</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <div style={{ marginTop: 10, fontSize: 11, color: "var(--muted-foreground)", fontStyle: "italic", padding: "8px 12px", background: "var(--muted)", borderRadius: 6 }}>
+                      Leader-vs-employee comparison requires at least 5 EPN respondents (leaders) AND 5 standard NAI respondents (excluding leaders). Currently {deltaResult?.epn_participant_count ?? 0} EPN, {deltaResult?.self_participant_count ?? 0} NAI (non-leader). Assign more EPN assignments or wait for more standard NAI completions.
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", gap: 16 }}>
+                      <div>
+                        <p style={{ fontSize: 13, color: "var(--muted-foreground)", margin: "0 0 8px", textTransform: "uppercase", letterSpacing: 0.4 }}>
+                          Leaders (EPN · n={deltaResult.epn_participant_count})
+                        </p>
+                        {DIMS_BY_WEIGHT.map(dimId => {
+                          const score = deltaResult.delta?.[dimId]?.epn_mean ?? null;
+                          return (
+                            <div key={dimId} style={{ display: "grid", gridTemplateColumns: "1fr 32px", alignItems: "center", marginBottom: 8, gap: 4 }}>
+                              <span style={{ fontSize: 13, fontWeight: 500, color: DIM_COLORS[dimId] }}>{DIM_NAMES[dimId]}</span>
+                              <span style={{ fontSize: 15, fontWeight: 500, color: DIM_COLORS[dimId], textAlign: "right" }}>{score !== null ? Math.round(score) : "—"}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      <div style={{ alignSelf: "center", textAlign: "center" }}>
+                        <p style={{ fontSize: 10, color: "var(--muted-foreground)", margin: "0 0 6px", textTransform: "uppercase" }}>delta</p>
+                        {DIMS_BY_WEIGHT.map(dimId => {
+                          const entry = deltaResult.delta?.[dimId];
+                          const d = entry?.delta ?? null;
+                          const dir = entry?.direction;
+                          const color =
+                            dir === "leaders_see_more_concern" ? "#993c1d" :
+                            dir === "leaders_see_less_concern" ? "#0f6e56" :
+                            "var(--muted-foreground)";
+                          const sign = d === null ? "" : (d > 0 ? "+" : "");
+                          return (
+                            <div key={dimId} style={{ fontSize: 13, fontWeight: 500, color, padding: "4px 0" }}>
+                              {d !== null ? `${sign}${Math.round(d * 10) / 10}` : "—"}
+                            </div>
+                          );
+                        })}
+                      </div>
+                      <div>
+                        <p style={{ fontSize: 13, color: "var(--muted-foreground)", margin: "0 0 8px", textTransform: "uppercase", letterSpacing: 0.4 }}>
+                          Employees (NAI self · n={deltaResult.self_participant_count})
+                        </p>
+                        {DIMS_BY_WEIGHT.map(dimId => {
+                          const score = deltaResult.delta?.[dimId]?.self_mean ?? null;
+                          return (
+                            <div key={dimId} style={{ display: "grid", gridTemplateColumns: "1fr 32px", alignItems: "center", marginBottom: 8, gap: 4 }}>
+                              <span style={{ fontSize: 13, fontWeight: 500, color: DIM_COLORS[dimId] }}>{DIM_NAMES[dimId]}</span>
+                              <span style={{ fontSize: 15, fontWeight: 500, color: DIM_COLORS[dimId], textAlign: "right" }}>{score !== null ? Math.round(score) : "—"}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                    <div style={{ marginTop: 10, display: "flex", gap: 14, flexWrap: "wrap", alignItems: "center" }}>
+                      <span style={{ fontSize: 10, color: "var(--muted-foreground)" }}>
+                        <span style={{ color: "#993c1d", fontWeight: 600 }}>+ delta</span>: leaders see more concern than employees report.
+                      </span>
+                      <span style={{ fontSize: 10, color: "var(--muted-foreground)" }}>
+                        <span style={{ color: "#0f6e56", fontWeight: 600 }}>− delta</span>: leaders underestimate employee concern.
+                      </span>
+                      <span style={{ fontSize: 10, color: TEAL, marginLeft: "auto" }}>
+                        {expandedLeaderWorkforce ? "↑ collapse" : "↓ expand for narrative + interventions"}
+                      </span>
+                    </div>
+                    {expandedLeaderWorkforce && (
+                      <div onClick={e => e.stopPropagation()} style={{ marginTop: 14, paddingTop: 14, borderTop: "0.5px solid var(--border)" }}>
+                        {loadingDeltaNarrative ? (
+                          <p style={{ fontSize: 13, color: "var(--muted-foreground)", fontStyle: "italic" }}>Loading narrative…</p>
+                        ) : !deltaNarrative ? (
+                          <>
+                            <p style={{ fontSize: 14, color: "var(--muted-foreground)", lineHeight: 1.6, marginBottom: 10 }}>
+                              No AI narrative generated yet for this leader-vs-workforce comparison. Generate one to see what these gaps may mean and 3 targeted interventions you can add to your tracking list.
+                            </p>
+                            <Button size="sm" onClick={handleGenerateDelta} disabled={generatingDelta}>
+                              <RefreshCw className={generatingDelta ? "animate-spin" : ""} style={{ marginRight: 6 }} />
+                              {generatingDelta ? "Generating..." : "Generate narrative"}
+                            </Button>
+                          </>
+                        ) : (
+                          <>
+                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12, flexWrap: "wrap", gap: 8 }}>
+                              <span style={{ fontSize: 11, color: "var(--muted-foreground)" }}>
+                                Generated {new Date(deltaNarrative.generated_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })} · Leaders n={deltaNarrative.epn_participant_count} · Employees n={deltaNarrative.self_participant_count}
+                              </span>
+                              <Button size="sm" variant="outline" onClick={handleGenerateDelta} disabled={generatingDelta}>
+                                <RefreshCw className={generatingDelta ? "animate-spin" : ""} style={{ marginRight: 4 }} />
+                                {generatingDelta ? "Generating..." : "↻ Regenerate"}
+                              </Button>
+                            </div>
+                            {deltaNarrative.narrative_text.summary && (
+                              <div style={{ background: "var(--card)", border: "0.5px solid var(--border)", borderRadius: 8, padding: 12, marginBottom: 10 }}>
+                                <div style={{ fontSize: 9, fontWeight: 500, color: NAVY, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6, borderLeft: `3px solid ${ORANGE}`, paddingLeft: 7 }}>
+                                  What we're seeing
+                                </div>
+                                <p style={{ fontSize: 14, color: "var(--foreground)", margin: 0, lineHeight: 1.65 }}>
+                                  {deltaNarrative.narrative_text.summary}
+                                </p>
+                              </div>
+                            )}
+                            {deltaNarrative.narrative_text.alignment_overview && (
+                              <p style={{ fontSize: 13, color: "var(--muted-foreground)", lineHeight: 1.6, marginBottom: 12 }}>
+                                {deltaNarrative.narrative_text.alignment_overview}
+                              </p>
+                            )}
+                            {deltaNarrative.narrative_text.key_gaps && deltaNarrative.narrative_text.key_gaps.length > 0 && (
+                              <>
+                                <div style={{ fontSize: 13, fontWeight: 500, color: NAVY, marginBottom: 8 }}>Key gaps</div>
+                                {deltaNarrative.narrative_text.key_gaps.map((gap, i) => (
+                                  <div key={i} style={{ background: "var(--muted)", borderRadius: 8, padding: 12, marginBottom: 8 }}>
+                                    <div style={{ fontSize: 13, fontWeight: 700, color: NAVY, marginBottom: 4 }}>{gap.title}</div>
+                                    <div style={{ fontSize: 13, color: "var(--muted-foreground)", lineHeight: 1.55 }}>{gap.description}</div>
+                                  </div>
+                                ))}
+                              </>
+                            )}
+                            {deltaNarrative.narrative_text.recommendations && deltaNarrative.narrative_text.recommendations.length > 0 && (
+                              <>
+                                <div style={{ fontSize: 13, fontWeight: 500, color: NAVY, marginTop: 14, marginBottom: 8 }}>
+                                  Recommended interventions ({deltaNarrative.narrative_text.recommendations.length})
+                                </div>
+                                {deltaNarrative.narrative_text.recommendations.map(rec => (
+                                  <div key={rec.id} style={{ background: "#ede9df", borderRadius: 8, padding: "14px 16px", marginBottom: 8 }}>
+                                    <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8, marginBottom: 6 }}>
+                                      <span style={{ fontSize: 14, fontWeight: 500, color: NAVY }}>{rec.title}</span>
+                                      <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
+                                        {priorityBadge(rec.priority)}
+                                        {horizonBadge(rec.time_horizon)}
+                                        {typeBadge(rec.intervention_type)}
+                                      </div>
+                                    </div>
+                                    <p style={{ fontSize: 13, color: "var(--muted-foreground)", margin: "0 0 8px", lineHeight: 1.55 }}>{rec.rationale}</p>
+                                    {rec.steps && rec.steps.length > 0 && (
+                                      <ol style={{ margin: "4px 0 8px", paddingLeft: 18, fontSize: 12, color: "var(--muted-foreground)", lineHeight: 1.55 }}>
+                                        {rec.steps.map((step, j) => <li key={j}>{step}</li>)}
+                                      </ol>
+                                    )}
+                                    <button onClick={(e) => { e.stopPropagation(); saveDeltaIntervention(rec); }} style={{
+                                      fontSize: 10, padding: "3px 9px", border: `0.5px solid ${NAVY}`, borderRadius: 5,
+                                      background: "transparent", color: NAVY, cursor: "pointer",
+                                    }}>+ Add to intervention tracking</button>
+                                  </div>
+                                ))}
+                              </>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
             </>
           )}
@@ -2234,6 +2530,36 @@ export default function CompanyDashboard() {
                         </ol>
                       </div>
                     )}
+                    <button
+                      onClick={async () => {
+                        if (!latestNarrative) {
+                          toast.error("Cross-instrument recommendations require an existing NAI dashboard narrative — regenerate first.");
+                          return;
+                        }
+                        try {
+                          await (supabase as any).rpc("save_org_intervention", {
+                            p_narrative_id: latestNarrative.id,
+                            p_epn_delta_narrative_id: null,
+                            p_instrument_id: "INST-002",
+                            p_title: rec.title,
+                            p_description: rec.rationale,
+                            p_target_dimensions: [...(rec.primary_targets ?? []), ...(rec.cross_targets ?? [])],
+                            p_priority: rec.priority,
+                            p_time_horizon: rec.time_horizon,
+                            p_intervention_type: "cross_instrument",
+                          });
+                          toast.success("Saved to intervention tracking");
+                        } catch (e: any) {
+                          toast.error("Failed to save: " + (e.message ?? "unknown"));
+                        }
+                      }}
+                      style={{
+                        fontSize: 10, padding: "3px 9px", border: `0.5px solid ${NAVY}`, borderRadius: 5,
+                        background: "transparent", color: NAVY, cursor: "pointer", marginTop: 8,
+                      }}
+                    >
+                      + Add to intervention tracking
+                    </button>
                   </div>
                 ))}
               </>
