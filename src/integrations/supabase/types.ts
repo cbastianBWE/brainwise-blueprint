@@ -2133,9 +2133,11 @@ export type Database = {
           narrative_id: string | null
           organization_id: string
           priority: string
+          status: string
           target_dimensions: string[]
           time_horizon: string
           title: string
+          tracking_notes: string | null
         }
         Insert: {
           created_at?: string
@@ -2147,9 +2149,11 @@ export type Database = {
           narrative_id?: string | null
           organization_id: string
           priority?: string
+          status?: string
           target_dimensions?: string[]
           time_horizon?: string
           title: string
+          tracking_notes?: string | null
         }
         Update: {
           created_at?: string
@@ -2161,9 +2165,11 @@ export type Database = {
           narrative_id?: string | null
           organization_id?: string
           priority?: string
+          status?: string
           target_dimensions?: string[]
           time_horizon?: string
           title?: string
+          tracking_notes?: string | null
         }
         Relationships: [
           {
@@ -3987,34 +3993,22 @@ export type Database = {
         Args: { p_new_user_id: string }
         Returns: number
       }
-      save_org_intervention:
-        | {
-            Args: {
-              p_description: string
-              p_instrument_id: string
-              p_intervention_type?: string
-              p_narrative_id: string
-              p_priority?: string
-              p_target_dimensions: string[]
-              p_time_horizon?: string
-              p_title: string
-            }
-            Returns: string
-          }
-        | {
-            Args: {
-              p_description: string
-              p_epn_delta_narrative_id?: string
-              p_instrument_id: string
-              p_intervention_type?: string
-              p_narrative_id: string
-              p_priority?: string
-              p_target_dimensions: string[]
-              p_time_horizon?: string
-              p_title: string
-            }
-            Returns: string
-          }
+      save_org_intervention: {
+        Args: {
+          p_description: string
+          p_epn_delta_narrative_id?: string
+          p_instrument_id: string
+          p_intervention_type?: string
+          p_narrative_id: string
+          p_priority?: string
+          p_status?: string
+          p_target_dimensions: string[]
+          p_time_horizon?: string
+          p_title: string
+          p_tracking_notes?: string
+        }
+        Returns: string
+      }
       seat_count_available: { Args: { p_org: string }; Returns: number }
       seat_count_used: { Args: { p_org: string }; Returns: number }
       sharing_preferences_upsert: {
