@@ -354,6 +354,7 @@ export default function CompanyDashboard() {
     interpretation: true,
     trends: true,
     "cross-instrument": true,
+    "leader-perspective": true,
   });
   const [exporting, setExporting] = useState(false);
 
