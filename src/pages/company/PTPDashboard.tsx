@@ -516,6 +516,62 @@ export default function PTPDashboard() {
     setLoadingCrossInstrument(false);
   }, [user, sliceType, sliceValue]);
 
+  const loadDeltaResult = useCallback(async () => {
+    if (!user) return;
+    setLoadingDelta(true);
+    const { data: userRow } = await (supabase as any)
+      .from("users")
+      .select("organization_id")
+      .eq("id", user.id)
+      .single();
+    if (!userRow?.organization_id) {
+      setDeltaResult(null);
+      setLoadingDelta(false);
+      return;
+    }
+    const { data, error } = await (supabase as any).rpc(
+      "get_ptp_leader_workforce_delta",
+      {
+        p_organization_id: userRow.organization_id,
+        p_slice_type: sliceType,
+        p_slice_value: sliceValue,
+      },
+    );
+    if (error) {
+      console.error("get_ptp_leader_workforce_delta error:", error);
+      setDeltaResult(null);
+    } else {
+      setDeltaResult(data as PTPDeltaResult);
+    }
+    setLoadingDelta(false);
+  }, [user, sliceType, sliceValue]);
+
+  const loadDeltaNarrative = useCallback(async () => {
+    if (!user) return;
+    setLoadingDeltaNarrative(true);
+    const { data: userRow } = await (supabase as any)
+      .from("users")
+      .select("organization_id")
+      .eq("id", user.id)
+      .single();
+    if (!userRow?.organization_id) {
+      setDeltaNarrative(null);
+      setLoadingDeltaNarrative(false);
+      return;
+    }
+    const { data } = await (supabase as any)
+      .from("org_ptp_delta_narratives")
+      .select("id, generated_at, workforce_participant_count, leader_participant_count, narrative_text")
+      .eq("organization_id", userRow.organization_id)
+      .eq("slice_type", sliceType)
+      .eq("slice_value", sliceValue)
+      .order("generated_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    setDeltaNarrative((data ?? null) as StoredPTPDeltaNarrative | null);
+    setLoadingDeltaNarrative(false);
+  }, [user, sliceType, sliceValue]);
+
   const loadNarrative = useCallback(async () => {
     if (!user) return;
     setLoadingNarrative(true);
