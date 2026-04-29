@@ -356,7 +356,7 @@ export default function CompanyDashboard() {
   const [loadingDelta, setLoadingDelta] = useState<boolean>(false);
   const [deltaNarrative, setDeltaNarrative] = useState<StoredDeltaNarrative | null>(null);
   const [loadingDeltaNarrative, setLoadingDeltaNarrative] = useState<boolean>(false);
-  const [generatingDelta, setGeneratingDelta] = useState<boolean>(false);
+  
   const [expandedLeaderWorkforce, setExpandedLeaderWorkforce] = useState<boolean>(false);
 
   // Load departments
@@ -569,44 +569,36 @@ export default function CompanyDashboard() {
         toast.warning(`Cross-instrument recommendations failed: ${xe.message ?? "network error"}`);
       }
 
-      await Promise.all([loadUsage(), loadNarrative(), loadNarrativeHistory(), loadCrossInstrumentRecs()]);
+      // Stage 3: leader-vs-workforce delta narrative (graceful skip if insufficient EPN data)
+      toast.info("Generating leader-vs-workforce narrative... (~60s)");
+      try {
+        const dRes = await fetch(`${supabaseUrl}/functions/v1/generate-nai-delta-narrative`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({
+            slice_type: sliceType,
+            slice_value: sliceValue,
+            exclude_leaders_from_self: true,
+          }),
+        });
+        const dResult = await dRes.json();
+        if (dRes.ok && dResult.generated) {
+          toast.success(`Leader-vs-workforce narrative generated (${dResult.recommendation_count} interventions)`);
+        } else if (dResult.suppressed || dResult.generated === false) {
+          toast.info("Leader-vs-workforce narrative skipped (need 5+ EPN respondents AND 5+ standard NAI respondents excluding leaders).");
+        } else {
+          toast.warning(`Leader-vs-workforce narrative not generated: ${dResult.reason ?? dResult.error ?? "unknown"}`);
+        }
+      } catch (de: any) {
+        toast.warning(`Leader-vs-workforce narrative failed: ${de.message ?? "network error"}`);
+      }
+
+      await Promise.all([loadUsage(), loadNarrative(), loadNarrativeHistory(), loadCrossInstrumentRecs(), loadDeltaNarrative(), loadDeltaResult()]);
     } catch (e: any) {
       toast.error(e.message ?? "Failed to generate interpretation");
     }
     setRegenerating(false);
   };
-
-  const handleGenerateDelta = async () => {
-    if (!user) return;
-    setGeneratingDelta(true);
-    const supabaseUrl = "https://svprhtzawnbzmumxnhsq.supabase.co";
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const token = session?.access_token ?? "";
-      toast.info("Generating leader-vs-workforce narrative... (~60s)");
-      const res = await fetch(`${supabaseUrl}/functions/v1/generate-nai-delta-narrative`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({
-          slice_type: sliceType,
-          slice_value: sliceValue,
-          exclude_leaders_from_self: true,
-        }),
-      });
-      const result = await res.json();
-      if (!res.ok) throw new Error(result.error ?? "Generation failed");
-      if (result.suppressed || result.generated === false) {
-        toast.warning("Cannot generate: insufficient participants in one or both pools (minimum 5).");
-      } else {
-        toast.success("Leader-vs-workforce narrative generated");
-        await loadDeltaNarrative();
-      }
-    } catch (e: any) {
-      toast.error(e.message ?? "Failed to generate");
-    }
-    setGeneratingDelta(false);
-  };
-
   const toggleFlag = (id: string) => {
     setExpandedFlags(prev => {
       const next = new Set(prev);
@@ -1782,25 +1774,15 @@ export default function CompanyDashboard() {
                         {loadingDeltaNarrative ? (
                           <p style={{ fontSize: 13, color: "var(--muted-foreground)", fontStyle: "italic" }}>Loading narrative…</p>
                         ) : !deltaNarrative ? (
-                          <>
-                            <p style={{ fontSize: 14, color: "var(--muted-foreground)", lineHeight: 1.6, marginBottom: 10 }}>
-                              No AI narrative generated yet for this leader-vs-workforce comparison. Generate one to see what these gaps may mean and 3 targeted interventions you can add to your tracking list.
-                            </p>
-                            <Button size="sm" onClick={handleGenerateDelta} disabled={generatingDelta}>
-                              <RefreshCw className={generatingDelta ? "animate-spin" : ""} style={{ marginRight: 6 }} />
-                              {generatingDelta ? "Generating..." : "Generate narrative"}
-                            </Button>
-                          </>
+                          <p style={{ fontSize: 13, color: "var(--muted-foreground)", lineHeight: 1.6, fontStyle: "italic" }}>
+                            AI narrative for the leader-vs-workforce comparison will appear here after you click "↻ Regenerate AI" at the top of the dashboard. The narrative is generated alongside the standard NAI interpretation.
+                          </p>
                         ) : (
                           <>
-                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12, flexWrap: "wrap", gap: 8 }}>
+                            <div style={{ marginBottom: 12 }}>
                               <span style={{ fontSize: 11, color: "var(--muted-foreground)" }}>
                                 Generated {new Date(deltaNarrative.generated_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })} · Leaders n={deltaNarrative.epn_participant_count} · Employees n={deltaNarrative.self_participant_count}
                               </span>
-                              <Button size="sm" variant="outline" onClick={handleGenerateDelta} disabled={generatingDelta}>
-                                <RefreshCw className={generatingDelta ? "animate-spin" : ""} style={{ marginRight: 4 }} />
-                                {generatingDelta ? "Generating..." : "↻ Regenerate"}
-                              </Button>
                             </div>
                             {deltaNarrative.narrative_text.summary && (
                               <div style={{ background: "var(--card)", border: "0.5px solid var(--border)", borderRadius: 8, padding: 12, marginBottom: 10 }}>
