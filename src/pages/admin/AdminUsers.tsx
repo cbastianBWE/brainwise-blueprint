@@ -1091,7 +1091,7 @@ export default function AdminUsers() {
           <TabsTrigger value="users">Users</TabsTrigger>
           <TabsTrigger value="epn">
             <Briefcase className="h-4 w-4 mr-1.5" />
-            Executive Perspective
+            Executive Perspective NAI
           </TabsTrigger>
         </TabsList>
 
@@ -1448,7 +1448,7 @@ export default function AdminUsers() {
               <>
                 <Card>
                   <CardHeader>
-                    <CardTitle>Assign Executive Perspective</CardTitle>
+                    <CardTitle>Assign Executive Perspective NAI</CardTitle>
                     <CardDescription>
                       Assign the Executive Perspective NAI to leaders. Recipients will see this assessment in their assessments list and rate how their employees experience AI adoption. The standard NAI is unaffected.
                     </CardDescription>
