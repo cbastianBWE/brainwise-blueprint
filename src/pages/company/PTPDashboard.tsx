@@ -723,7 +723,16 @@ export default function PTPDashboard() {
   };
 
   const saveTracking = async () => {
-    if (!trackingModal.source || !latestNarrative) {
+    if (!trackingModal.source) {
+      toast.error("Cannot save: no source loaded.");
+      return;
+    }
+    // dashboard and cross_instrument require latestNarrative;
+    // ptp_delta requires deltaNarrative (checked inside the branch).
+    if (
+      (trackingModal.source.kind === "dashboard" || trackingModal.source.kind === "cross_instrument")
+      && !latestNarrative
+    ) {
       toast.error("Cannot save: no PTP dashboard narrative loaded.");
       return;
     }
@@ -733,11 +742,12 @@ export default function PTPDashboard() {
       let rpcParams: any;
       if (src.kind === "dashboard") {
         rpcParams = {
-          p_narrative_id: latestNarrative.id,
+          p_narrative_id: latestNarrative!.id,
           p_epn_delta_narrative_id: null,
+          p_ptp_delta_narrative_id: null,
           p_instrument_id: "INST-001",
           p_title: src.intervention.title,
-          p_description: trackingNote || src.intervention.description,
+          p_description: src.intervention.description,
           p_target_dimensions: src.intervention.target_dimensions,
           p_priority: src.intervention.priority,
           p_time_horizon: src.intervention.time_horizon,
@@ -745,10 +755,11 @@ export default function PTPDashboard() {
           p_status: trackingStatus,
           p_tracking_notes: trackingNote || null,
         };
-      } else {
+      } else if (src.kind === "cross_instrument") {
         rpcParams = {
-          p_narrative_id: latestNarrative.id,
+          p_narrative_id: latestNarrative!.id,
           p_epn_delta_narrative_id: null,
+          p_ptp_delta_narrative_id: null,
           p_instrument_id: "INST-001",
           p_title: src.rec.title,
           p_description: src.rec.rationale,
@@ -762,6 +773,30 @@ export default function PTPDashboard() {
           p_status: trackingStatus,
           p_tracking_notes: trackingNote || null,
         };
+      } else if (src.kind === "ptp_delta") {
+        if (!deltaNarrative) {
+          toast.error("Cannot save: no PTP delta narrative loaded.");
+          setSavingTracking(false);
+          return;
+        }
+        rpcParams = {
+          p_narrative_id: null,
+          p_epn_delta_narrative_id: null,
+          p_ptp_delta_narrative_id: deltaNarrative.id,
+          p_instrument_id: "INST-001",
+          p_title: src.rec.title,
+          p_description: src.rec.rationale,
+          p_target_dimensions: src.rec.target_dimensions,
+          p_priority: src.rec.priority,
+          p_time_horizon: src.rec.time_horizon,
+          p_intervention_type: src.rec.intervention_type,
+          p_status: trackingStatus,
+          p_tracking_notes: trackingNote || null,
+        };
+      } else {
+        toast.error("Unknown intervention source");
+        setSavingTracking(false);
+        return;
       }
       const { error } = await (supabase as any).rpc("save_org_intervention", rpcParams);
       if (error) {
