@@ -3197,11 +3197,11 @@ export default function PTPDashboard() {
                   Add to intervention tracking
                 </div>
                 <div style={{ fontSize: 14, fontWeight: 500, color: NAVY }}>
-                  {trackingModal.intervention.title}
+                  {title}
                 </div>
               </div>
               <button
-                onClick={() => setTrackingModal({ open: false, intervention: null })}
+                onClick={() => setTrackingModal({ open: false, source: null })}
                 style={{
                   background: "none",
                   border: "none",
