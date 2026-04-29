@@ -53,6 +53,32 @@ const INSTRUMENT_LABEL: Record<string, string> = {
   "INST-002L": "Executive Perspective NAI",
 };
 
+// Friendly dimension names — fall back to the raw ID if the dimension isn't recognised
+const DIM_NAMES: Record<string, string> = {
+  "DIM-NAI-01": "Certainty",
+  "DIM-NAI-02": "Agency",
+  "DIM-NAI-03": "Fairness",
+  "DIM-NAI-04": "Ego Stability",
+  "DIM-NAI-05": "Saturation Threshold",
+  "DIM-PTP-01": "Protection",
+  "DIM-PTP-02": "Participation",
+  "DIM-PTP-03": "Prediction",
+  "DIM-PTP-04": "Purpose",
+  "DIM-PTP-05": "Pleasure",
+};
+
+// Format a YYYY-MM-DD date string in local time (avoiding the UTC parse off-by-one bug).
+// Pass-through for any value that isn't a YYYY-MM-DD string.
+function formatYmdLocal(ymd: string | null | undefined, opts: Intl.DateTimeFormatOptions = { month: "short", day: "numeric", year: "numeric" }): string {
+  if (!ymd) return "";
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(ymd);
+  if (!m) {
+    return new Date(ymd).toLocaleDateString("en-US", opts);
+  }
+  const [, y, mo, d] = m;
+  return new Date(Number(y), Number(mo) - 1, Number(d)).toLocaleDateString("en-US", opts);
+}
+
 // ── Types ───────────────────────────────────────────────────────────────────
 type SourceKind = "narrative" | "delta" | "manual";
 type StatusValue = "not_started" | "in_progress" | "completed" | "blocked" | "cancelled";
