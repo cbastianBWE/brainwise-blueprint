@@ -1058,8 +1058,8 @@ export default function AdminUsers() {
   return (
     <div className="p-6 space-y-6 max-w-5xl">
       <div>
-        <h1 className="text-2xl font-semibold text-foreground">Users</h1>
-        <p className="text-muted-foreground mt-1">Invite new users to your organization.</p>
+        <h1 className="text-2xl font-semibold text-foreground">User Management</h1>
+        <p className="text-muted-foreground mt-1">Manage members of your organization.</p>
       </div>
 
       {manualCodeAlert && (
