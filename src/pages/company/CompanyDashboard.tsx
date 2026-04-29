@@ -1485,7 +1485,7 @@ export default function CompanyDashboard() {
 
           checkY(8);
           pdf.setFontSize(6.5); pdf.setFont("helvetica","normal"); pdf.setTextColor(130,120,130);
-          pdf.text("+ delta: leaders see more concern than employees report.   − delta: leaders underestimate employee concern.   Aligned within ±5 = no meaningful gap.", ML, y);
+          pdf.text("+ delta: leaders see more concern than employees report.   - delta: leaders underestimate employee concern.   Aligned within +/-5 = no meaningful gap.", ML, y);
           y += 7;
 
           if (deltaNarrative && deltaNarrative.narrative_text) {
