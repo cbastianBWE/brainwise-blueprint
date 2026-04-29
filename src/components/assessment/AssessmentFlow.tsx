@@ -46,9 +46,11 @@ interface Props {
   };
   onExit: () => void;
   contextType?: 'professional' | 'personal' | 'both' | null;
+  preexistingAssessmentId?: string;
+  epnAssignmentId?: string;
 }
 
-export default function AssessmentFlow({ instrument, onExit, contextType }: Props) {
+export default function AssessmentFlow({ instrument, onExit, contextType, preexistingAssessmentId, epnAssignmentId }: Props) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
