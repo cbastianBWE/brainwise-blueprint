@@ -2746,6 +2746,18 @@ export default function CompanyDashboard() {
                   )}
                 </label>
               ))}
+              <label key="leader-perspective" style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: "0.5px solid var(--border)", cursor: "pointer" }}>
+                <input
+                  type="checkbox"
+                  checked={exportSections["leader-perspective"]}
+                  onChange={e => setExportSections(prev => ({ ...prev, "leader-perspective": e.target.checked }))}
+                  style={{ width: 14, height: 14, cursor: "pointer" }}
+                />
+                <span style={{ fontSize: 13, color: "var(--foreground)" }}>Leader Perspective (vs workforce)</span>
+                {(!deltaResult || deltaResult.suppressed) && (
+                  <span style={{ fontSize: 10, color: "var(--muted-foreground)", marginLeft: "auto" }}>No data yet</span>
+                )}
+              </label>
             </div>
             <div style={{ fontSize: 11, color: "var(--muted-foreground)", marginBottom: 14, lineHeight: 1.5 }}>
               All collapsed content (risk flags, dimension cards, methodology) will be automatically expanded in the export. Filename: BrainWise-NAI-CompanyDashboard-YYYY-MM-DD.pdf
