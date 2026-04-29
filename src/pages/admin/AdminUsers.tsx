@@ -19,7 +19,10 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Loader2, AlertTriangle, X, Upload, Download, KeyRound, Search, UserX, UserCheck, Users2, RefreshCw } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Textarea } from "@/components/ui/textarea";
+import { Loader2, AlertTriangle, X, Upload, Download, KeyRound, Search, UserX, UserCheck, Users2, RefreshCw, Briefcase } from "lucide-react";
 
 const ADD_DEPT_VALUE = "__add_department__";
 
