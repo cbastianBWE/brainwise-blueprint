@@ -217,6 +217,7 @@ export default function InterventionsPage() {
   const [savingId, setSavingId] = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [bulkImportOpen, setBulkImportOpen] = useState(false);
 
   // ── Loaders ────────────────────────────────────────────────────────────────
   const loadList = useCallback(async () => {
