@@ -620,57 +620,86 @@ export default function CompanyDashboard() {
     });
   };
 
-  const openTrackingModal = (intervention: Intervention, e: React.MouseEvent) => {
+  const openTrackingModal = (source: TrackingSource, e: React.MouseEvent) => {
     e.stopPropagation();
-    setTrackingModal({ open: true, intervention });
+    setTrackingModal({ open: true, source });
     setTrackingNote("");
     setTrackingStatus("not_started");
   };
 
   const closeTrackingModal = () => {
-    setTrackingModal({ open: false, intervention: null });
+    setTrackingModal({ open: false, source: null });
   };
 
   const saveTracking = async () => {
-    if (!trackingModal.intervention || !latestNarrative) return;
+    if (!trackingModal.source) return;
     setSavingTracking(true);
     try {
-      await (supabase as any).rpc("save_org_intervention", {
-        p_narrative_id: latestNarrative.id,
-        p_instrument_id: "INST-002",
-        p_title: trackingModal.intervention.title,
-        p_description: trackingNote || trackingModal.intervention.description,
-        p_target_dimensions: trackingModal.intervention.target_dimensions,
-        p_priority: trackingModal.intervention.priority,
-        p_time_horizon: trackingModal.intervention.time_horizon,
-        p_intervention_type: trackingModal.intervention.intervention_type,
-      });
+      const src = trackingModal.source;
+      let rpcParams: any;
+      if (src.kind === "dashboard") {
+        if (!latestNarrative) {
+          toast.error("Cannot save: no NAI dashboard narrative loaded.");
+          setSavingTracking(false);
+          return;
+        }
+        rpcParams = {
+          p_narrative_id: latestNarrative.id,
+          p_epn_delta_narrative_id: null,
+          p_instrument_id: "INST-002",
+          p_title: src.intervention.title,
+          p_description: trackingNote || src.intervention.description,
+          p_target_dimensions: src.intervention.target_dimensions,
+          p_priority: src.intervention.priority,
+          p_time_horizon: src.intervention.time_horizon,
+          p_intervention_type: src.intervention.intervention_type,
+        };
+      } else if (src.kind === "delta") {
+        if (!deltaNarrative) {
+          toast.error("Cannot save: no delta narrative loaded.");
+          setSavingTracking(false);
+          return;
+        }
+        rpcParams = {
+          p_narrative_id: null,
+          p_epn_delta_narrative_id: deltaNarrative.id,
+          p_instrument_id: "INST-002L",
+          p_title: src.rec.title,
+          p_description: trackingNote || src.rec.rationale,
+          p_target_dimensions: src.rec.target_dimensions,
+          p_priority: src.rec.priority,
+          p_time_horizon: src.rec.time_horizon,
+          p_intervention_type: src.rec.intervention_type,
+        };
+      } else if (src.kind === "cross_instrument") {
+        if (!latestNarrative) {
+          toast.error("Cross-instrument recommendations require an existing NAI dashboard narrative.");
+          setSavingTracking(false);
+          return;
+        }
+        rpcParams = {
+          p_narrative_id: latestNarrative.id,
+          p_epn_delta_narrative_id: null,
+          p_instrument_id: "INST-002",
+          p_title: src.rec.title,
+          p_description: trackingNote || src.rec.rationale,
+          p_target_dimensions: [...(src.rec.primary_targets ?? []), ...(src.rec.cross_targets ?? [])],
+          p_priority: src.rec.priority,
+          p_time_horizon: src.rec.time_horizon,
+          p_intervention_type: "cross_instrument",
+        };
+      } else {
+        toast.error("Unknown intervention source");
+        setSavingTracking(false);
+        return;
+      }
+      await (supabase as any).rpc("save_org_intervention", rpcParams);
       toast.success("Saved to intervention tracking");
       closeTrackingModal();
     } catch (e: any) {
-      toast.error("Failed to save");
-    }
-    setSavingTracking(false);
-  };
-
-  const saveDeltaIntervention = async (rec: DeltaRecommendation) => {
-    if (!deltaNarrative) return;
-    try {
-      await (supabase as any).rpc("save_org_intervention", {
-        p_narrative_id: null,
-        p_epn_delta_narrative_id: deltaNarrative.id,
-        p_instrument_id: "INST-002L",
-        p_title: rec.title,
-        p_description: rec.rationale,
-        p_target_dimensions: rec.target_dimensions,
-        p_priority: rec.priority,
-        p_time_horizon: rec.time_horizon,
-        p_intervention_type: rec.intervention_type,
-      });
-      toast.success("Saved to intervention tracking");
-    } catch (e: any) {
       toast.error("Failed to save: " + (e.message ?? "unknown"));
     }
+    setSavingTracking(false);
   };
 
   const handleExport = async () => {
