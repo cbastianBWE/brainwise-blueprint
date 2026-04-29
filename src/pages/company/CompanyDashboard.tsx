@@ -297,7 +297,6 @@ export default function CompanyDashboard() {
     overview: true,
     dimensions: true,
     interpretation: true,
-    interventions: true,
     trends: true,
     "cross-instrument": true,
   });
