@@ -335,10 +335,13 @@ export default function PTPDashboard() {
   const [compareSliceType, setCompareSliceType] = useState<string>("all");
   const [compareSliceValue, setCompareSliceValue] = useState<string>("all");
   const [compareHistory, setCompareHistory] = useState<NarrativeHistory[]>([]);
+  type PTPTrackingSource =
+    | { kind: "dashboard"; intervention: Intervention }
+    | { kind: "cross_instrument"; rec: CrossInstrumentRec };
   const [trackingModal, setTrackingModal] = useState<{
     open: boolean;
-    intervention: Intervention | null;
-  }>({ open: false, intervention: null });
+    source: PTPTrackingSource | null;
+  }>({ open: false, source: null });
   const [trackingNote, setTrackingNote] = useState<string>("");
   const [trackingStatus, setTrackingStatus] = useState<string>("not_started");
   const [savingTracking, setSavingTracking] = useState<boolean>(false);
