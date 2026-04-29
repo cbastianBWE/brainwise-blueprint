@@ -682,6 +682,11 @@ export default function InterventionsPage() {
         onCreated={loadList}
         orgAdmins={orgAdmins}
       />
+      <BulkImportRecommendationsModal
+        open={bulkImportOpen}
+        onClose={() => setBulkImportOpen(false)}
+        onImported={loadList}
+      />
     </TooltipProvider>
   );
 }
