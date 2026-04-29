@@ -370,6 +370,11 @@ export default function PTPDashboard() {
   const [loadingNaiAgg, setLoadingNaiAgg] = useState<boolean>(false);
   const [crossInstrumentRow, setCrossInstrumentRow] = useState<CrossInstrumentRow | null>(null);
   const [loadingCrossInstrument, setLoadingCrossInstrument] = useState<boolean>(false);
+  const [deltaResult, setDeltaResult] = useState<PTPDeltaResult | null>(null);
+  const [loadingDelta, setLoadingDelta] = useState<boolean>(false);
+  const [deltaNarrative, setDeltaNarrative] = useState<StoredPTPDeltaNarrative | null>(null);
+  const [loadingDeltaNarrative, setLoadingDeltaNarrative] = useState<boolean>(false);
+  const [expandedLeaderWorkforce, setExpandedLeaderWorkforce] = useState<boolean>(false);
   const [latestNarrative, setLatestNarrative] = useState<StoredNarrative | null>(null);
   const [loadingUsage, setLoadingUsage] = useState<boolean>(true);
   const [loadingAgg, setLoadingAgg] = useState<boolean>(true);
