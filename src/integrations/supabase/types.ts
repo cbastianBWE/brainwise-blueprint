@@ -2122,50 +2122,144 @@ export type Database = {
           },
         ]
       }
+      org_intervention_status_history: {
+        Row: {
+          changed_at: string
+          changed_by_user_id: string | null
+          id: string
+          intervention_id: string
+          new_status: string
+          notes_at_change: string | null
+          old_status: string | null
+          organization_id: string
+        }
+        Insert: {
+          changed_at?: string
+          changed_by_user_id?: string | null
+          id?: string
+          intervention_id: string
+          new_status: string
+          notes_at_change?: string | null
+          old_status?: string | null
+          organization_id: string
+        }
+        Update: {
+          changed_at?: string
+          changed_by_user_id?: string | null
+          id?: string
+          intervention_id?: string
+          new_status?: string
+          notes_at_change?: string | null
+          old_status?: string | null
+          organization_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_intervention_status_history_changed_by_user_id_fkey"
+            columns: ["changed_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_intervention_status_history_changed_by_user_id_fkey"
+            columns: ["changed_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "org_intervention_status_history_changed_by_user_id_fkey"
+            columns: ["changed_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_intervention_status_history_changed_by_user_id_fkey"
+            columns: ["changed_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_intervention_status_history_intervention_id_fkey"
+            columns: ["intervention_id"]
+            isOneToOne: false
+            referencedRelation: "org_interventions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_intervention_status_history_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       org_interventions: {
         Row: {
+          actual_completion_date: string | null
+          assigned_owner_user_id: string | null
           created_at: string
           description: string
           epn_delta_narrative_id: string | null
           id: string
           instrument_id: string
           intervention_type: string
+          last_updated_at: string
+          last_updated_by: string | null
+          manual_source_instrument_id: string | null
           narrative_id: string | null
           organization_id: string
           priority: string
           status: string
+          target_completion_date: string | null
           target_dimensions: string[]
           time_horizon: string
           title: string
           tracking_notes: string | null
         }
         Insert: {
+          actual_completion_date?: string | null
+          assigned_owner_user_id?: string | null
           created_at?: string
           description: string
           epn_delta_narrative_id?: string | null
           id?: string
           instrument_id: string
           intervention_type?: string
+          last_updated_at?: string
+          last_updated_by?: string | null
+          manual_source_instrument_id?: string | null
           narrative_id?: string | null
           organization_id: string
           priority?: string
           status?: string
+          target_completion_date?: string | null
           target_dimensions?: string[]
           time_horizon?: string
           title: string
           tracking_notes?: string | null
         }
         Update: {
+          actual_completion_date?: string | null
+          assigned_owner_user_id?: string | null
           created_at?: string
           description?: string
           epn_delta_narrative_id?: string | null
           id?: string
           instrument_id?: string
           intervention_type?: string
+          last_updated_at?: string
+          last_updated_by?: string | null
+          manual_source_instrument_id?: string | null
           narrative_id?: string | null
           organization_id?: string
           priority?: string
           status?: string
+          target_completion_date?: string | null
           target_dimensions?: string[]
           time_horizon?: string
           title?: string
@@ -2173,11 +2267,74 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "org_interventions_assigned_owner_user_id_fkey"
+            columns: ["assigned_owner_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_interventions_assigned_owner_user_id_fkey"
+            columns: ["assigned_owner_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "org_interventions_assigned_owner_user_id_fkey"
+            columns: ["assigned_owner_user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_interventions_assigned_owner_user_id_fkey"
+            columns: ["assigned_owner_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "org_interventions_epn_delta_narrative_id_fkey"
             columns: ["epn_delta_narrative_id"]
             isOneToOne: false
             referencedRelation: "org_nai_delta_narratives"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_interventions_last_updated_by_fkey"
+            columns: ["last_updated_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_interventions_last_updated_by_fkey"
+            columns: ["last_updated_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "org_interventions_last_updated_by_fkey"
+            columns: ["last_updated_by"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_interventions_last_updated_by_fkey"
+            columns: ["last_updated_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_interventions_manual_source_instrument_id_fkey"
+            columns: ["manual_source_instrument_id"]
+            isOneToOne: false
+            referencedRelation: "instruments"
+            referencedColumns: ["instrument_id"]
           },
           {
             foreignKeyName: "org_interventions_narrative_id_fkey"
@@ -3779,10 +3936,30 @@ export type Database = {
         }
         Returns: string
       }
+      create_manual_org_intervention: {
+        Args: {
+          p_assigned_owner_user_id?: string
+          p_description: string
+          p_intervention_type?: string
+          p_manual_source_instrument_id: string
+          p_priority?: string
+          p_status?: string
+          p_target_completion_date?: string
+          p_target_dimensions?: string[]
+          p_time_horizon?: string
+          p_title: string
+          p_tracking_notes?: string
+        }
+        Returns: string
+      }
       current_user_account_type: { Args: never; Returns: string }
       current_user_department_id: { Args: never; Returns: string }
       current_user_org_id: { Args: never; Returns: string }
       current_user_supervisor_id: { Args: never; Returns: string }
+      delete_org_intervention: {
+        Args: { p_intervention_id: string }
+        Returns: boolean
+      }
       department_create: {
         Args: { p_name: string; p_organization_id: string }
         Returns: string
@@ -3890,6 +4067,20 @@ export type Database = {
         }
         Returns: Json
       }
+      get_org_intervention_history: {
+        Args: { p_intervention_id: string }
+        Returns: {
+          out_changed_at: string
+          out_changed_by_email: string
+          out_changed_by_full_name: string
+          out_changed_by_user_id: string
+          out_id: string
+          out_intervention_id: string
+          out_new_status: string
+          out_notes_at_change: string
+          out_old_status: string
+        }[]
+      }
       get_org_narrative_history: {
         Args: {
           p_instrument: string
@@ -3939,6 +4130,44 @@ export type Database = {
           org_level: string
           organization_id: string
           user_id: string
+        }[]
+      }
+      list_org_interventions: {
+        Args: {
+          p_assigned_owner?: string
+          p_instrument_id?: string
+          p_show_cancelled?: boolean
+          p_show_completed?: boolean
+          p_status?: string[]
+        }
+        Returns: {
+          out_actual_completion_date: string
+          out_assigned_owner_user_id: string
+          out_created_at: string
+          out_days_until_target: number
+          out_description: string
+          out_epn_delta_narrative_id: string
+          out_id: string
+          out_instrument_id: string
+          out_intervention_type: string
+          out_last_updated_at: string
+          out_last_updated_by: string
+          out_manual_source_instrument_id: string
+          out_narrative_id: string
+          out_organization_id: string
+          out_owner_email: string
+          out_owner_full_name: string
+          out_priority: string
+          out_source_generated_at: string
+          out_source_kind: string
+          out_source_slice_type: string
+          out_source_slice_value: string
+          out_status: string
+          out_target_completion_date: string
+          out_target_dimensions: string[]
+          out_time_horizon: string
+          out_title: string
+          out_tracking_notes: string
         }[]
       }
       member_feature_override_set: {
@@ -4062,6 +4291,21 @@ export type Database = {
           p_session_id: string
         }
         Returns: undefined
+      }
+      update_org_intervention: {
+        Args: {
+          p_actual_completion_date?: string
+          p_assigned_owner_user_id?: string
+          p_clear_actual_date?: boolean
+          p_clear_notes?: boolean
+          p_clear_owner?: boolean
+          p_clear_target_date?: boolean
+          p_intervention_id: string
+          p_status?: string
+          p_target_completion_date?: string
+          p_tracking_notes?: string
+        }
+        Returns: Json
       }
       user_assign_supervisor: {
         Args: { p_supervisor_user_id: string; p_target_user_id: string }
