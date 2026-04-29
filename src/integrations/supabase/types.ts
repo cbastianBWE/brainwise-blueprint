@@ -2214,6 +2214,7 @@ export type Database = {
           narrative_id: string | null
           organization_id: string
           priority: string
+          ptp_delta_narrative_id: string | null
           status: string
           target_completion_date: string | null
           target_dimensions: string[]
@@ -2236,6 +2237,7 @@ export type Database = {
           narrative_id?: string | null
           organization_id: string
           priority?: string
+          ptp_delta_narrative_id?: string | null
           status?: string
           target_completion_date?: string | null
           target_dimensions?: string[]
@@ -2258,6 +2260,7 @@ export type Database = {
           narrative_id?: string | null
           organization_id?: string
           priority?: string
+          ptp_delta_narrative_id?: string | null
           status?: string
           target_completion_date?: string | null
           target_dimensions?: string[]
@@ -2348,6 +2351,13 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_interventions_ptp_delta_narrative_id_fkey"
+            columns: ["ptp_delta_narrative_id"]
+            isOneToOne: false
+            referencedRelation: "org_ptp_delta_narratives"
             referencedColumns: ["id"]
           },
         ]
@@ -2443,6 +2453,100 @@ export type Database = {
           {
             foreignKeyName: "org_nai_delta_narratives_source_nai_narrative_id_fkey"
             columns: ["source_nai_narrative_id"]
+            isOneToOne: false
+            referencedRelation: "org_dashboard_narratives"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      org_ptp_delta_narratives: {
+        Row: {
+          ai_model: string | null
+          delta: Json
+          generated_at: string
+          generated_by: string | null
+          id: string
+          leader_aggregate: Json
+          leader_participant_count: number
+          narrative_text: Json
+          organization_id: string
+          slice_type: string
+          slice_value: string
+          source_ptp_narrative_id: string | null
+          workforce_aggregate: Json
+          workforce_participant_count: number
+        }
+        Insert: {
+          ai_model?: string | null
+          delta: Json
+          generated_at?: string
+          generated_by?: string | null
+          id?: string
+          leader_aggregate: Json
+          leader_participant_count: number
+          narrative_text: Json
+          organization_id: string
+          slice_type?: string
+          slice_value?: string
+          source_ptp_narrative_id?: string | null
+          workforce_aggregate: Json
+          workforce_participant_count: number
+        }
+        Update: {
+          ai_model?: string | null
+          delta?: Json
+          generated_at?: string
+          generated_by?: string | null
+          id?: string
+          leader_aggregate?: Json
+          leader_participant_count?: number
+          narrative_text?: Json
+          organization_id?: string
+          slice_type?: string
+          slice_value?: string
+          source_ptp_narrative_id?: string | null
+          workforce_aggregate?: Json
+          workforce_participant_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_ptp_delta_narratives_generated_by_fkey"
+            columns: ["generated_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_ptp_delta_narratives_generated_by_fkey"
+            columns: ["generated_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "org_ptp_delta_narratives_generated_by_fkey"
+            columns: ["generated_by"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_ptp_delta_narratives_generated_by_fkey"
+            columns: ["generated_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_ptp_delta_narratives_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_ptp_delta_narratives_source_ptp_narrative_id_fkey"
+            columns: ["source_ptp_narrative_id"]
             isOneToOne: false
             referencedRelation: "org_dashboard_narratives"
             referencedColumns: ["id"]
@@ -4102,6 +4206,14 @@ export type Database = {
           subscription_tier: string
         }[]
       }
+      get_ptp_leader_workforce_delta: {
+        Args: {
+          p_organization_id: string
+          p_slice_type?: string
+          p_slice_value?: string
+        }
+        Returns: Json
+      }
       has_required_demographics: {
         Args: { p_user_id: string }
         Returns: boolean
@@ -4144,6 +4256,7 @@ export type Database = {
           out_narrative_id: string
           out_participant_count: number
           out_priority: string
+          out_ptp_delta_narrative_id: string
           out_rec_index: number
           out_slice_type: string
           out_slice_value: string
@@ -4179,6 +4292,7 @@ export type Database = {
           out_owner_email: string
           out_owner_full_name: string
           out_priority: string
+          out_ptp_delta_narrative_id: string
           out_source_generated_at: string
           out_source_kind: string
           out_source_slice_type: string
@@ -4251,6 +4365,7 @@ export type Database = {
           p_intervention_type?: string
           p_narrative_id: string
           p_priority?: string
+          p_ptp_delta_narrative_id?: string
           p_status?: string
           p_target_dimensions: string[]
           p_time_horizon?: string
