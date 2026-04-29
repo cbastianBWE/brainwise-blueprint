@@ -97,10 +97,7 @@ export default function CreateManualInterventionModal({ open, onClose, onCreated
     }
     setSaving(true);
 
-    const targetDimensions = targetDimensionsRaw
-      .split(",")
-      .map((s) => s.trim())
-      .filter((s) => s.length > 0);
+    const targetDimensions = Array.from(selectedDimensions);
 
     const params: Record<string, unknown> = {
       p_manual_source_instrument_id: sourceInstrument,
