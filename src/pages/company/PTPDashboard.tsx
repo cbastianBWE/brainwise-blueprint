@@ -580,7 +580,7 @@ export default function PTPDashboard() {
     if (!trackingModal.intervention || !latestNarrative) return;
     setSavingTracking(true);
     try {
-      await (supabase as any).rpc("save_org_intervention", {
+      const { error } = await (supabase as any).rpc("save_org_intervention", {
         p_narrative_id: latestNarrative.id,
         p_instrument_id: "INST-001",
         p_title: trackingModal.intervention.title,
@@ -591,12 +591,15 @@ export default function PTPDashboard() {
         p_intervention_type: trackingModal.intervention.intervention_type,
         p_status: trackingStatus,
       });
+      if (error) {
+        throw new Error(error.message ?? "Database rejected the save");
+      }
       toast.success("Saved to intervention tracking");
       setTrackingModal({ open: false, intervention: null });
       setTrackingNote("");
       setTrackingStatus("not_started");
-    } catch {
-      toast.error("Failed to save");
+    } catch (e: any) {
+      toast.error("Failed to save: " + (e?.message ?? "unknown"));
     }
     setSavingTracking(false);
   };

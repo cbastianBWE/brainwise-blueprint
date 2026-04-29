@@ -687,7 +687,7 @@ export default function CompanyDashboard() {
           p_target_dimensions: [...(src.rec.primary_targets ?? []), ...(src.rec.cross_targets ?? [])],
           p_priority: src.rec.priority,
           p_time_horizon: src.rec.time_horizon,
-          p_intervention_type: "cross_instrument",
+          p_intervention_type: "process",
           p_status: trackingStatus,
           p_tracking_notes: trackingNote || null,
         };
@@ -696,11 +696,14 @@ export default function CompanyDashboard() {
         setSavingTracking(false);
         return;
       }
-      await (supabase as any).rpc("save_org_intervention", rpcParams);
+      const { error } = await (supabase as any).rpc("save_org_intervention", rpcParams);
+      if (error) {
+        throw new Error(error.message ?? "Database rejected the save");
+      }
       toast.success("Saved to intervention tracking");
       closeTrackingModal();
     } catch (e: any) {
-      toast.error("Failed to save: " + (e.message ?? "unknown"));
+      toast.error("Failed to save: " + (e?.message ?? "unknown"));
     }
     setSavingTracking(false);
   };
