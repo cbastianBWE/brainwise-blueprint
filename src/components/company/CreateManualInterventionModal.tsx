@@ -70,7 +70,7 @@ export default function CreateManualInterventionModal({ open, onClose, onCreated
     setSourceInstrument("INST-002");
     setTitle("");
     setDescription("");
-    setTargetDimensionsRaw("");
+    setSelectedDimensions(new Set());
     setPriority("medium");
     setTimeHorizon("90-day");
     setInterventionType("process");
