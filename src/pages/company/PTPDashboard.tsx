@@ -1994,7 +1994,7 @@ export default function PTPDashboard() {
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      setTrackingModal({ open: true, intervention: iv });
+                                      setTrackingModal({ open: true, source: { kind: "dashboard", intervention: iv } });
                                       setTrackingNote("");
                                       setTrackingStatus("not_started");
                                     }}
