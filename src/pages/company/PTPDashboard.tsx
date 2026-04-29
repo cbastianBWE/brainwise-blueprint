@@ -1547,6 +1547,231 @@ export default function PTPDashboard() {
             </div>
           )}
 
+          {/* LEADERSHIP COHORT vs WORKFORCE COHORT — PTP self-report comparison */}
+          {!suppressed && Object.keys(dims).length > 0 && (
+            <>
+              <h3
+                style={{
+                  fontSize: 15,
+                  fontWeight: 500,
+                  color: NAVY,
+                  margin: "24px 0 10px",
+                  textTransform: "uppercase",
+                  letterSpacing: 0.5,
+                }}
+              >
+                Leadership cohort compared to workforce cohort · PTP
+              </h3>
+              <div
+                onClick={() => setExpandedLeaderWorkforce((v) => !v)}
+                style={{
+                  padding: 14,
+                  background: SAND,
+                  border: `0.5px solid ${expandedLeaderWorkforce ? NAVY : "var(--border)"}`,
+                  borderRadius: 8,
+                  cursor: "pointer",
+                  transition: "border-color 0.15s",
+                }}
+              >
+                {loadingDelta ? (
+                  <div style={{ padding: 20, textAlign: "center", color: "var(--muted-foreground)", fontSize: 13 }}>
+                    Loading cohort comparison…
+                  </div>
+                ) : !deltaResult || deltaResult.suppressed ? (
+                  <>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", gap: 16 }}>
+                      <div>
+                        <p style={{ fontSize: 13, color: "var(--muted-foreground)", margin: "0 0 8px", textTransform: "uppercase", letterSpacing: 0.4 }}>
+                          Leadership cohort (Director · VP · C-Suite)
+                        </p>
+                        {ALL_DIMS.map((dimId) => (
+                          <div key={dimId} style={{ display: "grid", gridTemplateColumns: "1fr 32px", alignItems: "center", marginBottom: 8, gap: 4 }}>
+                            <span style={{ fontSize: 13, fontWeight: 500, color: DIM_COLORS[dimId] }}>{DIM_NAMES[dimId]}</span>
+                            <span style={{ fontSize: 13, color: "var(--muted-foreground)", textAlign: "right" }}>—</span>
+                          </div>
+                        ))}
+                      </div>
+                      <div style={{ alignSelf: "center", textAlign: "center" }}>
+                        <p style={{ fontSize: 10, color: "var(--muted-foreground)", margin: "0 0 6px", textTransform: "uppercase" }}>delta</p>
+                        {ALL_DIMS.map((dimId) => (
+                          <div key={dimId} style={{ fontSize: 13, color: "var(--muted-foreground)", padding: "4px 0" }}>—</div>
+                        ))}
+                      </div>
+                      <div>
+                        <p style={{ fontSize: 13, color: "var(--muted-foreground)", margin: "0 0 8px", textTransform: "uppercase", letterSpacing: 0.4 }}>
+                          Workforce cohort (IC · Manager)
+                        </p>
+                        {ALL_DIMS.map((dimId) => (
+                          <div key={dimId} style={{ display: "grid", gridTemplateColumns: "1fr 32px", alignItems: "center", marginBottom: 8, gap: 4 }}>
+                            <span style={{ fontSize: 13, fontWeight: 500, color: DIM_COLORS[dimId] }}>{DIM_NAMES[dimId]}</span>
+                            <span style={{ fontSize: 13, color: "var(--muted-foreground)", textAlign: "right" }}>—</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <div style={{ marginTop: 10, fontSize: 11, color: "var(--muted-foreground)", fontStyle: "italic", padding: "8px 12px", background: "var(--muted)", borderRadius: 6 }}>
+                      {deltaResult?.reason === "slice_incompatible_with_leader_workforce"
+                        ? "Leadership-vs-workforce comparison cannot be sliced by org level. Switch to All organization or a department slice."
+                        : `Cohort comparison requires at least 5 PTP completions in EACH cohort. Currently ${deltaResult?.leader_participant_count ?? 0} in leadership cohort, ${deltaResult?.workforce_participant_count ?? 0} in workforce cohort.`}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", gap: 16 }}>
+                      <div>
+                        <p style={{ fontSize: 13, color: "var(--muted-foreground)", margin: "0 0 8px", textTransform: "uppercase", letterSpacing: 0.4 }}>
+                          Leadership cohort (n={deltaResult.leader_participant_count})
+                        </p>
+                        {ALL_DIMS.map((dimId) => {
+                          const score = deltaResult.delta?.[dimId]?.leader_mean ?? null;
+                          return (
+                            <div key={dimId} style={{ display: "grid", gridTemplateColumns: "1fr 32px", alignItems: "center", marginBottom: 8, gap: 4 }}>
+                              <span style={{ fontSize: 13, fontWeight: 500, color: DIM_COLORS[dimId] }}>{DIM_NAMES[dimId]}</span>
+                              <span style={{ fontSize: 15, fontWeight: 500, color: DIM_COLORS[dimId], textAlign: "right" }}>
+                                {score !== null ? Math.round(score) : "—"}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      <div style={{ alignSelf: "center", textAlign: "center" }}>
+                        <p style={{ fontSize: 10, color: "var(--muted-foreground)", margin: "0 0 6px", textTransform: "uppercase" }}>delta</p>
+                        {ALL_DIMS.map((dimId) => {
+                          const entry = deltaResult.delta?.[dimId];
+                          const d = entry?.delta ?? null;
+                          const sign = d === null ? "" : (d > 0 ? "+" : "");
+                          return (
+                            <div key={dimId} style={{ fontSize: 13, fontWeight: 500, color: DIM_COLORS[dimId], padding: "4px 0" }}>
+                              {d !== null ? `${sign}${Math.round(d * 10) / 10}` : "—"}
+                            </div>
+                          );
+                        })}
+                      </div>
+                      <div>
+                        <p style={{ fontSize: 13, color: "var(--muted-foreground)", margin: "0 0 8px", textTransform: "uppercase", letterSpacing: 0.4 }}>
+                          Workforce cohort (n={deltaResult.workforce_participant_count})
+                        </p>
+                        {ALL_DIMS.map((dimId) => {
+                          const score = deltaResult.delta?.[dimId]?.workforce_mean ?? null;
+                          return (
+                            <div key={dimId} style={{ display: "grid", gridTemplateColumns: "1fr 32px", alignItems: "center", marginBottom: 8, gap: 4 }}>
+                              <span style={{ fontSize: 13, fontWeight: 500, color: DIM_COLORS[dimId] }}>{DIM_NAMES[dimId]}</span>
+                              <span style={{ fontSize: 15, fontWeight: 500, color: DIM_COLORS[dimId], textAlign: "right" }}>
+                                {score !== null ? Math.round(score) : "—"}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                    <div style={{ marginTop: 10, display: "flex", gap: 14, flexWrap: "wrap", alignItems: "center" }}>
+                      <span style={{ fontSize: 10, color: "var(--muted-foreground)" }}>
+                        <span style={{ color: NAVY, fontWeight: 600 }}>+ delta</span>: leadership cohort scores higher than workforce cohort.
+                      </span>
+                      <span style={{ fontSize: 10, color: "var(--muted-foreground)" }}>
+                        <span style={{ color: PURPLE, fontWeight: 600 }}>− delta</span>: workforce cohort scores higher than leadership cohort.
+                      </span>
+                      <span style={{ fontSize: 10, color: TEAL, marginLeft: "auto" }}>
+                        {expandedLeaderWorkforce ? "↑ collapse" : "↓ expand for narrative + interventions"}
+                      </span>
+                    </div>
+                    {expandedLeaderWorkforce && (
+                      <div onClick={(e) => e.stopPropagation()} style={{ marginTop: 14, paddingTop: 14, borderTop: "0.5px solid var(--border)" }}>
+                        {loadingDeltaNarrative ? (
+                          <p style={{ fontSize: 13, color: "var(--muted-foreground)", fontStyle: "italic" }}>Loading narrative…</p>
+                        ) : !deltaNarrative ? (
+                          <p style={{ fontSize: 13, color: "var(--muted-foreground)", lineHeight: 1.6, fontStyle: "italic" }}>
+                            AI narrative for the leadership-vs-workforce comparison will appear here after you click "Regenerate AI" at the top of the dashboard. The narrative is generated alongside the standard PTP interpretation.
+                          </p>
+                        ) : (
+                          <>
+                            <div style={{ marginBottom: 12 }}>
+                              <span style={{ fontSize: 11, color: "var(--muted-foreground)" }}>
+                                Generated {new Date(deltaNarrative.generated_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })} · Leadership n={deltaNarrative.leader_participant_count} · Workforce n={deltaNarrative.workforce_participant_count}
+                              </span>
+                            </div>
+                            {deltaNarrative.narrative_text.summary && (
+                              <div style={{ background: "var(--card)", border: "0.5px solid var(--border)", borderRadius: 8, padding: 12, marginBottom: 10 }}>
+                                <div style={{ fontSize: 9, fontWeight: 500, color: NAVY, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6, borderLeft: `3px solid ${ORANGE}`, paddingLeft: 7 }}>
+                                  What we're seeing
+                                </div>
+                                <p style={{ fontSize: 14, color: "var(--foreground)", margin: 0, lineHeight: 1.65 }}>
+                                  {deltaNarrative.narrative_text.summary}
+                                </p>
+                              </div>
+                            )}
+                            {deltaNarrative.narrative_text.alignment_overview && (
+                              <p style={{ fontSize: 13, color: "var(--muted-foreground)", lineHeight: 1.6, marginBottom: 12 }}>
+                                {deltaNarrative.narrative_text.alignment_overview}
+                              </p>
+                            )}
+                            {deltaNarrative.narrative_text.key_gaps && deltaNarrative.narrative_text.key_gaps.length > 0 && (
+                              <>
+                                <div style={{ fontSize: 13, fontWeight: 500, color: NAVY, marginBottom: 8 }}>Key divergences</div>
+                                {deltaNarrative.narrative_text.key_gaps.map((gap, i) => (
+                                  <div key={i} style={{ background: "var(--muted)", borderRadius: 8, padding: 12, marginBottom: 8 }}>
+                                    <div style={{ fontSize: 13, fontWeight: 700, color: NAVY, marginBottom: 4 }}>{gap.title}</div>
+                                    <div style={{ fontSize: 13, color: "var(--muted-foreground)", lineHeight: 1.55 }}>{gap.description}</div>
+                                  </div>
+                                ))}
+                              </>
+                            )}
+                            {deltaNarrative.narrative_text.recommendations && deltaNarrative.narrative_text.recommendations.length > 0 && (
+                              <>
+                                <div style={{ fontSize: 13, fontWeight: 500, color: NAVY, marginTop: 14, marginBottom: 8 }}>
+                                  Recommended interventions ({deltaNarrative.narrative_text.recommendations.length})
+                                </div>
+                                {deltaNarrative.narrative_text.recommendations.map((rec) => (
+                                  <div key={rec.id} style={{ background: "#ede9df", borderRadius: 8, padding: "14px 16px", marginBottom: 8 }}>
+                                    <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8, marginBottom: 6 }}>
+                                      <span style={{ fontSize: 14, fontWeight: 500, color: NAVY }}>{rec.title}</span>
+                                      <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
+                                        {priorityBadge(rec.priority)}
+                                        {horizonBadge(rec.time_horizon)}
+                                        {typeBadge(rec.intervention_type)}
+                                      </div>
+                                    </div>
+                                    <p style={{ fontSize: 13, color: "var(--muted-foreground)", margin: "0 0 8px", lineHeight: 1.55 }}>
+                                      {rec.rationale}
+                                    </p>
+                                    {rec.steps && rec.steps.length > 0 && (
+                                      <ol style={{ margin: "4px 0 8px", paddingLeft: 18, fontSize: 12, color: "var(--muted-foreground)", lineHeight: 1.55 }}>
+                                        {rec.steps.map((step, j) => <li key={j}>{step}</li>)}
+                                      </ol>
+                                    )}
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setTrackingModal({ open: true, source: { kind: "ptp_delta", rec } });
+                                        setTrackingNote("");
+                                        setTrackingStatus("not_started");
+                                      }}
+                                      style={{
+                                        fontSize: 10,
+                                        padding: "3px 9px",
+                                        border: `0.5px solid ${NAVY}`,
+                                        borderRadius: 5,
+                                        background: "transparent",
+                                        color: NAVY,
+                                        cursor: "pointer",
+                                      }}
+                                    >
+                                      + Add to intervention tracking
+                                    </button>
+                                  </div>
+                                ))}
+                              </>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            </>
+          )}
+
           {usage?.dept_participation && usage.dept_participation.length > 0 && (
             <>
               <h3
