@@ -337,7 +337,12 @@ export default function CompanyDashboard() {
   const [compareHistory, setCompareHistory] = useState<NarrativeHistory[]>([]);
   const [loadingInterventions, setLoadingInterventions] = useState(false);
   const [expandedDims, setExpandedDims] = useState<Set<string>>(new Set());
-  const [trackingModal, setTrackingModal] = useState<{ open: boolean; intervention: Intervention | null }>({ open: false, intervention: null });
+  type TrackingSource =
+    | { kind: "dashboard"; intervention: Intervention }
+    | { kind: "delta"; rec: DeltaRecommendation }
+    | { kind: "cross_instrument"; rec: CrossInstrumentRec };
+
+  const [trackingModal, setTrackingModal] = useState<{ open: boolean; source: TrackingSource | null }>({ open: false, source: null });
   const [trackingNote, setTrackingNote] = useState("");
   const [trackingStatus, setTrackingStatus] = useState("not_started");
   const [savingTracking, setSavingTracking] = useState(false);
