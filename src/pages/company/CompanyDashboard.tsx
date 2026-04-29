@@ -248,6 +248,56 @@ interface CrossInstrumentRow {
   generated_at: string;
 }
 
+interface DeltaDimEntry {
+  self_mean: number | null;
+  epn_mean: number | null;
+  delta: number | null;
+  direction: 'leaders_see_more_concern' | 'leaders_see_less_concern' | 'aligned' | null;
+}
+
+interface DeltaResult {
+  suppressed: boolean;
+  reason?: string;
+  self_participant_count: number;
+  epn_participant_count: number;
+  self_aggregate?: Record<string, { mean: number; n?: number }>;
+  epn_aggregate?: Record<string, { mean: number; n?: number }>;
+  delta?: Record<string, DeltaDimEntry>;
+  minimum_required?: number;
+}
+
+interface DeltaRecommendation {
+  id: string;
+  title: string;
+  rationale: string;
+  steps: string[];
+  priority: 'high' | 'medium' | 'low';
+  time_horizon: 'immediate' | '30-day' | '90-day';
+  intervention_type: 'process' | 'conversation' | 'structural' | 'measurement';
+  target_dimensions: string[];
+}
+
+interface StoredDeltaNarrative {
+  id: string;
+  generated_at: string;
+  self_participant_count: number;
+  epn_participant_count: number;
+  exclude_leaders_from_self: boolean;
+  narrative_text: {
+    summary?: string;
+    alignment_overview?: string;
+    dimension_insights?: Array<{
+      dimension_name: string;
+      dimension_id: string;
+      gap_direction: string;
+      interpretation: string;
+      interpretive_caution?: string;
+    }>;
+    key_gaps?: Array<{ title: string; description: string; primary_dimension: string }>;
+    recommendations?: DeltaRecommendation[];
+  };
+}
+
 interface Department {
   id: string;
   name: string;
