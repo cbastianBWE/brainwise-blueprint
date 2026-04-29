@@ -712,12 +712,27 @@ export function generatePTPDashboardPdf(data: PTPDashboardPdfData): void {
       doc.text(s.label, MARGIN_L + 5, y + 6);
       y += 14;
 
-      // Body text
+      // Body text — render line by line, but force a page break early
+      // if a 1-2 line widow would otherwise straddle to the next page.
+      // Specifically: when only 1 or 2 lines remain in this section's body
+      // AND the next line would push past the page, push the entire tail
+      // to the next page instead of just the last line.
       doc.setFont("helvetica", "normal");
       doc.setFontSize(11);
       const bodyLines = doc.splitTextToSize(s.text, CONTENT_W - 4) as string[];
-      for (const line of bodyLines) {
-        checkPageBreak(6);
+      for (let i = 0; i < bodyLines.length; i++) {
+        const line = bodyLines[i];
+        const linesRemaining = bodyLines.length - i;
+        // Widow prevention: if 1-2 lines remain AND we're within ~2 line-heights
+        // of the bottom margin, force a page break NOW so the tail moves together.
+        if (linesRemaining <= 2 && y + (linesRemaining * 5.5) > PAGE_H - MARGIN_B) {
+          addFooter();
+          doc.addPage();
+          y = MARGIN_T;
+          if (currentSectionTitle) renderContinuationHeader();
+        } else {
+          checkPageBreak(6);
+        }
         setText(TEXT);
         doc.text(line, MARGIN_L + 4, y);
         y += 5.5;
@@ -927,7 +942,7 @@ export function generatePTPDashboardPdf(data: PTPDashboardPdfData): void {
           const firstRec = nar.recommendations[0];
           doc.setFont("helvetica", "bold");
           doc.setFontSize(11);
-          const firstRecTitleLns = doc.splitTextToSize(firstRec.title, CONTENT_W - 60) as string[];
+          const firstRecTitleLns = doc.splitTextToSize(firstRec.title, CONTENT_W - 72) as string[];
           doc.setFont("helvetica", "normal");
           doc.setFontSize(9);
           const firstRecRatLns = doc.splitTextToSize(firstRec.rationale, CONTENT_W - 12) as string[];
@@ -947,7 +962,7 @@ export function generatePTPDashboardPdf(data: PTPDashboardPdfData): void {
           y += 6;
 
           for (const rec of nar.recommendations) {
-            const titleLns = doc.splitTextToSize(rec.title, CONTENT_W - 60) as string[];
+            const titleLns = doc.splitTextToSize(rec.title, CONTENT_W - 72) as string[];
             const ratLns = doc.splitTextToSize(rec.rationale, CONTENT_W - 12) as string[];
             const stepLns = (rec.steps ?? []).map((s, i) =>
               (doc.splitTextToSize(`${i + 1}. ${s}`, CONTENT_W - 18) as string[])
