@@ -72,43 +72,48 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
   useEffect(() => {
     if (!user) return;
     const init = async () => {
-      // Check for in-progress assessment
-      const { data: existing } = await supabase
-        .from("assessments")
-        .select("id")
-        .eq("user_id", user.id)
-        .eq("instrument_id", instrument.instrument_id)
-        .eq("status", "in_progress")
-        .limit(1);
-
       let aId: string;
-      if (existing && existing.length > 0) {
-        aId = existing[0].id;
-        if (contextType) {
-          await supabase
-            .from('assessments')
-            .update({ context_type: contextType })
-            .eq('id', aId);
-        }
+
+      if (preexistingAssessmentId) {
+        aId = preexistingAssessmentId;
       } else {
-        const { data: newA, error } = await supabase
+        // Check for in-progress assessment
+        const { data: existing } = await supabase
           .from("assessments")
-          .insert({
-            user_id: user.id,
-            instrument_id: instrument.instrument_id,
-            instrument_version: instrument.instrument_version,
-            rater_type: "self",
-            status: "in_progress",
-            context_type: contextType ?? null,
-          })
           .select("id")
-          .single();
-        if (error || !newA) {
-          toast({ title: "Error", description: "Could not create assessment.", variant: "destructive" });
-          onExit();
-          return;
+          .eq("user_id", user.id)
+          .eq("instrument_id", instrument.instrument_id)
+          .eq("status", "in_progress")
+          .limit(1);
+
+        if (existing && existing.length > 0) {
+          aId = existing[0].id;
+          if (contextType) {
+            await supabase
+              .from('assessments')
+              .update({ context_type: contextType })
+              .eq('id', aId);
+          }
+        } else {
+          const { data: newA, error } = await supabase
+            .from("assessments")
+            .insert({
+              user_id: user.id,
+              instrument_id: instrument.instrument_id,
+              instrument_version: instrument.instrument_version,
+              rater_type: "self",
+              status: "in_progress",
+              context_type: contextType ?? null,
+            })
+            .select("id")
+            .single();
+          if (error || !newA) {
+            toast({ title: "Error", description: "Could not create assessment.", variant: "destructive" });
+            onExit();
+            return;
+          }
+          aId = newA.id;
         }
-        aId = newA.id;
       }
       setAssessmentId(aId);
 
