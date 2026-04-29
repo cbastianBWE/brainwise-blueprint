@@ -384,7 +384,9 @@ export default function BulkImportRecommendationsModal({ open, onClose, onImport
                       <div style={{ fontSize: 13, fontWeight: 600, color: NAVY }}>{rec.title}</div>
                       <div style={{ display: "flex", gap: 4, flexShrink: 0, flexWrap: "wrap", justifyContent: "flex-end" }}>
                         <span style={{ fontSize: 10, padding: "2px 7px", borderRadius: 10, background: sourceStyle.bg, color: sourceStyle.color, fontWeight: 500 }}>
-                          {INSTRUMENT_LABEL[rec.instrument_id] ?? rec.instrument_id}
+                          {rec.source_kind === "ptp_delta"
+                            ? PTP_DELTA_LABEL
+                            : (INSTRUMENT_LABEL[rec.instrument_id] ?? rec.instrument_id)}
                         </span>
                         <span style={{ fontSize: 10, padding: "2px 7px", borderRadius: 10, background: priStyle.bg, color: priStyle.color, fontWeight: 500, textTransform: "capitalize" }}>
                           {rec.priority}
