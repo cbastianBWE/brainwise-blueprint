@@ -2355,7 +2355,7 @@ export default function PTPDashboard() {
                         </span>
                         <button
                           onClick={() => {
-                            setTrackingModal({ open: true, intervention: iv });
+                            setTrackingModal({ open: true, source: { kind: "dashboard", intervention: iv } });
                             setTrackingNote("");
                             setTrackingStatus("not_started");
                           }}
