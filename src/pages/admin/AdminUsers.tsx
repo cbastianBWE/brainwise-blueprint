@@ -1227,7 +1227,9 @@ export default function AdminUsers() {
           </Card>
         );
       })()}
+        </TabsContent>
 
+        <TabsContent value="users" className="space-y-6">
       {(() => {
         const allUsers = orgUsersQuery.data || [];
         const q = usersSearch.trim().toLowerCase();
