@@ -16,12 +16,14 @@ const PURPLE = "#3C096C";
 // Source-kind chip colors
 const SOURCE_KIND_LABEL: Record<string, string> = {
   narrative: "Dashboard",
-  delta: "Leader vs Workforce",
+  epn_delta: "NAI Leader vs Workforce",
+  ptp_delta: "PTP Leader vs Workforce",
   manual: "Custom",
 };
 const SOURCE_KIND_COLOR: Record<string, { bg: string; color: string }> = {
   narrative: { bg: "#e8edf1", color: NAVY },
-  delta: { bg: "#eeedfe", color: PURPLE },
+  epn_delta: { bg: "#eeedfe", color: PURPLE },
+  ptp_delta: { bg: "#eeedfe", color: PURPLE },
   manual: { bg: "#fef0e7", color: ORANGE },
 };
 
