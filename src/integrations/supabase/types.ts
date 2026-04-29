@@ -1595,6 +1595,122 @@ export type Database = {
           },
         ]
       }
+      executive_perspective_assignments: {
+        Row: {
+          assessment_id: string | null
+          assigned_at: string
+          assigned_by: string | null
+          assigned_by_role: string
+          assignee_user_id: string
+          completed_at: string | null
+          id: string
+          instrument_id: string
+          notes: string | null
+          organization_id: string
+          started_at: string | null
+          status: string
+        }
+        Insert: {
+          assessment_id?: string | null
+          assigned_at?: string
+          assigned_by?: string | null
+          assigned_by_role: string
+          assignee_user_id: string
+          completed_at?: string | null
+          id?: string
+          instrument_id?: string
+          notes?: string | null
+          organization_id: string
+          started_at?: string | null
+          status?: string
+        }
+        Update: {
+          assessment_id?: string | null
+          assigned_at?: string
+          assigned_by?: string | null
+          assigned_by_role?: string
+          assignee_user_id?: string
+          completed_at?: string | null
+          id?: string
+          instrument_id?: string
+          notes?: string | null
+          organization_id?: string
+          started_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "executive_perspective_assignments_assessment_id_fkey"
+            columns: ["assessment_id"]
+            isOneToOne: false
+            referencedRelation: "assessments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "executive_perspective_assignments_assigned_by_fkey"
+            columns: ["assigned_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "executive_perspective_assignments_assigned_by_fkey"
+            columns: ["assigned_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "executive_perspective_assignments_assigned_by_fkey"
+            columns: ["assigned_by"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "executive_perspective_assignments_assigned_by_fkey"
+            columns: ["assigned_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "executive_perspective_assignments_assignee_user_id_fkey"
+            columns: ["assignee_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "executive_perspective_assignments_assignee_user_id_fkey"
+            columns: ["assignee_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "executive_perspective_assignments_assignee_user_id_fkey"
+            columns: ["assignee_user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "executive_perspective_assignments_assignee_user_id_fkey"
+            columns: ["assignee_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "executive_perspective_assignments_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       facet_interpretations: {
         Row: {
           assessment_result_id: string
@@ -1637,6 +1753,7 @@ export type Database = {
           instrument_name: string
           instrument_version: string
           rater_types: string | null
+          requires_assignment: boolean
           scale_type: string | null
           scoring_unit: string | null
           short_name: string | null
@@ -1651,6 +1768,7 @@ export type Database = {
           instrument_name: string
           instrument_version: string
           rater_types?: string | null
+          requires_assignment?: boolean
           scale_type?: string | null
           scoring_unit?: string | null
           short_name?: string | null
@@ -1665,6 +1783,7 @@ export type Database = {
           instrument_name?: string
           instrument_version?: string
           rater_types?: string | null
+          requires_assignment?: boolean
           scale_type?: string | null
           scoring_unit?: string | null
           short_name?: string | null
@@ -2056,6 +2175,103 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      org_nai_delta_narratives: {
+        Row: {
+          ai_model: string | null
+          delta: Json
+          epn_aggregate: Json
+          epn_participant_count: number
+          exclude_leaders_from_self: boolean
+          generated_at: string
+          generated_by: string | null
+          id: string
+          narrative_text: Json
+          organization_id: string
+          self_aggregate: Json
+          self_participant_count: number
+          slice_type: string
+          slice_value: string
+          source_nai_narrative_id: string | null
+        }
+        Insert: {
+          ai_model?: string | null
+          delta: Json
+          epn_aggregate: Json
+          epn_participant_count: number
+          exclude_leaders_from_self?: boolean
+          generated_at?: string
+          generated_by?: string | null
+          id?: string
+          narrative_text: Json
+          organization_id: string
+          self_aggregate: Json
+          self_participant_count: number
+          slice_type?: string
+          slice_value?: string
+          source_nai_narrative_id?: string | null
+        }
+        Update: {
+          ai_model?: string | null
+          delta?: Json
+          epn_aggregate?: Json
+          epn_participant_count?: number
+          exclude_leaders_from_self?: boolean
+          generated_at?: string
+          generated_by?: string | null
+          id?: string
+          narrative_text?: Json
+          organization_id?: string
+          self_aggregate?: Json
+          self_participant_count?: number
+          slice_type?: string
+          slice_value?: string
+          source_nai_narrative_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_nai_delta_narratives_generated_by_fkey"
+            columns: ["generated_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_nai_delta_narratives_generated_by_fkey"
+            columns: ["generated_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "org_nai_delta_narratives_generated_by_fkey"
+            columns: ["generated_by"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_nai_delta_narratives_generated_by_fkey"
+            columns: ["generated_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_nai_delta_narratives_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_nai_delta_narratives_source_nai_narrative_id_fkey"
+            columns: ["source_nai_narrative_id"]
+            isOneToOne: false
+            referencedRelation: "org_dashboard_narratives"
             referencedColumns: ["id"]
           },
         ]
@@ -3005,6 +3221,7 @@ export type Database = {
           onboarding_instrument_version: string | null
           org_level: string | null
           organization_id: string | null
+          pseudonymized_at: string | null
           reactivation_deadline: string | null
           share_results_with_coach: boolean
           stripe_coupon_id: string | null
@@ -3032,6 +3249,7 @@ export type Database = {
           onboarding_instrument_version?: string | null
           org_level?: string | null
           organization_id?: string | null
+          pseudonymized_at?: string | null
           reactivation_deadline?: string | null
           share_results_with_coach?: boolean
           stripe_coupon_id?: string | null
@@ -3059,6 +3277,7 @@ export type Database = {
           onboarding_instrument_version?: string | null
           org_level?: string | null
           organization_id?: string | null
+          pseudonymized_at?: string | null
           reactivation_deadline?: string | null
           share_results_with_coach?: boolean
           stripe_coupon_id?: string | null
@@ -3488,6 +3707,14 @@ export type Database = {
         Returns: boolean
       }
       assert_super_admin: { Args: never; Returns: undefined }
+      assign_executive_perspective_assessment: {
+        Args: {
+          p_assignee_user_ids: string[]
+          p_notes?: string
+          p_organization_id: string
+        }
+        Returns: Json
+      }
       bulk_invitation_create: {
         Args: { p_organization_id: string; p_rows: Json }
         Returns: {
@@ -3506,6 +3733,10 @@ export type Database = {
         Returns: number
       }
       close_chat_session: { Args: { p_session_id: string }; Returns: undefined }
+      complete_epn_assessment: {
+        Args: { p_assignment_id: string }
+        Returns: undefined
+      }
       consume_assessment_purchase: {
         Args: {
           p_assessment_id: string
@@ -3611,6 +3842,18 @@ export type Database = {
           out_user_id: string
         }[]
       }
+      get_my_epn_assignments: {
+        Args: never
+        Returns: {
+          assigned_at: string
+          assignment_id: string
+          instrument_id: string
+          notes: string
+          organization_id: string
+          organization_name: string
+          status: string
+        }[]
+      }
       get_my_team: {
         Args: never
         Returns: {
@@ -3621,6 +3864,15 @@ export type Database = {
           out_org_level: string
           out_user_id: string
         }[]
+      }
+      get_nai_epn_delta: {
+        Args: {
+          p_exclude_leaders_from_self?: boolean
+          p_organization_id: string
+          p_slice_type?: string
+          p_slice_value?: string
+        }
+        Returns: Json
       }
       get_org_narrative_history: {
         Args: {
@@ -3710,6 +3962,10 @@ export type Database = {
         Args: { p_owner_user_id: string; p_viewer_user_id: string }
         Returns: boolean
       }
+      pseudonymize_user: {
+        Args: { p_reason?: string; p_user_id: string }
+        Returns: number
+      }
       reconcile_supervisors_for_org: {
         Args: { p_organization_id: string }
         Returns: {
@@ -3754,6 +4010,10 @@ export type Database = {
           out_user_id: string
         }[]
       }
+      start_epn_assessment: {
+        Args: { p_assignment_id: string }
+        Returns: string
+      }
       super_admin_list_orgs_with_usage: {
         Args: never
         Returns: {
@@ -3773,6 +4033,7 @@ export type Database = {
         Returns: {
           run_at: string
           users_logged: number
+          users_pseudonymized: number
         }[]
       }
       update_chat_session: {
