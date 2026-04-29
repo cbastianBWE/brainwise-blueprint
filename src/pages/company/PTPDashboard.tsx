@@ -3138,6 +3138,26 @@ export default function PTPDashboard() {
                         </ol>
                       </div>
                     )}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setTrackingModal({ open: true, source: { kind: "cross_instrument", rec } });
+                        setTrackingNote("");
+                        setTrackingStatus("not_started");
+                      }}
+                      style={{
+                        fontSize: 10,
+                        padding: "3px 9px",
+                        border: `0.5px solid ${NAVY}`,
+                        borderRadius: 5,
+                        background: "transparent",
+                        color: NAVY,
+                        cursor: "pointer",
+                        marginTop: 8,
+                      }}
+                    >
+                      + Add to intervention tracking
+                    </button>
                   </div>
                 ))}
               </>
