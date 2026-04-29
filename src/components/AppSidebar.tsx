@@ -1,5 +1,5 @@
 import {
-  LayoutDashboard, BarChart3, ClipboardList, MessageSquare, BookOpen, Settings,
+  LayoutDashboard, BarChart3, ClipboardList, ClipboardCheck, MessageSquare, BookOpen, Settings,
   Users, Users2, Building2, UsersRound, Activity, Heart, Award, UserCircle,
   ShieldCheck, Briefcase, GitBranch, FlaskConical, LogOut, History, Shield,
   CreditCard, Receipt, ChevronDown, ChevronRight, Plus,
@@ -286,6 +286,20 @@ export function AppSidebar() {
                       </SidebarMenuItem>
                     </div>
                   )}
+                </SidebarMenuItem>
+              )}
+              {(profile?.account_type === 'company_admin' || profile?.account_type === 'org_admin') && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <NavLink
+                      to="/dashboard/interventions"
+                      className="hover:bg-sidebar-accent"
+                      activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                    >
+                      <ClipboardCheck className="h-4 w-4 shrink-0" />
+                      {!collapsed && <span>Interventions</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
                 </SidebarMenuItem>
               )}
               <SidebarMenuItem>
