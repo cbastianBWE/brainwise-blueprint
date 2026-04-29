@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Plus, RefreshCw, Trash2, ChevronDown, ChevronRight } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
+import CreateManualInterventionModal from "@/components/company/CreateManualInterventionModal";
 
 // ── Brand constants (mirrors CompanyDashboard / PTPDashboard) ───────────────
 const NAVY = "#021F36";
@@ -178,6 +179,7 @@ export default function InterventionsPage() {
   const [historyOpen, setHistoryOpen] = useState<Set<string>>(new Set());
   const [savingId, setSavingId] = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [createModalOpen, setCreateModalOpen] = useState(false);
 
   // ── Loaders ────────────────────────────────────────────────────────────────
   const loadList = useCallback(async () => {
@@ -456,17 +458,13 @@ export default function InterventionsPage() {
               </p>
             </div>
             <div>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span style={{ display: "inline-block" }}>
-                    <Button disabled style={{ background: NAVY, color: "#fff", opacity: 0.6 }}>
-                      <Plus />
-                      Create custom intervention
-                    </Button>
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent>Coming in next update</TooltipContent>
-              </Tooltip>
+              <Button
+                onClick={() => setCreateModalOpen(true)}
+                style={{ background: NAVY, color: "#fff" }}
+              >
+                <Plus />
+                Create custom intervention
+              </Button>
             </div>
           </div>
 
@@ -635,6 +633,12 @@ export default function InterventionsPage() {
           </div>
         )}
       </div>
+      <CreateManualInterventionModal
+        open={createModalOpen}
+        onClose={() => setCreateModalOpen(false)}
+        onCreated={loadList}
+        orgAdmins={orgAdmins}
+      />
     </TooltipProvider>
   );
 }
