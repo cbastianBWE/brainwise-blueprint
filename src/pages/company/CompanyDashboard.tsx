@@ -576,6 +576,37 @@ export default function CompanyDashboard() {
     setRegenerating(false);
   };
 
+  const handleGenerateDelta = async () => {
+    if (!user) return;
+    setGeneratingDelta(true);
+    const supabaseUrl = "https://svprhtzawnbzmumxnhsq.supabase.co";
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token ?? "";
+      toast.info("Generating leader-vs-workforce narrative... (~60s)");
+      const res = await fetch(`${supabaseUrl}/functions/v1/generate-nai-delta-narrative`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          slice_type: sliceType,
+          slice_value: sliceValue,
+          exclude_leaders_from_self: true,
+        }),
+      });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error ?? "Generation failed");
+      if (result.suppressed || result.generated === false) {
+        toast.warning("Cannot generate: insufficient participants in one or both pools (minimum 5).");
+      } else {
+        toast.success("Leader-vs-workforce narrative generated");
+        await loadDeltaNarrative();
+      }
+    } catch (e: any) {
+      toast.error(e.message ?? "Failed to generate");
+    }
+    setGeneratingDelta(false);
+  };
+
   const toggleFlag = (id: string) => {
     setExpandedFlags(prev => {
       const next = new Set(prev);
