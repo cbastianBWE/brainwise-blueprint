@@ -647,10 +647,10 @@ export default function InterventionsPage() {
                   <th style={{ width: 32 }} />
                   {headerCell("Title", "title")}
                   {headerCell("Status", "status", "120px")}
-                  {headerCell("Source", "source_kind", "140px")}
+                  {headerCell("Source", "source_kind", "180px")}
                   {headerCell("Priority", "priority", "90px")}
                   {headerCell("Target date", "target_completion_date", "120px")}
-                  {headerCell("Owner", "owner_full_name", "160px")}
+                  {headerCell("Owner", "owner_full_name", "140px")}
                   {headerCell("Last updated", "last_updated_at", "120px")}
                 </tr>
               </thead>
@@ -771,7 +771,7 @@ function FragmentRow(props: {
           </span>
         </td>
         <td style={cellStyle}>
-          <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 12, background: sourceStyle.bg, color: sourceStyle.color, fontWeight: 500 }}>
+          <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 12, background: sourceStyle.bg, color: sourceStyle.color, fontWeight: 500, whiteSpace: "nowrap", display: "inline-block" }}>
             {SOURCE_KIND_LABEL[r.source_kind]}
           </span>
           <div style={{ fontSize: 10, color: "var(--muted-foreground)", marginTop: 3 }}>
