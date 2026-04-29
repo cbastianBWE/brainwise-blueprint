@@ -700,30 +700,10 @@ export function generatePTPDashboardPdf(data: PTPDashboardPdfData): void {
     for (const s of sections) {
       if (!s.text) continue;
 
-      // Pre-compute the body lines so we can measure section height
-      // BEFORE deciding whether to break to a new page.
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(11);
-      const bodyLines = doc.splitTextToSize(s.text, CONTENT_W - 4) as string[];
-
-      // Compute total section height: header (14mm) + body lines + trailing spacing (8mm)
-      const sectionTotalH = 14 + bodyLines.length * 5.5 + 8;
-      const spaceLeftOnPage = PAGE_H - MARGIN_B - y;
-      const spaceOnFreshPage = PAGE_H - MARGIN_B - MARGIN_T;
-
-      // Section orphan prevention: if the whole section won't fit on the
-      // current page BUT WOULD fit on a fresh page, break to fresh page now.
-      // (If the section is longer than a fresh page, fall through to the
-      // existing per-line widow logic — splitting is unavoidable.)
-      if (sectionTotalH > spaceLeftOnPage && sectionTotalH <= spaceOnFreshPage) {
-        addFooter();
-        doc.addPage();
-        y = MARGIN_T;
-        if (currentSectionTitle) renderContinuationHeader();
-      } else {
-        // Otherwise, just ensure the section header itself has room.
-        checkPageBreak(20);
-      }
+      // Reserve enough room for the section header AND the first ~3
+      // body lines, so a section never starts at the bottom of a page
+      // with only a heading or 1-2 lines visible.
+      checkPageBreak(30);
 
       // Orange left accent bar
       setFill(ORANGE);
@@ -736,17 +716,18 @@ export function generatePTPDashboardPdf(data: PTPDashboardPdfData): void {
       doc.text(s.label, MARGIN_L + 5, y + 6);
       y += 14;
 
-      // Body text — render line by line. The pre-emptive break above
-      // handles the common case where a section orphans onto the next
-      // page; this per-line widow logic is a backstop for sections that
-      // are longer than a single fresh page.
+      // Body text — render line by line with widow prevention. If 1-3
+      // lines remain AND rendering them would push past the bottom margin,
+      // force a page break now so the entire tail moves together rather
+      // than orphaning onto the next page.
       doc.setFont("helvetica", "normal");
       doc.setFontSize(11);
+      const bodyLines = doc.splitTextToSize(s.text, CONTENT_W - 4) as string[];
       for (let i = 0; i < bodyLines.length; i++) {
         const line = bodyLines[i];
         const linesRemaining = bodyLines.length - i;
-        // Widow prevention: if 1-2 lines remain AND would orphan, force break now.
-        if (linesRemaining <= 2 && y + (linesRemaining * 5.5) > PAGE_H - MARGIN_B) {
+        // Widow prevention: 1-3 trailing lines is a widow.
+        if (linesRemaining <= 3 && y + (linesRemaining * 5.5) > PAGE_H - MARGIN_B) {
           addFooter();
           doc.addPage();
           y = MARGIN_T;
@@ -983,7 +964,14 @@ export function generatePTPDashboardPdf(data: PTPDashboardPdfData): void {
           y += 6;
 
           for (const rec of nar.recommendations) {
+            // Set font BEFORE splitTextToSize for each measurement.
+            // jsPDF uses the CURRENT font for width calculation, so font
+            // must match the font that will eventually render that text.
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(11);
             const titleLns = doc.splitTextToSize(rec.title, CONTENT_W - 72) as string[];
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(9);
             const ratLns = doc.splitTextToSize(rec.rationale, CONTENT_W - 12) as string[];
             const stepLns = (rec.steps ?? []).map((s, i) =>
               (doc.splitTextToSize(`${i + 1}. ${s}`, CONTENT_W - 18) as string[])
