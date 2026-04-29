@@ -699,7 +699,31 @@ export function generatePTPDashboardPdf(data: PTPDashboardPdfData): void {
 
     for (const s of sections) {
       if (!s.text) continue;
-      checkPageBreak(20);
+
+      // Pre-compute the body lines so we can measure section height
+      // BEFORE deciding whether to break to a new page.
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(11);
+      const bodyLines = doc.splitTextToSize(s.text, CONTENT_W - 4) as string[];
+
+      // Compute total section height: header (14mm) + body lines + trailing spacing (8mm)
+      const sectionTotalH = 14 + bodyLines.length * 5.5 + 8;
+      const spaceLeftOnPage = PAGE_H - MARGIN_B - y;
+      const spaceOnFreshPage = PAGE_H - MARGIN_B - MARGIN_T;
+
+      // Section orphan prevention: if the whole section won't fit on the
+      // current page BUT WOULD fit on a fresh page, break to fresh page now.
+      // (If the section is longer than a fresh page, fall through to the
+      // existing per-line widow logic — splitting is unavoidable.)
+      if (sectionTotalH > spaceLeftOnPage && sectionTotalH <= spaceOnFreshPage) {
+        addFooter();
+        doc.addPage();
+        y = MARGIN_T;
+        if (currentSectionTitle) renderContinuationHeader();
+      } else {
+        // Otherwise, just ensure the section header itself has room.
+        checkPageBreak(20);
+      }
 
       // Orange left accent bar
       setFill(ORANGE);
@@ -712,19 +736,16 @@ export function generatePTPDashboardPdf(data: PTPDashboardPdfData): void {
       doc.text(s.label, MARGIN_L + 5, y + 6);
       y += 14;
 
-      // Body text — render line by line, but force a page break early
-      // if a 1-2 line widow would otherwise straddle to the next page.
-      // Specifically: when only 1 or 2 lines remain in this section's body
-      // AND the next line would push past the page, push the entire tail
-      // to the next page instead of just the last line.
+      // Body text — render line by line. The pre-emptive break above
+      // handles the common case where a section orphans onto the next
+      // page; this per-line widow logic is a backstop for sections that
+      // are longer than a single fresh page.
       doc.setFont("helvetica", "normal");
       doc.setFontSize(11);
-      const bodyLines = doc.splitTextToSize(s.text, CONTENT_W - 4) as string[];
       for (let i = 0; i < bodyLines.length; i++) {
         const line = bodyLines[i];
         const linesRemaining = bodyLines.length - i;
-        // Widow prevention: if 1-2 lines remain AND we're within ~2 line-heights
-        // of the bottom margin, force a page break NOW so the tail moves together.
+        // Widow prevention: if 1-2 lines remain AND would orphan, force break now.
         if (linesRemaining <= 2 && y + (linesRemaining * 5.5) > PAGE_H - MARGIN_B) {
           addFooter();
           doc.addPage();
