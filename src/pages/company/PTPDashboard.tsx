@@ -3296,7 +3296,8 @@ export default function PTPDashboard() {
             </button>
           </div>
         </div>
-      )}
+        );
+      })()}
 
       {/* EXPORT PDF MODAL */}
       {exportModal && (
