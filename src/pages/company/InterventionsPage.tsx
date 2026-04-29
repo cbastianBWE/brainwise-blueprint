@@ -160,6 +160,7 @@ function mapRow(r: any): EnrichedIntervention {
     tracking_notes: r.out_tracking_notes,
     narrative_id: r.out_narrative_id,
     epn_delta_narrative_id: r.out_epn_delta_narrative_id,
+    ptp_delta_narrative_id: r.out_ptp_delta_narrative_id,
     manual_source_instrument_id: r.out_manual_source_instrument_id,
     assigned_owner_user_id: r.out_assigned_owner_user_id,
     target_completion_date: r.out_target_completion_date,
