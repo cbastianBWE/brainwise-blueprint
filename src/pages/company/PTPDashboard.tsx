@@ -3134,7 +3134,11 @@ export default function PTPDashboard() {
       {/* TRACKING MODAL */}
       {trackingModal.open && trackingModal.source && (() => {
         const src = trackingModal.source;
-        const title = src.kind === "dashboard" ? src.intervention.title : src.rec.title;
+        const title =
+          src.kind === "dashboard" ? src.intervention.title :
+          src.kind === "cross_instrument" ? src.rec.title :
+          src.kind === "ptp_delta" ? src.rec.title :
+          "";
         return (
         <div
           onClick={() => setTrackingModal({ open: false, source: null })}
