@@ -624,6 +624,29 @@ export default function AdminUsers() {
     },
   });
 
+  const epnAssignmentsQuery = useQuery({
+    queryKey: ["epn-assignments", orgId],
+    enabled: !!orgId,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("executive_perspective_assignments")
+        .select("id, assignee_user_id, status, assigned_at, started_at, completed_at, assigned_by, notes")
+        .eq("organization_id", orgId)
+        .order("assigned_at", { ascending: false });
+      if (error) throw error;
+      return (data || []) as Array<{
+        id: string;
+        assignee_user_id: string;
+        status: string;
+        assigned_at: string;
+        started_at: string | null;
+        completed_at: string | null;
+        assigned_by: string | null;
+        notes: string | null;
+      }>;
+    },
+  });
+
   const departments = departmentsQuery.data || [];
 
   const handleDeptSelectChange = (value: string) => {
