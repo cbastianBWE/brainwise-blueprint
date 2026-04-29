@@ -635,6 +635,8 @@ export default function PTPDashboard() {
   }, [loadAggregate]);
   useEffect(() => { loadNAIAggregate(); }, [loadNAIAggregate]);
   useEffect(() => { loadCrossInstrumentRecs(); }, [loadCrossInstrumentRecs]);
+  useEffect(() => { loadDeltaResult(); }, [loadDeltaResult]);
+  useEffect(() => { loadDeltaNarrative(); }, [loadDeltaNarrative]);
   useEffect(() => {
     loadNarrative();
   }, [loadNarrative]);
