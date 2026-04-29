@@ -684,7 +684,37 @@ export default function PTPDashboard() {
         toast.warning(`Cross-instrument recommendations failed: ${xe.message ?? "network error"}`);
       }
 
-      await Promise.all([loadUsage(), loadNarrative(), loadNarrativeHistory(), loadCrossInstrumentRecs()]);
+      // Stage 3: PTP Leader vs Workforce delta narrative (graceful skip if cohorts insufficient)
+      toast.info("Generating leadership-vs-workforce narrative... (~60s)");
+      try {
+        const dRes = await fetch(`${supabaseUrl}/functions/v1/generate-ptp-delta-narrative`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({
+            slice_type: sliceType,
+            slice_value: sliceValue,
+          }),
+        });
+        const dResult = await dRes.json();
+        if (dRes.ok && dResult.generated) {
+          toast.success(`Leadership-vs-workforce narrative generated (${dResult.recommendation_count} interventions)`);
+        } else if (dResult.suppressed || dResult.generated === false) {
+          toast.info("Leadership-vs-workforce narrative skipped (need 5+ in each cohort).");
+        } else {
+          toast.warning(`Leadership-vs-workforce narrative not generated: ${dResult.reason ?? dResult.error ?? "unknown"}`);
+        }
+      } catch (de: any) {
+        toast.warning(`Leadership-vs-workforce narrative failed: ${de.message ?? "network error"}`);
+      }
+
+      await Promise.all([
+        loadUsage(),
+        loadNarrative(),
+        loadNarrativeHistory(),
+        loadCrossInstrumentRecs(),
+        loadDeltaResult(),
+        loadDeltaNarrative(),
+      ]);
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Failed";
       toast.error(msg);
