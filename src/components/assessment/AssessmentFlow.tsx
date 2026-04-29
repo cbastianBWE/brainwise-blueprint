@@ -241,6 +241,37 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
   const handleSubmit = async () => {
     if (!assessmentId || !user) return;
     setSubmitting(true);
+
+    if (epnAssignmentId) {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/submit-epn-assessment`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          },
+          body: JSON.stringify({
+            assessment_id: assessmentId,
+            assignment_id: epnAssignmentId,
+          }),
+        }
+      );
+      const result = await response.json();
+
+      if (!response.ok || result.error) {
+        toast({ title: "Error", description: result.error || "Failed to submit EPN.", variant: "destructive" });
+        setSubmitting(false);
+        return;
+      }
+
+      navigate(`/epn-complete/${epnAssignmentId}`);
+      return;
+    }
+
     const { data, error } = await supabase.functions.invoke("calculate-scores", {
       body: { assessment_id: assessmentId },
     });
