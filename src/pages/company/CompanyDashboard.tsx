@@ -2534,36 +2534,10 @@ export default function CompanyDashboard() {
                         </ol>
                       </div>
                     )}
-                    <button
-                      onClick={async () => {
-                        if (!latestNarrative) {
-                          toast.error("Cross-instrument recommendations require an existing NAI dashboard narrative — regenerate first.");
-                          return;
-                        }
-                        try {
-                          await (supabase as any).rpc("save_org_intervention", {
-                            p_narrative_id: latestNarrative.id,
-                            p_epn_delta_narrative_id: null,
-                            p_instrument_id: "INST-002",
-                            p_title: rec.title,
-                            p_description: rec.rationale,
-                            p_target_dimensions: [...(rec.primary_targets ?? []), ...(rec.cross_targets ?? [])],
-                            p_priority: rec.priority,
-                            p_time_horizon: rec.time_horizon,
-                            p_intervention_type: "cross_instrument",
-                          });
-                          toast.success("Saved to intervention tracking");
-                        } catch (e: any) {
-                          toast.error("Failed to save: " + (e.message ?? "unknown"));
-                        }
-                      }}
-                      style={{
-                        fontSize: 10, padding: "3px 9px", border: `0.5px solid ${NAVY}`, borderRadius: 5,
-                        background: "transparent", color: NAVY, cursor: "pointer", marginTop: 8,
-                      }}
-                    >
-                      + Add to intervention tracking
-                    </button>
+                    <button onClick={(e) => openTrackingModal({ kind: "cross_instrument", rec }, e)} style={{
+                      fontSize: 10, padding: "3px 9px", border: `0.5px solid ${NAVY}`, borderRadius: 5,
+                      background: "transparent", color: NAVY, cursor: "pointer", marginTop: 8,
+                    }}>+ Add to intervention tracking</button>
                   </div>
                 ))}
               </>
