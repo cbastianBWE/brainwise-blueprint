@@ -354,6 +354,7 @@ export default function CompanyDashboard() {
     interpretation: true,
     trends: true,
     "cross-instrument": true,
+    "leader-perspective": true,
   });
   const [exporting, setExporting] = useState(false);
 
@@ -706,7 +707,7 @@ export default function CompanyDashboard() {
     setExporting(true);
     setExportModal(false);
     // Belt-and-suspenders: ensure cross-instrument data is loaded
-    await Promise.all([loadPTPAggregate(), loadCrossInstrumentRecs()]);
+    await Promise.all([loadPTPAggregate(), loadCrossInstrumentRecs(), loadDeltaResult(), loadDeltaNarrative()]);
 
     try {
       const jsPDF = (await import("jspdf")).default;
@@ -1424,6 +1425,173 @@ export default function CompanyDashboard() {
             }
 
             y += cardH + 4;
+          }
+        }
+      }
+
+      // ── LEADER PERSPECTIVE ───────────────────────────────────────────────
+      if (exportSections["leader-perspective"]) {
+        newPage("LEADER PERSPECTIVE · LEADER VS EMPLOYEE PERCEPTION");
+
+        const lpIntro = "Compares how leaders perceive employees experience AI adoption (Executive Perspective NAI) against how employees themselves experience it (standard NAI, leaders excluded). Positive delta = leaders see more concern than employees report. Negative delta = leaders underestimate employee concern.";
+        const lpIntroLines = splitText(lpIntro, CW, 7.5, "normal");
+        pdf.setFontSize(7.5); pdf.setFont("helvetica","normal"); pdf.setTextColor(80,80,80);
+        pdf.text(lpIntroLines, ML, y); y += lpIntroLines.length*4+6;
+
+        if (!deltaResult || deltaResult.suppressed) {
+          const noDataMsg = !deltaResult
+            ? "Leader-vs-workforce comparison data is not loaded for this slice."
+            : `Insufficient participants for delta computation. Standard NAI respondents (excluding leaders): ${deltaResult.self_participant_count}. Executive Perspective NAI respondents: ${deltaResult.epn_participant_count}. Both pools require a minimum of 5.`;
+          const noDataLines = splitText(noDataMsg, CW-8, 7.5, "italic");
+          const noDataH = noDataLines.length*4+6;
+          pdf.setFillColor(245,247,250); pdf.roundedRect(ML, y, CW, noDataH, 2, 2, "F");
+          pdf.setFontSize(7.5); pdf.setFont("helvetica","italic"); pdf.setTextColor(130,120,130);
+          pdf.text(noDataLines, ML+4, y+5);
+          y += noDataH+6;
+        } else {
+          checkY(14);
+          pdf.setFontSize(7); pdf.setTextColor(130,120,130); pdf.setFont("helvetica","normal");
+          pdf.text(`Leaders (EPN): n=${deltaResult.epn_participant_count}  ·  Employees (NAI self, leaders excluded): n=${deltaResult.self_participant_count}`, ML, y);
+          y += 6;
+
+          checkY(14);
+          pdf.setFillColor(237,233,223); pdf.rect(ML,y,CW,6,"F");
+          pdf.setFontSize(6.5); pdf.setFont("helvetica","bold"); pdf.setTextColor(109,104,117);
+          pdf.text("DIMENSION", ML+2, y+4);
+          pdf.text("LEADERS (EPN)", ML+72, y+4);
+          pdf.text("EMPLOYEES (NAI)", ML+108, y+4);
+          pdf.text("DELTA", ML+150, y+4);
+          y += 6;
+
+          DIMS_BY_WEIGHT.forEach((dimId, i) => {
+            const entry = deltaResult.delta?.[dimId];
+            const epnMean = entry?.epn_mean;
+            const selfMean = entry?.self_mean;
+            const d = entry?.delta;
+            const sign = d === null || d === undefined ? "" : (d > 0 ? "+" : "");
+            const [r,g,b] = hexRgb(DIM_COLORS[dimId]);
+            if (i % 2 === 0) { pdf.setFillColor(250,250,252); pdf.rect(ML,y,CW,7,"F"); }
+            pdf.setFillColor(r,g,b); pdf.circle(ML+3, y+3.5, 1.8, "F");
+            pdf.setFontSize(7.5); pdf.setFont("helvetica","bold"); pdf.setTextColor(r,g,b);
+            pdf.text(DIM_NAMES[dimId], ML+8, y+4.5);
+            pdf.setFont("helvetica","normal"); pdf.setTextColor(2,31,54);
+            pdf.text(epnMean !== undefined && epnMean !== null ? String(Math.round(epnMean)) : "—", ML+72, y+4.5);
+            pdf.text(selfMean !== undefined && selfMean !== null ? String(Math.round(selfMean)) : "—", ML+108, y+4.5);
+            pdf.setFont("helvetica","bold"); pdf.setTextColor(r,g,b);
+            pdf.text(d !== undefined && d !== null ? `${sign}${Math.round(d * 10) / 10}` : "—", ML+150, y+4.5);
+            y += 7;
+          });
+          y += 4;
+
+          checkY(8);
+          pdf.setFontSize(6.5); pdf.setFont("helvetica","normal"); pdf.setTextColor(130,120,130);
+          pdf.text("+ delta: leaders see more concern than employees report.   − delta: leaders underestimate employee concern.   Aligned within ±5 = no meaningful gap.", ML, y);
+          y += 7;
+
+          if (deltaNarrative && deltaNarrative.narrative_text) {
+            const nt = deltaNarrative.narrative_text;
+            const generated = new Date(deltaNarrative.generated_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+
+            checkY(12, "LEADER PERSPECTIVE (cont.)");
+            y += 2;
+            pdf.setFontSize(9); pdf.setFont("helvetica","bold"); pdf.setTextColor(2,31,54);
+            pdf.text(`AI Narrative · generated ${generated}`, ML, y);
+            y += 1.5;
+            pdf.setDrawColor(2,31,54); pdf.setLineWidth(0.4); pdf.line(ML, y, ML+CW, y); y += 5;
+
+            if (nt.summary) {
+              const sumLines = splitText(nt.summary, CW-12, 8, "normal");
+              const cardH = 10 + sumLines.length*4.2 + 4;
+              checkY(cardH+4, "LEADER PERSPECTIVE (cont.)");
+              pdf.setFillColor(249,247,241); pdf.roundedRect(ML,y,CW,cardH,2,2,"F");
+              pdf.setFillColor(245,116,26); pdf.rect(ML,y,2,cardH,"F");
+              pdf.setFontSize(7); pdf.setFont("helvetica","bold"); pdf.setTextColor(2,31,54);
+              pdf.text("WHAT WE'RE SEEING", ML+5, y+6);
+              pdf.setFontSize(8); pdf.setFont("helvetica","normal"); pdf.setTextColor(40,40,40);
+              pdf.text(sumLines, ML+5, y+11);
+              y += cardH+4;
+            }
+
+            if (nt.alignment_overview) {
+              const alignLines = splitText(nt.alignment_overview, CW-8, 7.5, "normal");
+              const alignH = alignLines.length*4+6;
+              checkY(alignH+4, "LEADER PERSPECTIVE (cont.)");
+              pdf.setFontSize(7.5); pdf.setFont("helvetica","normal"); pdf.setTextColor(60,60,60);
+              pdf.text(alignLines, ML+4, y+5);
+              y += alignH+6;
+            }
+
+            if (Array.isArray(nt.key_gaps) && nt.key_gaps.length > 0) {
+              checkY(12, "LEADER PERSPECTIVE (cont.)");
+              y += 2;
+              pdf.setFontSize(8.5); pdf.setFont("helvetica","bold"); pdf.setTextColor(2,31,54);
+              pdf.text("Key gaps", ML, y);
+              y += 5;
+              nt.key_gaps.forEach((gap: any) => {
+                const titleLns = splitText(gap.title || "", CW-8, 8, "bold");
+                const descLns = splitText(gap.description || "", CW-8, 7.5, "normal");
+                const cardH = 4 + titleLns.length*4.5 + 2 + descLns.length*4 + 4;
+                checkY(cardH+4, "LEADER PERSPECTIVE (cont.)");
+                pdf.setFillColor(249,247,241); pdf.roundedRect(ML,y,CW,cardH,2,2,"F");
+                pdf.setFontSize(8); pdf.setFont("helvetica","bold"); pdf.setTextColor(2,31,54);
+                pdf.text(titleLns, ML+4, y+5);
+                pdf.setFontSize(7.5); pdf.setFont("helvetica","normal"); pdf.setTextColor(60,60,60);
+                pdf.text(descLns, ML+4, y+5+titleLns.length*4.5+2);
+                y += cardH+4;
+              });
+            }
+
+            if (Array.isArray(nt.recommendations) && nt.recommendations.length > 0) {
+              checkY(12, "LEADER PERSPECTIVE (cont.)");
+              y += 2;
+              pdf.setFontSize(8.5); pdf.setFont("helvetica","bold"); pdf.setTextColor(2,31,54);
+              pdf.text(`Recommended interventions (${nt.recommendations.length})`, ML, y);
+              y += 5;
+              nt.recommendations.forEach((rec: any) => {
+                const titleLns = splitText(rec.title || "", CW-50, 8.5, "bold");
+                const ratLns = splitText(rec.rationale || "", CW-8, 7.5, "normal");
+                const stepsHeight = Array.isArray(rec.steps) && rec.steps.length > 0
+                  ? rec.steps.reduce((acc: number, s: string) => acc + splitText(s, CW-14, 7, "normal").length * 3.8, 5)
+                  : 0;
+                const cardH = 5 + titleLns.length*4.5 + 2 + ratLns.length*4 + stepsHeight + 4;
+                checkY(cardH+4, "LEADER PERSPECTIVE (cont.)");
+                pdf.setFillColor(249,247,241); pdf.roundedRect(ML, y, CW, cardH, 2, 2, "F");
+                pdf.setFontSize(8.5); pdf.setFont("helvetica","bold"); pdf.setTextColor(2,31,54);
+                pdf.text(titleLns, ML+4, y+5);
+                const pCol: [number,number,number] = rec.priority === "high" ? [153,60,29] : rec.priority === "medium" ? [99,56,6] : [15,110,86];
+                pdf.setFontSize(6.5); pdf.setFont("helvetica","normal");
+                pdf.setTextColor(...pCol); pdf.text(rec.priority || "", ML+CW-4, y+5, {align:"right"});
+                pdf.setTextColor(60,9,108); pdf.text(rec.time_horizon || "", ML+CW-22, y+5, {align:"right"});
+                if (rec.intervention_type) {
+                  pdf.setTextColor(50,50,50); pdf.text(rec.intervention_type, ML+CW-44, y+5, {align:"right"});
+                }
+                let cy = y + 5 + titleLns.length * 4.5 + 2;
+                pdf.setFontSize(7.5); pdf.setFont("helvetica","normal"); pdf.setTextColor(60,60,60);
+                pdf.text(ratLns, ML+4, cy);
+                cy += ratLns.length * 4 + 2;
+                if (Array.isArray(rec.steps) && rec.steps.length > 0) {
+                  pdf.setFontSize(6.5); pdf.setFont("helvetica","bold"); pdf.setTextColor(2,31,54);
+                  pdf.text("STEPS", ML+4, cy);
+                  cy += 4;
+                  pdf.setFontSize(7); pdf.setFont("helvetica","normal"); pdf.setTextColor(70,70,70);
+                  rec.steps.forEach((step: string, idx: number) => {
+                    const stepLns = splitText(`${idx+1}. ${step}`, CW-14, 7, "normal");
+                    pdf.text(stepLns, ML+8, cy);
+                    cy += stepLns.length * 3.8;
+                  });
+                }
+                y += cardH + 4;
+              });
+            }
+          } else {
+            const noNarMsg = "AI narrative for this leader-vs-workforce comparison has not been generated yet. Click \"Regenerate AI\" on the dashboard to generate it as part of the standard interpretation cycle.";
+            const noNarLines = splitText(noNarMsg, CW-8, 7.5, "italic");
+            const noNarH = noNarLines.length*4+6;
+            checkY(noNarH+4);
+            pdf.setFillColor(245,247,250); pdf.roundedRect(ML, y, CW, noNarH, 2, 2, "F");
+            pdf.setFontSize(7.5); pdf.setFont("helvetica","italic"); pdf.setTextColor(130,120,130);
+            pdf.text(noNarLines, ML+4, y+5);
+            y += noNarH+6;
           }
         }
       }
@@ -2578,6 +2746,18 @@ export default function CompanyDashboard() {
                   )}
                 </label>
               ))}
+              <label key="leader-perspective" style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: "0.5px solid var(--border)", cursor: "pointer" }}>
+                <input
+                  type="checkbox"
+                  checked={exportSections["leader-perspective"]}
+                  onChange={e => setExportSections(prev => ({ ...prev, "leader-perspective": e.target.checked }))}
+                  style={{ width: 14, height: 14, cursor: "pointer" }}
+                />
+                <span style={{ fontSize: 13, color: "var(--foreground)" }}>Leader Perspective (vs workforce)</span>
+                {(!deltaResult || deltaResult.suppressed) && (
+                  <span style={{ fontSize: 10, color: "var(--muted-foreground)", marginLeft: "auto" }}>No data yet</span>
+                )}
+              </label>
             </div>
             <div style={{ fontSize: 11, color: "var(--muted-foreground)", marginBottom: 14, lineHeight: 1.5 }}>
               All collapsed content (risk flags, dimension cards, methodology) will be automatically expanded in the export. Filename: BrainWise-NAI-CompanyDashboard-YYYY-MM-DD.pdf
