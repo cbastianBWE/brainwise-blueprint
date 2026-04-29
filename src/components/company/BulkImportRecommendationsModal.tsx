@@ -24,7 +24,7 @@ const DIM_NAMES: Record<string, string> = {
 const INSTRUMENT_LABEL: Record<string, string> = {
   "INST-001": "PTP Dashboard",
   "INST-002": "NAI Dashboard",
-  "INST-002L": "Leader vs Workforce",
+  "INST-002L": "NAI Dashboard — Leader vs Workforce",
 };
 
 const SOURCE_KIND_COLOR: Record<string, { bg: string; color: string }> = {
