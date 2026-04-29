@@ -569,8 +569,9 @@ export default function InterventionsPage() {
             >
               <option value="all">Source ▾ (all)</option>
               <option value="INST-002">NAI Dashboard</option>
+              <option value="INST-002L">NAI Leader vs Workforce</option>
               <option value="INST-001">PTP Dashboard</option>
-              <option value="INST-002L">Leader vs Workforce</option>
+              <option value="PTP_DELTA">PTP Leader vs Workforce</option>
               <option value="manual">Custom (manual)</option>
             </select>
 
