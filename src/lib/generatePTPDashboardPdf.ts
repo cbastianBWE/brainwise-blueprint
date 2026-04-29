@@ -8,6 +8,7 @@ export interface PTPDashboardPdfSections {
   overview: boolean;
   dimensions: boolean;
   interpretation: boolean;
+  leaderWorkforce: boolean;
   trends: boolean;
   interventions: boolean;
   crossInstrument: boolean;
@@ -91,6 +92,36 @@ export interface PTPDashboardPdfData {
     }>;
     summary: string | null;
     generated_at: string;
+  } | null;
+  leaderWorkforceDelta: {
+    suppressed: boolean;
+    reason?: string;
+    leaderParticipantCount: number;
+    workforceParticipantCount: number;
+    delta?: Record<string, {
+      workforce_mean: number | null;
+      leader_mean: number | null;
+      delta: number | null;
+      direction: string | null;
+    }>;
+    minimumRequired?: number;
+  } | null;
+  leaderWorkforceNarrative: {
+    generatedAt: string;
+    leaderParticipantCount: number;
+    workforceParticipantCount: number;
+    summary: string | null;
+    alignmentOverview: string | null;
+    keyGaps: Array<{ title: string; description: string }>;
+    recommendations: Array<{
+      id: string;
+      title: string;
+      rationale: string;
+      steps: string[];
+      priority: 'high' | 'medium' | 'low';
+      time_horizon: 'immediate' | '30-day' | '90-day';
+      intervention_type: string;
+    }>;
   } | null;
 }
 
@@ -692,6 +723,259 @@ export function generatePTPDashboardPdf(data: PTPDashboardPdfData): void {
         y += 5.5;
       }
       y += 8;
+    }
+  }
+
+  // ============================================================
+  // LEADERSHIP vs WORKFORCE PAGE
+  // ============================================================
+  if (data.exportSections.leaderWorkforce) {
+    doc.addPage();
+    y = MARGIN_T;
+    sectionHeading("Leadership vs Workforce · PTP");
+
+    const lwIntro = "Compares how the leadership cohort (Director, VP, C-Suite) and the workforce cohort (IC, Manager) self-report their own experience on the same five PTP dimensions. Positive delta means the leadership cohort scores higher; negative delta means the workforce cohort scores higher. This is a structural comparison of cohort experience, not a perception-gap analysis.";
+    const lwIntroLines = doc.splitTextToSize(lwIntro, CONTENT_W) as string[];
+    setText(MUTED);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.text(lwIntroLines, MARGIN_L, y);
+    y += lwIntroLines.length * 5 + 6;
+
+    const lwData = data.leaderWorkforceDelta;
+    if (!lwData || lwData.suppressed) {
+      const noDataMsg = !lwData
+        ? "Leadership-vs-workforce comparison data is not loaded for this slice."
+        : lwData.reason === "slice_incompatible_with_leader_workforce"
+          ? "Leadership-vs-workforce comparison cannot be sliced by org level. Use the All-organization slice or a department slice."
+          : `Insufficient cohort sizes. Leadership cohort: n=${lwData.leaderParticipantCount}. Workforce cohort: n=${lwData.workforceParticipantCount}. Both cohorts require a minimum of 5 PTP completions.`;
+      const noDataLines = doc.splitTextToSize(noDataMsg, CONTENT_W - 8) as string[];
+      const noDataH = noDataLines.length * 5 + 8;
+      checkPageBreak(noDataH + 4);
+      setFill([245, 247, 250]);
+      doc.roundedRect(MARGIN_L, y, CONTENT_W, noDataH, 2, 2, "F");
+      setText(MUTED);
+      doc.setFont("helvetica", "italic");
+      doc.setFontSize(10);
+      doc.text(noDataLines, MARGIN_L + 4, y + 5);
+      y += noDataH + 6;
+    } else {
+      checkPageBreak(8);
+      setText(MUTED);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      doc.text(
+        `Leadership cohort: n=${lwData.leaderParticipantCount}  ·  Workforce cohort: n=${lwData.workforceParticipantCount}`,
+        MARGIN_L,
+        y,
+      );
+      y += 7;
+
+      checkPageBreak(14);
+      setFill([237, 233, 223]);
+      doc.rect(MARGIN_L, y, CONTENT_W, 7, "F");
+      setText(MUTED);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(8);
+      doc.text("DIMENSION", MARGIN_L + 2, y + 4.8);
+      doc.text("LEADERSHIP", MARGIN_L + 72, y + 4.8);
+      doc.text("WORKFORCE", MARGIN_L + 108, y + 4.8);
+      doc.text("DELTA", MARGIN_L + 150, y + 4.8);
+      y += 7;
+
+      const ptpOrder = ["DIM-PTP-01", "DIM-PTP-02", "DIM-PTP-03", "DIM-PTP-04", "DIM-PTP-05"];
+      ptpOrder.forEach((dimId, i) => {
+        checkPageBreak(8);
+        const entry = lwData.delta?.[dimId];
+        const leaderMean = entry?.leader_mean ?? null;
+        const workforceMean = entry?.workforce_mean ?? null;
+        const d = entry?.delta ?? null;
+        const sign = d === null ? "" : (d > 0 ? "+" : "");
+        const dimColor = DIM_RGB_MAP[dimId];
+        const dimName = DIM_NAME_MAP[dimId] ?? dimId;
+
+        if (i % 2 === 0) {
+          setFill([250, 250, 252]);
+          doc.rect(MARGIN_L, y, CONTENT_W, 8, "F");
+        }
+        setFill(dimColor);
+        doc.circle(MARGIN_L + 3, y + 4, 1.8, "F");
+        setText(dimColor);
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(9);
+        doc.text(dimName, MARGIN_L + 8, y + 5);
+        doc.setFont("helvetica", "normal");
+        setText([2, 31, 54]);
+        doc.text(leaderMean !== null ? String(Math.round(leaderMean)) : "—", MARGIN_L + 72, y + 5);
+        doc.text(workforceMean !== null ? String(Math.round(workforceMean)) : "—", MARGIN_L + 108, y + 5);
+        doc.setFont("helvetica", "bold");
+        setText(dimColor);
+        doc.text(d !== null ? `${sign}${Math.round(d * 10) / 10}` : "—", MARGIN_L + 150, y + 5);
+        y += 8;
+      });
+      y += 4;
+
+      checkPageBreak(8);
+      setText(MUTED);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8);
+      doc.text(
+        "+ delta: leadership cohort scores higher than workforce cohort.   - delta: workforce cohort scores higher than leadership cohort.",
+        MARGIN_L,
+        y,
+      );
+      y += 7;
+
+      const nar = data.leaderWorkforceNarrative;
+      if (nar) {
+        checkPageBreak(14);
+        y += 2;
+        setText(NAVY);
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(13);
+        doc.text(`AI Narrative · generated ${nar.generatedAt}`, MARGIN_L, y);
+        setDraw(ORANGE);
+        doc.setLineWidth(0.8);
+        doc.line(MARGIN_L, y + 2, MARGIN_L + 50, y + 2);
+        y += 8;
+
+        if (nar.summary) {
+          const sumLines = doc.splitTextToSize(nar.summary, CONTENT_W - 14) as string[];
+          const cardH = 12 + sumLines.length * 5 + 4;
+          checkPageBreak(cardH + 4);
+          setFill(SAND);
+          doc.roundedRect(MARGIN_L, y, CONTENT_W, cardH, 2, 2, "F");
+          setFill(ORANGE);
+          doc.rect(MARGIN_L, y, 1.5, cardH, "F");
+          setText(NAVY);
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(9);
+          doc.text("WHAT WE'RE SEEING", MARGIN_L + 6, y + 7);
+          setText(TEXT);
+          doc.setFont("helvetica", "normal");
+          doc.setFontSize(10);
+          doc.text(sumLines, MARGIN_L + 6, y + 13);
+          y += cardH + 4;
+        }
+
+        if (nar.alignmentOverview) {
+          const alignLines = doc.splitTextToSize(nar.alignmentOverview, CONTENT_W - 4) as string[];
+          const alignH = alignLines.length * 5 + 6;
+          checkPageBreak(alignH + 4);
+          setText(MUTED);
+          doc.setFont("helvetica", "normal");
+          doc.setFontSize(10);
+          doc.text(alignLines, MARGIN_L + 2, y + 5);
+          y += alignH + 4;
+        }
+
+        if (nar.keyGaps.length > 0) {
+          checkPageBreak(14);
+          y += 2;
+          setText(NAVY);
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(11);
+          doc.text("Key divergences", MARGIN_L, y);
+          y += 6;
+
+          for (const gap of nar.keyGaps) {
+            const titleLns = doc.splitTextToSize(gap.title, CONTENT_W - 12) as string[];
+            const descLns = doc.splitTextToSize(gap.description, CONTENT_W - 12) as string[];
+            const cardH = 6 + titleLns.length * 5 + 2 + descLns.length * 4.5 + 6;
+            checkPageBreak(cardH + 4);
+            setFill(SAND);
+            doc.roundedRect(MARGIN_L, y, CONTENT_W, cardH, 2, 2, "F");
+            setText(NAVY);
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(10);
+            doc.text(titleLns, MARGIN_L + 6, y + 7);
+            setText(MUTED);
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(9);
+            doc.text(descLns, MARGIN_L + 6, y + 7 + titleLns.length * 5 + 2);
+            y += cardH + 4;
+          }
+        }
+
+        if (nar.recommendations.length > 0) {
+          checkPageBreak(14);
+          y += 2;
+          setText(NAVY);
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(11);
+          doc.text(`Recommended interventions (${nar.recommendations.length})`, MARGIN_L, y);
+          y += 6;
+
+          for (const rec of nar.recommendations) {
+            const titleLns = doc.splitTextToSize(rec.title, CONTENT_W - 60) as string[];
+            const ratLns = doc.splitTextToSize(rec.rationale, CONTENT_W - 12) as string[];
+            const stepLns = (rec.steps ?? []).map((s, i) =>
+              (doc.splitTextToSize(`${i + 1}. ${s}`, CONTENT_W - 18) as string[])
+            );
+            const stepsH = rec.steps && rec.steps.length > 0
+              ? 6 + stepLns.reduce((a, c) => a + c.length * 4.5, 0) + 2
+              : 0;
+            const cardH = 8 + titleLns.length * 5 + 3 + ratLns.length * 4.5 + stepsH + 6;
+            checkPageBreak(cardH + 4);
+            setFill(SAND);
+            doc.roundedRect(MARGIN_L, y, CONTENT_W, cardH, 2, 2, "F");
+
+            setText(NAVY);
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(11);
+            doc.text(titleLns, MARGIN_L + 6, y + 7);
+
+            const prioColor: [number, number, number] =
+              rec.priority === "high" ? [153, 60, 29]
+              : rec.priority === "medium" ? [99, 56, 6]
+              : [15, 110, 86];
+            doc.setFontSize(8);
+            doc.setFont("helvetica", "bold");
+            setText(prioColor);
+            doc.text(rec.priority.toUpperCase(), MARGIN_L + CONTENT_W - 6, y + 7, { align: "right" });
+            setText(PURPLE);
+            doc.text(rec.time_horizon.toUpperCase(), MARGIN_L + CONTENT_W - 26, y + 7, { align: "right" });
+            setText(NAVY);
+            doc.text(rec.intervention_type.toUpperCase(), MARGIN_L + CONTENT_W - 50, y + 7, { align: "right" });
+
+            let cy = y + 7 + titleLns.length * 5 + 3;
+            setText(TEXT);
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(9);
+            doc.text(ratLns, MARGIN_L + 6, cy);
+            cy += ratLns.length * 4.5 + 2;
+
+            if (rec.steps && rec.steps.length > 0) {
+              setText(NAVY);
+              doc.setFont("helvetica", "bold");
+              doc.setFontSize(8);
+              doc.text("STEPS", MARGIN_L + 6, cy);
+              cy += 4;
+              setText(MUTED);
+              doc.setFont("helvetica", "normal");
+              doc.setFontSize(9);
+              for (const block of stepLns) {
+                doc.text(block, MARGIN_L + 10, cy);
+                cy += block.length * 4.5;
+              }
+            }
+
+            y += cardH + 4;
+          }
+        }
+      } else {
+        const noNarMsg = "AI narrative for this leadership-vs-workforce comparison has not been generated yet. Click \"Regenerate AI\" on the dashboard to generate it as part of the standard interpretation cycle.";
+        const noNarLines = doc.splitTextToSize(noNarMsg, CONTENT_W - 8) as string[];
+        const noNarH = noNarLines.length * 5 + 8;
+        checkPageBreak(noNarH + 4);
+        setFill([245, 247, 250]);
+        doc.roundedRect(MARGIN_L, y, CONTENT_W, noNarH, 2, 2, "F");
+        setText(MUTED);
+        doc.setFont("helvetica", "italic");
+        doc.setFontSize(10);
+        doc.text(noNarLines, MARGIN_L + 4, y + 5);
+        y += noNarH + 6;
+      }
     }
   }
 
