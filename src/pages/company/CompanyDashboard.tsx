@@ -1578,7 +1578,7 @@ export default function CompanyDashboard() {
                   cy += 4;
                   pdf.setFontSize(7); pdf.setFont("helvetica","normal"); pdf.setTextColor(70,70,70);
                   rec.steps.forEach((step: string, idx: number) => {
-                    const stepLns = splitText(`${idx+1}. ${step}`, CW-14, 7, "normal");
+                    const stepLns = splitText(`${idx+1}. ${step}`, CW-18, 7, "normal");
                     pdf.text(stepLns, ML+8, cy);
                     cy += stepLns.length * 3.8;
                   });
