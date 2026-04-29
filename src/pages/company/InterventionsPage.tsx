@@ -110,6 +110,7 @@ interface EnrichedIntervention {
   tracking_notes: string | null;
   narrative_id: string | null;
   epn_delta_narrative_id: string | null;
+  ptp_delta_narrative_id: string | null;
   manual_source_instrument_id: string | null;
   assigned_owner_user_id: string | null;
   target_completion_date: string | null;
