@@ -1053,20 +1053,23 @@ export default function CompanyDashboard() {
             pdf.text("Interventions targeting this dimension", ML+5, cy2);
             cy2 += 6;
             dimInterventions.forEach(iv => {
-              const tl = splitText(iv.title, descW-45, 7.5, "bold");
-              const dl = splitText(iv.description, descW, 7.5, "normal");
-              const ivH = 5 + tl.length*4.5 + dl.length*4 + 3;
+              // Inner card spans ML+5 to ML+CW-5 (width = CW-10).
+              // Text starts at ML+8 (3mm left pad) and must end by ML+CW-8 (3mm right pad).
+              // Effective text width = CW-16.
+              const innerTextW = CW - 16;
+              const tl = splitText(iv.title, innerTextW - 45, 7.5, "bold");
+              const dl = splitText(iv.description, innerTextW, 7.5, "normal");
+              const ivH = 4.5 + tl.length*4.5 + 2 + dl.length*4 + 5;
               pdf.setFillColor(237,233,223); pdf.roundedRect(ML+5, cy2, CW-10, ivH, 1.5, 1.5, "F");
               pdf.setFontSize(7.5); pdf.setFont("helvetica","bold"); pdf.setTextColor(2,31,54);
               pdf.text(tl, ML+8, cy2+4.5);
-              // Badges right-aligned
               const pCol: [number,number,number] = iv.priority === "high" ? [153,60,29] : iv.priority === "medium" ? [99,56,6] : [15,110,86];
               pdf.setFontSize(6.5); pdf.setFont("helvetica","normal");
-              pdf.setTextColor(...pCol); pdf.text(iv.priority, ML+CW-7, cy2+4.5, {align:"right"});
-              pdf.setTextColor(60,9,108); pdf.text(iv.time_horizon, ML+CW-20, cy2+4.5, {align:"right"});
-              pdf.setTextColor(2,31,54); pdf.text(iv.intervention_type, ML+CW-38, cy2+4.5, {align:"right"});
+              pdf.setTextColor(...pCol); pdf.text(iv.priority, ML+CW-8, cy2+4.5, {align:"right"});
+              pdf.setTextColor(60,9,108); pdf.text(iv.time_horizon, ML+CW-22, cy2+4.5, {align:"right"});
+              pdf.setTextColor(2,31,54); pdf.text(iv.intervention_type, ML+CW-42, cy2+4.5, {align:"right"});
               pdf.setFontSize(7.5); pdf.setFont("helvetica","normal"); pdf.setTextColor(70,70,70);
-              pdf.text(dl, ML+8, cy2+4.5+tl.length*4.5);
+              pdf.text(dl, ML+8, cy2+4.5+tl.length*4.5+2);
               cy2 += ivH + 2;
             });
           }
