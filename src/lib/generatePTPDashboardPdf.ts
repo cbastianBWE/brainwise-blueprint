@@ -499,7 +499,7 @@ export function generatePTPDashboardPdf(data: PTPDashboardPdfData): void {
         setText(accent);
         doc.setFont("helvetica", "bold");
         doc.setFontSize(9);
-        doc.text(flag.level.toUpperCase(), MARGIN_L + 6, cy);
+        doc.text(flag.level === "high" ? "HIGH RISK" : "WARNING", MARGIN_L + 6, cy);
         cy += 5;
 
         setText(NAVY);
@@ -826,9 +826,13 @@ export function generatePTPDashboardPdf(data: PTPDashboardPdfData): void {
       );
       y += 7;
 
+      // AI narrative section
+      // Reserve space for the header AND a minimum content footprint
+      // (~30mm for the smallest plausible first card) so the header
+      // never orphans at the bottom of a page.
       const nar = data.leaderWorkforceNarrative;
       if (nar) {
-        checkPageBreak(14);
+        checkPageBreak(14 + 30);
         y += 2;
         setText(NAVY);
         doc.setFont("helvetica", "bold");
@@ -839,8 +843,14 @@ export function generatePTPDashboardPdf(data: PTPDashboardPdfData): void {
         doc.line(MARGIN_L, y + 2, MARGIN_L + 50, y + 2);
         y += 8;
 
+        // Summary card — set font BEFORE splitTextToSize for accurate wrap widths.
+        // Body text wraps at CONTENT_W - 12 (6mm padding each side past the orange bar)
+        // to fill the card width consistently.
         if (nar.summary) {
-          const sumLines = doc.splitTextToSize(nar.summary, CONTENT_W - 14) as string[];
+          setText(TEXT);
+          doc.setFont("helvetica", "normal");
+          doc.setFontSize(10);
+          const sumLines = doc.splitTextToSize(nar.summary, CONTENT_W - 12) as string[];
           const cardH = 12 + sumLines.length * 5 + 4;
           checkPageBreak(cardH + 4);
           setFill(SAND);
@@ -869,8 +879,20 @@ export function generatePTPDashboardPdf(data: PTPDashboardPdfData): void {
           y += alignH + 4;
         }
 
+        // Key divergences
+        // Reserve space for header + first card minimum (~30mm) so the
+        // header never orphans. Compute the first card's actual height
+        // so the reservation is precise.
         if (nar.keyGaps.length > 0) {
-          checkPageBreak(14);
+          const firstGap = nar.keyGaps[0];
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(10);
+          const firstTitleLns = doc.splitTextToSize(firstGap.title, CONTENT_W - 12) as string[];
+          doc.setFont("helvetica", "normal");
+          doc.setFontSize(9);
+          const firstDescLns = doc.splitTextToSize(firstGap.description, CONTENT_W - 12) as string[];
+          const firstCardH = 6 + firstTitleLns.length * 5 + 2 + firstDescLns.length * 4.5 + 6;
+          checkPageBreak(14 + firstCardH);
           y += 2;
           setText(NAVY);
           doc.setFont("helvetica", "bold");
@@ -897,8 +919,26 @@ export function generatePTPDashboardPdf(data: PTPDashboardPdfData): void {
           }
         }
 
+        // Recommendations
+        // Reserve space for header + first recommendation card minimum
+        // so the header never orphans. Compute the first card's actual
+        // height for a precise reservation.
         if (nar.recommendations.length > 0) {
-          checkPageBreak(14);
+          const firstRec = nar.recommendations[0];
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(11);
+          const firstRecTitleLns = doc.splitTextToSize(firstRec.title, CONTENT_W - 60) as string[];
+          doc.setFont("helvetica", "normal");
+          doc.setFontSize(9);
+          const firstRecRatLns = doc.splitTextToSize(firstRec.rationale, CONTENT_W - 12) as string[];
+          const firstRecStepsH = firstRec.steps && firstRec.steps.length > 0
+            ? 6 + firstRec.steps.reduce((acc, s, i) => {
+                const lns = doc.splitTextToSize(`${i + 1}. ${s}`, CONTENT_W - 18) as string[];
+                return acc + lns.length * 4.5;
+              }, 0) + 2
+            : 0;
+          const firstRecCardH = 8 + firstRecTitleLns.length * 5 + 3 + firstRecRatLns.length * 4.5 + firstRecStepsH + 6;
+          checkPageBreak(14 + firstRecCardH);
           y += 2;
           setText(NAVY);
           doc.setFont("helvetica", "bold");
@@ -1364,10 +1404,11 @@ export function generatePTPDashboardPdf(data: PTPDashboardPdfData): void {
       y += 6;
 
       if (recs.summary) {
-        const sumLines = doc.splitTextToSize(recs.summary, CONTENT_W) as string[];
+        // Set font BEFORE splitTextToSize — jsPDF uses the current font for width calc.
         setText(TEXT);
         doc.setFont("helvetica", "normal");
         doc.setFontSize(10);
+        const sumLines = doc.splitTextToSize(recs.summary, CONTENT_W) as string[];
         doc.text(sumLines, MARGIN_L, y);
         y += sumLines.length * 5 + 4;
       }
