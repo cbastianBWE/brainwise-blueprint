@@ -54,7 +54,7 @@ export default function CreateManualInterventionModal({ open, onClose, onCreated
   const [sourceInstrument, setSourceInstrument] = useState("INST-002");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [targetDimensionsRaw, setTargetDimensionsRaw] = useState("");
+  const [selectedDimensions, setSelectedDimensions] = useState<Set<string>>(new Set());
   const [priority, setPriority] = useState("medium");
   const [timeHorizon, setTimeHorizon] = useState("90-day");
   const [interventionType, setInterventionType] = useState("process");
