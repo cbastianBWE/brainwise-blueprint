@@ -750,7 +750,7 @@ function FragmentRow(props: {
         </td>
         <td style={cellStyle}>
           {r.target_completion_date
-            ? new Date(r.target_completion_date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+            ? formatYmdLocal(r.target_completion_date)
             : <span style={{ color: "var(--muted-foreground)" }}>—</span>}
           {overdue && (
             <span style={{ display: "block", fontSize: 9, color: "#993c1d", fontWeight: 600, marginTop: 2 }}>OVERDUE</span>
