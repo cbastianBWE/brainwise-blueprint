@@ -2596,50 +2596,58 @@ export default function CompanyDashboard() {
         </div>
       )}
 
-      {trackingModal.open && trackingModal.intervention && (
-        <div onClick={closeTrackingModal} style={{
-          position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 1000,
-          display: "flex", alignItems: "center", justifyContent: "center",
-        }}>
-          <div onClick={e => e.stopPropagation()} style={{
-            background: "#ffffff", borderRadius: 12, padding: 20, width: 400, maxWidth: "95vw",
-            border: "0.5px solid var(--border)", boxShadow: "0 8px 32px rgba(0,0,0,0.18)", position: "relative" as const, zIndex: 1001,
+      {trackingModal.open && trackingModal.source && (() => {
+        const src = trackingModal.source;
+        const title =
+          src.kind === "dashboard" ? src.intervention.title :
+          src.kind === "delta" ? src.rec.title :
+          src.kind === "cross_instrument" ? src.rec.title :
+          "";
+        return (
+          <div onClick={closeTrackingModal} style={{
+            position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 1000,
+            display: "flex", alignItems: "center", justifyContent: "center",
           }}>
-            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 14 }}>
-              <div>
-                <div style={{ fontSize: 9, color: "var(--muted-foreground)", textTransform: "uppercase" as const, letterSpacing: "0.05em", marginBottom: 3 }}>Add to intervention tracking</div>
-                <div style={{ fontSize: 14, fontWeight: 500, color: NAVY }}>{trackingModal.intervention.title}</div>
-              </div>
-              <button onClick={closeTrackingModal} style={{ background: "none", border: "none", fontSize: 20, cursor: "pointer", color: "var(--muted-foreground)", lineHeight: 1, padding: 0 }}>×</button>
-            </div>
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ fontSize: 11, fontWeight: 500, marginBottom: 4, display: "block", color: NAVY }}>Status</label>
-              <select value={trackingStatus} onChange={e => setTrackingStatus(e.target.value)}
-                style={{ width: "100%", fontSize: 12, padding: "6px 9px", border: "0.5px solid var(--border)", borderRadius: 7, background: "var(--card)", color: "var(--foreground)" }}>
-                <option value="not_started">Not started</option>
-                <option value="in_progress">In progress</option>
-                <option value="completed">Completed</option>
-              </select>
-            </div>
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ fontSize: 11, fontWeight: 500, marginBottom: 4, display: "block", color: NAVY }}>Notes / next steps</label>
-              <textarea value={trackingNote} onChange={e => setTrackingNote(e.target.value)}
-                placeholder="Add context, assigned teams, or first concrete next step..."
-                style={{ width: "100%", fontSize: 12, padding: "7px 9px", border: "0.5px solid var(--border)", borderRadius: 7, background: "var(--card)", color: "var(--foreground)", resize: "vertical", minHeight: 72, fontFamily: "inherit", lineHeight: 1.5, boxSizing: "border-box" as const }}
-              />
-            </div>
-            <button onClick={saveTracking} disabled={savingTracking} style={{
-              background: NAVY, color: "#fff", border: "none", borderRadius: 8,
-              padding: "9px 18px", fontSize: 12, cursor: "pointer", width: "100%", fontWeight: 500,
+            <div onClick={e => e.stopPropagation()} style={{
+              background: "#ffffff", borderRadius: 12, padding: 20, width: 400, maxWidth: "95vw",
+              border: "0.5px solid var(--border)", boxShadow: "0 8px 32px rgba(0,0,0,0.18)", position: "relative" as const, zIndex: 1001,
             }}>
-              {savingTracking ? "Saving..." : "Save to intervention tracking"}
-            </button>
-            <p style={{ fontSize: 10, color: "var(--muted-foreground)", textAlign: "center", marginTop: 6 }}>
-              Saves without leaving this page · View all in Interventions tab (Phase 6)
-            </p>
+              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 14 }}>
+                <div>
+                  <div style={{ fontSize: 9, color: "var(--muted-foreground)", textTransform: "uppercase" as const, letterSpacing: "0.05em", marginBottom: 3 }}>Add to intervention tracking</div>
+                  <div style={{ fontSize: 14, fontWeight: 500, color: NAVY }}>{title}</div>
+                </div>
+                <button onClick={closeTrackingModal} style={{ background: "none", border: "none", fontSize: 20, cursor: "pointer", color: "var(--muted-foreground)", lineHeight: 1, padding: 0 }}>×</button>
+              </div>
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ fontSize: 11, fontWeight: 500, marginBottom: 4, display: "block", color: NAVY }}>Status</label>
+                <select value={trackingStatus} onChange={e => setTrackingStatus(e.target.value)}
+                  style={{ width: "100%", fontSize: 12, padding: "6px 9px", border: "0.5px solid var(--border)", borderRadius: 7, background: "var(--card)", color: "var(--foreground)" }}>
+                  <option value="not_started">Not started</option>
+                  <option value="in_progress">In progress</option>
+                  <option value="completed">Completed</option>
+                </select>
+              </div>
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ fontSize: 11, fontWeight: 500, marginBottom: 4, display: "block", color: NAVY }}>Notes / next steps</label>
+                <textarea value={trackingNote} onChange={e => setTrackingNote(e.target.value)}
+                  placeholder="Add context, assigned teams, or first concrete next step..."
+                  style={{ width: "100%", fontSize: 12, padding: "7px 9px", border: "0.5px solid var(--border)", borderRadius: 7, background: "var(--card)", color: "var(--foreground)", resize: "vertical", minHeight: 72, fontFamily: "inherit", lineHeight: 1.5, boxSizing: "border-box" as const }}
+                />
+              </div>
+              <button onClick={saveTracking} disabled={savingTracking} style={{
+                background: NAVY, color: "#fff", border: "none", borderRadius: 8,
+                padding: "9px 18px", fontSize: 12, cursor: "pointer", width: "100%", fontWeight: 500,
+              }}>
+                {savingTracking ? "Saving..." : "Save to intervention tracking"}
+              </button>
+              <p style={{ fontSize: 10, color: "var(--muted-foreground)", textAlign: "center", marginTop: 6 }}>
+                Saves without leaving this page · View all in the dedicated Interventions page (Phase 6)
+              </p>
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 }
