@@ -42,9 +42,10 @@ const PRIORITY_COLOR: Record<string, { bg: string; color: string }> = {
 };
 
 interface AvailableRec {
-  source_kind: "narrative" | "delta";
+  source_kind: "narrative" | "epn_delta" | "ptp_delta";
   narrative_id: string | null;
   epn_delta_narrative_id: string | null;
+  ptp_delta_narrative_id: string | null;
   instrument_id: string;
   slice_type: string;
   slice_value: string;
@@ -65,6 +66,7 @@ function mapRow(r: any): AvailableRec {
     source_kind: r.out_source_kind,
     narrative_id: r.out_narrative_id,
     epn_delta_narrative_id: r.out_epn_delta_narrative_id,
+    ptp_delta_narrative_id: r.out_ptp_delta_narrative_id,
     instrument_id: r.out_instrument_id,
     slice_type: r.out_slice_type,
     slice_value: r.out_slice_value,
