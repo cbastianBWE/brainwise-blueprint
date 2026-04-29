@@ -804,6 +804,12 @@ function FragmentRow(props: {
                   <strong style={{ color: NAVY, fontWeight: 500 }}>Type:</strong>{" "}
                   {r.intervention_type}
                 </span>
+                {r.target_dimensions.length > 0 && (
+                  <span>
+                    <strong style={{ color: NAVY, fontWeight: 500 }}>Target dimensions:</strong>{" "}
+                    {r.target_dimensions.map((d) => DIM_NAMES[d] ?? d).join(" · ")}
+                  </span>
+                )}
               </div>
 
               {/* Editable grid */}
