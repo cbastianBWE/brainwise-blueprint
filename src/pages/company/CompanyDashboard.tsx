@@ -352,6 +352,13 @@ export default function CompanyDashboard() {
   });
   const [exporting, setExporting] = useState(false);
 
+  const [deltaResult, setDeltaResult] = useState<DeltaResult | null>(null);
+  const [loadingDelta, setLoadingDelta] = useState<boolean>(false);
+  const [deltaNarrative, setDeltaNarrative] = useState<StoredDeltaNarrative | null>(null);
+  const [loadingDeltaNarrative, setLoadingDeltaNarrative] = useState<boolean>(false);
+  const [generatingDelta, setGeneratingDelta] = useState<boolean>(false);
+  const [expandedLeaderWorkforce, setExpandedLeaderWorkforce] = useState<boolean>(false);
+
   // Load departments
   useEffect(() => {
     if (!user) return;
