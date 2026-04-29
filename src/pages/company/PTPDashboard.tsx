@@ -152,6 +152,16 @@ interface RiskFlag {
   detail: string;
 }
 
+interface Intervention {
+  id?: string;
+  title: string;
+  description: string;
+  target_dimensions: string[];
+  priority: "high" | "medium" | "low";
+  time_horizon: string;
+  intervention_type: string;
+}
+
 interface StoredNarrative {
   id: string;
   generated_at: string;
@@ -167,17 +177,8 @@ interface StoredNarrative {
     risks?: string;
     next_steps?: string;
     reassessment_note?: string;
+    interventions?: Intervention[];
   };
-}
-
-interface Intervention {
-  id: string;
-  title: string;
-  description: string;
-  target_dimensions: string[];
-  priority: "high" | "medium" | "low";
-  time_horizon: string;
-  intervention_type: string;
 }
 
 interface NarrativeHistory {
@@ -387,20 +388,14 @@ export default function PTPDashboard() {
     })();
   }, [user]);
 
-  const loadInterventions = useCallback(
-    async (narrativeId?: string) => {
-      if (!user || !narrativeId) return;
-      const { data } = await (supabase as any)
-        .from("org_interventions")
-        .select(
-          "id,title,description,target_dimensions,priority,time_horizon,intervention_type",
-        )
-        .eq("narrative_id", narrativeId)
-        .order("created_at", { ascending: true });
-      setInterventions((data ?? []) as Intervention[]);
-    },
-    [user],
-  );
+  const loadInterventions = useCallback((narrative: StoredNarrative | null) => {
+    if (!narrative) {
+      setInterventions([]);
+      return;
+    }
+    const recs = (narrative.narrative_text as any)?.interventions;
+    setInterventions(Array.isArray(recs) ? (recs as Intervention[]) : []);
+  }, []);
 
   const loadUsage = useCallback(async () => {
     if (!user) return;
@@ -477,7 +472,7 @@ export default function PTPDashboard() {
       .maybeSingle();
     if (data) {
       setLatestNarrative(data as StoredNarrative);
-      await loadInterventions((data as StoredNarrative).id);
+      loadInterventions(data as StoredNarrative);
     } else {
       setLatestNarrative(null);
       setInterventions([]);
@@ -1925,7 +1920,7 @@ export default function PTPDashboard() {
                               </div>
                               {dimIvs.map((iv) => (
                                 <div
-                                  key={iv.id}
+                                  key={iv.id ?? `${dimId}-${iv.title}`}
                                   style={{
                                     background: "#ede9df",
                                     borderRadius: 8,
@@ -2275,7 +2270,7 @@ export default function PTPDashboard() {
                   </h3>
                   {interventions.map((iv) => (
                     <div
-                      key={iv.id}
+                      key={iv.id ?? iv.title}
                       style={{
                         border: "0.5px solid var(--border)",
                         borderRadius: 8,

@@ -183,6 +183,16 @@ interface RiskFlag {
   detail: string;
 }
 
+interface Intervention {
+  id?: string;
+  title: string;
+  description: string;
+  target_dimensions: string[];
+  priority: "high" | "medium" | "low";
+  time_horizon: string;
+  intervention_type: string;
+}
+
 interface StoredNarrative {
   id: string;
   generated_at: string;
@@ -195,17 +205,8 @@ interface StoredNarrative {
     risks?: string;
     next_steps?: string;
     reassessment_note?: string;
+    interventions?: Intervention[];
   };
-}
-
-interface Intervention {
-  id: string;
-  title: string;
-  description: string;
-  target_dimensions: string[];
-  priority: "high" | "medium" | "low";
-  time_horizon: string;
-  intervention_type: string;
 }
 
 interface NarrativeHistory {
@@ -431,19 +432,14 @@ export default function CompanyDashboard() {
     setLoadingCrossInstrument(false);
   }, [user, sliceType, sliceValue]);
 
-  const loadInterventions = useCallback(async (narrativeId?: string) => {
-    if (!user) return;
-    const id = narrativeId ?? latestNarrative?.id;
-    if (!id) return;
-    setLoadingInterventions(true);
-    const { data } = await (supabase as any)
-      .from("org_interventions")
-      .select("id, title, description, target_dimensions, priority, time_horizon, intervention_type")
-      .eq("narrative_id", id)
-      .order("created_at", { ascending: true });
-    setInterventions((data ?? []) as Intervention[]);
-    setLoadingInterventions(false);
-  }, [user, latestNarrative?.id]);
+  const loadInterventions = useCallback((narrative: StoredNarrative | null) => {
+    if (!narrative) {
+      setInterventions([]);
+      return;
+    }
+    const recs = (narrative.narrative_text as any)?.interventions;
+    setInterventions(Array.isArray(recs) ? (recs as Intervention[]) : []);
+  }, []);
 
   // Load latest stored narrative (for risk flags)
   const loadNarrative = useCallback(async () => {
@@ -459,7 +455,7 @@ export default function CompanyDashboard() {
       .maybeSingle();
     if (!error && data) {
       setLatestNarrative(data as StoredNarrative);
-      await loadInterventions(data.id);
+      loadInterventions(data as StoredNarrative);
     }
     else setLatestNarrative(null);
     setLoadingNarrative(false);
@@ -2178,7 +2174,7 @@ export default function CompanyDashboard() {
                                 Interventions targeting this dimension
                               </div>
                               {dimInterventions.map(iv => (
-                                <div key={iv.id} style={{ background: "#ede9df", borderRadius: 8, padding: "14px 16px", marginBottom: 8 }}>
+                                <div key={iv.id ?? `${dimId}-${iv.title}`} style={{ background: "#ede9df", borderRadius: 8, padding: "14px 16px", marginBottom: 8 }}>
                                   <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8, marginBottom: 6 }}>
                                     <span style={{ fontSize: 14, fontWeight: 500, color: NAVY }}>{iv.title}</span>
                                     <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
@@ -2296,7 +2292,7 @@ export default function CompanyDashboard() {
                     Structured interventions <span style={{ fontSize: 10, fontWeight: 400, color: "var(--muted-foreground)" }}>(click + to track without leaving this page)</span>
                   </h3>
                   {interventions.map(iv => (
-                    <div key={iv.id} style={{ border: "0.5px solid var(--border)", borderRadius: 8, padding: 16, marginBottom: 12, background: "#F9F7F1" }}>
+                    <div key={iv.id ?? iv.title} style={{ border: "0.5px solid var(--border)", borderRadius: 8, padding: 16, marginBottom: 12, background: "#F9F7F1" }}>
                       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8, marginBottom: 6 }}>
                         <span style={{ fontSize: 15, fontWeight: 500, color: NAVY }}>{iv.title}</span>
                         <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
