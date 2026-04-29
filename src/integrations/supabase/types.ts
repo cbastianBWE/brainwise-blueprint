@@ -2126,10 +2126,11 @@ export type Database = {
         Row: {
           created_at: string
           description: string
+          epn_delta_narrative_id: string | null
           id: string
           instrument_id: string
           intervention_type: string
-          narrative_id: string
+          narrative_id: string | null
           organization_id: string
           priority: string
           target_dimensions: string[]
@@ -2139,10 +2140,11 @@ export type Database = {
         Insert: {
           created_at?: string
           description: string
+          epn_delta_narrative_id?: string | null
           id?: string
           instrument_id: string
           intervention_type?: string
-          narrative_id: string
+          narrative_id?: string | null
           organization_id: string
           priority?: string
           target_dimensions?: string[]
@@ -2152,10 +2154,11 @@ export type Database = {
         Update: {
           created_at?: string
           description?: string
+          epn_delta_narrative_id?: string | null
           id?: string
           instrument_id?: string
           intervention_type?: string
-          narrative_id?: string
+          narrative_id?: string | null
           organization_id?: string
           priority?: string
           target_dimensions?: string[]
@@ -2163,6 +2166,13 @@ export type Database = {
           title?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "org_interventions_epn_delta_narrative_id_fkey"
+            columns: ["epn_delta_narrative_id"]
+            isOneToOne: false
+            referencedRelation: "org_nai_delta_narratives"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "org_interventions_narrative_id_fkey"
             columns: ["narrative_id"]
@@ -3977,19 +3987,34 @@ export type Database = {
         Args: { p_new_user_id: string }
         Returns: number
       }
-      save_org_intervention: {
-        Args: {
-          p_description: string
-          p_instrument_id: string
-          p_intervention_type?: string
-          p_narrative_id: string
-          p_priority?: string
-          p_target_dimensions: string[]
-          p_time_horizon?: string
-          p_title: string
-        }
-        Returns: string
-      }
+      save_org_intervention:
+        | {
+            Args: {
+              p_description: string
+              p_instrument_id: string
+              p_intervention_type?: string
+              p_narrative_id: string
+              p_priority?: string
+              p_target_dimensions: string[]
+              p_time_horizon?: string
+              p_title: string
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              p_description: string
+              p_epn_delta_narrative_id?: string
+              p_instrument_id: string
+              p_intervention_type?: string
+              p_narrative_id: string
+              p_priority?: string
+              p_target_dimensions: string[]
+              p_time_horizon?: string
+              p_title: string
+            }
+            Returns: string
+          }
       seat_count_available: { Args: { p_org: string }; Returns: number }
       seat_count_used: { Args: { p_org: string }; Returns: number }
       sharing_preferences_upsert: {
