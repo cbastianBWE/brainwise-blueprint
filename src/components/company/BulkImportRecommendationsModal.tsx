@@ -24,7 +24,7 @@ const DIM_NAMES: Record<string, string> = {
 const INSTRUMENT_LABEL: Record<string, string> = {
   "INST-001": "PTP Dashboard",
   "INST-002": "NAI Dashboard",
-  "INST-002L": "Leader vs Workforce",
+  "INST-002L": "NAI Dashboard — Leader vs Workforce",
 };
 
 const SOURCE_KIND_COLOR: Record<string, { bg: string; color: string }> = {
@@ -281,8 +281,8 @@ export default function BulkImportRecommendationsModal({ open, onClose, onImport
             <select value={sourceFilter} onChange={(e) => setSourceFilter(e.target.value)} style={selectStyle}>
               <option value="all">Source ▾ (all)</option>
               <option value="INST-002">NAI Dashboard</option>
+              <option value="INST-002L">NAI Dashboard — Leader vs Workforce</option>
               <option value="INST-001">PTP Dashboard</option>
-              <option value="INST-002L">Leader vs Workforce</option>
             </select>
 
             <select value={sliceFilter} onChange={(e) => setSliceFilter(e.target.value)} style={selectStyle}>
