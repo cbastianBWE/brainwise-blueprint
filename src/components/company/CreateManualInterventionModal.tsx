@@ -8,7 +8,22 @@ const NAVY = "#021F36";
 const INSTRUMENT_OPTIONS: Array<{ value: string; label: string }> = [
   { value: "INST-002", label: "NAI Dashboard" },
   { value: "INST-001", label: "PTP Dashboard" },
-  { value: "INST-002L", label: "Leader vs Workforce (Executive Perspective NAI)" },
+];
+
+const NAI_DIMENSIONS: Array<{ id: string; label: string }> = [
+  { id: "DIM-NAI-01", label: "Certainty" },
+  { id: "DIM-NAI-02", label: "Agency" },
+  { id: "DIM-NAI-03", label: "Fairness" },
+  { id: "DIM-NAI-04", label: "Ego Stability" },
+  { id: "DIM-NAI-05", label: "Saturation Threshold" },
+];
+
+const PTP_DIMENSIONS: Array<{ id: string; label: string }> = [
+  { id: "DIM-PTP-01", label: "Protection" },
+  { id: "DIM-PTP-02", label: "Participation" },
+  { id: "DIM-PTP-03", label: "Prediction" },
+  { id: "DIM-PTP-04", label: "Purpose" },
+  { id: "DIM-PTP-05", label: "Pleasure" },
 ];
 
 const PRIORITY_OPTIONS = ["high", "medium", "low"] as const;
@@ -39,7 +54,7 @@ export default function CreateManualInterventionModal({ open, onClose, onCreated
   const [sourceInstrument, setSourceInstrument] = useState("INST-002");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [targetDimensionsRaw, setTargetDimensionsRaw] = useState("");
+  const [selectedDimensions, setSelectedDimensions] = useState<Set<string>>(new Set());
   const [priority, setPriority] = useState("medium");
   const [timeHorizon, setTimeHorizon] = useState("90-day");
   const [interventionType, setInterventionType] = useState("process");
@@ -55,7 +70,7 @@ export default function CreateManualInterventionModal({ open, onClose, onCreated
     setSourceInstrument("INST-002");
     setTitle("");
     setDescription("");
-    setTargetDimensionsRaw("");
+    setSelectedDimensions(new Set());
     setPriority("medium");
     setTimeHorizon("90-day");
     setInterventionType("process");
@@ -82,10 +97,7 @@ export default function CreateManualInterventionModal({ open, onClose, onCreated
     }
     setSaving(true);
 
-    const targetDimensions = targetDimensionsRaw
-      .split(",")
-      .map((s) => s.trim())
-      .filter((s) => s.length > 0);
+    const targetDimensions = Array.from(selectedDimensions);
 
     const params: Record<string, unknown> = {
       p_manual_source_instrument_id: sourceInstrument,
@@ -234,16 +246,56 @@ export default function CreateManualInterventionModal({ open, onClose, onCreated
         {/* Target dimensions */}
         <div style={{ marginBottom: 12 }}>
           <label style={labelStyle}>Target dimensions (optional)</label>
-          <input
-            type="text"
-            value={targetDimensionsRaw}
-            onChange={(e) => setTargetDimensionsRaw(e.target.value)}
-            placeholder="DIM-NAI-03, DIM-NAI-04 (comma separated)"
-            style={inputStyle}
-            disabled={saving}
-          />
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            <div style={{ border: "0.5px solid var(--border)", borderRadius: 7, padding: "8px 10px", background: "var(--card)" }}>
+              <div style={{ fontSize: 10, fontWeight: 600, color: NAVY, textTransform: "uppercase", letterSpacing: 0.4, marginBottom: 6 }}>
+                NAI dimensions
+              </div>
+              {NAI_DIMENSIONS.map((d) => (
+                <label key={d.id} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: NAVY, padding: "3px 0", cursor: "pointer" }}>
+                  <input
+                    type="checkbox"
+                    checked={selectedDimensions.has(d.id)}
+                    disabled={saving}
+                    onChange={(e) => {
+                      setSelectedDimensions((prev) => {
+                        const next = new Set(prev);
+                        if (e.target.checked) next.add(d.id);
+                        else next.delete(d.id);
+                        return next;
+                      });
+                    }}
+                  />
+                  {d.label}
+                </label>
+              ))}
+            </div>
+            <div style={{ border: "0.5px solid var(--border)", borderRadius: 7, padding: "8px 10px", background: "var(--card)" }}>
+              <div style={{ fontSize: 10, fontWeight: 600, color: NAVY, textTransform: "uppercase", letterSpacing: 0.4, marginBottom: 6 }}>
+                PTP dimensions
+              </div>
+              {PTP_DIMENSIONS.map((d) => (
+                <label key={d.id} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: NAVY, padding: "3px 0", cursor: "pointer" }}>
+                  <input
+                    type="checkbox"
+                    checked={selectedDimensions.has(d.id)}
+                    disabled={saving}
+                    onChange={(e) => {
+                      setSelectedDimensions((prev) => {
+                        const next = new Set(prev);
+                        if (e.target.checked) next.add(d.id);
+                        else next.delete(d.id);
+                        return next;
+                      });
+                    }}
+                  />
+                  {d.label}
+                </label>
+              ))}
+            </div>
+          </div>
           <div style={{ fontSize: 10, color: "var(--muted-foreground)", marginTop: 4 }}>
-            Leave blank if not targeting specific dimensions. Example IDs: DIM-NAI-01 through DIM-NAI-05, DIM-PTP-01 through DIM-PTP-05.
+            Optional. Check any combination of dimensions that this intervention targets.
           </div>
         </div>
 

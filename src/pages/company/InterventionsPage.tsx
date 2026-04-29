@@ -53,6 +53,32 @@ const INSTRUMENT_LABEL: Record<string, string> = {
   "INST-002L": "Executive Perspective NAI",
 };
 
+// Friendly dimension names — fall back to the raw ID if the dimension isn't recognised
+const DIM_NAMES: Record<string, string> = {
+  "DIM-NAI-01": "Certainty",
+  "DIM-NAI-02": "Agency",
+  "DIM-NAI-03": "Fairness",
+  "DIM-NAI-04": "Ego Stability",
+  "DIM-NAI-05": "Saturation Threshold",
+  "DIM-PTP-01": "Protection",
+  "DIM-PTP-02": "Participation",
+  "DIM-PTP-03": "Prediction",
+  "DIM-PTP-04": "Purpose",
+  "DIM-PTP-05": "Pleasure",
+};
+
+// Format a YYYY-MM-DD date string in local time (avoiding the UTC parse off-by-one bug).
+// Pass-through for any value that isn't a YYYY-MM-DD string.
+function formatYmdLocal(ymd: string | null | undefined, opts: Intl.DateTimeFormatOptions = { month: "short", day: "numeric", year: "numeric" }): string {
+  if (!ymd) return "";
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(ymd);
+  if (!m) {
+    return new Date(ymd).toLocaleDateString("en-US", opts);
+  }
+  const [, y, mo, d] = m;
+  return new Date(Number(y), Number(mo) - 1, Number(d)).toLocaleDateString("en-US", opts);
+}
+
 // ── Types ───────────────────────────────────────────────────────────────────
 type SourceKind = "narrative" | "delta" | "manual";
 type StatusValue = "not_started" | "in_progress" | "completed" | "blocked" | "cancelled";
@@ -701,7 +727,7 @@ function FragmentRow(props: {
         <td style={cellStyle}>
           <div style={{ fontWeight: 500, color: NAVY, lineHeight: 1.3 }}>{r.title}</div>
           <div style={{ fontSize: 10, color: "var(--muted-foreground)", marginTop: 2 }}>
-            {r.target_dimensions.length > 0 && r.target_dimensions.join(" · ")}
+            {r.target_dimensions.length > 0 && r.target_dimensions.map((d) => DIM_NAMES[d] ?? d).join(" · ")}
           </div>
         </td>
         <td style={cellStyle}>
@@ -724,7 +750,7 @@ function FragmentRow(props: {
         </td>
         <td style={cellStyle}>
           {r.target_completion_date
-            ? new Date(r.target_completion_date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+            ? formatYmdLocal(r.target_completion_date)
             : <span style={{ color: "var(--muted-foreground)" }}>—</span>}
           {overdue && (
             <span style={{ display: "block", fontSize: 9, color: "#993c1d", fontWeight: 600, marginTop: 2 }}>OVERDUE</span>
@@ -778,6 +804,12 @@ function FragmentRow(props: {
                   <strong style={{ color: NAVY, fontWeight: 500 }}>Type:</strong>{" "}
                   {r.intervention_type}
                 </span>
+                {r.target_dimensions.length > 0 && (
+                  <span>
+                    <strong style={{ color: NAVY, fontWeight: 500 }}>Target dimensions:</strong>{" "}
+                    {r.target_dimensions.map((d) => DIM_NAMES[d] ?? d).join(" · ")}
+                  </span>
+                )}
               </div>
 
               {/* Editable grid */}
