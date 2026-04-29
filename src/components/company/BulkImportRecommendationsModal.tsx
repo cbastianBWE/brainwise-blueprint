@@ -192,7 +192,8 @@ export default function BulkImportRecommendationsModal({ open, onClose, onImport
     for (const rec of toImport) {
       const rpcParams: any = {
         p_narrative_id: rec.source_kind === "narrative" ? rec.narrative_id : null,
-        p_epn_delta_narrative_id: rec.source_kind === "delta" ? rec.epn_delta_narrative_id : null,
+        p_epn_delta_narrative_id: rec.source_kind === "epn_delta" ? rec.epn_delta_narrative_id : null,
+        p_ptp_delta_narrative_id: rec.source_kind === "ptp_delta" ? rec.ptp_delta_narrative_id : null,
         p_instrument_id: rec.instrument_id,
         p_title: rec.title,
         p_description: rec.description,
