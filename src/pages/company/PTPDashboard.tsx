@@ -580,25 +580,52 @@ export default function PTPDashboard() {
   };
 
   const saveTracking = async () => {
-    if (!trackingModal.intervention || !latestNarrative) return;
+    if (!trackingModal.source || !latestNarrative) {
+      toast.error("Cannot save: no PTP dashboard narrative loaded.");
+      return;
+    }
     setSavingTracking(true);
     try {
-      const { error } = await (supabase as any).rpc("save_org_intervention", {
-        p_narrative_id: latestNarrative.id,
-        p_instrument_id: "INST-001",
-        p_title: trackingModal.intervention.title,
-        p_description: trackingNote || trackingModal.intervention.description,
-        p_target_dimensions: trackingModal.intervention.target_dimensions,
-        p_priority: trackingModal.intervention.priority,
-        p_time_horizon: trackingModal.intervention.time_horizon,
-        p_intervention_type: trackingModal.intervention.intervention_type,
-        p_status: trackingStatus,
-      });
+      const src = trackingModal.source;
+      let rpcParams: any;
+      if (src.kind === "dashboard") {
+        rpcParams = {
+          p_narrative_id: latestNarrative.id,
+          p_epn_delta_narrative_id: null,
+          p_instrument_id: "INST-001",
+          p_title: src.intervention.title,
+          p_description: trackingNote || src.intervention.description,
+          p_target_dimensions: src.intervention.target_dimensions,
+          p_priority: src.intervention.priority,
+          p_time_horizon: src.intervention.time_horizon,
+          p_intervention_type: src.intervention.intervention_type,
+          p_status: trackingStatus,
+          p_tracking_notes: trackingNote || null,
+        };
+      } else {
+        rpcParams = {
+          p_narrative_id: latestNarrative.id,
+          p_epn_delta_narrative_id: null,
+          p_instrument_id: "INST-001",
+          p_title: src.rec.title,
+          p_description: src.rec.rationale,
+          p_target_dimensions: [
+            ...(src.rec.primary_targets ?? []),
+            ...(src.rec.cross_targets ?? []),
+          ],
+          p_priority: src.rec.priority,
+          p_time_horizon: src.rec.time_horizon,
+          p_intervention_type: "process",
+          p_status: trackingStatus,
+          p_tracking_notes: trackingNote || null,
+        };
+      }
+      const { error } = await (supabase as any).rpc("save_org_intervention", rpcParams);
       if (error) {
         throw new Error(error.message ?? "Database rejected the save");
       }
       toast.success("Saved to intervention tracking");
-      setTrackingModal({ open: false, intervention: null });
+      setTrackingModal({ open: false, source: null });
       setTrackingNote("");
       setTrackingStatus("not_started");
     } catch (e: any) {
