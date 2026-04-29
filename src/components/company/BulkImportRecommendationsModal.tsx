@@ -27,9 +27,12 @@ const INSTRUMENT_LABEL: Record<string, string> = {
   "INST-002L": "NAI Dashboard — Leader vs Workforce",
 };
 
+const PTP_DELTA_LABEL = "PTP Dashboard — Leader vs Workforce";
+
 const SOURCE_KIND_COLOR: Record<string, { bg: string; color: string }> = {
   narrative: { bg: "#e8edf1", color: NAVY },
-  delta: { bg: "#eeedfe", color: PURPLE },
+  epn_delta: { bg: "#eeedfe", color: PURPLE },
+  ptp_delta: { bg: "#eeedfe", color: PURPLE },
 };
 
 const PRIORITY_COLOR: Record<string, { bg: string; color: string }> = {
