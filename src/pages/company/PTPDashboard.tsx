@@ -335,10 +335,13 @@ export default function PTPDashboard() {
   const [compareSliceType, setCompareSliceType] = useState<string>("all");
   const [compareSliceValue, setCompareSliceValue] = useState<string>("all");
   const [compareHistory, setCompareHistory] = useState<NarrativeHistory[]>([]);
+  type PTPTrackingSource =
+    | { kind: "dashboard"; intervention: Intervention }
+    | { kind: "cross_instrument"; rec: CrossInstrumentRec };
   const [trackingModal, setTrackingModal] = useState<{
     open: boolean;
-    intervention: Intervention | null;
-  }>({ open: false, intervention: null });
+    source: PTPTrackingSource | null;
+  }>({ open: false, source: null });
   const [trackingNote, setTrackingNote] = useState<string>("");
   const [trackingStatus, setTrackingStatus] = useState<string>("not_started");
   const [savingTracking, setSavingTracking] = useState<boolean>(false);
@@ -577,25 +580,52 @@ export default function PTPDashboard() {
   };
 
   const saveTracking = async () => {
-    if (!trackingModal.intervention || !latestNarrative) return;
+    if (!trackingModal.source || !latestNarrative) {
+      toast.error("Cannot save: no PTP dashboard narrative loaded.");
+      return;
+    }
     setSavingTracking(true);
     try {
-      const { error } = await (supabase as any).rpc("save_org_intervention", {
-        p_narrative_id: latestNarrative.id,
-        p_instrument_id: "INST-001",
-        p_title: trackingModal.intervention.title,
-        p_description: trackingNote || trackingModal.intervention.description,
-        p_target_dimensions: trackingModal.intervention.target_dimensions,
-        p_priority: trackingModal.intervention.priority,
-        p_time_horizon: trackingModal.intervention.time_horizon,
-        p_intervention_type: trackingModal.intervention.intervention_type,
-        p_status: trackingStatus,
-      });
+      const src = trackingModal.source;
+      let rpcParams: any;
+      if (src.kind === "dashboard") {
+        rpcParams = {
+          p_narrative_id: latestNarrative.id,
+          p_epn_delta_narrative_id: null,
+          p_instrument_id: "INST-001",
+          p_title: src.intervention.title,
+          p_description: trackingNote || src.intervention.description,
+          p_target_dimensions: src.intervention.target_dimensions,
+          p_priority: src.intervention.priority,
+          p_time_horizon: src.intervention.time_horizon,
+          p_intervention_type: src.intervention.intervention_type,
+          p_status: trackingStatus,
+          p_tracking_notes: trackingNote || null,
+        };
+      } else {
+        rpcParams = {
+          p_narrative_id: latestNarrative.id,
+          p_epn_delta_narrative_id: null,
+          p_instrument_id: "INST-001",
+          p_title: src.rec.title,
+          p_description: src.rec.rationale,
+          p_target_dimensions: [
+            ...(src.rec.primary_targets ?? []),
+            ...(src.rec.cross_targets ?? []),
+          ],
+          p_priority: src.rec.priority,
+          p_time_horizon: src.rec.time_horizon,
+          p_intervention_type: "process",
+          p_status: trackingStatus,
+          p_tracking_notes: trackingNote || null,
+        };
+      }
+      const { error } = await (supabase as any).rpc("save_org_intervention", rpcParams);
       if (error) {
         throw new Error(error.message ?? "Database rejected the save");
       }
       toast.success("Saved to intervention tracking");
-      setTrackingModal({ open: false, intervention: null });
+      setTrackingModal({ open: false, source: null });
       setTrackingNote("");
       setTrackingStatus("not_started");
     } catch (e: any) {
@@ -1339,193 +1369,6 @@ export default function PTPDashboard() {
             </div>
           )}
 
-          {!suppressed && Object.keys(dims).length > 0 && (
-            <>
-              <h3
-                style={{
-                  fontSize: 15,
-                  fontWeight: 500,
-                  color: NAVY,
-                  margin: "24px 0 10px",
-                  textTransform: "uppercase",
-                  letterSpacing: 0.5,
-                }}
-              >
-                Leadership compared to workforce
-              </h3>
-              <div
-                style={{
-                  padding: 14,
-                  background: SAND,
-                  border: "0.5px solid var(--border)",
-                  borderRadius: 8,
-                }}
-              >
-                <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", gap: 16 }}>
-                  <div>
-                    <p
-                      style={{
-                        fontSize: 13,
-                        color: "var(--muted-foreground)",
-                        margin: "0 0 8px",
-                        textTransform: "uppercase",
-                        letterSpacing: 0.4,
-                      }}
-                    >
-                      Director · VP · C-Suite
-                    </p>
-                    {ALL_DIMS.map((dimId) => {
-                      const score = dims[dimId]?.avg_score ?? 0;
-                      const act = activationLabel(score);
-                      return (
-                        <div
-                          key={dimId}
-                          style={{
-                            display: "grid",
-                            gridTemplateColumns: "1fr 32px 56px",
-                            alignItems: "center",
-                            marginBottom: 8,
-                            gap: 4,
-                          }}
-                        >
-                          <span
-                            style={{
-                              fontSize: 13,
-                              fontWeight: 500,
-                              color: DIM_COLORS[dimId],
-                            }}
-                          >
-                            {DIM_NAMES[dimId]}
-                          </span>
-                          <span
-                            style={{
-                              fontSize: 15,
-                              fontWeight: 500,
-                              color: DIM_COLORS[dimId],
-                              textAlign: "right",
-                            }}
-                          >
-                            {Math.round(score)}
-                          </span>
-                          <span
-                            style={{
-                              fontSize: 9,
-                              padding: "2px 5px",
-                              borderRadius: 3,
-                              background: act.bg,
-                              color: act.color,
-                              textAlign: "center",
-                            }}
-                          >
-                            {act.label}
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                  <div style={{ alignSelf: "center", textAlign: "center" }}>
-                    <p
-                      style={{
-                        fontSize: 10,
-                        color: "var(--muted-foreground)",
-                        margin: "0 0 6px",
-                        textTransform: "uppercase",
-                      }}
-                    >
-                      delta
-                    </p>
-                    {ALL_DIMS.map((dimId) => (
-                      <div
-                        key={dimId}
-                        style={{
-                          fontSize: 13,
-                          color: "var(--muted-foreground)",
-                          padding: "4px 0",
-                        }}
-                      >
-                        —
-                      </div>
-                    ))}
-                  </div>
-                  <div>
-                    <p
-                      style={{
-                        fontSize: 13,
-                        color: "var(--muted-foreground)",
-                        margin: "0 0 8px",
-                        textTransform: "uppercase",
-                        letterSpacing: 0.4,
-                      }}
-                    >
-                      Manager · IC
-                    </p>
-                    {ALL_DIMS.map((dimId) => {
-                      const score = dims[dimId]?.avg_score ?? 0;
-                      const act = activationLabel(score);
-                      return (
-                        <div
-                          key={dimId}
-                          style={{
-                            display: "grid",
-                            gridTemplateColumns: "1fr 32px 56px",
-                            alignItems: "center",
-                            marginBottom: 8,
-                            gap: 4,
-                          }}
-                        >
-                          <span
-                            style={{
-                              fontSize: 13,
-                              fontWeight: 500,
-                              color: DIM_COLORS[dimId],
-                            }}
-                          >
-                            {DIM_NAMES[dimId]}
-                          </span>
-                          <span
-                            style={{
-                              fontSize: 15,
-                              fontWeight: 500,
-                              color: DIM_COLORS[dimId],
-                              textAlign: "right",
-                            }}
-                          >
-                            {Math.round(score)}
-                          </span>
-                          <span
-                            style={{
-                              fontSize: 9,
-                              padding: "2px 5px",
-                              borderRadius: 3,
-                              background: act.bg,
-                              color: act.color,
-                              textAlign: "center",
-                            }}
-                          >
-                            {act.label}
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-                <div
-                  style={{
-                    fontSize: 10,
-                    color: "var(--muted-foreground)",
-                    padding: "8px 14px",
-                    borderTop: "0.5px solid var(--border)",
-                    background: "var(--muted)",
-                    fontStyle: "italic",
-                    marginTop: 8,
-                  }}
-                >
-                  Select "Level ▾" above for real delta values.
-                </div>
-              </div>
-            </>
-          )}
-
           {usage?.dept_participation && usage.dept_participation.length > 0 && (
             <>
               <h3
@@ -1607,32 +1450,6 @@ export default function PTPDashboard() {
             </>
           )}
 
-          <div
-            style={{
-              marginTop: 24,
-              padding: 14,
-              background: SAND,
-              border: "0.5px solid var(--border)",
-              borderRadius: 8,
-            }}
-          >
-            <h3
-              style={{
-                fontSize: 15,
-                fontWeight: 500,
-                color: NAVY,
-                margin: "0 0 6px",
-                textTransform: "uppercase",
-                letterSpacing: 0.5,
-              }}
-            >
-              Cross-instrument snapshot
-            </h3>
-            <p style={{ fontSize: 14, color: "var(--muted-foreground)", margin: 0 }}>
-              NAI aggregate data will appear here once 5+ participants have completed both
-              instruments.
-            </p>
-          </div>
 
           {suppressed && !loadingAgg && (
             <div
@@ -1964,7 +1781,7 @@ export default function PTPDashboard() {
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      setTrackingModal({ open: true, intervention: iv });
+                                      setTrackingModal({ open: true, source: { kind: "dashboard", intervention: iv } });
                                       setTrackingNote("");
                                       setTrackingStatus("not_started");
                                     }}
@@ -2325,7 +2142,7 @@ export default function PTPDashboard() {
                         </span>
                         <button
                           onClick={() => {
-                            setTrackingModal({ open: true, intervention: iv });
+                            setTrackingModal({ open: true, source: { kind: "dashboard", intervention: iv } });
                             setTrackingNote("");
                             setTrackingStatus("not_started");
                           }}
@@ -3108,6 +2925,26 @@ export default function PTPDashboard() {
                         </ol>
                       </div>
                     )}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setTrackingModal({ open: true, source: { kind: "cross_instrument", rec } });
+                        setTrackingNote("");
+                        setTrackingStatus("not_started");
+                      }}
+                      style={{
+                        fontSize: 10,
+                        padding: "3px 9px",
+                        border: `0.5px solid ${NAVY}`,
+                        borderRadius: 5,
+                        background: "transparent",
+                        color: NAVY,
+                        cursor: "pointer",
+                        marginTop: 8,
+                      }}
+                    >
+                      + Add to intervention tracking
+                    </button>
                   </div>
                 ))}
               </>
@@ -3117,9 +2954,12 @@ export default function PTPDashboard() {
       )}
 
       {/* TRACKING MODAL */}
-      {trackingModal.open && trackingModal.intervention && (
+      {trackingModal.open && trackingModal.source && (() => {
+        const src = trackingModal.source;
+        const title = src.kind === "dashboard" ? src.intervention.title : src.rec.title;
+        return (
         <div
-          onClick={() => setTrackingModal({ open: false, intervention: null })}
+          onClick={() => setTrackingModal({ open: false, source: null })}
           style={{
             position: "fixed",
             inset: 0,
@@ -3164,11 +3004,11 @@ export default function PTPDashboard() {
                   Add to intervention tracking
                 </div>
                 <div style={{ fontSize: 14, fontWeight: 500, color: NAVY }}>
-                  {trackingModal.intervention.title}
+                  {title}
                 </div>
               </div>
               <button
-                onClick={() => setTrackingModal({ open: false, intervention: null })}
+                onClick={() => setTrackingModal({ open: false, source: null })}
                 style={{
                   background: "none",
                   border: "none",
@@ -3263,7 +3103,8 @@ export default function PTPDashboard() {
             </button>
           </div>
         </div>
-      )}
+        );
+      })()}
 
       {/* EXPORT PDF MODAL */}
       {exportModal && (
