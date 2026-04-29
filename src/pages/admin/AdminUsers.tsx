@@ -518,6 +518,13 @@ export default function AdminUsers() {
   const [pendingSearch, setPendingSearch] = useState("");
   const [usersSearch, setUsersSearch] = useState("");
 
+  // Executive Perspective state
+  const [epnFilter, setEpnFilter] = useState<string>("leaders");
+  const [epnSelectedIds, setEpnSelectedIds] = useState<Set<string>>(new Set());
+  const [epnNotes, setEpnNotes] = useState("");
+  const [epnSubmitting, setEpnSubmitting] = useState(false);
+  const [epnSearch, setEpnSearch] = useState("");
+
   // Load org_id for current admin
   useEffect(() => {
     if (!user) return;
