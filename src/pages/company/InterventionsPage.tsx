@@ -79,6 +79,16 @@ function formatYmdLocal(ymd: string | null | undefined, opts: Intl.DateTimeForma
   return new Date(Number(y), Number(mo) - 1, Number(d)).toLocaleDateString("en-US", opts);
 }
 
+// Today's date as YYYY-MM-DD in the user's local timezone.
+// Used for comparing against target_completion_date (which is also YYYY-MM-DD).
+function todayYmdLocal(): string {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, "0");
+  const d = String(now.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
 // ── Types ───────────────────────────────────────────────────────────────────
 type SourceKind = "narrative" | "delta" | "manual";
 type StatusValue = "not_started" | "in_progress" | "completed" | "blocked" | "cancelled";
@@ -339,16 +349,16 @@ export default function InterventionsPage() {
         new Date(r.actual_completion_date) >= qStart,
     ).length;
   }, [rows]);
-  const overdueCount = useMemo(
-    () =>
-      rows.filter(
-        (r) =>
-          (r.status === "not_started" || r.status === "in_progress") &&
-          r.target_completion_date &&
-          new Date(r.target_completion_date) < new Date(),
-      ).length,
-    [rows],
-  );
+  const overdueCount = useMemo(() => {
+    const today = todayYmdLocal();
+    return rows.filter(
+      (r) =>
+        (r.status === "not_started" || r.status === "in_progress") &&
+        r.target_completion_date !== null &&
+        r.target_completion_date !== undefined &&
+        r.target_completion_date < today,
+    ).length;
+  }, [rows]);
 
   // ── Mutations ──────────────────────────────────────────────────────────────
   const updateField = async (
@@ -628,10 +638,11 @@ export default function InterventionsPage() {
               <tbody>
                 {filteredRows.map((r, i) => {
                   const isOpen = expandedId === r.id;
+                  const today = todayYmdLocal();
                   const overdue = !!(
                     (r.status === "not_started" || r.status === "in_progress") &&
                     r.target_completion_date &&
-                    new Date(r.target_completion_date) < new Date()
+                    r.target_completion_date < today
                   );
                   return (
                     <FragmentRow
