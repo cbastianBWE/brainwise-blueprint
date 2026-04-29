@@ -492,7 +492,14 @@ export default function InterventionsPage() {
                 View and manage interventions saved across all dashboards.
               </p>
             </div>
-            <div>
+            <div style={{ display: "flex", gap: 8 }}>
+              <Button
+                onClick={() => setBulkImportOpen(true)}
+                variant="outline"
+              >
+                <Plus />
+                Bulk import recommendations
+              </Button>
               <Button
                 onClick={() => setCreateModalOpen(true)}
                 style={{ background: NAVY, color: "#fff" }}
