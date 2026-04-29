@@ -483,9 +483,6 @@ export default function InterventionsPage() {
         <div style={{ marginBottom: 20 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 12 }}>
             <div>
-              <div style={{ fontSize: 11, color: "var(--muted-foreground)", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>
-                Phase 6 · Org-level intervention tracking
-              </div>
               <h1 style={{ fontSize: 28, fontWeight: 600, color: NAVY, margin: 0 }}>
                 Intervention Tracking
               </h1>
