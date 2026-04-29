@@ -2133,7 +2133,7 @@ export default function CompanyDashboard() {
                         <span style={{ fontSize: 9, color: "var(--muted-foreground)" }}>
                           Targets: {iv.target_dimensions?.map(d => DIM_NAMES[d] ?? d).join(" · ")}
                         </span>
-                        <button onClick={e => openTrackingModal(iv, e)} style={{
+                        <button onClick={e => openTrackingModal({ kind: "dashboard", intervention: iv }, e)} style={{
                           fontSize: 10, padding: "3px 9px", border: `0.5px solid ${NAVY}`,
                           borderRadius: 5, background: "transparent", color: NAVY, cursor: "pointer",
                         }}>+ Add to intervention tracking</button>
