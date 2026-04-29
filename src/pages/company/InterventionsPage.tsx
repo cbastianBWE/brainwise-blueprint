@@ -93,7 +93,7 @@ function todayYmdLocal(): string {
 }
 
 // ── Types ───────────────────────────────────────────────────────────────────
-type SourceKind = "narrative" | "delta" | "manual";
+type SourceKind = "narrative" | "epn_delta" | "ptp_delta" | "manual";
 type StatusValue = "not_started" | "in_progress" | "completed" | "blocked" | "cancelled";
 
 interface EnrichedIntervention {
