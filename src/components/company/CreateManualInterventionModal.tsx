@@ -8,7 +8,22 @@ const NAVY = "#021F36";
 const INSTRUMENT_OPTIONS: Array<{ value: string; label: string }> = [
   { value: "INST-002", label: "NAI Dashboard" },
   { value: "INST-001", label: "PTP Dashboard" },
-  { value: "INST-002L", label: "Leader vs Workforce (Executive Perspective NAI)" },
+];
+
+const NAI_DIMENSIONS: Array<{ id: string; label: string }> = [
+  { id: "DIM-NAI-01", label: "Certainty" },
+  { id: "DIM-NAI-02", label: "Agency" },
+  { id: "DIM-NAI-03", label: "Fairness" },
+  { id: "DIM-NAI-04", label: "Ego Stability" },
+  { id: "DIM-NAI-05", label: "Saturation Threshold" },
+];
+
+const PTP_DIMENSIONS: Array<{ id: string; label: string }> = [
+  { id: "DIM-PTP-01", label: "Protection" },
+  { id: "DIM-PTP-02", label: "Participation" },
+  { id: "DIM-PTP-03", label: "Prediction" },
+  { id: "DIM-PTP-04", label: "Purpose" },
+  { id: "DIM-PTP-05", label: "Pleasure" },
 ];
 
 const PRIORITY_OPTIONS = ["high", "medium", "low"] as const;
