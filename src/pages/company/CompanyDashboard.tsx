@@ -1774,25 +1774,15 @@ export default function CompanyDashboard() {
                         {loadingDeltaNarrative ? (
                           <p style={{ fontSize: 13, color: "var(--muted-foreground)", fontStyle: "italic" }}>Loading narrative…</p>
                         ) : !deltaNarrative ? (
-                          <>
-                            <p style={{ fontSize: 14, color: "var(--muted-foreground)", lineHeight: 1.6, marginBottom: 10 }}>
-                              No AI narrative generated yet for this leader-vs-workforce comparison. Generate one to see what these gaps may mean and 3 targeted interventions you can add to your tracking list.
-                            </p>
-                            <Button size="sm" onClick={handleGenerateDelta} disabled={generatingDelta}>
-                              <RefreshCw className={generatingDelta ? "animate-spin" : ""} style={{ marginRight: 6 }} />
-                              {generatingDelta ? "Generating..." : "Generate narrative"}
-                            </Button>
-                          </>
+                          <p style={{ fontSize: 13, color: "var(--muted-foreground)", lineHeight: 1.6, fontStyle: "italic" }}>
+                            AI narrative for the leader-vs-workforce comparison will appear here after you click "↻ Regenerate AI" at the top of the dashboard. The narrative is generated alongside the standard NAI interpretation.
+                          </p>
                         ) : (
                           <>
-                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12, flexWrap: "wrap", gap: 8 }}>
+                            <div style={{ marginBottom: 12 }}>
                               <span style={{ fontSize: 11, color: "var(--muted-foreground)" }}>
                                 Generated {new Date(deltaNarrative.generated_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })} · Leaders n={deltaNarrative.epn_participant_count} · Employees n={deltaNarrative.self_participant_count}
                               </span>
-                              <Button size="sm" variant="outline" onClick={handleGenerateDelta} disabled={generatingDelta}>
-                                <RefreshCw className={generatingDelta ? "animate-spin" : ""} style={{ marginRight: 4 }} />
-                                {generatingDelta ? "Generating..." : "↻ Regenerate"}
-                              </Button>
                             </div>
                             {deltaNarrative.narrative_text.summary && (
                               <div style={{ background: "var(--card)", border: "0.5px solid var(--border)", borderRadius: 8, padding: 12, marginBottom: 10 }}>
