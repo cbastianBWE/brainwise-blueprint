@@ -51,6 +51,7 @@ import VersionManagement from "./pages/super-admin/VersionManagement";
 import CompanyDetail from "./pages/super-admin/CompanyDetail";
 import CoachManagement from "./pages/super-admin/CoachManagement";
 import CreateOrganization from "./pages/super-admin/CreateOrganization";
+import EpnComplete from "./pages/EpnComplete";
 
 const queryClient = new QueryClient();
 
