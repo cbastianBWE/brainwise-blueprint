@@ -16,12 +16,14 @@ const PURPLE = "#3C096C";
 // Source-kind chip colors
 const SOURCE_KIND_LABEL: Record<string, string> = {
   narrative: "Dashboard",
-  delta: "Leader vs Workforce",
+  epn_delta: "NAI Leader vs Workforce",
+  ptp_delta: "PTP Leader vs Workforce",
   manual: "Custom",
 };
 const SOURCE_KIND_COLOR: Record<string, { bg: string; color: string }> = {
   narrative: { bg: "#e8edf1", color: NAVY },
-  delta: { bg: "#eeedfe", color: PURPLE },
+  epn_delta: { bg: "#eeedfe", color: PURPLE },
+  ptp_delta: { bg: "#eeedfe", color: PURPLE },
   manual: { bg: "#fef0e7", color: ORANGE },
 };
 
@@ -91,7 +93,7 @@ function todayYmdLocal(): string {
 }
 
 // ── Types ───────────────────────────────────────────────────────────────────
-type SourceKind = "narrative" | "delta" | "manual";
+type SourceKind = "narrative" | "epn_delta" | "ptp_delta" | "manual";
 type StatusValue = "not_started" | "in_progress" | "completed" | "blocked" | "cancelled";
 
 interface EnrichedIntervention {
@@ -108,6 +110,7 @@ interface EnrichedIntervention {
   tracking_notes: string | null;
   narrative_id: string | null;
   epn_delta_narrative_id: string | null;
+  ptp_delta_narrative_id: string | null;
   manual_source_instrument_id: string | null;
   assigned_owner_user_id: string | null;
   target_completion_date: string | null;
@@ -157,6 +160,7 @@ function mapRow(r: any): EnrichedIntervention {
     tracking_notes: r.out_tracking_notes,
     narrative_id: r.out_narrative_id,
     epn_delta_narrative_id: r.out_epn_delta_narrative_id,
+    ptp_delta_narrative_id: r.out_ptp_delta_narrative_id,
     manual_source_instrument_id: r.out_manual_source_instrument_id,
     assigned_owner_user_id: r.out_assigned_owner_user_id,
     target_completion_date: r.out_target_completion_date,
@@ -294,6 +298,14 @@ export default function InterventionsPage() {
     if (sourceFilter !== "all") {
       if (sourceFilter === "manual") {
         out = out.filter((r) => r.source_kind === "manual");
+      } else if (sourceFilter === "PTP_DELTA") {
+        out = out.filter((r) => r.source_kind === "ptp_delta");
+      } else if (sourceFilter === "INST-001") {
+        out = out.filter(
+          (r) =>
+            (r.instrument_id === "INST-001" && r.source_kind !== "ptp_delta") ||
+            r.manual_source_instrument_id === "INST-001",
+        );
       } else {
         out = out.filter(
           (r) =>
@@ -557,8 +569,9 @@ export default function InterventionsPage() {
             >
               <option value="all">Source ▾ (all)</option>
               <option value="INST-002">NAI Dashboard</option>
+              <option value="INST-002L">NAI Leader vs Workforce</option>
               <option value="INST-001">PTP Dashboard</option>
-              <option value="INST-002L">Leader vs Workforce</option>
+              <option value="PTP_DELTA">PTP Leader vs Workforce</option>
               <option value="manual">Custom (manual)</option>
             </select>
 

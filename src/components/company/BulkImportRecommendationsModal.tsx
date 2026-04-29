@@ -27,9 +27,12 @@ const INSTRUMENT_LABEL: Record<string, string> = {
   "INST-002L": "NAI Dashboard — Leader vs Workforce",
 };
 
+const PTP_DELTA_LABEL = "PTP Dashboard — Leader vs Workforce";
+
 const SOURCE_KIND_COLOR: Record<string, { bg: string; color: string }> = {
   narrative: { bg: "#e8edf1", color: NAVY },
-  delta: { bg: "#eeedfe", color: PURPLE },
+  epn_delta: { bg: "#eeedfe", color: PURPLE },
+  ptp_delta: { bg: "#eeedfe", color: PURPLE },
 };
 
 const PRIORITY_COLOR: Record<string, { bg: string; color: string }> = {
@@ -39,9 +42,10 @@ const PRIORITY_COLOR: Record<string, { bg: string; color: string }> = {
 };
 
 interface AvailableRec {
-  source_kind: "narrative" | "delta";
+  source_kind: "narrative" | "epn_delta" | "ptp_delta";
   narrative_id: string | null;
   epn_delta_narrative_id: string | null;
+  ptp_delta_narrative_id: string | null;
   instrument_id: string;
   slice_type: string;
   slice_value: string;
@@ -62,6 +66,7 @@ function mapRow(r: any): AvailableRec {
     source_kind: r.out_source_kind,
     narrative_id: r.out_narrative_id,
     epn_delta_narrative_id: r.out_epn_delta_narrative_id,
+    ptp_delta_narrative_id: r.out_ptp_delta_narrative_id,
     instrument_id: r.out_instrument_id,
     slice_type: r.out_slice_type,
     slice_value: r.out_slice_value,
@@ -140,7 +145,15 @@ export default function BulkImportRecommendationsModal({ open, onClose, onImport
   const filtered = useMemo(() => {
     return rows.filter((r) => {
       if (hideAlreadyTracked && r.already_tracked) return false;
-      if (sourceFilter !== "all" && r.instrument_id !== sourceFilter) return false;
+      if (sourceFilter !== "all") {
+        if (sourceFilter === "PTP_DELTA") {
+          if (r.source_kind !== "ptp_delta") return false;
+        } else if (sourceFilter === "INST-001") {
+          if (r.instrument_id !== "INST-001" || r.source_kind === "ptp_delta") return false;
+        } else {
+          if (r.instrument_id !== sourceFilter) return false;
+        }
+      }
       if (sliceFilter !== "all" && `${r.slice_type}:${r.slice_value}` !== sliceFilter) return false;
       if (dimensionFilter !== "all" && !r.target_dimensions.includes(dimensionFilter)) return false;
       return true;
@@ -179,7 +192,8 @@ export default function BulkImportRecommendationsModal({ open, onClose, onImport
     for (const rec of toImport) {
       const rpcParams: any = {
         p_narrative_id: rec.source_kind === "narrative" ? rec.narrative_id : null,
-        p_epn_delta_narrative_id: rec.source_kind === "delta" ? rec.epn_delta_narrative_id : null,
+        p_epn_delta_narrative_id: rec.source_kind === "epn_delta" ? rec.epn_delta_narrative_id : null,
+        p_ptp_delta_narrative_id: rec.source_kind === "ptp_delta" ? rec.ptp_delta_narrative_id : null,
         p_instrument_id: rec.instrument_id,
         p_title: rec.title,
         p_description: rec.description,
@@ -283,6 +297,7 @@ export default function BulkImportRecommendationsModal({ open, onClose, onImport
               <option value="INST-002">NAI Dashboard</option>
               <option value="INST-002L">NAI Dashboard — Leader vs Workforce</option>
               <option value="INST-001">PTP Dashboard</option>
+              <option value="PTP_DELTA">PTP Dashboard — Leader vs Workforce</option>
             </select>
 
             <select value={sliceFilter} onChange={(e) => setSliceFilter(e.target.value)} style={selectStyle}>
@@ -369,7 +384,9 @@ export default function BulkImportRecommendationsModal({ open, onClose, onImport
                       <div style={{ fontSize: 13, fontWeight: 600, color: NAVY }}>{rec.title}</div>
                       <div style={{ display: "flex", gap: 4, flexShrink: 0, flexWrap: "wrap", justifyContent: "flex-end" }}>
                         <span style={{ fontSize: 10, padding: "2px 7px", borderRadius: 10, background: sourceStyle.bg, color: sourceStyle.color, fontWeight: 500 }}>
-                          {INSTRUMENT_LABEL[rec.instrument_id] ?? rec.instrument_id}
+                          {rec.source_kind === "ptp_delta"
+                            ? PTP_DELTA_LABEL
+                            : (INSTRUMENT_LABEL[rec.instrument_id] ?? rec.instrument_id)}
                         </span>
                         <span style={{ fontSize: 10, padding: "2px 7px", borderRadius: 10, background: priStyle.bg, color: priStyle.color, fontWeight: 500, textTransform: "capitalize" }}>
                           {rec.priority}
