@@ -386,7 +386,8 @@ export default function PTPDashboard() {
   const [compareHistory, setCompareHistory] = useState<NarrativeHistory[]>([]);
   type PTPTrackingSource =
     | { kind: "dashboard"; intervention: Intervention }
-    | { kind: "cross_instrument"; rec: CrossInstrumentRec };
+    | { kind: "cross_instrument"; rec: CrossInstrumentRec }
+    | { kind: "ptp_delta"; rec: PTPDeltaRecommendation };
   const [trackingModal, setTrackingModal] = useState<{
     open: boolean;
     source: PTPTrackingSource | null;
