@@ -991,6 +991,48 @@ export default function AdminUsers() {
     await qc.invalidateQueries({ queryKey: ["admin-org-users", orgId] });
   };
 
+  const handleAssignExecutivePerspective = async () => {
+    if (!orgId || epnSelectedIds.size === 0) return;
+    setEpnSubmitting(true);
+    const { data, error } = await (supabase.rpc as any)("assign_executive_perspective_assessment", {
+      p_assignee_user_ids: Array.from(epnSelectedIds),
+      p_organization_id: orgId,
+      p_notes: epnNotes.trim() || null,
+    });
+    setEpnSubmitting(false);
+    if (error) {
+      toast({ title: "Assignment failed", description: error.message, variant: "destructive" });
+      return;
+    }
+    const inserted = (data?.inserted_count ?? 0) as number;
+    const skipped = (data?.skipped_count ?? 0) as number;
+    const invalid = (data?.invalid_user_ids ?? []) as string[];
+    const invalidCount = invalid.length;
+
+    if (inserted > 0) {
+      const parts: string[] = [`${inserted} new assignment${inserted === 1 ? "" : "s"}`];
+      if (skipped > 0) parts.push(`${skipped} already assigned`);
+      if (invalidCount > 0) parts.push(`${invalidCount} skipped (invalid)`);
+      toast({ title: "Executive Perspective assigned", description: parts.join(", ") });
+      setEpnSelectedIds(new Set());
+      setEpnNotes("");
+      await qc.invalidateQueries({ queryKey: ["epn-assignments", orgId] });
+    } else if (skipped > 0) {
+      toast({
+        title: "No new assignments",
+        description: `${skipped} user${skipped === 1 ? "" : "s"} already had active assignments.`,
+      });
+    } else if (invalidCount > 0) {
+      toast({
+        title: "Assignment failed",
+        description: "All selected users were rejected as invalid.",
+        variant: "destructive",
+      });
+    } else {
+      toast({ title: "No new assignments" });
+    }
+  };
+
   if (orgId === undefined) {
     return (
       <div className="p-6 flex items-center justify-center">
