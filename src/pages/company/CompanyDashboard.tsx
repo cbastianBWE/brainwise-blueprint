@@ -1764,14 +1764,9 @@ export default function CompanyDashboard() {
                         {DIMS_BY_WEIGHT.map(dimId => {
                           const entry = deltaResult.delta?.[dimId];
                           const d = entry?.delta ?? null;
-                          const dir = entry?.direction;
-                          const color =
-                            dir === "leaders_see_more_concern" ? "#993c1d" :
-                            dir === "leaders_see_less_concern" ? "#0f6e56" :
-                            "var(--muted-foreground)";
                           const sign = d === null ? "" : (d > 0 ? "+" : "");
                           return (
-                            <div key={dimId} style={{ fontSize: 13, fontWeight: 500, color, padding: "4px 0" }}>
+                            <div key={dimId} style={{ fontSize: 13, fontWeight: 500, color: DIM_COLORS[dimId], padding: "4px 0" }}>
                               {d !== null ? `${sign}${Math.round(d * 10) / 10}` : "—"}
                             </div>
                           );
