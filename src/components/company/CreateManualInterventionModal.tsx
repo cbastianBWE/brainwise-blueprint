@@ -178,9 +178,6 @@ export default function CreateManualInterventionModal({ open, onClose, onCreated
         {/* Header */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
           <div>
-            <div style={{ fontSize: 10, color: "var(--muted-foreground)", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>
-              Phase 6 · Org-level intervention
-            </div>
             <h2 style={{ fontSize: 18, fontWeight: 600, color: NAVY, margin: 0 }}>Create custom intervention</h2>
             <p style={{ fontSize: 11, color: "var(--muted-foreground)", margin: "4px 0 0", maxWidth: 440 }}>
               Manually-created interventions must be tied to a dashboard source for filtering and reporting.

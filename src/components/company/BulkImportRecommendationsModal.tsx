@@ -271,9 +271,6 @@ export default function BulkImportRecommendationsModal({ open, onClose, onImport
         {/* Header */}
         <div style={{ padding: "18px 22px 12px", borderBottom: "0.5px solid var(--border)", display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
           <div>
-            <div style={{ fontSize: 10, color: "var(--muted-foreground)", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>
-              Phase 6 · Bulk import
-            </div>
             <h2 style={{ fontSize: 18, fontWeight: 600, color: NAVY, margin: 0 }}>Import recommendations</h2>
             <p style={{ fontSize: 11, color: "var(--muted-foreground)", margin: "4px 0 0", maxWidth: 640 }}>
               Latest AI-generated recommendations across all dashboards. Select per row to import.
