@@ -569,7 +569,31 @@ export default function CompanyDashboard() {
         toast.warning(`Cross-instrument recommendations failed: ${xe.message ?? "network error"}`);
       }
 
-      await Promise.all([loadUsage(), loadNarrative(), loadNarrativeHistory(), loadCrossInstrumentRecs()]);
+      // Stage 3: leader-vs-workforce delta narrative (graceful skip if insufficient EPN data)
+      toast.info("Generating leader-vs-workforce narrative... (~60s)");
+      try {
+        const dRes = await fetch(`${supabaseUrl}/functions/v1/generate-nai-delta-narrative`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({
+            slice_type: sliceType,
+            slice_value: sliceValue,
+            exclude_leaders_from_self: true,
+          }),
+        });
+        const dResult = await dRes.json();
+        if (dRes.ok && dResult.generated) {
+          toast.success(`Leader-vs-workforce narrative generated (${dResult.recommendation_count} interventions)`);
+        } else if (dResult.suppressed || dResult.generated === false) {
+          toast.info("Leader-vs-workforce narrative skipped (need 5+ EPN respondents AND 5+ standard NAI respondents excluding leaders).");
+        } else {
+          toast.warning(`Leader-vs-workforce narrative not generated: ${dResult.reason ?? dResult.error ?? "unknown"}`);
+        }
+      } catch (de: any) {
+        toast.warning(`Leader-vs-workforce narrative failed: ${de.message ?? "network error"}`);
+      }
+
+      await Promise.all([loadUsage(), loadNarrative(), loadNarrativeHistory(), loadCrossInstrumentRecs(), loadDeltaNarrative(), loadDeltaResult()]);
     } catch (e: any) {
       toast.error(e.message ?? "Failed to generate interpretation");
     }
