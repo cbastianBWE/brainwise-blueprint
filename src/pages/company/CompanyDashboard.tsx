@@ -656,6 +656,26 @@ export default function CompanyDashboard() {
     setSavingTracking(false);
   };
 
+  const saveDeltaIntervention = async (rec: DeltaRecommendation) => {
+    if (!deltaNarrative) return;
+    try {
+      await (supabase as any).rpc("save_org_intervention", {
+        p_narrative_id: null,
+        p_epn_delta_narrative_id: deltaNarrative.id,
+        p_instrument_id: "INST-002L",
+        p_title: rec.title,
+        p_description: rec.rationale,
+        p_target_dimensions: rec.target_dimensions,
+        p_priority: rec.priority,
+        p_time_horizon: rec.time_horizon,
+        p_intervention_type: rec.intervention_type,
+      });
+      toast.success("Saved to intervention tracking");
+    } catch (e: any) {
+      toast.error("Failed to save: " + (e.message ?? "unknown"));
+    }
+  };
+
   const handleExport = async () => {
     setExporting(true);
     setExportModal(false);
