@@ -298,6 +298,14 @@ export default function InterventionsPage() {
     if (sourceFilter !== "all") {
       if (sourceFilter === "manual") {
         out = out.filter((r) => r.source_kind === "manual");
+      } else if (sourceFilter === "PTP_DELTA") {
+        out = out.filter((r) => r.source_kind === "ptp_delta");
+      } else if (sourceFilter === "INST-001") {
+        out = out.filter(
+          (r) =>
+            (r.instrument_id === "INST-001" && r.source_kind !== "ptp_delta") ||
+            r.manual_source_instrument_id === "INST-001",
+        );
       } else {
         out = out.filter(
           (r) =>
