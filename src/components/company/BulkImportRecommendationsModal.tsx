@@ -145,7 +145,15 @@ export default function BulkImportRecommendationsModal({ open, onClose, onImport
   const filtered = useMemo(() => {
     return rows.filter((r) => {
       if (hideAlreadyTracked && r.already_tracked) return false;
-      if (sourceFilter !== "all" && r.instrument_id !== sourceFilter) return false;
+      if (sourceFilter !== "all") {
+        if (sourceFilter === "PTP_DELTA") {
+          if (r.source_kind !== "ptp_delta") return false;
+        } else if (sourceFilter === "INST-001") {
+          if (r.instrument_id !== "INST-001" || r.source_kind === "ptp_delta") return false;
+        } else {
+          if (r.instrument_id !== sourceFilter) return false;
+        }
+      }
       if (sliceFilter !== "all" && `${r.slice_type}:${r.slice_value}` !== sliceFilter) return false;
       if (dimensionFilter !== "all" && !r.target_dimensions.includes(dimensionFilter)) return false;
       return true;
