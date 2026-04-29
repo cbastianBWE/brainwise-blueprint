@@ -1551,10 +1551,10 @@ export default function CompanyDashboard() {
               pdf.text(`Recommended interventions (${nt.recommendations.length})`, ML, y);
               y += 5;
               nt.recommendations.forEach((rec: any) => {
-                const titleLns = splitText(rec.title || "", CW-50, 8.5, "bold");
-                const ratLns = splitText(rec.rationale || "", CW-8, 7.5, "normal");
+                const titleLns = splitText(rec.title || "", CW-58, 8.5, "bold");
+                const ratLns = splitText(rec.rationale || "", CW-12, 7.5, "normal");
                 const stepsHeight = Array.isArray(rec.steps) && rec.steps.length > 0
-                  ? rec.steps.reduce((acc: number, s: string) => acc + splitText(s, CW-14, 7, "normal").length * 3.8, 5)
+                  ? rec.steps.reduce((acc: number, s: string) => acc + splitText(s, CW-18, 7, "normal").length * 3.8, 5)
                   : 0;
                 const cardH = 5 + titleLns.length*4.5 + 2 + ratLns.length*4 + stepsHeight + 4;
                 checkY(cardH+4, "LEADER PERSPECTIVE (cont.)");
