@@ -337,7 +337,12 @@ export default function CompanyDashboard() {
   const [compareHistory, setCompareHistory] = useState<NarrativeHistory[]>([]);
   const [loadingInterventions, setLoadingInterventions] = useState(false);
   const [expandedDims, setExpandedDims] = useState<Set<string>>(new Set());
-  const [trackingModal, setTrackingModal] = useState<{ open: boolean; intervention: Intervention | null }>({ open: false, intervention: null });
+  type TrackingSource =
+    | { kind: "dashboard"; intervention: Intervention }
+    | { kind: "delta"; rec: DeltaRecommendation }
+    | { kind: "cross_instrument"; rec: CrossInstrumentRec };
+
+  const [trackingModal, setTrackingModal] = useState<{ open: boolean; source: TrackingSource | null }>({ open: false, source: null });
   const [trackingNote, setTrackingNote] = useState("");
   const [trackingStatus, setTrackingStatus] = useState("not_started");
   const [savingTracking, setSavingTracking] = useState(false);
@@ -615,57 +620,86 @@ export default function CompanyDashboard() {
     });
   };
 
-  const openTrackingModal = (intervention: Intervention, e: React.MouseEvent) => {
+  const openTrackingModal = (source: TrackingSource, e: React.MouseEvent) => {
     e.stopPropagation();
-    setTrackingModal({ open: true, intervention });
+    setTrackingModal({ open: true, source });
     setTrackingNote("");
     setTrackingStatus("not_started");
   };
 
   const closeTrackingModal = () => {
-    setTrackingModal({ open: false, intervention: null });
+    setTrackingModal({ open: false, source: null });
   };
 
   const saveTracking = async () => {
-    if (!trackingModal.intervention || !latestNarrative) return;
+    if (!trackingModal.source) return;
     setSavingTracking(true);
     try {
-      await (supabase as any).rpc("save_org_intervention", {
-        p_narrative_id: latestNarrative.id,
-        p_instrument_id: "INST-002",
-        p_title: trackingModal.intervention.title,
-        p_description: trackingNote || trackingModal.intervention.description,
-        p_target_dimensions: trackingModal.intervention.target_dimensions,
-        p_priority: trackingModal.intervention.priority,
-        p_time_horizon: trackingModal.intervention.time_horizon,
-        p_intervention_type: trackingModal.intervention.intervention_type,
-      });
+      const src = trackingModal.source;
+      let rpcParams: any;
+      if (src.kind === "dashboard") {
+        if (!latestNarrative) {
+          toast.error("Cannot save: no NAI dashboard narrative loaded.");
+          setSavingTracking(false);
+          return;
+        }
+        rpcParams = {
+          p_narrative_id: latestNarrative.id,
+          p_epn_delta_narrative_id: null,
+          p_instrument_id: "INST-002",
+          p_title: src.intervention.title,
+          p_description: trackingNote || src.intervention.description,
+          p_target_dimensions: src.intervention.target_dimensions,
+          p_priority: src.intervention.priority,
+          p_time_horizon: src.intervention.time_horizon,
+          p_intervention_type: src.intervention.intervention_type,
+        };
+      } else if (src.kind === "delta") {
+        if (!deltaNarrative) {
+          toast.error("Cannot save: no delta narrative loaded.");
+          setSavingTracking(false);
+          return;
+        }
+        rpcParams = {
+          p_narrative_id: null,
+          p_epn_delta_narrative_id: deltaNarrative.id,
+          p_instrument_id: "INST-002L",
+          p_title: src.rec.title,
+          p_description: trackingNote || src.rec.rationale,
+          p_target_dimensions: src.rec.target_dimensions,
+          p_priority: src.rec.priority,
+          p_time_horizon: src.rec.time_horizon,
+          p_intervention_type: src.rec.intervention_type,
+        };
+      } else if (src.kind === "cross_instrument") {
+        if (!latestNarrative) {
+          toast.error("Cross-instrument recommendations require an existing NAI dashboard narrative.");
+          setSavingTracking(false);
+          return;
+        }
+        rpcParams = {
+          p_narrative_id: latestNarrative.id,
+          p_epn_delta_narrative_id: null,
+          p_instrument_id: "INST-002",
+          p_title: src.rec.title,
+          p_description: trackingNote || src.rec.rationale,
+          p_target_dimensions: [...(src.rec.primary_targets ?? []), ...(src.rec.cross_targets ?? [])],
+          p_priority: src.rec.priority,
+          p_time_horizon: src.rec.time_horizon,
+          p_intervention_type: "cross_instrument",
+        };
+      } else {
+        toast.error("Unknown intervention source");
+        setSavingTracking(false);
+        return;
+      }
+      await (supabase as any).rpc("save_org_intervention", rpcParams);
       toast.success("Saved to intervention tracking");
       closeTrackingModal();
     } catch (e: any) {
-      toast.error("Failed to save");
-    }
-    setSavingTracking(false);
-  };
-
-  const saveDeltaIntervention = async (rec: DeltaRecommendation) => {
-    if (!deltaNarrative) return;
-    try {
-      await (supabase as any).rpc("save_org_intervention", {
-        p_narrative_id: null,
-        p_epn_delta_narrative_id: deltaNarrative.id,
-        p_instrument_id: "INST-002L",
-        p_title: rec.title,
-        p_description: rec.rationale,
-        p_target_dimensions: rec.target_dimensions,
-        p_priority: rec.priority,
-        p_time_horizon: rec.time_horizon,
-        p_intervention_type: rec.intervention_type,
-      });
-      toast.success("Saved to intervention tracking");
-    } catch (e: any) {
       toast.error("Failed to save: " + (e.message ?? "unknown"));
     }
+    setSavingTracking(false);
   };
 
   const handleExport = async () => {
@@ -1730,14 +1764,9 @@ export default function CompanyDashboard() {
                         {DIMS_BY_WEIGHT.map(dimId => {
                           const entry = deltaResult.delta?.[dimId];
                           const d = entry?.delta ?? null;
-                          const dir = entry?.direction;
-                          const color =
-                            dir === "leaders_see_more_concern" ? "#993c1d" :
-                            dir === "leaders_see_less_concern" ? "#0f6e56" :
-                            "var(--muted-foreground)";
                           const sign = d === null ? "" : (d > 0 ? "+" : "");
                           return (
-                            <div key={dimId} style={{ fontSize: 13, fontWeight: 500, color, padding: "4px 0" }}>
+                            <div key={dimId} style={{ fontSize: 13, fontWeight: 500, color: DIM_COLORS[dimId], padding: "4px 0" }}>
                               {d !== null ? `${sign}${Math.round(d * 10) / 10}` : "—"}
                             </div>
                           );
@@ -1831,7 +1860,7 @@ export default function CompanyDashboard() {
                                         {rec.steps.map((step, j) => <li key={j}>{step}</li>)}
                                       </ol>
                                     )}
-                                    <button onClick={(e) => { e.stopPropagation(); saveDeltaIntervention(rec); }} style={{
+                                    <button onClick={(e) => openTrackingModal({ kind: "delta", rec }, e)} style={{
                                       fontSize: 10, padding: "3px 9px", border: `0.5px solid ${NAVY}`, borderRadius: 5,
                                       background: "transparent", color: NAVY, cursor: "pointer",
                                     }}>+ Add to intervention tracking</button>
@@ -1894,13 +1923,6 @@ export default function CompanyDashboard() {
             </div>
           )}
 
-          {/* Cross-instrument snapshot placeholder */}
-          <div style={{ marginTop: 24, padding: 14, background: "#F9F7F1", border: "0.5px solid var(--border)", borderRadius: 8 }}>
-            <h3 style={{ fontSize: 15, fontWeight: 500, color: NAVY, margin: "0 0 6px", textTransform: "uppercase", letterSpacing: 0.5 }}>Cross-instrument snapshot</h3>
-            <p style={{ fontSize: 14, color: "var(--muted-foreground)", margin: 0 }}>
-              PTP aggregate data will appear here once participants have completed both NAI and PTP. View the full analysis in the Cross-Instrument tab.
-            </p>
-          </div>
         </div>
       )}
 
@@ -1989,7 +2011,7 @@ export default function CompanyDashboard() {
                                     </div>
                                   </div>
                                   <p style={{ fontSize: 13, color: "var(--muted-foreground)", margin: "0 0 8px", lineHeight: 1.55 }}>{iv.description}</p>
-                                  <button onClick={e => openTrackingModal(iv, e)} style={{
+                                  <button onClick={e => openTrackingModal({ kind: "dashboard", intervention: iv }, e)} style={{
                                     fontSize: 10, padding: "3px 9px", border: `0.5px solid ${NAVY}`, borderRadius: 5,
                                     background: "transparent", color: NAVY, cursor: "pointer",
                                   }}>+ Add to intervention tracking</button>
@@ -2111,7 +2133,7 @@ export default function CompanyDashboard() {
                         <span style={{ fontSize: 9, color: "var(--muted-foreground)" }}>
                           Targets: {iv.target_dimensions?.map(d => DIM_NAMES[d] ?? d).join(" · ")}
                         </span>
-                        <button onClick={e => openTrackingModal(iv, e)} style={{
+                        <button onClick={e => openTrackingModal({ kind: "dashboard", intervention: iv }, e)} style={{
                           fontSize: 10, padding: "3px 9px", border: `0.5px solid ${NAVY}`,
                           borderRadius: 5, background: "transparent", color: NAVY, cursor: "pointer",
                         }}>+ Add to intervention tracking</button>
@@ -2512,36 +2534,10 @@ export default function CompanyDashboard() {
                         </ol>
                       </div>
                     )}
-                    <button
-                      onClick={async () => {
-                        if (!latestNarrative) {
-                          toast.error("Cross-instrument recommendations require an existing NAI dashboard narrative — regenerate first.");
-                          return;
-                        }
-                        try {
-                          await (supabase as any).rpc("save_org_intervention", {
-                            p_narrative_id: latestNarrative.id,
-                            p_epn_delta_narrative_id: null,
-                            p_instrument_id: "INST-002",
-                            p_title: rec.title,
-                            p_description: rec.rationale,
-                            p_target_dimensions: [...(rec.primary_targets ?? []), ...(rec.cross_targets ?? [])],
-                            p_priority: rec.priority,
-                            p_time_horizon: rec.time_horizon,
-                            p_intervention_type: "cross_instrument",
-                          });
-                          toast.success("Saved to intervention tracking");
-                        } catch (e: any) {
-                          toast.error("Failed to save: " + (e.message ?? "unknown"));
-                        }
-                      }}
-                      style={{
-                        fontSize: 10, padding: "3px 9px", border: `0.5px solid ${NAVY}`, borderRadius: 5,
-                        background: "transparent", color: NAVY, cursor: "pointer", marginTop: 8,
-                      }}
-                    >
-                      + Add to intervention tracking
-                    </button>
+                    <button onClick={(e) => openTrackingModal({ kind: "cross_instrument", rec }, e)} style={{
+                      fontSize: 10, padding: "3px 9px", border: `0.5px solid ${NAVY}`, borderRadius: 5,
+                      background: "transparent", color: NAVY, cursor: "pointer", marginTop: 8,
+                    }}>+ Add to intervention tracking</button>
                   </div>
                 ))}
               </>
@@ -2600,50 +2596,58 @@ export default function CompanyDashboard() {
         </div>
       )}
 
-      {trackingModal.open && trackingModal.intervention && (
-        <div onClick={closeTrackingModal} style={{
-          position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 1000,
-          display: "flex", alignItems: "center", justifyContent: "center",
-        }}>
-          <div onClick={e => e.stopPropagation()} style={{
-            background: "#ffffff", borderRadius: 12, padding: 20, width: 400, maxWidth: "95vw",
-            border: "0.5px solid var(--border)", boxShadow: "0 8px 32px rgba(0,0,0,0.18)", position: "relative" as const, zIndex: 1001,
+      {trackingModal.open && trackingModal.source && (() => {
+        const src = trackingModal.source;
+        const title =
+          src.kind === "dashboard" ? src.intervention.title :
+          src.kind === "delta" ? src.rec.title :
+          src.kind === "cross_instrument" ? src.rec.title :
+          "";
+        return (
+          <div onClick={closeTrackingModal} style={{
+            position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 1000,
+            display: "flex", alignItems: "center", justifyContent: "center",
           }}>
-            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 14 }}>
-              <div>
-                <div style={{ fontSize: 9, color: "var(--muted-foreground)", textTransform: "uppercase" as const, letterSpacing: "0.05em", marginBottom: 3 }}>Add to intervention tracking</div>
-                <div style={{ fontSize: 14, fontWeight: 500, color: NAVY }}>{trackingModal.intervention.title}</div>
-              </div>
-              <button onClick={closeTrackingModal} style={{ background: "none", border: "none", fontSize: 20, cursor: "pointer", color: "var(--muted-foreground)", lineHeight: 1, padding: 0 }}>×</button>
-            </div>
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ fontSize: 11, fontWeight: 500, marginBottom: 4, display: "block", color: NAVY }}>Status</label>
-              <select value={trackingStatus} onChange={e => setTrackingStatus(e.target.value)}
-                style={{ width: "100%", fontSize: 12, padding: "6px 9px", border: "0.5px solid var(--border)", borderRadius: 7, background: "var(--card)", color: "var(--foreground)" }}>
-                <option value="not_started">Not started</option>
-                <option value="in_progress">In progress</option>
-                <option value="completed">Completed</option>
-              </select>
-            </div>
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ fontSize: 11, fontWeight: 500, marginBottom: 4, display: "block", color: NAVY }}>Notes / next steps</label>
-              <textarea value={trackingNote} onChange={e => setTrackingNote(e.target.value)}
-                placeholder="Add context, assigned teams, or first concrete next step..."
-                style={{ width: "100%", fontSize: 12, padding: "7px 9px", border: "0.5px solid var(--border)", borderRadius: 7, background: "var(--card)", color: "var(--foreground)", resize: "vertical", minHeight: 72, fontFamily: "inherit", lineHeight: 1.5, boxSizing: "border-box" as const }}
-              />
-            </div>
-            <button onClick={saveTracking} disabled={savingTracking} style={{
-              background: NAVY, color: "#fff", border: "none", borderRadius: 8,
-              padding: "9px 18px", fontSize: 12, cursor: "pointer", width: "100%", fontWeight: 500,
+            <div onClick={e => e.stopPropagation()} style={{
+              background: "#ffffff", borderRadius: 12, padding: 20, width: 400, maxWidth: "95vw",
+              border: "0.5px solid var(--border)", boxShadow: "0 8px 32px rgba(0,0,0,0.18)", position: "relative" as const, zIndex: 1001,
             }}>
-              {savingTracking ? "Saving..." : "Save to intervention tracking"}
-            </button>
-            <p style={{ fontSize: 10, color: "var(--muted-foreground)", textAlign: "center", marginTop: 6 }}>
-              Saves without leaving this page · View all in Interventions tab (Phase 6)
-            </p>
+              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 14 }}>
+                <div>
+                  <div style={{ fontSize: 9, color: "var(--muted-foreground)", textTransform: "uppercase" as const, letterSpacing: "0.05em", marginBottom: 3 }}>Add to intervention tracking</div>
+                  <div style={{ fontSize: 14, fontWeight: 500, color: NAVY }}>{title}</div>
+                </div>
+                <button onClick={closeTrackingModal} style={{ background: "none", border: "none", fontSize: 20, cursor: "pointer", color: "var(--muted-foreground)", lineHeight: 1, padding: 0 }}>×</button>
+              </div>
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ fontSize: 11, fontWeight: 500, marginBottom: 4, display: "block", color: NAVY }}>Status</label>
+                <select value={trackingStatus} onChange={e => setTrackingStatus(e.target.value)}
+                  style={{ width: "100%", fontSize: 12, padding: "6px 9px", border: "0.5px solid var(--border)", borderRadius: 7, background: "var(--card)", color: "var(--foreground)" }}>
+                  <option value="not_started">Not started</option>
+                  <option value="in_progress">In progress</option>
+                  <option value="completed">Completed</option>
+                </select>
+              </div>
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ fontSize: 11, fontWeight: 500, marginBottom: 4, display: "block", color: NAVY }}>Notes / next steps</label>
+                <textarea value={trackingNote} onChange={e => setTrackingNote(e.target.value)}
+                  placeholder="Add context, assigned teams, or first concrete next step..."
+                  style={{ width: "100%", fontSize: 12, padding: "7px 9px", border: "0.5px solid var(--border)", borderRadius: 7, background: "var(--card)", color: "var(--foreground)", resize: "vertical", minHeight: 72, fontFamily: "inherit", lineHeight: 1.5, boxSizing: "border-box" as const }}
+                />
+              </div>
+              <button onClick={saveTracking} disabled={savingTracking} style={{
+                background: NAVY, color: "#fff", border: "none", borderRadius: 8,
+                padding: "9px 18px", fontSize: 12, cursor: "pointer", width: "100%", fontWeight: 500,
+              }}>
+                {savingTracking ? "Saving..." : "Save to intervention tracking"}
+              </button>
+              <p style={{ fontSize: 10, color: "var(--muted-foreground)", textAlign: "center", marginTop: 6 }}>
+                Saves without leaving this page · View all in the dedicated Interventions page (Phase 6)
+              </p>
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 }
