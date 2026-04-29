@@ -4132,6 +4132,27 @@ export type Database = {
           user_id: string
         }[]
       }
+      list_available_recommendations: {
+        Args: never
+        Returns: {
+          out_already_tracked: boolean
+          out_description: string
+          out_epn_delta_narrative_id: string
+          out_generated_at: string
+          out_instrument_id: string
+          out_intervention_type: string
+          out_narrative_id: string
+          out_participant_count: number
+          out_priority: string
+          out_rec_index: number
+          out_slice_type: string
+          out_slice_value: string
+          out_source_kind: string
+          out_target_dimensions: string[]
+          out_time_horizon: string
+          out_title: string
+        }[]
+      }
       list_org_interventions: {
         Args: {
           p_assigned_owner?: string

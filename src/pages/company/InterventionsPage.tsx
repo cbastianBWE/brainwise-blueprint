@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Plus, RefreshCw, Trash2, ChevronDown, ChevronRight } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import CreateManualInterventionModal from "@/components/company/CreateManualInterventionModal";
+import BulkImportRecommendationsModal from "@/components/company/BulkImportRecommendationsModal";
 
 // ── Brand constants (mirrors CompanyDashboard / PTPDashboard) ───────────────
 const NAVY = "#021F36";
@@ -216,6 +217,7 @@ export default function InterventionsPage() {
   const [savingId, setSavingId] = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [bulkImportOpen, setBulkImportOpen] = useState(false);
 
   // ── Loaders ────────────────────────────────────────────────────────────────
   const loadList = useCallback(async () => {
@@ -490,7 +492,14 @@ export default function InterventionsPage() {
                 View and manage interventions saved across all dashboards.
               </p>
             </div>
-            <div>
+            <div style={{ display: "flex", gap: 8 }}>
+              <Button
+                onClick={() => setBulkImportOpen(true)}
+                variant="outline"
+              >
+                <Plus />
+                Bulk import recommendations
+              </Button>
               <Button
                 onClick={() => setCreateModalOpen(true)}
                 style={{ background: NAVY, color: "#fff" }}
@@ -672,6 +681,11 @@ export default function InterventionsPage() {
         onClose={() => setCreateModalOpen(false)}
         onCreated={loadList}
         orgAdmins={orgAdmins}
+      />
+      <BulkImportRecommendationsModal
+        open={bulkImportOpen}
+        onClose={() => setBulkImportOpen(false)}
+        onImported={loadList}
       />
     </TooltipProvider>
   );
