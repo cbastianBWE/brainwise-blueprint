@@ -492,6 +492,44 @@ export default function CompanyDashboard() {
   useEffect(() => { loadNarrativeHistory(); }, [loadNarrativeHistory]);
   useEffect(() => { loadCompareHistory(); }, [loadCompareHistory]);
 
+  const loadDeltaResult = useCallback(async () => {
+    if (!user) return;
+    setLoadingDelta(true);
+    const { data: userRow } = await (supabase as any).from("users").select("organization_id").eq("id", user.id).single();
+    if (!userRow?.organization_id) { setDeltaResult(null); setLoadingDelta(false); return; }
+    const { data, error } = await (supabase as any).rpc("get_nai_epn_delta", {
+      p_organization_id: userRow.organization_id,
+      p_slice_type: sliceType,
+      p_slice_value: sliceValue,
+      p_exclude_leaders_from_self: true,
+    });
+    if (error) { console.error("get_nai_epn_delta error:", error); setDeltaResult(null); }
+    else setDeltaResult(data as DeltaResult);
+    setLoadingDelta(false);
+  }, [user, sliceType, sliceValue]);
+
+  const loadDeltaNarrative = useCallback(async () => {
+    if (!user) return;
+    setLoadingDeltaNarrative(true);
+    const { data: userRow } = await (supabase as any).from("users").select("organization_id").eq("id", user.id).single();
+    if (!userRow?.organization_id) { setDeltaNarrative(null); setLoadingDeltaNarrative(false); return; }
+    const { data } = await (supabase as any)
+      .from("org_nai_delta_narratives")
+      .select("id, generated_at, self_participant_count, epn_participant_count, exclude_leaders_from_self, narrative_text")
+      .eq("organization_id", userRow.organization_id)
+      .eq("slice_type", sliceType)
+      .eq("slice_value", sliceValue)
+      .eq("exclude_leaders_from_self", true)
+      .order("generated_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    setDeltaNarrative((data ?? null) as StoredDeltaNarrative | null);
+    setLoadingDeltaNarrative(false);
+  }, [user, sliceType, sliceValue]);
+
+  useEffect(() => { loadDeltaResult(); }, [loadDeltaResult]);
+  useEffect(() => { loadDeltaNarrative(); }, [loadDeltaNarrative]);
+
   const handleRegenerate = async () => {
     if (!user) return;
     setRegenerating(true);
