@@ -1860,7 +1860,7 @@ export default function CompanyDashboard() {
                                         {rec.steps.map((step, j) => <li key={j}>{step}</li>)}
                                       </ol>
                                     )}
-                                    <button onClick={(e) => { e.stopPropagation(); saveDeltaIntervention(rec); }} style={{
+                                    <button onClick={(e) => openTrackingModal({ kind: "delta", rec }, e)} style={{
                                       fontSize: 10, padding: "3px 9px", border: `0.5px solid ${NAVY}`, borderRadius: 5,
                                       background: "transparent", color: NAVY, cursor: "pointer",
                                     }}>+ Add to intervention tracking</button>
