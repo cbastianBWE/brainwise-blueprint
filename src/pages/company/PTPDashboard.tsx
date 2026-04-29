@@ -405,6 +405,7 @@ export default function PTPDashboard() {
     overview: true,
     dimensions: true,
     interpretation: true,
+    leaderWorkforce: true,
     trends: true,
     interventions: true,
     crossInstrument: true,
@@ -815,7 +816,12 @@ export default function PTPDashboard() {
   const handleExport = async () => {
     // Belt-and-suspenders: ensure cross-instrument data is loaded even if user
     // hasn't visited the cross-instrument tab or just changed slice
-    await Promise.all([loadNAIAggregate(), loadCrossInstrumentRecs()]);
+    await Promise.all([
+      loadNAIAggregate(),
+      loadCrossInstrumentRecs(),
+      loadDeltaResult(),
+      loadDeltaNarrative(),
+    ]);
     const sliceLabel =
       sliceType === "all" ? "All organization" : `${sliceType}: ${sliceValue}`;
     const generatedAt = latestNarrative?.generated_at
@@ -929,6 +935,34 @@ export default function PTPDashboard() {
         recommendations: crossInstrumentRow.recommendations,
         summary: crossInstrumentRow.summary,
         generated_at: crossInstrumentRow.generated_at,
+      } : null,
+      leaderWorkforceDelta: deltaResult ? {
+        suppressed: deltaResult.suppressed,
+        reason: deltaResult.reason,
+        leaderParticipantCount: deltaResult.leader_participant_count,
+        workforceParticipantCount: deltaResult.workforce_participant_count,
+        delta: deltaResult.delta,
+        minimumRequired: deltaResult.minimum_required,
+      } : null,
+      leaderWorkforceNarrative: deltaNarrative ? {
+        generatedAt: new Date(deltaNarrative.generated_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+        leaderParticipantCount: deltaNarrative.leader_participant_count,
+        workforceParticipantCount: deltaNarrative.workforce_participant_count,
+        summary: deltaNarrative.narrative_text.summary ?? null,
+        alignmentOverview: deltaNarrative.narrative_text.alignment_overview ?? null,
+        keyGaps: (deltaNarrative.narrative_text.key_gaps ?? []).map(g => ({
+          title: g.title,
+          description: g.description,
+        })),
+        recommendations: (deltaNarrative.narrative_text.recommendations ?? []).map(r => ({
+          id: r.id,
+          title: r.title,
+          rationale: r.rationale,
+          steps: r.steps ?? [],
+          priority: r.priority,
+          time_horizon: r.time_horizon,
+          intervention_type: r.intervention_type,
+        })),
       } : null,
     });
   };
@@ -3564,6 +3598,7 @@ export default function PTPDashboard() {
                   { key: "overview", label: "Overview" },
                   { key: "dimensions", label: "Dimensions" },
                   { key: "interpretation", label: "AI Interpretation" },
+                  { key: "leaderWorkforce", label: "Leadership vs Workforce" },
                   { key: "trends", label: "Trends" },
                   { key: "interventions", label: "Interventions" },
                   { key: "crossInstrument", label: "Cross-Instrument" },
