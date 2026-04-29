@@ -1298,12 +1298,11 @@ export default function CompanyDashboard() {
     return false;
   };
 
-  const tabs = ["overview", "dimensions", "interpretation", "interventions", "trends", "cross-instrument"];
+  const tabs = ["overview", "dimensions", "interpretation", "trends", "cross-instrument"];
   const tabLabels: Record<string, string> = {
     overview: "Overview",
     dimensions: "Dimensions",
     interpretation: "AI Interpretation",
-    interventions: "Interventions",
     trends: "Trends",
     "cross-instrument": "Cross-Instrument",
   };
