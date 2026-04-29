@@ -1371,6 +1371,242 @@ export default function AdminUsers() {
           </Card>
         );
       })()}
+        </TabsContent>
+
+        <TabsContent value="epn" className="space-y-6">
+          {(() => {
+            const allOrgUsers = orgUsersQuery.data || [];
+            const eligible = allOrgUsers
+              .filter((u) => !u.deactivated_at && u.id !== user?.id)
+              .filter((u) => {
+                if (epnFilter === "all") return true;
+                if (epnFilter === "leaders") {
+                  return u.org_level === "Director" || u.org_level === "VP" || u.org_level === "C-Suite";
+                }
+                return u.org_level === epnFilter;
+              })
+              .slice()
+              .sort((a, b) => (a.full_name || a.email).localeCompare(b.full_name || b.email));
+
+            const toggle = (id: string) => {
+              setEpnSelectedIds((prev) => {
+                const next = new Set(prev);
+                if (next.has(id)) next.delete(id);
+                else next.add(id);
+                return next;
+              });
+            };
+            const selectAllVisible = () => {
+              setEpnSelectedIds((prev) => {
+                const next = new Set(prev);
+                eligible.forEach((u) => next.add(u.id));
+                return next;
+              });
+            };
+            const clearSelection = () => setEpnSelectedIds(new Set());
+
+            const userMap = new Map(allOrgUsers.map((u) => [u.id, u]));
+            const assignments = epnAssignmentsQuery.data || [];
+            const sq = epnSearch.trim().toLowerCase();
+            const enriched = assignments.map((a) => {
+              const assignee = userMap.get(a.assignee_user_id);
+              const assigner = a.assigned_by ? userMap.get(a.assigned_by) : null;
+              return {
+                ...a,
+                assignee_email: assignee?.email ?? "",
+                assignee_name: assignee?.full_name ?? null,
+                assignee_level: assignee?.org_level ?? null,
+                assigner_label: assigner?.full_name || assigner?.email || null,
+              };
+            });
+            const filteredAssignments = !sq
+              ? enriched
+              : enriched.filter(
+                  (a) =>
+                    a.assignee_email.toLowerCase().includes(sq) ||
+                    (a.assignee_name?.toLowerCase().includes(sq) ?? false)
+                );
+
+            const renderStatusBadge = (status: string) => {
+              switch (status) {
+                case "pending":
+                  return <Badge variant="outline">pending</Badge>;
+                case "in_progress":
+                  return <Badge variant="secondary">in progress</Badge>;
+                case "completed":
+                  return <Badge className="bg-accent text-accent-foreground">completed</Badge>;
+                case "declined":
+                  return <Badge variant="destructive">declined</Badge>;
+                case "expired":
+                  return <Badge variant="secondary" className="opacity-60">expired</Badge>;
+                default:
+                  return <Badge variant="outline">{status}</Badge>;
+              }
+            };
+
+            return (
+              <>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Assign Executive Perspective</CardTitle>
+                    <CardDescription>
+                      Assign the Executive Perspective NAI to leaders. Recipients will see this assessment in their assessments list and rate how their employees experience AI adoption. The standard NAI is unaffected.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <Alert>
+                      <AlertTriangle className="h-4 w-4" />
+                      <AlertDescription>
+                        The Executive Perspective NAI is a leader-perspective rewording of the standard NAI. Leaders rate how their employees experience AI adoption. Their responses contribute to a leader-vs-employee delta view in the NAI dashboard, but do NOT count toward the standard NAI organizational aggregate. Leaders should still take the standard NAI separately.
+                      </AlertDescription>
+                    </Alert>
+
+                    <div className="space-y-2 max-w-md">
+                      <Label htmlFor="epn-filter">Filter by org level</Label>
+                      <Select value={epnFilter} onValueChange={setEpnFilter}>
+                        <SelectTrigger id="epn-filter">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All levels</SelectItem>
+                          <SelectItem value="leaders">Leaders only (Director / VP / C-Suite)</SelectItem>
+                          <SelectItem value="Director">Director</SelectItem>
+                          <SelectItem value="VP">VP</SelectItem>
+                          <SelectItem value="C-Suite">C-Suite</SelectItem>
+                          <SelectItem value="Manager">Manager</SelectItem>
+                          <SelectItem value="IC">IC</SelectItem>
+                          <SelectItem value="Other">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <div className="flex gap-2">
+                        <Button variant="ghost" size="sm" onClick={selectAllVisible} disabled={eligible.length === 0}>
+                          Select all visible
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={clearSelection} disabled={epnSelectedIds.size === 0}>
+                          Clear selection
+                        </Button>
+                      </div>
+                      <span className="text-sm text-muted-foreground">{epnSelectedIds.size} selected</span>
+                    </div>
+
+                    <div className="max-h-96 overflow-y-auto border rounded-md">
+                      {eligible.length === 0 ? (
+                        <p className="text-sm text-muted-foreground py-8 text-center">No matching users to assign.</p>
+                      ) : (
+                        <ul className="divide-y">
+                          {eligible.map((u) => {
+                            const checked = epnSelectedIds.has(u.id);
+                            return (
+                              <li key={u.id} className="flex items-center gap-3 px-3 py-2">
+                                <Checkbox
+                                  id={`epn-user-${u.id}`}
+                                  checked={checked}
+                                  onCheckedChange={() => toggle(u.id)}
+                                />
+                                <Label htmlFor={`epn-user-${u.id}`} className="flex-1 cursor-pointer font-normal">
+                                  {(u.full_name || u.email)} — {u.org_level || "Other"}
+                                </Label>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="epn-notes">Notes (optional)</Label>
+                      <Textarea
+                        id="epn-notes"
+                        placeholder="e.g. Q3 leadership cycle"
+                        value={epnNotes}
+                        onChange={(e) => setEpnNotes(e.target.value.slice(0, 500))}
+                        maxLength={500}
+                      />
+                    </div>
+
+                    <div className="flex justify-end">
+                      <Button
+                        onClick={handleAssignExecutivePerspective}
+                        disabled={epnSelectedIds.size === 0 || epnSubmitting}
+                      >
+                        {epnSubmitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                        Assign to {epnSelectedIds.size} user{epnSelectedIds.size === 1 ? "" : "s"}
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Current assignments</CardTitle>
+                    <CardDescription>
+                      Pending, in-progress, and completed Executive Perspective assignments for this organization.
+                    </CardDescription>
+                    <div className="relative max-w-sm pt-2">
+                      <Search className="absolute left-2 top-1/2 -translate-y-1/2 mt-1 h-4 w-4 text-muted-foreground pointer-events-none" />
+                      <Input
+                        value={epnSearch}
+                        onChange={(e) => setEpnSearch(e.target.value)}
+                        placeholder="Search by email or name…"
+                        className="pl-8"
+                      />
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    {epnAssignmentsQuery.isLoading ? (
+                      <div className="py-8 flex items-center justify-center">
+                        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                      </div>
+                    ) : filteredAssignments.length === 0 ? (
+                      <p className="text-sm text-muted-foreground py-8 text-center">No assignments yet.</p>
+                    ) : (
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>User</TableHead>
+                            <TableHead>Role/Level</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead>Assigned</TableHead>
+                            <TableHead>Started</TableHead>
+                            <TableHead>Completed</TableHead>
+                            <TableHead>Notes</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {filteredAssignments.map((a) => {
+                            const truncated = a.notes && a.notes.length > 60 ? a.notes.slice(0, 60) + "…" : a.notes;
+                            return (
+                              <TableRow key={a.id}>
+                                <TableCell className="font-medium">
+                                  {a.assignee_name || a.assignee_email || a.assignee_user_id}
+                                  {a.assignee_name && (
+                                    <div className="text-xs text-muted-foreground">{a.assignee_email}</div>
+                                  )}
+                                </TableCell>
+                                <TableCell>{a.assignee_level || "—"}</TableCell>
+                                <TableCell>{renderStatusBadge(a.status)}</TableCell>
+                                <TableCell>{formatDate(a.assigned_at)}</TableCell>
+                                <TableCell>{formatDate(a.started_at)}</TableCell>
+                                <TableCell>{formatDate(a.completed_at)}</TableCell>
+                                <TableCell title={a.notes ?? undefined} className="text-sm text-muted-foreground">
+                                  {truncated || "—"}
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
+                        </TableBody>
+                      </Table>
+                    )}
+                  </CardContent>
+                </Card>
+              </>
+            );
+          })()}
+        </TabsContent>
+      </Tabs>
 
       <Dialog open={deptDialogOpen} onOpenChange={(open) => !creatingDept && setDeptDialogOpen(open)}>
         <DialogContent>
