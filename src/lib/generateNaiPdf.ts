@@ -562,7 +562,7 @@ export function generateNaiPdf(data: NaiPdfData, sections: NaiPdfSections, optio
     y += 6;
 
     for (const r of data.assessmentResponses) {
-      const rgb = hexToRgb(data.dimensions.find(d => d.dimensionId === r.dimensionId)?.color ?? "#021F36");
+      const rgb = hexToRgb(data.dimensions.find(d => d.dimensionId === r.dimensionId)?.color ?? PRIMARY_TEXT_HEX);
       const labelText = `Q${r.itemNumber} — ${r.facetName}`;
       const questionLines = doc.splitTextToSize(r.itemText, CONTENT_W - 20);
       const rowH = questionLines.length * 4 + 8;
