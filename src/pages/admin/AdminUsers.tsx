@@ -1863,7 +1863,7 @@ export default function AdminUsers() {
           <DialogHeader>
             <DialogTitle>Deactivate user</DialogTitle>
             <DialogDescription>
-              This will deactivate {deactivateDialog.userName || deactivateDialog.userEmail}. They will lose access immediately and can be reactivated within 90 days. After that, their account data is scheduled for permanent removal.
+              This will deactivate {deactivateDialog.userName || deactivateDialog.userEmail}. They will lose access immediately. They will be emailed with their options: convert to a personal account, download their data, or de-identify themselves now. They have 90 days to be reactivated. After that, their account is automatically de-identified.
             </DialogDescription>
           </DialogHeader>
           {deactivateDialog.targetRole === "brainwise_super_admin" && (
