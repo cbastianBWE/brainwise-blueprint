@@ -1601,6 +1601,8 @@ export default function AdminUsers() {
                     })}
                   </TableBody>
                 </Table>
+                  );
+                })()
               )}
             </CardContent>
           </Card>
