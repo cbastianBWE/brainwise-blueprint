@@ -515,6 +515,18 @@ export default function AdminUsers() {
 
   const [reconciling, setReconciling] = useState(false);
 
+  const [selectedUserIds, setSelectedUserIds] = useState<Set<string>>(new Set());
+  const [bulkDeactivateDialog, setBulkDeactivateDialog] = useState<{
+    open: boolean;
+    sending: boolean;
+    results: null | {
+      succeeded: number;
+      failed: Array<{ user_id: string; error: string }>;
+      emails_sent: number;
+      emails_failed: number;
+    };
+  }>({ open: false, sending: false, results: null });
+
   const [pendingSearch, setPendingSearch] = useState("");
   const [usersSearch, setUsersSearch] = useState("");
 
