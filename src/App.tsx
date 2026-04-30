@@ -55,6 +55,7 @@ import CreateOrganization from "./pages/super-admin/CreateOrganization";
 import EpnComplete from "./pages/EpnComplete";
 import VerifyConversion from "./pages/VerifyConversion";
 import Departed from "./pages/Departed";
+import MfaEnrollment from "./pages/MfaEnrollment";
 
 const queryClient = new QueryClient();
 
@@ -83,6 +84,7 @@ const App = () => (
             <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
             <Route path="/demographic-consent" element={<ProtectedRoute><DemographicConsent /></ProtectedRoute>} />
             <Route path="/demographic-form" element={<ProtectedRoute><DemographicForm /></ProtectedRoute>} />
+            <Route path="/mfa-enrollment" element={<ProtectedRoute><MfaEnrollment /></ProtectedRoute>} />
             <Route path="/peer-sharing-optin" element={<ProtectedRoute><PeerSharingOptIn /></ProtectedRoute>} />
             
 
