@@ -558,6 +558,16 @@ export function generateResultsPdf(data: PdfData, sections: PdfSections, options
 
   addFooter();
 
+  // Stamp "Page X of Y" on every page now that the total page count is known.
+  const totalPages = doc.getNumberOfPages();
+  for (let p = 1; p <= totalPages; p++) {
+    doc.setPage(p);
+    doc.setFontSize(7);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(...MUTED);
+    doc.text(`Page ${p} of ${totalPages}`, PAGE_W - MARGIN_R, FOOTER_Y, { align: "right" });
+  }
+
   const lastName = data.userName.split(" ").pop() || "User";
   const dateStr = new Date().toISOString().slice(0, 10);
   const contextSuffix = data.contextLabel ? `-${data.contextLabel}` : "";
