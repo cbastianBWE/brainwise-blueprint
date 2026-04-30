@@ -13,6 +13,10 @@ import {
 import {
   Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Search, ShieldCheck, Users2, ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 
@@ -28,6 +32,7 @@ interface EffectiveFeatures {
   ai_chat_enabled: boolean;
   dashboard_access_level: string;
   supervisor_dashboard_enabled: boolean;
+  mfa_required: boolean;
 }
 
 interface Instrument {
@@ -91,6 +96,8 @@ export default function Features() {
 
   const [inFlight, setInFlight] = useState<Set<string>>(new Set());
   const [supervisorInFlight, setSupervisorInFlight] = useState(false);
+  const [mfaInFlight, setMfaInFlight] = useState(false);
+  const [confirmEnableMfaOpen, setConfirmEnableMfaOpen] = useState(false);
 
   /* ---------- Initial load ---------- */
 
@@ -115,7 +122,19 @@ export default function Features() {
         if (membersRes.error) throw membersRes.error;
         if (overridesRes.error) throw overridesRes.error;
 
-        setFeatures(featuresRes.data as EffectiveFeatures | null);
+        const baseFeatures = featuresRes.data as Omit<EffectiveFeatures, "mfa_required"> | null;
+        let merged: EffectiveFeatures | null = null;
+        if (baseFeatures) {
+          const orgRes = await supabase
+            .from("organizations")
+            .select("mfa_required")
+            .eq("id", baseFeatures.organization_id)
+            .single();
+          if (orgRes.error) throw orgRes.error;
+          merged = { ...baseFeatures, mfa_required: !!orgRes.data?.mfa_required };
+        }
+
+        setFeatures(merged);
         setInstruments((instrumentsRes.data ?? []) as Instrument[]);
         // Exclude deactivated users from the overrides table
         setMembers(((membersRes.data ?? []) as OrgMember[]).filter((m) => !m.deactivated_at));
@@ -229,6 +248,40 @@ export default function Features() {
     if (error) {
       setFeatures({ ...features, supervisor_dashboard_enabled: prev });
       toast.error(error.message || "Failed to update supervisor dashboard setting.");
+    }
+  }
+
+  async function applyMfaToggle(newEnabled: boolean) {
+    if (mfaInFlight || !features) return;
+    setMfaInFlight(true);
+
+    const prev = features.mfa_required;
+    setFeatures({ ...features, mfa_required: newEnabled });
+
+    const { error } = await supabase.rpc("org_set_mfa_required", {
+      p_organization_id: features.organization_id,
+      p_enabled: newEnabled,
+    });
+
+    setMfaInFlight(false);
+
+    if (error) {
+      setFeatures({ ...features, mfa_required: prev });
+      toast.error(error.message || "Failed to update two-factor authentication setting.");
+      return;
+    }
+    toast.success(
+      newEnabled
+        ? "Two-factor authentication enforcement enabled"
+        : "Two-factor authentication enforcement disabled"
+    );
+  }
+
+  function handleMfaSwitch(newEnabled: boolean) {
+    if (newEnabled) {
+      setConfirmEnableMfaOpen(true);
+    } else {
+      void applyMfaToggle(false);
     }
   }
 
@@ -370,6 +423,53 @@ export default function Features() {
             </CardContent>
           </Card>
         )}
+
+        {/* ---------- Card: Two-Factor Authentication (org_admin only) ---------- */}
+        {isOrgAdmin && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ShieldCheck className="h-5 w-5" />
+                Two-Factor Authentication
+              </CardTitle>
+              <CardDescription>
+                When enabled, all users in your organization must set up two-factor authentication to access the platform.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between gap-4">
+                <div className="space-y-1">
+                  <p className="font-medium">Require two-factor authentication for all users</p>
+                  <p className="text-sm text-muted-foreground">
+                    Users without an authenticator app enrolled will be prompted to set one up before they can access any feature.
+                  </p>
+                </div>
+                <Switch
+                  checked={!!features.mfa_required}
+                  disabled={mfaInFlight}
+                  onCheckedChange={handleMfaSwitch}
+                />
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        <AlertDialog open={confirmEnableMfaOpen} onOpenChange={setConfirmEnableMfaOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Enable two-factor authentication for this organization?</AlertDialogTitle>
+              <AlertDialogDescription>
+                All users will be required to set up an authenticator app before they can use the platform. Existing users without MFA will be redirected to set it up on their next page load.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={() => void applyMfaToggle(true)}>
+                Enable
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         {/* ---------- Card 3: Member Feature Overrides ---------- */}
         <Card>
