@@ -1013,6 +1013,7 @@ export default function AdminUsers() {
         failed: result.deactivation.failed || [],
         emails_sent: result.email_results.sent,
         emails_failed: result.email_results.failed,
+        email_failures: result.email_results.failures || [],
       },
     });
     setSelectedUserIds(new Set());
