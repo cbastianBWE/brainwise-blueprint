@@ -1,17 +1,17 @@
-// Stripe configuration — price and product IDs
-export const STRIPE_PUBLISHABLE_KEY = "pk_test_51TK2PzCMQX1silSQ4JJjibsxxJh0kLpTS74zqIIWKQxMGYfGHckb8gsG4V63K9Kot4CEBN4qMVwbqN5Cuq9ZPcuF008JCHffCG";
+// Stripe configuration — price and product IDs (LIVE MODE)
+// Updated: Session 36 — pricing amendment per E-Q2, switched from test to live mode
+export const STRIPE_PUBLISHABLE_KEY = "pk_live_51TK2Pl2FY7qIyIXALOqrfqTUpaluzl3V3hj59mz9E4qG5rdaYGjfGc6WKi6e6rZKippRJjYgwDiSgNIhaJg0Vct30052dAT8Sn";
 
 export const PLANS = {
   base: {
     name: "Base",
-    product_id: "prod_UJ0cysJxUCxn4a",
     monthly: {
-      price_id: "price_1TKObgCMQX1silSQMZ71bNuM",
-      price: 14,
+      price_id: "price_1TS3WV2FY7qIyIXA5L2Gs71D",
+      price: 10,
     },
     annual: {
-      price_id: "price_1TKOd1CMQX1silSQigrP4JGm",
-      price: 130,
+      price_id: "price_1TS3WU2FY7qIyIXAPG37X3eg",
+      price: 100,
     },
     features: [
       "PTP instrument unlimited",
@@ -23,14 +23,13 @@ export const PLANS = {
   },
   premium: {
     name: "Premium",
-    product_id: "prod_UJ0fZEaEn6S9Vu",
     monthly: {
-      price_id: "price_1TKOdhCMQX1silSQYicToumr",
-      price: 24,
+      price_id: "price_1TS3WY2FY7qIyIXA6aO8QZfO",
+      price: 18,
     },
     annual: {
-      price_id: "price_1TKOdzCMQX1silSQSPWiE7ac",
-      price: 220,
+      price_id: "price_1TS3WY2FY7qIyIXAUrBknGRQ",
+      price: 180,
     },
     features: [
       "All 4 instruments unlimited",
@@ -43,8 +42,7 @@ export const PLANS = {
 } as const;
 
 export const ASSESSMENT_PURCHASE = {
-  product_id: "prod_UJ0fo5LTXmz9Y3",
-  price_id: "price_1TKOeMCMQX1silSQ7tzQLso6",
+  price_id: "price_1TS3WY2FY7qIyIXAalOKbxdZ",
   price: 29.99,
   instruments: ["NAI", "AIRSA", "HSS", "PTP"],
 } as const;
