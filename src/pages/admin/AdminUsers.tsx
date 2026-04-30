@@ -1274,7 +1274,7 @@ export default function AdminUsers() {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="invite" className="space-y-6">
+        <TabsContent value="invite" className="space-y-6 max-w-5xl">
       <Card>
         <CardHeader>
           <CardTitle>Invite a user</CardTitle>
