@@ -2715,6 +2715,7 @@ export type Database = {
           created_at: string
           created_by_user_id: string | null
           id: string
+          is_internal_test: boolean
           mfa_required: boolean
           name: string
           primary_contact_email: string | null
@@ -2726,6 +2727,7 @@ export type Database = {
           created_at?: string
           created_by_user_id?: string | null
           id?: string
+          is_internal_test?: boolean
           mfa_required?: boolean
           name: string
           primary_contact_email?: string | null
@@ -2737,6 +2739,7 @@ export type Database = {
           created_at?: string
           created_by_user_id?: string | null
           id?: string
+          is_internal_test?: boolean
           mfa_required?: boolean
           name?: string
           primary_contact_email?: string | null
@@ -3619,6 +3622,7 @@ export type Database = {
           email: string
           full_name: string | null
           id: string
+          is_internal_test: boolean
           notifications: Json | null
           onboarding_completed_at: string | null
           onboarding_instrument_version: string | null
@@ -3651,6 +3655,7 @@ export type Database = {
           email: string
           full_name?: string | null
           id?: string
+          is_internal_test?: boolean
           notifications?: Json | null
           onboarding_completed_at?: string | null
           onboarding_instrument_version?: string | null
@@ -3683,6 +3688,7 @@ export type Database = {
           email?: string
           full_name?: string | null
           id?: string
+          is_internal_test?: boolean
           notifications?: Json | null
           onboarding_completed_at?: string | null
           onboarding_instrument_version?: string | null
@@ -4093,6 +4099,10 @@ export type Database = {
       admin_promote_to_org_admin: {
         Args: { p_target_user_id: string }
         Returns: undefined
+      }
+      admin_reset_user_mfa: {
+        Args: { p_reason: string; p_target_user_id: string }
+        Returns: Json
       }
       admin_revoke_company_admin: {
         Args: { p_target_user_id: string }
