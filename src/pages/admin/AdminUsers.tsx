@@ -1610,7 +1610,7 @@ export default function AdminUsers() {
       })()}
         </TabsContent>
 
-        <TabsContent value="epn" className="space-y-6">
+        <TabsContent value="epn" className="space-y-6 max-w-5xl">
           {(() => {
             const allOrgUsers = orgUsersQuery.data || [];
             const eligible = allOrgUsers
