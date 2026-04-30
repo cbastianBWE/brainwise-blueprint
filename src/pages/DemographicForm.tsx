@@ -85,7 +85,8 @@ const DemographicForm = () => {
     }
 
     setLoading(false);
-    navigate("/demographic-consent");
+    await queryClient.invalidateQueries({ queryKey: ["onboarding-status", user.id] });
+    navigate("/demographic-consent", { replace: true });
   };
 
   return (
