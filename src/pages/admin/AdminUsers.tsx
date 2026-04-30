@@ -1408,7 +1408,7 @@ export default function AdminUsers() {
       })()}
         </TabsContent>
 
-        <TabsContent value="users" className="space-y-6">
+        <TabsContent value="users" className="space-y-6 max-w-7xl">
       {(() => {
         const allUsers = orgUsersQuery.data || [];
         const q = usersSearch.trim().toLowerCase();
