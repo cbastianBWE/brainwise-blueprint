@@ -414,7 +414,7 @@ export function generateNaiPdf(data: NaiPdfData, sections: NaiPdfSections, optio
       doc.setFontSize(7.5);
       const relatedLine = item.relatedPtpFacets ? doc.splitTextToSize(`Related PTP facets: ${item.relatedPtpFacets}`, CONTENT_W - 10) : [];
       const cardH = 15 + itemTextLines.length * 4 + relatedLine.length * 4 + interpLines.length * 4.5 + 10;
-      checkPageBreak(cardH + 4);
+      ensureBlockSpace(Math.max(MIN_BLOCK_SPACE, Math.min(cardH + 4, 80)));
       doc.setFillColor(rgb[0], rgb[1], rgb[2]);
       doc.rect(MARGIN_L, y, 1.5, cardH, "F");
       doc.setFillColor(rgb[0], rgb[1], rgb[2]);
