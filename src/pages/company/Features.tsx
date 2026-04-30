@@ -96,6 +96,8 @@ export default function Features() {
 
   const [inFlight, setInFlight] = useState<Set<string>>(new Set());
   const [supervisorInFlight, setSupervisorInFlight] = useState(false);
+  const [mfaInFlight, setMfaInFlight] = useState(false);
+  const [confirmEnableMfaOpen, setConfirmEnableMfaOpen] = useState(false);
 
   /* ---------- Initial load ---------- */
 
@@ -120,7 +122,19 @@ export default function Features() {
         if (membersRes.error) throw membersRes.error;
         if (overridesRes.error) throw overridesRes.error;
 
-        setFeatures(featuresRes.data as EffectiveFeatures | null);
+        const baseFeatures = featuresRes.data as Omit<EffectiveFeatures, "mfa_required"> | null;
+        let merged: EffectiveFeatures | null = null;
+        if (baseFeatures) {
+          const orgRes = await supabase
+            .from("organizations")
+            .select("mfa_required")
+            .eq("id", baseFeatures.organization_id)
+            .single();
+          if (orgRes.error) throw orgRes.error;
+          merged = { ...baseFeatures, mfa_required: !!orgRes.data?.mfa_required };
+        }
+
+        setFeatures(merged);
         setInstruments((instrumentsRes.data ?? []) as Instrument[]);
         // Exclude deactivated users from the overrides table
         setMembers(((membersRes.data ?? []) as OrgMember[]).filter((m) => !m.deactivated_at));
