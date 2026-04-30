@@ -96,7 +96,7 @@ function cleanMarkdown(text: string): string {
   return text.replace(/\*\*(.+?)\*\*/g, "$1").replace(/\*(.+?)\*/g, "$1");
 }
 
-export function generateNaiPdf(data: NaiPdfData, sections: NaiPdfSections): void {
+export function generateNaiPdf(data: NaiPdfData, sections: NaiPdfSections, options?: { returnBlob?: boolean }): void | Blob {
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   let y = MARGIN_T;
   const today = new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
@@ -584,5 +584,8 @@ export function generateNaiPdf(data: NaiPdfData, sections: NaiPdfSections): void
   const lastName = data.userName.split(" ").pop() || "User";
   const dateStr = new Date().toISOString().slice(0, 10);
   const viewSuffix = data.isCoachView ? "-Coach" : "";
+  if (options?.returnBlob) {
+    return doc.output("blob");
+  }
   doc.save(`BrainWise-${data.instrumentShortName}${viewSuffix}-${lastName}-${dateStr}.pdf`);
 }
