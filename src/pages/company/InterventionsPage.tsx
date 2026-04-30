@@ -7,6 +7,8 @@ import { Plus, RefreshCw, Trash2, ChevronDown, ChevronRight } from "lucide-react
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import CreateManualInterventionModal from "@/components/company/CreateManualInterventionModal";
 import BulkImportRecommendationsModal from "@/components/company/BulkImportRecommendationsModal";
+import { rowsToCsv, downloadCsv } from "@/lib/csvUtils";
+import { Download } from "lucide-react";
 
 // ── Brand constants (mirrors CompanyDashboard / PTPDashboard) ───────────────
 const NAVY = "#021F36";
@@ -243,6 +245,8 @@ export default function InterventionsPage() {
     setLoading(false);
   }, [user]);
 
+  const [orgName, setOrgName] = useState("");
+
   const loadOrgAdmins = useCallback(async () => {
     if (!user) return;
     const { data: userRow } = await (supabase as any)
@@ -252,8 +256,16 @@ export default function InterventionsPage() {
       .single();
     if (!userRow?.organization_id) {
       setOrgAdmins([]);
+      setOrgName("");
       return;
     }
+    const { data: orgRow } = await (supabase as any)
+      .from("organizations")
+      .select("name")
+      .eq("id", userRow.organization_id)
+      .single();
+    setOrgName((orgRow?.name as string) ?? "");
+
     const { data } = await (supabase as any)
       .from("users")
       .select("id, full_name, email")
@@ -455,6 +467,109 @@ export default function InterventionsPage() {
     });
   };
 
+  // Human-readable source label combining source_kind and instrument_id.
+  // Five values: PTP Dashboard, NAI Dashboard, PTP Leader vs Workforce,
+  // NAI Leader vs Workforce, Custom.
+  const getSourceLabel = (row: EnrichedIntervention): string => {
+    if (row.source_kind === "manual") return "Custom";
+    if (row.source_kind === "ptp_delta") return "PTP Leader vs Workforce";
+    if (row.source_kind === "epn_delta") return "NAI Leader vs Workforce";
+    if (row.source_kind === "narrative") {
+      if (row.instrument_id === "INST-001") return "PTP Dashboard";
+      if (row.instrument_id === "INST-002" || row.instrument_id === "INST-002L") return "NAI Dashboard";
+    }
+    return SOURCE_KIND_LABEL[row.source_kind] ?? row.source_kind;
+  };
+
+  // Convert a timestamp or date-string column to YYYY-MM-DD (date-only) for CSV.
+  const toCsvDate = (value: string | null | undefined): string => {
+    if (!value) return "";
+    const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(value);
+    if (m) return `${m[1]}-${m[2]}-${m[3]}`;
+    const d = new Date(value);
+    if (isNaN(d.getTime())) return "";
+    const y = d.getFullYear();
+    const mo = String(d.getMonth() + 1).padStart(2, "0");
+    const da = String(d.getDate()).padStart(2, "0");
+    return `${y}-${mo}-${da}`;
+  };
+
+  const slugifyOrgName = (name: string): string => {
+    const slug = name
+      .replace(/[^a-zA-Z0-9-]+/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-|-$/g, "");
+    return slug || "Organization";
+  };
+
+  const handleExportCsv = () => {
+    if (filteredRows.length === 0) {
+      toast.error("No interventions match the current filters.");
+      return;
+    }
+
+    const headers = [
+      "intervention_id",
+      "title",
+      "description",
+      "status",
+      "priority",
+      "source_kind",
+      "source_label",
+      "instrument_id",
+      "instrument_label",
+      "target_dimensions",
+      "time_horizon",
+      "intervention_type",
+      "tracking_notes",
+      "assigned_owner_name",
+      "assigned_owner_email",
+      "target_completion_date",
+      "actual_completion_date",
+      "source_slice_type",
+      "source_slice_value",
+      "source_generated_at",
+      "created_at",
+      "last_updated_at",
+    ];
+
+    const rows = filteredRows.map((r) => [
+      r.id,
+      r.title,
+      r.description,
+      r.status,
+      r.priority,
+      r.source_kind,
+      getSourceLabel(r),
+      r.instrument_id,
+      INSTRUMENT_LABEL[r.instrument_id] ?? r.instrument_id,
+      r.target_dimensions.map((d) => DIM_NAMES[d] ?? d).join("; "),
+      r.time_horizon,
+      r.intervention_type,
+      r.tracking_notes ?? "",
+      r.owner_full_name ?? "",
+      r.owner_email ?? "",
+      toCsvDate(r.target_completion_date),
+      toCsvDate(r.actual_completion_date),
+      r.source_slice_type ?? "",
+      r.source_slice_value ?? "",
+      toCsvDate(r.source_generated_at),
+      toCsvDate(r.created_at),
+      toCsvDate(r.last_updated_at),
+    ]);
+
+    const csv = rowsToCsv(headers, rows);
+    const today = new Date();
+    const y = today.getFullYear();
+    const mo = String(today.getMonth() + 1).padStart(2, "0");
+    const d = String(today.getDate()).padStart(2, "0");
+    const orgSlug = slugifyOrgName(orgName);
+    const filename = `BrainWise-Interventions-${orgSlug}-${y}-${mo}-${d}.csv`;
+
+    downloadCsv(filename, csv);
+    toast.success(`Exported ${filteredRows.length} intervention${filteredRows.length === 1 ? "" : "s"}`);
+  };
+
   const setSort = (key: keyof EnrichedIntervention) => {
     if (sortKey === key) {
       setSortDir((d) => (d === "asc" ? "desc" : "asc"));
@@ -505,6 +620,13 @@ export default function InterventionsPage() {
               </p>
             </div>
             <div style={{ display: "flex", gap: 8 }}>
+              <Button
+                onClick={handleExportCsv}
+                variant="outline"
+              >
+                <Download />
+                Export CSV
+              </Button>
               <Button
                 onClick={() => setBulkImportOpen(true)}
                 variant="outline"
