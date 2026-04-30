@@ -424,6 +424,53 @@ export default function Features() {
           </Card>
         )}
 
+        {/* ---------- Card: Two-Factor Authentication (org_admin only) ---------- */}
+        {isOrgAdmin && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ShieldCheck className="h-5 w-5" />
+                Two-Factor Authentication
+              </CardTitle>
+              <CardDescription>
+                When enabled, all users in your organization must set up two-factor authentication to access the platform.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between gap-4">
+                <div className="space-y-1">
+                  <p className="font-medium">Require two-factor authentication for all users</p>
+                  <p className="text-sm text-muted-foreground">
+                    Users without an authenticator app enrolled will be prompted to set one up before they can access any feature.
+                  </p>
+                </div>
+                <Switch
+                  checked={!!features.mfa_required}
+                  disabled={mfaInFlight}
+                  onCheckedChange={handleMfaSwitch}
+                />
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        <AlertDialog open={confirmEnableMfaOpen} onOpenChange={setConfirmEnableMfaOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Enable two-factor authentication for this organization?</AlertDialogTitle>
+              <AlertDialogDescription>
+                All users will be required to set up an authenticator app before they can use the platform. Existing users without MFA will be redirected to set it up on their next page load.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={() => void applyMfaToggle(true)}>
+                Enable
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
         {/* ---------- Card 3: Member Feature Overrides ---------- */}
         <Card>
           <CardHeader>
