@@ -401,7 +401,7 @@ export function generateNaiPdf(data: NaiPdfData, sections: NaiPdfSections, optio
   if (sections.individualResponses && data.outlierItems.length > 0) {
     sectionHeading("Individual Responses That Warrant Attention");
     for (const item of data.outlierItems) {
-      const rgb = hexToRgb(item.dimensionId ? (data.dimensions.find(d => d.dimensionId === item.dimensionId)?.color ?? "#021F36") : "#021F36");
+      const rgb = hexToRgb(item.dimensionId ? (data.dimensions.find(d => d.dimensionId === item.dimensionId)?.color ?? PRIMARY_TEXT_HEX) : PRIMARY_TEXT_HEX);
       const threshold = item.score >= 85 ? "Significant (85+)" : "Notable (75+)";
       // IMPORTANT: splitTextToSize uses the CURRENT font for width calc.
       // Set font to match rendering font BEFORE splitting, or wrap widths come out wrong.
