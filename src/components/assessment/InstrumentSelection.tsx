@@ -238,7 +238,7 @@ export default function InstrumentSelection({ onSelect }: Props) {
     const instrumentIds = Array.from(selfPayCoachInstrumentIds).join(",");
     const { data } = await supabase.functions.invoke("create-checkout", {
       body: {
-        price_id: "price_1TKOeMCMQX1silSQ7tzQLso6",
+        price_id: "price_1TS3WY2FY7qIyIXAalOKbxdZ",
         mode: "payment",
         instrument_ids: instrumentIds,
         quantity: selfPayCoachInstrumentIds.size,

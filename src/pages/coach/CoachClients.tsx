@@ -217,7 +217,7 @@ export default function CoachClients() {
     try {
       const instrumentIds = getSelectedUuids();
       const payload = {
-        price_id: "price_1TKOeMCMQX1silSQ7tzQLso6",
+        price_id: "price_1TS3WY2FY7qIyIXAalOKbxdZ",
         mode: "coach_order",
         instrument_ids: instrumentIds,
         quantity: selectedInstruments.length,
