@@ -27,6 +27,7 @@ const CORPORATE_TYPES = ["corporate_employee", "company_admin", "org_admin"];
 const DemographicForm = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [accountType, setAccountType] = useState<string | null>(null);
