@@ -456,6 +456,9 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
+      {/* MFA */}
+      {user && <MfaSection userId={user.id} />}
+
       {/* Preferences */}
       <Card>
         <CardHeader>
