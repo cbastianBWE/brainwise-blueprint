@@ -412,7 +412,7 @@ export function generateResultsPdf(data: PdfData, sections: PdfSections, options
         ];
         const impactRowsEst = Math.max(selfItemsEst.length, othersItemsEst.length);
         const estimatedBlockH = 15 + 5 + impactRowsEst * 12 + 6;
-        checkPageBreak(estimatedBlockH);
+        ensureBlockSpace(Math.max(MIN_BLOCK_SPACE, Math.min(estimatedBlockH, 80)));
         doc.setFillColor(rgb[0], rgb[1], rgb[2]);
         doc.rect(MARGIN_L, y, 1.5, 12, "F");
         doc.setFontSize(9);
