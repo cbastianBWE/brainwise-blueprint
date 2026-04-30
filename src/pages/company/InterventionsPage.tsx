@@ -245,6 +245,8 @@ export default function InterventionsPage() {
     setLoading(false);
   }, [user]);
 
+  const [orgName, setOrgName] = useState("");
+
   const loadOrgAdmins = useCallback(async () => {
     if (!user) return;
     const { data: userRow } = await (supabase as any)
@@ -254,8 +256,16 @@ export default function InterventionsPage() {
       .single();
     if (!userRow?.organization_id) {
       setOrgAdmins([]);
+      setOrgName("");
       return;
     }
+    const { data: orgRow } = await (supabase as any)
+      .from("organizations")
+      .select("name")
+      .eq("id", userRow.organization_id)
+      .single();
+    setOrgName((orgRow?.name as string) ?? "");
+
     const { data } = await (supabase as any)
       .from("users")
       .select("id, full_name, email")
