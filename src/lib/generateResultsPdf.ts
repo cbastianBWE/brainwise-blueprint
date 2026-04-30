@@ -63,6 +63,8 @@ const MARGIN_B = 25;
 const CONTENT_W = PAGE_W - MARGIN_L - MARGIN_R;
 const FOOTER_Y = PAGE_H - 12;
 
+// Standardized brand navy used for ALL primary text in this PDF.
+const PRIMARY_TEXT_HEX = "#021F36";
 const NAVY = [2, 31, 54] as const;
 const MUTED = [109, 104, 117] as const;
 const BLACK = [30, 30, 30] as const;
@@ -70,6 +72,11 @@ const SAND_BG = [249, 247, 241] as const;
 const LIGHT_BG = [245, 247, 250] as const;
 const GREEN = [34, 139, 34] as const;
 const RED = [200, 50, 50] as const;
+
+// Minimum vertical space (mm) required at the bottom of a page before
+// starting a new paragraph or major heading block. If less than this is
+// available, force a page break first to avoid widows/orphans.
+const MIN_BLOCK_SPACE = 30;
 
 function hexToRgb(hex: string): [number, number, number] {
   const h = hex.replace("#", "");
