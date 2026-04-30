@@ -874,25 +874,121 @@ export default function AdminUsers() {
     if (!deactivateDialog.userId) return;
     setDeactivateDialog((s) => ({ ...s, sending: true }));
     const trimmedReason = deactivateDialog.reason.trim();
-    const { error } = await (supabase.rpc as any)("user_deactivate", {
-      p_target_user_id: deactivateDialog.userId,
-      p_reason: trimmedReason.length > 0 ? trimmedReason : null,
-    });
-    if (error) {
+    const targetLabel = deactivateDialog.userName || deactivateDialog.userEmail;
+
+    const { data: sessionData } = await supabase.auth.getSession();
+    const token = sessionData?.session?.access_token;
+    if (!token) {
       setDeactivateDialog((s) => ({ ...s, sending: false }));
-      const code = (error as any).code;
-      if (code === "42501") {
+      toast({ title: "Not signed in", description: "Please log in again.", variant: "destructive" });
+      return;
+    }
+
+    let response: Response;
+    let result: any = {};
+    try {
+      response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/deactivate-and-notify`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          },
+          body: JSON.stringify({
+            target_user_id: deactivateDialog.userId,
+            reason: trimmedReason.length > 0 ? trimmedReason : null,
+          }),
+        }
+      );
+      try { result = await response.json(); } catch { /* ignore */ }
+    } catch (err: any) {
+      setDeactivateDialog((s) => ({ ...s, sending: false }));
+      toast({ title: "Network error", description: err?.message || "Network error", variant: "destructive" });
+      return;
+    }
+
+    if (!response.ok || result?.success === false) {
+      setDeactivateDialog((s) => ({ ...s, sending: false }));
+      const code = result?.code;
+      if (response.status === 403 || code === "42501") {
         toast({ title: "Forbidden", description: "You don't have permission to deactivate this user.", variant: "destructive" });
-      } else if (code === "P0002") {
+      } else if (response.status === 404 || code === "P0002") {
         toast({ title: "User not found", variant: "destructive" });
       } else {
-        toast({ title: "Error", description: error.message, variant: "destructive" });
+        toast({ title: "Error", description: result?.error || "Something went wrong", variant: "destructive" });
       }
       return;
     }
-    const targetLabel = deactivateDialog.userName || deactivateDialog.userEmail;
+
     setDeactivateDialog({ open: false, userId: null, userEmail: null, userName: null, targetRole: null, reason: "", sending: false });
-    toast({ title: "User deactivated", description: `${targetLabel} has been deactivated with a 90-day reactivation window.` });
+    if (result.email_sent) {
+      toast({
+        title: "User deactivated",
+        description: `${targetLabel} has been deactivated. They've been emailed their options. They have 90 days to reactivate.`,
+      });
+    } else {
+      toast({
+        title: "User deactivated, email failed",
+        description: `${targetLabel} has been deactivated, but the notification email could not be sent (${result.email_error || "unknown error"}). Please contact them directly.`,
+        variant: "default",
+      });
+    }
+    await qc.invalidateQueries({ queryKey: ["admin-org-users", orgId] });
+  };
+
+  const handleConfirmBulkDeactivate = async () => {
+    if (selectedUserIds.size === 0) return;
+    setBulkDeactivateDialog((s) => ({ ...s, sending: true }));
+
+    const { data: sessionData } = await supabase.auth.getSession();
+    const token = sessionData?.session?.access_token;
+    if (!token) {
+      setBulkDeactivateDialog((s) => ({ ...s, sending: false }));
+      toast({ title: "Not signed in", description: "Please log in again.", variant: "destructive" });
+      return;
+    }
+
+    let response: Response;
+    let result: any = {};
+    try {
+      response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/bulk-deactivate-and-notify`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          },
+          body: JSON.stringify({ user_ids: Array.from(selectedUserIds) }),
+        }
+      );
+      try { result = await response.json(); } catch { /* ignore */ }
+    } catch (err: any) {
+      setBulkDeactivateDialog((s) => ({ ...s, sending: false }));
+      toast({ title: "Network error", description: err?.message || "Network error", variant: "destructive" });
+      return;
+    }
+
+    if (!response.ok || result?.success === false) {
+      setBulkDeactivateDialog((s) => ({ ...s, sending: false }));
+      toast({ title: "Error", description: result?.error || "Something went wrong", variant: "destructive" });
+      return;
+    }
+
+    setBulkDeactivateDialog({
+      open: true,
+      sending: false,
+      results: {
+        succeeded: result.deactivation.succeeded,
+        failed: result.deactivation.failed || [],
+        emails_sent: result.email_results.sent,
+        emails_failed: result.email_results.failed,
+      },
+    });
+    setSelectedUserIds(new Set());
     await qc.invalidateQueries({ queryKey: ["admin-org-users", orgId] });
   };
 
