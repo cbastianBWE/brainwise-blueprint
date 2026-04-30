@@ -1430,14 +1430,26 @@ export default function AdminUsers() {
                   <CardTitle>Users in your organization</CardTitle>
                   <CardDescription>All users currently linked to your organization.</CardDescription>
                 </div>
-                <Button variant="outline" size="sm" onClick={handleReconcileSupervisors} disabled={reconciling}>
-                  {reconciling ? (
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  ) : (
-                    <RefreshCw className="h-4 w-4 mr-2" />
+                <div className="flex items-center gap-2">
+                  {selectedUserIds.size > 0 && (
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => setBulkDeactivateDialog({ open: true, sending: false, results: null })}
+                    >
+                      <UserX className="h-4 w-4 mr-2" />
+                      Deactivate selected ({selectedUserIds.size})
+                    </Button>
                   )}
-                  Reconcile supervisors
-                </Button>
+                  <Button variant="outline" size="sm" onClick={handleReconcileSupervisors} disabled={reconciling}>
+                    {reconciling ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <RefreshCw className="h-4 w-4 mr-2" />
+                    )}
+                    Reconcile supervisors
+                  </Button>
+                </div>
               </div>
               <div className="relative max-w-sm pt-2">
                 <Search className="absolute left-2 top-1/2 -translate-y-1/2 mt-1 h-4 w-4 text-muted-foreground pointer-events-none" />
