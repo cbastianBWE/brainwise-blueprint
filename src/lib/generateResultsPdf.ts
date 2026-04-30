@@ -93,13 +93,13 @@ function formatBand(band: string): string {
 
 function PTP_DIM_COLOR(dimId: string): string {
   const colors: Record<string, string> = {
-    "DIM-PTP-01": "#021F36",
+    "DIM-PTP-01": PRIMARY_TEXT_HEX,
     "DIM-PTP-02": "#006D77",
     "DIM-PTP-03": "#6D6875",
     "DIM-PTP-04": "#3C096C",
     "DIM-PTP-05": "#FFB703",
   };
-  return colors[dimId] ?? "#021F36";
+  return colors[dimId] ?? PRIMARY_TEXT_HEX;
 }
 
 export function generateResultsPdf(data: PdfData, sections: PdfSections, options?: { returnBlob?: boolean }): void | Blob {
