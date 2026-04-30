@@ -2003,34 +2003,69 @@ export default function AdminUsers() {
             </>
           ) : (
             <>
-              <DialogHeader>
-                <DialogTitle>Bulk deactivation results</DialogTitle>
-                <DialogDescription>
-                  {bulkDeactivateDialog.results.succeeded} deactivated, {bulkDeactivateDialog.results.emails_sent} emailed
-                  {bulkDeactivateDialog.results.emails_failed > 0 ? `, ${bulkDeactivateDialog.results.emails_failed} email failures` : ""}
-                  {bulkDeactivateDialog.results.failed.length > 0 ? `, ${bulkDeactivateDialog.results.failed.length} could not be deactivated` : ""}.
-                </DialogDescription>
-              </DialogHeader>
-              {bulkDeactivateDialog.results.failed.length > 0 && (
-                <Alert variant="destructive">
-                  <AlertTriangle className="h-4 w-4" />
-                  <AlertTitle>Failures</AlertTitle>
-                  <AlertDescription>
-                    <ul className="list-disc pl-5 space-y-1 text-sm">
-                      {bulkDeactivateDialog.results.failed.map((f) => {
-                        const u = (orgUsersQuery.data || []).find((x) => x.id === f.user_id);
-                        const label = u?.email || f.user_id;
-                        return <li key={f.user_id}>{label}: {f.error}</li>;
-                      })}
-                    </ul>
-                  </AlertDescription>
-                </Alert>
-              )}
-              <DialogFooter>
-                <Button onClick={() => setBulkDeactivateDialog({ open: false, sending: false, results: null })}>
-                  Done
-                </Button>
-              </DialogFooter>
+              {(() => {
+                const r = bulkDeactivateDialog.results;
+                const totalAttempted = r.succeeded + r.failed.length;
+                const allSucceeded = r.failed.length === 0 && r.emails_failed === 0;
+                const lookupLabel = (uid: string) => {
+                  const u = (orgUsersQuery.data || []).find((x) => x.id === uid);
+                  return u?.email || `User ${uid.slice(0, 8)}`;
+                };
+                return (
+                  <>
+                    <DialogHeader>
+                      <DialogTitle>Bulk deactivation results</DialogTitle>
+                      <DialogDescription>
+                        {r.succeeded} of {totalAttempted} users deactivated. {r.emails_sent} notification emails sent.
+                      </DialogDescription>
+                    </DialogHeader>
+
+                    {allSucceeded && (
+                      <div className="flex items-start gap-2 text-sm">
+                        <CheckCircle2 className="h-5 w-5 text-green-600 shrink-0 mt-0.5" />
+                        <span>All {r.succeeded} users deactivated and notified successfully.</span>
+                      </div>
+                    )}
+
+                    {r.failed.length > 0 && (
+                      <Alert variant="destructive">
+                        <AlertTriangle className="h-4 w-4" />
+                        <AlertTitle>Some deactivations failed</AlertTitle>
+                        <AlertDescription>
+                          <ul className="list-disc pl-5 space-y-1 text-sm">
+                            {r.failed.map((f) => (
+                              <li key={f.user_id}>{lookupLabel(f.user_id)}: {f.error}</li>
+                            ))}
+                          </ul>
+                        </AlertDescription>
+                      </Alert>
+                    )}
+
+                    {r.emails_failed > 0 && r.succeeded > 0 && (
+                      <Alert>
+                        <AlertTriangle className="h-4 w-4" />
+                        <AlertTitle>Some emails failed to send</AlertTitle>
+                        <AlertDescription>
+                          <ul className="list-disc pl-5 space-y-1 text-sm">
+                            {r.email_failures.map((f) => (
+                              <li key={f.user_id}>{lookupLabel(f.user_id)}: {f.error}</li>
+                            ))}
+                          </ul>
+                          <p className="mt-2 text-sm">
+                            These users were deactivated but did not receive notification emails. You may want to contact them directly.
+                          </p>
+                        </AlertDescription>
+                      </Alert>
+                    )}
+
+                    <DialogFooter>
+                      <Button onClick={() => setBulkDeactivateDialog({ open: false, sending: false, results: null })}>
+                        Close
+                      </Button>
+                    </DialogFooter>
+                  </>
+                );
+              })()}
             </>
           )}
         </DialogContent>
