@@ -1964,6 +1964,77 @@ export default function AdminUsers() {
       </Dialog>
 
       <Dialog
+        open={bulkDeactivateDialog.open}
+        onOpenChange={(open) => {
+          if (bulkDeactivateDialog.sending) return;
+          if (!open) {
+            setBulkDeactivateDialog({ open: false, sending: false, results: null });
+          }
+        }}
+      >
+        <DialogContent>
+          {bulkDeactivateDialog.results === null ? (
+            <>
+              <DialogHeader>
+                <DialogTitle>Deactivate {selectedUserIds.size} users</DialogTitle>
+                <DialogDescription>
+                  This will deactivate {selectedUserIds.size} users. Each will lose access immediately and will be emailed with their options. Each has 90 days to be reactivated. Continue?
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => setBulkDeactivateDialog({ open: false, sending: false, results: null })}
+                  disabled={bulkDeactivateDialog.sending}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={handleConfirmBulkDeactivate}
+                  disabled={bulkDeactivateDialog.sending || selectedUserIds.size === 0}
+                >
+                  {bulkDeactivateDialog.sending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                  Deactivate {selectedUserIds.size}
+                </Button>
+              </DialogFooter>
+            </>
+          ) : (
+            <>
+              <DialogHeader>
+                <DialogTitle>Bulk deactivation results</DialogTitle>
+                <DialogDescription>
+                  {bulkDeactivateDialog.results.succeeded} deactivated, {bulkDeactivateDialog.results.emails_sent} emailed
+                  {bulkDeactivateDialog.results.emails_failed > 0 ? `, ${bulkDeactivateDialog.results.emails_failed} email failures` : ""}
+                  {bulkDeactivateDialog.results.failed.length > 0 ? `, ${bulkDeactivateDialog.results.failed.length} could not be deactivated` : ""}.
+                </DialogDescription>
+              </DialogHeader>
+              {bulkDeactivateDialog.results.failed.length > 0 && (
+                <Alert variant="destructive">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertTitle>Failures</AlertTitle>
+                  <AlertDescription>
+                    <ul className="list-disc pl-5 space-y-1 text-sm">
+                      {bulkDeactivateDialog.results.failed.map((f) => {
+                        const u = (orgUsersQuery.data || []).find((x) => x.id === f.user_id);
+                        const label = u?.email || f.user_id;
+                        return <li key={f.user_id}>{label}: {f.error}</li>;
+                      })}
+                    </ul>
+                  </AlertDescription>
+                </Alert>
+              )}
+              <DialogFooter>
+                <Button onClick={() => setBulkDeactivateDialog({ open: false, sending: false, results: null })}>
+                  Done
+                </Button>
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
         open={reactivateDialog.open}
         onOpenChange={(open) => {
           if (reactivateDialog.sending) return;
