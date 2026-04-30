@@ -515,6 +515,18 @@ export default function AdminUsers() {
 
   const [reconciling, setReconciling] = useState(false);
 
+  const [selectedUserIds, setSelectedUserIds] = useState<Set<string>>(new Set());
+  const [bulkDeactivateDialog, setBulkDeactivateDialog] = useState<{
+    open: boolean;
+    sending: boolean;
+    results: null | {
+      succeeded: number;
+      failed: Array<{ user_id: string; error: string }>;
+      emails_sent: number;
+      emails_failed: number;
+    };
+  }>({ open: false, sending: false, results: null });
+
   const [pendingSearch, setPendingSearch] = useState("");
   const [usersSearch, setUsersSearch] = useState("");
 
@@ -648,6 +660,32 @@ export default function AdminUsers() {
   });
 
   const departments = departmentsQuery.data || [];
+
+  const isBulkEligible = (u: { id: string; account_type: string | null; deactivated_at: string | null }) => {
+    if (!user) return false;
+    if (u.id === user.id) return false;
+    if (u.deactivated_at) return false;
+    if (u.account_type === "company_admin" || u.account_type === "org_admin" || u.account_type === "brainwise_super_admin") return false;
+    return true;
+  };
+
+  // Prune selectedUserIds when org users data changes
+  useEffect(() => {
+    const data = orgUsersQuery.data;
+    if (!data) return;
+    setSelectedUserIds((prev) => {
+      if (prev.size === 0) return prev;
+      const eligibleIds = new Set(data.filter(isBulkEligible).map((u) => u.id));
+      let changed = false;
+      const next = new Set<string>();
+      prev.forEach((id) => {
+        if (eligibleIds.has(id)) next.add(id);
+        else changed = true;
+      });
+      return changed ? next : prev;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orgUsersQuery.data, user?.id]);
 
   const handleDeptSelectChange = (value: string) => {
     if (value === ADD_DEPT_VALUE) {
@@ -862,25 +900,121 @@ export default function AdminUsers() {
     if (!deactivateDialog.userId) return;
     setDeactivateDialog((s) => ({ ...s, sending: true }));
     const trimmedReason = deactivateDialog.reason.trim();
-    const { error } = await (supabase.rpc as any)("user_deactivate", {
-      p_target_user_id: deactivateDialog.userId,
-      p_reason: trimmedReason.length > 0 ? trimmedReason : null,
-    });
-    if (error) {
+    const targetLabel = deactivateDialog.userName || deactivateDialog.userEmail;
+
+    const { data: sessionData } = await supabase.auth.getSession();
+    const token = sessionData?.session?.access_token;
+    if (!token) {
       setDeactivateDialog((s) => ({ ...s, sending: false }));
-      const code = (error as any).code;
-      if (code === "42501") {
+      toast({ title: "Not signed in", description: "Please log in again.", variant: "destructive" });
+      return;
+    }
+
+    let response: Response;
+    let result: any = {};
+    try {
+      response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/deactivate-and-notify`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          },
+          body: JSON.stringify({
+            target_user_id: deactivateDialog.userId,
+            reason: trimmedReason.length > 0 ? trimmedReason : null,
+          }),
+        }
+      );
+      try { result = await response.json(); } catch { /* ignore */ }
+    } catch (err: any) {
+      setDeactivateDialog((s) => ({ ...s, sending: false }));
+      toast({ title: "Network error", description: err?.message || "Network error", variant: "destructive" });
+      return;
+    }
+
+    if (!response.ok || result?.success === false) {
+      setDeactivateDialog((s) => ({ ...s, sending: false }));
+      const code = result?.code;
+      if (response.status === 403 || code === "42501") {
         toast({ title: "Forbidden", description: "You don't have permission to deactivate this user.", variant: "destructive" });
-      } else if (code === "P0002") {
+      } else if (response.status === 404 || code === "P0002") {
         toast({ title: "User not found", variant: "destructive" });
       } else {
-        toast({ title: "Error", description: error.message, variant: "destructive" });
+        toast({ title: "Error", description: result?.error || "Something went wrong", variant: "destructive" });
       }
       return;
     }
-    const targetLabel = deactivateDialog.userName || deactivateDialog.userEmail;
+
     setDeactivateDialog({ open: false, userId: null, userEmail: null, userName: null, targetRole: null, reason: "", sending: false });
-    toast({ title: "User deactivated", description: `${targetLabel} has been deactivated with a 90-day reactivation window.` });
+    if (result.email_sent) {
+      toast({
+        title: "User deactivated",
+        description: `${targetLabel} has been deactivated. They've been emailed their options. They have 90 days to reactivate.`,
+      });
+    } else {
+      toast({
+        title: "User deactivated, email failed",
+        description: `${targetLabel} has been deactivated, but the notification email could not be sent (${result.email_error || "unknown error"}). Please contact them directly.`,
+        variant: "default",
+      });
+    }
+    await qc.invalidateQueries({ queryKey: ["admin-org-users", orgId] });
+  };
+
+  const handleConfirmBulkDeactivate = async () => {
+    if (selectedUserIds.size === 0) return;
+    setBulkDeactivateDialog((s) => ({ ...s, sending: true }));
+
+    const { data: sessionData } = await supabase.auth.getSession();
+    const token = sessionData?.session?.access_token;
+    if (!token) {
+      setBulkDeactivateDialog((s) => ({ ...s, sending: false }));
+      toast({ title: "Not signed in", description: "Please log in again.", variant: "destructive" });
+      return;
+    }
+
+    let response: Response;
+    let result: any = {};
+    try {
+      response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/bulk-deactivate-and-notify`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          },
+          body: JSON.stringify({ user_ids: Array.from(selectedUserIds) }),
+        }
+      );
+      try { result = await response.json(); } catch { /* ignore */ }
+    } catch (err: any) {
+      setBulkDeactivateDialog((s) => ({ ...s, sending: false }));
+      toast({ title: "Network error", description: err?.message || "Network error", variant: "destructive" });
+      return;
+    }
+
+    if (!response.ok || result?.success === false) {
+      setBulkDeactivateDialog((s) => ({ ...s, sending: false }));
+      toast({ title: "Error", description: result?.error || "Something went wrong", variant: "destructive" });
+      return;
+    }
+
+    setBulkDeactivateDialog({
+      open: true,
+      sending: false,
+      results: {
+        succeeded: result.deactivation.succeeded,
+        failed: result.deactivation.failed || [],
+        emails_sent: result.email_results.sent,
+        emails_failed: result.email_results.failed,
+      },
+    });
+    setSelectedUserIds(new Set());
     await qc.invalidateQueries({ queryKey: ["admin-org-users", orgId] });
   };
 
@@ -1296,14 +1430,26 @@ export default function AdminUsers() {
                   <CardTitle>Users in your organization</CardTitle>
                   <CardDescription>All users currently linked to your organization.</CardDescription>
                 </div>
-                <Button variant="outline" size="sm" onClick={handleReconcileSupervisors} disabled={reconciling}>
-                  {reconciling ? (
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  ) : (
-                    <RefreshCw className="h-4 w-4 mr-2" />
+                <div className="flex items-center gap-2">
+                  {selectedUserIds.size > 0 && (
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => setBulkDeactivateDialog({ open: true, sending: false, results: null })}
+                    >
+                      <UserX className="h-4 w-4 mr-2" />
+                      Deactivate selected ({selectedUserIds.size})
+                    </Button>
                   )}
-                  Reconcile supervisors
-                </Button>
+                  <Button variant="outline" size="sm" onClick={handleReconcileSupervisors} disabled={reconciling}>
+                    {reconciling ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <RefreshCw className="h-4 w-4 mr-2" />
+                    )}
+                    Reconcile supervisors
+                  </Button>
+                </div>
               </div>
               <div className="relative max-w-sm pt-2">
                 <Search className="absolute left-2 top-1/2 -translate-y-1/2 mt-1 h-4 w-4 text-muted-foreground pointer-events-none" />
@@ -1327,9 +1473,43 @@ export default function AdminUsers() {
               ) : filteredUsers.length === 0 ? (
                 <p className="text-sm text-muted-foreground py-4 text-center">No users match your search.</p>
               ) : (
+                (() => {
+                  const eligibleVisible = filteredUsers.filter(isBulkEligible);
+                  const eligibleVisibleIds = eligibleVisible.map((u) => u.id);
+                  const selectedVisibleCount = eligibleVisibleIds.filter((id) => selectedUserIds.has(id)).length;
+                  const allSelected = eligibleVisible.length > 0 && selectedVisibleCount === eligibleVisible.length;
+                  const someSelected = selectedVisibleCount > 0 && !allSelected;
+                  const toggleAll = (checked: boolean) => {
+                    setSelectedUserIds((prev) => {
+                      const next = new Set(prev);
+                      if (checked) {
+                        eligibleVisibleIds.forEach((id) => next.add(id));
+                      } else {
+                        eligibleVisibleIds.forEach((id) => next.delete(id));
+                      }
+                      return next;
+                    });
+                  };
+                  const toggleOne = (id: string, checked: boolean) => {
+                    setSelectedUserIds((prev) => {
+                      const next = new Set(prev);
+                      if (checked) next.add(id);
+                      else next.delete(id);
+                      return next;
+                    });
+                  };
+                  return (
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead className="w-10">
+                        <Checkbox
+                          checked={allSelected ? true : someSelected ? "indeterminate" : false}
+                          onCheckedChange={(c) => toggleAll(c === true)}
+                          disabled={eligibleVisible.length === 0}
+                          aria-label="Select all eligible users"
+                        />
+                      </TableHead>
                       <TableHead>Email</TableHead>
                       <TableHead>Name</TableHead>
                       <TableHead>Role</TableHead>
@@ -1349,8 +1529,18 @@ export default function AdminUsers() {
                         ? Math.max(0, Math.ceil((new Date(u.reactivation_deadline).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
                         : 0;
                       const isSelf = u.id === user?.id;
+                      const eligible = isBulkEligible(u);
                       return (
                         <TableRow key={u.id} className={isDeactivated ? "opacity-60" : undefined}>
+                          <TableCell className="w-10">
+                            {eligible ? (
+                              <Checkbox
+                                checked={selectedUserIds.has(u.id)}
+                                onCheckedChange={(c) => toggleOne(u.id, c === true)}
+                                aria-label={`Select ${u.email}`}
+                              />
+                            ) : null}
+                          </TableCell>
                           <TableCell className="font-medium">{u.email}</TableCell>
                           <TableCell>{u.full_name || "—"}</TableCell>
                           <TableCell>{formatRole(u.account_type)}</TableCell>
@@ -1411,6 +1601,8 @@ export default function AdminUsers() {
                     })}
                   </TableBody>
                 </Table>
+                  );
+                })()
               )}
             </CardContent>
           </Card>
@@ -1729,7 +1921,7 @@ export default function AdminUsers() {
           <DialogHeader>
             <DialogTitle>Deactivate user</DialogTitle>
             <DialogDescription>
-              This will deactivate {deactivateDialog.userName || deactivateDialog.userEmail}. They will lose access immediately and can be reactivated within 90 days. After that, their account data is scheduled for permanent removal.
+              This will deactivate {deactivateDialog.userName || deactivateDialog.userEmail}. They will lose access immediately. They will be emailed with their options: convert to a personal account, download their data, or de-identify themselves now. They have 90 days to be reactivated. After that, their account is automatically de-identified.
             </DialogDescription>
           </DialogHeader>
           {deactivateDialog.targetRole === "brainwise_super_admin" && (
@@ -1768,6 +1960,77 @@ export default function AdminUsers() {
               Deactivate
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={bulkDeactivateDialog.open}
+        onOpenChange={(open) => {
+          if (bulkDeactivateDialog.sending) return;
+          if (!open) {
+            setBulkDeactivateDialog({ open: false, sending: false, results: null });
+          }
+        }}
+      >
+        <DialogContent>
+          {bulkDeactivateDialog.results === null ? (
+            <>
+              <DialogHeader>
+                <DialogTitle>Deactivate {selectedUserIds.size} users</DialogTitle>
+                <DialogDescription>
+                  This will deactivate {selectedUserIds.size} users. Each will lose access immediately and will be emailed with their options. Each has 90 days to be reactivated. Continue?
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => setBulkDeactivateDialog({ open: false, sending: false, results: null })}
+                  disabled={bulkDeactivateDialog.sending}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={handleConfirmBulkDeactivate}
+                  disabled={bulkDeactivateDialog.sending || selectedUserIds.size === 0}
+                >
+                  {bulkDeactivateDialog.sending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                  Deactivate {selectedUserIds.size}
+                </Button>
+              </DialogFooter>
+            </>
+          ) : (
+            <>
+              <DialogHeader>
+                <DialogTitle>Bulk deactivation results</DialogTitle>
+                <DialogDescription>
+                  {bulkDeactivateDialog.results.succeeded} deactivated, {bulkDeactivateDialog.results.emails_sent} emailed
+                  {bulkDeactivateDialog.results.emails_failed > 0 ? `, ${bulkDeactivateDialog.results.emails_failed} email failures` : ""}
+                  {bulkDeactivateDialog.results.failed.length > 0 ? `, ${bulkDeactivateDialog.results.failed.length} could not be deactivated` : ""}.
+                </DialogDescription>
+              </DialogHeader>
+              {bulkDeactivateDialog.results.failed.length > 0 && (
+                <Alert variant="destructive">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertTitle>Failures</AlertTitle>
+                  <AlertDescription>
+                    <ul className="list-disc pl-5 space-y-1 text-sm">
+                      {bulkDeactivateDialog.results.failed.map((f) => {
+                        const u = (orgUsersQuery.data || []).find((x) => x.id === f.user_id);
+                        const label = u?.email || f.user_id;
+                        return <li key={f.user_id}>{label}: {f.error}</li>;
+                      })}
+                    </ul>
+                  </AlertDescription>
+                </Alert>
+              )}
+              <DialogFooter>
+                <Button onClick={() => setBulkDeactivateDialog({ open: false, sending: false, results: null })}>
+                  Done
+                </Button>
+              </DialogFooter>
+            </>
+          )}
         </DialogContent>
       </Dialog>
 
