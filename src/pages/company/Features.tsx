@@ -32,6 +32,7 @@ interface EffectiveFeatures {
   ai_chat_enabled: boolean;
   dashboard_access_level: string;
   supervisor_dashboard_enabled: boolean;
+  mfa_required: boolean;
 }
 
 interface Instrument {
