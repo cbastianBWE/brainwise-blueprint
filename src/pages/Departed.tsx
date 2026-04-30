@@ -119,12 +119,43 @@ export default function Departed() {
       toast({ title: "Error", description: cancelRes.error.message, variant: "destructive" });
       return;
     }
-    const { error } = await supabase.rpc("corporate_employee_choose_individual", {
+    const { data, error } = await supabase.rpc("corporate_employee_choose_individual", {
       p_personal_email: profile.personal_email_pending,
     });
     setResending(false);
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
+      return;
+    }
+    const rpcData = data as any;
+    const { data: { session: authSession } } = await supabase.auth.getSession();
+    const sendRes = await fetch(
+      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-departure-emails`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authSession?.access_token ?? ""}`,
+          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+        },
+        body: JSON.stringify({
+          mode: "verify_conversion",
+          user_id: user.id,
+          personal_email: rpcData?.personal_email_pending ?? profile.personal_email_pending,
+          conversion_token: rpcData?.conversion_token,
+          token_expires_at: rpcData?.expires_at,
+          app_origin: window.location.origin,
+        }),
+      }
+    );
+    const sendJson = await sendRes.json().catch(() => ({}));
+    if (!sendRes.ok || !sendJson.success) {
+      qc.invalidateQueries({ queryKey: ["departed-profile"] });
+      toast({
+        title: "Email failed to send",
+        description: `We saved your request but could not send the verification email (${sendJson.error || `HTTP ${sendRes.status}`}). Try the Resend button again or contact support.`,
+        variant: "destructive",
+      });
       return;
     }
     qc.invalidateQueries({ queryKey: ["departed-profile"] });
@@ -152,7 +183,7 @@ export default function Departed() {
       return;
     }
     setConversionSubmitting(true);
-    const { error } = await supabase.rpc("corporate_employee_choose_individual", {
+    const { data, error } = await supabase.rpc("corporate_employee_choose_individual", {
       p_personal_email: trimmedEmail,
     });
     setConversionSubmitting(false);
@@ -162,6 +193,37 @@ export default function Departed() {
       } else {
         setConversionError(error.message);
       }
+      return;
+    }
+    const rpcData = data as any;
+    const { data: { session: authSession } } = await supabase.auth.getSession();
+    const sendRes = await fetch(
+      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-departure-emails`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authSession?.access_token ?? ""}`,
+          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+        },
+        body: JSON.stringify({
+          mode: "verify_conversion",
+          user_id: user.id,
+          personal_email: rpcData?.personal_email_pending ?? trimmedEmail,
+          conversion_token: rpcData?.conversion_token,
+          token_expires_at: rpcData?.expires_at,
+          app_origin: window.location.origin,
+        }),
+      }
+    );
+    const sendJson = await sendRes.json().catch(() => ({}));
+    if (!sendRes.ok || !sendJson.success) {
+      setConversionError(
+        `We saved your request but could not send the verification email (${sendJson.error || `HTTP ${sendRes.status}`}). Try the Resend button on the next screen.`
+      );
+      setConversionModalOpen(false);
+      setConversionEmail("");
+      qc.invalidateQueries({ queryKey: ["departed-profile"] });
       return;
     }
     setConversionModalOpen(false);
