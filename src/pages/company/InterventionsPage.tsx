@@ -621,6 +621,13 @@ export default function InterventionsPage() {
             </div>
             <div style={{ display: "flex", gap: 8 }}>
               <Button
+                onClick={handleExportCsv}
+                variant="outline"
+              >
+                <Download />
+                Export CSV
+              </Button>
+              <Button
                 onClick={() => setBulkImportOpen(true)}
                 variant="outline"
               >
