@@ -53,6 +53,8 @@ import CompanyDetail from "./pages/super-admin/CompanyDetail";
 import CoachManagement from "./pages/super-admin/CoachManagement";
 import CreateOrganization from "./pages/super-admin/CreateOrganization";
 import EpnComplete from "./pages/EpnComplete";
+import VerifyConversion from "./pages/VerifyConversion";
+import Departed from "./pages/Departed";
 
 const queryClient = new QueryClient();
 
@@ -71,6 +73,10 @@ const App = () => (
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/peer-access-responded" element={<PeerAccessResponded />} />
+            <Route path="/auth/verify-conversion" element={<VerifyConversion />} />
+
+            {/* Departed route — protected, but ProtectedRoute won't redirect away from /departed */}
+            <Route path="/departed" element={<ProtectedRoute><Departed /></ProtectedRoute>} />
             
 
             {/* Protected routes without sidebar */}
