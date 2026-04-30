@@ -2362,6 +2362,126 @@ export type Database = {
           },
         ]
       }
+      org_member_history_snapshot: {
+        Row: {
+          converted_to_individual: boolean
+          deidentified_email: string
+          deidentified_name: string
+          departed_at: string
+          department_id_at_departure: string | null
+          id: string
+          org_level_at_departure: string | null
+          organization_id: string
+          pseudonymized: boolean
+          supervisor_user_id_at_departure: string | null
+          user_id: string
+        }
+        Insert: {
+          converted_to_individual?: boolean
+          deidentified_email: string
+          deidentified_name: string
+          departed_at?: string
+          department_id_at_departure?: string | null
+          id?: string
+          org_level_at_departure?: string | null
+          organization_id: string
+          pseudonymized?: boolean
+          supervisor_user_id_at_departure?: string | null
+          user_id: string
+        }
+        Update: {
+          converted_to_individual?: boolean
+          deidentified_email?: string
+          deidentified_name?: string
+          departed_at?: string
+          department_id_at_departure?: string | null
+          id?: string
+          org_level_at_departure?: string | null
+          organization_id?: string
+          pseudonymized?: boolean
+          supervisor_user_id_at_departure?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_member_history_snapshot_department_id_at_departure_fkey"
+            columns: ["department_id_at_departure"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["department_joined_id"]
+          },
+          {
+            foreignKeyName: "org_member_history_snapshot_department_id_at_departure_fkey"
+            columns: ["department_id_at_departure"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_member_history_snapshot_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_member_history_snapshot_supervisor_user_id_at_departur_fkey"
+            columns: ["supervisor_user_id_at_departure"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_member_history_snapshot_supervisor_user_id_at_departur_fkey"
+            columns: ["supervisor_user_id_at_departure"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "org_member_history_snapshot_supervisor_user_id_at_departur_fkey"
+            columns: ["supervisor_user_id_at_departure"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_member_history_snapshot_supervisor_user_id_at_departur_fkey"
+            columns: ["supervisor_user_id_at_departure"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_member_history_snapshot_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_member_history_snapshot_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "org_member_history_snapshot_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_member_history_snapshot_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       org_nai_delta_narratives: {
         Row: {
           ai_model: string | null
@@ -3483,6 +3603,8 @@ export type Database = {
         Row: {
           account_status: string
           account_type: string | null
+          conversion_token: string | null
+          conversion_token_expires_at: string | null
           coupon_amount: number | null
           coupon_expires_at: string | null
           created_at: string
@@ -3498,6 +3620,7 @@ export type Database = {
           onboarding_instrument_version: string | null
           org_level: string | null
           organization_id: string | null
+          personal_email_pending: string | null
           pseudonymized_at: string | null
           reactivation_deadline: string | null
           share_results_with_coach: boolean
@@ -3511,6 +3634,8 @@ export type Database = {
         Insert: {
           account_status?: string
           account_type?: string | null
+          conversion_token?: string | null
+          conversion_token_expires_at?: string | null
           coupon_amount?: number | null
           coupon_expires_at?: string | null
           created_at?: string
@@ -3526,6 +3651,7 @@ export type Database = {
           onboarding_instrument_version?: string | null
           org_level?: string | null
           organization_id?: string | null
+          personal_email_pending?: string | null
           pseudonymized_at?: string | null
           reactivation_deadline?: string | null
           share_results_with_coach?: boolean
@@ -3539,6 +3665,8 @@ export type Database = {
         Update: {
           account_status?: string
           account_type?: string | null
+          conversion_token?: string | null
+          conversion_token_expires_at?: string | null
           coupon_amount?: number | null
           coupon_expires_at?: string | null
           created_at?: string
@@ -3554,6 +3682,7 @@ export type Database = {
           onboarding_instrument_version?: string | null
           org_level?: string | null
           organization_id?: string | null
+          personal_email_pending?: string | null
           pseudonymized_at?: string | null
           reactivation_deadline?: string | null
           share_results_with_coach?: boolean
@@ -3992,6 +4121,7 @@ export type Database = {
         }
         Returns: Json
       }
+      bulk_deactivate_users: { Args: { p_user_ids: string[] }; Returns: Json }
       bulk_invitation_create: {
         Args: { p_organization_id: string; p_rows: Json }
         Returns: {
@@ -4009,6 +4139,7 @@ export type Database = {
         Args: { p_dimension_scores: Json }
         Returns: number
       }
+      cancel_individual_conversion: { Args: never; Returns: Json }
       close_chat_session: { Args: { p_session_id: string }; Returns: undefined }
       complete_epn_assessment: {
         Args: { p_assignment_id: string }
@@ -4039,6 +4170,18 @@ export type Database = {
           p_tier_id: string
         }
         Returns: string
+      }
+      corporate_employee_choose_individual: {
+        Args: { p_personal_email: string }
+        Returns: Json
+      }
+      corporate_employee_run_pseudonym_now: {
+        Args: { p_confirmation_phrase: string }
+        Returns: Json
+      }
+      corporate_employee_verify_individual: {
+        Args: { p_token: string }
+        Returns: Json
       }
       create_manual_org_intervention: {
         Args: {
@@ -4376,6 +4519,13 @@ export type Database = {
       }
       seat_count_available: { Args: { p_org: string }; Returns: number }
       seat_count_used: { Args: { p_org: string }; Returns: number }
+      send_grace_period_reminders: {
+        Args: never
+        Returns: {
+          reminders_logged: number
+          run_at: string
+        }[]
+      }
       sharing_preferences_upsert: {
         Args: {
           p_share_ptp_with_company_admin?: boolean
