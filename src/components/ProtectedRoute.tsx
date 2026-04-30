@@ -1,6 +1,7 @@
 import { useAuth } from "@/hooks/useAuth";
 import { Navigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 const EXEMPT_PATHS = ["/onboarding", "/demographic-form", "/demographic-consent", "/peer-sharing-optin", "/peer-access-responded"];
@@ -11,6 +12,22 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const [checking, setChecking] = useState(true);
   const [hasRequired, setHasRequired] = useState<boolean | null>(null);
   const [accountType, setAccountType] = useState<string | null>(null);
+
+  const userId = session?.user?.id;
+
+  const { data: statusProfile, isLoading: statusLoading } = useQuery({
+    queryKey: ["protected-route-profile", userId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("users")
+        .select("account_status, deactivated_at, reactivation_deadline")
+        .eq("id", userId!)
+        .single();
+      return data;
+    },
+    enabled: !!userId,
+    staleTime: 60_000,
+  });
 
   useEffect(() => {
     if (!session?.user) {
@@ -34,7 +51,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     };
   }, [session?.user?.id, location.pathname]);
 
-  if (loading || (session && checking)) {
+  if (loading || (session && (checking || statusLoading))) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
@@ -44,6 +61,19 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
   if (!session) {
     return <Navigate to="/login" replace />;
+  }
+
+  // Deactivation grace-period guard: redirect to /departed if active+deactivated_at set
+  // and not yet past reactivation_deadline.
+  if (
+    statusProfile?.account_status === "active" &&
+    statusProfile?.deactivated_at &&
+    (!statusProfile.reactivation_deadline ||
+      new Date(statusProfile.reactivation_deadline) > new Date())
+  ) {
+    if (location.pathname !== "/departed") {
+      return <Navigate to="/departed" replace />;
+    }
   }
 
   if (hasRequired === false && !EXEMPT_PATHS.includes(location.pathname)) {
