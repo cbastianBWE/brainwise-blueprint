@@ -217,10 +217,12 @@ export default function AiChat() {
 
       let ownAssessments: AssessmentOption[] = [];
       if (includeSelf) {
+        // EPN is filed BY an executive ABOUT this user; not a self-administered result, do not surface as a standalone tile.
         const { data: results } = await supabase
           .from("assessment_results")
           .select("id, instrument_id, created_at")
           .eq("user_id", user.id)
+          .neq("instrument_id", "INST-002L")
           .order("created_at", { ascending: false });
 
         if (results && results.length > 0) {
