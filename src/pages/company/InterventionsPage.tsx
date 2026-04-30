@@ -7,6 +7,8 @@ import { Plus, RefreshCw, Trash2, ChevronDown, ChevronRight } from "lucide-react
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import CreateManualInterventionModal from "@/components/company/CreateManualInterventionModal";
 import BulkImportRecommendationsModal from "@/components/company/BulkImportRecommendationsModal";
+import { rowsToCsv, downloadCsv } from "@/lib/csvUtils";
+import { Download } from "lucide-react";
 
 // ── Brand constants (mirrors CompanyDashboard / PTPDashboard) ───────────────
 const NAVY = "#021F36";
