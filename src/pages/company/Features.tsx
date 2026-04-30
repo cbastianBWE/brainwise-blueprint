@@ -251,6 +251,40 @@ export default function Features() {
     }
   }
 
+  async function applyMfaToggle(newEnabled: boolean) {
+    if (mfaInFlight || !features) return;
+    setMfaInFlight(true);
+
+    const prev = features.mfa_required;
+    setFeatures({ ...features, mfa_required: newEnabled });
+
+    const { error } = await supabase.rpc("org_set_mfa_required", {
+      p_organization_id: features.organization_id,
+      p_enabled: newEnabled,
+    });
+
+    setMfaInFlight(false);
+
+    if (error) {
+      setFeatures({ ...features, mfa_required: prev });
+      toast.error(error.message || "Failed to update two-factor authentication setting.");
+      return;
+    }
+    toast.success(
+      newEnabled
+        ? "Two-factor authentication enforcement enabled"
+        : "Two-factor authentication enforcement disabled"
+    );
+  }
+
+  function handleMfaSwitch(newEnabled: boolean) {
+    if (newEnabled) {
+      setConfirmEnableMfaOpen(true);
+    } else {
+      void applyMfaToggle(false);
+    }
+  }
+
   /* ---------- Render ---------- */
 
   if (loading || roleLoading) {
