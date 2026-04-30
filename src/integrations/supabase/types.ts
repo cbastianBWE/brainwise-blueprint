@@ -3617,6 +3617,7 @@ export type Database = {
           full_name: string | null
           id: string
           notifications: Json | null
+          onboarding_completed_at: string | null
           onboarding_instrument_version: string | null
           org_level: string | null
           organization_id: string | null
@@ -3648,6 +3649,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           notifications?: Json | null
+          onboarding_completed_at?: string | null
           onboarding_instrument_version?: string | null
           org_level?: string | null
           organization_id?: string | null
@@ -3679,6 +3681,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           notifications?: Json | null
+          onboarding_completed_at?: string | null
           onboarding_instrument_version?: string | null
           org_level?: string | null
           organization_id?: string | null
@@ -4447,6 +4450,10 @@ export type Database = {
           out_title: string
           out_tracking_notes: string
         }[]
+      }
+      maybe_mark_onboarding_complete: {
+        Args: { p_user_id: string }
+        Returns: undefined
       }
       member_feature_override_set: {
         Args: { p_enabled: boolean; p_feature: string; p_user: string }

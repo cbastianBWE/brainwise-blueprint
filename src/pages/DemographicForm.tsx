@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -26,6 +27,7 @@ const CORPORATE_TYPES = ["corporate_employee", "company_admin", "org_admin"];
 const DemographicForm = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [accountType, setAccountType] = useState<string | null>(null);
@@ -83,7 +85,8 @@ const DemographicForm = () => {
     }
 
     setLoading(false);
-    navigate("/demographic-consent");
+    await queryClient.invalidateQueries({ queryKey: ["onboarding-status", user.id] });
+    navigate("/demographic-consent", { replace: true });
   };
 
   return (
