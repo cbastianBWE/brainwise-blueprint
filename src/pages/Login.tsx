@@ -9,6 +9,7 @@ import { Brain, Eye, EyeOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useRoleRedirect } from "@/hooks/useAuth";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import MfaChallenge from "@/components/MfaChallenge";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -19,6 +20,7 @@ const Login = () => {
   const { redirectByRole } = useRoleRedirect();
   const [showReactivate, setShowReactivate] = useState(false);
   const [reactivating, setReactivating] = useState(false);
+  const [mfaUserId, setMfaUserId] = useState<string | null>(null);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,16 +31,32 @@ const Login = () => {
       password,
     });
 
-    setLoading(false);
-
     if (error) {
+      setLoading(false);
       if (error.message.toLowerCase().includes('banned') || error.message.toLowerCase().includes('user is banned')) {
         setShowReactivate(true);
       } else {
         toast({ title: "Login Failed", description: error.message, variant: "destructive" });
       }
-    } else if (data.user) {
+      return;
+    }
+
+    if (data.user) {
+      try {
+        const { data: factorsData } = await supabase.auth.mfa.listFactors();
+        const hasVerified = (factorsData?.totp ?? []).some((f) => f.status === "verified");
+        if (hasVerified) {
+          setMfaUserId(data.user.id);
+          setLoading(false);
+          return;
+        }
+      } catch {
+        // fall through to redirect
+      }
+      setLoading(false);
       await redirectByRole(data.user.id);
+    } else {
+      setLoading(false);
     }
   };
 
