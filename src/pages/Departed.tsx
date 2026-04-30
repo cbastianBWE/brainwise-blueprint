@@ -258,10 +258,12 @@ export default function Departed() {
 
     try {
       // 1. Fetch all assessment_results for this user
+      // EPN is admin-assigned; users don't get a personal copy in their export.
       const { data: results, error: resultsErr } = await supabase
         .from("assessment_results")
         .select("id, assessment_id, instrument_id")
         .eq("user_id", user.id)
+        .neq("instrument_id", "INST-002L")
         .order("created_at", { ascending: false });
       if (resultsErr) throw resultsErr;
       if (!results || results.length === 0) {
