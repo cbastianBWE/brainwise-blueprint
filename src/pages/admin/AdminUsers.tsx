@@ -1473,9 +1473,43 @@ export default function AdminUsers() {
               ) : filteredUsers.length === 0 ? (
                 <p className="text-sm text-muted-foreground py-4 text-center">No users match your search.</p>
               ) : (
+                (() => {
+                  const eligibleVisible = filteredUsers.filter(isBulkEligible);
+                  const eligibleVisibleIds = eligibleVisible.map((u) => u.id);
+                  const selectedVisibleCount = eligibleVisibleIds.filter((id) => selectedUserIds.has(id)).length;
+                  const allSelected = eligibleVisible.length > 0 && selectedVisibleCount === eligibleVisible.length;
+                  const someSelected = selectedVisibleCount > 0 && !allSelected;
+                  const toggleAll = (checked: boolean) => {
+                    setSelectedUserIds((prev) => {
+                      const next = new Set(prev);
+                      if (checked) {
+                        eligibleVisibleIds.forEach((id) => next.add(id));
+                      } else {
+                        eligibleVisibleIds.forEach((id) => next.delete(id));
+                      }
+                      return next;
+                    });
+                  };
+                  const toggleOne = (id: string, checked: boolean) => {
+                    setSelectedUserIds((prev) => {
+                      const next = new Set(prev);
+                      if (checked) next.add(id);
+                      else next.delete(id);
+                      return next;
+                    });
+                  };
+                  return (
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead className="w-10">
+                        <Checkbox
+                          checked={allSelected ? true : someSelected ? "indeterminate" : false}
+                          onCheckedChange={(c) => toggleAll(c === true)}
+                          disabled={eligibleVisible.length === 0}
+                          aria-label="Select all eligible users"
+                        />
+                      </TableHead>
                       <TableHead>Email</TableHead>
                       <TableHead>Name</TableHead>
                       <TableHead>Role</TableHead>
@@ -1495,8 +1529,18 @@ export default function AdminUsers() {
                         ? Math.max(0, Math.ceil((new Date(u.reactivation_deadline).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
                         : 0;
                       const isSelf = u.id === user?.id;
+                      const eligible = isBulkEligible(u);
                       return (
                         <TableRow key={u.id} className={isDeactivated ? "opacity-60" : undefined}>
+                          <TableCell className="w-10">
+                            {eligible ? (
+                              <Checkbox
+                                checked={selectedUserIds.has(u.id)}
+                                onCheckedChange={(c) => toggleOne(u.id, c === true)}
+                                aria-label={`Select ${u.email}`}
+                              />
+                            ) : null}
+                          </TableCell>
                           <TableCell className="font-medium">{u.email}</TableCell>
                           <TableCell>{u.full_name || "—"}</TableCell>
                           <TableCell>{formatRole(u.account_type)}</TableCell>
