@@ -524,6 +524,7 @@ export default function AdminUsers() {
       failed: Array<{ user_id: string; error: string }>;
       emails_sent: number;
       emails_failed: number;
+      email_failures: Array<{ user_id: string; error: string }>;
     };
   }>({ open: false, sending: false, results: null });
 
