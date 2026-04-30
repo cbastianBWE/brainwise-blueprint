@@ -661,6 +661,32 @@ export default function AdminUsers() {
 
   const departments = departmentsQuery.data || [];
 
+  const isBulkEligible = (u: { id: string; account_type: string | null; deactivated_at: string | null }) => {
+    if (!user) return false;
+    if (u.id === user.id) return false;
+    if (u.deactivated_at) return false;
+    if (u.account_type === "company_admin" || u.account_type === "org_admin" || u.account_type === "brainwise_super_admin") return false;
+    return true;
+  };
+
+  // Prune selectedUserIds when org users data changes
+  useEffect(() => {
+    const data = orgUsersQuery.data;
+    if (!data) return;
+    setSelectedUserIds((prev) => {
+      if (prev.size === 0) return prev;
+      const eligibleIds = new Set(data.filter(isBulkEligible).map((u) => u.id));
+      let changed = false;
+      const next = new Set<string>();
+      prev.forEach((id) => {
+        if (eligibleIds.has(id)) next.add(id);
+        else changed = true;
+      });
+      return changed ? next : prev;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orgUsersQuery.data, user?.id]);
+
   const handleDeptSelectChange = (value: string) => {
     if (value === ADD_DEPT_VALUE) {
       setNewDeptName("");
