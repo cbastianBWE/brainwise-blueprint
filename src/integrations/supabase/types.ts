@@ -2715,6 +2715,7 @@ export type Database = {
           created_at: string
           created_by_user_id: string | null
           id: string
+          mfa_required: boolean
           name: string
           primary_contact_email: string | null
           seat_count: number
@@ -2725,6 +2726,7 @@ export type Database = {
           created_at?: string
           created_by_user_id?: string | null
           id?: string
+          mfa_required?: boolean
           name: string
           primary_contact_email?: string | null
           seat_count?: number
@@ -2735,6 +2737,7 @@ export type Database = {
           created_at?: string
           created_by_user_id?: string | null
           id?: string
+          mfa_required?: boolean
           name?: string
           primary_contact_email?: string | null
           seat_count?: number
@@ -4204,6 +4207,8 @@ export type Database = {
       }
       current_user_account_type: { Args: never; Returns: string }
       current_user_department_id: { Args: never; Returns: string }
+      current_user_mfa_required: { Args: never; Returns: boolean }
+      current_user_mfa_satisfied: { Args: never; Returns: boolean }
       current_user_org_id: { Args: never; Returns: string }
       current_user_supervisor_id: { Args: never; Returns: string }
       delete_org_intervention: {
@@ -4462,6 +4467,10 @@ export type Database = {
       org_has_feature: {
         Args: { p_feature: string; p_org: string }
         Returns: boolean
+      }
+      org_set_mfa_required: {
+        Args: { p_enabled: boolean; p_organization_id: string }
+        Returns: Json
       }
       peer_access_request_create: {
         Args: { p_target_user_id: string }

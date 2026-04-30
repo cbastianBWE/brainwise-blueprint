@@ -3,8 +3,16 @@ import { Navigate, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useOnboardingStatus, useAccountType } from "@/hooks/useOnboardingStatus";
+import { useMfaRequired, useMfaSatisfied } from "@/hooks/useMfaStatus";
 
-const EXEMPT_PATHS = ["/onboarding", "/demographic-form", "/demographic-consent", "/peer-sharing-optin", "/peer-access-responded"];
+const EXEMPT_PATHS = [
+  "/onboarding",
+  "/demographic-form",
+  "/demographic-consent",
+  "/peer-sharing-optin",
+  "/peer-access-responded",
+  "/mfa-enrollment",
+];
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { session, loading } = useAuth();
@@ -30,8 +38,18 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
   const { data: hasRequired, isLoading: gateLoading } = useOnboardingStatus(userId);
   const { data: accountType, isLoading: accountTypeLoading } = useAccountType(userId);
+  const { data: mfaRequired, isLoading: mfaRequiredLoading } = useMfaRequired(userId);
+  const { data: mfaSatisfied, isLoading: mfaSatisfiedLoading } = useMfaSatisfied(userId);
 
-  if (loading || (session && (statusLoading || gateLoading || accountTypeLoading))) {
+  if (
+    loading ||
+    (session &&
+      (statusLoading ||
+        gateLoading ||
+        accountTypeLoading ||
+        mfaRequiredLoading ||
+        mfaSatisfiedLoading))
+  ) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
@@ -43,8 +61,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     return <Navigate to="/login" replace />;
   }
 
-  // Deactivation grace-period guard: redirect to /departed if active+deactivated_at set
-  // and not yet past reactivation_deadline.
+  // Deactivation grace-period guard
   if (
     statusProfile?.account_status === "active" &&
     statusProfile?.deactivated_at &&
@@ -56,11 +73,21 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     }
   }
 
+  // Demographics gate (runs before MFA gate)
   if (hasRequired === false && !EXEMPT_PATHS.includes(location.pathname)) {
     if (!accountType) {
       return <Navigate to="/onboarding" replace />;
     }
     return <Navigate to="/demographic-form" replace />;
+  }
+
+  // MFA gate
+  if (
+    mfaRequired === true &&
+    mfaSatisfied === false &&
+    !EXEMPT_PATHS.includes(location.pathname)
+  ) {
+    return <Navigate to="/mfa-enrollment" replace />;
   }
 
   return <>{children}</>;
