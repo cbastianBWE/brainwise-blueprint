@@ -95,7 +95,7 @@ function PTP_DIM_COLOR(dimId: string): string {
   return colors[dimId] ?? "#021F36";
 }
 
-export function generateResultsPdf(data: PdfData, sections: PdfSections): void {
+export function generateResultsPdf(data: PdfData, sections: PdfSections, options?: { returnBlob?: boolean }): void | Blob {
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   let y = MARGIN_T;
   const today = new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
@@ -537,5 +537,8 @@ export function generateResultsPdf(data: PdfData, sections: PdfSections): void {
   const lastName = data.userName.split(" ").pop() || "User";
   const dateStr = new Date().toISOString().slice(0, 10);
   const contextSuffix = data.contextLabel ? `-${data.contextLabel}` : "";
+  if (options?.returnBlob) {
+    return doc.output("blob");
+  }
   doc.save(`BrainWise-${data.instrumentShortName}${contextSuffix}-${lastName}-${dateStr}.pdf`);
 }
