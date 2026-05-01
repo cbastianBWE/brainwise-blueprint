@@ -65,7 +65,7 @@ interface Props {
 export default function InstrumentSelection({ onSelect }: Props) {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { isCorp, loading: roleLoading } = useAccountRole();
+  const { isCorp, isSuperAdmin, loading: roleLoading } = useAccountRole();
   const [corpInstrumentAccess, setCorpInstrumentAccess] = useState<Map<string, boolean>>(new Map());
   const [userTier, setUserTier] = useState<string>("base");
   const [userStatus, setUserStatus] = useState<string>("inactive");
@@ -199,6 +199,7 @@ export default function InstrumentSelection({ onSelect }: Props) {
   }, [user]);
 
   const canAccessBySubscription = (tier: "base" | "premium") => {
+    if (isSuperAdmin) return true;
     if (userStatus === "inactive" || !userStatus) return false;
     if (tier === "base") return true;
     return userTier === "premium";
@@ -316,7 +317,13 @@ export default function InstrumentSelection({ onSelect }: Props) {
               const startLabel = isInProgress ? "Continue Assessment" : "Start Assessment";
 
               let buttonContent: React.ReactNode;
-              if (isCorp) {
+              if (isSuperAdmin) {
+                buttonContent = (
+                  <Button className="w-full" onClick={() => handleSelect(inst)}>
+                    {startLabel}
+                  </Button>
+                );
+              } else if (isCorp) {
                 buttonContent = (
                   <Button className="w-full" onClick={() => handleSelect(inst)}>
                     {startLabel}
@@ -360,7 +367,7 @@ export default function InstrumentSelection({ onSelect }: Props) {
               return (
                 <Card
                   key={inst.instrument_id}
-                  className={`relative transition-all ${isRecommended ? "ring-2 ring-primary" : ""} ${isCorp || subscriptionAccess || coachPaid || selfPayCoachInvited || purchaseAccess ? "hover:shadow-md" : "opacity-80"}`}
+                  className={`relative transition-all ${isRecommended ? "ring-2 ring-primary" : ""} ${isSuperAdmin || isCorp || subscriptionAccess || coachPaid || selfPayCoachInvited || purchaseAccess ? "hover:shadow-md" : "opacity-80"}`}
                 >
                   {isRecommended && (
                     <div className="absolute -top-3 left-4">

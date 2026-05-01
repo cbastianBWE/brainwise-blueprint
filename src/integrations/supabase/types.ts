@@ -4369,6 +4369,7 @@ export type Database = {
           user_id: string
         }[]
       }
+      is_internal_user: { Args: { p_user_id: string }; Returns: boolean }
       list_available_recommendations: {
         Args: never
         Returns: {
