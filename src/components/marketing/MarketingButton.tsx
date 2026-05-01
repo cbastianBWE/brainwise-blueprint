@@ -1,62 +1,25 @@
-import { CSSProperties, ElementType, ReactNode } from "react";
+import { ReactNode, ElementType, CSSProperties } from "react";
 
 type Variant = "primary" | "secondary" | "ghost" | "invert";
 type Size = "sm" | "md" | "lg";
 
-interface Props {
+type Props = {
   variant?: Variant;
   size?: Size;
   as?: ElementType;
   to?: string;
   href?: string;
-  type?: "button" | "submit";
-  disabled?: boolean;
-  onClick?: (e: any) => void;
   children: ReactNode;
   style?: CSSProperties;
+  className?: string;
   fullWidth?: boolean;
   hideArrow?: boolean;
-}
-
-const sizeMap: Record<Size, CSSProperties> = {
-  sm: { padding: "8px 16px", fontSize: 13 },
-  md: { padding: "11px 22px", fontSize: 14 },
-  lg: { padding: "15px 30px", fontSize: 15 },
+  onDark?: boolean;
+  onClick?: (e: React.MouseEvent) => void;
+  type?: "button" | "submit" | "reset";
+  disabled?: boolean;
+  [key: string]: any;
 };
-
-function getVariantStyle(v: Variant): CSSProperties {
-  // Use !important via string-with-suffix trick because Tailwind preflight
-  // resets buttons and anchors to background-color: transparent / color: inherit,
-  // which beats normal React inline styles in cascade order.
-  const i = (val: string) => `${val} !important` as any;
-  switch (v) {
-    case "primary":
-      return {
-        background: i("var(--accent)"),
-        color: i("#ffffff"),
-        border: "1px solid var(--accent)",
-        boxShadow: "var(--shadow-cta)",
-      };
-    case "secondary":
-      return {
-        background: i("var(--bw-navy)"),
-        color: i("#ffffff"),
-        border: "1px solid var(--bw-navy)",
-      };
-    case "ghost":
-      return {
-        background: i("transparent"),
-        color: i("rgba(255,255,255,0.92)"),
-        border: "1px solid rgba(255,255,255,0.32)",
-      };
-    case "invert":
-      return {
-        background: i("transparent"),
-        color: i("#ffffff"),
-        border: "1px solid rgba(255,255,255,0.55)",
-      };
-  }
-}
 
 export default function MarketingButton({
   variant = "primary",
@@ -64,36 +27,31 @@ export default function MarketingButton({
   as,
   children,
   style,
+  className = "",
   fullWidth,
   hideArrow,
+  onDark,
   ...rest
 }: Props) {
   const Tag: ElementType = as || (rest.to || rest.href ? "a" : "button");
-  const base: CSSProperties = {
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    fontFamily: "'Montserrat', sans-serif",
-    fontWeight: 600,
-    borderRadius: "var(--r-pill)",
-    cursor: rest.disabled ? "not-allowed" : "pointer",
-    opacity: rest.disabled ? 0.6 : 1,
-    transition: "transform var(--dur-fast) var(--ease-standard), background var(--dur-fast)",
-    textDecoration: "none",
-    whiteSpace: "nowrap",
-    width: fullWidth ? "100%" : undefined,
-    letterSpacing: "0.01em",
-    lineHeight: 1.1,
-    ...sizeMap[size],
-    ...getVariantStyle(variant),
-    ...style,
-  };
+
+  const classes = [
+    "bw-btn",
+    `bw-btn-${variant}`,
+    `bw-btn-${size}`,
+    fullWidth ? "bw-btn-fullwidth" : "",
+    onDark && variant === "ghost" ? "bw-btn-on-dark" : "",
+    className,
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   const showArrow = !hideArrow && variant !== "ghost";
+
   return (
-    <Tag {...rest} style={base}>
+    <Tag className={classes} style={style} {...rest}>
       {children}
-      {showArrow && <span aria-hidden style={{ marginLeft: 2 }}>→</span>}
+      {showArrow && <span className="bw-btn-arrow">→</span>}
     </Tag>
   );
 }
