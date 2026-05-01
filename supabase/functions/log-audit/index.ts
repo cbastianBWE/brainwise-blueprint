@@ -65,9 +65,7 @@ serve(async (req) => {
       .insert(rows);
 
     if (insertError) {
-      return new Response(JSON.stringify({ error: insertError.message }), {
-        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return serverError("log-audit", insertError, corsHeaders);
     }
 
     return new Response(JSON.stringify({ success: true, count: rows.length }), {
