@@ -1,46 +1,40 @@
-# Phase 5 — Marketing Homepage Build
+# Phase 5 — Class-based marketing button system
 
-Inventory re-confirmed: `/` → `src/pages/Index.tsx`, supabase client at `@/integrations/supabase/client`, shadcn Dialog present. Brand assets `/brain-icon.png` (512×512) and `/logo-orange-white.png` (768×664) already in `public/`.
+Stop fighting Tailwind preflight via inline-style specificity. Move all marketing button variants to real CSS classes scoped under `.bw-marketing-root`, and reduce `MarketingButton` to a thin class composer.
 
-## Files to create
+## Changes
 
-1. **`src/styles/marketing-tokens.css`** — Google Fonts import (Poppins/Montserrat/Inter), full `--bw-*` token palette, semantic mappings, scoped `.bw-marketing-root` reset, focus-state helper for inputs, nav-link hover helper.
+### 1. `src/styles/marketing-tokens.css`
+- Append a new "Button system" block at the end with classes: `.bw-btn`, sizes `.bw-btn-sm/md/lg`, variants `.bw-btn-primary/secondary/ghost/invert`, modifier `.bw-btn-on-dark` (for ghost on dark surfaces), `.bw-btn-fullwidth`, `:disabled` state, and `.bw-btn-arrow`.
+- Selectors written for both `button` and `a` (`.bw-marketing-root .bw-btn, .bw-marketing-root a.bw-btn`) so anchor and button render identically and beat Tailwind preflight via specificity (no `!important` needed).
+- Includes hover states for primary/secondary/ghost/invert.
+- Remove (if still present) any leftover `.bw-marketing-root button { background-color: revert; ... }` rule from prior fix attempts. Keep `.bw-marketing-root button { font-family: inherit; }`.
 
-2. **`src/components/marketing/MarketingButton.tsx`** — variants `primary | secondary | ghost | invert`, sizes `sm | md | lg`, pill shape, trailing → arrow on non-ghost, `as` prop for react-router `Link`, `fullWidth`, `hideArrow`, `disabled`, inline-style based on tokens.
+### 2. `src/components/marketing/MarketingButton.tsx` — full rewrite
+- Drop the `getVariantStyle` + `i(val)` `!important` hack and the `as any` cast.
+- Compose `className` from props: base `bw-btn`, variant class, size class, optional `bw-btn-fullwidth`, and `bw-btn-on-dark` when `variant="ghost"` and new `onDark` prop is true.
+- `style` prop still forwarded for one-off overrides.
+- Arrow rendered via `<span className="bw-btn-arrow">→</span>`; hidden when `hideArrow` or variant is `ghost`.
+- Tag selection unchanged: `as` prop wins, else `<a>` if `to`/`href`, else `<button>`.
 
-3. **`src/components/marketing/Eyebrow.tsx`** — Poppins 700 12px / 0.2em / uppercase, default orange, color override prop.
+### 3. `src/components/marketing/MarketingNav.tsx` — one call site update
+- Top-nav "Sign In" (ghost on navy bar): add `onDark` prop so it gets white text/border instead of navy. Applies to both desktop and the mobile-header instance (same component instance — single edit).
+- Audience-card "Talk to Us" / "Book a Briefing" stay as `variant="ghost"` with no `onDark` (cream background, navy text/border is correct). Their existing inline `style={{ color: "var(--bw-navy)", borderColor: "var(--border-2)" }}` overrides become redundant but harmless; leave as-is to keep diff minimal.
 
-4. **`src/components/marketing/DotArc.tsx`** — absolutely positioned `<img src="/brain-icon.png">` wrapper, props `size`, `opacity`, `style`, pointer-events none.
+## Files touched
+- `src/styles/marketing-tokens.css` (append + small cleanup)
+- `src/components/marketing/MarketingButton.tsx` (full rewrite)
+- `src/components/marketing/MarketingNav.tsx` (add `onDark` to nav Sign In)
 
-5. **`src/components/marketing/MarketingNav.tsx`** — sticky navy nav, brain-icon + "BrainWise Enterprises" wordmark, four center links (Products/Pricing/Services/Contact → `/coming-soon`) hidden <768px, Sign In (ghost) / Sign Up (primary) right block, sm size on mobile.
+## Verification checklist
+- Hero "Sign Up" (primary on navy): orange fill, white text + arrow
+- Hero "Sign In" (invert on navy): transparent + white border, white text + arrow
+- Top-nav "Sign In" (ghost + onDark): transparent, subtle white border, white text
+- Top-nav "Sign Up" (primary): orange fill, white text
+- Audience card "Get Started" (primary on cream): orange fill, white text
+- Audience card "Talk to Us" / "Book a Briefing" (ghost on cream): transparent, navy border + text
+- Modal "Request Briefing" (primary fullWidth on white): orange fill, white text
+- CTA "Sign Up" (primary on navy) + "Book a Briefing" (invert on navy): both visible
+- Hover: primary darkens one shade; ghost/invert get subtle bg tint
 
-6. **`src/components/marketing/MarketingFooter.tsx`** — navy, single-row top (icon + wordmark left, "Faster Change. More Wins." tagline right), bottom row with copyright + support email + Phase-6 placeholder text.
-
-7. **`src/components/marketing/BriefingModal.tsx`** — `createPortal` to body, backdrop with blur, dialog ARIA, ESC + backdrop-click close, autofocus first input, honeypot `website` field off-screen, five labeled inputs (Name, Email, Company, Role, Message), submit calls `supabase.functions.invoke('submit-briefing-request', { body: { …form, source } })`, success state with checkmark, error state below button.
-
-8. **`src/pages/marketing/Home.tsx`** — composes Nav + Hero (DotArc, eyebrow, H1 with orange "psychometric assessments" span, subhead, Sign Up/Sign In CTAs) + Stats (4-col grid with colored left borders, responsive 2/1) + AudienceCards (3-col, Get Started → /signup, Talk to Us → modal source `audience_card_coach`, Book a Briefing → modal source `audience_card_enterprise`) + Instruments (PTP/NAI/AIRSA/HSS, 2x2 grid) + CTA (split layout, DotArc, Sign Up + Book a Briefing) + Footer + BriefingModal. SEO meta tags via `useEffect` (title, description, og:*).
-
-9. **`src/pages/marketing/ComingSoon.tsx`** — cream full-viewport centered: eyebrow, H1 "We're building this.", body, Sign Up + ← Back to home CTAs.
-
-## Routing change
-
-**`src/App.tsx`**:
-- Remove `import Index from "./pages/Index"`.
-- Add `import Home from "./pages/marketing/Home"` and `import ComingSoon from "./pages/marketing/ComingSoon"`.
-- Replace `<Route path="/" element={<Index />} />` with `<Route path="/" element={<Home />} />`.
-- Add `<Route path="/coming-soon" element={<ComingSoon />} />` in the public routes block.
-- Leave every other route unchanged.
-
-## Delete
-
-- **`src/pages/Index.tsx`** — orphaned placeholder.
-
-## Out of scope (not doing)
-
-- No changes to existing app routes, AppLayout, Tailwind config, email templates, or backend.
-- No Phase 6 pages (Products/Pricing/Services/Contact/Privacy/Terms/Cookies/International).
-- No new dependencies, no favicon, no fake logos/quotes.
-
-## Definition of done verification (post-build)
-
-Will confirm all 10 DoD items, including: `/` renders new homepage, `/coming-soon` reachable, `/login` & `/signup` still work, nav center links route to `/coming-soon`, `Index.tsx` deleted, modal opens from coach/enterprise cards + CTA "Book a Briefing", hero CTAs go to /signup and /login, modal submits via edge function, mobile 375px clean, brain-icon renders cleanly on navy, exact "BrainWise Enterprises" capitalization throughout.
+No other components affected. The Phase 4 mobile-nav hamburger work stays as-is.
