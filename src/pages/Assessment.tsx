@@ -41,7 +41,6 @@ export default function Assessment() {
   const [contextType, setContextType] = useState<'professional' | 'personal' | 'both' | null>(null);
   const [epnStarting, setEpnStarting] = useState(false);
 
-  const shouldRedirectCoach = !roleLoading && isCoach && !canBypassAssessmentPaywall;
 
   const epnAssignmentsQuery = useQuery({
     queryKey: ["my-epn-assignments", user?.id],
