@@ -1,4 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { serverError } from "../_shared/errors.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -46,7 +47,6 @@ Deno.serve(async (req: Request) => {
       message: string;
       conversation_history: Array<{ role: string; content: string }>;
       assessment_result_ids: string[];
-      subscription_tier: string;
     };
     try {
       body = await req.json();
@@ -57,7 +57,7 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    const { message, conversation_history = [], assessment_result_ids = [], subscription_tier = "base" } = body;
+    const { message, conversation_history = [], assessment_result_ids = [] } = body;
 
     if (!message || typeof message !== "string") {
       return new Response(
@@ -74,7 +74,7 @@ Deno.serve(async (req: Request) => {
         "Content-Type": "application/json",
         apikey: anonKey,
       },
-      body: JSON.stringify({ subscription_tier, usage_type: "chat_message" }),
+      body: JSON.stringify({ usage_type: "chat_message" }),
     });
     const usage = await usageRes.json();
 
@@ -217,10 +217,6 @@ Deno.serve(async (req: Request) => {
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {
-    console.error("ai-chat error:", err);
-    return new Response(
-      JSON.stringify({ error: String(err) }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return serverError("ai-chat", err, corsHeaders);
   }
 });
