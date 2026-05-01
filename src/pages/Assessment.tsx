@@ -137,6 +137,10 @@ export default function Assessment() {
     });
   };
 
+  if (shouldRedirectCoach) {
+    return <Navigate to="/coach/clients" replace />;
+  }
+
   if (selectedInstrument) {
     if (selectedInstrument.instrument_id === "INST-001" && contextType === null) {
       return <PTPContextSelection onSelect={setContextType} />;
