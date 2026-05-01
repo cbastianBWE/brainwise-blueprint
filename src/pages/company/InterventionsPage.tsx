@@ -267,7 +267,7 @@ export default function InterventionsPage() {
     setOrgName((orgRow?.name as string) ?? "");
 
     const { data } = await (supabase as any)
-      .from("users")
+      .from("org_users_public")
       .select("id, full_name, email")
       .eq("organization_id", userRow.organization_id)
       .in("account_type", ["org_admin", "company_admin"])
