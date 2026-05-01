@@ -522,9 +522,9 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
     setLimitReached(null);
 
     // Consume one AI interaction from usage limit (report_generation type)
-    const usageData = await consumeMessage(profile?.subscription_tier ?? "base", "report_generation");
+    const usageData = await consumeMessage(effectiveTier, "report_generation");
     if (!usageData || !usageData.allowed) {
-      setLimitReached({ limit: usageData?.limit ?? 30, tier: usageData?.tier ?? profile?.subscription_tier ?? "base" });
+      setLimitReached({ limit: usageData?.limit ?? 30, tier: usageData?.tier ?? effectiveTier });
       setRegenerating(false);
       return;
     }
@@ -567,7 +567,7 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
       clearInterval(poll);
       setRegenerating(false);
     }, 120000);
-  }, [selected, consumeMessage, profile?.subscription_tier, toast]);
+  }, [selected, consumeMessage, effectiveTier, toast]);
 
   // Derived data
   const dimensionScores = effectiveDimensionScores;
@@ -664,7 +664,7 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
           message: userMessage,
           conversation_history: chatMessagesRef.current.slice(0, -1).map(m => ({ role: m.role, content: m.content })),
           assessment_result_ids: [selected.result.id],
-          subscription_tier: profile?.subscription_tier ?? 'base',
+          subscription_tier: effectiveTier,
         },
         headers: { Authorization: `Bearer ${authSession?.access_token}` },
       });
@@ -1145,7 +1145,7 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
                               size="sm"
                               className="text-xs text-foreground border-border mt-1"
                               onClick={() => {
-                                if (profile?.subscription_status === "active") {
+                                if (hasActiveAccess) {
                                   setShowConfirmDialog(true);
                                 } else {
                                   setShowUpgradeDialog(true);
@@ -1227,7 +1227,7 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
 
       {!isCoachView && selected && (
         <div className="fixed bottom-6 right-6 z-40 flex flex-col items-end gap-2">
-          {chatOpen && profile?.subscription_status === 'active' && (
+          {chatOpen && hasActiveAccess && (
             <div className="w-80 sm:w-96 h-[480px] bg-background border border-border rounded-2xl shadow-2xl flex flex-col overflow-hidden">
               {/* Chat header */}
               <div className="bg-primary px-4 py-3 flex items-center justify-between">
@@ -1318,7 +1318,7 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
           {/* Bubble toggle button */}
           <button
             onClick={() => {
-              if (profile?.subscription_status !== 'active') {
+              if (!hasActiveAccess) {
                 setShowChatUpgradeDialog(true);
               } else {
                 setChatOpen(prev => !prev);
