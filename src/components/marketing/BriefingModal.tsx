@@ -265,5 +265,5 @@ export default function BriefingModal({ open, onClose, source }: Props) {
     </div>
   );
 
-  return createPortal(node, document.body);
+  return createPortal(<div className="bw-marketing-root">{node}</div>, document.body);
 }
