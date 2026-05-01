@@ -52,9 +52,7 @@ export default function Assessment() {
     }
   }, [roleLoading, isCoach, canBypassAssessmentPaywall]);
 
-  if (!roleLoading && isCoach && !canBypassAssessmentPaywall) {
-    return <Navigate to="/coach/clients" replace />;
-  }
+  const shouldRedirectCoach = !roleLoading && isCoach && !canBypassAssessmentPaywall;
 
   const epnAssignmentsQuery = useQuery({
     queryKey: ["my-epn-assignments", user?.id],
@@ -138,6 +136,10 @@ export default function Assessment() {
       preexistingAssessmentId: assessmentId as string,
     });
   };
+
+  if (shouldRedirectCoach) {
+    return <Navigate to="/coach/clients" replace />;
+  }
 
   if (selectedInstrument) {
     if (selectedInstrument.instrument_id === "INST-001" && contextType === null) {
