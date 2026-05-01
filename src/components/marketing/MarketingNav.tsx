@@ -101,7 +101,7 @@ export default function MarketingNav() {
             </svg>
           </button>
         )}
-        <MarketingButton as={Link} to="/login" variant="ghost" size={isMobile ? "sm" : "md"} hideArrow>
+        <MarketingButton as={Link} to="/login" variant="ghost" size={isMobile ? "sm" : "md"} onDark hideArrow>
           Sign In
         </MarketingButton>
         <MarketingButton as={Link} to="/signup" variant="primary" size={isMobile ? "sm" : "md"}>
