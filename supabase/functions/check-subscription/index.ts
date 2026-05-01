@@ -42,18 +42,27 @@ serve(async (req) => {
     if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
 
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) throw new Error("No authorization header");
+    const token = authHeader?.replace("Bearer ", "").trim();
+    if (!authHeader || !token || token === supabaseAnonKey) {
+      logStep("No user auth token provided");
+      return new Response(
+        JSON.stringify({ subscribed: false, tier: "base", subscription_end: null, unauthenticated: true }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 },
+      );
+    }
 
-    logStep("Auth header present", { length: authHeader.length, prefix: authHeader.substring(0, 20) });
-    logStep("Anon key present", { hasAnonKey: !!supabaseAnonKey, length: supabaseAnonKey.length });
+    logStep("Auth header present", { length: authHeader.length });
 
-    // Extract token and use admin client to validate
-    const token = authHeader.replace("Bearer ", "");
     const { data: userData, error: userError } = await supabaseAdmin.auth.getUser(token);
     logStep("getUser result", { hasData: !!userData?.user, error: userError?.message });
-    if (userError) throw new Error(`Auth error: ${userError.message}`);
+    if (userError || !userData?.user?.email) {
+      logStep("Auth failed", { error: userError?.message });
+      return new Response(
+        JSON.stringify({ subscribed: false, tier: "base", subscription_end: null, unauthenticated: true }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 },
+      );
+    }
     const user = userData.user;
-    if (!user?.email) throw new Error("User not authenticated");
     logStep("User authenticated", { userId: user.id });
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
