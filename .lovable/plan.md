@@ -1,93 +1,135 @@
-# Phase 8 Security Hardening — Edge Functions Only
+# Coordinated security fixes — generate-report auth + coach invite token leak
 
-All 8 target files match the prior diagnostic (line numbers within ±2; no structural rewrites). Safe to proceed. **No frontend changes. No DB migrations.**
+Four file changes across two findings. No DB migrations, no other auth flows touched.
 
-Confirmed clarifications from user:
-- **Field names preserved**: existing response uses `current_count` (not `used`). Keep `current_count`; add `reason`/`message` additively. For corp tier, map `chat_used_this_month` → `current_count`.
-- **Branch order**: `subscription_status !== 'active'` checked **before** tier (canceled premium → free path).
-- **Defensive defaults**: tier null/unknown → `'base'`; status null/non-active → `'inactive'`; missing user row → `free_tier_no_chat`.
+## Prerequisites (already confirmed)
 
----
-
-## Item A — Server-side AI tier resolution
-
-### `supabase/functions/check-ai-usage/index.ts` (rewrite tier logic)
-
-1. Stop reading `body.subscription_tier` entirely. Body parses only `check_only` and `usage_type`.
-2. After `auth.getUser()`, look up caller via service-role client:
-   ```
-   SELECT account_type, subscription_tier, subscription_status FROM users WHERE id = user.id
-   ```
-   If zero rows → return `{ allowed:false, reason:'free_tier_no_chat', message:'Upgrade to a paid plan to chat with the AI coach.' }`.
-3. Branch by `account_type`:
-   - **`corporate_employee` | `company_admin` | `org_admin`** → call `user_effective_allowances` via a **user-JWT-scoped client** (built from request's Authorization header):
-     - `!ai_chat_enabled` → `{ allowed:false, reason:'chat_disabled_by_contract', message:"AI chat is not enabled on your organization's plan. Contact your administrator." }`
-     - `chat_remaining <= 0` → `{ allowed:false, reason:'limit_exceeded', current_count:chat_used_this_month, limit:chat_allowance_per_user, remaining:0, message:"You've used your monthly AI chat allowance." }`
-     - else → allowed; `current_count=chat_used_this_month`, `limit=chat_allowance_per_user`, `remaining=chat_remaining`
-   - **`brainwise_super_admin`** → `limit=9999`; used = sum from `ai_usage` for current month_year
-   - **`individual`** → `subscription_status` check first: if not `'active'` → `free_tier_no_chat`. Then tier: `'premium'` → 150, anything else (incl. null/unknown) → 30.
-   - **`coach` | null | unknown account_type** → `free_tier_no_chat`
-4. For non-corp allowed paths, retain existing `increment_ai_usage` RPC + manual upsert fallback and `check_only` short-circuit. For corp allowed paths, also still increment `ai_usage` so analytics tracking stays intact (per "do NOT remove the corp-employee usage tracking already in place").
-5. Response shape stays backward compatible: `allowed`, `current_count`, `limit`, `remaining`, `tier`, `counts_by_type` (where applicable), plus additive `reason`/`message` on denials.
-
-### `supabase/functions/ai-chat/index.ts`
-
-- Remove `subscription_tier` from the JSON body forwarded to `check-ai-usage`. Stop destructuring `subscription_tier` from inbound body. All other logic untouched. Catch block also gets `serverError` (Item B).
+- `INTERNAL_FUNCTION_SECRET` is set in Supabase Edge Function secrets.
+- `validate-coach-invite` Edge Function will be deployed by you separately and returns `{ first_name, last_name, email, certification_type }`.
 
 ---
 
-## Item B — Sanitized 5xx errors
+## Change 1 — NEW FILE: `supabase/functions/_shared/secrets.ts`
 
-### New file `supabase/functions/_shared/errors.ts`
+Constant-time string comparison helper.
 
-Exports `serverError(label, err, headers)`: `console.error`s full error, returns generic `{ error: 'Internal server error' }` 500 with CORS headers merged.
+```ts
+export function safeEqual(a: string, b: string): boolean {
+  if (typeof a !== "string" || typeof b !== "string") return false;
+  if (a.length !== b.length) return false;
+  let result = 0;
+  for (let i = 0; i < a.length; i++) {
+    result |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  return result === 0;
+}
+```
 
-### Apply in catch blocks of:
+## Change 2 — `supabase/functions/generate-report/index.ts`
 
-| File | Lines |
-|---|---|
-| `ai-chat/index.ts` | ~222 catch-all |
-| `check-ai-usage/index.ts` | selectError 500, insertError 500, outer catch |
-| `calculate-scores/index.ts` | ~369 catch |
-| `check-subscription/index.ts` | ~122-128 catch (preserve `logStep('ERROR', ...)`) |
-| `create-checkout/index.ts` | ~95-101 catch (do NOT touch `coach_user_id` metadata) |
-| `customer-portal/index.ts` | ~49-54 catch |
-| `generate-report/index.ts` | ~322 catch |
-| `log-audit/index.ts` | ~75 catch |
+**a)** Add import at top (after existing imports, line 2):
 
-Each gets `import { serverError } from "../_shared/errors.ts";`. **All 4xx validation responses left untouched.**
+```ts
+import { safeEqual } from "../_shared/secrets.ts";
+```
+
+**b)** Insert hybrid auth gate immediately after the OPTIONS handler (after line 13), **before** the existing `admin` client creation at line 15:
+
+```ts
+  // Hybrid auth: internal-secret bypass OR user JWT with ownership check
+  const internalSecret = Deno.env.get("INTERNAL_FUNCTION_SECRET");
+  const headerSecret = req.headers.get("x-internal-secret");
+  const isInternal = !!(internalSecret && headerSecret && safeEqual(internalSecret, headerSecret));
+
+  let callerUserId: string | null = null;
+
+  if (!isInternal) {
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const userClient = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+      { global: { headers: { Authorization: authHeader } } }
+    );
+    const { data: { user }, error: authErr } = await userClient.auth.getUser();
+    if (authErr || !user) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    callerUserId = user.id;
+  }
+```
+
+**c)** Insert ownership check after the `assessment_results` row is fetched and validated (i.e. after the `if (resultErr || !result)` early-return block ending at line 53), before any Anthropic / heavy work. Note: the existing variable name is `admin` (not `supabaseAdmin` as in your spec) — using the existing name to avoid an undefined reference:
+
+```ts
+    // Ownership check (skip for internal calls)
+    if (!isInternal && callerUserId) {
+      if (result.user_id !== callerUserId) {
+        const { data: callerProfile } = await admin
+          .from("users")
+          .select("account_type")
+          .eq("id", callerUserId)
+          .single();
+        if (callerProfile?.account_type !== "brainwise_super_admin") {
+          return new Response(
+            JSON.stringify({ error: "Forbidden" }),
+            { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+      }
+    }
+```
+
+This sits inside the existing `try` block, immediately after the user-name fetch can begin — placing it right after line 53 means the super-admin lookup only happens when ownership doesn't match, before any Anthropic spend.
+
+## Change 3 — `supabase/functions/calculate-scores/index.ts` (lines 319-326)
+
+Replace the `fetch()` headers block to drop the anon-key Authorization and add the internal-secret header:
+
+```ts
+      fetch(reportUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-internal-secret": Deno.env.get("INTERNAL_FUNCTION_SECRET") ?? "",
+        },
+        body: JSON.stringify({ assessment_result_id: result!.id }),
+      }).catch((e) => console.error("generate-report fire-and-forget error:", e));
+```
+
+## Change 4 — `src/pages/SignUp.tsx` (lines 60-65)
+
+Replace the anon read of `coach_invitations` with the new Edge Function call:
+
+```ts
+      const { data, error } = await supabase.functions.invoke('validate-coach-invite', {
+        body: { token }
+      });
+```
+
+The downstream `if (data) { setCoachInvitation(data); setFirstName(data.first_name); ... }` block is unchanged (response shape is identical).
+
+The post-signup `accept-coach-invitation` invoke at lines 121-123 is **not** touched.
 
 ---
 
-## Out of scope
+## Verification (after apply)
 
-- `src/` frontend, DB schema/RLS/migrations, `set-account-type`, Stripe price IDs/webhooks/`subscription_plans`, `create-checkout` Stripe metadata, `generate-report` auth model, `supabase/config.toml`.
+1. `rg "INTERNAL_FUNCTION_SECRET" supabase/functions/` — should show the new gate in `generate-report/index.ts` and the new header in `calculate-scores/index.ts` (plus any pre-existing usage e.g. in deployed `invite-coach`).
+2. `rg "SUPABASE_ANON_KEY" supabase/functions/calculate-scores/` — should NOT show the line previously used to call generate-report.
+3. `rg "from\(['\"]coach_invitations['\"]\)" src/` — should match only `src/pages/super-admin/CoachManagement.tsx` (lines 299, 328); SignUp.tsx no longer matches.
 
----
+## Notes / risks
 
-## Post-edit deliverables (per user request)
-
-1. Diff of `check-ai-usage/index.ts` tier-resolution block
-2. Full `_shared/errors.ts` contents
-3. One-line confirmation per Item B file that only the catch block changed
-4. `rg "subscription_tier" supabase/functions/check-ai-usage` and `rg "subscription_tier" supabase/functions/ai-chat` output
-
-## Verification checklist
-
-1. No `body.subscription_tier` reads in `check-ai-usage`
-2. `ai-chat` no longer forwards `subscription_tier` to `check-ai-usage`
-3. `user_effective_allowances` invoked via user-JWT-scoped client
-4. `_shared/errors.ts` exists; imported by all 8 listed functions
-5. Corp disabled → `reason:'chat_disabled_by_contract'`
-6. Free/coach/inactive → `reason:'free_tier_no_chat'` with exact upgrade message
-7. `brainwise_super_admin` → `limit:9999`
-8. `coach` → `free_tier_no_chat`
-
-## Smoke-test scenarios (described, not executed)
-
-- Inactive individual → `free_tier_no_chat`
-- Premium-tier but inactive individual → `free_tier_no_chat` (status checked first)
-- Corp employee, org `ai_chat_enabled=false` → `chat_disabled_by_contract`
-- Premium active individual → `limit=150`
-- Base active individual → `limit=30`
-- Cole (super admin `1d14e510-d0d0-4687-9741-4ddfc0c37253`) → `limit=9999`
+- I will use `admin` (existing name in generate-report) instead of `supabaseAdmin` from your spec — purely a naming alignment, behavior identical.
+- Frontend callers (`MyResults.tsx`, `VersionManagement.tsx`) are untouched; `supabase.functions.invoke()` already attaches the user JWT, so they pass through Class A path with ownership check (super-admin bypass covers `VersionManagement`).
+- The fire-and-forget call from `calculate-scores` now goes through the internal-secret path; if the secret env var is missing in the function's environment, the fetch will be rejected with 401 and the narrative won't generate (caller-only impact, surfaced via console.error).

@@ -320,7 +320,7 @@ Deno.serve(async (req: Request) => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${Deno.env.get("SUPABASE_ANON_KEY")}`,
+          "x-internal-secret": Deno.env.get("INTERNAL_FUNCTION_SECRET") ?? "",
         },
         body: JSON.stringify({ assessment_result_id: result!.id }),
       }).catch((e) => console.error("generate-report fire-and-forget error:", e));

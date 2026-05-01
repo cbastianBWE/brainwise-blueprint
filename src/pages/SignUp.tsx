@@ -57,12 +57,9 @@ const SignUp = () => {
     setCoachToken(token);
     setTokenLoading(true);
     (async () => {
-      const { data } = await supabase
-        .from('coach_invitations')
-        .select('first_name, last_name, email, certification_type')
-        .eq('token', token)
-        .eq('status', 'pending')
-        .single();
+      const { data } = await supabase.functions.invoke('validate-coach-invite', {
+        body: { token }
+      });
       if (data) {
         setCoachInvitation(data);
         setFirstName(data.first_name);
