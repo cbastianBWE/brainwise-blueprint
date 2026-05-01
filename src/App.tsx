@@ -12,6 +12,10 @@ import { SuperAdminSessionProvider } from "@/hooks/useSuperAdminSession";
 import AppLayout from "@/components/AppLayout";
 import Home from "./pages/marketing/Home";
 import ComingSoon from "./pages/marketing/ComingSoon";
+import Privacy from "./pages/marketing/Privacy";
+import Terms from "./pages/marketing/Terms";
+import Cookies from "./pages/marketing/Cookies";
+import InternationalCompliance from "./pages/marketing/InternationalCompliance";
 import NotFound from "./pages/NotFound";
 import SignUp from "./pages/SignUp";
 import Login from "./pages/Login";
@@ -77,6 +81,10 @@ const App = () => (
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/peer-access-responded" element={<PeerAccessResponded />} />
             <Route path="/auth/verify-conversion" element={<VerifyConversion />} />
+            <Route path="/privacy" element={<Privacy />} />
+            <Route path="/terms" element={<Terms />} />
+            <Route path="/cookies" element={<Cookies />} />
+            <Route path="/international-privacy" element={<InternationalCompliance />} />
 
             {/* Departed route — protected, but ProtectedRoute won't redirect away from /departed */}
             <Route path="/departed" element={<ProtectedRoute><Departed /></ProtectedRoute>} />

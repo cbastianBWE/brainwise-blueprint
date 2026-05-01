@@ -1208,6 +1208,57 @@ export type Database = {
           },
         ]
       }
+      contact_requests: {
+        Row: {
+          client_ip: unknown
+          created_at: string
+          email: string
+          email_send_error: string | null
+          email_send_status: string
+          email_sent_at: string | null
+          id: string
+          inquiry_type: string
+          message: string
+          name: string
+          organization: string | null
+          source: string
+          status: string
+          user_agent: string | null
+        }
+        Insert: {
+          client_ip?: unknown
+          created_at?: string
+          email: string
+          email_send_error?: string | null
+          email_send_status?: string
+          email_sent_at?: string | null
+          id?: string
+          inquiry_type: string
+          message: string
+          name: string
+          organization?: string | null
+          source?: string
+          status?: string
+          user_agent?: string | null
+        }
+        Update: {
+          client_ip?: unknown
+          created_at?: string
+          email?: string
+          email_send_error?: string | null
+          email_send_status?: string
+          email_sent_at?: string | null
+          id?: string
+          inquiry_type?: string
+          message?: string
+          name?: string
+          organization?: string | null
+          source?: string
+          status?: string
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       corporate_contracts: {
         Row: {
           ai_chat_enabled_override: boolean | null
