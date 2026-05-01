@@ -1,5 +1,6 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { serverError } from "../_shared/errors.ts";
+import { safeEqual } from "../_shared/secrets.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -10,6 +11,37 @@ const corsHeaders = {
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
+  }
+
+  // Hybrid auth: internal-secret bypass OR user JWT with ownership check
+  const internalSecret = Deno.env.get("INTERNAL_FUNCTION_SECRET");
+  const headerSecret = req.headers.get("x-internal-secret");
+  const isInternal = !!(internalSecret && headerSecret && safeEqual(internalSecret, headerSecret));
+
+  let callerUserId: string | null = null;
+
+  if (!isInternal) {
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const userClient = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+      { global: { headers: { Authorization: authHeader } } }
+    );
+    const { data: { user }, error: authErr } = await userClient.auth.getUser();
+    if (authErr || !user) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    callerUserId = user.id;
   }
 
   const admin = createClient(
@@ -50,6 +82,23 @@ Deno.serve(async (req: Request) => {
         JSON.stringify({ error: "Assessment result not found" }),
         { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
+    }
+
+    // Ownership check (skip for internal calls)
+    if (!isInternal && callerUserId) {
+      if (result.user_id !== callerUserId) {
+        const { data: callerProfile } = await admin
+          .from("users")
+          .select("account_type")
+          .eq("id", callerUserId)
+          .single();
+        if (callerProfile?.account_type !== "brainwise_super_admin") {
+          return new Response(
+            JSON.stringify({ error: "Forbidden" }),
+            { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+      }
     }
 
     // ── 2. Fetch user name ──
