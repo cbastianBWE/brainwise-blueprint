@@ -7,12 +7,13 @@ import MarketingButton from "@/components/marketing/MarketingButton";
 import Eyebrow from "@/components/marketing/Eyebrow";
 import DotArc from "@/components/marketing/DotArc";
 import BriefingModal from "@/components/marketing/BriefingModal";
-import ServiceAccordionCard from "@/components/marketing/ServiceAccordionCard";
-import { meta, services } from "@/content/marketing/servicesContent";
+import ServiceTile from "@/components/marketing/ServiceTile";
+import ServiceDetailModal from "@/components/marketing/ServiceDetailModal";
+import { meta, services, type ServiceCard } from "@/content/marketing/servicesContent";
 
 export default function Services() {
   const [briefingOpen, setBriefingOpen] = useState(false);
-  const [openId, setOpenId] = useState<string | null>(null);
+  const [openCard, setOpenCard] = useState<ServiceCard | null>(null);
   const [w, setW] = useState(typeof window !== "undefined" ? window.innerWidth : 1280);
 
   useEffect(() => {
@@ -119,17 +120,11 @@ export default function Services() {
               display: "grid",
               gridTemplateColumns: gridCols,
               gap: gridGap,
-              alignItems: "stretch",
+              alignItems: "start",
             }}
           >
             {services.map((card) => (
-              <ServiceAccordionCard
-                key={card.id}
-                card={card}
-                isOpen={openId === card.id}
-                onToggle={() => setOpenId(openId === card.id ? null : card.id)}
-                onOpenBriefing={() => setBriefingOpen(true)}
-              />
+              <ServiceTile key={card.id} card={card} onOpen={() => setOpenCard(card)} />
             ))}
           </div>
         </div>
@@ -262,6 +257,12 @@ export default function Services() {
         open={briefingOpen}
         onClose={() => setBriefingOpen(false)}
         source="services_page"
+      />
+
+      <ServiceDetailModal
+        card={openCard}
+        onClose={() => setOpenCard(null)}
+        onOpenBriefing={() => setBriefingOpen(true)}
       />
     </div>
   );
