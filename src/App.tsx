@@ -16,6 +16,8 @@ import Privacy from "./pages/marketing/Privacy";
 import Terms from "./pages/marketing/Terms";
 import Cookies from "./pages/marketing/Cookies";
 import InternationalCompliance from "./pages/marketing/InternationalCompliance";
+import Services from "./pages/marketing/Services";
+import Contact from "./pages/marketing/Contact";
 import NotFound from "./pages/NotFound";
 import SignUp from "./pages/SignUp";
 import Login from "./pages/Login";
@@ -85,6 +87,8 @@ const App = () => (
             <Route path="/terms" element={<Terms />} />
             <Route path="/cookies" element={<Cookies />} />
             <Route path="/international-privacy" element={<InternationalCompliance />} />
+            <Route path="/services" element={<Services />} />
+            <Route path="/contact" element={<Contact />} />
 
             {/* Departed route — protected, but ProtectedRoute won't redirect away from /departed */}
             <Route path="/departed" element={<ProtectedRoute><Departed /></ProtectedRoute>} />
