@@ -27,6 +27,13 @@ export interface AccountRoleInfo {
   isCoach: boolean;
   isSuperAdmin: boolean;
   isBypassAdmin: boolean;
+  /**
+   * True only for super admin. Use this on the assessment-take surface
+   * (InstrumentSelection) where coaches MUST be gated like base-tier
+   * individuals. Distinct from isBypassAdmin, which also covers coaches
+   * for AI chat / resources surfaces.
+   */
+  canBypassAssessmentPaywall: boolean;
   isCompanyAdmin: boolean;
   isOrgAdmin: boolean;
   loading: boolean;
@@ -37,7 +44,11 @@ export interface AccountRoleInfo {
  * Use this hook everywhere role-based branching is needed.
  *
  * - isCorp: any corporate role (employee or admin).
- * - isBypassAdmin: super admin or coach; skips Stripe subscription gating.
+ * - isBypassAdmin: super admin or coach; skips Stripe subscription gating
+ *   on AI chat / resources / results surfaces.
+ * - canBypassAssessmentPaywall: super admin only; skips the assessment-take
+ *   paywall in InstrumentSelection. Coaches are explicitly NOT included so
+ *   they're gated like base-tier individuals when taking assessments.
  * - While loading, all booleans are false. Consumers should check `loading`
  *   before rendering gated content.
  */
@@ -53,6 +64,7 @@ export function useAccountRole(): AccountRoleInfo {
       isCoach: false,
       isSuperAdmin: false,
       isBypassAdmin: false,
+      canBypassAssessmentPaywall: false,
       isCompanyAdmin: false,
       isOrgAdmin: false,
       loading,
@@ -61,14 +73,16 @@ export function useAccountRole(): AccountRoleInfo {
 
   const isCorp = (CORPORATE_ROLES as readonly string[]).includes(accountType);
   const isBypassAdmin = (BYPASS_ROLES as readonly string[]).includes(accountType);
+  const isSuperAdmin = accountType === "brainwise_super_admin";
 
   return {
     accountType,
     isCorp,
     isIndividual: accountType === "individual",
     isCoach: accountType === "coach",
-    isSuperAdmin: accountType === "brainwise_super_admin",
+    isSuperAdmin,
     isBypassAdmin,
+    canBypassAssessmentPaywall: isSuperAdmin,
     isCompanyAdmin: accountType === "company_admin",
     isOrgAdmin: accountType === "org_admin",
     loading,
