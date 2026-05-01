@@ -258,6 +258,12 @@ export default function Services() {
         onClose={() => setBriefingOpen(false)}
         source="services_page"
       />
+
+      <ServiceDetailModal
+        card={openCard}
+        onClose={() => setOpenCard(null)}
+        onOpenBriefing={() => setBriefingOpen(true)}
+      />
     </div>
   );
 }
