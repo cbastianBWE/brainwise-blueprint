@@ -10,7 +10,8 @@ import SubscriptionGate from "@/components/SubscriptionGate";
 import CorpRedirect from "@/components/CorpRedirect";
 import { SuperAdminSessionProvider } from "@/hooks/useSuperAdminSession";
 import AppLayout from "@/components/AppLayout";
-import Index from "./pages/Index";
+import Home from "./pages/marketing/Home";
+import ComingSoon from "./pages/marketing/ComingSoon";
 import NotFound from "./pages/NotFound";
 import SignUp from "./pages/SignUp";
 import Login from "./pages/Login";
@@ -68,7 +69,8 @@ const App = () => (
         <AuthProvider>
           <Routes>
             {/* Public routes */}
-            <Route path="/" element={<Index />} />
+            <Route path="/" element={<Home />} />
+            <Route path="/coming-soon" element={<ComingSoon />} />
             <Route path="/signup" element={<SignUp />} />
             <Route path="/login" element={<Login />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />

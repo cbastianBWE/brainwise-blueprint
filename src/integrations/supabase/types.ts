@@ -555,6 +555,57 @@ export type Database = {
           },
         ]
       }
+      briefing_requests: {
+        Row: {
+          client_ip: unknown
+          company: string
+          created_at: string
+          email: string
+          email_send_error: string | null
+          email_send_status: string
+          email_sent_at: string | null
+          id: string
+          message: string | null
+          name: string
+          role: string
+          source: string
+          status: string
+          user_agent: string | null
+        }
+        Insert: {
+          client_ip?: unknown
+          company: string
+          created_at?: string
+          email: string
+          email_send_error?: string | null
+          email_send_status?: string
+          email_sent_at?: string | null
+          id?: string
+          message?: string | null
+          name: string
+          role: string
+          source?: string
+          status?: string
+          user_agent?: string | null
+        }
+        Update: {
+          client_ip?: unknown
+          company?: string
+          created_at?: string
+          email?: string
+          email_send_error?: string | null
+          email_send_status?: string
+          email_sent_at?: string | null
+          id?: string
+          message?: string | null
+          name?: string
+          role?: string
+          source?: string
+          status?: string
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       cafes_ptp_mapping: {
         Row: {
           coaching_questions: Json
