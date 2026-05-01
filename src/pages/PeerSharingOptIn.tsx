@@ -41,7 +41,7 @@ const PeerSharingOptIn = () => {
     if (!user) return;
     (async () => {
       const { data } = await supabase
-        .from("users")
+        .from("org_users_public")
         .select("id")
         .eq("supervisor_user_id", user.id)
         .limit(1);
