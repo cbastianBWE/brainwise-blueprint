@@ -91,6 +91,8 @@ const App = () => (
             <Route path="/international-privacy" element={<InternationalCompliance />} />
             <Route path="/services" element={<Services />} />
             <Route path="/contact" element={<Contact />} />
+            <Route path="/products" element={<Products />} />
+            <Route path="/pricing" element={<PricingRouter />} />
 
             {/* Departed route — protected, but ProtectedRoute won't redirect away from /departed */}
             <Route path="/departed" element={<ProtectedRoute><Departed /></ProtectedRoute>} />
