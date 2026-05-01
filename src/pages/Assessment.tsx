@@ -52,9 +52,7 @@ export default function Assessment() {
     }
   }, [roleLoading, isCoach, canBypassAssessmentPaywall]);
 
-  if (!roleLoading && isCoach && !canBypassAssessmentPaywall) {
-    return <Navigate to="/coach/clients" replace />;
-  }
+  const shouldRedirectCoach = !roleLoading && isCoach && !canBypassAssessmentPaywall;
 
   const epnAssignmentsQuery = useQuery({
     queryKey: ["my-epn-assignments", user?.id],
