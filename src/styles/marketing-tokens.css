@@ -48,6 +48,13 @@
 .bw-marketing-root { font-family: var(--font-primary); color: var(--fg-1); }
 .bw-marketing-root *, .bw-marketing-root *::before, .bw-marketing-root *::after { box-sizing: border-box; }
 .bw-marketing-root a { text-decoration: none; }
+.bw-marketing-root button {
+  background-color: revert;
+  background-image: revert;
+  color: revert;
+  border-style: revert;
+  font-family: inherit;
+}
 .bw-nav-link:hover { color: var(--bw-orange) !important; }
 .bw-marketing-root input:focus, .bw-marketing-root textarea:focus {
   border-color: var(--accent) !important;
