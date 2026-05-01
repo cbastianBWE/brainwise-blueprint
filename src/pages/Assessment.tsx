@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, Navigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import InstrumentSelection from "@/components/assessment/InstrumentSelection";
@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useAccountRole } from "@/lib/accountRoles";
+import { toast as sonnerToast } from "sonner";
 
 const INSTRUMENT_ID_TO_SHORT_NAME: Record<string, string> = {
   "INST-001": "PTP",
