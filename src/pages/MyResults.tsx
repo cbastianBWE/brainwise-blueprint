@@ -3,6 +3,7 @@ import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserProfile } from "@/hooks/useUserProfile";
+import { useAccountRole } from "@/lib/accountRoles";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAiUsage } from "@/hooks/useAiUsage";
@@ -156,6 +157,9 @@ interface MyResultsProps {
 export default function MyResults({ isCoachView = false, targetUserId, preSelectedAssessmentId, coachUserId, permissionLevel = null, viewLabel, defaultInstrumentId }: MyResultsProps) {
   const { user } = useAuth();
   const { profile } = useUserProfile();
+  const { isBypassAdmin } = useAccountRole();
+  const effectiveTier = isBypassAdmin ? "premium" : (profile?.subscription_tier ?? "base");
+  const hasActiveAccess = isBypassAdmin || profile?.subscription_status === "active";
   const { toast } = useToast();
   const navigate = useNavigate();
   const effectiveUserId = isCoachView && targetUserId ? targetUserId : user?.id;
