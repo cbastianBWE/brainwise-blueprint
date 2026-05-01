@@ -2,14 +2,9 @@
 // Last updated: May 1, 2026
 // Source: Cole-approved copy, Session 39.
 
-export type ServiceCard = {
-  id: string;
-  title: string;
-  summary: string;
-  body: string;
-  benefits: string[];
-  cta: { label: string; action: "open-briefing" | "navigate"; to?: string };
-};
+import type { MarketingCardData } from "@/components/marketing/types";
+
+export type ServiceCard = MarketingCardData;
 
 export const meta = {
   eyebrow: "Services",

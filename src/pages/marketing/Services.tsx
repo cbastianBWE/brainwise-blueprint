@@ -7,8 +7,8 @@ import MarketingButton from "@/components/marketing/MarketingButton";
 import Eyebrow from "@/components/marketing/Eyebrow";
 import DotArc from "@/components/marketing/DotArc";
 import BriefingModal from "@/components/marketing/BriefingModal";
-import ServiceTile from "@/components/marketing/ServiceTile";
-import ServiceDetailModal from "@/components/marketing/ServiceDetailModal";
+import MarketingTile from "@/components/marketing/MarketingTile";
+import MarketingDetailModal from "@/components/marketing/MarketingDetailModal";
 import { meta, services, type ServiceCard } from "@/content/marketing/servicesContent";
 
 export default function Services() {
@@ -124,7 +124,7 @@ export default function Services() {
             }}
           >
             {services.map((card) => (
-              <ServiceTile key={card.id} card={card} onOpen={() => setOpenCard(card)} />
+              <MarketingTile key={card.id} card={card} onOpen={() => setOpenCard(card)} />
             ))}
           </div>
         </div>
@@ -259,7 +259,7 @@ export default function Services() {
         source="services_page"
       />
 
-      <ServiceDetailModal
+      <MarketingDetailModal
         card={openCard}
         onClose={() => setOpenCard(null)}
         onOpenBriefing={() => setBriefingOpen(true)}
