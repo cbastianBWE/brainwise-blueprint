@@ -25,15 +25,36 @@ const sizeMap: Record<Size, CSSProperties> = {
 };
 
 function getVariantStyle(v: Variant): CSSProperties {
+  // Use !important via string-with-suffix trick because Tailwind preflight
+  // resets buttons and anchors to background-color: transparent / color: inherit,
+  // which beats normal React inline styles in cascade order.
+  const i = (val: string) => `${val} !important` as any;
   switch (v) {
     case "primary":
-      return { background: "var(--accent)", color: "#fff", border: "1px solid var(--accent)", boxShadow: "var(--shadow-cta)" };
+      return {
+        background: i("var(--accent)"),
+        color: i("#ffffff"),
+        border: "1px solid var(--accent)",
+        boxShadow: "var(--shadow-cta)",
+      };
     case "secondary":
-      return { background: "var(--bw-navy)", color: "#fff", border: "1px solid var(--bw-navy)" };
+      return {
+        background: i("var(--bw-navy)"),
+        color: i("#ffffff"),
+        border: "1px solid var(--bw-navy)",
+      };
     case "ghost":
-      return { background: "transparent", color: "rgba(255,255,255,0.92)", border: "1px solid rgba(255,255,255,0.32)" };
+      return {
+        background: i("transparent"),
+        color: i("rgba(255,255,255,0.92)"),
+        border: "1px solid rgba(255,255,255,0.32)",
+      };
     case "invert":
-      return { background: "transparent", color: "#fff", border: "1px solid rgba(255,255,255,0.55)" };
+      return {
+        background: i("transparent"),
+        color: i("#ffffff"),
+        border: "1px solid rgba(255,255,255,0.55)",
+      };
   }
 }
 
