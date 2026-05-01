@@ -5,8 +5,8 @@ import MarketingButton from "./MarketingButton";
 const navLinks = [
   { label: "Products", to: "/coming-soon" },
   { label: "Pricing", to: "/coming-soon" },
-  { label: "Services", to: "/coming-soon" },
-  { label: "Contact", to: "/coming-soon" },
+  { label: "Services", to: "/services" },
+  { label: "Contact", to: "/contact" },
 ];
 
 export default function MarketingNav() {
