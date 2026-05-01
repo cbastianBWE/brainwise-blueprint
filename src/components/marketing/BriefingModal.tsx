@@ -177,16 +177,19 @@ export default function BriefingModal({ open, onClose, source }: Props) {
               We'll be in touch within one business day.
             </p>
 
-            <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 16, position: "relative" }}>
+            <form onSubmit={handleSubmit} autoComplete="off" style={{ display: "flex", flexDirection: "column", gap: 16, position: "relative" }}>
               <input
                 type="text"
-                name="website"
+                name="_bw_company_url"
                 tabIndex={-1}
-                autoComplete="off"
+                autoComplete="new-password"
                 aria-hidden="true"
                 value={form.website}
                 onChange={(e) => setForm((f) => ({ ...f, website: e.target.value }))}
                 style={{ position: "absolute", left: "-9999px", top: "auto", width: 1, height: 1, overflow: "hidden" }}
+                data-form-type="other"
+                data-lpignore="true"
+                data-1p-ignore
               />
 
               <label style={{ display: "block" }}>
