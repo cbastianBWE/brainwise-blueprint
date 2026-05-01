@@ -157,9 +157,12 @@ interface MyResultsProps {
 export default function MyResults({ isCoachView = false, targetUserId, preSelectedAssessmentId, coachUserId, permissionLevel = null, viewLabel, defaultInstrumentId }: MyResultsProps) {
   const { user } = useAuth();
   const { profile } = useUserProfile();
-  const { isBypassAdmin } = useAccountRole();
+  const { isBypassAdmin, isCoach, canBypassAssessmentPaywall } = useAccountRole();
   const effectiveTier = isBypassAdmin ? "premium" : (profile?.subscription_tier ?? "base");
   const hasActiveAccess = isBypassAdmin || profile?.subscription_status === "active";
+  // Coaches are gated on assessment-take; hide "Take/Retake" CTAs for them.
+  // Super admins (canBypassAssessmentPaywall) keep full access.
+  const canTakeAssessments = canBypassAssessmentPaywall || !isCoach;
   const { toast } = useToast();
   const navigate = useNavigate();
   const effectiveUserId = isCoachView && targetUserId ? targetUserId : user?.id;
@@ -733,7 +736,7 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
         <p className="text-muted-foreground">
           {isCoachView ? "No completed assessments found for this client." : "You haven't completed any assessments yet."}
         </p>
-        {!isCoachView && (
+        {!isCoachView && canTakeAssessments && (
           <Button onClick={() => navigate("/assessment")}>
             Take an Assessment
           </Button>
@@ -898,7 +901,7 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
             >
               <FileText className="mr-2 h-4 w-4" /> Export PDF
             </Button>
-            {!isCoachView && (
+            {!isCoachView && canTakeAssessments && (
               <>
                 <Button
                   variant="outline"
@@ -918,7 +921,7 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
           </section>
 
           {/* Complete other half prompt — PTP only */}
-          {!isCoachView && selected.isPTP && !hasPtpTabs && (selected.context_type === 'professional' || selected.context_type === 'personal') && (
+          {!isCoachView && canTakeAssessments && selected.isPTP && !hasPtpTabs && (selected.context_type === 'professional' || selected.context_type === 'personal') && (
             <section>
               <Card className="border-primary/30 bg-primary/5">
                 <CardContent className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 py-4">
@@ -1036,7 +1039,7 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
           )}
 
           {/* SECTION 3 - Cross-Instrument Recommendations */}
-          {recommendations.length > 0 && (
+          {recommendations.length > 0 && canTakeAssessments && (
             <section>
               <Card>
                 <CardHeader>
