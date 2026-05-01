@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useSearchParams, Navigate } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import InstrumentSelection from "@/components/assessment/InstrumentSelection";
@@ -9,8 +9,6 @@ import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { useAccountRole } from "@/lib/accountRoles";
-import { toast as sonnerToast } from "sonner";
 
 const INSTRUMENT_ID_TO_SHORT_NAME: Record<string, string> = {
   "INST-001": "PTP",
@@ -39,18 +37,9 @@ export default function Assessment() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
   const { toast } = useToast();
-  const { isCoach, canBypassAssessmentPaywall, loading: roleLoading } = useAccountRole();
   const [selectedInstrument, setSelectedInstrument] = useState<SelectedInstrument | null>(null);
   const [contextType, setContextType] = useState<'professional' | 'personal' | 'both' | null>(null);
   const [epnStarting, setEpnStarting] = useState(false);
-
-  // Coaches are gated on the assessment-take surface like base-tier individuals.
-  // Super admins (canBypassAssessmentPaywall) are exempt.
-  useEffect(() => {
-    if (!roleLoading && isCoach && !canBypassAssessmentPaywall) {
-      sonnerToast.info("Assessments are not included with coach accounts.");
-    }
-  }, [roleLoading, isCoach, canBypassAssessmentPaywall]);
 
   const shouldRedirectCoach = !roleLoading && isCoach && !canBypassAssessmentPaywall;
 
