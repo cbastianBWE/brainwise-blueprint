@@ -18,6 +18,8 @@ import Cookies from "./pages/marketing/Cookies";
 import InternationalCompliance from "./pages/marketing/InternationalCompliance";
 import Services from "./pages/marketing/Services";
 import Contact from "./pages/marketing/Contact";
+import Products from "./pages/marketing/Products";
+import PricingRouter from "./pages/PricingRouter";
 import NotFound from "./pages/NotFound";
 import SignUp from "./pages/SignUp";
 import Login from "./pages/Login";
@@ -105,7 +107,7 @@ const App = () => (
             {/* Protected routes with sidebar layout */}
             <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
               {/* Individual / Corporate Employee */}
-              <Route path="/pricing" element={<CorpRedirect toastMessage="Your organization handles billing directly."><Pricing /></CorpRedirect>} />
+              <Route path="/settings/plan" element={<CorpRedirect toastMessage="Your organization handles billing directly."><Pricing /></CorpRedirect>} />
               <Route path="/assessment" element={<Assessment />} />
               <Route path="/epn-complete/:assignmentId" element={<EpnComplete />} />
               <Route path="/dashboard" element={<Dashboard />} />

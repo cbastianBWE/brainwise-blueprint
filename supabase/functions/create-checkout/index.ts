@@ -72,7 +72,7 @@ serve(async (req) => {
       cancel_url:
         mode === "coach_order"
           ? `${origin}/coach/clients?checkout=cancelled`
-          : `${origin}/pricing?checkout=cancelled`,
+          : `${origin}/settings/plan?checkout=cancelled`,
       metadata: {
         user_id: user.id,
         instrument_ids: resolvedInstrumentIds,

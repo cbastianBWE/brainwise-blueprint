@@ -3,8 +3,8 @@ import { useEffect, useState } from "react";
 import MarketingButton from "./MarketingButton";
 
 const navLinks = [
-  { label: "Products", to: "/coming-soon" },
-  { label: "Pricing", to: "/coming-soon" },
+  { label: "Products", to: "/products" },
+  { label: "Pricing", to: "/pricing" },
   { label: "Services", to: "/services" },
   { label: "Contact", to: "/contact" },
 ];

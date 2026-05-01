@@ -148,3 +148,79 @@
   font-weight: 400;
   margin-left: 2px;
 }
+
+/* ============================================
+   Products page tabs
+   ============================================ */
+.bw-marketing-root .bw-products-tabs {
+  background: transparent;
+  border-bottom: 1px solid var(--border-1);
+  padding: 0;
+  gap: 32px;
+  justify-content: flex-start;
+  border-radius: 0;
+  margin-bottom: 40px;
+  height: auto;
+  display: flex;
+  width: 100%;
+}
+.bw-marketing-root .bw-products-tabs button[role="tab"] {
+  background: transparent !important;
+  border: none;
+  border-radius: 0;
+  padding: 12px 0;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--bw-slate);
+  border-bottom: 2px solid transparent;
+  box-shadow: none !important;
+}
+.bw-marketing-root .bw-products-tabs button[role="tab"][data-state="active"] {
+  color: var(--bw-navy) !important;
+  border-bottom-color: var(--bw-orange);
+  background: transparent !important;
+}
+
+/* ============================================
+   Pricing page segment switcher
+   ============================================ */
+.bw-marketing-root .bw-segment-switcher {
+  display: flex;
+  gap: 0;
+  padding: 4px;
+  background: white;
+  border: 1px solid var(--border-1);
+  border-radius: var(--r-pill);
+  box-shadow: var(--shadow-sm);
+}
+.bw-marketing-root .bw-segment-button {
+  flex: 1;
+  padding: 12px 24px;
+  border: none;
+  background: transparent;
+  border-radius: var(--r-pill);
+  font-family: 'Poppins', sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--bw-slate);
+  cursor: pointer;
+  transition: all var(--dur-fast) var(--ease-standard);
+}
+.bw-marketing-root .bw-segment-button:hover {
+  color: var(--bw-navy);
+}
+.bw-marketing-root .bw-segment-button.active {
+  background: var(--bw-navy);
+  color: white;
+}
+@media (max-width: 640px) {
+  .bw-marketing-root .bw-segment-switcher {
+    flex-direction: column;
+    border-radius: var(--r-md);
+    padding: 8px;
+  }
+  .bw-marketing-root .bw-segment-button {
+    border-radius: var(--r-md);
+  }
+}

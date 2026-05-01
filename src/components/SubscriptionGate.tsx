@@ -62,7 +62,7 @@ export default function SubscriptionGate({ children, feature }: Props) {
   // Individual users: unchanged Stripe check
   if (isIndividual) {
     if (profile?.subscription_status !== "active") {
-      return <Navigate to="/pricing" replace />;
+      return <Navigate to="/settings/plan" replace />;
     }
     return <>{children}</>;
   }
