@@ -81,6 +81,10 @@ const App = () => (
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/peer-access-responded" element={<PeerAccessResponded />} />
             <Route path="/auth/verify-conversion" element={<VerifyConversion />} />
+            <Route path="/privacy" element={<Privacy />} />
+            <Route path="/terms" element={<Terms />} />
+            <Route path="/cookies" element={<Cookies />} />
+            <Route path="/international-privacy" element={<InternationalCompliance />} />
 
             {/* Departed route — protected, but ProtectedRoute won't redirect away from /departed */}
             <Route path="/departed" element={<ProtectedRoute><Departed /></ProtectedRoute>} />
