@@ -10,7 +10,7 @@ interface Props {
 
 /**
  * Redirects corporate users away from Stripe-related routes.
- * Used on /pricing and /settings/billing. Corp users have no Stripe
+ * Used on /settings/plan and /settings/billing. Corp users have no Stripe
  * subscription (their org's contract is the source of truth), so these
  * pages would either 403 at create-checkout or show stale data.
  * Toast is fired once per mount via a ref guard to avoid double-fires
