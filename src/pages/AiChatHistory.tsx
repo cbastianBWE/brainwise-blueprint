@@ -229,7 +229,7 @@ export default function AiChatHistory() {
                               <div className={`flex gap-2 max-w-[80%] ${msg.role === "user" ? "flex-row-reverse" : ""}`}>
                                 {msg.role === "assistant" && (
                                   <div className="flex-shrink-0 h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center mt-1">
-                                    <Brain className="h-4 w-4 text-primary" />
+                                    <img src="/brain-icon.png" alt="" className="h-4 w-4" />
                                   </div>
                                 )}
                                 <div>

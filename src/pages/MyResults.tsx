@@ -1235,7 +1235,7 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
               {/* Chat header */}
               <div className="bg-primary px-4 py-3 flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Brain className="h-4 w-4 text-primary-foreground" />
+                  <img src="/brain-icon.png" alt="" className="h-4 w-4" />
                   <span className="text-sm font-semibold text-primary-foreground">Ask AI</span>
                 </div>
                 <button onClick={async () => {
@@ -1259,7 +1259,7 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
               <div className="flex-1 overflow-y-auto p-3 space-y-3">
                 {chatMessages.length === 0 && (
                   <div className="text-center text-xs text-muted-foreground mt-8 space-y-1">
-                    <Brain className="h-8 w-8 text-primary/30 mx-auto" />
+                    <img src="/brain-icon.png" alt="" className="h-8 w-8 mx-auto opacity-30" />
                     <p>Ask me anything about your {selected.instrument_name} results.</p>
                   </div>
                 )}
@@ -1329,7 +1329,7 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
             }}
             className="flex items-center gap-2 bg-primary text-primary-foreground rounded-full px-4 py-3 shadow-lg hover:bg-primary/90 transition-all"
           >
-            <Brain className="h-5 w-5" />
+            <img src="/brain-icon.png" alt="" className="h-5 w-5" />
             <span className="text-sm font-semibold">Ask AI</span>
           </button>
 

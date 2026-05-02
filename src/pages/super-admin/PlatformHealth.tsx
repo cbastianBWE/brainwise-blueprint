@@ -172,7 +172,7 @@ export default function PlatformHealth() {
         </Card>
         <Card>
           <CardContent className="flex items-center gap-3 py-4">
-            <div className="rounded-lg bg-primary/10 p-2"><Brain className="h-5 w-5 text-primary" /></div>
+            <div className="rounded-lg bg-primary/10 p-2"><img src="/brain-icon.png" alt="" className="h-5 w-5" /></div>
             <div>
               <p className="text-lg font-semibold text-foreground">{stats.activeAiVersion}</p>
               <p className="text-xs text-muted-foreground">Active AI Version</p>
