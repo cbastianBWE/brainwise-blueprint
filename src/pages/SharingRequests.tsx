@@ -156,22 +156,47 @@ export default function SharingRequests() {
 
     const html = `
 <!DOCTYPE html>
-<html>
-  <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f6f7f9; padding: 24px;">
-    <div style="max-width: 560px; margin: 0 auto; background: #ffffff; padding: 32px; border-radius: 8px;">
-      <h2 style="margin: 0 0 16px; color: #111;">Peer access request</h2>
-      <p style="color: #333; line-height: 1.5;">Hi ${targetName},</p>
-      <p style="color: #333; line-height: 1.5;">${requesterName} is requesting access to view your PTP assessment results on BrainWise.</p>
-      <p style="color: #333; line-height: 1.5;">You can accept or decline this request below. If you prefer to review your privacy settings first, you can open BrainWise and respond from there. This request expires on ${expiresLabel}.</p>
-      <div style="margin: 24px 0;">
-        <a href="${acceptUrl}" style="display: inline-block; background: #2563eb; color: #fff; padding: 10px 20px; border-radius: 6px; text-decoration: none; margin-right: 8px;">Accept</a>
-        <a href="${declineUrl}" style="display: inline-block; background: #e5e7eb; color: #111; padding: 10px 20px; border-radius: 6px; text-decoration: none;">Decline</a>
-      </div>
-      <p style="color: #666; font-size: 13px; line-height: 1.5;">If you don't recognize this request or believe it was sent in error, you can safely ignore this email.</p>
-      <hr style="border: none; border-top: 1px solid #eee; margin: 24px 0;" />
-      <p style="color: #999; font-size: 12px;">BrainWise Enterprise Platform</p>
-    </div>
-  </body>
+<html lang="en">
+<head><meta charset="UTF-8"></head>
+<body style="margin:0;padding:0;background:#F9F7F1;font-family:'Montserrat','Helvetica Neue',Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#F9F7F1;padding:40px 0;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:8px;overflow:hidden;">
+        <tr><td style="background:#021F36;padding:24px 32px;">
+          <h1 style="margin:0;color:#ffffff;font-size:22px;font-family:'Poppins','Helvetica Neue',Arial,sans-serif;font-weight:800;letter-spacing:-0.01em;">BrainWise Enterprises</h1>
+        </td></tr>
+        <tr><td style="padding:32px;">
+          <h2 style="font-size:20px;color:#021F36;margin:0 0 16px;font-family:'Poppins','Helvetica Neue',Arial,sans-serif;font-weight:700;letter-spacing:-0.01em;">Peer access request</h2>
+          <p style="font-size:15px;color:#021F36;line-height:1.6;margin:0 0 16px;font-family:'Montserrat','Helvetica Neue',Arial,sans-serif;font-weight:600;">Hi ${targetName},</p>
+          <p style="font-size:15px;color:#4B4751;line-height:1.6;margin:0 0 16px;font-family:'Montserrat','Helvetica Neue',Arial,sans-serif;">
+            ${requesterName} is requesting access to view your PTP assessment results.
+          </p>
+          <p style="font-size:15px;color:#4B4751;line-height:1.6;margin:0 0 8px;font-family:'Montserrat','Helvetica Neue',Arial,sans-serif;">
+            You can accept or decline this request below. If you prefer to review your sharing settings instead, you can do that from inside BrainWise at any time.
+          </p>
+          <p style="font-size:14px;color:#6D6875;line-height:1.6;margin:0 0 28px;font-family:'Montserrat','Helvetica Neue',Arial,sans-serif;">
+            This request expires on ${expiresLabel}.
+          </p>
+          <table cellpadding="0" cellspacing="0" style="margin:0 0 28px;"><tr>
+            <td style="background:#F5741A;border-radius:999px;padding:14px 28px;">
+              <a href="${acceptUrl}" style="color:#ffffff;text-decoration:none;font-size:15px;font-weight:600;font-family:'Montserrat','Helvetica Neue',Arial,sans-serif;">Accept</a>
+            </td>
+            <td style="width:12px;">&nbsp;</td>
+            <td style="background:#ffffff;border:1.5px solid #021F36;border-radius:999px;padding:10.5px 22.5px;">
+              <a href="${declineUrl}" style="color:#021F36;text-decoration:none;font-size:15px;font-weight:600;font-family:'Montserrat','Helvetica Neue',Arial,sans-serif;">Decline</a>
+            </td>
+          </tr></table>
+          <p style="font-size:13px;color:#6D6875;line-height:1.5;margin:0;font-family:'Montserrat','Helvetica Neue',Arial,sans-serif;">
+            If you weren't expecting this request, you can safely ignore this email — no access will be granted.
+          </p>
+        </td></tr>
+        <tr><td style="padding:20px 32px;border-top:1px solid #EDEAE0;text-align:center;">
+          <p style="font-size:12px;color:#6D6875;margin:0;font-family:'Montserrat','Helvetica Neue',Arial,sans-serif;">© ${new Date().getFullYear()} BrainWise Enterprises. All rights reserved.</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
 </html>
 `.trim();
 
