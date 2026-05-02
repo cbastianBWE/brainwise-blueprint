@@ -8,44 +8,79 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 210 20% 98%;
-    --foreground: 220 30% 12%;
+    /* BrainWise palette — keep in sync with src/styles/marketing-tokens.css */
+
+    /* Brand color hex tokens (mirror of marketing-tokens.css for app-wide use) */
+    --bw-navy: #021F36;
+    --bw-orange: #F5741A;
+    --bw-cream: #F9F7F1;
+    --bw-teal: #006D77;
+    --bw-amber: #FFB703;
+    --bw-slate: #6D6875;
+    --bw-plum: #3C096C;
+    --bw-forest: #2D6A4F;
+    --bw-white: #FFFFFF;
+    --bw-navy-900: #010F1C;
+    --bw-navy-800: #021F36;
+    --bw-navy-700: #0A2F4D;
+    --bw-navy-600: #143E63;
+    --bw-navy-500: #284F77;
+    --bw-orange-700: #C55A0F;
+    --bw-orange-600: #E06714;
+    --bw-orange-500: #F5741A;
+    --bw-orange-400: #F78F46;
+    --bw-orange-300: #FAB078;
+    --bw-orange-100: #FDE5D1;
+    --bw-cream-100: #FDFCF8;
+    --bw-cream-200: #F9F7F1;
+    --bw-cream-300: #EDEAE0;
+    --bw-cream-400: #DCD7C8;
+    --bw-slate-700: #4B4751;
+    --bw-slate-500: #6D6875;
+    --bw-slate-400: #8E8995;
+    --bw-slate-300: #B5B1B9;
+    --bw-slate-200: #D9D6DC;
+    --bw-slate-100: #EEEDEF;
+
+    /* shadcn HSL tokens — BrainWise palette equivalents */
+    --background: 45 33% 97%;
+    --foreground: 211 94% 11%;
 
     --card: 0 0% 100%;
-    --card-foreground: 220 30% 12%;
+    --card-foreground: 211 94% 11%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 220 30% 12%;
+    --popover-foreground: 211 94% 11%;
 
-    --primary: 217 91% 50%;
+    --primary: 211 94% 11%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 20% 94%;
-    --secondary-foreground: 220 30% 18%;
+    --secondary: 40 28% 91%;
+    --secondary-foreground: 211 94% 11%;
 
-    --muted: 210 15% 93%;
-    --muted-foreground: 220 10% 46%;
+    --muted: 260 7% 94%;
+    --muted-foreground: 260 4% 46%;
 
-    --accent: 170 60% 45%;
+    --accent: 25 92% 53%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 72% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 214 20% 90%;
-    --input: 214 20% 90%;
-    --ring: 217 91% 50%;
+    --border: 262 6% 86%;
+    --input: 262 6% 86%;
+    --ring: 25 92% 53%;
 
     --radius: 0.625rem;
 
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 217 91% 50%;
+    --sidebar-background: 45 33% 97%;
+    --sidebar-foreground: 211 94% 11%;
+    --sidebar-primary: 25 92% 53%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 210 20% 94%;
-    --sidebar-accent-foreground: 220 30% 18%;
-    --sidebar-border: 214 20% 90%;
-    --sidebar-ring: 217 91% 50%;
+    --sidebar-accent: 40 28% 91%;
+    --sidebar-accent-foreground: 211 94% 11%;
+    --sidebar-border: 262 6% 86%;
+    --sidebar-ring: 25 92% 53%;
   }
 
   .dark {

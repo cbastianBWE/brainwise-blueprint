@@ -63,6 +63,12 @@ export default {
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
+      fontFamily: {
+        sans: ['Montserrat', 'system-ui', 'sans-serif'],
+        display: ['Poppins', 'Montserrat', 'system-ui', 'sans-serif'],
+        accent: ['Inter', 'system-ui', 'sans-serif'],
+        mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Consolas', 'monospace'],
+      },
       keyframes: {
         "accordion-down": {
           from: {
