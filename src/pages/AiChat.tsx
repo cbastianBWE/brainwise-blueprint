@@ -20,7 +20,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { MessageSquare, Send, Brain, Loader2, History, Save, AlertTriangle, Search } from "lucide-react";
+import { MessageSquare, Send, Loader2, History, Save, AlertTriangle, Search } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import UsageCounter from "@/components/ai/UsageCounter";

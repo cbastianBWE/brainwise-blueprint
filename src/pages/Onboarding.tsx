@@ -6,7 +6,7 @@ import { useAccountType } from "@/hooks/useOnboardingStatus";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Brain, User, Building2 } from "lucide-react";
+import { User, Building2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const PENDING_INVITE_KEY = "pending_invite_code";

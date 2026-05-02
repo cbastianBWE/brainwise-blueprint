@@ -6,7 +6,7 @@ import { useAccountRole } from "@/lib/accountRoles";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Brain, Star } from "lucide-react";
+import { Star } from "lucide-react";
 import {
   Dialog,
   DialogContent,

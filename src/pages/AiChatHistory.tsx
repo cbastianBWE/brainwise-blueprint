@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Link } from "react-router-dom";
-import { History, MessageSquare, Brain, ChevronDown, ChevronUp, ArrowLeft } from "lucide-react";
+import { History, MessageSquare, ChevronDown, ChevronUp, ArrowLeft } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import type { Json } from "@/integrations/supabase/types";
 
