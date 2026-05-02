@@ -66,7 +66,7 @@ export default function EpnComplete() {
     <div className="max-w-2xl mx-auto py-12 px-4">
       <Card>
         <CardContent className="p-8 space-y-6">
-          <h1 className="text-3xl font-bold" style={{ color: "#021F36" }}>
+          <h1 className="text-3xl font-bold" style={{ color: "var(--bw-navy)" }}>
             Thank you
           </h1>
           <p className="text-foreground leading-relaxed">
@@ -80,7 +80,7 @@ export default function EpnComplete() {
 
           {showStandardNaiCta && (
             <div className="border-t pt-6 space-y-3">
-              <h2 className="text-xl font-semibold" style={{ color: "#021F36" }}>
+              <h2 className="text-xl font-semibold" style={{ color: "var(--bw-navy)" }}>
                 Have you taken the standard NAI yet?
               </h2>
               <p className="text-muted-foreground leading-relaxed">

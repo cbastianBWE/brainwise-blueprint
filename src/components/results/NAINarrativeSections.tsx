@@ -413,7 +413,7 @@ export default function NAINarrativeSections({
       {showPatternAlert && (
         <div
           className="rounded-lg p-4 border-l-4"
-          style={{ backgroundColor: "#F9F7F1", borderLeftColor: "#021F36" }}
+          style={{ backgroundColor: "var(--bw-cream)", borderLeftColor: "var(--bw-navy)" }}
         >
           <div className="flex gap-3">
             <AlertTriangle className="h-5 w-5 flex-shrink-0 mt-0.5" style={{ color: "#021F36" }} />
@@ -451,7 +451,7 @@ export default function NAINarrativeSections({
         <h3 className="text-lg font-semibold text-foreground">Profile overview</h3>
         <div
           className="rounded-lg p-5 border-l-4"
-          style={{ backgroundColor: "#F9F7F1", borderLeftColor: "#021F36" }}
+          style={{ backgroundColor: "var(--bw-cream)", borderLeftColor: "var(--bw-navy)" }}
         >
           {loading || !profileOverview ? (
             <p className="text-sm text-muted-foreground italic">Generating profile overview...</p>

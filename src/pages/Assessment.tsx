@@ -154,8 +154,8 @@ export default function Assessment() {
             return (
               <Card
                 key={a.assignment_id}
-                className="bg-[#F9F7F1] border-l-4"
-                style={{ borderLeftColor: "#F5741A" }}
+                className="bg-[var(--bw-cream)] border-l-4"
+                style={{ borderLeftColor: "var(--bw-orange)" }}
               >
                 <CardContent className="p-6 space-y-4">
                   <div>

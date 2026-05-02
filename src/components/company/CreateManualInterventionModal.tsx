@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 
-const NAVY = "#021F36";
+const NAVY = "var(--bw-navy)";
 
 const INSTRUMENT_OPTIONS: Array<{ value: string; label: string }> = [
   { value: "INST-002", label: "NAI Dashboard" },

@@ -151,7 +151,7 @@ export default function PlatformHealth() {
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Certified</span>
-                    <span className="font-semibold text-green-600">{counts.certified}</span>
+                    <span className="font-semibold text-[var(--bw-forest)]">{counts.certified}</span>
                   </div>
                 </CardContent>
               </Card>

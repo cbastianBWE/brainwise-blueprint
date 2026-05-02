@@ -4,9 +4,9 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { X, RefreshCw } from "lucide-react";
 
-const NAVY = "#021F36";
-const ORANGE = "#F5741A";
-const PURPLE = "#3C096C";
+const NAVY = "var(--bw-navy)";
+const ORANGE = "var(--bw-orange)";
+const PURPLE = "var(--bw-plum)";
 
 const DIM_NAMES: Record<string, string> = {
   "DIM-NAI-01": "Certainty",

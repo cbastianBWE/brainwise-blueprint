@@ -238,8 +238,8 @@ const SignUp = () => {
                       { key: 'number', label: 'At least one number' },
                       { key: 'symbol', label: 'At least one symbol' },
                     ].map(({ key, label }) => (
-                      <div key={key} className={`flex items-center gap-1.5 text-xs ${checks[key as keyof typeof checks] ? 'text-green-600' : 'text-muted-foreground'}`}>
-                        <div className={`w-1.5 h-1.5 rounded-full ${checks[key as keyof typeof checks] ? 'bg-green-600' : 'bg-muted-foreground/40'}`} />
+                      <div key={key} className={`flex items-center gap-1.5 text-xs ${checks[key as keyof typeof checks] ? 'text-[var(--bw-forest)]' : 'text-muted-foreground'}`}>
+                        <div className={`w-1.5 h-1.5 rounded-full ${checks[key as keyof typeof checks] ? 'bg-[var(--bw-forest)]' : 'bg-muted-foreground/40'}`} />
                         {label}
                       </div>
                     ))}
@@ -269,8 +269,8 @@ const SignUp = () => {
                 </button>
               </div>
               {confirmPassword.length > 0 && (
-                <p className={`text-xs flex items-center gap-1.5 mt-1 ${password === confirmPassword ? 'text-green-600' : 'text-red-500'}`}>
-                  <span className={`inline-block w-1.5 h-1.5 rounded-full ${password === confirmPassword ? 'bg-green-600' : 'bg-red-500'}`} />
+                <p className={`text-xs flex items-center gap-1.5 mt-1 ${password === confirmPassword ? 'text-[var(--bw-forest)]' : 'text-destructive'}`}>
+                  <span className={`inline-block w-1.5 h-1.5 rounded-full ${password === confirmPassword ? 'bg-[var(--bw-forest)]' : 'bg-destructive'}`} />
                   {password === confirmPassword ? 'Passwords match' : 'Passwords do not match'}
                 </p>
               )}
