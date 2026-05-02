@@ -442,7 +442,7 @@ export default function Departed() {
 
   if (profileQuery.isLoading || !profile) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#F9F7F1]">
+      <div className="min-h-screen flex items-center justify-center bg-[var(--bw-cream)]">
         <div className="flex items-center gap-3 text-muted-foreground">
           <Loader2 className="h-5 w-5 animate-spin" />
           <span>Loading…</span>
@@ -452,7 +452,7 @@ export default function Departed() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F9F7F1] flex items-start justify-center px-4 py-12">
+    <div className="min-h-screen bg-[var(--bw-cream)] flex items-start justify-center px-4 py-12">
       <Card className="w-full max-w-[600px] shadow-lg bg-white">
         <CardContent className="p-8 space-y-6">
           <div>

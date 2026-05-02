@@ -11,7 +11,7 @@ const MESSAGES: Record<Result, { title: string; body: string; icon: JSX.Element;
     title: "Access granted",
     body: "You've accepted the request. The requester can now view your PTP results. You can revoke this access anytime from Privacy Settings.",
     icon: <CheckCircle2 className="h-12 w-12" />,
-    iconColor: "text-green-600",
+    iconColor: "text-[var(--bw-forest)]",
   },
   declined: {
     title: "Request declined",

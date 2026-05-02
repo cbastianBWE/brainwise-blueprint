@@ -543,9 +543,9 @@ export default function PrivacySettings() {
               <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
                 {(() => {
                   const pct = usage.limit > 0 ? Math.round((usage.current_count / usage.limit) * 100) : 0;
-                  let color = "bg-accent";
-                  if (pct >= 80) color = "bg-[hsl(30,90%,50%)]";
-                  else if (pct >= 50) color = "bg-[hsl(45,90%,50%)]";
+                  let color = "bg-[var(--bw-forest)]";
+                  if (pct >= 80) color = "bg-[var(--bw-orange)]";
+                  else if (pct >= 50) color = "bg-[var(--bw-amber)]";
                   return <div className={`h-full rounded-full transition-all ${color}`} style={{ width: `${Math.min(pct, 100)}%` }} />;
                 })()}
               </div>

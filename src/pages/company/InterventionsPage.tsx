@@ -11,9 +11,9 @@ import { rowsToCsv, downloadCsv } from "@/lib/csvUtils";
 import { Download } from "lucide-react";
 
 // ── Brand constants (mirrors CompanyDashboard / PTPDashboard) ───────────────
-const NAVY = "#021F36";
-const ORANGE = "#F5741A";
-const PURPLE = "#3C096C";
+const NAVY = "var(--bw-navy)";
+const ORANGE = "var(--bw-orange)";
+const PURPLE = "var(--bw-plum)";
 
 // Source-kind chip colors
 const SOURCE_KIND_LABEL: Record<string, string> = {

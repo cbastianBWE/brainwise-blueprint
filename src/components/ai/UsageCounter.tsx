@@ -8,9 +8,9 @@ interface Props {
 export default function UsageCounter({ currentCount, limit }: Props) {
   const pct = limit > 0 ? Math.round((currentCount / limit) * 100) : 0;
 
-  let barColor = "bg-accent"; // green
-  if (pct >= 80) barColor = "bg-[hsl(30,90%,50%)]"; // orange
-  else if (pct >= 50) barColor = "bg-[hsl(45,90%,50%)]"; // yellow
+  let barColor = "bg-[var(--bw-forest)]"; // normal
+  if (pct >= 80) barColor = "bg-[var(--bw-orange)]"; // warning
+  else if (pct >= 50) barColor = "bg-[var(--bw-amber)]"; // caution
 
   return (
     <div className="space-y-1">

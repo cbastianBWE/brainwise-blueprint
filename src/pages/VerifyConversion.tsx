@@ -49,7 +49,7 @@ export default function VerifyConversion() {
   }, [searchParams]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#F9F7F1] p-6">
+    <div className="min-h-screen flex items-center justify-center bg-[var(--bw-cream)] p-6">
       <Card className="w-full max-w-[600px] shadow-lg">
         <CardContent className="p-8">
           {stage === "verifying" && (
@@ -62,7 +62,7 @@ export default function VerifyConversion() {
 
           {stage === "success" && (
             <div className="flex flex-col items-center text-center gap-4">
-              <CheckCircle2 className="h-10 w-10 text-green-600" />
+              <CheckCircle2 className="h-10 w-10 text-[var(--bw-forest)]" />
               <h1 className="text-2xl font-semibold">Your account has been transferred</h1>
               <p className="text-muted-foreground">
                 Your BrainWise account is now associated with{" "}
