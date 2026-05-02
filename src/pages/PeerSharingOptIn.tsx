@@ -73,7 +73,7 @@ const PeerSharingOptIn = () => {
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-lg">
         <CardHeader className="text-center">
-          <Brain className="mx-auto h-10 w-10 text-primary mb-2" />
+          <img src="/brain-icon.png" alt="BrainWise" className="mx-auto h-10 w-10 mb-2" />
           <CardTitle className="text-2xl">Share your PTP results with your team?</CardTitle>
           <CardDescription className="text-base leading-relaxed pt-2">
             Sharing your PTP with your team helps them understand your communication style and reduces friction in collaboration. You can change these preferences anytime from Privacy settings. NAI and HSS results are never shared through these toggles.

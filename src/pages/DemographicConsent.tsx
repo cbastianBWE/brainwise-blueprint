@@ -98,7 +98,7 @@ const DemographicConsent = () => {
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-lg">
         <CardHeader className="text-center">
-          <Brain className="mx-auto h-10 w-10 text-primary mb-2" />
+          <img src="/brain-icon.png" alt="BrainWise" className="mx-auto h-10 w-10 mb-2" />
           <CardTitle className="text-2xl">Optional: Help Us Understand Our Users</CardTitle>
           <CardDescription className="text-base leading-relaxed pt-2">
             We collect optional background information to improve our platform through aggregate research.
