@@ -576,13 +576,13 @@ export default function PTPNarrativeSections({
                       <ul className="space-y-1.5">
                         {interpretation.positive_self.map((item, i) => (
                           <li key={`ps-${i}`} className="flex gap-2 text-sm">
-                            <span className="text-green-600 shrink-0">✓</span>
+                            <span className="text-[var(--bw-forest)] shrink-0">✓</span>
                             <span>{item}</span>
                           </li>
                         ))}
                         {interpretation.negative_self.map((item, i) => (
                           <li key={`ns-${i}`} className="flex gap-2 text-sm">
-                            <span className="text-red-600 shrink-0">✗</span>
+                            <span className="text-destructive shrink-0">✗</span>
                             <span>{item}</span>
                           </li>
                         ))}
@@ -593,13 +593,13 @@ export default function PTPNarrativeSections({
                       <ul className="space-y-1.5">
                         {interpretation.positive_others.map((item, i) => (
                           <li key={`po-${i}`} className="flex gap-2 text-sm">
-                            <span className="text-green-600 shrink-0">✓</span>
+                            <span className="text-[var(--bw-forest)] shrink-0">✓</span>
                             <span>{item}</span>
                           </li>
                         ))}
                         {interpretation.negative_others.map((item, i) => (
                           <li key={`no-${i}`} className="flex gap-2 text-sm">
-                            <span className="text-red-600 shrink-0">✗</span>
+                            <span className="text-destructive shrink-0">✗</span>
                             <span>{item}</span>
                           </li>
                         ))}
