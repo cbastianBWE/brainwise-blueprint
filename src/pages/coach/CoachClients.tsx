@@ -303,7 +303,7 @@ export default function CoachClients() {
         .join("");
 
       const coachNoteHtml = note
-        ? `<blockquote style="border-left:4px solid #3B82F6;margin:20px 0;padding:12px 16px;background:#F0F4FF;border-radius:4px;font-style:italic;color:#374151;">"${note}"</blockquote>`
+        ? `<blockquote style="border-left:4px solid #F5741A;margin:20px 0;padding:12px 16px;background:#ffffff;border-radius:4px;font-style:italic;color:#4B4751;font-family:'Montserrat','Helvetica Neue',Arial,sans-serif;">"${note}"</blockquote>`
         : "";
 
       const signupUrl = `${window.location.origin}/signup?email=${encodeURIComponent(email)}`;
@@ -312,32 +312,32 @@ export default function CoachClients() {
 <!DOCTYPE html>
 <html lang="en">
 <head><meta charset="UTF-8"></head>
-<body style="margin:0;padding:0;background:#f9fafb;font-family:Arial,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f9fafb;padding:40px 0;">
+<body style="margin:0;padding:0;background:#F9F7F1;font-family:'Montserrat','Helvetica Neue',Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#F9F7F1;padding:40px 0;">
     <tr><td align="center">
-      <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.1);">
-        <tr><td style="background:#1e40af;padding:24px 32px;">
-          <h1 style="margin:0;color:#ffffff;font-size:22px;">BrainWise</h1>
+      <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:8px;overflow:hidden;">
+        <tr><td style="background:#021F36;padding:24px 32px;">
+          <h1 style="margin:0;color:#ffffff;font-size:22px;font-family:'Poppins','Helvetica Neue',Arial,sans-serif;font-weight:800;letter-spacing:-0.01em;">BrainWise Enterprises</h1>
         </td></tr>
         <tr><td style="padding:32px;">
-          <p style="font-size:16px;color:#111827;margin:0 0 16px;">Hi ${firstName || "there"},</p>
-          <p style="font-size:15px;color:#374151;line-height:1.6;margin:0 0 16px;">
-            Your coach has invited you to complete the following BrainWise assessment${selectedNames.length > 1 ? "s" : ""}. When you register, you'll be able to choose your preferred payment method.
+          <h2 style="font-size:20px;color:#021F36;margin:0 0 16px;font-family:'Poppins','Helvetica Neue',Arial,sans-serif;font-weight:700;letter-spacing:-0.01em;">Hi ${firstName || "there"},</h2>
+          <p style="font-size:15px;color:#4B4751;line-height:1.6;margin:0 0 16px;font-family:'Montserrat','Helvetica Neue',Arial,sans-serif;font-weight:400;">
+            You've been invited to complete a BrainWise assessment${selectedNames.length > 1 ? "s" : ""}. When you register, you'll be able to choose your preferred payment method.
           </p>
-          <ul style="font-size:15px;color:#374151;line-height:1.8;padding-left:20px;margin:0 0 16px;">
+          <ul style="font-size:15px;color:#4B4751;line-height:1.8;padding-left:20px;margin:0 0 16px;font-family:'Montserrat','Helvetica Neue',Arial,sans-serif;">
             ${instrumentListHtml}
           </ul>
           ${coachNoteHtml}
-          <p style="font-size:14px;color:#6b7280;margin:0 0 24px;">
+          <p style="font-size:14px;color:#4B4751;margin:0 0 28px;font-family:'Montserrat','Helvetica Neue',Arial,sans-serif;">
             Please complete your assessment${selectedNames.length > 1 ? "s" : ""} within <strong>14 days</strong> of receiving this invitation.
           </p>
-          <table cellpadding="0" cellspacing="0" style="margin:0 0 24px;"><tr><td style="background:#2563eb;border-radius:6px;padding:12px 28px;">
-            <a href="${signupUrl}" style="color:#ffffff;text-decoration:none;font-size:15px;font-weight:600;">Get Started</a>
+          <table cellpadding="0" cellspacing="0" style="margin:0 0 28px;"><tr><td style="background:#F5741A;border-radius:999px;padding:14px 28px;">
+            <a href="${signupUrl}" style="color:#ffffff;text-decoration:none;font-size:15px;font-weight:600;font-family:'Montserrat','Helvetica Neue',Arial,sans-serif;">Get Started</a>
           </td></tr></table>
-          <p style="font-size:14px;color:#6b7280;margin:0;">Best regards,<br/><strong>The BrainWise Team</strong></p>
+          <p style="font-size:14px;color:#4B4751;margin:0;font-family:'Montserrat','Helvetica Neue',Arial,sans-serif;">Best regards,<br/><strong>The BrainWise Team</strong></p>
         </td></tr>
-        <tr><td style="background:#f3f4f6;padding:16px 32px;text-align:center;">
-          <p style="font-size:12px;color:#9ca3af;margin:0;">© ${new Date().getFullYear()} BrainWise. All rights reserved.</p>
+        <tr><td style="padding:20px 32px;border-top:1px solid #EDEAE0;text-align:center;">
+          <p style="font-size:12px;color:#6D6875;margin:0;font-family:'Montserrat','Helvetica Neue',Arial,sans-serif;">© ${new Date().getFullYear()} BrainWise Enterprises. All rights reserved.</p>
         </td></tr>
       </table>
     </td></tr>
