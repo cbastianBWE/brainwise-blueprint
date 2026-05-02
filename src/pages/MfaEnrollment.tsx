@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Brain, Copy, Check } from "lucide-react";
+import { Copy, Check } from "lucide-react";
 import { toast } from "sonner";
 
 const MfaEnrollment = () => {
@@ -74,7 +74,7 @@ const MfaEnrollment = () => {
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <Brain className="mx-auto h-10 w-10 text-primary mb-2" />
+          <img src="/brain-icon.png" alt="BrainWise" className="mx-auto h-10 w-10 mb-2" />
           <CardTitle className="text-2xl">Set up two-factor authentication</CardTitle>
           <CardDescription>
             Your organization requires two-factor authentication for all users. Set up an

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import {
-  Users, ClipboardCheck, Calendar, CreditCard, GitBranch, Brain, Award,
+  Users, ClipboardCheck, Calendar, CreditCard, GitBranch, Award,
 } from "lucide-react";
 
 interface Stats {
@@ -172,7 +172,7 @@ export default function PlatformHealth() {
         </Card>
         <Card>
           <CardContent className="flex items-center gap-3 py-4">
-            <div className="rounded-lg bg-primary/10 p-2"><Brain className="h-5 w-5 text-primary" /></div>
+            <div className="rounded-lg bg-primary/10 p-2"><img src="/brain-icon.png" alt="" className="h-5 w-5" /></div>
             <div>
               <p className="text-lg font-semibold text-foreground">{stats.activeAiVersion}</p>
               <p className="text-xs text-muted-foreground">Active AI Version</p>

@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Brain } from "lucide-react";
+
 import { useToast } from "@/hooks/use-toast";
 
 const ROLES = ["Individual Contributor", "Manager", "Director", "VP/SVP", "C-Suite", "Other"];
@@ -93,7 +93,7 @@ const DemographicForm = () => {
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-lg">
         <CardHeader className="text-center">
-          <Brain className="mx-auto h-10 w-10 text-primary mb-2" />
+          <img src="/brain-icon.png" alt="BrainWise" className="mx-auto h-10 w-10 mb-2" />
           <CardTitle className="text-2xl">A Few Required Details</CardTitle>
           <CardDescription>
             We need this information to tailor your experience and enable aggregate reporting for your organization.

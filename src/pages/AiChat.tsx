@@ -20,7 +20,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { MessageSquare, Send, Brain, Loader2, History, Save, AlertTriangle, Search } from "lucide-react";
+import { MessageSquare, Send, Loader2, History, Save, AlertTriangle, Search } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import UsageCounter from "@/components/ai/UsageCounter";
@@ -678,7 +678,7 @@ export default function AiChat() {
                 <div className={`flex gap-2 max-w-[80%] ${msg.role === "user" ? "flex-row-reverse" : ""}`}>
                   {msg.role === "assistant" && (
                     <div className="flex-shrink-0 h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center mt-1">
-                      <Brain className="h-4 w-4 text-primary" />
+                      <img src="/brain-icon.png" alt="" className="h-4 w-4" />
                     </div>
                   )}
                   <div>
@@ -710,7 +710,7 @@ export default function AiChat() {
               <div className="flex justify-start">
                 <div className="flex gap-2">
                   <div className="flex-shrink-0 h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center mt-1">
-                    <Brain className="h-4 w-4 text-primary" />
+                    <img src="/brain-icon.png" alt="" className="h-4 w-4" />
                   </div>
                   <div className="bg-muted rounded-2xl px-4 py-3">
                     <div className="flex gap-1">

@@ -6,7 +6,7 @@ import { useAccountRole } from "@/lib/accountRoles";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Brain, Star } from "lucide-react";
+import { Star } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -272,7 +272,7 @@ export default function InstrumentSelection({ onSelect }: Props) {
   return (
     <div className="max-w-4xl mx-auto py-8 px-4">
       <div className="text-center mb-8">
-        <Brain className="mx-auto h-10 w-10 text-primary mb-3" />
+        <img src="/brain-icon.png" alt="BrainWise" className="mx-auto h-10 w-10 mb-3" />
         <h1 className="text-2xl font-semibold text-foreground">Choose an Assessment</h1>
         <p className="text-muted-foreground mt-1">Select an instrument to begin your self-assessment</p>
       </div>

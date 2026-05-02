@@ -6,7 +6,7 @@ import { useAccountType } from "@/hooks/useOnboardingStatus";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Brain, User, Building2 } from "lucide-react";
+import { User, Building2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const PENDING_INVITE_KEY = "pending_invite_code";
@@ -162,7 +162,7 @@ const Onboarding = () => {
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
-            <Brain className="mx-auto h-10 w-10 text-primary mb-2" />
+            <img src="/brain-icon.png" alt="BrainWise" className="mx-auto h-10 w-10 mb-2" />
             <CardTitle className="text-2xl">Enter Invitation Code</CardTitle>
             <CardDescription>Enter the code your company provided</CardDescription>
           </CardHeader>
@@ -191,7 +191,7 @@ const Onboarding = () => {
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <div className="w-full max-w-2xl">
         <div className="text-center mb-8">
-          <Brain className="mx-auto h-10 w-10 text-primary mb-2" />
+          <img src="/brain-icon.png" alt="BrainWise" className="mx-auto h-10 w-10 mb-2" />
           <h1 className="text-2xl font-semibold text-foreground">Welcome to BrainWise</h1>
           <p className="text-muted-foreground mt-1">Tell us how you'll be using the platform</p>
         </div>

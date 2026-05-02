@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Link } from "react-router-dom";
-import { History, MessageSquare, Brain, ChevronDown, ChevronUp, ArrowLeft } from "lucide-react";
+import { History, MessageSquare, ChevronDown, ChevronUp, ArrowLeft } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import type { Json } from "@/integrations/supabase/types";
 
@@ -229,7 +229,7 @@ export default function AiChatHistory() {
                               <div className={`flex gap-2 max-w-[80%] ${msg.role === "user" ? "flex-row-reverse" : ""}`}>
                                 {msg.role === "assistant" && (
                                   <div className="flex-shrink-0 h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center mt-1">
-                                    <Brain className="h-4 w-4 text-primary" />
+                                    <img src="/brain-icon.png" alt="" className="h-4 w-4" />
                                   </div>
                                 )}
                                 <div>
