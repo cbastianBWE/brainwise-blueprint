@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Outlet, useNavigate } from "react-router-dom";
-import { Brain, X } from "lucide-react";
+import { X } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -51,10 +51,33 @@ export default function AppLayout() {
       <div className="min-h-screen flex w-full">
         <AppSidebar />
         <div className="flex-1 flex flex-col">
-          <header className="h-12 flex items-center border-b border-border px-4 gap-2">
-            <SidebarTrigger />
-            <Brain className="h-5 w-5 text-primary" />
-            <span className="text-sm font-semibold text-foreground">BrainWise</span>
+          <header
+            className="flex items-center px-4 gap-3"
+            style={{
+              background: "var(--bw-navy)",
+              height: 56,
+              borderBottom: "1px solid var(--bw-navy-700)",
+            }}
+          >
+            <SidebarTrigger className="text-white hover:text-white/80" />
+            <img
+              src="/brain-icon.png"
+              alt="BrainWise Enterprises"
+              style={{ height: 28, width: 28 }}
+            />
+            <span
+              style={{
+                fontFamily: "'Poppins', sans-serif",
+                fontWeight: 800,
+                fontSize: 16,
+                color: "#ffffff",
+                letterSpacing: "-0.01em",
+                lineHeight: 1.1,
+                whiteSpace: "nowrap",
+              }}
+            >
+              BrainWise Enterprises
+            </span>
           </header>
           <main className="flex-1 overflow-auto p-6">
             {showBanner && (
