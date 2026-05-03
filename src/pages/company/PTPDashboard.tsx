@@ -1364,10 +1364,11 @@ export default function PTPDashboard() {
               style={{
                 marginBottom: 16,
                 padding: "12px 16px",
-                background: SAND,
+                background: "#FFFFFF",
                 borderRadius: 8,
                 border: "0.5px solid var(--border)",
                 borderLeft: `4px solid ${archetype.color}`,
+                boxShadow: "var(--shadow-sm)",
               }}
             >
               <div
