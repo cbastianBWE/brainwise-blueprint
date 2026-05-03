@@ -2125,9 +2125,10 @@ export default function CompanyDashboard() {
               const dimInterventions = interventions.filter(iv => iv.target_dimensions?.includes(dimId));
               return (
                 <div key={dimId} onClick={() => toggleDim(dimId)} style={{
-                  background: "#F9F7F1", border: `0.5px solid ${isExpanded ? DIM_COLORS[dimId] : "var(--border)"}`,
+                  background: "#FFFFFF", border: `0.5px solid ${isExpanded ? DIM_COLORS[dimId] : "var(--border)"}`,
                   borderRadius: 12, padding: 14, marginBottom: 14, cursor: "pointer",
                   transition: "border-color 0.15s",
+                  boxShadow: "var(--shadow-sm)",
                 }}>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
