@@ -2508,11 +2508,12 @@ export default function PTPDashboard() {
                   style={{
                     fontSize: 13,
                     color: "var(--muted-foreground)",
-                    background: SAND,
+                    background: "#FFFFFF",
                     borderRadius: 8,
                     padding: "10px 12px",
                     marginBottom: 16,
                     lineHeight: 1.6,
+                    boxShadow: "var(--shadow-sm)",
                   }}
                 >
                   <strong style={{ color: NAVY }}>Reassessment: </strong>
