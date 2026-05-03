@@ -1790,7 +1790,7 @@ export default function CompanyDashboard() {
       {activeTab === "overview" && (
         <div data-export-tab="true">
           {/* Methodology callout */}
-          <div style={{ marginBottom: 16, padding: "10px 14px", background: SAND, borderRadius: 8, border: "0.5px solid var(--border)" }}>
+          <div style={{ marginBottom: 16, padding: "10px 14px", background: "#FFFFFF", borderRadius: 8, border: "0.5px solid var(--border)", boxShadow: "var(--shadow-sm)" }}>
             <button onClick={() => setExpandedMethod(!expandedMethod)}
               style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", background: "none", border: "none", cursor: "pointer", padding: 0 }}>
               <span style={{ fontSize: 12, fontWeight: 500, color: NAVY }}>About the AI Readiness Index · weighted methodology</span>
