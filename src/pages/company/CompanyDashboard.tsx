@@ -1839,8 +1839,9 @@ export default function CompanyDashboard() {
               {riskFlags.map(flag => (
                 <div key={flag.id} onClick={() => toggleFlag(flag.id)} style={{
                   borderLeft: `3px solid ${flag.level === "high" ? "#a32d2d" : ORANGE}`,
-                  background: "#F9F7F1", borderRadius: "0 8px 8px 0",
+                  background: "#FFFFFF", borderRadius: "0 8px 8px 0",
                   padding: "12px 16px", marginBottom: 12, cursor: "pointer",
+                  boxShadow: "var(--shadow-sm)",
                 }}>
                   <span style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: 0.5, color: flag.level === "high" ? "#a32d2d" : ORANGE, fontWeight: 500 }}>
                     {flag.level === "high" ? "High risk" : "Warning"}
