@@ -1519,11 +1519,12 @@ export default function PTPDashboard() {
                   }
                   style={{
                     borderLeft: `3px solid ${flag.level === "high" ? "#a32d2d" : ORANGE}`,
-                    background: SAND,
+                    background: "#FFFFFF",
                     borderRadius: "0 8px 8px 0",
                     padding: "12px 16px",
                     marginBottom: 12,
                     cursor: "pointer",
+                    boxShadow: "var(--shadow-sm)",
                   }}
                 >
                   <span
