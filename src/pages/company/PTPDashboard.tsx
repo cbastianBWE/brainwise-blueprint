@@ -2389,6 +2389,7 @@ export default function PTPDashboard() {
                             padding: "10px 8px",
                             textAlign: "center",
                             background: act.bg,
+                            boxShadow: "var(--shadow-sm)",
                           }}
                         >
                           <div
