@@ -1729,7 +1729,7 @@ export default function PTPDashboard() {
                               </span>
                             </div>
                             {deltaNarrative.narrative_text.summary && (
-                              <div style={{ background: "var(--card)", border: "0.5px solid var(--border)", borderRadius: 8, padding: 12, marginBottom: 10, boxShadow: "var(--shadow-sm)" }}>
+                              <div style={{ background: "#FFFFFF", border: "0.5px solid var(--border)", borderRadius: 8, padding: 12, marginBottom: 10, boxShadow: "var(--shadow-sm)" }}>
                                 <div style={{ fontSize: 9, fontWeight: 500, color: NAVY, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6, borderLeft: `3px solid ${ORANGE}`, paddingLeft: 7 }}>
                                   What we're seeing
                                 </div>
@@ -1826,7 +1826,7 @@ export default function PTPDashboard() {
               </h3>
               <div
                 style={{
-                  background: "var(--card)",
+                  background: "#FFFFFF",
                   border: "0.5px solid var(--border)",
                   borderRadius: 8,
                   overflow: "hidden",
@@ -2389,8 +2389,9 @@ export default function PTPDashboard() {
                             borderRadius: 8,
                             padding: "10px 8px",
                             textAlign: "center",
-                            background: act.bg,
-                            boxShadow: "var(--shadow-md)",
+                            background: "#FFFFFF",
+                            border: "0.5px solid var(--border)",
+                            boxShadow: "var(--shadow-sm)",
                           }}
                         >
                           <div
@@ -2722,7 +2723,7 @@ export default function PTPDashboard() {
             <>
               <div
                 style={{
-                  background: "var(--card)",
+                  background: "#FFFFFF",
                   border: "0.5px solid var(--border)",
                   borderRadius: 12,
                   overflow: "hidden",
@@ -2910,7 +2911,7 @@ export default function PTPDashboard() {
                 </div>
                 <div
                   style={{
-                    background: "var(--card)",
+                    background: "#FFFFFF",
                     border: "0.5px solid var(--border)",
                     borderRadius: 12,
                     padding: "16px 8px 8px",
@@ -2986,7 +2987,7 @@ export default function PTPDashboard() {
                 </div>
                 <div
                   style={{
-                    background: "var(--card)",
+                    background: "#FFFFFF",
                     border: "0.5px solid var(--border)",
                     borderRadius: 12,
                     padding: "16px 8px 8px",
@@ -3352,7 +3353,7 @@ export default function PTPDashboard() {
                 )}
                 {crossInstrumentRow.recommendations.map((rec, i) => (
                   <div key={rec.id ?? i} style={{
-                    background: "var(--card)",
+                    background: "#FFFFFF",
                     border: "0.5px solid var(--border)",
                     borderRadius: 8,
                     padding: 14,
