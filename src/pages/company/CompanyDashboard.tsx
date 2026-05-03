@@ -1790,7 +1790,7 @@ export default function CompanyDashboard() {
       {activeTab === "overview" && (
         <div data-export-tab="true">
           {/* Methodology callout */}
-          <div style={{ marginBottom: 16, padding: "10px 14px", background: SAND, borderRadius: 8, border: "0.5px solid var(--border)" }}>
+          <div style={{ marginBottom: 16, padding: "10px 14px", background: "#FFFFFF", borderRadius: 8, border: "0.5px solid var(--border)", boxShadow: "var(--shadow-sm)" }}>
             <button onClick={() => setExpandedMethod(!expandedMethod)}
               style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", background: "none", border: "none", cursor: "pointer", padding: 0 }}>
               <span style={{ fontSize: 12, fontWeight: 500, color: NAVY }}>About the AI Readiness Index · weighted methodology</span>
@@ -1822,7 +1822,7 @@ export default function CompanyDashboard() {
               { label: "Completion rate", value: loadingUsage ? "—" : `${Math.round(usage?.completion_rate?.pct ?? 0)}%`, sub: loadingUsage ? "" : `${usage?.completion_rate?.completed ?? 0} of ${usage?.completion_rate?.eligible ?? 0} users` },
               { label: "AI chat usage", value: loadingUsage ? "—" : `${usage?.ai_usage?.chat_used ?? 0}/${usage?.ai_usage?.chat_allowance ?? 0}`, sub: usage?.ai_usage?.ai_chat_enabled ? "messages this month" : "AI chat not enabled" },
             ].map(card => (
-              <div key={card.label} style={{ padding: 14, background: "#F9F7F1", border: "0.5px solid var(--border)", borderRadius: 8 }}>
+              <div key={card.label} style={{ padding: 14, background: "#FFFFFF", border: "0.5px solid var(--border)", borderRadius: 8, boxShadow: "var(--shadow-sm)" }}>
                 <p style={{ fontSize: 13, color: "var(--muted-foreground)", margin: 0, textTransform: "uppercase", letterSpacing: 0.4 }}>{card.label}</p>
                 <p style={{ fontSize: 22, fontWeight: 500, color: NAVY, margin: "4px 0 2px" }}>{card.value}</p>
                 <p style={{ fontSize: 13, color: "var(--muted-foreground)", margin: 0 }}>{card.sub}</p>
@@ -1839,8 +1839,9 @@ export default function CompanyDashboard() {
               {riskFlags.map(flag => (
                 <div key={flag.id} onClick={() => toggleFlag(flag.id)} style={{
                   borderLeft: `3px solid ${flag.level === "high" ? "#a32d2d" : ORANGE}`,
-                  background: "#F9F7F1", borderRadius: "0 8px 8px 0",
+                  background: "#FFFFFF", borderRadius: "0 8px 8px 0",
                   padding: "12px 16px", marginBottom: 12, cursor: "pointer",
+                  boxShadow: "var(--shadow-sm)",
                 }}>
                   <span style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: 0.5, color: flag.level === "high" ? "#a32d2d" : ORANGE, fontWeight: 500 }}>
                     {flag.level === "high" ? "High risk" : "Warning"}
@@ -1877,11 +1878,12 @@ export default function CompanyDashboard() {
                 onClick={() => setExpandedLeaderWorkforce(v => !v)}
                 style={{
                   padding: 14,
-                  background: "#F9F7F1",
+                  background: "#FFFFFF",
                   border: `0.5px solid ${expandedLeaderWorkforce ? NAVY : "var(--border)"}`,
                   borderRadius: 8,
                   cursor: "pointer",
                   transition: "border-color 0.15s",
+                  boxShadow: "var(--shadow-sm)",
                 }}
               >
                 {loadingDelta ? (
@@ -2123,9 +2125,10 @@ export default function CompanyDashboard() {
               const dimInterventions = interventions.filter(iv => iv.target_dimensions?.includes(dimId));
               return (
                 <div key={dimId} onClick={() => toggleDim(dimId)} style={{
-                  background: "#F9F7F1", border: `0.5px solid ${isExpanded ? DIM_COLORS[dimId] : "var(--border)"}`,
+                  background: "#FFFFFF", border: `0.5px solid ${isExpanded ? DIM_COLORS[dimId] : "var(--border)"}`,
                   borderRadius: 12, padding: 14, marginBottom: 14, cursor: "pointer",
                   transition: "border-color 0.15s",
+                  boxShadow: "var(--shadow-sm)",
                 }}>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -2252,7 +2255,7 @@ export default function CompanyDashboard() {
                     if (!dim) return null;
                     const act = activationLabel(dim.avg_score);
                     return (
-                      <div key={dimId} style={{ borderRadius: 8, padding: "10px 8px", textAlign: "center", background: act.bg }}>
+                      <div key={dimId} style={{ borderRadius: 8, padding: "10px 8px", textAlign: "center", background: act.bg, boxShadow: "var(--shadow-sm)" }}>
                         <div style={{ fontSize: 9, fontWeight: 500, textTransform: "uppercase" as const, letterSpacing: "0.04em", color: DIM_COLORS[dimId], marginBottom: 3 }}>{DIM_NAMES[dimId]}</div>
                         <div style={{ fontSize: 26, fontWeight: 500, color: DIM_COLORS[dimId] }}>{Math.round(dim.avg_score)}</div>
                         <div style={{ fontSize: 9, color: DIM_COLORS[dimId], marginTop: 2, opacity: 0.8 }}>{act.label}</div>
@@ -2274,7 +2277,7 @@ export default function CompanyDashboard() {
                 const text = latestNarrative.narrative_text[section.key as keyof typeof latestNarrative.narrative_text] as string | undefined;
                 if (!text) return null;
                 return (
-                  <div key={section.key} style={{ background: "#F9F7F1", border: "0.5px solid var(--border)", borderRadius: 12, padding: 16, marginBottom: 12 }}>
+                  <div key={section.key} style={{ background: "#FFFFFF", border: "0.5px solid var(--border)", borderRadius: 12, padding: 16, marginBottom: 12, boxShadow: "var(--shadow-sm)" }}>
                     <div style={{ fontSize: 9, fontWeight: 500, color: NAVY, textTransform: "uppercase" as const, letterSpacing: "0.06em", marginBottom: 6, borderLeft: `3px solid ${ORANGE}`, paddingLeft: 7 }}>
                       {section.label}
                     </div>
@@ -2284,7 +2287,7 @@ export default function CompanyDashboard() {
               })}
 
               {latestNarrative.narrative_text.reassessment_note && (
-                <div style={{ fontSize: 13, color: "var(--muted-foreground)", background: "#F9F7F1", borderRadius: 8, padding: "10px 12px", marginBottom: 16, lineHeight: 1.6 }}>
+                <div style={{ fontSize: 13, color: "var(--muted-foreground)", background: "#FFFFFF", borderRadius: 8, padding: "10px 12px", marginBottom: 16, lineHeight: 1.6, boxShadow: "var(--shadow-sm)" }}>
                   <strong style={{ color: NAVY }}>Reassessment: </strong>{latestNarrative.narrative_text.reassessment_note}
                 </div>
               )}
@@ -2295,7 +2298,7 @@ export default function CompanyDashboard() {
                     Structured interventions <span style={{ fontSize: 10, fontWeight: 400, color: "var(--muted-foreground)" }}>(click + to track without leaving this page)</span>
                   </h3>
                   {interventions.map(iv => (
-                    <div key={iv.id ?? iv.title} style={{ border: "0.5px solid var(--border)", borderRadius: 8, padding: 16, marginBottom: 12, background: "#F9F7F1" }}>
+                    <div key={iv.id ?? iv.title} style={{ border: "0.5px solid var(--border)", borderRadius: 8, padding: 16, marginBottom: 12, background: "#FFFFFF", boxShadow: "var(--shadow-sm)" }}>
                       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8, marginBottom: 6 }}>
                         <span style={{ fontSize: 15, fontWeight: 500, color: NAVY }}>{iv.title}</span>
                         <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
@@ -2530,7 +2533,7 @@ export default function CompanyDashboard() {
 
           {!suppressed && Object.keys(dims).length > 0 && (
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 16 }}>
-              <div style={{ background: "#F9F7F1", border: "0.5px solid var(--border)", borderRadius: 12, padding: 14 }}>
+              <div style={{ background: "#FFFFFF", border: "0.5px solid var(--border)", borderRadius: 12, padding: 14, boxShadow: "var(--shadow-sm)" }}>
                 <div style={{ fontSize: 13, fontWeight: 500, color: "var(--muted-foreground)", textTransform: "uppercase" as const, letterSpacing: 0.04, marginBottom: 10 }}>
                   NAI · C.A.F.E.S. (by weight)
                 </div>
@@ -2599,7 +2602,7 @@ export default function CompanyDashboard() {
             </div>
           )}
 
-          <div style={{ background: "#F9F7F1", border: "0.5px solid var(--border)", borderRadius: 12, padding: 14, marginBottom: 14 }}>
+          <div style={{ background: "#FFFFFF", border: "0.5px solid var(--border)", borderRadius: 12, padding: 14, marginBottom: 14, boxShadow: "var(--shadow-sm)" }}>
             <div style={{ fontSize: 15, fontWeight: 500, color: NAVY, marginBottom: 8 }}>Co-elevation patterns</div>
             <p style={{ fontSize: 14, color: "var(--muted-foreground)", margin: "0 0 12px", lineHeight: 1.6 }}>
               Co-elevation occurs when a dimension is simultaneously elevated in both NAI and PTP — for example, high Ego Stability (NAI) paired with high Protection (PTP). These compound patterns are the most operationally significant findings because the barriers reinforce each other and require sequential intervention.
@@ -2640,11 +2643,12 @@ export default function CompanyDashboard() {
           </div>
 
           <div style={{
-            background: SAND,
+            background: "#FFFFFF",
             border: "0.5px solid var(--border)",
             borderRadius: 12,
             padding: 14,
             marginTop: 14,
+            boxShadow: "var(--shadow-sm)",
           }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8, flexWrap: "wrap", gap: 8 }}>
               <div style={{ fontSize: 15, fontWeight: 500, color: NAVY }}>Recommended next steps · cross-instrument</div>

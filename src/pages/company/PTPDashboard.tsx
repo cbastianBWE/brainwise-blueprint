@@ -1364,10 +1364,11 @@ export default function PTPDashboard() {
               style={{
                 marginBottom: 16,
                 padding: "12px 16px",
-                background: SAND,
+                background: "#FFFFFF",
                 borderRadius: 8,
                 border: "0.5px solid var(--border)",
                 borderLeft: `4px solid ${archetype.color}`,
+                boxShadow: "var(--shadow-sm)",
               }}
             >
               <div
@@ -1457,9 +1458,10 @@ export default function PTPDashboard() {
                 key={card.label}
                 style={{
                   padding: 14,
-                  background: SAND,
+                  background: "#FFFFFF",
                   border: "0.5px solid var(--border)",
                   borderRadius: 8,
+                  boxShadow: "var(--shadow-sm)",
                 }}
               >
                 <p
@@ -1517,11 +1519,12 @@ export default function PTPDashboard() {
                   }
                   style={{
                     borderLeft: `3px solid ${flag.level === "high" ? "#a32d2d" : ORANGE}`,
-                    background: SAND,
+                    background: "#FFFFFF",
                     borderRadius: "0 8px 8px 0",
                     padding: "12px 16px",
                     marginBottom: 12,
                     cursor: "pointer",
+                    boxShadow: "var(--shadow-sm)",
                   }}
                 >
                   <span
@@ -1600,11 +1603,12 @@ export default function PTPDashboard() {
                 onClick={() => setExpandedLeaderWorkforce((v) => !v)}
                 style={{
                   padding: 14,
-                  background: SAND,
+                  background: "#FFFFFF",
                   border: `0.5px solid ${expandedLeaderWorkforce ? NAVY : "var(--border)"}`,
                   borderRadius: 8,
                   cursor: "pointer",
                   transition: "border-color 0.15s",
+                  boxShadow: "var(--shadow-sm)",
                 }}
               >
                 {loadingDelta ? (
@@ -2010,12 +2014,13 @@ export default function PTPDashboard() {
                     })
                   }
                   style={{
-                    background: SAND,
+                    background: "#FFFFFF",
                     border: `0.5px solid ${isExp ? DIM_COLORS[dimId] : "var(--border)"}`,
                     borderRadius: 12,
                     padding: 14,
                     marginBottom: 14,
                     cursor: "pointer",
+                    boxShadow: "var(--shadow-sm)",
                   }}
                 >
                   <div
@@ -2332,9 +2337,10 @@ export default function PTPDashboard() {
                   style={{
                     marginBottom: 16,
                     padding: "10px 14px",
-                    background: SAND,
+                    background: "#FFFFFF",
                     borderRadius: 8,
                     border: "0.5px solid var(--border)",
+                    boxShadow: "var(--shadow-sm)",
                   }}
                 >
                   <span
@@ -2383,6 +2389,7 @@ export default function PTPDashboard() {
                             padding: "10px 8px",
                             textAlign: "center",
                             background: act.bg,
+                            boxShadow: "var(--shadow-sm)",
                           }}
                         >
                           <div
@@ -2461,11 +2468,12 @@ export default function PTPDashboard() {
                   <div
                     key={section.key}
                     style={{
-                      background: SAND,
+                      background: "#FFFFFF",
                       border: "0.5px solid var(--border)",
                       borderRadius: 12,
                       padding: 16,
                       marginBottom: 12,
+                      boxShadow: "var(--shadow-sm)",
                     }}
                   >
                     <div
@@ -2500,11 +2508,12 @@ export default function PTPDashboard() {
                   style={{
                     fontSize: 13,
                     color: "var(--muted-foreground)",
-                    background: SAND,
+                    background: "#FFFFFF",
                     borderRadius: 8,
                     padding: "10px 12px",
                     marginBottom: 16,
                     lineHeight: 1.6,
+                    boxShadow: "var(--shadow-sm)",
                   }}
                 >
                   <strong style={{ color: NAVY }}>Reassessment: </strong>
@@ -2533,7 +2542,8 @@ export default function PTPDashboard() {
                         borderRadius: 8,
                         padding: 16,
                         marginBottom: 12,
-                        background: SAND,
+                        background: "#FFFFFF",
+                        boxShadow: "var(--shadow-sm)",
                       }}
                     >
                       <div
@@ -3094,10 +3104,11 @@ export default function PTPDashboard() {
             >
               <div
                 style={{
-                  background: SAND,
+                  background: "#FFFFFF",
                   border: "0.5px solid var(--border)",
                   borderRadius: 12,
                   padding: 14,
+                  boxShadow: "var(--shadow-sm)",
                 }}
               >
                 <div
@@ -3234,11 +3245,12 @@ export default function PTPDashboard() {
           )}
           <div
             style={{
-              background: SAND,
+              background: "#FFFFFF",
               border: "0.5px solid var(--border)",
               borderRadius: 12,
               padding: 14,
               marginBottom: 14,
+              boxShadow: "var(--shadow-sm)",
             }}
           >
             <div style={{ fontSize: 15, fontWeight: 500, color: NAVY, marginBottom: 8 }}>
@@ -3292,11 +3304,12 @@ export default function PTPDashboard() {
             })()}
           </div>
           <div style={{
-            background: SAND,
+            background: "#FFFFFF",
             border: "0.5px solid var(--border)",
             borderRadius: 12,
             padding: 14,
             marginTop: 14,
+            boxShadow: "var(--shadow-sm)",
           }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8, flexWrap: "wrap", gap: 8 }}>
               <div style={{ fontSize: 15, fontWeight: 500, color: NAVY }}>Recommended next steps · cross-instrument</div>
