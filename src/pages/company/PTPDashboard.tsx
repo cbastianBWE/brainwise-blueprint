@@ -3245,11 +3245,12 @@ export default function PTPDashboard() {
           )}
           <div
             style={{
-              background: SAND,
+              background: "#FFFFFF",
               border: "0.5px solid var(--border)",
               borderRadius: 12,
               padding: 14,
               marginBottom: 14,
+              boxShadow: "var(--shadow-sm)",
             }}
           >
             <div style={{ fontSize: 15, fontWeight: 500, color: NAVY, marginBottom: 8 }}>
