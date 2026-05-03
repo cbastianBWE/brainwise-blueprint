@@ -2277,7 +2277,7 @@ export default function CompanyDashboard() {
                 const text = latestNarrative.narrative_text[section.key as keyof typeof latestNarrative.narrative_text] as string | undefined;
                 if (!text) return null;
                 return (
-                  <div key={section.key} style={{ background: "#F9F7F1", border: "0.5px solid var(--border)", borderRadius: 12, padding: 16, marginBottom: 12 }}>
+                  <div key={section.key} style={{ background: "#FFFFFF", border: "0.5px solid var(--border)", borderRadius: 12, padding: 16, marginBottom: 12, boxShadow: "var(--shadow-sm)" }}>
                     <div style={{ fontSize: 9, fontWeight: 500, color: NAVY, textTransform: "uppercase" as const, letterSpacing: "0.06em", marginBottom: 6, borderLeft: `3px solid ${ORANGE}`, paddingLeft: 7 }}>
                       {section.label}
                     </div>
