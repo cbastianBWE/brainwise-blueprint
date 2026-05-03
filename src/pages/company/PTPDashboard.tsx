@@ -1458,9 +1458,10 @@ export default function PTPDashboard() {
                 key={card.label}
                 style={{
                   padding: 14,
-                  background: SAND,
+                  background: "#FFFFFF",
                   border: "0.5px solid var(--border)",
                   borderRadius: 8,
+                  boxShadow: "var(--shadow-sm)",
                 }}
               >
                 <p
