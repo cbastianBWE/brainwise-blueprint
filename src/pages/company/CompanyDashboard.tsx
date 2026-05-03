@@ -2298,7 +2298,7 @@ export default function CompanyDashboard() {
                     Structured interventions <span style={{ fontSize: 10, fontWeight: 400, color: "var(--muted-foreground)" }}>(click + to track without leaving this page)</span>
                   </h3>
                   {interventions.map(iv => (
-                    <div key={iv.id ?? iv.title} style={{ border: "0.5px solid var(--border)", borderRadius: 8, padding: 16, marginBottom: 12, background: "#F9F7F1" }}>
+                    <div key={iv.id ?? iv.title} style={{ border: "0.5px solid var(--border)", borderRadius: 8, padding: 16, marginBottom: 12, background: "#FFFFFF", boxShadow: "var(--shadow-sm)" }}>
                       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8, marginBottom: 6 }}>
                         <span style={{ fontSize: 15, fontWeight: 500, color: NAVY }}>{iv.title}</span>
                         <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
