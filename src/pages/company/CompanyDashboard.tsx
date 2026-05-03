@@ -2533,7 +2533,7 @@ export default function CompanyDashboard() {
 
           {!suppressed && Object.keys(dims).length > 0 && (
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 16 }}>
-              <div style={{ background: "#F9F7F1", border: "0.5px solid var(--border)", borderRadius: 12, padding: 14 }}>
+              <div style={{ background: "#FFFFFF", border: "0.5px solid var(--border)", borderRadius: 12, padding: 14, boxShadow: "var(--shadow-sm)" }}>
                 <div style={{ fontSize: 13, fontWeight: 500, color: "var(--muted-foreground)", textTransform: "uppercase" as const, letterSpacing: 0.04, marginBottom: 10 }}>
                   NAI · C.A.F.E.S. (by weight)
                 </div>
