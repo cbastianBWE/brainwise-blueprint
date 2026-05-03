@@ -1603,11 +1603,12 @@ export default function PTPDashboard() {
                 onClick={() => setExpandedLeaderWorkforce((v) => !v)}
                 style={{
                   padding: 14,
-                  background: SAND,
+                  background: "#FFFFFF",
                   border: `0.5px solid ${expandedLeaderWorkforce ? NAVY : "var(--border)"}`,
                   borderRadius: 8,
                   cursor: "pointer",
                   transition: "border-color 0.15s",
+                  boxShadow: "var(--shadow-sm)",
                 }}
               >
                 {loadingDelta ? (
