@@ -2337,9 +2337,10 @@ export default function PTPDashboard() {
                   style={{
                     marginBottom: 16,
                     padding: "10px 14px",
-                    background: SAND,
+                    background: "#FFFFFF",
                     borderRadius: 8,
                     border: "0.5px solid var(--border)",
+                    boxShadow: "var(--shadow-sm)",
                   }}
                 >
                   <span
