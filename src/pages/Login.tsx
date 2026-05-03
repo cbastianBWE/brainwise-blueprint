@@ -77,10 +77,15 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4 gap-6">
+      <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+        <img src="/brain-icon.png" alt="BrainWise" className="h-8 w-8" />
+        <span style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 800, fontSize: 18, color: "var(--bw-navy)" }}>
+          BrainWise Enterprises
+        </span>
+      </Link>
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <img src="/brain-icon.png" alt="BrainWise" className="mx-auto h-10 w-10 mb-2" />
           <CardTitle className="text-2xl">
             {mfaUserId ? "Two-Factor Verification" : "Welcome Back"}
           </CardTitle>
