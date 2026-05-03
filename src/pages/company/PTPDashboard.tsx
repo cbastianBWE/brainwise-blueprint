@@ -2014,12 +2014,13 @@ export default function PTPDashboard() {
                     })
                   }
                   style={{
-                    background: SAND,
+                    background: "#FFFFFF",
                     border: `0.5px solid ${isExp ? DIM_COLORS[dimId] : "var(--border)"}`,
                     borderRadius: 12,
                     padding: 14,
                     marginBottom: 14,
                     cursor: "pointer",
+                    boxShadow: "var(--shadow-sm)",
                   }}
                 >
                   <div
