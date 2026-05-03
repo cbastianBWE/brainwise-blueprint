@@ -3304,11 +3304,12 @@ export default function PTPDashboard() {
             })()}
           </div>
           <div style={{
-            background: SAND,
+            background: "#FFFFFF",
             border: "0.5px solid var(--border)",
             borderRadius: 12,
             padding: 14,
             marginTop: 14,
+            boxShadow: "var(--shadow-sm)",
           }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8, flexWrap: "wrap", gap: 8 }}>
               <div style={{ fontSize: 15, fontWeight: 500, color: NAVY }}>Recommended next steps · cross-instrument</div>
