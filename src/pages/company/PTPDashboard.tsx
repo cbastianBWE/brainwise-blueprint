@@ -2468,11 +2468,12 @@ export default function PTPDashboard() {
                   <div
                     key={section.key}
                     style={{
-                      background: SAND,
+                      background: "#FFFFFF",
                       border: "0.5px solid var(--border)",
                       borderRadius: 12,
                       padding: 16,
                       marginBottom: 12,
+                      boxShadow: "var(--shadow-sm)",
                     }}
                   >
                     <div
