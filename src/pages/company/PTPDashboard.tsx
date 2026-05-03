@@ -1729,7 +1729,7 @@ export default function PTPDashboard() {
                               </span>
                             </div>
                             {deltaNarrative.narrative_text.summary && (
-                              <div style={{ background: "var(--card)", border: "0.5px solid var(--border)", borderRadius: 8, padding: 12, marginBottom: 10 }}>
+                              <div style={{ background: "var(--card)", border: "0.5px solid var(--border)", borderRadius: 8, padding: 12, marginBottom: 10, boxShadow: "var(--shadow-sm)" }}>
                                 <div style={{ fontSize: 9, fontWeight: 500, color: NAVY, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6, borderLeft: `3px solid ${ORANGE}`, paddingLeft: 7 }}>
                                   What we're seeing
                                 </div>
@@ -1830,6 +1830,7 @@ export default function PTPDashboard() {
                   border: "0.5px solid var(--border)",
                   borderRadius: 8,
                   overflow: "hidden",
+                  boxShadow: "var(--shadow-sm)",
                 }}
               >
                 <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}>
@@ -2389,7 +2390,7 @@ export default function PTPDashboard() {
                             padding: "10px 8px",
                             textAlign: "center",
                             background: act.bg,
-                            boxShadow: "var(--shadow-sm)",
+                            boxShadow: "var(--shadow-md)",
                           }}
                         >
                           <div
@@ -2726,6 +2727,7 @@ export default function PTPDashboard() {
                   borderRadius: 12,
                   overflow: "hidden",
                   marginBottom: 16,
+                  boxShadow: "var(--shadow-sm)",
                 }}
               >
                 <div style={{ overflowX: "auto" }}>
@@ -2912,6 +2914,7 @@ export default function PTPDashboard() {
                     border: "0.5px solid var(--border)",
                     borderRadius: 12,
                     padding: "16px 8px 8px",
+                    boxShadow: "var(--shadow-sm)",
                   }}
                 >
                   <div
@@ -2987,6 +2990,7 @@ export default function PTPDashboard() {
                     border: "0.5px solid var(--border)",
                     borderRadius: 12,
                     padding: "16px 8px 8px",
+                    boxShadow: "var(--shadow-sm)",
                   }}
                 >
                   <div
@@ -3184,10 +3188,11 @@ export default function PTPDashboard() {
               </div>
               <div
                 style={{
-                  background: "var(--muted)",
+                  background: "#FFFFFF",
                   border: "0.5px solid var(--border)",
                   borderRadius: 12,
                   padding: 14,
+                  boxShadow: "var(--shadow-sm)",
                 }}
               >
                 <div
@@ -3352,6 +3357,7 @@ export default function PTPDashboard() {
                     borderRadius: 8,
                     padding: 14,
                     marginBottom: 10,
+                    boxShadow: "var(--shadow-sm)",
                   }}>
                     <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8, marginBottom: 6 }}>
                       <span style={{ fontSize: 14, fontWeight: 600, color: NAVY }}>{rec.title}</span>
