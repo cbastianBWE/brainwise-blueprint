@@ -2542,7 +2542,8 @@ export default function PTPDashboard() {
                         borderRadius: 8,
                         padding: 16,
                         marginBottom: 12,
-                        background: SAND,
+                        background: "#FFFFFF",
+                        boxShadow: "var(--shadow-sm)",
                       }}
                     >
                       <div
