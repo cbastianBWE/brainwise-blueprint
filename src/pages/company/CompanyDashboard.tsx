@@ -1992,7 +1992,7 @@ export default function CompanyDashboard() {
                               </span>
                             </div>
                             {deltaNarrative.narrative_text.summary && (
-                              <div style={{ background: "var(--card)", border: "0.5px solid var(--border)", borderRadius: 8, padding: 12, marginBottom: 10, boxShadow: "var(--shadow-sm)" }}>
+                              <div style={{ background: "#FFFFFF", border: "0.5px solid var(--border)", borderRadius: 8, padding: 12, marginBottom: 10, boxShadow: "var(--shadow-sm)" }}>
                                 <div style={{ fontSize: 9, fontWeight: 500, color: NAVY, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6, borderLeft: `3px solid ${ORANGE}`, paddingLeft: 7 }}>
                                   What we're seeing
                                 </div>
@@ -2062,7 +2062,7 @@ export default function CompanyDashboard() {
               <h3 style={{ fontSize: 15, fontWeight: 500, color: NAVY, margin: "24px 0 10px", textTransform: "uppercase", letterSpacing: 0.5 }}>
                 Participation by department
               </h3>
-              <div style={{ background: "var(--card)", border: "0.5px solid var(--border)", borderRadius: 8, overflow: "hidden", boxShadow: "var(--shadow-sm)" }}>
+              <div style={{ background: "#FFFFFF", border: "0.5px solid var(--border)", borderRadius: 8, overflow: "hidden", boxShadow: "var(--shadow-sm)" }}>
                 <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}>
                   <thead>
                     <tr style={{ background: "#ede9df" }}>
@@ -2255,7 +2255,7 @@ export default function CompanyDashboard() {
                     if (!dim) return null;
                     const act = activationLabel(dim.avg_score);
                     return (
-                      <div key={dimId} style={{ borderRadius: 8, padding: "10px 8px", textAlign: "center", background: act.bg, boxShadow: "var(--shadow-md)" }}>
+                      <div key={dimId} style={{ borderRadius: 8, padding: "10px 8px", textAlign: "center", background: "#FFFFFF", border: "0.5px solid var(--border)", boxShadow: "var(--shadow-sm)" }}>
                         <div style={{ fontSize: 9, fontWeight: 500, textTransform: "uppercase" as const, letterSpacing: "0.04em", color: DIM_COLORS[dimId], marginBottom: 3 }}>{DIM_NAMES[dimId]}</div>
                         <div style={{ fontSize: 26, fontWeight: 500, color: DIM_COLORS[dimId] }}>{Math.round(dim.avg_score)}</div>
                         <div style={{ fontSize: 9, color: DIM_COLORS[dimId], marginTop: 2, opacity: 0.8 }}>{act.label}</div>
@@ -2374,7 +2374,7 @@ export default function CompanyDashboard() {
             </div>
           ) : (
             <>
-              <div style={{ background: "var(--card)", border: "0.5px solid var(--border)", borderRadius: 12, overflow: "hidden", marginBottom: 16, boxShadow: "var(--shadow-sm)" }}>
+              <div style={{ background: "#FFFFFF", border: "0.5px solid var(--border)", borderRadius: 12, overflow: "hidden", marginBottom: 16, boxShadow: "var(--shadow-sm)" }}>
                 <div style={{ overflowX: "auto" }}>
                   <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11 }}>
                     <thead>
@@ -2459,7 +2459,7 @@ export default function CompanyDashboard() {
                   date: primaryChartData[i]?.date ?? compareChartData[i]?.date ?? "",
                 }));
                 return (
-                  <div style={{ background: "var(--card)", border: "0.5px solid var(--border)", borderRadius: 12, padding: "16px 8px 8px", marginBottom: 16, boxShadow: "var(--shadow-sm)" }}>
+                  <div style={{ background: "#FFFFFF", border: "0.5px solid var(--border)", borderRadius: 12, padding: "16px 8px 8px", marginBottom: 16, boxShadow: "var(--shadow-sm)" }}>
                     <div style={{ fontSize: 10, color: "var(--muted-foreground)", paddingLeft: 28, marginBottom: 4 }}>Avg score by dimension · lower = more ready</div>
                     <ResponsiveContainer width="100%" height={260}>
                       <LineChart data={mergedChartData}>
@@ -2686,7 +2686,7 @@ export default function CompanyDashboard() {
                 )}
                 {crossInstrumentRow.recommendations.map((rec, i) => (
                   <div key={rec.id ?? i} style={{
-                    background: "var(--card)",
+                    background: "#FFFFFF",
                     border: "0.5px solid var(--border)",
                     borderRadius: 8,
                     padding: 14,
