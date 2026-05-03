@@ -137,6 +137,19 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    background: linear-gradient(180deg, hsl(var(--background)) 0%, hsl(40 28% 95%) 100%);
+    background-attachment: fixed;
+    min-height: 100vh;
+    @apply text-foreground;
+  }
+
+  @media (max-width: 768px) {
+    /* Lighter shadows on mobile so cards don't feel heavy */
+    [class*="shadow-md"]:not(.no-shadow-override) {
+      box-shadow: var(--shadow-sm) !important;
+    }
+    [class*="shadow-sm"]:not(.no-shadow-override) {
+      box-shadow: var(--shadow-xs) !important;
+    }
   }
 }
