@@ -1028,65 +1028,81 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
             </Card>
           </section>
 
-          {/* SECTION 2b - Driving Facet Scores (PTP only) */}
-          {effectiveSelected?.isPTP && !isNAI && (
-            <section>
-              <DrivingFacetScores
-                assessmentId={effectiveSelected.result.assessment_id}
-                additionalAssessmentId={ptpContextTab === 'combined' && !isBothAssessment && hasPtpTabs ? ptpPersonalResults[0]?.result.assessment_id : undefined}
-                contextFilter={isBothAssessment && ptpContextTab !== 'combined' ? ptpContextTab as 'professional' | 'personal' : undefined}
-              />
-            </section>
-          )}
+          {/* SECTION 4 - PTP path: Profile overview + Action Plan + What does this mean to me? + Dimension highlights + Driving facet scores + Facet insights + Cross-assessment + Cross-Instrument Recs + Responses */}
+          {effectiveSelected?.isPTP && (() => {
+            const ptpNarrativeProps = {
+              assessmentResultId: effectiveSelected.result.id,
+              assessmentId: effectiveSelected.result.assessment_id,
+              narrative: selected.result.ai_narrative,
+              dimensionScores: dimensionScores as [string, { mean?: number; band?: string }][],
+              dimensionNameMap,
+              recommendations,
+              permissionLevel,
+              isCoachView,
+              ptpContextTab,
+              otherAssessments: assessments.filter(a => a.result.id !== effectiveSelected?.result.id),
+            };
+            return (
+              <>
+                <section>
+                  <PTPProfileOverviewSection {...ptpNarrativeProps} />
+                </section>
+                <section>
+                  <PTPDimensionHighlightsSection {...ptpNarrativeProps} />
+                </section>
+                <section>
+                  <DrivingFacetScores
+                    assessmentId={effectiveSelected.result.assessment_id}
+                    additionalAssessmentId={ptpContextTab === 'combined' && !isBothAssessment && hasPtpTabs ? ptpPersonalResults[0]?.result.assessment_id : undefined}
+                    contextFilter={isBothAssessment && ptpContextTab !== 'combined' ? ptpContextTab as 'professional' | 'personal' : undefined}
+                  />
+                </section>
+                <section>
+                  <PTPFacetInsightsElevatedSection {...ptpNarrativeProps} />
+                </section>
+                <section>
+                  <PTPFacetInsightsSuppressedSection {...ptpNarrativeProps} />
+                </section>
+                <section>
+                  <PTPCrossAssessmentSection {...ptpNarrativeProps} />
+                </section>
+                {recommendations.length > 0 && canTakeAssessments && (
+                  <section>
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-lg">Cross-Instrument Recommendations</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        <p className="text-sm text-muted-foreground">
+                          Based on your results, we suggest exploring:
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {recommendations.map((triggerId) => (
+                            <Button
+                              key={triggerId}
+                              variant="outline"
+                              size="sm"
+                              onClick={() => navigate(`/assessment?instrument=${triggerId}`)}
+                            >
+                              {triggerId} <ArrowRight className="ml-1 h-3 w-3" />
+                            </Button>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </section>
+                )}
+                <section>
+                  <PTPAssessmentResponsesSection {...ptpNarrativeProps} />
+                </section>
+              </>
+            );
+          })()}
 
-          {/* SECTION 3 - Cross-Instrument Recommendations */}
-          {recommendations.length > 0 && canTakeAssessments && (
-            <section>
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">
-                    Cross-Instrument Recommendations
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <p className="text-sm text-muted-foreground">
-                    Based on your results, we suggest exploring:
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    {recommendations.map((triggerId) => (
-                      <Button
-                        key={triggerId}
-                        variant="outline"
-                        size="sm"
-                        onClick={() =>
-                          navigate(`/assessment?instrument=${triggerId}`)
-                        }
-                      >
-                        {triggerId} <ArrowRight className="ml-1 h-3 w-3" />
-                      </Button>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </section>
-          )}
-
-          {/* SECTION 4 - Profile Interpretation */}
+          {/* SECTION 4 - Non-PTP path */}
+          {!effectiveSelected?.isPTP && (
           <section>
-            {effectiveSelected?.isPTP ? (
-              <PTPNarrativeSections
-                assessmentResultId={effectiveSelected.result.id}
-                assessmentId={effectiveSelected.result.assessment_id}
-                narrative={selected.result.ai_narrative}
-                dimensionScores={dimensionScores as [string, { mean?: number; band?: string }][]}
-                dimensionNameMap={dimensionNameMap}
-                recommendations={recommendations}
-                permissionLevel={permissionLevel}
-                isCoachView={isCoachView}
-                ptpContextTab={ptpContextTab}
-                otherAssessments={assessments.filter(a => a.result.id !== effectiveSelected?.result.id)}
-              />
-            ) : isNAI ? (
+            {isNAI ? (
               <NAINarrativeSections
                 assessmentResultId={selected.result.id}
                 assessmentId={selected.result.assessment_id}
