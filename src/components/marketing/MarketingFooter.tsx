@@ -81,6 +81,22 @@ export default function MarketingFooter() {
             <Link to="/terms" className="bw-footer-link" style={linkStyle}>Terms of Service</Link>
             <Link to="/cookies" className="bw-footer-link" style={linkStyle}>Cookies</Link>
             <Link to="/international-privacy" className="bw-footer-link" style={linkStyle}>International Privacy</Link>
+            <button
+              type="button"
+              className="bw-footer-link"
+              onClick={() => window.dispatchEvent(new Event("open-cookie-settings"))}
+              style={{
+                ...linkStyle,
+                background: "transparent",
+                border: "none",
+                cursor: "pointer",
+                textAlign: "left",
+                width: "100%",
+                fontFamily: "'Montserrat', sans-serif",
+              }}
+            >
+              Cookie Settings
+            </button>
           </div>
           <div>
             <div style={columnHeading}>Contact</div>

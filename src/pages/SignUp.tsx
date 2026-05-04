@@ -8,6 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Info, Eye, EyeOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { TOS_VERSION, PRIVACY_VERSION } from "@/lib/legalVersions";
 
 const CERT_LABELS: Record<string, string> = {
   ptp_coach: 'PTP Certified Coach',
@@ -103,7 +104,11 @@ const SignUp = () => {
       email: email.trim(),
       password,
       options: {
-        data: { full_name: `${firstName.trim()} ${lastName.trim()}` },
+        data: {
+          full_name: `${firstName.trim()} ${lastName.trim()}`,
+          tos_version: TOS_VERSION,
+          privacy_version: PRIVACY_VERSION,
+        },
         emailRedirectTo: window.location.origin,
       },
     });
