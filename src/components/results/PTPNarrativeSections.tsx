@@ -10,14 +10,6 @@ const PTP_DIMENSION_COLORS: Record<string, string> = {
   "DIM-PTP-05": "#FFB703",
 };
 
-const PTP_DIMENSION_PASTEL: Record<string, string> = {
-  "DIM-PTP-01": "#E8EDF1",
-  "DIM-PTP-02": "#E6F2F3",
-  "DIM-PTP-03": "#F0EFF1",
-  "DIM-PTP-04": "#EEE8F5",
-  "DIM-PTP-05": "#FFF8E6",
-};
-
 const PTP_DIMENSION_DESCRIPTIONS: Record<string, { high: string; moderate: string; low: string }> = {
   "DIM-PTP-01": {
     high: "Safety and security concerns are a strong driver for you. You are highly attuned to potential risks — physical, emotional, or professional — and tend to respond strongly when these feel threatened.",
@@ -165,7 +157,22 @@ interface OtherAssessment {
   result: { id: string };
 }
 
-interface PTPNarrativeSectionsProps {
+interface ActionPlanItem {
+  title: string;
+  rationale: string;
+  steps: string[];
+  dimension_tags: string[];
+}
+
+interface NarrativeSectionsShape {
+  profile_overview?: string;
+  dimension_highlights?: Record<string, string>;
+  cross_assessment?: string;
+  action_plan?: ActionPlanItem[];
+  personal_summary?: string[];
+}
+
+export interface PTPNarrativeSectionsProps {
   assessmentResultId: string;
   assessmentId: string;
   narrative: string | null;
@@ -178,27 +185,26 @@ interface PTPNarrativeSectionsProps {
   otherAssessments?: OtherAssessment[];
 }
 
-export default function PTPNarrativeSections({
-  assessmentResultId,
-  assessmentId,
-  dimensionScores,
-  dimensionNameMap,
-  permissionLevel,
-  isCoachView,
-  ptpContextTab,
-  otherAssessments = [],
-}: PTPNarrativeSectionsProps) {
+/* =========================================================================
+   Shared data hook
+   ========================================================================= */
+
+function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
+  const {
+    assessmentResultId,
+    assessmentId,
+    dimensionScores,
+    ptpContextTab,
+    otherAssessments = [],
+  } = props;
+
   const [elevatedFacets, setElevatedFacets] = useState<FacetItem[]>([]);
   const [suppressedFacets, setSuppressedFacets] = useState<FacetItem[]>([]);
   const [facetInterpretations, setFacetInterpretations] = useState<FacetInterpretation[]>([]);
   const [loadingFacets, setLoadingFacets] = useState(true);
   const [loadingInterpretations, setLoadingInterpretations] = useState(false);
   const [expandedFacets, setExpandedFacets] = useState<Set<string>>(new Set());
-  const [narrativeSections, setNarrativeSections] = useState<{
-    profile_overview?: string;
-    dimension_highlights?: Record<string, string>;
-    cross_assessment?: string;
-  } | null>(null);
+  const [narrativeSections, setNarrativeSections] = useState<NarrativeSectionsShape | null>(null);
   const [loadingNarrativeSections, setLoadingNarrativeSections] = useState(false);
   const [responsesExpanded, setResponsesExpanded] = useState(false);
   const [assessmentResponses, setAssessmentResponses] = useState<{
@@ -476,27 +482,110 @@ export default function PTPNarrativeSections({
     fetchFacets();
   }, [assessmentId, assessmentResultId, ptpContextTab]);
 
-  const toggleFacet = (key: string) => {
-    setExpandedFacets((prev) => {
-      const next = new Set(prev);
-      if (next.has(key)) next.delete(key);
-      else next.add(key);
-      return next;
-    });
+  return {
+    narrativeSections,
+    loadingNarrativeSections,
+    elevatedFacets,
+    suppressedFacets,
+    facetInterpretations,
+    loadingFacets,
+    loadingInterpretations,
+    assessmentResponses,
+    expandedFacets,
+    setExpandedFacets,
+    responsesExpanded,
+    setResponsesExpanded,
   };
+}
 
-  const getFacetInterpretation = (facetName: string) =>
-    facetInterpretations.find((f) => f.name === facetName);
+/* =========================================================================
+   Shared style helpers
+   ========================================================================= */
+
+const sectionHeadingStyle: React.CSSProperties = {
+  fontFamily: "var(--font-display)",
+  fontSize: 18,
+  fontWeight: 600,
+  color: "var(--fg-1)",
+  margin: 0,
+  marginBottom: "var(--s-4)",
+  letterSpacing: "-0.01em",
+};
+
+const subtitleStyle: React.CSSProperties = {
+  fontSize: 13,
+  color: "var(--fg-3)",
+  margin: 0,
+  marginTop: -8,
+  marginBottom: "var(--s-4)",
+};
+
+const cardSurface: React.CSSProperties = {
+  background: "var(--bw-white)",
+  border: "1px solid var(--border-1)",
+  borderRadius: "var(--r-md)",
+  padding: "var(--s-5)",
+  boxShadow: "var(--shadow-sm)",
+};
+
+function DimensionPill({ dimId }: { dimId: string }) {
+  const color = PTP_DIMENSION_COLORS[dimId] ?? "#021F36";
+  return (
+    <span
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        padding: "2px 10px",
+        borderRadius: "var(--r-pill)",
+        fontFamily: "var(--font-primary)",
+        fontSize: 11,
+        fontWeight: 600,
+        background: `${color}20`,
+        color,
+        marginRight: 6,
+        marginBottom: 4,
+      }}
+    >
+      {dimId}
+    </span>
+  );
+}
+
+function isCoachLimited(props: PTPNarrativeSectionsProps) {
+  return props.isCoachView && props.permissionLevel === "score_summary";
+}
+
+function CoachLimitedNotice() {
+  return (
+    <div
+      style={{
+        ...cardSurface,
+        background: "var(--bw-cream-200)",
+      }}
+    >
+      <p style={{ fontSize: 14, color: "var(--fg-2)", margin: 0 }}>
+        The client has limited coach access to scores only.
+      </p>
+    </div>
+  );
+}
+
+/* =========================================================================
+   Named-export sections
+   ========================================================================= */
+
+export function PTPProfileOverviewSection(props: PTPNarrativeSectionsProps) {
+  const data = usePTPNarrativeData(props);
+  if (isCoachLimited(props)) return <CoachLimitedNotice />;
+
+  const { narrativeSections, loadingNarrativeSections } = data;
+  const { dimensionScores, dimensionNameMap, ptpContextTab } = props;
 
   const sortedDims = [...dimensionScores].sort((a, b) => (b[1].mean ?? 0) - (a[1].mean ?? 0));
   const highestDim = sortedDims[0];
   const lowestDim = sortedDims[sortedDims.length - 1];
   const contextLabel =
-    ptpContextTab === "professional"
-      ? "professional"
-      : ptpContextTab === "personal"
-        ? "personal"
-        : "overall";
+    ptpContextTab === "professional" ? "professional" : ptpContextTab === "personal" ? "personal" : "overall";
   const scores = dimensionScores.map(([, s]) => s.mean ?? 0);
   const scoreRange = scores.length > 0 ? Math.max(...scores) - Math.min(...scores) : 0;
   const profilePattern =
@@ -509,6 +598,130 @@ export default function PTPNarrativeSections({
       ? `Your ${contextLabel} Personal Threat Profile shows ${dimensionScores.length} dimensions assessed. ${profilePattern} Your highest sensitivity in this context is ${dimensionNameMap.get(highestDim?.[0] ?? "") ?? highestDim?.[0] ?? "—"} (${Math.round(highestDim?.[1]?.mean ?? 0)}), while ${dimensionNameMap.get(lowestDim?.[0] ?? "") ?? lowestDim?.[0] ?? "—"} (${Math.round(lowestDim?.[1]?.mean ?? 0)}) shows the lowest activation.`
       : null;
 
+  const actionPlan = narrativeSections?.action_plan ?? [];
+  const personalSummary = narrativeSections?.personal_summary ?? [];
+
+  return (
+    <div className="space-y-8">
+      {/* Profile overview */}
+      <div>
+        <h3 style={sectionHeadingStyle}>Profile overview</h3>
+        {loadingNarrativeSections ? (
+          <p style={{ fontSize: 14, color: "var(--fg-3)", margin: 0 }}>Generating profile overview...</p>
+        ) : narrativeSections?.profile_overview ? (
+          <p style={{ fontSize: 14, color: "var(--fg-2)", lineHeight: 1.6, margin: 0 }}>
+            {narrativeSections.profile_overview}
+          </p>
+        ) : profileOverviewText ? (
+          <p style={{ fontSize: 14, color: "var(--fg-2)", lineHeight: 1.6, margin: 0 }}>{profileOverviewText}</p>
+        ) : null}
+      </div>
+
+      {/* Action Plan */}
+      {(actionPlan.length > 0 || loadingNarrativeSections) && (
+        <div>
+          <h3 style={sectionHeadingStyle}>Action Plan</h3>
+          <p style={subtitleStyle}>Three concrete things to focus on next.</p>
+          {actionPlan.length === 0 && loadingNarrativeSections ? (
+            <p style={{ fontSize: 13, color: "var(--fg-3)", margin: 0 }}>Generating action plan...</p>
+          ) : (
+            <div className="space-y-3">
+              {actionPlan.map((item, i) => (
+                <div key={i} style={cardSurface}>
+                  <div style={{ marginBottom: 8 }}>
+                    {(item.dimension_tags ?? []).map((tag) => (
+                      <DimensionPill key={tag} dimId={tag} />
+                    ))}
+                  </div>
+                  <h4
+                    style={{
+                      fontFamily: "var(--font-display)",
+                      fontSize: 16,
+                      fontWeight: 700,
+                      color: "var(--fg-1)",
+                      margin: 0,
+                      marginBottom: 6,
+                    }}
+                  >
+                    {item.title}
+                  </h4>
+                  {item.rationale && (
+                    <p style={{ fontSize: 13, color: "var(--fg-2)", lineHeight: 1.55, margin: 0, marginBottom: 10 }}>
+                      {item.rationale}
+                    </p>
+                  )}
+                  {item.steps?.length > 0 && (
+                    <ol
+                      style={{
+                        fontSize: 13,
+                        color: "var(--fg-1)",
+                        lineHeight: 1.6,
+                        margin: 0,
+                        paddingLeft: 20,
+                      }}
+                    >
+                      {item.steps.map((step, j) => (
+                        <li key={j} style={{ marginBottom: 4 }}>{step}</li>
+                      ))}
+                    </ol>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* What does this mean to me? */}
+      {(personalSummary.length > 0 || loadingNarrativeSections) && (
+        <div>
+          <h3 style={sectionHeadingStyle}>What does this mean to me?</h3>
+          {personalSummary.length === 0 && loadingNarrativeSections ? (
+            <p style={{ fontSize: 13, color: "var(--fg-3)", margin: 0 }}>Generating summary...</p>
+          ) : (
+            <div style={cardSurface}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "var(--s-3)" }}>
+                {personalSummary.map((bullet, i) => (
+                  <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+                    <div
+                      style={{
+                        flexShrink: 0,
+                        width: 24,
+                        height: 24,
+                        borderRadius: "var(--r-circle)",
+                        background: "var(--bw-navy)",
+                        color: "var(--bw-white)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontSize: 12,
+                        fontWeight: 600,
+                        fontFamily: "var(--font-display)",
+                      }}
+                    >
+                      {i + 1}
+                    </div>
+                    <p style={{ fontSize: 14, color: "var(--fg-1)", lineHeight: 1.55, margin: 0 }}>{bullet}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+export function PTPDimensionHighlightsSection(props: PTPNarrativeSectionsProps) {
+  const data = usePTPNarrativeData(props);
+  if (isCoachLimited(props)) return null;
+  const { narrativeSections, loadingNarrativeSections } = data;
+  const { dimensionScores, dimensionNameMap } = props;
+
+  if (dimensionScores.length === 0) return null;
+  const sortedDims = [...dimensionScores].sort((a, b) => (b[1].mean ?? 0) - (a[1].mean ?? 0));
+
   const getDimDescriptor = (dimId: string, mean: number) => {
     const desc = PTP_DIMENSION_DESCRIPTIONS[dimId];
     if (!desc) return null;
@@ -517,71 +730,149 @@ export default function PTPNarrativeSections({
     return desc.low;
   };
 
-  if (isCoachView && permissionLevel === "score_summary") {
-    return (
-      <div className="rounded-lg border border-border bg-muted/30 p-6">
-        <p className="text-sm text-muted-foreground">
-          The client has limited coach access to scores only.
-        </p>
-      </div>
-    );
-  }
+  return (
+    <div>
+      <h3 style={sectionHeadingStyle}>Dimension highlights</h3>
+      {loadingNarrativeSections ? (
+        <p style={{ fontSize: 14, color: "var(--fg-3)", margin: 0 }}>Generating dimension highlights...</p>
+      ) : (
+        <div className="space-y-3">
+          {sortedDims.map(([dimId, score]) => {
+            const color = PTP_DIMENSION_COLORS[dimId] ?? "#021F36";
+            const name = dimensionNameMap.get(dimId) ?? dimId;
+            const mean = Math.round(score.mean ?? 0);
+            const aiDescription = narrativeSections?.dimension_highlights?.[dimId];
+            const fallbackDescription = getDimDescriptor(dimId, mean);
+            return (
+              <div
+                key={dimId}
+                style={{
+                  background: "var(--bw-white)",
+                  border: "1px solid var(--border-1)",
+                  borderLeft: `4px solid ${color}`,
+                  boxShadow: "var(--shadow-sm)",
+                  borderRadius: "var(--r-md)",
+                  padding: "var(--s-4)",
+                }}
+              >
+                <h4
+                  style={{
+                    fontFamily: "var(--font-display)",
+                    fontSize: 14,
+                    fontWeight: 600,
+                    color: "var(--fg-1)",
+                    margin: 0,
+                    marginBottom: 4,
+                  }}
+                >
+                  {name} — {mean}
+                </h4>
+                {(aiDescription || fallbackDescription) && (
+                  <p style={{ fontSize: 14, color: "var(--fg-2)", lineHeight: 1.55, margin: 0 }}>
+                    {aiDescription || fallbackDescription}
+                  </p>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
 
-  const renderFacetList = (facets: FacetItem[], prefix: string) => (
+function FacetList({
+  facets,
+  prefix,
+  data,
+}: {
+  facets: FacetItem[];
+  prefix: string;
+  data: ReturnType<typeof usePTPNarrativeData>;
+}) {
+  const { expandedFacets, setExpandedFacets, facetInterpretations, loadingInterpretations } = data;
+
+  const toggleFacet = (key: string) => {
+    setExpandedFacets((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
+
+  const getFacetInterpretation = (facetName: string) =>
+    facetInterpretations.find((f) => f.name === facetName);
+
+  return (
     <div className="space-y-2">
       {facets.map((facet, idx) => {
-        const facetName =
-          PTP_ITEM_FACET_NAMES[facet.item_number ?? 0] ?? facet.item_text.slice(0, 40);
+        const facetName = PTP_ITEM_FACET_NAMES[facet.item_number ?? 0] ?? facet.item_text.slice(0, 40);
         const key = `${prefix}-${idx}`;
         const isExpanded = expandedFacets.has(key);
         const interpretation = getFacetInterpretation(facetName);
         const color = PTP_DIMENSION_COLORS[facet.dimension_id] ?? "#021F36";
         const score = Math.round(facet.value);
         return (
-          <div key={key} className="rounded-lg border border-border overflow-hidden">
+          <div
+            key={key}
+            style={{
+              background: "var(--bw-white)",
+              border: "1px solid var(--border-1)",
+              boxShadow: "var(--shadow-xs)",
+              borderRadius: "var(--r-md)",
+              overflow: "hidden",
+            }}
+          >
             <button
               onClick={() => toggleFacet(key)}
-              className="w-full text-left p-4 flex items-start gap-3 hover:bg-muted/30 transition-colors"
+              className="w-full text-left flex items-start gap-3 transition-colors hover:bg-muted/30"
+              style={{ padding: 16 }}
             >
               <div
-                className="w-2 h-8 rounded-sm shrink-0 mt-0.5"
-                style={{ backgroundColor: color }}
+                className="shrink-0 mt-0.5"
+                style={{ width: 8, height: 32, borderRadius: 2, backgroundColor: color }}
               />
               <div className="flex-1 min-w-0">
-                <div className="font-medium text-sm">{facetName}</div>
-                <div className="text-xs text-muted-foreground mt-0.5">
-                  {facet.item_text}
-                </div>
+                <div style={{ fontSize: 14, fontWeight: 500, color: "var(--fg-1)" }}>{facetName}</div>
+                <div style={{ fontSize: 12, color: "var(--fg-3)", marginTop: 2 }}>{facet.item_text}</div>
               </div>
               <span
-                className="px-2 py-1 rounded text-xs font-semibold text-white shrink-0"
-                style={{ backgroundColor: color }}
+                style={{
+                  padding: "4px 8px",
+                  borderRadius: 4,
+                  fontSize: 12,
+                  fontWeight: 600,
+                  color: "#fff",
+                  backgroundColor: color,
+                  flexShrink: 0,
+                }}
               >
                 {score}
               </span>
               {isExpanded ? (
-                <ChevronUp className="w-4 h-4 text-muted-foreground shrink-0 mt-1" />
+                <ChevronUp className="w-4 h-4 shrink-0 mt-1" style={{ color: "var(--fg-3)" }} />
               ) : (
-                <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0 mt-1" />
+                <ChevronDown className="w-4 h-4 shrink-0 mt-1" style={{ color: "var(--fg-3)" }} />
               )}
             </button>
             {isExpanded && (
-              <div className="p-4 border-t border-border bg-muted/20">
+              <div style={{ padding: 16, borderTop: "1px solid var(--border-1)", background: "var(--bw-cream-200)" }}>
                 {loadingInterpretations || !interpretation ? (
-                  <p className="text-sm text-muted-foreground">Generating insights...</p>
+                  <p style={{ fontSize: 14, color: "var(--fg-3)", margin: 0 }}>Generating insights...</p>
                 ) : (
                   <div className="grid md:grid-cols-2 gap-4">
                     <div>
-                      <h5 className="font-semibold text-sm mb-2">Impact on self</h5>
+                      <h5 style={{ fontWeight: 600, fontSize: 14, marginBottom: 8, color: "var(--fg-1)" }}>Impact on self</h5>
                       <ul className="space-y-1.5">
                         {interpretation.positive_self.map((item, i) => (
-                          <li key={`ps-${i}`} className="flex gap-2 text-sm">
-                            <span className="text-[var(--bw-forest)] shrink-0">✓</span>
+                          <li key={`ps-${i}`} className="flex gap-2" style={{ fontSize: 14, color: "var(--fg-2)" }}>
+                            <span style={{ color: "var(--bw-forest)", flexShrink: 0 }}>✓</span>
                             <span>{item}</span>
                           </li>
                         ))}
                         {interpretation.negative_self.map((item, i) => (
-                          <li key={`ns-${i}`} className="flex gap-2 text-sm">
+                          <li key={`ns-${i}`} className="flex gap-2" style={{ fontSize: 14, color: "var(--fg-2)" }}>
                             <span className="text-destructive shrink-0">✗</span>
                             <span>{item}</span>
                           </li>
@@ -589,16 +880,16 @@ export default function PTPNarrativeSections({
                       </ul>
                     </div>
                     <div>
-                      <h5 className="font-semibold text-sm mb-2">Impact on others</h5>
+                      <h5 style={{ fontWeight: 600, fontSize: 14, marginBottom: 8, color: "var(--fg-1)" }}>Impact on others</h5>
                       <ul className="space-y-1.5">
                         {interpretation.positive_others.map((item, i) => (
-                          <li key={`po-${i}`} className="flex gap-2 text-sm">
-                            <span className="text-[var(--bw-forest)] shrink-0">✓</span>
+                          <li key={`po-${i}`} className="flex gap-2" style={{ fontSize: 14, color: "var(--fg-2)" }}>
+                            <span style={{ color: "var(--bw-forest)", flexShrink: 0 }}>✓</span>
                             <span>{item}</span>
                           </li>
                         ))}
                         {interpretation.negative_others.map((item, i) => (
-                          <li key={`no-${i}`} className="flex gap-2 text-sm">
+                          <li key={`no-${i}`} className="flex gap-2" style={{ fontSize: 14, color: "var(--fg-2)" }}>
                             <span className="text-destructive shrink-0">✗</span>
                             <span>{item}</span>
                           </li>
@@ -614,170 +905,208 @@ export default function PTPNarrativeSections({
       })}
     </div>
   );
+}
+
+export function PTPFacetInsightsElevatedSection(props: PTPNarrativeSectionsProps) {
+  const data = usePTPNarrativeData(props);
+  if (isCoachLimited(props)) return null;
+  if (data.loadingFacets || data.elevatedFacets.length === 0) return null;
+  return (
+    <div>
+      <h3 style={sectionHeadingStyle}>Driving facet insights — elevated</h3>
+      <FacetList facets={data.elevatedFacets} prefix="elevated" data={data} />
+    </div>
+  );
+}
+
+export function PTPFacetInsightsSuppressedSection(props: PTPNarrativeSectionsProps) {
+  const data = usePTPNarrativeData(props);
+  if (isCoachLimited(props)) return null;
+  if (data.loadingFacets || data.suppressedFacets.length === 0) return null;
+  return (
+    <div>
+      <h3 style={sectionHeadingStyle}>Driving facet insights — suppressed</h3>
+      <FacetList facets={data.suppressedFacets} prefix="suppressed" data={data} />
+    </div>
+  );
+}
+
+export function PTPCrossAssessmentSection(props: PTPNarrativeSectionsProps) {
+  const data = usePTPNarrativeData(props);
+  if (isCoachLimited(props)) return null;
+  const { otherAssessments = [] } = props;
+  if (otherAssessments.length === 0) return null;
+  const { narrativeSections, loadingNarrativeSections } = data;
 
   return (
-    <div className="space-y-8">
-      <section>
-        <h3 className="text-lg font-semibold mb-3">Profile overview</h3>
+    <div>
+      <h3 style={sectionHeadingStyle}>Cross-assessment connections</h3>
+      <div
+        style={{
+          background: "var(--bw-white)",
+          border: "1px solid var(--border-1)",
+          borderRadius: "var(--r-md)",
+          padding: "var(--s-5)",
+          boxShadow: "var(--shadow-sm)",
+        }}
+      >
         {loadingNarrativeSections ? (
-          <p className="text-sm text-muted-foreground">Generating profile overview...</p>
-        ) : narrativeSections?.profile_overview ? (
-          <p className="text-sm text-muted-foreground leading-relaxed">
-            {narrativeSections.profile_overview}
+          <p style={{ fontSize: 14, color: "var(--fg-3)", margin: 0, marginBottom: 12 }}>
+            Generating cross-assessment analysis...
           </p>
-        ) : profileOverviewText ? (
-          <p className="text-sm text-muted-foreground leading-relaxed">{profileOverviewText}</p>
-        ) : null}
-      </section>
-
-      <section>
-        <div
-          className="rounded-lg p-5"
-          style={{ backgroundColor: "#F9F7F1", borderLeft: "4px solid #021F36", borderRadius: "0 8px 8px 0" }}
-        >
-          <h3 className="text-lg font-semibold mb-2" style={{ color: "#021F36" }}>PTP and Brain Overview</h3>
-          <p className="text-sm leading-relaxed" style={{ color: "#6D6875" }}>
-            Content coming soon. This section will provide a brief introduction to the Personal Threat Profile framework and its neuroscientific basis, including links to supporting resources and a video overview.
+        ) : narrativeSections?.cross_assessment ? (
+          <p style={{ fontSize: 14, color: "var(--fg-2)", lineHeight: 1.55, margin: 0, marginBottom: 12 }}>
+            {narrativeSections.cross_assessment}
           </p>
-        </div>
-      </section>
-
-      {dimensionScores.length > 0 && (
-        <section>
-          <h3 className="text-lg font-semibold mb-3">Dimension highlights</h3>
-          {loadingNarrativeSections ? (
-            <p className="text-sm text-muted-foreground">Generating dimension highlights...</p>
-          ) : (
-            <div className="space-y-3">
-              {sortedDims.map(([dimId, score]) => {
-                const color = PTP_DIMENSION_COLORS[dimId] ?? "#021F36";
-                const pastel = PTP_DIMENSION_PASTEL[dimId] ?? "#F9F7F1";
-                const name = dimensionNameMap.get(dimId) ?? dimId;
-                const mean = Math.round(score.mean ?? 0);
-                const aiDescription = narrativeSections?.dimension_highlights?.[dimId];
-                const fallbackDescription = getDimDescriptor(dimId, mean);
-                return (
-                  <div
-                    key={dimId}
-                    className="rounded-lg p-4 border-l-4"
-                    style={{ backgroundColor: pastel, borderLeftColor: color }}
-                  >
-                    <h4 className="font-semibold text-sm mb-1">
-                      {name} — {mean}
-                    </h4>
-                    {(aiDescription || fallbackDescription) && (
-                      <p className="text-sm text-muted-foreground leading-relaxed">
-                        {aiDescription || fallbackDescription}
-                      </p>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </section>
-      )}
-
-      {!loadingFacets && elevatedFacets.length > 0 && (
-        <section>
-          <h3 className="text-lg font-semibold mb-3">Driving facet insights — elevated</h3>
-          {renderFacetList(elevatedFacets, "elevated")}
-        </section>
-      )}
-
-      {!loadingFacets && suppressedFacets.length > 0 && (
-        <section>
-          <h3 className="text-lg font-semibold mb-3">Driving facet insights — suppressed</h3>
-          {renderFacetList(suppressedFacets, "suppressed")}
-        </section>
-      )}
-
-      {otherAssessments.length > 0 && (
-        <section>
-          <h3 className="text-lg font-semibold mb-3">Cross-assessment connections</h3>
-          {loadingNarrativeSections ? (
-            <p className="text-sm text-muted-foreground">Generating cross-assessment analysis...</p>
-          ) : narrativeSections?.cross_assessment ? (
-            <p className="text-sm text-muted-foreground leading-relaxed mb-3">
-              {narrativeSections.cross_assessment}
-            </p>
-          ) : (
-            <p className="text-sm text-muted-foreground leading-relaxed mb-3">
-              You have completed {otherAssessments.length} other assessment
-              {otherAssessments.length > 1 ? "s" : ""} alongside your PTP. Patterns across these
-              instruments can reveal deeper insights into how your threat sensitivities show up in
-              different areas of your life.
-            </p>
-          )}
-          <div className="flex flex-wrap gap-2">
-            {otherAssessments.map((a) => (
-              <span
-                key={a.result.id}
-                className="px-3 py-1 rounded-full text-xs font-medium bg-muted text-foreground border border-border"
-              >
-                {a.instrument_name}
-              </span>
-            ))}
-          </div>
-        </section>
-      )}
-
-      <section>
-        <button
-          onClick={() => setResponsesExpanded((prev) => !prev)}
-          className="w-full flex items-center justify-between p-4 rounded-lg border border-border hover:bg-muted/30 transition-colors text-left"
-        >
-          <h3 className="text-lg font-semibold">Your assessment responses</h3>
-          {responsesExpanded ? (
-            <ChevronUp className="w-4 h-4 text-muted-foreground shrink-0" />
-          ) : (
-            <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0" />
-          )}
-        </button>
-
-        {responsesExpanded && (
-          <div className="border border-border rounded-lg overflow-hidden mt-2">
-            <div className="px-4 py-2 bg-muted/30 border-b border-border">
-              <p className="text-xs text-muted-foreground">
-                {assessmentResponses.length} responses —{" "}
-                {ptpContextTab === "professional"
-                  ? "Professional context"
-                  : ptpContextTab === "personal"
-                    ? "Personal context"
-                    : "All contexts"}
-              </p>
-            </div>
-            {assessmentResponses.map((r, idx) => {
-              const color = PTP_DIMENSION_COLORS[r.dimensionId] ?? "#021F36";
-              return (
-                <div
-                  key={idx}
-                  className="flex items-start gap-3 px-4 py-3 border-b border-border last:border-b-0"
-                >
-                  <div
-                    className="w-1 shrink-0 self-stretch rounded-sm"
-                    style={{ backgroundColor: color, minHeight: "40px" }}
-                  />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-foreground">
-                      Q{r.itemNumber} — {r.facetName}
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
-                      {r.itemText}
-                    </p>
-                  </div>
-                  <span
-                    className="px-2 py-1 rounded text-xs font-semibold text-white shrink-0 mt-0.5"
-                    style={{ backgroundColor: color }}
-                  >
-                    {r.score}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
+        ) : (
+          <p style={{ fontSize: 14, color: "var(--fg-2)", lineHeight: 1.55, margin: 0, marginBottom: 12 }}>
+            You have completed {otherAssessments.length} other assessment
+            {otherAssessments.length > 1 ? "s" : ""} alongside your PTP. Patterns across these
+            instruments can reveal deeper insights into how your threat sensitivities show up in
+            different areas of your life.
+          </p>
         )}
-      </section>
+        <div className="flex flex-wrap gap-2">
+          {otherAssessments.map((a) => (
+            <span
+              key={a.result.id}
+              style={{
+                padding: "4px 12px",
+                borderRadius: "var(--r-pill)",
+                fontSize: 12,
+                fontWeight: 500,
+                background: "var(--bw-cream-200)",
+                color: "var(--fg-1)",
+                border: "1px solid var(--border-1)",
+              }}
+            >
+              {a.instrument_name}
+            </span>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function PTPAssessmentResponsesSection(props: PTPNarrativeSectionsProps) {
+  const data = usePTPNarrativeData(props);
+  if (isCoachLimited(props)) return null;
+  const { responsesExpanded, setResponsesExpanded, assessmentResponses } = data;
+  const { ptpContextTab } = props;
+
+  return (
+    <div>
+      <button
+        onClick={() => setResponsesExpanded((prev) => !prev)}
+        className="w-full flex items-center justify-between text-left transition-colors hover:bg-muted/30"
+        style={{
+          background: "var(--bw-white)",
+          border: "1px solid var(--border-1)",
+          borderRadius: "var(--r-md)",
+          padding: "var(--s-4)",
+          boxShadow: "var(--shadow-xs)",
+        }}
+      >
+        <h3
+          style={{
+            fontFamily: "var(--font-display)",
+            fontSize: 18,
+            fontWeight: 600,
+            color: "var(--fg-1)",
+            margin: 0,
+          }}
+        >
+          Your assessment responses
+        </h3>
+        {responsesExpanded ? (
+          <ChevronUp className="w-4 h-4 shrink-0" style={{ color: "var(--fg-3)" }} />
+        ) : (
+          <ChevronDown className="w-4 h-4 shrink-0" style={{ color: "var(--fg-3)" }} />
+        )}
+      </button>
+
+      {responsesExpanded && (
+        <div
+          style={{
+            background: "var(--bw-white)",
+            border: "1px solid var(--border-1)",
+            borderRadius: "var(--r-md)",
+            overflow: "hidden",
+            marginTop: 8,
+            boxShadow: "var(--shadow-xs)",
+          }}
+        >
+          <div style={{ padding: "8px 16px", background: "var(--bw-cream-200)", borderBottom: "1px solid var(--border-1)" }}>
+            <p style={{ fontSize: 12, color: "var(--fg-3)", margin: 0 }}>
+              {assessmentResponses.length} responses —{" "}
+              {ptpContextTab === "professional"
+                ? "Professional context"
+                : ptpContextTab === "personal"
+                  ? "Personal context"
+                  : "All contexts"}
+            </p>
+          </div>
+          {assessmentResponses.map((r, idx) => {
+            const color = PTP_DIMENSION_COLORS[r.dimensionId] ?? "#021F36";
+            return (
+              <div
+                key={idx}
+                className="flex items-start gap-3"
+                style={{
+                  padding: "12px 16px",
+                  borderBottom: idx === assessmentResponses.length - 1 ? "none" : "1px solid var(--border-1)",
+                }}
+              >
+                <div
+                  className="shrink-0 self-stretch"
+                  style={{ width: 4, backgroundColor: color, minHeight: 40, borderRadius: 2 }}
+                />
+                <div className="flex-1 min-w-0">
+                  <p style={{ fontSize: 14, fontWeight: 500, color: "var(--fg-1)", margin: 0 }}>
+                    Q{r.itemNumber} — {r.facetName}
+                  </p>
+                  <p style={{ fontSize: 12, color: "var(--fg-3)", marginTop: 2, lineHeight: 1.5 }}>
+                    {r.itemText}
+                  </p>
+                </div>
+                <span
+                  style={{
+                    padding: "4px 8px",
+                    borderRadius: 4,
+                    fontSize: 12,
+                    fontWeight: 600,
+                    color: "#fff",
+                    backgroundColor: color,
+                    flexShrink: 0,
+                    marginTop: 2,
+                  }}
+                >
+                  {r.score}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* =========================================================================
+   Default export — backwards-compatible wrapper
+   ========================================================================= */
+
+export default function PTPNarrativeSections(props: PTPNarrativeSectionsProps) {
+  if (isCoachLimited(props)) return <CoachLimitedNotice />;
+  return (
+    <div className="space-y-8">
+      <PTPProfileOverviewSection {...props} />
+      <PTPDimensionHighlightsSection {...props} />
+      <PTPFacetInsightsElevatedSection {...props} />
+      <PTPFacetInsightsSuppressedSection {...props} />
+      <PTPCrossAssessmentSection {...props} />
+      <PTPAssessmentResponsesSection {...props} />
     </div>
   );
 }
