@@ -45,7 +45,15 @@ import {
 import { format } from "date-fns";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import DrivingFacetScores from "@/components/results/DrivingFacetScores";
-import PTPNarrativeSections from "@/components/results/PTPNarrativeSections";
+import PTPNarrativeSections, {
+  PTPProfileOverviewSection,
+  PTPDimensionHighlightsSection,
+  PTPFacetInsightsElevatedSection,
+  PTPFacetInsightsSuppressedSection,
+  PTPCrossAssessmentSection,
+  PTPAssessmentResponsesSection,
+} from "@/components/results/PTPNarrativeSections";
+import PTPBrainOverview from "@/components/results/PTPBrainOverview";
 import NAINarrativeSections from "@/components/results/NAINarrativeSections";
 import ExportPdfModal, { type PdfSections } from "@/components/results/ExportPdfModal";
 import { generateResultsPdf, type PdfData } from "@/lib/generateResultsPdf";
