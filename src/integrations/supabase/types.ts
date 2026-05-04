@@ -3644,6 +3644,8 @@ export type Database = {
           org_level: string | null
           organization_id: string | null
           personal_email_pending: string | null
+          privacy_accepted_at: string | null
+          privacy_version_accepted: string | null
           pseudonymized_at: string | null
           reactivation_deadline: string | null
           share_results_with_coach: boolean
@@ -3653,6 +3655,8 @@ export type Database = {
           subscription_tier: string
           supervisor_user_id: string | null
           timezone: string | null
+          tos_accepted_at: string | null
+          tos_version_accepted: string | null
         }
         Insert: {
           account_status?: string
@@ -3677,6 +3681,8 @@ export type Database = {
           org_level?: string | null
           organization_id?: string | null
           personal_email_pending?: string | null
+          privacy_accepted_at?: string | null
+          privacy_version_accepted?: string | null
           pseudonymized_at?: string | null
           reactivation_deadline?: string | null
           share_results_with_coach?: boolean
@@ -3686,6 +3692,8 @@ export type Database = {
           subscription_tier?: string
           supervisor_user_id?: string | null
           timezone?: string | null
+          tos_accepted_at?: string | null
+          tos_version_accepted?: string | null
         }
         Update: {
           account_status?: string
@@ -3710,6 +3718,8 @@ export type Database = {
           org_level?: string | null
           organization_id?: string | null
           personal_email_pending?: string | null
+          privacy_accepted_at?: string | null
+          privacy_version_accepted?: string | null
           pseudonymized_at?: string | null
           reactivation_deadline?: string | null
           share_results_with_coach?: boolean
@@ -3719,6 +3729,8 @@ export type Database = {
           subscription_tier?: string
           supervisor_user_id?: string | null
           timezone?: string | null
+          tos_accepted_at?: string | null
+          tos_version_accepted?: string | null
         }
         Relationships: [
           {
