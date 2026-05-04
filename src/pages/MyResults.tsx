@@ -949,6 +949,13 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
             </section>
           )}
 
+          {/* PTP and Brain Overview (PTP only, new placement above dimension scores) */}
+          {effectiveSelected?.isPTP && (
+            <section>
+              <PTPBrainOverview contextTab={ptpContextTab} />
+            </section>
+          )}
+
           {/* SECTION 2 - Profile Chart */}
           <section>
             <Card>
