@@ -1552,29 +1552,60 @@ function PTPDomainCards({
       {dimensions.map(([dimId, score]) => {
         const mean = Math.round(score.mean ?? score.level_mean ?? 0);
         const color = PTP_DIMENSION_COLORS[dimId] ?? "#021F36";
-        const pastel = PTP_DIMENSION_PASTEL[dimId] ?? "#F9F7F1";
         const name = dimensionNameMap.get(dimId) ?? PTP_DIMENSION_NAMES[dimId] ?? formatDimensionName(dimId);
         const band = getBand(mean);
         return (
           <div
             key={dimId}
-            className="rounded-xl p-4 flex flex-col items-center text-center space-y-2 border"
-            style={{ backgroundColor: pastel, borderColor: color + "40" }}
+            style={{
+              background: "var(--bw-white)",
+              border: "1px solid var(--border-1)",
+              borderTop: `3px solid ${color}`,
+              borderRadius: "var(--r-md)",
+              padding: "var(--s-4)",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              textAlign: "center",
+              gap: "var(--s-2)",
+              boxShadow: "var(--shadow-sm)",
+            }}
           >
-            <div
-              className="w-3 h-3 rounded-full"
-              style={{ backgroundColor: color }}
-            />
-            <p className="text-sm font-semibold text-foreground leading-tight">{name}</p>
+            <div style={{ width: 12, height: 12, borderRadius: "var(--r-circle)", backgroundColor: color }} />
             <p
-              className="text-3xl font-bold"
-              style={{ color }}
+              style={{
+                fontFamily: "var(--font-display)",
+                fontSize: 13,
+                fontWeight: 600,
+                color: "var(--fg-1)",
+                lineHeight: 1.2,
+                margin: 0,
+              }}
+            >
+              {name}
+            </p>
+            <p
+              style={{
+                fontFamily: "var(--font-display)",
+                fontSize: 30,
+                fontWeight: 700,
+                color,
+                margin: 0,
+                lineHeight: 1,
+              }}
             >
               {mean}
             </p>
             <span
-              className="text-xs font-medium px-2 py-0.5 rounded-full"
-              style={{ backgroundColor: color + "20", color }}
+              style={{
+                fontFamily: "var(--font-primary)",
+                fontSize: 11,
+                fontWeight: 600,
+                padding: "2px 10px",
+                borderRadius: "var(--r-pill)",
+                backgroundColor: `${color}1A`,
+                color,
+              }}
             >
               {band}
             </span>
