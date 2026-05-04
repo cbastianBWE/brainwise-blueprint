@@ -54,6 +54,7 @@ import {
   PTPAssessmentResponsesSection,
 } from "@/components/results/PTPNarrativeSections";
 import PTPBrainOverview from "@/components/results/PTPBrainOverview";
+import PTPFullFacetCharts from "@/components/results/PTPFullFacetCharts";
 import NAINarrativeSections from "@/components/results/NAINarrativeSections";
 import ExportPdfModal, { type PdfSections } from "@/components/results/ExportPdfModal";
 import { generateResultsPdf, type PdfData } from "@/lib/generateResultsPdf";
@@ -1099,6 +1100,14 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
                     </Card>
                   </section>
                 )}
+                <section>
+                  <PTPFullFacetCharts
+                    assessmentId={effectiveSelected.result.assessment_id}
+                    additionalAssessmentId={ptpContextTab === 'combined' && !isBothAssessment && hasPtpTabs ? ptpPersonalResults[0]?.result.assessment_id : undefined}
+                    contextFilter={isBothAssessment && ptpContextTab !== 'combined' ? ptpContextTab as 'professional' | 'personal' : undefined}
+                    ptpContextTab={ptpContextTab}
+                  />
+                </section>
                 <section>
                   <PTPAssessmentResponsesSection {...ptpNarrativeProps} />
                 </section>
