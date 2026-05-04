@@ -1230,6 +1230,7 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
               </Card>
             )}
           </section>
+          )}
 
           {/* Export PDF Modal */}
           <ExportPdfModal
