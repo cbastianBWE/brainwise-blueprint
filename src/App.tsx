@@ -65,6 +65,7 @@ import EpnComplete from "./pages/EpnComplete";
 import VerifyConversion from "./pages/VerifyConversion";
 import Departed from "./pages/Departed";
 import MfaEnrollment from "./pages/MfaEnrollment";
+import CookieConsentBanner from "@/components/CookieConsentBanner";
 
 const queryClient = new QueryClient();
 
@@ -75,6 +76,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
+          <CookieConsentBanner />
           <Routes>
             {/* Public routes */}
             <Route path="/" element={<Home />} />
