@@ -10,6 +10,14 @@ const PTP_DIMENSION_COLORS: Record<string, string> = {
   "DIM-PTP-05": "#FFB703",
 };
 
+const PTP_DIMENSION_NAMES: Record<string, string> = {
+  "DIM-PTP-01": "Protection",
+  "DIM-PTP-02": "Participation",
+  "DIM-PTP-03": "Prediction",
+  "DIM-PTP-04": "Purpose",
+  "DIM-PTP-05": "Pleasure",
+};
+
 const PTP_DIMENSION_DESCRIPTIONS: Record<string, { high: string; moderate: string; low: string }> = {
   "DIM-PTP-01": {
     high: "Safety and security concerns are a strong driver for you. You are highly attuned to potential risks — physical, emotional, or professional — and tend to respond strongly when these feel threatened.",
@@ -528,8 +536,9 @@ const cardSurface: React.CSSProperties = {
   boxShadow: "var(--shadow-sm)",
 };
 
-function DimensionPill({ dimId }: { dimId: string }) {
+function DimensionPill({ dimId, dimensionNameMap }: { dimId: string; dimensionNameMap?: Map<string, string> }) {
   const color = PTP_DIMENSION_COLORS[dimId] ?? "#021F36";
+  const dimName = dimensionNameMap?.get(dimId) ?? PTP_DIMENSION_NAMES[dimId] ?? dimId;
   return (
     <span
       style={{
@@ -546,7 +555,7 @@ function DimensionPill({ dimId }: { dimId: string }) {
         marginBottom: 4,
       }}
     >
-      {dimId}
+      {dimName}
     </span>
   );
 }
@@ -617,6 +626,44 @@ export function PTPProfileOverviewSection(props: PTPNarrativeSectionsProps) {
         ) : null}
       </div>
 
+      {/* What does this mean to me? */}
+      {(personalSummary.length > 0 || loadingNarrativeSections) && (
+        <div>
+          <h3 style={sectionHeadingStyle}>What does this mean to me?</h3>
+          {personalSummary.length === 0 && loadingNarrativeSections ? (
+            <p style={{ fontSize: 13, color: "var(--fg-3)", margin: 0 }}>Generating summary...</p>
+          ) : (
+            <div style={cardSurface}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "var(--s-3)" }}>
+                {personalSummary.map((bullet, i) => (
+                  <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+                    <div
+                      style={{
+                        flexShrink: 0,
+                        width: 24,
+                        height: 24,
+                        borderRadius: "var(--r-circle)",
+                        background: "var(--bw-navy)",
+                        color: "var(--bw-white)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontSize: 12,
+                        fontWeight: 600,
+                        fontFamily: "var(--font-display)",
+                      }}
+                    >
+                      {i + 1}
+                    </div>
+                    <p style={{ fontSize: 14, color: "var(--fg-1)", lineHeight: 1.55, margin: 0 }}>{bullet}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Action Plan */}
       {(actionPlan.length > 0 || loadingNarrativeSections) && (
         <div>
@@ -630,7 +677,7 @@ export function PTPProfileOverviewSection(props: PTPNarrativeSectionsProps) {
                 <div key={i} style={cardSurface}>
                   <div style={{ marginBottom: 8 }}>
                     {(item.dimension_tags ?? []).map((tag) => (
-                      <DimensionPill key={tag} dimId={tag} />
+                      <DimensionPill key={tag} dimId={tag} dimensionNameMap={dimensionNameMap} />
                     ))}
                   </div>
                   <h4
@@ -667,44 +714,6 @@ export function PTPProfileOverviewSection(props: PTPNarrativeSectionsProps) {
                   )}
                 </div>
               ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* What does this mean to me? */}
-      {(personalSummary.length > 0 || loadingNarrativeSections) && (
-        <div>
-          <h3 style={sectionHeadingStyle}>What does this mean to me?</h3>
-          {personalSummary.length === 0 && loadingNarrativeSections ? (
-            <p style={{ fontSize: 13, color: "var(--fg-3)", margin: 0 }}>Generating summary...</p>
-          ) : (
-            <div style={cardSurface}>
-              <div style={{ display: "flex", flexDirection: "column", gap: "var(--s-3)" }}>
-                {personalSummary.map((bullet, i) => (
-                  <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
-                    <div
-                      style={{
-                        flexShrink: 0,
-                        width: 24,
-                        height: 24,
-                        borderRadius: "var(--r-circle)",
-                        background: "var(--bw-navy)",
-                        color: "var(--bw-white)",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        fontSize: 12,
-                        fontWeight: 600,
-                        fontFamily: "var(--font-display)",
-                      }}
-                    >
-                      {i + 1}
-                    </div>
-                    <p style={{ fontSize: 14, color: "var(--fg-1)", lineHeight: 1.55, margin: 0 }}>{bullet}</p>
-                  </div>
-                ))}
-              </div>
             </div>
           )}
         </div>
