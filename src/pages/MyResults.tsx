@@ -45,7 +45,15 @@ import {
 import { format } from "date-fns";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import DrivingFacetScores from "@/components/results/DrivingFacetScores";
-import PTPNarrativeSections from "@/components/results/PTPNarrativeSections";
+import {
+  PTPProfileOverviewSection,
+  PTPDimensionHighlightsSection,
+  PTPFacetInsightsElevatedSection,
+  PTPFacetInsightsSuppressedSection,
+  PTPCrossAssessmentSection,
+  PTPAssessmentResponsesSection,
+} from "@/components/results/PTPNarrativeSections";
+import PTPBrainOverview from "@/components/results/PTPBrainOverview";
 import NAINarrativeSections from "@/components/results/NAINarrativeSections";
 import ExportPdfModal, { type PdfSections } from "@/components/results/ExportPdfModal";
 import { generateResultsPdf, type PdfData } from "@/lib/generateResultsPdf";
@@ -106,13 +114,6 @@ const PTP_DIMENSION_COLORS: Record<string, string> = {
   "DIM-PTP-05": "#FFB703",
 };
 
-const PTP_DIMENSION_PASTEL: Record<string, string> = {
-  "DIM-PTP-01": "#E8EDF1",
-  "DIM-PTP-02": "#E6F2F3",
-  "DIM-PTP-03": "#F0EFF1",
-  "DIM-PTP-04": "#EEE8F5",
-  "DIM-PTP-05": "#FFF8E6",
-};
 
 const PTP_DIMENSION_NAMES: Record<string, string> = {
   "DIM-PTP-01": "Protection",
@@ -948,6 +949,13 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
             </section>
           )}
 
+          {/* PTP and Brain Overview (PTP only, new placement above dimension scores) */}
+          {effectiveSelected?.isPTP && (
+            <section>
+              <PTPBrainOverview contextTab={ptpContextTab} />
+            </section>
+          )}
+
           {/* SECTION 2 - Profile Chart */}
           <section>
             <Card>
@@ -1027,65 +1035,81 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
             </Card>
           </section>
 
-          {/* SECTION 2b - Driving Facet Scores (PTP only) */}
-          {effectiveSelected?.isPTP && !isNAI && (
-            <section>
-              <DrivingFacetScores
-                assessmentId={effectiveSelected.result.assessment_id}
-                additionalAssessmentId={ptpContextTab === 'combined' && !isBothAssessment && hasPtpTabs ? ptpPersonalResults[0]?.result.assessment_id : undefined}
-                contextFilter={isBothAssessment && ptpContextTab !== 'combined' ? ptpContextTab as 'professional' | 'personal' : undefined}
-              />
-            </section>
-          )}
+          {/* SECTION 4 - PTP path: Profile overview + Action Plan + What does this mean to me? + Dimension highlights + Driving facet scores + Facet insights + Cross-assessment + Cross-Instrument Recs + Responses */}
+          {effectiveSelected?.isPTP && (() => {
+            const ptpNarrativeProps = {
+              assessmentResultId: effectiveSelected.result.id,
+              assessmentId: effectiveSelected.result.assessment_id,
+              narrative: selected.result.ai_narrative,
+              dimensionScores: dimensionScores as [string, { mean?: number; band?: string }][],
+              dimensionNameMap,
+              recommendations,
+              permissionLevel,
+              isCoachView,
+              ptpContextTab,
+              otherAssessments: assessments.filter(a => a.result.id !== effectiveSelected?.result.id),
+            };
+            return (
+              <>
+                <section>
+                  <PTPProfileOverviewSection {...ptpNarrativeProps} />
+                </section>
+                <section>
+                  <PTPDimensionHighlightsSection {...ptpNarrativeProps} />
+                </section>
+                <section>
+                  <DrivingFacetScores
+                    assessmentId={effectiveSelected.result.assessment_id}
+                    additionalAssessmentId={ptpContextTab === 'combined' && !isBothAssessment && hasPtpTabs ? ptpPersonalResults[0]?.result.assessment_id : undefined}
+                    contextFilter={isBothAssessment && ptpContextTab !== 'combined' ? ptpContextTab as 'professional' | 'personal' : undefined}
+                  />
+                </section>
+                <section>
+                  <PTPFacetInsightsElevatedSection {...ptpNarrativeProps} />
+                </section>
+                <section>
+                  <PTPFacetInsightsSuppressedSection {...ptpNarrativeProps} />
+                </section>
+                <section>
+                  <PTPCrossAssessmentSection {...ptpNarrativeProps} />
+                </section>
+                {recommendations.length > 0 && canTakeAssessments && (
+                  <section>
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-lg">Cross-Instrument Recommendations</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        <p className="text-sm text-muted-foreground">
+                          Based on your results, we suggest exploring:
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {recommendations.map((triggerId) => (
+                            <Button
+                              key={triggerId}
+                              variant="outline"
+                              size="sm"
+                              onClick={() => navigate(`/assessment?instrument=${triggerId}`)}
+                            >
+                              {triggerId} <ArrowRight className="ml-1 h-3 w-3" />
+                            </Button>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </section>
+                )}
+                <section>
+                  <PTPAssessmentResponsesSection {...ptpNarrativeProps} />
+                </section>
+              </>
+            );
+          })()}
 
-          {/* SECTION 3 - Cross-Instrument Recommendations */}
-          {recommendations.length > 0 && canTakeAssessments && (
-            <section>
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">
-                    Cross-Instrument Recommendations
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <p className="text-sm text-muted-foreground">
-                    Based on your results, we suggest exploring:
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    {recommendations.map((triggerId) => (
-                      <Button
-                        key={triggerId}
-                        variant="outline"
-                        size="sm"
-                        onClick={() =>
-                          navigate(`/assessment?instrument=${triggerId}`)
-                        }
-                      >
-                        {triggerId} <ArrowRight className="ml-1 h-3 w-3" />
-                      </Button>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </section>
-          )}
-
-          {/* SECTION 4 - Profile Interpretation */}
+          {/* SECTION 4 - Non-PTP path */}
+          {!effectiveSelected?.isPTP && (
           <section>
-            {effectiveSelected?.isPTP ? (
-              <PTPNarrativeSections
-                assessmentResultId={effectiveSelected.result.id}
-                assessmentId={effectiveSelected.result.assessment_id}
-                narrative={selected.result.ai_narrative}
-                dimensionScores={dimensionScores as [string, { mean?: number; band?: string }][]}
-                dimensionNameMap={dimensionNameMap}
-                recommendations={recommendations}
-                permissionLevel={permissionLevel}
-                isCoachView={isCoachView}
-                ptpContextTab={ptpContextTab}
-                otherAssessments={assessments.filter(a => a.result.id !== effectiveSelected?.result.id)}
-              />
-            ) : isNAI ? (
+            {isNAI ? (
               <NAINarrativeSections
                 assessmentResultId={selected.result.id}
                 assessmentId={selected.result.assessment_id}
@@ -1213,6 +1237,7 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
               </Card>
             )}
           </section>
+          )}
 
           {/* Export PDF Modal */}
           <ExportPdfModal
@@ -1551,29 +1576,60 @@ function PTPDomainCards({
       {dimensions.map(([dimId, score]) => {
         const mean = Math.round(score.mean ?? score.level_mean ?? 0);
         const color = PTP_DIMENSION_COLORS[dimId] ?? "#021F36";
-        const pastel = PTP_DIMENSION_PASTEL[dimId] ?? "#F9F7F1";
         const name = dimensionNameMap.get(dimId) ?? PTP_DIMENSION_NAMES[dimId] ?? formatDimensionName(dimId);
         const band = getBand(mean);
         return (
           <div
             key={dimId}
-            className="rounded-xl p-4 flex flex-col items-center text-center space-y-2 border"
-            style={{ backgroundColor: pastel, borderColor: color + "40" }}
+            style={{
+              background: "var(--bw-white)",
+              border: "1px solid var(--border-1)",
+              borderTop: `3px solid ${color}`,
+              borderRadius: "var(--r-md)",
+              padding: "var(--s-4)",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              textAlign: "center",
+              gap: "var(--s-2)",
+              boxShadow: "var(--shadow-sm)",
+            }}
           >
-            <div
-              className="w-3 h-3 rounded-full"
-              style={{ backgroundColor: color }}
-            />
-            <p className="text-sm font-semibold text-foreground leading-tight">{name}</p>
+            <div style={{ width: 12, height: 12, borderRadius: "var(--r-circle)", backgroundColor: color }} />
             <p
-              className="text-3xl font-bold"
-              style={{ color }}
+              style={{
+                fontFamily: "var(--font-display)",
+                fontSize: 13,
+                fontWeight: 600,
+                color: "var(--fg-1)",
+                lineHeight: 1.2,
+                margin: 0,
+              }}
+            >
+              {name}
+            </p>
+            <p
+              style={{
+                fontFamily: "var(--font-display)",
+                fontSize: 30,
+                fontWeight: 700,
+                color,
+                margin: 0,
+                lineHeight: 1,
+              }}
             >
               {mean}
             </p>
             <span
-              className="text-xs font-medium px-2 py-0.5 rounded-full"
-              style={{ backgroundColor: color + "20", color }}
+              style={{
+                fontFamily: "var(--font-primary)",
+                fontSize: 11,
+                fontWeight: 600,
+                padding: "2px 10px",
+                borderRadius: "var(--r-pill)",
+                backgroundColor: `${color}1A`,
+                color,
+              }}
             >
               {band}
             </span>
