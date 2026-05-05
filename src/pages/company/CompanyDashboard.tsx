@@ -365,6 +365,14 @@ export default function CompanyDashboard() {
   const [loadingDeltaNarrative, setLoadingDeltaNarrative] = useState<boolean>(false);
   
   const [expandedLeaderWorkforce, setExpandedLeaderWorkforce] = useState<boolean>(false);
+  const [expandedNarrativeSections, setExpandedNarrativeSections] = useState<Set<string>>(new Set());
+  const toggleNarrativeSection = (key: string) => {
+    setExpandedNarrativeSections(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      return next;
+    });
+  };
 
   // Load departments
   useEffect(() => {
