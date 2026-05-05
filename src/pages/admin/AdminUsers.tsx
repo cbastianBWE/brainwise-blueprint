@@ -1733,6 +1733,7 @@ export default function AdminUsers() {
               )}
             </CardContent>
           </Card>
+          </>
         );
       })()}
         </TabsContent>
