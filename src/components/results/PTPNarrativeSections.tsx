@@ -569,7 +569,7 @@ function CoachLimitedNotice() {
     <div
       style={{
         ...cardSurface,
-        background: "var(--bw-cream-200)",
+        background: "var(--bw-white)",
       }}
     >
       <p style={{ fontSize: 14, color: "var(--fg-2)", margin: 0 }}>
@@ -866,7 +866,7 @@ function FacetList({
               )}
             </button>
             {isExpanded && (
-              <div style={{ padding: 16, borderTop: "1px solid var(--border-1)", background: "var(--bw-cream-200)" }}>
+              <div style={{ padding: 16, borderTop: "1px solid var(--border-1)", background: "var(--bw-white)" }}>
                 {loadingInterpretations || !interpretation ? (
                   <p style={{ fontSize: 14, color: "var(--fg-3)", margin: 0 }}>Generating insights...</p>
                 ) : (
@@ -984,7 +984,7 @@ export function PTPCrossAssessmentSection(props: PTPNarrativeSectionsProps) {
                 borderRadius: "var(--r-pill)",
                 fontSize: 12,
                 fontWeight: 500,
-                background: "var(--bw-cream-200)",
+                background: "var(--bw-white)",
                 color: "var(--fg-1)",
                 border: "1px solid var(--border-1)",
               }}
@@ -1046,7 +1046,7 @@ export function PTPAssessmentResponsesSection(props: PTPNarrativeSectionsProps) 
             boxShadow: "var(--shadow-xs)",
           }}
         >
-          <div style={{ padding: "8px 16px", background: "var(--bw-cream-200)", borderBottom: "1px solid var(--border-1)" }}>
+          <div style={{ padding: "8px 16px", background: "var(--bw-white)", borderBottom: "1px solid var(--border-1)" }}>
             <p style={{ fontSize: 12, color: "var(--fg-3)", margin: 0 }}>
               {assessmentResponses.length} responses —{" "}
               {ptpContextTab === "professional"
