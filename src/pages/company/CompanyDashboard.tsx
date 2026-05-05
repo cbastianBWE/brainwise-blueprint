@@ -375,6 +375,30 @@ export default function CompanyDashboard() {
       return next;
     });
   };
+  const [expandedInterventions, setExpandedInterventions] = useState<Set<string>>(new Set());
+  const toggleIntervention = (key: string) => {
+    setExpandedInterventions(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      return next;
+    });
+  };
+  const [expandedCoElevations, setExpandedCoElevations] = useState<Set<number>>(new Set());
+  const toggleCoElevation = (i: number) => {
+    setExpandedCoElevations(prev => {
+      const next = new Set(prev);
+      if (next.has(i)) next.delete(i); else next.add(i);
+      return next;
+    });
+  };
+  const [expandedCrossRecs, setExpandedCrossRecs] = useState<Set<string>>(new Set());
+  const toggleCrossRec = (key: string) => {
+    setExpandedCrossRecs(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      return next;
+    });
+  };
 
   // Load departments
   useEffect(() => {
