@@ -38,7 +38,7 @@ const DIMS_BY_WEIGHT = ["DIM-NAI-03", "DIM-NAI-04", "DIM-NAI-02", "DIM-NAI-01", 
 // ── PTP cross-instrument constants ──────────────────────────────────────────
 const PTP_DIM_COLORS: Record<string, string> = {
   "DIM-PTP-01": "#021F36", "DIM-PTP-02": "#006D77",
-  "DIM-PTP-03": "#6D6875", "DIM-PTP-04": "#3C096C", "DIM-PTP-05": "#FFB703",
+  "DIM-PTP-03": "#6D6875", "DIM-PTP-04": "#3C096C", "DIM-PTP-05": "#2D6A4F",
 };
 const PTP_DIM_NAMES: Record<string, string> = {
   "DIM-PTP-01": "Protection", "DIM-PTP-02": "Participation",
