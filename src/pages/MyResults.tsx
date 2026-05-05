@@ -557,7 +557,7 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [selected?.result.id, selected?.result.ai_narrative]);
+  }, [selected?.result.id, selected?.result.ai_narrative, selected?.isAwaitingSupervisor]);
 
   // Split scores by context for "both" PTP assessments
   useEffect(() => {
