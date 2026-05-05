@@ -2073,7 +2073,7 @@ export default function CompanyDashboard() {
               <div style={{ background: "#FFFFFF", border: "0.5px solid var(--border)", borderRadius: 8, overflow: "hidden", boxShadow: "var(--shadow-sm)" }}>
                 <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}>
                   <thead>
-                    <tr style={{ background: "#ede9df" }}>
+                    <tr style={{ background: "#FFFFFF" }}>
                       {["Department", "Completed", "Rate", "Progress"].map(h => (
                         <th key={h} style={{ padding: "8px 12px", textAlign: "left", fontSize: 13, color: "var(--muted-foreground)", textTransform: "uppercase", letterSpacing: 0.4, fontWeight: 500 }}>{h}</th>
                       ))}
