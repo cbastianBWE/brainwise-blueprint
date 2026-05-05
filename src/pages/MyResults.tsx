@@ -957,6 +957,54 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
             </section>
           )}
 
+          {/* NAI Overview — static intro card, renders above dimension scores for NAI only */}
+          {isNAI && (
+            <section>
+              <div
+                style={{
+                  background: "var(--bw-white)",
+                  border: "1px solid var(--border-1)",
+                  borderLeft: "4px solid var(--bw-navy)",
+                  borderRadius: "var(--r-md)",
+                  padding: "var(--s-6)",
+                  boxShadow: "var(--shadow-sm)",
+                  fontFamily: "var(--font-primary)",
+                }}
+              >
+                <h3
+                  style={{
+                    fontFamily: "var(--font-display)",
+                    fontSize: 18,
+                    fontWeight: 600,
+                    color: "var(--fg-1)",
+                    margin: 0,
+                    marginBottom: "var(--s-4)",
+                    letterSpacing: "-0.01em",
+                  }}
+                >
+                  Understanding your results
+                </h3>
+                <div style={{ fontSize: 14, lineHeight: 1.65, color: "var(--fg-2)" }}>
+                  <p style={{ margin: 0, marginBottom: "var(--s-3)" }}>
+                    How you experience new technology isn't random. It reflects something much more fundamental — the way your brain naturally responds to change, uncertainty, and the demands that come with learning something new.
+                  </p>
+                  <p style={{ margin: 0, marginBottom: "var(--s-3)" }}>
+                    When navigating AI at work feels energizing for some people and draining for others, the difference usually isn't about skill or willingness. It comes down to five specific needs the brain monitors continuously: how much <strong style={{ fontWeight: 600, color: "var(--fg-1)" }}>Certainty</strong> you need about what's ahead, how much <strong style={{ fontWeight: 600, color: "var(--fg-1)" }}>Agency</strong> you need over your own work, how strongly <strong style={{ fontWeight: 600, color: "var(--fg-1)" }}>Fairness</strong> shapes your experience of change, how tied your sense of <strong style={{ fontWeight: 600, color: "var(--fg-1)" }}>Ego Stability</strong> is to feeling competent and respected, and what your <strong style={{ fontWeight: 600, color: "var(--fg-1)" }}>Saturation Threshold</strong> is — how much more your brain can comfortably absorb before it needs to consolidate.
+                  </p>
+                  <p style={{ margin: 0, marginBottom: "var(--s-3)" }}>
+                    The Neuroscience Adoption Index measures exactly those five dimensions. Together they form your personal picture of what makes AI adoption feel natural and sustainable for you — and what conditions need to be in place for you to do your best work with these tools.
+                  </p>
+                  <p style={{ margin: 0, marginBottom: "var(--s-3)" }}>
+                    A higher score in any dimension isn't a warning sign. It simply means that dimension matters more to you, and that understanding it gives you a real advantage in navigating your career as AI becomes a bigger part of how work gets done.
+                  </p>
+                  <p style={{ margin: 0 }}>
+                    This report is a starting point for that understanding. Your individual responses are completely confidential and will never be shared with anyone. What you discover here is yours — and it's designed to help you move forward with more clarity, not less.
+                  </p>
+                </div>
+              </div>
+            </section>
+          )}
+
           {/* SECTION 2 - Profile Chart */}
           <section>
             <Card>
