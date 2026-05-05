@@ -21,6 +21,7 @@
   --accent: var(--bw-orange); --accent-hover: var(--bw-orange-600); --accent-press: var(--bw-orange-700); --accent-soft: var(--bw-orange-100);
   --focus-ring: color-mix(in oklch, var(--bw-orange) 45%, transparent);
   --success: var(--bw-forest); --warning: var(--bw-amber); --info: var(--bw-teal); --premium: var(--bw-plum);
+  --danger: var(--bw-orange-700); --danger-soft: var(--bw-orange-100);
   --border-1: var(--bw-slate-200); --border-2: var(--bw-slate-300); --border-dark: var(--bw-navy-700); --divider: var(--bw-cream-300);
 
   --font-primary: 'Montserrat', system-ui, sans-serif;

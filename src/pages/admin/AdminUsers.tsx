@@ -530,6 +530,8 @@ export default function AdminUsers() {
 
   const [pendingSearch, setPendingSearch] = useState("");
   const [usersSearch, setUsersSearch] = useState("");
+  const [missingSupervisorFilter, setMissingSupervisorFilter] = useState(false);
+  const [deactivatedSupervisorFilter, setDeactivatedSupervisorFilter] = useState(false);
 
   // Executive Perspective state
   const [epnFilter, setEpnFilter] = useState<string>("leaders");
@@ -1413,8 +1415,21 @@ export default function AdminUsers() {
         <TabsContent value="users" className="space-y-6 max-w-7xl">
       {(() => {
         const allUsers = orgUsersQuery.data || [];
+        const supervisorById = new Map(allUsers.map((u) => [u.id, u]));
+        const missingSupervisorCount = allUsers.filter(
+          (u) =>
+            u.account_type === "corporate_employee" &&
+            u.deactivated_at == null &&
+            u.supervisor_user_id == null
+        ).length;
+        const deactivatedSupervisorCount = allUsers.filter((u) => {
+          if (u.deactivated_at != null) return false;
+          if (!u.supervisor_user_id) return false;
+          const sup = supervisorById.get(u.supervisor_user_id);
+          return sup?.deactivated_at != null;
+        }).length;
         const q = usersSearch.trim().toLowerCase();
-        const filteredUsers = !q
+        let filteredUsers = !q
           ? allUsers
           : allUsers.filter(
               (u) =>
@@ -1424,7 +1439,89 @@ export default function AdminUsers() {
                 (u.supervisor?.full_name?.toLowerCase().includes(q) ?? false) ||
                 (u.supervisor?.email?.toLowerCase().includes(q) ?? false)
             );
+        if (missingSupervisorFilter) {
+          filteredUsers = filteredUsers.filter(
+            (u) =>
+              u.supervisor_user_id == null &&
+              u.account_type === "corporate_employee" &&
+              u.deactivated_at == null
+          );
+        } else if (deactivatedSupervisorFilter) {
+          filteredUsers = filteredUsers.filter((u) => {
+            if (u.deactivated_at != null) return false;
+            if (!u.supervisor_user_id) return false;
+            const sup = supervisorById.get(u.supervisor_user_id);
+            return sup?.deactivated_at != null;
+          });
+        }
         return (
+          <>
+          <div className="space-y-3 mb-6">
+            {missingSupervisorCount > 0 && (
+              <Alert
+                className="border-l-4"
+                style={{
+                  borderLeftColor: "var(--bw-amber)",
+                  backgroundColor: "var(--bw-cream-200)",
+                }}
+              >
+                <AlertTriangle className="h-4 w-4" style={{ color: "var(--bw-amber)" }} />
+                <AlertTitle>
+                  {missingSupervisorCount === 1
+                    ? "1 user has no supervisor assigned"
+                    : `${missingSupervisorCount} users have no supervisor assigned`}
+                </AlertTitle>
+                <AlertDescription className="flex items-center justify-between gap-2 mt-1">
+                  <span className="text-muted-foreground">
+                    Assign supervisors so they can be included in dual-rater assessments.
+                  </span>
+                  <Button
+                    variant="link"
+                    size="sm"
+                    className="h-auto p-0 shrink-0"
+                    onClick={() => {
+                      setMissingSupervisorFilter(true);
+                      setDeactivatedSupervisorFilter(false);
+                    }}
+                  >
+                    Review →
+                  </Button>
+                </AlertDescription>
+              </Alert>
+            )}
+            {deactivatedSupervisorCount > 0 && (
+              <Alert
+                className="border-l-4"
+                style={{
+                  borderLeftColor: "var(--bw-orange-700)",
+                  backgroundColor: "var(--bw-orange-100)",
+                }}
+              >
+                <AlertTriangle className="h-4 w-4" style={{ color: "var(--bw-orange-700)" }} />
+                <AlertTitle>
+                  {deactivatedSupervisorCount === 1
+                    ? "1 user has a deactivated supervisor"
+                    : `${deactivatedSupervisorCount} users have a deactivated supervisor`}
+                </AlertTitle>
+                <AlertDescription className="flex items-center justify-between gap-2 mt-1">
+                  <span style={{ color: "var(--bw-navy-700)" }}>
+                    Reassign these users so their pending manager assessments can route correctly.
+                  </span>
+                  <Button
+                    variant="link"
+                    size="sm"
+                    className="h-auto p-0 shrink-0"
+                    onClick={() => {
+                      setDeactivatedSupervisorFilter(true);
+                      setMissingSupervisorFilter(false);
+                    }}
+                  >
+                    Review →
+                  </Button>
+                </AlertDescription>
+              </Alert>
+            )}
+          </div>
           <Card>
             <CardHeader>
               <div className="flex items-start justify-between gap-2 flex-wrap">
@@ -1464,6 +1561,34 @@ export default function AdminUsers() {
               </div>
             </CardHeader>
             <CardContent>
+              {(missingSupervisorFilter || deactivatedSupervisorFilter) && (
+                <div className="mb-3">
+                  <Badge variant="secondary" className="gap-1.5 pr-1">
+                    <span
+                      style={{
+                        color: missingSupervisorFilter
+                          ? "var(--bw-amber)"
+                          : "var(--bw-orange-700)",
+                      }}
+                    >
+                      ●
+                    </span>
+                    Showing only:{" "}
+                    {missingSupervisorFilter ? "missing supervisor" : "deactivated supervisor"}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMissingSupervisorFilter(false);
+                        setDeactivatedSupervisorFilter(false);
+                      }}
+                      className="ml-1 hover:opacity-70 px-1"
+                      aria-label="Clear filter"
+                    >
+                      ×
+                    </button>
+                  </Badge>
+                </div>
+              )}
               {orgUsersQuery.isLoading ? (
                 <div className="py-8 flex items-center justify-center">
                   <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
@@ -1608,6 +1733,7 @@ export default function AdminUsers() {
               )}
             </CardContent>
           </Card>
+          </>
         );
       })()}
         </TabsContent>
