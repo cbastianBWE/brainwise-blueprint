@@ -2400,28 +2400,40 @@ export default function CompanyDashboard() {
                   <h3 style={{ fontSize: 15, fontWeight: 500, color: NAVY, margin: "24px 0 10px", textTransform: "uppercase" as const, letterSpacing: 0.5 }}>
                     Structured interventions <span style={{ fontSize: 10, fontWeight: 400, color: "var(--muted-foreground)" }}>(click + to track without leaving this page)</span>
                   </h3>
-                  {interventions.map(iv => (
-                    <div key={iv.id ?? iv.title} style={{ border: "0.5px solid var(--border)", borderRadius: 8, padding: 16, marginBottom: 12, background: "#FFFFFF", boxShadow: "var(--shadow-sm)" }}>
-                      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8, marginBottom: 6 }}>
-                        <span style={{ fontSize: 15, fontWeight: 500, color: NAVY }}>{iv.title}</span>
-                        <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
-                          {priorityBadge(iv.priority)}
-                          {horizonBadge(iv.time_horizon)}
-                          {typeBadge(iv.intervention_type)}
-                        </div>
+                  {interventions.map(iv => {
+                    const ivKey = iv.id ?? iv.title;
+                    const isIvOpen = expandedInterventions.has(ivKey);
+                    return (
+                      <div key={ivKey} style={{ border: "0.5px solid var(--border)", borderRadius: 8, marginBottom: 12, background: "#FFFFFF", boxShadow: "var(--shadow-sm)", overflow: "hidden" }}>
+                        <button
+                          onClick={() => toggleIntervention(ivKey)}
+                          style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, padding: "12px 16px", background: "none", border: "none", cursor: "pointer", textAlign: "left" }}
+                        >
+                          <span style={{ fontSize: 15, fontWeight: 500, color: NAVY, flex: 1 }}>{iv.title}</span>
+                          <div style={{ display: "flex", gap: 4, flexShrink: 0, alignItems: "center" }}>
+                            {priorityBadge(iv.priority)}
+                            {horizonBadge(iv.time_horizon)}
+                            {typeBadge(iv.intervention_type)}
+                            <span style={{ fontSize: 11, color: TEAL, marginLeft: 4 }}>{isIvOpen ? "↑" : "↓"}</span>
+                          </div>
+                        </button>
+                        {isIvOpen && (
+                          <div style={{ padding: "0 16px 14px", borderTop: "0.5px solid var(--border)" }}>
+                            <p style={{ fontSize: 14, color: "var(--muted-foreground)", margin: "10px 0 6px", lineHeight: 1.6 }}>{iv.description}</p>
+                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                              <span style={{ fontSize: 9, color: "var(--muted-foreground)" }}>
+                                Targets: {iv.target_dimensions?.map(d => DIM_NAMES[d] ?? d).join(" · ")}
+                              </span>
+                              <button onClick={e => openTrackingModal({ kind: "dashboard", intervention: iv }, e)} style={{
+                                fontSize: 10, padding: "3px 9px", border: `0.5px solid ${NAVY}`,
+                                borderRadius: 5, background: "transparent", color: NAVY, cursor: "pointer",
+                              }}>+ Add to intervention tracking</button>
+                            </div>
+                          </div>
+                        )}
                       </div>
-                      <p style={{ fontSize: 14, color: "var(--muted-foreground)", margin: "0 0 6px", lineHeight: 1.6 }}>{iv.description}</p>
-                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                        <span style={{ fontSize: 9, color: "var(--muted-foreground)" }}>
-                          Targets: {iv.target_dimensions?.map(d => DIM_NAMES[d] ?? d).join(" · ")}
-                        </span>
-                        <button onClick={e => openTrackingModal({ kind: "dashboard", intervention: iv }, e)} style={{
-                          fontSize: 10, padding: "3px 9px", border: `0.5px solid ${NAVY}`,
-                          borderRadius: 5, background: "transparent", color: NAVY, cursor: "pointer",
-                        }}>+ Add to intervention tracking</button>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </>
               )}
             </>
