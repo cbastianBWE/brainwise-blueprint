@@ -433,7 +433,7 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
     };
 
     fetchResults();
-  }, [effectiveUserId, preSelectedAssessmentId, isCoachView, coachUserId, shareWithCoach]);
+  }, [effectiveUserId, preSelectedAssessmentId, isCoachView, coachUserId, shareWithCoach, refetchKey]);
 
   // Selected assessment
   const selected = useMemo(
