@@ -2188,7 +2188,7 @@ export default function CompanyDashboard() {
                                 Interventions targeting this dimension
                               </div>
                               {dimInterventions.map(iv => (
-                                <div key={iv.id ?? `${dimId}-${iv.title}`} style={{ background: "#ede9df", borderRadius: 8, padding: "14px 16px", marginBottom: 8 }}>
+                                <div key={iv.id ?? `${dimId}-${iv.title}`} style={{ background: "#FFFFFF", border: "0.5px solid var(--border)", borderRadius: 8, padding: "14px 16px", marginBottom: 8 }}>
                                   <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8, marginBottom: 6 }}>
                                     <span style={{ fontSize: 14, fontWeight: 500, color: NAVY }}>{iv.title}</span>
                                     <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
