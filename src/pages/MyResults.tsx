@@ -97,6 +97,13 @@ interface AssessmentWithResult {
   scale_type: string | null;
   isPTP: boolean;
   context_type: string | null;
+  isAwaitingSupervisor?: boolean;
+  pairedManager?: {
+    id: string;
+    status: string;
+    reminder_count: number;
+    last_reminder_sent_at: string | null;
+  } | null;
 }
 
 const BAND_COLORS: Record<string, string> = {
