@@ -99,6 +99,8 @@ export default function NAINarrativeSections({
   const [responsesExpanded, setResponsesExpanded] = useState(false);
   const [expandedMapping, setExpandedMapping] = useState<Set<string>>(new Set());
   const [expandedResponseId, setExpandedResponseId] = useState<number | null>(null);
+  const [actionPlan, setActionPlan] = useState<any[] | null>(null);
+  const [personalSummary, setPersonalSummary] = useState<string[] | null>(null);
 
   const dimNameOf = (dimId: string) =>
     dimensionNameMap.get(dimId) ?? NAI_DIMENSION_NAMES[dimId] ?? dimId;
@@ -212,6 +214,8 @@ export default function NAINarrativeSections({
       const elevatedDimCount = dimensionScores.filter(([, s]) => (s.mean ?? 0) >= 51).length;
       const requiredSections = [
         "nai_profile_overview",
+        "nai_action_plan",
+        "nai_personal_summary",
         ...Object.keys(NAI_DIMENSION_NAMES).map((d) => `nai_dimension_highlight_${d}`),
         ...outliers.map((o) => `nai_item_interpretation_${o.item_number}`),
         "nai_cross_assessment",
@@ -262,6 +266,13 @@ export default function NAINarrativeSections({
       }
 
       if (!cancelled) setInterpretations(interpMap);
+
+      const apData = interpMap["nai_action_plan"];
+      const psData = interpMap["nai_personal_summary"];
+      if (!cancelled) {
+        setActionPlan(Array.isArray(apData?.action_plan) ? apData.action_plan : null);
+        setPersonalSummary(Array.isArray(psData?.personal_summary) ? psData.personal_summary : null);
+      }
 
       if (isCoachView) {
         const elevatedDimIds = dimensionScores
@@ -410,10 +421,11 @@ export default function NAINarrativeSections({
 
   return (
     <div className="space-y-6">
+      {/* Pattern alert — coach only, before Profile overview */}
       {showPatternAlert && (
         <div
           className="rounded-lg p-4 border-l-4"
-          style={{ backgroundColor: "var(--bw-cream)", borderLeftColor: "var(--bw-navy)" }}
+          style={{ background: "var(--bw-white)", border: "1px solid var(--border-1)", borderLeftColor: "var(--bw-navy)", boxShadow: "var(--shadow-sm)" }}
         >
           <div className="flex gap-3">
             <AlertTriangle className="h-5 w-5 flex-shrink-0 mt-0.5" style={{ color: "#021F36" }} />
@@ -447,12 +459,12 @@ export default function NAINarrativeSections({
         </div>
       )}
 
+      {/* 1. Profile overview */}
       <section className="space-y-3">
-        <h3 className="text-lg font-semibold text-foreground">Profile overview</h3>
-        <div
-          className="rounded-lg p-5 border-l-4"
-          style={{ backgroundColor: "var(--bw-cream)", borderLeftColor: "var(--bw-navy)" }}
-        >
+        <h3 style={{ fontFamily: "var(--font-display)", fontSize: 18, fontWeight: 600, color: "var(--fg-1)", margin: 0, letterSpacing: "-0.01em" }}>
+          Profile overview
+        </h3>
+        <div style={{ background: "var(--bw-white)", border: "1px solid var(--border-1)", borderLeft: "4px solid var(--bw-navy)", borderRadius: "var(--r-md)", padding: "var(--s-5)", boxShadow: "var(--shadow-sm)" }}>
           {loading || !profileOverview ? (
             <p className="text-sm text-muted-foreground italic">Generating profile overview...</p>
           ) : (
@@ -461,70 +473,95 @@ export default function NAINarrativeSections({
         </div>
       </section>
 
-      <section className="space-y-3">
-        <div className="rounded-lg border border-border bg-card p-5">
-          <h3 className="text-lg font-semibold text-foreground mb-2">NAI Overview</h3>
-          <p className="text-sm text-muted-foreground">
-            Content coming soon. This section will provide a brief introduction to the Neuroscience Adoption Index framework, its neuroscientific basis, and how the five C.A.F.E.S. dimensions connect to the brain's protection system.
-          </p>
-        </div>
-      </section>
-
-      <section className="space-y-3">
-        <h3 className="text-lg font-semibold text-foreground">Dimension highlights</h3>
-        <div className="space-y-3">
-          {sortedDims.map(([dimId, score]) => {
-            const mean = Math.round(score.mean ?? 0);
-            const color = NAI_DIMENSION_COLORS[dimId] ?? "#021F36";
-            const pastel = NAI_DIMENSION_PASTEL[dimId] ?? "#F9F7F1";
-            const name = dimNameOf(dimId);
-            const band = NAI_ACTIVATION_BAND(mean);
-            const data = interpretations[`nai_dimension_highlight_${dimId}`];
-            const highlight = data?.highlight;
-            const focus = data?.areas_of_focus;
-            return (
-              <div
-                key={dimId}
-                className="rounded-lg p-4 border-l-4 space-y-2"
-                style={{ backgroundColor: pastel, borderLeftColor: color }}
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="font-semibold" style={{ color }}>
-                    {name} — {mean}
+      {/* 2. What does this mean to me? */}
+      {(loading || personalSummary) && (
+        <section className="space-y-3">
+          <h3 style={{ fontFamily: "var(--font-display)", fontSize: 18, fontWeight: 600, color: "var(--fg-1)", margin: 0, letterSpacing: "-0.01em" }}>
+            What does this mean to me?
+          </h3>
+          <div style={{ background: "var(--bw-white)", border: "1px solid var(--border-1)", borderRadius: "var(--r-md)", padding: "var(--s-5)", boxShadow: "var(--shadow-sm)" }}>
+            {loading || !personalSummary ? (
+              <p style={{ fontSize: 13, color: "var(--fg-3)", margin: 0, fontStyle: "italic" }}>Generating summary...</p>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: "var(--s-3)" }}>
+                {personalSummary.map((bullet, i) => (
+                  <div key={i} style={{ display: "flex", gap: "var(--s-3)", alignItems: "flex-start" }}>
+                    <span style={{
+                      flexShrink: 0, width: 24, height: 24, borderRadius: "50%",
+                      background: "var(--bw-navy)", color: "#FFFFFF",
+                      fontSize: 12, fontWeight: 600,
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                    }}>{i + 1}</span>
+                    <span style={{ fontSize: 14, color: "var(--fg-1)", lineHeight: 1.55 }}>{bullet}</span>
                   </div>
-                  <span
-                    className="text-xs px-2 py-0.5 rounded-full font-medium text-white flex-shrink-0"
-                    style={{ backgroundColor: color }}
-                  >
-                    {band}
-                  </span>
-                </div>
-                {loading ? (
-                  <p className="text-xs text-muted-foreground italic">Generating...</p>
-                ) : (
-                  <>
-                    {highlight && <p className="text-sm text-foreground">{highlight}</p>}
-                    {focus && (
-                      <>
-                        <div className="text-xs font-semibold text-foreground mt-2 uppercase tracking-wide">
-                          Areas of focus
-                        </div>
-                        <p className="text-sm text-foreground">{focus}</p>
-                      </>
-                    )}
-                  </>
-                )}
+                ))}
               </div>
-            );
-          })}
-        </div>
-      </section>
+            )}
+          </div>
+        </section>
+      )}
 
+      {/* 3. Action Plan */}
+      {(loading || actionPlan) && (
+        <section className="space-y-3">
+          <div>
+            <h3 style={{ fontFamily: "var(--font-display)", fontSize: 18, fontWeight: 600, color: "var(--fg-1)", margin: 0, marginBottom: 4, letterSpacing: "-0.01em" }}>
+              Action Plan
+            </h3>
+            <p style={{ fontSize: 13, color: "var(--fg-3)", margin: 0 }}>Three concrete things to focus on next.</p>
+          </div>
+          {loading || !actionPlan ? (
+            <p style={{ fontSize: 13, color: "var(--fg-3)", fontStyle: "italic" }}>Generating action plan...</p>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: "var(--s-4)" }}>
+              {actionPlan.map((rec: any, i: number) => {
+                const NAI_DIM_COLORS: Record<string, string> = {
+                  "DIM-NAI-01": "#021F36", "DIM-NAI-02": "#F5741A",
+                  "DIM-NAI-03": "#006D77", "DIM-NAI-04": "#3C096C", "DIM-NAI-05": "#FFB703",
+                };
+                const NAI_DIM_NAMES: Record<string, string> = {
+                  "DIM-NAI-01": "Certainty", "DIM-NAI-02": "Agency",
+                  "DIM-NAI-03": "Fairness", "DIM-NAI-04": "Ego Stability", "DIM-NAI-05": "Saturation Threshold",
+                };
+                return (
+                  <div key={i} style={{ background: "var(--bw-white)", border: "1px solid var(--border-1)", borderRadius: "var(--r-md)", padding: "var(--s-5)", boxShadow: "var(--shadow-sm)" }}>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: "var(--s-2)" }}>
+                      {(rec.dimension_tags ?? []).map((dimId: string) => {
+                        const dimColor = NAI_DIM_COLORS[dimId] ?? "#021F36";
+                        const dimName = dimensionNameMap.get(dimId) ?? NAI_DIM_NAMES[dimId] ?? dimId;
+                        return (
+                          <span key={dimId} style={{
+                            display: "inline-flex", alignItems: "center",
+                            padding: "2px 10px", borderRadius: "var(--r-pill)",
+                            fontFamily: "var(--font-primary)", fontSize: 11, fontWeight: 600,
+                            background: `${dimColor}20`, color: dimColor,
+                          }}>{dimName}</span>
+                        );
+                      })}
+                    </div>
+                    <p style={{ fontFamily: "var(--font-display)", fontSize: 16, fontWeight: 700, color: "var(--fg-1)", margin: 0, marginBottom: "var(--s-2)" }}>{rec.title}</p>
+                    <p style={{ fontSize: 13, color: "var(--fg-2)", margin: 0, marginBottom: "var(--s-3)", lineHeight: 1.55 }}>{rec.rationale}</p>
+                    {Array.isArray(rec.steps) && rec.steps.length > 0 && (
+                      <ol style={{ margin: 0, paddingLeft: 18, fontSize: 13, color: "var(--fg-1)", lineHeight: 1.55 }}>
+                        {rec.steps.map((step: string, j: number) => (
+                          <li key={j} style={{ marginBottom: 4 }}>{step}</li>
+                        ))}
+                      </ol>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </section>
+      )}
+
+      {/* 4. Complete PTP prompt — regular user only, only when PTP not taken */}
       {!isCoachView && !ptpCompleted && anyDim50Plus && (
         <section>
           <div
-            className="rounded-lg p-5 border-l-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
-            style={{ backgroundColor: "#F9F7F1", borderLeftColor: "#021F36" }}
+            style={{ background: "var(--bw-white)", border: "1px solid var(--border-1)", borderLeft: "4px solid var(--bw-navy)", borderRadius: "var(--r-md)", padding: "var(--s-5)", boxShadow: "var(--shadow-sm)" }}
+            className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
           >
             <p className="text-sm text-foreground flex-1">
               One or more of your C.A.F.E.S. dimensions are elevated. Completing the Personal Threat Profile (PTP) will unlock a cross-assessment analysis giving you significantly more insight into what is driving your scores.
@@ -536,18 +573,95 @@ export default function NAINarrativeSections({
         </section>
       )}
 
+      {/* 5. Dimension highlights */}
+      <section className="space-y-3">
+        <h3 style={{ fontFamily: "var(--font-display)", fontSize: 18, fontWeight: 600, color: "var(--fg-1)", margin: 0, letterSpacing: "-0.01em" }}>
+          Dimension highlights
+        </h3>
+        <div className="space-y-3">
+          {sortedDims.map(([dimId, score]) => {
+            const mean = Math.round(score.mean ?? 0);
+            const color = NAI_DIMENSION_COLORS[dimId] ?? "#021F36";
+            const name = dimNameOf(dimId);
+            const band = NAI_ACTIVATION_BAND(mean);
+            const data = interpretations[`nai_dimension_highlight_${dimId}`];
+            const highlight = data?.highlight;
+            const focus = data?.areas_of_focus;
+            return (
+              <div
+                key={dimId}
+                style={{ background: "var(--bw-white)", border: "1px solid var(--border-1)", borderLeft: `4px solid ${color}`, borderRadius: "var(--r-md)", padding: "var(--s-4)", boxShadow: "var(--shadow-sm)" }}
+                className="space-y-2"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="font-semibold" style={{ color }}>{name} — {mean}</div>
+                  <span className="text-xs px-2 py-0.5 rounded-full font-medium text-white flex-shrink-0" style={{ backgroundColor: color }}>{band}</span>
+                </div>
+                {loading ? (
+                  <p className="text-xs text-muted-foreground italic">Generating...</p>
+                ) : (
+                  <>
+                    {highlight && <p className="text-sm text-foreground">{highlight}</p>}
+                    {focus && (
+                      <>
+                        <div className="text-xs font-semibold text-foreground mt-2 uppercase tracking-wide">Areas of focus</div>
+                        <p className="text-sm text-foreground">{focus}</p>
+                      </>
+                    )}
+                  </>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* 6. Individual responses that warrant attention */}
       {renderOutlierSection()}
 
+      {/* 7. Cross-assessment interpretation */}
+      {ptpCompleted && (
+        <section className="space-y-3">
+          <h3 style={{ fontFamily: "var(--font-display)", fontSize: 18, fontWeight: 600, color: "var(--fg-1)", margin: 0, letterSpacing: "-0.01em" }}>
+            Cross-assessment interpretation
+          </h3>
+          <div style={{ background: "var(--bw-white)", border: "1px solid var(--border-1)", borderLeft: "4px solid var(--bw-navy)", borderRadius: "var(--r-md)", padding: "var(--s-5)", boxShadow: "var(--shadow-sm)" }} className="space-y-3">
+            {loading || !crossAssessment ? (
+              <p className="text-sm text-muted-foreground italic">Generating cross-assessment analysis...</p>
+            ) : (
+              <>
+                {crossAssessment.interpretation && (
+                  <p className="text-sm text-foreground whitespace-pre-line">{crossAssessment.interpretation}</p>
+                )}
+                {Array.isArray(crossAssessment.suggestions) && crossAssessment.suggestions.length > 0 && (
+                  <>
+                    <div className="text-xs font-semibold text-foreground uppercase tracking-wide">Suggested ways to support yourself</div>
+                    <ul className="text-sm text-foreground space-y-1">
+                      {crossAssessment.suggestions.map((s: string, i: number) => (
+                        <li key={i} className="flex gap-2">
+                          <span className="text-muted-foreground">•</span>
+                          <span>{s}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                )}
+              </>
+            )}
+          </div>
+        </section>
+      )}
+
+      {/* 8. C.A.F.E.S.-PTP mapping — coach only */}
       {isCoachView && Object.keys(mappings).length > 0 && (
         <section className="space-y-3">
-          <h3 className="text-lg font-semibold text-foreground">C.A.F.E.S.–PTP mapping</h3>
+          <h3 style={{ fontFamily: "var(--font-display)", fontSize: 18, fontWeight: 600, color: "var(--fg-1)", margin: 0, letterSpacing: "-0.01em" }}>C.A.F.E.S.–PTP mapping</h3>
           <div className="space-y-2">
             {sortedDims
               .filter(([dimId, s]) => (s.mean ?? 0) >= 51 && mappings[dimId])
               .map(([dimId, score]) => {
                 const mapping = mappings[dimId];
                 const color = NAI_DIMENSION_COLORS[dimId] ?? "#021F36";
-                const pastel = NAI_DIMENSION_PASTEL[dimId] ?? "#F9F7F1";
                 const mean = Math.round(score.mean ?? 0);
                 const band = NAI_ACTIVATION_BAND(mean);
                 const isOpen = expandedMapping.has(dimId);
@@ -560,11 +674,11 @@ export default function NAINarrativeSections({
                   : fallbackQuestions;
                 const facets: any[] = Array.isArray(mapping.facets) ? mapping.facets : [];
                 return (
-                  <div key={dimId} className="rounded-lg border border-border overflow-hidden">
+                  <div key={dimId} style={{ background: "var(--bw-white)", border: "1px solid var(--border-1)", borderRadius: "var(--r-md)", boxShadow: "var(--shadow-sm)", overflow: "hidden" }}>
                     <button
                       onClick={() => toggleMapping(dimId)}
                       className="w-full text-left p-4 flex items-center gap-3 hover:opacity-90 transition-opacity"
-                      style={{ backgroundColor: pastel, borderLeft: `4px solid ${color}` }}
+                      style={{ background: "var(--bw-white)", borderLeft: `4px solid ${color}` }}
                     >
                       <div className="flex-1 flex items-center gap-3 flex-wrap">
                         <span className="font-semibold" style={{ color }}>
@@ -630,92 +744,36 @@ export default function NAINarrativeSections({
         </section>
       )}
 
-      {ptpCompleted && (
-        <section className="space-y-3">
-          <h3 className="text-lg font-semibold text-foreground">Cross-assessment interpretation</h3>
-          <div
-            className="rounded-lg p-5 border-l-4 space-y-3"
-            style={{ backgroundColor: "#F9F7F1", borderLeftColor: "#021F36" }}
-          >
-            {loading || !crossAssessment ? (
-              <p className="text-sm text-muted-foreground italic">Generating cross-assessment analysis...</p>
-            ) : (
-              <>
-                {crossAssessment.interpretation && (
-                  <p className="text-sm text-foreground whitespace-pre-line">{crossAssessment.interpretation}</p>
-                )}
-                {Array.isArray(crossAssessment.suggestions) && crossAssessment.suggestions.length > 0 && (
-                  <>
-                    <div className="text-xs font-semibold text-foreground uppercase tracking-wide">
-                      Suggested ways to support yourself
-                    </div>
-                    <ul className="text-sm text-foreground space-y-1">
-                      {crossAssessment.suggestions.map((s: string, i: number) => (
-                        <li key={i} className="flex gap-2">
-                          <span className="text-muted-foreground">•</span>
-                          <span>{s}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </>
-                )}
-              </>
-            )}
-          </div>
-        </section>
-      )}
-
+      {/* 9. Your assessment responses */}
       {responses.length > 0 && (
         <section>
           <button
             onClick={() => setResponsesExpanded((p) => !p)}
-            className="w-full flex items-center justify-between p-4 rounded-lg border border-border hover:bg-muted/30 transition-colors text-left"
+            style={{ background: "var(--bw-white)", border: "1px solid var(--border-1)", borderRadius: "var(--r-md)", padding: "var(--s-4)", boxShadow: "var(--shadow-xs)" }}
+            className="w-full flex items-center justify-between text-left"
           >
-            <span className="font-medium text-foreground">
-              Your assessment responses — all {responses.length} questions
-            </span>
-            {responsesExpanded ? (
-              <ChevronUp className="h-4 w-4 text-muted-foreground" />
-            ) : (
-              <ChevronDown className="h-4 w-4 text-muted-foreground" />
-            )}
+            <span className="font-medium text-foreground">Your assessment responses — all {responses.length} questions</span>
+            {responsesExpanded ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
           </button>
           {responsesExpanded && (
             <div className="mt-3 space-y-2">
-              {[...responses]
-                .sort((a, b) => a.item_number - b.item_number)
-                .map((r) => {
-                  const color = NAI_DIMENSION_COLORS[r.dimension_id] ?? "#021F36";
-                  return (
-                    <div
-                      key={r.item_number}
-                      className="flex items-start gap-3 p-3 rounded-lg border border-border bg-card"
-                    >
-                      <div
-                        className="flex-shrink-0 w-1 self-stretch rounded-full"
-                        style={{ backgroundColor: color }}
-                      />
-                      <div className="flex-1 min-w-0">
-                        <div className="text-xs font-semibold text-muted-foreground">
-                          Q{r.item_number} — {r.facet_name}
-                        </div>
-                        <div className="text-sm text-foreground mt-0.5">{r.item_text}</div>
-                      </div>
-                      {r.has_response && r.score !== null ? (
-                        <div
-                          className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center text-white text-xs font-semibold"
-                          style={{ backgroundColor: color }}
-                        >
-                          {r.score}
-                        </div>
-                      ) : (
-                        <div className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center bg-muted text-muted-foreground text-xs font-semibold">
-                          —
-                        </div>
-                      )}
+              {[...responses].sort((a, b) => a.item_number - b.item_number).map((r) => {
+                const color = NAI_DIMENSION_COLORS[r.dimension_id] ?? "#021F36";
+                return (
+                  <div key={r.item_number} style={{ background: "var(--bw-white)", border: "1px solid var(--border-1)", borderRadius: "var(--r-md)" }} className="flex items-start gap-3 p-3">
+                    <div className="flex-shrink-0 w-1 self-stretch rounded-full" style={{ backgroundColor: color }} />
+                    <div className="flex-1 min-w-0">
+                      <div className="text-xs font-semibold text-muted-foreground">Q{r.item_number} — {r.facet_name}</div>
+                      <div className="text-sm text-foreground mt-0.5">{r.item_text}</div>
                     </div>
-                  );
-                })}
+                    {r.has_response && r.score !== null ? (
+                      <div className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center text-white text-xs font-semibold" style={{ backgroundColor: color }}>{r.score}</div>
+                    ) : (
+                      <div className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center bg-muted text-muted-foreground text-xs font-semibold">—</div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
         </section>
