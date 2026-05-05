@@ -17,6 +17,7 @@ import Terms from "./pages/marketing/Terms";
 import Cookies from "./pages/marketing/Cookies";
 import InternationalCompliance from "./pages/marketing/InternationalCompliance";
 import Services from "./pages/marketing/Services";
+import Evolve from "./pages/marketing/Evolve";
 import Contact from "./pages/marketing/Contact";
 import Products from "./pages/marketing/Products";
 import PricingRouter from "./pages/PricingRouter";
