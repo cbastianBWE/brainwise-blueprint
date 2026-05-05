@@ -334,6 +334,35 @@ export default function InstrumentSelection({ onSelect }: Props) {
                 if (hasCorpAccess !== true) return null;
               }
 
+              // AIRSA awaiting supervisor: suppress restart, show status tile
+              if (inst.instrument_id === "INST-003" && airsaAwaiting) {
+                return (
+                  <Card
+                    key={inst.instrument_id}
+                    className="relative transition-all"
+                    style={{ opacity: 0.7 }}
+                  >
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-lg">{inst.short_name}</CardTitle>
+                        {inst.tier === "premium" && (
+                          <Badge variant="secondary" className="text-xs">Premium</Badge>
+                        )}
+                      </div>
+                      <CardDescription className="font-medium text-foreground">{inst.instrument_name}</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <p className="text-sm text-muted-foreground">
+                        You completed AIRSA on {format(new Date(airsaAwaiting.completed_at), "MMM d, yyyy")}. The combined report becomes available once your supervisor completes their rating. Manage this from your Results page.
+                      </p>
+                      <Button disabled className="w-full">
+                        Awaiting your supervisor's rating
+                      </Button>
+                    </CardContent>
+                  </Card>
+                );
+              }
+
               const coachPaid = coachPaidInstrumentIds.has(instrumentUuid);
               const hasPurchase = purchasedInstrumentIds.has(instrumentUuid) || purchasedInstrumentIds.has(inst.instrument_id) || purchasedInstrumentIds.has(inst.short_name);
               const hasCompleted = completedInstrumentIds.has(inst.instrument_id);
