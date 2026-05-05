@@ -11,7 +11,6 @@ import MarketingTile from "@/components/marketing/MarketingTile";
 import {
   meta,
   heroStats,
-  heroStatsSourceNote,
   problemStats,
   evolveStages,
   evolveInstruments,
@@ -102,22 +101,29 @@ export default function Evolve() {
       {/* Stat banner */}
       <section
         style={{
-          background: "var(--bw-orange)",
-          padding: isMobile ? "48px 24px" : "56px 48px",
+          background: "white",
+          padding: isMobile ? "48px 24px" : "64px 48px",
         }}
       >
         <div style={{ maxWidth: 1200, margin: "0 auto" }}>
-          <div style={{ display: "grid", gridTemplateColumns: statsCols, gap: gap }}>
+          <div style={{ display: "grid", gridTemplateColumns: statsCols, gap: 32 }}>
             {heroStats.map((s, i) => (
-              <div key={i}>
+              <div
+                key={i}
+                style={{
+                  paddingLeft: 16,
+                  borderLeft: `3px solid ${s.accentColor}`,
+                }}
+              >
                 <div
                   style={{
                     fontFamily: "'Poppins', sans-serif",
                     fontWeight: 800,
-                    fontSize: "clamp(36px, 4vw, 56px)",
-                    color: "#fff",
+                    fontSize: "clamp(32px, 3vw, 44px)",
+                    color: "var(--bw-navy)",
                     lineHeight: 1.05,
                     letterSpacing: "-0.02em",
+                    marginBottom: 12,
                   }}
                 >
                   {s.value}
@@ -125,28 +131,31 @@ export default function Evolve() {
                 <div
                   style={{
                     fontFamily: "'Montserrat', sans-serif",
-                    fontWeight: 500,
-                    fontSize: 14,
-                    color: "#fff",
-                    lineHeight: 1.4,
-                    marginTop: 8,
+                    fontWeight: 600,
+                    fontSize: 12,
+                    letterSpacing: "0.08em",
+                    textTransform: "uppercase",
+                    color: "var(--bw-navy)",
+                    lineHeight: 1.5,
+                    marginBottom: 8,
                   }}
                 >
                   {s.label}
                 </div>
+                <div
+                  style={{
+                    fontFamily: "'Montserrat', sans-serif",
+                    fontWeight: 400,
+                    fontStyle: "italic",
+                    fontSize: 12,
+                    color: "var(--bw-slate)",
+                    lineHeight: 1.5,
+                  }}
+                >
+                  {s.source}
+                </div>
               </div>
             ))}
-          </div>
-          <div
-            style={{
-              marginTop: 24,
-              fontFamily: "'Montserrat', sans-serif",
-              fontWeight: 400,
-              fontSize: 12,
-              color: "rgba(255,255,255,0.7)",
-            }}
-          >
-            {heroStatsSourceNote}
           </div>
         </div>
       </section>
