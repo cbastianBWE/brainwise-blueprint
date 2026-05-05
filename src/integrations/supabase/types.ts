@@ -342,6 +342,8 @@ export type Database = {
           manager_dimension_scores: Json | null
           overall_profile: Json | null
           self_manager_divergence: Json | null
+          superseded_at: string | null
+          superseded_reason: string | null
           user_id: string
         }
         Insert: {
@@ -358,6 +360,8 @@ export type Database = {
           manager_dimension_scores?: Json | null
           overall_profile?: Json | null
           self_manager_divergence?: Json | null
+          superseded_at?: string | null
+          superseded_reason?: string | null
           user_id: string
         }
         Update: {
@@ -374,6 +378,8 @@ export type Database = {
           manager_dimension_scores?: Json | null
           overall_profile?: Json | null
           self_manager_divergence?: Json | null
+          superseded_at?: string | null
+          superseded_reason?: string | null
           user_id?: string
         }
         Relationships: [
