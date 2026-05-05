@@ -1822,6 +1822,51 @@ export default function CompanyDashboard() {
             )}
           </div>
 
+          {/* AI Readiness Summary */}
+          {latestNarrative?.narrative_text?.summary && (
+            <div style={{
+              background: "#FFFFFF",
+              border: "0.5px solid var(--border)",
+              borderLeft: `4px solid ${TEAL}`,
+              borderRadius: 8,
+              padding: "14px 16px",
+              marginBottom: 16,
+              boxShadow: "var(--shadow-sm)",
+            }}>
+              <div style={{ fontSize: 9, fontWeight: 500, color: NAVY, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>
+                AI Readiness Summary
+              </div>
+              <p style={{ fontSize: 14, color: "var(--foreground)", margin: "0 0 12px", lineHeight: 1.65, fontWeight: 500 }}>
+                {latestNarrative.narrative_text.summary}
+              </p>
+              {Array.isArray((latestNarrative.narrative_text as any).top_interventions) && (latestNarrative.narrative_text as any).top_interventions.length > 0 && (
+                <div>
+                  <div style={{ fontSize: 9, fontWeight: 500, color: NAVY, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>
+                    Top 3 recommended actions
+                  </div>
+                  {(latestNarrative.narrative_text as any).top_interventions.map((item: { title: string; rationale: string }, i: number) => (
+                    <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start", marginBottom: 6 }}>
+                      <span style={{
+                        flexShrink: 0,
+                        width: 18,
+                        height: 18,
+                        borderRadius: "50%",
+                        background: TEAL,
+                        color: "#FFFFFF",
+                        fontSize: 10,
+                        fontWeight: 600,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}>{i + 1}</span>
+                      <span style={{ fontSize: 13, color: "var(--foreground)", fontWeight: 500, lineHeight: 1.4 }}>{item.title}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Usage cards */}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12, marginBottom: 24 }}>
             {[
