@@ -207,6 +207,10 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
   const [chatLoading, setChatLoading] = useState(false);
   const [chatSessionId, setChatSessionId] = useState<string | null>(null);
   const [showChatUpgradeDialog, setShowChatUpgradeDialog] = useState(false);
+  const [refetchKey, setRefetchKey] = useState(0);
+  const [airsaActionLoading, setAirsaActionLoading] = useState(false);
+  const [showAirsaReleaseDialog, setShowAirsaReleaseDialog] = useState(false);
+  const [showAirsaRerateDialog, setShowAirsaRerateDialog] = useState(false);
 
   useEffect(() => {
     return () => {
