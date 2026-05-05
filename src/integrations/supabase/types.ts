@@ -4189,6 +4189,15 @@ export type Database = {
           out_self_only_released_at: string
         }[]
       }
+      airsa_get_my_paired_manager_status: {
+        Args: { p_self_assessment_id: string }
+        Returns: {
+          last_reminder_sent_at: string
+          paired_assessment_id: string
+          paired_status: string
+          reminder_count: number
+        }[]
+      }
       airsa_release_self_only: {
         Args: { p_self_assessment_id: string }
         Returns: {
