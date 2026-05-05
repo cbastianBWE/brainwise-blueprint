@@ -1867,7 +1867,7 @@ export default function PTPDashboard() {
               >
                 <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}>
                   <thead>
-                    <tr style={{ background: "#ede9df" }}>
+                    <tr style={{ background: "#FFFFFF" }}>
                       {["Department", "Completed", "Rate", "Progress"].map((h) => (
                         <th
                           key={h}
@@ -2768,7 +2768,7 @@ export default function PTPDashboard() {
                     style={{ width: "100%", borderCollapse: "collapse", fontSize: 11 }}
                   >
                     <thead>
-                      <tr style={{ background: "#ede9df" }}>
+                      <tr style={{ background: "#FFFFFF" }}>
                         <th
                           style={{
                             padding: "8px 12px",
