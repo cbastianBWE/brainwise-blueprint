@@ -17,6 +17,7 @@ import Terms from "./pages/marketing/Terms";
 import Cookies from "./pages/marketing/Cookies";
 import InternationalCompliance from "./pages/marketing/InternationalCompliance";
 import Services from "./pages/marketing/Services";
+import Evolve from "./pages/marketing/Evolve";
 import Contact from "./pages/marketing/Contact";
 import Products from "./pages/marketing/Products";
 import PricingRouter from "./pages/PricingRouter";
@@ -92,6 +93,7 @@ const App = () => (
             <Route path="/cookies" element={<Cookies />} />
             <Route path="/international-privacy" element={<InternationalCompliance />} />
             <Route path="/services" element={<Services />} />
+            <Route path="/evolve" element={<Evolve />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/products" element={<Products />} />
             <Route path="/pricing" element={<PricingRouter />} />
