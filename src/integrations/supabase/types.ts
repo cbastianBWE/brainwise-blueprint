@@ -386,7 +386,7 @@ export type Database = {
           {
             foreignKeyName: "assessment_results_assessment_id_fkey"
             columns: ["assessment_id"]
-            isOneToOne: false
+            isOneToOne: true
             referencedRelation: "assessments"
             referencedColumns: ["id"]
           },
@@ -434,8 +434,12 @@ export type Database = {
           id: string
           instrument_id: string
           instrument_version: string
+          last_reminder_sent_at: string | null
           ordered_by_coach_id: string | null
+          paired_assessment_id: string | null
           rater_type: string
+          reminder_count: number
+          self_only_released_at: string | null
           started_at: string
           status: string
           target_user_id: string | null
@@ -447,8 +451,12 @@ export type Database = {
           id?: string
           instrument_id: string
           instrument_version: string
+          last_reminder_sent_at?: string | null
           ordered_by_coach_id?: string | null
+          paired_assessment_id?: string | null
           rater_type?: string
+          reminder_count?: number
+          self_only_released_at?: string | null
           started_at?: string
           status?: string
           target_user_id?: string | null
@@ -460,8 +468,12 @@ export type Database = {
           id?: string
           instrument_id?: string
           instrument_version?: string
+          last_reminder_sent_at?: string | null
           ordered_by_coach_id?: string | null
+          paired_assessment_id?: string | null
           rater_type?: string
+          reminder_count?: number
+          self_only_released_at?: string | null
           started_at?: string
           status?: string
           target_user_id?: string | null
@@ -501,6 +513,13 @@ export type Database = {
             columns: ["ordered_by_coach_id"]
             isOneToOne: false
             referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessments_paired_assessment_id_fkey"
+            columns: ["paired_assessment_id"]
+            isOneToOne: false
+            referencedRelation: "assessments"
             referencedColumns: ["id"]
           },
           {
@@ -4157,9 +4176,52 @@ export type Database = {
         Args: { p_org: string; p_pool: string; p_user_id?: string }
         Returns: undefined
       }
+      airsa_can_generate_combined_result: {
+        Args: { p_self_assessment_id: string }
+        Returns: {
+          out_can_generate: boolean
+          out_manager_assessment_id: string
+          out_manager_completed_at: string
+          out_mode: string
+          out_reason: string
+          out_self_assessment_id: string
+          out_self_completed_at: string
+          out_self_only_released_at: string
+        }[]
+      }
+      airsa_release_self_only: {
+        Args: { p_self_assessment_id: string }
+        Returns: {
+          out_self_assessment_id: string
+          out_self_only_released_at: string
+          out_was_already_released: boolean
+        }[]
+      }
+      airsa_request_rerate: {
+        Args: { p_self_assessment_id: string }
+        Returns: {
+          out_manager_in_progress_discarded: boolean
+          out_new_self_assessment_id: string
+          out_old_manager_assessment_id: string
+          out_old_self_assessment_id: string
+        }[]
+      }
       airsa_role_access: {
         Args: { p_owner_user_id: string; p_viewer_user_id: string }
         Returns: boolean
+      }
+      airsa_send_reminder: {
+        Args: { p_self_assessment_id: string }
+        Returns: {
+          out_last_reminder_sent_at: string
+          out_manager_assessment_id: string
+          out_reminder_count: number
+          out_self_rater_email: string
+          out_self_rater_full_name: string
+          out_supervisor_email: string
+          out_supervisor_full_name: string
+          out_supervisor_user_id: string
+        }[]
       }
       assert_super_admin: { Args: never; Returns: undefined }
       assign_executive_perspective_assessment: {
@@ -4507,6 +4569,39 @@ export type Database = {
       member_feature_override_set: {
         Args: { p_enabled: boolean; p_feature: string; p_user: string }
         Returns: undefined
+      }
+      my_direct_reports_with_pending_ratings: {
+        Args: never
+        Returns: {
+          direct_report_department_name: string
+          direct_report_email: string
+          direct_report_full_name: string
+          direct_report_org_level: string
+          direct_report_user_id: string
+          latest_self_assessment_id: string
+          latest_self_completed_at: string
+          latest_self_status: string
+          paired_manager_assessment_id: string
+          paired_manager_started_at: string
+          paired_manager_status: string
+          reminder_count: number
+        }[]
+      }
+      my_pending_manager_assessments: {
+        Args: never
+        Returns: {
+          last_reminder_sent_at: string
+          manager_assessment_id: string
+          manager_started_at: string
+          manager_status: string
+          paired_self_assessment_id: string
+          reminder_count: number
+          self_completed_at: string
+          self_rater_department_name: string
+          self_rater_email: string
+          self_rater_full_name: string
+          self_rater_user_id: string
+        }[]
       }
       org_has_feature: {
         Args: { p_feature: string; p_org: string }
