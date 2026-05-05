@@ -375,6 +375,30 @@ export default function CompanyDashboard() {
       return next;
     });
   };
+  const [expandedInterventions, setExpandedInterventions] = useState<Set<string>>(new Set());
+  const toggleIntervention = (key: string) => {
+    setExpandedInterventions(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      return next;
+    });
+  };
+  const [expandedCoElevations, setExpandedCoElevations] = useState<Set<number>>(new Set());
+  const toggleCoElevation = (i: number) => {
+    setExpandedCoElevations(prev => {
+      const next = new Set(prev);
+      if (next.has(i)) next.delete(i); else next.add(i);
+      return next;
+    });
+  };
+  const [expandedCrossRecs, setExpandedCrossRecs] = useState<Set<string>>(new Set());
+  const toggleCrossRec = (key: string) => {
+    setExpandedCrossRecs(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      return next;
+    });
+  };
 
   // Load departments
   useEffect(() => {
@@ -1861,7 +1885,10 @@ export default function CompanyDashboard() {
                         alignItems: "center",
                         justifyContent: "center",
                       }}>{i + 1}</span>
-                      <span style={{ fontSize: 13, color: "var(--foreground)", fontWeight: 500, lineHeight: 1.4 }}>{item.title}</span>
+                      <span style={{ fontSize: 13, color: "var(--foreground)", fontWeight: 500, lineHeight: 1.4 }}>
+                        {item.title}
+                        <span style={{ fontWeight: 400, color: "var(--muted-foreground)", fontSize: 12 }}> (Interventions tab)</span>
+                      </span>
                     </div>
                   ))}
                 </div>
@@ -2332,8 +2359,8 @@ export default function CompanyDashboard() {
                 const text = latestNarrative.narrative_text[section.key as keyof typeof latestNarrative.narrative_text] as string | undefined;
                 if (!text) return null;
                 const isOpen = expandedNarrativeSections.has(section.key);
-                const sentences = text.match(/[^.!?]+[.!?]+/g) ?? [];
-                const preview = sentences.slice(0, 2).join(" ").trim() || text.slice(0, 180);
+                const sectionSummaries = (latestNarrative.narrative_text as any).section_summaries ?? {};
+                const preview = sectionSummaries[section.key] as string | undefined;
                 return (
                   <div key={section.key} style={{ background: "#FFFFFF", border: "0.5px solid var(--border)", borderRadius: 12, marginBottom: 12, boxShadow: "var(--shadow-sm)", overflow: "hidden" }}>
                     <button
@@ -2344,8 +2371,11 @@ export default function CompanyDashboard() {
                         <div style={{ fontSize: 9, fontWeight: 500, color: NAVY, textTransform: "uppercase" as const, letterSpacing: "0.06em", marginBottom: 5, borderLeft: `3px solid ${ORANGE}`, paddingLeft: 7 }}>
                           {section.label}
                         </div>
-                        {!isOpen && (
+                        {!isOpen && preview && (
                           <p style={{ fontSize: 13, color: "var(--muted-foreground)", margin: 0, lineHeight: 1.6 }}>{preview}</p>
+                        )}
+                        {!isOpen && !preview && (
+                          <p style={{ fontSize: 12, color: "var(--muted-foreground)", margin: 0, fontStyle: "italic" }}>Click to read full analysis</p>
                         )}
                       </div>
                       <span style={{ fontSize: 11, color: TEAL, flexShrink: 0, marginTop: 2 }}>{isOpen ? "↑ collapse" : "↓ read full"}</span>
@@ -2370,28 +2400,40 @@ export default function CompanyDashboard() {
                   <h3 style={{ fontSize: 15, fontWeight: 500, color: NAVY, margin: "24px 0 10px", textTransform: "uppercase" as const, letterSpacing: 0.5 }}>
                     Structured interventions <span style={{ fontSize: 10, fontWeight: 400, color: "var(--muted-foreground)" }}>(click + to track without leaving this page)</span>
                   </h3>
-                  {interventions.map(iv => (
-                    <div key={iv.id ?? iv.title} style={{ border: "0.5px solid var(--border)", borderRadius: 8, padding: 16, marginBottom: 12, background: "#FFFFFF", boxShadow: "var(--shadow-sm)" }}>
-                      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8, marginBottom: 6 }}>
-                        <span style={{ fontSize: 15, fontWeight: 500, color: NAVY }}>{iv.title}</span>
-                        <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
-                          {priorityBadge(iv.priority)}
-                          {horizonBadge(iv.time_horizon)}
-                          {typeBadge(iv.intervention_type)}
-                        </div>
+                  {interventions.map(iv => {
+                    const ivKey = iv.id ?? iv.title;
+                    const isIvOpen = expandedInterventions.has(ivKey);
+                    return (
+                      <div key={ivKey} style={{ border: "0.5px solid var(--border)", borderRadius: 8, marginBottom: 12, background: "#FFFFFF", boxShadow: "var(--shadow-sm)", overflow: "hidden" }}>
+                        <button
+                          onClick={() => toggleIntervention(ivKey)}
+                          style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, padding: "12px 16px", background: "none", border: "none", cursor: "pointer", textAlign: "left" }}
+                        >
+                          <span style={{ fontSize: 15, fontWeight: 500, color: NAVY, flex: 1 }}>{iv.title}</span>
+                          <div style={{ display: "flex", gap: 4, flexShrink: 0, alignItems: "center" }}>
+                            {priorityBadge(iv.priority)}
+                            {horizonBadge(iv.time_horizon)}
+                            {typeBadge(iv.intervention_type)}
+                            <span style={{ fontSize: 11, color: TEAL, marginLeft: 4 }}>{isIvOpen ? "↑" : "↓"}</span>
+                          </div>
+                        </button>
+                        {isIvOpen && (
+                          <div style={{ padding: "0 16px 14px", borderTop: "0.5px solid var(--border)" }}>
+                            <p style={{ fontSize: 14, color: "var(--muted-foreground)", margin: "10px 0 6px", lineHeight: 1.6 }}>{iv.description}</p>
+                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                              <span style={{ fontSize: 9, color: "var(--muted-foreground)" }}>
+                                Targets: {iv.target_dimensions?.map(d => DIM_NAMES[d] ?? d).join(" · ")}
+                              </span>
+                              <button onClick={e => openTrackingModal({ kind: "dashboard", intervention: iv }, e)} style={{
+                                fontSize: 10, padding: "3px 9px", border: `0.5px solid ${NAVY}`,
+                                borderRadius: 5, background: "transparent", color: NAVY, cursor: "pointer",
+                              }}>+ Add to intervention tracking</button>
+                            </div>
+                          </div>
+                        )}
                       </div>
-                      <p style={{ fontSize: 14, color: "var(--muted-foreground)", margin: "0 0 6px", lineHeight: 1.6 }}>{iv.description}</p>
-                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                        <span style={{ fontSize: 9, color: "var(--muted-foreground)" }}>
-                          Targets: {iv.target_dimensions?.map(d => DIM_NAMES[d] ?? d).join(" · ")}
-                        </span>
-                        <button onClick={e => openTrackingModal({ kind: "dashboard", intervention: iv }, e)} style={{
-                          fontSize: 10, padding: "3px 9px", border: `0.5px solid ${NAVY}`,
-                          borderRadius: 5, background: "transparent", color: NAVY, cursor: "pointer",
-                        }}>+ Add to intervention tracking</button>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </>
               )}
             </>
@@ -2700,16 +2742,31 @@ export default function CompanyDashboard() {
               }
               return (
                 <div style={{ display: "flex", flexDirection: "column" as const, gap: 10 }}>
-                  {patterns.map((p, i) => (
-                    <div key={i} style={{ background: "var(--muted)", borderRadius: 8, padding: 12, border: "0.5px solid var(--border)" }}>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: NAVY, marginBottom: 6 }}>{p.label}</div>
-                      <div style={{ fontSize: 13, color: "var(--muted-foreground)", marginBottom: 8, lineHeight: 1.6 }}>{p.description}</div>
-                      <div style={{ display: "flex", gap: 16, fontSize: 12 }}>
-                        <span><span style={{ color: "var(--muted-foreground)" }}>NAI </span><span style={{ color: DIM_COLORS[p.naiDimId], fontWeight: 600 }}>{p.naiDimName} {Math.round(p.naiScore)}</span></span>
-                        <span><span style={{ color: "var(--muted-foreground)" }}>PTP </span><span style={{ color: PTP_DIM_COLORS[p.ptpDimId], fontWeight: 600 }}>{p.ptpDimName} {Math.round(p.ptpScore)}</span></span>
+                  {patterns.map((p, i) => {
+                    const isCoOpen = expandedCoElevations.has(i);
+                    return (
+                      <div key={i} style={{ background: "#FFFFFF", border: "0.5px solid var(--border)", borderRadius: 8, marginBottom: 8, overflow: "hidden" }}>
+                        <button
+                          onClick={() => toggleCoElevation(i)}
+                          style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "10px 12px", background: "none", border: "none", cursor: "pointer", textAlign: "left" }}
+                        >
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontSize: 13, fontWeight: 700, color: NAVY, marginBottom: 4 }}>{p.label}</div>
+                            <div style={{ display: "flex", gap: 16, fontSize: 12 }}>
+                              <span><span style={{ color: "var(--muted-foreground)" }}>NAI </span><span style={{ color: DIM_COLORS[p.naiDimId], fontWeight: 600 }}>{p.naiDimName} {Math.round(p.naiScore)}</span></span>
+                              <span><span style={{ color: "var(--muted-foreground)" }}>PTP </span><span style={{ color: PTP_DIM_COLORS[p.ptpDimId], fontWeight: 600 }}>{p.ptpDimName} {Math.round(p.ptpScore)}</span></span>
+                            </div>
+                          </div>
+                          <span style={{ fontSize: 11, color: TEAL, flexShrink: 0 }}>{isCoOpen ? "↑ less" : "↓ more"}</span>
+                        </button>
+                        {isCoOpen && (
+                          <div style={{ padding: "0 12px 12px", borderTop: "0.5px solid var(--border)" }}>
+                            <p style={{ fontSize: 13, color: "var(--muted-foreground)", margin: "10px 0 0", lineHeight: 1.6 }}>{p.description}</p>
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               );
             })()}
@@ -2757,43 +2814,55 @@ export default function CompanyDashboard() {
                     {crossInstrumentRow.summary}
                   </p>
                 )}
-                {crossInstrumentRow.recommendations.map((rec, i) => (
-                  <div key={rec.id ?? i} style={{
-                    background: "#FFFFFF",
-                    border: "0.5px solid var(--border)",
-                    borderRadius: 8,
-                    padding: 14,
-                    marginBottom: 10,
-                    boxShadow: "var(--shadow-sm)",
-                  }}>
-                    <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8, marginBottom: 6 }}>
-                      <span style={{ fontSize: 14, fontWeight: 600, color: NAVY }}>{rec.title}</span>
-                      <div style={{ display: "flex", gap: 4, flexShrink: 0, flexWrap: "wrap" }}>
-                        <span style={{ fontSize: 9, padding: "2px 6px", borderRadius: 3, fontWeight: 500, textTransform: "uppercase", letterSpacing: 0.4,
-                          background: rec.priority === "high" ? "#faece7" : rec.priority === "medium" ? "#faeeda" : "#e1f5ee",
-                          color: rec.priority === "high" ? "#993c1d" : rec.priority === "medium" ? "#633806" : "#0f6e56",
-                        }}>{rec.priority}</span>
-                        <span style={{ fontSize: 9, padding: "2px 6px", borderRadius: 3, background: "#eeedfe", color: "#3C096C", fontWeight: 500, textTransform: "uppercase", letterSpacing: 0.4 }}>{rec.time_horizon}</span>
-                        {rec.anchor_co_elevation && (
-                          <span style={{ fontSize: 9, padding: "2px 6px", borderRadius: 3, background: "#e8edf1", color: NAVY, fontWeight: 500 }}>{rec.anchor_co_elevation}</span>
-                        )}
-                      </div>
+                {crossInstrumentRow.recommendations.map((rec, i) => {
+                  const recKey = (rec.id ?? rec.title ?? `rec-${i}`) as string;
+                  const isRecOpen = expandedCrossRecs.has(recKey);
+                  return (
+                    <div key={recKey} style={{
+                      background: "#FFFFFF",
+                      border: "0.5px solid var(--border)",
+                      borderRadius: 8,
+                      marginBottom: 10,
+                      boxShadow: "var(--shadow-sm)",
+                      overflow: "hidden",
+                    }}>
+                      <button
+                        onClick={() => toggleCrossRec(recKey)}
+                        style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, padding: "12px 14px", background: "none", border: "none", cursor: "pointer", textAlign: "left" }}
+                      >
+                        <span style={{ fontSize: 14, fontWeight: 600, color: NAVY, flex: 1 }}>{rec.title}</span>
+                        <div style={{ display: "flex", gap: 4, flexShrink: 0, flexWrap: "wrap", alignItems: "center" }}>
+                          <span style={{ fontSize: 9, padding: "2px 6px", borderRadius: 3, fontWeight: 500, textTransform: "uppercase", letterSpacing: 0.4,
+                            background: rec.priority === "high" ? "#faece7" : rec.priority === "medium" ? "#faeeda" : "#e1f5ee",
+                            color: rec.priority === "high" ? "#993c1d" : rec.priority === "medium" ? "#633806" : "#0f6e56",
+                          }}>{rec.priority}</span>
+                          <span style={{ fontSize: 9, padding: "2px 6px", borderRadius: 3, background: "#eeedfe", color: "#3C096C", fontWeight: 500, textTransform: "uppercase", letterSpacing: 0.4 }}>{rec.time_horizon}</span>
+                          {rec.anchor_co_elevation && (
+                            <span style={{ fontSize: 9, padding: "2px 6px", borderRadius: 3, background: "#e8edf1", color: NAVY, fontWeight: 500 }}>{rec.anchor_co_elevation}</span>
+                          )}
+                          <span style={{ fontSize: 11, color: TEAL, marginLeft: 4 }}>{isRecOpen ? "↑" : "↓"}</span>
+                        </div>
+                      </button>
+                      {isRecOpen && (
+                        <div style={{ padding: "0 14px 14px", borderTop: "0.5px solid var(--border)" }}>
+                          <p style={{ fontSize: 13, color: "var(--foreground)", margin: "10px 0", lineHeight: 1.65 }}>{rec.rationale}</p>
+                          {rec.steps && rec.steps.length > 0 && (
+                            <div style={{ marginTop: 8 }}>
+                              <div style={{ fontSize: 10, fontWeight: 500, color: NAVY, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Steps</div>
+                              <ol style={{ margin: 0, paddingLeft: 18, fontSize: 13, color: "var(--muted-foreground)", lineHeight: 1.6 }}>
+                                {rec.steps.map((step, j) => <li key={j} style={{ marginBottom: 3 }}>{step}</li>)}
+                              </ol>
+                            </div>
+                          )}
+                          <button onClick={(e) => openTrackingModal({ kind: "cross_instrument", rec }, e)} style={{
+                            fontSize: 10, padding: "3px 9px", border: `0.5px solid ${NAVY}`, borderRadius: 5,
+                            background: "transparent", color: NAVY, cursor: "pointer", marginTop: 8,
+                          }}>+ Add to intervention tracking</button>
+                        </div>
+                      )}
                     </div>
-                    <p style={{ fontSize: 13, color: "var(--foreground)", margin: "0 0 10px", lineHeight: 1.65 }}>{rec.rationale}</p>
-                    {rec.steps && rec.steps.length > 0 && (
-                      <div style={{ marginTop: 8 }}>
-                        <div style={{ fontSize: 10, fontWeight: 500, color: NAVY, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Steps</div>
-                        <ol style={{ margin: 0, paddingLeft: 18, fontSize: 13, color: "var(--muted-foreground)", lineHeight: 1.6 }}>
-                          {rec.steps.map((step, j) => <li key={j} style={{ marginBottom: 3 }}>{step}</li>)}
-                        </ol>
-                      </div>
-                    )}
-                    <button onClick={(e) => openTrackingModal({ kind: "cross_instrument", rec }, e)} style={{
-                      fontSize: 10, padding: "3px 9px", border: `0.5px solid ${NAVY}`, borderRadius: 5,
-                      background: "transparent", color: NAVY, cursor: "pointer", marginTop: 8,
-                    }}>+ Add to intervention tracking</button>
-                  </div>
-                ))}
+                  );
+                })}
               </>
             )}
           </div>
