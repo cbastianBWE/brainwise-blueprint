@@ -333,12 +333,27 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
               { assessment_id: row.id }
             );
           } else {
-            const { data: pairedRow } = await supabase
-              .from("assessments")
-              .select("id, status, reminder_count, last_reminder_sent_at")
-              .eq("id", row.paired_assessment_id)
-              .maybeSingle();
-            pairedManager = pairedRow ?? null;
+            const { data: pairedManagerRows } = await supabase.rpc(
+              "airsa_get_my_paired_manager_status" as any,
+              { p_self_assessment_id: row.id }
+            );
+            const pmRow = Array.isArray(pairedManagerRows) && pairedManagerRows.length > 0
+              ? (pairedManagerRows[0] as any)
+              : null;
+            pairedManager = pmRow && pmRow.paired_assessment_id
+              ? {
+                  id: pmRow.paired_assessment_id,
+                  status: pmRow.paired_status,
+                  reminder_count: pmRow.reminder_count ?? 0,
+                  last_reminder_sent_at: pmRow.last_reminder_sent_at,
+                }
+              : null;
+            if (!pairedManager) {
+              console.error(
+                "[AIRSA awaiting] Paired manager RPC returned no row",
+                { assessment_id: row.id }
+              );
+            }
           }
 
           combined.push({
