@@ -99,6 +99,8 @@ export default function NAINarrativeSections({
   const [responsesExpanded, setResponsesExpanded] = useState(false);
   const [expandedMapping, setExpandedMapping] = useState<Set<string>>(new Set());
   const [expandedResponseId, setExpandedResponseId] = useState<number | null>(null);
+  const [actionPlan, setActionPlan] = useState<any[] | null>(null);
+  const [personalSummary, setPersonalSummary] = useState<string[] | null>(null);
 
   const dimNameOf = (dimId: string) =>
     dimensionNameMap.get(dimId) ?? NAI_DIMENSION_NAMES[dimId] ?? dimId;
@@ -212,6 +214,8 @@ export default function NAINarrativeSections({
       const elevatedDimCount = dimensionScores.filter(([, s]) => (s.mean ?? 0) >= 51).length;
       const requiredSections = [
         "nai_profile_overview",
+        "nai_action_plan",
+        "nai_personal_summary",
         ...Object.keys(NAI_DIMENSION_NAMES).map((d) => `nai_dimension_highlight_${d}`),
         ...outliers.map((o) => `nai_item_interpretation_${o.item_number}`),
         "nai_cross_assessment",
@@ -262,6 +266,13 @@ export default function NAINarrativeSections({
       }
 
       if (!cancelled) setInterpretations(interpMap);
+
+      const apData = interpMap["nai_action_plan"];
+      const psData = interpMap["nai_personal_summary"];
+      if (!cancelled) {
+        setActionPlan(Array.isArray(apData?.action_plan) ? apData.action_plan : null);
+        setPersonalSummary(Array.isArray(psData?.personal_summary) ? psData.personal_summary : null);
+      }
 
       if (isCoachView) {
         const elevatedDimIds = dimensionScores
