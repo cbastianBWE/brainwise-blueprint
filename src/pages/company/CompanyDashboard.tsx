@@ -38,7 +38,7 @@ const DIMS_BY_WEIGHT = ["DIM-NAI-03", "DIM-NAI-04", "DIM-NAI-02", "DIM-NAI-01", 
 // ── PTP cross-instrument constants ──────────────────────────────────────────
 const PTP_DIM_COLORS: Record<string, string> = {
   "DIM-PTP-01": "#021F36", "DIM-PTP-02": "#006D77",
-  "DIM-PTP-03": "#6D6875", "DIM-PTP-04": "#3C096C", "DIM-PTP-05": "#FFB703",
+  "DIM-PTP-03": "#6D6875", "DIM-PTP-04": "#3C096C", "DIM-PTP-05": "#2D6A4F",
 };
 const PTP_DIM_NAMES: Record<string, string> = {
   "DIM-PTP-01": "Protection", "DIM-PTP-02": "Participation",
@@ -1320,7 +1320,7 @@ export default function CompanyDashboard() {
           const px = ML+panelW+6;
           const ptpDimsLocal = ptpAggregate?.dimensions;
           const ptpAvailable = !!ptpDimsLocal && Object.keys(ptpDimsLocal).length > 0 && !ptpAggregate?.suppressed;
-          const PTP_COLORS_LOCAL: Record<string,string> = {"DIM-PTP-01":"#021F36","DIM-PTP-02":"#006D77","DIM-PTP-03":"#6D6875","DIM-PTP-04":"#3C096C","DIM-PTP-05":"#FFB703"};
+          const PTP_COLORS_LOCAL: Record<string,string> = {"DIM-PTP-01":"#021F36","DIM-PTP-02":"#006D77","DIM-PTP-03":"#6D6875","DIM-PTP-04":"#3C096C","DIM-PTP-05":"#2D6A4F"};
           const PTP_NAMES_LOCAL: Record<string,string> = {"DIM-PTP-01":"Protection","DIM-PTP-02":"Participation","DIM-PTP-03":"Prediction","DIM-PTP-04":"Purpose","DIM-PTP-05":"Pleasure"};
           const PTP_TRI_W: Record<string,number> = {"DIM-PTP-01":0.25,"DIM-PTP-02":0.30,"DIM-PTP-03":0.45};
           const PTP_RSI_W: Record<string,number> = {"DIM-PTP-04":0.60,"DIM-PTP-05":0.40};
@@ -1372,7 +1372,7 @@ export default function CompanyDashboard() {
         const ptpDimsForCo = ptpAggregate?.dimensions;
         const ptpAvailForCo = !!ptpDimsForCo && Object.keys(ptpDimsForCo).length > 0 && !ptpAggregate?.suppressed;
         const naiDimsForCo = aggregate?.dimensions ?? {};
-        const PTP_COLORS_CO: Record<string,string> = {"DIM-PTP-01":"#021F36","DIM-PTP-02":"#006D77","DIM-PTP-03":"#6D6875","DIM-PTP-04":"#3C096C","DIM-PTP-05":"#FFB703"};
+        const PTP_COLORS_CO: Record<string,string> = {"DIM-PTP-01":"#021F36","DIM-PTP-02":"#006D77","DIM-PTP-03":"#6D6875","DIM-PTP-04":"#3C096C","DIM-PTP-05":"#2D6A4F"};
         if (!ptpAvailForCo) {
           const pendText = "Co-elevation pattern detection requires PTP aggregate data. Complete cross-instrument analysis will appear here once participants have completed both assessments.";
           const pendLines = splitText(pendText, CW-8, 7.5, "italic");

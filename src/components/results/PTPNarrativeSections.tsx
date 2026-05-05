@@ -7,7 +7,7 @@ const PTP_DIMENSION_COLORS: Record<string, string> = {
   "DIM-PTP-02": "#006D77",
   "DIM-PTP-03": "#6D6875",
   "DIM-PTP-04": "#3C096C",
-  "DIM-PTP-05": "#FFB703",
+  "DIM-PTP-05": "#2D6A4F",
 };
 
 const PTP_DIMENSION_NAMES: Record<string, string> = {
