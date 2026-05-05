@@ -93,6 +93,7 @@ const App = () => (
             <Route path="/cookies" element={<Cookies />} />
             <Route path="/international-privacy" element={<InternationalCompliance />} />
             <Route path="/services" element={<Services />} />
+            <Route path="/evolve" element={<Evolve />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/products" element={<Products />} />
             <Route path="/pricing" element={<PricingRouter />} />
