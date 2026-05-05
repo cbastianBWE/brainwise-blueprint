@@ -86,7 +86,7 @@ export default function InstrumentSelection({ onSelect }: Props) {
   useEffect(() => {
     if (!user) return;
     const load = async () => {
-      const [userRes, versionRes, resultsRes, coachClientsRes, purchasesRes, completedRes, inProgressRes, plansRes, selfPayCoachClientsRes] = await Promise.all([
+      const [userRes, versionRes, resultsRes, coachClientsRes, purchasesRes, completedRes, inProgressRes, plansRes, selfPayCoachClientsRes, awaitingRes] = await Promise.all([
         supabase.from("users").select("subscription_tier, subscription_status").eq("id", user.id).single(),
         supabase.from("platform_versions").select("version_string").eq("is_active", true).limit(1).single(),
         supabase.from("assessment_results").select("overall_profile").eq("user_id", user.id).order("created_at", { ascending: false }).limit(1),
@@ -106,7 +106,32 @@ export default function InstrumentSelection({ onSelect }: Props) {
           .is("stripe_payment_intent_id", null)
           .is("assessment_id", null)
           .in("invitation_status", ["sent", "opened"]),
+        supabase.from("assessments")
+          .select("id, completed_at")
+          .eq("user_id", user.id)
+          .eq("instrument_id", "INST-003")
+          .eq("rater_type", "self")
+          .eq("status", "completed")
+          .is("self_only_released_at", null)
+          .order("completed_at", { ascending: false })
+          .limit(1)
+          .maybeSingle(),
       ]);
+
+      if (awaitingRes.data) {
+        const { data: existingResult } = await supabase
+          .from("assessment_results")
+          .select("id")
+          .eq("assessment_id", awaitingRes.data.id)
+          .maybeSingle();
+        if (!existingResult) {
+          setAirsaAwaiting({ completed_at: awaitingRes.data.completed_at });
+        } else {
+          setAirsaAwaiting(null);
+        }
+      } else {
+        setAirsaAwaiting(null);
+      }
 
       if (userRes.data) {
         setUserTier(userRes.data.subscription_tier || "base");
