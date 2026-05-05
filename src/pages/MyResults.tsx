@@ -1927,12 +1927,24 @@ function AirsaAwaitingView({
   const handleReleaseConfirm = async () => {
     setShowReleaseDialog(false);
     setActionLoading(true);
-    const { error } = await supabase.rpc("airsa_release_self_only" as any, {
+    const { error: rpcError } = await supabase.rpc("airsa_release_self_only" as any, {
       p_self_assessment_id: selected.result.assessment_id,
     });
+    if (rpcError) {
+      setActionLoading(false);
+      toast({ title: "Cannot release report", description: rpcError.message, variant: "destructive" });
+      return;
+    }
+    const { error: scoresError } = await supabase.functions.invoke("calculate-scores", {
+      body: { assessment_id: selected.result.assessment_id },
+    });
     setActionLoading(false);
-    if (error) {
-      toast({ title: "Cannot release report", description: error.message, variant: "destructive" });
+    if (scoresError) {
+      toast({
+        title: "Report processing failed",
+        description: "Your release was recorded but report generation failed. Try refreshing in a few minutes, or contact support if it persists.",
+        variant: "destructive",
+      });
       return;
     }
     toast({ title: "Self-only report released" });
