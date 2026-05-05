@@ -530,6 +530,8 @@ export default function AdminUsers() {
 
   const [pendingSearch, setPendingSearch] = useState("");
   const [usersSearch, setUsersSearch] = useState("");
+  const [missingSupervisorFilter, setMissingSupervisorFilter] = useState(false);
+  const [deactivatedSupervisorFilter, setDeactivatedSupervisorFilter] = useState(false);
 
   // Executive Perspective state
   const [epnFilter, setEpnFilter] = useState<string>("leaders");
