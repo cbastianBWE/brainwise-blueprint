@@ -857,19 +857,28 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
       </div>
 
       {selected && selected.isAwaitingSupervisor && (
-        <AirsaAwaitingView
-          selected={selected}
-          isCoachView={isCoachView}
-          onRefetch={() => setRefetchKey((k) => k + 1)}
-          actionLoading={airsaActionLoading}
-          setActionLoading={setAirsaActionLoading}
-          showReleaseDialog={showAirsaReleaseDialog}
-          setShowReleaseDialog={setShowAirsaReleaseDialog}
-          showRerateDialog={showAirsaRerateDialog}
-          setShowRerateDialog={setShowAirsaRerateDialog}
-          toast={toast}
-          navigate={navigate}
-        />
+        <>
+          {!isCoachView && canTakeAssessments && (
+            <section className="flex flex-wrap gap-3">
+              <Button onClick={() => navigate("/assessment")}>
+                Take Another Assessment
+              </Button>
+            </section>
+          )}
+          <AirsaAwaitingView
+            selected={selected}
+            isCoachView={isCoachView}
+            onRefetch={() => setRefetchKey((k) => k + 1)}
+            actionLoading={airsaActionLoading}
+            setActionLoading={setAirsaActionLoading}
+            showReleaseDialog={showAirsaReleaseDialog}
+            setShowReleaseDialog={setShowAirsaReleaseDialog}
+            showRerateDialog={showAirsaRerateDialog}
+            setShowRerateDialog={setShowAirsaRerateDialog}
+            toast={toast}
+            navigate={navigate}
+          />
+        </>
       )}
 
       {selected && !selected.isAwaitingSupervisor && (
