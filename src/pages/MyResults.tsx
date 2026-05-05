@@ -524,7 +524,7 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
 
   // Poll for AI narrative
   useEffect(() => {
-    if (!selected || selected.result.ai_narrative) {
+    if (!selected || selected.result.ai_narrative || selected.isAwaitingSupervisor) {
       setPollingNarrative(false);
       return;
     }
