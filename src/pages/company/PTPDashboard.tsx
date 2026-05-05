@@ -1792,7 +1792,7 @@ export default function PTPDashboard() {
                                   Recommended interventions ({deltaNarrative.narrative_text.recommendations.length})
                                 </div>
                                 {deltaNarrative.narrative_text.recommendations.map((rec) => (
-                                  <div key={rec.id} style={{ background: "#ede9df", borderRadius: 8, padding: "14px 16px", marginBottom: 8 }}>
+                                  <div key={rec.id} style={{ background: "#FFFFFF", border: "0.5px solid var(--border)", borderRadius: 8, padding: "14px 16px", marginBottom: 8 }}>
                                     <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8, marginBottom: 6 }}>
                                       <span style={{ fontSize: 14, fontWeight: 500, color: NAVY }}>{rec.title}</span>
                                       <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
