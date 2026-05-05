@@ -2600,80 +2600,46 @@ export default function PTPDashboard() {
                   >
                     Structured interventions
                   </h3>
-                  {interventions.map((iv) => (
-                    <div
-                      key={iv.id ?? iv.title}
-                      style={{
-                        border: "0.5px solid var(--border)",
-                        borderRadius: 8,
-                        padding: 16,
-                        marginBottom: 12,
-                        background: "#FFFFFF",
-                        boxShadow: "var(--shadow-sm)",
-                      }}
-                    >
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "flex-start",
-                          justifyContent: "space-between",
-                          gap: 8,
-                          marginBottom: 6,
-                        }}
-                      >
-                        <span style={{ fontSize: 15, fontWeight: 500, color: NAVY }}>
-                          {iv.title}
-                        </span>
-                        <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
-                          {priorityBadge(iv.priority)}
-                          {horizonBadge(iv.time_horizon)}
-                          {typeBadge(iv.intervention_type)}
-                        </div>
-                      </div>
-                      <p
-                        style={{
-                          fontSize: 14,
-                          color: "var(--muted-foreground)",
-                          margin: "0 0 6px",
-                          lineHeight: 1.6,
-                        }}
-                      >
-                        {iv.description}
-                      </p>
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "space-between",
-                        }}
-                      >
-                        <span style={{ fontSize: 9, color: "var(--muted-foreground)" }}>
-                          Targets:{" "}
-                          {iv.target_dimensions
-                            ?.map((d) => DIM_NAMES[d] ?? d)
-                            .join(" · ")}
-                        </span>
+                  {interventions.map((iv) => {
+                    const ivKey = iv.id ?? iv.title;
+                    const isIvOpen = expandedInterventions.has(ivKey);
+                    return (
+                      <div key={ivKey} style={{ border: "0.5px solid var(--border)", borderRadius: 8, marginBottom: 12, background: "#FFFFFF", boxShadow: "var(--shadow-sm)", overflow: "hidden" }}>
                         <button
-                          onClick={() => {
-                            setTrackingModal({ open: true, source: { kind: "dashboard", intervention: iv } });
-                            setTrackingNote("");
-                            setTrackingStatus("not_started");
-                          }}
-                          style={{
-                            fontSize: 10,
-                            padding: "3px 9px",
-                            border: `0.5px solid ${NAVY}`,
-                            borderRadius: 5,
-                            background: "transparent",
-                            color: NAVY,
-                            cursor: "pointer",
-                          }}
+                          onClick={() => toggleIntervention(ivKey)}
+                          style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, padding: "12px 16px", background: "none", border: "none", cursor: "pointer", textAlign: "left" }}
                         >
-                          + Add to intervention tracking
+                          <span style={{ fontSize: 15, fontWeight: 500, color: NAVY, flex: 1 }}>{iv.title}</span>
+                          <div style={{ display: "flex", gap: 4, flexShrink: 0, alignItems: "center" }}>
+                            {priorityBadge(iv.priority)}
+                            {horizonBadge(iv.time_horizon)}
+                            {typeBadge(iv.intervention_type)}
+                            <span style={{ fontSize: 11, color: ORANGE, marginLeft: 4 }}>{isIvOpen ? "↑" : "↓"}</span>
+                          </div>
                         </button>
+                        {isIvOpen && (
+                          <div style={{ padding: "0 16px 14px", borderTop: "0.5px solid var(--border)" }}>
+                            <p style={{ fontSize: 14, color: "var(--muted-foreground)", margin: "10px 0 6px", lineHeight: 1.6 }}>{iv.description}</p>
+                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                              <span style={{ fontSize: 9, color: "var(--muted-foreground)" }}>
+                                Targets: {iv.target_dimensions?.map((d: string) => DIM_NAMES[d] ?? d).join(" · ")}
+                              </span>
+                              <button
+                                onClick={() => {
+                                  setTrackingModal({ open: true, source: { kind: "dashboard", intervention: iv } });
+                                  setTrackingNote("");
+                                  setTrackingStatus("not_started");
+                                }}
+                                style={{ fontSize: 10, padding: "3px 9px", border: `0.5px solid ${NAVY}`, borderRadius: 5, background: "transparent", color: NAVY, cursor: "pointer" }}
+                              >
+                                + Add to intervention tracking
+                              </button>
+                            </div>
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </>
               )}
             </>
