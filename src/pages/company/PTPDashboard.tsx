@@ -2217,7 +2217,8 @@ export default function PTPDashboard() {
                                 <div
                                   key={iv.id ?? `${dimId}-${iv.title}`}
                                   style={{
-                                    background: "#ede9df",
+                                    background: "#FFFFFF",
+                                    border: "0.5px solid var(--border)",
                                     borderRadius: 8,
                                     padding: "14px 16px",
                                     marginBottom: 8,
