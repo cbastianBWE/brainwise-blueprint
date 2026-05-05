@@ -55,7 +55,7 @@ const NAI_DIMENSION_COLORS: Record<string, string> = {
   "DIM-NAI-02": "#F5741A",
   "DIM-NAI-03": "#006D77",
   "DIM-NAI-04": "#3C096C",
-  "DIM-NAI-05": "#FFB703",
+  "DIM-NAI-05": "#7a5800",
 };
 
 const NAI_DIMENSION_PASTEL: Record<string, string> = {
@@ -63,7 +63,7 @@ const NAI_DIMENSION_PASTEL: Record<string, string> = {
   "DIM-NAI-02": "#FEF0E7",
   "DIM-NAI-03": "#E0F0F2",
   "DIM-NAI-04": "#EDE5F4",
-  "DIM-NAI-05": "#FFF8E1",
+  "DIM-NAI-05": "#F0E6D2",
 };
 
 const PTP_ITEM_FACET_NAMES: Record<number, string> = {
