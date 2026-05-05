@@ -178,6 +178,9 @@ interface StoredNarrative {
     next_steps?: string;
     reassessment_note?: string;
     interventions?: Intervention[];
+    summary?: string;
+    section_summaries?: Record<string, string>;
+    top_interventions?: Array<{ title: string; rationale: string }>;
   };
 }
 
@@ -389,6 +392,38 @@ export default function PTPDashboard() {
   const [compareSliceType, setCompareSliceType] = useState<string>("all");
   const [compareSliceValue, setCompareSliceValue] = useState<string>("all");
   const [compareHistory, setCompareHistory] = useState<NarrativeHistory[]>([]);
+  const [expandedNarrativeSections, setExpandedNarrativeSections] = useState<Set<string>>(new Set());
+  const toggleNarrativeSection = (key: string) => {
+    setExpandedNarrativeSections(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      return next;
+    });
+  };
+  const [expandedInterventions, setExpandedInterventions] = useState<Set<string>>(new Set());
+  const toggleIntervention = (key: string) => {
+    setExpandedInterventions(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      return next;
+    });
+  };
+  const [expandedCoElevations, setExpandedCoElevations] = useState<Set<number>>(new Set());
+  const toggleCoElevation = (i: number) => {
+    setExpandedCoElevations(prev => {
+      const next = new Set(prev);
+      if (next.has(i)) next.delete(i); else next.add(i);
+      return next;
+    });
+  };
+  const [expandedCrossRecs, setExpandedCrossRecs] = useState<Set<string>>(new Set());
+  const toggleCrossRec = (key: string) => {
+    setExpandedCrossRecs(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      return next;
+    });
+  };
   type PTPTrackingSource =
     | { kind: "dashboard"; intervention: Intervention }
     | { kind: "cross_instrument"; rec: CrossInstrumentRec }
@@ -1406,6 +1441,45 @@ export default function PTPDashboard() {
             </div>
           )}
 
+          {latestNarrative?.narrative_text?.summary && (
+            <div style={{
+              background: "#FFFFFF",
+              border: "0.5px solid var(--border)",
+              borderLeft: `4px solid ${ORANGE}`,
+              borderRadius: 8,
+              padding: "14px 16px",
+              marginBottom: 16,
+              boxShadow: "var(--shadow-sm)",
+            }}>
+              <div style={{ fontSize: 9, fontWeight: 500, color: NAVY, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>
+                Threat Profile Summary
+              </div>
+              <p style={{ fontSize: 14, color: "var(--foreground)", margin: "0 0 12px", lineHeight: 1.65, fontWeight: 500 }}>
+                {latestNarrative.narrative_text.summary}
+              </p>
+              {Array.isArray((latestNarrative.narrative_text as any).top_interventions) && (latestNarrative.narrative_text as any).top_interventions.length > 0 && (
+                <div>
+                  <div style={{ fontSize: 9, fontWeight: 500, color: NAVY, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>
+                    Top 3 recommended actions
+                  </div>
+                  {(latestNarrative.narrative_text as any).top_interventions.map((item: { title: string; rationale: string }, i: number) => (
+                    <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start", marginBottom: 6 }}>
+                      <span style={{
+                        flexShrink: 0, width: 18, height: 18, borderRadius: "50%",
+                        background: ORANGE, color: "#FFFFFF", fontSize: 10, fontWeight: 600,
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                      }}>{i + 1}</span>
+                      <span style={{ fontSize: 13, color: "var(--foreground)", fontWeight: 500, lineHeight: 1.4 }}>
+                        {item.title}
+                        <span style={{ fontWeight: 400, color: "var(--muted-foreground)", fontSize: 12 }}> (AI Interpretation → Structured Interventions)</span>
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           <div
             style={{
               display: "grid",
@@ -1760,7 +1834,7 @@ export default function PTPDashboard() {
                                   Recommended interventions ({deltaNarrative.narrative_text.recommendations.length})
                                 </div>
                                 {deltaNarrative.narrative_text.recommendations.map((rec) => (
-                                  <div key={rec.id} style={{ background: "#ede9df", borderRadius: 8, padding: "14px 16px", marginBottom: 8 }}>
+                                  <div key={rec.id} style={{ background: "#FFFFFF", border: "0.5px solid var(--border)", borderRadius: 8, padding: "14px 16px", marginBottom: 8 }}>
                                     <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8, marginBottom: 6 }}>
                                       <span style={{ fontSize: 14, fontWeight: 500, color: NAVY }}>{rec.title}</span>
                                       <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
@@ -1835,7 +1909,7 @@ export default function PTPDashboard() {
               >
                 <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}>
                   <thead>
-                    <tr style={{ background: "#ede9df" }}>
+                    <tr style={{ background: "#FFFFFF" }}>
                       {["Department", "Completed", "Rate", "Progress"].map((h) => (
                         <th
                           key={h}
@@ -2185,7 +2259,8 @@ export default function PTPDashboard() {
                                 <div
                                   key={iv.id ?? `${dimId}-${iv.title}`}
                                   style={{
-                                    background: "#ede9df",
+                                    background: "#FFFFFF",
+                                    border: "0.5px solid var(--border)",
                                     borderRadius: 8,
                                     padding: "14px 16px",
                                     marginBottom: 8,
@@ -2461,47 +2536,36 @@ export default function PTPDashboard() {
                 { key: "benefits", label: "Potential benefits visible in the data" },
                 { key: "risks", label: "Potential risks if unaddressed" },
                 { key: "next_steps", label: "Recommended next steps" },
-              ].map((section) => {
-                const text = latestNarrative.narrative_text[
-                  section.key as keyof typeof latestNarrative.narrative_text
-                ] as string | undefined;
+              ].map(section => {
+                const text = latestNarrative.narrative_text[section.key as keyof typeof latestNarrative.narrative_text] as string | undefined;
                 if (!text) return null;
+                const isOpen = expandedNarrativeSections.has(section.key);
+                const sectionSummaries = (latestNarrative.narrative_text as any).section_summaries ?? {};
+                const preview = sectionSummaries[section.key] as string | undefined;
                 return (
-                  <div
-                    key={section.key}
-                    style={{
-                      background: "#FFFFFF",
-                      border: "0.5px solid var(--border)",
-                      borderRadius: 12,
-                      padding: 16,
-                      marginBottom: 12,
-                      boxShadow: "var(--shadow-sm)",
-                    }}
-                  >
-                    <div
-                      style={{
-                        fontSize: 9,
-                        fontWeight: 500,
-                        color: NAVY,
-                        textTransform: "uppercase",
-                        letterSpacing: "0.06em",
-                        marginBottom: 6,
-                        borderLeft: `3px solid ${ORANGE}`,
-                        paddingLeft: 7,
-                      }}
+                  <div key={section.key} style={{ background: "#FFFFFF", border: "0.5px solid var(--border)", borderRadius: 12, marginBottom: 12, boxShadow: "var(--shadow-sm)", overflow: "hidden" }}>
+                    <button
+                      onClick={() => toggleNarrativeSection(section.key)}
+                      style={{ width: "100%", display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, padding: 16, background: "none", border: "none", cursor: "pointer", textAlign: "left" }}
                     >
-                      {section.label}
-                    </div>
-                    <div
-                      style={{
-                        fontSize: 14,
-                        lineHeight: 1.75,
-                        color: "var(--foreground)",
-                        whiteSpace: "pre-wrap",
-                      }}
-                    >
-                      {text}
-                    </div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: 9, fontWeight: 500, color: NAVY, textTransform: "uppercase" as const, letterSpacing: "0.06em", marginBottom: 5, borderLeft: `3px solid ${ORANGE}`, paddingLeft: 7 }}>
+                          {section.label}
+                        </div>
+                        {!isOpen && preview && (
+                          <p style={{ fontSize: 13, color: "var(--muted-foreground)", margin: 0, lineHeight: 1.6 }}>{preview}</p>
+                        )}
+                        {!isOpen && !preview && (
+                          <p style={{ fontSize: 12, color: "var(--muted-foreground)", margin: 0, fontStyle: "italic" }}>Click to read full analysis</p>
+                        )}
+                      </div>
+                      <span style={{ fontSize: 11, color: ORANGE, flexShrink: 0, marginTop: 2 }}>{isOpen ? "↑ collapse" : "↓ read full"}</span>
+                    </button>
+                    {isOpen && (
+                      <div style={{ padding: "0 16px 16px", fontSize: 14, lineHeight: 1.75, color: "var(--foreground)", whiteSpace: "pre-wrap" }}>
+                        {text}
+                      </div>
+                    )}
                   </div>
                 );
               })}
@@ -2536,80 +2600,46 @@ export default function PTPDashboard() {
                   >
                     Structured interventions
                   </h3>
-                  {interventions.map((iv) => (
-                    <div
-                      key={iv.id ?? iv.title}
-                      style={{
-                        border: "0.5px solid var(--border)",
-                        borderRadius: 8,
-                        padding: 16,
-                        marginBottom: 12,
-                        background: "#FFFFFF",
-                        boxShadow: "var(--shadow-sm)",
-                      }}
-                    >
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "flex-start",
-                          justifyContent: "space-between",
-                          gap: 8,
-                          marginBottom: 6,
-                        }}
-                      >
-                        <span style={{ fontSize: 15, fontWeight: 500, color: NAVY }}>
-                          {iv.title}
-                        </span>
-                        <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
-                          {priorityBadge(iv.priority)}
-                          {horizonBadge(iv.time_horizon)}
-                          {typeBadge(iv.intervention_type)}
-                        </div>
-                      </div>
-                      <p
-                        style={{
-                          fontSize: 14,
-                          color: "var(--muted-foreground)",
-                          margin: "0 0 6px",
-                          lineHeight: 1.6,
-                        }}
-                      >
-                        {iv.description}
-                      </p>
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "space-between",
-                        }}
-                      >
-                        <span style={{ fontSize: 9, color: "var(--muted-foreground)" }}>
-                          Targets:{" "}
-                          {iv.target_dimensions
-                            ?.map((d) => DIM_NAMES[d] ?? d)
-                            .join(" · ")}
-                        </span>
+                  {interventions.map((iv) => {
+                    const ivKey = iv.id ?? iv.title;
+                    const isIvOpen = expandedInterventions.has(ivKey);
+                    return (
+                      <div key={ivKey} style={{ border: "0.5px solid var(--border)", borderRadius: 8, marginBottom: 12, background: "#FFFFFF", boxShadow: "var(--shadow-sm)", overflow: "hidden" }}>
                         <button
-                          onClick={() => {
-                            setTrackingModal({ open: true, source: { kind: "dashboard", intervention: iv } });
-                            setTrackingNote("");
-                            setTrackingStatus("not_started");
-                          }}
-                          style={{
-                            fontSize: 10,
-                            padding: "3px 9px",
-                            border: `0.5px solid ${NAVY}`,
-                            borderRadius: 5,
-                            background: "transparent",
-                            color: NAVY,
-                            cursor: "pointer",
-                          }}
+                          onClick={() => toggleIntervention(ivKey)}
+                          style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, padding: "12px 16px", background: "none", border: "none", cursor: "pointer", textAlign: "left" }}
                         >
-                          + Add to intervention tracking
+                          <span style={{ fontSize: 15, fontWeight: 500, color: NAVY, flex: 1 }}>{iv.title}</span>
+                          <div style={{ display: "flex", gap: 4, flexShrink: 0, alignItems: "center" }}>
+                            {priorityBadge(iv.priority)}
+                            {horizonBadge(iv.time_horizon)}
+                            {typeBadge(iv.intervention_type)}
+                            <span style={{ fontSize: 11, color: ORANGE, marginLeft: 4 }}>{isIvOpen ? "↑" : "↓"}</span>
+                          </div>
                         </button>
+                        {isIvOpen && (
+                          <div style={{ padding: "0 16px 14px", borderTop: "0.5px solid var(--border)" }}>
+                            <p style={{ fontSize: 14, color: "var(--muted-foreground)", margin: "10px 0 6px", lineHeight: 1.6 }}>{iv.description}</p>
+                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                              <span style={{ fontSize: 9, color: "var(--muted-foreground)" }}>
+                                Targets: {iv.target_dimensions?.map((d: string) => DIM_NAMES[d] ?? d).join(" · ")}
+                              </span>
+                              <button
+                                onClick={() => {
+                                  setTrackingModal({ open: true, source: { kind: "dashboard", intervention: iv } });
+                                  setTrackingNote("");
+                                  setTrackingStatus("not_started");
+                                }}
+                                style={{ fontSize: 10, padding: "3px 9px", border: `0.5px solid ${NAVY}`, borderRadius: 5, background: "transparent", color: NAVY, cursor: "pointer" }}
+                              >
+                                + Add to intervention tracking
+                              </button>
+                            </div>
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </>
               )}
             </>
@@ -2736,7 +2766,7 @@ export default function PTPDashboard() {
                     style={{ width: "100%", borderCollapse: "collapse", fontSize: 11 }}
                   >
                     <thead>
-                      <tr style={{ background: "#ede9df" }}>
+                      <tr style={{ background: "#FFFFFF" }}>
                         <th
                           style={{
                             padding: "8px 12px",
@@ -3295,16 +3325,31 @@ export default function PTPDashboard() {
               }
               return (
                 <div style={{ display: "flex", flexDirection: "column" as const, gap: 10 }}>
-                  {patterns.map((p, i) => (
-                    <div key={i} style={{ background: "var(--muted)", borderRadius: 8, padding: 12, border: "0.5px solid var(--border)" }}>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: NAVY, marginBottom: 6 }}>{p.label}</div>
-                      <div style={{ fontSize: 13, color: "var(--muted-foreground)", marginBottom: 8, lineHeight: 1.6 }}>{p.description}</div>
-                      <div style={{ display: "flex", gap: 16, fontSize: 12 }}>
-                        <span><span style={{ color: "var(--muted-foreground)" }}>NAI </span><span style={{ color: NAI_DIM_COLORS[p.naiDimId], fontWeight: 600 }}>{p.naiDimName} {Math.round(p.naiScore)}</span></span>
-                        <span><span style={{ color: "var(--muted-foreground)" }}>PTP </span><span style={{ color: DIM_COLORS[p.ptpDimId], fontWeight: 600 }}>{p.ptpDimName} {Math.round(p.ptpScore)}</span></span>
+                  {patterns.map((p, i) => {
+                    const isCoOpen = expandedCoElevations.has(i);
+                    return (
+                      <div key={i} style={{ background: "#FFFFFF", border: "0.5px solid var(--border)", borderRadius: 8, marginBottom: 8, overflow: "hidden" }}>
+                        <button
+                          onClick={() => toggleCoElevation(i)}
+                          style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "10px 12px", background: "none", border: "none", cursor: "pointer", textAlign: "left" }}
+                        >
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontSize: 13, fontWeight: 700, color: NAVY, marginBottom: 4 }}>{p.label}</div>
+                            <div style={{ display: "flex", gap: 16, fontSize: 12 }}>
+                              <span><span style={{ color: "var(--muted-foreground)" }}>NAI </span><span style={{ color: NAI_DIM_COLORS[p.naiDimId], fontWeight: 600 }}>{p.naiDimName} {Math.round(p.naiScore)}</span></span>
+                              <span><span style={{ color: "var(--muted-foreground)" }}>PTP </span><span style={{ color: DIM_COLORS[p.ptpDimId], fontWeight: 600 }}>{p.ptpDimName} {Math.round(p.ptpScore)}</span></span>
+                            </div>
+                          </div>
+                          <span style={{ fontSize: 11, color: ORANGE, flexShrink: 0 }}>{isCoOpen ? "↑ less" : "↓ more"}</span>
+                        </button>
+                        {isCoOpen && (
+                          <div style={{ padding: "0 12px 12px", borderTop: "0.5px solid var(--border)" }}>
+                            <p style={{ fontSize: 13, color: "var(--muted-foreground)", margin: "10px 0 0", lineHeight: 1.6 }}>{p.description}</p>
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               );
             })()}
@@ -3351,59 +3396,55 @@ export default function PTPDashboard() {
                     {crossInstrumentRow.summary}
                   </p>
                 )}
-                {crossInstrumentRow.recommendations.map((rec, i) => (
-                  <div key={rec.id ?? i} style={{
-                    background: "#FFFFFF",
-                    border: "0.5px solid var(--border)",
-                    borderRadius: 8,
-                    padding: 14,
-                    marginBottom: 10,
-                    boxShadow: "var(--shadow-sm)",
-                  }}>
-                    <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8, marginBottom: 6 }}>
-                      <span style={{ fontSize: 14, fontWeight: 600, color: NAVY }}>{rec.title}</span>
-                      <div style={{ display: "flex", gap: 4, flexShrink: 0, flexWrap: "wrap" }}>
-                        <span style={{ fontSize: 9, padding: "2px 6px", borderRadius: 3, fontWeight: 500, textTransform: "uppercase", letterSpacing: 0.4,
-                          background: rec.priority === "high" ? "#faece7" : rec.priority === "medium" ? "#faeeda" : "#e1f5ee",
-                          color: rec.priority === "high" ? "#993c1d" : rec.priority === "medium" ? "#633806" : "#0f6e56",
-                        }}>{rec.priority}</span>
-                        <span style={{ fontSize: 9, padding: "2px 6px", borderRadius: 3, background: "#eeedfe", color: "#3C096C", fontWeight: 500, textTransform: "uppercase", letterSpacing: 0.4 }}>{rec.time_horizon}</span>
-                        {rec.anchor_co_elevation && (
-                          <span style={{ fontSize: 9, padding: "2px 6px", borderRadius: 3, background: "#e8edf1", color: NAVY, fontWeight: 500 }}>{rec.anchor_co_elevation}</span>
-                        )}
-                      </div>
+                {crossInstrumentRow.recommendations.map((rec, i) => {
+                  const recKey = rec.id ?? String(i);
+                  const isRecOpen = expandedCrossRecs.has(recKey);
+                  return (
+                    <div key={recKey} style={{ background: "#FFFFFF", border: "0.5px solid var(--border)", borderRadius: 8, marginBottom: 10, overflow: "hidden", boxShadow: "var(--shadow-sm)" }}>
+                      <button
+                        onClick={() => toggleCrossRec(recKey)}
+                        style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, padding: "12px 14px", background: "none", border: "none", cursor: "pointer", textAlign: "left" }}
+                      >
+                        <span style={{ fontSize: 14, fontWeight: 600, color: NAVY, flex: 1 }}>{rec.title}</span>
+                        <div style={{ display: "flex", gap: 4, flexShrink: 0, flexWrap: "wrap", alignItems: "center" }}>
+                          <span style={{ fontSize: 9, padding: "2px 6px", borderRadius: 3, fontWeight: 500, textTransform: "uppercase", letterSpacing: 0.4,
+                            background: rec.priority === "high" ? "#faece7" : rec.priority === "medium" ? "#faeeda" : "#e1f5ee",
+                            color: rec.priority === "high" ? "#993c1d" : rec.priority === "medium" ? "#633806" : "#0f6e56",
+                          }}>{rec.priority}</span>
+                          <span style={{ fontSize: 9, padding: "2px 6px", borderRadius: 3, background: "#eeedfe", color: "#3C096C", fontWeight: 500, textTransform: "uppercase", letterSpacing: 0.4 }}>{rec.time_horizon}</span>
+                          {rec.anchor_co_elevation && (
+                            <span style={{ fontSize: 9, padding: "2px 6px", borderRadius: 3, background: "#e8edf1", color: NAVY, fontWeight: 500 }}>{rec.anchor_co_elevation}</span>
+                          )}
+                          <span style={{ fontSize: 11, color: ORANGE, marginLeft: 4 }}>{isRecOpen ? "↑" : "↓"}</span>
+                        </div>
+                      </button>
+                      {isRecOpen && (
+                        <div style={{ padding: "0 14px 14px", borderTop: "0.5px solid var(--border)" }}>
+                          <p style={{ fontSize: 13, color: "var(--foreground)", margin: "10px 0 8px", lineHeight: 1.65 }}>{rec.rationale}</p>
+                          {rec.steps && rec.steps.length > 0 && (
+                            <div style={{ marginBottom: 10 }}>
+                              <div style={{ fontSize: 10, fontWeight: 500, color: NAVY, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Steps</div>
+                              <ol style={{ margin: 0, paddingLeft: 18, fontSize: 13, color: "var(--muted-foreground)", lineHeight: 1.6 }}>
+                                {rec.steps.map((step, j) => <li key={j} style={{ marginBottom: 3 }}>{step}</li>)}
+                              </ol>
+                            </div>
+                          )}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setTrackingModal({ open: true, source: { kind: "cross_instrument", rec } });
+                              setTrackingNote("");
+                              setTrackingStatus("not_started");
+                            }}
+                            style={{ fontSize: 10, padding: "3px 9px", border: `0.5px solid ${NAVY}`, borderRadius: 5, background: "transparent", color: NAVY, cursor: "pointer", marginTop: 4 }}
+                          >
+                            + Add to intervention tracking
+                          </button>
+                        </div>
+                      )}
                     </div>
-                    <p style={{ fontSize: 13, color: "var(--foreground)", margin: "0 0 10px", lineHeight: 1.65 }}>{rec.rationale}</p>
-                    {rec.steps && rec.steps.length > 0 && (
-                      <div style={{ marginTop: 8 }}>
-                        <div style={{ fontSize: 10, fontWeight: 500, color: NAVY, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Steps</div>
-                        <ol style={{ margin: 0, paddingLeft: 18, fontSize: 13, color: "var(--muted-foreground)", lineHeight: 1.6 }}>
-                          {rec.steps.map((step, j) => <li key={j} style={{ marginBottom: 3 }}>{step}</li>)}
-                        </ol>
-                      </div>
-                    )}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setTrackingModal({ open: true, source: { kind: "cross_instrument", rec } });
-                        setTrackingNote("");
-                        setTrackingStatus("not_started");
-                      }}
-                      style={{
-                        fontSize: 10,
-                        padding: "3px 9px",
-                        border: `0.5px solid ${NAVY}`,
-                        borderRadius: 5,
-                        background: "transparent",
-                        color: NAVY,
-                        cursor: "pointer",
-                        marginTop: 8,
-                      }}
-                    >
-                      + Add to intervention tracking
-                    </button>
-                  </div>
-                ))}
+                  );
+                })}
               </>
             )}
           </div>
