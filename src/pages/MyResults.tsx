@@ -856,7 +856,23 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
         )}
       </div>
 
-      {selected && (
+      {selected && selected.isAwaitingSupervisor && (
+        <AirsaAwaitingView
+          selected={selected}
+          isCoachView={isCoachView}
+          onRefetch={() => setRefetchKey((k) => k + 1)}
+          actionLoading={airsaActionLoading}
+          setActionLoading={setAirsaActionLoading}
+          showReleaseDialog={showAirsaReleaseDialog}
+          setShowReleaseDialog={setShowAirsaReleaseDialog}
+          showRerateDialog={showAirsaRerateDialog}
+          setShowRerateDialog={setShowAirsaRerateDialog}
+          toast={toast}
+          navigate={navigate}
+        />
+      )}
+
+      {selected && !selected.isAwaitingSupervisor && (
         <>
           {debriefPendingIds.has(selected.result.assessment_id) && (
             <Card className="border-primary/30 bg-primary/5">
