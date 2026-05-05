@@ -1885,7 +1885,10 @@ export default function CompanyDashboard() {
                         alignItems: "center",
                         justifyContent: "center",
                       }}>{i + 1}</span>
-                      <span style={{ fontSize: 13, color: "var(--foreground)", fontWeight: 500, lineHeight: 1.4 }}>{item.title}</span>
+                      <span style={{ fontSize: 13, color: "var(--foreground)", fontWeight: 500, lineHeight: 1.4 }}>
+                        {item.title}
+                        <span style={{ fontWeight: 400, color: "var(--muted-foreground)", fontSize: 12 }}> (Interventions tab)</span>
+                      </span>
                     </div>
                   ))}
                 </div>
