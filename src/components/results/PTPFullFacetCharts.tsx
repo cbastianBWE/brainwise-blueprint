@@ -18,7 +18,7 @@ const PTP_DIMENSION_COLORS: Record<string, string> = {
   "DIM-PTP-02": "#006D77", // Participation — Teal
   "DIM-PTP-03": "#6D6875", // Prediction — Gray
   "DIM-PTP-04": "#3C096C", // Purpose — Purple
-  "DIM-PTP-05": "#FFB703", // Pleasure — Yellow
+  "DIM-PTP-05": "#2D6A4F", // Pleasure — Forest Green
 };
 
 const THREAT_DIMENSION_IDS = new Set(["DIM-PTP-01", "DIM-PTP-02", "DIM-PTP-03"]);

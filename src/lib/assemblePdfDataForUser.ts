@@ -39,7 +39,7 @@ const PTP_DIMENSION_COLORS: Record<string, string> = {
   "DIM-PTP-02": "#006D77",
   "DIM-PTP-03": "#6D6875",
   "DIM-PTP-04": "#3C096C",
-  "DIM-PTP-05": "#FFB703",
+  "DIM-PTP-05": "#2D6A4F",
 };
 
 const PTP_DIMENSION_PASTEL: Record<string, string> = {
@@ -47,7 +47,7 @@ const PTP_DIMENSION_PASTEL: Record<string, string> = {
   "DIM-PTP-02": "#E6F2F3",
   "DIM-PTP-03": "#F0EFF1",
   "DIM-PTP-04": "#EEE8F5",
-  "DIM-PTP-05": "#FFF8E6",
+  "DIM-PTP-05": "#E8F0EC",
 };
 
 const NAI_DIMENSION_COLORS: Record<string, string> = {
