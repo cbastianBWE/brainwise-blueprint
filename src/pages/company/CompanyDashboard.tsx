@@ -482,6 +482,7 @@ export default function CompanyDashboard() {
     const { data, error } = await (supabase as any)
       .from("org_dashboard_narratives")
       .select("id, generated_at, participant_count, index_score, narrative_text")
+      .eq("instrument_id", "INST-002")
       .eq("slice_type", sliceType)
       .eq("slice_value", sliceValue)
       .order("generated_at", { ascending: false })
