@@ -389,6 +389,38 @@ export default function PTPDashboard() {
   const [compareSliceType, setCompareSliceType] = useState<string>("all");
   const [compareSliceValue, setCompareSliceValue] = useState<string>("all");
   const [compareHistory, setCompareHistory] = useState<NarrativeHistory[]>([]);
+  const [expandedNarrativeSections, setExpandedNarrativeSections] = useState<Set<string>>(new Set());
+  const toggleNarrativeSection = (key: string) => {
+    setExpandedNarrativeSections(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      return next;
+    });
+  };
+  const [expandedInterventions, setExpandedInterventions] = useState<Set<string>>(new Set());
+  const toggleIntervention = (key: string) => {
+    setExpandedInterventions(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      return next;
+    });
+  };
+  const [expandedCoElevations, setExpandedCoElevations] = useState<Set<number>>(new Set());
+  const toggleCoElevation = (i: number) => {
+    setExpandedCoElevations(prev => {
+      const next = new Set(prev);
+      if (next.has(i)) next.delete(i); else next.add(i);
+      return next;
+    });
+  };
+  const [expandedCrossRecs, setExpandedCrossRecs] = useState<Set<string>>(new Set());
+  const toggleCrossRec = (key: string) => {
+    setExpandedCrossRecs(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      return next;
+    });
+  };
   type PTPTrackingSource =
     | { kind: "dashboard"; intervention: Intervention }
     | { kind: "cross_instrument"; rec: CrossInstrumentRec }
