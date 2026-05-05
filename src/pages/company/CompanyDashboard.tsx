@@ -2331,12 +2331,30 @@ export default function CompanyDashboard() {
               ].map(section => {
                 const text = latestNarrative.narrative_text[section.key as keyof typeof latestNarrative.narrative_text] as string | undefined;
                 if (!text) return null;
+                const isOpen = expandedNarrativeSections.has(section.key);
+                const sentences = text.match(/[^.!?]+[.!?]+/g) ?? [];
+                const preview = sentences.slice(0, 2).join(" ").trim() || text.slice(0, 180);
                 return (
-                  <div key={section.key} style={{ background: "#FFFFFF", border: "0.5px solid var(--border)", borderRadius: 12, padding: 16, marginBottom: 12, boxShadow: "var(--shadow-sm)" }}>
-                    <div style={{ fontSize: 9, fontWeight: 500, color: NAVY, textTransform: "uppercase" as const, letterSpacing: "0.06em", marginBottom: 6, borderLeft: `3px solid ${ORANGE}`, paddingLeft: 7 }}>
-                      {section.label}
-                    </div>
-                    <div style={{ fontSize: 14, lineHeight: 1.75, color: "var(--foreground)", whiteSpace: "pre-wrap" }}>{text}</div>
+                  <div key={section.key} style={{ background: "#FFFFFF", border: "0.5px solid var(--border)", borderRadius: 12, marginBottom: 12, boxShadow: "var(--shadow-sm)", overflow: "hidden" }}>
+                    <button
+                      onClick={() => toggleNarrativeSection(section.key)}
+                      style={{ width: "100%", display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, padding: 16, background: "none", border: "none", cursor: "pointer", textAlign: "left" }}
+                    >
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: 9, fontWeight: 500, color: NAVY, textTransform: "uppercase" as const, letterSpacing: "0.06em", marginBottom: 5, borderLeft: `3px solid ${ORANGE}`, paddingLeft: 7 }}>
+                          {section.label}
+                        </div>
+                        {!isOpen && (
+                          <p style={{ fontSize: 13, color: "var(--muted-foreground)", margin: 0, lineHeight: 1.6 }}>{preview}</p>
+                        )}
+                      </div>
+                      <span style={{ fontSize: 11, color: TEAL, flexShrink: 0, marginTop: 2 }}>{isOpen ? "↑ collapse" : "↓ read full"}</span>
+                    </button>
+                    {isOpen && (
+                      <div style={{ padding: "0 16px 16px", fontSize: 14, lineHeight: 1.75, color: "var(--foreground)", whiteSpace: "pre-wrap" }}>
+                        {text}
+                      </div>
+                    )}
                   </div>
                 );
               })}
