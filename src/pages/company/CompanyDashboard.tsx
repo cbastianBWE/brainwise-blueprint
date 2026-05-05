@@ -206,6 +206,8 @@ interface StoredNarrative {
     next_steps?: string;
     reassessment_note?: string;
     interventions?: Intervention[];
+    summary?: string;
+    top_interventions?: { title: string; rationale: string }[];
   };
 }
 
