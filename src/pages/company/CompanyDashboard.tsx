@@ -2742,16 +2742,31 @@ export default function CompanyDashboard() {
               }
               return (
                 <div style={{ display: "flex", flexDirection: "column" as const, gap: 10 }}>
-                  {patterns.map((p, i) => (
-                    <div key={i} style={{ background: "var(--muted)", borderRadius: 8, padding: 12, border: "0.5px solid var(--border)" }}>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: NAVY, marginBottom: 6 }}>{p.label}</div>
-                      <div style={{ fontSize: 13, color: "var(--muted-foreground)", marginBottom: 8, lineHeight: 1.6 }}>{p.description}</div>
-                      <div style={{ display: "flex", gap: 16, fontSize: 12 }}>
-                        <span><span style={{ color: "var(--muted-foreground)" }}>NAI </span><span style={{ color: DIM_COLORS[p.naiDimId], fontWeight: 600 }}>{p.naiDimName} {Math.round(p.naiScore)}</span></span>
-                        <span><span style={{ color: "var(--muted-foreground)" }}>PTP </span><span style={{ color: PTP_DIM_COLORS[p.ptpDimId], fontWeight: 600 }}>{p.ptpDimName} {Math.round(p.ptpScore)}</span></span>
+                  {patterns.map((p, i) => {
+                    const isCoOpen = expandedCoElevations.has(i);
+                    return (
+                      <div key={i} style={{ background: "#FFFFFF", border: "0.5px solid var(--border)", borderRadius: 8, marginBottom: 8, overflow: "hidden" }}>
+                        <button
+                          onClick={() => toggleCoElevation(i)}
+                          style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "10px 12px", background: "none", border: "none", cursor: "pointer", textAlign: "left" }}
+                        >
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontSize: 13, fontWeight: 700, color: NAVY, marginBottom: 4 }}>{p.label}</div>
+                            <div style={{ display: "flex", gap: 16, fontSize: 12 }}>
+                              <span><span style={{ color: "var(--muted-foreground)" }}>NAI </span><span style={{ color: DIM_COLORS[p.naiDimId], fontWeight: 600 }}>{p.naiDimName} {Math.round(p.naiScore)}</span></span>
+                              <span><span style={{ color: "var(--muted-foreground)" }}>PTP </span><span style={{ color: PTP_DIM_COLORS[p.ptpDimId], fontWeight: 600 }}>{p.ptpDimName} {Math.round(p.ptpScore)}</span></span>
+                            </div>
+                          </div>
+                          <span style={{ fontSize: 11, color: TEAL, flexShrink: 0 }}>{isCoOpen ? "↑ less" : "↓ more"}</span>
+                        </button>
+                        {isCoOpen && (
+                          <div style={{ padding: "0 12px 12px", borderTop: "0.5px solid var(--border)" }}>
+                            <p style={{ fontSize: 13, color: "var(--muted-foreground)", margin: "10px 0 0", lineHeight: 1.6 }}>{p.description}</p>
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               );
             })()}
