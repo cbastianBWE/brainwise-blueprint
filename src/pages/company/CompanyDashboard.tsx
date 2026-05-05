@@ -2359,8 +2359,8 @@ export default function CompanyDashboard() {
                 const text = latestNarrative.narrative_text[section.key as keyof typeof latestNarrative.narrative_text] as string | undefined;
                 if (!text) return null;
                 const isOpen = expandedNarrativeSections.has(section.key);
-                const sentences = text.match(/[^.!?]+[.!?]+/g) ?? [];
-                const preview = sentences.slice(0, 2).join(" ").trim() || text.slice(0, 180);
+                const sectionSummaries = (latestNarrative.narrative_text as any).section_summaries ?? {};
+                const preview = sectionSummaries[section.key] as string | undefined;
                 return (
                   <div key={section.key} style={{ background: "#FFFFFF", border: "0.5px solid var(--border)", borderRadius: 12, marginBottom: 12, boxShadow: "var(--shadow-sm)", overflow: "hidden" }}>
                     <button
@@ -2371,8 +2371,11 @@ export default function CompanyDashboard() {
                         <div style={{ fontSize: 9, fontWeight: 500, color: NAVY, textTransform: "uppercase" as const, letterSpacing: "0.06em", marginBottom: 5, borderLeft: `3px solid ${ORANGE}`, paddingLeft: 7 }}>
                           {section.label}
                         </div>
-                        {!isOpen && (
+                        {!isOpen && preview && (
                           <p style={{ fontSize: 13, color: "var(--muted-foreground)", margin: 0, lineHeight: 1.6 }}>{preview}</p>
+                        )}
+                        {!isOpen && !preview && (
+                          <p style={{ fontSize: 12, color: "var(--muted-foreground)", margin: 0, fontStyle: "italic" }}>Click to read full analysis</p>
                         )}
                       </div>
                       <span style={{ fontSize: 11, color: TEAL, flexShrink: 0, marginTop: 2 }}>{isOpen ? "↑ collapse" : "↓ read full"}</span>
