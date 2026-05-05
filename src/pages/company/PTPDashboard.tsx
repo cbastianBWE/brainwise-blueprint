@@ -3396,59 +3396,55 @@ export default function PTPDashboard() {
                     {crossInstrumentRow.summary}
                   </p>
                 )}
-                {crossInstrumentRow.recommendations.map((rec, i) => (
-                  <div key={rec.id ?? i} style={{
-                    background: "#FFFFFF",
-                    border: "0.5px solid var(--border)",
-                    borderRadius: 8,
-                    padding: 14,
-                    marginBottom: 10,
-                    boxShadow: "var(--shadow-sm)",
-                  }}>
-                    <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8, marginBottom: 6 }}>
-                      <span style={{ fontSize: 14, fontWeight: 600, color: NAVY }}>{rec.title}</span>
-                      <div style={{ display: "flex", gap: 4, flexShrink: 0, flexWrap: "wrap" }}>
-                        <span style={{ fontSize: 9, padding: "2px 6px", borderRadius: 3, fontWeight: 500, textTransform: "uppercase", letterSpacing: 0.4,
-                          background: rec.priority === "high" ? "#faece7" : rec.priority === "medium" ? "#faeeda" : "#e1f5ee",
-                          color: rec.priority === "high" ? "#993c1d" : rec.priority === "medium" ? "#633806" : "#0f6e56",
-                        }}>{rec.priority}</span>
-                        <span style={{ fontSize: 9, padding: "2px 6px", borderRadius: 3, background: "#eeedfe", color: "#3C096C", fontWeight: 500, textTransform: "uppercase", letterSpacing: 0.4 }}>{rec.time_horizon}</span>
-                        {rec.anchor_co_elevation && (
-                          <span style={{ fontSize: 9, padding: "2px 6px", borderRadius: 3, background: "#e8edf1", color: NAVY, fontWeight: 500 }}>{rec.anchor_co_elevation}</span>
-                        )}
-                      </div>
+                {crossInstrumentRow.recommendations.map((rec, i) => {
+                  const recKey = rec.id ?? String(i);
+                  const isRecOpen = expandedCrossRecs.has(recKey);
+                  return (
+                    <div key={recKey} style={{ background: "#FFFFFF", border: "0.5px solid var(--border)", borderRadius: 8, marginBottom: 10, overflow: "hidden", boxShadow: "var(--shadow-sm)" }}>
+                      <button
+                        onClick={() => toggleCrossRec(recKey)}
+                        style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, padding: "12px 14px", background: "none", border: "none", cursor: "pointer", textAlign: "left" }}
+                      >
+                        <span style={{ fontSize: 14, fontWeight: 600, color: NAVY, flex: 1 }}>{rec.title}</span>
+                        <div style={{ display: "flex", gap: 4, flexShrink: 0, flexWrap: "wrap", alignItems: "center" }}>
+                          <span style={{ fontSize: 9, padding: "2px 6px", borderRadius: 3, fontWeight: 500, textTransform: "uppercase", letterSpacing: 0.4,
+                            background: rec.priority === "high" ? "#faece7" : rec.priority === "medium" ? "#faeeda" : "#e1f5ee",
+                            color: rec.priority === "high" ? "#993c1d" : rec.priority === "medium" ? "#633806" : "#0f6e56",
+                          }}>{rec.priority}</span>
+                          <span style={{ fontSize: 9, padding: "2px 6px", borderRadius: 3, background: "#eeedfe", color: "#3C096C", fontWeight: 500, textTransform: "uppercase", letterSpacing: 0.4 }}>{rec.time_horizon}</span>
+                          {rec.anchor_co_elevation && (
+                            <span style={{ fontSize: 9, padding: "2px 6px", borderRadius: 3, background: "#e8edf1", color: NAVY, fontWeight: 500 }}>{rec.anchor_co_elevation}</span>
+                          )}
+                          <span style={{ fontSize: 11, color: ORANGE, marginLeft: 4 }}>{isRecOpen ? "↑" : "↓"}</span>
+                        </div>
+                      </button>
+                      {isRecOpen && (
+                        <div style={{ padding: "0 14px 14px", borderTop: "0.5px solid var(--border)" }}>
+                          <p style={{ fontSize: 13, color: "var(--foreground)", margin: "10px 0 8px", lineHeight: 1.65 }}>{rec.rationale}</p>
+                          {rec.steps && rec.steps.length > 0 && (
+                            <div style={{ marginBottom: 10 }}>
+                              <div style={{ fontSize: 10, fontWeight: 500, color: NAVY, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Steps</div>
+                              <ol style={{ margin: 0, paddingLeft: 18, fontSize: 13, color: "var(--muted-foreground)", lineHeight: 1.6 }}>
+                                {rec.steps.map((step, j) => <li key={j} style={{ marginBottom: 3 }}>{step}</li>)}
+                              </ol>
+                            </div>
+                          )}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setTrackingModal({ open: true, source: { kind: "cross_instrument", rec } });
+                              setTrackingNote("");
+                              setTrackingStatus("not_started");
+                            }}
+                            style={{ fontSize: 10, padding: "3px 9px", border: `0.5px solid ${NAVY}`, borderRadius: 5, background: "transparent", color: NAVY, cursor: "pointer", marginTop: 4 }}
+                          >
+                            + Add to intervention tracking
+                          </button>
+                        </div>
+                      )}
                     </div>
-                    <p style={{ fontSize: 13, color: "var(--foreground)", margin: "0 0 10px", lineHeight: 1.65 }}>{rec.rationale}</p>
-                    {rec.steps && rec.steps.length > 0 && (
-                      <div style={{ marginTop: 8 }}>
-                        <div style={{ fontSize: 10, fontWeight: 500, color: NAVY, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Steps</div>
-                        <ol style={{ margin: 0, paddingLeft: 18, fontSize: 13, color: "var(--muted-foreground)", lineHeight: 1.6 }}>
-                          {rec.steps.map((step, j) => <li key={j} style={{ marginBottom: 3 }}>{step}</li>)}
-                        </ol>
-                      </div>
-                    )}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setTrackingModal({ open: true, source: { kind: "cross_instrument", rec } });
-                        setTrackingNote("");
-                        setTrackingStatus("not_started");
-                      }}
-                      style={{
-                        fontSize: 10,
-                        padding: "3px 9px",
-                        border: `0.5px solid ${NAVY}`,
-                        borderRadius: 5,
-                        background: "transparent",
-                        color: NAVY,
-                        cursor: "pointer",
-                        marginTop: 8,
-                      }}
-                    >
-                      + Add to intervention tracking
-                    </button>
-                  </div>
-                ))}
+                  );
+                })}
               </>
             )}
           </div>
