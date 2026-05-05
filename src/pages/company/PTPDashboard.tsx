@@ -2536,47 +2536,36 @@ export default function PTPDashboard() {
                 { key: "benefits", label: "Potential benefits visible in the data" },
                 { key: "risks", label: "Potential risks if unaddressed" },
                 { key: "next_steps", label: "Recommended next steps" },
-              ].map((section) => {
-                const text = latestNarrative.narrative_text[
-                  section.key as keyof typeof latestNarrative.narrative_text
-                ] as string | undefined;
+              ].map(section => {
+                const text = latestNarrative.narrative_text[section.key as keyof typeof latestNarrative.narrative_text] as string | undefined;
                 if (!text) return null;
+                const isOpen = expandedNarrativeSections.has(section.key);
+                const sectionSummaries = (latestNarrative.narrative_text as any).section_summaries ?? {};
+                const preview = sectionSummaries[section.key] as string | undefined;
                 return (
-                  <div
-                    key={section.key}
-                    style={{
-                      background: "#FFFFFF",
-                      border: "0.5px solid var(--border)",
-                      borderRadius: 12,
-                      padding: 16,
-                      marginBottom: 12,
-                      boxShadow: "var(--shadow-sm)",
-                    }}
-                  >
-                    <div
-                      style={{
-                        fontSize: 9,
-                        fontWeight: 500,
-                        color: NAVY,
-                        textTransform: "uppercase",
-                        letterSpacing: "0.06em",
-                        marginBottom: 6,
-                        borderLeft: `3px solid ${ORANGE}`,
-                        paddingLeft: 7,
-                      }}
+                  <div key={section.key} style={{ background: "#FFFFFF", border: "0.5px solid var(--border)", borderRadius: 12, marginBottom: 12, boxShadow: "var(--shadow-sm)", overflow: "hidden" }}>
+                    <button
+                      onClick={() => toggleNarrativeSection(section.key)}
+                      style={{ width: "100%", display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, padding: 16, background: "none", border: "none", cursor: "pointer", textAlign: "left" }}
                     >
-                      {section.label}
-                    </div>
-                    <div
-                      style={{
-                        fontSize: 14,
-                        lineHeight: 1.75,
-                        color: "var(--foreground)",
-                        whiteSpace: "pre-wrap",
-                      }}
-                    >
-                      {text}
-                    </div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: 9, fontWeight: 500, color: NAVY, textTransform: "uppercase" as const, letterSpacing: "0.06em", marginBottom: 5, borderLeft: `3px solid ${ORANGE}`, paddingLeft: 7 }}>
+                          {section.label}
+                        </div>
+                        {!isOpen && preview && (
+                          <p style={{ fontSize: 13, color: "var(--muted-foreground)", margin: 0, lineHeight: 1.6 }}>{preview}</p>
+                        )}
+                        {!isOpen && !preview && (
+                          <p style={{ fontSize: 12, color: "var(--muted-foreground)", margin: 0, fontStyle: "italic" }}>Click to read full analysis</p>
+                        )}
+                      </div>
+                      <span style={{ fontSize: 11, color: ORANGE, flexShrink: 0, marginTop: 2 }}>{isOpen ? "↑ collapse" : "↓ read full"}</span>
+                    </button>
+                    {isOpen && (
+                      <div style={{ padding: "0 16px 16px", fontSize: 14, lineHeight: 1.75, color: "var(--foreground)", whiteSpace: "pre-wrap" }}>
+                        {text}
+                      </div>
+                    )}
                   </div>
                 );
               })}
