@@ -41,15 +41,34 @@ export const meta = {
   ctaSecondaryTo: "/products",
 };
 
+// Stat banner — white bg with colored left-accent bars. 4 stats, each with citation.
+// accentColor rotates through brand palette: orange, teal, navy, plum.
 export const heroStats = [
-  { value: "12%", label: "average AI transformation success rate without addressing human factors" },
-  { value: "60–68%", label: "estimated success rate when all five EVOLVE practices are applied consistently" },
-  { value: "4.5x", label: "improvement when readiness is measured before deployment begins" },
-  { value: "$7.2M", label: "average cost of a failed enterprise AI initiative" },
+  {
+    value: "12%",
+    label: "average AI transformation success rate without addressing human factors",
+    source: "Pertama Partners, 2026",
+    accentColor: "var(--bw-orange)",
+  },
+  {
+    value: "60–68%",
+    label: "estimated success rate when all five EVOLVE practices are applied consistently",
+    source: "Pertama Partners 2026; MIT Tech Review 2025",
+    accentColor: "var(--bw-teal)",
+  },
+  {
+    value: "4.5x",
+    label: "improvement when readiness is measured before deployment begins",
+    source: "McKinsey, 2025",
+    accentColor: "var(--bw-navy)",
+  },
+  {
+    value: "$7.2M",
+    label: "average cost of a failed enterprise AI initiative",
+    source: "NTT DATA, 2024",
+    accentColor: "var(--bw-plum)",
+  },
 ];
-
-export const heroStatsSourceNote =
-  "Sources: Pertama Partners 2026, MIT Technology Review 2025, McKinsey 2025, NTT DATA 2024";
 
 export const problemStats = [
   { value: "80%+", label: "of AI projects fail, twice the rate of non-AI tech projects", source: "RAND, 2024" },
