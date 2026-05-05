@@ -1887,7 +1887,7 @@ export default function CompanyDashboard() {
                       }}>{i + 1}</span>
                       <span style={{ fontSize: 13, color: "var(--foreground)", fontWeight: 500, lineHeight: 1.4 }}>
                         {item.title}
-                        <span style={{ fontWeight: 400, color: "var(--muted-foreground)", fontSize: 12 }}> (Interventions tab)</span>
+                        <span style={{ fontWeight: 400, color: "var(--muted-foreground)", fontSize: 12 }}> (AI Interpretation → Structured Interventions)</span>
                       </span>
                     </div>
                   ))}
