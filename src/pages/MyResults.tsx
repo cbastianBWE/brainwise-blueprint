@@ -1409,7 +1409,7 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
         </>
       )}
 
-      {!isCoachView && selected && (
+      {!isCoachView && selected && !selected.isAwaitingSupervisor && (
         <div className="fixed bottom-6 right-6 z-40 flex flex-col items-end gap-2">
           {chatOpen && hasActiveAccess && (
             <div className="w-80 sm:w-96 h-[480px] bg-background border border-border rounded-2xl shadow-2xl flex flex-col overflow-hidden">
