@@ -249,16 +249,16 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
 
       // Get all results for this user
       // EPN is filed BY an executive ABOUT this user; not a self-administered result, do not surface as a standalone tile.
-      const { data: results, error: resultsErr } = await supabase
+      const { data: resultsData, error: resultsErr } = await supabase
         .from("assessment_results")
         .select("*")
         .eq("user_id", effectiveUserId)
         .neq("instrument_id", "INST-002L")
         .order("created_at", { ascending: false });
 
-      if (resultsErr || !results?.length) {
-        setLoading(false);
-        return;
+      const results = resultsData ?? [];
+      if (resultsErr) {
+        console.error("[MyResults] results fetch error", resultsErr);
       }
 
       // Get assessment details
