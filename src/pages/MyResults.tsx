@@ -309,6 +309,76 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
         };
       });
 
+      // Awaiting AIRSA self assessments (no result row yet because supervisor hasn't completed)
+      if (!isCoachView) {
+        const { data: awaitingRows } = await supabase
+          .from("assessments")
+          .select("id, completed_at, paired_assessment_id, self_only_released_at")
+          .eq("user_id", effectiveUserId)
+          .eq("instrument_id", "INST-003")
+          .eq("rater_type", "self")
+          .eq("status", "completed")
+          .is("self_only_released_at", null);
+
+        const existingResultAssessmentIds = new Set(combined.map((c) => c.result.assessment_id));
+        const awaitingFiltered = (awaitingRows ?? []).filter(
+          (row) => !existingResultAssessmentIds.has(row.id)
+        );
+
+        for (const row of awaitingFiltered) {
+          let pairedManager: AssessmentWithResult["pairedManager"] = null;
+          if (!row.paired_assessment_id) {
+            console.error(
+              "[AIRSA awaiting] Unexpected NULL paired_assessment_id on self assessment",
+              { assessment_id: row.id }
+            );
+          } else {
+            const { data: pairedRow } = await supabase
+              .from("assessments")
+              .select("id, status, reminder_count, last_reminder_sent_at")
+              .eq("id", row.paired_assessment_id)
+              .maybeSingle();
+            pairedManager = pairedRow ?? null;
+          }
+
+          combined.push({
+            result: {
+              id: `awaiting-${row.id}`,
+              assessment_id: row.id,
+              user_id: effectiveUserId,
+              instrument_id: "INST-003",
+              instrument_version: null,
+              dimension_scores: {},
+              overall_profile: null,
+              ai_narrative: null,
+              ai_version: null,
+              created_at: row.completed_at,
+            },
+            completed_at: row.completed_at,
+            instrument_name: "AI Readiness Skills Assessment",
+            instrument_short_name: "AIRSA",
+            scale_type: null,
+            isPTP: false,
+            context_type: null,
+            isAwaitingSupervisor: true,
+            pairedManager,
+          });
+        }
+
+        // Sort merged list by completed_at desc
+        combined.sort((a, b) => {
+          const ta = a.completed_at ? new Date(a.completed_at).getTime() : 0;
+          const tb = b.completed_at ? new Date(b.completed_at).getTime() : 0;
+          return tb - ta;
+        });
+      }
+
+      if (combined.length === 0) {
+        setLoading(false);
+        return;
+      }
+
+
       // Coach filtering: if share_results_with_coach is false, only show linked assessments
       let filtered = combined;
       if (isCoachView && coachUserId && shareWithCoach === false) {
