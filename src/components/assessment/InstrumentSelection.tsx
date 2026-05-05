@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useAccountRole } from "@/lib/accountRoles";
@@ -80,11 +81,12 @@ export default function InstrumentSelection({ onSelect }: Props) {
   const [selfPayDialogLoading, setSelfPayDialogLoading] = useState(false);
   const [subscriptionPlans, setSubscriptionPlans] = useState<Array<{ plan_name: string; tier: string; billing_period: string; price_usd: number | null; stripe_price_id: string }>>([]);
   const [selfPayCoachInstrumentIds, setSelfPayCoachInstrumentIds] = useState<Set<string>>(new Set());
+  const [airsaAwaiting, setAirsaAwaiting] = useState<{ completed_at: string } | null>(null);
 
   useEffect(() => {
     if (!user) return;
     const load = async () => {
-      const [userRes, versionRes, resultsRes, coachClientsRes, purchasesRes, completedRes, inProgressRes, plansRes, selfPayCoachClientsRes] = await Promise.all([
+      const [userRes, versionRes, resultsRes, coachClientsRes, purchasesRes, completedRes, inProgressRes, plansRes, selfPayCoachClientsRes, awaitingRes] = await Promise.all([
         supabase.from("users").select("subscription_tier, subscription_status").eq("id", user.id).single(),
         supabase.from("platform_versions").select("version_string").eq("is_active", true).limit(1).single(),
         supabase.from("assessment_results").select("overall_profile").eq("user_id", user.id).order("created_at", { ascending: false }).limit(1),
@@ -104,7 +106,32 @@ export default function InstrumentSelection({ onSelect }: Props) {
           .is("stripe_payment_intent_id", null)
           .is("assessment_id", null)
           .in("invitation_status", ["sent", "opened"]),
+        supabase.from("assessments")
+          .select("id, completed_at")
+          .eq("user_id", user.id)
+          .eq("instrument_id", "INST-003")
+          .eq("rater_type", "self")
+          .eq("status", "completed")
+          .is("self_only_released_at", null)
+          .order("completed_at", { ascending: false })
+          .limit(1)
+          .maybeSingle(),
       ]);
+
+      if (awaitingRes.data) {
+        const { data: existingResult } = await supabase
+          .from("assessment_results")
+          .select("id")
+          .eq("assessment_id", awaitingRes.data.id)
+          .maybeSingle();
+        if (!existingResult) {
+          setAirsaAwaiting({ completed_at: awaitingRes.data.completed_at });
+        } else {
+          setAirsaAwaiting(null);
+        }
+      } else {
+        setAirsaAwaiting(null);
+      }
 
       if (userRes.data) {
         setUserTier(userRes.data.subscription_tier || "base");
@@ -305,6 +332,35 @@ export default function InstrumentSelection({ onSelect }: Props) {
               if (isCorp) {
                 const hasCorpAccess = corpInstrumentAccess.get(instrumentUuid);
                 if (hasCorpAccess !== true) return null;
+              }
+
+              // AIRSA awaiting supervisor: suppress restart, show status tile
+              if (inst.instrument_id === "INST-003" && airsaAwaiting) {
+                return (
+                  <Card
+                    key={inst.instrument_id}
+                    className="relative transition-all"
+                    style={{ opacity: 0.7 }}
+                  >
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-lg">{inst.short_name}</CardTitle>
+                        {inst.tier === "premium" && (
+                          <Badge variant="secondary" className="text-xs">Premium</Badge>
+                        )}
+                      </div>
+                      <CardDescription className="font-medium text-foreground">{inst.instrument_name}</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <p className="text-sm text-muted-foreground">
+                        You completed AIRSA on {format(new Date(airsaAwaiting.completed_at), "MMM d, yyyy")}. The combined report becomes available once your supervisor completes their rating. Manage this from your Results page.
+                      </p>
+                      <Button disabled className="w-full">
+                        Awaiting your supervisor's rating
+                      </Button>
+                    </CardContent>
+                  </Card>
+                );
               }
 
               const coachPaid = coachPaidInstrumentIds.has(instrumentUuid);

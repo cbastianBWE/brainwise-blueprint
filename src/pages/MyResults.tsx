@@ -97,6 +97,13 @@ interface AssessmentWithResult {
   scale_type: string | null;
   isPTP: boolean;
   context_type: string | null;
+  isAwaitingSupervisor?: boolean;
+  pairedManager?: {
+    id: string;
+    status: string;
+    reminder_count: number;
+    last_reminder_sent_at: string | null;
+  } | null;
 }
 
 const BAND_COLORS: Record<string, string> = {
@@ -200,6 +207,10 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
   const [chatLoading, setChatLoading] = useState(false);
   const [chatSessionId, setChatSessionId] = useState<string | null>(null);
   const [showChatUpgradeDialog, setShowChatUpgradeDialog] = useState(false);
+  const [refetchKey, setRefetchKey] = useState(0);
+  const [airsaActionLoading, setAirsaActionLoading] = useState(false);
+  const [showAirsaReleaseDialog, setShowAirsaReleaseDialog] = useState(false);
+  const [showAirsaRerateDialog, setShowAirsaRerateDialog] = useState(false);
 
   useEffect(() => {
     return () => {
@@ -238,16 +249,16 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
 
       // Get all results for this user
       // EPN is filed BY an executive ABOUT this user; not a self-administered result, do not surface as a standalone tile.
-      const { data: results, error: resultsErr } = await supabase
+      const { data: resultsData, error: resultsErr } = await supabase
         .from("assessment_results")
         .select("*")
         .eq("user_id", effectiveUserId)
         .neq("instrument_id", "INST-002L")
         .order("created_at", { ascending: false });
 
-      if (resultsErr || !results?.length) {
-        setLoading(false);
-        return;
+      const results = resultsData ?? [];
+      if (resultsErr) {
+        console.error("[MyResults] results fetch error", resultsErr);
       }
 
       // Get assessment details
@@ -297,6 +308,76 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
           context_type: assessmentMap.get(r.assessment_id)?.context_type ?? null,
         };
       });
+
+      // Awaiting AIRSA self assessments (no result row yet because supervisor hasn't completed)
+      if (!isCoachView) {
+        const { data: awaitingRows } = await supabase
+          .from("assessments")
+          .select("id, completed_at, paired_assessment_id, self_only_released_at")
+          .eq("user_id", effectiveUserId)
+          .eq("instrument_id", "INST-003")
+          .eq("rater_type", "self")
+          .eq("status", "completed")
+          .is("self_only_released_at", null);
+
+        const existingResultAssessmentIds = new Set(combined.map((c) => c.result.assessment_id));
+        const awaitingFiltered = (awaitingRows ?? []).filter(
+          (row) => !existingResultAssessmentIds.has(row.id)
+        );
+
+        for (const row of awaitingFiltered) {
+          let pairedManager: AssessmentWithResult["pairedManager"] = null;
+          if (!row.paired_assessment_id) {
+            console.error(
+              "[AIRSA awaiting] Unexpected NULL paired_assessment_id on self assessment",
+              { assessment_id: row.id }
+            );
+          } else {
+            const { data: pairedRow } = await supabase
+              .from("assessments")
+              .select("id, status, reminder_count, last_reminder_sent_at")
+              .eq("id", row.paired_assessment_id)
+              .maybeSingle();
+            pairedManager = pairedRow ?? null;
+          }
+
+          combined.push({
+            result: {
+              id: `awaiting-${row.id}`,
+              assessment_id: row.id,
+              user_id: effectiveUserId,
+              instrument_id: "INST-003",
+              instrument_version: null,
+              dimension_scores: {},
+              overall_profile: null,
+              ai_narrative: null,
+              ai_version: null,
+              created_at: row.completed_at,
+            },
+            completed_at: row.completed_at,
+            instrument_name: "AI Readiness Skills Assessment",
+            instrument_short_name: "AIRSA",
+            scale_type: null,
+            isPTP: false,
+            context_type: null,
+            isAwaitingSupervisor: true,
+            pairedManager,
+          });
+        }
+
+        // Sort merged list by completed_at desc
+        combined.sort((a, b) => {
+          const ta = a.completed_at ? new Date(a.completed_at).getTime() : 0;
+          const tb = b.completed_at ? new Date(b.completed_at).getTime() : 0;
+          return tb - ta;
+        });
+      }
+
+      if (combined.length === 0) {
+        setLoading(false);
+        return;
+      }
+
 
       // Coach filtering: if share_results_with_coach is false, only show linked assessments
       let filtered = combined;
@@ -352,7 +433,7 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
     };
 
     fetchResults();
-  }, [effectiveUserId, preSelectedAssessmentId, isCoachView, coachUserId, shareWithCoach]);
+  }, [effectiveUserId, preSelectedAssessmentId, isCoachView, coachUserId, shareWithCoach, refetchKey]);
 
   // Selected assessment
   const selected = useMemo(
@@ -762,7 +843,9 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
             <SelectContent>
               {assessments.map((a) => (
                 <SelectItem key={a.result.id} value={a.result.id}>
-                  {a.isPTP && a.context_type
+                  {a.isAwaitingSupervisor
+                    ? `AIRSA — Awaiting Supervisor (${format(new Date(a.completed_at!), "MMM yyyy")})`
+                    : a.isPTP && a.context_type
                     ? `PTP ${a.context_type.charAt(0).toUpperCase() + a.context_type.slice(1)} — ${format(new Date(a.completed_at!), "MMM yyyy")}`
                     : `${a.instrument_name} — ${format(new Date(a.completed_at!), "MMM yyyy")}`
                   }
@@ -773,7 +856,23 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
         )}
       </div>
 
-      {selected && (
+      {selected && selected.isAwaitingSupervisor && (
+        <AirsaAwaitingView
+          selected={selected}
+          isCoachView={isCoachView}
+          onRefetch={() => setRefetchKey((k) => k + 1)}
+          actionLoading={airsaActionLoading}
+          setActionLoading={setAirsaActionLoading}
+          showReleaseDialog={showAirsaReleaseDialog}
+          setShowReleaseDialog={setShowAirsaReleaseDialog}
+          showRerateDialog={showAirsaRerateDialog}
+          setShowRerateDialog={setShowAirsaRerateDialog}
+          toast={toast}
+          navigate={navigate}
+        />
+      )}
+
+      {selected && !selected.isAwaitingSupervisor && (
         <>
           {debriefPendingIds.has(selected.result.assessment_id) && (
             <Card className="border-primary/30 bg-primary/5">
@@ -1310,7 +1409,7 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
         </>
       )}
 
-      {!isCoachView && selected && (
+      {!isCoachView && selected && !selected.isAwaitingSupervisor && (
         <div className="fixed bottom-6 right-6 z-40 flex flex-col items-end gap-2">
           {chatOpen && hasActiveAccess && (
             <div className="w-80 sm:w-96 h-[480px] bg-background border border-border rounded-2xl shadow-2xl flex flex-col overflow-hidden">
@@ -1761,4 +1860,290 @@ function formatDimensionName(id: string): string {
   return id
     .replace(/_/g, " ")
     .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+interface AirsaAwaitingViewProps {
+  selected: AssessmentWithResult;
+  isCoachView: boolean;
+  onRefetch: () => void;
+  actionLoading: boolean;
+  setActionLoading: (v: boolean) => void;
+  showReleaseDialog: boolean;
+  setShowReleaseDialog: (v: boolean) => void;
+  showRerateDialog: boolean;
+  setShowRerateDialog: (v: boolean) => void;
+  toast: ReturnType<typeof useToast>["toast"];
+  navigate: ReturnType<typeof useNavigate>;
+}
+
+function AirsaAwaitingView({
+  selected,
+  isCoachView,
+  onRefetch,
+  actionLoading,
+  setActionLoading,
+  showReleaseDialog,
+  setShowReleaseDialog,
+  showRerateDialog,
+  setShowRerateDialog,
+  toast,
+  navigate,
+}: AirsaAwaitingViewProps) {
+  const completedAt = new Date(selected.completed_at!);
+  const daysSinceComplete = (Date.now() - completedAt.getTime()) / (24 * 60 * 60 * 1000);
+  const releaseAvailableDate = new Date(completedAt.getTime() + 14 * 24 * 60 * 60 * 1000);
+  const pairedStatus = selected.pairedManager?.status ?? null;
+  const hasPairedManager = !!selected.pairedManager;
+  const within14 = daysSinceComplete < 14;
+  const beyond90 = daysSinceComplete >= 90 && pairedStatus !== "completed";
+  const reminderCount = selected.pairedManager?.reminder_count ?? 0;
+
+  const handleSendReminder = async () => {
+    setActionLoading(true);
+    const { error: rpcError } = await supabase.rpc("airsa_send_reminder" as any, {
+      p_self_assessment_id: selected.result.assessment_id,
+    });
+    if (rpcError) {
+      setActionLoading(false);
+      toast({ title: "Cannot send reminder", description: rpcError.message, variant: "destructive" });
+      return;
+    }
+    const { error: fnError } = await supabase.functions.invoke("airsa-supervisor-reminder", {
+      body: { manager_assessment_id: selected.pairedManager!.id },
+    });
+    setActionLoading(false);
+    if (fnError) {
+      toast({
+        title: "Email send failed",
+        description: "Reminder logged but email send failed. Please try again later.",
+        variant: "destructive",
+      });
+      return;
+    }
+    toast({ title: "Reminder sent" });
+    onRefetch();
+  };
+
+  const handleReleaseConfirm = async () => {
+    setShowReleaseDialog(false);
+    setActionLoading(true);
+    const { error } = await supabase.rpc("airsa_release_self_only" as any, {
+      p_self_assessment_id: selected.result.assessment_id,
+    });
+    setActionLoading(false);
+    if (error) {
+      toast({ title: "Cannot release report", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Self-only report released" });
+    onRefetch();
+  };
+
+  const performRerate = async () => {
+    setActionLoading(true);
+    const { error } = await supabase.rpc("airsa_request_rerate" as any, {
+      p_self_assessment_id: selected.result.assessment_id,
+    });
+    setActionLoading(false);
+    if (error) {
+      toast({ title: "Cannot re-take", description: error.message, variant: "destructive" });
+      return;
+    }
+    navigate("/assessment?instrument=INST-003&autostart=true");
+  };
+
+  const handleRerateClick = () => {
+    if (pairedStatus === "in_progress") {
+      setShowRerateDialog(true);
+    } else {
+      performRerate();
+    }
+  };
+
+  return (
+    <>
+      {/* Block 1: AIRSA overview */}
+      <section>
+        <div
+          style={{
+            background: "var(--bw-white)",
+            border: "1px solid var(--border-1)",
+            borderLeft: "4px solid var(--bw-navy)",
+            borderRadius: "var(--r-md)",
+            padding: "var(--s-6)",
+            boxShadow: "var(--shadow-sm)",
+            fontFamily: "var(--font-primary)",
+          }}
+        >
+          <h3
+            style={{
+              fontFamily: "var(--font-display)",
+              fontSize: 18,
+              fontWeight: 600,
+              color: "var(--fg-1)",
+              margin: 0,
+              marginBottom: "var(--s-4)",
+              letterSpacing: "-0.01em",
+            }}
+          >
+            Reading your AIRSA
+          </h3>
+          <div style={{ fontSize: 14, lineHeight: 1.65, color: "var(--fg-2)" }}>
+            <p style={{ margin: 0, marginBottom: "var(--s-3)" }}>
+              The AI Readiness Skills Assessment measures how prepared you are to work effectively alongside AI tools in your role. It covers 24 specific skills across 8 domains, and rates each one on a three-level readiness scale.
+            </p>
+            <p style={{ margin: 0, marginBottom: "var(--s-2)", fontWeight: 600, color: "var(--fg-1)" }}>
+              The three readiness levels
+            </p>
+            <ul style={{ margin: 0, marginBottom: "var(--s-3)", paddingLeft: 20 }}>
+              <li><strong style={{ fontWeight: 600, color: "var(--fg-1)" }}>Foundational</strong> — early awareness; you recognize the skill but don't yet apply it consistently.</li>
+              <li><strong style={{ fontWeight: 600, color: "var(--fg-1)" }}>Proficient</strong> — you apply the skill independently across familiar situations.</li>
+              <li><strong style={{ fontWeight: 600, color: "var(--fg-1)" }}>Advanced</strong> — you use the skill fluently and adapt it to new situations.</li>
+            </ul>
+            <p style={{ margin: 0, marginBottom: "var(--s-2)", fontWeight: 600, color: "var(--fg-1)" }}>
+              How to read this report
+            </p>
+            <p style={{ margin: 0, marginBottom: "var(--s-3)" }}>
+              Your AIRSA pairs your self-rating with your manager's rating of the same skills. The two ratings rarely match exactly, and that's the point. Where they line up, you have shared ground to build on. Where they differ, you have information you couldn't get from either rating alone.
+            </p>
+            <p style={{ margin: 0, marginBottom: "var(--s-3)" }}>
+              You'll see your manager's readiness level for each of the 24 skills, not their specific response to each question. Both views use the same three-level scale.
+            </p>
+            <p style={{ margin: 0, marginBottom: "var(--s-2)" }}>Three patterns matter most:</p>
+            <ul style={{ margin: 0, marginBottom: "var(--s-3)", paddingLeft: 20 }}>
+              <li><strong style={{ fontWeight: 600, color: "var(--fg-1)" }}>Confirmed strengths</strong> — both rate Advanced. Skills you can lean on and lend to others.</li>
+              <li><strong style={{ fontWeight: 600, color: "var(--fg-1)" }}>Blind spots</strong> — you rate yourself higher than your manager does. Worth investigating before they become gaps in visible work.</li>
+              <li><strong style={{ fontWeight: 600, color: "var(--fg-1)" }}>Underestimates</strong> — your manager rates you higher than you rate yourself. Often a sign you're underweighting capability you've already built.</li>
+            </ul>
+            <p style={{ margin: 0 }}>
+              This report is the same view your manager sees. It's designed for the two of you to discuss together.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Block 2: Waiting status card */}
+      <section>
+        <div
+          style={{
+            background: "var(--bw-white)",
+            border: "1px solid var(--border-1)",
+            borderLeft: "4px solid var(--bw-amber)",
+            borderRadius: "var(--r-md)",
+            padding: "var(--s-5)",
+            boxShadow: "var(--shadow-sm)",
+          }}
+        >
+          <h3
+            style={{
+              fontFamily: "var(--font-display)",
+              fontSize: 16,
+              fontWeight: 600,
+              color: "var(--fg-1)",
+              margin: 0,
+              marginBottom: "var(--s-3)",
+            }}
+          >
+            Waiting on your supervisor
+          </h3>
+          <div style={{ display: "flex", flexDirection: "column", gap: "var(--s-2)" }}>
+            <p style={{ fontSize: 14, lineHeight: 1.6, color: "var(--fg-2)", margin: 0 }}>
+              You completed your AIRSA on {format(completedAt, "MMMM d, yyyy")}. Your supervisor was emailed and asked to complete their rating.
+            </p>
+            {pairedStatus === "pending" && (
+              <p style={{ fontSize: 14, lineHeight: 1.6, color: "var(--fg-2)", margin: 0 }}>
+                They haven't started yet.
+              </p>
+            )}
+            {pairedStatus === "in_progress" && (
+              <p style={{ fontSize: 14, lineHeight: 1.6, color: "var(--fg-2)", margin: 0 }}>
+                They've started but haven't finished.
+              </p>
+            )}
+            {reminderCount > 0 && (
+              <p style={{ fontSize: 14, lineHeight: 1.6, color: "var(--fg-2)", margin: 0 }}>
+                {reminderCount} reminder{reminderCount === 1 ? "" : "s"} sent.
+              </p>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* Block 3: Action buttons (not in coach view) */}
+      {!isCoachView && (
+        <section style={{ display: "flex", flexDirection: "column", gap: "var(--s-3)" }}>
+          {!hasPairedManager ? (
+            <>
+              <div style={{ display: "flex", gap: "var(--s-3)", flexWrap: "wrap" }}>
+                <Button disabled>Send reminder to supervisor</Button>
+                <Button disabled variant="outline">Release self-only report</Button>
+              </div>
+              <p style={{ fontSize: 12, color: "var(--fg-3)", margin: 0 }}>
+                Your supervisor relationship is in an unexpected state. Contact your administrator.
+              </p>
+            </>
+          ) : within14 ? (
+            <>
+              <div style={{ display: "flex", gap: "var(--s-3)", flexWrap: "wrap" }}>
+                <Button disabled>Send reminder to supervisor</Button>
+                <Button disabled variant="outline">Release self-only report</Button>
+              </div>
+              <p style={{ fontSize: 12, color: "var(--fg-3)", margin: 0 }}>
+                Reminders can be sent starting {format(releaseAvailableDate, "MMM d")}.
+              </p>
+              <p style={{ fontSize: 12, color: "var(--fg-3)", margin: 0 }}>
+                Self-only release becomes available {format(releaseAvailableDate, "MMM d")} if your supervisor hasn't completed by then.
+              </p>
+            </>
+          ) : (
+            <>
+              <div style={{ display: "flex", gap: "var(--s-3)", flexWrap: "wrap" }}>
+                <Button onClick={handleSendReminder} disabled={actionLoading}>
+                  Send reminder to supervisor
+                </Button>
+                <Button variant="outline" onClick={() => setShowReleaseDialog(true)} disabled={actionLoading}>
+                  Release self-only report
+                </Button>
+                {beyond90 && (
+                  <Button variant="outline" onClick={handleRerateClick} disabled={actionLoading}>
+                    Re-take AIRSA
+                  </Button>
+                )}
+              </div>
+            </>
+          )}
+
+          <AlertDialog open={showReleaseDialog} onOpenChange={setShowReleaseDialog}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Release self-only report?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Release your AIRSA without your supervisor's rating? You can still get a combined view if your supervisor completes their rating later.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleReleaseConfirm}>Continue</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+
+          <AlertDialog open={showRerateDialog} onOpenChange={setShowRerateDialog}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Re-take AIRSA?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Your supervisor has started but not finished their rating. Re-taking AIRSA will discard their in-progress rating and start a fresh cycle.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={() => { setShowRerateDialog(false); performRerate(); }}>Continue</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </section>
+      )}
+    </>
+  );
 }
