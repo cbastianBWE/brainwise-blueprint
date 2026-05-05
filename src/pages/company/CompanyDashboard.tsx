@@ -206,6 +206,8 @@ interface StoredNarrative {
     next_steps?: string;
     reassessment_note?: string;
     interventions?: Intervention[];
+    summary?: string;
+    top_interventions?: { title: string; rationale: string }[];
   };
 }
 
@@ -365,6 +367,14 @@ export default function CompanyDashboard() {
   const [loadingDeltaNarrative, setLoadingDeltaNarrative] = useState<boolean>(false);
   
   const [expandedLeaderWorkforce, setExpandedLeaderWorkforce] = useState<boolean>(false);
+  const [expandedNarrativeSections, setExpandedNarrativeSections] = useState<Set<string>>(new Set());
+  const toggleNarrativeSection = (key: string) => {
+    setExpandedNarrativeSections(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      return next;
+    });
+  };
 
   // Load departments
   useEffect(() => {
@@ -1814,6 +1824,51 @@ export default function CompanyDashboard() {
             )}
           </div>
 
+          {/* AI Readiness Summary */}
+          {latestNarrative?.narrative_text?.summary && (
+            <div style={{
+              background: "#FFFFFF",
+              border: "0.5px solid var(--border)",
+              borderLeft: `4px solid ${TEAL}`,
+              borderRadius: 8,
+              padding: "14px 16px",
+              marginBottom: 16,
+              boxShadow: "var(--shadow-sm)",
+            }}>
+              <div style={{ fontSize: 9, fontWeight: 500, color: NAVY, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>
+                AI Readiness Summary
+              </div>
+              <p style={{ fontSize: 14, color: "var(--foreground)", margin: "0 0 12px", lineHeight: 1.65, fontWeight: 500 }}>
+                {latestNarrative.narrative_text.summary}
+              </p>
+              {Array.isArray((latestNarrative.narrative_text as any).top_interventions) && (latestNarrative.narrative_text as any).top_interventions.length > 0 && (
+                <div>
+                  <div style={{ fontSize: 9, fontWeight: 500, color: NAVY, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>
+                    Top 3 recommended actions
+                  </div>
+                  {(latestNarrative.narrative_text as any).top_interventions.map((item: { title: string; rationale: string }, i: number) => (
+                    <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start", marginBottom: 6 }}>
+                      <span style={{
+                        flexShrink: 0,
+                        width: 18,
+                        height: 18,
+                        borderRadius: "50%",
+                        background: TEAL,
+                        color: "#FFFFFF",
+                        fontSize: 10,
+                        fontWeight: 600,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}>{i + 1}</span>
+                      <span style={{ fontSize: 13, color: "var(--foreground)", fontWeight: 500, lineHeight: 1.4 }}>{item.title}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Usage cards */}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12, marginBottom: 24 }}>
             {[
@@ -2023,7 +2078,7 @@ export default function CompanyDashboard() {
                                   Recommended interventions ({deltaNarrative.narrative_text.recommendations.length})
                                 </div>
                                 {deltaNarrative.narrative_text.recommendations.map(rec => (
-                                  <div key={rec.id} style={{ background: "#ede9df", borderRadius: 8, padding: "14px 16px", marginBottom: 8 }}>
+                                  <div key={rec.id} style={{ background: "#FFFFFF", border: "0.5px solid var(--border)", borderRadius: 8, padding: "14px 16px", marginBottom: 8 }}>
                                     <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8, marginBottom: 6 }}>
                                       <span style={{ fontSize: 14, fontWeight: 500, color: NAVY }}>{rec.title}</span>
                                       <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
@@ -2065,7 +2120,7 @@ export default function CompanyDashboard() {
               <div style={{ background: "#FFFFFF", border: "0.5px solid var(--border)", borderRadius: 8, overflow: "hidden", boxShadow: "var(--shadow-sm)" }}>
                 <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}>
                   <thead>
-                    <tr style={{ background: "#ede9df" }}>
+                    <tr style={{ background: "#FFFFFF" }}>
                       {["Department", "Completed", "Rate", "Progress"].map(h => (
                         <th key={h} style={{ padding: "8px 12px", textAlign: "left", fontSize: 13, color: "var(--muted-foreground)", textTransform: "uppercase", letterSpacing: 0.4, fontWeight: 500 }}>{h}</th>
                       ))}
@@ -2180,7 +2235,7 @@ export default function CompanyDashboard() {
                                 Interventions targeting this dimension
                               </div>
                               {dimInterventions.map(iv => (
-                                <div key={iv.id ?? `${dimId}-${iv.title}`} style={{ background: "#ede9df", borderRadius: 8, padding: "14px 16px", marginBottom: 8 }}>
+                                <div key={iv.id ?? `${dimId}-${iv.title}`} style={{ background: "#FFFFFF", border: "0.5px solid var(--border)", borderRadius: 8, padding: "14px 16px", marginBottom: 8 }}>
                                   <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8, marginBottom: 6 }}>
                                     <span style={{ fontSize: 14, fontWeight: 500, color: NAVY }}>{iv.title}</span>
                                     <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
@@ -2276,12 +2331,30 @@ export default function CompanyDashboard() {
               ].map(section => {
                 const text = latestNarrative.narrative_text[section.key as keyof typeof latestNarrative.narrative_text] as string | undefined;
                 if (!text) return null;
+                const isOpen = expandedNarrativeSections.has(section.key);
+                const sentences = text.match(/[^.!?]+[.!?]+/g) ?? [];
+                const preview = sentences.slice(0, 2).join(" ").trim() || text.slice(0, 180);
                 return (
-                  <div key={section.key} style={{ background: "#FFFFFF", border: "0.5px solid var(--border)", borderRadius: 12, padding: 16, marginBottom: 12, boxShadow: "var(--shadow-sm)" }}>
-                    <div style={{ fontSize: 9, fontWeight: 500, color: NAVY, textTransform: "uppercase" as const, letterSpacing: "0.06em", marginBottom: 6, borderLeft: `3px solid ${ORANGE}`, paddingLeft: 7 }}>
-                      {section.label}
-                    </div>
-                    <div style={{ fontSize: 14, lineHeight: 1.75, color: "var(--foreground)", whiteSpace: "pre-wrap" }}>{text}</div>
+                  <div key={section.key} style={{ background: "#FFFFFF", border: "0.5px solid var(--border)", borderRadius: 12, marginBottom: 12, boxShadow: "var(--shadow-sm)", overflow: "hidden" }}>
+                    <button
+                      onClick={() => toggleNarrativeSection(section.key)}
+                      style={{ width: "100%", display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, padding: 16, background: "none", border: "none", cursor: "pointer", textAlign: "left" }}
+                    >
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: 9, fontWeight: 500, color: NAVY, textTransform: "uppercase" as const, letterSpacing: "0.06em", marginBottom: 5, borderLeft: `3px solid ${ORANGE}`, paddingLeft: 7 }}>
+                          {section.label}
+                        </div>
+                        {!isOpen && (
+                          <p style={{ fontSize: 13, color: "var(--muted-foreground)", margin: 0, lineHeight: 1.6 }}>{preview}</p>
+                        )}
+                      </div>
+                      <span style={{ fontSize: 11, color: TEAL, flexShrink: 0, marginTop: 2 }}>{isOpen ? "↑ collapse" : "↓ read full"}</span>
+                    </button>
+                    {isOpen && (
+                      <div style={{ padding: "0 16px 16px", fontSize: 14, lineHeight: 1.75, color: "var(--foreground)", whiteSpace: "pre-wrap" }}>
+                        {text}
+                      </div>
+                    )}
                   </div>
                 );
               })}
@@ -2378,7 +2451,7 @@ export default function CompanyDashboard() {
                 <div style={{ overflowX: "auto" }}>
                   <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11 }}>
                     <thead>
-                      <tr style={{ background: "#ede9df" }}>
+                      <tr style={{ background: "#FFFFFF" }}>
                         <th style={{ padding: "8px 12px", textAlign: "left", fontSize: 10, color: "var(--muted-foreground)", fontWeight: 500, textTransform: "uppercase" as const, letterSpacing: 0.4 }}>Generated</th>
                         <th style={{ padding: "8px 12px", textAlign: "center", fontSize: 10, color: "var(--muted-foreground)", fontWeight: 500 }}>Index</th>
                         {DIMS_BY_WEIGHT.map(dimId => (
