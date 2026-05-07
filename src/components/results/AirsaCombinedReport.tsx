@@ -327,6 +327,7 @@ export default function AirsaCombinedReport({
   instrumentVersion,
   isCoachView,
   canTakeAssessments,
+  onExportClick,
 }: AirsaCombinedReportProps) {
   const navigate = useNavigate();
   const [data, setData] = useState<PageData | null>(null);
