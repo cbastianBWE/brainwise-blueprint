@@ -48,9 +48,11 @@ interface Props {
   contextType?: 'professional' | 'personal' | 'both' | null;
   preexistingAssessmentId?: string;
   epnAssignmentId?: string;
+  raterType?: 'self' | 'manager';
+  targetUserName?: string;
 }
 
-export default function AssessmentFlow({ instrument, onExit, contextType, preexistingAssessmentId, epnAssignmentId }: Props) {
+export default function AssessmentFlow({ instrument, onExit, contextType, preexistingAssessmentId, epnAssignmentId, raterType = 'self', targetUserName }: Props) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -72,6 +74,11 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
   useEffect(() => {
     if (!user) return;
     const init = async () => {
+      if (raterType === 'manager' && !preexistingAssessmentId) {
+        toast({ title: "Error", description: "Manager assessment requires a preexisting assessment ID.", variant: "destructive" });
+        onExit();
+        return;
+      }
       let aId: string;
 
       if (preexistingAssessmentId) {
@@ -122,7 +129,7 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
         .from("items")
         .select("item_id, item_number, item_text, anchor_low, anchor_high, scale_type, reverse_scored, dimension_id")
         .eq("instrument_id", instrument.instrument_id)
-        .eq("rater_type", "Self")
+        .eq("rater_type", raterType === "manager" ? "Manager" : "Self")
         .order("item_number", { ascending: true });
 
       if (instrument.instrument_id === "INST-001" && contextType && contextType !== "both") {
@@ -156,7 +163,7 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
       }
 
       // Load response scales for AIRSA
-      if (instrument.instrument_id === "AIRSA") {
+      if (instrument.instrument_id === "INST-003") {
         const { data: scales } = await supabase
           .from("response_scales")
           .select("response_value, numeric_equivalent, display_label, readiness_translation")
@@ -282,6 +289,11 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
       return;
     }
 
+    if (raterType === 'manager') {
+      navigate(`/airsa-manager-complete/${assessmentId}`);
+      return;
+    }
+
     // Consume an unconsumed per-assessment purchase for this instrument, if one exists.
     // Non-blocking: returns NULL when user is on a subscription or coach-paid, which is fine.
     try {
@@ -316,7 +328,10 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
       {/* Header */}
       <div className="border-b px-4 py-3 flex items-center justify-between">
         <div className="text-sm text-muted-foreground">
-          Item {currentIndex + 1} of {items.length}
+          <div>Item {currentIndex + 1} of {items.length}</div>
+          {raterType === 'manager' && targetUserName && (
+            <div className="text-xs mt-0.5">Rating: {targetUserName}</div>
+          )}
         </div>
         <div className="flex items-center gap-2">
           {savedIndicator && (
@@ -342,6 +357,8 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
             <LevelMatchControl
               item={currentItem}
               value={currentResponse?.numeric ?? null}
+              raterType={raterType}
+              targetUserName={targetUserName}
               onSelect={(val, text) => saveResponse(currentItem.item_id, val, text, null)}
             />
           ) : currentItem.scale_type === "Never/Rarely/Often/Consistently" ? (
@@ -349,12 +366,16 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
               item={currentItem}
               value={currentResponse?.numeric ?? null}
               responseScales={responseScales}
+              raterType={raterType}
+              targetUserName={targetUserName}
               onSelect={(val, text, readiness) => saveResponse(currentItem.item_id, val, text, readiness)}
             />
           ) : (
             <SliderControl
               item={currentItem}
               value={currentResponse?.numeric ?? null}
+              raterType={raterType}
+              targetUserName={targetUserName}
               onSelect={(val) => saveResponse(currentItem.item_id, val, null, null)}
             />
           )}
@@ -443,13 +464,22 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
 
 // ── Scale controls ──
 
+function ManagerContextLine({ raterType, targetUserName }: { raterType?: 'self' | 'manager'; targetUserName?: string }) {
+  if (raterType !== 'manager' || !targetUserName) return null;
+  return <p className="text-sm italic text-muted-foreground text-center">Thinking about {targetUserName}...</p>;
+}
+
 function SliderControl({
   item,
   value,
+  raterType,
+  targetUserName,
   onSelect,
 }: {
   item: Item;
   value: number | null;
+  raterType?: 'self' | 'manager';
+  targetUserName?: string;
   onSelect: (val: number) => void;
 }) {
   const [localVal, setLocalVal] = useState(value ?? 50);
@@ -487,6 +517,7 @@ function SliderControl({
           height: 8px;
         }
       `}</style>
+      <ManagerContextLine raterType={raterType} targetUserName={targetUserName} />
       <p className="text-xl font-medium text-foreground leading-relaxed">{item.item_text}</p>
       <div className="space-y-4 px-2">
         <div className="flex justify-center">
@@ -527,10 +558,14 @@ function SliderControl({
 function LevelMatchControl({
   item,
   value,
+  raterType,
+  targetUserName,
   onSelect,
 }: {
   item: Item;
   value: number | null;
+  raterType?: 'self' | 'manager';
+  targetUserName?: string;
   onSelect: (val: number, text: string) => void;
 }) {
   // Parse behavioral descriptions from item_text
@@ -549,6 +584,7 @@ function LevelMatchControl({
 
   return (
     <div className="space-y-6">
+      <ManagerContextLine raterType={raterType} targetUserName={targetUserName} />
       <p className="text-xl font-medium text-foreground text-center leading-relaxed">{dimensionDesc}</p>
       <div className="space-y-3">
         {levels.map((lvl, idx) => (
@@ -583,11 +619,15 @@ function FrequencyControl({
   item,
   value,
   responseScales,
+  raterType,
+  targetUserName,
   onSelect,
 }: {
   item: Item;
   value: number | null;
   responseScales: ResponseScale[];
+  raterType?: 'self' | 'manager';
+  targetUserName?: string;
   onSelect: (val: number, text: string, readiness: string | null) => void;
 }) {
   const options = [
@@ -606,6 +646,7 @@ function FrequencyControl({
 
   return (
     <div className="space-y-8 text-center">
+      <ManagerContextLine raterType={raterType} targetUserName={targetUserName} />
       <p className="text-xl font-medium text-foreground leading-relaxed">{item.item_text}</p>
       <div className="flex gap-3 justify-center flex-wrap">
         {options.map((opt) => (
