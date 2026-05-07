@@ -36,13 +36,29 @@ export interface NaiPdfSectionsUi {
   assessmentResponses: boolean;
 }
 
+export interface AirsaPdfSectionsUi {
+  atAGlance: boolean;
+  howToRead: boolean;
+  profileOverview: boolean;
+  domainHeatmap: boolean;
+  whatThisMeans: boolean;
+  actionPlan: boolean;
+  lollipop: boolean;
+  conversationGuide: boolean;
+  topPriorities: boolean;
+  crossInstrument: boolean;
+  skillReference: boolean;
+  methodology: boolean;
+}
+
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  instrumentType: "PTP" | "NAI" | "OTHER";
+  instrumentType: "PTP" | "NAI" | "AIRSA" | "OTHER";
   isCoachView?: boolean;
   onExportPtp?: (sections: PdfSections) => Promise<void>;
   onExportNai?: (sections: NaiPdfSectionsUi) => Promise<void>;
+  onExportAirsa?: (sections: AirsaPdfSectionsUi) => Promise<void>;
 }
 
 type SectionOption<K extends string> = {
@@ -120,7 +136,42 @@ const NAI_GROUPS: SectionGroup<keyof NaiPdfSectionsUi>[] = [
   },
 ];
 
-export default function ExportPdfModal({ open, onOpenChange, instrumentType, isCoachView = false, onExportPtp, onExportNai }: Props) {
+const AIRSA_GROUPS: SectionGroup<keyof AirsaPdfSectionsUi>[] = [
+  {
+    title: "Profile sections",
+    options: [
+      { key: "atAGlance", name: "At a glance", description: "Four metric cards" },
+      { key: "howToRead", name: "How to read your results", description: "Framework introduction" },
+      { key: "profileOverview", name: "Profile overview", description: "AI-generated summary" },
+    ],
+  },
+  {
+    title: "Skill detail sections",
+    options: [
+      { key: "domainHeatmap", name: "Domain heatmap", description: "Self vs manager by domain" },
+      { key: "lollipop", name: "Skill-by-skill comparison", description: "All 24 skills, lollipop chart" },
+      { key: "topPriorities", name: "Top 3 development priorities", description: "AI-generated priorities" },
+    ],
+  },
+  {
+    title: "Cross-cutting sections",
+    options: [
+      { key: "whatThisMeans", name: "What does this mean to me?", description: "AI-generated four-box analysis" },
+      { key: "actionPlan", name: "Action plan", description: "AI-generated 7/30/90-day plan" },
+      { key: "conversationGuide", name: "Conversation guide", description: "AI-generated three-card guide" },
+      { key: "crossInstrument", name: "How this connects to your other assessments", description: "AI-generated cross-instrument analysis" },
+    ],
+  },
+  {
+    title: "Reference",
+    options: [
+      { key: "skillReference", name: "Skill reference list", description: "All 24 skills with definitions" },
+      { key: "methodology", name: "Methodology", description: "Framework citations and disclaimers" },
+    ],
+  },
+];
+
+export default function ExportPdfModal({ open, onOpenChange, instrumentType, isCoachView = false, onExportPtp, onExportNai, onExportAirsa }: Props) {
   const [ptpSections, setPtpSections] = useState<PdfSections>({
     profileOverview: true,
     drivingFacetScores: true,
@@ -144,6 +195,21 @@ export default function ExportPdfModal({ open, onOpenChange, instrumentType, isC
     assessmentResponses: true,
   });
 
+  const [airsaSections, setAirsaSections] = useState<AirsaPdfSectionsUi>({
+    atAGlance: true,
+    howToRead: true,
+    profileOverview: true,
+    domainHeatmap: true,
+    whatThisMeans: true,
+    actionPlan: true,
+    lollipop: true,
+    conversationGuide: true,
+    topPriorities: true,
+    crossInstrument: true,
+    skillReference: true,
+    methodology: true,
+  });
+
   const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
@@ -153,6 +219,7 @@ export default function ExportPdfModal({ open, onOpenChange, instrumentType, isC
   }, [isCoachView]);
 
   const isNai = instrumentType === "NAI";
+  const isAirsa = instrumentType === "AIRSA";
 
   const visibleNaiGroups = useMemo(
     () =>
@@ -164,13 +231,26 @@ export default function ExportPdfModal({ open, onOpenChange, instrumentType, isC
   );
 
   const visiblePtpGroups = PTP_GROUPS;
+  const visibleAirsaGroups = AIRSA_GROUPS;
 
-  const allSelected = isNai
+  const allSelected = isAirsa
+    ? visibleAirsaGroups.every((g) => g.options.every((o) => airsaSections[o.key]))
+    : isNai
     ? visibleNaiGroups.every((g) => g.options.every((o) => naiSections[o.key]))
     : visiblePtpGroups.every((g) => g.options.every((o) => ptpSections[o.key]));
 
   const setAll = (value: boolean) => {
-    if (isNai) {
+    if (isAirsa) {
+      setAirsaSections((prev) => {
+        const next = { ...prev };
+        visibleAirsaGroups.forEach((g) =>
+          g.options.forEach((o) => {
+            next[o.key] = value;
+          })
+        );
+        return next;
+      });
+    } else if (isNai) {
       setNaiSections((prev) => {
         const next = { ...prev };
         visibleNaiGroups.forEach((g) =>
@@ -197,11 +277,15 @@ export default function ExportPdfModal({ open, onOpenChange, instrumentType, isC
     setPtpSections((prev) => ({ ...prev, [key]: !prev[key] }));
   const toggleNai = (key: keyof NaiPdfSectionsUi) =>
     setNaiSections((prev) => ({ ...prev, [key]: !prev[key] }));
+  const toggleAirsa = (key: keyof AirsaPdfSectionsUi) =>
+    setAirsaSections((prev) => ({ ...prev, [key]: !prev[key] }));
 
   const handleExport = async () => {
     setExporting(true);
     try {
-      if (instrumentType === "NAI" && onExportNai) {
+      if (instrumentType === "AIRSA" && onExportAirsa) {
+        await onExportAirsa(airsaSections);
+      } else if (instrumentType === "NAI" && onExportNai) {
         await onExportNai(naiSections);
       } else if (onExportPtp) {
         await onExportPtp(ptpSections);
@@ -252,7 +336,7 @@ export default function ExportPdfModal({ open, onOpenChange, instrumentType, isC
 
         <div className="flex items-center justify-between py-2">
           <span className="text-xs text-muted-foreground">
-            {isNai ? "NAI report sections" : "PTP report sections"}
+            {isAirsa ? "AIRSA report sections" : isNai ? "NAI report sections" : "PTP report sections"}
           </span>
           <Button
             type="button"
@@ -268,7 +352,14 @@ export default function ExportPdfModal({ open, onOpenChange, instrumentType, isC
         <Separator />
 
         <div className="space-y-6 py-4">
-          {isNai
+          {isAirsa
+            ? visibleAirsaGroups.map((g, i) => (
+                <div key={g.title} className="space-y-6">
+                  {renderGroup(g, airsaSections as Record<keyof AirsaPdfSectionsUi, boolean>, toggleAirsa)}
+                  {i < visibleAirsaGroups.length - 1 && <Separator />}
+                </div>
+              ))
+            : isNai
             ? visibleNaiGroups.map((g, i) => (
                 <div key={g.title} className="space-y-6">
                   {renderGroup(g, naiSections as Record<keyof NaiPdfSectionsUi, boolean>, toggleNai)}

@@ -59,7 +59,9 @@ import NAINarrativeSections from "@/components/results/NAINarrativeSections";
 import ExportPdfModal, { type PdfSections } from "@/components/results/ExportPdfModal";
 import { generateResultsPdf, type PdfData } from "@/lib/generateResultsPdf";
 import { generateNaiPdf, type NaiPdfData } from "@/lib/generateNaiPdf";
-import { assemblePtpPdfData, assembleNaiPdfData } from "@/lib/assemblePdfDataForUser";
+import { generateAirsaPdf, type AirsaPdfData } from "@/lib/generateAirsaPdf";
+import { assemblePtpPdfData, assembleNaiPdfData, assembleAirsaPdfData } from "@/lib/assemblePdfDataForUser";
+import { type AirsaPdfSectionsUi } from "@/components/results/ExportPdfModal";
 import AirsaCombinedReport from "@/components/results/AirsaCombinedReport";
 
 // Types
@@ -722,6 +724,17 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
     generateNaiPdf(pdfData, sections);
   }, [selected, isNAI, coachViewActive, displayName, effectiveUserId]);
 
+  const handleAirsaPdfExport = useCallback(async (sections: AirsaPdfSectionsUi) => {
+    if (!selected || !isAIRSA) return;
+    const pdfData = await assembleAirsaPdfData({
+      userId: effectiveUserId!,
+      assessmentResultId: selected.result.id,
+      isCoachView: coachViewActive,
+      displayName: displayName ?? null,
+    });
+    generateAirsaPdf(pdfData, sections);
+  }, [selected, isAIRSA, coachViewActive, displayName, effectiveUserId]);
+
   const chatMessagesRef = useRef<Array<{role: 'user' | 'assistant'; content: string; timestamp: Date}>>([]);
   const chatSessionIdRef = useRef<string | null>(null);
 
@@ -984,6 +997,7 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
               instrumentVersion={selected.result.instrument_version}
               isCoachView={isCoachView}
               canTakeAssessments={canTakeAssessments}
+              onExportClick={() => setExportModalOpen(true)}
             />
           )}
 
@@ -1424,16 +1438,22 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
           </section>
           )}
 
-          {/* Export PDF Modal */}
+          </>)}
+
+          {/* Export PDF Modal (lifted out of !isAIRSA so AIRSA can also trigger it) */}
           <ExportPdfModal
             open={exportModalOpen}
             onOpenChange={setExportModalOpen}
-            instrumentType={isNAI ? "NAI" : (effectiveSelected?.isPTP ? "PTP" : "OTHER")}
+            instrumentType={
+              isAIRSA ? "AIRSA"
+              : isNAI ? "NAI"
+              : (effectiveSelected?.isPTP ? "PTP" : "OTHER")
+            }
             isCoachView={coachViewActive}
             onExportPtp={handlePdfExport}
             onExportNai={handleNaiPdfExport}
+            onExportAirsa={handleAirsaPdfExport}
           />
-          </>)}
             </>
           )}
         </>
