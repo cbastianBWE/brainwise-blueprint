@@ -31,7 +31,7 @@ const STATUS_COLORS: Record<string, { color: string; label: string }> = {
   confirmed_strength: { color: "#2D6A4F", label: "Confirmed strength" },
   confirmed_gap:      { color: "#6D6875", label: "Confirmed gap" },
   blind_spot:         { color: "#021F36", label: "Blind spot" },
-  underestimate:      { color: "#006D77", label: "Underestimate" },
+  underestimate:      { color: "#3C096C", label: "Underestimate" },
 };
 
 const DOMAIN_NAMES: Record<string, string> = {
