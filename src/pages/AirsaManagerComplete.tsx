@@ -71,11 +71,10 @@ export default function AirsaManagerComplete() {
           </h1>
           <p className="text-foreground leading-relaxed">
             {selfRaterName} will be notified that their combined AI Readiness Skills results are ready to view.
-            They'll see how your readiness ratings compare to their self-ratings at the dimension level.
+            They'll see your readiness ratings for each of the 24 skills, side-by-side with their own self-ratings.
           </p>
           <p className="text-foreground leading-relaxed">
-            Your individual responses to each item are not shared with {selfRaterName}. Only the dimension-level
-            readiness summaries (Foundational, Proficient, Advanced) are visible to them, alongside their own.
+            AIRSA is a development conversation tool, not anonymous feedback. {selfRaterName} will see your readiness ratings (Foundational, Proficient, Advanced) for each skill — they won't see your specific Never/Rarely/Often/Consistently responses.
           </p>
           <div className="border-t pt-6">
             <Button onClick={() => navigate("/assessment")}>Back to Assessments</Button>
