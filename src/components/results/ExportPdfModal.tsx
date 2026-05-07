@@ -36,13 +36,29 @@ export interface NaiPdfSectionsUi {
   assessmentResponses: boolean;
 }
 
+export interface AirsaPdfSectionsUi {
+  atAGlance: boolean;
+  howToRead: boolean;
+  profileOverview: boolean;
+  domainHeatmap: boolean;
+  whatThisMeans: boolean;
+  actionPlan: boolean;
+  lollipop: boolean;
+  conversationGuide: boolean;
+  topPriorities: boolean;
+  crossInstrument: boolean;
+  skillReference: boolean;
+  methodology: boolean;
+}
+
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  instrumentType: "PTP" | "NAI" | "OTHER";
+  instrumentType: "PTP" | "NAI" | "AIRSA" | "OTHER";
   isCoachView?: boolean;
   onExportPtp?: (sections: PdfSections) => Promise<void>;
   onExportNai?: (sections: NaiPdfSectionsUi) => Promise<void>;
+  onExportAirsa?: (sections: AirsaPdfSectionsUi) => Promise<void>;
 }
 
 type SectionOption<K extends string> = {
