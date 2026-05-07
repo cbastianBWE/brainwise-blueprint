@@ -696,7 +696,9 @@ export async function assembleAirsaPdfData(params: {
     secMap.airsa_top_priorities ??
     secMap.airsa_cross_instrument ??
     null;
-  const aiGeneratedAt = anySection?.generated_at ?? null;
+  // AI section facet_data does not always carry generated_at.
+  // Fall back to assessment_results.created_at.
+  const aiGeneratedAt = anySection?.generated_at ?? result.created_at ?? null;
   const aiVersion = anySection?.ai_version ?? null;
 
   const instrumentName = instrument?.instrument_name ?? "AI Readiness Skills Assessment";
