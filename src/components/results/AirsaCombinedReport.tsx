@@ -14,6 +14,7 @@ interface AirsaCombinedReportProps {
   instrumentVersion: string | null;
   isCoachView: boolean;
   canTakeAssessments: boolean;
+  onExportClick?: () => void;
 }
 
 // Brand palette — used for accent stripes and chart colors only.
