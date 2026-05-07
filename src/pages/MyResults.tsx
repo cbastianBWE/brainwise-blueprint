@@ -1569,44 +1569,6 @@ function StatCard({ label, value }: { label: string; value: string }) {
   );
 }
 
-function AIRSACards({
-  dimensions,
-}: {
-  dimensions: [string, DimensionScore][];
-}) {
-  return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-      {dimensions.map(([name, score]) => {
-        const level = score.readiness_level ?? "Foundational";
-        const colors = READINESS_COLORS[level] ?? READINESS_COLORS.Foundational;
-        return (
-          <div
-            key={name}
-            className="rounded-lg p-4 border"
-            style={{
-              backgroundColor: colors.bg,
-              borderColor: colors.border,
-            }}
-          >
-            <p className="text-sm font-medium" style={{ color: colors.text }}>
-              {formatDimensionName(name)}
-            </p>
-            <Badge
-              className="mt-2"
-              style={{
-                backgroundColor: colors.border,
-                color: "#fff",
-              }}
-            >
-              {level}
-            </Badge>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
 function NarrativeRenderer({ text }: { text: string }) {
   const lines = text.split("\n");
   const elements: React.ReactNode[] = [];
