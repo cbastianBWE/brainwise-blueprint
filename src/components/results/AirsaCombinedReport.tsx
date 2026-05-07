@@ -612,7 +612,7 @@ export default function AirsaCombinedReport({
       <ActionPlan data={action?.content} breakdown={breakdown} />
 
       {/* ───── Section 9: Lollipop ───── */}
-      <LollipopChart skills={skillsArr} newFlags={data.newSkillFlags} breakdown={breakdown} isSelfOnly={isSelfOnly} />
+      <LollipopChart skills={skillsArr} priorityFlags={prioritySkillNumbers} breakdown={breakdown} isSelfOnly={isSelfOnly} />
 
       {/* ───── Section 10: Conversation guide ───── */}
       <ConversationGuide data={guide?.content} breakdown={breakdown} />
@@ -621,7 +621,6 @@ export default function AirsaCombinedReport({
       <TopPriorities
         data={priorities?.content}
         breakdown={breakdown}
-        newFlags={data.newSkillFlags}
       />
 
       {/* ───── Section 12: Cross-instrument ───── */}
