@@ -31,6 +31,8 @@ interface SelectedInstrument {
   short_name: string;
   epnAssignmentId?: string;
   preexistingAssessmentId?: string;
+  raterType?: 'self' | 'manager';
+  targetUserName?: string;
 }
 
 export default function Assessment() {
@@ -56,6 +58,28 @@ export default function Assessment() {
         status: string;
         assigned_at: string;
         notes: string | null;
+      }>;
+    },
+  });
+
+  const pendingManagerQuery = useQuery({
+    queryKey: ["my-pending-manager-assessments", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data, error } = await (supabase.rpc as any)("my_pending_manager_assessments");
+      if (error) throw error;
+      return (data ?? []) as Array<{
+        manager_assessment_id: string;
+        paired_self_assessment_id: string;
+        self_rater_user_id: string;
+        self_rater_full_name: string;
+        self_rater_email: string;
+        self_rater_department_name: string | null;
+        manager_status: string;
+        manager_started_at: string | null;
+        reminder_count: number;
+        last_reminder_sent_at: string | null;
+        self_completed_at: string;
       }>;
     },
   });
