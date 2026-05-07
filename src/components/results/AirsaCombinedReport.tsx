@@ -262,14 +262,17 @@ function SkillReference({
 // Regex post-processor for "Skill N" / "Skills 7, 8, 9"
 function processSkillRefs(text: string, breakdown: Record<string, SkillBreakdown> | null): React.ReactNode[] {
   if (!text) return [];
-  const re = /Skills?\s+(\d+(?:\s*,\s*\d+)*)/g;
+  const re = /Skills?\s+(\d+(?:\s*(?:,\s*and\s+|,\s*|\s+and\s+)\d+)*)/g;
   const parts: React.ReactNode[] = [];
   let last = 0;
   let m: RegExpExecArray | null;
   let key = 0;
   while ((m = re.exec(text)) !== null) {
     if (m.index > last) parts.push(text.slice(last, m.index));
-    const nums = m[1].split(",").map((s) => parseInt(s.trim(), 10)).filter((n) => !isNaN(n));
+    const nums = m[1]
+      .split(/\s*(?:,\s*and\s+|,\s*|\s+and\s+)\s*/)
+      .map((s) => parseInt(s.trim(), 10))
+      .filter((n) => !isNaN(n));
     parts.push(
       <SkillReference key={`sr-${key++}`} numbers={nums} breakdown={breakdown}>
         {m[0]}
