@@ -60,6 +60,7 @@ import ExportPdfModal, { type PdfSections } from "@/components/results/ExportPdf
 import { generateResultsPdf, type PdfData } from "@/lib/generateResultsPdf";
 import { generateNaiPdf, type NaiPdfData } from "@/lib/generateNaiPdf";
 import { assemblePtpPdfData, assembleNaiPdfData } from "@/lib/assemblePdfDataForUser";
+import AirsaCombinedReport from "@/components/results/AirsaCombinedReport";
 
 // Types
 interface DimensionScore {
