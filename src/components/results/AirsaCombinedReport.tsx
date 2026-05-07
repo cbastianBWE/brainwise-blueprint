@@ -953,6 +953,22 @@ function LollipopChart({
         )}
         <div style={{ overflowX: "auto" }}>
           <svg width={totalW} height={totalH} role="img" aria-label="Skill level comparison chart">
+            {/* Level zone shading bands */}
+            {[0, 1, 2].map((zoneIdx) => {
+              const sliceW = chartW / 3;
+              const bandX = labelW + 20 + zoneIdx * sliceW;
+              return (
+                <rect
+                  key={`band-${zoneIdx}`}
+                  x={bandX}
+                  y={20}
+                  width={sliceW}
+                  height={skills.length * rowH}
+                  fill={zoneIdx % 2 === 0 ? "var(--bw-cream)" : "transparent"}
+                  fillOpacity={zoneIdx % 2 === 0 ? 0.5 : 0}
+                />
+              );
+            })}
             {["Foundational", "Proficient", "Advanced"].map((lvl) => {
               const isLast = lvl === "Advanced";
               const anchor = isLast ? "end" : "middle";
