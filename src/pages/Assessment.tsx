@@ -203,6 +203,46 @@ export default function Assessment() {
 
   return (
     <>
+      {pendingManager.length > 0 && (
+        <div className="max-w-3xl mx-auto px-4 pt-8 space-y-4">
+          {pendingManager.map((row) => {
+            const daysLabel = formatDaysAgo(row.self_completed_at);
+            const dept = row.self_rater_department_name || "your team";
+            const ctaLabel =
+              row.manager_status === "in_progress" && row.reminder_count > 0
+                ? "Continue Rating"
+                : "Start Rating";
+            return (
+              <Card
+                key={row.manager_assessment_id}
+                className="bg-[var(--bw-cream)] border-l-4"
+                style={{ borderLeftColor: "#2D6A4F" }}
+              >
+                <CardContent className="p-6 space-y-4">
+                  <div>
+                    <h2 className="text-xl font-semibold text-foreground">
+                      You've been asked to rate {row.self_rater_full_name}
+                    </h2>
+                    <p className="text-sm text-muted-foreground mt-2">
+                      {row.self_rater_full_name} from {dept} completed their AI Readiness Skills self-assessment {daysLabel}.
+                      Your perspective will help them see how their self-assessment compares to your view. About 8-10 minutes.
+                    </p>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Your individual responses won't be shared with {row.self_rater_full_name}. They'll see dimension-level summaries only.
+                  </p>
+                  <Button
+                    onClick={() => handleStartManagerAirsa(row)}
+                    style={{ backgroundColor: "#2D6A4F" }}
+                  >
+                    {ctaLabel}
+                  </Button>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
       {epnAssignments.length > 0 && (
         <div className="max-w-3xl mx-auto px-4 pt-8 space-y-4">
           {epnAssignments.map((a) => {
