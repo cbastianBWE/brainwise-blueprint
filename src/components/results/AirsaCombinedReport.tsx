@@ -914,12 +914,12 @@ function ActionPlan({ data, breakdown }: { data: any; breakdown: Record<string, 
 
 function LollipopChart({
   skills,
-  newFlags,
+  priorityFlags,
   breakdown,
   isSelfOnly,
 }: {
   skills: SkillBreakdown[];
-  newFlags: Record<number, boolean>;
+  priorityFlags: Set<number>;
   breakdown: Record<string, SkillBreakdown> | null;
   isSelfOnly: boolean;
 }) {
