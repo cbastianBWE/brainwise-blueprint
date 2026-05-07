@@ -1349,7 +1349,7 @@ function SkillReferenceList({
                     <li key={it.num} style={{ fontSize: 13, color: "var(--fg-2)", lineHeight: 1.55 }}>
                       <span style={{ color: "var(--fg-1)", fontWeight: 500 }}>
                         <SkillReference numbers={[it.num]} breakdown={breakdown}>
-                          {it.num}. {it.name}{newFlags[it.num] ? " ★" : ""}
+                          {it.num}. {it.name}
                         </SkillReference>
                       </span>
                       {" — "}
