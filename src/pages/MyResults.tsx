@@ -59,7 +59,9 @@ import NAINarrativeSections from "@/components/results/NAINarrativeSections";
 import ExportPdfModal, { type PdfSections } from "@/components/results/ExportPdfModal";
 import { generateResultsPdf, type PdfData } from "@/lib/generateResultsPdf";
 import { generateNaiPdf, type NaiPdfData } from "@/lib/generateNaiPdf";
-import { assemblePtpPdfData, assembleNaiPdfData } from "@/lib/assemblePdfDataForUser";
+import { generateAirsaPdf, type AirsaPdfData } from "@/lib/generateAirsaPdf";
+import { assemblePtpPdfData, assembleNaiPdfData, assembleAirsaPdfData } from "@/lib/assemblePdfDataForUser";
+import { type AirsaPdfSectionsUi } from "@/components/results/ExportPdfModal";
 import AirsaCombinedReport from "@/components/results/AirsaCombinedReport";
 
 // Types
