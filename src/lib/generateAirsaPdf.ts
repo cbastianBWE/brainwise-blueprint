@@ -1,4 +1,20 @@
 import jsPDF from "jspdf";
+import { format } from "date-fns";
+
+// jsPDF's default helvetica uses WinAnsiEncoding, which does not contain U+2605 (★).
+// Use ASCII asterisk in the PDF only. The on-screen report keeps ★ unchanged.
+const PRIORITY_GLYPH = "*";
+
+const AIRSA_DOMAIN_NAMES_LOCAL: Record<string, string> = {
+  "DIM-AIRSA-01": "Cognitive & Learning Skills",
+  "DIM-AIRSA-02": "Social & Collaborative Skills",
+  "DIM-AIRSA-03": "Psychological Readiness",
+  "DIM-AIRSA-04": "Strategic & Systems Thinking",
+  "DIM-AIRSA-05": "Execution & Practical Skills",
+  "DIM-AIRSA-06": "Proactivity & Personal Drive",
+  "DIM-AIRSA-07": "Information & Resource Management",
+  "DIM-AIRSA-08": "Ethical & Reflective Judgment",
+};
 
 export interface AirsaPdfSections {
   atAGlance: boolean;
@@ -635,7 +651,7 @@ export function generateAirsaPdf(
 
   // ── SECTION 11: TOP 3 PRIORITIES ──
   if (sections.topPriorities) {
-    sectionHeading("Top 3 development priorities");
+    sectionHeading("Top 3 development priorities", 70);
     if (!data.topPriorities || data.topPriorities.length === 0) {
       doc.setFontSize(8.5);
       doc.setFont("helvetica", "italic");
@@ -644,28 +660,92 @@ export function generateAirsaPdf(
       doc.setFont("helvetica", "normal");
       y += 6;
     } else {
-      const accents: Array<readonly [number, number, number]> = [NAVY, TEAL, GREEN];
-      data.topPriorities.forEach((p, idx) => {
+      const accentColors = [NAVY, TEAL, GREEN] as const;
+      for (let i = 0; i < data.topPriorities.length; i++) {
+        const p = data.topPriorities[i];
+        const accent = accentColors[i] ?? NAVY;
         const skill = data.skills.find((s) => s.skill_number === p.skill_number);
-        const status = skill?.status ?? "aligned";
-        const statusInfo = STATUS_COLORS[status] ?? { hex: "#6D6875", label: status };
-        const heading = skill ? `Skill ${p.skill_number}. ${skill.skill_name}` : `Skill ${p.skill_number}`;
-        const accent = accents[idx % 3];
-        // Use status color for the pill via accent? Spec says pill uses status color. We'll render via a custom card to match spec.
-        renderAccentCardWithStatusPill(
-          doc,
-          accent,
-          statusInfo,
-          heading,
-          [
-            { eyebrow: "What your manager will see", text: p.behavioral_target },
-            { eyebrow: "Practice", text: p.practice },
-          ],
-          () => ensureBlockSpace(MIN_BLOCK_SPACE),
-          (newY) => { y = newY; },
-          y
-        );
-      });
+        const skillName = skill?.skill_name ?? "";
+        const status = skill?.status ?? null;
+        const statusInfo = status ? STATUS_COLORS[status] : null;
+
+        // CRITICAL: set font BEFORE splitTextToSize so wrap width is correct
+        doc.setFontSize(8);
+        doc.setFont("helvetica", "normal");
+        const targetLines = doc.splitTextToSize(cleanMarkdown(p.behavioral_target), CONTENT_W - 12);
+        const practiceLines = doc.splitTextToSize(cleanMarkdown(p.practice), CONTENT_W - 12);
+
+        const cardH =
+          5 + 5 + 2
+          + 6 + 4
+          + 4 + 1 + targetLines.length * 4.5 + 3
+          + 4 + 1 + practiceLines.length * 4.5
+          + 5;
+
+        ensureBlockSpace(Math.max(MIN_BLOCK_SPACE, Math.min(cardH + 4, 100)));
+
+        doc.setDrawColor(...BORDER);
+        doc.setLineWidth(0.3);
+        doc.roundedRect(MARGIN_L, y, CONTENT_W, cardH, 2, 2, "S");
+        doc.setFillColor(accent[0], accent[1], accent[2]);
+        doc.rect(MARGIN_L, y, 1.5, cardH, "F");
+
+        let cursor = y + 5;
+
+        if (statusInfo) {
+          const [pr, pg, pb] = hexToRgb(statusInfo.hex);
+          const bgR = Math.round(pr * 0.2 + 255 * 0.8);
+          const bgG = Math.round(pg * 0.2 + 255 * 0.8);
+          const bgB = Math.round(pb * 0.2 + 255 * 0.8);
+          doc.setFillColor(bgR, bgG, bgB);
+          const pillW = 32;
+          const pillH = 5;
+          doc.roundedRect(MARGIN_L + 6, cursor, pillW, pillH, 1, 1, "F");
+          doc.setFontSize(6.5);
+          doc.setFont("helvetica", "bold");
+          doc.setTextColor(pr, pg, pb);
+          doc.text(statusInfo.label.toUpperCase(), MARGIN_L + 6 + pillW / 2, cursor + 3.4, { align: "center" });
+          cursor += pillH + 2;
+        }
+
+        doc.setFontSize(11);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(...BLACK);
+        doc.text(`Skill ${p.skill_number}. ${skillName}`, MARGIN_L + 6, cursor + 5);
+        cursor += 6 + 4;
+
+        doc.setFontSize(6.5);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(...MUTED);
+        doc.text("WHAT YOUR MANAGER WILL SEE", MARGIN_L + 6, cursor + 3);
+        cursor += 4 + 1;
+
+        doc.setFontSize(8);
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(...BLACK);
+        for (const line of targetLines) {
+          doc.text(line, MARGIN_L + 6, cursor + 3);
+          cursor += 4.5;
+        }
+        cursor += 3;
+
+        doc.setFontSize(6.5);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(...MUTED);
+        doc.text("PRACTICE", MARGIN_L + 6, cursor + 3);
+        cursor += 4 + 1;
+
+        doc.setFontSize(8);
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(...BLACK);
+        for (const line of practiceLines) {
+          doc.text(line, MARGIN_L + 6, cursor + 3);
+          cursor += 4.5;
+        }
+
+        y += cardH + 4;
+      }
+      y += 2;
     }
   }
 
@@ -692,36 +772,68 @@ export function generateAirsaPdf(
 
   // ── SECTION 13: SKILL REFERENCE LIST ──
   if (sections.skillReference) {
-    sectionHeading("Skill reference list");
-    const useFallback = data.skills.length === 0 && data.selfOnlySkills && data.selfOnlySkills.length > 0;
-    if (data.skills.length > 0) {
-      const sorted = [...data.skills].sort((a, b) => a.skill_number - b.skill_number);
-      for (const s of sorted) {
-        renderSkillRefRow(
-          doc,
-          s.skill_number,
-          s.skill_name,
-          s.domain_name,
-          s.skill_description,
-          () => checkPageBreak(16),
-          (newY) => { y = newY; },
-          y
-        );
+    sectionHeading("Skill reference list", 60);
+
+    const refList: Array<{
+      item_number: number;
+      skill_name: string;
+      description: string;
+      domain_name: string;
+    }> = data.skills.length > 0
+      ? [...data.skills]
+          .sort((a, b) => a.skill_number - b.skill_number)
+          .map((s) => ({
+            item_number: s.skill_number,
+            skill_name: s.skill_name,
+            description: s.skill_description,
+            domain_name: s.domain_name,
+          }))
+      : (data.selfOnlySkills ?? []).map((s) => ({
+          item_number: s.item_number,
+          skill_name: s.skill_name,
+          description: s.short_description,
+          domain_name: AIRSA_DOMAIN_NAMES_LOCAL[s.dimension_id] ?? s.dimension_id,
+        }));
+
+    for (const r of refList) {
+      const headingText = `Skill ${r.item_number}. ${r.skill_name}`;
+      const domainText = r.domain_name;
+      // CRITICAL: set font BEFORE splitTextToSize
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "normal");
+      const descLines = doc.splitTextToSize(cleanMarkdown(r.description || ""), CONTENT_W);
+
+      const headingH = 4.5;
+      const domainH = 3.8;
+      const descH = descLines.length * 4.2;
+      const padH = 4;
+      const entryH = headingH + domainH + descH + padH;
+
+      ensureBlockSpace(Math.max(MIN_BLOCK_SPACE, Math.min(entryH + 2, 60)));
+
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(...BLACK);
+      doc.text(headingText, MARGIN_L, y);
+      let cursor = y + headingH;
+
+      doc.setFontSize(7.5);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(...MUTED);
+      doc.text(domainText, MARGIN_L, cursor);
+      cursor += domainH;
+
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(...BLACK);
+      for (const line of descLines) {
+        doc.text(line, MARGIN_L, cursor);
+        cursor += 4.2;
       }
-    } else if (useFallback) {
-      for (const s of data.selfOnlySkills!) {
-        renderSkillRefRow(
-          doc,
-          s.item_number,
-          s.skill_name,
-          s.dimension_id,
-          s.short_description,
-          () => checkPageBreak(16),
-          (newY) => { y = newY; },
-          y
-        );
-      }
+
+      y += entryH;
     }
+    y += 2;
   }
 
   // ── SECTION 14: METHODOLOGY ──
@@ -735,7 +847,11 @@ export function generateAirsaPdf(
     y += 3;
     doc.setFontSize(7);
     doc.setTextColor(...MUTED);
-    doc.text(`Report generated ${data.aiGeneratedAt ?? "—"} · AI version: ${data.aiVersion ?? "—"}`, MARGIN_L, y);
+    const generatedDateStr = data.aiGeneratedAt
+      ? format(new Date(data.aiGeneratedAt), "MMMM d, yyyy")
+      : "-";
+    const versionStr = data.aiVersion ?? "-";
+    doc.text(`Report generated ${generatedDateStr} · AI version: ${versionStr}`, MARGIN_L, y);
     y += 5;
   }
 
@@ -942,7 +1058,7 @@ function renderLollipop(doc: jsPDF, data: AirsaPdfData, startY: number) {
   // Row 3: priority legend
   doc.setFontSize(8);
   doc.setTextColor(...MUTED);
-  doc.text("★ marks your top 3 development priorities", MARGIN_L, y);
+  doc.text(`${PRIORITY_GLYPH} marks your top 3 development priorities`, MARGIN_L, y);
   y += 6;
 
   // Chart geometry
@@ -1003,7 +1119,7 @@ function renderLollipop(doc: jsPDF, data: AirsaPdfData, startY: number) {
     doc.setFontSize(7.5);
     doc.setTextColor(...BLACK);
     doc.setFont("helvetica", "normal");
-    const labelText = `${s.skill_number}. ${s.skill_name}${isPriority ? " ★" : ""}`;
+    const labelText = `${s.skill_number}. ${s.skill_name}${isPriority ? ` ${PRIORITY_GLYPH}` : ""}`;
     const truncated = labelText.length > 42 ? labelText.slice(0, 40) + "…" : labelText;
     doc.text(truncated, MARGIN_L + labelW, rowY + 1, { align: "right" });
 
