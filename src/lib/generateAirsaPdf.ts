@@ -550,34 +550,33 @@ export function generateAirsaPdf(
 
   // ── SECTION 6: PROFILE OVERVIEW ──
   if (sections.profileOverview) {
-    sectionHeading("Profile overview");
-    if (!data.profileOverviewText) {
-      doc.setFontSize(8.5);
-      doc.setFont("helvetica", "italic");
-      doc.setTextColor(...MUTED);
-      doc.text("Profile overview content is still generating. Please re-export in a few moments.", MARGIN_L, y);
-      doc.setFont("helvetica", "normal");
-      y += 6;
-    } else {
-      const text = cleanMarkdown(data.profileOverviewText);
-      const indent = 6;
-      const lines = doc.splitTextToSize(text, CONTENT_W - indent - 4);
-      const cardH = lines.length * 4.5 + 6;
-      ensureBlockSpace(cardH + 4);
-      doc.setFillColor(...SAND_BG);
-      doc.rect(MARGIN_L + 1.5, y, CONTENT_W - 1.5, cardH, "F");
-      doc.setFillColor(...NAVY);
-      doc.rect(MARGIN_L, y, 1.5, cardH, "F");
-      doc.setFontSize(8.5);
-      doc.setFont("helvetica", "normal");
-      doc.setTextColor(...BLACK);
-      let ly = y + 5;
-      for (const ln of lines) {
-        doc.text(ln, MARGIN_L + indent, ly);
-        ly += 4.5;
-      }
-      y += cardH + 4;
+    const overviewText = data.profileOverviewText
+      ? cleanMarkdown(data.profileOverviewText)
+      : "Profile overview content is still generating. Please re-export in a few moments.";
+
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "normal");
+    const overviewLines = doc.splitTextToSize(overviewText, CONTENT_W - 12);
+
+    const overviewCardH = 5 + overviewLines.length * 4.5 + 5;
+
+    sectionHeading("Profile overview", overviewCardH + 6);
+
+    doc.setFillColor(...SAND_BG);
+    doc.rect(MARGIN_L, y, CONTENT_W, overviewCardH, "F");
+    doc.setFillColor(...NAVY);
+    doc.rect(MARGIN_L, y, 1.5, overviewCardH, "F");
+
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(...BLACK);
+    let cursor = y + 5;
+    for (const line of overviewLines) {
+      doc.text(line, MARGIN_L + 6, cursor + 3);
+      cursor += 4.5;
     }
+
+    y += overviewCardH + 4;
   }
 
   // ── SECTION 7: WHAT THIS MEANS ──
