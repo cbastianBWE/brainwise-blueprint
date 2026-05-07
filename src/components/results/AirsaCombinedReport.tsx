@@ -606,22 +606,17 @@ export default function AirsaCombinedReport({
       {/* ───── Section 9: Lollipop ───── */}
       <LollipopChart skills={skillsArr} newFlags={data.newSkillFlags} breakdown={breakdown} isSelfOnly={isSelfOnly} />
 
-      {/* ───── Section 10: Quadrant map ───── */}
-      {!isSelfOnly && (
-        <QuadrantMap skills={skillsArr} breakdown={breakdown} />
-      )}
-
-      {/* ───── Section 11: Conversation guide ───── */}
+      {/* ───── Section 10: Conversation guide ───── */}
       <ConversationGuide data={guide?.content} breakdown={breakdown} />
 
-      {/* ───── Section 12: Top 3 priorities ───── */}
+      {/* ───── Section 11: Top 3 priorities ───── */}
       <TopPriorities
         data={priorities?.content}
         breakdown={breakdown}
         newFlags={data.newSkillFlags}
       />
 
-      {/* ───── Section 13: Cross-instrument ───── */}
+      {/* ───── Section 12: Cross-instrument ───── */}
       <CrossInstrument
         content={cross?.content ? String(cross.content) : null}
         breakdown={breakdown}
@@ -630,7 +625,7 @@ export default function AirsaCombinedReport({
         onNavigate={(p) => navigate(p)}
       />
 
-      {/* ───── Section 14: Skill reference list ───── */}
+      {/* ───── Section 13: Skill reference list ───── */}
       <SkillReferenceList
         breakdown={breakdown}
         isSelfOnly={isSelfOnly}
@@ -638,7 +633,7 @@ export default function AirsaCombinedReport({
         newFlags={data.newSkillFlags}
       />
 
-      {/* ───── Section 15: Methodology footer ───── */}
+      {/* ───── Section 14: Methodology footer ───── */}
       <section
         style={{
           marginTop: "var(--s-6)",
