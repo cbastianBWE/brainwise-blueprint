@@ -692,9 +692,7 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
       (selected?.result.instrument_id ?? "").toUpperCase().includes(s)
     );
 
-  const isAIRSA = (selected?.result.instrument_id ?? "")
-    .toUpperCase()
-    .includes("AIRSA");
+  const isAIRSA = (selected?.result.instrument_id ?? "") === "INST-003";
 
   const recommendations =
     (selected?.result.overall_profile as OverallProfile)
