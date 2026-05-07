@@ -136,7 +136,42 @@ const NAI_GROUPS: SectionGroup<keyof NaiPdfSectionsUi>[] = [
   },
 ];
 
-export default function ExportPdfModal({ open, onOpenChange, instrumentType, isCoachView = false, onExportPtp, onExportNai }: Props) {
+const AIRSA_GROUPS: SectionGroup<keyof AirsaPdfSectionsUi>[] = [
+  {
+    title: "Profile sections",
+    options: [
+      { key: "atAGlance", name: "At a glance", description: "Four metric cards" },
+      { key: "howToRead", name: "How to read your results", description: "Framework introduction" },
+      { key: "profileOverview", name: "Profile overview", description: "AI-generated summary" },
+    ],
+  },
+  {
+    title: "Skill detail sections",
+    options: [
+      { key: "domainHeatmap", name: "Domain heatmap", description: "Self vs manager by domain" },
+      { key: "lollipop", name: "Skill-by-skill comparison", description: "All 24 skills, lollipop chart" },
+      { key: "topPriorities", name: "Top 3 development priorities", description: "AI-generated priorities" },
+    ],
+  },
+  {
+    title: "Cross-cutting sections",
+    options: [
+      { key: "whatThisMeans", name: "What does this mean to me?", description: "AI-generated four-box analysis" },
+      { key: "actionPlan", name: "Action plan", description: "AI-generated 7/30/90-day plan" },
+      { key: "conversationGuide", name: "Conversation guide", description: "AI-generated three-card guide" },
+      { key: "crossInstrument", name: "How this connects to your other assessments", description: "AI-generated cross-instrument analysis" },
+    ],
+  },
+  {
+    title: "Reference",
+    options: [
+      { key: "skillReference", name: "Skill reference list", description: "All 24 skills with definitions" },
+      { key: "methodology", name: "Methodology", description: "Framework citations and disclaimers" },
+    ],
+  },
+];
+
+export default function ExportPdfModal({ open, onOpenChange, instrumentType, isCoachView = false, onExportPtp, onExportNai, onExportAirsa }: Props) {
   const [ptpSections, setPtpSections] = useState<PdfSections>({
     profileOverview: true,
     drivingFacetScores: true,
