@@ -920,7 +920,7 @@ function LollipopChart({
   if (!skills.length) return null;
 
   const labelW = 280;
-  const chartW = 520;
+  const chartW = 560;
   const padR = 60; // increased to fit "Advanced" label
   const totalW = labelW + chartW + padR;
   const rowH = 30;
