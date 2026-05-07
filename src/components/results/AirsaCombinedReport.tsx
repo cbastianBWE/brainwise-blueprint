@@ -1242,8 +1242,13 @@ function TopPriorities({
         <div style={{ display: "flex", flexDirection: "column", gap: "var(--s-3)" }}>
           {(Array.isArray(data) ? data : []).map((p: any, i: number) => {
             const skill = breakdown?.[String(p.skill_number)];
+            const status = skill?.status;
+            const statusInfo = status ? STATUS_COLORS[status] : null;
             return (
               <div key={i} style={accentCardSurface(accents[i] ?? AIRSA_COLORS.navy)}>
+                {statusInfo && (
+                  <span style={tonePillStyle(statusInfo.color)}>{statusInfo.label}</span>
+                )}
                 <h3
                   style={{
                     fontFamily: "var(--font-display)",
