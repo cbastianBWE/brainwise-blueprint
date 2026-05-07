@@ -958,35 +958,43 @@ function LollipopChart({
                 <svg width="12" height="12" aria-hidden="true">
                   <circle cx="6" cy="6" r="5" fill={AIRSA_COLORS.teal} />
                 </svg>
-                Self rating
+                Self rating (the level you assigned)
               </span>
               <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
                 <svg width="12" height="12" aria-hidden="true">
                   <circle cx="6" cy="6" r="5" fill={AIRSA_COLORS.navy} />
                 </svg>
-                Manager rating
+                Manager rating (the level your supervisor assigned)
               </span>
             </div>
             {/* Divider */}
             <div style={{ borderTop: "1px solid var(--border-1)", margin: "var(--s-2) 0" }} />
-            {/* Row 2: status colors and dash patterns */}
+            {/* Row 2: status colors */}
             <div
               className="flex flex-wrap"
               style={{ gap: "var(--s-3)", fontSize: 12, color: "var(--fg-2)" }}
             >
               {Object.entries(STATUS_COLORS).map(([k, v]) => (
-                <span key={k} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                <span key={k} style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
                   <span
                     style={{
                       display: "inline-block",
-                      width: 16,
-                      height: 0,
-                      borderTop: `2px ${k === "blind_spot" ? "dashed" : "solid"} ${v.color}`,
+                      width: 28,
+                      height: 6,
+                      borderRadius: 3,
+                      background: k === "blind_spot" ? "transparent" : v.color,
+                      borderTop: k === "blind_spot" ? `3px dashed ${v.color}` : "none",
                     }}
                   />
                   {v.label}
                 </span>
               ))}
+            </div>
+            {/* Divider */}
+            <div style={{ borderTop: "1px solid var(--border-1)", margin: "var(--s-2) 0" }} />
+            {/* Row 3: star indicator */}
+            <div style={{ fontSize: 12, color: "var(--fg-2)" }}>
+              <span style={{ fontWeight: 600 }}>★</span> marks your top 3 development priorities (see Top 3 development priorities section below)
             </div>
           </div>
         )}
