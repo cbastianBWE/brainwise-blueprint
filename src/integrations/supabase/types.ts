@@ -207,6 +207,59 @@ export type Database = {
           },
         ]
       }
+      airsa_skills: {
+        Row: {
+          behavioral_indicators: Json
+          created_at: string
+          dimension_id: string
+          full_definition: string
+          is_new_skill: boolean
+          item_number: number
+          primary_p: string | null
+          secondary_ps: Json
+          short_description: string
+          skill_name: string
+          theoretical_basis: string | null
+          updated_at: string
+        }
+        Insert: {
+          behavioral_indicators?: Json
+          created_at?: string
+          dimension_id: string
+          full_definition: string
+          is_new_skill?: boolean
+          item_number: number
+          primary_p?: string | null
+          secondary_ps?: Json
+          short_description: string
+          skill_name: string
+          theoretical_basis?: string | null
+          updated_at?: string
+        }
+        Update: {
+          behavioral_indicators?: Json
+          created_at?: string
+          dimension_id?: string
+          full_definition?: string
+          is_new_skill?: boolean
+          item_number?: number
+          primary_p?: string | null
+          secondary_ps?: Json
+          short_description?: string
+          skill_name?: string
+          theoretical_basis?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "airsa_skills_dimension_id_fkey"
+            columns: ["dimension_id"]
+            isOneToOne: false
+            referencedRelation: "dimensions"
+            referencedColumns: ["dimension_id"]
+          },
+        ]
+      }
       assessment_purchases: {
         Row: {
           amount_paid: number
@@ -342,6 +395,7 @@ export type Database = {
           manager_dimension_scores: Json | null
           overall_profile: Json | null
           self_manager_divergence: Json | null
+          skill_level_breakdown: Json | null
           superseded_at: string | null
           superseded_reason: string | null
           user_id: string
@@ -360,6 +414,7 @@ export type Database = {
           manager_dimension_scores?: Json | null
           overall_profile?: Json | null
           self_manager_divergence?: Json | null
+          skill_level_breakdown?: Json | null
           superseded_at?: string | null
           superseded_reason?: string | null
           user_id: string
@@ -378,6 +433,7 @@ export type Database = {
           manager_dimension_scores?: Json | null
           overall_profile?: Json | null
           self_manager_divergence?: Json | null
+          skill_level_breakdown?: Json | null
           superseded_at?: string | null
           superseded_reason?: string | null
           user_id?: string
