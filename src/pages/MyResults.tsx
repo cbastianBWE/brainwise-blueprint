@@ -724,6 +724,17 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
     generateNaiPdf(pdfData, sections);
   }, [selected, isNAI, coachViewActive, displayName, effectiveUserId]);
 
+  const handleAirsaPdfExport = useCallback(async (sections: AirsaPdfSectionsUi) => {
+    if (!selected || !isAIRSA) return;
+    const pdfData = await assembleAirsaPdfData({
+      userId: effectiveUserId!,
+      assessmentResultId: selected.result.id,
+      isCoachView: coachViewActive,
+      displayName: displayName ?? null,
+    });
+    generateAirsaPdf(pdfData, sections);
+  }, [selected, isAIRSA, coachViewActive, displayName, effectiveUserId]);
+
   const chatMessagesRef = useRef<Array<{role: 'user' | 'assistant'; content: string; timestamp: Date}>>([]);
   const chatSessionIdRef = useRef<string | null>(null);
 
