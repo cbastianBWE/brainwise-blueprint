@@ -439,6 +439,14 @@ export default function AirsaCombinedReport({
   const priorities = sec.airsa_top_priorities;
   const cross = sec.airsa_cross_instrument;
 
+  const prioritySkillNumbers = useMemo(() => {
+    const arr = priorities?.content;
+    if (!Array.isArray(arr)) return new Set<number>();
+    return new Set<number>(
+      arr.map((p: any) => p.skill_number).filter((n: any) => typeof n === "number")
+    );
+  }, [priorities]);
+
   const footerMeta =
     overview ?? wtm ?? action ?? guide ?? priorities ?? cross ?? null;
 
