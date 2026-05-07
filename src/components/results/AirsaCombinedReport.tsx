@@ -525,7 +525,7 @@ export default function AirsaCombinedReport({
 
       {/* ───── Section 3: Action buttons ───── */}
       <section className="flex flex-wrap" style={{ gap: "var(--s-3)" }}>
-        <Button variant="outline" onClick={() => alert("PDF export coming soon")}>
+        <Button variant="outline" onClick={() => onExportClick?.()}>
           <FileText className="mr-2 h-4 w-4" /> Export PDF
         </Button>
         {!isCoachView && canTakeAssessments && (
