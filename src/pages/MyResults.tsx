@@ -1435,6 +1435,7 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
             onExportPtp={handlePdfExport}
             onExportNai={handleNaiPdfExport}
           />
+          </>)}
             </>
           )}
         </>
