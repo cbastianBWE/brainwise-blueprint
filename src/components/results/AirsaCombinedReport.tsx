@@ -1182,11 +1182,28 @@ function QuadrantMap({
   );
 }
 
+function tonePillStyle(color: string): React.CSSProperties {
+  return {
+    display: "inline-flex",
+    alignItems: "center",
+    padding: "2px 10px",
+    borderRadius: "var(--r-pill)",
+    fontFamily: "var(--font-primary)",
+    fontSize: 11,
+    fontWeight: 600,
+    background: `${color}20`,
+    color,
+    marginBottom: "var(--s-2)",
+    textTransform: "uppercase",
+    letterSpacing: "0.04em",
+  };
+}
+
 function ConversationGuide({ data, breakdown }: { data: any; breakdown: Record<string, SkillBreakdown> | null }) {
   const cards = [
-    { key: "for_self", title: "For you to start", color: AIRSA_COLORS.navy },
-    { key: "for_manager", title: "For your manager to start", color: AIRSA_COLORS.teal },
-    { key: "for_both", title: "For both of you to start", color: AIRSA_COLORS.green },
+    { key: "for_self", title: "For you to start", color: AIRSA_COLORS.navy, tone: "For you" },
+    { key: "for_manager", title: "For your manager to start", color: AIRSA_COLORS.teal, tone: "For your manager" },
+    { key: "for_both", title: "For both of you to start", color: AIRSA_COLORS.green, tone: "For both" },
   ];
   return (
     <section>
@@ -1194,6 +1211,7 @@ function ConversationGuide({ data, breakdown }: { data: any; breakdown: Record<s
       <div style={{ display: "flex", flexDirection: "column", gap: "var(--s-3)" }}>
         {cards.map((c) => (
           <div key={c.key} style={accentCardSurface(c.color)}>
+            <span style={tonePillStyle(c.color)}>{c.tone}</span>
             <h3 style={cardTitleStyle}>{c.title}</h3>
             <div style={{ fontSize: 14, color: "var(--fg-2)", lineHeight: 1.6 }}>
               {data?.[c.key] ? processSkillRefs(String(data[c.key]), breakdown) : <SkeletonLines lines={3} />}
