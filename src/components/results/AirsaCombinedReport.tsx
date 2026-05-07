@@ -877,9 +877,9 @@ function WhatThisMeans({
 
 function ActionPlan({ data, breakdown }: { data: any; breakdown: Record<string, SkillBreakdown> | null }) {
   const rows = [
-    { key: "this_week", label: "This week" },
-    { key: "next_30_days", label: "Next 30 days" },
-    { key: "in_90_days", label: "In 90 days" },
+    { key: "this_week", label: "This week", color: AIRSA_COLORS.navy },
+    { key: "next_30_days", label: "Next 30 days", color: AIRSA_COLORS.teal },
+    { key: "in_90_days", label: "In 90 days", color: AIRSA_COLORS.green },
   ];
   return (
     <section>
@@ -887,8 +887,24 @@ function ActionPlan({ data, breakdown }: { data: any; breakdown: Record<string, 
       <div style={cardSurface}>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:divide-x md:divide-[var(--border-1)]">
           {rows.map((r, i) => (
-            <div key={r.key} style={{ paddingLeft: i > 0 ? "var(--s-4)" : 0 }}>
-              <div style={{ ...eyebrowStyle, marginBottom: "var(--s-2)" }}>{r.label}</div>
+            <div key={r.key} style={{ paddingLeft: i > 0 ? "var(--s-4)" : 0, display: "flex", flexDirection: "column" }}>
+              <span style={{
+                display: "inline-flex",
+                alignItems: "center",
+                padding: "2px 10px",
+                borderRadius: "var(--r-pill)",
+                fontFamily: "var(--font-primary)",
+                fontSize: 11,
+                fontWeight: 600,
+                background: `${r.color}20`,
+                color: r.color,
+                marginBottom: "var(--s-2)",
+                textTransform: "uppercase",
+                letterSpacing: "0.04em",
+                alignSelf: "flex-start",
+              }}>
+                {r.label}
+              </span>
               <div style={{ fontSize: 14, color: "var(--fg-2)", lineHeight: 1.6 }}>
                 {data?.[r.key] ? processSkillRefs(String(data[r.key]), breakdown) : <SkeletonLines lines={3} />}
               </div>
@@ -931,44 +947,77 @@ function LollipopChart({
         {isSelfOnly ? "Self-rated skill levels" : "Skill-by-skill comparison"}
       </h2>
       <div style={cardSurface}>
-        {!isSelfOnly && (
-          <div
-            className="flex flex-wrap"
-            style={{ gap: "var(--s-3)", fontSize: 12, color: "var(--fg-2)", marginBottom: "var(--s-3)" }}
-          >
-            {Object.entries(STATUS_COLORS).map(([k, v]) => (
-              <span key={k} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-                <span
-                  style={{
-                    display: "inline-block",
-                    width: 16,
-                    height: 0,
-                    borderTop: `2px ${k === "blind_spot" ? "dashed" : "solid"} ${v.color}`,
-                  }}
-                />
-                {v.label}
+        {isSelfOnly ? (
+          <div style={{ fontSize: 12, color: "var(--fg-2)", marginBottom: "var(--s-3)" }}>
+            Showing your self-rated skill levels
+          </div>
+        ) : (
+          <div style={{ marginBottom: "var(--s-4)" }}>
+            {/* Row 1: dot meaning */}
+            <div
+              className="flex flex-wrap"
+              style={{ gap: "var(--s-4)", fontSize: 12, color: "var(--fg-2)", marginBottom: "var(--s-2)" }}
+            >
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                <svg width="12" height="12" aria-hidden="true">
+                  <circle cx="6" cy="6" r="5" fill={AIRSA_COLORS.teal} />
+                </svg>
+                Self rating
               </span>
-            ))}
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                <svg width="12" height="12" aria-hidden="true">
+                  <circle cx="6" cy="6" r="5" fill={AIRSA_COLORS.navy} />
+                </svg>
+                Manager rating
+              </span>
+            </div>
+            {/* Divider */}
+            <div style={{ borderTop: "1px solid var(--border-1)", margin: "var(--s-2) 0" }} />
+            {/* Row 2: status colors and dash patterns */}
+            <div
+              className="flex flex-wrap"
+              style={{ gap: "var(--s-3)", fontSize: 12, color: "var(--fg-2)" }}
+            >
+              {Object.entries(STATUS_COLORS).map(([k, v]) => (
+                <span key={k} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                  <span
+                    style={{
+                      display: "inline-block",
+                      width: 16,
+                      height: 0,
+                      borderTop: `2px ${k === "blind_spot" ? "dashed" : "solid"} ${v.color}`,
+                    }}
+                  />
+                  {v.label}
+                </span>
+              ))}
+            </div>
           </div>
         )}
         <div style={{ overflowX: "auto" }}>
           <svg width={totalW} height={totalH} role="img" aria-label="Skill level comparison chart">
-            {/* Level zone shading bands */}
-            {[0, 1, 2].map((zoneIdx) => {
+            {/* Level zone shading bands — three distinct zones telegraphing progression */}
+            {(() => {
               const sliceW = chartW / 3;
-              const bandX = labelW + 20 + zoneIdx * sliceW;
-              return (
+              const bandY = 20;
+              const bandH = skills.length * rowH;
+              const zones = [
+                { idx: 0, fill: "#FCE4D6" },
+                { idx: 1, fill: "#D6E8F5" },
+                { idx: 2, fill: "#D8E8D0" },
+              ];
+              return zones.map((z) => (
                 <rect
-                  key={`band-${zoneIdx}`}
-                  x={bandX}
-                  y={20}
+                  key={`band-${z.idx}`}
+                  x={labelW + 20 + z.idx * sliceW}
+                  y={bandY}
                   width={sliceW}
-                  height={skills.length * rowH}
-                  fill={zoneIdx % 2 === 0 ? "var(--bw-cream)" : "transparent"}
-                  fillOpacity={zoneIdx % 2 === 0 ? 0.5 : 0}
+                  height={bandH}
+                  fill={z.fill}
+                  fillOpacity={0.6}
                 />
-              );
-            })}
+              ));
+            })()}
             {["Foundational", "Proficient", "Advanced"].map((lvl) => {
               const isLast = lvl === "Advanced";
               const anchor = isLast ? "end" : "middle";
@@ -1038,26 +1087,6 @@ function LollipopChart({
             })}
           </svg>
         </div>
-        {!isSelfOnly && (
-          <div style={{
-            display: "flex",
-            gap: "var(--s-3)",
-            fontSize: 11,
-            color: "var(--fg-3)",
-            marginTop: "var(--s-3)",
-            paddingTop: "var(--s-2)",
-            borderTop: "1px solid var(--border-1)",
-          }}>
-            <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
-              <svg width="10" height="10"><circle cx="5" cy="5" r="4" fill={AIRSA_COLORS.teal} /></svg>
-              Self rating
-            </span>
-            <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
-              <svg width="10" height="10"><circle cx="5" cy="5" r="4" fill={AIRSA_COLORS.navy} /></svg>
-              Manager rating
-            </span>
-          </div>
-        )}
       </div>
     </section>
   );
