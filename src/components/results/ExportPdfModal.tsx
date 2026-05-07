@@ -195,6 +195,21 @@ export default function ExportPdfModal({ open, onOpenChange, instrumentType, isC
     assessmentResponses: true,
   });
 
+  const [airsaSections, setAirsaSections] = useState<AirsaPdfSectionsUi>({
+    atAGlance: true,
+    howToRead: true,
+    profileOverview: true,
+    domainHeatmap: true,
+    whatThisMeans: true,
+    actionPlan: true,
+    lollipop: true,
+    conversationGuide: true,
+    topPriorities: true,
+    crossInstrument: true,
+    skillReference: true,
+    methodology: true,
+  });
+
   const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
@@ -204,6 +219,7 @@ export default function ExportPdfModal({ open, onOpenChange, instrumentType, isC
   }, [isCoachView]);
 
   const isNai = instrumentType === "NAI";
+  const isAirsa = instrumentType === "AIRSA";
 
   const visibleNaiGroups = useMemo(
     () =>
@@ -215,13 +231,26 @@ export default function ExportPdfModal({ open, onOpenChange, instrumentType, isC
   );
 
   const visiblePtpGroups = PTP_GROUPS;
+  const visibleAirsaGroups = AIRSA_GROUPS;
 
-  const allSelected = isNai
+  const allSelected = isAirsa
+    ? visibleAirsaGroups.every((g) => g.options.every((o) => airsaSections[o.key]))
+    : isNai
     ? visibleNaiGroups.every((g) => g.options.every((o) => naiSections[o.key]))
     : visiblePtpGroups.every((g) => g.options.every((o) => ptpSections[o.key]));
 
   const setAll = (value: boolean) => {
-    if (isNai) {
+    if (isAirsa) {
+      setAirsaSections((prev) => {
+        const next = { ...prev };
+        visibleAirsaGroups.forEach((g) =>
+          g.options.forEach((o) => {
+            next[o.key] = value;
+          })
+        );
+        return next;
+      });
+    } else if (isNai) {
       setNaiSections((prev) => {
         const next = { ...prev };
         visibleNaiGroups.forEach((g) =>
@@ -248,11 +277,15 @@ export default function ExportPdfModal({ open, onOpenChange, instrumentType, isC
     setPtpSections((prev) => ({ ...prev, [key]: !prev[key] }));
   const toggleNai = (key: keyof NaiPdfSectionsUi) =>
     setNaiSections((prev) => ({ ...prev, [key]: !prev[key] }));
+  const toggleAirsa = (key: keyof AirsaPdfSectionsUi) =>
+    setAirsaSections((prev) => ({ ...prev, [key]: !prev[key] }));
 
   const handleExport = async () => {
     setExporting(true);
     try {
-      if (instrumentType === "NAI" && onExportNai) {
+      if (instrumentType === "AIRSA" && onExportAirsa) {
+        await onExportAirsa(airsaSections);
+      } else if (instrumentType === "NAI" && onExportNai) {
         await onExportNai(naiSections);
       } else if (onExportPtp) {
         await onExportPtp(ptpSections);
