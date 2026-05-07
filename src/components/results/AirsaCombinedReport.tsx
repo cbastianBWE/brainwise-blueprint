@@ -1176,7 +1176,6 @@ function TopPriorities({
                     Skill {p.skill_number}.
                   </SkillReference>{" "}
                   {skill?.skill_name ?? ""}
-                  {newFlags[p.skill_number] ? " ★" : ""}
                 </h3>
                 <div style={{ display: "flex", flexDirection: "column", gap: "var(--s-3)" }}>
                   <div>
