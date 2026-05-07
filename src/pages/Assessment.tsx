@@ -149,6 +149,28 @@ export default function Assessment() {
     });
   };
 
+  const handleStartManagerAirsa = async (row: {
+    manager_assessment_id: string;
+    self_rater_full_name: string;
+  }) => {
+    const { data: versionData } = await supabase
+      .from("platform_versions")
+      .select("version_string")
+      .eq("is_active", true)
+      .limit(1)
+      .single();
+
+    setSelectedInstrument({
+      instrument_id: "INST-003",
+      instrument_name: "AI Readiness Skills Assessment",
+      instrument_version: versionData?.version_string || "1.0",
+      short_name: "AIRSA",
+      preexistingAssessmentId: row.manager_assessment_id,
+      raterType: "manager",
+      targetUserName: row.self_rater_full_name,
+    });
+  };
+
   if (selectedInstrument) {
     if (selectedInstrument.instrument_id === "INST-001" && contextType === null) {
       return <PTPContextSelection onSelect={setContextType} />;
@@ -159,6 +181,8 @@ export default function Assessment() {
         contextType={contextType}
         preexistingAssessmentId={selectedInstrument.preexistingAssessmentId}
         epnAssignmentId={selectedInstrument.epnAssignmentId}
+        raterType={selectedInstrument.raterType}
+        targetUserName={selectedInstrument.targetUserName}
         onExit={() => {
           setSelectedInstrument(null);
           setContextType(null);
@@ -168,6 +192,14 @@ export default function Assessment() {
   }
 
   const epnAssignments = epnAssignmentsQuery.data ?? [];
+  const pendingManager = pendingManagerQuery.data ?? [];
+
+  const formatDaysAgo = (iso: string) => {
+    const days = Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
+    if (days <= 0) return "today";
+    if (days === 1) return "yesterday";
+    return `${days} days ago`;
+  };
 
   return (
     <>
