@@ -606,22 +606,17 @@ export default function AirsaCombinedReport({
       {/* ───── Section 9: Lollipop ───── */}
       <LollipopChart skills={skillsArr} newFlags={data.newSkillFlags} breakdown={breakdown} isSelfOnly={isSelfOnly} />
 
-      {/* ───── Section 10: Quadrant map ───── */}
-      {!isSelfOnly && (
-        <QuadrantMap skills={skillsArr} breakdown={breakdown} />
-      )}
-
-      {/* ───── Section 11: Conversation guide ───── */}
+      {/* ───── Section 10: Conversation guide ───── */}
       <ConversationGuide data={guide?.content} breakdown={breakdown} />
 
-      {/* ───── Section 12: Top 3 priorities ───── */}
+      {/* ───── Section 11: Top 3 priorities ───── */}
       <TopPriorities
         data={priorities?.content}
         breakdown={breakdown}
         newFlags={data.newSkillFlags}
       />
 
-      {/* ───── Section 13: Cross-instrument ───── */}
+      {/* ───── Section 12: Cross-instrument ───── */}
       <CrossInstrument
         content={cross?.content ? String(cross.content) : null}
         breakdown={breakdown}
@@ -630,7 +625,7 @@ export default function AirsaCombinedReport({
         onNavigate={(p) => navigate(p)}
       />
 
-      {/* ───── Section 14: Skill reference list ───── */}
+      {/* ───── Section 13: Skill reference list ───── */}
       <SkillReferenceList
         breakdown={breakdown}
         isSelfOnly={isSelfOnly}
@@ -638,7 +633,7 @@ export default function AirsaCombinedReport({
         newFlags={data.newSkillFlags}
       />
 
-      {/* ───── Section 15: Methodology footer ───── */}
+      {/* ───── Section 14: Methodology footer ───── */}
       <section
         style={{
           marginTop: "var(--s-6)",
@@ -925,7 +920,7 @@ function LollipopChart({
   if (!skills.length) return null;
 
   const labelW = 280;
-  const chartW = 520;
+  const chartW = 560;
   const padR = 60; // increased to fit "Advanced" label
   const totalW = labelW + chartW + padR;
   const rowH = 30;
@@ -1081,125 +1076,6 @@ function LollipopChart({
               );
             })}
           </svg>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function QuadrantMap({
-  skills,
-  breakdown,
-}: {
-  skills: SkillBreakdown[];
-  breakdown: Record<string, SkillBreakdown> | null;
-}) {
-  // bucket by (self_level, manager_level)
-  const cells: Record<string, number[]> = {};
-  for (const s of skills) {
-    const key = `${s.self_level}|${s.manager_level}`;
-    cells[key] ||= [];
-    cells[key].push(s.skill_number);
-  }
-
-  const W = 560;
-  const H = 420;
-  const padL = 80, padR = 40, padT = 40, padB = 50;
-  const innerW = W - padL - padR;
-  const innerH = H - padT - padB;
-
-  // Place each cell at the center of its 1/3 slice of the chart's inner area.
-  const xFor = (lvl: string) => padL + ((LEVEL_INDEX[lvl] + 0.5) / 3) * innerW;
-  const yFor = (lvl: string) => padT + innerH - ((LEVEL_INDEX[lvl] + 0.5) / 3) * innerH;
-
-  const quadrants = [
-    { x: padL + innerW / 2, y: padT, w: innerW / 2, h: innerH / 2, color: AIRSA_COLORS.green,
-      label: "Confirmed strength",
-      labelAt: { x: W - padR - 8, y: padT + 16, anchor: "end" as const } },
-    { x: padL, y: padT, w: innerW / 2, h: innerH / 2, color: AIRSA_COLORS.teal,
-      label: "Underestimate",
-      labelAt: { x: padL + 8, y: padT + 16, anchor: "start" as const } },
-    { x: padL + innerW / 2, y: padT + innerH / 2, w: innerW / 2, h: innerH / 2, color: AIRSA_COLORS.navy,
-      label: "Blind spot",
-      labelAt: { x: W - padR - 8, y: padT + innerH - 8, anchor: "end" as const } },
-    { x: padL, y: padT + innerH / 2, w: innerW / 2, h: innerH / 2, color: AIRSA_COLORS.gray,
-      label: "Confirmed gap",
-      labelAt: { x: padL + 8, y: padT + innerH - 8, anchor: "start" as const } },
-  ];
-
-  const colorForCell = (selfLvl: string, mgrLvl: string) => {
-    const sx = LEVEL_INDEX[selfLvl];
-    const my = LEVEL_INDEX[mgrLvl];
-    if (sx === 1 && my === 1) return AIRSA_COLORS.teal;
-    if (sx >= 1 && my >= 1) return AIRSA_COLORS.green;
-    if (sx < 1 && my >= 1) return AIRSA_COLORS.teal;
-    if (sx >= 1 && my < 1) return AIRSA_COLORS.navy;
-    return AIRSA_COLORS.gray;
-  };
-
-  return (
-    <section>
-      <h2 style={sectionHeadingStyle}>Developmental quadrant map</h2>
-      <div style={cardSurface}>
-        <div style={{ position: "relative", overflowX: "auto" }}>
-          <svg width={W} height={H} role="img" aria-label="Quadrant map of self vs manager ratings">
-            {quadrants.map((q, i) => (
-              <rect key={`q-${i}`} x={q.x} y={q.y} width={q.w} height={q.h} fill={q.color} fillOpacity={0.08} />
-            ))}
-            <line x1={padL} y1={padT + innerH} x2={padL + innerW} y2={padT + innerH} stroke="var(--border-1)" />
-            <line x1={padL} y1={padT} x2={padL} y2={padT + innerH} stroke="var(--border-1)" />
-            {["Foundational", "Proficient", "Advanced"].map((lvl) => (
-              <g key={lvl}>
-                <text x={xFor(lvl)} y={H - 16} fontSize={11} textAnchor="middle" fill="var(--fg-3)">{lvl}</text>
-                <text x={padL - 10} y={yFor(lvl) + 4} fontSize={11} textAnchor="end" fill="var(--fg-3)">{lvl}</text>
-              </g>
-            ))}
-            <text x={padL + innerW / 2} y={H - 2} fontSize={11} fontWeight={600} textAnchor="middle" fill="var(--fg-2)">Self</text>
-            <text x={16} y={padT + innerH / 2} fontSize={11} fontWeight={600} textAnchor="middle" fill="var(--fg-2)" transform={`rotate(-90 16 ${padT + innerH / 2})`}>Manager</text>
-            {quadrants.map((q, i) => (
-              <text key={`ql-${i}`} x={q.labelAt.x} y={q.labelAt.y} fontSize={11} fontWeight={600} fill={q.color} textAnchor={q.labelAt.anchor}>
-                {q.label.toUpperCase()}
-              </text>
-            ))}
-          </svg>
-          {Object.entries(cells).map(([key, nums]) => {
-            const [selfLvl, mgrLvl] = key.split("|");
-            const cx = xFor(selfLvl);
-            const cy = yFor(mgrLvl);
-            const c = colorForCell(selfLvl, mgrLvl);
-            return (
-              <div
-                key={key}
-                style={{
-                  position: "absolute",
-                  left: cx - 50,
-                  top: cy - 12,
-                  width: 100,
-                  height: 24,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  pointerEvents: "auto",
-                }}
-              >
-                <div style={{
-                  background: "var(--bw-white)",
-                  border: `1px solid ${c}40`,
-                  borderRadius: "var(--r-pill)",
-                  padding: "2px 8px",
-                  fontSize: 12,
-                  fontWeight: 700,
-                  color: c,
-                  boxShadow: "var(--shadow-xs)",
-                  whiteSpace: "nowrap",
-                }}>
-                  <SkillReference numbers={nums} breakdown={breakdown}>
-                    {nums.join(", ")}
-                  </SkillReference>
-                </div>
-              </div>
-            );
-          })}
         </div>
       </div>
     </section>
