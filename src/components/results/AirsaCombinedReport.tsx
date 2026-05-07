@@ -1140,11 +1140,9 @@ function ConversationGuide({ data, breakdown }: { data: any; breakdown: Record<s
 function TopPriorities({
   data,
   breakdown,
-  newFlags,
 }: {
   data: any;
   breakdown: Record<string, SkillBreakdown> | null;
-  newFlags: Record<number, boolean>;
 }) {
   const accents = [AIRSA_COLORS.navy, AIRSA_COLORS.teal, AIRSA_COLORS.green];
   return (
