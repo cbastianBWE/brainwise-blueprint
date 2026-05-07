@@ -1,4 +1,20 @@
 import jsPDF from "jspdf";
+import { format } from "date-fns";
+
+// jsPDF's default helvetica uses WinAnsiEncoding, which does not contain U+2605 (★).
+// Use ASCII asterisk in the PDF only. The on-screen report keeps ★ unchanged.
+const PRIORITY_GLYPH = "*";
+
+const AIRSA_DOMAIN_NAMES_LOCAL: Record<string, string> = {
+  "DIM-AIRSA-01": "Cognitive & Learning Skills",
+  "DIM-AIRSA-02": "Social & Collaborative Skills",
+  "DIM-AIRSA-03": "Psychological Readiness",
+  "DIM-AIRSA-04": "Strategic & Systems Thinking",
+  "DIM-AIRSA-05": "Execution & Practical Skills",
+  "DIM-AIRSA-06": "Proactivity & Personal Drive",
+  "DIM-AIRSA-07": "Information & Resource Management",
+  "DIM-AIRSA-08": "Ethical & Reflective Judgment",
+};
 
 export interface AirsaPdfSections {
   atAGlance: boolean;
