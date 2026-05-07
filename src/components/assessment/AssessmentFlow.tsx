@@ -464,13 +464,22 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
 
 // ── Scale controls ──
 
+function ManagerContextLine({ raterType, targetUserName }: { raterType?: 'self' | 'manager'; targetUserName?: string }) {
+  if (raterType !== 'manager' || !targetUserName) return null;
+  return <p className="text-sm italic text-muted-foreground text-center">Thinking about {targetUserName}...</p>;
+}
+
 function SliderControl({
   item,
   value,
+  raterType,
+  targetUserName,
   onSelect,
 }: {
   item: Item;
   value: number | null;
+  raterType?: 'self' | 'manager';
+  targetUserName?: string;
   onSelect: (val: number) => void;
 }) {
   const [localVal, setLocalVal] = useState(value ?? 50);
@@ -508,6 +517,7 @@ function SliderControl({
           height: 8px;
         }
       `}</style>
+      <ManagerContextLine raterType={raterType} targetUserName={targetUserName} />
       <p className="text-xl font-medium text-foreground leading-relaxed">{item.item_text}</p>
       <div className="space-y-4 px-2">
         <div className="flex justify-center">
@@ -548,10 +558,14 @@ function SliderControl({
 function LevelMatchControl({
   item,
   value,
+  raterType,
+  targetUserName,
   onSelect,
 }: {
   item: Item;
   value: number | null;
+  raterType?: 'self' | 'manager';
+  targetUserName?: string;
   onSelect: (val: number, text: string) => void;
 }) {
   // Parse behavioral descriptions from item_text
@@ -570,6 +584,7 @@ function LevelMatchControl({
 
   return (
     <div className="space-y-6">
+      <ManagerContextLine raterType={raterType} targetUserName={targetUserName} />
       <p className="text-xl font-medium text-foreground text-center leading-relaxed">{dimensionDesc}</p>
       <div className="space-y-3">
         {levels.map((lvl, idx) => (
@@ -604,11 +619,15 @@ function FrequencyControl({
   item,
   value,
   responseScales,
+  raterType,
+  targetUserName,
   onSelect,
 }: {
   item: Item;
   value: number | null;
   responseScales: ResponseScale[];
+  raterType?: 'self' | 'manager';
+  targetUserName?: string;
   onSelect: (val: number, text: string, readiness: string | null) => void;
 }) {
   const options = [
@@ -627,6 +646,7 @@ function FrequencyControl({
 
   return (
     <div className="space-y-8 text-center">
+      <ManagerContextLine raterType={raterType} targetUserName={targetUserName} />
       <p className="text-xl font-medium text-foreground leading-relaxed">{item.item_text}</p>
       <div className="flex gap-3 justify-center flex-wrap">
         {options.map((opt) => (
