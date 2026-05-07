@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { FileText, Calendar, BookOpen, Share2 } from "lucide-react";
+import { FileText, RefreshCw } from "lucide-react";
 import { format } from "date-fns";
 
 interface AirsaCombinedReportProps {
@@ -514,26 +514,19 @@ export default function AirsaCombinedReport({
       </section>
 
       {/* ───── Section 3: Action buttons ───── */}
-      <section className="flex flex-wrap gap-3">
+      <section className="flex flex-wrap" style={{ gap: "var(--s-3)" }}>
         <Button variant="outline" onClick={() => alert("PDF export coming soon")}>
-          <FileText className="mr-2 h-4 w-4" /> Download PDF
-        </Button>
-        <Button
-          variant="outline"
-          onClick={() => {
-            window.location.href =
-              "mailto:?subject=AI%20Readiness%20conversation&body=I%27d%20like%20to%20schedule%20time%20to%20discuss%20my%20AIRSA%20results%20with%20you.";
-          }}
-        >
-          <Calendar className="mr-2 h-4 w-4" /> Schedule conversation with manager
-        </Button>
-        <Button variant="outline" onClick={() => alert("Resources page coming soon")}>
-          <BookOpen className="mr-2 h-4 w-4" /> Resources
+          <FileText className="mr-2 h-4 w-4" /> Export PDF
         </Button>
         {!isCoachView && canTakeAssessments && (
-          <Button variant="outline" onClick={() => alert("Sharing coming soon")}>
-            <Share2 className="mr-2 h-4 w-4" /> Share
-          </Button>
+          <>
+            <Button variant="outline" onClick={() => navigate("/assessment?instrument=INST-003")}>
+              <RefreshCw className="mr-2 h-4 w-4" /> Retake Assessment
+            </Button>
+            <Button onClick={() => navigate("/assessment")}>
+              Take Another Assessment
+            </Button>
+          </>
         )}
       </section>
 
@@ -739,7 +732,7 @@ function DomainHeatmap({
             <th style={thStyle}>Domain</th>
             <th style={thStyle}>Self level</th>
             {!isSelfOnly && <th style={thStyle}>Manager level</th>}
-            {!isSelfOnly && <th style={thStyle}>Status</th>}
+            {!isSelfOnly && <th style={{ ...thStyle, minWidth: 160 }}>Status</th>}
             {!isSelfOnly && <th style={thStyle}>Skills by status</th>}
           </tr>
         </thead>
@@ -767,6 +760,8 @@ function DomainHeatmap({
                           borderRadius: "var(--r-pill)",
                           fontSize: 11,
                           fontWeight: 600,
+                          display: "inline-block",
+                          whiteSpace: "nowrap",
                         }}
                       >
                         {STATUS_COLORS[status].label}
@@ -930,7 +925,7 @@ function LollipopChart({
   if (!skills.length) return null;
 
   const labelW = 280;
-  const chartW = 360;
+  const chartW = 520;
   const padR = 60; // increased to fit "Advanced" label
   const totalW = labelW + chartW + padR;
   const rowH = 30;
