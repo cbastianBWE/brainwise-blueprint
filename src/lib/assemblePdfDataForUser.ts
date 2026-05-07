@@ -10,6 +10,7 @@ import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import type { PdfData } from "./generateResultsPdf";
 import type { NaiPdfData } from "./generateNaiPdf";
+import type { AirsaPdfData } from "./generateAirsaPdf";
 import type { PdfSections } from "@/components/results/ExportPdfModal";
 
 interface DimensionScore {
