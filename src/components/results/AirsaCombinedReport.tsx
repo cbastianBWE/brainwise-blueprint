@@ -637,7 +637,6 @@ export default function AirsaCombinedReport({
         breakdown={breakdown}
         isSelfOnly={isSelfOnly}
         selfOnlySkills={selfOnlySkillList}
-        newFlags={data.newSkillFlags}
       />
 
       {/* ───── Section 14: Methodology footer ───── */}
