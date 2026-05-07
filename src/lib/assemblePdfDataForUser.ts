@@ -576,3 +576,160 @@ export async function assembleNaiPdfData(params: {
     assessmentResponses,
   };
 }
+
+// =========================================================================
+// AIRSA
+// =========================================================================
+const AIRSA_DOMAIN_NAMES: Record<string, string> = {
+  "DIM-AIRSA-01": "Domain 1",
+  "DIM-AIRSA-02": "Domain 2",
+  "DIM-AIRSA-03": "Domain 3",
+  "DIM-AIRSA-04": "Domain 4",
+  "DIM-AIRSA-05": "Domain 5",
+  "DIM-AIRSA-06": "Domain 6",
+  "DIM-AIRSA-07": "Domain 7",
+  "DIM-AIRSA-08": "Domain 8",
+};
+
+const AIRSA_STATUS_COLORS: Record<string, { hex: string; label: string }> = {
+  aligned:            { hex: "#006D77", label: "Aligned" },
+  confirmed_strength: { hex: "#2D6A4F", label: "Confirmed strength" },
+  confirmed_gap:      { hex: "#6D6875", label: "Confirmed gap" },
+  blind_spot:         { hex: "#021F36", label: "Blind spot" },
+  underestimate:      { hex: "#3C096C", label: "Underestimate" },
+};
+
+export async function assembleAirsaPdfData(params: {
+  userId: string;
+  assessmentResultId: string;
+  isCoachView: boolean;
+  displayName: string | null;
+}): Promise<AirsaPdfData> {
+  const { assessmentResultId, isCoachView, displayName } = params;
+  const { result, assessment, instrument, dimensionNameMap } = await fetchCommon(assessmentResultId);
+
+  const { data: airsaResult } = await supabase
+    .from("assessment_results")
+    .select("manager_dimension_scores, self_manager_divergence, skill_level_breakdown")
+    .eq("id", assessmentResultId)
+    .single();
+
+  const dimensionScores: Record<string, { readiness_level?: string }> = result.dimension_scores ?? {};
+  const managerScores: Record<string, { readiness_level?: string }> | null = (airsaResult as any)?.manager_dimension_scores ?? null;
+  const divergence: Record<string, { status?: string; self_level?: string; manager_level?: string }> | null = (airsaResult as any)?.self_manager_divergence ?? null;
+  const breakdown: Record<string, any> | null = (airsaResult as any)?.skill_level_breakdown ?? null;
+
+  const isSelfOnly =
+    !managerScores ||
+    !divergence ||
+    !breakdown ||
+    Object.keys(breakdown).length === 0;
+
+  const skillsArr: any[] = breakdown
+    ? Object.values(breakdown).sort((a: any, b: any) => a.skill_number - b.skill_number)
+    : [];
+
+  const totalSkills = skillsArr.length || 24;
+  const alignedStatuses = ["aligned", "confirmed_strength", "confirmed_gap"];
+  const alignedCount = skillsArr.filter((s: any) => alignedStatuses.includes(s.status)).length;
+  const alignmentPct = isSelfOnly ? null : Math.round((alignedCount / totalSkills) * 100);
+  const confirmedStrengths = skillsArr.filter((s: any) => s.status === "confirmed_strength").length;
+  const blindSpots = skillsArr.filter((s: any) => s.status === "blind_spot").length;
+  const underestimates = skillsArr.filter((s: any) => s.status === "underestimate").length;
+
+  const domainRows = Object.keys(AIRSA_DOMAIN_NAMES).map((dimId) => {
+    const selfLevel = dimensionScores[dimId]?.readiness_level ?? "—";
+    const managerLevel = managerScores?.[dimId]?.readiness_level ?? null;
+    const status = divergence?.[dimId]?.status ?? null;
+    return {
+      dimensionId: dimId,
+      domainName:
+        (skillsArr.find((s: any) => s.dimension_id === dimId) as any)?.domain_name ??
+        dimensionNameMap.get(dimId) ??
+        AIRSA_DOMAIN_NAMES[dimId] ??
+        dimId,
+      selfLevel,
+      managerLevel,
+      status,
+      statusLabel: status ? AIRSA_STATUS_COLORS[status]?.label ?? null : null,
+      statusColor: status ? AIRSA_STATUS_COLORS[status]?.hex ?? null : null,
+    };
+  });
+
+  const { data: secRows } = await supabase
+    .from("facet_interpretations")
+    .select("section_type, facet_data")
+    .eq("assessment_result_id", assessmentResultId)
+    .like("section_type", "airsa_%");
+
+  const secMap: Record<string, any> = {};
+  (secRows ?? []).forEach((r: any) => {
+    if (r.section_type) secMap[r.section_type] = r.facet_data;
+  });
+
+  let selfOnlySkills: AirsaPdfData["selfOnlySkills"] = null;
+  if (isSelfOnly) {
+    const { data: skillRows } = await supabase
+      .from("airsa_skills" as any)
+      .select("item_number, skill_name, short_description, dimension_id")
+      .order("item_number");
+    selfOnlySkills = (skillRows ?? []) as any;
+  }
+
+  const topPrioritiesContent = secMap.airsa_top_priorities?.content;
+  const topPriorities: AirsaPdfData["topPriorities"] = Array.isArray(topPrioritiesContent)
+    ? topPrioritiesContent.map((p: any) => ({
+        skill_number: p.skill_number,
+        behavioral_target: p.behavioral_target ?? "",
+        practice: p.practice ?? "",
+      }))
+    : null;
+  const prioritySkillNumbers = topPriorities
+    ? topPriorities.map((p) => p.skill_number).filter((n) => typeof n === "number")
+    : [];
+
+  const anySection =
+    secMap.airsa_profile_overview ??
+    secMap.airsa_what_this_means ??
+    secMap.airsa_action_plan ??
+    secMap.airsa_conversation_guide ??
+    secMap.airsa_top_priorities ??
+    secMap.airsa_cross_instrument ??
+    null;
+  const aiGeneratedAt = anySection?.generated_at ?? null;
+  const aiVersion = anySection?.ai_version ?? null;
+
+  const instrumentName = instrument?.instrument_name ?? "AI Readiness Skills Assessment";
+  const instrumentShortName = instrument?.short_name ?? "AIRSA";
+
+  return {
+    userName: displayName ?? "Participant",
+    instrumentName,
+    instrumentShortName,
+    instrumentVersion: result.instrument_version ?? "—",
+    dateTaken: assessment?.completed_at ? format(new Date(assessment.completed_at), "MMMM d, yyyy") : "—",
+    isCoachView,
+    isSelfOnly,
+    totalSkills,
+    alignmentPct,
+    confirmedStrengths,
+    blindSpots,
+    underestimates,
+    domainRows,
+    skills: skillsArr as any,
+    prioritySkillNumbers,
+    profileOverviewText: secMap.airsa_profile_overview?.content
+      ? String(secMap.airsa_profile_overview.content)
+      : null,
+    whatThisMeans: secMap.airsa_what_this_means?.content ?? null,
+    actionPlan: secMap.airsa_action_plan?.content ?? null,
+    conversationGuide: secMap.airsa_conversation_guide?.content ?? null,
+    topPriorities,
+    crossInstrumentText: secMap.airsa_cross_instrument?.content
+      ? String(secMap.airsa_cross_instrument.content)
+      : null,
+    selfOnlySkills,
+    aiGeneratedAt,
+    aiVersion,
+  };
+}
