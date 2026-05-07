@@ -997,6 +997,7 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
               instrumentVersion={selected.result.instrument_version}
               isCoachView={isCoachView}
               canTakeAssessments={canTakeAssessments}
+              onExportClick={() => setExportModalOpen(true)}
             />
           )}
 
