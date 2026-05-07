@@ -651,7 +651,7 @@ export function generateAirsaPdf(
 
   // ── SECTION 11: TOP 3 PRIORITIES ──
   if (sections.topPriorities) {
-    sectionHeading("Top 3 development priorities");
+    sectionHeading("Top 3 development priorities", 70);
     if (!data.topPriorities || data.topPriorities.length === 0) {
       doc.setFontSize(8.5);
       doc.setFont("helvetica", "italic");
@@ -660,28 +660,92 @@ export function generateAirsaPdf(
       doc.setFont("helvetica", "normal");
       y += 6;
     } else {
-      const accents: Array<readonly [number, number, number]> = [NAVY, TEAL, GREEN];
-      data.topPriorities.forEach((p, idx) => {
+      const accentColors = [NAVY, TEAL, GREEN] as const;
+      for (let i = 0; i < data.topPriorities.length; i++) {
+        const p = data.topPriorities[i];
+        const accent = accentColors[i] ?? NAVY;
         const skill = data.skills.find((s) => s.skill_number === p.skill_number);
-        const status = skill?.status ?? "aligned";
-        const statusInfo = STATUS_COLORS[status] ?? { hex: "#6D6875", label: status };
-        const heading = skill ? `Skill ${p.skill_number}. ${skill.skill_name}` : `Skill ${p.skill_number}`;
-        const accent = accents[idx % 3];
-        // Use status color for the pill via accent? Spec says pill uses status color. We'll render via a custom card to match spec.
-        renderAccentCardWithStatusPill(
-          doc,
-          accent,
-          statusInfo,
-          heading,
-          [
-            { eyebrow: "What your manager will see", text: p.behavioral_target },
-            { eyebrow: "Practice", text: p.practice },
-          ],
-          () => ensureBlockSpace(MIN_BLOCK_SPACE),
-          (newY) => { y = newY; },
-          y
-        );
-      });
+        const skillName = skill?.skill_name ?? "";
+        const status = skill?.status ?? null;
+        const statusInfo = status ? STATUS_COLORS[status] : null;
+
+        // CRITICAL: set font BEFORE splitTextToSize so wrap width is correct
+        doc.setFontSize(8);
+        doc.setFont("helvetica", "normal");
+        const targetLines = doc.splitTextToSize(cleanMarkdown(p.behavioral_target), CONTENT_W - 12);
+        const practiceLines = doc.splitTextToSize(cleanMarkdown(p.practice), CONTENT_W - 12);
+
+        const cardH =
+          5 + 5 + 2
+          + 6 + 4
+          + 4 + 1 + targetLines.length * 4.5 + 3
+          + 4 + 1 + practiceLines.length * 4.5
+          + 5;
+
+        ensureBlockSpace(Math.max(MIN_BLOCK_SPACE, Math.min(cardH + 4, 100)));
+
+        doc.setDrawColor(...BORDER);
+        doc.setLineWidth(0.3);
+        doc.roundedRect(MARGIN_L, y, CONTENT_W, cardH, 2, 2, "S");
+        doc.setFillColor(accent[0], accent[1], accent[2]);
+        doc.rect(MARGIN_L, y, 1.5, cardH, "F");
+
+        let cursor = y + 5;
+
+        if (statusInfo) {
+          const [pr, pg, pb] = hexToRgb(statusInfo.hex);
+          const bgR = Math.round(pr * 0.2 + 255 * 0.8);
+          const bgG = Math.round(pg * 0.2 + 255 * 0.8);
+          const bgB = Math.round(pb * 0.2 + 255 * 0.8);
+          doc.setFillColor(bgR, bgG, bgB);
+          const pillW = 32;
+          const pillH = 5;
+          doc.roundedRect(MARGIN_L + 6, cursor, pillW, pillH, 1, 1, "F");
+          doc.setFontSize(6.5);
+          doc.setFont("helvetica", "bold");
+          doc.setTextColor(pr, pg, pb);
+          doc.text(statusInfo.label.toUpperCase(), MARGIN_L + 6 + pillW / 2, cursor + 3.4, { align: "center" });
+          cursor += pillH + 2;
+        }
+
+        doc.setFontSize(11);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(...BLACK);
+        doc.text(`Skill ${p.skill_number}. ${skillName}`, MARGIN_L + 6, cursor + 5);
+        cursor += 6 + 4;
+
+        doc.setFontSize(6.5);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(...MUTED);
+        doc.text("WHAT YOUR MANAGER WILL SEE", MARGIN_L + 6, cursor + 3);
+        cursor += 4 + 1;
+
+        doc.setFontSize(8);
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(...BLACK);
+        for (const line of targetLines) {
+          doc.text(line, MARGIN_L + 6, cursor + 3);
+          cursor += 4.5;
+        }
+        cursor += 3;
+
+        doc.setFontSize(6.5);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(...MUTED);
+        doc.text("PRACTICE", MARGIN_L + 6, cursor + 3);
+        cursor += 4 + 1;
+
+        doc.setFontSize(8);
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(...BLACK);
+        for (const line of practiceLines) {
+          doc.text(line, MARGIN_L + 6, cursor + 3);
+          cursor += 4.5;
+        }
+
+        y += cardH + 4;
+      }
+      y += 2;
     }
   }
 
