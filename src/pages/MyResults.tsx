@@ -60,6 +60,7 @@ import ExportPdfModal, { type PdfSections } from "@/components/results/ExportPdf
 import { generateResultsPdf, type PdfData } from "@/lib/generateResultsPdf";
 import { generateNaiPdf, type NaiPdfData } from "@/lib/generateNaiPdf";
 import { assemblePtpPdfData, assembleNaiPdfData } from "@/lib/assemblePdfDataForUser";
+import AirsaCombinedReport from "@/components/results/AirsaCombinedReport";
 
 // Types
 interface DimensionScore {
@@ -147,11 +148,6 @@ const NAI_DIMENSION_PASTEL: Record<string, string> = {
   "DIM-NAI-05": "#F0E6D2",
 };
 
-const READINESS_COLORS: Record<string, { bg: string; text: string; border: string }> = {
-  Foundational: { bg: "hsl(45 93% 95%)", text: "hsl(45 93% 30%)", border: "hsl(45 93% 47%)" },
-  Proficient: { bg: "hsl(217 91% 95%)", text: "hsl(217 91% 30%)", border: "hsl(217 91% 50%)" },
-  Advanced: { bg: "hsl(142 71% 95%)", text: "hsl(142 71% 25%)", border: "hsl(142 71% 45%)" },
-};
 
 interface MyResultsProps {
   isCoachView?: boolean;
@@ -696,9 +692,7 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
       (selected?.result.instrument_id ?? "").toUpperCase().includes(s)
     );
 
-  const isAIRSA = (selected?.result.instrument_id ?? "")
-    .toUpperCase()
-    .includes("AIRSA");
+  const isAIRSA = (selected?.result.instrument_id ?? "") === "INST-003";
 
   const recommendations =
     (selected?.result.overall_profile as OverallProfile)
@@ -981,6 +975,19 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
             </section>
           )}
 
+          {isAIRSA && (
+            <AirsaCombinedReport
+              assessmentResultId={selected.result.id}
+              assessmentId={selected.result.assessment_id}
+              userFullName={displayName ?? null}
+              completedAt={selected.completed_at}
+              instrumentVersion={selected.result.instrument_version}
+              isCoachView={isCoachView}
+              canTakeAssessments={canTakeAssessments}
+            />
+          )}
+
+          {!isAIRSA && (<>
           {/* SECTION 1 - Profile Overview */}
           <section className="space-y-4">
             <div>
@@ -1135,9 +1142,7 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
                 <CardTitle className="text-lg">Dimension Scores</CardTitle>
               </CardHeader>
               <CardContent>
-                {isAIRSA ? (
-                  <AIRSACards dimensions={dimensionScores} />
-                ) : effectiveSelected?.isPTP ? (
+                {effectiveSelected?.isPTP ? (
                   <PTPDomainCards
                     dimensions={dimensionScores}
                     dimensionNameMap={dimensionNameMap}
@@ -1428,6 +1433,7 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
             onExportPtp={handlePdfExport}
             onExportNai={handleNaiPdfExport}
           />
+          </>)}
             </>
           )}
         </>
@@ -1572,44 +1578,6 @@ function StatCard({ label, value }: { label: string; value: string }) {
         <p className="text-lg font-semibold text-foreground mt-1">{value}</p>
       </CardContent>
     </Card>
-  );
-}
-
-function AIRSACards({
-  dimensions,
-}: {
-  dimensions: [string, DimensionScore][];
-}) {
-  return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-      {dimensions.map(([name, score]) => {
-        const level = score.readiness_level ?? "Foundational";
-        const colors = READINESS_COLORS[level] ?? READINESS_COLORS.Foundational;
-        return (
-          <div
-            key={name}
-            className="rounded-lg p-4 border"
-            style={{
-              backgroundColor: colors.bg,
-              borderColor: colors.border,
-            }}
-          >
-            <p className="text-sm font-medium" style={{ color: colors.text }}>
-              {formatDimensionName(name)}
-            </p>
-            <Badge
-              className="mt-2"
-              style={{
-                backgroundColor: colors.border,
-                color: "#fff",
-              }}
-            >
-              {level}
-            </Badge>
-          </div>
-        );
-      })}
-    </div>
   );
 }
 
