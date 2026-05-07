@@ -336,7 +336,7 @@ export default function ExportPdfModal({ open, onOpenChange, instrumentType, isC
 
         <div className="flex items-center justify-between py-2">
           <span className="text-xs text-muted-foreground">
-            {isNai ? "NAI report sections" : "PTP report sections"}
+            {isAirsa ? "AIRSA report sections" : isNai ? "NAI report sections" : "PTP report sections"}
           </span>
           <Button
             type="button"
