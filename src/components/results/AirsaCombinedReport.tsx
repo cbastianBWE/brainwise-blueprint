@@ -1078,41 +1078,29 @@ function QuadrantMap({
     cells[key].push(s.skill_number);
   }
 
-  const W = 520;
+  const W = 560;
   const H = 420;
-  // Generous padding so axis ticks and titles sit comfortably outside the chart area.
-  const padL = 110, padR = 40, padT = 40, padB = 80;
+  const padL = 80, padR = 40, padT = 40, padB = 50;
   const innerW = W - padL - padR;
   const innerH = H - padT - padB;
 
-  const xFor = (lvl: string) => padL + (LEVEL_INDEX[lvl] / 2) * innerW;
-  const yFor = (lvl: string) => padT + innerH - (LEVEL_INDEX[lvl] / 2) * innerH;
+  // Place each cell at the center of its 1/3 slice of the chart's inner area.
+  const xFor = (lvl: string) => padL + ((LEVEL_INDEX[lvl] + 0.5) / 3) * innerW;
+  const yFor = (lvl: string) => padT + innerH - ((LEVEL_INDEX[lvl] + 0.5) / 3) * innerH;
 
-  // Quadrants — labels positioned at the inner top of each quadrant, vertically
-  // offset enough to clear the data cells below them.
-  const halfW = innerW / 2;
-  const halfH = innerH / 2;
   const quadrants = [
-    {
-      x: padL + halfW, y: padT, w: halfW, h: halfH,
-      color: AIRSA_COLORS.green, label: "Confirmed strength",
-      labelX: padL + halfW + halfW / 2, labelY: padT + 14,
-    },
-    {
-      x: padL, y: padT, w: halfW, h: halfH,
-      color: AIRSA_COLORS.teal, label: "Underestimate",
-      labelX: padL + halfW / 2, labelY: padT + 14,
-    },
-    {
-      x: padL + halfW, y: padT + halfH, w: halfW, h: halfH,
-      color: AIRSA_COLORS.navy, label: "Blind spot",
-      labelX: padL + halfW + halfW / 2, labelY: padT + halfH + 14,
-    },
-    {
-      x: padL, y: padT + halfH, w: halfW, h: halfH,
-      color: AIRSA_COLORS.gray, label: "Confirmed gap",
-      labelX: padL + halfW / 2, labelY: padT + halfH + 14,
-    },
+    { x: padL + innerW / 2, y: padT, w: innerW / 2, h: innerH / 2, color: AIRSA_COLORS.green,
+      label: "Confirmed strength",
+      labelAt: { x: W - padR - 8, y: padT + 16, anchor: "end" as const } },
+    { x: padL, y: padT, w: innerW / 2, h: innerH / 2, color: AIRSA_COLORS.teal,
+      label: "Underestimate",
+      labelAt: { x: padL + 8, y: padT + 16, anchor: "start" as const } },
+    { x: padL + innerW / 2, y: padT + innerH / 2, w: innerW / 2, h: innerH / 2, color: AIRSA_COLORS.navy,
+      label: "Blind spot",
+      labelAt: { x: W - padR - 8, y: padT + innerH - 8, anchor: "end" as const } },
+    { x: padL, y: padT + innerH / 2, w: innerW / 2, h: innerH / 2, color: AIRSA_COLORS.gray,
+      label: "Confirmed gap",
+      labelAt: { x: padL + 8, y: padT + innerH - 8, anchor: "start" as const } },
   ];
 
   const colorForCell = (selfLvl: string, mgrLvl: string) => {
@@ -1129,115 +1117,65 @@ function QuadrantMap({
     <section>
       <h2 style={sectionHeadingStyle}>Developmental quadrant map</h2>
       <div style={cardSurface}>
-        <div style={{ overflowX: "auto" }}>
+        <div style={{ position: "relative", overflowX: "auto" }}>
           <svg width={W} height={H} role="img" aria-label="Quadrant map of self vs manager ratings">
-            {/* Quadrant tints */}
             {quadrants.map((q, i) => (
-              <rect key={i} x={q.x} y={q.y} width={q.w} height={q.h} fill={q.color} fillOpacity={0.08} />
+              <rect key={`q-${i}`} x={q.x} y={q.y} width={q.w} height={q.h} fill={q.color} fillOpacity={0.08} />
             ))}
-            {/* Quadrant labels — positioned at inner top of each quadrant, well clear of cells */}
-            {quadrants.map((q, i) => (
-              <text
-                key={`ql-${i}`}
-                x={q.labelX}
-                y={q.labelY}
-                fontSize={11}
-                fontWeight={600}
-                fill={q.color}
-                textAnchor="middle"
-                style={{ letterSpacing: "0.02em", textTransform: "uppercase" }}
-              >
-                {q.label}
-              </text>
-            ))}
-            {/* Axes */}
             <line x1={padL} y1={padT + innerH} x2={padL + innerW} y2={padT + innerH} stroke="var(--border-1)" />
             <line x1={padL} y1={padT} x2={padL} y2={padT + innerH} stroke="var(--border-1)" />
-            {/* Axis tick labels (offset 16px from axis) */}
             {["Foundational", "Proficient", "Advanced"].map((lvl) => (
               <g key={lvl}>
-                <text
-                  x={xFor(lvl)}
-                  y={padT + innerH + 18}
-                  fontSize={10}
-                  textAnchor="middle"
-                  fill="var(--fg-3)"
-                >
-                  {lvl}
-                </text>
-                <text
-                  x={padL - 16}
-                  y={yFor(lvl) + 3}
-                  fontSize={10}
-                  textAnchor="end"
-                  fill="var(--fg-3)"
-                >
-                  {lvl}
-                </text>
+                <text x={xFor(lvl)} y={H - 16} fontSize={11} textAnchor="middle" fill="var(--fg-3)">{lvl}</text>
+                <text x={padL - 10} y={yFor(lvl) + 4} fontSize={11} textAnchor="end" fill="var(--fg-3)">{lvl}</text>
               </g>
             ))}
-            {/* Axis titles (further out still) */}
-            <text
-              x={padL + innerW / 2}
-              y={H - 18}
-              fontSize={11}
-              fontWeight={600}
-              textAnchor="middle"
-              fill="var(--fg-2)"
-            >
-              Self
-            </text>
-            <text
-              x={24}
-              y={padT + innerH / 2}
-              fontSize={11}
-              fontWeight={600}
-              textAnchor="middle"
-              fill="var(--fg-2)"
-              transform={`rotate(-90 24 ${padT + innerH / 2})`}
-            >
-              Manager
-            </text>
-            {/* Cell labels with white background pill for readability */}
-            {Object.entries(cells).map(([key, nums]) => {
-              const [selfLvl, mgrLvl] = key.split("|");
-              const cx = xFor(selfLvl);
-              const cy = yFor(mgrLvl);
-              const c = colorForCell(selfLvl, mgrLvl);
-              const text = nums.join(", ");
-              const charW = 7;
-              const pillW = Math.max(28, text.length * charW + 12);
-              return (
-                <g key={key}>
-                  <rect
-                    x={cx - pillW / 2}
-                    y={cy - 11}
-                    width={pillW}
-                    height={22}
-                    fill="var(--bw-white)"
-                    fillOpacity={0.92}
-                    rx={4}
-                    stroke="var(--border-1)"
-                  />
-                  <foreignObject x={cx - pillW / 2} y={cy - 11} width={pillW} height={22}>
-                    <div
-                      style={{
-                        textAlign: "center",
-                        fontSize: 12,
-                        fontWeight: 600,
-                        color: c,
-                        lineHeight: "22px",
-                      }}
-                    >
-                      <SkillReference numbers={nums} breakdown={breakdown}>
-                        {text}
-                      </SkillReference>
-                    </div>
-                  </foreignObject>
-                </g>
-              );
-            })}
+            <text x={padL + innerW / 2} y={H - 2} fontSize={11} fontWeight={600} textAnchor="middle" fill="var(--fg-2)">Self</text>
+            <text x={16} y={padT + innerH / 2} fontSize={11} fontWeight={600} textAnchor="middle" fill="var(--fg-2)" transform={`rotate(-90 16 ${padT + innerH / 2})`}>Manager</text>
+            {quadrants.map((q, i) => (
+              <text key={`ql-${i}`} x={q.labelAt.x} y={q.labelAt.y} fontSize={11} fontWeight={600} fill={q.color} textAnchor={q.labelAt.anchor}>
+                {q.label.toUpperCase()}
+              </text>
+            ))}
           </svg>
+          {Object.entries(cells).map(([key, nums]) => {
+            const [selfLvl, mgrLvl] = key.split("|");
+            const cx = xFor(selfLvl);
+            const cy = yFor(mgrLvl);
+            const c = colorForCell(selfLvl, mgrLvl);
+            return (
+              <div
+                key={key}
+                style={{
+                  position: "absolute",
+                  left: cx - 50,
+                  top: cy - 12,
+                  width: 100,
+                  height: 24,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  pointerEvents: "auto",
+                }}
+              >
+                <div style={{
+                  background: "var(--bw-white)",
+                  border: `1px solid ${c}40`,
+                  borderRadius: "var(--r-pill)",
+                  padding: "2px 8px",
+                  fontSize: 12,
+                  fontWeight: 700,
+                  color: c,
+                  boxShadow: "var(--shadow-xs)",
+                  whiteSpace: "nowrap",
+                }}>
+                  <SkillReference numbers={nums} breakdown={breakdown}>
+                    {nums.join(", ")}
+                  </SkillReference>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
     </section>
