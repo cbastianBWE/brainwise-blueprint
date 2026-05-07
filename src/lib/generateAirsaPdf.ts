@@ -958,7 +958,7 @@ function renderLollipop(doc: jsPDF, data: AirsaPdfData, startY: number) {
   // Row 3: priority legend
   doc.setFontSize(8);
   doc.setTextColor(...MUTED);
-  doc.text("★ marks your top 3 development priorities", MARGIN_L, y);
+  doc.text(`${PRIORITY_GLYPH} marks your top 3 development priorities`, MARGIN_L, y);
   y += 6;
 
   // Chart geometry
