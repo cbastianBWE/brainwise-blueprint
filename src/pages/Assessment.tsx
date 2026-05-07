@@ -225,11 +225,11 @@ export default function Assessment() {
                     </h2>
                     <p className="text-sm text-muted-foreground mt-2">
                       {row.self_rater_full_name} from {dept} completed their AI Readiness Skills self-assessment {daysLabel}.
-                      Your perspective will help them see how their self-assessment compares to your view. About 8-10 minutes.
+                      You'll be asked to rate the same 24 skills they rated themselves on. About 8 minutes.
                     </p>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Your individual responses won't be shared with {row.self_rater_full_name}. They'll see dimension-level summaries only.
+                    AIRSA is a development conversation tool, not anonymous feedback. {row.self_rater_full_name} will see your readiness ratings (Foundational, Proficient, Advanced) for each skill — they won't see your specific Never/Rarely/Often/Consistently responses.
                   </p>
                   <Button
                     onClick={() => handleStartManagerAirsa(row)}
