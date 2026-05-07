@@ -289,6 +289,11 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
       return;
     }
 
+    if (raterType === 'manager') {
+      navigate(`/airsa-manager-complete/${assessmentId}`);
+      return;
+    }
+
     // Consume an unconsumed per-assessment purchase for this instrument, if one exists.
     // Non-blocking: returns NULL when user is on a subscription or coach-paid, which is fine.
     try {
@@ -323,7 +328,10 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
       {/* Header */}
       <div className="border-b px-4 py-3 flex items-center justify-between">
         <div className="text-sm text-muted-foreground">
-          Item {currentIndex + 1} of {items.length}
+          <div>Item {currentIndex + 1} of {items.length}</div>
+          {raterType === 'manager' && targetUserName && (
+            <div className="text-xs mt-0.5">Rating: {targetUserName}</div>
+          )}
         </div>
         <div className="flex items-center gap-2">
           {savedIndicator && (
@@ -349,6 +357,8 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
             <LevelMatchControl
               item={currentItem}
               value={currentResponse?.numeric ?? null}
+              raterType={raterType}
+              targetUserName={targetUserName}
               onSelect={(val, text) => saveResponse(currentItem.item_id, val, text, null)}
             />
           ) : currentItem.scale_type === "Never/Rarely/Often/Consistently" ? (
@@ -356,12 +366,16 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
               item={currentItem}
               value={currentResponse?.numeric ?? null}
               responseScales={responseScales}
+              raterType={raterType}
+              targetUserName={targetUserName}
               onSelect={(val, text, readiness) => saveResponse(currentItem.item_id, val, text, readiness)}
             />
           ) : (
             <SliderControl
               item={currentItem}
               value={currentResponse?.numeric ?? null}
+              raterType={raterType}
+              targetUserName={targetUserName}
               onSelect={(val) => saveResponse(currentItem.item_id, val, null, null)}
             />
           )}
