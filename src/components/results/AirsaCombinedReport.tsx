@@ -405,6 +405,14 @@ export default function AirsaCombinedReport({
     return () => { cancelled = true; };
   }, [data, isSelfOnly, selfOnlySkillList]);
 
+  const prioritySkillNumbers = useMemo(() => {
+    const arr = data?.sections?.airsa_top_priorities?.content;
+    if (!Array.isArray(arr)) return new Set<number>();
+    return new Set<number>(
+      arr.map((p: any) => p.skill_number).filter((n: any) => typeof n === "number")
+    );
+  }, [data]);
+
   if (loading || !data) {
     return (
       <div className="space-y-6">
