@@ -1019,7 +1019,7 @@ function renderLollipop(doc: jsPDF, data: AirsaPdfData, startY: number) {
     doc.setFontSize(7.5);
     doc.setTextColor(...BLACK);
     doc.setFont("helvetica", "normal");
-    const labelText = `${s.skill_number}. ${s.skill_name}${isPriority ? " ★" : ""}`;
+    const labelText = `${s.skill_number}. ${s.skill_name}${isPriority ? ` ${PRIORITY_GLYPH}` : ""}`;
     const truncated = labelText.length > 42 ? labelText.slice(0, 40) + "…" : labelText;
     doc.text(truncated, MARGIN_L + labelW, rowY + 1, { align: "right" });
 
