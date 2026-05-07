@@ -1142,9 +1142,7 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
                 <CardTitle className="text-lg">Dimension Scores</CardTitle>
               </CardHeader>
               <CardContent>
-                {isAIRSA ? (
-                  <AIRSACards dimensions={dimensionScores} />
-                ) : effectiveSelected?.isPTP ? (
+                {effectiveSelected?.isPTP ? (
                   <PTPDomainCards
                     dimensions={dimensionScores}
                     dimensionNameMap={dimensionNameMap}
