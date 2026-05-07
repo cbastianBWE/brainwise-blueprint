@@ -1438,16 +1438,22 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
           </section>
           )}
 
-          {/* Export PDF Modal */}
+          </>)}
+
+          {/* Export PDF Modal (lifted out of !isAIRSA so AIRSA can also trigger it) */}
           <ExportPdfModal
             open={exportModalOpen}
             onOpenChange={setExportModalOpen}
-            instrumentType={isNAI ? "NAI" : (effectiveSelected?.isPTP ? "PTP" : "OTHER")}
+            instrumentType={
+              isAIRSA ? "AIRSA"
+              : isNAI ? "NAI"
+              : (effectiveSelected?.isPTP ? "PTP" : "OTHER")
+            }
             isCoachView={coachViewActive}
             onExportPtp={handlePdfExport}
             onExportNai={handleNaiPdfExport}
+            onExportAirsa={handleAirsaPdfExport}
           />
-          </>)}
             </>
           )}
         </>
