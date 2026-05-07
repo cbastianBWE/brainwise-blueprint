@@ -1266,12 +1266,10 @@ function SkillReferenceList({
   breakdown,
   isSelfOnly,
   selfOnlySkills,
-  newFlags,
 }: {
   breakdown: Record<string, SkillBreakdown> | null;
   isSelfOnly: boolean;
   selfOnlySkills: Array<{ item_number: number; skill_name: string; short_description: string; dimension_id: string }> | null;
-  newFlags: Record<number, boolean>;
 }) {
   const grouped: Record<string, Array<{ num: number; name: string; desc: string }>> = {};
   if (isSelfOnly) {
