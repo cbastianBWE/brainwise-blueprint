@@ -63,6 +63,7 @@ import CompanyDetail from "./pages/super-admin/CompanyDetail";
 import CoachManagement from "./pages/super-admin/CoachManagement";
 import CreateOrganization from "./pages/super-admin/CreateOrganization";
 import EpnComplete from "./pages/EpnComplete";
+import AirsaManagerComplete from "./pages/AirsaManagerComplete";
 import VerifyConversion from "./pages/VerifyConversion";
 import Departed from "./pages/Departed";
 import MfaEnrollment from "./pages/MfaEnrollment";
@@ -116,6 +117,7 @@ const App = () => (
               <Route path="/settings/plan" element={<CorpRedirect toastMessage="Your organization handles billing directly."><Pricing /></CorpRedirect>} />
               <Route path="/assessment" element={<Assessment />} />
               <Route path="/epn-complete/:assignmentId" element={<EpnComplete />} />
+              <Route path="/airsa-manager-complete/:managerAssessmentId" element={<AirsaManagerComplete />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/my-results" element={<MyResults />} />
               <Route path="/shared-results" element={<SharedResults />} />
