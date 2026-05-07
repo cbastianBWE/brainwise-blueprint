@@ -48,9 +48,11 @@ interface Props {
   contextType?: 'professional' | 'personal' | 'both' | null;
   preexistingAssessmentId?: string;
   epnAssignmentId?: string;
+  raterType?: 'self' | 'manager';
+  targetUserName?: string;
 }
 
-export default function AssessmentFlow({ instrument, onExit, contextType, preexistingAssessmentId, epnAssignmentId }: Props) {
+export default function AssessmentFlow({ instrument, onExit, contextType, preexistingAssessmentId, epnAssignmentId, raterType = 'self', targetUserName }: Props) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -72,6 +74,11 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
   useEffect(() => {
     if (!user) return;
     const init = async () => {
+      if (raterType === 'manager' && !preexistingAssessmentId) {
+        toast({ title: "Error", description: "Manager assessment requires a preexisting assessment ID.", variant: "destructive" });
+        onExit();
+        return;
+      }
       let aId: string;
 
       if (preexistingAssessmentId) {
@@ -122,7 +129,7 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
         .from("items")
         .select("item_id, item_number, item_text, anchor_low, anchor_high, scale_type, reverse_scored, dimension_id")
         .eq("instrument_id", instrument.instrument_id)
-        .eq("rater_type", "Self")
+        .eq("rater_type", raterType === "manager" ? "Manager" : "Self")
         .order("item_number", { ascending: true });
 
       if (instrument.instrument_id === "INST-001" && contextType && contextType !== "both") {
@@ -156,7 +163,7 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
       }
 
       // Load response scales for AIRSA
-      if (instrument.instrument_id === "AIRSA") {
+      if (instrument.instrument_id === "INST-003") {
         const { data: scales } = await supabase
           .from("response_scales")
           .select("response_value, numeric_equivalent, display_label, readiness_translation")
