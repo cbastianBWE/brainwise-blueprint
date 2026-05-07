@@ -1039,8 +1039,23 @@ function LollipopChart({
           </svg>
         </div>
         {!isSelfOnly && (
-          <div style={{ fontSize: 11, color: "var(--fg-3)", marginTop: "var(--s-3)" }}>
-            Teal dot = self · Navy dot = manager
+          <div style={{
+            display: "flex",
+            gap: "var(--s-3)",
+            fontSize: 11,
+            color: "var(--fg-3)",
+            marginTop: "var(--s-3)",
+            paddingTop: "var(--s-2)",
+            borderTop: "1px solid var(--border-1)",
+          }}>
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+              <svg width="10" height="10"><circle cx="5" cy="5" r="4" fill={AIRSA_COLORS.teal} /></svg>
+              Self rating
+            </span>
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+              <svg width="10" height="10"><circle cx="5" cy="5" r="4" fill={AIRSA_COLORS.navy} /></svg>
+              Manager rating
+            </span>
           </div>
         )}
       </div>
