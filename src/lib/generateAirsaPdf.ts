@@ -751,7 +751,11 @@ export function generateAirsaPdf(
     y += 3;
     doc.setFontSize(7);
     doc.setTextColor(...MUTED);
-    doc.text(`Report generated ${data.aiGeneratedAt ?? "—"} · AI version: ${data.aiVersion ?? "—"}`, MARGIN_L, y);
+    const generatedDateStr = data.aiGeneratedAt
+      ? format(new Date(data.aiGeneratedAt), "MMMM d, yyyy")
+      : "-";
+    const versionStr = data.aiVersion ?? "-";
+    doc.text(`Report generated ${generatedDateStr} · AI version: ${versionStr}`, MARGIN_L, y);
     y += 5;
   }
 
