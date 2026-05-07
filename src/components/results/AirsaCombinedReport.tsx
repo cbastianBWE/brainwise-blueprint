@@ -829,11 +829,26 @@ function WhatThisMeans({
   isSelfOnly: boolean;
 }) {
   const boxes = [
-    { key: "where_data_agrees", title: "Where the data agrees", color: AIRSA_COLORS.green },
-    { key: "where_largest_gaps_live", title: "Where the largest gaps live", color: AIRSA_COLORS.gray },
-    { key: "neurological_read", title: "The neurological read", color: AIRSA_COLORS.purple },
-    { key: "note_for_manager", title: "A note for your manager", color: AIRSA_COLORS.navy },
+    { key: "where_data_agrees",       title: "Where the data agrees",       color: AIRSA_COLORS.green,  tone: "Shared territory" },
+    { key: "where_largest_gaps_live", title: "Where the largest gaps live", color: AIRSA_COLORS.gray,   tone: "Divergence" },
+    { key: "neurological_read",       title: "The neurological read",       color: AIRSA_COLORS.purple, tone: "Brain frame" },
+    { key: "note_for_manager",        title: "A note for your manager",     color: AIRSA_COLORS.navy,   tone: "For the manager" },
   ];
+
+  const pillStyle = (color: string): React.CSSProperties => ({
+    display: "inline-flex",
+    alignItems: "center",
+    padding: "2px 10px",
+    borderRadius: "var(--r-pill)",
+    fontFamily: "var(--font-primary)",
+    fontSize: 11,
+    fontWeight: 600,
+    background: `${color}20`,
+    color,
+    marginBottom: "var(--s-2)",
+    textTransform: "uppercase",
+    letterSpacing: "0.04em",
+  });
 
   return (
     <section>
@@ -847,6 +862,7 @@ function WhatThisMeans({
           }
           return (
             <div key={b.key} style={accentCardSurface(b.color)}>
+              <span style={pillStyle(b.color)}>{b.tone}</span>
               <h3 style={cardTitleStyle}>{b.title}</h3>
               <div style={{ fontSize: 14, color: "var(--fg-2)", lineHeight: 1.6 }}>
                 {body ? processSkillRefs(body, breakdown) : <SkeletonLines lines={3} />}
