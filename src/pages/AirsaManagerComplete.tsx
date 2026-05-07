@@ -11,7 +11,7 @@ export default function AirsaManagerComplete() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
-  const [selfRaterName, setSelfRaterName] = useState<string>("the self-rater");
+  const [selfRaterName, setSelfRaterName] = useState<string>("The self-rater");
 
   useEffect(() => {
     if (!user || !managerAssessmentId) return;
@@ -35,14 +35,14 @@ export default function AirsaManagerComplete() {
         return;
       }
 
-      const targetUserId = rows[0].target_user_id;
-      if (targetUserId) {
-        const { data: u } = await (supabase as any)
-          .from("users")
-          .select("full_name")
-          .eq("id", targetUserId)
-          .maybeSingle();
-        if (!cancelled && u?.full_name) setSelfRaterName(u.full_name);
+      const { data: nameRows, error: nameErr } = await (supabase.rpc as any)(
+        "airsa_get_paired_self_rater_name",
+        { p_manager_assessment_id: managerAssessmentId }
+      );
+      if (nameErr) {
+        console.error("airsa_get_paired_self_rater_name failed:", nameErr);
+      } else if (!cancelled && Array.isArray(nameRows) && nameRows.length > 0 && nameRows[0]?.out_full_name) {
+        setSelfRaterName(nameRows[0].out_full_name);
       }
 
       if (!cancelled) setLoading(false);

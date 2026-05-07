@@ -4198,6 +4198,12 @@ export type Database = {
           reminder_count: number
         }[]
       }
+      airsa_get_paired_self_rater_name: {
+        Args: { p_manager_assessment_id: string }
+        Returns: {
+          out_full_name: string
+        }[]
+      }
       airsa_release_self_only: {
         Args: { p_self_assessment_id: string }
         Returns: {
