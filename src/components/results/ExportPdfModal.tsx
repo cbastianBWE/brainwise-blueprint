@@ -352,7 +352,14 @@ export default function ExportPdfModal({ open, onOpenChange, instrumentType, isC
         <Separator />
 
         <div className="space-y-6 py-4">
-          {isNai
+          {isAirsa
+            ? visibleAirsaGroups.map((g, i) => (
+                <div key={g.title} className="space-y-6">
+                  {renderGroup(g, airsaSections as Record<keyof AirsaPdfSectionsUi, boolean>, toggleAirsa)}
+                  {i < visibleAirsaGroups.length - 1 && <Separator />}
+                </div>
+              ))
+            : isNai
             ? visibleNaiGroups.map((g, i) => (
                 <div key={g.title} className="space-y-6">
                   {renderGroup(g, naiSections as Record<keyof NaiPdfSectionsUi, boolean>, toggleNai)}
