@@ -148,11 +148,6 @@ const NAI_DIMENSION_PASTEL: Record<string, string> = {
   "DIM-NAI-05": "#F0E6D2",
 };
 
-const READINESS_COLORS: Record<string, { bg: string; text: string; border: string }> = {
-  Foundational: { bg: "hsl(45 93% 95%)", text: "hsl(45 93% 30%)", border: "hsl(45 93% 47%)" },
-  Proficient: { bg: "hsl(217 91% 95%)", text: "hsl(217 91% 30%)", border: "hsl(217 91% 50%)" },
-  Advanced: { bg: "hsl(142 71% 95%)", text: "hsl(142 71% 25%)", border: "hsl(142 71% 45%)" },
-};
 
 interface MyResultsProps {
   isCoachView?: boolean;
