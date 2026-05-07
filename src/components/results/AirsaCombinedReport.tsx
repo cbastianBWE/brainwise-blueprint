@@ -877,9 +877,9 @@ function WhatThisMeans({
 
 function ActionPlan({ data, breakdown }: { data: any; breakdown: Record<string, SkillBreakdown> | null }) {
   const rows = [
-    { key: "this_week", label: "This week" },
-    { key: "next_30_days", label: "Next 30 days" },
-    { key: "in_90_days", label: "In 90 days" },
+    { key: "this_week", label: "This week", color: AIRSA_COLORS.navy },
+    { key: "next_30_days", label: "Next 30 days", color: AIRSA_COLORS.teal },
+    { key: "in_90_days", label: "In 90 days", color: AIRSA_COLORS.green },
   ];
   return (
     <section>
@@ -887,8 +887,24 @@ function ActionPlan({ data, breakdown }: { data: any; breakdown: Record<string, 
       <div style={cardSurface}>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:divide-x md:divide-[var(--border-1)]">
           {rows.map((r, i) => (
-            <div key={r.key} style={{ paddingLeft: i > 0 ? "var(--s-4)" : 0 }}>
-              <div style={{ ...eyebrowStyle, marginBottom: "var(--s-2)" }}>{r.label}</div>
+            <div key={r.key} style={{ paddingLeft: i > 0 ? "var(--s-4)" : 0, display: "flex", flexDirection: "column" }}>
+              <span style={{
+                display: "inline-flex",
+                alignItems: "center",
+                padding: "2px 10px",
+                borderRadius: "var(--r-pill)",
+                fontFamily: "var(--font-primary)",
+                fontSize: 11,
+                fontWeight: 600,
+                background: `${r.color}20`,
+                color: r.color,
+                marginBottom: "var(--s-2)",
+                textTransform: "uppercase",
+                letterSpacing: "0.04em",
+                alignSelf: "flex-start",
+              }}>
+                {r.label}
+              </span>
               <div style={{ fontSize: 14, color: "var(--fg-2)", lineHeight: 1.6 }}>
                 {data?.[r.key] ? processSkillRefs(String(data[r.key]), breakdown) : <SkeletonLines lines={3} />}
               </div>
