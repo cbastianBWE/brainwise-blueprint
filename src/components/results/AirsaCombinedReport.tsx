@@ -1063,7 +1063,7 @@ function LollipopChart({
                   <foreignObject x={0} y={y - 12} width={labelW} height={rowH}>
                     <div style={{ fontSize: 12, color: "var(--fg-2)", paddingRight: 8, textAlign: "right" }}>
                       <SkillReference numbers={[s.skill_number]} breakdown={breakdown}>
-                        {s.skill_number}. {s.skill_name}{newFlags[s.skill_number] ? " ★" : ""}
+                        {s.skill_number}. {s.skill_name}{priorityFlags.has(s.skill_number) ? " ★" : ""}
                       </SkillReference>
                     </div>
                   </foreignObject>
