@@ -975,6 +975,19 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
             </section>
           )}
 
+          {isAIRSA && (
+            <AirsaCombinedReport
+              assessmentResultId={selected.result.id}
+              assessmentId={selected.result.assessment_id}
+              userFullName={displayName ?? null}
+              completedAt={selected.completed_at}
+              instrumentVersion={selected.result.instrument_version}
+              isCoachView={isCoachView}
+              canTakeAssessments={canTakeAssessments}
+            />
+          )}
+
+          {!isAIRSA && (<>
           {/* SECTION 1 - Profile Overview */}
           <section className="space-y-4">
             <div>
