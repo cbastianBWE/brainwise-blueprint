@@ -670,7 +670,7 @@ export async function assembleAirsaPdfData(params: {
   let selfOnlySkills: AirsaPdfData["selfOnlySkills"] = null;
   if (isSelfOnly) {
     const { data: skillRows } = await supabase
-      .from("airsa_skills" as any)
+      .from("airsa_skills")
       .select("item_number, skill_name, short_description, dimension_id")
       .order("item_number");
     selfOnlySkills = (skillRows ?? []) as any;
