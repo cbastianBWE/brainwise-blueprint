@@ -772,36 +772,68 @@ export function generateAirsaPdf(
 
   // ── SECTION 13: SKILL REFERENCE LIST ──
   if (sections.skillReference) {
-    sectionHeading("Skill reference list");
-    const useFallback = data.skills.length === 0 && data.selfOnlySkills && data.selfOnlySkills.length > 0;
-    if (data.skills.length > 0) {
-      const sorted = [...data.skills].sort((a, b) => a.skill_number - b.skill_number);
-      for (const s of sorted) {
-        renderSkillRefRow(
-          doc,
-          s.skill_number,
-          s.skill_name,
-          s.domain_name,
-          s.skill_description,
-          () => checkPageBreak(16),
-          (newY) => { y = newY; },
-          y
-        );
+    sectionHeading("Skill reference list", 60);
+
+    const refList: Array<{
+      item_number: number;
+      skill_name: string;
+      description: string;
+      domain_name: string;
+    }> = data.skills.length > 0
+      ? [...data.skills]
+          .sort((a, b) => a.skill_number - b.skill_number)
+          .map((s) => ({
+            item_number: s.skill_number,
+            skill_name: s.skill_name,
+            description: s.skill_description,
+            domain_name: s.domain_name,
+          }))
+      : (data.selfOnlySkills ?? []).map((s) => ({
+          item_number: s.item_number,
+          skill_name: s.skill_name,
+          description: s.short_description,
+          domain_name: AIRSA_DOMAIN_NAMES_LOCAL[s.dimension_id] ?? s.dimension_id,
+        }));
+
+    for (const r of refList) {
+      const headingText = `Skill ${r.item_number}. ${r.skill_name}`;
+      const domainText = r.domain_name;
+      // CRITICAL: set font BEFORE splitTextToSize
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "normal");
+      const descLines = doc.splitTextToSize(cleanMarkdown(r.description || ""), CONTENT_W);
+
+      const headingH = 4.5;
+      const domainH = 3.8;
+      const descH = descLines.length * 4.2;
+      const padH = 4;
+      const entryH = headingH + domainH + descH + padH;
+
+      ensureBlockSpace(Math.max(MIN_BLOCK_SPACE, Math.min(entryH + 2, 60)));
+
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(...BLACK);
+      doc.text(headingText, MARGIN_L, y);
+      let cursor = y + headingH;
+
+      doc.setFontSize(7.5);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(...MUTED);
+      doc.text(domainText, MARGIN_L, cursor);
+      cursor += domainH;
+
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(...BLACK);
+      for (const line of descLines) {
+        doc.text(line, MARGIN_L, cursor);
+        cursor += 4.2;
       }
-    } else if (useFallback) {
-      for (const s of data.selfOnlySkills!) {
-        renderSkillRefRow(
-          doc,
-          s.item_number,
-          s.skill_name,
-          s.dimension_id,
-          s.short_description,
-          () => checkPageBreak(16),
-          (newY) => { y = newY; },
-          y
-        );
-      }
+
+      y += entryH;
     }
+    y += 2;
   }
 
   // ── SECTION 14: METHODOLOGY ──
