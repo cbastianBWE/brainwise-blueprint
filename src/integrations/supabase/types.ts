@@ -4428,6 +4428,10 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_airsa_aggregate: {
+        Args: { p_slice_type?: string; p_slice_value?: string }
+        Returns: Json
+      }
       get_chain_of_command: {
         Args: { p_user_id?: string }
         Returns: {
