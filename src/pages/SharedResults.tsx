@@ -118,9 +118,10 @@ export default function SharedResults() {
       }
       if (deptFilter !== "all" && p.department_id !== deptFilter) return false;
       if (supervisorFilter !== "all" && p.supervisor_user_id !== supervisorFilter) return false;
+      if (myReportsOnly && !directReportIds.has(p.user_id)) return false;
       return true;
     });
-  }, [peers, nameSearch, deptFilter, supervisorFilter]);
+  }, [peers, nameSearch, deptFilter, supervisorFilter, myReportsOnly, directReportIds]);
 
   const groupedByDept = useMemo(() => {
     const groups = new Map<string, Peer[]>();
