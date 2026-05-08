@@ -231,6 +231,16 @@ export default function AirsaDashboard() {
   const [expandedRankingsRight, setExpandedRankingsRight] = useState(false);
   const [expandedRiskFlags, setExpandedRiskFlags] = useState<Set<string>>(new Set());
 
+  const [exportModal, setExportModal] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [exportSections, setExportSections] = useState<AIRSADashboardPdfSections>({
+    overview: true,
+    domains: true,
+    skillInventory: true,
+    managerCalibration: true,
+    trends: true,
+  });
+
   const toggleRiskFlag = (id: string) => {
     setExpandedRiskFlags(prev => {
       const next = new Set(prev);
