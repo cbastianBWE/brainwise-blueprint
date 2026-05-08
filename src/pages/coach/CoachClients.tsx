@@ -922,6 +922,15 @@ export default function CoachClients() {
           </CardContent>
         </Card>
       )}
+        </TabsContent>
+
+        <TabsContent value="pending" className="mt-4">
+          <PendingInvitations
+            coachUserId={user?.id ?? null}
+            onChanged={fetchClients}
+          />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
