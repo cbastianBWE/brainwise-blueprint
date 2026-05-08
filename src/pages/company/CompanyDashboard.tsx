@@ -2042,58 +2042,92 @@ export default function CompanyDashboard() {
 
       {/* ── Intervention tracking modal ───────────────────────────────────────── */}
       {exportModal && (
-        <div onClick={() => setExportModal(false)} style={{
-          position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 1000,
-          display: "flex", alignItems: "center", justifyContent: "center",
-        }}>
-          <div onClick={e => e.stopPropagation()} style={{
-            background: "#ffffff", borderRadius: 12, padding: 24, width: 380, maxWidth: "95vw",
-            border: "0.5px solid var(--border)", boxShadow: "0 8px 32px rgba(0,0,0,0.18)", position: "relative" as const, zIndex: 1001,
-          }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-              <div>
-                <div style={{ fontSize: 9, color: "var(--muted-foreground)", textTransform: "uppercase" as const, letterSpacing: "0.05em", marginBottom: 3 }}>Export dashboard</div>
-                <div style={{ fontSize: 15, fontWeight: 500, color: NAVY }}>Select sections to include</div>
-              </div>
-              <button onClick={() => setExportModal(false)} style={{ background: "none", border: "none", fontSize: 20, cursor: "pointer", color: "var(--muted-foreground)", lineHeight: 1, padding: 0 }}>×</button>
-            </div>
+        <div
+          onClick={() => setExportModal(false)}
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.5)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1000,
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: "#fff",
+              borderRadius: 12,
+              padding: 24,
+              width: 360,
+              maxWidth: "92vw",
+              position: "relative",
+            }}
+          >
+            <button
+              onClick={() => setExportModal(false)}
+              aria-label="Close"
+              style={{
+                position: "absolute",
+                top: 10,
+                right: 12,
+                background: "transparent",
+                border: "none",
+                fontSize: 20,
+                cursor: "pointer",
+                color: "var(--muted-foreground)",
+                lineHeight: 1,
+              }}
+            >
+              ×
+            </button>
+            <h2 style={{ fontSize: 16, fontWeight: 600, color: NAVY, margin: "0 0 16px 0" }}>
+              Export NAI Dashboard
+            </h2>
             <div style={{ marginBottom: 16 }}>
-              {tabs.map(tab => (
-                <label key={tab} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: "0.5px solid var(--border)", cursor: "pointer" }}>
+              {(
+                [
+                  { key: "overview", label: "Overview" },
+                  { key: "dimensions", label: "Dimensions" },
+                  { key: "interpretation", label: "AI Interpretation" },
+                  { key: "leaderPerspective", label: "Leader Perspective" },
+                  { key: "trends", label: "Trends" },
+                  { key: "interventions", label: "Interventions" },
+                  { key: "crossInstrument", label: "Cross-Instrument" },
+                ] as Array<{ key: keyof NAIDashboardPdfSections; label: string }>
+              ).map(({ key, label }) => (
+                <label key={key} style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 0", cursor: "pointer" }}>
                   <input
                     type="checkbox"
-                    checked={exportSections[tab]}
-                    onChange={e => setExportSections(prev => ({ ...prev, [tab]: e.target.checked }))}
+                    checked={exportSections[key]}
+                    onChange={(e) =>
+                      setExportSections((prev) => ({ ...prev, [key]: e.target.checked }))
+                    }
                     style={{ width: 14, height: 14, cursor: "pointer" }}
                   />
-                  <span style={{ fontSize: 13, color: "var(--foreground)" }}>{tabLabels[tab]}</span>
-                  {tab === "interpretation" && !latestNarrative && (
-                    <span style={{ fontSize: 10, color: "var(--muted-foreground)", marginLeft: "auto" }}>No data yet</span>
-                  )}
+                  <span style={{ fontSize: 13, color: "var(--foreground)" }}>{label}</span>
                 </label>
               ))}
-              <label key="leader-perspective" style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: "0.5px solid var(--border)", cursor: "pointer" }}>
-                <input
-                  type="checkbox"
-                  checked={exportSections["leader-perspective"]}
-                  onChange={e => setExportSections(prev => ({ ...prev, "leader-perspective": e.target.checked }))}
-                  style={{ width: 14, height: 14, cursor: "pointer" }}
-                />
-                <span style={{ fontSize: 13, color: "var(--foreground)" }}>Leader Perspective (vs workforce)</span>
-                {(!deltaResult || deltaResult.suppressed) && (
-                  <span style={{ fontSize: 10, color: "var(--muted-foreground)", marginLeft: "auto" }}>No data yet</span>
-                )}
-              </label>
             </div>
             <div style={{ fontSize: 11, color: "var(--muted-foreground)", marginBottom: 14, lineHeight: 1.5 }}>
-              All collapsed content (risk flags, dimension cards, methodology) will be automatically expanded in the export. Filename: BrainWise-NAI-CompanyDashboard-YYYY-MM-DD.pdf
+              All collapsed content will be automatically expanded in the export.
             </div>
             <button
-              onClick={handleExport}
-              disabled={!Object.values(exportSections).some(Boolean)}
+              onClick={() => {
+                handleExport();
+                setExportModal(false);
+              }}
               style={{
-                background: NAVY, color: "#fff", border: "none", borderRadius: 8,
-                padding: "10px 18px", fontSize: 13, cursor: "pointer", width: "100%", fontWeight: 500,
+                background: NAVY,
+                color: "#fff",
+                border: "none",
+                borderRadius: 8,
+                padding: "10px 18px",
+                fontSize: 13,
+                cursor: "pointer",
+                width: "100%",
+                fontWeight: 500,
               }}
             >
               Download PDF
