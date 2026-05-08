@@ -757,7 +757,7 @@ export default function AirsaDashboard() {
                       {latestNarrative.narrative_text.next_steps && (
                         <div>
                           <h4 style={{ fontSize: 11, fontWeight: 600, color: NAVY, margin: 0, textTransform: "uppercase", letterSpacing: 0.5 }}>Next steps</h4>
-                          <p style={{ fontSize: 12, lineHeight: 1.6, marginTop: 4, whiteSpace: "pre-wrap" }}>{latestNarrative.narrative_text.next_steps}</p>
+                          <div style={{ marginTop: 4 }}>{renderNarrativeText(latestNarrative.narrative_text.next_steps, 12, "var(--foreground)")}</div>
                         </div>
                       )}
                       {latestNarrative.narrative_text.reassessment_note && (
