@@ -130,7 +130,9 @@ export function AppSidebar() {
   const navItems = getNavItems(profile?.account_type);
   const isSettingsOpen = location.pathname.startsWith('/settings');
   const isClientsOpen = location.pathname.startsWith('/coach/clients') || location.pathname.startsWith('/coach/client-results');
-  const isDashboardsOpen = location.pathname.startsWith('/company/nai-dashboard') || location.pathname.startsWith('/company/ptp-dashboard');
+  const isDashboardsOpen = location.pathname.startsWith('/company/nai-dashboard')
+    || location.pathname.startsWith('/company/ptp-dashboard')
+    || location.pathname.startsWith('/company/airsa-dashboard');
   const showDashboardsMenu = profile?.account_type === 'company_admin' || profile?.account_type === 'org_admin' || profile?.account_type === 'brainwise_super_admin';
   const settingsSubItems: { title: string; url: string; icon: React.ElementType; disabled?: boolean; badge?: string }[] = [
     { title: 'General Settings', url: '/settings', icon: Settings },
