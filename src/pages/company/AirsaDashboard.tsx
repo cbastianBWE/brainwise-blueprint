@@ -761,7 +761,7 @@ export default function AirsaDashboard() {
                         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                           <span style={{
                             fontSize: 9, textTransform: "uppercase", padding: "2px 6px", borderRadius: 3,
-                            background: isHigh ? "#DC2626" : ORANGE, color: "#fff", fontWeight: 600, letterSpacing: 0.5,
+                            background: isHigh ? ORANGE : "#fef0e7", color: isHigh ? "#fff" : ORANGE, fontWeight: 600, letterSpacing: 0.5,
                           }}>{flag.level}</span>
                           <span style={{ fontSize: 12, fontWeight: 600, color: NAVY }}>{flag.title}</span>
                         </div>
