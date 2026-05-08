@@ -470,8 +470,8 @@ export default function AirsaDashboard() {
             }}
             style={{ fontSize: 11, padding: "3px 8px", borderRadius: 20, border: "0.5px solid var(--border)", background: "var(--card)", color: "var(--foreground)", cursor: "pointer" }}
           >
-            <option value="all">Team ▾</option>
-            {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+            <option value="all">All teams</option>
+            {supervisors.map(s => <option key={`team-${s.id}`} value={s.id}>{s.full_name}</option>)}
           </select>
           <span style={{ fontSize: 10, color: "var(--muted-foreground)", marginLeft: "auto" }}>
             min 5 per slice · min 3 per supervisor
