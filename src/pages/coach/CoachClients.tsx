@@ -220,6 +220,46 @@ export default function CoachClients() {
     })();
   }, [user]);
 
+  useEffect(() => {
+    (async () => {
+      const { data, error } = await supabase
+        .from("subscription_plans")
+        .select("price_usd")
+        .eq("plan_name", "Per Assessment")
+        .eq("billing_period", "one_time")
+        .eq("is_active", true)
+        .single();
+      if (error) {
+        console.error("[CoachClients] Per Assessment price lookup failed:", error);
+        setPerAssessmentPrice(null);
+        return;
+      }
+      setPerAssessmentPrice(Number(data.price_usd));
+    })();
+  }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const bulkCheckout = params.get("bulk_checkout");
+    if (bulkCheckout === "success") {
+      toast.success("Bulk order completed", {
+        description: "Your client invitations have been sent.",
+      });
+      fetchClients();
+      params.delete("bulk_checkout");
+      params.delete("session_id");
+      const newUrl = window.location.pathname + (params.toString() ? `?${params.toString()}` : "");
+      window.history.replaceState({}, "", newUrl);
+    } else if (bulkCheckout === "cancelled") {
+      toast.error("Checkout cancelled", {
+        description: "Your batch was not sent.",
+      });
+      params.delete("bulk_checkout");
+      const newUrl = window.location.pathname + (params.toString() ? `?${params.toString()}` : "");
+      window.history.replaceState({}, "", newUrl);
+    }
+  }, []);
+
   const resetForm = () => {
     setFirstName(""); setLastName(""); setEmail(""); setNote("");
     setSelectedInstruments([]); setInstrumentError(false);
