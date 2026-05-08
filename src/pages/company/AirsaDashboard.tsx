@@ -1215,6 +1215,67 @@ export default function AirsaDashboard() {
           </div>
         )}
       </div>
+
+      {exportModal && (
+        <div
+          onClick={() => setExportModal(false)}
+          style={{
+            position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)",
+            display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000,
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{ background: "#fff", borderRadius: 12, padding: 24, width: 360, maxWidth: "92vw", position: "relative" }}
+          >
+            <button
+              onClick={() => setExportModal(false)}
+              aria-label="Close"
+              style={{
+                position: "absolute", top: 10, right: 12, background: "transparent",
+                border: "none", fontSize: 20, cursor: "pointer", color: "var(--muted-foreground)", lineHeight: 1,
+              }}
+            >
+              ×
+            </button>
+            <h2 style={{ margin: 0, marginBottom: 16, fontSize: 16, color: NAVY, fontWeight: 600 }}>
+              Export AIRSA Dashboard
+            </h2>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 16 }}>
+              {(
+                [
+                  { key: "overview", label: "Overview" },
+                  { key: "domains", label: "Domains" },
+                  { key: "skillInventory", label: "Skill Inventory" },
+                  { key: "managerCalibration", label: "Manager Calibration" },
+                  { key: "trends", label: "Trends" },
+                ] as Array<{ key: keyof AIRSADashboardPdfSections; label: string }>
+              ).map(({ key, label }) => (
+                <label key={key} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, cursor: "pointer" }}>
+                  <input
+                    type="checkbox"
+                    checked={exportSections[key]}
+                    onChange={(e) => setExportSections((prev) => ({ ...prev, [key]: e.target.checked }))}
+                  />
+                  {label}
+                </label>
+              ))}
+            </div>
+            <div style={{ fontSize: 11, color: "var(--muted-foreground)", marginBottom: 14 }}>
+              All collapsed content will be automatically expanded in the export.
+            </div>
+            <button
+              onClick={() => { handleExport(); setExportModal(false); }}
+              style={{
+                background: NAVY, color: "#fff", border: "none", borderRadius: 8,
+                padding: "10px 18px", fontSize: 13, cursor: "pointer", width: "100%", fontWeight: 500,
+              }}
+            >
+              Download PDF
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
