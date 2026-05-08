@@ -79,6 +79,7 @@ export default function SharedResults() {
     setNameSearch("");
     setDeptFilter("all");
     setSupervisorFilter("all");
+    setMyReportsOnly(false);
     (async () => {
       const { data, error } = await (supabase as any).rpc("get_accessible_peer_results", {
         p_instrument: instrument,
