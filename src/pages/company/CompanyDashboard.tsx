@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { RefreshCw, AlertTriangle, Download } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts";
+import { generateNAIDashboardPdf, type NAIDashboardPdfSections } from "@/lib/generateNAIDashboardPdf";
 
 // ── Brand colors ─────────────────────────────────────────────────────────────
 const NAVY = "#021F36";
