@@ -951,7 +951,7 @@ export default function AirsaDashboard() {
                       </div>
                       <div style={{ fontSize: 11, color: "var(--foreground)", marginTop: 6 }}>{flag.summary}</div>
                       {isExpanded && flag.detail && (
-                        <div style={{ fontSize: 11, color: "var(--muted-foreground)", marginTop: 8, whiteSpace: "pre-wrap" }}>{flag.detail}</div>
+                        <div style={{ marginTop: 8 }}>{renderNarrativeText(flag.detail, 11, "var(--muted-foreground)")}</div>
                       )}
                     </div>
                   );
