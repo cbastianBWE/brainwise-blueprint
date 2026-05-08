@@ -17,9 +17,13 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription,
 } from "@/components/ui/dialog";
 import {
-  Users, ClipboardCheck, Clock, Plus, Send, Eye, Mail, ArrowLeft,
+  DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
+import {
+  Users, ClipboardCheck, Clock, Plus, Send, Eye, Mail, ArrowLeft, ChevronDown,
 } from "lucide-react";
 import { format } from "date-fns";
+import BulkInviteModal from "@/components/coach/BulkInviteModal";
 
 const INSTRUMENTS = [
   { id: "PTP", uuid: "02618e9a-d411-44cf-b316-fe368edeac03", name: "Personal Threat Profile", desc: "Measures nonconscious threat responses influencing behavior." },
@@ -82,6 +86,8 @@ export default function CoachClients() {
   const [resultsReleased, setResultsReleased] = useState(false);
   const [allowedInstrumentIds, setAllowedInstrumentIds] = useState<Set<string>>(new Set());
   const [certsLoaded, setCertsLoaded] = useState(false);
+  const [bulkModalOpen, setBulkModalOpen] = useState(false);
+  const [perAssessmentPrice, setPerAssessmentPrice] = useState<number | null>(null);
 
   const fetchClients = async () => {
     if (!user) return;
@@ -213,6 +219,46 @@ export default function CoachClients() {
       setCertsLoaded(true);
     })();
   }, [user]);
+
+  useEffect(() => {
+    (async () => {
+      const { data, error } = await supabase
+        .from("subscription_plans")
+        .select("price_usd")
+        .eq("plan_name", "Per Assessment")
+        .eq("billing_period", "one_time")
+        .eq("is_active", true)
+        .single();
+      if (error) {
+        console.error("[CoachClients] Per Assessment price lookup failed:", error);
+        setPerAssessmentPrice(null);
+        return;
+      }
+      setPerAssessmentPrice(Number(data.price_usd));
+    })();
+  }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const bulkCheckout = params.get("bulk_checkout");
+    if (bulkCheckout === "success") {
+      toast.success("Bulk order completed", {
+        description: "Your client invitations have been sent.",
+      });
+      fetchClients();
+      params.delete("bulk_checkout");
+      params.delete("session_id");
+      const newUrl = window.location.pathname + (params.toString() ? `?${params.toString()}` : "");
+      window.history.replaceState({}, "", newUrl);
+    } else if (bulkCheckout === "cancelled") {
+      toast.error("Checkout cancelled", {
+        description: "Your batch was not sent.",
+      });
+      params.delete("bulk_checkout");
+      const newUrl = window.location.pathname + (params.toString() ? `?${params.toString()}` : "");
+      window.history.replaceState({}, "", newUrl);
+    }
+  }, []);
 
   const resetForm = () => {
     setFirstName(""); setLastName(""); setEmail(""); setNote("");
@@ -509,19 +555,32 @@ export default function CoachClients() {
           <h1 className="text-2xl font-bold text-foreground">My Clients</h1>
           <p className="text-sm text-muted-foreground mt-1">Manage your coaching clients and assessments</p>
         </div>
-        <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-          <DialogTrigger asChild>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
             <Button
               className="gap-2"
               disabled={certsLoaded && allowedInstrumentIds.size === 0}
-              onClick={() => { resetForm(); setModalOpen(true); }}
               title={certsLoaded && allowedInstrumentIds.size === 0
                 ? "You need an active certification to order assessments"
                 : undefined}
             >
-              <Plus className="h-4 w-4" /> Order Assessment for New Client
+              <Plus className="h-4 w-4" /> Order Assessment <ChevronDown className="h-4 w-4" />
             </Button>
-          </DialogTrigger>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => { resetForm(); setModalOpen(true); }}>
+              Single client
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setBulkModalOpen(true)}>
+              Bulk invite
+            </DropdownMenuItem>
+            <DropdownMenuItem disabled>
+              Generate shareable link (coming soon)
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <Dialog open={modalOpen} onOpenChange={setModalOpen}>
           <DialogContent className="max-w-lg">
             <DialogHeader>
               <DialogTitle>Order Assessment</DialogTitle>
@@ -583,7 +642,9 @@ export default function CoachClients() {
                   {selectedInstruments.length > 0 && (
                     <p className="text-xs text-muted-foreground">
                       {selectedInstruments.length} instrument{selectedInstruments.length !== 1 ? "s" : ""} selected
-                      {" "}— ${(selectedInstruments.length * 29.99).toFixed(2)} total
+                      {" "}— {perAssessmentPrice !== null
+                        ? `$${(selectedInstruments.length * perAssessmentPrice).toFixed(2)} total`
+                        : "loading price…"}
                     </p>
                   )}
                 </div>
@@ -610,6 +671,14 @@ export default function CoachClients() {
             </Tabs>
           </DialogContent>
         </Dialog>
+
+        <BulkInviteModal
+          open={bulkModalOpen}
+          onOpenChange={setBulkModalOpen}
+          allowedInstrumentIds={allowedInstrumentIds}
+          perAssessmentPrice={perAssessmentPrice}
+          onComplete={() => { setBulkModalOpen(false); fetchClients(); }}
+        />
       </div>
 
       {/* Stat cards */}

@@ -985,6 +985,8 @@ export type Database = {
         Row: {
           assessment_id: string | null
           client_email: string
+          client_first_name: string | null
+          client_last_name: string | null
           client_user_id: string | null
           coach_notes: string | null
           coach_user_id: string
@@ -993,16 +995,21 @@ export type Database = {
           coupon_redeemed: boolean
           created_at: string
           debrief_completed: boolean
+          expires_at: string | null
           id: string
           instrument_id: string | null
+          invitation_source: string
           invitation_status: string
           results_released: boolean
+          revoked_at: string | null
           stripe_coupon_id: string | null
           stripe_payment_intent_id: string | null
         }
         Insert: {
           assessment_id?: string | null
           client_email: string
+          client_first_name?: string | null
+          client_last_name?: string | null
           client_user_id?: string | null
           coach_notes?: string | null
           coach_user_id: string
@@ -1011,16 +1018,21 @@ export type Database = {
           coupon_redeemed?: boolean
           created_at?: string
           debrief_completed?: boolean
+          expires_at?: string | null
           id?: string
           instrument_id?: string | null
+          invitation_source?: string
           invitation_status?: string
           results_released?: boolean
+          revoked_at?: string | null
           stripe_coupon_id?: string | null
           stripe_payment_intent_id?: string | null
         }
         Update: {
           assessment_id?: string | null
           client_email?: string
+          client_first_name?: string | null
+          client_last_name?: string | null
           client_user_id?: string | null
           coach_notes?: string | null
           coach_user_id?: string
@@ -1029,10 +1041,13 @@ export type Database = {
           coupon_redeemed?: boolean
           created_at?: string
           debrief_completed?: boolean
+          expires_at?: string | null
           id?: string
           instrument_id?: string | null
+          invitation_source?: string
           invitation_status?: string
           results_released?: boolean
+          revoked_at?: string | null
           stripe_coupon_id?: string | null
           stripe_payment_intent_id?: string | null
         }
@@ -1174,6 +1189,68 @@ export type Database = {
           {
             foreignKeyName: "coach_invitations_invited_by_fkey"
             columns: ["invited_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      coach_pending_bulk_batches: {
+        Row: {
+          coach_user_id: string
+          completed_at: string | null
+          created_at: string
+          id: string
+          rows: Json
+          status: string
+          stripe_session_id: string | null
+          total_amount: number
+        }
+        Insert: {
+          coach_user_id: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          rows: Json
+          status?: string
+          stripe_session_id?: string | null
+          total_amount: number
+        }
+        Update: {
+          coach_user_id?: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          rows?: Json
+          status?: string
+          stripe_session_id?: string | null
+          total_amount?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coach_pending_bulk_batches_coach_user_id_fkey"
+            columns: ["coach_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coach_pending_bulk_batches_coach_user_id_fkey"
+            columns: ["coach_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "coach_pending_bulk_batches_coach_user_id_fkey"
+            columns: ["coach_user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coach_pending_bulk_batches_coach_user_id_fkey"
+            columns: ["coach_user_id"]
             isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
@@ -4303,6 +4380,20 @@ export type Database = {
         }
         Returns: Json
       }
+      bulk_coach_invitation_create: {
+        Args: { p_rows: Json }
+        Returns: {
+          client_email: string
+          coach_client_id: string
+          error_code: string
+          error_message: string
+          instrument_id: string
+          payment_mode: string
+          requires_checkout: boolean
+          row_index: number
+          success: boolean
+        }[]
+      }
       bulk_deactivate_users: { Args: { p_user_ids: string[] }; Returns: Json }
       bulk_invitation_create: {
         Args: { p_organization_id: string; p_rows: Json }
@@ -4323,6 +4414,44 @@ export type Database = {
       }
       cancel_individual_conversion: { Args: never; Returns: Json }
       close_chat_session: { Args: { p_session_id: string }; Returns: undefined }
+      coach_invitation_revoke: {
+        Args: { p_coach_client_id: string }
+        Returns: {
+          out_client_email: string
+          out_coach_client_id: string
+          out_invitation_source: string
+          out_revoked_at: string
+          out_stripe_coupon_id: string
+        }[]
+      }
+      coach_shareable_link_coach_paid: {
+        Args: {
+          p_client_email: string
+          p_client_first_name: string
+          p_client_last_name: string
+          p_coach_note?: string
+          p_instrument_ids: string[]
+        }
+        Returns: {
+          batch_id: string
+          row_count: number
+          total_amount: number
+        }[]
+      }
+      coach_shareable_link_self_pay: {
+        Args: {
+          p_client_email: string
+          p_client_first_name: string
+          p_client_last_name: string
+          p_coach_note?: string
+          p_instrument_ids: string[]
+        }
+        Returns: {
+          coach_client_id: string
+          expires_at: string
+          instrument_id: string
+        }[]
+      }
       complete_epn_assessment: {
         Args: { p_assignment_id: string }
         Returns: undefined
