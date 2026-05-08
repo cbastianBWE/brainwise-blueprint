@@ -28,6 +28,13 @@ const INSTRUMENTS = [
   { id: "HSS", uuid: "90216d9d-153c-4b7b-abe0-1d7845c9e6e0", name: "Habit Stabilization Scorecard", desc: "Measures stability of behavioral changes related to AI." },
 ];
 
+const CERT_TYPE_TO_INSTRUMENTS: Record<string, string[]> = {
+  ptp_coach: ["PTP"],
+  ai_transformation_coach: ["NAI", "AIRSA", "HSS"],
+  ai_transformation_ptp_coach: ["PTP", "NAI", "AIRSA", "HSS"],
+  my_brainwise_coach: ["PTP", "NAI", "AIRSA", "HSS"],
+};
+
 interface ClientRow {
   id: string;
   client_email: string;
@@ -73,6 +80,8 @@ export default function CoachClients() {
   const [instrumentError, setInstrumentError] = useState(false);
   const [sendingReminderId, setSendingReminderId] = useState<string | null>(null);
   const [resultsReleased, setResultsReleased] = useState(false);
+  const [allowedInstrumentIds, setAllowedInstrumentIds] = useState<Set<string>>(new Set());
+  const [certsLoaded, setCertsLoaded] = useState(false);
 
   const fetchClients = async () => {
     if (!user) return;
@@ -180,6 +189,30 @@ export default function CoachClients() {
   };
 
   useEffect(() => { fetchClients(); }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      const { data, error } = await (supabase as any)
+        .from("coach_certifications")
+        .select("certification_type, status")
+        .eq("user_id", user.id)
+        .eq("status", "certified");
+      if (error) {
+        console.error("coach_certifications fetch error:", error);
+        setAllowedInstrumentIds(new Set());
+        setCertsLoaded(true);
+        return;
+      }
+      const allowed = new Set<string>();
+      (data ?? []).forEach((row: any) => {
+        const ids = CERT_TYPE_TO_INSTRUMENTS[row.certification_type] ?? [];
+        ids.forEach(id => allowed.add(id));
+      });
+      setAllowedInstrumentIds(allowed);
+      setCertsLoaded(true);
+    })();
+  }, [user]);
 
   const resetForm = () => {
     setFirstName(""); setLastName(""); setEmail(""); setNote("");
@@ -478,7 +511,14 @@ export default function CoachClients() {
         </div>
         <Dialog open={modalOpen} onOpenChange={setModalOpen}>
           <DialogTrigger asChild>
-            <Button className="gap-2" onClick={() => { resetForm(); setModalOpen(true); }}>
+            <Button
+              className="gap-2"
+              disabled={certsLoaded && allowedInstrumentIds.size === 0}
+              onClick={() => { resetForm(); setModalOpen(true); }}
+              title={certsLoaded && allowedInstrumentIds.size === 0
+                ? "You need an active certification to order assessments"
+                : undefined}
+            >
               <Plus className="h-4 w-4" /> Order Assessment for New Client
             </Button>
           </DialogTrigger>
@@ -516,7 +556,7 @@ export default function CoachClients() {
                 <div className="space-y-2">
                   <Label className="text-sm">Assessment Instruments <span className="text-muted-foreground">(select at least one)</span></Label>
                   <div className={`space-y-2 rounded-md border p-3 ${instrumentError ? "border-destructive" : "border-border"}`}>
-                    {INSTRUMENTS.map(inst => (
+                    {INSTRUMENTS.filter(inst => allowedInstrumentIds.has(inst.id)).map(inst => (
                       <label key={inst.id} className="flex items-start gap-3 cursor-pointer">
                         <Checkbox
                           checked={selectedInstruments.includes(inst.id)}
@@ -530,6 +570,12 @@ export default function CoachClients() {
                         </div>
                       </label>
                     ))}
+                    {certsLoaded && allowedInstrumentIds.size === 0 && (
+                      <div className="rounded-md border border-dashed border-muted-foreground/30 p-4 text-sm text-muted-foreground">
+                        You don't have any active certifications. Complete a certification path to start ordering assessments for clients.{" "}
+                        <a href="/certifications" className="text-primary underline underline-offset-2">View certifications</a>
+                      </div>
+                    )}
                   </div>
                   {instrumentError && (
                     <p className="text-xs text-destructive">Please select at least one instrument.</p>
@@ -697,11 +743,15 @@ export default function CoachClients() {
               <Button
                 size="sm"
                 className="gap-1"
+                disabled={certsLoaded && allowedInstrumentIds.size === 0}
                 onClick={() => {
                   resetForm();
                   setEmail(selectedClientEmail);
                   setModalOpen(true);
                 }}
+                title={certsLoaded && allowedInstrumentIds.size === 0
+                  ? "You need an active certification to order assessments"
+                  : undefined}
               >
                 <Plus className="h-3 w-3" /> Order Assessment for This Client
               </Button>
