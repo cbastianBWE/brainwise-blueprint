@@ -188,6 +188,33 @@ export default function AirsaDashboard() {
   const [sliceType, setSliceType] = useState("all");
   const [sliceValue, setSliceValue] = useState("all");
   const [departments, setDepartments] = useState<Department[]>([]);
+  const [supervisors, setSupervisors] = useState<Supervisor[]>([]);
+  const [narrativeHistory, setNarrativeHistory] = useState<NarrativeHistoryRow[]>([]);
+
+  const [skillSortKey, setSkillSortKey] = useState<SkillSortKey>("cps_growth");
+  const [skillSortDir, setSkillSortDir] = useState<"asc" | "desc">("desc");
+  const [skillFilterDomain, setSkillFilterDomain] = useState<string>("all");
+  const [skillFilterText, setSkillFilterText] = useState<string>("");
+  const [expandedSkillRows, setExpandedSkillRows] = useState<Set<number>>(new Set());
+
+  const toggleSkillRow = (skillNum: number) => {
+    setExpandedSkillRows(prev => {
+      const next = new Set(prev);
+      if (next.has(skillNum)) next.delete(skillNum); else next.add(skillNum);
+      return next;
+    });
+  };
+
+  const handleSkillSort = (key: SkillSortKey) => {
+    setSkillSortKey(prevKey => {
+      if (prevKey === key) {
+        setSkillSortDir(prev => prev === "asc" ? "desc" : "asc");
+        return key;
+      }
+      setSkillSortDir(["skill_number", "skill_name", "domain_name"].includes(key) ? "asc" : "desc");
+      return key;
+    });
+  };
 
   const [aggregate, setAggregate] = useState<AirsaAggregate | null>(null);
   const [latestNarrative, setLatestNarrative] = useState<StoredAirsaNarrative | null>(null);
