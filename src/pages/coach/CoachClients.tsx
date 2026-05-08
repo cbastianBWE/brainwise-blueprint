@@ -743,11 +743,15 @@ export default function CoachClients() {
               <Button
                 size="sm"
                 className="gap-1"
+                disabled={certsLoaded && allowedInstrumentIds.size === 0}
                 onClick={() => {
                   resetForm();
                   setEmail(selectedClientEmail);
                   setModalOpen(true);
                 }}
+                title={certsLoaded && allowedInstrumentIds.size === 0
+                  ? "You need an active certification to order assessments"
+                  : undefined}
               >
                 <Plus className="h-3 w-3" /> Order Assessment for This Client
               </Button>
