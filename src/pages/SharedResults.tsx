@@ -59,6 +59,20 @@ export default function SharedResults() {
 
   useEffect(() => {
     if (!user) return;
+    (async () => {
+      const { data, error } = await (supabase as any).rpc("get_my_direct_reports");
+      if (error) {
+        console.error("get_my_direct_reports error:", error);
+        setDirectReportIds(new Set());
+        return;
+      }
+      const ids = new Set<string>((data ?? []).map((row: any) => row.out_user_id as string));
+      setDirectReportIds(ids);
+    })();
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
     setLoadingPeers(true);
     setSelectedPeerId(null);
     setCheckedPeerIds(new Set());
