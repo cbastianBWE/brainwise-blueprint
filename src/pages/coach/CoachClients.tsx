@@ -89,6 +89,7 @@ export default function CoachClients() {
   const [allowedInstrumentIds, setAllowedInstrumentIds] = useState<Set<string>>(new Set());
   const [certsLoaded, setCertsLoaded] = useState(false);
   const [bulkModalOpen, setBulkModalOpen] = useState(false);
+  const [shareableModalOpen, setShareableModalOpen] = useState(false);
   const [perAssessmentPrice, setPerAssessmentPrice] = useState<number | null>(null);
 
   const fetchClients = async () => {
