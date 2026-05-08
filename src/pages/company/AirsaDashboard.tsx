@@ -752,8 +752,8 @@ export default function AirsaDashboard() {
                       key={flag.id}
                       onClick={() => toggleRiskFlag(flag.id)}
                       style={{
-                        background: "var(--card)", border: `1px solid ${isHigh ? "#DC2626" : ORANGE}`,
-                        borderLeft: `4px solid ${isHigh ? "#DC2626" : ORANGE}`,
+                        background: "var(--card)", border: `1px solid ${isHigh ? ORANGE : "#fef0e7"}`,
+                        borderLeft: `4px solid ${isHigh ? ORANGE : ORANGE}`,
                         borderRadius: 6, padding: 12, cursor: "pointer",
                       }}
                     >
