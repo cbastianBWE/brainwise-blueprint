@@ -80,6 +80,8 @@ export default function CoachClients() {
   const [instrumentError, setInstrumentError] = useState(false);
   const [sendingReminderId, setSendingReminderId] = useState<string | null>(null);
   const [resultsReleased, setResultsReleased] = useState(false);
+  const [allowedInstrumentIds, setAllowedInstrumentIds] = useState<Set<string>>(new Set());
+  const [certsLoaded, setCertsLoaded] = useState(false);
 
   const fetchClients = async () => {
     if (!user) return;
