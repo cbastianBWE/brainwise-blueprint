@@ -706,8 +706,8 @@ export default function AirsaDashboard() {
                 <div style={{ fontSize: 13, fontWeight: 600, color: NAVY, marginBottom: 8 }}>
                   AI Workforce Calibration Summary
                 </div>
-                <div style={{ fontSize: 12, color: "var(--foreground)", lineHeight: 1.6, whiteSpace: "pre-wrap" }}>
-                  {latestNarrative.narrative_text.summary}
+                <div style={{ fontSize: 12, color: "var(--foreground)", lineHeight: 1.6 }}>
+                  {renderNarrativeText(latestNarrative.narrative_text.summary, 12, "var(--foreground)")}
                 </div>
                 {Array.isArray(latestNarrative.narrative_text.top_interventions) && latestNarrative.narrative_text.top_interventions.length > 0 && (
                   <div style={{ marginTop: 14, padding: 12, background: SAND, borderRadius: 6 }}>
