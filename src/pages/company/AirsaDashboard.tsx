@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { RefreshCw, Download } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts";
+import { generateAIRSADashboardPdf, type AIRSADashboardPdfSections } from "@/lib/generateAIRSADashboardPdf";
 
 // Brand palette (canonical hex from architecture-reference §5.1)
 const NAVY    = "#021F36";
