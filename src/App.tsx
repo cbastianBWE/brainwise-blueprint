@@ -55,6 +55,7 @@ import AdminResources from "./pages/admin/AdminResources";
 import Features from "./pages/company/Features";
 import CompanyDashboard from "./pages/company/CompanyDashboard";
 import PTPDashboard from "./pages/company/PTPDashboard";
+import AirsaDashboard from "./pages/company/AirsaDashboard";
 import InterventionsPage from "./pages/company/InterventionsPage";
 import PlatformHealth from "./pages/super-admin/PlatformHealth";
 import CompanyAccounts from "./pages/super-admin/CompanyAccounts";
@@ -144,6 +145,7 @@ const App = () => (
               <Route path="/company/nai-dashboard" element={<RoleGuard allowedRoles={["company_admin", "org_admin", "brainwise_super_admin"]}><CompanyDashboard /></RoleGuard>} />
               <Route path="/company/dashboard" element={<Navigate to="/company/nai-dashboard" replace />} />
               <Route path="/company/ptp-dashboard" element={<RoleGuard allowedRoles={["company_admin", "org_admin", "brainwise_super_admin"]}><PTPDashboard /></RoleGuard>} />
+              <Route path="/company/airsa-dashboard" element={<RoleGuard allowedRoles={["company_admin", "org_admin", "brainwise_super_admin"]}><AirsaDashboard /></RoleGuard>} />
               <Route path="/dashboard/interventions" element={<RoleGuard allowedRoles={["company_admin", "org_admin"]}><InterventionsPage /></RoleGuard>} />
               <Route path="/admin/teams" element={<RoleGuard allowedRoles={["company_admin", "org_admin"]}><AdminTeams /></RoleGuard>} />
               <Route path="/admin/resources" element={<RoleGuard allowedRoles={["company_admin", "org_admin"]}><AdminResources /></RoleGuard>} />
