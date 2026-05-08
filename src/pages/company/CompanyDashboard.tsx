@@ -352,13 +352,14 @@ export default function CompanyDashboard() {
   const [savingTracking, setSavingTracking] = useState(false);
 
   const [exportModal, setExportModal] = useState(false);
-  const [exportSections, setExportSections] = useState<Record<string, boolean>>({
+  const [exportSections, setExportSections] = useState<NAIDashboardPdfSections>({
     overview: true,
     dimensions: true,
     interpretation: true,
+    leaderPerspective: true,
     trends: true,
-    "cross-instrument": true,
-    "leader-perspective": true,
+    interventions: true,
+    crossInstrument: true,
   });
   const [exporting, setExporting] = useState(false);
 
