@@ -246,6 +246,25 @@ export default function AirsaDashboard() {
     })();
   }, [user]);
 
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      const { data: subordinates } = await (supabase as any)
+        .from("users")
+        .select("supervisor_user_id")
+        .not("supervisor_user_id", "is", null);
+      if (!subordinates) { setSupervisors([]); return; }
+      const supervisorIds = Array.from(new Set(subordinates.map((s: any) => s.supervisor_user_id).filter(Boolean)));
+      if (supervisorIds.length === 0) { setSupervisors([]); return; }
+      const { data: supervisorRows } = await (supabase as any)
+        .from("users")
+        .select("id, full_name")
+        .in("id", supervisorIds)
+        .order("full_name");
+      setSupervisors((supervisorRows ?? []) as Supervisor[]);
+    })();
+  }, [user]);
+
   const loadAggregate = useCallback(async () => {
     if (!user) return;
     setLoadingAgg(true);
