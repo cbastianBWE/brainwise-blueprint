@@ -38,6 +38,9 @@ export default function SharedResults() {
   const [selectedPeerId, setSelectedPeerId] = useState<string | null>(null);
   const [checkedPeerIds, setCheckedPeerIds] = useState<Set<string>>(new Set());
 
+  const [directReportIds, setDirectReportIds] = useState<Set<string>>(new Set());
+  const [myReportsOnly, setMyReportsOnly] = useState(false);
+
   useEffect(() => {
     if (!user) return;
     if (isCompanyAdmin || isOrgAdmin || isSuperAdmin) {
