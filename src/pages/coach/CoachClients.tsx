@@ -17,9 +17,13 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription,
 } from "@/components/ui/dialog";
 import {
-  Users, ClipboardCheck, Clock, Plus, Send, Eye, Mail, ArrowLeft,
+  DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
+import {
+  Users, ClipboardCheck, Clock, Plus, Send, Eye, Mail, ArrowLeft, ChevronDown,
 } from "lucide-react";
 import { format } from "date-fns";
+import BulkInviteModal from "@/components/coach/BulkInviteModal";
 
 const INSTRUMENTS = [
   { id: "PTP", uuid: "02618e9a-d411-44cf-b316-fe368edeac03", name: "Personal Threat Profile", desc: "Measures nonconscious threat responses influencing behavior." },
