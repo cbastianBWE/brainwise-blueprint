@@ -763,7 +763,7 @@ export default function AirsaDashboard() {
                       {latestNarrative.narrative_text.reassessment_note && (
                         <div>
                           <h4 style={{ fontSize: 11, fontWeight: 600, color: NAVY, margin: 0, textTransform: "uppercase", letterSpacing: 0.5 }}>Reassessment guidance</h4>
-                          <p style={{ fontSize: 12, lineHeight: 1.6, marginTop: 4, whiteSpace: "pre-wrap" }}>{latestNarrative.narrative_text.reassessment_note}</p>
+                          <div style={{ marginTop: 4 }}>{renderNarrativeText(latestNarrative.narrative_text.reassessment_note, 12, "var(--foreground)")}</div>
                         </div>
                       )}
                     </div>
