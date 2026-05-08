@@ -593,6 +593,7 @@ export default function AirsaDashboard() {
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 16 }}>
               <RankingPanel
                 title="Greatest Growth Opportunities"
+                subtitle="Composite priority score · 0-2 scale, higher = more urgent"
                 accent={ORANGE}
                 skillItems={(aggregate.rankings?.growth_skills ?? []).slice(0, expandedRankingsLeft ? 5 : 2)}
                 domainItems={(aggregate.rankings?.growth_domains ?? []).slice(0, expandedRankingsLeft ? 4 : 2)}
@@ -603,15 +604,141 @@ export default function AirsaDashboard() {
               />
               <RankingPanel
                 title="Strengths to Capitalize"
+                subtitle="% of pairs at confirmed strength · both rated Advanced"
                 accent={GREEN}
                 skillItems={(aggregate.rankings?.strength_skills ?? []).slice(0, expandedRankingsRight ? 5 : 2)}
                 domainItems={(aggregate.rankings?.strength_domains ?? []).slice(0, expandedRankingsRight ? 4 : 2)}
                 metricKey="cps_strength"
-                metricLabel="Strength %"
+                metricLabel="% confirmed strength"
                 expanded={expandedRankingsRight}
                 onToggle={() => setExpandedRankingsRight(v => !v)}
               />
             </div>
+
+            {(() => {
+              const skillAggMap = aggregate.skill_aggregates ?? {};
+              const deptSet = new Set<string>();
+              Object.values(skillAggMap).forEach(s => {
+                Object.keys(s.per_department_breakdown ?? {}).forEach(k => deptSet.add(k));
+              });
+              const calibrationDepartments = Array.from(deptSet).sort();
+              const unassignedIdx = calibrationDepartments.indexOf("(unassigned)");
+              if (unassignedIdx >= 0) {
+                calibrationDepartments.splice(unassignedIdx, 1);
+                calibrationDepartments.push("(unassigned)");
+              }
+              const topGrowthSkills = new Set(
+                (aggregate.rankings?.growth_skills ?? []).slice(0, 2).map(s => s.skill_number)
+              );
+              const topStrengthSkills = new Set(
+                (aggregate.rankings?.strength_skills ?? []).slice(0, 2).map(s => s.skill_number)
+              );
+              const sortedSkills: Array<[string, SkillAggregate]> = Object.entries(skillAggMap)
+                .sort(([a], [b]) => parseInt(a) - parseInt(b));
+
+              const cells: React.ReactNode[] = [];
+              cells.push(<div key="corner" />);
+              calibrationDepartments.forEach(dept => {
+                cells.push(
+                  <div key={`header-${dept}`} style={{
+                    padding: "6px 4px", textAlign: "center", fontWeight: 500, color: NAVY,
+                    fontSize: 10, borderBottom: "0.5px solid var(--border)",
+                  }}>{dept}</div>
+                );
+              });
+              sortedSkills.forEach(([skillNumStr, skill]) => {
+                const skillNum = parseInt(skillNumStr);
+                const isTopGrowth = topGrowthSkills.has(skillNum);
+                const isTopStrength = topStrengthSkills.has(skillNum);
+                const domainColor = DOMAIN_COLORS[skill.dimension_id] ?? "#000";
+                cells.push(
+                  <div key={`label-${skillNum}`} style={{
+                    padding: "6px 8px", borderLeft: `4px solid ${domainColor}`, background: "#FAFAFA",
+                    display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: "var(--foreground)",
+                  }}>
+                    <span style={{ color: "var(--muted-foreground)", minWidth: 20 }}>{skillNum}.</span>
+                    <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{skill.skill_name}</span>
+                    {isTopGrowth && <span style={{ color: ORANGE, fontWeight: 600 }} title="Top growth priority">▲</span>}
+                    {isTopStrength && <span style={{ color: GREEN, fontWeight: 600 }} title="Top confirmed strength">◆</span>}
+                  </div>
+                );
+                calibrationDepartments.forEach(dept => {
+                  const cell: any = skill.per_department_breakdown?.[dept];
+                  if (!cell) {
+                    cells.push(
+                      <div key={`cell-${skillNum}-${dept}`} style={{
+                        background: "var(--muted)", border: "0.5px solid var(--border)",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        fontSize: 9, color: "var(--muted-foreground)", borderRadius: 2,
+                      }} title="No participants in this department for this skill">—</div>
+                    );
+                    return;
+                  }
+                  if (cell.suppressed) {
+                    cells.push(
+                      <div key={`cell-${skillNum}-${dept}`} style={{
+                        background: "var(--muted)", border: "0.5px solid var(--border)",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        fontSize: 9, color: "var(--muted-foreground)", borderRadius: 2,
+                      }} title={`n=${cell.n} (suppressed; minimum 5 required)`}>n&lt;5</div>
+                    );
+                    return;
+                  }
+                  const statusInfo = STATUS_COLORS[cell.modal_status];
+                  const isBlindSpot = cell.modal_status === "blind_spot";
+                  const tooltip = `n=${cell.n} · ${statusInfo?.label ?? cell.modal_status} (modal) · TCI ${cell.tci.toFixed(1)} · blind ${cell.blind_spot_pct.toFixed(1)}% · under ${cell.underestimate_pct.toFixed(1)}%`;
+                  cells.push(
+                    <div key={`cell-${skillNum}-${dept}`} style={{
+                      background: isBlindSpot ? "transparent" : (statusInfo?.color ?? "#999"),
+                      border: isBlindSpot ? `1.5px dashed ${statusInfo?.color ?? "#999"}` : `0.5px solid ${statusInfo?.color ?? "#999"}`,
+                      color: isBlindSpot ? (statusInfo?.color ?? "#000") : "#FFFFFF",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      fontSize: 10, fontWeight: 500, borderRadius: 2, cursor: "default",
+                    }} title={tooltip}>{cell.tci.toFixed(0)}</div>
+                  );
+                });
+              });
+
+              return (
+                <div style={{
+                  background: "#FFFFFF", border: "0.5px solid var(--border)", borderRadius: 12,
+                  padding: "16px 18px", marginBottom: 0,
+                }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 4 }}>
+                    <h2 style={{ fontSize: 14, fontWeight: 600, color: NAVY, margin: 0 }}>Calibration Map</h2>
+                    <span style={{ fontSize: 10, color: "var(--muted-foreground)" }}>
+                      24 skills × {calibrationDepartments.length} {calibrationDepartments.length === 1 ? "department" : "departments"}
+                    </span>
+                  </div>
+                  <div style={{ fontSize: 11, color: "var(--muted-foreground)", marginBottom: 12 }}>
+                    Cell color shows the modal calibration status for that skill in that department. Hover for details. ▲ marks top 2 growth priorities · ◆ marks top 2 confirmed strengths.
+                  </div>
+                  <div style={{ display: "flex", gap: 12, flexWrap: "wrap", fontSize: 10, marginBottom: 12, paddingBottom: 10, borderBottom: "0.5px solid var(--border)" }}>
+                    {Object.entries(STATUS_COLORS).map(([key, val]) => (
+                      <div key={key} style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                        <span style={{
+                          width: 12, height: 12, borderRadius: 2,
+                          background: key === "blind_spot" ? "transparent" : val.color,
+                          ...(key === "blind_spot" ? { border: `1.5px dashed ${val.color}` } : {}),
+                        }} />
+                        <span style={{ color: "var(--muted-foreground)" }}>{val.label}</span>
+                      </div>
+                    ))}
+                    <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                      <span style={{ width: 12, height: 12, borderRadius: 2, background: "var(--muted)", border: "0.5px solid var(--border)" }} />
+                      <span style={{ color: "var(--muted-foreground)" }}>n&lt;5 (suppressed)</span>
+                    </div>
+                  </div>
+                  <div style={{
+                    display: "grid",
+                    gridTemplateColumns: `260px repeat(${calibrationDepartments.length}, minmax(72px, 1fr))`,
+                    gap: 2, fontSize: 11,
+                  }}>
+                    {cells}
+                  </div>
+                </div>
+              );
+            })()}
 
             <div style={{ background: "var(--card)", border: "1px dashed var(--border)", borderRadius: 8, padding: 24, textAlign: "center" }}>
               <div style={{ fontSize: 13, fontWeight: 600, color: NAVY, marginBottom: 6 }}>Calibration Map</div>
