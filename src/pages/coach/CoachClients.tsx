@@ -671,6 +671,14 @@ export default function CoachClients() {
             </Tabs>
           </DialogContent>
         </Dialog>
+
+        <BulkInviteModal
+          open={bulkModalOpen}
+          onOpenChange={setBulkModalOpen}
+          allowedInstrumentIds={allowedInstrumentIds}
+          perAssessmentPrice={perAssessmentPrice}
+          onComplete={() => { setBulkModalOpen(false); fetchClients(); }}
+        />
       </div>
 
       {/* Stat cards */}
