@@ -740,12 +740,6 @@ export default function AirsaDashboard() {
               );
             })()}
 
-            <div style={{ background: "var(--card)", border: "1px dashed var(--border)", borderRadius: 8, padding: 24, textAlign: "center" }}>
-              <div style={{ fontSize: 13, fontWeight: 600, color: NAVY, marginBottom: 6 }}>Calibration Map</div>
-              <div style={{ fontSize: 11, color: "var(--muted-foreground)" }}>
-                24 skills × {Object.keys(Object.values(aggregate.skill_aggregates ?? {})[0]?.per_department_breakdown ?? {}).length || "N"} departments heatmap — coming in Phase 5b Prompt 2
-              </div>
-            </div>
 
             {riskFlags.length > 0 && (
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
