@@ -24,6 +24,8 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import BulkInviteModal from "@/components/coach/BulkInviteModal";
+import ShareableLinkModal from "@/components/coach/ShareableLinkModal";
+import PendingInvitations from "@/components/coach/PendingInvitations";
 
 const INSTRUMENTS = [
   { id: "PTP", uuid: "02618e9a-d411-44cf-b316-fe368edeac03", name: "Personal Threat Profile", desc: "Measures nonconscious threat responses influencing behavior." },
