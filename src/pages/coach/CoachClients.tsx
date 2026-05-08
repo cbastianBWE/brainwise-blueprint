@@ -723,6 +723,13 @@ export default function CoachClients() {
         </Card>
       </div>
 
+      {selectedClientEmail === null && (
+        <PendingInvitations
+          coachUserId={user?.id ?? null}
+          onChanged={fetchClients}
+        />
+      )}
+
       {/* Client table */}
       {loading ? (
         <div className="flex items-center justify-center py-16">
