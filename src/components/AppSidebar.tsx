@@ -288,6 +288,19 @@ export function AppSidebar() {
                           </NavLink>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
+                      <SidebarMenuItem key="/company/airsa-dashboard">
+                        <SidebarMenuButton asChild>
+                          <NavLink
+                            to="/company/airsa-dashboard"
+                            end
+                            className="hover:bg-sidebar-accent text-sm"
+                            activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                          >
+                            <BarChart3 className="h-3.5 w-3.5 shrink-0" />
+                            <span>AIRSA Dashboard</span>
+                          </NavLink>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
                     </div>
                   )}
                 </SidebarMenuItem>
