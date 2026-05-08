@@ -249,6 +249,75 @@ export default function AirsaDashboard() {
     });
   };
 
+  // Renders narrative text that may contain hyphen bullets ("- text") and
+  // numbered steps ("1. text"). Plain paragraphs render with normal margins.
+  const renderNarrativeText = (
+    text: string,
+    fontSize = 12,
+    textColor = "var(--foreground)",
+  ) => {
+    const lines = text.split("\n");
+    const out: React.ReactNode[] = [];
+    let paraBuffer: string[] = [];
+
+    const flushPara = (key: string) => {
+      if (paraBuffer.length === 0) return;
+      out.push(
+        <p key={key} style={{
+          fontSize, color: textColor, lineHeight: 1.6,
+          margin: "0 0 8px 0", whiteSpace: "pre-wrap" as const,
+        }}>
+          {paraBuffer.join("\n")}
+        </p>
+      );
+      paraBuffer = [];
+    };
+
+    for (let i = 0; i < lines.length; i++) {
+      const raw = lines[i];
+      const trimmed = raw.trim();
+
+      if (trimmed.length === 0) {
+        flushPara(`p-${i}`);
+        continue;
+      }
+
+      const bulletMatch = /^[-*]\s+(.+)$/.exec(trimmed);
+      const numberMatch = /^(\d+)\.\s+(.+)$/.exec(trimmed);
+
+      if (bulletMatch) {
+        flushPara(`p-${i}`);
+        out.push(
+          <div key={`b-${i}`} style={{
+            display: "flex", gap: 8, fontSize, color: textColor, lineHeight: 1.6,
+            paddingLeft: 16, marginBottom: 4,
+          }}>
+            <span style={{ flexShrink: 0 }}>-</span>
+            <span style={{ flex: 1 }}>{bulletMatch[1]}</span>
+          </div>
+        );
+      } else if (numberMatch) {
+        flushPara(`p-${i}`);
+        out.push(
+          <div key={`n-${i}`} style={{
+            display: "flex", gap: 8, fontSize, color: textColor, lineHeight: 1.6,
+            paddingLeft: 16, marginBottom: 4,
+          }}>
+            <span style={{ flexShrink: 0, fontWeight: 500, minWidth: 16 }}>
+              {numberMatch[1]}.
+            </span>
+            <span style={{ flex: 1 }}>{numberMatch[2]}</span>
+          </div>
+        );
+      } else {
+        paraBuffer.push(raw);
+      }
+    }
+
+    flushPara("p-final");
+    return <>{out}</>;
+  };
+
   useEffect(() => {
     if (!user) return;
     (async () => {
