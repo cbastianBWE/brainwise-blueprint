@@ -577,8 +577,8 @@ export default function CoachClients() {
             <DropdownMenuItem onClick={() => setBulkModalOpen(true)}>
               Bulk invite
             </DropdownMenuItem>
-            <DropdownMenuItem disabled>
-              Generate shareable link (coming soon)
+            <DropdownMenuItem onClick={() => setShareableModalOpen(true)}>
+              Generate shareable link
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
