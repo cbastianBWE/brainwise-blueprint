@@ -291,15 +291,70 @@ export function generateAIRSADashboardPdf(data: AIRSADashboardPdfData): void {
   };
 
   const bodyText = (text: string, indent = 0) => {
-    doc.setFontSize(8.5);
-    doc.setFont("helvetica", "normal");
-    setText(BLACK);
-    const lines = doc.splitTextToSize(cleanMarkdown(text), CONTENT_W - indent) as string[];
-    if (lines.length > 1) ensureBlockSpace(Math.min(MIN_BLOCK_SPACE, lines.length * 4.5 + 4));
-    for (const line of lines) {
-      checkPageBreak(5);
-      doc.text(line, MARGIN_L + indent, y);
-      y += 4.5;
+    const rawLines = text.split("\n");
+    const baseX = MARGIN_L + indent;
+    const baseW = CONTENT_W - indent;
+    const bulletIndent = 4;
+    const bulletSpacing = 1;
+
+    for (const rawLine of rawLines) {
+      const trimmed = rawLine.trim();
+      if (trimmed.length === 0) {
+        y += 2;
+        continue;
+      }
+
+      const bulletMatch = /^[-*]\s+(.+)$/.exec(trimmed);
+      const numberMatch = /^(\d+\.)\s+(.+)$/.exec(trimmed);
+
+      let prefix = "";
+      let body = trimmed;
+      let isListItem = false;
+      let lineX = baseX;
+      let wrapX = baseX;
+      let lineW = baseW;
+
+      if (bulletMatch) {
+        prefix = "- ";
+        body = bulletMatch[1];
+        isListItem = true;
+        lineX = baseX + bulletIndent;
+        wrapX = baseX + bulletIndent + 3;
+        lineW = baseW - bulletIndent - 3;
+      } else if (numberMatch) {
+        prefix = numberMatch[1] + " ";
+        body = numberMatch[2];
+        isListItem = true;
+        lineX = baseX + bulletIndent;
+        wrapX = baseX + bulletIndent + doc.getTextWidth("0. ") + 1;
+        lineW = baseW - bulletIndent - 8;
+      }
+
+      doc.setFontSize(8.5);
+      doc.setFont("helvetica", "normal");
+      setText(BLACK);
+
+      const wrappedBody = doc.splitTextToSize(cleanMarkdown(body), lineW) as string[];
+
+      if (isListItem) y += bulletSpacing;
+      if (wrappedBody.length > 1) {
+        ensureBlockSpace(Math.min(MIN_BLOCK_SPACE, wrappedBody.length * 4.5 + 4));
+      }
+
+      for (let i = 0; i < wrappedBody.length; i++) {
+        checkPageBreak(5);
+        doc.setFontSize(8.5);
+        doc.setFont("helvetica", "normal");
+        setText(BLACK);
+        if (i === 0 && isListItem) {
+          doc.text(prefix + wrappedBody[i], lineX, y);
+        } else if (i === 0) {
+          doc.text(wrappedBody[i], baseX, y);
+        } else {
+          doc.text(wrappedBody[i], isListItem ? wrapX : baseX, y);
+        }
+        y += 4.5;
+      }
     }
   };
 
