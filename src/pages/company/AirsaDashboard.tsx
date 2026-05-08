@@ -375,6 +375,108 @@ export default function AirsaDashboard() {
         ? `Team: ${supervisors.find(s => s.id === sliceValue)?.full_name ?? sliceValue}`
         : `${sliceType}: ${sliceValue}`;
 
+  const handleExport = async () => {
+    if (!aggregate || aggregate.suppressed) {
+      toast.error("Cannot export: insufficient data for this slice.");
+      return;
+    }
+    setExporting(true);
+    setExportModal(false);
+    try {
+      const skillAggMap = aggregate.skill_aggregates ?? {};
+      const deptSet = new Set<string>();
+      Object.values(skillAggMap).forEach((s: any) => {
+        Object.keys(s.per_department_breakdown ?? {}).forEach(k => deptSet.add(k));
+      });
+      const calibrationDepartments = Array.from(deptSet).sort();
+      const unassignedIdx = calibrationDepartments.indexOf("(unassigned)");
+      if (unassignedIdx >= 0) {
+        calibrationDepartments.splice(unassignedIdx, 1);
+        calibrationDepartments.push("(unassigned)");
+      }
+
+      const sortedCalibrationSkills = Object.entries(skillAggMap)
+        .sort(([a], [b]) => parseInt(a) - parseInt(b))
+        .map(([numStr, skill]) => ({ skill_number: parseInt(numStr), ...(skill as any) }));
+
+      const topGrowthSkillNumbers = (aggregate.rankings?.growth_skills ?? []).slice(0, 2).map(s => s.skill_number);
+      const topStrengthSkillNumbers = (aggregate.rankings?.strength_skills ?? []).slice(0, 2).map(s => s.skill_number);
+
+      const domainOrder: string[] = (aggregate.rankings?.growth_domains ?? []).map(d => d.dimension_id);
+      Object.keys(aggregate.domain_aggregates ?? {}).forEach(dimId => {
+        if (!domainOrder.includes(dimId)) domainOrder.push(dimId);
+      });
+      const domainsArr = domainOrder
+        .map(dimensionId => {
+          const domain = (aggregate.domain_aggregates ?? {})[dimensionId];
+          if (!domain) return null;
+          return { dimensionId, domain };
+        })
+        .filter((d): d is { dimensionId: string; domain: any } => d !== null);
+
+      const allSkills = Object.entries(skillAggMap)
+        .sort(([a], [b]) => parseInt(a) - parseInt(b))
+        .map(([numStr, skill]) => ({ skill_number: parseInt(numStr), ...(skill as any) }));
+
+      const mgrs = aggregate.manager_calibration ?? [];
+      const sortedDesc = [...mgrs].sort((a, b) => b.tci - a.tci);
+      const sortedAsc = [...mgrs].sort((a, b) => a.tci - b.tci);
+      const top5 = sortedDesc.slice(0, 5);
+      const bottom5 = sortedAsc.slice(0, 5).filter(b => !top5.some(t => t.supervisor_id === b.supervisor_id));
+
+      const generatedAt = latestNarrative?.generated_at
+        ? new Date(latestNarrative.generated_at).toLocaleString()
+        : new Date().toLocaleString();
+
+      generateAIRSADashboardPdf({
+        sliceLabel,
+        generatedAt,
+        participantCount: aggregate.pair_count ?? 0,
+        tciOverall: aggregate.tci_overall ?? null,
+        alignmentRate: aggregate.alignment_rate ?? null,
+        blindSpotRate: aggregate.blind_spot_rate ?? null,
+        underestimateRate: aggregate.underestimate_rate ?? null,
+        latestNarrativeGeneratedAt: latestNarrative?.generated_at ?? null,
+        narrative: latestNarrative ? {
+          summary: latestNarrative.narrative_text.summary ?? null,
+          business_meaning: latestNarrative.narrative_text.business_meaning ?? null,
+          benefits: latestNarrative.narrative_text.benefits ?? null,
+          risks: latestNarrative.narrative_text.risks ?? null,
+          next_steps: latestNarrative.narrative_text.next_steps ?? null,
+          reassessment_note: latestNarrative.narrative_text.reassessment_note ?? null,
+          top_interventions: latestNarrative.narrative_text.top_interventions ?? [],
+          risk_flags: latestNarrative.narrative_text.risk_flags ?? [],
+        } : null,
+        rankings: {
+          growthSkills: (aggregate.rankings?.growth_skills ?? []).slice(0, 5),
+          growthDomains: (aggregate.rankings?.growth_domains ?? []).slice(0, 4),
+          strengthSkills: (aggregate.rankings?.strength_skills ?? []).slice(0, 5),
+          strengthDomains: (aggregate.rankings?.strength_domains ?? []).slice(0, 4),
+        },
+        calibrationMap: {
+          departments: calibrationDepartments,
+          skills: sortedCalibrationSkills as any,
+          topGrowthSkillNumbers,
+          topStrengthSkillNumbers,
+        },
+        domains: domainsArr as any,
+        skills: allSkills as any,
+        managerCalibration: { top: top5, bottom: bottom5 },
+        narrativeHistory: narrativeHistory.map(h => ({
+          generated_at: h.generated_at,
+          index_score: typeof h.index_score === "number" ? h.index_score : (h.index_score ? parseFloat(h.index_score as any) : null),
+          participant_count: h.participant_count,
+        })),
+        exportSections,
+      });
+      toast.success("Dashboard exported successfully");
+    } catch (e: any) {
+      toast.error("Export failed: " + (e?.message ?? "unknown error"));
+      console.error(e);
+    }
+    setExporting(false);
+  };
+
   const sandBg: React.CSSProperties = { background: SAND, minHeight: "100vh" };
 
   return (
