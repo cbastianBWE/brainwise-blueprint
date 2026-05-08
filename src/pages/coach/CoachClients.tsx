@@ -90,6 +90,7 @@ export default function CoachClients() {
   const [certsLoaded, setCertsLoaded] = useState(false);
   const [bulkModalOpen, setBulkModalOpen] = useState(false);
   const [shareableModalOpen, setShareableModalOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<"clients" | "pending">("clients");
   const [perAssessmentPrice, setPerAssessmentPrice] = useState<number | null>(null);
 
   const fetchClients = async () => {
@@ -723,15 +724,14 @@ export default function CoachClients() {
         </Card>
       </div>
 
-      {selectedClientEmail === null && (
-        <PendingInvitations
-          coachUserId={user?.id ?? null}
-          onChanged={fetchClients}
-        />
-      )}
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "clients" | "pending")}>
+        <TabsList className="grid w-full max-w-md grid-cols-2">
+          <TabsTrigger value="clients">Clients</TabsTrigger>
+          <TabsTrigger value="pending">Pending Invitations</TabsTrigger>
+        </TabsList>
 
-      {/* Client table */}
-      {loading ? (
+        <TabsContent value="clients" className="mt-4">
+          {loading ? (
         <div className="flex items-center justify-center py-16">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
         </div>
@@ -922,6 +922,15 @@ export default function CoachClients() {
           </CardContent>
         </Card>
       )}
+        </TabsContent>
+
+        <TabsContent value="pending" className="mt-4">
+          <PendingInvitations
+            coachUserId={user?.id ?? null}
+            onChanged={fetchClients}
+          />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
