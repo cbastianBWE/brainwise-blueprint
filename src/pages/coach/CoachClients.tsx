@@ -555,19 +555,32 @@ export default function CoachClients() {
           <h1 className="text-2xl font-bold text-foreground">My Clients</h1>
           <p className="text-sm text-muted-foreground mt-1">Manage your coaching clients and assessments</p>
         </div>
-        <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-          <DialogTrigger asChild>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
             <Button
               className="gap-2"
               disabled={certsLoaded && allowedInstrumentIds.size === 0}
-              onClick={() => { resetForm(); setModalOpen(true); }}
               title={certsLoaded && allowedInstrumentIds.size === 0
                 ? "You need an active certification to order assessments"
                 : undefined}
             >
-              <Plus className="h-4 w-4" /> Order Assessment for New Client
+              <Plus className="h-4 w-4" /> Order Assessment <ChevronDown className="h-4 w-4" />
             </Button>
-          </DialogTrigger>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => { resetForm(); setModalOpen(true); }}>
+              Single client
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setBulkModalOpen(true)}>
+              Bulk invite
+            </DropdownMenuItem>
+            <DropdownMenuItem disabled>
+              Generate shareable link (coming soon)
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <Dialog open={modalOpen} onOpenChange={setModalOpen}>
           <DialogContent className="max-w-lg">
             <DialogHeader>
               <DialogTitle>Order Assessment</DialogTitle>
