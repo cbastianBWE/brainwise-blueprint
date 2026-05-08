@@ -249,6 +249,75 @@ export default function AirsaDashboard() {
     });
   };
 
+  // Renders narrative text that may contain hyphen bullets ("- text") and
+  // numbered steps ("1. text"). Plain paragraphs render with normal margins.
+  const renderNarrativeText = (
+    text: string,
+    fontSize = 12,
+    textColor = "var(--foreground)",
+  ) => {
+    const lines = text.split("\n");
+    const out: React.ReactNode[] = [];
+    let paraBuffer: string[] = [];
+
+    const flushPara = (key: string) => {
+      if (paraBuffer.length === 0) return;
+      out.push(
+        <p key={key} style={{
+          fontSize, color: textColor, lineHeight: 1.6,
+          margin: "0 0 8px 0", whiteSpace: "pre-wrap" as const,
+        }}>
+          {paraBuffer.join("\n")}
+        </p>
+      );
+      paraBuffer = [];
+    };
+
+    for (let i = 0; i < lines.length; i++) {
+      const raw = lines[i];
+      const trimmed = raw.trim();
+
+      if (trimmed.length === 0) {
+        flushPara(`p-${i}`);
+        continue;
+      }
+
+      const bulletMatch = /^[-*]\s+(.+)$/.exec(trimmed);
+      const numberMatch = /^(\d+)\.\s+(.+)$/.exec(trimmed);
+
+      if (bulletMatch) {
+        flushPara(`p-${i}`);
+        out.push(
+          <div key={`b-${i}`} style={{
+            display: "flex", gap: 8, fontSize, color: textColor, lineHeight: 1.6,
+            paddingLeft: 16, marginBottom: 4,
+          }}>
+            <span style={{ flexShrink: 0 }}>-</span>
+            <span style={{ flex: 1 }}>{bulletMatch[1]}</span>
+          </div>
+        );
+      } else if (numberMatch) {
+        flushPara(`p-${i}`);
+        out.push(
+          <div key={`n-${i}`} style={{
+            display: "flex", gap: 8, fontSize, color: textColor, lineHeight: 1.6,
+            paddingLeft: 16, marginBottom: 4,
+          }}>
+            <span style={{ flexShrink: 0, fontWeight: 500, minWidth: 16 }}>
+              {numberMatch[1]}.
+            </span>
+            <span style={{ flex: 1 }}>{numberMatch[2]}</span>
+          </div>
+        );
+      } else {
+        paraBuffer.push(raw);
+      }
+    }
+
+    flushPara("p-final");
+    return <>{out}</>;
+  };
+
   useEffect(() => {
     if (!user) return;
     (async () => {
@@ -637,8 +706,8 @@ export default function AirsaDashboard() {
                 <div style={{ fontSize: 13, fontWeight: 600, color: NAVY, marginBottom: 8 }}>
                   AI Workforce Calibration Summary
                 </div>
-                <div style={{ fontSize: 12, color: "var(--foreground)", lineHeight: 1.6, whiteSpace: "pre-wrap" }}>
-                  {latestNarrative.narrative_text.summary}
+                <div style={{ fontSize: 12, color: "var(--foreground)", lineHeight: 1.6 }}>
+                  {renderNarrativeText(latestNarrative.narrative_text.summary, 12, "var(--foreground)")}
                 </div>
                 {Array.isArray(latestNarrative.narrative_text.top_interventions) && latestNarrative.narrative_text.top_interventions.length > 0 && (
                   <div style={{ marginTop: 14, padding: 12, background: SAND, borderRadius: 6 }}>
@@ -670,31 +739,31 @@ export default function AirsaDashboard() {
                       {latestNarrative.narrative_text.business_meaning && (
                         <div>
                           <h4 style={{ fontSize: 11, fontWeight: 600, color: NAVY, margin: 0, textTransform: "uppercase", letterSpacing: 0.5 }}>Business meaning</h4>
-                          <p style={{ fontSize: 12, lineHeight: 1.6, marginTop: 4, whiteSpace: "pre-wrap" }}>{latestNarrative.narrative_text.business_meaning}</p>
+                          <div style={{ marginTop: 4 }}>{renderNarrativeText(latestNarrative.narrative_text.business_meaning, 12, "var(--foreground)")}</div>
                         </div>
                       )}
                       {latestNarrative.narrative_text.benefits && (
                         <div>
                           <h4 style={{ fontSize: 11, fontWeight: 600, color: NAVY, margin: 0, textTransform: "uppercase", letterSpacing: 0.5 }}>Benefits to capitalize</h4>
-                          <p style={{ fontSize: 12, lineHeight: 1.6, marginTop: 4, whiteSpace: "pre-wrap" }}>{latestNarrative.narrative_text.benefits}</p>
+                          <div style={{ marginTop: 4 }}>{renderNarrativeText(latestNarrative.narrative_text.benefits, 12, "var(--foreground)")}</div>
                         </div>
                       )}
                       {latestNarrative.narrative_text.risks && (
                         <div>
                           <h4 style={{ fontSize: 11, fontWeight: 600, color: NAVY, margin: 0, textTransform: "uppercase", letterSpacing: 0.5 }}>Risks if patterns persist</h4>
-                          <p style={{ fontSize: 12, lineHeight: 1.6, marginTop: 4, whiteSpace: "pre-wrap" }}>{latestNarrative.narrative_text.risks}</p>
+                          <div style={{ marginTop: 4 }}>{renderNarrativeText(latestNarrative.narrative_text.risks, 12, "var(--foreground)")}</div>
                         </div>
                       )}
                       {latestNarrative.narrative_text.next_steps && (
                         <div>
                           <h4 style={{ fontSize: 11, fontWeight: 600, color: NAVY, margin: 0, textTransform: "uppercase", letterSpacing: 0.5 }}>Next steps</h4>
-                          <p style={{ fontSize: 12, lineHeight: 1.6, marginTop: 4, whiteSpace: "pre-wrap" }}>{latestNarrative.narrative_text.next_steps}</p>
+                          <div style={{ marginTop: 4 }}>{renderNarrativeText(latestNarrative.narrative_text.next_steps, 12, "var(--foreground)")}</div>
                         </div>
                       )}
                       {latestNarrative.narrative_text.reassessment_note && (
                         <div>
                           <h4 style={{ fontSize: 11, fontWeight: 600, color: NAVY, margin: 0, textTransform: "uppercase", letterSpacing: 0.5 }}>Reassessment guidance</h4>
-                          <p style={{ fontSize: 12, lineHeight: 1.6, marginTop: 4, whiteSpace: "pre-wrap" }}>{latestNarrative.narrative_text.reassessment_note}</p>
+                          <div style={{ marginTop: 4 }}>{renderNarrativeText(latestNarrative.narrative_text.reassessment_note, 12, "var(--foreground)")}</div>
                         </div>
                       )}
                     </div>
@@ -882,7 +951,7 @@ export default function AirsaDashboard() {
                       </div>
                       <div style={{ fontSize: 11, color: "var(--foreground)", marginTop: 6 }}>{flag.summary}</div>
                       {isExpanded && flag.detail && (
-                        <div style={{ fontSize: 11, color: "var(--muted-foreground)", marginTop: 8, whiteSpace: "pre-wrap" }}>{flag.detail}</div>
+                        <div style={{ marginTop: 8 }}>{renderNarrativeText(flag.detail, 11, "var(--muted-foreground)")}</div>
                       )}
                     </div>
                   );
