@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { RefreshCw, Download } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts";
+import { generateAIRSADashboardPdf, type AIRSADashboardPdfSections } from "@/lib/generateAIRSADashboardPdf";
 
 // Brand palette (canonical hex from architecture-reference §5.1)
 const NAVY    = "#021F36";
@@ -230,6 +231,16 @@ export default function AirsaDashboard() {
   const [expandedRankingsRight, setExpandedRankingsRight] = useState(false);
   const [expandedRiskFlags, setExpandedRiskFlags] = useState<Set<string>>(new Set());
 
+  const [exportModal, setExportModal] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [exportSections, setExportSections] = useState<AIRSADashboardPdfSections>({
+    overview: true,
+    domains: true,
+    skillInventory: true,
+    managerCalibration: true,
+    trends: true,
+  });
+
   const toggleRiskFlag = (id: string) => {
     setExpandedRiskFlags(prev => {
       const next = new Set(prev);
@@ -364,6 +375,108 @@ export default function AirsaDashboard() {
         ? `Team: ${supervisors.find(s => s.id === sliceValue)?.full_name ?? sliceValue}`
         : `${sliceType}: ${sliceValue}`;
 
+  const handleExport = async () => {
+    if (!aggregate || aggregate.suppressed) {
+      toast.error("Cannot export: insufficient data for this slice.");
+      return;
+    }
+    setExporting(true);
+    setExportModal(false);
+    try {
+      const skillAggMap = aggregate.skill_aggregates ?? {};
+      const deptSet = new Set<string>();
+      Object.values(skillAggMap).forEach((s: any) => {
+        Object.keys(s.per_department_breakdown ?? {}).forEach(k => deptSet.add(k));
+      });
+      const calibrationDepartments = Array.from(deptSet).sort();
+      const unassignedIdx = calibrationDepartments.indexOf("(unassigned)");
+      if (unassignedIdx >= 0) {
+        calibrationDepartments.splice(unassignedIdx, 1);
+        calibrationDepartments.push("(unassigned)");
+      }
+
+      const sortedCalibrationSkills = Object.entries(skillAggMap)
+        .sort(([a], [b]) => parseInt(a) - parseInt(b))
+        .map(([numStr, skill]) => ({ skill_number: parseInt(numStr), ...(skill as any) }));
+
+      const topGrowthSkillNumbers = (aggregate.rankings?.growth_skills ?? []).slice(0, 2).map(s => s.skill_number);
+      const topStrengthSkillNumbers = (aggregate.rankings?.strength_skills ?? []).slice(0, 2).map(s => s.skill_number);
+
+      const domainOrder: string[] = (aggregate.rankings?.growth_domains ?? []).map(d => d.dimension_id);
+      Object.keys(aggregate.domain_aggregates ?? {}).forEach(dimId => {
+        if (!domainOrder.includes(dimId)) domainOrder.push(dimId);
+      });
+      const domainsArr = domainOrder
+        .map(dimensionId => {
+          const domain = (aggregate.domain_aggregates ?? {})[dimensionId];
+          if (!domain) return null;
+          return { dimensionId, domain };
+        })
+        .filter((d): d is { dimensionId: string; domain: any } => d !== null);
+
+      const allSkills = Object.entries(skillAggMap)
+        .sort(([a], [b]) => parseInt(a) - parseInt(b))
+        .map(([numStr, skill]) => ({ skill_number: parseInt(numStr), ...(skill as any) }));
+
+      const mgrs = aggregate.manager_calibration ?? [];
+      const sortedDesc = [...mgrs].sort((a, b) => b.tci - a.tci);
+      const sortedAsc = [...mgrs].sort((a, b) => a.tci - b.tci);
+      const top5 = sortedDesc.slice(0, 5);
+      const bottom5 = sortedAsc.slice(0, 5).filter(b => !top5.some(t => t.supervisor_id === b.supervisor_id));
+
+      const generatedAt = latestNarrative?.generated_at
+        ? new Date(latestNarrative.generated_at).toLocaleString()
+        : new Date().toLocaleString();
+
+      generateAIRSADashboardPdf({
+        sliceLabel,
+        generatedAt,
+        participantCount: aggregate.pair_count ?? 0,
+        tciOverall: aggregate.tci_overall ?? null,
+        alignmentRate: aggregate.alignment_rate ?? null,
+        blindSpotRate: aggregate.blind_spot_rate ?? null,
+        underestimateRate: aggregate.underestimate_rate ?? null,
+        latestNarrativeGeneratedAt: latestNarrative?.generated_at ?? null,
+        narrative: latestNarrative ? {
+          summary: latestNarrative.narrative_text.summary ?? null,
+          business_meaning: latestNarrative.narrative_text.business_meaning ?? null,
+          benefits: latestNarrative.narrative_text.benefits ?? null,
+          risks: latestNarrative.narrative_text.risks ?? null,
+          next_steps: latestNarrative.narrative_text.next_steps ?? null,
+          reassessment_note: latestNarrative.narrative_text.reassessment_note ?? null,
+          top_interventions: latestNarrative.narrative_text.top_interventions ?? [],
+          risk_flags: latestNarrative.narrative_text.risk_flags ?? [],
+        } : null,
+        rankings: {
+          growthSkills: (aggregate.rankings?.growth_skills ?? []).slice(0, 5),
+          growthDomains: (aggregate.rankings?.growth_domains ?? []).slice(0, 4),
+          strengthSkills: (aggregate.rankings?.strength_skills ?? []).slice(0, 5),
+          strengthDomains: (aggregate.rankings?.strength_domains ?? []).slice(0, 4),
+        },
+        calibrationMap: {
+          departments: calibrationDepartments,
+          skills: sortedCalibrationSkills as any,
+          topGrowthSkillNumbers,
+          topStrengthSkillNumbers,
+        },
+        domains: domainsArr as any,
+        skills: allSkills as any,
+        managerCalibration: { top: top5, bottom: bottom5 },
+        narrativeHistory: narrativeHistory.map(h => ({
+          generated_at: h.generated_at,
+          index_score: typeof h.index_score === "number" ? h.index_score : (h.index_score ? parseFloat(h.index_score as any) : null),
+          participant_count: h.participant_count,
+        })),
+        exportSections,
+      });
+      toast.success("Dashboard exported successfully");
+    } catch (e: any) {
+      toast.error("Export failed: " + (e?.message ?? "unknown error"));
+      console.error(e);
+    }
+    setExporting(false);
+  };
+
   const sandBg: React.CSSProperties = { background: SAND, minHeight: "100vh" };
 
   return (
@@ -407,9 +520,9 @@ export default function AirsaDashboard() {
             <div style={{ fontSize: 11, color: "var(--muted-foreground)" }}>
               {sliceLabel} · n={completedCount}/{eligibleCount}
             </div>
-            <Button variant="outline" size="sm" onClick={() => toast.info("PDF export coming soon")}>
+            <Button variant="outline" size="sm" onClick={() => setExportModal(true)} disabled={exporting || !aggregate || !!aggregate?.suppressed}>
               <Download className="h-3.5 w-3.5 mr-1" />
-              Export PDF
+              {exporting ? "Exporting..." : "Export PDF"}
             </Button>
             <Button size="sm" onClick={handleRegenerate} disabled={regenerating} style={{ background: GREEN, color: "#fff" }}>
               <RefreshCw className={`h-3.5 w-3.5 mr-1 ${regenerating ? "animate-spin" : ""}`} />
@@ -1102,6 +1215,67 @@ export default function AirsaDashboard() {
           </div>
         )}
       </div>
+
+      {exportModal && (
+        <div
+          onClick={() => setExportModal(false)}
+          style={{
+            position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)",
+            display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000,
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{ background: "#fff", borderRadius: 12, padding: 24, width: 360, maxWidth: "92vw", position: "relative" }}
+          >
+            <button
+              onClick={() => setExportModal(false)}
+              aria-label="Close"
+              style={{
+                position: "absolute", top: 10, right: 12, background: "transparent",
+                border: "none", fontSize: 20, cursor: "pointer", color: "var(--muted-foreground)", lineHeight: 1,
+              }}
+            >
+              ×
+            </button>
+            <h2 style={{ margin: 0, marginBottom: 16, fontSize: 16, color: NAVY, fontWeight: 600 }}>
+              Export AIRSA Dashboard
+            </h2>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 16 }}>
+              {(
+                [
+                  { key: "overview", label: "Overview" },
+                  { key: "domains", label: "Domains" },
+                  { key: "skillInventory", label: "Skill Inventory" },
+                  { key: "managerCalibration", label: "Manager Calibration" },
+                  { key: "trends", label: "Trends" },
+                ] as Array<{ key: keyof AIRSADashboardPdfSections; label: string }>
+              ).map(({ key, label }) => (
+                <label key={key} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, cursor: "pointer" }}>
+                  <input
+                    type="checkbox"
+                    checked={exportSections[key]}
+                    onChange={(e) => setExportSections((prev) => ({ ...prev, [key]: e.target.checked }))}
+                  />
+                  {label}
+                </label>
+              ))}
+            </div>
+            <div style={{ fontSize: 11, color: "var(--muted-foreground)", marginBottom: 14 }}>
+              All collapsed content will be automatically expanded in the export.
+            </div>
+            <button
+              onClick={() => { handleExport(); setExportModal(false); }}
+              style={{
+                background: NAVY, color: "#fff", border: "none", borderRadius: 8,
+                padding: "10px 18px", fontSize: 13, cursor: "pointer", width: "100%", fontWeight: 500,
+              }}
+            >
+              Download PDF
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
