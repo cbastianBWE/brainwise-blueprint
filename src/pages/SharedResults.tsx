@@ -38,6 +38,9 @@ export default function SharedResults() {
   const [selectedPeerId, setSelectedPeerId] = useState<string | null>(null);
   const [checkedPeerIds, setCheckedPeerIds] = useState<Set<string>>(new Set());
 
+  const [directReportIds, setDirectReportIds] = useState<Set<string>>(new Set());
+  const [myReportsOnly, setMyReportsOnly] = useState(false);
+
   useEffect(() => {
     if (!user) return;
     if (isCompanyAdmin || isOrgAdmin || isSuperAdmin) {
@@ -56,12 +59,27 @@ export default function SharedResults() {
 
   useEffect(() => {
     if (!user) return;
+    (async () => {
+      const { data, error } = await (supabase as any).rpc("get_my_direct_reports");
+      if (error) {
+        console.error("get_my_direct_reports error:", error);
+        setDirectReportIds(new Set());
+        return;
+      }
+      const ids = new Set<string>((data ?? []).map((row: any) => row.out_user_id as string));
+      setDirectReportIds(ids);
+    })();
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
     setLoadingPeers(true);
     setSelectedPeerId(null);
     setCheckedPeerIds(new Set());
     setNameSearch("");
     setDeptFilter("all");
     setSupervisorFilter("all");
+    setMyReportsOnly(false);
     (async () => {
       const { data, error } = await (supabase as any).rpc("get_accessible_peer_results", {
         p_instrument: instrument,
@@ -100,9 +118,10 @@ export default function SharedResults() {
       }
       if (deptFilter !== "all" && p.department_id !== deptFilter) return false;
       if (supervisorFilter !== "all" && p.supervisor_user_id !== supervisorFilter) return false;
+      if (myReportsOnly && !directReportIds.has(p.user_id)) return false;
       return true;
     });
-  }, [peers, nameSearch, deptFilter, supervisorFilter]);
+  }, [peers, nameSearch, deptFilter, supervisorFilter, myReportsOnly, directReportIds]);
 
   const groupedByDept = useMemo(() => {
     const groups = new Map<string, Peer[]>();
@@ -168,6 +187,18 @@ export default function SharedResults() {
                 ))}
               </SelectContent>
             </Select>
+          )}
+
+          {directReportIds.size > 0 && (
+            <Button
+              variant={myReportsOnly ? "default" : "outline"}
+              size="sm"
+              className="w-full justify-start gap-2"
+              onClick={() => setMyReportsOnly(prev => !prev)}
+            >
+              <Users className="h-4 w-4" />
+              My direct reports only
+            </Button>
           )}
 
           {supervisors.length > 0 && (
