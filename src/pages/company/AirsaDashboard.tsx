@@ -298,6 +298,21 @@ export default function AirsaDashboard() {
 
   useEffect(() => { loadNarrative(); }, [loadNarrative]);
 
+  const loadNarrativeHistory = useCallback(async () => {
+    if (!user) return;
+    const { data } = await (supabase as any)
+      .from("org_dashboard_narratives")
+      .select("id, generated_at, participant_count, index_score")
+      .eq("instrument_id", "INST-003")
+      .eq("slice_type", sliceType)
+      .eq("slice_value", sliceValue)
+      .order("generated_at", { ascending: false })
+      .limit(20);
+    setNarrativeHistory((data ?? []) as NarrativeHistoryRow[]);
+  }, [user, sliceType, sliceValue]);
+
+  useEffect(() => { loadNarrativeHistory(); }, [loadNarrativeHistory]);
+
   const handleRegenerate = async () => {
     if (!user) return;
     setRegenerating(true);
