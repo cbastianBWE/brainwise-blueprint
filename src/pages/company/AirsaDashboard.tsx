@@ -520,9 +520,9 @@ export default function AirsaDashboard() {
             <div style={{ fontSize: 11, color: "var(--muted-foreground)" }}>
               {sliceLabel} · n={completedCount}/{eligibleCount}
             </div>
-            <Button variant="outline" size="sm" onClick={() => toast.info("PDF export coming soon")}>
+            <Button variant="outline" size="sm" onClick={() => setExportModal(true)} disabled={exporting || !aggregate || !!aggregate?.suppressed}>
               <Download className="h-3.5 w-3.5 mr-1" />
-              Export PDF
+              {exporting ? "Exporting..." : "Export PDF"}
             </Button>
             <Button size="sm" onClick={handleRegenerate} disabled={regenerating} style={{ background: GREEN, color: "#fff" }}>
               <RefreshCw className={`h-3.5 w-3.5 mr-1 ${regenerating ? "animate-spin" : ""}`} />
