@@ -361,7 +361,7 @@ export default function AirsaDashboard() {
     : sliceType === "department"
       ? `Department: ${departments.find(d => d.id === sliceValue)?.name ?? sliceValue}`
       : sliceType === "team"
-        ? `Team: ${departments.find(d => d.id === sliceValue)?.name ?? sliceValue}`
+        ? `Team: ${supervisors.find(s => s.id === sliceValue)?.full_name ?? sliceValue}`
         : `${sliceType}: ${sliceValue}`;
 
   const sandBg: React.CSSProperties = { background: SAND, minHeight: "100vh" };
