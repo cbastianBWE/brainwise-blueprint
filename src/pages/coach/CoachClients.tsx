@@ -556,7 +556,7 @@ export default function CoachClients() {
                 <div className="space-y-2">
                   <Label className="text-sm">Assessment Instruments <span className="text-muted-foreground">(select at least one)</span></Label>
                   <div className={`space-y-2 rounded-md border p-3 ${instrumentError ? "border-destructive" : "border-border"}`}>
-                    {INSTRUMENTS.map(inst => (
+                    {INSTRUMENTS.filter(inst => allowedInstrumentIds.has(inst.id)).map(inst => (
                       <label key={inst.id} className="flex items-start gap-3 cursor-pointer">
                         <Checkbox
                           checked={selectedInstruments.includes(inst.id)}
@@ -570,6 +570,12 @@ export default function CoachClients() {
                         </div>
                       </label>
                     ))}
+                    {certsLoaded && allowedInstrumentIds.size === 0 && (
+                      <div className="rounded-md border border-dashed border-muted-foreground/30 p-4 text-sm text-muted-foreground">
+                        You don't have any active certifications. Complete a certification path to start ordering assessments for clients.{" "}
+                        <a href="/certifications" className="text-primary underline underline-offset-2">View certifications</a>
+                      </div>
+                    )}
                   </div>
                   {instrumentError && (
                     <p className="text-xs text-destructive">Please select at least one instrument.</p>
