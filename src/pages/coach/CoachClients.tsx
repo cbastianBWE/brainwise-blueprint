@@ -511,7 +511,14 @@ export default function CoachClients() {
         </div>
         <Dialog open={modalOpen} onOpenChange={setModalOpen}>
           <DialogTrigger asChild>
-            <Button className="gap-2" onClick={() => { resetForm(); setModalOpen(true); }}>
+            <Button
+              className="gap-2"
+              disabled={certsLoaded && allowedInstrumentIds.size === 0}
+              onClick={() => { resetForm(); setModalOpen(true); }}
+              title={certsLoaded && allowedInstrumentIds.size === 0
+                ? "You need an active certification to order assessments"
+                : undefined}
+            >
               <Plus className="h-4 w-4" /> Order Assessment for New Client
             </Button>
           </DialogTrigger>
