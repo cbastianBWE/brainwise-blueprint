@@ -804,9 +804,10 @@ function SubMetricChip({ label, value, suffix, color }: { label: string; value: 
 }
 
 function RankingPanel({
-  title, accent, skillItems, domainItems, metricKey, metricLabel, expanded, onToggle,
+  title, subtitle, accent, skillItems, domainItems, metricKey, metricLabel, expanded, onToggle,
 }: {
   title: string;
+  subtitle: string;
   accent: string;
   skillItems: RankedSkill[];
   domainItems: RankedDomain[];
@@ -817,8 +818,11 @@ function RankingPanel({
 }) {
   return (
     <div style={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 8, padding: 16 }}>
-      <div style={{ fontSize: 13, fontWeight: 600, color: NAVY, marginBottom: 12, borderBottom: `2px solid ${accent}`, paddingBottom: 6 }}>
+      <div style={{ fontSize: 13, fontWeight: 600, color: NAVY, marginBottom: 2, borderBottom: `2px solid ${accent}`, paddingBottom: 6 }}>
         {title}
+      </div>
+      <div style={{ fontSize: 10, color: "var(--muted-foreground)", marginBottom: 12, marginTop: 4, fontStyle: "italic" }}>
+        {subtitle}
       </div>
       {skillItems.length === 0 && domainItems.length === 0 ? (
         <div style={{ fontSize: 11, color: "var(--muted-foreground)", padding: 8 }}>
