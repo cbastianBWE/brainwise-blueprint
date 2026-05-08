@@ -629,7 +629,9 @@ export default function CoachClients() {
                   {selectedInstruments.length > 0 && (
                     <p className="text-xs text-muted-foreground">
                       {selectedInstruments.length} instrument{selectedInstruments.length !== 1 ? "s" : ""} selected
-                      {" "}— ${(selectedInstruments.length * 29.99).toFixed(2)} total
+                      {" "}— {perAssessmentPrice !== null
+                        ? `$${(selectedInstruments.length * perAssessmentPrice).toFixed(2)} total`
+                        : "loading price…"}
                     </p>
                   )}
                 </div>
