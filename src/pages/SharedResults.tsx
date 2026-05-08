@@ -189,6 +189,18 @@ export default function SharedResults() {
             </Select>
           )}
 
+          {directReportIds.size > 0 && (
+            <Button
+              variant={myReportsOnly ? "default" : "outline"}
+              size="sm"
+              className="w-full justify-start gap-2"
+              onClick={() => setMyReportsOnly(prev => !prev)}
+            >
+              <Users className="h-4 w-4" />
+              My direct reports only
+            </Button>
+          )}
+
           {supervisors.length > 0 && (
             <Select value={supervisorFilter} onValueChange={setSupervisorFilter}>
               <SelectTrigger>
