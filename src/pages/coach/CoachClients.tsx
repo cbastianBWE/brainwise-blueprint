@@ -24,6 +24,8 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import BulkInviteModal from "@/components/coach/BulkInviteModal";
+import ShareableLinkModal from "@/components/coach/ShareableLinkModal";
+import PendingInvitations from "@/components/coach/PendingInvitations";
 
 const INSTRUMENTS = [
   { id: "PTP", uuid: "02618e9a-d411-44cf-b316-fe368edeac03", name: "Personal Threat Profile", desc: "Measures nonconscious threat responses influencing behavior." },
@@ -87,6 +89,7 @@ export default function CoachClients() {
   const [allowedInstrumentIds, setAllowedInstrumentIds] = useState<Set<string>>(new Set());
   const [certsLoaded, setCertsLoaded] = useState(false);
   const [bulkModalOpen, setBulkModalOpen] = useState(false);
+  const [shareableModalOpen, setShareableModalOpen] = useState(false);
   const [perAssessmentPrice, setPerAssessmentPrice] = useState<number | null>(null);
 
   const fetchClients = async () => {
@@ -574,8 +577,8 @@ export default function CoachClients() {
             <DropdownMenuItem onClick={() => setBulkModalOpen(true)}>
               Bulk invite
             </DropdownMenuItem>
-            <DropdownMenuItem disabled>
-              Generate shareable link (coming soon)
+            <DropdownMenuItem onClick={() => setShareableModalOpen(true)}>
+              Generate shareable link
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -679,6 +682,14 @@ export default function CoachClients() {
           perAssessmentPrice={perAssessmentPrice}
           onComplete={() => { setBulkModalOpen(false); fetchClients(); }}
         />
+
+        <ShareableLinkModal
+          open={shareableModalOpen}
+          onOpenChange={setShareableModalOpen}
+          allowedInstrumentIds={allowedInstrumentIds}
+          perAssessmentPrice={perAssessmentPrice}
+          onComplete={() => { setShareableModalOpen(false); fetchClients(); }}
+        />
       </div>
 
       {/* Stat cards */}
@@ -711,6 +722,13 @@ export default function CoachClients() {
           </CardContent>
         </Card>
       </div>
+
+      {selectedClientEmail === null && (
+        <PendingInvitations
+          coachUserId={user?.id ?? null}
+          onChanged={fetchClients}
+        />
+      )}
 
       {/* Client table */}
       {loading ? (
