@@ -168,6 +168,20 @@ interface Department {
   name: string;
 }
 
+interface Supervisor {
+  id: string;
+  full_name: string;
+}
+
+interface NarrativeHistoryRow {
+  id: string;
+  generated_at: string;
+  participant_count: number;
+  index_score: number | null;
+}
+
+type SkillSortKey = "skill_number" | "skill_name" | "domain_name" | "tci" | "blind_spot_pct" | "underestimate_pct" | "cps_growth" | "cps_strength" | "n";
+
 export default function AirsaDashboard() {
   const { user } = useAuth();
 
