@@ -28,6 +28,13 @@ const INSTRUMENTS = [
   { id: "HSS", uuid: "90216d9d-153c-4b7b-abe0-1d7845c9e6e0", name: "Habit Stabilization Scorecard", desc: "Measures stability of behavioral changes related to AI." },
 ];
 
+const CERT_TYPE_TO_INSTRUMENTS: Record<string, string[]> = {
+  ptp_coach: ["PTP"],
+  ai_transformation_coach: ["NAI", "AIRSA", "HSS"],
+  ai_transformation_ptp_coach: ["PTP", "NAI", "AIRSA", "HSS"],
+  my_brainwise_coach: ["PTP", "NAI", "AIRSA", "HSS"],
+};
+
 interface ClientRow {
   id: string;
   client_email: string;
