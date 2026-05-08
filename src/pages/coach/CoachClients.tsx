@@ -190,6 +190,30 @@ export default function CoachClients() {
 
   useEffect(() => { fetchClients(); }, [user]);
 
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      const { data, error } = await (supabase as any)
+        .from("coach_certifications")
+        .select("certification_type, status")
+        .eq("user_id", user.id)
+        .eq("status", "certified");
+      if (error) {
+        console.error("coach_certifications fetch error:", error);
+        setAllowedInstrumentIds(new Set());
+        setCertsLoaded(true);
+        return;
+      }
+      const allowed = new Set<string>();
+      (data ?? []).forEach((row: any) => {
+        const ids = CERT_TYPE_TO_INSTRUMENTS[row.certification_type] ?? [];
+        ids.forEach(id => allowed.add(id));
+      });
+      setAllowedInstrumentIds(allowed);
+      setCertsLoaded(true);
+    })();
+  }, [user]);
+
   const resetForm = () => {
     setFirstName(""); setLastName(""); setEmail(""); setNote("");
     setSelectedInstruments([]); setInstrumentError(false);
