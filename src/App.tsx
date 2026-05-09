@@ -170,7 +170,7 @@ const App = () => (
             {/* Legacy redirects */}
             <Route path="/coach-portal" element={<ProtectedRoute><AppLayout /></ProtectedRoute>} />
             <Route path="/admin" element={<ProtectedRoute><AppLayout /></ProtectedRoute>} />
-            <Route path="/super-admin" element={<ProtectedRoute><AppLayout /></ProtectedRoute>} />
+            <Route path="/super-admin" element={<Navigate to="/super-admin/users" replace />} />
 
             <Route path="*" element={<NotFound />} />
             </Routes>
