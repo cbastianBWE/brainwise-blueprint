@@ -142,6 +142,16 @@ const ImpersonationProvider = ({ children }: { children: ReactNode }) => {
       if (!data?.access_token || !data?.refresh_token) {
         throw new Error("impersonation-start did not return tokens");
       }
+      if (data?.imp_session_id && data?.target_user?.email) {
+        try {
+          localStorage.setItem(
+            `bw_imp_target_email_${data.imp_session_id}`,
+            data.target_user.email
+          );
+        } catch {
+          // localStorage failure is non-fatal; banner falls back to user_id display.
+        }
+      }
       const { error: setErr } = await supabase.auth.setSession({
         access_token: data.access_token,
         refresh_token: data.refresh_token,
