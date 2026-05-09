@@ -473,10 +473,13 @@ export default function CoachClients() {
 
   // pendingInvitationsCount: distinct rows still awaiting redemption
   // (matches PendingInvitations card query).
-  const pendingInvitationsCount = clients.filter(c =>
-    (c.invitation_status === "sent" || c.invitation_status === "opened") &&
-    c.assessment_id === null
-  ).length;
+  const pendingInvitationsCount = clients.filter(c => {
+    if (c.invitation_status !== "sent" && c.invitation_status !== "opened") return false;
+    if (c.assessment_id !== null) return false;
+    if (c.revoked_at !== null) return false;
+    if (c.expires_at !== null && new Date(c.expires_at) <= new Date()) return false;
+    return true;
+  }).length;
 
   const completedThisMonth = clients.filter(c => {
     if (!c.completed_at) return false;
