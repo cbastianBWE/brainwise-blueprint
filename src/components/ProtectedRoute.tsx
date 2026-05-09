@@ -83,6 +83,11 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     }
   }
 
+  // Impersonation gate-route redirect
+  if (isImpersonating && IMPERSONATION_REDIRECT_PATHS.includes(location.pathname)) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
   // Demographics gate (runs before MFA gate)
   if (hasRequired === false && !EXEMPT_PATHS.includes(location.pathname)) {
     if (!accountType) {
