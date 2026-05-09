@@ -79,7 +79,9 @@ function MfaSection({ userId }: { userId: string }) {
   const cancelEnroll = async () => {
     if (enrollFactorId) {
       try {
-        await supabase.auth.mfa.unenroll({ factorId: enrollFactorId });
+        await supabase.functions.invoke('identity-mutation', {
+          body: { action: 'mfa_unenroll', factor_id: enrollFactorId },
+        });
       } catch {
         // ignore
       }
