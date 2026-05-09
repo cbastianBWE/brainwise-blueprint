@@ -171,7 +171,8 @@ const App = () => (
             <Route path="/super-admin" element={<ProtectedRoute><AppLayout /></ProtectedRoute>} />
 
             <Route path="*" element={<NotFound />} />
-          </Routes>
+            </Routes>
+          </ImpersonationProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
