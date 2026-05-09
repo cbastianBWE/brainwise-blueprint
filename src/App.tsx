@@ -69,6 +69,7 @@ import AirsaManagerComplete from "./pages/AirsaManagerComplete";
 import VerifyConversion from "./pages/VerifyConversion";
 import Departed from "./pages/Departed";
 import MfaEnrollment from "./pages/MfaEnrollment";
+import AccessHistory from "./pages/AccessHistory";
 import CookieConsentBanner from "@/components/CookieConsentBanner";
 import ImpersonationProvider from "@/contexts/ImpersonationProvider";
 import ImpersonationBanner from "@/components/impersonation/ImpersonationBanner";
