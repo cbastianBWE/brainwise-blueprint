@@ -102,7 +102,7 @@ export default function CoachClients() {
 
     const { data: ccRows } = await supabase
       .from("coach_clients")
-      .select("id, client_email, client_user_id, invitation_status, assessment_id, instrument_id, coach_notes, created_at, stripe_payment_intent_id, debrief_completed, results_released")
+      .select("id, client_email, client_user_id, invitation_status, assessment_id, instrument_id, coach_notes, created_at, stripe_payment_intent_id, debrief_completed, results_released, revoked_at, expires_at")
       .eq("coach_user_id", user.id)
       .order("created_at", { ascending: false });
 
