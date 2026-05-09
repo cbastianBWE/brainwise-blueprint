@@ -62,7 +62,11 @@ const MfaChallenge = ({ userId, onSuccess, onCancel }: Props) => {
   };
 
   const handleCancel = async () => {
-    await supabase.auth.signOut();
+    if (onCancel) {
+      onCancel();
+    } else {
+      await supabase.auth.signOut();
+    }
     setCode("");
     setFactorId(null);
     setChallengeId(null);
