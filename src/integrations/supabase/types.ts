@@ -268,7 +268,12 @@ export type Database = {
           id: string
           instrument_id: string
           purchased_at: string
+          refund_amount: number | null
+          refund_failure_reason: string | null
+          refund_processed_by: string | null
+          refunded_at: string | null
           stripe_payment_intent_id: string | null
+          stripe_refund_id: string | null
           stripe_session_id: string | null
           user_id: string
         }
@@ -279,7 +284,12 @@ export type Database = {
           id?: string
           instrument_id: string
           purchased_at?: string
+          refund_amount?: number | null
+          refund_failure_reason?: string | null
+          refund_processed_by?: string | null
+          refunded_at?: string | null
           stripe_payment_intent_id?: string | null
+          stripe_refund_id?: string | null
           stripe_session_id?: string | null
           user_id: string
         }
@@ -290,7 +300,12 @@ export type Database = {
           id?: string
           instrument_id?: string
           purchased_at?: string
+          refund_amount?: number | null
+          refund_failure_reason?: string | null
+          refund_processed_by?: string | null
+          refunded_at?: string | null
           stripe_payment_intent_id?: string | null
+          stripe_refund_id?: string | null
           stripe_session_id?: string | null
           user_id?: string
         }
@@ -300,6 +315,34 @@ export type Database = {
             columns: ["consumed_by_assessment_id"]
             isOneToOne: false
             referencedRelation: "assessments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessment_purchases_refund_processed_by_fkey"
+            columns: ["refund_processed_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessment_purchases_refund_processed_by_fkey"
+            columns: ["refund_processed_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "assessment_purchases_refund_processed_by_fkey"
+            columns: ["refund_processed_by"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessment_purchases_refund_processed_by_fkey"
+            columns: ["refund_processed_by"]
+            isOneToOne: false
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
           {
@@ -1000,10 +1043,14 @@ export type Database = {
           instrument_id: string | null
           invitation_source: string
           invitation_status: string
+          refund_amount: number | null
+          refund_failure_reason: string | null
+          refunded_at: string | null
           results_released: boolean
           revoked_at: string | null
           stripe_coupon_id: string | null
           stripe_payment_intent_id: string | null
+          stripe_refund_id: string | null
         }
         Insert: {
           assessment_id?: string | null
@@ -1023,10 +1070,14 @@ export type Database = {
           instrument_id?: string | null
           invitation_source?: string
           invitation_status?: string
+          refund_amount?: number | null
+          refund_failure_reason?: string | null
+          refunded_at?: string | null
           results_released?: boolean
           revoked_at?: string | null
           stripe_coupon_id?: string | null
           stripe_payment_intent_id?: string | null
+          stripe_refund_id?: string | null
         }
         Update: {
           assessment_id?: string | null
@@ -1046,10 +1097,14 @@ export type Database = {
           instrument_id?: string | null
           invitation_source?: string
           invitation_status?: string
+          refund_amount?: number | null
+          refund_failure_reason?: string | null
+          refunded_at?: string | null
           results_released?: boolean
           revoked_at?: string | null
           stripe_coupon_id?: string | null
           stripe_payment_intent_id?: string | null
+          stripe_refund_id?: string | null
         }
         Relationships: [
           {

@@ -1,12 +1,12 @@
 // Auto-generated content for Terms of Service.
-// Last updated: May 1, 2026
-// Source: drafts approved by Cole, May 1, 2026.
+// Last updated: May 9, 2026
+// Source: drafts approved by Cole, May 1, 2026; refund policy revision approved by Cole, May 9, 2026.
 
 import type { LegalBlock } from "@/components/marketing/LegalPageLayout";
 
 export const meta = {
   title: "Terms of Service",
-  effectiveDate: "May 1, 2026",
+  effectiveDate: "May 9, 2026",
 };
 
 export const content: LegalBlock[] = [
@@ -24,7 +24,7 @@ export const content: LegalBlock[] = [
   },
   {
     "type": "p",
-    "text": "v1"
+    "text": "v2"
   },
   {
     "type": "h1",
@@ -169,7 +169,19 @@ export const content: LegalBlock[] = [
   },
   {
     "type": "p",
-    "text": "When a coach pays for a client's assessment, we generate a credit (Stripe coupon) valued at the amount paid, which is automatically applied when the client signs up. Coupons expire 90 days after issuance unless otherwise specified. Unused coupons are not refundable."
+    "text": "When a coach pays for a client's assessment, we generate a credit (Stripe coupon) valued at the amount paid, which is automatically applied when the client signs up. Coupons expire 90 days after issuance unless otherwise specified."
+  },
+  {
+    "type": "p",
+    "text": "Refund policy for coach-paid assessments: Refunds are processed automatically when the coach revokes an active invitation that has not been redeemed by the client AND the original payment was made within the last 90 days, OR when the invitation expires (30 days) without the client redeeming it."
+  },
+  {
+    "type": "p",
+    "text": "Refunds will NOT be issued automatically when the client has redeemed the coupon (regardless of whether they completed the assessment), when the original payment was made more than 90 days ago, or when the assessment is in progress or completed."
+  },
+  {
+    "type": "p",
+    "text": "For exceptional cases outside these rules (disputes, fraud, technical errors), please contact support@brainwiseenterprises.com."
   },
   {
     "type": "h2",
@@ -187,19 +199,35 @@ export const content: LegalBlock[] = [
   },
   {
     "type": "p",
-    "text": "All purchases are final and non-refundable, except where required by applicable consumer protection law. Specific exceptions:"
+    "text": "Refund eligibility differs by purchase type."
   },
   {
     "type": "p",
-    "text": "If you are an EU, UK, or similar consumer with a statutory right of withdrawal: you may withdraw within 14 days of purchase, but the right is forfeited once you have begun an assessment, generated AI interpretation content, or substantively used a feature."
+    "text": "Individual purchases (per-assessment, per-feature, per-subscription): Eligible for a full refund within 14 days of purchase, provided the assessment has not been started, AI interpretation content has not been generated, and the feature has not been substantively used. Once started or used, the purchase is non-refundable."
   },
   {
     "type": "p",
-    "text": "If we materially fail to deliver the Service (extended outage, fundamental functional failure), contact us at support@brainwiseenterprises.com to discuss a pro-rata credit or refund."
+    "text": "Coach-paid client assessments: See Section 5.3 above for the auto-refund policy applicable to coach-paid invitations."
   },
   {
     "type": "p",
-    "text": "Subscription cancellations take effect at the end of the current billing period. We do not pro-rate refunds for partial periods."
+    "text": "Corporate contracts: All sales are final per the executed corporate contract. For details, exceptions, or questions, contact support@brainwiseenterprises.com."
+  },
+  {
+    "type": "p",
+    "text": "Subscription cancellations: Cancellations take effect at the end of the current billing period. We do not pro-rate refunds for partial periods."
+  },
+  {
+    "type": "p",
+    "text": "EU, UK, or similar consumer statutory rights: If you have a statutory right of withdrawal, you may withdraw within the legally mandated period, but the right is forfeited once you have begun an assessment, generated AI interpretation content, or substantively used a feature."
+  },
+  {
+    "type": "p",
+    "text": "Service failure: If we materially fail to deliver the Service (extended outage, fundamental functional failure), contact us at support@brainwiseenterprises.com to discuss a pro-rata credit or refund."
+  },
+  {
+    "type": "p",
+    "text": "For exceptional cases outside these rules (disputes, fraud, technical errors), please contact support@brainwiseenterprises.com."
   },
   {
     "type": "h2",
