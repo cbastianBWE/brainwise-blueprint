@@ -7,6 +7,7 @@ export interface ImpersonationSession {
   sessionId: string;
   actorUserId: string;
   targetUserId: string;
+  targetEmail: string | null;
   mode: "observe" | "act";
   expiresAt: Date;
   startedAt: Date;
