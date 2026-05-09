@@ -172,6 +172,8 @@ export default function CoachClients() {
         stripe_payment_intent_id: cc.stripe_payment_intent_id,
         debrief_completed: cc.debrief_completed,
         results_released: cc.results_released,
+        revoked_at: cc.revoked_at,
+        expires_at: cc.expires_at,
       });
     }
 
