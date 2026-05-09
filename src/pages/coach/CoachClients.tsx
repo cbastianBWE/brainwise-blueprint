@@ -554,6 +554,8 @@ export default function CoachClients() {
           to: client.client_email,
           subject: "Friendly Reminder: Your BrainWise Assessment is Waiting",
           html,
+          email_type: "coach_reminder",
+          source: "CoachClients.handleRemind",
         },
       });
       if (error) {
