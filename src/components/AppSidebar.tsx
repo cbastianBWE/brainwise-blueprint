@@ -138,12 +138,14 @@ export function AppSidebar() {
   const settingsSubItems: { title: string; url: string; icon: React.ElementType; disabled?: boolean; badge?: string }[] = [
     { title: 'General Settings', url: '/settings', icon: Settings },
     { title: 'Privacy & Permissions', url: '/settings/privacy', icon: Shield },
+    { title: 'Access History', url: '/settings/access-history', icon: History },
     ...(isCorp ? [] : [{ title: 'Billing & Receipts', url: '/settings/billing', icon: CreditCard }]),
   ];
 
   const coachSettingsSubItems: typeof settingsSubItems = [
     { title: 'General Settings', url: '/settings', icon: Settings },
     { title: 'Privacy & Permissions', url: '/settings/privacy', icon: Shield },
+    { title: 'Access History', url: '/settings/access-history', icon: History },
     { title: 'Billing & Receipts', url: '/settings/billing', icon: CreditCard, disabled: true, badge: 'Coming Soon' },
   ];
 
