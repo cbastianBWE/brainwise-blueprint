@@ -781,9 +781,26 @@ export default function CoachClients() {
                 Get started by ordering an assessment for your first client.
               </p>
             </div>
-            <Button className="gap-2" onClick={() => { resetForm(); setModalOpen(true); }}>
-              <Plus className="h-4 w-4" /> Order Your First Assessment
-            </Button>
+            {certsLoaded && allowedInstrumentIds.size === 0 ? (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span tabIndex={0}>
+                      <Button className="gap-2" disabled>
+                        <Plus className="h-4 w-4" /> Order Your First Assessment
+                      </Button>
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    You need an active certification to order assessments
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            ) : (
+              <Button className="gap-2" onClick={() => { resetForm(); setModalOpen(true); }}>
+                <Plus className="h-4 w-4" /> Order Your First Assessment
+              </Button>
+            )}
           </CardContent>
         </Card>
       ) : selectedClientEmail === null ? (
