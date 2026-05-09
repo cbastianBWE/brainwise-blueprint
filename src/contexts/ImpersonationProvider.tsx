@@ -51,10 +51,18 @@ function sessionFromAccessToken(accessToken: string | undefined | null): Imperso
   if (!sessionId || !actorUserId || !mode || !expiresAtRaw || !sub) return null;
   const expiresAt = new Date(expiresAtRaw * 1000);
   if (expiresAt.getTime() <= Date.now()) return null;
+  const stashedEmail = (() => {
+    try {
+      return localStorage.getItem(`bw_imp_target_email_${sessionId}`);
+    } catch {
+      return null;
+    }
+  })();
   return {
     sessionId,
     actorUserId,
     targetUserId: sub,
+    targetEmail: stashedEmail,
     mode,
     expiresAt,
     startedAt: new Date(expiresAt.getTime() - 30 * 60 * 1000),
