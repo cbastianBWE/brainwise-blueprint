@@ -58,6 +58,7 @@ import PTPDashboard from "./pages/company/PTPDashboard";
 import AirsaDashboard from "./pages/company/AirsaDashboard";
 import InterventionsPage from "./pages/company/InterventionsPage";
 import PlatformHealth from "./pages/super-admin/PlatformHealth";
+import SuperAdminUsers from "./pages/super-admin/Users";
 import CompanyAccounts from "./pages/super-admin/CompanyAccounts";
 import VersionManagement from "./pages/super-admin/VersionManagement";
 import CompanyDetail from "./pages/super-admin/CompanyDetail";
