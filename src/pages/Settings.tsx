@@ -369,8 +369,11 @@ export default function SettingsPage() {
   };
 
   const saveEmail = async () => {
-    const { error: authErr } = await supabase.auth.updateUser({ email });
+    const { data, error: authErr } = await supabase.functions.invoke('identity-mutation', {
+      body: { action: 'update_email', new_email: email },
+    });
     if (authErr) { toast.error(authErr.message); return; }
+    if (data?.error) { toast.error(data.error); return; }
     toast.success("Confirmation email sent to your new address");
     showSaved("email");
   };
