@@ -458,16 +458,31 @@ export default function CoachClients() {
     setSubmitting(false);
   };
 
-  // Stats — one row per assessment (coach_clients record)
-  const totalUniqueClients = new Set(clients.map(c => c.client_email)).size;
+  // Stats
+  // totalSignedUpClients: distinct emails where the client has a user account
+  // (client_user_id IS NOT NULL means signup completed and trigger fired).
+  const totalSignedUpClients = new Set(
+    clients.filter(c => c.client_user_id !== null).map(c => c.client_email)
+  ).size;
+
+  // pendingInvitationsCount: distinct rows still awaiting redemption
+  // (matches PendingInvitations card query).
+  const pendingInvitationsCount = clients.filter(c =>
+    (c.invitation_status === "sent" || c.invitation_status === "opened") &&
+    c.assessment_id === null
+  ).length;
+
   const completedThisMonth = clients.filter(c => {
     if (!c.completed_at) return false;
     const d = new Date(c.completed_at);
     const now = new Date();
     return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
   }).length;
-  const pending = clients.filter(c =>
-    c.invitation_status === "sent" || c.invitation_status === "opened"
+
+  // assessmentsPending: assessments started but not yet completed
+  // (distinct from pending invitations: these have an assessment_id).
+  const assessmentsPending = clients.filter(c =>
+    c.assessment_id !== null && c.assessment_status !== "completed"
   ).length;
 
   const getStatusBadge = (status: string | null, invitationStatus: string) => {
