@@ -58,6 +58,7 @@ import PTPDashboard from "./pages/company/PTPDashboard";
 import AirsaDashboard from "./pages/company/AirsaDashboard";
 import InterventionsPage from "./pages/company/InterventionsPage";
 import PlatformHealth from "./pages/super-admin/PlatformHealth";
+import SuperAdminUsers from "./pages/super-admin/Users";
 import CompanyAccounts from "./pages/super-admin/CompanyAccounts";
 import VersionManagement from "./pages/super-admin/VersionManagement";
 import CompanyDetail from "./pages/super-admin/CompanyDetail";
@@ -157,6 +158,7 @@ const App = () => (
               <Route path="/admin/resources" element={<RoleGuard allowedRoles={["company_admin", "org_admin"]}><AdminResources /></RoleGuard>} />
 
               {/* Super Admin */}
+              <Route path="/super-admin/users" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><SuperAdminUsers /></SuperAdminSessionProvider></RoleGuard>} />
               <Route path="/super-admin/health" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><PlatformHealth /></SuperAdminSessionProvider></RoleGuard>} />
               <Route path="/super-admin/coaches" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><CoachManagement /></SuperAdminSessionProvider></RoleGuard>} />
               <Route path="/super-admin/companies" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><CompanyAccounts /></SuperAdminSessionProvider></RoleGuard>} />
@@ -168,7 +170,7 @@ const App = () => (
             {/* Legacy redirects */}
             <Route path="/coach-portal" element={<ProtectedRoute><AppLayout /></ProtectedRoute>} />
             <Route path="/admin" element={<ProtectedRoute><AppLayout /></ProtectedRoute>} />
-            <Route path="/super-admin" element={<ProtectedRoute><AppLayout /></ProtectedRoute>} />
+            <Route path="/super-admin" element={<Navigate to="/super-admin/users" replace />} />
 
             <Route path="*" element={<NotFound />} />
             </Routes>

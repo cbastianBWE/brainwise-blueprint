@@ -7,6 +7,7 @@ export interface ImpersonationSession {
   sessionId: string;
   actorUserId: string;
   targetUserId: string;
+  targetEmail: string | null;
   mode: "observe" | "act";
   expiresAt: Date;
   startedAt: Date;
@@ -50,10 +51,18 @@ function sessionFromAccessToken(accessToken: string | undefined | null): Imperso
   if (!sessionId || !actorUserId || !mode || !expiresAtRaw || !sub) return null;
   const expiresAt = new Date(expiresAtRaw * 1000);
   if (expiresAt.getTime() <= Date.now()) return null;
+  const stashedEmail = (() => {
+    try {
+      return localStorage.getItem(`bw_imp_target_email_${sessionId}`);
+    } catch {
+      return null;
+    }
+  })();
   return {
     sessionId,
     actorUserId,
     targetUserId: sub,
+    targetEmail: stashedEmail,
     mode,
     expiresAt,
     startedAt: new Date(expiresAt.getTime() - 30 * 60 * 1000),
@@ -79,8 +88,15 @@ const ImpersonationProvider = ({ children }: { children: ReactNode }) => {
   const isImpersonating = !!session;
 
   const endImpersonation = useCallback(async (_reason: "manual" | "forced") => {
+    const priorSessionId = session?.sessionId;
     const { data, error } = await supabase.functions.invoke("impersonation-end", { body: {} });
+    const cleanupStash = () => {
+      if (priorSessionId) {
+        try { localStorage.removeItem(`bw_imp_target_email_${priorSessionId}`); } catch { /* non-fatal */ }
+      }
+    };
     if (error) {
+      cleanupStash();
       await supabase.auth.signOut();
       navigate("/login");
       return;
@@ -91,12 +107,14 @@ const ImpersonationProvider = ({ children }: { children: ReactNode }) => {
         refresh_token: data.refresh_token,
       });
       await queryClient.invalidateQueries();
+      cleanupStash();
       navigate("/super-admin/users");
     } else {
+      cleanupStash();
       await supabase.auth.signOut();
       navigate("/login");
     }
-  }, [navigate, queryClient]);
+  }, [navigate, queryClient, session]);
 
   useEffect(() => {
     if (!isImpersonating || !session) {
@@ -123,6 +141,16 @@ const ImpersonationProvider = ({ children }: { children: ReactNode }) => {
       if (error) throw error;
       if (!data?.access_token || !data?.refresh_token) {
         throw new Error("impersonation-start did not return tokens");
+      }
+      if (data?.imp_session_id && data?.target_user?.email) {
+        try {
+          localStorage.setItem(
+            `bw_imp_target_email_${data.imp_session_id}`,
+            data.target_user.email
+          );
+        } catch {
+          // localStorage failure is non-fatal; banner falls back to user_id display.
+        }
       }
       const { error: setErr } = await supabase.auth.setSession({
         access_token: data.access_token,

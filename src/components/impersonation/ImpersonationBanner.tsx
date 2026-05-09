@@ -55,8 +55,8 @@ const ImpersonationBanner = () => {
       </span>
       <span style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 600 }}>
         Impersonating:{" "}
-        <span style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace", fontWeight: 400 }}>
-          {session.targetUserId}
+        <span style={{ fontFamily: session.targetEmail ? "inherit" : "ui-monospace, SFMono-Regular, Menlo, monospace", fontWeight: 400 }}>
+          {session.targetEmail ?? session.targetUserId}
         </span>
       </span>
       <span style={{ flex: 1 }} />
