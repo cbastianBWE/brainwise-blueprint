@@ -125,8 +125,11 @@ function MfaSection({ userId }: { userId: string }) {
 
   const unenroll = async (factorId: string) => {
     try {
-      const { error } = await supabase.auth.mfa.unenroll({ factorId });
+      const { data, error } = await supabase.functions.invoke('identity-mutation', {
+        body: { action: 'mfa_unenroll', factor_id: factorId },
+      });
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
       toast.success("Authenticator removed");
       if (mfaRequired && factors.length <= 1) {
         toast.warning("Your organization requires MFA — you'll need to set it up again to continue.");
