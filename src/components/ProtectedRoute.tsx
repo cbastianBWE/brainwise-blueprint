@@ -49,6 +49,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { data: accountType, isLoading: accountTypeLoading } = useAccountType(userId);
   const { data: mfaRequired, isLoading: mfaRequiredLoading } = useMfaRequired(userId);
   const { data: mfaSatisfied, isLoading: mfaSatisfiedLoading } = useMfaSatisfied(userId);
+  const { isImpersonating } = useImpersonation();
 
   if (
     loading ||
