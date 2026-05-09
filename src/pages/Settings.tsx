@@ -62,11 +62,14 @@ function MfaSection({ userId }: { userId: string }) {
   const startEnroll = async () => {
     setEnrolling(true);
     try {
-      const { data, error } = await supabase.auth.mfa.enroll({ factorType: "totp" });
+      const { data: result, error } = await supabase.functions.invoke('identity-mutation', {
+        body: { action: 'mfa_enroll' },
+      });
       if (error) throw error;
-      setEnrollFactorId(data.id);
-      setQrSvg(data.totp.qr_code);
-      setSecret(data.totp.secret);
+      if (result?.error) throw new Error(result.error);
+      setEnrollFactorId(result.factor_id);
+      setQrSvg(result.qr_code);
+      setSecret(result.secret);
     } catch (err: any) {
       toast.error(err?.message || "Failed to start enrollment");
       setEnrolling(false);
