@@ -88,8 +88,15 @@ const ImpersonationProvider = ({ children }: { children: ReactNode }) => {
   const isImpersonating = !!session;
 
   const endImpersonation = useCallback(async (_reason: "manual" | "forced") => {
+    const priorSessionId = session?.sessionId;
     const { data, error } = await supabase.functions.invoke("impersonation-end", { body: {} });
+    const cleanupStash = () => {
+      if (priorSessionId) {
+        try { localStorage.removeItem(`bw_imp_target_email_${priorSessionId}`); } catch { /* non-fatal */ }
+      }
+    };
     if (error) {
+      cleanupStash();
       await supabase.auth.signOut();
       navigate("/login");
       return;
@@ -100,12 +107,14 @@ const ImpersonationProvider = ({ children }: { children: ReactNode }) => {
         refresh_token: data.refresh_token,
       });
       await queryClient.invalidateQueries();
+      cleanupStash();
       navigate("/super-admin/users");
     } else {
+      cleanupStash();
       await supabase.auth.signOut();
       navigate("/login");
     }
-  }, [navigate, queryClient]);
+  }, [navigate, queryClient, session]);
 
   useEffect(() => {
     if (!isImpersonating || !session) {
