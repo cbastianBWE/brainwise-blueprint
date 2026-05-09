@@ -62,11 +62,14 @@ function MfaSection({ userId }: { userId: string }) {
   const startEnroll = async () => {
     setEnrolling(true);
     try {
-      const { data, error } = await supabase.auth.mfa.enroll({ factorType: "totp" });
+      const { data: result, error } = await supabase.functions.invoke('identity-mutation', {
+        body: { action: 'mfa_enroll' },
+      });
       if (error) throw error;
-      setEnrollFactorId(data.id);
-      setQrSvg(data.totp.qr_code);
-      setSecret(data.totp.secret);
+      if (result?.error) throw new Error(result.error);
+      setEnrollFactorId(result.factor_id);
+      setQrSvg(result.qr_code);
+      setSecret(result.secret);
     } catch (err: any) {
       toast.error(err?.message || "Failed to start enrollment");
       setEnrolling(false);
@@ -76,7 +79,9 @@ function MfaSection({ userId }: { userId: string }) {
   const cancelEnroll = async () => {
     if (enrollFactorId) {
       try {
-        await supabase.auth.mfa.unenroll({ factorId: enrollFactorId });
+        await supabase.functions.invoke('identity-mutation', {
+          body: { action: 'mfa_unenroll', factor_id: enrollFactorId },
+        });
       } catch {
         // ignore
       }
@@ -120,8 +125,11 @@ function MfaSection({ userId }: { userId: string }) {
 
   const unenroll = async (factorId: string) => {
     try {
-      const { error } = await supabase.auth.mfa.unenroll({ factorId });
+      const { data, error } = await supabase.functions.invoke('identity-mutation', {
+        body: { action: 'mfa_unenroll', factor_id: factorId },
+      });
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
       toast.success("Authenticator removed");
       if (mfaRequired && factors.length <= 1) {
         toast.warning("Your organization requires MFA — you'll need to set it up again to continue.");
@@ -361,8 +369,11 @@ export default function SettingsPage() {
   };
 
   const saveEmail = async () => {
-    const { error: authErr } = await supabase.auth.updateUser({ email });
+    const { data, error: authErr } = await supabase.functions.invoke('identity-mutation', {
+      body: { action: 'update_email', new_email: email },
+    });
     if (authErr) { toast.error(authErr.message); return; }
+    if (data?.error) { toast.error(data.error); return; }
     toast.success("Confirmation email sent to your new address");
     showSaved("email");
   };

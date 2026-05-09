@@ -69,6 +69,9 @@ import VerifyConversion from "./pages/VerifyConversion";
 import Departed from "./pages/Departed";
 import MfaEnrollment from "./pages/MfaEnrollment";
 import CookieConsentBanner from "@/components/CookieConsentBanner";
+import ImpersonationProvider from "@/contexts/ImpersonationProvider";
+import ImpersonationBanner from "@/components/impersonation/ImpersonationBanner";
+import ImpersonationChrome from "@/components/impersonation/ImpersonationChrome";
 
 const queryClient = new QueryClient();
 
@@ -79,8 +82,11 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <CookieConsentBanner />
-          <Routes>
+          <ImpersonationProvider>
+            <CookieConsentBanner />
+            <ImpersonationBanner />
+            <ImpersonationChrome />
+            <Routes>
             {/* Public routes */}
             <Route path="/" element={<Home />} />
             <Route path="/coming-soon" element={<ComingSoon />} />
@@ -165,7 +171,8 @@ const App = () => (
             <Route path="/super-admin" element={<ProtectedRoute><AppLayout /></ProtectedRoute>} />
 
             <Route path="*" element={<NotFound />} />
-          </Routes>
+            </Routes>
+          </ImpersonationProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>

@@ -9,9 +9,10 @@ import { toast } from "sonner";
 interface Props {
   userId: string;
   onSuccess: () => void | Promise<void>;
+  onCancel?: () => void;
 }
 
-const MfaChallenge = ({ userId, onSuccess }: Props) => {
+const MfaChallenge = ({ userId, onSuccess, onCancel }: Props) => {
   const queryClient = useQueryClient();
   const [factorId, setFactorId] = useState<string | null>(null);
   const [challengeId, setChallengeId] = useState<string | null>(null);
@@ -61,7 +62,11 @@ const MfaChallenge = ({ userId, onSuccess }: Props) => {
   };
 
   const handleCancel = async () => {
-    await supabase.auth.signOut();
+    if (onCancel) {
+      onCancel();
+    } else {
+      await supabase.auth.signOut();
+    }
     setCode("");
     setFactorId(null);
     setChallengeId(null);

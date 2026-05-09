@@ -1318,10 +1318,14 @@ export type Database = {
           action_type: string
           actor_role: string
           actor_user_id: string | null
+          after_value: Json | null
+          before_value: Json | null
           created_at: string
           id: string
           ip_address: unknown
           organization_id: string
+          reason: string | null
+          super_admin_acting_as_user_id: string | null
           target_entity_id: string | null
           target_entity_type: string | null
           target_user_id: string | null
@@ -1332,10 +1336,14 @@ export type Database = {
           action_type: string
           actor_role: string
           actor_user_id?: string | null
+          after_value?: Json | null
+          before_value?: Json | null
           created_at?: string
           id?: string
           ip_address?: unknown
           organization_id: string
+          reason?: string | null
+          super_admin_acting_as_user_id?: string | null
           target_entity_id?: string | null
           target_entity_type?: string | null
           target_user_id?: string | null
@@ -1346,10 +1354,14 @@ export type Database = {
           action_type?: string
           actor_role?: string
           actor_user_id?: string | null
+          after_value?: Json | null
+          before_value?: Json | null
           created_at?: string
           id?: string
           ip_address?: unknown
           organization_id?: string
+          reason?: string | null
+          super_admin_acting_as_user_id?: string | null
           target_entity_id?: string | null
           target_entity_type?: string | null
           target_user_id?: string | null
@@ -1389,6 +1401,34 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_admin_audit_log_super_admin_acting_as_user_id_fkey"
+            columns: ["super_admin_acting_as_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_admin_audit_log_super_admin_acting_as_user_id_fkey"
+            columns: ["super_admin_acting_as_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "company_admin_audit_log_super_admin_acting_as_user_id_fkey"
+            columns: ["super_admin_acting_as_user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_admin_audit_log_super_admin_acting_as_user_id_fkey"
+            columns: ["super_admin_acting_as_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
           {
@@ -2018,6 +2058,115 @@ export type Database = {
             columns: ["assessment_result_id"]
             isOneToOne: false
             referencedRelation: "assessment_results"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      impersonation_sessions: {
+        Row: {
+          audit_log_id: string | null
+          end_reason: string | null
+          ended_at: string | null
+          expires_at: string
+          id: string
+          ip_address: unknown
+          justification: string
+          mode: string
+          started_at: string
+          super_admin_user_id: string
+          target_user_id: string
+          user_agent: string | null
+        }
+        Insert: {
+          audit_log_id?: string | null
+          end_reason?: string | null
+          ended_at?: string | null
+          expires_at: string
+          id?: string
+          ip_address?: unknown
+          justification: string
+          mode: string
+          started_at?: string
+          super_admin_user_id: string
+          target_user_id: string
+          user_agent?: string | null
+        }
+        Update: {
+          audit_log_id?: string | null
+          end_reason?: string | null
+          ended_at?: string | null
+          expires_at?: string
+          id?: string
+          ip_address?: unknown
+          justification?: string
+          mode?: string
+          started_at?: string
+          super_admin_user_id?: string
+          target_user_id?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "impersonation_sessions_audit_log_id_fkey"
+            columns: ["audit_log_id"]
+            isOneToOne: false
+            referencedRelation: "super_admin_audit_log"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "impersonation_sessions_super_admin_user_id_fkey"
+            columns: ["super_admin_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "impersonation_sessions_super_admin_user_id_fkey"
+            columns: ["super_admin_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "impersonation_sessions_super_admin_user_id_fkey"
+            columns: ["super_admin_user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "impersonation_sessions_super_admin_user_id_fkey"
+            columns: ["super_admin_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "impersonation_sessions_target_user_id_fkey"
+            columns: ["target_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "impersonation_sessions_target_user_id_fkey"
+            columns: ["target_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "impersonation_sessions_target_user_id_fkey"
+            columns: ["target_user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "impersonation_sessions_target_user_id_fkey"
+            columns: ["target_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
@@ -3551,38 +3700,108 @@ export type Database = {
         }
         Relationships: []
       }
+      super_admin_action_types: {
+        Row: {
+          action_type: string
+          category: string
+          created_at: string
+          denylist_during_impersonation: boolean
+          description: string
+          is_mutation: boolean
+          requires_justification: boolean
+          requires_mfa: boolean
+          tier: string | null
+        }
+        Insert: {
+          action_type: string
+          category: string
+          created_at?: string
+          denylist_during_impersonation?: boolean
+          description: string
+          is_mutation?: boolean
+          requires_justification?: boolean
+          requires_mfa?: boolean
+          tier?: string | null
+        }
+        Update: {
+          action_type?: string
+          category?: string
+          created_at?: string
+          denylist_during_impersonation?: boolean
+          description?: string
+          is_mutation?: boolean
+          requires_justification?: boolean
+          requires_mfa?: boolean
+          tier?: string | null
+        }
+        Relationships: []
+      }
       super_admin_audit_log: {
         Row: {
           action_type: string
           affected_user_id: string | null
+          after_value: Json | null
+          before_value: Json | null
           company_id: string | null
           created_at: string
           detail: Json | null
+          end_reason: string | null
+          ended_at: string | null
+          expires_at: string | null
           id: string
+          ip_address: unknown
+          mode: string | null
+          reason: string | null
           session_id: string
           super_admin_user_id: string
+          user_agent: string | null
         }
         Insert: {
           action_type: string
           affected_user_id?: string | null
+          after_value?: Json | null
+          before_value?: Json | null
           company_id?: string | null
           created_at?: string
           detail?: Json | null
+          end_reason?: string | null
+          ended_at?: string | null
+          expires_at?: string | null
           id?: string
+          ip_address?: unknown
+          mode?: string | null
+          reason?: string | null
           session_id: string
           super_admin_user_id: string
+          user_agent?: string | null
         }
         Update: {
           action_type?: string
           affected_user_id?: string | null
+          after_value?: Json | null
+          before_value?: Json | null
           company_id?: string | null
           created_at?: string
           detail?: Json | null
+          end_reason?: string | null
+          ended_at?: string | null
+          expires_at?: string | null
           id?: string
+          ip_address?: unknown
+          mode?: string | null
+          reason?: string | null
           session_id?: string
           super_admin_user_id?: string
+          user_agent?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "super_admin_audit_log_action_type_fkey"
+            columns: ["action_type"]
+            isOneToOne: false
+            referencedRelation: "super_admin_action_types"
+            referencedColumns: ["action_type"]
+          },
           {
             foreignKeyName: "super_admin_audit_log_affected_user_id_fkey"
             columns: ["affected_user_id"]
@@ -4477,6 +4696,16 @@ export type Database = {
           out_supervisor_user_id: string
         }[]
       }
+      assert_impersonation_allows: {
+        Args: { p_action_category: string }
+        Returns: {
+          imp_actor_user_id: string
+          imp_mode: string
+          imp_session_id: string
+          imp_target_user_id: string
+          status: string
+        }[]
+      }
       assert_super_admin: { Args: never; Returns: undefined }
       assign_executive_perspective_assessment: {
         Args: {
@@ -4486,6 +4715,37 @@ export type Database = {
         }
         Returns: Json
       }
+      audit_event_detail: {
+        Args: { p_event_id: string }
+        Returns: {
+          action_category: string
+          action_type: string
+          actor_account_type: string
+          actor_email: string
+          actor_full_name: string
+          actor_user_id: string
+          after_value: Json
+          before_value: Json
+          created_at: string
+          detail: Json
+          end_reason: string
+          ended_at: string
+          event_id: string
+          expires_at: string
+          ip_address: unknown
+          mode: string
+          organization_id: string
+          organization_name: string
+          reason: string
+          session_id: string
+          target_account_type: string
+          target_email: string
+          target_full_name: string
+          target_user_id: string
+          user_agent: string
+        }[]
+      }
+      audit_session_replay: { Args: { p_session_id: string }; Returns: Json }
       bulk_coach_invitation_create: {
         Args: { p_rows: Json }
         Returns: {
@@ -4519,6 +4779,10 @@ export type Database = {
         Returns: number
       }
       cancel_individual_conversion: { Args: never; Returns: Json }
+      check_mfa_freshness: {
+        Args: { p_max_age_seconds?: number; p_session_id: string }
+        Returns: boolean
+      }
       close_chat_session: { Args: { p_session_id: string }; Returns: undefined }
       coach_invitation_revoke: {
         Args: { p_coach_client_id: string }
@@ -4622,6 +4886,7 @@ export type Database = {
       current_user_mfa_satisfied: { Args: never; Returns: boolean }
       current_user_org_id: { Args: never; Returns: string }
       current_user_supervisor_id: { Args: never; Returns: string }
+      custom_access_token_hook: { Args: { event: Json }; Returns: Json }
       delete_org_intervention: {
         Args: { p_intervention_id: string }
         Returns: boolean
@@ -4650,6 +4915,7 @@ export type Database = {
         Args: { p_dept_id: string; p_new_name: string }
         Returns: undefined
       }
+      export_audit_events: { Args: { p_filters?: Json }; Returns: Json }
       generate_invitation_code: { Args: never; Returns: string }
       get_accessible_peer_results: {
         Args: { p_instrument: string }
@@ -4784,6 +5050,13 @@ export type Database = {
         Args: { p_user_id: string }
         Returns: boolean
       }
+      impersonation_denylist_categories: {
+        Args: never
+        Returns: {
+          category: string
+          description: string
+        }[]
+      }
       invitation_create: {
         Args: {
           p_account_type?: string
@@ -4810,7 +5083,32 @@ export type Database = {
           user_id: string
         }[]
       }
+      is_impersonating: { Args: never; Returns: boolean }
+      is_impersonating_act: { Args: never; Returns: boolean }
       is_internal_user: { Args: { p_user_id: string }; Returns: boolean }
+      list_audit_events: {
+        Args: { p_filters?: Json; p_limit?: number; p_offset?: number }
+        Returns: {
+          action_category: string
+          action_type: string
+          actor_email: string
+          actor_full_name: string
+          actor_user_id: string
+          created_at: string
+          event_id: string
+          has_before_after: boolean
+          ip_address: unknown
+          mode: string
+          organization_id: string
+          organization_name: string
+          reason: string
+          session_id: string
+          target_email: string
+          target_full_name: string
+          target_user_id: string
+          total_count: number
+        }[]
+      }
       list_available_recommendations: {
         Args: never
         Returns: {
@@ -4872,6 +5170,18 @@ export type Database = {
           out_tracking_notes: string
         }[]
       }
+      log_super_admin_action: {
+        Args: {
+          p_action_type: string
+          p_after?: Json
+          p_before?: Json
+          p_mode?: string
+          p_reason?: string
+          p_target_org_id: string
+          p_target_user_id: string
+        }
+        Returns: string
+      }
       maybe_mark_onboarding_complete: {
         Args: { p_user_id: string }
         Returns: undefined
@@ -4879,6 +5189,24 @@ export type Database = {
       member_feature_override_set: {
         Args: { p_enabled: boolean; p_feature: string; p_user: string }
         Returns: undefined
+      }
+      my_access_history: {
+        Args: { p_limit?: number; p_offset?: number }
+        Returns: {
+          action_category: string
+          action_type: string
+          actor_email: string
+          actor_full_name: string
+          actor_user_id: string
+          audit_source: string
+          created_at: string
+          event_id: string
+          mode: string
+          organization_id: string
+          organization_name: string
+          reason: string
+          total_count: number
+        }[]
       }
       my_direct_reports_with_pending_ratings: {
         Args: never
@@ -4982,6 +5310,17 @@ export type Database = {
         }
         Returns: string
       }
+      search_impersonation_targets: {
+        Args: { p_limit?: number; p_query: string }
+        Returns: {
+          account_type: string
+          email: string
+          full_name: string
+          organization_id: string
+          organization_name: string
+          user_id: string
+        }[]
+      }
       seat_count_available: { Args: { p_org: string }; Returns: number }
       seat_count_used: { Args: { p_org: string }; Returns: number }
       send_grace_period_reminders: {
@@ -5009,6 +5348,8 @@ export type Database = {
           out_user_id: string
         }[]
       }
+      show_limit: { Args: never; Returns: number }
+      show_trgm: { Args: { "": string }; Returns: string[] }
       start_epn_assessment: {
         Args: { p_assignment_id: string }
         Returns: string
@@ -5095,6 +5436,18 @@ export type Database = {
         }[]
       }
       user_resource_audiences: { Args: { p_user: string }; Returns: string[] }
+      validate_impersonation_session: {
+        Args: { p_session_id: string }
+        Returns: {
+          ended_at: string
+          expires_at: string
+          is_valid: boolean
+          mode: string
+          reason: string
+          super_admin_user_id: string
+          target_user_id: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never

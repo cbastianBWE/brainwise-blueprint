@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useOnboardingStatus, useAccountType } from "@/hooks/useOnboardingStatus";
 import { useMfaRequired, useMfaSatisfied } from "@/hooks/useMfaStatus";
+import { useImpersonation } from "@/contexts/ImpersonationProvider";
 
 const EXEMPT_PATHS = [
   "/onboarding",
@@ -11,6 +12,14 @@ const EXEMPT_PATHS = [
   "/demographic-consent",
   "/peer-sharing-optin",
   "/peer-access-responded",
+  "/mfa-enrollment",
+];
+
+const IMPERSONATION_REDIRECT_PATHS = [
+  "/onboarding",
+  "/demographic-form",
+  "/demographic-consent",
+  "/peer-sharing-optin",
   "/mfa-enrollment",
 ];
 
@@ -40,6 +49,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { data: accountType, isLoading: accountTypeLoading } = useAccountType(userId);
   const { data: mfaRequired, isLoading: mfaRequiredLoading } = useMfaRequired(userId);
   const { data: mfaSatisfied, isLoading: mfaSatisfiedLoading } = useMfaSatisfied(userId);
+  const { isImpersonating } = useImpersonation();
 
   if (
     loading ||
@@ -71,6 +81,11 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     if (location.pathname !== "/departed") {
       return <Navigate to="/departed" replace />;
     }
+  }
+
+  // Impersonation gate-route redirect
+  if (isImpersonating && IMPERSONATION_REDIRECT_PATHS.includes(location.pathname)) {
+    return <Navigate to="/dashboard" replace />;
   }
 
   // Demographics gate (runs before MFA gate)

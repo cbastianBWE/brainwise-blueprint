@@ -46,7 +46,14 @@ const ResetPassword = () => {
     }
 
     setLoading(true);
-    const { error } = await supabase.auth.updateUser({ password });
+    const { data, error } = await supabase.functions.invoke('identity-mutation', {
+      body: { action: 'update_password', new_password: password },
+    });
+    if (!error && data?.error) {
+      toast({ title: "Error", description: data.error, variant: "destructive" });
+      setLoading(false);
+      return;
+    }
     setLoading(false);
 
     if (error) {
