@@ -721,13 +721,22 @@ export default function CoachClients() {
       </div>
 
       {/* Stat cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardContent className="flex items-center gap-3 py-4">
             <div className="rounded-lg bg-primary/10 p-2"><Users className="h-5 w-5 text-primary" /></div>
             <div>
-              <p className="text-2xl font-bold text-foreground">{totalUniqueClients}</p>
+              <p className="text-2xl font-bold text-foreground">{totalSignedUpClients}</p>
               <p className="text-xs text-muted-foreground">Total Clients</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="flex items-center gap-3 py-4">
+            <div className="rounded-lg bg-primary/10 p-2"><Mail className="h-5 w-5 text-primary" /></div>
+            <div>
+              <p className="text-2xl font-bold text-foreground">{pendingInvitationsCount}</p>
+              <p className="text-xs text-muted-foreground">Pending Invitations</p>
             </div>
           </CardContent>
         </Card>
@@ -744,7 +753,7 @@ export default function CoachClients() {
           <CardContent className="flex items-center gap-3 py-4">
             <div className="rounded-lg bg-destructive/10 p-2"><Clock className="h-5 w-5 text-destructive" /></div>
             <div>
-              <p className="text-2xl font-bold text-foreground">{pending}</p>
+              <p className="text-2xl font-bold text-foreground">{assessmentsPending}</p>
               <p className="text-xs text-muted-foreground">Assessments Pending</p>
             </div>
           </CardContent>
