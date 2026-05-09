@@ -82,8 +82,11 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <CookieConsentBanner />
-          <Routes>
+          <ImpersonationProvider>
+            <CookieConsentBanner />
+            <ImpersonationBanner />
+            <ImpersonationChrome />
+            <Routes>
             {/* Public routes */}
             <Route path="/" element={<Home />} />
             <Route path="/coming-soon" element={<ComingSoon />} />
