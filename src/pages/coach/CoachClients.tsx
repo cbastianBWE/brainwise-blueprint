@@ -435,6 +435,8 @@ export default function CoachClients() {
             to: email,
             subject: "You've Been Invited to Complete a BrainWise Assessment",
             html,
+            email_type: "coach_invitation_self_pay",
+            source: "CoachClients.handleOrderClientPays",
           },
         });
         if (emailError) {
