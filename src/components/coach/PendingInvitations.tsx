@@ -11,7 +11,7 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
-import { Copy, Trash2, Loader2 } from "lucide-react";
+import { Copy, Trash2, Loader2, Mail } from "lucide-react";
 
 const INSTRUMENTS = [
   { id: "PTP",   uuid: "02618e9a-d411-44cf-b316-fe368edeac03", name: "Personal Threat Profile" },
@@ -51,6 +51,52 @@ export default function PendingInvitations({ coachUserId, onChanged }: Props) {
   const [loading, setLoading] = useState(true);
   const [revokeTarget, setRevokeTarget] = useState<PendingRow | null>(null);
   const [revoking, setRevoking] = useState(false);
+  const [resendingId, setResendingId] = useState<string | null>(null);
+
+  const handleResend = async (row: PendingRow) => {
+    setResendingId(row.id);
+    const { data, error } = await supabase.functions.invoke("coach_invitation_resend", {
+      body: { coach_client_id: row.id },
+    });
+    setResendingId(null);
+    if (error) {
+      let errorCode = "internal_error";
+      let errorMessage = (error as any).message ?? "Failed to send reminder";
+      try {
+        if (typeof error === "object" && "context" in error) {
+          const body = await (error as any).context?.json?.();
+          if (body?.error_code) errorCode = body.error_code;
+          if (body?.error_message) errorMessage = body.error_message;
+        }
+      } catch { /* ignore parse errors */ }
+      if (errorCode === "rate_limited") {
+        toast.warning("Reminder already sent recently", {
+          description: "A reminder for this client was sent in the last 24 hours. Please wait before resending.",
+        });
+      } else if (errorCode === "nothing_to_remind") {
+        toast.warning("Nothing to remind", {
+          description: "This client has no pending assessments to remind about.",
+        });
+      } else if (errorCode === "unauthorized") {
+        toast.error("Unauthorized", {
+          description: "You don't have permission to resend this invitation.",
+        });
+      } else {
+        toast.error("Reminder failed", { description: errorMessage });
+      }
+      return;
+    }
+    if ((data as any)?.success) {
+      const count = (data as any).instruments_count ?? 0;
+      toast.success("Reminder sent", {
+        description: count > 1
+          ? `${count} pending assessments included in the reminder.`
+          : "Reminder sent for the pending assessment.",
+      });
+    } else {
+      toast.error("Reminder failed", { description: "Unexpected response from server." });
+    }
+  };
 
   const fetchPending = useCallback(async () => {
     if (!coachUserId) { setRows([]); setLoading(false); return; }
@@ -191,8 +237,15 @@ export default function PendingInvitations({ coachUserId, onChanged }: Props) {
                               <Copy className="h-3 w-3 mr-1" /> Copy link
                             </Button>
                           )}
-                          <Button size="sm" variant="outline" disabled title="Coming soon">
-                            Resend
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="gap-1"
+                            disabled={resendingId === r.id}
+                            onClick={() => handleResend(r)}
+                          >
+                            <Mail className="h-3 w-3" />
+                            {resendingId === r.id ? "Sending..." : "Resend"}
                           </Button>
                           <Button size="sm" variant="destructive" onClick={() => setRevokeTarget(r)}>
                             <Trash2 className="h-3 w-3 mr-1" /> Revoke
