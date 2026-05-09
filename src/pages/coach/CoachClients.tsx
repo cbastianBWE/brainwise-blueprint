@@ -56,6 +56,8 @@ interface ClientRow {
   stripe_payment_intent_id: string | null;
   debrief_completed: boolean;
   results_released: boolean;
+  revoked_at: string | null;
+  expires_at: string | null;
 }
 
 interface UniqueClient {
