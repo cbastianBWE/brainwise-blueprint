@@ -19,6 +19,7 @@ import {
 import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import {
   Users, ClipboardCheck, Clock, Plus, Send, Eye, Mail, ArrowLeft, ChevronDown,
 } from "lucide-react";
@@ -434,6 +435,8 @@ export default function CoachClients() {
             to: email,
             subject: "You've Been Invited to Complete a BrainWise Assessment",
             html,
+            email_type: "coach_invitation_self_pay",
+            source: "CoachClients.handleOrderClientPays",
           },
         });
         if (emailError) {
@@ -457,16 +460,31 @@ export default function CoachClients() {
     setSubmitting(false);
   };
 
-  // Stats — one row per assessment (coach_clients record)
-  const totalUniqueClients = new Set(clients.map(c => c.client_email)).size;
+  // Stats
+  // totalSignedUpClients: distinct emails where the client has a user account
+  // (client_user_id IS NOT NULL means signup completed and trigger fired).
+  const totalSignedUpClients = new Set(
+    clients.filter(c => c.client_user_id !== null).map(c => c.client_email)
+  ).size;
+
+  // pendingInvitationsCount: distinct rows still awaiting redemption
+  // (matches PendingInvitations card query).
+  const pendingInvitationsCount = clients.filter(c =>
+    (c.invitation_status === "sent" || c.invitation_status === "opened") &&
+    c.assessment_id === null
+  ).length;
+
   const completedThisMonth = clients.filter(c => {
     if (!c.completed_at) return false;
     const d = new Date(c.completed_at);
     const now = new Date();
     return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
   }).length;
-  const pending = clients.filter(c =>
-    c.invitation_status === "sent" || c.invitation_status === "opened"
+
+  // assessmentsPending: assessments started but not yet completed
+  // (distinct from pending invitations: these have an assessment_id).
+  const assessmentsPending = clients.filter(c =>
+    c.assessment_id !== null && c.assessment_status !== "completed"
   ).length;
 
   const getStatusBadge = (status: string | null, invitationStatus: string) => {
@@ -536,6 +554,8 @@ export default function CoachClients() {
           to: client.client_email,
           subject: "Friendly Reminder: Your BrainWise Assessment is Waiting",
           html,
+          email_type: "coach_reminder",
+          source: "CoachClients.handleRemind",
         },
       });
       if (error) {
@@ -559,30 +579,41 @@ export default function CoachClients() {
           <h1 className="text-2xl font-bold text-foreground">My Clients</h1>
           <p className="text-sm text-muted-foreground mt-1">Manage your coaching clients and assessments</p>
         </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              className="gap-2"
-              disabled={certsLoaded && allowedInstrumentIds.size === 0}
-              title={certsLoaded && allowedInstrumentIds.size === 0
-                ? "You need an active certification to order assessments"
-                : undefined}
-            >
-              <Plus className="h-4 w-4" /> Order Assessment <ChevronDown className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => { resetForm(); setModalOpen(true); }}>
-              Single client
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setBulkModalOpen(true)}>
-              Bulk invite
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setShareableModalOpen(true)}>
-              Generate shareable link
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        {certsLoaded && allowedInstrumentIds.size === 0 ? (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span tabIndex={0}>
+                  <Button className="gap-2" disabled>
+                    <Plus className="h-4 w-4" /> Order Assessment <ChevronDown className="h-4 w-4" />
+                  </Button>
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                You need an active certification to order assessments
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        ) : (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button className="gap-2">
+                <Plus className="h-4 w-4" /> Order Assessment <ChevronDown className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => { resetForm(); setModalOpen(true); }}>
+                Single client
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setBulkModalOpen(true)}>
+                Bulk invite
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setShareableModalOpen(true)}>
+                Generate shareable link
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
 
         <Dialog open={modalOpen} onOpenChange={setModalOpen}>
           <DialogContent className="max-w-lg">
@@ -694,13 +725,22 @@ export default function CoachClients() {
       </div>
 
       {/* Stat cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardContent className="flex items-center gap-3 py-4">
             <div className="rounded-lg bg-primary/10 p-2"><Users className="h-5 w-5 text-primary" /></div>
             <div>
-              <p className="text-2xl font-bold text-foreground">{totalUniqueClients}</p>
+              <p className="text-2xl font-bold text-foreground">{totalSignedUpClients}</p>
               <p className="text-xs text-muted-foreground">Total Clients</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="flex items-center gap-3 py-4">
+            <div className="rounded-lg bg-primary/10 p-2"><Mail className="h-5 w-5 text-primary" /></div>
+            <div>
+              <p className="text-2xl font-bold text-foreground">{pendingInvitationsCount}</p>
+              <p className="text-xs text-muted-foreground">Pending Invitations</p>
             </div>
           </CardContent>
         </Card>
@@ -717,7 +757,7 @@ export default function CoachClients() {
           <CardContent className="flex items-center gap-3 py-4">
             <div className="rounded-lg bg-destructive/10 p-2"><Clock className="h-5 w-5 text-destructive" /></div>
             <div>
-              <p className="text-2xl font-bold text-foreground">{pending}</p>
+              <p className="text-2xl font-bold text-foreground">{assessmentsPending}</p>
               <p className="text-xs text-muted-foreground">Assessments Pending</p>
             </div>
           </CardContent>
@@ -745,9 +785,26 @@ export default function CoachClients() {
                 Get started by ordering an assessment for your first client.
               </p>
             </div>
-            <Button className="gap-2" onClick={() => { resetForm(); setModalOpen(true); }}>
-              <Plus className="h-4 w-4" /> Order Your First Assessment
-            </Button>
+            {certsLoaded && allowedInstrumentIds.size === 0 ? (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span tabIndex={0}>
+                      <Button className="gap-2" disabled>
+                        <Plus className="h-4 w-4" /> Order Your First Assessment
+                      </Button>
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    You need an active certification to order assessments
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            ) : (
+              <Button className="gap-2" onClick={() => { resetForm(); setModalOpen(true); }}>
+                <Plus className="h-4 w-4" /> Order Your First Assessment
+              </Button>
+            )}
           </CardContent>
         </Card>
       ) : selectedClientEmail === null ? (

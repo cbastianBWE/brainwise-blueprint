@@ -164,22 +164,22 @@ export default function PendingInvitations({ coachUserId, onChanged }: Props) {
                   const fullName = [r.client_first_name, r.client_last_name].filter(Boolean).join(" ") || "—";
                   return (
                     <TableRow key={r.id}>
-                      <TableCell>{fullName}</TableCell>
-                      <TableCell>{r.client_email}</TableCell>
+                      <TableCell className="max-w-[12rem] truncate">{fullName}</TableCell>
+                      <TableCell className="max-w-[14rem] truncate">{r.client_email}</TableCell>
                       <TableCell>
                         <span title={r.instrument_name}>{r.instrument_short_id}</span>
                       </TableCell>
                       <TableCell>
                         <Badge variant={r.payment_mode === "coach_paid" ? "default" : "outline"}>
-                          {r.payment_mode === "coach_paid" ? "Coach Paid" : "Self Pay"}
+                          {r.payment_mode === "coach_paid" ? "Coach" : "Self"}
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <Badge variant="secondary">{sourceLabel(r.invitation_source)}</Badge>
+                        <Badge variant="secondary">{r.invitation_source === "shareable_link" ? "Link" : sourceLabel(r.invitation_source)}</Badge>
                       </TableCell>
-                      <TableCell className="text-xs">{format(new Date(r.created_at), "MMM d, yyyy")}</TableCell>
+                      <TableCell className="text-xs">{format(new Date(r.created_at), "MMM d")}</TableCell>
                       <TableCell className="text-xs">
-                        {r.expires_at ? format(new Date(r.expires_at), "MMM d, yyyy") : "—"}
+                        {r.expires_at ? format(new Date(r.expires_at), "MMM d") : "—"}
                       </TableCell>
                       <TableCell>
                         <Badge variant="outline">{cap(r.invitation_status)}</Badge>

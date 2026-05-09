@@ -1768,6 +1768,42 @@ export type Database = {
           },
         ]
       }
+      email_logs: {
+        Row: {
+          email_type: string
+          error_message: string | null
+          id: string
+          recipient_email: string
+          resend_message_id: string | null
+          send_status: string
+          sent_at: string
+          source: string | null
+          subject: string
+        }
+        Insert: {
+          email_type: string
+          error_message?: string | null
+          id?: string
+          recipient_email: string
+          resend_message_id?: string | null
+          send_status: string
+          sent_at?: string
+          source?: string | null
+          subject: string
+        }
+        Update: {
+          email_type?: string
+          error_message?: string | null
+          id?: string
+          recipient_email?: string
+          resend_message_id?: string | null
+          send_status?: string
+          sent_at?: string
+          source?: string | null
+          subject?: string
+        }
+        Relationships: []
+      }
       executive_perspective_assignments: {
         Row: {
           assessment_id: string | null

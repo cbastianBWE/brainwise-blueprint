@@ -365,7 +365,7 @@ export default function BulkInviteModal({
                             </TableCell>
                             <TableCell>
                               <Select
-                                value={r.instrument_short_id || undefined}
+                                value={r.instrument_short_id}
                                 onValueChange={v => updateRow(r.id, { instrument_short_id: v })}
                               >
                                 <SelectTrigger className={cellErr("instrument_short_id")} title={errMap.instrument_short_id}>
