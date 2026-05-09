@@ -575,30 +575,41 @@ export default function CoachClients() {
           <h1 className="text-2xl font-bold text-foreground">My Clients</h1>
           <p className="text-sm text-muted-foreground mt-1">Manage your coaching clients and assessments</p>
         </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              className="gap-2"
-              disabled={certsLoaded && allowedInstrumentIds.size === 0}
-              title={certsLoaded && allowedInstrumentIds.size === 0
-                ? "You need an active certification to order assessments"
-                : undefined}
-            >
-              <Plus className="h-4 w-4" /> Order Assessment <ChevronDown className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => { resetForm(); setModalOpen(true); }}>
-              Single client
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setBulkModalOpen(true)}>
-              Bulk invite
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setShareableModalOpen(true)}>
-              Generate shareable link
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        {certsLoaded && allowedInstrumentIds.size === 0 ? (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span tabIndex={0}>
+                  <Button className="gap-2" disabled>
+                    <Plus className="h-4 w-4" /> Order Assessment <ChevronDown className="h-4 w-4" />
+                  </Button>
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                You need an active certification to order assessments
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        ) : (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button className="gap-2">
+                <Plus className="h-4 w-4" /> Order Assessment <ChevronDown className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => { resetForm(); setModalOpen(true); }}>
+                Single client
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setBulkModalOpen(true)}>
+                Bulk invite
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setShareableModalOpen(true)}>
+                Generate shareable link
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
 
         <Dialog open={modalOpen} onOpenChange={setModalOpen}>
           <DialogContent className="max-w-lg">
