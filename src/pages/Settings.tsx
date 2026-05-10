@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useQueryClient } from "@tanstack/react-query";
 import { useMfaRequired, useMfaSatisfied } from "@/hooks/useMfaStatus";
+import { callIdentityMutation } from "@/lib/identityMutation";
 
 interface MfaFactor {
   id: string;
