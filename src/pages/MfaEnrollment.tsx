@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Copy, Check } from "lucide-react";
 import { toast } from "sonner";
+import { callIdentityMutation } from "@/lib/identityMutation";
 
 const MfaEnrollment = () => {
   const navigate = useNavigate();
