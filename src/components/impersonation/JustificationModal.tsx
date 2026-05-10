@@ -21,7 +21,7 @@ interface JustificationModalProps {
     user_id: string;
     email: string;
     full_name: string | null;
-    account_type: string;
+    account_type: string | null;
   } | null;
   onClose: () => void;
 }
