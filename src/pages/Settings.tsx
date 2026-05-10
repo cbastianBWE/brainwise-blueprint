@@ -63,14 +63,11 @@ function MfaSection({ userId }: { userId: string }) {
   const startEnroll = async () => {
     setEnrolling(true);
     try {
-      const { data: result, error } = await supabase.functions.invoke('identity-mutation', {
-        body: { action: 'mfa_enroll' },
-      });
-      if (error) throw error;
-      if (result?.error) throw new Error(result.error);
-      setEnrollFactorId(result.factor_id);
-      setQrSvg(result.qr_code);
-      setSecret(result.secret);
+      const result = await callIdentityMutation({ action: 'mfa_enroll' });
+      if (!result.ok) throw new Error(result.error ?? 'Failed to start enrollment');
+      setEnrollFactorId(result.data.factor_id);
+      setQrSvg(result.data.qr_code);
+      setSecret(result.data.secret);
     } catch (err: any) {
       toast.error(err?.message || "Failed to start enrollment");
       setEnrolling(false);
@@ -80,9 +77,7 @@ function MfaSection({ userId }: { userId: string }) {
   const cancelEnroll = async () => {
     if (enrollFactorId) {
       try {
-        await supabase.functions.invoke('identity-mutation', {
-          body: { action: 'mfa_unenroll', factor_id: enrollFactorId },
-        });
+        await callIdentityMutation({ action: 'mfa_unenroll', factor_id: enrollFactorId });
       } catch {
         // ignore
       }
