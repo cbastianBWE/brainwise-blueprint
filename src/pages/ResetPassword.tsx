@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Eye, EyeOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { callIdentityMutation } from "@/lib/identityMutation";
 
 const ResetPassword = () => {
   const [password, setPassword] = useState("");
@@ -46,18 +47,11 @@ const ResetPassword = () => {
     }
 
     setLoading(true);
-    const { data, error } = await supabase.functions.invoke('identity-mutation', {
-      body: { action: 'update_password', new_password: password },
-    });
-    if (!error && data?.error) {
-      toast({ title: "Error", description: data.error, variant: "destructive" });
-      setLoading(false);
-      return;
-    }
+    const result = await callIdentityMutation({ action: 'update_password', new_password: password });
     setLoading(false);
 
-    if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+    if (!result.ok) {
+      toast({ title: "Error", description: result.error ?? "Could not update password", variant: "destructive" });
     } else {
       toast({ title: "Password Updated", description: "Your password has been reset. You can now log in." });
       navigate("/login");
