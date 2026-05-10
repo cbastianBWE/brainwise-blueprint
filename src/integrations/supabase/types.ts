@@ -5310,17 +5310,30 @@ export type Database = {
         }
         Returns: string
       }
-      search_impersonation_targets: {
-        Args: { p_limit?: number; p_query: string }
-        Returns: {
-          account_type: string
-          email: string
-          full_name: string
-          organization_id: string
-          organization_name: string
-          user_id: string
-        }[]
-      }
+      search_impersonation_targets:
+        | {
+            Args: { p_limit?: number; p_query: string }
+            Returns: {
+              account_type: string
+              email: string
+              full_name: string
+              organization_id: string
+              organization_name: string
+              user_id: string
+            }[]
+          }
+        | {
+            Args: { p_limit?: number; p_offset?: number; p_query: string }
+            Returns: {
+              account_type: string
+              email: string
+              full_name: string
+              organization_id: string
+              organization_name: string
+              total_count: number
+              user_id: string
+            }[]
+          }
       seat_count_available: { Args: { p_org: string }; Returns: number }
       seat_count_used: { Args: { p_org: string }; Returns: number }
       send_grace_period_reminders: {
