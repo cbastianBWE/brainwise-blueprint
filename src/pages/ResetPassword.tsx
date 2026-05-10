@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Eye, EyeOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { callIdentityMutation } from "@/lib/identityMutation";
 
 const ResetPassword = () => {
   const [password, setPassword] = useState("");
