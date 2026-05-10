@@ -27,14 +27,11 @@ const MfaEnrollment = () => {
   const handleEnroll = async () => {
     setEnrolling(true);
     try {
-      const { data: result, error } = await supabase.functions.invoke('identity-mutation', {
-        body: { action: 'mfa_enroll' },
-      });
-      if (error) throw error;
-      if (result?.error) throw new Error(result.error);
-      setFactorId(result.factor_id);
-      setQrSvg(result.qr_code);
-      setSecret(result.secret);
+      const result = await callIdentityMutation({ action: 'mfa_enroll' });
+      if (!result.ok) throw new Error(result.error ?? 'Failed to start enrollment');
+      setFactorId(result.data.factor_id);
+      setQrSvg(result.data.qr_code);
+      setSecret(result.data.secret);
     } catch (err: any) {
       toast.error(err?.message || "Failed to start enrollment");
     } finally {
