@@ -2325,6 +2325,14 @@ function ModuleEditor({
             </Button>
           </div>
         </div>
+
+        {mode === "edit" && initial?.id && (
+          <AttachedContentItemsSection
+            moduleId={initial.id}
+            onAddClick={() => onRequestCreateAttachedContentItem?.()}
+            onSelectContentItem={(contentItemId) => onSelectContentItem?.(contentItemId)}
+          />
+        )}
       </CardContent>
 
       <AlertDialog open={archiveDialogOpen} onOpenChange={(open) => {
