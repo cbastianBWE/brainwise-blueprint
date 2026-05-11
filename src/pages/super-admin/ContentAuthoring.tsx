@@ -2382,14 +2382,6 @@ function ModuleEditor({
   );
 }
 
-const VOICE_PRESETS = [
-  { value: "conversational_coach", label: "Conversational coach" },
-  { value: "tactical_direct", label: "Tactical and direct" },
-  { value: "academic_precise", label: "Academic and precise" },
-  { value: "warm_supportive", label: "Warm and supportive" },
-  { value: "playful_energetic", label: "Playful and energetic" },
-];
-
 const ITEM_TYPE_OPTIONS = [
   { value: "video", label: "Video" },
   { value: "quiz", label: "Quiz" },
