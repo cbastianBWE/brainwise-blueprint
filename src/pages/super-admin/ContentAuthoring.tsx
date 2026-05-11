@@ -275,6 +275,81 @@ function AttachedCurriculaSection({
   );
 }
 
+function AttachedModulesSection({
+  curriculumId,
+  onAddClick,
+  onSelectModule,
+}: { curriculumId: string; onAddClick: () => void; onSelectModule: (moduleId: string) => void }) {
+  const { data, isLoading } = useQuery({
+    queryKey: ["curriculum-attached-modules", curriculumId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("curriculum_modules")
+        .select("id, display_order, is_required, module:modules!module_id(id, name, is_published, archived_at)")
+        .eq("curriculum_id", curriculumId)
+        .order("display_order");
+      if (error) throw error;
+      return (data ?? []).filter((r: any) => r.module && !r.module.archived_at);
+    },
+    staleTime: 15_000,
+  });
+
+  return (
+    <div className="space-y-3 pt-2">
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-semibold text-foreground">Attached modules</h3>
+        <Button size="sm" variant="outline" onClick={onAddClick}>
+          <Plus className="h-3.5 w-3.5" /> Add module
+        </Button>
+      </div>
+
+      {isLoading ? (
+        <div className="space-y-2">
+          <Skeleton className="h-8 w-full" />
+          <Skeleton className="h-8 w-full" />
+        </div>
+      ) : !data || data.length === 0 ? (
+        <p className="text-sm italic text-muted-foreground">No modules attached yet.</p>
+      ) : (
+        <div className="space-y-1">
+          {data.map((row: any) => (
+            <div
+              key={row.id}
+              className="flex items-center justify-between rounded-sm border px-3 py-2 text-sm"
+            >
+              <div className="flex items-center gap-2">
+                <span className="text-muted-foreground font-mono text-xs w-6 text-right">
+                  {row.display_order ?? 0}
+                </span>
+                <BookOpenText className="h-4 w-4 text-muted-foreground" />
+                <span>{row.module.name}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                {row.is_required && (
+                  <Badge variant="outline" className="text-xs">Required</Badge>
+                )}
+                <Badge variant={row.module.is_published ? "default" : "secondary"} className="text-xs">
+                  {row.module.is_published ? "Published" : "Draft"}
+                </Badge>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-7 w-7"
+                  onClick={() => onSelectModule(row.module.id)}
+                  aria-label={`Edit ${row.module.name}`}
+                  title="Edit module"
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 interface CertPathEditorProps {
   mode: "create" | "edit";
   initial: any | null;
