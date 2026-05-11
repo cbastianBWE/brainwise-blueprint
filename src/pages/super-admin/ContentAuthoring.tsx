@@ -1610,15 +1610,8 @@ export default function ContentAuthoring() {
       children: (curriculaByCertPath.get(cp.id) ?? []).map(buildCurriculumNode),
     }));
 
-    const linkedCurriculumIds = new Set(cpcLinks.map((l: any) => l.curriculum_id));
-    const standaloneCurricula: TreeNode[] = curricula
-      .filter((c: any) => !linkedCurriculumIds.has(c.id))
-      .map(buildCurriculumNode);
-
-    const linkedModuleIds = new Set(cmLinks.map((l: any) => l.module_id));
-    const standaloneModules: TreeNode[] = modules
-      .filter((m: any) => !linkedModuleIds.has(m.id))
-      .map(buildModuleNode);
+    const allCurriculaNodes: TreeNode[] = curricula.map(buildCurriculumNode);
+    const allModulesNodes: TreeNode[] = modules.map(buildModuleNode);
 
     // build ancestor map for breadcrumbs
     const allKeyMap = new Map<string, TreeNode[]>();
@@ -1627,9 +1620,9 @@ export default function ContentAuthoring() {
       allKeyMap.set(nodeKey(n), path);
       for (const c of n.children) walk(c, path);
     };
-    for (const n of [...certPathTree, ...standaloneCurricula, ...standaloneModules]) walk(n, []);
+    for (const n of [...certPathTree, ...allCurriculaNodes, ...allModulesNodes]) walk(n, []);
 
-    return { certPathTree, standaloneCurricula, standaloneModules, allKeyMap };
+    return { certPathTree, allCurriculaNodes, allModulesNodes, allKeyMap };
   }, [data]);
 
   // URL sync
