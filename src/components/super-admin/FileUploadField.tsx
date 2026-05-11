@@ -15,7 +15,10 @@ import {
   LibraryBig,
   BookmarkCheck,
 } from "lucide-react";
+import * as tus from "tus-js-client";
 import { supabase } from "@/integrations/supabase/client";
+
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -115,24 +118,40 @@ type UploadState =
   | { kind: "uploaded"; assetId: string }
   | { kind: "error"; message: string };
 
-function uploadWithProgress(
-  signedUrl: string,
-  file: File,
-  onProgress: (pct: number) => void,
-  xhrRef: React.MutableRefObject<XMLHttpRequest | null>
-): Promise<Response> {
+interface TusUploadOpts {
+  file: File;
+  bucket: string;
+  path: string;
+  token: string;
+  onProgress: (pct: number) => void;
+  setUpload: (u: tus.Upload) => void;
+}
+
+function runTusUpload({ file, bucket, path, token, onProgress, setUpload }: TusUploadOpts): Promise<void> {
   return new Promise((resolve, reject) => {
-    const xhr = new XMLHttpRequest();
-    xhrRef.current = xhr;
-    xhr.open("PUT", signedUrl, true);
-    xhr.setRequestHeader("Content-Type", file.type);
-    xhr.upload.onprogress = (e) => {
-      if (e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 100));
-    };
-    xhr.onload = () => resolve(new Response(xhr.responseText, { status: xhr.status }));
-    xhr.onerror = () => reject(new Error("Network error during upload"));
-    xhr.onabort = () => reject(new Error("Upload aborted"));
-    xhr.send(file);
+    const upload = new tus.Upload(file, {
+      endpoint: `${SUPABASE_URL}/storage/v1/upload/resumable`,
+      retryDelays: [0, 1000, 3000, 5000, 10000],
+      chunkSize: 6 * 1024 * 1024,
+      headers: {
+        "x-signature": token,
+      },
+      metadata: {
+        bucketName: bucket,
+        objectName: path,
+        contentType: file.type,
+        cacheControl: "3600",
+      },
+      parallelUploads: 1,
+      removeFingerprintOnSuccess: true,
+      onError: (err) => reject(err),
+      onProgress: (bytesUploaded, bytesTotal) => {
+        onProgress(Math.round((bytesUploaded / bytesTotal) * 100));
+      },
+      onSuccess: () => resolve(),
+    });
+    setUpload(upload);
+    upload.start();
   });
 }
 
@@ -159,7 +178,7 @@ export function FileUploadField({
   const [libraryPickerOpen, setLibraryPickerOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const replaceInputRef = useRef<HTMLInputElement | null>(null);
-  const xhrRef = useRef<XMLHttpRequest | null>(null);
+  const tusUploadRef = useRef<tus.Upload | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -247,29 +266,31 @@ export function FileUploadField({
       setState({ kind: "error", message: reqResp.error?.message ?? "Failed to request upload URL." });
       return;
     }
-    const { asset_id, signed_upload_url } = reqResp.data;
+    const { asset_id, upload_token, bucket, path } = reqResp.data;
+    if (!upload_token || !bucket || !path) {
+      setState({ kind: "error", message: "Upload protocol error: missing token/bucket/path from server." });
+      return;
+    }
 
     try {
-      const uploadResp = await uploadWithProgress(
-        signed_upload_url,
+      await runTusUpload({
         file,
-        (pct) => setState((s) => (s.kind === "uploading" ? { ...s, progress: pct } : s)),
-        xhrRef
-      );
-      if (!uploadResp.ok) {
-        const errText = await uploadResp.text();
-        setState({ kind: "error", message: `Upload failed: ${uploadResp.status} ${errText.slice(0, 200)}` });
-        return;
-      }
+        bucket,
+        path,
+        token: upload_token,
+        onProgress: (pct) => setState((s) => (s.kind === "uploading" ? { ...s, progress: pct } : s)),
+        setUpload: (u) => { tusUploadRef.current = u; },
+      });
     } catch (err: any) {
-      if (err?.message === "Upload aborted") {
+      const msg = err?.message ?? String(err);
+      if (msg.includes("aborted")) {
         setState({ kind: "empty" });
       } else {
-        setState({ kind: "error", message: err?.message ?? "Upload failed." });
+        setState({ kind: "error", message: `Upload failed: ${msg.slice(0, 300)}` });
       }
       return;
     } finally {
-      xhrRef.current = null;
+      tusUploadRef.current = null;
     }
 
     const finResp = await supabase.functions.invoke("finalize-asset-upload", {
@@ -329,29 +350,31 @@ export function FileUploadField({
       setState({ kind: "error", message: reqResp.error?.message ?? "Failed to request upload URL." });
       return;
     }
-    const { asset_id: newAssetId, signed_upload_url } = reqResp.data;
+    const { asset_id: newAssetId, upload_token, bucket, path } = reqResp.data;
+    if (!upload_token || !bucket || !path) {
+      setState({ kind: "error", message: "Upload protocol error: missing token/bucket/path from server." });
+      return;
+    }
 
     try {
-      const uploadResp = await uploadWithProgress(
-        signed_upload_url,
+      await runTusUpload({
         file,
-        (pct) => setState((s) => (s.kind === "uploading" ? { ...s, progress: pct } : s)),
-        xhrRef
-      );
-      if (!uploadResp.ok) {
-        const errText = await uploadResp.text();
-        setState({ kind: "error", message: `Upload failed: ${uploadResp.status} ${errText.slice(0, 200)}` });
-        return;
-      }
+        bucket,
+        path,
+        token: upload_token,
+        onProgress: (pct) => setState((s) => (s.kind === "uploading" ? { ...s, progress: pct } : s)),
+        setUpload: (u) => { tusUploadRef.current = u; },
+      });
     } catch (err: any) {
-      if (err?.message === "Upload aborted") {
+      const msg = err?.message ?? String(err);
+      if (msg.includes("aborted")) {
         setState({ kind: "uploaded", assetId: oldId });
       } else {
-        setState({ kind: "error", message: err?.message ?? "Upload failed." });
+        setState({ kind: "error", message: `Upload failed: ${msg.slice(0, 300)}` });
       }
       return;
     } finally {
-      xhrRef.current = null;
+      tusUploadRef.current = null;
     }
 
     const finResp = await supabase.functions.invoke("finalize-asset-upload", {
@@ -390,8 +413,10 @@ export function FileUploadField({
   };
 
   const cancelUpload = () => {
-    xhrRef.current?.abort();
-    xhrRef.current = null;
+    if (tusUploadRef.current) {
+      try { tusUploadRef.current.abort(true); } catch { /* noop */ }
+      tusUploadRef.current = null;
+    }
     setState({ kind: "empty" });
   };
 
