@@ -361,7 +361,7 @@ export default function CoachManagement() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     const [invRes, coachRes] = await Promise.all([
-      supabase.from("coach_invitations").select("id, first_name, last_name, email, certification_type, created_at, expires_at").eq("status", "pending").order("created_at", { ascending: false }),
+      supabase.from("coach_invitations").select("id, first_name, last_name, email, certification_type, created_at, expires_at, email_send_status, email_send_error, email_last_attempt_at").eq("status", "pending").order("created_at", { ascending: false }),
       supabase.from("users").select("id, full_name, email").eq("account_type", "coach").order("full_name"),
     ]);
     setInvitations((invRes.data as Invitation[]) || []);
