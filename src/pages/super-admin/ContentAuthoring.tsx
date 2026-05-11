@@ -3392,6 +3392,14 @@ export default function ContentAuthoring() {
     return m;
   }, [data?.cmLinks]);
 
+  const moduleByContentItem = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const ci of (data?.contentItems ?? []) as any[]) {
+      m.set(ci.id, ci.module_id);
+    }
+    return m;
+  }, [data?.contentItems]);
+
   const selectNode = (k: string) => {
     setSelectedKey(k);
     if (k.startsWith("cu:") && !k.startsWith("cu:new")) {
