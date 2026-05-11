@@ -829,24 +829,117 @@ function CertPathEditor({
               <TabsTrigger value="existing">Pull in existing</TabsTrigger>
               <TabsTrigger value="new">Create new</TabsTrigger>
             </TabsList>
+
             <TabsContent value="existing" className="space-y-3 pt-3">
               <p className="text-sm text-muted-foreground">
-                Pick from existing curricula not yet attached to this path.
+                Pick from existing non-archived curricula not yet attached to this path.
               </p>
-              <Button
-                variant="outline"
-                onClick={() => toast({ title: "Coming in Prompt 3" })}
-              >
-                Continue
-              </Button>
+
+              <div className="space-y-3 rounded-md border border-dashed p-3 bg-muted/30">
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  Attachment settings
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="cp-pull-order" className="text-xs">Display order</Label>
+                    <Input
+                      id="cp-pull-order"
+                      type="number"
+                      min={0}
+                      value={pullDisplayOrder}
+                      onChange={(e) => setPullDisplayOrder(e.target.value)}
+                      disabled={pullAttachingId !== null}
+                    />
+                  </div>
+                  <div className="flex items-end pb-1">
+                    <div className="flex items-center justify-between w-full">
+                      <div className="space-y-0.5">
+                        <Label htmlFor="cp-pull-req" className="text-xs cursor-pointer">Required</Label>
+                        <p className="text-xs text-muted-foreground">
+                          Must be completed for certification.
+                        </p>
+                      </div>
+                      <Switch
+                        id="cp-pull-req"
+                        checked={pullIsRequired}
+                        onCheckedChange={setPullIsRequired}
+                        disabled={pullAttachingId !== null}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <Input
+                placeholder="Search curricula..."
+                value={pullSearch}
+                onChange={(e) => setPullSearch(e.target.value)}
+                disabled={pullAttachingId !== null}
+              />
+
+              {(() => {
+                const filtered = (allCurricula ?? [])
+                  .filter((c: any) => !c.archived_at)
+                  .filter((c: any) => !attachedCurriculumIds.has(c.id))
+                  .filter((c: any) => {
+                    if (pullSearch.trim() === "") return true;
+                    const q = pullSearch.toLowerCase();
+                    return (
+                      (c.name ?? "").toLowerCase().includes(q) ||
+                      (c.slug ?? "").toLowerCase().includes(q)
+                    );
+                  });
+                if (filtered.length === 0) {
+                  return (
+                    <p className="text-sm italic text-muted-foreground">
+                      {(allCurricula ?? []).length === 0
+                        ? "No curricula exist yet. Use 'Create new' to make one."
+                        : "No curricula match. Try a different search, or use 'Create new'."}
+                    </p>
+                  );
+                }
+                return (
+                  <div className="max-h-72 overflow-y-auto space-y-1 rounded-sm border p-1">
+                    {filtered.map((c: any) => (
+                      <div
+                        key={c.id}
+                        className="flex items-center justify-between rounded-sm px-3 py-2 text-sm hover:bg-muted"
+                      >
+                        <div className="flex items-center gap-2 min-w-0">
+                          <BookOpenText className="h-4 w-4 text-muted-foreground shrink-0" />
+                          <div className="min-w-0">
+                            <div className="font-medium truncate">{c.name}</div>
+                            <div className="text-xs text-muted-foreground font-mono truncate">{c.slug}</div>
+                          </div>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => attachExistingCurriculum(c.id, c.name)}
+                          disabled={pullAttachingId !== null}
+                        >
+                          {pullAttachingId === c.id ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            "Attach"
+                          )}
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
             </TabsContent>
+
             <TabsContent value="new" className="space-y-3 pt-3">
               <p className="text-sm text-muted-foreground">
-                Create a fresh curriculum and attach it to this path.
+                Create a fresh curriculum and attach it to this path in one step.
               </p>
               <Button
-                variant="outline"
-                onClick={() => toast({ title: "Coming in Prompt 3" })}
+                onClick={() => {
+                  setAddCurriculumOpen(false);
+                  onRequestCreateAttachedCurriculum?.();
+                }}
               >
                 Open new-curriculum editor
               </Button>
