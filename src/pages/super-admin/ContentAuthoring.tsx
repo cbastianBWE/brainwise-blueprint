@@ -1801,6 +1801,13 @@ export default function ContentAuthoring() {
     return selectedKey.slice("cu:new:".length) || null;
   })();
 
+  const isModuleCreate = selectedKey?.startsWith("mo:new") ?? false;
+  const moduleCreateAttachToCuId = (() => {
+    if (!selectedKey) return null;
+    if (!selectedKey.startsWith("mo:new:")) return null;
+    return selectedKey.slice("mo:new:".length) || null;
+  })();
+
   const cpAttachedIds = useMemo(() => {
     const m = new Map<string, Set<string>>();
     for (const link of (data?.cpcLinks ?? []) as any[]) {
@@ -1810,6 +1817,16 @@ export default function ContentAuthoring() {
     }
     return m;
   }, [data?.cpcLinks]);
+
+  const cuAttachedModuleIds = useMemo(() => {
+    const m = new Map<string, Set<string>>();
+    for (const link of (data?.cmLinks ?? []) as any[]) {
+      const set = m.get(link.curriculum_id) ?? new Set<string>();
+      set.add(link.module_id);
+      m.set(link.curriculum_id, set);
+    }
+    return m;
+  }, [data?.cmLinks]);
 
   return (
     <div className="space-y-6 p-6">
