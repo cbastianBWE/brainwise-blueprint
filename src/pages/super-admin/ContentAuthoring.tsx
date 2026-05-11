@@ -1052,15 +1052,24 @@ interface CurriculumEditorProps {
   initial: any | null;
   allCurricula: any[];
   allCertPaths: any[];
+  allModules: any[];
+  attachedModuleIds: Set<string>;
   attachToCertPathId: string | null;
   onSaved: (newId?: string, attachedCertPathId?: string | null) => void;
   onArchived?: () => void;
   onCancelCreate?: () => void;
+  onRequestCreateAttachedModule?: () => void;
+  onRefetch?: () => void | Promise<void>;
+  onExpandSelf?: () => void;
+  onInvalidateAttachedModulesList?: () => Promise<void>;
+  onSelectModule?: (moduleId: string) => void;
 }
 
 function CurriculumEditor({
-  mode, initial, allCurricula, allCertPaths, attachToCertPathId,
+  mode, initial, allCurricula, allCertPaths, allModules, attachedModuleIds, attachToCertPathId,
   onSaved, onArchived, onCancelCreate,
+  onRequestCreateAttachedModule, onRefetch, onExpandSelf,
+  onInvalidateAttachedModulesList, onSelectModule,
 }: CurriculumEditorProps) {
   const { toast } = useToast();
 
