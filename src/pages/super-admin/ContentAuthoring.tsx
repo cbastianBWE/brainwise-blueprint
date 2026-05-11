@@ -3629,6 +3629,18 @@ export default function ContentAuthoring() {
                   ) : (
                     <span className="font-medium text-foreground">New module</span>
                   )
+                ) : isContentItemCreate ? (
+                  contentItemCreateAttachToMoId ? (
+                    <>
+                      <span>
+                        Module: {(data?.modules ?? []).find((m: any) => m.id === contentItemCreateAttachToMoId)?.name ?? "(unknown)"}
+                      </span>
+                      <ChevronRight className="h-3.5 w-3.5" />
+                      <span className="font-medium text-foreground">New content item</span>
+                    </>
+                  ) : (
+                    <span className="font-medium text-foreground">New content item</span>
+                  )
                 ) : (
                   selectedPath!.map((n, idx) => {
                     const isLast = idx === selectedPath!.length - 1;
