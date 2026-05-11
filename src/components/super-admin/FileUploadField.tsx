@@ -156,9 +156,12 @@ export function FileUploadField({
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [replaceOpen, setReplaceOpen] = useState(false);
   const [removeOpen, setRemoveOpen] = useState(false);
+  const [libraryPickerOpen, setLibraryPickerOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const replaceInputRef = useRef<HTMLInputElement | null>(null);
   const xhrRef = useRef<XMLHttpRequest | null>(null);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   // Sync external value changes
   useEffect(() => {
