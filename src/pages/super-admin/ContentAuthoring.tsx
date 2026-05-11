@@ -787,6 +787,7 @@ function CertPathEditor({
           <AttachedCurriculaSection
             certPathId={initial.id}
             onAddClick={() => setAddCurriculumOpen(true)}
+            onSelectCurriculum={(curriculumId) => onSelectCurriculum?.(curriculumId)}
           />
         )}
       </CardContent>
