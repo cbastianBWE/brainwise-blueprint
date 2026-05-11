@@ -65,6 +65,7 @@ import CompanyDetail from "./pages/super-admin/CompanyDetail";
 import CoachManagement from "./pages/super-admin/CoachManagement";
 import CreateOrganization from "./pages/super-admin/CreateOrganization";
 import ContentAuthoring from "./pages/super-admin/ContentAuthoring";
+import AssetLibrary from "./pages/super-admin/AssetLibrary";
 import EpnComplete from "./pages/EpnComplete";
 import AirsaManagerComplete from "./pages/AirsaManagerComplete";
 import VerifyConversion from "./pages/VerifyConversion";
@@ -169,6 +170,7 @@ const App = () => (
               <Route path="/super-admin/company/:orgId" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><CompanyDetail /></SuperAdminSessionProvider></RoleGuard>} />
               <Route path="/super-admin/versions" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><VersionManagement /></SuperAdminSessionProvider></RoleGuard>} />
               <Route path="/super-admin/content-authoring" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><ContentAuthoring /></SuperAdminSessionProvider></RoleGuard>} />
+              <Route path="/super-admin/asset-library" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><AssetLibrary /></SuperAdminSessionProvider></RoleGuard>} />
             </Route>
 
             {/* Legacy redirects */}
