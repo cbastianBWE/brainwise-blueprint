@@ -26,7 +26,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Library, Trophy, GraduationCap, BookOpenText, Layers,
-  Video, FileQuestion, PenLine, Users, Upload, ExternalLink, CalendarClock,
+  Video, FileQuestion, PenLine, Pencil, Users, Upload, ExternalLink, CalendarClock,
   ChevronRight, ChevronDown, Search, Plus, Loader2, Save, Archive,
 } from "lucide-react";
 
@@ -203,7 +203,8 @@ function TreeRow({ node, depth, expanded, selectedKey, onToggle, onSelect }: Row
 function AttachedCurriculaSection({
   certPathId,
   onAddClick,
-}: { certPathId: string; onAddClick: () => void }) {
+  onSelectCurriculum,
+}: { certPathId: string; onAddClick: () => void; onSelectCurriculum: (curriculumId: string) => void }) {
   const { data, isLoading } = useQuery({
     queryKey: ["cert-path-attached-curricula", certPathId],
     queryFn: async () => {
@@ -255,6 +256,16 @@ function AttachedCurriculaSection({
                 <Badge variant={row.curriculum.is_published ? "default" : "secondary"} className="text-xs">
                   {row.curriculum.is_published ? "Published" : "Draft"}
                 </Badge>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-7 w-7"
+                  onClick={() => onSelectCurriculum(row.curriculum.id)}
+                  aria-label={`Edit ${row.curriculum.name}`}
+                  title="Edit curriculum"
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                </Button>
               </div>
             </div>
           ))}
@@ -277,13 +288,14 @@ interface CertPathEditorProps {
   onRefetch?: () => void | Promise<void>;
   onExpandSelf?: () => void;
   onInvalidateAttachedList?: () => Promise<void>;
+  onSelectCurriculum?: (curriculumId: string) => void;
 }
 
 function CertPathEditor({
   mode, initial, allCertPaths, allCurricula, attachedCurriculumIds,
   onSaved, onArchived, onCancelCreate,
   onRequestCreateAttachedCurriculum, onRefetch, onExpandSelf,
-  onInvalidateAttachedList,
+  onInvalidateAttachedList, onSelectCurriculum,
 }: CertPathEditorProps) {
   const { toast } = useToast();
 
@@ -775,6 +787,7 @@ function CertPathEditor({
           <AttachedCurriculaSection
             certPathId={initial.id}
             onAddClick={() => setAddCurriculumOpen(true)}
+            onSelectCurriculum={(curriculumId) => onSelectCurriculum?.(curriculumId)}
           />
         )}
       </CardContent>
@@ -1533,8 +1546,8 @@ export default function ContentAuthoring() {
     staleTime: 30_000,
   });
 
-  const { certPathTree, standaloneCurricula, standaloneModules, allKeyMap } = useMemo(() => {
-    const empty = { certPathTree: [] as TreeNode[], standaloneCurricula: [] as TreeNode[], standaloneModules: [] as TreeNode[], allKeyMap: new Map<string, TreeNode[]>() };
+  const { certPathTree, allCurriculaNodes, allModulesNodes, allKeyMap } = useMemo(() => {
+    const empty = { certPathTree: [] as TreeNode[], allCurriculaNodes: [] as TreeNode[], allModulesNodes: [] as TreeNode[], allKeyMap: new Map<string, TreeNode[]>() };
     if (!data) return empty;
 
     const { certPaths, curricula, modules, contentItems, cpcLinks, cmLinks } = data;
@@ -1597,15 +1610,8 @@ export default function ContentAuthoring() {
       children: (curriculaByCertPath.get(cp.id) ?? []).map(buildCurriculumNode),
     }));
 
-    const linkedCurriculumIds = new Set(cpcLinks.map((l: any) => l.curriculum_id));
-    const standaloneCurricula: TreeNode[] = curricula
-      .filter((c: any) => !linkedCurriculumIds.has(c.id))
-      .map(buildCurriculumNode);
-
-    const linkedModuleIds = new Set(cmLinks.map((l: any) => l.module_id));
-    const standaloneModules: TreeNode[] = modules
-      .filter((m: any) => !linkedModuleIds.has(m.id))
-      .map(buildModuleNode);
+    const allCurriculaNodes: TreeNode[] = curricula.map(buildCurriculumNode);
+    const allModulesNodes: TreeNode[] = modules.map(buildModuleNode);
 
     // build ancestor map for breadcrumbs
     const allKeyMap = new Map<string, TreeNode[]>();
@@ -1614,9 +1620,9 @@ export default function ContentAuthoring() {
       allKeyMap.set(nodeKey(n), path);
       for (const c of n.children) walk(c, path);
     };
-    for (const n of [...certPathTree, ...standaloneCurricula, ...standaloneModules]) walk(n, []);
+    for (const n of [...certPathTree, ...allCurriculaNodes, ...allModulesNodes]) walk(n, []);
 
-    return { certPathTree, standaloneCurricula, standaloneModules, allKeyMap };
+    return { certPathTree, allCurriculaNodes, allModulesNodes, allKeyMap };
   }, [data]);
 
   // URL sync
@@ -1638,7 +1644,54 @@ export default function ContentAuthoring() {
     });
   };
 
-  const selectNode = (k: string) => setSelectedKey(k);
+  const certPathsByCurriculum = useMemo(() => {
+    const m = new Map<string, string[]>();
+    for (const link of (data?.cpcLinks ?? []) as any[]) {
+      const arr = m.get(link.curriculum_id) ?? [];
+      arr.push(link.certification_path_id);
+      m.set(link.curriculum_id, arr);
+    }
+    return m;
+  }, [data?.cpcLinks]);
+
+  const curriculaByModule = useMemo(() => {
+    const m = new Map<string, string[]>();
+    for (const link of (data?.cmLinks ?? []) as any[]) {
+      const arr = m.get(link.module_id) ?? [];
+      arr.push(link.curriculum_id);
+      m.set(link.module_id, arr);
+    }
+    return m;
+  }, [data?.cmLinks]);
+
+  const selectNode = (k: string) => {
+    setSelectedKey(k);
+    if (k.startsWith("cu:") && !k.startsWith("cu:new")) {
+      const cuId = k.slice("cu:".length);
+      const parentCpIds = certPathsByCurriculum.get(cuId) ?? [];
+      if (parentCpIds.length > 0) {
+        setExpanded((prev) => {
+          const next = new Set(prev);
+          for (const cpId of parentCpIds) next.add(`cp:${cpId}`);
+          return next;
+        });
+      }
+    } else if (k.startsWith("mo:")) {
+      const moId = k.slice("mo:".length);
+      const parentCuIds = curriculaByModule.get(moId) ?? [];
+      if (parentCuIds.length > 0) {
+        setExpanded((prev) => {
+          const next = new Set(prev);
+          for (const cuId of parentCuIds) {
+            next.add(`cu:${cuId}`);
+            const cpIds = certPathsByCurriculum.get(cuId) ?? [];
+            for (const cpId of cpIds) next.add(`cp:${cpId}`);
+          }
+          return next;
+        });
+      }
+    }
+  };
 
   const handleComingSoon = () => {
     toast({ title: "Coming in the next prompt" });
@@ -1646,8 +1699,8 @@ export default function ContentAuthoring() {
 
   const sectionsRaw: { label: string; nodes: TreeNode[] }[] = [
     { label: "Certification Paths", nodes: certPathTree },
-    { label: "Standalone Curricula", nodes: standaloneCurricula },
-    { label: "Standalone Modules", nodes: standaloneModules },
+    { label: "All Curricula", nodes: allCurriculaNodes },
+    { label: "All Modules", nodes: allModulesNodes },
   ];
 
   const sections = sectionsRaw.map((s) => {
@@ -1662,7 +1715,7 @@ export default function ContentAuthoring() {
     return merged;
   }, [expanded, debouncedSearch, sections]);
 
-  const totalTopLevel = certPathTree.length + standaloneCurricula.length + standaloneModules.length;
+  const totalTopLevel = certPathTree.length + allCurriculaNodes.length + allModulesNodes.length;
   const selectedPath = selectedKey ? allKeyMap.get(selectedKey) ?? null : null;
   const selectedNode = selectedPath ? selectedPath[selectedPath.length - 1] : null;
 
@@ -1858,6 +1911,9 @@ export default function ContentAuthoring() {
                     await queryClient.invalidateQueries({
                       queryKey: ["cert-path-attached-curricula", selectedNode.id],
                     });
+                  }}
+                  onSelectCurriculum={(curriculumId) => {
+                    selectNode(`cu:${curriculumId}`);
                   }}
                 />
               ) : isCurriculumCreate ? (
