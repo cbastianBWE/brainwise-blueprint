@@ -3815,13 +3815,94 @@ export default function ContentAuthoring() {
                     refetch();
                     setSelectedKey(null);
                   }}
+                  onRequestCreateAttachedContentItem={() => {
+                    setSelectedKey(`ci:new:${selectedNode.id}`);
+                  }}
+                  onRefetch={async () => { await refetch(); }}
+                  onExpandSelf={() => {
+                    setExpanded((prev) => {
+                      const next = new Set(prev);
+                      next.add(`mo:${selectedNode.id}`);
+                      return next;
+                    });
+                  }}
+                  onInvalidateAttachedContentItemsList={async () => {
+                    await queryClient.invalidateQueries({
+                      queryKey: ["module-attached-content-items", selectedNode.id],
+                    });
+                  }}
+                  onSelectContentItem={(contentItemId) => {
+                    selectNode(`ci:${contentItemId}`);
+                  }}
+                />
+              ) : isContentItemCreate ? (
+                <ContentItemEditor
+                  key={selectedKey ?? "ci:new"}
+                  mode="create"
+                  initial={null}
+                  parentModule={contentItemCreateAttachToMoId
+                    ? (data?.modules ?? []).find((m: any) => m.id === contentItemCreateAttachToMoId) ?? null
+                    : null}
+                  allModules={data?.modules ?? []}
+                  attachToModuleId={contentItemCreateAttachToMoId}
+                  onSaved={async (newId) => {
+                    if (contentItemCreateAttachToMoId) {
+                      setExpanded((prev) => {
+                        const next = new Set(prev);
+                        next.add(`mo:${contentItemCreateAttachToMoId}`);
+                        const parentCuIds = curriculaByModule.get(contentItemCreateAttachToMoId) ?? [];
+                        for (const cuId of parentCuIds) {
+                          next.add(`cu:${cuId}`);
+                          const cpIds = certPathsByCurriculum.get(cuId) ?? [];
+                          for (const cpId of cpIds) next.add(`cp:${cpId}`);
+                        }
+                        return next;
+                      });
+                      await queryClient.invalidateQueries({
+                        queryKey: ["module-attached-content-items", contentItemCreateAttachToMoId],
+                      });
+                    }
+                    await refetch();
+                    if (newId) setSelectedKey(`ci:${newId}`);
+                    else setSelectedKey(null);
+                  }}
+                  onCancelCreate={() => setSelectedKey(null)}
+                />
+              ) : selectedNode?.type === "ci" ? (
+                <ContentItemEditor
+                  key={`ci:${selectedNode.id}`}
+                  mode="edit"
+                  initial={(data?.contentItems ?? []).find((ci: any) => ci.id === selectedNode.id) ?? null}
+                  parentModule={(() => {
+                    const ci = (data?.contentItems ?? []).find((ci: any) => ci.id === selectedNode.id);
+                    if (!ci) return null;
+                    return (data?.modules ?? []).find((m: any) => m.id === ci.module_id) ?? null;
+                  })()}
+                  allModules={data?.modules ?? []}
+                  attachToModuleId={null}
+                  onSaved={async () => {
+                    await queryClient.invalidateQueries({
+                      queryKey: ["module-attached-content-items", (data?.contentItems ?? []).find((ci: any) => ci.id === selectedNode.id)?.module_id],
+                    });
+                    await refetch();
+                  }}
+                  onArchived={async () => {
+                    const moId = (data?.contentItems ?? []).find((ci: any) => ci.id === selectedNode.id)?.module_id;
+                    if (moId) {
+                      await queryClient.invalidateQueries({
+                        queryKey: ["module-attached-content-items", moId],
+                      });
+                    }
+                    await refetch();
+                    setSelectedKey(null);
+                  }}
                 />
               ) : (
                 <Card>
                   <CardHeader>
                     <CardTitle>{TYPE_LABELS[selectedNode!.type]} editor</CardTitle>
                     <CardDescription>
-                      The {TYPE_LABELS[selectedNode!.type].toLowerCase()} editor will be built in the next prompt.
+                      The {TYPE_LABELS[selectedNode!.type].toLowerCase()} editor will be built in a future prompt.
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
