@@ -194,12 +194,20 @@ function BulkInviteTab() {
     if (!valid.length) return;
     setSending(true);
     let sent = 0, failed = 0;
+    const errorEmails: string[] = [];
     for (const row of valid) {
-      const { error } = await supabase.functions.invoke("invite-coach", { body: row });
-      if (error) failed++; else sent++;
+      const { data, error } = await supabase.functions.invoke("invite-coach", { body: row });
+      const { allSucceeded } = inspectInviteCoachResponse(data as InviteCoachResponse, error);
+      if (allSucceeded) sent++; else { failed++; errorEmails.push(row.email); }
     }
     setSending(false);
-    toast({ title: "Bulk Invite Complete", description: `${sent} sent, ${failed} failed.` });
+    toast({
+      title: "Bulk Invite Complete",
+      description: failed === 0
+        ? `${sent} sent.`
+        : `${sent} sent, ${failed} failed${errorEmails.length > 0 ? `: ${errorEmails.slice(0, 3).join(", ")}${errorEmails.length > 3 ? "..." : ""}` : ""}`,
+      variant: failed > 0 ? "destructive" : "default",
+    });
     if (sent > 0) setRows([{ first_name: "", last_name: "", email: "", certification_type: "ptp_coach" }]);
   };
 
