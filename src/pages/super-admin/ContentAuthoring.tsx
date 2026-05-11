@@ -1100,6 +1100,78 @@ function CurriculumEditor({
   const [archiveReason, setArchiveReason] = useState("");
   const [archiving, setArchiving] = useState(false);
 
+  const [addModuleOpen, setAddModuleOpen] = useState(false);
+  const [pullModSearch, setPullModSearch] = useState("");
+  const [pullModAttachingId, setPullModAttachingId] = useState<string | null>(null);
+  const suggestedNextModOrder = useMemo(() => attachedModuleIds.size, [attachedModuleIds]);
+  const [pullModDisplayOrder, setPullModDisplayOrder] = useState<string>(String(suggestedNextModOrder));
+  const [pullModIsRequired, setPullModIsRequired] = useState<boolean>(true);
+
+  useEffect(() => {
+    if (!addModuleOpen) {
+      setPullModDisplayOrder(String(suggestedNextModOrder));
+      setPullModIsRequired(true);
+      setPullModSearch("");
+    }
+  }, [addModuleOpen, suggestedNextModOrder]);
+
+  const attachExistingModule = async (moduleId: string, _moduleName: string) => {
+    if (!initial?.id || pullModAttachingId) return;
+    setPullModAttachingId(moduleId);
+
+    const existing = (allModules ?? []).find((m: any) => m.id === moduleId);
+    if (!existing) {
+      setPullModAttachingId(null);
+      toast({
+        title: "Could not attach module",
+        description: "Module no longer exists. Refresh and try again.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const orderNum = Number(pullModDisplayOrder);
+    const safeOrder = Number.isFinite(orderNum) && orderNum >= 0 ? Math.floor(orderNum) : 0;
+
+    const payload = {
+      p_id: existing.id,
+      p_slug: existing.slug,
+      p_name: existing.name,
+      p_description: existing.description,
+      p_audience_tags: existing.audience_tags ?? [],
+      p_estimated_minutes: existing.estimated_minutes,
+      p_is_published: existing.is_published,
+      p_curriculum_id: initial.id,
+      p_attachment_display_order: safeOrder,
+      p_attachment_is_required: pullModIsRequired,
+      p_prerequisite_module_id: null,
+      p_reason: `Attach existing module "${existing.name}" to "${initial.name}" via Curriculum editor.`,
+    };
+
+    const { error } = await supabase.rpc("upsert_module", payload as any);
+    setPullModAttachingId(null);
+
+    if (error) {
+      toast({
+        title: "Could not attach module",
+        description: error.message ?? "Unknown error.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    toast({
+      title: "Module attached",
+      description: `${existing.name} → ${initial.name}`,
+    });
+    setAddModuleOpen(false);
+    onExpandSelf?.();
+    await Promise.all([
+      onRefetch?.(),
+      onInvalidateAttachedModulesList?.(),
+    ]);
+  };
+
   useEffect(() => {
     if (autoSlug) setSlug(slugify(name));
   }, [name, autoSlug]);
