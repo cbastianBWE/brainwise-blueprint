@@ -274,13 +274,14 @@ interface CertPathEditorProps {
   onArchived?: () => void;
   onCancelCreate?: () => void;
   onRequestCreateAttachedCurriculum?: () => void;
-  onRefetch?: () => void;
+  onRefetch?: () => void | Promise<void>;
+  onExpandSelf?: () => void;
 }
 
 function CertPathEditor({
   mode, initial, allCertPaths, allCurricula, attachedCurriculumIds,
   onSaved, onArchived, onCancelCreate,
-  onRequestCreateAttachedCurriculum, onRefetch,
+  onRequestCreateAttachedCurriculum, onRefetch, onExpandSelf,
 }: CertPathEditorProps) {
   const { toast } = useToast();
 
@@ -374,7 +375,8 @@ function CertPathEditor({
       description: `${existing.name} → ${initial.name}`,
     });
     setAddCurriculumOpen(false);
-    onRefetch?.();
+    onExpandSelf?.();
+    await onRefetch?.();
   };
 
   useEffect(() => {
@@ -1837,7 +1839,14 @@ export default function ContentAuthoring() {
                   onRequestCreateAttachedCurriculum={() => {
                     setSelectedKey(`cu:new:${selectedNode.id}`);
                   }}
-                  onRefetch={() => refetch()}
+                  onRefetch={async () => { await refetch(); }}
+                  onExpandSelf={() => {
+                    setExpanded((prev) => {
+                      const next = new Set(prev);
+                      next.add(`cp:${selectedNode.id}`);
+                      return next;
+                    });
+                  }}
                 />
               ) : isCurriculumCreate ? (
                 <CurriculumEditor
@@ -1847,8 +1856,15 @@ export default function ContentAuthoring() {
                   allCurricula={data?.curricula ?? []}
                   allCertPaths={data?.certPaths ?? []}
                   attachToCertPathId={curriculumCreateAttachToCpId}
-                  onSaved={(newId) => {
-                    refetch();
+                  onSaved={async (newId, attachedCertPathId) => {
+                    if (attachedCertPathId) {
+                      setExpanded((prev) => {
+                        const next = new Set(prev);
+                        next.add(`cp:${attachedCertPathId}`);
+                        return next;
+                      });
+                    }
+                    await refetch();
                     if (newId) setSelectedKey(`cu:${newId}`);
                     else setSelectedKey(null);
                   }}
