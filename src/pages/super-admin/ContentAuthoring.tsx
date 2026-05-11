@@ -1615,6 +1615,14 @@ function CurriculumEditor({
           />
         )}
       </CardContent>
+
+      <AlertDialog open={archiveDialogOpen} onOpenChange={(open) => {
+        setArchiveDialogOpen(open);
+        if (!open) setArchiveReason("");
+      }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Archive this curriculum?</AlertDialogTitle>
             <AlertDialogDescription>
               <span className="font-medium text-foreground">{initial?.name}</span> will be marked archived
               and unpublished. Any modules attached to it remain. Attachments from certification paths to
