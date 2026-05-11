@@ -49,6 +49,11 @@ const DELIVERY_MODES = [
   { value: "cohort",     label: "Cohort" },
 ];
 
+const CURRICULUM_MODES = [
+  { value: "free_order",  label: "Free order" },
+  { value: "sequential",  label: "Sequential" },
+];
+
 function slugify(s: string) {
   return s
     .toLowerCase()
