@@ -2747,6 +2747,8 @@ export default function ContentAuthoring() {
                   initial={null}
                   allCurricula={data?.curricula ?? []}
                   allCertPaths={data?.certPaths ?? []}
+                  allModules={data?.modules ?? []}
+                  attachedModuleIds={new Set()}
                   attachToCertPathId={curriculumCreateAttachToCpId}
                   onSaved={async (newId, attachedCertPathId) => {
                     if (attachedCertPathId) {
@@ -2772,7 +2774,69 @@ export default function ContentAuthoring() {
                   initial={(data?.curricula ?? []).find((c: any) => c.id === selectedNode.id) ?? null}
                   allCurricula={data?.curricula ?? []}
                   allCertPaths={data?.certPaths ?? []}
+                  allModules={data?.modules ?? []}
+                  attachedModuleIds={cuAttachedModuleIds.get(selectedNode.id) ?? new Set()}
                   attachToCertPathId={null}
+                  onSaved={() => refetch()}
+                  onArchived={() => {
+                    refetch();
+                    setSelectedKey(null);
+                  }}
+                  onRequestCreateAttachedModule={() => {
+                    setSelectedKey(`mo:new:${selectedNode.id}`);
+                  }}
+                  onRefetch={async () => { await refetch(); }}
+                  onExpandSelf={() => {
+                    setExpanded((prev) => {
+                      const next = new Set(prev);
+                      next.add(`cu:${selectedNode.id}`);
+                      return next;
+                    });
+                  }}
+                  onInvalidateAttachedModulesList={async () => {
+                    await queryClient.invalidateQueries({
+                      queryKey: ["curriculum-attached-modules", selectedNode.id],
+                    });
+                  }}
+                  onSelectModule={(moduleId) => {
+                    selectNode(`mo:${moduleId}`);
+                  }}
+                />
+              ) : isModuleCreate ? (
+                <ModuleEditor
+                  key={selectedKey ?? "mo:new"}
+                  mode="create"
+                  initial={null}
+                  allModules={data?.modules ?? []}
+                  allCurricula={data?.curricula ?? []}
+                  attachToCurriculumId={moduleCreateAttachToCuId}
+                  onSaved={async (newId, attachedCurriculumId) => {
+                    if (attachedCurriculumId) {
+                      setExpanded((prev) => {
+                        const next = new Set(prev);
+                        next.add(`cu:${attachedCurriculumId}`);
+                        const cpIds = certPathsByCurriculum.get(attachedCurriculumId) ?? [];
+                        for (const cpId of cpIds) next.add(`cp:${cpId}`);
+                        return next;
+                      });
+                      await queryClient.invalidateQueries({
+                        queryKey: ["curriculum-attached-modules", attachedCurriculumId],
+                      });
+                    }
+                    await refetch();
+                    if (newId) setSelectedKey(`mo:${newId}`);
+                    else setSelectedKey(null);
+                  }}
+                  onCancelCreate={() => setSelectedKey(null)}
+                />
+              ) : selectedNode?.type === "mo" ? (
+                <ModuleEditor
+                  key={`mo:${selectedNode.id}`}
+                  mode="edit"
+                  initial={(data?.modules ?? []).find((m: any) => m.id === selectedNode.id) ?? null}
+                  allModules={data?.modules ?? []}
+                  allCurricula={data?.curricula ?? []}
+                  attachToCurriculumId={null}
                   onSaved={() => refetch()}
                   onArchived={() => {
                     refetch();
