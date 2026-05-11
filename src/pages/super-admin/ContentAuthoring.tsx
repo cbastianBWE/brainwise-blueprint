@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -276,12 +276,14 @@ interface CertPathEditorProps {
   onRequestCreateAttachedCurriculum?: () => void;
   onRefetch?: () => void | Promise<void>;
   onExpandSelf?: () => void;
+  onInvalidateAttachedList?: () => Promise<void>;
 }
 
 function CertPathEditor({
   mode, initial, allCertPaths, allCurricula, attachedCurriculumIds,
   onSaved, onArchived, onCancelCreate,
   onRequestCreateAttachedCurriculum, onRefetch, onExpandSelf,
+  onInvalidateAttachedList,
 }: CertPathEditorProps) {
   const { toast } = useToast();
 
@@ -376,7 +378,10 @@ function CertPathEditor({
     });
     setAddCurriculumOpen(false);
     onExpandSelf?.();
-    await onRefetch?.();
+    await Promise.all([
+      onRefetch?.(),
+      onInvalidateAttachedList?.(),
+    ]);
   };
 
   useEffect(() => {
@@ -1500,6 +1505,8 @@ export default function ContentAuthoring() {
   const [expanded, setExpanded] = useState<Set<string>>(initialExpanded);
   const [selectedKey, setSelectedKey] = useState<string | null>(searchParams.get("selected"));
 
+  const queryClient = useQueryClient();
+
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["content-authoring-tree"],
     queryFn: async () => {
@@ -1847,6 +1854,11 @@ export default function ContentAuthoring() {
                       return next;
                     });
                   }}
+                  onInvalidateAttachedList={async () => {
+                    await queryClient.invalidateQueries({
+                      queryKey: ["cert-path-attached-curricula", selectedNode.id],
+                    });
+                  }}
                 />
               ) : isCurriculumCreate ? (
                 <CurriculumEditor
@@ -1862,6 +1874,9 @@ export default function ContentAuthoring() {
                         const next = new Set(prev);
                         next.add(`cp:${attachedCertPathId}`);
                         return next;
+                      });
+                      await queryClient.invalidateQueries({
+                        queryKey: ["cert-path-attached-curricula", attachedCertPathId],
                       });
                     }
                     await refetch();
