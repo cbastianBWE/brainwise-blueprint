@@ -1500,6 +1500,8 @@ export default function ContentAuthoring() {
   const [expanded, setExpanded] = useState<Set<string>>(initialExpanded);
   const [selectedKey, setSelectedKey] = useState<string | null>(searchParams.get("selected"));
 
+  const queryClient = useQueryClient();
+
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["content-authoring-tree"],
     queryFn: async () => {
