@@ -1854,6 +1854,11 @@ export default function ContentAuthoring() {
                       return next;
                     });
                   }}
+                  onInvalidateAttachedList={async () => {
+                    await queryClient.invalidateQueries({
+                      queryKey: ["cert-path-attached-curricula", selectedNode.id],
+                    });
+                  }}
                 />
               ) : isCurriculumCreate ? (
                 <CurriculumEditor
@@ -1869,6 +1874,9 @@ export default function ContentAuthoring() {
                         const next = new Set(prev);
                         next.add(`cp:${attachedCertPathId}`);
                         return next;
+                      });
+                      await queryClient.invalidateQueries({
+                        queryKey: ["cert-path-attached-curricula", attachedCertPathId],
                       });
                     }
                     await refetch();
