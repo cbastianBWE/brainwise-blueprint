@@ -382,11 +382,17 @@ export default function CoachManagement() {
   useEffect(() => { fetchData(); }, [fetchData]);
 
   const handleResend = async (inv: Invitation) => {
-    const { error } = await supabase.functions.invoke("invite-coach", {
+    const { data, error } = await supabase.functions.invoke("invite-coach", {
       body: { email: inv.email, first_name: inv.first_name, last_name: inv.last_name, certification_type: inv.certification_type },
     });
-    if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
-    else toast({ title: "Resent", description: `Invitation resent to ${inv.email}` });
+    const { allSucceeded, summary } = inspectInviteCoachResponse(data as InviteCoachResponse, error);
+    if (allSucceeded) {
+      toast({ title: "Resent", description: `Invitation resent to ${inv.email}` });
+      fetchData();
+    } else {
+      toast({ title: "Resend Failed", description: summary, variant: "destructive" });
+      fetchData();
+    }
   };
 
   const handleCancel = async (inv: Invitation) => {
