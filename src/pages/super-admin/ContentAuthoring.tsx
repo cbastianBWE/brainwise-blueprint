@@ -27,7 +27,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Library, Trophy, GraduationCap, BookOpenText, Layers,
   Video, FileQuestion, PenLine, Pencil, Users, Upload, ExternalLink, CalendarClock,
-  ChevronRight, ChevronDown, Search, Plus, Loader2, Save, Archive,
+  ChevronRight, ChevronDown, Search, Plus, Loader2, Save, Archive, Sparkles,
 } from "lucide-react";
 
 const CERT_INSTRUMENTS = [
