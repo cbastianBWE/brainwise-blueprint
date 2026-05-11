@@ -209,7 +209,7 @@ function AttachedCurriculaSection({
     queryFn: async () => {
       const { data, error } = await supabase
         .from("certification_path_curricula")
-        .select("id, display_order, is_required, curriculum:curricula(id, name, is_published, archived_at)")
+        .select("id, display_order, is_required, curriculum:curricula!curriculum_id(id, name, is_published, archived_at)")
         .eq("certification_path_id", certPathId)
         .order("display_order");
       if (error) throw error;
