@@ -378,7 +378,10 @@ function CertPathEditor({
     });
     setAddCurriculumOpen(false);
     onExpandSelf?.();
-    await onRefetch?.();
+    await Promise.all([
+      onRefetch?.(),
+      onInvalidateAttachedList?.(),
+    ]);
   };
 
   useEffect(() => {
