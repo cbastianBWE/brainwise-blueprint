@@ -1878,11 +1878,17 @@ interface ModuleEditorProps {
   onSaved: (newId?: string, attachedCurriculumId?: string | null) => void;
   onArchived?: () => void;
   onCancelCreate?: () => void;
+  onRequestCreateAttachedContentItem?: () => void;
+  onRefetch?: () => void | Promise<void>;
+  onExpandSelf?: () => void;
+  onInvalidateAttachedContentItemsList?: () => Promise<void>;
+  onSelectContentItem?: (contentItemId: string) => void;
 }
 
 function ModuleEditor({
   mode, initial, allModules, allCurricula, attachToCurriculumId,
   onSaved, onArchived, onCancelCreate,
+  onRequestCreateAttachedContentItem, onSelectContentItem,
 }: ModuleEditorProps) {
   const { toast } = useToast();
 
