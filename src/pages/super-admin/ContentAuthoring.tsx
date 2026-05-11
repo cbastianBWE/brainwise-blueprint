@@ -1546,8 +1546,8 @@ export default function ContentAuthoring() {
     staleTime: 30_000,
   });
 
-  const { certPathTree, standaloneCurricula, standaloneModules, allKeyMap } = useMemo(() => {
-    const empty = { certPathTree: [] as TreeNode[], standaloneCurricula: [] as TreeNode[], standaloneModules: [] as TreeNode[], allKeyMap: new Map<string, TreeNode[]>() };
+  const { certPathTree, allCurriculaNodes, allModulesNodes, allKeyMap } = useMemo(() => {
+    const empty = { certPathTree: [] as TreeNode[], allCurriculaNodes: [] as TreeNode[], allModulesNodes: [] as TreeNode[], allKeyMap: new Map<string, TreeNode[]>() };
     if (!data) return empty;
 
     const { certPaths, curricula, modules, contentItems, cpcLinks, cmLinks } = data;
