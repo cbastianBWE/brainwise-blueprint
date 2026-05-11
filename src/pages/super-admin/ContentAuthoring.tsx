@@ -1606,15 +1606,15 @@ function CurriculumEditor({
             </Button>
           </div>
         </div>
-      </CardContent>
 
-      <AlertDialog open={archiveDialogOpen} onOpenChange={(open) => {
-        setArchiveDialogOpen(open);
-        if (!open) setArchiveReason("");
-      }}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Archive this curriculum?</AlertDialogTitle>
+        {mode === "edit" && initial?.id && (
+          <AttachedModulesSection
+            curriculumId={initial.id}
+            onAddClick={() => setAddModuleOpen(true)}
+            onSelectModule={(moduleId) => onSelectModule?.(moduleId)}
+          />
+        )}
+      </CardContent>
             <AlertDialogDescription>
               <span className="font-medium text-foreground">{initial?.name}</span> will be marked archived
               and unpublished. Any modules attached to it remain. Attachments from certification paths to
