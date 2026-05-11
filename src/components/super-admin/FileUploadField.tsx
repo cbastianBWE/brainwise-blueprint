@@ -572,30 +572,73 @@ export function FileUploadField({
   }
 
   // Empty state
+  const handleLibraryPick = async (libraryAssetId: string) => {
+    if (contentItemId || lessonBlockId) {
+      const { error } = await supabase.rpc("create_asset_ref", {
+        p_asset_id: libraryAssetId,
+        p_content_item_id: contentItemId ?? null,
+        p_lesson_block_id: lessonBlockId ?? null,
+        p_ref_field: refField ?? "library_pick",
+        p_reason: `Linked library asset to ${refField ?? "field"} via FileUploadField picker`,
+      });
+      if (error) {
+        toast({ title: "Failed to link library asset", description: error.message, variant: "destructive" });
+        return;
+      }
+    }
+    onChange(libraryAssetId);
+  };
+
   return (
-    <div
-      className={cn(
-        "rounded-md border-2 border-dashed p-8 text-center cursor-pointer transition-colors",
-        isDragOver ? "border-[#006D77] bg-[#006D77]/5" : "border-muted-foreground/25 hover:border-[#006D77]/50",
-        disabled && "opacity-50 pointer-events-none"
+    <div className="space-y-3">
+      <div
+        className={cn(
+          "rounded-md border-2 border-dashed p-8 text-center cursor-pointer transition-colors",
+          isDragOver ? "border-[#006D77] bg-[#006D77]/5" : "border-muted-foreground/25 hover:border-[#006D77]/50",
+          disabled && "opacity-50 pointer-events-none"
+        )}
+        onClick={() => fileInputRef.current?.click()}
+        onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
+        onDragLeave={() => setIsDragOver(false)}
+        onDrop={onDrop}
+        role="button"
+        tabIndex={0}
+      >
+        <Icon className="h-8 w-8 mx-auto text-muted-foreground" style={{ opacity: 0.6 }} />
+        <p className="mt-3 text-sm font-medium">Drop a file here, or click to browse</p>
+        <p className="mt-1 text-xs text-muted-foreground">{config.hintLine}</p>
+        {!isLibraryAsset && (
+          <div className="mt-3 flex items-center justify-center gap-3">
+            <span className="text-xs text-muted-foreground">or</span>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={(e) => { e.stopPropagation(); setLibraryPickerOpen(true); }}
+              disabled={disabled}
+            >
+              <LibraryBig className="mr-2 h-4 w-4" />
+              Choose from library
+            </Button>
+          </div>
+        )}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept={config.extensions}
+          className="hidden"
+          onChange={(e) => handleFileSelected(e.target.files?.[0])}
+        />
+      </div>
+
+      {!isLibraryAsset && (
+        <AssetLibraryPicker
+          open={libraryPickerOpen}
+          onOpenChange={setLibraryPickerOpen}
+          assetKind={assetKind}
+          onPick={handleLibraryPick}
+        />
       )}
-      onClick={() => fileInputRef.current?.click()}
-      onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
-      onDragLeave={() => setIsDragOver(false)}
-      onDrop={onDrop}
-      role="button"
-      tabIndex={0}
-    >
-      <Icon className="h-8 w-8 mx-auto text-muted-foreground" style={{ opacity: 0.6 }} />
-      <p className="mt-3 text-sm font-medium">Drop a file here, or click to browse</p>
-      <p className="mt-1 text-xs text-muted-foreground">{config.hintLine}</p>
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept={config.extensions}
-        className="hidden"
-        onChange={(e) => handleFileSelected(e.target.files?.[0])}
-      />
     </div>
   );
 }
