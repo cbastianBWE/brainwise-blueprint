@@ -92,7 +92,6 @@ interface RowProps {
 
 function TreeRow({ node, depth, expanded, selectedKey, onToggle, onSelect }: RowProps) {
   const key = nodeKey(node);
-  const isExpandable = node.type !== "ci" && node.children.length >= 0 && node.type !== "ci";
   const canExpand = node.type !== "ci";
   const isOpen = expanded.has(key);
   const isSelected = selectedKey === key;
