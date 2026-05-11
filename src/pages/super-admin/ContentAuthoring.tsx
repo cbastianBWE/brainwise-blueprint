@@ -256,6 +256,16 @@ function AttachedCurriculaSection({
                 <Badge variant={row.curriculum.is_published ? "default" : "secondary"} className="text-xs">
                   {row.curriculum.is_published ? "Published" : "Draft"}
                 </Badge>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-7 w-7"
+                  onClick={() => onSelectCurriculum(row.curriculum.id)}
+                  aria-label={`Edit ${row.curriculum.name}`}
+                  title="Edit curriculum"
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                </Button>
               </div>
             </div>
           ))}
