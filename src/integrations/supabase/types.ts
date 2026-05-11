@@ -1556,6 +1556,9 @@ export type Database = {
           certification_type: string
           created_at: string
           email: string
+          email_last_attempt_at: string | null
+          email_send_error: string | null
+          email_send_status: string | null
           expires_at: string
           first_name: string
           id: string
@@ -1569,6 +1572,9 @@ export type Database = {
           certification_type?: string
           created_at?: string
           email: string
+          email_last_attempt_at?: string | null
+          email_send_error?: string | null
+          email_send_status?: string | null
           expires_at?: string
           first_name: string
           id?: string
@@ -1582,6 +1588,9 @@ export type Database = {
           certification_type?: string
           created_at?: string
           email?: string
+          email_last_attempt_at?: string | null
+          email_send_error?: string | null
+          email_send_status?: string | null
           expires_at?: string
           first_name?: string
           id?: string
