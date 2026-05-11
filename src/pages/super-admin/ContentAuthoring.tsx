@@ -268,13 +268,19 @@ interface CertPathEditorProps {
   mode: "create" | "edit";
   initial: any | null;
   allCertPaths: any[];
+  allCurricula: any[];
+  attachedCurriculumIds: Set<string>;
   onSaved: (newId?: string) => void;
   onArchived?: () => void;
   onCancelCreate?: () => void;
+  onRequestCreateAttachedCurriculum?: () => void;
+  onRefetch?: () => void;
 }
 
 function CertPathEditor({
-  mode, initial, allCertPaths, onSaved, onArchived, onCancelCreate,
+  mode, initial, allCertPaths, allCurricula, attachedCurriculumIds,
+  onSaved, onArchived, onCancelCreate,
+  onRequestCreateAttachedCurriculum, onRefetch,
 }: CertPathEditorProps) {
   const { toast } = useToast();
 
