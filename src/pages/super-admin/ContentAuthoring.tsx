@@ -456,7 +456,7 @@ export default function ContentAuthoring() {
 
         {/* Right pane */}
         <div>
-          {!selectedNode ? (
+          {!selectedNode && selectedKey !== "cp:new" ? (
             <Card>
               <CardContent className="flex items-center justify-center py-24">
                 <p className="text-sm text-muted-foreground">
@@ -467,46 +467,75 @@ export default function ContentAuthoring() {
           ) : (
             <div className="space-y-4">
               <div className="flex flex-wrap items-center gap-1 text-sm text-muted-foreground">
-                {selectedPath!.map((n, idx) => {
-                  const isLast = idx === selectedPath!.length - 1;
-                  const label = `${TYPE_LABELS[n.type]}: ${n.name}`;
-                  return (
-                    <span key={nodeKey(n)} className="flex items-center gap-1">
-                      {isLast ? (
-                        <span className="font-medium text-foreground">{label}</span>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => selectNode(nodeKey(n))}
-                          className="hover:text-foreground hover:underline"
-                        >
-                          {label}
-                        </button>
-                      )}
-                      {!isLast && <ChevronRight className="h-3.5 w-3.5" />}
-                    </span>
-                  );
-                })}
+                {selectedKey === "cp:new" ? (
+                  <span className="font-medium text-foreground">New certification path</span>
+                ) : (
+                  selectedPath!.map((n, idx) => {
+                    const isLast = idx === selectedPath!.length - 1;
+                    const label = `${TYPE_LABELS[n.type]}: ${n.name}`;
+                    return (
+                      <span key={nodeKey(n)} className="flex items-center gap-1">
+                        {isLast ? (
+                          <span className="font-medium text-foreground">{label}</span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => selectNode(nodeKey(n))}
+                            className="hover:text-foreground hover:underline"
+                          >
+                            {label}
+                          </button>
+                        )}
+                        {!isLast && <ChevronRight className="h-3.5 w-3.5" />}
+                      </span>
+                    );
+                  })
+                )}
               </div>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle>{TYPE_LABELS[selectedNode.type]} editor</CardTitle>
-                  <CardDescription>
-                    The {TYPE_LABELS[selectedNode.type].toLowerCase()} editor will be built in the next prompt.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Name</p>
-                    <p className="mt-1 text-sm">{selectedNode.name}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">ID</p>
-                    <p className="mt-1 font-mono text-xs text-muted-foreground">{selectedNode.id}</p>
-                  </div>
-                </CardContent>
-              </Card>
+              {selectedKey === "cp:new" ? (
+                <CertPathEditor
+                  mode="create"
+                  initial={null}
+                  allCertPaths={data?.certPaths ?? []}
+                  onSaved={(newId) => {
+                    refetch();
+                    if (newId) setSelectedKey(`cp:${newId}`);
+                    else setSelectedKey(null);
+                  }}
+                  onCancelCreate={() => setSelectedKey(null)}
+                />
+              ) : selectedNode?.type === "cp" ? (
+                <CertPathEditor
+                  mode="edit"
+                  initial={(data?.certPaths ?? []).find((p: any) => p.id === selectedNode.id) ?? null}
+                  allCertPaths={data?.certPaths ?? []}
+                  onSaved={() => refetch()}
+                  onArchived={() => {
+                    refetch();
+                    setSelectedKey(null);
+                  }}
+                />
+              ) : (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>{TYPE_LABELS[selectedNode!.type]} editor</CardTitle>
+                    <CardDescription>
+                      The {TYPE_LABELS[selectedNode!.type].toLowerCase()} editor will be built in the next prompt.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Name</p>
+                      <p className="mt-1 text-sm">{selectedNode!.name}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">ID</p>
+                      <p className="mt-1 font-mono text-xs text-muted-foreground">{selectedNode!.id}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
             </div>
           )}
         </div>
