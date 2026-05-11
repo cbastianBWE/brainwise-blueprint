@@ -203,7 +203,8 @@ function TreeRow({ node, depth, expanded, selectedKey, onToggle, onSelect }: Row
 function AttachedCurriculaSection({
   certPathId,
   onAddClick,
-}: { certPathId: string; onAddClick: () => void }) {
+  onSelectCurriculum,
+}: { certPathId: string; onAddClick: () => void; onSelectCurriculum: (curriculumId: string) => void }) {
   const { data, isLoading } = useQuery({
     queryKey: ["cert-path-attached-curricula", certPathId],
     queryFn: async () => {
