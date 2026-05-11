@@ -469,8 +469,25 @@ export default function CoachManagement() {
                     <TableCell>{CERT_LABELS[inv.certification_type] || inv.certification_type}</TableCell>
                     <TableCell>{new Date(inv.created_at).toLocaleDateString()}</TableCell>
                     <TableCell>{new Date(inv.expires_at).toLocaleDateString()}</TableCell>
+                    <TableCell>
+                      {inv.email_send_status === "sent" ? (
+                        <Badge variant="secondary">Sent</Badge>
+                      ) : inv.email_send_status === "failed" ? (
+                        <Badge variant="destructive" title={inv.email_send_error || "Unknown error"}>
+                          Failed
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline">Pending</Badge>
+                      )}
+                    </TableCell>
                     <TableCell className="flex gap-2">
-                      <Button size="sm" variant="outline" onClick={() => handleResend(inv)}>Resend</Button>
+                      <Button
+                        size="sm"
+                        variant={inv.email_send_status === "failed" ? "default" : "outline"}
+                        onClick={() => handleResend(inv)}
+                      >
+                        {inv.email_send_status === "failed" ? "Retry Email" : "Resend"}
+                      </Button>
                       <Button size="sm" variant="ghost" onClick={() => handleCancel(inv)}>Cancel</Button>
                     </TableCell>
                   </TableRow>
