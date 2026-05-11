@@ -350,6 +350,80 @@ function AttachedModulesSection({
   );
 }
 
+function AttachedContentItemsSection({
+  moduleId,
+  onAddClick,
+  onSelectContentItem,
+}: { moduleId: string; onAddClick: () => void; onSelectContentItem: (contentItemId: string) => void }) {
+  const { data, isLoading } = useQuery({
+    queryKey: ["module-attached-content-items", moduleId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("content_items")
+        .select("id, title, item_type, display_order, is_required, archived_at")
+        .eq("module_id", moduleId)
+        .is("archived_at", null)
+        .order("display_order");
+      if (error) throw error;
+      return data ?? [];
+    },
+    staleTime: 15_000,
+  });
+
+  return (
+    <div className="space-y-3 pt-2">
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-semibold text-foreground">Content items</h3>
+        <Button size="sm" variant="outline" onClick={onAddClick}>
+          <Plus className="h-3.5 w-3.5" /> Add content item
+        </Button>
+      </div>
+
+      {isLoading ? (
+        <div className="space-y-2">
+          <Skeleton className="h-8 w-full" />
+          <Skeleton className="h-8 w-full" />
+        </div>
+      ) : !data || data.length === 0 ? (
+        <p className="text-sm italic text-muted-foreground">No content items yet.</p>
+      ) : (
+        <div className="space-y-1">
+          {data.map((row: any) => (
+            <div
+              key={row.id}
+              className="flex items-center justify-between rounded-sm border px-3 py-2 text-sm"
+            >
+              <div className="flex items-center gap-2">
+                <span className="text-muted-foreground font-mono text-xs w-6 text-right">
+                  {row.display_order ?? 0}
+                </span>
+                <ItemTypeIcon itemType={row.item_type} className="h-4 w-4 text-muted-foreground" />
+                <span>{row.title}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                {row.is_required && (
+                  <Badge variant="outline" className="text-xs">Required</Badge>
+                )}
+                <Badge variant="secondary" className="text-xs">{row.item_type}</Badge>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-7 w-7"
+                  onClick={() => onSelectContentItem(row.id)}
+                  aria-label={`Edit ${row.title}`}
+                  title="Edit content item"
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 interface CertPathEditorProps {
   mode: "create" | "edit";
   initial: any | null;
