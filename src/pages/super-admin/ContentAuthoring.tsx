@@ -9,11 +9,54 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Library, Trophy, GraduationCap, BookOpenText, Layers,
   Video, FileQuestion, PenLine, Users, Upload, ExternalLink, CalendarClock,
-  ChevronRight, ChevronDown, Search, Plus,
+  ChevronRight, ChevronDown, Search, Plus, Loader2, Trash2, Save, Archive,
 } from "lucide-react";
+
+const CERT_INSTRUMENTS = [
+  { id: "INST-001", label: "PTP" },
+  { id: "INST-002", label: "NAI" },
+  { id: "INST-003", label: "AIRSA" },
+  { id: "INST-004", label: "HSS" },
+];
+
+const CERTIFICATION_TYPES = [
+  { value: "ptp_coach", label: "PTP Coach" },
+  { value: "ai_transformation_coach", label: "AI Transformation Coach" },
+  { value: "ai_transformation_ptp_coach", label: "AI Transformation + PTP Coach" },
+  { value: "my_brainwise_coach", label: "My BrainWise Coach" },
+];
+
+const DELIVERY_MODES = [
+  { value: "self_paced", label: "Self-paced" },
+  { value: "cohort",     label: "Cohort" },
+];
+
+function slugify(s: string) {
+  return s
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-");
+}
 
 type NodeType = "cp" | "cu" | "mo" | "ci";
 
