@@ -1213,7 +1213,7 @@ export default function ContentAuthoring() {
 
         {/* Right pane */}
         <div>
-          {!selectedNode && selectedKey !== "cp:new" ? (
+          {!selectedNode && selectedKey !== "cp:new" && !isCurriculumCreate ? (
             <Card>
               <CardContent className="flex items-center justify-center py-24">
                 <p className="text-sm text-muted-foreground">
@@ -1226,6 +1226,18 @@ export default function ContentAuthoring() {
               <div className="flex flex-wrap items-center gap-1 text-sm text-muted-foreground">
                 {selectedKey === "cp:new" ? (
                   <span className="font-medium text-foreground">New certification path</span>
+                ) : isCurriculumCreate ? (
+                  curriculumCreateAttachToCpId ? (
+                    <>
+                      <span>
+                        Cert path: {(data?.certPaths ?? []).find((p: any) => p.id === curriculumCreateAttachToCpId)?.name ?? "(unknown)"}
+                      </span>
+                      <ChevronRight className="h-3.5 w-3.5" />
+                      <span className="font-medium text-foreground">New curriculum</span>
+                    </>
+                  ) : (
+                    <span className="font-medium text-foreground">New curriculum</span>
+                  )
                 ) : (
                   selectedPath!.map((n, idx) => {
                     const isLast = idx === selectedPath!.length - 1;
@@ -1252,9 +1264,12 @@ export default function ContentAuthoring() {
 
               {selectedKey === "cp:new" ? (
                 <CertPathEditor
+                  key="cp:new"
                   mode="create"
                   initial={null}
                   allCertPaths={data?.certPaths ?? []}
+                  allCurricula={data?.curricula ?? []}
+                  attachedCurriculumIds={new Set()}
                   onSaved={(newId) => {
                     refetch();
                     if (newId) setSelectedKey(`cp:${newId}`);
@@ -1264,9 +1279,45 @@ export default function ContentAuthoring() {
                 />
               ) : selectedNode?.type === "cp" ? (
                 <CertPathEditor
+                  key={`cp:${selectedNode.id}`}
                   mode="edit"
                   initial={(data?.certPaths ?? []).find((p: any) => p.id === selectedNode.id) ?? null}
                   allCertPaths={data?.certPaths ?? []}
+                  allCurricula={data?.curricula ?? []}
+                  attachedCurriculumIds={cpAttachedIds.get(selectedNode.id) ?? new Set()}
+                  onSaved={() => refetch()}
+                  onArchived={() => {
+                    refetch();
+                    setSelectedKey(null);
+                  }}
+                  onRequestCreateAttachedCurriculum={() => {
+                    setSelectedKey(`cu:new:${selectedNode.id}`);
+                  }}
+                  onRefetch={() => refetch()}
+                />
+              ) : isCurriculumCreate ? (
+                <CurriculumEditor
+                  key={selectedKey ?? "cu:new"}
+                  mode="create"
+                  initial={null}
+                  allCurricula={data?.curricula ?? []}
+                  allCertPaths={data?.certPaths ?? []}
+                  attachToCertPathId={curriculumCreateAttachToCpId}
+                  onSaved={(newId) => {
+                    refetch();
+                    if (newId) setSelectedKey(`cu:${newId}`);
+                    else setSelectedKey(null);
+                  }}
+                  onCancelCreate={() => setSelectedKey(null)}
+                />
+              ) : selectedNode?.type === "cu" ? (
+                <CurriculumEditor
+                  key={`cu:${selectedNode.id}`}
+                  mode="edit"
+                  initial={(data?.curricula ?? []).find((c: any) => c.id === selectedNode.id) ?? null}
+                  allCurricula={data?.curricula ?? []}
+                  allCertPaths={data?.certPaths ?? []}
+                  attachToCertPathId={null}
                   onSaved={() => refetch()}
                   onArchived={() => {
                     refetch();
