@@ -2382,14 +2382,6 @@ function ModuleEditor({
   );
 }
 
-const VOICE_PRESETS = [
-  { value: "conversational_coach", label: "Conversational coach" },
-  { value: "tactical_direct", label: "Tactical and direct" },
-  { value: "academic_precise", label: "Academic and precise" },
-  { value: "warm_supportive", label: "Warm and supportive" },
-  { value: "playful_energetic", label: "Playful and energetic" },
-];
-
 const ITEM_TYPE_OPTIONS = [
   { value: "video", label: "Video" },
   { value: "quiz", label: "Quiz" },
@@ -2495,6 +2487,20 @@ function ContentItemEditor({
   const [aiDraftTarget, setAiDraftTarget] = useState<"content_item_title" | "content_item_description" | null>(null);
   const [aiAuthorPrompt, setAiAuthorPrompt] = useState("");
   const [aiVoicePresetKey, setAiVoicePresetKey] = useState<string>("conversational_coach");
+
+  const { data: voicePresets, isLoading: voicePresetsLoading } = useQuery({
+    queryKey: ["ai-authoring-voice-presets"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("ai_authoring_voice_presets")
+        .select("preset_key, display_name, short_description")
+        .eq("is_active", true)
+        .order("display_order");
+      if (error) throw error;
+      return data ?? [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
   const reasonLen = reason.trim().length;
   const reasonOk = reasonLen >= 10;
@@ -3198,14 +3204,23 @@ function ContentItemEditor({
             </div>
             <div className="space-y-2">
               <Label htmlFor="ai-voice">Voice</Label>
-              <Select value={aiVoicePresetKey} onValueChange={setAiVoicePresetKey}>
-                <SelectTrigger id="ai-voice"><SelectValue /></SelectTrigger>
+              <Select value={aiVoicePresetKey} onValueChange={setAiVoicePresetKey} disabled={voicePresetsLoading}>
+                <SelectTrigger id="ai-voice">
+                  <SelectValue placeholder={voicePresetsLoading ? "Loading voices..." : "Select a voice"} />
+                </SelectTrigger>
                 <SelectContent>
-                  {VOICE_PRESETS.map((p) => (
-                    <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
+                  {(voicePresets ?? []).map((p: any) => (
+                    <SelectItem key={p.preset_key} value={p.preset_key}>
+                      {p.display_name}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+              {voicePresets && voicePresets.length > 0 && voicePresets.find((p: any) => p.preset_key === aiVoicePresetKey) && (
+                <p className="text-xs text-muted-foreground">
+                  {voicePresets.find((p: any) => p.preset_key === aiVoicePresetKey)?.short_description}
+                </p>
+              )}
             </div>
           </div>
           <div className="flex justify-end gap-2 pt-2">
