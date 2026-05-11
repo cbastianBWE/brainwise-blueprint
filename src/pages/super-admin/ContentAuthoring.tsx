@@ -3426,12 +3426,25 @@ export default function ContentAuthoring() {
           return next;
         });
       }
+    } else if (k.startsWith("ci:") && !k.startsWith("ci:new")) {
+      const ciId = k.slice("ci:".length);
+      const parentMoId = moduleByContentItem.get(ciId);
+      if (parentMoId) {
+        setExpanded((prev) => {
+          const next = new Set(prev);
+          next.add(`mo:${parentMoId}`);
+          const parentCuIds = curriculaByModule.get(parentMoId) ?? [];
+          for (const cuId of parentCuIds) {
+            next.add(`cu:${cuId}`);
+            const cpIds = certPathsByCurriculum.get(cuId) ?? [];
+            for (const cpId of cpIds) next.add(`cp:${cpId}`);
+          }
+          return next;
+        });
+      }
     }
   };
 
-  const handleComingSoon = () => {
-    toast({ title: "Coming in the next prompt" });
-  };
 
   const sectionsRaw: { label: string; nodes: TreeNode[] }[] = [
     { label: "Certification Paths", nodes: certPathTree },
