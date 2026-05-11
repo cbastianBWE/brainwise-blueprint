@@ -53,6 +53,54 @@ interface Invitation {
   certification_type: string;
   created_at: string;
   expires_at: string;
+  email_send_status: "sent" | "failed" | null;
+  email_send_error: string | null;
+  email_last_attempt_at: string | null;
+}
+
+// Helper: inspect the invite-coach response body and produce a user-facing summary.
+// invite-coach returns per-recipient results regardless of HTTP status, so the frontend
+// must NOT rely on the transport-level `error` check alone (200 and 207 are both success
+// at the transport layer but 207 indicates per-recipient failures).
+type InviteCoachResult = {
+  email: string;
+  success: boolean;
+  mode?: "created" | "resent" | "failed" | "rejected";
+  invitation_id?: string;
+  error?: string;
+};
+
+type InviteCoachResponse = {
+  success?: boolean;
+  sent?: number;
+  failed?: number;
+  results?: InviteCoachResult[];
+};
+
+function inspectInviteCoachResponse(
+  data: InviteCoachResponse | null | undefined,
+  transportError: { message: string } | null | undefined
+): { allSucceeded: boolean; summary: string; failures: InviteCoachResult[] } {
+  if (transportError) {
+    return {
+      allSucceeded: false,
+      summary: transportError.message,
+      failures: [],
+    };
+  }
+  const results = data?.results ?? [];
+  const failures = results.filter((r) => !r.success);
+  const allSucceeded = failures.length === 0 && results.length > 0;
+  let summary: string;
+  if (allSucceeded) {
+    summary = `${results.length} invitation${results.length === 1 ? "" : "s"} sent.`;
+  } else if (results.length === 0) {
+    summary = "No invitations were processed.";
+  } else {
+    const sent = results.length - failures.length;
+    summary = `${sent} sent, ${failures.length} failed. First failure: ${failures[0].error ?? "Unknown error"} (${failures[0].email})`;
+  }
+  return { allSucceeded, summary, failures };
 }
 
 interface Coach {
@@ -81,15 +129,16 @@ function SingleInviteTab() {
   const handleSend = async () => {
     if (!firstName || !lastName || !email) return;
     setSending(true);
-    const { error } = await supabase.functions.invoke("invite-coach", {
+    const { data, error } = await supabase.functions.invoke("invite-coach", {
       body: { email, first_name: firstName, last_name: lastName, certification_type: certType },
     });
     setSending(false);
-    if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
-    } else {
+    const { allSucceeded, summary } = inspectInviteCoachResponse(data as InviteCoachResponse, error);
+    if (allSucceeded) {
       toast({ title: "Invitation Sent", description: `Invitation sent to ${email}` });
       setFirstName(""); setLastName(""); setEmail("");
+    } else {
+      toast({ title: "Invitation Failed", description: summary, variant: "destructive" });
     }
   };
 
@@ -145,12 +194,20 @@ function BulkInviteTab() {
     if (!valid.length) return;
     setSending(true);
     let sent = 0, failed = 0;
+    const errorEmails: string[] = [];
     for (const row of valid) {
-      const { error } = await supabase.functions.invoke("invite-coach", { body: row });
-      if (error) failed++; else sent++;
+      const { data, error } = await supabase.functions.invoke("invite-coach", { body: row });
+      const { allSucceeded } = inspectInviteCoachResponse(data as InviteCoachResponse, error);
+      if (allSucceeded) sent++; else { failed++; errorEmails.push(row.email); }
     }
     setSending(false);
-    toast({ title: "Bulk Invite Complete", description: `${sent} sent, ${failed} failed.` });
+    toast({
+      title: "Bulk Invite Complete",
+      description: failed === 0
+        ? `${sent} sent.`
+        : `${sent} sent, ${failed} failed${errorEmails.length > 0 ? `: ${errorEmails.slice(0, 3).join(", ")}${errorEmails.length > 3 ? "..." : ""}` : ""}`,
+      variant: failed > 0 ? "destructive" : "default",
+    });
     if (sent > 0) setRows([{ first_name: "", last_name: "", email: "", certification_type: "ptp_coach" }]);
   };
 
@@ -231,12 +288,20 @@ function UploadExcelTab() {
     if (!parsed.length) return;
     setSending(true);
     let sent = 0, failed = 0;
+    const errorEmails: string[] = [];
     for (const row of parsed) {
-      const { error } = await supabase.functions.invoke("invite-coach", { body: row });
-      if (error) failed++; else sent++;
+      const { data, error } = await supabase.functions.invoke("invite-coach", { body: row });
+      const { allSucceeded } = inspectInviteCoachResponse(data as InviteCoachResponse, error);
+      if (allSucceeded) sent++; else { failed++; errorEmails.push(row.email); }
     }
     setSending(false);
-    toast({ title: "Upload Complete", description: `${sent} sent, ${failed} failed.` });
+    toast({
+      title: "Upload Complete",
+      description: failed === 0
+        ? `${sent} sent.`
+        : `${sent} sent, ${failed} failed${errorEmails.length > 0 ? `: ${errorEmails.slice(0, 3).join(", ")}${errorEmails.length > 3 ? "..." : ""}` : ""}`,
+      variant: failed > 0 ? "destructive" : "default",
+    });
     if (sent > 0) setParsed([]);
   };
 
@@ -296,7 +361,7 @@ export default function CoachManagement() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     const [invRes, coachRes] = await Promise.all([
-      supabase.from("coach_invitations").select("id, first_name, last_name, email, certification_type, created_at, expires_at").eq("status", "pending").order("created_at", { ascending: false }),
+      supabase.from("coach_invitations").select("id, first_name, last_name, email, certification_type, created_at, expires_at, email_send_status, email_send_error, email_last_attempt_at").eq("status", "pending").order("created_at", { ascending: false }),
       supabase.from("users").select("id, full_name, email").eq("account_type", "coach").order("full_name"),
     ]);
     setInvitations((invRes.data as Invitation[]) || []);
@@ -317,11 +382,17 @@ export default function CoachManagement() {
   useEffect(() => { fetchData(); }, [fetchData]);
 
   const handleResend = async (inv: Invitation) => {
-    const { error } = await supabase.functions.invoke("invite-coach", {
+    const { data, error } = await supabase.functions.invoke("invite-coach", {
       body: { email: inv.email, first_name: inv.first_name, last_name: inv.last_name, certification_type: inv.certification_type },
     });
-    if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
-    else toast({ title: "Resent", description: `Invitation resent to ${inv.email}` });
+    const { allSucceeded, summary } = inspectInviteCoachResponse(data as InviteCoachResponse, error);
+    if (allSucceeded) {
+      toast({ title: "Resent", description: `Invitation resent to ${inv.email}` });
+      fetchData();
+    } else {
+      toast({ title: "Resend Failed", description: summary, variant: "destructive" });
+      fetchData();
+    }
   };
 
   const handleCancel = async (inv: Invitation) => {
@@ -386,6 +457,7 @@ export default function CoachManagement() {
                   <TableHead>Certification</TableHead>
                   <TableHead>Invited</TableHead>
                   <TableHead>Expires</TableHead>
+                  <TableHead>Email Status</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -397,8 +469,25 @@ export default function CoachManagement() {
                     <TableCell>{CERT_LABELS[inv.certification_type] || inv.certification_type}</TableCell>
                     <TableCell>{new Date(inv.created_at).toLocaleDateString()}</TableCell>
                     <TableCell>{new Date(inv.expires_at).toLocaleDateString()}</TableCell>
+                    <TableCell>
+                      {inv.email_send_status === "sent" ? (
+                        <Badge variant="secondary">Sent</Badge>
+                      ) : inv.email_send_status === "failed" ? (
+                        <Badge variant="destructive" title={inv.email_send_error || "Unknown error"}>
+                          Failed
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline">Pending</Badge>
+                      )}
+                    </TableCell>
                     <TableCell className="flex gap-2">
-                      <Button size="sm" variant="outline" onClick={() => handleResend(inv)}>Resend</Button>
+                      <Button
+                        size="sm"
+                        variant={inv.email_send_status === "failed" ? "default" : "outline"}
+                        onClick={() => handleResend(inv)}
+                      >
+                        {inv.email_send_status === "failed" ? "Retry Email" : "Resend"}
+                      </Button>
                       <Button size="sm" variant="ghost" onClick={() => handleCancel(inv)}>Cancel</Button>
                     </TableCell>
                   </TableRow>
