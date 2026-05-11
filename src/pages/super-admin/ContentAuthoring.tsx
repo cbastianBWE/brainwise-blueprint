@@ -1751,7 +1751,7 @@ export default function ContentAuthoring() {
           return next;
         });
       }
-    } else if (k.startsWith("mo:")) {
+    } else if (k.startsWith("mo:") && !k.startsWith("mo:new")) {
       const moId = k.slice("mo:".length);
       const parentCuIds = curriculaByModule.get(moId) ?? [];
       if (parentCuIds.length > 0) {
