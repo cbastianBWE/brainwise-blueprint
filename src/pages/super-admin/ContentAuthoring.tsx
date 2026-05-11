@@ -3592,7 +3592,7 @@ export default function ContentAuthoring() {
 
         {/* Right pane */}
         <div>
-          {!selectedNode && selectedKey !== "cp:new" && !isCurriculumCreate && !isModuleCreate ? (
+          {!selectedNode && selectedKey !== "cp:new" && !isCurriculumCreate && !isModuleCreate && !isContentItemCreate ? (
             <Card>
               <CardContent className="flex items-center justify-center py-24">
                 <p className="text-sm text-muted-foreground">
