@@ -53,6 +53,54 @@ interface Invitation {
   certification_type: string;
   created_at: string;
   expires_at: string;
+  email_send_status: "sent" | "failed" | null;
+  email_send_error: string | null;
+  email_last_attempt_at: string | null;
+}
+
+// Helper: inspect the invite-coach response body and produce a user-facing summary.
+// invite-coach returns per-recipient results regardless of HTTP status, so the frontend
+// must NOT rely on the transport-level `error` check alone (200 and 207 are both success
+// at the transport layer but 207 indicates per-recipient failures).
+type InviteCoachResult = {
+  email: string;
+  success: boolean;
+  mode?: "created" | "resent" | "failed" | "rejected";
+  invitation_id?: string;
+  error?: string;
+};
+
+type InviteCoachResponse = {
+  success?: boolean;
+  sent?: number;
+  failed?: number;
+  results?: InviteCoachResult[];
+};
+
+function inspectInviteCoachResponse(
+  data: InviteCoachResponse | null | undefined,
+  transportError: { message: string } | null | undefined
+): { allSucceeded: boolean; summary: string; failures: InviteCoachResult[] } {
+  if (transportError) {
+    return {
+      allSucceeded: false,
+      summary: transportError.message,
+      failures: [],
+    };
+  }
+  const results = data?.results ?? [];
+  const failures = results.filter((r) => !r.success);
+  const allSucceeded = failures.length === 0 && results.length > 0;
+  let summary: string;
+  if (allSucceeded) {
+    summary = `${results.length} invitation${results.length === 1 ? "" : "s"} sent.`;
+  } else if (results.length === 0) {
+    summary = "No invitations were processed.";
+  } else {
+    const sent = results.length - failures.length;
+    summary = `${sent} sent, ${failures.length} failed. First failure: ${failures[0].error ?? "Unknown error"} (${failures[0].email})`;
+  }
+  return { allSucceeded, summary, failures };
 }
 
 interface Coach {
