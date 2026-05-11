@@ -1936,6 +1936,18 @@ export default function ContentAuthoring() {
                   ) : (
                     <span className="font-medium text-foreground">New curriculum</span>
                   )
+                ) : isModuleCreate ? (
+                  moduleCreateAttachToCuId ? (
+                    <>
+                      <span>
+                        Curriculum: {(data?.curricula ?? []).find((c: any) => c.id === moduleCreateAttachToCuId)?.name ?? "(unknown)"}
+                      </span>
+                      <ChevronRight className="h-3.5 w-3.5" />
+                      <span className="font-medium text-foreground">New module</span>
+                    </>
+                  ) : (
+                    <span className="font-medium text-foreground">New module</span>
+                  )
                 ) : (
                   selectedPath!.map((n, idx) => {
                     const isLast = idx === selectedPath!.length - 1;
