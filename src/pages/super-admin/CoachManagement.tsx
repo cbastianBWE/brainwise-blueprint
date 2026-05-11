@@ -129,15 +129,16 @@ function SingleInviteTab() {
   const handleSend = async () => {
     if (!firstName || !lastName || !email) return;
     setSending(true);
-    const { error } = await supabase.functions.invoke("invite-coach", {
+    const { data, error } = await supabase.functions.invoke("invite-coach", {
       body: { email, first_name: firstName, last_name: lastName, certification_type: certType },
     });
     setSending(false);
-    if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
-    } else {
+    const { allSucceeded, summary } = inspectInviteCoachResponse(data as InviteCoachResponse, error);
+    if (allSucceeded) {
       toast({ title: "Invitation Sent", description: `Invitation sent to ${email}` });
       setFirstName(""); setLastName(""); setEmail("");
+    } else {
+      toast({ title: "Invitation Failed", description: summary, variant: "destructive" });
     }
   };
 
