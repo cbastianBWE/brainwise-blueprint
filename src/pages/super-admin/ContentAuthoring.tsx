@@ -375,7 +375,8 @@ function CertPathEditor({
       description: `${existing.name} → ${initial.name}`,
     });
     setAddCurriculumOpen(false);
-    onRefetch?.();
+    onExpandSelf?.();
+    await onRefetch?.();
   };
 
   useEffect(() => {
