@@ -501,6 +501,27 @@ export function FileUploadField({
           </Button>
         </div>
 
+        {asset && !asset.is_library_asset && (
+          <div>
+            <PromoteToLibraryButton
+              assetId={asset.id}
+              disabled={disabled}
+              onPromoted={() => {
+                queryClient.invalidateQueries({ queryKey: ["content_asset", asset.id] });
+                queryClient.invalidateQueries({ queryKey: ["library_assets", asset.asset_kind] });
+                queryClient.invalidateQueries({ queryKey: ["library_tags", asset.asset_kind] });
+                queryClient.invalidateQueries({ queryKey: ["all_library_assets"] });
+              }}
+            />
+          </div>
+        )}
+        {asset?.is_library_asset && (
+          <Badge variant="secondary" className="bg-[#006D77]/10 text-[#006D77] hover:bg-[#006D77]/15">
+            <BookmarkCheck className="mr-1 h-3 w-3" />
+            Library asset: {asset.library_name}
+          </Badge>
+        )}
+
         <input
           ref={replaceInputRef}
           type="file"
