@@ -3899,21 +3899,8 @@ export default function ContentAuthoring() {
                 />
               ) : (
                 <Card>
-                  <CardHeader>
-                    <CardTitle>{TYPE_LABELS[selectedNode!.type]} editor</CardTitle>
-                    <CardDescription>
-                      The {TYPE_LABELS[selectedNode!.type].toLowerCase()} editor will be built in a future prompt.
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div>
-                      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Name</p>
-                      <p className="mt-1 text-sm">{selectedNode!.name}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">ID</p>
-                      <p className="mt-1 font-mono text-xs text-muted-foreground">{selectedNode!.id}</p>
-                    </div>
+                  <CardContent className="flex items-center justify-center py-24">
+                    <p className="text-sm text-muted-foreground">Unknown selection.</p>
                   </CardContent>
                 </Card>
               )}
