@@ -1156,7 +1156,7 @@ export default function ContentAuthoring() {
               <Button size="sm" variant="outline" onClick={() => setSelectedKey("cp:new")}>
                 <Plus className="h-3.5 w-3.5" /> Cert Path
               </Button>
-              <Button size="sm" variant="outline" onClick={handleComingSoon}>
+              <Button size="sm" variant="outline" onClick={() => setSelectedKey("cu:new")}>
                 <Plus className="h-3.5 w-3.5" /> Curriculum
               </Button>
               <Button size="sm" variant="outline" onClick={handleComingSoon}>
