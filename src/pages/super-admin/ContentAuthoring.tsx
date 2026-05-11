@@ -3482,6 +3482,13 @@ export default function ContentAuthoring() {
     return selectedKey.slice("mo:new:".length) || null;
   })();
 
+  const isContentItemCreate = selectedKey?.startsWith("ci:new") ?? false;
+  const contentItemCreateAttachToMoId = (() => {
+    if (!selectedKey) return null;
+    if (!selectedKey.startsWith("ci:new:")) return null;
+    return selectedKey.slice("ci:new:".length) || null;
+  })();
+
   const cpAttachedIds = useMemo(() => {
     const m = new Map<string, Set<string>>();
     for (const link of (data?.cpcLinks ?? []) as any[]) {
