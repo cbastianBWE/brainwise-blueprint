@@ -396,7 +396,7 @@ export default function ContentAuthoring() {
               />
             </div>
             <div className="flex flex-wrap gap-2">
-              <Button size="sm" variant="outline" onClick={handleComingSoon}>
+              <Button size="sm" variant="outline" onClick={() => setSelectedKey("cp:new")}>
                 <Plus className="h-3.5 w-3.5" /> Cert Path
               </Button>
               <Button size="sm" variant="outline" onClick={handleComingSoon}>
