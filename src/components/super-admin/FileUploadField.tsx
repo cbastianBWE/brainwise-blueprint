@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Image as ImageIcon,
   Video,
@@ -12,10 +12,14 @@ import {
   Loader2,
   AlertCircle,
   Upload,
+  LibraryBig,
+  BookmarkCheck,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,6 +31,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
+import { AssetLibraryPicker } from "@/components/super-admin/AssetLibraryPicker";
+import { PromoteToLibraryButton } from "@/components/super-admin/PromoteToLibraryButton";
 
 type AssetKind = "image" | "video" | "audio" | "document";
 
