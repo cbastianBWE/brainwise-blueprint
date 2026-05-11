@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/dialog";
 import { Loader2, Save, Archive, Sparkles, Video } from "lucide-react";
 import { ITEM_TYPE_OPTIONS, ItemTypeIcon } from "./_shared";
+import { FileUploadField } from "@/components/super-admin/FileUploadField";
 
 interface ContentItemEditorProps {
   mode: "create" | "edit";
@@ -544,10 +545,30 @@ function ContentItemEditor({
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2">
-                <Label>Video ID or URL</Label>
-                <Input value={videoSourceId} onChange={(e) => setVideoSourceId(e.target.value)} disabled={saving} />
-              </div>
+              {videoSourceType === "supabase_storage" ? (
+                <div className="space-y-2">
+                  <Label>Video file</Label>
+                  {initial?.id ? (
+                    <FileUploadField
+                      assetKind="video"
+                      contentItemId={initial.id}
+                      refField="content_item_video_source"
+                      value={videoSourceId || null}
+                      onChange={(newAssetId) => setVideoSourceId(newAssetId ?? "")}
+                      disabled={saving}
+                    />
+                  ) : (
+                    <div className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">
+                      Save the content item first (with a placeholder source), then upload the video file.
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <Label>Video ID or URL</Label>
+                  <Input value={videoSourceId} onChange={(e) => setVideoSourceId(e.target.value)} disabled={saving} />
+                </div>
+              )}
               <div className="space-y-2">
                 <Label>Completion threshold (%)</Label>
                 <Input

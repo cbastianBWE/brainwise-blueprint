@@ -2235,6 +2235,285 @@ export type Database = {
         }
         Relationships: []
       }
+      content_asset_refs: {
+        Row: {
+          archived_at: string | null
+          asset_id: string
+          content_item_id: string | null
+          created_at: string
+          created_by: string
+          id: string
+          lesson_block_id: string | null
+          ref_field: string
+        }
+        Insert: {
+          archived_at?: string | null
+          asset_id: string
+          content_item_id?: string | null
+          created_at?: string
+          created_by: string
+          id?: string
+          lesson_block_id?: string | null
+          ref_field: string
+        }
+        Update: {
+          archived_at?: string | null
+          asset_id?: string
+          content_item_id?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          lesson_block_id?: string | null
+          ref_field?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_asset_refs_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "content_assets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_asset_refs_content_item_id_fkey"
+            columns: ["content_item_id"]
+            isOneToOne: false
+            referencedRelation: "content_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_asset_refs_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_asset_refs_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "content_asset_refs_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_asset_refs_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_asset_refs_lesson_block_id_fkey"
+            columns: ["lesson_block_id"]
+            isOneToOne: false
+            referencedRelation: "lesson_blocks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      content_asset_versions: {
+        Row: {
+          archived_at: string | null
+          asset_id: string
+          bucket: string
+          created_at: string
+          generation_provenance: Json | null
+          id: string
+          mime_type: string
+          original_filename: string
+          path: string
+          size_bytes: number
+          uploaded_by: string
+          version_number: number
+        }
+        Insert: {
+          archived_at?: string | null
+          asset_id: string
+          bucket?: string
+          created_at?: string
+          generation_provenance?: Json | null
+          id?: string
+          mime_type: string
+          original_filename: string
+          path: string
+          size_bytes: number
+          uploaded_by: string
+          version_number: number
+        }
+        Update: {
+          archived_at?: string | null
+          asset_id?: string
+          bucket?: string
+          created_at?: string
+          generation_provenance?: Json | null
+          id?: string
+          mime_type?: string
+          original_filename?: string
+          path?: string
+          size_bytes?: number
+          uploaded_by?: string
+          version_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_asset_versions_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "content_assets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_asset_versions_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_asset_versions_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "content_asset_versions_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_asset_versions_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      content_assets: {
+        Row: {
+          archive_email_sent_at: string | null
+          archive_reason: string | null
+          archived_at: string | null
+          asset_kind: string
+          created_at: string
+          current_version_id: string | null
+          id: string
+          is_library_asset: boolean
+          library_name: string | null
+          library_tags: string[] | null
+          status: string
+          updated_at: string
+          updated_by: string | null
+          uploaded_by: string
+        }
+        Insert: {
+          archive_email_sent_at?: string | null
+          archive_reason?: string | null
+          archived_at?: string | null
+          asset_kind: string
+          created_at?: string
+          current_version_id?: string | null
+          id?: string
+          is_library_asset?: boolean
+          library_name?: string | null
+          library_tags?: string[] | null
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+          uploaded_by: string
+        }
+        Update: {
+          archive_email_sent_at?: string | null
+          archive_reason?: string | null
+          archived_at?: string | null
+          asset_kind?: string
+          created_at?: string
+          current_version_id?: string | null
+          id?: string
+          is_library_asset?: boolean
+          library_name?: string | null
+          library_tags?: string[] | null
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_assets_current_version_fk"
+            columns: ["current_version_id"]
+            isOneToOne: false
+            referencedRelation: "content_asset_versions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_assets_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_assets_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "content_assets_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_assets_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_assets_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_assets_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "content_assets_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_assets_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       content_item_completions: {
         Row: {
           attempts_count: number
@@ -6817,6 +7096,40 @@ export type Database = {
       }
     }
     Functions: {
+      _archive_asset_internal: {
+        Args: {
+          p_archive_reason: string
+          p_asset_id: string
+          p_caller_id: string
+        }
+        Returns: undefined
+      }
+      _asset_active_ref_count: { Args: { p_asset_id: string }; Returns: number }
+      _asset_extract_ext: { Args: { p_filename: string }; Returns: string }
+      _asset_kind_mime_allowed: {
+        Args: { p_asset_kind: string; p_mime: string }
+        Returns: boolean
+      }
+      _asset_kind_size_ceiling: {
+        Args: { p_asset_kind: string }
+        Returns: number
+      }
+      _cascade_archive_asset_refs_for_content_item: {
+        Args: {
+          p_archive_reason: string
+          p_caller_id: string
+          p_content_item_id: string
+        }
+        Returns: Json
+      }
+      _cascade_archive_asset_refs_for_lesson_blocks: {
+        Args: {
+          p_archive_reason: string
+          p_caller_id: string
+          p_lesson_block_ids: string[]
+        }
+        Returns: Json
+      }
       admin_assign_org_admin: {
         Args: {
           p_is_transfer: boolean
@@ -6956,6 +7269,14 @@ export type Database = {
       }
       apply_post_certification_benefits: {
         Args: { p_certification_id: string }
+        Returns: Json
+      }
+      archive_asset_manual: {
+        Args: { p_asset_id: string; p_force?: boolean; p_reason: string }
+        Returns: Json
+      }
+      archive_asset_ref: {
+        Args: { p_reason: string; p_ref_id: string }
         Returns: Json
       }
       archive_certification_path: {
@@ -7175,6 +7496,16 @@ export type Database = {
         Args: { p_token: string }
         Returns: Json
       }
+      create_asset_ref: {
+        Args: {
+          p_asset_id: string
+          p_content_item_id: string
+          p_lesson_block_id: string
+          p_reason: string
+          p_ref_field: string
+        }
+        Returns: Json
+      }
       create_manual_org_intervention: {
         Args: {
           p_assigned_owner_user_id?: string
@@ -7236,6 +7567,14 @@ export type Database = {
         Returns: Json
       }
       export_audit_events: { Args: { p_filters?: Json }; Returns: Json }
+      finalize_asset_upload: {
+        Args: { p_asset_id: string; p_reason: string }
+        Returns: Json
+      }
+      finalize_new_asset_version: {
+        Args: { p_asset_id: string; p_reason: string; p_version_id: string }
+        Returns: Json
+      }
       generate_invitation_code: { Args: never; Returns: string }
       get_accessible_peer_results: {
         Args: { p_instrument: string }
@@ -7252,6 +7591,21 @@ export type Database = {
       get_airsa_aggregate: {
         Args: { p_slice_type?: string; p_slice_value?: string }
         Returns: Json
+      }
+      get_assets_due_for_archive_email: {
+        Args: never
+        Returns: {
+          archive_reason: string
+          archived_at: string
+          asset_id: string
+          bucket: string
+          is_library_asset: boolean
+          library_name: string
+          mime_type: string
+          original_filename: string
+          path: string
+          size_bytes: number
+        }[]
       }
       get_chain_of_command: {
         Args: { p_user_id?: string }
@@ -7507,6 +7861,10 @@ export type Database = {
         }
         Returns: string
       }
+      mark_archive_email_sent: {
+        Args: { p_asset_ids: string[]; p_recipient: string; p_zip_path: string }
+        Returns: Json
+      }
       mark_skills_practice_signoff: {
         Args: {
           p_content_item_id: string
@@ -7628,10 +7986,20 @@ export type Database = {
         Args: { p_owner_user_id: string; p_viewer_user_id: string }
         Returns: boolean
       }
+      promote_to_library: {
+        Args: {
+          p_asset_id: string
+          p_library_name: string
+          p_library_tags: string[]
+          p_reason: string
+        }
+        Returns: Json
+      }
       pseudonymize_user: {
         Args: { p_reason?: string; p_user_id: string }
         Returns: number
       }
+      reap_pending_uploads: { Args: never; Returns: Json }
       reconcile_supervisors_for_org: {
         Args: { p_organization_id: string }
         Returns: {
@@ -7647,14 +8015,49 @@ export type Database = {
         Args: { p_module_id: string; p_ordered_ids: string[]; p_reason: string }
         Returns: Json
       }
+      replace_asset: {
+        Args: {
+          p_new_asset_id: string
+          p_old_asset_id: string
+          p_reason: string
+        }
+        Returns: Json
+      }
       replace_lesson_blocks: {
         Args: { p_blocks: Json; p_content_item_id: string; p_reason: string }
+        Returns: Json
+      }
+      request_asset_upload: {
+        Args: {
+          p_asset_kind: string
+          p_content_item_id?: string
+          p_is_library_asset?: boolean
+          p_lesson_block_id?: string
+          p_library_name?: string
+          p_library_tags?: string[]
+          p_mime_type: string
+          p_original_filename: string
+          p_reason: string
+          p_ref_field?: string
+          p_size_bytes: number
+        }
+        Returns: Json
+      }
+      request_new_asset_version: {
+        Args: {
+          p_asset_id: string
+          p_mime_type: string
+          p_original_filename: string
+          p_reason: string
+          p_size_bytes: number
+        }
         Returns: Json
       }
       revoke_certification: {
         Args: { p_certification_id: string; p_reason: string }
         Returns: Json
       }
+      run_asset_hard_delete: { Args: never; Returns: Json }
       save_org_intervention: {
         Args: {
           p_description: string
