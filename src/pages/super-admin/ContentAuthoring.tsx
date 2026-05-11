@@ -276,12 +276,14 @@ interface CertPathEditorProps {
   onRequestCreateAttachedCurriculum?: () => void;
   onRefetch?: () => void | Promise<void>;
   onExpandSelf?: () => void;
+  onInvalidateAttachedList?: () => Promise<void>;
 }
 
 function CertPathEditor({
   mode, initial, allCertPaths, allCurricula, attachedCurriculumIds,
   onSaved, onArchived, onCancelCreate,
   onRequestCreateAttachedCurriculum, onRefetch, onExpandSelf,
+  onInvalidateAttachedList,
 }: CertPathEditorProps) {
   const { toast } = useToast();
 
