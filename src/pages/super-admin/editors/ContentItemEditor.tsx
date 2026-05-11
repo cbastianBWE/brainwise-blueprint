@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/dialog";
 import { Loader2, Save, Archive, Sparkles, Video } from "lucide-react";
 import { ITEM_TYPE_OPTIONS, ItemTypeIcon } from "./_shared";
+import { FileUploadField } from "@/components/super-admin/FileUploadField";
 
 interface ContentItemEditorProps {
   mode: "create" | "edit";
