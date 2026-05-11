@@ -1912,6 +1912,9 @@ export default function ContentAuthoring() {
                       queryKey: ["cert-path-attached-curricula", selectedNode.id],
                     });
                   }}
+                  onSelectCurriculum={(curriculumId) => {
+                    selectNode(`cu:${curriculumId}`);
+                  }}
                 />
               ) : isCurriculumCreate ? (
                 <CurriculumEditor
