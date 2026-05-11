@@ -457,6 +457,7 @@ export default function CoachManagement() {
                   <TableHead>Certification</TableHead>
                   <TableHead>Invited</TableHead>
                   <TableHead>Expires</TableHead>
+                  <TableHead>Email Status</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
