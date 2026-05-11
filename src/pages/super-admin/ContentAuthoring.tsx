@@ -1644,7 +1644,54 @@ export default function ContentAuthoring() {
     });
   };
 
-  const selectNode = (k: string) => setSelectedKey(k);
+  const certPathsByCurriculum = useMemo(() => {
+    const m = new Map<string, string[]>();
+    for (const link of (data?.cpcLinks ?? []) as any[]) {
+      const arr = m.get(link.curriculum_id) ?? [];
+      arr.push(link.certification_path_id);
+      m.set(link.curriculum_id, arr);
+    }
+    return m;
+  }, [data?.cpcLinks]);
+
+  const curriculaByModule = useMemo(() => {
+    const m = new Map<string, string[]>();
+    for (const link of (data?.cmLinks ?? []) as any[]) {
+      const arr = m.get(link.module_id) ?? [];
+      arr.push(link.curriculum_id);
+      m.set(link.module_id, arr);
+    }
+    return m;
+  }, [data?.cmLinks]);
+
+  const selectNode = (k: string) => {
+    setSelectedKey(k);
+    if (k.startsWith("cu:") && !k.startsWith("cu:new")) {
+      const cuId = k.slice("cu:".length);
+      const parentCpIds = certPathsByCurriculum.get(cuId) ?? [];
+      if (parentCpIds.length > 0) {
+        setExpanded((prev) => {
+          const next = new Set(prev);
+          for (const cpId of parentCpIds) next.add(`cp:${cpId}`);
+          return next;
+        });
+      }
+    } else if (k.startsWith("mo:")) {
+      const moId = k.slice("mo:".length);
+      const parentCuIds = curriculaByModule.get(moId) ?? [];
+      if (parentCuIds.length > 0) {
+        setExpanded((prev) => {
+          const next = new Set(prev);
+          for (const cuId of parentCuIds) {
+            next.add(`cu:${cuId}`);
+            const cpIds = certPathsByCurriculum.get(cuId) ?? [];
+            for (const cpId of cpIds) next.add(`cp:${cpId}`);
+          }
+          return next;
+        });
+      }
+    }
+  };
 
   const handleComingSoon = () => {
     toast({ title: "Coming in the next prompt" });
@@ -1652,8 +1699,8 @@ export default function ContentAuthoring() {
 
   const sectionsRaw: { label: string; nodes: TreeNode[] }[] = [
     { label: "Certification Paths", nodes: certPathTree },
-    { label: "Standalone Curricula", nodes: standaloneCurricula },
-    { label: "Standalone Modules", nodes: standaloneModules },
+    { label: "All Curricula", nodes: allCurriculaNodes },
+    { label: "All Modules", nodes: allModulesNodes },
   ];
 
   const sections = sectionsRaw.map((s) => {
@@ -1668,7 +1715,7 @@ export default function ContentAuthoring() {
     return merged;
   }, [expanded, debouncedSearch, sections]);
 
-  const totalTopLevel = certPathTree.length + standaloneCurricula.length + standaloneModules.length;
+  const totalTopLevel = certPathTree.length + allCurriculaNodes.length + allModulesNodes.length;
   const selectedPath = selectedKey ? allKeyMap.get(selectedKey) ?? null : null;
   const selectedNode = selectedPath ? selectedPath[selectedPath.length - 1] : null;
 
