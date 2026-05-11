@@ -2,7 +2,7 @@ import {
   LayoutDashboard, BarChart3, ClipboardList, ClipboardCheck, MessageSquare, BookOpen, Settings,
   Users, Users2, Building2, UsersRound, Activity, Heart, Award, UserCircle,
   ShieldCheck, Briefcase, GitBranch, FlaskConical, LogOut, History, Shield,
-  CreditCard, Receipt, ChevronDown, ChevronRight, Plus, FileText, UserSearch,
+  CreditCard, Receipt, ChevronDown, ChevronRight, Plus, FileText, UserSearch, Library,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -86,6 +86,7 @@ const superAdminNav: NavItem[] = [
   { title: "Company Accounts", url: "/super-admin/companies", icon: Briefcase },
   { title: "Create Organization", url: "/super-admin/create-organization", icon: Plus },
   { title: "Version Management", url: "/super-admin/versions", icon: GitBranch },
+  { title: "Content Authoring", url: "/super-admin/content-authoring", icon: Library },
   { title: "AI Chat", url: "/ai-chat", icon: MessageSquare },
   { title: "Chat History", url: "/ai-chat/history", icon: History },
   { title: "AI Research", url: "/super-admin/ai-research", icon: FlaskConical, disabled: true, badge: "Phase 2" },

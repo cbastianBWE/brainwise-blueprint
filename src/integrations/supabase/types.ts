@@ -14,6 +14,173 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_authoring_context: {
+        Row: {
+          body_markdown: string
+          context_name: string
+          created_at: string
+          created_by: string | null
+          id: string
+          is_active: boolean
+          notes: string | null
+          version: number
+        }
+        Insert: {
+          body_markdown: string
+          context_name: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          notes?: string | null
+          version: number
+        }
+        Update: {
+          body_markdown?: string
+          context_name?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          notes?: string | null
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_authoring_context_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_authoring_context_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "ai_authoring_context_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_authoring_context_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_authoring_voice_presets: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          display_name: string
+          display_order: number
+          example_paragraph: string
+          id: string
+          is_active: boolean
+          is_system: boolean
+          preset_key: string
+          short_description: string
+          updated_at: string
+          updated_by: string | null
+          voice_guidance_markdown: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          display_name: string
+          display_order?: number
+          example_paragraph: string
+          id?: string
+          is_active?: boolean
+          is_system?: boolean
+          preset_key: string
+          short_description: string
+          updated_at?: string
+          updated_by?: string | null
+          voice_guidance_markdown: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          display_name?: string
+          display_order?: number
+          example_paragraph?: string
+          id?: string
+          is_active?: boolean
+          is_system?: boolean
+          preset_key?: string
+          short_description?: string
+          updated_at?: string
+          updated_by?: string | null
+          voice_guidance_markdown?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_authoring_voice_presets_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_authoring_voice_presets_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "ai_authoring_voice_presets_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_authoring_voice_presets_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_authoring_voice_presets_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_authoring_voice_presets_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "ai_authoring_voice_presets_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_authoring_voice_presets_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_usage: {
         Row: {
           id: string
@@ -760,6 +927,207 @@ export type Database = {
         }
         Relationships: []
       }
+      certification_path_curricula: {
+        Row: {
+          certification_path_id: string
+          created_at: string
+          created_by: string | null
+          curriculum_id: string
+          display_order: number
+          id: string
+          is_required: boolean
+          prerequisite_curriculum_id: string | null
+        }
+        Insert: {
+          certification_path_id: string
+          created_at?: string
+          created_by?: string | null
+          curriculum_id: string
+          display_order?: number
+          id?: string
+          is_required?: boolean
+          prerequisite_curriculum_id?: string | null
+        }
+        Update: {
+          certification_path_id?: string
+          created_at?: string
+          created_by?: string | null
+          curriculum_id?: string
+          display_order?: number
+          id?: string
+          is_required?: boolean
+          prerequisite_curriculum_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "certification_path_curricula_certification_path_id_fkey"
+            columns: ["certification_path_id"]
+            isOneToOne: false
+            referencedRelation: "certification_paths"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "certification_path_curricula_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "certification_path_curricula_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "certification_path_curricula_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "certification_path_curricula_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "certification_path_curricula_curriculum_id_fkey"
+            columns: ["curriculum_id"]
+            isOneToOne: false
+            referencedRelation: "curricula"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "certification_path_curricula_prerequisite_curriculum_id_fkey"
+            columns: ["prerequisite_curriculum_id"]
+            isOneToOne: false
+            referencedRelation: "curricula"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      certification_paths: {
+        Row: {
+          archived_at: string | null
+          cert_instrument_ids: Json
+          certification_type: string
+          created_at: string
+          created_by: string | null
+          delivery_mode: string
+          description: string | null
+          display_order: number
+          id: string
+          is_published: boolean
+          name: string
+          prerequisite_path_id: string | null
+          slug: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          archived_at?: string | null
+          cert_instrument_ids?: Json
+          certification_type: string
+          created_at?: string
+          created_by?: string | null
+          delivery_mode?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          is_published?: boolean
+          name: string
+          prerequisite_path_id?: string | null
+          slug: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          archived_at?: string | null
+          cert_instrument_ids?: Json
+          certification_type?: string
+          created_at?: string
+          created_by?: string | null
+          delivery_mode?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          is_published?: boolean
+          name?: string
+          prerequisite_path_id?: string | null
+          slug?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "certification_paths_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "certification_paths_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "certification_paths_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "certification_paths_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "certification_paths_prerequisite_path_id_fkey"
+            columns: ["prerequisite_path_id"]
+            isOneToOne: false
+            referencedRelation: "certification_paths"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "certification_paths_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "certification_paths_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "certification_paths_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "certification_paths_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chat_sessions: {
         Row: {
           assessment_result_ids: string[]
@@ -910,6 +1278,7 @@ export type Database = {
           free_assessment_uses: Json
           id: string
           notes: string | null
+          post_certification_benefit_applied_at: string | null
           status: string
           user_id: string
         }
@@ -922,6 +1291,7 @@ export type Database = {
           free_assessment_uses?: Json
           id?: string
           notes?: string | null
+          post_certification_benefit_applied_at?: string | null
           status?: string
           user_id: string
         }
@@ -934,6 +1304,7 @@ export type Database = {
           free_assessment_uses?: Json
           id?: string
           notes?: string | null
+          post_certification_benefit_applied_at?: string | null
           status?: string
           user_id?: string
         }
@@ -1250,6 +1621,134 @@ export type Database = {
           },
         ]
       }
+      coach_mentor_assignments: {
+        Row: {
+          assigned_at: string
+          assigned_by: string | null
+          certification_id: string
+          end_reason: string | null
+          ended_at: string | null
+          id: string
+          mentor_user_id: string
+          notes: string | null
+          trainee_user_id: string
+        }
+        Insert: {
+          assigned_at?: string
+          assigned_by?: string | null
+          certification_id: string
+          end_reason?: string | null
+          ended_at?: string | null
+          id?: string
+          mentor_user_id: string
+          notes?: string | null
+          trainee_user_id: string
+        }
+        Update: {
+          assigned_at?: string
+          assigned_by?: string | null
+          certification_id?: string
+          end_reason?: string | null
+          ended_at?: string | null
+          id?: string
+          mentor_user_id?: string
+          notes?: string | null
+          trainee_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coach_mentor_assignments_assigned_by_fkey"
+            columns: ["assigned_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coach_mentor_assignments_assigned_by_fkey"
+            columns: ["assigned_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "coach_mentor_assignments_assigned_by_fkey"
+            columns: ["assigned_by"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coach_mentor_assignments_assigned_by_fkey"
+            columns: ["assigned_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coach_mentor_assignments_certification_id_fkey"
+            columns: ["certification_id"]
+            isOneToOne: false
+            referencedRelation: "coach_certifications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coach_mentor_assignments_mentor_user_id_fkey"
+            columns: ["mentor_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coach_mentor_assignments_mentor_user_id_fkey"
+            columns: ["mentor_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "coach_mentor_assignments_mentor_user_id_fkey"
+            columns: ["mentor_user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coach_mentor_assignments_mentor_user_id_fkey"
+            columns: ["mentor_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coach_mentor_assignments_trainee_user_id_fkey"
+            columns: ["trainee_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coach_mentor_assignments_trainee_user_id_fkey"
+            columns: ["trainee_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "coach_mentor_assignments_trainee_user_id_fkey"
+            columns: ["trainee_user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coach_mentor_assignments_trainee_user_id_fkey"
+            columns: ["trainee_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       coach_pending_bulk_batches: {
         Row: {
           coach_user_id: string
@@ -1306,6 +1805,221 @@ export type Database = {
           {
             foreignKeyName: "coach_pending_bulk_batches_coach_user_id_fkey"
             columns: ["coach_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cohort_members: {
+        Row: {
+          cohort_id: string
+          id: string
+          joined_at: string
+          joined_by: string | null
+          left_at: string | null
+          left_reason: string | null
+          member_status: string
+          user_id: string
+        }
+        Insert: {
+          cohort_id: string
+          id?: string
+          joined_at?: string
+          joined_by?: string | null
+          left_at?: string | null
+          left_reason?: string | null
+          member_status?: string
+          user_id: string
+        }
+        Update: {
+          cohort_id?: string
+          id?: string
+          joined_at?: string
+          joined_by?: string | null
+          left_at?: string | null
+          left_reason?: string | null
+          member_status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cohort_members_cohort_id_fkey"
+            columns: ["cohort_id"]
+            isOneToOne: false
+            referencedRelation: "cohorts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cohort_members_joined_by_fkey"
+            columns: ["joined_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cohort_members_joined_by_fkey"
+            columns: ["joined_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "cohort_members_joined_by_fkey"
+            columns: ["joined_by"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cohort_members_joined_by_fkey"
+            columns: ["joined_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cohort_members_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cohort_members_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "cohort_members_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cohort_members_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cohorts: {
+        Row: {
+          archived_at: string | null
+          certification_path_id: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          ends_at: string | null
+          enrollment_closes_at: string | null
+          enrollment_opens_at: string | null
+          id: string
+          max_capacity: number | null
+          name: string
+          starts_at: string | null
+          status: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          archived_at?: string | null
+          certification_path_id: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          ends_at?: string | null
+          enrollment_closes_at?: string | null
+          enrollment_opens_at?: string | null
+          id?: string
+          max_capacity?: number | null
+          name: string
+          starts_at?: string | null
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          archived_at?: string | null
+          certification_path_id?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          ends_at?: string | null
+          enrollment_closes_at?: string | null
+          enrollment_opens_at?: string | null
+          id?: string
+          max_capacity?: number | null
+          name?: string
+          starts_at?: string | null
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cohorts_certification_path_id_fkey"
+            columns: ["certification_path_id"]
+            isOneToOne: false
+            referencedRelation: "certification_paths"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cohorts_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cohorts_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "cohorts_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cohorts_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cohorts_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cohorts_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "cohorts_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cohorts_updated_by_fkey"
+            columns: ["updated_by"]
             isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
@@ -1511,6 +2225,382 @@ export type Database = {
           user_agent?: string | null
         }
         Relationships: []
+      }
+      content_item_completions: {
+        Row: {
+          attempts_count: number
+          completed_at: string | null
+          content_item_id: string
+          created_at: string
+          external_link_confirmed_at: string | null
+          file_upload_filename: string | null
+          file_upload_size_bytes: number | null
+          file_upload_url: string | null
+          id: string
+          live_event_attendance_status: string | null
+          live_event_marked_by: string | null
+          quiz_best_score_pct: number | null
+          quiz_passed: boolean | null
+          reviewer_comments: string | null
+          reviewer_user_id: string | null
+          skills_attachment_url: string | null
+          skills_mentor_signed_off: boolean
+          skills_mentor_signed_off_at: string | null
+          skills_mentor_signed_off_by: string | null
+          skills_trainee_signed_off: boolean
+          skills_trainee_signed_off_at: string | null
+          started_at: string | null
+          status: string
+          updated_at: string
+          user_id: string
+          video_last_position_seconds: number | null
+          video_watch_pct: number | null
+          written_review_status: string | null
+        }
+        Insert: {
+          attempts_count?: number
+          completed_at?: string | null
+          content_item_id: string
+          created_at?: string
+          external_link_confirmed_at?: string | null
+          file_upload_filename?: string | null
+          file_upload_size_bytes?: number | null
+          file_upload_url?: string | null
+          id?: string
+          live_event_attendance_status?: string | null
+          live_event_marked_by?: string | null
+          quiz_best_score_pct?: number | null
+          quiz_passed?: boolean | null
+          reviewer_comments?: string | null
+          reviewer_user_id?: string | null
+          skills_attachment_url?: string | null
+          skills_mentor_signed_off?: boolean
+          skills_mentor_signed_off_at?: string | null
+          skills_mentor_signed_off_by?: string | null
+          skills_trainee_signed_off?: boolean
+          skills_trainee_signed_off_at?: string | null
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+          video_last_position_seconds?: number | null
+          video_watch_pct?: number | null
+          written_review_status?: string | null
+        }
+        Update: {
+          attempts_count?: number
+          completed_at?: string | null
+          content_item_id?: string
+          created_at?: string
+          external_link_confirmed_at?: string | null
+          file_upload_filename?: string | null
+          file_upload_size_bytes?: number | null
+          file_upload_url?: string | null
+          id?: string
+          live_event_attendance_status?: string | null
+          live_event_marked_by?: string | null
+          quiz_best_score_pct?: number | null
+          quiz_passed?: boolean | null
+          reviewer_comments?: string | null
+          reviewer_user_id?: string | null
+          skills_attachment_url?: string | null
+          skills_mentor_signed_off?: boolean
+          skills_mentor_signed_off_at?: string | null
+          skills_mentor_signed_off_by?: string | null
+          skills_trainee_signed_off?: boolean
+          skills_trainee_signed_off_at?: string | null
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+          video_last_position_seconds?: number | null
+          video_watch_pct?: number | null
+          written_review_status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_item_completions_content_item_id_fkey"
+            columns: ["content_item_id"]
+            isOneToOne: false
+            referencedRelation: "content_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_item_completions_live_event_marked_by_fkey"
+            columns: ["live_event_marked_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_item_completions_live_event_marked_by_fkey"
+            columns: ["live_event_marked_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "content_item_completions_live_event_marked_by_fkey"
+            columns: ["live_event_marked_by"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_item_completions_live_event_marked_by_fkey"
+            columns: ["live_event_marked_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_item_completions_reviewer_user_id_fkey"
+            columns: ["reviewer_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_item_completions_reviewer_user_id_fkey"
+            columns: ["reviewer_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "content_item_completions_reviewer_user_id_fkey"
+            columns: ["reviewer_user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_item_completions_reviewer_user_id_fkey"
+            columns: ["reviewer_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_item_completions_skills_mentor_signed_off_by_fkey"
+            columns: ["skills_mentor_signed_off_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_item_completions_skills_mentor_signed_off_by_fkey"
+            columns: ["skills_mentor_signed_off_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "content_item_completions_skills_mentor_signed_off_by_fkey"
+            columns: ["skills_mentor_signed_off_by"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_item_completions_skills_mentor_signed_off_by_fkey"
+            columns: ["skills_mentor_signed_off_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_item_completions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_item_completions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "content_item_completions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_item_completions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      content_items: {
+        Row: {
+          archived_at: string | null
+          config: Json
+          created_at: string
+          created_by: string | null
+          description: string | null
+          display_order: number
+          event_external_id: string | null
+          event_scheduled_at: string | null
+          external_url: string | null
+          file_upload_allowed_extensions: string[] | null
+          file_upload_max_bytes: number | null
+          id: string
+          is_required: boolean
+          item_type: string
+          lesson_completion_mode: string | null
+          module_id: string
+          quiz_pass_threshold_pct: number | null
+          quiz_show_correct_mode: string | null
+          skills_actor_invitation_required: boolean
+          skills_optional_attachment: boolean
+          skills_signoff_required: string | null
+          title: string
+          updated_at: string
+          updated_by: string | null
+          video_completion_threshold_pct: number | null
+          video_source_id: string | null
+          video_source_type: string | null
+          written_completion_mode: string | null
+          written_max_chars: number | null
+          written_min_chars: number | null
+        }
+        Insert: {
+          archived_at?: string | null
+          config?: Json
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          display_order?: number
+          event_external_id?: string | null
+          event_scheduled_at?: string | null
+          external_url?: string | null
+          file_upload_allowed_extensions?: string[] | null
+          file_upload_max_bytes?: number | null
+          id?: string
+          is_required?: boolean
+          item_type: string
+          lesson_completion_mode?: string | null
+          module_id: string
+          quiz_pass_threshold_pct?: number | null
+          quiz_show_correct_mode?: string | null
+          skills_actor_invitation_required?: boolean
+          skills_optional_attachment?: boolean
+          skills_signoff_required?: string | null
+          title: string
+          updated_at?: string
+          updated_by?: string | null
+          video_completion_threshold_pct?: number | null
+          video_source_id?: string | null
+          video_source_type?: string | null
+          written_completion_mode?: string | null
+          written_max_chars?: number | null
+          written_min_chars?: number | null
+        }
+        Update: {
+          archived_at?: string | null
+          config?: Json
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          display_order?: number
+          event_external_id?: string | null
+          event_scheduled_at?: string | null
+          external_url?: string | null
+          file_upload_allowed_extensions?: string[] | null
+          file_upload_max_bytes?: number | null
+          id?: string
+          is_required?: boolean
+          item_type?: string
+          lesson_completion_mode?: string | null
+          module_id?: string
+          quiz_pass_threshold_pct?: number | null
+          quiz_show_correct_mode?: string | null
+          skills_actor_invitation_required?: boolean
+          skills_optional_attachment?: boolean
+          skills_signoff_required?: string | null
+          title?: string
+          updated_at?: string
+          updated_by?: string | null
+          video_completion_threshold_pct?: number | null
+          video_source_id?: string | null
+          video_source_type?: string | null
+          written_completion_mode?: string | null
+          written_max_chars?: number | null
+          written_min_chars?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_items_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_items_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "content_items_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_items_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_items_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "modules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_items_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_items_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "content_items_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_items_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       corporate_contracts: {
         Row: {
@@ -1743,6 +2833,194 @@ export type Database = {
             columns: ["redeemed_by_user_id"]
             isOneToOne: false
             referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      curricula: {
+        Row: {
+          archived_at: string | null
+          audience_tags: string[]
+          created_at: string
+          created_by: string | null
+          description: string | null
+          estimated_minutes: number | null
+          id: string
+          is_published: boolean
+          mode: string
+          name: string
+          slug: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          archived_at?: string | null
+          audience_tags?: string[]
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          estimated_minutes?: number | null
+          id?: string
+          is_published?: boolean
+          mode?: string
+          name: string
+          slug: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          archived_at?: string | null
+          audience_tags?: string[]
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          estimated_minutes?: number | null
+          id?: string
+          is_published?: boolean
+          mode?: string
+          name?: string
+          slug?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "curricula_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "curricula_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "curricula_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "curricula_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "curricula_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "curricula_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "curricula_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "curricula_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      curriculum_modules: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          curriculum_id: string
+          display_order: number
+          id: string
+          is_required: boolean
+          module_id: string
+          prerequisite_module_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          curriculum_id: string
+          display_order?: number
+          id?: string
+          is_required?: boolean
+          module_id: string
+          prerequisite_module_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          curriculum_id?: string
+          display_order?: number
+          id?: string
+          is_required?: boolean
+          module_id?: string
+          prerequisite_module_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "curriculum_modules_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "curriculum_modules_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "curriculum_modules_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "curriculum_modules_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "curriculum_modules_curriculum_id_fkey"
+            columns: ["curriculum_id"]
+            isOneToOne: false
+            referencedRelation: "curricula"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "curriculum_modules_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "modules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "curriculum_modules_prerequisite_module_id_fkey"
+            columns: ["prerequisite_module_id"]
+            isOneToOne: false
+            referencedRelation: "modules"
             referencedColumns: ["id"]
           },
         ]
@@ -2294,6 +3572,146 @@ export type Database = {
           },
         ]
       }
+      lesson_block_types: {
+        Row: {
+          block_type: string
+          category: string
+          created_at: string
+          description: string
+          is_interactive: boolean
+          is_scored: boolean
+          is_v1_active: boolean
+        }
+        Insert: {
+          block_type: string
+          category: string
+          created_at?: string
+          description: string
+          is_interactive?: boolean
+          is_scored?: boolean
+          is_v1_active?: boolean
+        }
+        Update: {
+          block_type?: string
+          category?: string
+          created_at?: string
+          description?: string
+          is_interactive?: boolean
+          is_scored?: boolean
+          is_v1_active?: boolean
+        }
+        Relationships: []
+      }
+      lesson_blocks: {
+        Row: {
+          archived_at: string | null
+          block_type: string
+          config: Json
+          content_item_id: string
+          created_at: string
+          created_by: string | null
+          display_order: number
+          id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          archived_at?: string | null
+          block_type: string
+          config?: Json
+          content_item_id: string
+          created_at?: string
+          created_by?: string | null
+          display_order: number
+          id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          archived_at?: string | null
+          block_type?: string
+          config?: Json
+          content_item_id?: string
+          created_at?: string
+          created_by?: string | null
+          display_order?: number
+          id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lesson_blocks_block_type_fkey"
+            columns: ["block_type"]
+            isOneToOne: false
+            referencedRelation: "lesson_block_types"
+            referencedColumns: ["block_type"]
+          },
+          {
+            foreignKeyName: "lesson_blocks_content_item_id_fkey"
+            columns: ["content_item_id"]
+            isOneToOne: false
+            referencedRelation: "content_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lesson_blocks_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lesson_blocks_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "lesson_blocks_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lesson_blocks_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lesson_blocks_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lesson_blocks_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "lesson_blocks_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lesson_blocks_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       member_feature_overrides: {
         Row: {
           created_at: string
@@ -2380,6 +3798,141 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      modules: {
+        Row: {
+          archived_at: string | null
+          audience_tags: string[]
+          created_at: string
+          created_by: string | null
+          description: string | null
+          estimated_minutes: number | null
+          id: string
+          is_published: boolean
+          name: string
+          slug: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          archived_at?: string | null
+          audience_tags?: string[]
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          estimated_minutes?: number | null
+          id?: string
+          is_published?: boolean
+          name: string
+          slug: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          archived_at?: string | null
+          audience_tags?: string[]
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          estimated_minutes?: number | null
+          id?: string
+          is_published?: boolean
+          name?: string
+          slug?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "modules_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "modules_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "modules_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "modules_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "modules_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "modules_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "modules_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "modules_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notification_types_catalog: {
+        Row: {
+          category: string
+          created_at: string
+          default_channel: string
+          description: string
+          importance_band: string
+          is_v1_active: boolean
+          notification_type: string
+          user_configurable: boolean
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          default_channel: string
+          description: string
+          importance_band: string
+          is_v1_active?: boolean
+          notification_type: string
+          user_configurable: boolean
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          default_channel?: string
+          description?: string
+          importance_band?: string
+          is_v1_active?: boolean
+          notification_type?: string
+          user_configurable?: boolean
+        }
+        Relationships: []
       }
       org_cross_instrument_recommendations: {
         Row: {
@@ -3485,9 +5038,319 @@ export type Database = {
           },
         ]
       }
+      quiz_answer_options: {
+        Row: {
+          archived_at: string | null
+          created_at: string
+          created_by: string | null
+          display_order: number
+          id: string
+          is_correct: boolean
+          match_pair_key: string | null
+          option_image_url: string | null
+          option_text: string
+          question_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          archived_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          display_order?: number
+          id?: string
+          is_correct?: boolean
+          match_pair_key?: string | null
+          option_image_url?: string | null
+          option_text: string
+          question_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          archived_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          display_order?: number
+          id?: string
+          is_correct?: boolean
+          match_pair_key?: string | null
+          option_image_url?: string | null
+          option_text?: string
+          question_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_answer_options_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quiz_answer_options_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "quiz_answer_options_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quiz_answer_options_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quiz_answer_options_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_questions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quiz_answer_options_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quiz_answer_options_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "quiz_answer_options_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quiz_answer_options_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quiz_attempts: {
+        Row: {
+          answers: Json
+          attempt_number: number
+          completion_id: string | null
+          content_item_id: string
+          id: string
+          pass_threshold_pct: number
+          passed: boolean
+          score_pct: number
+          started_at: string | null
+          submitted_at: string
+          time_taken_seconds: number | null
+          user_id: string
+        }
+        Insert: {
+          answers: Json
+          attempt_number: number
+          completion_id?: string | null
+          content_item_id: string
+          id?: string
+          pass_threshold_pct: number
+          passed: boolean
+          score_pct: number
+          started_at?: string | null
+          submitted_at?: string
+          time_taken_seconds?: number | null
+          user_id: string
+        }
+        Update: {
+          answers?: Json
+          attempt_number?: number
+          completion_id?: string | null
+          content_item_id?: string
+          id?: string
+          pass_threshold_pct?: number
+          passed?: boolean
+          score_pct?: number
+          started_at?: string | null
+          submitted_at?: string
+          time_taken_seconds?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_attempts_completion_id_fkey"
+            columns: ["completion_id"]
+            isOneToOne: false
+            referencedRelation: "content_item_completions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quiz_attempts_content_item_id_fkey"
+            columns: ["content_item_id"]
+            isOneToOne: false
+            referencedRelation: "content_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quiz_attempts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quiz_attempts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "quiz_attempts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quiz_attempts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quiz_questions: {
+        Row: {
+          archived_at: string | null
+          content_item_id: string
+          created_at: string
+          created_by: string | null
+          display_order: number
+          explanation: string | null
+          id: string
+          points: number
+          question_image_url: string | null
+          question_text: string
+          question_type: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          archived_at?: string | null
+          content_item_id: string
+          created_at?: string
+          created_by?: string | null
+          display_order?: number
+          explanation?: string | null
+          id?: string
+          points?: number
+          question_image_url?: string | null
+          question_text: string
+          question_type: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          archived_at?: string | null
+          content_item_id?: string
+          created_at?: string
+          created_by?: string | null
+          display_order?: number
+          explanation?: string | null
+          id?: string
+          points?: number
+          question_image_url?: string | null
+          question_text?: string
+          question_type?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_questions_content_item_id_fkey"
+            columns: ["content_item_id"]
+            isOneToOne: false
+            referencedRelation: "content_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quiz_questions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quiz_questions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "quiz_questions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quiz_questions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quiz_questions_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quiz_questions_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "quiz_questions_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quiz_questions_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       resources: {
         Row: {
           audiences: string[]
+          category: string
           content_type: string | null
           id: string
           published_at: string
@@ -3497,6 +5360,7 @@ export type Database = {
         }
         Insert: {
           audiences: string[]
+          category?: string
           content_type?: string | null
           id?: string
           published_at?: string
@@ -3506,6 +5370,7 @@ export type Database = {
         }
         Update: {
           audiences?: string[]
+          category?: string
           content_type?: string | null
           id?: string
           published_at?: string
@@ -4029,6 +5894,159 @@ export type Database = {
         }
         Relationships: []
       }
+      user_curriculum_assignments: {
+        Row: {
+          assigned_at: string
+          assigned_by: string | null
+          certification_id: string | null
+          completed_at: string | null
+          curriculum_id: string
+          due_at: string | null
+          id: string
+          notes: string | null
+          source: string
+          source_reference_id: string | null
+          status: string
+          unassigned_at: string | null
+          unassigned_by: string | null
+          unassigned_reason: string | null
+          user_id: string
+        }
+        Insert: {
+          assigned_at?: string
+          assigned_by?: string | null
+          certification_id?: string | null
+          completed_at?: string | null
+          curriculum_id: string
+          due_at?: string | null
+          id?: string
+          notes?: string | null
+          source: string
+          source_reference_id?: string | null
+          status?: string
+          unassigned_at?: string | null
+          unassigned_by?: string | null
+          unassigned_reason?: string | null
+          user_id: string
+        }
+        Update: {
+          assigned_at?: string
+          assigned_by?: string | null
+          certification_id?: string | null
+          completed_at?: string | null
+          curriculum_id?: string
+          due_at?: string | null
+          id?: string
+          notes?: string | null
+          source?: string
+          source_reference_id?: string | null
+          status?: string
+          unassigned_at?: string | null
+          unassigned_by?: string | null
+          unassigned_reason?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_curriculum_assignments_assigned_by_fkey"
+            columns: ["assigned_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_curriculum_assignments_assigned_by_fkey"
+            columns: ["assigned_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "user_curriculum_assignments_assigned_by_fkey"
+            columns: ["assigned_by"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_curriculum_assignments_assigned_by_fkey"
+            columns: ["assigned_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_curriculum_assignments_certification_id_fkey"
+            columns: ["certification_id"]
+            isOneToOne: false
+            referencedRelation: "coach_certifications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_curriculum_assignments_curriculum_id_fkey"
+            columns: ["curriculum_id"]
+            isOneToOne: false
+            referencedRelation: "curricula"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_curriculum_assignments_unassigned_by_fkey"
+            columns: ["unassigned_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_curriculum_assignments_unassigned_by_fkey"
+            columns: ["unassigned_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "user_curriculum_assignments_unassigned_by_fkey"
+            columns: ["unassigned_by"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_curriculum_assignments_unassigned_by_fkey"
+            columns: ["unassigned_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_curriculum_assignments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_curriculum_assignments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "user_curriculum_assignments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_curriculum_assignments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_demographics: {
         Row: {
           age_range: string | null
@@ -4098,6 +6116,121 @@ export type Database = {
             foreignKeyName: "user_demographics_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_notification_preferences: {
+        Row: {
+          channel: string
+          created_at: string
+          notification_type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          channel?: string
+          created_at?: string
+          notification_type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          channel?: string
+          created_at?: string
+          notification_type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_notification_preferences_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_notification_preferences_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "user_notification_preferences_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_notification_preferences_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_notifications: {
+        Row: {
+          archived_at: string | null
+          created_at: string
+          dedup_key: string | null
+          id: string
+          notification_type: string
+          payload: Json
+          read_at: string | null
+          user_id: string
+        }
+        Insert: {
+          archived_at?: string | null
+          created_at?: string
+          dedup_key?: string | null
+          id?: string
+          notification_type: string
+          payload?: Json
+          read_at?: string | null
+          user_id: string
+        }
+        Update: {
+          archived_at?: string | null
+          created_at?: string
+          dedup_key?: string | null
+          id?: string
+          notification_type?: string
+          payload?: Json
+          read_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "user_notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
           },
@@ -4261,6 +6394,122 @@ export type Database = {
           {
             foreignKeyName: "users_supervisor_user_id_fkey"
             columns: ["supervisor_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      written_submissions: {
+        Row: {
+          char_count: number
+          completion_id: string | null
+          content: string
+          content_item_id: string
+          id: string
+          iteration_number: number
+          review_decision: string | null
+          reviewed_at: string | null
+          reviewer_comments: string | null
+          reviewer_user_id: string | null
+          submitted_at: string
+          user_id: string
+        }
+        Insert: {
+          char_count: number
+          completion_id?: string | null
+          content: string
+          content_item_id: string
+          id?: string
+          iteration_number: number
+          review_decision?: string | null
+          reviewed_at?: string | null
+          reviewer_comments?: string | null
+          reviewer_user_id?: string | null
+          submitted_at?: string
+          user_id: string
+        }
+        Update: {
+          char_count?: number
+          completion_id?: string | null
+          content?: string
+          content_item_id?: string
+          id?: string
+          iteration_number?: number
+          review_decision?: string | null
+          reviewed_at?: string | null
+          reviewer_comments?: string | null
+          reviewer_user_id?: string | null
+          submitted_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "written_submissions_completion_id_fkey"
+            columns: ["completion_id"]
+            isOneToOne: false
+            referencedRelation: "content_item_completions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "written_submissions_content_item_id_fkey"
+            columns: ["content_item_id"]
+            isOneToOne: false
+            referencedRelation: "content_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "written_submissions_reviewer_user_id_fkey"
+            columns: ["reviewer_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "written_submissions_reviewer_user_id_fkey"
+            columns: ["reviewer_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "written_submissions_reviewer_user_id_fkey"
+            columns: ["reviewer_user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "written_submissions_reviewer_user_id_fkey"
+            columns: ["reviewer_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "written_submissions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "written_submissions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "written_submissions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "written_submissions_user_id_fkey"
+            columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
@@ -4696,6 +6945,26 @@ export type Database = {
           out_supervisor_user_id: string
         }[]
       }
+      apply_post_certification_benefits: {
+        Args: { p_certification_id: string }
+        Returns: Json
+      }
+      archive_certification_path: {
+        Args: { p_id: string; p_reason: string }
+        Returns: Json
+      }
+      archive_content_item: {
+        Args: { p_id: string; p_reason: string }
+        Returns: Json
+      }
+      archive_curriculum: {
+        Args: { p_id: string; p_reason: string }
+        Returns: Json
+      }
+      archive_module: {
+        Args: { p_id: string; p_reason: string }
+        Returns: Json
+      }
       assert_impersonation_allows: {
         Args: { p_action_category: string }
         Returns: {
@@ -4707,11 +6976,32 @@ export type Database = {
         }[]
       }
       assert_super_admin: { Args: never; Returns: undefined }
+      assign_curriculum_directly: {
+        Args: {
+          p_certification_id?: string
+          p_curriculum_id: string
+          p_due_at?: string
+          p_reason?: string
+          p_source?: string
+          p_source_reference_id?: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
       assign_executive_perspective_assessment: {
         Args: {
           p_assignee_user_ids: string[]
           p_notes?: string
           p_organization_id: string
+        }
+        Returns: Json
+      }
+      assign_mentor: {
+        Args: {
+          p_certification_id: string
+          p_mentor_user_id: string
+          p_reason?: string
+          p_trainee_user_id: string
         }
         Returns: Json
       }
@@ -4826,6 +7116,18 @@ export type Database = {
         Args: { p_assignment_id: string }
         Returns: undefined
       }
+      compose_notification_email: {
+        Args: {
+          p_full_name: string
+          p_notification_type: string
+          p_payload: Json
+          p_user_id: string
+        }
+        Returns: {
+          html_body: string
+          subject: string
+        }[]
+      }
       consume_assessment_purchase: {
         Args: {
           p_assessment_id: string
@@ -4914,6 +7216,15 @@ export type Database = {
       department_rename: {
         Args: { p_dept_id: string; p_new_name: string }
         Returns: undefined
+      }
+      enroll_user_in_certification_path: {
+        Args: {
+          p_certification_path_id: string
+          p_due_at?: string
+          p_reason: string
+          p_user_id: string
+        }
+        Returns: Json
       }
       export_audit_events: { Args: { p_filters?: Json }; Returns: Json }
       generate_invitation_code: { Args: never; Returns: string }
@@ -5044,6 +7355,11 @@ export type Database = {
           p_slice_type?: string
           p_slice_value?: string
         }
+        Returns: Json
+      }
+      get_user_learning_state: { Args: { p_user_id: string }; Returns: Json }
+      grant_certification: {
+        Args: { p_certification_id: string; p_reason?: string }
         Returns: Json
       }
       has_required_demographics: {
@@ -5182,6 +7498,14 @@ export type Database = {
         }
         Returns: string
       }
+      mark_skills_practice_signoff: {
+        Args: {
+          p_content_item_id: string
+          p_signoff_type: string
+          p_trainee_user_id?: string
+        }
+        Returns: Json
+      }
       maybe_mark_onboarding_complete: {
         Args: { p_user_id: string }
         Returns: undefined
@@ -5189,6 +7513,14 @@ export type Database = {
       member_feature_override_set: {
         Args: { p_enabled: boolean; p_feature: string; p_user: string }
         Returns: undefined
+      }
+      mentor_review_submission: {
+        Args: {
+          p_comments?: string
+          p_decision: string
+          p_submission_id: string
+        }
+        Returns: Json
       }
       my_access_history: {
         Args: { p_limit?: number; p_offset?: number }
@@ -5241,6 +7573,15 @@ export type Database = {
           self_rater_user_id: string
         }[]
       }
+      notify_user: {
+        Args: {
+          p_dedup_key?: string
+          p_notification_type: string
+          p_payload?: Json
+          p_user_id: string
+        }
+        Returns: Json
+      }
       org_has_feature: {
         Args: { p_feature: string; p_org: string }
         Returns: boolean
@@ -5292,6 +7633,18 @@ export type Database = {
       reconcile_supervisors_for_user: {
         Args: { p_new_user_id: string }
         Returns: number
+      }
+      reorder_content_items: {
+        Args: { p_module_id: string; p_ordered_ids: string[]; p_reason: string }
+        Returns: Json
+      }
+      replace_lesson_blocks: {
+        Args: { p_blocks: Json; p_content_item_id: string; p_reason: string }
+        Returns: Json
+      }
+      revoke_certification: {
+        Args: { p_certification_id: string; p_reason: string }
+        Returns: Json
       }
       save_org_intervention: {
         Args: {
@@ -5367,6 +7720,14 @@ export type Database = {
         Args: { p_assignment_id: string }
         Returns: string
       }
+      submit_quiz_attempt: {
+        Args: { p_answers: Json; p_content_item_id: string }
+        Returns: Json
+      }
+      submit_written_summary: {
+        Args: { p_content: string; p_content_item_id: string }
+        Returns: Json
+      }
       super_admin_list_orgs_with_usage: {
         Args: never
         Returns: {
@@ -5389,6 +7750,18 @@ export type Database = {
           users_pseudonymized: number
         }[]
       }
+      unassign_curriculum: {
+        Args: { p_assignment_id: string; p_reason: string }
+        Returns: Json
+      }
+      unassign_mentor: {
+        Args: {
+          p_assignment_id: string
+          p_end_reason: string
+          p_reason: string
+        }
+        Returns: Json
+      }
       update_chat_session: {
         Args: {
           p_message_count: number
@@ -5409,6 +7782,72 @@ export type Database = {
           p_status?: string
           p_target_completion_date?: string
           p_tracking_notes?: string
+        }
+        Returns: Json
+      }
+      upsert_certification_path: {
+        Args: {
+          p_cert_instrument_ids: Json
+          p_certification_type: string
+          p_delivery_mode: string
+          p_description: string
+          p_display_order: number
+          p_id: string
+          p_is_published: boolean
+          p_name: string
+          p_prerequisite_path_id: string
+          p_reason: string
+          p_slug: string
+        }
+        Returns: Json
+      }
+      upsert_content_item: {
+        Args: {
+          p_description: string
+          p_display_order: number
+          p_id: string
+          p_is_required: boolean
+          p_item_type: string
+          p_lesson_completion_mode: string
+          p_module_id: string
+          p_reason: string
+          p_title: string
+          p_type_config: Json
+        }
+        Returns: Json
+      }
+      upsert_curriculum: {
+        Args: {
+          p_attachment_display_order: number
+          p_attachment_is_required: boolean
+          p_audience_tags: string[]
+          p_certification_path_id: string
+          p_description: string
+          p_estimated_minutes: number
+          p_id: string
+          p_is_published: boolean
+          p_mode: string
+          p_name: string
+          p_prerequisite_curriculum_id: string
+          p_reason: string
+          p_slug: string
+        }
+        Returns: Json
+      }
+      upsert_module: {
+        Args: {
+          p_attachment_display_order: number
+          p_attachment_is_required: boolean
+          p_audience_tags: string[]
+          p_curriculum_id: string
+          p_description: string
+          p_estimated_minutes: number
+          p_id: string
+          p_is_published: boolean
+          p_name: string
+          p_prerequisite_module_id: string
+          p_reason: string
+          p_slug: string
         }
         Returns: Json
       }
