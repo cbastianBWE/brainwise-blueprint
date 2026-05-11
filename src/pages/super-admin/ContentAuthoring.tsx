@@ -309,6 +309,74 @@ function CertPathEditor({
 
   const [addCurriculumOpen, setAddCurriculumOpen] = useState(false);
 
+  const [pullSearch, setPullSearch] = useState("");
+  const [pullAttachingId, setPullAttachingId] = useState<string | null>(null);
+  const suggestedNextOrder = useMemo(() => attachedCurriculumIds.size, [attachedCurriculumIds]);
+  const [pullDisplayOrder, setPullDisplayOrder] = useState<string>(String(suggestedNextOrder));
+  const [pullIsRequired, setPullIsRequired] = useState<boolean>(true);
+
+  useEffect(() => {
+    if (!addCurriculumOpen) {
+      setPullDisplayOrder(String(suggestedNextOrder));
+      setPullIsRequired(true);
+      setPullSearch("");
+    }
+  }, [addCurriculumOpen, suggestedNextOrder]);
+
+  const attachExistingCurriculum = async (curriculumId: string, _curriculumName: string) => {
+    if (!initial?.id || pullAttachingId) return;
+    setPullAttachingId(curriculumId);
+
+    const existing = (allCurricula ?? []).find((c: any) => c.id === curriculumId);
+    if (!existing) {
+      setPullAttachingId(null);
+      toast({
+        title: "Could not attach curriculum",
+        description: "Curriculum no longer exists. Refresh and try again.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const orderNum = Number(pullDisplayOrder);
+    const safeOrder = Number.isFinite(orderNum) && orderNum >= 0 ? Math.floor(orderNum) : 0;
+
+    const payload = {
+      p_id: existing.id,
+      p_slug: existing.slug,
+      p_name: existing.name,
+      p_description: existing.description,
+      p_mode: existing.mode,
+      p_audience_tags: existing.audience_tags ?? [],
+      p_estimated_minutes: existing.estimated_minutes,
+      p_is_published: existing.is_published,
+      p_certification_path_id: initial.id,
+      p_attachment_display_order: safeOrder,
+      p_attachment_is_required: pullIsRequired,
+      p_prerequisite_curriculum_id: null,
+      p_reason: `Attach existing curriculum "${existing.name}" to "${initial.name}" via Cert Path editor.`,
+    };
+
+    const { error } = await supabase.rpc("upsert_curriculum", payload as any);
+    setPullAttachingId(null);
+
+    if (error) {
+      toast({
+        title: "Could not attach curriculum",
+        description: error.message ?? "Unknown error.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    toast({
+      title: "Curriculum attached",
+      description: `${existing.name} → ${initial.name}`,
+    });
+    setAddCurriculumOpen(false);
+    onRefetch?.();
+  };
+
   useEffect(() => {
     if (autoSlug) setSlug(slugify(name));
   }, [name, autoSlug]);
