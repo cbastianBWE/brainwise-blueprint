@@ -93,7 +93,6 @@
   background-color: hsl(var(--muted) / 0.30);
 }
 .stacked-block.is-selected {
-  background-color: hsl(var(--muted));
   border-left: 4px solid #F5741A;
   padding-left: 12px;
 }
