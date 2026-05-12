@@ -12,11 +12,19 @@ import {
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { BLOCK_TYPE_META, type BlockType } from "../blockTypeMeta";
 import type {
   AiMode,
   ChatMessage,
   FullContentItem,
+  LengthLevel,
   OutlineItem,
 } from "./types";
 import { mapAiError } from "./mapAiError";
@@ -39,6 +47,8 @@ interface Props {
   attachedDocumentIds: string[];
   mode: AiMode;
   conversationMessages: ChatMessage[]; // for context on outline iterate/add calls
+  lengthPreference: LengthLevel;
+  onLengthChange: (next: LengthLevel) => void;
   onApplyOutlineItem: (
     target: Extract<IterationTarget, { kind: "outline_item" } | { kind: "outline_add" }>,
     item: OutlineItem,
@@ -62,6 +72,8 @@ export function IterationModal(props: Props) {
     mode,
     conversationMessages,
     contentItemId,
+    lengthPreference,
+    onLengthChange,
     onApplyOutlineItem,
     onApplyFullBlock,
   } = props;
