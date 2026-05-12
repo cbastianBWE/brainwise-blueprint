@@ -48,25 +48,25 @@ export const BLOCK_TYPE_META: Record<
     label: "Text",
     description: "Paragraph of rich text",
     icon: Type,
-    defaultConfig: () => ({ body: emptyDoc() }),
+    defaultConfig: () => ({ body: emptyDoc(), background_color: null, padding: "none" }),
   },
   heading: {
     label: "Heading",
     description: "Section header",
     icon: HeadingIcon,
-    defaultConfig: () => ({ text: "", level: 2 }),
+    defaultConfig: () => ({ text: "", level: 2, background_color: null, padding: "none" }),
   },
   divider: {
     label: "Divider",
     description: "Horizontal rule",
     icon: Minus,
-    defaultConfig: () => ({ color: "#021F36" }),
+    defaultConfig: () => ({ color: "#021F36", background_color: null, padding: "none" }),
   },
   image: {
     label: "Image",
     description: "Upload an image",
     icon: ImageIcon,
-    defaultConfig: () => ({ asset_id: null, alt: "", caption: null }),
+    defaultConfig: () => ({ asset_id: null, alt: "", caption: null, background_color: null, padding: "none" }),
   },
   video_embed: {
     label: "Video",
@@ -77,13 +77,15 @@ export const BLOCK_TYPE_META: Record<
       source_type: "supabase_storage",
       source_id: null,
       title: null,
+      background_color: null,
+      padding: "none",
     }),
   },
   quote: {
     label: "Quote",
     description: "Blockquote with attribution",
     icon: Quote,
-    defaultConfig: () => ({ body: emptyDoc(), attribution: null }),
+    defaultConfig: () => ({ body: emptyDoc(), attribution: null, background_color: null, padding: "none" }),
   },
   list: {
     label: "List",
@@ -92,19 +94,21 @@ export const BLOCK_TYPE_META: Record<
     defaultConfig: () => ({
       items: [{ client_id: crypto.randomUUID(), body: emptyDoc() }],
       ordered: false,
+      background_color: null,
+      padding: "none",
     }),
   },
   callout: {
     label: "Callout",
     description: "Highlighted note",
     icon: AlertCircle,
-    defaultConfig: () => ({ variant: "info", body: emptyDoc() }),
+    defaultConfig: () => ({ variant: "info", body: emptyDoc(), background_color: null, padding: "none" }),
   },
   embed_audio: {
     label: "Audio",
     description: "Embedded audio file",
     icon: Music,
-    defaultConfig: () => ({ asset_id: null, transcript: null }),
+    defaultConfig: () => ({ asset_id: null, transcript: null, background_color: null, padding: "none" }),
   },
 };
 

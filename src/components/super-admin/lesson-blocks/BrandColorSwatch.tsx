@@ -18,6 +18,17 @@ export const BRAND_SWATCH_COLORS: BrandSwatchColor[] = [
   { label: "Forest", hex: "#2D6A4F" },
 ];
 
+export const BRAND_TINT_COLORS: BrandSwatchColor[] = [
+  { label: "Navy tint", hex: "#EDEFF2" },
+  { label: "Orange tint", hex: "#FDEFE3" },
+  { label: "Sand tint", hex: "#F9F7F1" },
+  { label: "Teal tint", hex: "#E3EDED" },
+  { label: "Mustard tint", hex: "#F3EEDF" },
+  { label: "Slate tint", hex: "#EFEDEF" },
+  { label: "Purple tint", hex: "#EAE4EE" },
+  { label: "Forest tint", hex: "#E5EBE7" },
+];
+
 interface BrandColorSwatchProps {
   /** Currently selected hex value, or null/undefined for "default" */
   value: string | null | undefined;
@@ -29,6 +40,8 @@ interface BrandColorSwatchProps {
   /** Default label, defaults to "Default" */
   defaultLabel?: string;
   onDefaultSelected?: () => void;
+  /** Which palette to render. "full" = saturated brand colors (default). "tints" = pre-mixed near-neutral tints for backgrounds. */
+  palette?: "full" | "tints";
 }
 
 export function BrandColorSwatch({
@@ -38,10 +51,12 @@ export function BrandColorSwatch({
   allowDefault = false,
   defaultLabel = "Default",
   onDefaultSelected,
+  palette = "full",
 }: BrandColorSwatchProps) {
+  const source = palette === "tints" ? BRAND_TINT_COLORS : BRAND_SWATCH_COLORS;
   const swatches = allowedHexes
-    ? BRAND_SWATCH_COLORS.filter((c) => allowedHexes.includes(c.hex))
-    : BRAND_SWATCH_COLORS;
+    ? source.filter((c) => allowedHexes.includes(c.hex))
+    : source;
 
   return (
     <div className="flex flex-wrap items-center gap-2">

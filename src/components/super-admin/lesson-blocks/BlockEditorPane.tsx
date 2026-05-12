@@ -8,6 +8,7 @@ import { QuoteBlockForm } from "./block-forms/QuoteBlockForm";
 import { ListBlockForm } from "./block-forms/ListBlockForm";
 import { CalloutBlockForm } from "./block-forms/CalloutBlockForm";
 import { EmbedAudioBlockForm } from "./block-forms/EmbedAudioBlockForm";
+import { BlockStyleSection } from "./BlockStyleSection";
 
 interface Props {
   block: EditorBlock | null;
@@ -70,6 +71,8 @@ export function BlockEditorPane({ block, onChange, contentItemId }: Props) {
           contentItemId={contentItemId}
         />
       )}
+
+      <BlockStyleSection value={cfg} onConfigChange={handleConfig} />
     </div>
   );
 }
