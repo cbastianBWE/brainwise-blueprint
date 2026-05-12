@@ -12,6 +12,7 @@ import {
   ListOrdered,
   Heading2,
   Heading3,
+  Heading4,
   Link as LinkIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
