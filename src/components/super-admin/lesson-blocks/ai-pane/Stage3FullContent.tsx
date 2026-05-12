@@ -3,7 +3,7 @@ import { ArrowLeft, Loader2, Sparkles, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { BlockRenderer } from "../BlockRenderer";
 import { BLOCK_TYPE_META, type BlockType, type EditorBlock } from "../blockTypeMeta";
-import type { AiMode, ChatMessage, FullContentItem } from "./types";
+import type { AiMode, ChatMessage, FullContentItem, LengthLevel } from "./types";
 import { IterationModal, type IterationTarget } from "./IterationModal";
 
 interface Props {
@@ -22,6 +22,8 @@ interface Props {
   mode: AiMode;
   conversationMessages: ChatMessage[];
   assetUrlMap: Map<string, string>;
+  lengthPreference: LengthLevel;
+  onLengthChange: (next: LengthLevel) => void;
 }
 
 export function Stage3FullContent(props: Props) {
@@ -41,6 +43,8 @@ export function Stage3FullContent(props: Props) {
     conversationMessages,
     contentItemId,
     assetUrlMap,
+    lengthPreference,
+    onLengthChange,
   } = props;
 
   const [iterationOpen, setIterationOpen] = useState(false);
@@ -147,6 +151,8 @@ export function Stage3FullContent(props: Props) {
         attachedDocumentIds={attachedDocumentIds}
         mode={mode}
         conversationMessages={conversationMessages}
+        lengthPreference={lengthPreference}
+        onLengthChange={onLengthChange}
         onApplyOutlineItem={() => {
           /* not used in stage 3 */
         }}
