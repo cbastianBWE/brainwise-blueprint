@@ -580,14 +580,23 @@ function ButtonStackRender({
               </Button>
             );
           }
-          const url = b.url ?? "";
-          if (!url) {
+          const rawUrl = (b.url ?? "").trim();
+          if (!rawUrl) {
             return (
               <Button key={b.client_id} {...buttonProps} disabled>
                 {label}
               </Button>
             );
           }
+          // Normalize bare domains (e.g. "google.com") to absolute https URLs.
+          // Leave http(s)://, internal routes (/), mailto:, and tel: untouched.
+          const hasScheme =
+            rawUrl.startsWith("http://") ||
+            rawUrl.startsWith("https://") ||
+            rawUrl.startsWith("/") ||
+            rawUrl.startsWith("mailto:") ||
+            rawUrl.startsWith("tel:");
+          const url = hasScheme ? rawUrl : `https://${rawUrl}`;
           const isExternal = url.startsWith("http://") || url.startsWith("https://");
           return (
             <Button key={b.client_id} {...buttonProps} asChild>
