@@ -161,6 +161,23 @@ export function ListBlockForm({ value, onConfigChange }: Props) {
         <Plus className="mr-1 h-3.5 w-3.5" />
         Add item
       </Button>
+      <div className="space-y-2 pt-2">
+        <Label>{value?.ordered ? "Numbered marker color" : "Bullet color"}</Label>
+        <BrandColorSwatch
+          value={value?.marker_color ?? null}
+          onChange={(hex) => onConfigChange({ ...value, marker_color: hex })}
+          allowDefault
+          defaultLabel="Default"
+          onDefaultSelected={() =>
+            onConfigChange({ ...value, marker_color: null })
+          }
+        />
+        <p className="text-xs text-muted-foreground">
+          {value?.ordered
+            ? "Choose a color for the numbered circles. Defaults to Orange."
+            : "Choose a color for the bullets. Defaults to Forest."}
+        </p>
+      </div>
     </div>
   );
 }
