@@ -255,6 +255,7 @@ function ModuleEditor({
       p_prerequisite_module_id: hasAttachmentSection
         ? (attachmentPrerequisiteModuleId === "__none__" ? null : attachmentPrerequisiteModuleId)
         : null,
+      p_thumbnail_asset_id: thumbnailAssetId,
       p_reason: reason.trim(),
     };
 
