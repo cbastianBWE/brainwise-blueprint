@@ -491,15 +491,27 @@ function TabsRender({
   if (tabs.length === 0) return null;
   const safeDefault = Math.min(Math.max(0, defaultTab), tabs.length - 1);
   const defaultValue = tabs[safeDefault]?.client_id ?? tabs[0].client_id;
-  const listClass = style === "pills" ? "bw-tabs-list-pills" : "bw-tabs-list-underline";
-  const triggerClass = style === "pills" ? "bw-tabs-trigger-pills" : "bw-tabs-trigger-underline";
 
   return (
     <Tabs defaultValue={defaultValue} className="w-full">
-      <div className="bw-tabs-list-wrapper">
-        <TabsList className={listClass}>
+      <div className="flex justify-center mb-4">
+        <TabsList
+          className={
+            style === "pills"
+              ? "inline-flex h-auto flex-wrap gap-2 bg-transparent p-0 rounded-none"
+              : "inline-flex h-auto flex-wrap gap-2 bg-transparent p-0 rounded-none border-b-0"
+          }
+        >
           {tabs.map((t) => (
-            <TabsTrigger key={t.client_id} value={t.client_id} className={triggerClass}>
+            <TabsTrigger
+              key={t.client_id}
+              value={t.client_id}
+              className={
+                style === "pills"
+                  ? "rounded-full bg-muted text-muted-foreground hover:bg-muted/70 hover:text-[#021F36] data-[state=active]:bg-[#F5741A] data-[state=active]:text-white data-[state=active]:shadow-none font-medium px-4 py-2 transition-colors"
+                  : "rounded-none bg-transparent border-b-2 border-border text-muted-foreground hover:text-[#021F36] hover:border-muted-foreground data-[state=active]:text-[#021F36] data-[state=active]:border-[#F5741A] data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:font-semibold font-medium px-4 py-2 transition-colors"
+              }
+            >
               {t.label || "(untitled)"}
             </TabsTrigger>
           ))}
@@ -507,7 +519,7 @@ function TabsRender({
       </div>
       {tabs.map((t) => (
         <TabsContent key={t.client_id} value={t.client_id} className="pt-2">
-          <div className="tiptap-prose">
+          <div className="tiptap-prose prose-base max-w-none">
             <ReadOnlyTipTap json={t.body} />
           </div>
         </TabsContent>
