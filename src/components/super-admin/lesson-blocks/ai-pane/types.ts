@@ -24,6 +24,20 @@ export type FullContentState = { blocks: FullContentItem[] };
 export type AiStage = "chat" | "outline" | "full_content" | "built";
 export type AiMode = "fresh" | "append" | "replace";
 
+export type LengthLevel = "concise" | "standard" | "detailed";
+
+export const LENGTH_LABELS: Record<LengthLevel, string> = {
+  concise: "Concise",
+  standard: "Standard",
+  detailed: "Detailed",
+};
+
+export const LENGTH_DESCRIPTIONS: Record<LengthLevel, string> = {
+  concise: "Shorter, lean output",
+  standard: "Default balance",
+  detailed: "Longer with examples",
+};
+
 export type ConversationRow = {
   out_id: string;
   out_stage: AiStage;
@@ -35,6 +49,7 @@ export type ConversationRow = {
   out_voice_preset_key: string | null;
   out_custom_voice_guidance: string | null;
   out_custom_voice_example: string | null;
+  out_length_preference: LengthLevel;
   out_created_at: string;
   out_updated_at: string;
 };

@@ -5,6 +5,7 @@ import type {
   AiStage,
   ChatMessage,
   FullContentState,
+  LengthLevel,
   OutlineState,
 } from "./types";
 
@@ -39,6 +40,7 @@ export type PersistenceState = {
   voicePresetKey: string | null;
   customVoiceGuidance: string | null;
   customVoiceExample: string | null;
+  lengthPreference: LengthLevel;
 };
 
 export function useAiAuthoringPersistence(args: {
@@ -76,7 +78,8 @@ export function useAiAuthoringPersistence(args: {
         p_voice_preset_key: s.voicePresetKey as any,
         p_custom_voice_guidance: s.customVoiceGuidance as any,
         p_custom_voice_example: s.customVoiceExample as any,
-      });
+        p_length_preference: s.lengthPreference,
+      } as any);
       if (error) throw error;
       setStatus("saved");
       setLastSavedAt(new Date());
