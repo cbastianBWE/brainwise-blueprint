@@ -12,6 +12,19 @@ import {
   Music as MusicIcon,
   Video as VideoIcon,
 } from "lucide-react";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { Button } from "@/components/ui/button";
 import type { EditorBlock, TipTapDocJSON } from "./blockTypeMeta";
 
 interface BlockRendererProps {
