@@ -32,6 +32,7 @@ import {
   type ChatMessage,
   type FullContentItem,
   type FullContentState,
+  type LengthLevel,
   type OutlineItem,
   type OutlineState,
   type SessionDocument,
@@ -69,6 +70,7 @@ export function AiPane(props: Props) {
   const [voicePresetKey, setVoicePresetKey] = useState<string | null>(null);
   const [customVoiceGuidance, setCustomVoiceGuidance] = useState("");
   const [customVoiceExample, setCustomVoiceExample] = useState("");
+  const [lengthPreference, setLengthPreference] = useState<LengthLevel>("standard");
   const [hasRehydrated, setHasRehydrated] = useState(false);
   const [staleBannerOpen, setStaleBannerOpen] = useState(false);
   const [showStartOverConfirm, setShowStartOverConfirm] = useState(false);
@@ -139,6 +141,7 @@ export function AiPane(props: Props) {
           setVoicePresetKey(conv.out_voice_preset_key ?? null);
           setCustomVoiceGuidance(conv.out_custom_voice_guidance ?? "");
           setCustomVoiceExample(conv.out_custom_voice_example ?? "");
+          setLengthPreference(((conv.out_length_preference as LengthLevel) ?? "standard"));
 
           const idleMs = Date.now() - new Date(conv.out_updated_at).getTime();
           const isIdle24h = idleMs > 24 * 60 * 60 * 1000;
@@ -196,6 +199,7 @@ export function AiPane(props: Props) {
       voicePresetKey,
       customVoiceGuidance: customVoiceGuidance || null,
       customVoiceExample: customVoiceExample || null,
+      lengthPreference,
     }),
     [
       stage,
@@ -207,6 +211,7 @@ export function AiPane(props: Props) {
       voicePresetKey,
       customVoiceGuidance,
       customVoiceExample,
+      lengthPreference,
     ],
   );
   const persistence = useAiAuthoringPersistence({
