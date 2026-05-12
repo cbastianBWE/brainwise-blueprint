@@ -76,6 +76,160 @@ export type Database = {
           },
         ]
       }
+      ai_authoring_conversations: {
+        Row: {
+          attached_document_ids: string[]
+          author_id: string
+          content_item_id: string
+          created_at: string
+          custom_voice_example: string | null
+          custom_voice_guidance: string | null
+          full_content_state: Json | null
+          id: string
+          messages: Json
+          mode: string
+          outline_state: Json | null
+          stage: string
+          updated_at: string
+          voice_preset_key: string | null
+        }
+        Insert: {
+          attached_document_ids?: string[]
+          author_id: string
+          content_item_id: string
+          created_at?: string
+          custom_voice_example?: string | null
+          custom_voice_guidance?: string | null
+          full_content_state?: Json | null
+          id?: string
+          messages?: Json
+          mode?: string
+          outline_state?: Json | null
+          stage?: string
+          updated_at?: string
+          voice_preset_key?: string | null
+        }
+        Update: {
+          attached_document_ids?: string[]
+          author_id?: string
+          content_item_id?: string
+          created_at?: string
+          custom_voice_example?: string | null
+          custom_voice_guidance?: string | null
+          full_content_state?: Json | null
+          id?: string
+          messages?: Json
+          mode?: string
+          outline_state?: Json | null
+          stage?: string
+          updated_at?: string
+          voice_preset_key?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_authoring_conversations_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_authoring_conversations_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "ai_authoring_conversations_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_authoring_conversations_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_authoring_session_documents: {
+        Row: {
+          author_id: string
+          content_item_id: string
+          expires_at: string
+          extracted_text: string
+          extracted_text_token_count: number
+          file_name: string
+          file_size_bytes: number
+          id: string
+          last_accessed_at: string
+          mime_type: string
+          storage_path: string
+          uploaded_at: string
+        }
+        Insert: {
+          author_id: string
+          content_item_id: string
+          expires_at?: string
+          extracted_text: string
+          extracted_text_token_count: number
+          file_name: string
+          file_size_bytes: number
+          id?: string
+          last_accessed_at?: string
+          mime_type: string
+          storage_path: string
+          uploaded_at?: string
+        }
+        Update: {
+          author_id?: string
+          content_item_id?: string
+          expires_at?: string
+          extracted_text?: string
+          extracted_text_token_count?: number
+          file_name?: string
+          file_size_bytes?: number
+          id?: string
+          last_accessed_at?: string
+          mime_type?: string
+          storage_path?: string
+          uploaded_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_authoring_session_documents_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_authoring_session_documents_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "ai_authoring_session_documents_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_authoring_session_documents_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_authoring_voice_presets: {
         Row: {
           created_at: string
@@ -7703,6 +7857,20 @@ export type Database = {
       current_user_org_id: { Args: never; Returns: string }
       current_user_supervisor_id: { Args: never; Returns: string }
       custom_access_token_hook: { Args: { event: Json }; Returns: Json }
+      delete_ai_authoring_conversation: {
+        Args: { p_content_item_id: string }
+        Returns: {
+          out_conversation_deleted: boolean
+          out_documents_deleted: number
+        }[]
+      }
+      delete_ai_authoring_session_document: {
+        Args: { p_document_id: string }
+        Returns: {
+          out_deleted: boolean
+          out_storage_path: string
+        }[]
+      }
       delete_org_intervention: {
         Args: { p_intervention_id: string }
         Returns: boolean
@@ -7764,6 +7932,23 @@ export type Database = {
           org_level: string
           supervisor_user_id: string
           user_id: string
+        }[]
+      }
+      get_ai_authoring_conversation: {
+        Args: { p_content_item_id: string }
+        Returns: {
+          out_attached_document_ids: string[]
+          out_created_at: string
+          out_custom_voice_example: string
+          out_custom_voice_guidance: string
+          out_full_content_state: Json
+          out_id: string
+          out_messages: Json
+          out_mode: string
+          out_outline_state: Json
+          out_stage: string
+          out_updated_at: string
+          out_voice_preset_key: string
         }[]
       }
       get_airsa_aggregate: {
@@ -7952,6 +8137,19 @@ export type Database = {
       is_impersonating: { Args: never; Returns: boolean }
       is_impersonating_act: { Args: never; Returns: boolean }
       is_internal_user: { Args: { p_user_id: string }; Returns: boolean }
+      list_ai_authoring_session_documents: {
+        Args: { p_content_item_id: string }
+        Returns: {
+          out_expires_at: string
+          out_extracted_text_token_count: number
+          out_file_name: string
+          out_file_size_bytes: number
+          out_id: string
+          out_last_accessed_at: string
+          out_mime_type: string
+          out_uploaded_at: string
+        }[]
+      }
       list_audit_events: {
         Args: { p_filters?: Json; p_limit?: number; p_offset?: number }
         Returns: {
@@ -8390,6 +8588,24 @@ export type Database = {
           p_tracking_notes?: string
         }
         Returns: Json
+      }
+      upsert_ai_authoring_conversation: {
+        Args: {
+          p_attached_document_ids: string[]
+          p_content_item_id: string
+          p_custom_voice_example: string
+          p_custom_voice_guidance: string
+          p_full_content_state: Json
+          p_messages: Json
+          p_mode: string
+          p_outline_state: Json
+          p_stage: string
+          p_voice_preset_key: string
+        }
+        Returns: {
+          out_id: string
+          out_updated_at: string
+        }[]
       }
       upsert_certification_path: {
         Args: {
