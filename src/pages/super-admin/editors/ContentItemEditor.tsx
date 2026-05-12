@@ -192,6 +192,7 @@ function ContentItemEditor({
       (description ?? "") !== (initial.description ?? "") ||
       String(displayOrder) !== String(initial.display_order ?? 0) ||
       isRequired !== (initial.is_required ?? true) ||
+      thumbnailAssetId !== (initial.thumbnail_asset_id ?? null) ||
       reason.trim().length > 0 ||
       // per-type quick check (any change triggers dirty in edit)
       videoSourceType !== (initial.video_source_type ?? "youtube_unlisted") ||
@@ -211,7 +212,7 @@ function ContentItemEditor({
     );
   }, [
     mode, initial,
-    title, description, displayOrder, isRequired, reason,
+    title, description, displayOrder, isRequired, thumbnailAssetId, reason,
     videoSourceType, videoSourceId, videoCompletionThreshold,
     quizPassThreshold, quizShowCorrectMode,
     writtenMinChars, writtenMaxChars, writtenCompletionMode,

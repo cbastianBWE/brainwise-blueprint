@@ -245,6 +245,7 @@ function CertPathEditor({
         prerequisitePathId !== "__none__" ||
         isPublished ||
         displayOrder !== "0" ||
+        thumbnailAssetId !== null ||
         reason.trim().length > 0
       );
     }
@@ -263,12 +264,13 @@ function CertPathEditor({
       prerequisitePathId !== (initial.prerequisite_path_id ?? "__none__") ||
       isPublished !== !!initial.is_published ||
       Number(displayOrder) !== (initial.display_order ?? 0) ||
+      thumbnailAssetId !== (initial.thumbnail_asset_id ?? null) ||
       reason.trim().length > 0
     );
   }, [
     mode, initial, startingInstruments,
     slug, name, description, certificationType, deliveryMode,
-    instruments, prerequisitePathId, isPublished, displayOrder, reason,
+    instruments, prerequisitePathId, isPublished, displayOrder, thumbnailAssetId, reason,
   ]);
 
   const reasonOk = reason.trim().length >= 10;
