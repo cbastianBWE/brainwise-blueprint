@@ -790,6 +790,11 @@ function ContentItemEditor({
                 >
                   <ExternalLink className="mr-2 h-4 w-4" />
                   Edit lesson blocks
+                  {blockCount !== null && (
+                    <span className="ml-2 text-xs text-muted-foreground">
+                      ({blockCount === 0 ? "no blocks yet" : blockCount === 1 ? "1 block" : `${blockCount} blocks`})
+                    </span>
+                  )}
                 </Button>
               ) : (
                 <p className="text-xs italic text-muted-foreground">
