@@ -668,7 +668,7 @@ export function FileUploadField({
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={() => { setRemoveOpen(false); setState({ kind: "empty" }); setPreviewUrl(null); onChange(null); }}>
+              <AlertDialogAction onClick={() => { setRemoveOpen(false); setState({ kind: "empty" }); setPreviewUrl(null); setDocOpenUrl(null); onChange(null); }}>
                 Continue
               </AlertDialogAction>
             </AlertDialogFooter>
