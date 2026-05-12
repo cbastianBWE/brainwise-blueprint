@@ -46,7 +46,7 @@ export function RichTextEditor({
   const editor = useEditor({
     extensions: [
       StarterKit,
-      TextStyle,
+      TextStyleWithFontSize,
       Link.configure({ openOnClick: false }),
       Placeholder.configure({ placeholder: placeholder ?? "" }),
     ],
