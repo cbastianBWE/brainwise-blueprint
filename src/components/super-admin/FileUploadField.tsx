@@ -118,23 +118,28 @@ type UploadState =
   | { kind: "uploaded"; assetId: string }
   | { kind: "error"; message: string };
 
+function directStorageHostname(projectUrl: string): string {
+  return projectUrl.replace(/^(https?:\/\/[^.]+)\.supabase\.co/, "$1.storage.supabase.co");
+}
+
 interface TusUploadOpts {
   file: File;
   bucket: string;
   path: string;
-  token: string;
+  accessToken: string;
   onProgress: (pct: number) => void;
   setUpload: (u: tus.Upload) => void;
 }
 
-function runTusUpload({ file, bucket, path, token, onProgress, setUpload }: TusUploadOpts): Promise<void> {
+function runTusUpload({ file, bucket, path, accessToken, onProgress, setUpload }: TusUploadOpts): Promise<void> {
+  const endpoint = `${directStorageHostname(SUPABASE_URL)}/storage/v1/upload/resumable`;
   return new Promise((resolve, reject) => {
     const upload = new tus.Upload(file, {
-      endpoint: `${SUPABASE_URL}/storage/v1/upload/resumable`,
-      retryDelays: [0, 1000, 3000, 5000, 10000],
+      endpoint,
+      retryDelays: [0, 3000, 5000, 10000, 20000],
       chunkSize: 6 * 1024 * 1024,
       headers: {
-        "x-signature": token,
+        authorization: `Bearer ${accessToken}`,
       },
       metadata: {
         bucketName: bucket,
@@ -142,7 +147,7 @@ function runTusUpload({ file, bucket, path, token, onProgress, setUpload }: TusU
         contentType: file.type,
         cacheControl: "3600",
       },
-      parallelUploads: 1,
+      uploadDataDuringCreation: true,
       removeFingerprintOnSuccess: true,
       onError: (err) => reject(err),
       onProgress: (bytesUploaded, bytesTotal) => {
@@ -240,6 +245,13 @@ export function FileUploadField({
 
     setState({ kind: "uploading", filename: file.name, progress: 0 });
 
+    const { data: { session }, error: sessionErr } = await supabase.auth.getSession();
+    if (sessionErr || !session?.access_token) {
+      setState({ kind: "error", message: "Not authenticated. Please refresh and try again." });
+      return;
+    }
+    const accessToken = session.access_token;
+
     const defaultReason = isLibraryAsset
       ? `Library asset upload: ${libraryName ?? "(unnamed)"}`
       : contentItemId
@@ -277,7 +289,7 @@ export function FileUploadField({
         file,
         bucket,
         path,
-        token: upload_token,
+        accessToken,
         onProgress: (pct) => setState((s) => (s.kind === "uploading" ? { ...s, progress: pct } : s)),
         setUpload: (u) => { tusUploadRef.current = u; },
       });
@@ -324,6 +336,13 @@ export function FileUploadField({
 
     setState({ kind: "uploading", filename: file.name, progress: 0 });
 
+    const { data: { session }, error: sessionErr } = await supabase.auth.getSession();
+    if (sessionErr || !session?.access_token) {
+      setState({ kind: "error", message: "Not authenticated. Please refresh and try again." });
+      return;
+    }
+    const accessToken = session.access_token;
+
     const defaultReason = isLibraryAsset
       ? `Library asset upload: ${libraryName ?? "(unnamed)"}`
       : contentItemId
@@ -361,7 +380,7 @@ export function FileUploadField({
         file,
         bucket,
         path,
-        token: upload_token,
+        accessToken,
         onProgress: (pct) => setState((s) => (s.kind === "uploading" ? { ...s, progress: pct } : s)),
         setUpload: (u) => { tusUploadRef.current = u; },
       });
