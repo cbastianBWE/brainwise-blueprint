@@ -7812,6 +7812,15 @@ export type Database = {
         }
         Returns: Json
       }
+      get_lesson_block_assets: {
+        Args: { p_content_item_id: string; p_extra_asset_ids?: string[] }
+        Returns: {
+          out_asset_id: string
+          out_asset_kind: string
+          out_bucket: string
+          out_path: string
+        }[]
+      }
       get_my_direct_reports: {
         Args: never
         Returns: {
