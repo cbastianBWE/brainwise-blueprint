@@ -133,6 +133,7 @@ function ModuleEditor({
   );
   const [isPublished, setIsPublished] = useState<boolean>(!!initial?.is_published);
   const [reason, setReason] = useState<string>("");
+  const [thumbnailAssetId, setThumbnailAssetId] = useState<string | null>(initial?.thumbnail_asset_id ?? null);
 
   const [attachmentDisplayOrder, setAttachmentDisplayOrder] = useState<string>("0");
   const [attachmentIsRequired, setAttachmentIsRequired] = useState<boolean>(true);
