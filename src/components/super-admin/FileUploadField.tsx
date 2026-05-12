@@ -44,6 +44,9 @@ interface FileUploadFieldProps {
   assetKind: AssetKind;
   contentItemId?: string | null;
   lessonBlockId?: string | null;
+  moduleId?: string | null;
+  curriculumId?: string | null;
+  certificationPathId?: string | null;
   isLibraryAsset?: boolean;
   refField?: string | null;
   libraryName?: string | null;
