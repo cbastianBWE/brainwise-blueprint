@@ -38,6 +38,8 @@ import {
 } from "@/components/super-admin/lesson-blocks/blockTypeMeta";
 import { useLessonBlockDraft } from "@/components/super-admin/lesson-blocks/useLessonBlockDraft";
 import { useLessonBlockAssetUrls } from "@/components/super-admin/lesson-blocks/useLessonBlockAssetUrls";
+import { AiPane } from "@/components/super-admin/lesson-blocks/ai-pane/AiPane";
+import type { AiMode, FullContentItem } from "@/components/super-admin/lesson-blocks/ai-pane/types";
 import "@/components/super-admin/lesson-blocks/lesson-blocks.css";
 
 function rowsToEditorBlocks(rows: any[]): EditorBlock[] {
