@@ -507,23 +507,6 @@ export function Stage1Chat(props: Props) {
         {dictation.error && (
           <p className="mt-1 text-xs text-destructive">{dictation.error}</p>
         )}
-        {canShowGenerateOutline && (
-          <Button
-            type="button"
-            className="mt-3 w-full shadow-cta"
-            disabled={loadingOutline}
-            onClick={onAdvanceToOutline}
-            style={{ backgroundColor: "#F5741A", color: "white" }}
-            title="Generate a structured outline based on this conversation."
-          >
-            {loadingOutline ? (
-              <Loader2 className="mr-1 h-4 w-4 animate-spin" />
-            ) : (
-              <Sparkles className="mr-1 h-4 w-4" />
-            )}
-            Generate outline
-          </Button>
-        )}
       </div>
     </div>
   );
