@@ -196,6 +196,7 @@ export function FileUploadField({
     } else if (!value && state.kind === "uploaded") {
       setState({ kind: "empty" });
       setPreviewUrl(null);
+      setDocOpenUrl(null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value]);
