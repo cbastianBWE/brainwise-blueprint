@@ -187,15 +187,62 @@
   padding-bottom: 1rem;
 }
 
-/* Tabs */
-.bw-tabs-list-underline {
-  border-bottom: 1px solid hsl(var(--border));
+/* Tabs — center the tab strip and give each tab its own discrete shape */
+.bw-tabs-list-wrapper {
+  display: flex;
+  justify-content: center;
   margin-bottom: 1rem;
+}
+.bw-tabs-list-underline,
+.bw-tabs-list-pills {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  background: transparent;
+  padding: 0;
+  height: auto;
+  width: auto;
+  justify-content: center;
+}
+/* Underline style — each tab independently underlined with a gap between */
+.bw-tabs-trigger-underline {
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid hsl(var(--border));
+  border-radius: 0;
+  padding: 0.5rem 1rem;
+  font-weight: 500;
+  color: #6D6875;
+  transition: color 150ms ease, border-color 150ms ease;
+}
+.bw-tabs-trigger-underline:hover {
+  color: #021F36;
+  border-bottom-color: #6D6875;
 }
 .bw-tabs-trigger-underline[data-state="active"] {
   color: #021F36;
-  border-bottom: 2px solid #F5741A;
-  margin-bottom: -1px;
+  border-bottom-color: #F5741A;
+  font-weight: 600;
+}
+/* Pills style — each tab is its own rounded pill with a gap between */
+.bw-tabs-trigger-pills {
+  background: hsl(var(--muted));
+  border: 1px solid transparent;
+  border-radius: 9999px;
+  padding: 0.5rem 1.125rem;
+  font-weight: 500;
+  color: #6D6875;
+  transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease;
+}
+.bw-tabs-trigger-pills:hover {
+  background: hsl(var(--muted) / 0.7);
+  color: #021F36;
+}
+.bw-tabs-trigger-pills[data-state="active"] {
+  background: #F5741A;
+  color: #FFFFFF;
+  font-weight: 600;
+  border-color: #F5741A;
 }
 
 /* Button stack */
@@ -209,4 +256,16 @@
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
+}
+
+/* Button stack — instructional caption below buttons */
+.bw-button-stack-caption {
+  margin-top: 0.75rem;
+  font-size: 0.9375rem;
+  color: #6D6875;
+  text-align: center;
+  line-height: 1.45;
+  max-width: 36rem;
+  margin-left: auto;
+  margin-right: auto;
 }
