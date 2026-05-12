@@ -118,7 +118,7 @@ export function Stage2Outline(props: Props) {
   };
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex flex-1 min-h-0 flex-col">
       <div className="border-b p-3 text-sm text-muted-foreground">
         Review the outline below. Iterate any item, reorder, add items, or remove items. When ready,
         generate the full content.

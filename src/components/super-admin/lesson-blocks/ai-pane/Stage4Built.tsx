@@ -14,7 +14,7 @@ interface Props {
 export function Stage4Built({ messages, onStartOver }: Props) {
   const [historyOpen, setHistoryOpen] = useState(false);
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex flex-1 min-h-0 flex-col">
       <div className="flex-1 space-y-4 overflow-y-auto p-4">
         <div
           className="flex items-start gap-3 rounded-lg p-4"
