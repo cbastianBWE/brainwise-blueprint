@@ -67,6 +67,12 @@ export default function LessonBlocksEditor() {
     block: EditorBlock;
     index: number;
   } | null>(null);
+  const [mode, setMode] = useState<EditorMode>("edit");
+  const [selectedClientIds, setSelectedClientIds] = useState<Set<string>>(new Set());
+  const [lastClickedClientId, setLastClickedClientId] = useState<string | null>(null);
+  const [bulkDeletedBlocks, setBulkDeletedBlocks] = useState<
+    { block: EditorBlock; index: number }[] | null
+  >(null);
 
   const itemQuery = useQuery({
     queryKey: ["lesson-blocks-editor-item", contentItemId],
