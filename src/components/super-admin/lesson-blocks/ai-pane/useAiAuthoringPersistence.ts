@@ -61,9 +61,9 @@ export function useAiAuthoringPersistence(args: {
   const stateRef = useRef(state);
   stateRef.current = state;
 
-  const doSave = useCallback(async () => {
+  const doSave = useCallback(async (overrideState?: Partial<PersistenceState>) => {
     setStatus("saving");
-    const s = stateRef.current;
+    const s = { ...stateRef.current, ...(overrideState ?? {}) };
     try {
       const { error } = await supabase.rpc("upsert_ai_authoring_conversation", {
         p_content_item_id: contentItemId,
