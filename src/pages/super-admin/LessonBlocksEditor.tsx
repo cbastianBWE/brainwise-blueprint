@@ -251,9 +251,19 @@ export default function LessonBlocksEditor() {
       setSaveReason("");
       await reload();
       draftStatus.resume();
+      if (saveAndNavigateTo) {
+        const target = saveAndNavigateTo;
+        setSaveAndNavigateTo(null);
+        if (target === "__browser_back__") {
+          window.history.back();
+        } else {
+          navigate(target);
+        }
+      }
     } catch (e: any) {
       toast({ title: "Save failed", description: e.message ?? String(e), variant: "destructive" });
       draftStatus.resume();
+      setSaveAndNavigateTo(null);
     } finally {
       setSaving(false);
     }
