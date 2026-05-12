@@ -16,6 +16,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { ArrowLeft, GripVertical, Loader2, Plus, Sparkles, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { BLOCK_TYPE_META, type BlockType } from "../blockTypeMeta";
 import { COST_ESTIMATES } from "./costEstimates";
 import type { OutlineItem } from "./types";
@@ -249,22 +250,23 @@ function OutlineCard(props: {
             {label}
           </div>
           {editingSummary ? (
-            <input
+            <Textarea
               autoFocus
-              className="w-full rounded border px-2 py-1 text-sm"
+              rows={3}
+              className="w-full resize-none rounded border px-2 py-1 text-sm"
               defaultValue={item.summary_one_line}
               onBlur={(e) => {
                 onUpdate({ summary_one_line: e.target.value });
                 setEditingSummary(false);
               }}
               onKeyDown={(e) => {
-                if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+                if ((e.metaKey || e.ctrlKey) && e.key === "Enter") (e.target as HTMLTextAreaElement).blur();
                 if (e.key === "Escape") setEditingSummary(false);
               }}
             />
           ) : (
             <p
-              className="cursor-text rounded text-sm hover:bg-muted/40"
+              className="cursor-text whitespace-pre-wrap rounded text-sm hover:bg-muted/40"
               onClick={() => setEditingSummary(true)}
               title="Click to edit"
             >
@@ -272,22 +274,23 @@ function OutlineCard(props: {
             </p>
           )}
           {editingObjective ? (
-            <input
+            <Textarea
               autoFocus
-              className="w-full rounded border px-2 py-1 text-xs"
+              rows={2}
+              className="w-full resize-none rounded border px-2 py-1 text-xs"
               defaultValue={item.learning_objective_fragment}
               onBlur={(e) => {
                 onUpdate({ learning_objective_fragment: e.target.value });
                 setEditingObjective(false);
               }}
               onKeyDown={(e) => {
-                if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+                if ((e.metaKey || e.ctrlKey) && e.key === "Enter") (e.target as HTMLTextAreaElement).blur();
                 if (e.key === "Escape") setEditingObjective(false);
               }}
             />
           ) : (
             <p
-              className="cursor-text rounded text-xs text-muted-foreground hover:bg-muted/40"
+              className="cursor-text whitespace-pre-wrap rounded text-xs text-muted-foreground hover:bg-muted/40"
               onClick={() => setEditingObjective(true)}
               title="Click to edit"
             >

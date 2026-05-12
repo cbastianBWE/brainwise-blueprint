@@ -50,7 +50,7 @@ export function useAiAuthoringPersistence(args: {
   lastSavedAt: Date | null;
   pause: () => void;
   resume: () => void;
-  flushNow: () => Promise<void>;
+  flushNow: (overrideState?: Partial<PersistenceState>) => Promise<void>;
 } {
   const { contentItemId, state, enabled } = args;
   const [status, setStatus] = useState<Status>("idle");
@@ -61,9 +61,9 @@ export function useAiAuthoringPersistence(args: {
   const stateRef = useRef(state);
   stateRef.current = state;
 
-  const doSave = useCallback(async () => {
+  const doSave = useCallback(async (overrideState?: Partial<PersistenceState>) => {
     setStatus("saving");
-    const s = stateRef.current;
+    const s = { ...stateRef.current, ...(overrideState ?? {}) };
     try {
       const { error } = await supabase.rpc("upsert_ai_authoring_conversation", {
         p_content_item_id: contentItemId,
@@ -128,12 +128,12 @@ export function useAiAuthoringPersistence(args: {
     prevSerialized.current = null;
   }, []);
 
-  const flushNow = useCallback(async () => {
+  const flushNow = useCallback(async (overrideState?: Partial<PersistenceState>) => {
     if (timer.current) {
       clearTimeout(timer.current);
       timer.current = null;
     }
-    await doSave();
+    await doSave(overrideState);
   }, [doSave]);
 
   return { status, lastSavedAt, pause, resume, flushNow };

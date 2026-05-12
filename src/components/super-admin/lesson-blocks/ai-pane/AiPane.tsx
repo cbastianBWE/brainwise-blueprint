@@ -336,7 +336,7 @@ export function AiPane(props: Props) {
     setStage("built");
     try {
       // Make sure the "built" stage transition is persisted before we commit.
-      await persistence.flushNow();
+      await persistence.flushNow({ stage: "built" });
     } catch {
       /* non-fatal */
     }
