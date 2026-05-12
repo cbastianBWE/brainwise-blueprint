@@ -40,6 +40,7 @@ function ContentItemEditor({
   onSaved, onArchived, onCancelCreate,
 }: ContentItemEditorProps) {
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const [itemType, setItemType] = useState<string>(initial?.item_type ?? "video");
   const [title, setTitle] = useState<string>(initial?.title ?? "");
