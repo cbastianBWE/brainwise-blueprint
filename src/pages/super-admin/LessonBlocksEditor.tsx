@@ -292,31 +292,40 @@ export default function LessonBlocksEditor() {
   const item: any = itemQuery.data;
 
   return (
-    <div className="flex flex-col gap-3 p-4">
+    <div className="space-y-6 p-6">
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b pb-3">
-        <div className="flex items-center gap-3">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              navigate("/super-admin/content-authoring");
-            }}
-          >
-            <ChevronLeft className="mr-1 h-4 w-4" />
-            Back to content authoring
-          </Button>
-          <div className="text-sm font-semibold">{item?.title}</div>
-        </div>
-        <div className="flex items-center gap-2">
-          <Badge variant={isDirty ? "secondary" : "outline"}>{statusLabel}</Badge>
-          <Button
-            disabled={!isDirty || saving}
-            onClick={() => setSaveDialogOpen(true)}
-          >
-            <Save className="mr-1 h-4 w-4" />
-            Save
-          </Button>
+      <div className="space-y-3 border-b pb-4">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="-ml-2 h-auto px-2 py-1 text-muted-foreground hover:text-foreground"
+          onClick={() => {
+            navigate("/super-admin/content-authoring");
+          }}
+        >
+          <ChevronLeft className="mr-1 h-4 w-4" />
+          Back to content authoring
+        </Button>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="space-y-1">
+            <h1 className="text-3xl font-bold tracking-tight" style={{ color: "#021F36" }}>
+              {item?.title ?? "Lesson"}
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              Build and arrange the blocks that make up this lesson.
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Badge variant={isDirty ? "secondary" : "outline"}>{statusLabel}</Badge>
+            <Button
+              disabled={!isDirty || saving}
+              onClick={() => setSaveDialogOpen(true)}
+              className="shadow-cta"
+            >
+              <Save className="mr-1 h-4 w-4" />
+              Save
+            </Button>
+          </div>
         </div>
       </div>
 
