@@ -775,6 +775,7 @@ export default function LessonBlocksEditor() {
                 onSelectBlock={handleSelectBlock}
                 onToggleSelect={handleToggleSelect}
                 onReorder={handleReorder}
+                onGroupReorder={handleGroupReorder}
                 onDelete={handleDelete}
                 onDuplicate={handleDuplicate}
                 onInsert={handleInsert}
