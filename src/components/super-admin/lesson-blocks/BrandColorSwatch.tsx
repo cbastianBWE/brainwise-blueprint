@@ -18,6 +18,17 @@ export const BRAND_SWATCH_COLORS: BrandSwatchColor[] = [
   { label: "Forest", hex: "#2D6A4F" },
 ];
 
+export const BRAND_TINT_COLORS: BrandSwatchColor[] = [
+  { label: "Navy tint", hex: "#EDEFF2" },
+  { label: "Orange tint", hex: "#FDEFE3" },
+  { label: "Sand tint", hex: "#F9F7F1" },
+  { label: "Teal tint", hex: "#E3EDED" },
+  { label: "Mustard tint", hex: "#F3EEDF" },
+  { label: "Slate tint", hex: "#EFEDEF" },
+  { label: "Purple tint", hex: "#EAE4EE" },
+  { label: "Forest tint", hex: "#E5EBE7" },
+];
+
 interface BrandColorSwatchProps {
   /** Currently selected hex value, or null/undefined for "default" */
   value: string | null | undefined;
