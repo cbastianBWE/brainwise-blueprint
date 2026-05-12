@@ -256,7 +256,7 @@ export function Stage1Chat(props: Props) {
   return (
     <div className="flex h-full flex-col">
       {/* Top controls */}
-      <div className="space-y-3 border-b p-3">
+      <div className="max-h-[45vh] overflow-y-auto space-y-3 border-b p-3 flex-shrink-0">
         {/* Mode selector */}
         {showModeSelector && (
           <div>

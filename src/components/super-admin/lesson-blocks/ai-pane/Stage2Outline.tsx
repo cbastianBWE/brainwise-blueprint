@@ -157,7 +157,7 @@ export function Stage2Outline(props: Props) {
         )}
       </div>
 
-      <div className="space-y-2 border-t p-3">
+      <div className="flex-shrink-0 space-y-2 border-t p-3">
         <div className="flex items-center justify-between gap-2">
           <Label className="text-xs uppercase tracking-wide text-muted-foreground">Length</Label>
           <Select value={lengthPreference} onValueChange={(v) => onLengthChange(v as LengthLevel)}>
