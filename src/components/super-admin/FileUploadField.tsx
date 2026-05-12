@@ -462,7 +462,7 @@ export function FileUploadField({
 
     setState({ kind: "uploaded", assetId: newAssetId });
     onChange(newAssetId);
-  }, [value, assetKind, config, contentItemId, lessonBlockId, refField, isLibraryAsset, libraryName, libraryTags, reasonOverride, onChange]);
+  }, [value, assetKind, config, contentItemId, lessonBlockId, moduleId, curriculumId, certificationPathId, refField, isLibraryAsset, libraryName, libraryTags, reasonOverride, onChange]);
 
   const handleFileSelected = (file: File | null | undefined) => {
     if (!file) return;
