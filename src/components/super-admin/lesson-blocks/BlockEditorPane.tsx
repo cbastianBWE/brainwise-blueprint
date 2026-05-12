@@ -241,8 +241,17 @@ export function BlockEditorPane({ block, onChange, contentItemId, siblingBlocks 
       {block.block_type === "embed_audio" && (
         <EmbedAudioBlockForm value={cfg} onConfigChange={handleConfig} contentItemId={contentItemId} />
       )}
+      {block.block_type === "stat_callout" && (
+        <StatCalloutBlockForm value={cfg} onConfigChange={handleConfig} />
+      )}
+      {block.block_type === "statement_a_b" && (
+        <StatementABBlockForm value={cfg} onConfigChange={handleConfig} />
+      )}
 
       <BlockStyleSection value={cfg} onConfigChange={handleConfig} />
     </div>
   );
 }
+
+// Suppress unused param warning until 6b.2 consumes siblingBlocks
+void ((_x: unknown) => _x);
