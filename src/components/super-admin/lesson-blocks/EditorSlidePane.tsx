@@ -84,6 +84,7 @@ export function EditorSlidePane({
             block={block}
             onChange={onChange}
             contentItemId={contentItemId}
+            siblingBlocks={siblingBlocks}
           />
         </div>
         <div className="border-t bg-background p-3">
