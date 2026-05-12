@@ -1,8 +1,8 @@
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import { TextStyle } from "@tiptap/extension-text-style";
+import { TextStyleWithFontSize } from "./TextStyleWithFontSize";
 import { Link } from "@tiptap/extension-link";
-import { useEffect } from "react";
+import { useEffect, type CSSProperties } from "react";
 import {
   Info,
   AlertTriangle,
@@ -23,7 +23,7 @@ interface BlockRendererProps {
 function ReadOnlyTipTap({ json }: { json: TipTapDocJSON | null | undefined }) {
   const editor = useEditor({
     editable: false,
-    extensions: [StarterKit, TextStyle, Link.configure({ openOnClick: true })],
+    extensions: [StarterKit, TextStyleWithFontSize, Link.configure({ openOnClick: true })],
     content: json ?? "",
   });
   useEffect(() => {
@@ -163,10 +163,21 @@ function QuoteRender({
   );
 }
 
-function ListRender({ items, ordered }: { items: any[]; ordered: boolean }) {
+function ListRender({
+  items,
+  ordered,
+  markerColor,
+}: {
+  items: any[];
+  ordered: boolean;
+  markerColor?: string | null;
+}) {
   const ListTag = (ordered ? "ol" : "ul") as "ol" | "ul";
+  const styleVars = markerColor
+    ? ({ "--list-marker-color": markerColor } as CSSProperties)
+    : undefined;
   return (
-    <div className="tiptap-prose prose-base max-w-none">
+    <div className="tiptap-prose prose-base max-w-none" style={styleVars}>
       <ListTag>
         {(items ?? []).map((it, idx) => (
           <li key={it.client_id ?? idx}>
@@ -276,7 +287,13 @@ export function BlockRenderer({ block, assetUrlMap }: BlockRendererProps) {
         <QuoteRender body={cfg.body ?? null} attribution={cfg.attribution ?? null} />
       );
     case "list":
-      return <ListRender items={cfg.items ?? []} ordered={!!cfg.ordered} />;
+      return (
+        <ListRender
+          items={cfg.items ?? []}
+          ordered={!!cfg.ordered}
+          markerColor={cfg.marker_color ?? null}
+        />
+      );
     case "callout":
       return <CalloutRender variant={cfg.variant ?? "info"} body={cfg.body ?? null} />;
     case "embed_audio":
