@@ -24,7 +24,7 @@
   width: 0.65em;
   height: 0.65em;
   border-radius: 50%;
-  background: #2D6A4F;
+  background: var(--list-marker-color, #2D6A4F);
   position: absolute;
   left: -1.25em;
   top: 0.55em;
