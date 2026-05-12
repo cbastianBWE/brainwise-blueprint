@@ -44,11 +44,16 @@ function ReadOnlyTipTap({ json }: { json: TipTapDocJSON | null | undefined }) {
 function HeadingRender({ text, level }: { text: string; level: number }) {
   const safeLevel = level === 2 || level === 3 || level === 4 ? level : 2;
   const sizeClass =
-    safeLevel === 2 ? "text-2xl" : safeLevel === 3 ? "text-xl" : "text-lg";
+    safeLevel === 2
+      ? "text-3xl mt-8 mb-4"
+      : safeLevel === 3
+      ? "text-2xl mt-6 mb-3"
+      : "text-xl mt-4 mb-2";
+  const weightClass = safeLevel === 2 ? "font-bold" : "font-semibold";
   const Tag = `h${safeLevel}` as "h2" | "h3" | "h4";
   return (
     <Tag
-      className={`font-display font-bold tracking-tight ${sizeClass}`}
+      className={`font-display tracking-tight ${sizeClass} ${weightClass}`}
       style={{ color: "#021F36" }}
     >
       {text || (
