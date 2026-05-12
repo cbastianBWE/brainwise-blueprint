@@ -46,6 +46,7 @@ function ContentItemEditor({
   const [displayOrder, setDisplayOrder] = useState<string>(String(initial?.display_order ?? 0));
   const [isRequired, setIsRequired] = useState<boolean>(initial?.is_required ?? true);
   const [reason, setReason] = useState<string>("");
+  const [thumbnailAssetId, setThumbnailAssetId] = useState<string | null>(initial?.thumbnail_asset_id ?? null);
   const [saving, setSaving] = useState(false);
   const [archiveDialogOpen, setArchiveDialogOpen] = useState(false);
   const [archiveReason, setArchiveReason] = useState("");
