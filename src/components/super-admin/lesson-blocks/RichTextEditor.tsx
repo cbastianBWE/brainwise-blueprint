@@ -74,7 +74,7 @@ export function RichTextEditor({
   const btnClass = (active: boolean) =>
     cn(
       "h-7 w-7 p-0 text-xs",
-      active && "bg-accent text-accent-foreground",
+      active && "bg-[#F5741A]/15 text-[#F5741A] hover:bg-[#F5741A]/20",
     );
 
   return (
