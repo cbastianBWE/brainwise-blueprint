@@ -146,6 +146,7 @@ function CertPathEditor({
   const [isPublished, setIsPublished] = useState<boolean>(!!initial?.is_published);
   const [displayOrder, setDisplayOrder] = useState<string>(String(initial?.display_order ?? 0));
   const [reason, setReason] = useState<string>("");
+  const [thumbnailAssetId, setThumbnailAssetId] = useState<string | null>(initial?.thumbnail_asset_id ?? null);
 
   const [autoSlug, setAutoSlug] = useState<boolean>(mode === "create");
   const [saving, setSaving] = useState(false);
