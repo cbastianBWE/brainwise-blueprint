@@ -16,6 +16,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { ArrowLeft, GripVertical, Loader2, Plus, Sparkles, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { BLOCK_TYPE_META, type BlockType } from "../blockTypeMeta";
 import { COST_ESTIMATES } from "./costEstimates";
 import type { OutlineItem } from "./types";
