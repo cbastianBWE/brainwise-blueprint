@@ -97,6 +97,16 @@
   padding-left: 12px;
 }
 
+/* Manage mode — multi-selected block visual */
+.stacked-block.is-manage-selected {
+  background-color: #FDEFE3;
+  border-left: 4px solid #F5741A;
+  padding-left: 12px;
+}
+.stacked-block.is-manage-selected:hover {
+  background-color: #FCE4D0;
+}
+
 /* Slide-in pane shadow */
 .editor-slide-pane {
   box-shadow: 0 0 24px rgba(2, 31, 54, 0.08);
