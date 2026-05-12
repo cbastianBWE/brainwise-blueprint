@@ -8,6 +8,11 @@ import {
   List as ListIcon,
   AlertCircle,
   Music,
+  Hash as HashIcon,
+  Columns2 as ColumnsIcon,
+  ListCollapse as AccordionIcon,
+  LayoutPanelTop as TabsIcon,
+  MousePointerClick as ButtonStackIcon,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -20,7 +25,12 @@ export type BlockType =
   | "quote"
   | "list"
   | "callout"
-  | "embed_audio";
+  | "embed_audio"
+  | "stat_callout"
+  | "statement_a_b"
+  | "accordion"
+  | "tabs"
+  | "button_stack";
 
 export type TipTapDocJSON = Record<string, unknown>;
 
