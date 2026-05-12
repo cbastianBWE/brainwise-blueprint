@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Pencil, Plus, Loader2, Save, Archive, Layers } from "lucide-react";
 import { slugify, ItemTypeIcon } from "./_shared";
+import { FileUploadField } from "@/components/super-admin/FileUploadField";
 
 function AttachedContentItemsSection({
   moduleId,
