@@ -12,11 +12,19 @@ import {
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { BLOCK_TYPE_META, type BlockType } from "../blockTypeMeta";
 import type {
   AiMode,
   ChatMessage,
   FullContentItem,
+  LengthLevel,
   OutlineItem,
 } from "./types";
 import { mapAiError } from "./mapAiError";
@@ -39,6 +47,8 @@ interface Props {
   attachedDocumentIds: string[];
   mode: AiMode;
   conversationMessages: ChatMessage[]; // for context on outline iterate/add calls
+  lengthPreference: LengthLevel;
+  onLengthChange: (next: LengthLevel) => void;
   onApplyOutlineItem: (
     target: Extract<IterationTarget, { kind: "outline_item" } | { kind: "outline_add" }>,
     item: OutlineItem,
@@ -62,6 +72,8 @@ export function IterationModal(props: Props) {
     mode,
     conversationMessages,
     contentItemId,
+    lengthPreference,
+    onLengthChange,
     onApplyOutlineItem,
     onApplyFullBlock,
   } = props;
@@ -119,6 +131,7 @@ export function IterationModal(props: Props) {
               voice_preset_key: voicePresetKey ?? undefined,
               custom_voice_guidance: customVoiceGuidance ?? undefined,
               custom_voice_example: customVoiceExample ?? undefined,
+              length: lengthPreference,
             },
           },
         );
@@ -155,6 +168,7 @@ export function IterationModal(props: Props) {
               custom_voice_guidance: customVoiceGuidance ?? undefined,
               custom_voice_example: customVoiceExample ?? undefined,
               mode,
+              length: lengthPreference,
               max_outline_items: 1,
             },
           },
@@ -196,6 +210,19 @@ export function IterationModal(props: Props) {
             Using voice: <strong>{voiceDisplayName}</strong> · {costStr}
           </DialogDescription>
         </DialogHeader>
+        <div className="flex items-center gap-2">
+          <Label className="text-xs uppercase tracking-wide text-muted-foreground">Length</Label>
+          <Select value={lengthPreference} onValueChange={(v) => onLengthChange(v as LengthLevel)}>
+            <SelectTrigger className="h-7 w-28 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="concise">Concise</SelectItem>
+              <SelectItem value="standard">Standard</SelectItem>
+              <SelectItem value="detailed">Detailed</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
         {target.kind === "outline_item" && (
           <details className="rounded-md border bg-muted/40 p-3 text-xs">
             <summary className="cursor-pointer font-medium">Current item</summary>

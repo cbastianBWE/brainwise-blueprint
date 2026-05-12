@@ -24,7 +24,7 @@ import { EmbedAudioBlockForm } from "./block-forms/EmbedAudioBlockForm";
 import { BlockStyleSection } from "./BlockStyleSection";
 import { mapAiError } from "./ai-pane/mapAiError";
 import { COST_ESTIMATES } from "./ai-pane/costEstimates";
-import type { VoicePreset } from "./ai-pane/types";
+import type { LengthLevel, VoicePreset } from "./ai-pane/types";
 import { useEffect } from "react";
 
 interface Props {
@@ -43,6 +43,19 @@ export function BlockEditorPane({ block, onChange, contentItemId }: Props) {
     if (typeof window === "undefined") return null;
     return window.localStorage.getItem(`ai-authoring:voice:${contentItemId}`);
   });
+  const [lengthPreference, setLengthPreference] = useState<LengthLevel>(() => {
+    if (typeof window === "undefined") return "standard";
+    const stored = window.localStorage.getItem(`ai-authoring:length:${contentItemId}`);
+    if (stored === "concise" || stored === "standard" || stored === "detailed") return stored;
+    return "standard";
+  });
+
+  const handleLengthChange = (next: LengthLevel) => {
+    setLengthPreference(next);
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(`ai-authoring:length:${contentItemId}`, next);
+    }
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -84,6 +97,7 @@ export function BlockEditorPane({ block, onChange, contentItemId }: Props) {
           block_type: block.block_type,
           author_prompt,
           voice_preset_key: voicePresetKey ?? undefined,
+          length: lengthPreference,
         },
       });
       if (error) throw error;
@@ -163,6 +177,22 @@ export function BlockEditorPane({ block, onChange, contentItemId }: Props) {
                       {p.display_name}
                     </SelectItem>
                   ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
+              <Label className="text-[10px] uppercase tracking-wide text-muted-foreground">Length</Label>
+              <Select
+                value={lengthPreference}
+                onValueChange={(v) => handleLengthChange(v as LengthLevel)}
+              >
+                <SelectTrigger className="h-8">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="concise">Concise</SelectItem>
+                  <SelectItem value="standard">Standard</SelectItem>
+                  <SelectItem value="detailed">Detailed</SelectItem>
                 </SelectContent>
               </Select>
             </div>

@@ -86,6 +86,7 @@ export type Database = {
           custom_voice_guidance: string | null
           full_content_state: Json | null
           id: string
+          length_preference: string | null
           messages: Json
           mode: string
           outline_state: Json | null
@@ -102,6 +103,7 @@ export type Database = {
           custom_voice_guidance?: string | null
           full_content_state?: Json | null
           id?: string
+          length_preference?: string | null
           messages?: Json
           mode?: string
           outline_state?: Json | null
@@ -118,6 +120,7 @@ export type Database = {
           custom_voice_guidance?: string | null
           full_content_state?: Json | null
           id?: string
+          length_preference?: string | null
           messages?: Json
           mode?: string
           outline_state?: Json | null
@@ -7943,6 +7946,7 @@ export type Database = {
           out_custom_voice_guidance: string
           out_full_content_state: Json
           out_id: string
+          out_length_preference: string
           out_messages: Json
           out_mode: string
           out_outline_state: Json
@@ -8596,6 +8600,7 @@ export type Database = {
           p_custom_voice_example: string
           p_custom_voice_guidance: string
           p_full_content_state: Json
+          p_length_preference?: string
           p_messages: Json
           p_mode: string
           p_outline_state: Json
