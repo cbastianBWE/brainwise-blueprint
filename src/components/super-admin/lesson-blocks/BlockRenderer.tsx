@@ -287,7 +287,13 @@ export function BlockRenderer({ block, assetUrlMap }: BlockRendererProps) {
         <QuoteRender body={cfg.body ?? null} attribution={cfg.attribution ?? null} />
       );
     case "list":
-      return <ListRender items={cfg.items ?? []} ordered={!!cfg.ordered} />;
+      return (
+        <ListRender
+          items={cfg.items ?? []}
+          ordered={!!cfg.ordered}
+          markerColor={cfg.marker_color ?? null}
+        />
+      );
     case "callout":
       return <CalloutRender variant={cfg.variant ?? "info"} body={cfg.body ?? null} />;
     case "embed_audio":
