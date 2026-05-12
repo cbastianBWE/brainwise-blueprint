@@ -190,6 +190,7 @@ export const BLOCK_TYPE_META: Record<
         },
       ],
       layout: "stacked",
+      caption: null,
       background_color: null,
       padding: "none",
     }),

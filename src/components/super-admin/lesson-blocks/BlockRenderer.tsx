@@ -379,6 +379,7 @@ export function BlockRenderer({ block, assetUrlMap }: BlockRendererProps) {
           <ButtonStackRender
             buttons={cfg.buttons ?? []}
             layout={cfg.layout === "inline" ? "inline" : "stacked"}
+            caption={cfg.caption ?? null}
           />
         );
       default:
@@ -490,33 +491,23 @@ function TabsRender({
   if (tabs.length === 0) return null;
   const safeDefault = Math.min(Math.max(0, defaultTab), tabs.length - 1);
   const defaultValue = tabs[safeDefault]?.client_id ?? tabs[0].client_id;
-  const isUnderline = style === "underline";
+  const listClass = style === "pills" ? "bw-tabs-list-pills" : "bw-tabs-list-underline";
+  const triggerClass = style === "pills" ? "bw-tabs-trigger-pills" : "bw-tabs-trigger-underline";
+
   return (
     <Tabs defaultValue={defaultValue} className="w-full">
-      <TabsList
-        className={
-          isUnderline
-            ? "bw-tabs-list-underline h-auto bg-transparent p-0 gap-2 justify-start"
-            : ""
-        }
-      >
-        {tabs.map((t) => (
-          <TabsTrigger
-            key={t.client_id}
-            value={t.client_id}
-            className={
-              isUnderline
-                ? "bw-tabs-trigger-underline rounded-none bg-transparent px-3 py-2 data-[state=active]:bg-transparent data-[state=active]:shadow-none"
-                : ""
-            }
-          >
-            {t.label || "(untitled)"}
-          </TabsTrigger>
-        ))}
-      </TabsList>
+      <div className="bw-tabs-list-wrapper">
+        <TabsList className={listClass}>
+          {tabs.map((t) => (
+            <TabsTrigger key={t.client_id} value={t.client_id} className={triggerClass}>
+              {t.label || "(untitled)"}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </div>
       {tabs.map((t) => (
-        <TabsContent key={t.client_id} value={t.client_id}>
-          <div className="tiptap-prose prose-base max-w-none">
+        <TabsContent key={t.client_id} value={t.client_id} className="pt-2">
+          <div className="tiptap-prose">
             <ReadOnlyTipTap json={t.body} />
           </div>
         </TabsContent>
@@ -528,6 +519,7 @@ function TabsRender({
 function ButtonStackRender({
   buttons,
   layout,
+  caption,
 }: {
   buttons: Array<{
     client_id: string;
@@ -538,6 +530,7 @@ function ButtonStackRender({
     variant: "primary" | "secondary";
   }>;
   layout: "stacked" | "inline";
+  caption: string | null;
 }) {
   if (buttons.length === 0) return null;
   const wrapperClass = layout === "inline" ? "bw-button-stack-inline" : "bw-button-stack-stacked";
@@ -552,49 +545,54 @@ function ButtonStackRender({
   };
 
   return (
-    <div className={wrapperClass}>
-      {buttons.map((b) => {
-        const buttonProps = {
-          variant: b.variant === "secondary" ? ("outline" as const) : ("default" as const),
-          style:
-            b.variant === "primary"
-              ? ({ backgroundColor: "#F5741A", color: "white" } as CSSProperties)
-              : undefined,
-        };
-        const label = b.label || "(untitled)";
-        if (b.action_type === "jump_to_block") {
+    <>
+      <div className={wrapperClass}>
+        {buttons.map((b) => {
+          const buttonProps = {
+            variant: b.variant === "secondary" ? ("outline" as const) : ("default" as const),
+            style:
+              b.variant === "primary"
+                ? ({ backgroundColor: "#F5741A", color: "white" } as CSSProperties)
+                : undefined,
+          };
+          const label = b.label || "(untitled)";
+          if (b.action_type === "jump_to_block") {
+            return (
+              <Button
+                key={b.client_id}
+                {...buttonProps}
+                onClick={() => handleJump(b.target_block_client_id)}
+                disabled={!b.target_block_client_id}
+              >
+                {label}
+              </Button>
+            );
+          }
+          const url = b.url ?? "";
+          if (!url) {
+            return (
+              <Button key={b.client_id} {...buttonProps} disabled>
+                {label}
+              </Button>
+            );
+          }
+          const isExternal = url.startsWith("http://") || url.startsWith("https://");
           return (
-            <Button
-              key={b.client_id}
-              {...buttonProps}
-              onClick={() => handleJump(b.target_block_client_id)}
-              disabled={!b.target_block_client_id}
-            >
-              {label}
+            <Button key={b.client_id} {...buttonProps} asChild>
+              <a
+                href={url}
+                target={isExternal ? "_blank" : undefined}
+                rel={isExternal ? "noopener noreferrer" : undefined}
+              >
+                {label}
+              </a>
             </Button>
           );
-        }
-        const url = b.url ?? "";
-        if (!url) {
-          return (
-            <Button key={b.client_id} {...buttonProps} disabled>
-              {label}
-            </Button>
-          );
-        }
-        const isExternal = url.startsWith("http://") || url.startsWith("https://");
-        return (
-          <Button key={b.client_id} {...buttonProps} asChild>
-            <a
-              href={url}
-              target={isExternal ? "_blank" : undefined}
-              rel={isExternal ? "noopener noreferrer" : undefined}
-            >
-              {label}
-            </a>
-          </Button>
-        );
-      })}
-    </div>
+        })}
+      </div>
+      {caption && caption.trim().length > 0 && (
+        <p className="bw-button-stack-caption">{caption}</p>
+      )}
+    </>
   );
 }

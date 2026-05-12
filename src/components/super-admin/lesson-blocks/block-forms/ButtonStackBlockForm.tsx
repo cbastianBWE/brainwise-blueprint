@@ -25,6 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { BLOCK_TYPE_META, extractTextFromTipTap, type EditorBlock } from "../blockTypeMeta";
 
 type ActionType = "link" | "jump_to_block";
@@ -44,6 +45,7 @@ interface Props {
   value: {
     buttons: ButtonEntry[];
     layout: Layout;
+    caption?: string | null;
   };
   onConfigChange: (next: Props["value"]) => void;
   siblingBlocks: EditorBlock[];
@@ -328,6 +330,25 @@ export function ButtonStackBlockForm({ value, onConfigChange, siblingBlocks }: P
             Max 4 buttons — split into multiple blocks if more are needed.
           </p>
         )}
+      </div>
+
+      <div className="space-y-2">
+        <Label className="text-xs">Caption (optional)</Label>
+        <Textarea
+          value={value.caption ?? ""}
+          onChange={(e) =>
+            onConfigChange({
+              ...value,
+              caption: e.target.value.length > 0 ? e.target.value : null,
+            })
+          }
+          placeholder="Optional instructional text shown below the buttons (e.g. 'Click Continue when you've completed the reflection')"
+          rows={2}
+          maxLength={240}
+        />
+        <p className="text-xs text-muted-foreground">
+          Helpful when buttons need context — explain what action the trainee should take, or what each button does.
+        </p>
       </div>
     </div>
   );
