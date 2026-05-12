@@ -121,7 +121,7 @@ export default function LessonBlocksEditor() {
           .from("lesson_block_drafts" as any)
           .select("*")
           .eq("content_item_id", contentItemId)
-          .eq("user_id", user.id)
+          .eq("author_id", user.id)
           .maybeSingle();
         draft = d ?? null;
       }
