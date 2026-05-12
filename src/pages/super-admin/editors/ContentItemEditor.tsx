@@ -762,10 +762,23 @@ function ContentItemEditor({
 
           {itemType === "lesson_blocks" && (
             <div className="space-y-3">
-              <p className="text-xs italic text-muted-foreground">
-                Lesson block authoring (visual block editor, AI Draft, Scaffold) lands in a future prompt.
-                For now, this editor only configures the completion mode.
-              </p>
+              {mode === "edit" && initial?.id ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() =>
+                    navigate(`/super-admin/content-authoring/lessons/${initial.id}`)
+                  }
+                  disabled={saving}
+                >
+                  <ExternalLink className="mr-2 h-4 w-4" />
+                  Edit lesson blocks
+                </Button>
+              ) : (
+                <p className="text-xs italic text-muted-foreground">
+                  Save this content item first, then you can add lesson blocks here.
+                </p>
+              )}
               <div className="space-y-2">
                 <Label>Completion mode</Label>
                 <Select value={lessonCompletionMode} onValueChange={setLessonCompletionMode} disabled={saving}>
