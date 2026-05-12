@@ -477,7 +477,7 @@ export default function LessonBlocksEditor() {
         onOpenChange={(open) => {
           if (!open) {
             setShowLeaveDialog(false);
-            blocker.reset?.();
+            setPendingNavigation(null);
           }
         }}
       >
@@ -490,7 +490,7 @@ export default function LessonBlocksEditor() {
             <AlertDialogCancel
               onClick={() => {
                 setShowLeaveDialog(false);
-                blocker.reset?.();
+                setPendingNavigation(null);
               }}
             >
               Stay
@@ -506,8 +506,14 @@ export default function LessonBlocksEditor() {
                     // non-fatal
                   }
                 }
+                const target = pendingNavigation;
                 setShowLeaveDialog(false);
-                blocker.proceed?.();
+                setPendingNavigation(null);
+                if (target && target !== "__browser_back__") {
+                  navigate(target);
+                } else if (target === "__browser_back__") {
+                  window.history.back();
+                }
               }}
             >
               Discard and leave
