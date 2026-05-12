@@ -39,21 +39,18 @@ export function EditorSlidePane({
   const Icon = meta?.icon;
 
   return (
-    <div
+    <aside
       className={cn(
-        "editor-slide-pane-outer sticky top-0 z-20 self-start",
-        open
-          ? "w-full md:w-[480px] max-h-[calc(100vh-1rem)]"
-          : "absolute left-0 top-0 h-0 w-0 overflow-hidden pointer-events-none",
+        "editor-slide-pane fixed bottom-0 z-20 flex flex-col border-r bg-background shadow-md transition-transform duration-300 ease-out",
+        open ? "translate-x-0" : "-translate-x-full pointer-events-none",
       )}
+      style={{
+        top: 56,
+        left: "var(--sidebar-width, 0px)",
+        width: "min(480px, calc(100vw - var(--sidebar-width, 0px)))",
+      }}
       aria-hidden={!open}
     >
-      <aside
-        className={cn(
-          "editor-slide-pane flex h-full max-h-[calc(100vh-1rem)] w-full flex-col border-r bg-background shadow-md transition-transform duration-300 ease-out",
-          open ? "translate-x-0" : "-translate-x-full pointer-events-none",
-        )}
-      >
         <div className="flex items-center justify-between border-b px-4 py-3">
           <div className="flex items-center gap-2">
             {Icon && <Icon className="h-4 w-4 text-muted-foreground" />}
@@ -97,7 +94,6 @@ export function EditorSlidePane({
             Save lesson
           </Button>
         </div>
-      </aside>
-    </div>
+    </aside>
   );
 }
