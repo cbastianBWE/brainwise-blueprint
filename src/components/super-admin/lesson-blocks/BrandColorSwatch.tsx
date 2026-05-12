@@ -40,6 +40,8 @@ interface BrandColorSwatchProps {
   /** Default label, defaults to "Default" */
   defaultLabel?: string;
   onDefaultSelected?: () => void;
+  /** Which palette to render. "full" = saturated brand colors (default). "tints" = pre-mixed near-neutral tints for backgrounds. */
+  palette?: "full" | "tints";
 }
 
 export function BrandColorSwatch({
@@ -49,10 +51,12 @@ export function BrandColorSwatch({
   allowDefault = false,
   defaultLabel = "Default",
   onDefaultSelected,
+  palette = "full",
 }: BrandColorSwatchProps) {
+  const source = palette === "tints" ? BRAND_TINT_COLORS : BRAND_SWATCH_COLORS;
   const swatches = allowedHexes
-    ? BRAND_SWATCH_COLORS.filter((c) => allowedHexes.includes(c.hex))
-    : BRAND_SWATCH_COLORS;
+    ? source.filter((c) => allowedHexes.includes(c.hex))
+    : source;
 
   return (
     <div className="flex flex-wrap items-center gap-2">
