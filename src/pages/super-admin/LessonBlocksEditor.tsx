@@ -564,7 +564,9 @@ export default function LessonBlocksEditor() {
             </p>
           </div>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={saving}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={saving} onClick={() => setSaveAndNavigateTo(null)}>
+              Cancel
+            </AlertDialogCancel>
             <AlertDialogAction
               disabled={saveReason.trim().length < 10 || saving}
               onClick={(e) => {
