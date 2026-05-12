@@ -18,13 +18,18 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { RichTextEditor } from "../RichTextEditor";
+import { BrandColorSwatch } from "../BrandColorSwatch";
 import type { TipTapDocJSON } from "../blockTypeMeta";
 
 type Item = { client_id: string; body: TipTapDocJSON };
 
 interface Props {
-  value: { items: Item[]; ordered: boolean };
-  onConfigChange: (next: { items: Item[]; ordered: boolean }) => void;
+  value: { items: Item[]; ordered: boolean; marker_color?: string | null };
+  onConfigChange: (next: {
+    items: Item[];
+    ordered: boolean;
+    marker_color?: string | null;
+  }) => void;
 }
 
 const emptyDoc = (): TipTapDocJSON => ({
