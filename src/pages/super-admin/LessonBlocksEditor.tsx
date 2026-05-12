@@ -467,8 +467,8 @@ export default function LessonBlocksEditor() {
         </Card>
       )}
 
-      {/* Body — flex sidebar layout so the slide-in pane can position: sticky and track scroll */}
-      <div className="flex flex-col md:flex-row md:items-start md:gap-0">
+      {/* Body — stack gets left-margin to leave room for the fixed-positioned pane */}
+      <div className="relative">
         <EditorSlidePane
           open={paneOpen && !!selectedBlock}
           block={selectedBlock}
@@ -486,7 +486,7 @@ export default function LessonBlocksEditor() {
         <div
           className={cn(
             "flex-1 transition-all duration-300 ease-out",
-            paneOpen && !!selectedBlock ? "md:pl-6" : "",
+            paneOpen && !!selectedBlock ? "md:ml-[480px]" : "",
           )}
         >
           {blocks.length === 0 ? (
