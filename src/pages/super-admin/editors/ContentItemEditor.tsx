@@ -19,7 +19,8 @@ import {
 import {
   Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
-import { Loader2, Save, Archive, Sparkles, Video } from "lucide-react";
+import { Loader2, Save, Archive, Sparkles, Video, ExternalLink } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { ITEM_TYPE_OPTIONS, ItemTypeIcon } from "./_shared";
 import { FileUploadField } from "@/components/super-admin/FileUploadField";
 
