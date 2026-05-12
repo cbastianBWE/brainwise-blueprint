@@ -45,6 +45,7 @@ interface Props {
   value: {
     buttons: ButtonEntry[];
     layout: Layout;
+    caption?: string | null;
   };
   onConfigChange: (next: Props["value"]) => void;
   siblingBlocks: EditorBlock[];
