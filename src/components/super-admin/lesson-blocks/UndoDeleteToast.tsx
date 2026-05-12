@@ -42,7 +42,7 @@ export function UndoDeleteToast({
   return (
     <div
       role="status"
-      className="fixed bottom-6 left-6 z-50 w-72 overflow-hidden rounded-md border border-l-4 bg-background shadow-md"
+      className="fixed bottom-6 right-6 z-50 w-72 overflow-hidden rounded-md border border-l-4 bg-background shadow-md"
       style={{ borderLeftColor: "#006D77" }}
     >
       <div className="flex items-center justify-between gap-3 px-3 py-2">
