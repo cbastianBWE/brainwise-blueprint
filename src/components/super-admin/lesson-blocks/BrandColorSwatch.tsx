@@ -10,9 +10,12 @@ export interface BrandSwatchColor {
 export const BRAND_SWATCH_COLORS: BrandSwatchColor[] = [
   { label: "Navy", hex: "#021F36" },
   { label: "Orange", hex: "#F5741A" },
+  { label: "Sand", hex: "#F9F7F1" },
   { label: "Teal", hex: "#006D77" },
-  { label: "Forest", hex: "#2D6A4F" },
+  { label: "Mustard", hex: "#7a5800" },
   { label: "Slate", hex: "#6D6875" },
+  { label: "Purple", hex: "#3C096C" },
+  { label: "Forest", hex: "#2D6A4F" },
 ];
 
 interface BrandColorSwatchProps {
