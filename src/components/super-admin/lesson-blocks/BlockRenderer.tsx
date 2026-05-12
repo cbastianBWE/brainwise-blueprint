@@ -253,58 +253,93 @@ function AudioRender({
   );
 }
 
+function paddingPxFor(token: unknown): number {
+  switch (token) {
+    case "small":
+      return 12;
+    case "medium":
+      return 24;
+    case "large":
+      return 48;
+    case "none":
+    default:
+      return 0;
+  }
+}
+
 export function BlockRenderer({ block, assetUrlMap }: BlockRendererProps) {
   const cfg: any = block.config ?? {};
-  switch (block.block_type) {
-    case "text":
-      return <ReadOnlyTipTap json={cfg.body} />;
-    case "heading":
-      return <HeadingRender text={cfg.text ?? ""} level={cfg.level ?? 2} />;
-    case "divider": {
-      const dividerColor = (cfg.color as string | undefined) || "#021F36";
-      return (
-        <div className="my-4">
-          <div
-            className="h-[3px] w-full rounded-full"
-            style={{ background: dividerColor }}
-          />
-        </div>
-      );
-    }
-    case "image":
-      return (
-        <ImageRender
-          assetId={cfg.asset_id ?? null}
-          alt={cfg.alt ?? ""}
-          caption={cfg.caption ?? null}
-          urlMap={assetUrlMap}
+  const bg = (cfg.background_color as string | null | undefined) ?? null;
+  const padPx = paddingPxFor(cfg.padding);
+
+  if (block.block_type === "divider") {
+    const dividerColor = (cfg.color as string | undefined) || "#021F36";
+    return (
+      <div className="my-4">
+        <div
+          className="h-[3px] w-full rounded-full"
+          style={{ background: dividerColor }}
         />
-      );
-    case "video_embed":
-      return <VideoRender config={cfg} urlMap={assetUrlMap} />;
-    case "quote":
-      return (
-        <QuoteRender body={cfg.body ?? null} attribution={cfg.attribution ?? null} />
-      );
-    case "list":
-      return (
-        <ListRender
-          items={cfg.items ?? []}
-          ordered={!!cfg.ordered}
-          markerColor={cfg.marker_color ?? null}
-        />
-      );
-    case "callout":
-      return <CalloutRender variant={cfg.variant ?? "info"} body={cfg.body ?? null} />;
-    case "embed_audio":
-      return (
-        <AudioRender
-          assetId={cfg.asset_id ?? null}
-          transcript={cfg.transcript ?? null}
-          urlMap={assetUrlMap}
-        />
-      );
-    default:
-      return null;
+      </div>
+    );
   }
+
+  const wrapperStyle: CSSProperties = {
+    background: bg ?? undefined,
+    paddingTop: padPx,
+    paddingBottom: padPx,
+    paddingLeft: bg ? 16 : undefined,
+    paddingRight: bg ? 16 : undefined,
+    borderRadius: bg ? 8 : undefined,
+  };
+
+  const renderInner = () => {
+    switch (block.block_type) {
+      case "text":
+        return <ReadOnlyTipTap json={cfg.body} />;
+      case "heading":
+        return <HeadingRender text={cfg.text ?? ""} level={cfg.level ?? 2} />;
+      case "image":
+        return (
+          <ImageRender
+            assetId={cfg.asset_id ?? null}
+            alt={cfg.alt ?? ""}
+            caption={cfg.caption ?? null}
+            urlMap={assetUrlMap}
+          />
+        );
+      case "video_embed":
+        return <VideoRender config={cfg} urlMap={assetUrlMap} />;
+      case "quote":
+        return (
+          <QuoteRender body={cfg.body ?? null} attribution={cfg.attribution ?? null} />
+        );
+      case "list":
+        return (
+          <ListRender
+            items={cfg.items ?? []}
+            ordered={!!cfg.ordered}
+            markerColor={cfg.marker_color ?? null}
+          />
+        );
+      case "callout":
+        return <CalloutRender variant={cfg.variant ?? "info"} body={cfg.body ?? null} />;
+      case "embed_audio":
+        return (
+          <AudioRender
+            assetId={cfg.asset_id ?? null}
+            transcript={cfg.transcript ?? null}
+            urlMap={assetUrlMap}
+          />
+        );
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className="block-style-wrapper" style={wrapperStyle}>
+      {renderInner()}
+    </div>
+  );
 }
