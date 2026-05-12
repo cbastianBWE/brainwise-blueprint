@@ -1,90 +1,118 @@
-# Phase 6 — Prompt 3b: Implementation Plan
 
-I'm in plan mode and cannot write files yet. Approve this plan to switch to build mode and have me execute it. Investigation is complete; one cleanup item to flag below.
+# 6a-AI — AI authoring panel (frontend)
 
-## Important: cleanup needed
+Backend already shipped in Session 62: tables `ai_authoring_conversations`, `ai_authoring_session_documents`, `ai_authoring_voice_presets`, plus RPCs `upsert_ai_authoring_conversation`, `get_ai_authoring_conversation`, `delete_ai_authoring_conversation`, `list_ai_authoring_session_documents`, `delete_ai_authoring_session_document` are present in `src/integrations/supabase/types.ts`. The 6 Edge Functions (`ai-authoring-chat`, `scaffold-lesson-outline`, `expand-lesson-from-outline`, `upload-ai-authoring-doc`, `delete-ai-authoring-doc`, `draft-lesson-block`) are deployed remotely.
 
-While preparing this plan I deleted `src/components/marketing/ServiceTile.tsx` and `src/components/marketing/ServiceDetailModal.tsx` (the rename targets). The replacement files (`MarketingTile.tsx`, `MarketingDetailModal.tsx`) were blocked because we're in plan mode. **The build is therefore broken right now** — `Services.tsx` still imports the deleted files, and the just-copied `productsContent.ts` references `MarketingTile` which doesn't exist yet. Approving this plan and switching to build mode will restore everything in the same step.
+This plan is **frontend-only**. No DB or Edge Function changes.
 
-## Verified facts
+## New files (under `src/components/super-admin/lesson-blocks/ai-pane/`)
 
-- `useAuth` from `@/hooks/useAuth` exposes `{ session, user, loading, signOut }`. ✓
-- `useAccountRole` is exported from **`@/lib/accountRoles`** (not `@/hooks/useAccountRole` as the prompt's draft code suggested). Returns `{ isCorp, loading, ... }`. ✓
-- `CorpRedirect` uses `toast.info(...)` from `sonner` (not `toast(...)`). I'll match that exact API. ✓
-- `MarketingButton` accepts `as={Link}` + `to` prop. ✓
-- `BriefingModal` already exists; takes `open`, `onClose`, `source`. ✓
-- `create-checkout/index.ts` cancel URL is on **line 75**. ✓
-- `SubscriptionGate.tsx` `/pricing` redirect is on **line 65**. ✓
-- Content files already copied to `src/content/marketing/{products,coachPricing}Content.ts`. ✓
+1. **`AiPane.tsx`** — Fixed right-side panel, 480px, `position: fixed; top: 56px; right: 0/-480px`, animates `right` (not transform). Owns all stage state, mounts persistence + rehydration, routes to one of four stage subcomponents, renders header (title, stage pill, Start over, close X), handles 24h-stale banner and start-over confirm. Pauses autosave around `onBuildLesson`.
+2. **`Stage1Chat.tsx`** — Mode segmented control (locks after first message), voice preset Select (5 presets + Custom), attached-docs tray + paperclip upload (manual `fetch` to `upload-ai-authoring-doc`), markdown chat thread with sand/orange tint bubbles, auto-grow textarea, mic button, Send (Cmd/Ctrl+Enter), and the "Generate outline" CTA (visible only after ≥1 user + ≥1 assistant message).
+3. **`Stage2Outline.tsx`** — Sortable cards (`@dnd-kit/sortable`, mirroring `StackedLessonEditor`), inline-editable summary/objective, per-card Iterate/Delete, between-item "+ Add" dividers, Back to chat + Approve buttons with cost estimate.
+4. **`Stage3FullContent.tsx`** — Read-only previews via existing `BlockRenderer`, per-block Iterate, Back to outline, Build lesson, Discard.
+5. **`Stage4Built.tsx`** — Success card, collapsible conversation history, Start a new conversation.
+6. **`IterationModal.tsx`** — Single shadcn `Dialog`. Three target kinds (`outline_item`, `outline_add`, `full_block`). Calls `scaffold-lesson-outline` with `max_outline_items: 1` for outline targets and `draft-lesson-block` for full-block targets.
+7. **`useVoiceDictation.ts`** — Wraps `webkitSpeechRecognition`/`SpeechRecognition` with `isSupported`, `isListening`, interim `transcript`, `start/stop`, `error`. `onFinal` callback for committed chunks.
+8. **`useAiAuthoringPersistence.ts`** — 2s debounced autosave to `upsert_ai_authoring_conversation`, stable JSON diff (`normalizeForCompare` pattern from `useLessonBlockDraft.ts`), `pause/resume`, `enabled` flag (false until rehydration completes).
+9. **`types.ts`** — Shared `ChatMessage`, `OutlineItem`, `OutlineState`, `FullContentItem`, `FullContentState`, `SessionDocument` (matches the shipped RPC return shapes).
+10. **`costEstimates.ts`** — Static lookup map for the cost strings.
+11. **`uploadAiAuthoringDoc.ts`** — Thin helper that performs the manual multipart `fetch` (see Technical details).
 
-## Implementation order (one build-mode loop)
+## Modified files
 
-### Phase A — Shared marketing primitives
+### `src/pages/super-admin/LessonBlocksEditor.tsx`
+- Add `aiPaneOpen` state.
+- Add header **✨ AI Draft** button (toggles pane; opening it forces `mode: "edit"` and closes the EditorSlidePane; opening Manage closes the AI pane).
+- When `blocks.length === 0`, augment the empty state with a "✨ Start with AI" CTA.
+- Add `handleAiBuildLesson(aiBlocks, mode)` per spec: maps `FullContentItem[]` → `EditorBlock[]` with fresh `client_id`s; `append` spreads, otherwise replaces; closes AI pane, clears selection, shows toast. No auto-Save.
+- Apply `md:mr-[480px]` to the stack container when `aiPaneOpen` (in addition to existing Manage `md:mr-[320px]`); AI takes precedence when both would apply (mutual auto-close).
+- Render `<AiPane />` after `<ManageBlocksSidebar />`.
 
-1. **Create** `src/components/marketing/types.ts` exporting `MarketingCardCTA` and `MarketingCardData` (with optional `status` field).
-2. **Create** `src/components/marketing/MarketingTile.tsx` — same as old `ServiceTile`, plus a "Coming Soon" pill badge (top-right, cream-300 bg, slate text, Poppins 600 11px uppercase, ls 0.12em, pill radius) when `card.status === "coming_soon"`. Re-exports `MarketingCardData` for backward compat with productsContent's import.
-3. **Create** `src/components/marketing/MarketingDetailModal.tsx` — same as old `ServiceDetailModal`, but wraps the "What you get" heading + bullet list in `{card.benefits.length > 0 && ...}` so coming-soon entries (empty benefits) hide that section cleanly. Modal still renders title, body, CTA.
-4. **Rewrite** `src/content/marketing/servicesContent.ts` to import `MarketingCardData` from the new types file and alias `export type ServiceCard = MarketingCardData;`. Six service entries unchanged.
-5. **Edit** `src/pages/marketing/Services.tsx` — swap `ServiceTile` → `MarketingTile`, `ServiceDetailModal` → `MarketingDetailModal` (imports + 2 JSX sites).
+### `src/components/super-admin/lesson-blocks/BlockEditorPane.tsx`
+- Add **✨ Refine with AI** button at the top of the form.
+- Inline (non-modal) refine section: textarea + voice Select + Generate, calling `draft-lesson-block` with `author_prompt = "<JSON config> --- Change request: <text>"`. Replace block config via existing `onChange`. Inline error + retry. Independent of `ai_authoring_conversations`.
 
-### Phase B — Products page
+## Technical details (gotchas + the two amendments)
 
-6. **Create** `src/pages/marketing/Products.tsx`:
-   - `useState` for `briefingOpen`, `openCard`, and `tab` (`"assessments" | "certifications"`).
-   - `useMemo` reads initial tab from `location.hash`, mapping both `#certifications` and `#coach-certifications` to certifications.
-   - `useEffect` syncs `tab → location.hash` with `replace: true` and a guard to avoid loops.
-   - Second `useEffect` listens to `location.hash` and updates `tab` only if different (handles back/forward).
-   - Sections: `MarketingNav`, hero (cream bg, Eyebrow + H1 + subhead from `meta`), tabs section (cream bg) using shadcn `Tabs` with custom class `bw-products-tabs`, two grids (3/2/1 cols, `align-items: start`) of `MarketingTile`, `MarketingFooter`, `MarketingDetailModal`, `BriefingModal` (`source="products_page"`).
-7. **Append** custom Tabs styling to `src/styles/marketing-tokens.css` (rules under `.bw-marketing-root .bw-products-tabs`).
+### Amendment 1 — Drift detection via `lesson_blocks.updated_at` (no localStorage)
 
-### Phase C — Public Pricing page
+On AiPane mount, after `get_ai_authoring_conversation` returns:
+```ts
+const { data: latestBlockRow } = await supabase
+  .from("lesson_blocks")
+  .select("updated_at")
+  .eq("content_item_id", contentItemId)
+  .order("updated_at", { ascending: false })
+  .limit(1)
+  .maybeSingle();
 
-8. **Create** `src/pages/marketing/Pricing.tsx`:
-   - State for `briefingOpen` and `segment` (`"individual" | "coach" | "enterprise"`), with hash sync identical pattern to Products.
-   - Sections: `MarketingNav`, hero (cream), segment switcher (custom three-button row, classes `bw-segment-switcher` + `bw-segment-button.active`), segment content (white bg), `MarketingFooter`, `BriefingModal` (`source="pricing_page"`).
-   - Three inline subcomponents: `PricingIndividual`, `PricingCoach`, `PricingEnterprise`.
-     - **Individual** reads `PLANS` and `ASSESSMENT_PURCHASE` from `@/lib/stripe`. Two tier cards (Base, Premium), Premium gets `border-color: var(--bw-orange)` + "Recommended" pill. Renders monthly price (Poppins 800 36px), an annual-savings line (computed from `monthly.price * 12` vs `annual.price`), the `features` bullets, "Get Started" → `navigate("/signup")`. Per-assessment section below with $29.99 line and second "Get Started".
-     - **Coach** maps over `coachPricing` from `@/content/marketing/coachPricingContent`. "Coming Soon" cards get the same pill badge (reuse same inline style as MarketingTile). CTAs all call `onContact()`.
-     - **Enterprise** centered hero card (max-w 720, white, navy 2px border, shadow-md), bullet list of inclusions, single CTA → `onContact()`.
-9. **Append** segment-switcher styling to `marketing-tokens.css`.
+const idleMs = Date.now() - new Date(conv.out_updated_at).getTime();
+const isIdle24h = idleMs > 24 * 60 * 60 * 1000;
+const canvasDrifted =
+  latestBlockRow &&
+  new Date(latestBlockRow.updated_at) > new Date(conv.out_updated_at);
 
-### Phase D — PricingRouter and route reorganization
+const shouldInjectCanvasNote = isIdle24h && canvasDrifted;
+```
+If `shouldInjectCanvasNote` is true, the next outgoing `ai-authoring-chat` / `scaffold-lesson-outline` / `expand-lesson-from-outline` call prepends a hidden system-style note to the user's message:
+> `Note: the lesson canvas has been edited since this conversation last ran. Current state: <block summaries from canvasBlocks>.`
 
-10. **Create** `src/pages/PricingRouter.tsx`:
-    - Imports: `useAuth` from `@/hooks/useAuth`, `useAccountRole` from `@/lib/accountRoles`, `toast` from `sonner`, `useLocation`, `Navigate`.
-    - While `auth.loading` or (`user && roleLoading`) → `return null`.
-    - Logged out → `<MarketingPricing />`.
-    - Logged in + `isCorp` → fire `toast.info("Your organization handles billing directly.")` once via `useRef` guard, then `<Navigate to="/dashboard" replace />`.
-    - Logged in + non-corp → `<Navigate to={`/settings/plan${location.search}${location.hash}`} replace />`.
-11. **Edit** `src/App.tsx`:
-    - Add imports: `import Products from "./pages/marketing/Products";` and `import PricingRouter from "./pages/PricingRouter";`.
-    - Public block: add `<Route path="/products" element={<Products />} />`. **Remove** the existing `<Route path="/pricing" ...>` line (line 108) entirely from the protected block, and add `<Route path="/pricing" element={<PricingRouter />} />` to the public block.
-    - Protected `AppLayout` block: add `<Route path="/settings/plan" element={<CorpRedirect toastMessage="Your organization handles billing directly."><Pricing /></CorpRedirect>} />` near the other `/settings/*` routes. Existing `import Pricing from "./pages/Pricing";` stays.
-12. **Edit** `src/components/CorpRedirect.tsx` — comment-only update (line 13 `/pricing` → `/settings/plan`).
+Block summaries are generated via `extractTextFromTipTap` (already in `blockTypeMeta.ts`) trimmed to ~80 chars per block. The flag is one-shot — cleared after the first AI call following rehydration. The 24h stale banner uses the same `isIdle24h` check independently.
 
-### Phase E — Stripe cancel URL fix
+### Amendment 2 — `upload-ai-authoring-doc` uses manual `fetch` only
 
-13. **Edit** `supabase/functions/create-checkout/index.ts` line 75: `${origin}/pricing?checkout=cancelled` → `${origin}/settings/plan?checkout=cancelled`. Cole will deploy.
+```ts
+// uploadAiAuthoringDoc.ts
+import { supabase } from "@/integrations/supabase/client";
 
-### Phase F — SubscriptionGate cleanup
+const SUPABASE_URL = "https://svprhtzawnbzmumxnhsq.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "<anon key from client.ts>";
 
-14. **Edit** `src/components/SubscriptionGate.tsx` line 65: `<Navigate to="/pricing" replace />` → `<Navigate to="/settings/plan" replace />`.
+export async function uploadAiAuthoringDoc(args: {
+  contentItemId: string;
+  file: File;
+}) {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.access_token) throw new Error("Not authenticated");
 
-### Phase G — MarketingNav
+  const fd = new FormData();
+  fd.append("content_item_id", args.contentItemId);
+  fd.append("file", args.file);
 
-15. **Edit** `src/components/marketing/MarketingNav.tsx` — `Products: /coming-soon` → `/products`, `Pricing: /coming-soon` → `/pricing`.
+  const res = await fetch(
+    `${SUPABASE_URL}/functions/v1/upload-ai-authoring-doc`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+        apikey: SUPABASE_PUBLISHABLE_KEY,
+        // NOTE: no Content-Type — browser sets multipart boundary
+      },
+      body: fd,
+    }
+  );
 
-## Files touched
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) throw { status: res.status, ...json };
+  return json;
+}
+```
+The other 5 Edge Functions (`ai-authoring-chat`, `scaffold-lesson-outline`, `expand-lesson-from-outline`, `delete-ai-authoring-doc`, `draft-lesson-block`) use `supabase.functions.invoke()` — they're all JSON and benefit from auto-attached auth.
 
-**Created (6):** `types.ts`, `MarketingTile.tsx`, `MarketingDetailModal.tsx`, `Products.tsx`, `Pricing.tsx` (marketing), `PricingRouter.tsx`.
-**Deleted (already done):** `ServiceTile.tsx`, `ServiceDetailModal.tsx`.
-**Modified (7):** `Services.tsx`, `servicesContent.ts`, `App.tsx`, `MarketingNav.tsx`, `CorpRedirect.tsx` (comment), `SubscriptionGate.tsx` (one line), `marketing-tokens.css` (appended), `create-checkout/index.ts` (one line).
+### Other technical notes
+- **Standing rules honored:** brand-only colors (Navy `#021F36`, Orange `#F5741A`, Sand `#F9F7F1`, Teal `#006D77`, Mustard `#7a5800`, Slate `#6D6875`, Purple `#3C096C`, Forest `#2D6A4F`); 17px / 1.65 body baseline; `position: fixed` (not sticky); animate `right` (not `transform`); non-modal flex sibling (no shadcn Sheet); pause/resume autosave debounce.
+- **RPC typing:** generated `Database` types include all 4 client-side RPCs. Call as `supabase.rpc("get_ai_authoring_conversation", { p_content_item_id })` etc.
+- **Voice presets:** `supabase.from("ai_authoring_voice_presets").select("preset_key,display_name,display_order").eq("is_active", true).order("display_order")`. Sticky last-used voice per lesson stored in `localStorage` under `ai-authoring:voice:<contentItemId>` (this localStorage use is unrelated to drift detection — it's just a UI default).
+- **Markdown rendering:** add `react-markdown` + `remark-gfm` via `bun add` for assistant message rendering (~30KB gzip; only loaded inside the AI pane).
+- **dnd-kit:** already a project dep (used in `StackedLessonEditor`); reuse same sensors/strategy.
+- **Impersonation:** read existing `ImpersonationProvider` to disable the panel with the IMPERSONATION_DENIED banner without calling the function.
+- **Errors:** central `mapAiError(code) → { title, message, retry?: boolean }` helper covering the 8 known codes (`IMPERSONATION_DENIED`, `file_too_large`, `conversation_token_budget_exceeded`, `legacy_ppt_not_supported`, `extraction_failed`, `extraction_empty`, `ai_output_unparseable`, `anthropic_api_failure`). No silent retries.
 
-## Risks
+## Out of scope (per prompt)
 
-- The `MarketingCardCTA` union must allow `to?: string` on the `open-briefing` variant or be discriminated cleanly, because `MarketingDetailModal` reads `card.cta.to` only on `action === "navigate"`. I'll discriminate strictly: `open-briefing` has no `to`, `navigate` requires `to`.
-- The Tabs CSS overrides target shadcn's actual rendered classes (`button[role="tab"][data-state="active"]`); if shadcn's TabsTrigger uses a different selector, I may need to add `!important` or adjust selectors. Will verify against the shadcn `tabs.tsx` after writing.
-- Two `useEffect`s syncing tab/segment ↔ hash — guarded with `if (newValue !== current)` to prevent loops.
-- All upgrade-flow `navigate("/pricing")` calls in MyResults, BillingSettings, PrivacySettings, AppLayout top bar, LimitReached, InstrumentSelection are intentionally left unchanged — they keep working via `PricingRouter`'s redirect to `/settings/plan` (one hop, query string preserved).
+Image uploads to AI, server-side audio transcription, Anthropic streaming, cross-lesson conversation copy, knowledge_check trainee rendering, AI on other surfaces.
 
-Approve to execute all 15 steps in build mode.
+## Verification
+
+Walk the 30 acceptance criteria against `content_item 32e0e966-4cb8-4e8b-abf8-5617de346f59`, including: tab-close rehydration in each stage, all three modes (fresh/append/replace), the 5 file types + legacy `.ppt` rejection, the new drift-detection path (manually update a block, wait 24h or fudge the conversation row's `updated_at`, verify the canvas note is injected), and per-block Refine on 2+ block types.
