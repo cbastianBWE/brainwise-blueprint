@@ -1025,6 +1025,7 @@ export type Database = {
           name: string
           prerequisite_path_id: string | null
           slug: string
+          thumbnail_asset_id: string | null
           updated_at: string
           updated_by: string | null
         }
@@ -1042,6 +1043,7 @@ export type Database = {
           name: string
           prerequisite_path_id?: string | null
           slug: string
+          thumbnail_asset_id?: string | null
           updated_at?: string
           updated_by?: string | null
         }
@@ -1059,6 +1061,7 @@ export type Database = {
           name?: string
           prerequisite_path_id?: string | null
           slug?: string
+          thumbnail_asset_id?: string | null
           updated_at?: string
           updated_by?: string | null
         }
@@ -1096,6 +1099,13 @@ export type Database = {
             columns: ["prerequisite_path_id"]
             isOneToOne: false
             referencedRelation: "certification_paths"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "certification_paths_thumbnail_asset_id_fkey"
+            columns: ["thumbnail_asset_id"]
+            isOneToOne: false
+            referencedRelation: "content_assets"
             referencedColumns: ["id"]
           },
           {
@@ -2239,31 +2249,40 @@ export type Database = {
         Row: {
           archived_at: string | null
           asset_id: string
+          certification_path_id: string | null
           content_item_id: string | null
           created_at: string
           created_by: string
+          curriculum_id: string | null
           id: string
           lesson_block_id: string | null
+          module_id: string | null
           ref_field: string
         }
         Insert: {
           archived_at?: string | null
           asset_id: string
+          certification_path_id?: string | null
           content_item_id?: string | null
           created_at?: string
           created_by: string
+          curriculum_id?: string | null
           id?: string
           lesson_block_id?: string | null
+          module_id?: string | null
           ref_field: string
         }
         Update: {
           archived_at?: string | null
           asset_id?: string
+          certification_path_id?: string | null
           content_item_id?: string | null
           created_at?: string
           created_by?: string
+          curriculum_id?: string | null
           id?: string
           lesson_block_id?: string | null
+          module_id?: string | null
           ref_field?: string
         }
         Relationships: [
@@ -2272,6 +2291,13 @@ export type Database = {
             columns: ["asset_id"]
             isOneToOne: false
             referencedRelation: "content_assets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_asset_refs_certification_path_id_fkey"
+            columns: ["certification_path_id"]
+            isOneToOne: false
+            referencedRelation: "certification_paths"
             referencedColumns: ["id"]
           },
           {
@@ -2310,10 +2336,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "content_asset_refs_curriculum_id_fkey"
+            columns: ["curriculum_id"]
+            isOneToOne: false
+            referencedRelation: "curricula"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "content_asset_refs_lesson_block_id_fkey"
             columns: ["lesson_block_id"]
             isOneToOne: false
             referencedRelation: "lesson_blocks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_asset_refs_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "modules"
             referencedColumns: ["id"]
           },
         ]
@@ -2750,6 +2790,7 @@ export type Database = {
           skills_actor_invitation_required: boolean
           skills_optional_attachment: boolean
           skills_signoff_required: string | null
+          thumbnail_asset_id: string | null
           title: string
           updated_at: string
           updated_by: string | null
@@ -2782,6 +2823,7 @@ export type Database = {
           skills_actor_invitation_required?: boolean
           skills_optional_attachment?: boolean
           skills_signoff_required?: string | null
+          thumbnail_asset_id?: string | null
           title: string
           updated_at?: string
           updated_by?: string | null
@@ -2814,6 +2856,7 @@ export type Database = {
           skills_actor_invitation_required?: boolean
           skills_optional_attachment?: boolean
           skills_signoff_required?: string | null
+          thumbnail_asset_id?: string | null
           title?: string
           updated_at?: string
           updated_by?: string | null
@@ -2858,6 +2901,13 @@ export type Database = {
             columns: ["module_id"]
             isOneToOne: false
             referencedRelation: "modules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_items_thumbnail_asset_id_fkey"
+            columns: ["thumbnail_asset_id"]
+            isOneToOne: false
+            referencedRelation: "content_assets"
             referencedColumns: ["id"]
           },
           {
@@ -3138,6 +3188,7 @@ export type Database = {
           mode: string
           name: string
           slug: string
+          thumbnail_asset_id: string | null
           updated_at: string
           updated_by: string | null
         }
@@ -3153,6 +3204,7 @@ export type Database = {
           mode?: string
           name: string
           slug: string
+          thumbnail_asset_id?: string | null
           updated_at?: string
           updated_by?: string | null
         }
@@ -3168,6 +3220,7 @@ export type Database = {
           mode?: string
           name?: string
           slug?: string
+          thumbnail_asset_id?: string | null
           updated_at?: string
           updated_by?: string | null
         }
@@ -3198,6 +3251,13 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "curricula_thumbnail_asset_id_fkey"
+            columns: ["thumbnail_asset_id"]
+            isOneToOne: false
+            referencedRelation: "content_assets"
             referencedColumns: ["id"]
           },
           {
@@ -4099,6 +4159,7 @@ export type Database = {
           is_published: boolean
           name: string
           slug: string
+          thumbnail_asset_id: string | null
           updated_at: string
           updated_by: string | null
         }
@@ -4113,6 +4174,7 @@ export type Database = {
           is_published?: boolean
           name: string
           slug: string
+          thumbnail_asset_id?: string | null
           updated_at?: string
           updated_by?: string | null
         }
@@ -4127,6 +4189,7 @@ export type Database = {
           is_published?: boolean
           name?: string
           slug?: string
+          thumbnail_asset_id?: string | null
           updated_at?: string
           updated_by?: string | null
         }
@@ -4157,6 +4220,13 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "modules_thumbnail_asset_id_fkey"
+            columns: ["thumbnail_asset_id"]
+            isOneToOne: false
+            referencedRelation: "content_assets"
             referencedColumns: ["id"]
           },
           {
@@ -7104,6 +7174,16 @@ export type Database = {
         }
         Returns: undefined
       }
+      _archive_thumbnail_ref_and_maybe_asset: {
+        Args: {
+          p_archive_reason: string
+          p_caller_id: string
+          p_old_asset_id: string
+          p_parent_id: string
+          p_parent_type: string
+        }
+        Returns: undefined
+      }
       _asset_active_ref_count: { Args: { p_asset_id: string }; Returns: number }
       _asset_extract_ext: { Args: { p_filename: string }; Returns: string }
       _asset_kind_mime_allowed: {
@@ -7114,11 +7194,27 @@ export type Database = {
         Args: { p_asset_kind: string }
         Returns: number
       }
+      _cascade_archive_asset_refs_for_certification_path: {
+        Args: {
+          p_archive_reason: string
+          p_caller_id: string
+          p_certification_path_id: string
+        }
+        Returns: Json
+      }
       _cascade_archive_asset_refs_for_content_item: {
         Args: {
           p_archive_reason: string
           p_caller_id: string
           p_content_item_id: string
+        }
+        Returns: Json
+      }
+      _cascade_archive_asset_refs_for_curriculum: {
+        Args: {
+          p_archive_reason: string
+          p_caller_id: string
+          p_curriculum_id: string
         }
         Returns: Json
       }
@@ -7129,6 +7225,18 @@ export type Database = {
           p_lesson_block_ids: string[]
         }
         Returns: Json
+      }
+      _cascade_archive_asset_refs_for_module: {
+        Args: {
+          p_archive_reason: string
+          p_caller_id: string
+          p_module_id: string
+        }
+        Returns: Json
+      }
+      _validate_thumbnail_asset: {
+        Args: { p_asset_id: string }
+        Returns: undefined
       }
       admin_assign_org_admin: {
         Args: {
@@ -8030,12 +8138,15 @@ export type Database = {
       request_asset_upload: {
         Args: {
           p_asset_kind: string
+          p_certification_path_id?: string
           p_content_item_id?: string
+          p_curriculum_id?: string
           p_is_library_asset?: boolean
           p_lesson_block_id?: string
           p_library_name?: string
           p_library_tags?: string[]
           p_mime_type: string
+          p_module_id?: string
           p_original_filename: string
           p_reason: string
           p_ref_field?: string
@@ -8210,6 +8321,7 @@ export type Database = {
           p_prerequisite_path_id: string
           p_reason: string
           p_slug: string
+          p_thumbnail_asset_id?: string
         }
         Returns: Json
       }
@@ -8223,6 +8335,7 @@ export type Database = {
           p_lesson_completion_mode: string
           p_module_id: string
           p_reason: string
+          p_thumbnail_asset_id?: string
           p_title: string
           p_type_config: Json
         }
@@ -8243,6 +8356,7 @@ export type Database = {
           p_prerequisite_curriculum_id: string
           p_reason: string
           p_slug: string
+          p_thumbnail_asset_id?: string
         }
         Returns: Json
       }
@@ -8260,6 +8374,7 @@ export type Database = {
           p_prerequisite_module_id: string
           p_reason: string
           p_slug: string
+          p_thumbnail_asset_id?: string
         }
         Returns: Json
       }

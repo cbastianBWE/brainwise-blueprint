@@ -26,6 +26,7 @@ import {
   BookOpenText, Pencil, Plus, Search, Loader2, Save, Archive,
 } from "lucide-react";
 import { slugify, CURRICULUM_MODES } from "./_shared";
+import { FileUploadField } from "@/components/super-admin/FileUploadField";
 
 function AttachedModulesSection({
   curriculumId,
@@ -143,6 +144,7 @@ function CurriculumEditor({
   );
   const [isPublished, setIsPublished] = useState<boolean>(!!initial?.is_published);
   const [reason, setReason] = useState<string>("");
+  const [thumbnailAssetId, setThumbnailAssetId] = useState<string | null>(initial?.thumbnail_asset_id ?? null);
 
   const [attachmentDisplayOrder, setAttachmentDisplayOrder] = useState<string>("0");
   const [attachmentIsRequired, setAttachmentIsRequired] = useState<boolean>(true);
@@ -340,6 +342,7 @@ function CurriculumEditor({
       p_prerequisite_curriculum_id: hasAttachmentSection
         ? (attachmentPrerequisiteCurriculumId === "__none__" ? null : attachmentPrerequisiteCurriculumId)
         : null,
+      p_thumbnail_asset_id: thumbnailAssetId,
       p_reason: reason.trim(),
     };
 
@@ -423,6 +426,27 @@ function CurriculumEditor({
       </CardHeader>
 
       <CardContent className="space-y-6">
+        <div className="space-y-4">
+          <h3 className="text-sm font-semibold text-foreground">Thumbnail</h3>
+          <p className="text-xs text-muted-foreground">
+            Optional. Shown wherever this curriculum appears in catalogs. If unset, a default BrainWise placeholder displays.
+          </p>
+          {mode === "create" ? (
+            <div className="rounded-md border border-dashed p-4 text-sm italic text-muted-foreground">
+              Save the curriculum first to add a thumbnail.
+            </div>
+          ) : (
+            <FileUploadField
+              assetKind="image"
+              curriculumId={initial?.id ?? null}
+              refField="thumbnail"
+              value={thumbnailAssetId}
+              onChange={setThumbnailAssetId}
+              disabled={saving}
+            />
+          )}
+        </div>
+
         <div className="space-y-4">
           <h3 className="text-sm font-semibold text-foreground">Identity</h3>
 

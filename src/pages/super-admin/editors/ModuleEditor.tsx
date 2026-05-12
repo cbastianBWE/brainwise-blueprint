@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Pencil, Plus, Loader2, Save, Archive, Layers } from "lucide-react";
 import { slugify, ItemTypeIcon } from "./_shared";
+import { FileUploadField } from "@/components/super-admin/FileUploadField";
 
 function AttachedContentItemsSection({
   moduleId,
@@ -132,6 +133,7 @@ function ModuleEditor({
   );
   const [isPublished, setIsPublished] = useState<boolean>(!!initial?.is_published);
   const [reason, setReason] = useState<string>("");
+  const [thumbnailAssetId, setThumbnailAssetId] = useState<string | null>(initial?.thumbnail_asset_id ?? null);
 
   const [attachmentDisplayOrder, setAttachmentDisplayOrder] = useState<string>("0");
   const [attachmentIsRequired, setAttachmentIsRequired] = useState<boolean>(true);
@@ -253,6 +255,7 @@ function ModuleEditor({
       p_prerequisite_module_id: hasAttachmentSection
         ? (attachmentPrerequisiteModuleId === "__none__" ? null : attachmentPrerequisiteModuleId)
         : null,
+      p_thumbnail_asset_id: thumbnailAssetId,
       p_reason: reason.trim(),
     };
 
@@ -336,6 +339,27 @@ function ModuleEditor({
       </CardHeader>
 
       <CardContent className="space-y-6">
+        <div className="space-y-4">
+          <h3 className="text-sm font-semibold text-foreground">Thumbnail</h3>
+          <p className="text-xs text-muted-foreground">
+            Optional. Shown wherever this module appears in catalogs. If unset, a default BrainWise placeholder displays.
+          </p>
+          {mode === "create" ? (
+            <div className="rounded-md border border-dashed p-4 text-sm italic text-muted-foreground">
+              Save the module first to add a thumbnail.
+            </div>
+          ) : (
+            <FileUploadField
+              assetKind="image"
+              moduleId={initial?.id ?? null}
+              refField="thumbnail"
+              value={thumbnailAssetId}
+              onChange={setThumbnailAssetId}
+              disabled={saving}
+            />
+          )}
+        </div>
+
         <div className="space-y-4">
           <h3 className="text-sm font-semibold text-foreground">Identity</h3>
 

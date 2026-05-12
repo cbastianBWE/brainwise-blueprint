@@ -44,6 +44,9 @@ interface FileUploadFieldProps {
   assetKind: AssetKind;
   contentItemId?: string | null;
   lessonBlockId?: string | null;
+  moduleId?: string | null;
+  curriculumId?: string | null;
+  certificationPathId?: string | null;
   isLibraryAsset?: boolean;
   refField?: string | null;
   libraryName?: string | null;
@@ -165,6 +168,9 @@ export function FileUploadField({
   assetKind,
   contentItemId,
   lessonBlockId,
+  moduleId,
+  curriculumId,
+  certificationPathId,
   isLibraryAsset,
   refField,
   libraryName,
@@ -274,7 +280,15 @@ export function FileUploadField({
       ? `Library asset upload: ${libraryName ?? "(unnamed)"}`
       : contentItemId
         ? `Asset upload for ${refField ?? "field"} on content_item ${contentItemId}`
-        : `Asset upload for ${refField ?? "field"} on lesson_block ${lessonBlockId}`;
+        : lessonBlockId
+          ? `Asset upload for ${refField ?? "field"} on lesson_block ${lessonBlockId}`
+          : moduleId
+            ? `Thumbnail upload for module ${moduleId}`
+            : curriculumId
+              ? `Thumbnail upload for curriculum ${curriculumId}`
+              : certificationPathId
+                ? `Thumbnail upload for certification_path ${certificationPathId}`
+                : "Asset upload";
     const reason = (reasonOverride && reasonOverride.length >= 10) ? reasonOverride : defaultReason;
 
     const reqResp = await supabase.functions.invoke("request-asset-upload", {
@@ -286,6 +300,9 @@ export function FileUploadField({
         reason,
         content_item_id: contentItemId ?? null,
         lesson_block_id: lessonBlockId ?? null,
+        module_id: moduleId ?? null,
+        curriculum_id: curriculumId ?? null,
+        certification_path_id: certificationPathId ?? null,
         ref_field: refField ?? null,
         is_library_asset: isLibraryAsset ?? false,
         library_name: libraryName ?? null,
@@ -337,7 +354,7 @@ export function FileUploadField({
 
     setState({ kind: "uploaded", assetId: asset_id });
     onChange(asset_id);
-  }, [assetKind, config, contentItemId, lessonBlockId, refField, isLibraryAsset, libraryName, libraryTags, reasonOverride, onChange]);
+  }, [assetKind, config, contentItemId, lessonBlockId, moduleId, curriculumId, certificationPathId, refField, isLibraryAsset, libraryName, libraryTags, reasonOverride, onChange]);
 
   const handleReplaceUpload = useCallback(async (file: File) => {
     const oldId = value;
@@ -365,7 +382,15 @@ export function FileUploadField({
       ? `Library asset upload: ${libraryName ?? "(unnamed)"}`
       : contentItemId
         ? `Asset upload for ${refField ?? "field"} on content_item ${contentItemId}`
-        : `Asset upload for ${refField ?? "field"} on lesson_block ${lessonBlockId}`;
+        : lessonBlockId
+          ? `Asset upload for ${refField ?? "field"} on lesson_block ${lessonBlockId}`
+          : moduleId
+            ? `Thumbnail upload for module ${moduleId}`
+            : curriculumId
+              ? `Thumbnail upload for curriculum ${curriculumId}`
+              : certificationPathId
+                ? `Thumbnail upload for certification_path ${certificationPathId}`
+                : "Asset upload";
     const reason = (reasonOverride && reasonOverride.length >= 10) ? reasonOverride : defaultReason;
 
     const reqResp = await supabase.functions.invoke("request-asset-upload", {
@@ -377,6 +402,9 @@ export function FileUploadField({
         reason,
         content_item_id: contentItemId ?? null,
         lesson_block_id: lessonBlockId ?? null,
+        module_id: moduleId ?? null,
+        curriculum_id: curriculumId ?? null,
+        certification_path_id: certificationPathId ?? null,
         ref_field: refField ?? null,
         is_library_asset: isLibraryAsset ?? false,
         library_name: libraryName ?? null,
@@ -434,7 +462,7 @@ export function FileUploadField({
 
     setState({ kind: "uploaded", assetId: newAssetId });
     onChange(newAssetId);
-  }, [value, assetKind, config, contentItemId, lessonBlockId, refField, isLibraryAsset, libraryName, libraryTags, reasonOverride, onChange]);
+  }, [value, assetKind, config, contentItemId, lessonBlockId, moduleId, curriculumId, certificationPathId, refField, isLibraryAsset, libraryName, libraryTags, reasonOverride, onChange]);
 
   const handleFileSelected = (file: File | null | undefined) => {
     if (!file) return;
