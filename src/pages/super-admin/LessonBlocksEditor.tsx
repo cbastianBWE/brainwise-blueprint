@@ -281,8 +281,166 @@ export default function LessonBlocksEditor() {
   // Mutators
   const handleSelectBlock = (clientId: string) => {
     setSelectedClientId(clientId);
+    setSelectedClientIds(new Set([clientId]));
+    setLastClickedClientId(clientId);
     setPaneOpen(true);
   };
+
+  const handleToggleSelect = (clientId: string, e: React.MouseEvent) => {
+    if (mode !== "manage") return;
+    if (e.shiftKey && lastClickedClientId) {
+      const startIdx = blocks.findIndex((b) => b.client_id === lastClickedClientId);
+      const endIdx = blocks.findIndex((b) => b.client_id === clientId);
+      if (startIdx >= 0 && endIdx >= 0) {
+        const [lo, hi] = startIdx < endIdx ? [startIdx, endIdx] : [endIdx, startIdx];
+        const next = new Set(selectedClientIds);
+        for (let i = lo; i <= hi; i++) next.add(blocks[i].client_id);
+        setSelectedClientIds(next);
+        setLastClickedClientId(clientId);
+        return;
+      }
+    }
+    const next = new Set(selectedClientIds);
+    if (next.has(clientId)) next.delete(clientId);
+    else next.add(clientId);
+    setSelectedClientIds(next);
+    setLastClickedClientId(clientId);
+  };
+
+  const handleBulkSelectAll = () => {
+    setSelectedClientIds(new Set(blocks.map((b) => b.client_id)));
+  };
+  const handleBulkClearSelection = () => {
+    setSelectedClientIds(new Set());
+    setLastClickedClientId(null);
+  };
+
+  const handleBulkDelete = () => {
+    if (selectedClientIds.size === 0) return;
+    const removed: { block: EditorBlock; index: number }[] = [];
+    blocks.forEach((b, i) => {
+      if (selectedClientIds.has(b.client_id)) removed.push({ block: b, index: i });
+    });
+    removed.sort((a, b) => a.index - b.index);
+    setBlocks((prev) => prev.filter((b) => !selectedClientIds.has(b.client_id)));
+    setBulkDeletedBlocks(removed);
+    setSelectedClientIds(new Set());
+    setLastClickedClientId(null);
+  };
+
+  const handleUndoBulkDelete = () => {
+    if (!bulkDeletedBlocks) return;
+    setBlocks((prev) => {
+      const next = [...prev];
+      for (const r of bulkDeletedBlocks) next.splice(r.index, 0, r.block);
+      return next;
+    });
+    setBulkDeletedBlocks(null);
+  };
+
+  const handleBulkDuplicate = () => {
+    if (selectedClientIds.size === 0) return;
+    setBlocks((prev) => {
+      const next = [...prev];
+      for (let i = next.length - 1; i >= 0; i--) {
+        if (selectedClientIds.has(next[i].client_id)) {
+          const original = next[i];
+          const dup: EditorBlock = {
+            ...original,
+            client_id: crypto.randomUUID(),
+            config: JSON.parse(JSON.stringify(original.config)),
+          };
+          next.splice(i + 1, 0, dup);
+        }
+      }
+      return next;
+    });
+  };
+
+  const handleBulkMoveUp = () => {
+    if (selectedClientIds.size === 0) return;
+    setBlocks((prev) => {
+      const next = [...prev];
+      for (let i = 1; i < next.length; i++) {
+        if (
+          selectedClientIds.has(next[i].client_id) &&
+          !selectedClientIds.has(next[i - 1].client_id)
+        ) {
+          [next[i - 1], next[i]] = [next[i], next[i - 1]];
+        }
+      }
+      return next;
+    });
+  };
+
+  const handleBulkMoveDown = () => {
+    if (selectedClientIds.size === 0) return;
+    setBlocks((prev) => {
+      const next = [...prev];
+      for (let i = next.length - 2; i >= 0; i--) {
+        if (
+          selectedClientIds.has(next[i].client_id) &&
+          !selectedClientIds.has(next[i + 1].client_id)
+        ) {
+          [next[i], next[i + 1]] = [next[i + 1], next[i]];
+        }
+      }
+      return next;
+    });
+  };
+
+  const handleBulkApplyBackground = (hex: string | null) => {
+    if (selectedClientIds.size === 0) return;
+    setBlocks((prev) =>
+      prev.map((b) =>
+        selectedClientIds.has(b.client_id)
+          ? { ...b, config: { ...b.config, background_color: hex } }
+          : b,
+      ),
+    );
+  };
+
+  const handleBulkApplyPadding = (padding: BlockPadding) => {
+    if (selectedClientIds.size === 0) return;
+    setBlocks((prev) =>
+      prev.map((b) =>
+        selectedClientIds.has(b.client_id)
+          ? { ...b, config: { ...b.config, padding } }
+          : b,
+      ),
+    );
+  };
+
+  const canBulkMoveUp = useMemo(() => {
+    for (let i = 0; i < blocks.length; i++) {
+      if (selectedClientIds.has(blocks[i].client_id)) return i > 0;
+    }
+    return false;
+  }, [blocks, selectedClientIds]);
+
+  const canBulkMoveDown = useMemo(() => {
+    for (let i = blocks.length - 1; i >= 0; i--) {
+      if (selectedClientIds.has(blocks[i].client_id)) return i < blocks.length - 1;
+    }
+    return false;
+  }, [blocks, selectedClientIds]);
+
+  useEffect(() => {
+    if (mode !== "manage") return;
+    const onKey = (e: KeyboardEvent) => {
+      const meta = e.metaKey || e.ctrlKey;
+      if (meta && e.key.toLowerCase() === "a") {
+        e.preventDefault();
+        setSelectedClientIds(new Set(blocks.map((b) => b.client_id)));
+      } else if (e.key === "Escape") {
+        e.preventDefault();
+        setSelectedClientIds(new Set());
+        setLastClickedClientId(null);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [mode, blocks]);
 
   const handleInsert = (atIndex: number, blockType: BlockType) => {
     const newBlock: EditorBlock = {
