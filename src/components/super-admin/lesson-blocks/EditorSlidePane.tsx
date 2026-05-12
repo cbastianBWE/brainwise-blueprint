@@ -15,6 +15,7 @@ interface Props {
   isDirty: boolean;
   saving: boolean;
   onRequestSave: () => void;
+  siblingBlocks: EditorBlock[];
 }
 
 export function EditorSlidePane({
@@ -27,6 +28,7 @@ export function EditorSlidePane({
   isDirty,
   saving,
   onRequestSave,
+  siblingBlocks,
 }: Props) {
   const effectiveOpen = mode === "edit" && open;
 
