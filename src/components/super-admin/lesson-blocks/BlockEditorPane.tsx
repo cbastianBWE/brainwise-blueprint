@@ -8,7 +8,6 @@ import { QuoteBlockForm } from "./block-forms/QuoteBlockForm";
 import { ListBlockForm } from "./block-forms/ListBlockForm";
 import { CalloutBlockForm } from "./block-forms/CalloutBlockForm";
 import { EmbedAudioBlockForm } from "./block-forms/EmbedAudioBlockForm";
-import { BLOCK_TYPE_META } from "./blockTypeMeta";
 
 interface Props {
   block: EditorBlock | null;
@@ -19,8 +18,8 @@ interface Props {
 export function BlockEditorPane({ block, onChange, contentItemId }: Props) {
   if (!block) {
     return (
-      <div className="flex h-full items-center justify-center p-6 text-center text-sm text-muted-foreground">
-        Select a block from the left to edit, or use + Add block to create one.
+      <div className="p-6 text-center text-sm text-muted-foreground">
+        Select a block from the stack to edit.
       </div>
     );
   }
@@ -28,17 +27,10 @@ export function BlockEditorPane({ block, onChange, contentItemId }: Props) {
   const handleConfig = (nextConfig: Record<string, unknown>) =>
     onChange({ ...block, config: nextConfig });
 
-  const meta = BLOCK_TYPE_META[block.block_type];
   const cfg: any = block.config;
 
   return (
     <div className="space-y-4 p-4">
-      <div className="flex items-center gap-2 border-b pb-2">
-        <meta.icon className="h-4 w-4 text-muted-foreground" />
-        <div className="font-display text-base font-semibold tracking-tight" style={{ color: "#021F36" }}>
-          {meta.label}
-        </div>
-      </div>
       {block.block_type === "text" && (
         <TextBlockForm value={cfg} onConfigChange={handleConfig} />
       )}

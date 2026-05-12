@@ -26,8 +26,9 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
-import { BlockListPane } from "@/components/super-admin/lesson-blocks/BlockListPane";
-import { BlockEditorPane } from "@/components/super-admin/lesson-blocks/BlockEditorPane";
+import { StackedLessonEditor } from "@/components/super-admin/lesson-blocks/StackedLessonEditor";
+import { EditorSlidePane } from "@/components/super-admin/lesson-blocks/EditorSlidePane";
+import { UndoDeleteToast } from "@/components/super-admin/lesson-blocks/UndoDeleteToast";
 import { AddBlockPopover } from "@/components/super-admin/lesson-blocks/AddBlockPopover";
 import {
   BLOCK_TYPE_META,
@@ -35,6 +36,7 @@ import {
   type EditorBlock,
 } from "@/components/super-admin/lesson-blocks/blockTypeMeta";
 import { useLessonBlockDraft } from "@/components/super-admin/lesson-blocks/useLessonBlockDraft";
+import { useLessonBlockAssetUrls } from "@/components/super-admin/lesson-blocks/useLessonBlockAssetUrls";
 import "@/components/super-admin/lesson-blocks/lesson-blocks.css";
 
 function rowsToEditorBlocks(rows: any[]): EditorBlock[] {
@@ -57,10 +59,14 @@ export default function LessonBlocksEditor() {
   const [blocks, setBlocks] = useState<EditorBlock[]>([]);
   const [initialBlocks, setInitialBlocks] = useState<EditorBlock[]>([]);
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
+  const [paneOpen, setPaneOpen] = useState(false);
   const [draftEnabled, setDraftEnabled] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const [deletedBlock, setDeletedBlock] = useState<{
+    block: EditorBlock;
+    index: number;
+  } | null>(null);
 
-  // Fetch parent content item
   const itemQuery = useQuery({
     queryKey: ["lesson-blocks-editor-item", contentItemId],
     enabled: !!contentItemId,
@@ -75,7 +81,6 @@ export default function LessonBlocksEditor() {
     },
   });
 
-  // Validate item; redirect if not editable
   useEffect(() => {
     if (itemQuery.isLoading || !contentItemId) return;
     const item = itemQuery.data as any;
@@ -89,8 +94,6 @@ export default function LessonBlocksEditor() {
     }
   }, [itemQuery.isLoading, itemQuery.data, contentItemId, navigate, toast]);
 
-  // Fetch canonical lesson_blocks + draft once
-  const [canonicalLoaded, setCanonicalLoaded] = useState<EditorBlock[] | null>(null);
   const [draftRow, setDraftRow] = useState<any | null>(null);
   const [showDraftBanner, setShowDraftBanner] = useState(false);
 
@@ -124,19 +127,11 @@ export default function LessonBlocksEditor() {
       }
       if (cancelled) return;
 
-      setCanonicalLoaded(canonical);
       setDraftRow(draft);
-      if (draft) {
-        setShowDraftBanner(true);
-        // Preload canonical so the user sees it; banner gates picking up the draft
-        setBlocks(canonical);
-        setInitialBlocks(canonical);
-      } else {
-        setBlocks(canonical);
-        setInitialBlocks(canonical);
-      }
+      if (draft) setShowDraftBanner(true);
+      setBlocks(canonical);
+      setInitialBlocks(canonical);
       setLoaded(true);
-      // Defer enabling auto-save until user has interacted.
       setTimeout(() => setDraftEnabled(true), 100);
     })();
     return () => {
@@ -149,7 +144,6 @@ export default function LessonBlocksEditor() {
     [blocks, initialBlocks],
   );
 
-  // beforeunload guard
   useEffect(() => {
     if (!isDirty) return;
     const handler = (e: BeforeUnloadEvent) => {
@@ -160,15 +154,12 @@ export default function LessonBlocksEditor() {
     return () => window.removeEventListener("beforeunload", handler);
   }, [isDirty]);
 
-  // Navigation blocker — manual guard for back-button navigation since
-  // react-router v6 useBlocker requires a data router (we use BrowserRouter).
   const [showLeaveDialog, setShowLeaveDialog] = useState(false);
   const [pendingNavigation, setPendingNavigation] = useState<string | null>(null);
 
-  // Intercept browser back/forward when isDirty
   useEffect(() => {
     if (!isDirty) return;
-    const handlePopState = (e: PopStateEvent) => {
+    const handlePopState = () => {
       window.history.pushState(null, "", window.location.href);
       setPendingNavigation("__browser_back__");
       setShowLeaveDialog(true);
@@ -187,14 +178,14 @@ export default function LessonBlocksEditor() {
     }
   }, [isDirty, navigate]);
 
-  // Auto-save draft
   const draftStatus = useLessonBlockDraft({
     contentItemId: contentItemId ?? "",
     blocks,
     enabled: !!contentItemId && draftEnabled,
   });
 
-  // Save dialog state
+  const { urlMap: assetUrlMap, registerNewAssetId } = useLessonBlockAssetUrls(contentItemId);
+
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [saveReason, setSaveReason] = useState("");
   const [saving, setSaving] = useState(false);
@@ -209,15 +200,29 @@ export default function LessonBlocksEditor() {
       .order("display_order", { ascending: true });
     if (error) throw error;
     const next = rowsToEditorBlocks((rows as any[]) ?? []);
+    // Preserve selection by display_order — IDs change on Save.
+    let nextSelected: string | null = null;
+    if (selectedClientId) {
+      const prevIndex = blocks.findIndex((b) => b.client_id === selectedClientId);
+      if (prevIndex >= 0 && prevIndex < next.length) {
+        nextSelected = next[prevIndex].client_id;
+      }
+    }
     setBlocks(next);
     setInitialBlocks(next);
-    setSelectedClientId(null);
-  }, [contentItemId]);
+    if (nextSelected) {
+      setSelectedClientId(nextSelected);
+    } else {
+      setSelectedClientId(null);
+      setPaneOpen(false);
+    }
+  }, [contentItemId, selectedClientId, blocks]);
 
   const handleSave = async () => {
     if (!contentItemId) return;
     if (saveReason.trim().length < 10) return;
     setSaving(true);
+    draftStatus.pause();
     try {
       const { error } = await supabase.rpc("replace_lesson_blocks" as any, {
         p_content_item_id: contentItemId,
@@ -229,45 +234,109 @@ export default function LessonBlocksEditor() {
       setSaveDialogOpen(false);
       setSaveReason("");
       await reload();
+      draftStatus.resume();
     } catch (e: any) {
       toast({ title: "Save failed", description: e.message ?? String(e), variant: "destructive" });
+      draftStatus.resume();
     } finally {
       setSaving(false);
     }
   };
 
-  // Block list mutators
-  const insertBlock = (atIndex: number, blockType: BlockType) => {
+  // Mutators
+  const handleSelectBlock = (clientId: string) => {
+    setSelectedClientId(clientId);
+    setPaneOpen(true);
+  };
+
+  const handleInsert = (atIndex: number, blockType: BlockType) => {
     const newBlock: EditorBlock = {
       client_id: crypto.randomUUID(),
       block_type: blockType,
       config: BLOCK_TYPE_META[blockType].defaultConfig(),
     };
-    const next = [...blocks];
-    next.splice(atIndex, 0, newBlock);
-    setBlocks(next);
+    setBlocks((prev) => [...prev.slice(0, atIndex), newBlock, ...prev.slice(atIndex)]);
     setSelectedClientId(newBlock.client_id);
+    setPaneOpen(true);
   };
 
-  const reorderBlock = (from: number, to: number) => {
-    const next = [...blocks];
-    const [moved] = next.splice(from, 1);
-    next.splice(to, 0, moved);
-    setBlocks(next);
+  const handleReorder = (from: number, to: number) => {
+    setBlocks((prev) => {
+      const next = [...prev];
+      const [moved] = next.splice(from, 1);
+      next.splice(to, 0, moved);
+      return next;
+    });
   };
 
-  const deleteBlock = (clientId: string) => {
-    setBlocks((prev) => prev.filter((b) => b.client_id !== clientId));
-    if (selectedClientId === clientId) setSelectedClientId(null);
+  const handleMoveUp = (clientId: string) => {
+    setBlocks((prev) => {
+      const i = prev.findIndex((b) => b.client_id === clientId);
+      if (i <= 0) return prev;
+      const next = [...prev];
+      [next[i - 1], next[i]] = [next[i], next[i - 1]];
+      return next;
+    });
+  };
+
+  const handleMoveDown = (clientId: string) => {
+    setBlocks((prev) => {
+      const i = prev.findIndex((b) => b.client_id === clientId);
+      if (i < 0 || i >= prev.length - 1) return prev;
+      const next = [...prev];
+      [next[i + 1], next[i]] = [next[i], next[i + 1]];
+      return next;
+    });
+  };
+
+  const handleDuplicate = (clientId: string) => {
+    setBlocks((prev) => {
+      const i = prev.findIndex((b) => b.client_id === clientId);
+      if (i < 0) return prev;
+      const original = prev[i];
+      const duplicate: EditorBlock = {
+        ...original,
+        client_id: crypto.randomUUID(),
+        config: JSON.parse(JSON.stringify(original.config)),
+      };
+      return [...prev.slice(0, i + 1), duplicate, ...prev.slice(i + 1)];
+    });
+  };
+
+  const handleDelete = (clientId: string) => {
+    setBlocks((prev) => {
+      const i = prev.findIndex((b) => b.client_id === clientId);
+      if (i < 0) return prev;
+      setDeletedBlock({ block: prev[i], index: i });
+      if (selectedClientId === clientId) {
+        setSelectedClientId(null);
+        setPaneOpen(false);
+      }
+      return prev.filter((b) => b.client_id !== clientId);
+    });
+  };
+
+  const handleUndoDelete = () => {
+    if (!deletedBlock) return;
+    setBlocks((prev) => [
+      ...prev.slice(0, deletedBlock.index),
+      deletedBlock.block,
+      ...prev.slice(deletedBlock.index),
+    ]);
+    setDeletedBlock(null);
   };
 
   const updateBlock = (next: EditorBlock) => {
+    // If an asset_id was newly set, register it for signed-url fetching.
+    const cfg: any = next.config ?? {};
+    if (cfg.asset_id && typeof cfg.asset_id === "string") {
+      registerNewAssetId(cfg.asset_id);
+    }
     setBlocks((prev) => prev.map((b) => (b.client_id === next.client_id ? next : b)));
   };
 
   const selectedBlock = blocks.find((b) => b.client_id === selectedClientId) ?? null;
 
-  // Draft banner actions
   const pickUpDraft = () => {
     if (!draftRow) return;
     const draftBlocks = (draftRow.draft_json?.blocks ?? []) as EditorBlock[];
@@ -281,14 +350,13 @@ export default function LessonBlocksEditor() {
       await supabase.rpc("discard_lesson_block_draft" as any, {
         p_content_item_id: contentItemId,
       });
-    } catch (e) {
+    } catch {
       // non-fatal
     }
     setShowDraftBanner(false);
     setDraftRow(null);
   };
 
-  // Status badge
   const statusLabel = useMemo(() => {
     if (saving) return "Saving…";
     if (isDirty) {
@@ -317,16 +385,14 @@ export default function LessonBlocksEditor() {
           variant="ghost"
           size="sm"
           className="-ml-2 h-auto px-2 py-1 text-muted-foreground hover:text-foreground"
-          onClick={() => {
-            guardedNavigate("/super-admin/content-authoring");
-          }}
+          onClick={() => guardedNavigate("/super-admin/content-authoring")}
         >
           <ChevronLeft className="mr-1 h-4 w-4" />
           Back to content authoring
         </Button>
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="space-y-1">
-            <h1 className="text-3xl font-bold tracking-tight" style={{ color: "#021F36" }}>
+            <h1 className="font-display text-3xl font-bold tracking-tight" style={{ color: "#021F36" }}>
               {item?.title ?? "Lesson"}
             </h1>
             <p className="text-sm text-muted-foreground">
@@ -375,55 +441,68 @@ export default function LessonBlocksEditor() {
         </Card>
       )}
 
-      {/* Body */}
-      {blocks.length === 0 ? (
-        <div className="flex h-[60vh] items-center justify-center">
-          <Card className="w-96">
-            <CardContent className="flex flex-col items-center gap-3 p-8">
-              <div className="text-sm text-muted-foreground">No blocks yet</div>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button>
-                    <Plus className="mr-1 h-4 w-4" />
-                    Add your first block
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-72 p-2" align="center">
-                  <AddBlockPopover onSelect={(bt) => insertBlock(0, bt)} />
-                </PopoverContent>
-              </Popover>
-            </CardContent>
-          </Card>
-        </div>
-      ) : (
+      {/* Body — relative wrapper for the slide-in pane */}
+      <div className="relative">
+        <EditorSlidePane
+          open={paneOpen && !!selectedBlock}
+          block={selectedBlock}
+          contentItemId={contentItemId!}
+          onChange={updateBlock}
+          onClose={() => {
+            setPaneOpen(false);
+            setSelectedClientId(null);
+          }}
+        />
+
         <div
           className={cn(
-            "grid h-[calc(100vh-7rem)] grid-cols-1 gap-3 self-start md:grid-cols-12",
+            "transition-all duration-300 ease-out",
+            paneOpen && !!selectedBlock ? "md:ml-[480px]" : "ml-0",
           )}
         >
-          <Card className="flex h-full min-h-0 flex-col md:col-span-5 lg:col-span-4">
-            <CardContent className="flex-1 overflow-y-auto p-3">
-              <BlockListPane
+          {blocks.length === 0 ? (
+            <div className="flex h-[50vh] items-center justify-center">
+              <Card className="w-96">
+                <CardContent className="flex flex-col items-center gap-3 p-8">
+                  <div className="text-sm text-muted-foreground">No blocks yet</div>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button>
+                        <Plus className="mr-1 h-4 w-4" />
+                        Add your first block
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-72 p-2" align="center">
+                      <AddBlockPopover onSelect={(bt) => handleInsert(0, bt)} />
+                    </PopoverContent>
+                  </Popover>
+                </CardContent>
+              </Card>
+            </div>
+          ) : (
+            <div className="mx-auto max-w-3xl">
+              <StackedLessonEditor
                 blocks={blocks}
                 selectedClientId={selectedClientId}
-                onSelect={setSelectedClientId}
-                onReorder={reorderBlock}
-                onDelete={deleteBlock}
-                onInsert={insertBlock}
+                assetUrlMap={assetUrlMap}
+                onSelectBlock={handleSelectBlock}
+                onReorder={handleReorder}
+                onDelete={handleDelete}
+                onDuplicate={handleDuplicate}
+                onInsert={handleInsert}
+                onMoveUp={handleMoveUp}
+                onMoveDown={handleMoveDown}
               />
-            </CardContent>
-          </Card>
-          <Card className="flex h-full min-h-0 flex-col md:col-span-7 lg:col-span-8">
-            <CardContent className="flex-1 overflow-y-auto p-0">
-              <BlockEditorPane
-                block={selectedBlock}
-                onChange={updateBlock}
-                contentItemId={contentItemId!}
-              />
-            </CardContent>
-          </Card>
+            </div>
+          )}
         </div>
-      )}
+      </div>
+
+      <UndoDeleteToast
+        open={!!deletedBlock}
+        onUndo={handleUndoDelete}
+        onDismiss={() => setDeletedBlock(null)}
+      />
 
       {/* Save dialog */}
       <AlertDialog open={saveDialogOpen} onOpenChange={setSaveDialogOpen}>

@@ -20,7 +20,7 @@ export function EmbedAudioBlockForm({
         <FileUploadField
           assetKind="audio"
           contentItemId={contentItemId ?? null}
-          refField="audio_asset"
+          refField="embed_audio_asset"
           value={value.asset_id}
           onChange={(newAssetId) =>
             onConfigChange({ ...value, asset_id: newAssetId })
