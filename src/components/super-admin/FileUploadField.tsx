@@ -14,6 +14,7 @@ import {
   Upload,
   LibraryBig,
   BookmarkCheck,
+  ExternalLink,
 } from "lucide-react";
 import * as tus from "tus-js-client";
 import { supabase } from "@/integrations/supabase/client";
@@ -178,6 +179,7 @@ export function FileUploadField({
   const [state, setState] = useState<UploadState>(value ? { kind: "uploaded", assetId: value } : { kind: "empty" });
   const [isDragOver, setIsDragOver] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [docOpenUrl, setDocOpenUrl] = useState<string | null>(null);
   const [replaceOpen, setReplaceOpen] = useState(false);
   const [removeOpen, setRemoveOpen] = useState(false);
   const [libraryPickerOpen, setLibraryPickerOpen] = useState(false);
@@ -194,6 +196,7 @@ export function FileUploadField({
     } else if (!value && state.kind === "uploaded") {
       setState({ kind: "empty" });
       setPreviewUrl(null);
+      setDocOpenUrl(null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value]);
@@ -218,17 +221,32 @@ export function FileUploadField({
     },
   });
 
-  // Fetch signed URL for image preview
+  // Fetch signed URL for inline preview (image, video, audio)
   useEffect(() => {
     let cancelled = false;
     async function fetchPreview() {
-      if (!asset?.current_version || assetKind !== "image") return;
+      if (!asset?.current_version) return;
+      if (assetKind === "document") return;
       const { data, error } = await supabase.storage
         .from(asset.current_version.bucket)
-        .createSignedUrl(asset.current_version.path, 600);
+        .createSignedUrl(asset.current_version.path, 3600);
       if (!cancelled && !error && data) setPreviewUrl(data.signedUrl);
     }
     fetchPreview();
+    return () => { cancelled = true; };
+  }, [asset, assetKind]);
+
+  // Fetch signed URL for document inline render (PDF) and "Open in new tab" button
+  useEffect(() => {
+    let cancelled = false;
+    async function fetchDocUrl() {
+      if (!asset?.current_version || assetKind !== "document") return;
+      const { data, error } = await supabase.storage
+        .from(asset.current_version.bucket)
+        .createSignedUrl(asset.current_version.path, 3600);
+      if (!cancelled && !error && data) setDocOpenUrl(data.signedUrl);
+    }
+    fetchDocUrl();
     return () => { cancelled = true; };
   }, [asset, assetKind]);
 
@@ -505,21 +523,66 @@ export function FileUploadField({
       );
     } else if (assetKind === "video") {
       preview = (
-        <div className="aspect-video rounded-md bg-muted flex items-center justify-center">
-          <Video className="h-12 w-12 text-muted-foreground" />
+        <div className="aspect-video rounded-md overflow-hidden bg-black">
+          {previewUrl ? (
+            <video
+              src={previewUrl}
+              controls
+              preload="metadata"
+              className="w-full h-full"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-muted">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
+          )}
         </div>
       );
     } else if (assetKind === "audio") {
       preview = (
-        <div className="rounded-md bg-[#F9F7F1] p-6 flex items-center justify-center">
-          <Music className="h-12 w-12 text-[#006D77]" />
+        <div className="rounded-md bg-[#F9F7F1] p-6 space-y-3">
+          <div className="flex items-center justify-center">
+            <Music className="h-10 w-10 text-[#006D77]" />
+          </div>
+          {previewUrl ? (
+            <audio src={previewUrl} controls preload="metadata" className="w-full" />
+          ) : (
+            <div className="flex items-center justify-center">
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            </div>
+          )}
         </div>
       );
     } else {
       const DocIcon = documentExtIcon(filename);
+      const isPdf = ver?.mime_type === "application/pdf";
       preview = (
-        <div className="rounded-md bg-[#F9F7F1] p-6 flex items-center justify-center">
-          <DocIcon className="h-12 w-12 text-[#006D77]" />
+        <div className="rounded-md bg-[#F9F7F1] p-4 space-y-3">
+          <div className="flex items-center justify-center gap-3">
+            <DocIcon className="h-8 w-8 text-[#006D77]" />
+            {docOpenUrl ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => window.open(docOpenUrl, "_blank", "noopener,noreferrer")}
+              >
+                <ExternalLink className="mr-2 h-4 w-4" />
+                Open in new tab
+              </Button>
+            ) : (
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            )}
+          </div>
+          {isPdf && docOpenUrl && (
+            <div className="rounded-md overflow-hidden border bg-white" style={{ height: "600px" }}>
+              <iframe
+                src={docOpenUrl}
+                title={filename}
+                className="w-full h-full"
+              />
+            </div>
+          )}
         </div>
       );
     }
@@ -605,7 +668,7 @@ export function FileUploadField({
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={() => { setRemoveOpen(false); setState({ kind: "empty" }); setPreviewUrl(null); onChange(null); }}>
+              <AlertDialogAction onClick={() => { setRemoveOpen(false); setState({ kind: "empty" }); setPreviewUrl(null); setDocOpenUrl(null); onChange(null); }}>
                 Continue
               </AlertDialogAction>
             </AlertDialogFooter>
