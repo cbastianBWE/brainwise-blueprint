@@ -263,6 +263,7 @@ export function AiPane(props: Props) {
           custom_voice_guidance: customVoiceGuidance || undefined,
           custom_voice_example: customVoiceExample || undefined,
           mode,
+          length: lengthPreference,
           canvas_block_summary: canvasBlockSummary,
         },
       });
@@ -307,6 +308,7 @@ export function AiPane(props: Props) {
           custom_voice_guidance: customVoiceGuidance || undefined,
           custom_voice_example: customVoiceExample || undefined,
           mode,
+          length: lengthPreference,
           outline: outlineState.items.map((i) => ({
             block_type: i.block_type,
             summary_one_line: i.summary_one_line,
