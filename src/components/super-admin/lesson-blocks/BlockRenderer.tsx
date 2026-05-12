@@ -379,6 +379,7 @@ export function BlockRenderer({ block, assetUrlMap }: BlockRendererProps) {
           <ButtonStackRender
             buttons={cfg.buttons ?? []}
             layout={cfg.layout === "inline" ? "inline" : "stacked"}
+            caption={cfg.caption ?? null}
           />
         );
       default:
