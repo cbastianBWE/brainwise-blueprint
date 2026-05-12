@@ -131,6 +131,7 @@ export function IterationModal(props: Props) {
               voice_preset_key: voicePresetKey ?? undefined,
               custom_voice_guidance: customVoiceGuidance ?? undefined,
               custom_voice_example: customVoiceExample ?? undefined,
+              length: lengthPreference,
             },
           },
         );
@@ -167,6 +168,7 @@ export function IterationModal(props: Props) {
               custom_voice_guidance: customVoiceGuidance ?? undefined,
               custom_voice_example: customVoiceExample ?? undefined,
               mode,
+              length: lengthPreference,
               max_outline_items: 1,
             },
           },
@@ -208,6 +210,19 @@ export function IterationModal(props: Props) {
             Using voice: <strong>{voiceDisplayName}</strong> · {costStr}
           </DialogDescription>
         </DialogHeader>
+        <div className="flex items-center gap-2">
+          <Label className="text-xs uppercase tracking-wide text-muted-foreground">Length</Label>
+          <Select value={lengthPreference} onValueChange={(v) => onLengthChange(v as LengthLevel)}>
+            <SelectTrigger className="h-7 w-28 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="concise">Concise</SelectItem>
+              <SelectItem value="standard">Standard</SelectItem>
+              <SelectItem value="detailed">Detailed</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
         {target.kind === "outline_item" && (
           <details className="rounded-md border bg-muted/40 p-3 text-xs">
             <summary className="cursor-pointer font-medium">Current item</summary>
