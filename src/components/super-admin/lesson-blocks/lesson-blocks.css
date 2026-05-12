@@ -53,7 +53,7 @@
   width: 1.5em;
   height: 1.5em;
   border-radius: 50%;
-  background: #F5741A;
+  background: var(--list-marker-color, #F5741A);
   color: #FFFFFF;
   font-size: 0.85em;
   font-weight: 700;
