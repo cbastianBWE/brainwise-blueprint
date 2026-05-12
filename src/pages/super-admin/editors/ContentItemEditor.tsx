@@ -19,7 +19,8 @@ import {
 import {
   Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
-import { Loader2, Save, Archive, Sparkles, Video } from "lucide-react";
+import { Loader2, Save, Archive, Sparkles, Video, ExternalLink } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { ITEM_TYPE_OPTIONS, ItemTypeIcon } from "./_shared";
 import { FileUploadField } from "@/components/super-admin/FileUploadField";
 
@@ -39,6 +40,7 @@ function ContentItemEditor({
   onSaved, onArchived, onCancelCreate,
 }: ContentItemEditorProps) {
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const [itemType, setItemType] = useState<string>(initial?.item_type ?? "video");
   const [title, setTitle] = useState<string>(initial?.title ?? "");
@@ -762,10 +764,23 @@ function ContentItemEditor({
 
           {itemType === "lesson_blocks" && (
             <div className="space-y-3">
-              <p className="text-xs italic text-muted-foreground">
-                Lesson block authoring (visual block editor, AI Draft, Scaffold) lands in a future prompt.
-                For now, this editor only configures the completion mode.
-              </p>
+              {mode === "edit" && initial?.id ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() =>
+                    navigate(`/super-admin/content-authoring/lessons/${initial.id}`)
+                  }
+                  disabled={saving}
+                >
+                  <ExternalLink className="mr-2 h-4 w-4" />
+                  Edit lesson blocks
+                </Button>
+              ) : (
+                <p className="text-xs italic text-muted-foreground">
+                  Save this content item first, then you can add lesson blocks here.
+                </p>
+              )}
               <div className="space-y-2">
                 <Label>Completion mode</Label>
                 <Select value={lessonCompletionMode} onValueChange={setLessonCompletionMode} disabled={saving}>

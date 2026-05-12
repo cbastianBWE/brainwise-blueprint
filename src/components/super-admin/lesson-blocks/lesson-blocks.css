@@ -1,0 +1,52 @@
+.tiptap-prose .ProseMirror {
+  outline: none;
+}
+
+/* Branded list bullets in BrainWise orange */
+.tiptap-prose ul {
+  list-style: none;
+  padding-left: 1.5em;
+}
+.tiptap-prose ul li {
+  position: relative;
+}
+.tiptap-prose ul li::before {
+  content: "•";
+  color: #F5741A;
+  font-weight: bold;
+  position: absolute;
+  left: -1em;
+}
+
+/* Numbered list markers in orange */
+.tiptap-prose ol {
+  list-style: none;
+  counter-reset: item;
+  padding-left: 1.5em;
+}
+.tiptap-prose ol li {
+  position: relative;
+  counter-increment: item;
+}
+.tiptap-prose ol li::before {
+  content: counter(item) ".";
+  color: #F5741A;
+  font-weight: bold;
+  position: absolute;
+  left: -1.5em;
+}
+
+/* Links — orange, underlined */
+.tiptap-prose a {
+  color: #F5741A;
+  text-decoration: underline;
+}
+
+/* Placeholder — only show on truly empty first paragraph */
+.tiptap-prose p.is-editor-empty:first-child::before {
+  color: #9ca3af;
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}

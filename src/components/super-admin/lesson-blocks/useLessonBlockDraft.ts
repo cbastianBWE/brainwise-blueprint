@@ -1,0 +1,58 @@
+import { useEffect, useRef, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import type { EditorBlock } from "./blockTypeMeta";
+
+type Status = "idle" | "saving" | "saved" | "error";
+
+export function useLessonBlockDraft(args: {
+  contentItemId: string;
+  blocks: EditorBlock[];
+  enabled: boolean;
+}): { status: Status; lastSavedAt: Date | null } {
+  const { contentItemId, blocks, enabled } = args;
+  const [status, setStatus] = useState<Status>("idle");
+  const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
+  const prevSerialized = useRef<string | null>(null);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (!enabled) return;
+    const serialized = JSON.stringify(blocks);
+    if (prevSerialized.current === null) {
+      prevSerialized.current = serialized;
+      return;
+    }
+    if (serialized === prevSerialized.current) return;
+    prevSerialized.current = serialized;
+
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = setTimeout(async () => {
+      setStatus("saving");
+      try {
+        const { error } = await supabase.rpc("save_lesson_block_draft" as any, {
+          p_content_item_id: contentItemId,
+          p_draft_json: { blocks },
+        });
+        if (error) throw error;
+        setStatus("saved");
+        setLastSavedAt(new Date());
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.error("save_lesson_block_draft failed", e);
+        setStatus("error");
+      }
+    }, 3000);
+
+    return () => {
+      if (timer.current) clearTimeout(timer.current);
+    };
+  }, [blocks, enabled, contentItemId]);
+
+  useEffect(() => {
+    return () => {
+      if (timer.current) clearTimeout(timer.current);
+    };
+  }, []);
+
+  return { status, lastSavedAt };
+}

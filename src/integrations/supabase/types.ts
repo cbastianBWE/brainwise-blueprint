@@ -3920,6 +3920,63 @@ export type Database = {
           },
         ]
       }
+      lesson_block_drafts: {
+        Row: {
+          author_id: string
+          content_item_id: string
+          draft_json: Json
+          updated_at: string
+        }
+        Insert: {
+          author_id: string
+          content_item_id: string
+          draft_json: Json
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string
+          content_item_id?: string
+          draft_json?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lesson_block_drafts_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lesson_block_drafts_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "lesson_block_drafts_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lesson_block_drafts_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lesson_block_drafts_content_item_id_fkey"
+            columns: ["content_item_id"]
+            isOneToOne: false
+            referencedRelation: "content_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lesson_block_types: {
         Row: {
           block_type: string
@@ -7674,6 +7731,10 @@ export type Database = {
         Args: { p_dept_id: string; p_new_name: string }
         Returns: undefined
       }
+      discard_lesson_block_draft: {
+        Args: { p_content_item_id: string }
+        Returns: Json
+      }
       enroll_user_in_certification_path: {
         Args: {
           p_certification_path_id: string
@@ -8178,6 +8239,10 @@ export type Database = {
         Returns: Json
       }
       run_asset_hard_delete: { Args: never; Returns: Json }
+      save_lesson_block_draft: {
+        Args: { p_content_item_id: string; p_draft_json: Json }
+        Returns: Json
+      }
       save_org_intervention: {
         Args: {
           p_description: string
