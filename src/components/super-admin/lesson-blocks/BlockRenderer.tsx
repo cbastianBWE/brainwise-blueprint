@@ -249,8 +249,17 @@ export function BlockRenderer({ block, assetUrlMap }: BlockRendererProps) {
       return <ReadOnlyTipTap json={cfg.body} />;
     case "heading":
       return <HeadingRender text={cfg.text ?? ""} level={cfg.level ?? 2} />;
-    case "divider":
-      return <hr className="border-t border-border" />;
+    case "divider": {
+      const dividerColor = (cfg.color as string | undefined) || "#021F36";
+      return (
+        <div className="my-4">
+          <div
+            className="h-[3px] w-full rounded-full"
+            style={{ background: dividerColor }}
+          />
+        </div>
+      );
+    }
     case "image":
       return (
         <ImageRender
