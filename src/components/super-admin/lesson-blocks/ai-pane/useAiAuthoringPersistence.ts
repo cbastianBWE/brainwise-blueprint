@@ -128,12 +128,12 @@ export function useAiAuthoringPersistence(args: {
     prevSerialized.current = null;
   }, []);
 
-  const flushNow = useCallback(async () => {
+  const flushNow = useCallback(async (overrideState?: Partial<PersistenceState>) => {
     if (timer.current) {
       clearTimeout(timer.current);
       timer.current = null;
     }
-    await doSave();
+    await doSave(overrideState);
   }, [doSave]);
 
   return { status, lastSavedAt, pause, resume, flushNow };
