@@ -27,6 +27,7 @@ export function Stage4Built({ messages, onStartOver }: Props) {
               You can edit any block directly on the canvas, or refine specific blocks with AI from
               this panel.
             </p>
+          </div>
         </div>
         <div
           className="flex items-start gap-3 rounded-lg border p-4"
