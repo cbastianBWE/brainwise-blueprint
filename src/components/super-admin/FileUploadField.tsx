@@ -14,6 +14,7 @@ import {
   Upload,
   LibraryBig,
   BookmarkCheck,
+  ExternalLink,
 } from "lucide-react";
 import * as tus from "tus-js-client";
 import { supabase } from "@/integrations/supabase/client";
