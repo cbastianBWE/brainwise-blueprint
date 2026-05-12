@@ -342,6 +342,7 @@ function CurriculumEditor({
       p_prerequisite_curriculum_id: hasAttachmentSection
         ? (attachmentPrerequisiteCurriculumId === "__none__" ? null : attachmentPrerequisiteCurriculumId)
         : null,
+      p_thumbnail_asset_id: thumbnailAssetId,
       p_reason: reason.trim(),
     };
 
