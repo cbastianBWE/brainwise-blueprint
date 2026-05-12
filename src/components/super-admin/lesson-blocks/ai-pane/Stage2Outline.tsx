@@ -19,7 +19,15 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { BLOCK_TYPE_META, type BlockType } from "../blockTypeMeta";
 import { COST_ESTIMATES } from "./costEstimates";
-import type { OutlineItem } from "./types";
+import type { LengthLevel, OutlineItem } from "./types";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import { IterationModal, type IterationTarget } from "./IterationModal";
 
 interface Props {
@@ -36,6 +44,8 @@ interface Props {
   attachedDocumentIds: string[];
   mode: "fresh" | "append" | "replace";
   conversationMessages: { role: "user" | "assistant"; content: string }[];
+  lengthPreference: LengthLevel;
+  onLengthChange: (next: LengthLevel) => void;
 }
 
 export function Stage2Outline(props: Props) {
@@ -53,6 +63,8 @@ export function Stage2Outline(props: Props) {
     mode,
     conversationMessages,
     contentItemId,
+    lengthPreference,
+    onLengthChange,
   } = props;
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
@@ -146,6 +158,19 @@ export function Stage2Outline(props: Props) {
       </div>
 
       <div className="space-y-2 border-t p-3">
+        <div className="flex items-center justify-between gap-2">
+          <Label className="text-xs uppercase tracking-wide text-muted-foreground">Length</Label>
+          <Select value={lengthPreference} onValueChange={(v) => onLengthChange(v as LengthLevel)}>
+            <SelectTrigger className="h-8 w-32 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="concise">Concise</SelectItem>
+              <SelectItem value="standard">Standard</SelectItem>
+              <SelectItem value="detailed">Detailed</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
         <p className="text-xs text-muted-foreground">{COST_ESTIMATES.expandFullContent(items.length)}</p>
         <div className="flex gap-2">
           <Button variant="ghost" onClick={onBack} disabled={approving}>
@@ -185,6 +210,8 @@ export function Stage2Outline(props: Props) {
         attachedDocumentIds={attachedDocumentIds}
         mode={mode}
         conversationMessages={conversationMessages}
+        lengthPreference={lengthPreference}
+        onLengthChange={onLengthChange}
         onApplyOutlineItem={handleApplyOutlineItem}
         onApplyFullBlock={() => {
           /* not used in stage 2 */
