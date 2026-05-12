@@ -139,10 +139,25 @@ export default function LessonBlocksEditor() {
     };
   }, [contentItemId, itemQuery.data, toast]);
 
-  const isDirty = useMemo(
-    () => JSON.stringify(blocks) !== JSON.stringify(initialBlocks),
-    [blocks, initialBlocks],
-  );
+  const isDirty = useMemo(() => {
+    const normalize = (v: any): any => {
+      if (v === null || v === undefined) return null;
+      if (Array.isArray(v)) return v.map(normalize).filter((x) => x !== undefined);
+      if (typeof v === "object") {
+        const out: any = {};
+        for (const k of Object.keys(v).sort()) {
+          const nv = normalize(v[k]);
+          if (nv === undefined) continue;
+          if (Array.isArray(nv) && nv.length === 0) continue;
+          if (nv === null || nv === "") continue;
+          out[k] = nv;
+        }
+        return out;
+      }
+      return v;
+    };
+    return JSON.stringify(normalize(blocks)) !== JSON.stringify(normalize(initialBlocks));
+  }, [blocks, initialBlocks]);
 
   useEffect(() => {
     if (!isDirty) return;
