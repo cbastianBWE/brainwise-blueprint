@@ -221,17 +221,32 @@ export function FileUploadField({
     },
   });
 
-  // Fetch signed URL for image preview
+  // Fetch signed URL for inline preview (image, video, audio)
   useEffect(() => {
     let cancelled = false;
     async function fetchPreview() {
-      if (!asset?.current_version || assetKind !== "image") return;
+      if (!asset?.current_version) return;
+      if (assetKind === "document") return;
       const { data, error } = await supabase.storage
         .from(asset.current_version.bucket)
-        .createSignedUrl(asset.current_version.path, 600);
+        .createSignedUrl(asset.current_version.path, 3600);
       if (!cancelled && !error && data) setPreviewUrl(data.signedUrl);
     }
     fetchPreview();
+    return () => { cancelled = true; };
+  }, [asset, assetKind]);
+
+  // Fetch signed URL for document inline render (PDF) and "Open in new tab" button
+  useEffect(() => {
+    let cancelled = false;
+    async function fetchDocUrl() {
+      if (!asset?.current_version || assetKind !== "document") return;
+      const { data, error } = await supabase.storage
+        .from(asset.current_version.bucket)
+        .createSignedUrl(asset.current_version.path, 3600);
+      if (!cancelled && !error && data) setDocOpenUrl(data.signedUrl);
+    }
+    fetchDocUrl();
     return () => { cancelled = true; };
   }, [asset, assetKind]);
 
