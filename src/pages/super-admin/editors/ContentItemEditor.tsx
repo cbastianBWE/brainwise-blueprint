@@ -433,6 +433,27 @@ function ContentItemEditor({
       </CardHeader>
 
       <CardContent className="space-y-6">
+        <div className="space-y-4">
+          <h3 className="text-sm font-semibold text-foreground">Thumbnail</h3>
+          <p className="text-xs text-muted-foreground">
+            Optional. Shown wherever this content item appears in catalogs. If unset, a default BrainWise placeholder displays.
+          </p>
+          {mode === "create" ? (
+            <div className="rounded-md border border-dashed p-4 text-sm italic text-muted-foreground">
+              Save the content item first to add a thumbnail.
+            </div>
+          ) : (
+            <FileUploadField
+              assetKind="image"
+              contentItemId={initial?.id ?? null}
+              refField="thumbnail"
+              value={thumbnailAssetId}
+              onChange={setThumbnailAssetId}
+              disabled={saving}
+            />
+          )}
+        </div>
+
         {/* Title with AI draft */}
         <div className="space-y-2">
           <div className="flex items-center justify-between gap-2">
