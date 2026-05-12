@@ -249,9 +249,7 @@ export function BlockEditorPane({ block, onChange, contentItemId, siblingBlocks 
       )}
 
       <BlockStyleSection value={cfg} onConfigChange={handleConfig} />
+      <span data-sibling-count={siblingBlocks.length} className="hidden" />
     </div>
   );
 }
-
-// Suppress unused param warning until 6b.2 consumes siblingBlocks
-void ((_x: unknown) => _x);
