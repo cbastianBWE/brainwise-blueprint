@@ -174,7 +174,7 @@ function ListRender({
 }) {
   const ListTag = (ordered ? "ol" : "ul") as "ol" | "ul";
   const styleVars = markerColor
-    ? ({ "--list-marker-color": markerColor } as React.CSSProperties)
+    ? ({ "--list-marker-color": markerColor } as CSSProperties)
     : undefined;
   return (
     <div className="tiptap-prose prose-base max-w-none" style={styleVars}>
