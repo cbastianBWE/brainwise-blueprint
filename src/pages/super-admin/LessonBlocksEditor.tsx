@@ -692,6 +692,14 @@ export default function LessonBlocksEditor() {
             </div>
             <Badge variant={isDirty ? "secondary" : "outline"}>{statusLabel}</Badge>
             <Button
+              variant="outline"
+              onClick={() => setAiPaneOpen((v) => !v)}
+              aria-pressed={aiPaneOpen}
+            >
+              <Sparkles className="mr-1 h-4 w-4" style={{ color: "#F5741A" }} />
+              AI Draft
+            </Button>
+            <Button
               disabled={!isDirty || saving}
               onClick={() => setSaveDialogOpen(true)}
               className="shadow-cta"
