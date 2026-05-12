@@ -254,7 +254,7 @@ export function Stage1Chat(props: Props) {
   const showModeSelector = !canvasIsEmpty && !modeLocked;
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex flex-1 min-h-0 flex-col">
       {/* Top controls */}
       <div className="max-h-[45vh] overflow-y-auto space-y-3 border-b p-3 flex-shrink-0">
         {/* Mode selector */}

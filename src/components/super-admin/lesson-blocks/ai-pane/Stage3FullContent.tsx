@@ -63,7 +63,7 @@ export function Stage3FullContent(props: Props) {
   };
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex flex-1 min-h-0 flex-col">
       <div className="border-b p-3 text-sm text-muted-foreground">
         Review each block. Click any block to iterate it. When done, build the lesson.
       </div>
