@@ -592,7 +592,38 @@ export default function LessonBlocksEditor() {
               Build and arrange the blocks that make up this lesson.
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
+            <div className="inline-flex items-center rounded-md border bg-muted p-0.5">
+              <button
+                type="button"
+                onClick={() => setMode("edit")}
+                className={cn(
+                  "flex items-center gap-1.5 rounded-sm px-3 py-1 text-sm transition-colors",
+                  mode === "edit"
+                    ? "bg-background font-medium shadow-sm"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                <Edit2 className="h-3.5 w-3.5" />
+                Edit
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setMode("manage");
+                  setPaneOpen(false);
+                }}
+                className={cn(
+                  "flex items-center gap-1.5 rounded-sm px-3 py-1 text-sm transition-colors",
+                  mode === "manage"
+                    ? "bg-background font-medium shadow-sm"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                <Layers className="h-3.5 w-3.5" />
+                Manage
+              </button>
+            </div>
             <Badge variant={isDirty ? "secondary" : "outline"}>{statusLabel}</Badge>
             <Button
               disabled={!isDirty || saving}
