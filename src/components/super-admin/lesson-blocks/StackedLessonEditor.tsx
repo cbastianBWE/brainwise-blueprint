@@ -1,10 +1,13 @@
+import { useState } from "react";
 import {
   DndContext,
+  DragOverlay,
   PointerSensor,
   useSensor,
   useSensors,
   closestCenter,
   type DragEndEvent,
+  type DragStartEvent,
 } from "@dnd-kit/core";
 import {
   SortableContext,
@@ -17,7 +20,7 @@ import { Check } from "lucide-react";
 import { BlockRenderer } from "./BlockRenderer";
 import { BlockHoverToolbar } from "./BlockHoverToolbar";
 import { InlineAddButton } from "./InlineAddButton";
-import type { BlockType, EditorBlock } from "./blockTypeMeta";
+import { BLOCK_TYPE_META, type BlockType, type EditorBlock } from "./blockTypeMeta";
 
 export type EditorMode = "edit" | "manage";
 
@@ -30,6 +33,7 @@ interface Props {
   onSelectBlock: (clientId: string) => void;
   onToggleSelect: (clientId: string, e: React.MouseEvent) => void;
   onReorder: (fromIndex: number, toIndex: number) => void;
+  onGroupReorder: (activeClientId: string, overClientId: string) => void;
   onDelete: (clientId: string) => void;
   onDuplicate: (clientId: string) => void;
   onInsert: (atIndex: number, blockType: BlockType) => void;
@@ -43,6 +47,7 @@ function SortableStackBlock({
   total,
   selected,
   manageSelected,
+  isGroupMember,
   mode,
   assetUrlMap,
   onSelect,
@@ -57,6 +62,7 @@ function SortableStackBlock({
   total: number;
   selected: boolean;
   manageSelected: boolean;
+  isGroupMember: boolean;
   mode: EditorMode;
   assetUrlMap: Map<string, string>;
   onSelect: () => void;
@@ -69,10 +75,12 @@ function SortableStackBlock({
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: block.client_id });
 
+  const fadeOpacity = isDragging || isGroupMember ? 0.4 : 1;
+
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.4 : 1,
+    opacity: fadeOpacity,
   };
 
   const isManage = mode === "manage";
@@ -146,6 +154,7 @@ export function StackedLessonEditor({
   onSelectBlock,
   onToggleSelect,
   onReorder,
+  onGroupReorder,
   onDelete,
   onDuplicate,
   onInsert,
@@ -156,21 +165,56 @@ export function StackedLessonEditor({
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
   );
 
+  const [activeId, setActiveId] = useState<string | null>(null);
+
+  const isGroupDragActive =
+    activeId !== null &&
+    selectedClientIds.size >= 2 &&
+    selectedClientIds.has(activeId);
+
+  const handleDragStart = (e: DragStartEvent) => {
+    setActiveId(String(e.active.id));
+  };
+
   const handleDragEnd = (e: DragEndEvent) => {
     const { active, over } = e;
+    setActiveId(null);
     if (!over || active.id === over.id) return;
-    const from = blocks.findIndex((b) => b.client_id === active.id);
-    const to = blocks.findIndex((b) => b.client_id === over.id);
+
+    const activeStr = String(active.id);
+    const overStr = String(over.id);
+
+    if (selectedClientIds.size >= 2 && selectedClientIds.has(activeStr)) {
+      onGroupReorder(activeStr, overStr);
+      return;
+    }
+
+    const from = blocks.findIndex((b) => b.client_id === activeStr);
+    const to = blocks.findIndex((b) => b.client_id === overStr);
     if (from < 0 || to < 0) return;
     onReorder(from, to);
   };
 
   const isManage = mode === "manage";
 
+  const topmostSelectedBlock = (() => {
+    if (!isGroupDragActive) return null;
+    for (const b of blocks) {
+      if (selectedClientIds.has(b.client_id)) return b;
+    }
+    return null;
+  })();
+
+  const TopmostIcon =
+    topmostSelectedBlock != null
+      ? BLOCK_TYPE_META[topmostSelectedBlock.block_type].icon
+      : null;
+
   return (
     <DndContext
       sensors={sensors}
       collisionDetection={closestCenter}
+      onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
       <SortableContext
@@ -179,28 +223,56 @@ export function StackedLessonEditor({
       >
         <div className="space-y-1">
           {!isManage && <InlineAddButton atIndex={0} onInsert={onInsert} />}
-          {blocks.map((b, i) => (
-            <div key={b.client_id} className="space-y-1">
-              <SortableStackBlock
-                block={b}
-                index={i}
-                total={blocks.length}
-                selected={selectedClientId === b.client_id}
-                manageSelected={selectedClientIds.has(b.client_id)}
-                mode={mode}
-                assetUrlMap={assetUrlMap}
-                onSelect={() => onSelectBlock(b.client_id)}
-                onToggleSelect={(e) => onToggleSelect(b.client_id, e)}
-                onDelete={() => onDelete(b.client_id)}
-                onDuplicate={() => onDuplicate(b.client_id)}
-                onMoveUp={() => onMoveUp(b.client_id)}
-                onMoveDown={() => onMoveDown(b.client_id)}
-              />
-              {!isManage && <InlineAddButton atIndex={i + 1} onInsert={onInsert} />}
-            </div>
-          ))}
+          {blocks.map((b, i) => {
+            const isGroupMember =
+              isGroupDragActive &&
+              selectedClientIds.has(b.client_id) &&
+              b.client_id !== activeId;
+            return (
+              <div key={b.client_id} className="space-y-1">
+                <SortableStackBlock
+                  block={b}
+                  index={i}
+                  total={blocks.length}
+                  selected={selectedClientId === b.client_id}
+                  manageSelected={selectedClientIds.has(b.client_id)}
+                  isGroupMember={isGroupMember}
+                  mode={mode}
+                  assetUrlMap={assetUrlMap}
+                  onSelect={() => onSelectBlock(b.client_id)}
+                  onToggleSelect={(e) => onToggleSelect(b.client_id, e)}
+                  onDelete={() => onDelete(b.client_id)}
+                  onDuplicate={() => onDuplicate(b.client_id)}
+                  onMoveUp={() => onMoveUp(b.client_id)}
+                  onMoveDown={() => onMoveDown(b.client_id)}
+                />
+                {!isManage && <InlineAddButton atIndex={i + 1} onInsert={onInsert} />}
+              </div>
+            );
+          })}
         </div>
       </SortableContext>
+
+      <DragOverlay>
+        {isGroupDragActive && TopmostIcon && (
+          <div
+            className="flex items-center gap-2 rounded-md border-l-4 px-3 py-2 shadow-lg"
+            style={{
+              width: 240,
+              backgroundColor: "#FAF6F0",
+              borderLeftColor: "#F5741A",
+            }}
+          >
+            <TopmostIcon className="h-4 w-4 shrink-0" style={{ color: "#F5741A" }} />
+            <span
+              className="font-display text-sm font-medium"
+              style={{ color: "#021F36" }}
+            >
+              Moving {selectedClientIds.size} blocks
+            </span>
+          </div>
+        )}
+      </DragOverlay>
     </DndContext>
   );
 }

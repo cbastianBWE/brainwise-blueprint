@@ -462,6 +462,47 @@ export default function LessonBlocksEditor() {
     });
   };
 
+  const handleGroupReorder = (activeClientId: string, overClientId: string) => {
+    setBlocks((prev) => {
+      const activeIdx = prev.findIndex((b) => b.client_id === activeClientId);
+      const overIdx = prev.findIndex((b) => b.client_id === overClientId);
+      if (activeIdx < 0 || overIdx < 0) return prev;
+
+      const selectedSeq: EditorBlock[] = [];
+      const remaining: EditorBlock[] = [];
+      for (const b of prev) {
+        if (selectedClientIds.has(b.client_id)) {
+          selectedSeq.push(b);
+        } else {
+          remaining.push(b);
+        }
+      }
+
+      let dropIdxInRemaining = remaining.findIndex(
+        (b) => b.client_id === overClientId,
+      );
+      if (dropIdxInRemaining < 0) {
+        let i = overIdx;
+        while (i < prev.length && selectedClientIds.has(prev[i].client_id)) i++;
+        if (i >= prev.length) {
+          dropIdxInRemaining = remaining.length;
+        } else {
+          dropIdxInRemaining = remaining.findIndex(
+            (b) => b.client_id === prev[i].client_id,
+          );
+          if (dropIdxInRemaining < 0) dropIdxInRemaining = remaining.length;
+        }
+      }
+
+      const draggingDown = activeIdx < overIdx;
+      const insertAt = draggingDown ? dropIdxInRemaining + 1 : dropIdxInRemaining;
+
+      const next = [...remaining];
+      next.splice(insertAt, 0, ...selectedSeq);
+      return next;
+    });
+  };
+
   const handleMoveUp = (clientId: string) => {
     setBlocks((prev) => {
       const i = prev.findIndex((b) => b.client_id === clientId);
@@ -734,6 +775,7 @@ export default function LessonBlocksEditor() {
                 onSelectBlock={handleSelectBlock}
                 onToggleSelect={handleToggleSelect}
                 onReorder={handleReorder}
+                onGroupReorder={handleGroupReorder}
                 onDelete={handleDelete}
                 onDuplicate={handleDuplicate}
                 onInsert={handleInsert}
