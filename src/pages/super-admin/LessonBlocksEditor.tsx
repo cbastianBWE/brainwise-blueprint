@@ -771,11 +771,21 @@ export default function LessonBlocksEditor() {
           onApplyPadding={handleBulkApplyPadding}
         />
 
+        <AiPane
+          open={aiPaneOpen}
+          onClose={() => setAiPaneOpen(false)}
+          contentItemId={contentItemId!}
+          canvasBlocks={blocks}
+          assetUrlMap={assetUrlMap}
+          onBuildLesson={handleAiBuildLesson}
+        />
+
         <div
           className={cn(
             "flex-1 transition-all duration-300 ease-out",
             mode === "edit" && paneOpen && !!selectedBlock ? "md:ml-[480px]" : "",
             mode === "manage" ? "md:mr-[320px]" : "",
+            aiPaneOpen ? "md:mr-[480px]" : "",
           )}
         >
           {blocks.length === 0 ? (
