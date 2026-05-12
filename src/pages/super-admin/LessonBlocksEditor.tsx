@@ -75,6 +75,29 @@ export default function LessonBlocksEditor() {
   const [bulkDeletedBlocks, setBulkDeletedBlocks] = useState<
     { block: EditorBlock; index: number }[] | null
   >(null);
+  const [aiPaneOpen, setAiPaneOpen] = useState(false);
+
+  const handleAiBuildLesson = useCallback(
+    (aiBlocks: FullContentItem[], aiMode: AiMode) => {
+      const mapped: EditorBlock[] = aiBlocks.map((b) => ({
+        client_id: crypto.randomUUID(),
+        block_type: b.block_type as BlockType,
+        config: b.config as Record<string, unknown>,
+      }));
+      if (aiMode === "replace" || aiMode === "fresh") {
+        setBlocks(mapped);
+      } else {
+        setBlocks((prev) => [...prev, ...mapped]);
+      }
+      setSelectedClientId(null);
+      setPaneOpen(false);
+      toast({
+        title: "AI content added to canvas",
+        description: "Review the new blocks, then Save to commit.",
+      });
+    },
+    [toast],
+  );
 
   const itemQuery = useQuery({
     queryKey: ["lesson-blocks-editor-item", contentItemId],
