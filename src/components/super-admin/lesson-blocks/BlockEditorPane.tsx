@@ -33,9 +33,10 @@ interface Props {
   block: EditorBlock | null;
   onChange: (next: EditorBlock) => void;
   contentItemId: string;
+  siblingBlocks: EditorBlock[];
 }
 
-export function BlockEditorPane({ block, onChange, contentItemId }: Props) {
+export function BlockEditorPane({ block, onChange, contentItemId, siblingBlocks }: Props) {
   const [refineOpen, setRefineOpen] = useState(false);
   const [refineText, setRefineText] = useState("");
   const [refineBusy, setRefineBusy] = useState(false);
