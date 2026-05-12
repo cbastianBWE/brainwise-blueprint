@@ -23,6 +23,9 @@ import { CalloutBlockForm } from "./block-forms/CalloutBlockForm";
 import { EmbedAudioBlockForm } from "./block-forms/EmbedAudioBlockForm";
 import { StatCalloutBlockForm } from "./block-forms/StatCalloutBlockForm";
 import { StatementABBlockForm } from "./block-forms/StatementABBlockForm";
+import { AccordionBlockForm } from "./block-forms/AccordionBlockForm";
+import { TabsBlockForm } from "./block-forms/TabsBlockForm";
+import { ButtonStackBlockForm } from "./block-forms/ButtonStackBlockForm";
 import { BlockStyleSection } from "./BlockStyleSection";
 import { mapAiError } from "./ai-pane/mapAiError";
 import { COST_ESTIMATES } from "./ai-pane/costEstimates";
@@ -247,9 +250,21 @@ export function BlockEditorPane({ block, onChange, contentItemId, siblingBlocks 
       {block.block_type === "statement_a_b" && (
         <StatementABBlockForm value={cfg} onConfigChange={handleConfig} />
       )}
+      {block.block_type === "accordion" && (
+        <AccordionBlockForm value={cfg} onConfigChange={handleConfig} />
+      )}
+      {block.block_type === "tabs" && (
+        <TabsBlockForm value={cfg} onConfigChange={handleConfig} />
+      )}
+      {block.block_type === "button_stack" && (
+        <ButtonStackBlockForm
+          value={cfg}
+          onConfigChange={handleConfig}
+          siblingBlocks={siblingBlocks.filter((b) => b.client_id !== block.client_id)}
+        />
+      )}
 
       <BlockStyleSection value={cfg} onConfigChange={handleConfig} />
-      <span data-sibling-count={siblingBlocks.length} className="hidden" />
     </div>
   );
 }

@@ -461,7 +461,7 @@ function AccordionRender({
 }) {
   if (items.length === 0) return null;
   return (
-    <Accordion type="single" collapsible className="w-full">
+    <Accordion type="multiple" className="w-full">
       {items.map((item) => (
         <AccordionItem key={item.client_id} value={item.client_id} className="bw-accordion-item">
           <AccordionTrigger className="bw-accordion-trigger">
