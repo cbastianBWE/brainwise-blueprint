@@ -103,68 +103,96 @@ export function RichTextEditor({
         >
           <ItalicIcon className="h-3.5 w-3.5" />
         </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          className={btnClass(editor.isActive("strike"))}
+          onClick={() => editor.chain().focus().toggleStrike().run()}
+          disabled={disabled}
+          aria-label="Strike"
+        >
+          <Strikethrough className="h-3.5 w-3.5" />
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          className={btnClass(editor.isActive("bulletList"))}
+          onClick={() => editor.chain().focus().toggleBulletList().run()}
+          disabled={disabled}
+          aria-label="Bullet list"
+        >
+          <ListIcon className="h-3.5 w-3.5" />
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          className={btnClass(editor.isActive("orderedList"))}
+          onClick={() => editor.chain().focus().toggleOrderedList().run()}
+          disabled={disabled}
+          aria-label="Numbered list"
+        >
+          <ListOrdered className="h-3.5 w-3.5" />
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          className={btnClass(editor.isActive("heading", { level: 2 }))}
+          onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+          disabled={disabled}
+          aria-label="Heading 2"
+        >
+          <Heading2 className="h-3.5 w-3.5" />
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          className={btnClass(editor.isActive("heading", { level: 3 }))}
+          onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
+          disabled={disabled}
+          aria-label="Heading 3"
+        >
+          <Heading3 className="h-3.5 w-3.5" />
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          className={btnClass(editor.isActive("heading", { level: 4 }))}
+          onClick={() => editor.chain().focus().toggleHeading({ level: 4 }).run()}
+          disabled={disabled}
+          aria-label="Heading 4"
+        >
+          <Heading4 className="h-3.5 w-3.5" />
+        </Button>
         {!compact && (
-          <>
-            <Button
-              type="button"
-              size="sm"
-              variant="ghost"
-              className={btnClass(editor.isActive("strike"))}
-              onClick={() => editor.chain().focus().toggleStrike().run()}
-              disabled={disabled}
-              aria-label="Strike"
-            >
-              <Strikethrough className="h-3.5 w-3.5" />
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              variant="ghost"
-              className={btnClass(editor.isActive("bulletList"))}
-              onClick={() => editor.chain().focus().toggleBulletList().run()}
-              disabled={disabled}
-              aria-label="Bullet list"
-            >
-              <ListIcon className="h-3.5 w-3.5" />
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              variant="ghost"
-              className={btnClass(editor.isActive("orderedList"))}
-              onClick={() => editor.chain().focus().toggleOrderedList().run()}
-              disabled={disabled}
-              aria-label="Numbered list"
-            >
-              <ListOrdered className="h-3.5 w-3.5" />
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              variant="ghost"
-              className={btnClass(editor.isActive("heading", { level: 2 }))}
-              onClick={() =>
-                editor.chain().focus().toggleHeading({ level: 2 }).run()
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            className={cn(
+              "h-7 px-2 text-xs",
+              editor.getAttributes("textStyle")?.fontSize === "lead" &&
+                "bg-[#F5741A]/15 text-[#F5741A] hover:bg-[#F5741A]/20",
+            )}
+            onClick={() => {
+              const isLead = editor.getAttributes("textStyle")?.fontSize === "lead";
+              if (isLead) {
+                editor.chain().focus().setMark("textStyle", { fontSize: null }).run();
+              } else {
+                editor.chain().focus().setMark("textStyle", { fontSize: "lead" }).run();
               }
-              disabled={disabled}
-              aria-label="Heading 2"
-            >
-              <Heading2 className="h-3.5 w-3.5" />
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              variant="ghost"
-              className={btnClass(editor.isActive("heading", { level: 3 }))}
-              onClick={() =>
-                editor.chain().focus().toggleHeading({ level: 3 }).run()
-              }
-              disabled={disabled}
-              aria-label="Heading 3"
-            >
-              <Heading3 className="h-3.5 w-3.5" />
-            </Button>
-          </>
+            }}
+            disabled={disabled}
+            aria-label="Lead paragraph"
+            title="Larger paragraph text"
+          >
+            Lead
+          </Button>
         )}
         <Popover
           open={linkOpen}
