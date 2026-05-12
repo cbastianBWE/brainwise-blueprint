@@ -1,31 +1,8 @@
-import {
-  Type,
-  Heading as HeadingIcon,
-  Minus,
-  Image as ImageIcon,
-  Video,
-  Quote,
-  List as ListIcon,
-  AlertCircle,
-  Music,
-} from "lucide-react";
 import { IN_SCOPE_BLOCK_TYPES, BLOCK_TYPE_META, type BlockType } from "./blockTypeMeta";
 
 interface AddBlockPopoverProps {
   onSelect: (blockType: BlockType) => void;
 }
-
-const ICONS: Record<BlockType, any> = {
-  text: Type,
-  heading: HeadingIcon,
-  divider: Minus,
-  image: ImageIcon,
-  video_embed: Video,
-  quote: Quote,
-  list: ListIcon,
-  callout: AlertCircle,
-  embed_audio: Music,
-};
 
 export function AddBlockPopover({ onSelect }: AddBlockPopoverProps) {
   return (
@@ -36,7 +13,7 @@ export function AddBlockPopover({ onSelect }: AddBlockPopoverProps) {
       <div className="grid gap-0.5">
         {IN_SCOPE_BLOCK_TYPES.map((bt) => {
           const meta = BLOCK_TYPE_META[bt];
-          const Icon = ICONS[bt];
+          const Icon = meta.icon;
           return (
             <button
               key={bt}
