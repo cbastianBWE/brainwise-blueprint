@@ -26,8 +26,9 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
-import { StackedLessonEditor } from "@/components/super-admin/lesson-blocks/StackedLessonEditor";
+import { StackedLessonEditor, type EditorMode } from "@/components/super-admin/lesson-blocks/StackedLessonEditor";
 import { EditorSlidePane } from "@/components/super-admin/lesson-blocks/EditorSlidePane";
+import { ManageBlocksSidebar, type BlockPadding } from "@/components/super-admin/lesson-blocks/ManageBlocksSidebar";
 import { UndoDeleteToast } from "@/components/super-admin/lesson-blocks/UndoDeleteToast";
 import { AddBlockPopover } from "@/components/super-admin/lesson-blocks/AddBlockPopover";
 import {
