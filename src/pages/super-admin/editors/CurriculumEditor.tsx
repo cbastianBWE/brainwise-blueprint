@@ -26,6 +26,7 @@ import {
   BookOpenText, Pencil, Plus, Search, Loader2, Save, Archive,
 } from "lucide-react";
 import { slugify, CURRICULUM_MODES } from "./_shared";
+import { FileUploadField } from "@/components/super-admin/FileUploadField";
 
 function AttachedModulesSection({
   curriculumId,
