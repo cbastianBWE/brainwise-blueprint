@@ -41,12 +41,13 @@ export function EditorSlidePane({
   return (
     <aside
       className={cn(
-        "editor-slide-pane fixed bottom-0 z-20 flex flex-col border-r bg-background shadow-md transition-transform duration-300 ease-out",
-        open ? "translate-x-0" : "-translate-x-full pointer-events-none",
+        "editor-slide-pane fixed z-20 flex flex-col border-r bg-background shadow-md transition-[left] duration-300 ease-out",
+        !open && "pointer-events-none",
       )}
       style={{
         top: 56,
-        left: "var(--sidebar-width, 0px)",
+        left: open ? "var(--sidebar-width, 0px)" : "-480px",
+        bottom: 0,
         width: "min(480px, calc(100vw - var(--sidebar-width, 0px)))",
       }}
       aria-hidden={!open}
