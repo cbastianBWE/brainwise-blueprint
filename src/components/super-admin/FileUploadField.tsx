@@ -179,6 +179,7 @@ export function FileUploadField({
   const [state, setState] = useState<UploadState>(value ? { kind: "uploaded", assetId: value } : { kind: "empty" });
   const [isDragOver, setIsDragOver] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [docOpenUrl, setDocOpenUrl] = useState<string | null>(null);
   const [replaceOpen, setReplaceOpen] = useState(false);
   const [removeOpen, setRemoveOpen] = useState(false);
   const [libraryPickerOpen, setLibraryPickerOpen] = useState(false);
