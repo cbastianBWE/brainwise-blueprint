@@ -328,6 +328,7 @@ function CertPathEditor({
       p_prerequisite_path_id: prerequisitePathId === "__none__" ? null : prerequisitePathId,
       p_is_published: isPublished,
       p_display_order: Number.isFinite(orderNum) ? orderNum : 0,
+      p_thumbnail_asset_id: thumbnailAssetId,
       p_reason: reason.trim(),
     };
 
