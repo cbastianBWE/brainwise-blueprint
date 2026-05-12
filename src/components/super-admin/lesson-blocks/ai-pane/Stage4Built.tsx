@@ -27,6 +27,17 @@ export function Stage4Built({ messages, onStartOver }: Props) {
               You can edit any block directly on the canvas, or refine specific blocks with AI from
               this panel.
             </p>
+        </div>
+        <div
+          className="flex items-start gap-3 rounded-lg border p-4"
+          style={{ backgroundColor: "#F3EEDF", borderColor: "#7a5800", color: "#7a5800" }}
+        >
+          <AlertTriangle className="mt-0.5 h-5 w-5 flex-shrink-0" />
+          <div>
+            <h4 className="text-sm font-semibold">Don't forget to Save.</h4>
+            <p className="mt-1 text-xs">
+              The canvas has unsaved changes. Click <strong>Save</strong> at the top of the page to commit, or this work will be lost when you navigate away.
+            </p>
           </div>
         </div>
         <div className="rounded-lg border p-3 text-sm">
