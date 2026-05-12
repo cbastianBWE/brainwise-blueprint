@@ -346,6 +346,8 @@ export function Stage1Chat(props: Props) {
                 value={customVoiceExample}
                 onChange={(e) => onCustomVoiceExampleChange(e.target.value)}
               />
+            </div>
+          )}
         </div>
 
         {/* Length selector */}
@@ -379,8 +381,6 @@ export function Stage1Chat(props: Props) {
               </SelectItem>
             </SelectContent>
           </Select>
-        </div>
-          )}
         </div>
 
         {/* Attached docs */}
