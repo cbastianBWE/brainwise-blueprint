@@ -245,6 +245,13 @@ export function FileUploadField({
 
     setState({ kind: "uploading", filename: file.name, progress: 0 });
 
+    const { data: { session }, error: sessionErr } = await supabase.auth.getSession();
+    if (sessionErr || !session?.access_token) {
+      setState({ kind: "error", message: "Not authenticated. Please refresh and try again." });
+      return;
+    }
+    const accessToken = session.access_token;
+
     const defaultReason = isLibraryAsset
       ? `Library asset upload: ${libraryName ?? "(unnamed)"}`
       : contentItemId
