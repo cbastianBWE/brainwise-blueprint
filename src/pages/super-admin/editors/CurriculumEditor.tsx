@@ -255,6 +255,7 @@ function CurriculumEditor({
         audienceTagsText.trim().length > 0 ||
         estimatedMinutes.trim().length > 0 ||
         isPublished ||
+        thumbnailAssetId !== null ||
         reason.trim().length > 0 ||
         (hasAttachmentSection && (
           attachmentDisplayOrder !== "0" ||
@@ -273,12 +274,13 @@ function CurriculumEditor({
       audienceTagsText !== startingTagsText ||
       estimatedMinutes !== initialMin ||
       isPublished !== !!initial.is_published ||
+      thumbnailAssetId !== (initial.thumbnail_asset_id ?? null) ||
       reason.trim().length > 0
     );
   }, [
     mode, initial, startingTagsText, hasAttachmentSection,
     slug, name, description, curriculumMode, audienceTagsText, estimatedMinutes,
-    isPublished, reason,
+    isPublished, thumbnailAssetId, reason,
     attachmentDisplayOrder, attachmentIsRequired, attachmentPrerequisiteCurriculumId,
   ]);
 

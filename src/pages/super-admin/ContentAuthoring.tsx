@@ -409,7 +409,7 @@ export default function ContentAuthoring() {
 
       <div className="grid gap-6" style={{ gridTemplateColumns: "380px 1fr" }}>
         {/* Tree navigator */}
-        <Card className="flex flex-col self-start sticky top-4 max-h-[calc(100vh-2rem)]">
+        <Card className="flex flex-col h-[calc(100vh-7rem)] self-start">
           <CardHeader className="space-y-3 pb-3">
             <div className="relative">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
