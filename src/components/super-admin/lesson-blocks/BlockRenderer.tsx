@@ -23,7 +23,7 @@ interface BlockRendererProps {
 function ReadOnlyTipTap({ json }: { json: TipTapDocJSON | null | undefined }) {
   const editor = useEditor({
     editable: false,
-    extensions: [StarterKit, TextStyle, Link.configure({ openOnClick: true })],
+    extensions: [StarterKit, TextStyleWithFontSize, Link.configure({ openOnClick: true })],
     content: json ?? "",
   });
   useEffect(() => {
