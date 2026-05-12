@@ -21,6 +21,8 @@ import { QuoteBlockForm } from "./block-forms/QuoteBlockForm";
 import { ListBlockForm } from "./block-forms/ListBlockForm";
 import { CalloutBlockForm } from "./block-forms/CalloutBlockForm";
 import { EmbedAudioBlockForm } from "./block-forms/EmbedAudioBlockForm";
+import { StatCalloutBlockForm } from "./block-forms/StatCalloutBlockForm";
+import { StatementABBlockForm } from "./block-forms/StatementABBlockForm";
 import { BlockStyleSection } from "./BlockStyleSection";
 import { mapAiError } from "./ai-pane/mapAiError";
 import { COST_ESTIMATES } from "./ai-pane/costEstimates";
