@@ -6,6 +6,7 @@ interface Props {
   onUndo: () => void;
   onDismiss: () => void;
   durationMs?: number;
+  message?: string;
 }
 
 export function UndoDeleteToast({
@@ -13,6 +14,7 @@ export function UndoDeleteToast({
   onUndo,
   onDismiss,
   durationMs = 6000,
+  message = "Block deleted",
 }: Props) {
   const [progress, setProgress] = useState(100);
   const startRef = useRef<number>(0);
