@@ -30,6 +30,7 @@ import {
 import {
   slugify, CERT_INSTRUMENTS, CERTIFICATION_TYPES, DELIVERY_MODES,
 } from "./_shared";
+import { FileUploadField } from "@/components/super-admin/FileUploadField";
 
 function AttachedCurriculaSection({
   certPathId,
