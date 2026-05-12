@@ -28,6 +28,7 @@ import {
   TOKEN_BUDGET,
   type AiMode,
   type ChatMessage,
+  type LengthLevel,
   type SessionDocument,
   type VoicePreset,
 } from "./types";
@@ -57,6 +58,8 @@ interface Props {
   onAdvanceToOutline: () => void;
   loadingOutline: boolean;
   refreshAttachedDocs: () => Promise<void>;
+  lengthPreference: LengthLevel;
+  onLengthChange: (next: LengthLevel) => void;
 }
 
 const VOICE_LABELS: Record<string, string> = {
@@ -90,6 +93,8 @@ export function Stage1Chat(props: Props) {
     onAdvanceToOutline,
     loadingOutline,
     refreshAttachedDocs,
+    lengthPreference,
+    onLengthChange,
   } = props;
 
   const [input, setInput] = useState("");
@@ -160,6 +165,7 @@ export function Stage1Chat(props: Props) {
           custom_voice_guidance: customVoiceGuidance || undefined,
           custom_voice_example: customVoiceExample || undefined,
           mode,
+          length: lengthPreference,
           canvas_block_summary: canvasBlockSummary,
         },
       });
