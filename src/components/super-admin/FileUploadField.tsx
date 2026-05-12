@@ -523,21 +523,66 @@ export function FileUploadField({
       );
     } else if (assetKind === "video") {
       preview = (
-        <div className="aspect-video rounded-md bg-muted flex items-center justify-center">
-          <Video className="h-12 w-12 text-muted-foreground" />
+        <div className="aspect-video rounded-md overflow-hidden bg-black">
+          {previewUrl ? (
+            <video
+              src={previewUrl}
+              controls
+              preload="metadata"
+              className="w-full h-full"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-muted">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
+          )}
         </div>
       );
     } else if (assetKind === "audio") {
       preview = (
-        <div className="rounded-md bg-[#F9F7F1] p-6 flex items-center justify-center">
-          <Music className="h-12 w-12 text-[#006D77]" />
+        <div className="rounded-md bg-[#F9F7F1] p-6 space-y-3">
+          <div className="flex items-center justify-center">
+            <Music className="h-10 w-10 text-[#006D77]" />
+          </div>
+          {previewUrl ? (
+            <audio src={previewUrl} controls preload="metadata" className="w-full" />
+          ) : (
+            <div className="flex items-center justify-center">
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            </div>
+          )}
         </div>
       );
     } else {
       const DocIcon = documentExtIcon(filename);
+      const isPdf = ver?.mime_type === "application/pdf";
       preview = (
-        <div className="rounded-md bg-[#F9F7F1] p-6 flex items-center justify-center">
-          <DocIcon className="h-12 w-12 text-[#006D77]" />
+        <div className="rounded-md bg-[#F9F7F1] p-4 space-y-3">
+          <div className="flex items-center justify-center gap-3">
+            <DocIcon className="h-8 w-8 text-[#006D77]" />
+            {docOpenUrl ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => window.open(docOpenUrl, "_blank", "noopener,noreferrer")}
+              >
+                <ExternalLink className="mr-2 h-4 w-4" />
+                Open in new tab
+              </Button>
+            ) : (
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            )}
+          </div>
+          {isPdf && docOpenUrl && (
+            <div className="rounded-md overflow-hidden border bg-white" style={{ height: "600px" }}>
+              <iframe
+                src={docOpenUrl}
+                title={filename}
+                className="w-full h-full"
+              />
+            </div>
+          )}
         </div>
       );
     }
