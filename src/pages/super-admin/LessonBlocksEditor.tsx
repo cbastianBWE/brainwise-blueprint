@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
-import { ChevronLeft, Loader2, Plus, Save } from "lucide-react";
+import { ChevronLeft, Edit2, Layers, Loader2, Plus, Save } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -26,8 +26,9 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
-import { StackedLessonEditor } from "@/components/super-admin/lesson-blocks/StackedLessonEditor";
+import { StackedLessonEditor, type EditorMode } from "@/components/super-admin/lesson-blocks/StackedLessonEditor";
 import { EditorSlidePane } from "@/components/super-admin/lesson-blocks/EditorSlidePane";
+import { ManageBlocksSidebar, type BlockPadding } from "@/components/super-admin/lesson-blocks/ManageBlocksSidebar";
 import { UndoDeleteToast } from "@/components/super-admin/lesson-blocks/UndoDeleteToast";
 import { AddBlockPopover } from "@/components/super-admin/lesson-blocks/AddBlockPopover";
 import {
@@ -66,6 +67,12 @@ export default function LessonBlocksEditor() {
     block: EditorBlock;
     index: number;
   } | null>(null);
+  const [mode, setMode] = useState<EditorMode>("edit");
+  const [selectedClientIds, setSelectedClientIds] = useState<Set<string>>(new Set());
+  const [lastClickedClientId, setLastClickedClientId] = useState<string | null>(null);
+  const [bulkDeletedBlocks, setBulkDeletedBlocks] = useState<
+    { block: EditorBlock; index: number }[] | null
+  >(null);
 
   const itemQuery = useQuery({
     queryKey: ["lesson-blocks-editor-item", contentItemId],
@@ -250,6 +257,8 @@ export default function LessonBlocksEditor() {
       setSaveDialogOpen(false);
       setSaveReason("");
       await reload();
+      setSelectedClientIds(new Set());
+      setLastClickedClientId(null);
       draftStatus.resume();
       if (saveAndNavigateTo) {
         const target = saveAndNavigateTo;
@@ -272,8 +281,166 @@ export default function LessonBlocksEditor() {
   // Mutators
   const handleSelectBlock = (clientId: string) => {
     setSelectedClientId(clientId);
+    setSelectedClientIds(new Set([clientId]));
+    setLastClickedClientId(clientId);
     setPaneOpen(true);
   };
+
+  const handleToggleSelect = (clientId: string, e: React.MouseEvent) => {
+    if (mode !== "manage") return;
+    if (e.shiftKey && lastClickedClientId) {
+      const startIdx = blocks.findIndex((b) => b.client_id === lastClickedClientId);
+      const endIdx = blocks.findIndex((b) => b.client_id === clientId);
+      if (startIdx >= 0 && endIdx >= 0) {
+        const [lo, hi] = startIdx < endIdx ? [startIdx, endIdx] : [endIdx, startIdx];
+        const next = new Set(selectedClientIds);
+        for (let i = lo; i <= hi; i++) next.add(blocks[i].client_id);
+        setSelectedClientIds(next);
+        setLastClickedClientId(clientId);
+        return;
+      }
+    }
+    const next = new Set(selectedClientIds);
+    if (next.has(clientId)) next.delete(clientId);
+    else next.add(clientId);
+    setSelectedClientIds(next);
+    setLastClickedClientId(clientId);
+  };
+
+  const handleBulkSelectAll = () => {
+    setSelectedClientIds(new Set(blocks.map((b) => b.client_id)));
+  };
+  const handleBulkClearSelection = () => {
+    setSelectedClientIds(new Set());
+    setLastClickedClientId(null);
+  };
+
+  const handleBulkDelete = () => {
+    if (selectedClientIds.size === 0) return;
+    const removed: { block: EditorBlock; index: number }[] = [];
+    blocks.forEach((b, i) => {
+      if (selectedClientIds.has(b.client_id)) removed.push({ block: b, index: i });
+    });
+    removed.sort((a, b) => a.index - b.index);
+    setBlocks((prev) => prev.filter((b) => !selectedClientIds.has(b.client_id)));
+    setBulkDeletedBlocks(removed);
+    setSelectedClientIds(new Set());
+    setLastClickedClientId(null);
+  };
+
+  const handleUndoBulkDelete = () => {
+    if (!bulkDeletedBlocks) return;
+    setBlocks((prev) => {
+      const next = [...prev];
+      for (const r of bulkDeletedBlocks) next.splice(r.index, 0, r.block);
+      return next;
+    });
+    setBulkDeletedBlocks(null);
+  };
+
+  const handleBulkDuplicate = () => {
+    if (selectedClientIds.size === 0) return;
+    setBlocks((prev) => {
+      const next = [...prev];
+      for (let i = next.length - 1; i >= 0; i--) {
+        if (selectedClientIds.has(next[i].client_id)) {
+          const original = next[i];
+          const dup: EditorBlock = {
+            ...original,
+            client_id: crypto.randomUUID(),
+            config: JSON.parse(JSON.stringify(original.config)),
+          };
+          next.splice(i + 1, 0, dup);
+        }
+      }
+      return next;
+    });
+  };
+
+  const handleBulkMoveUp = () => {
+    if (selectedClientIds.size === 0) return;
+    setBlocks((prev) => {
+      const next = [...prev];
+      for (let i = 1; i < next.length; i++) {
+        if (
+          selectedClientIds.has(next[i].client_id) &&
+          !selectedClientIds.has(next[i - 1].client_id)
+        ) {
+          [next[i - 1], next[i]] = [next[i], next[i - 1]];
+        }
+      }
+      return next;
+    });
+  };
+
+  const handleBulkMoveDown = () => {
+    if (selectedClientIds.size === 0) return;
+    setBlocks((prev) => {
+      const next = [...prev];
+      for (let i = next.length - 2; i >= 0; i--) {
+        if (
+          selectedClientIds.has(next[i].client_id) &&
+          !selectedClientIds.has(next[i + 1].client_id)
+        ) {
+          [next[i], next[i + 1]] = [next[i + 1], next[i]];
+        }
+      }
+      return next;
+    });
+  };
+
+  const handleBulkApplyBackground = (hex: string | null) => {
+    if (selectedClientIds.size === 0) return;
+    setBlocks((prev) =>
+      prev.map((b) =>
+        selectedClientIds.has(b.client_id)
+          ? { ...b, config: { ...b.config, background_color: hex } }
+          : b,
+      ),
+    );
+  };
+
+  const handleBulkApplyPadding = (padding: BlockPadding) => {
+    if (selectedClientIds.size === 0) return;
+    setBlocks((prev) =>
+      prev.map((b) =>
+        selectedClientIds.has(b.client_id)
+          ? { ...b, config: { ...b.config, padding } }
+          : b,
+      ),
+    );
+  };
+
+  const canBulkMoveUp = useMemo(() => {
+    for (let i = 0; i < blocks.length; i++) {
+      if (selectedClientIds.has(blocks[i].client_id)) return i > 0;
+    }
+    return false;
+  }, [blocks, selectedClientIds]);
+
+  const canBulkMoveDown = useMemo(() => {
+    for (let i = blocks.length - 1; i >= 0; i--) {
+      if (selectedClientIds.has(blocks[i].client_id)) return i < blocks.length - 1;
+    }
+    return false;
+  }, [blocks, selectedClientIds]);
+
+  useEffect(() => {
+    if (mode !== "manage") return;
+    const onKey = (e: KeyboardEvent) => {
+      const meta = e.metaKey || e.ctrlKey;
+      if (meta && e.key.toLowerCase() === "a") {
+        e.preventDefault();
+        setSelectedClientIds(new Set(blocks.map((b) => b.client_id)));
+      } else if (e.key === "Escape") {
+        e.preventDefault();
+        setSelectedClientIds(new Set());
+        setLastClickedClientId(null);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [mode, blocks]);
 
   const handleInsert = (atIndex: number, blockType: BlockType) => {
     const newBlock: EditorBlock = {
@@ -425,7 +592,38 @@ export default function LessonBlocksEditor() {
               Build and arrange the blocks that make up this lesson.
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
+            <div className="inline-flex items-center rounded-md border bg-muted p-0.5">
+              <button
+                type="button"
+                onClick={() => setMode("edit")}
+                className={cn(
+                  "flex items-center gap-1.5 rounded-sm px-3 py-1 text-sm transition-colors",
+                  mode === "edit"
+                    ? "bg-background font-medium shadow-sm"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                <Edit2 className="h-3.5 w-3.5" />
+                Edit
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setMode("manage");
+                  setPaneOpen(false);
+                }}
+                className={cn(
+                  "flex items-center gap-1.5 rounded-sm px-3 py-1 text-sm transition-colors",
+                  mode === "manage"
+                    ? "bg-background font-medium shadow-sm"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                <Layers className="h-3.5 w-3.5" />
+                Manage
+              </button>
+            </div>
             <Badge variant={isDirty ? "secondary" : "outline"}>{statusLabel}</Badge>
             <Button
               disabled={!isDirty || saving}
@@ -473,6 +671,7 @@ export default function LessonBlocksEditor() {
           open={paneOpen && !!selectedBlock}
           block={selectedBlock}
           contentItemId={contentItemId!}
+          mode={mode}
           onChange={updateBlock}
           onClose={() => {
             setPaneOpen(false);
@@ -483,10 +682,26 @@ export default function LessonBlocksEditor() {
           onRequestSave={() => setSaveDialogOpen(true)}
         />
 
+        <ManageBlocksSidebar
+          open={mode === "manage"}
+          selectedCount={selectedClientIds.size}
+          canMoveUp={canBulkMoveUp}
+          canMoveDown={canBulkMoveDown}
+          onBulkDelete={handleBulkDelete}
+          onBulkDuplicate={handleBulkDuplicate}
+          onBulkMoveUp={handleBulkMoveUp}
+          onBulkMoveDown={handleBulkMoveDown}
+          onBulkSelectAll={handleBulkSelectAll}
+          onBulkClearSelection={handleBulkClearSelection}
+          onApplyBackground={handleBulkApplyBackground}
+          onApplyPadding={handleBulkApplyPadding}
+        />
+
         <div
           className={cn(
             "flex-1 transition-all duration-300 ease-out",
-            paneOpen && !!selectedBlock ? "md:ml-[480px]" : "",
+            mode === "edit" && paneOpen && !!selectedBlock ? "md:ml-[480px]" : "",
+            mode === "manage" ? "md:mr-[320px]" : "",
           )}
         >
           {blocks.length === 0 ? (
@@ -513,8 +728,11 @@ export default function LessonBlocksEditor() {
               <StackedLessonEditor
                 blocks={blocks}
                 selectedClientId={selectedClientId}
+                selectedClientIds={selectedClientIds}
+                mode={mode}
                 assetUrlMap={assetUrlMap}
                 onSelectBlock={handleSelectBlock}
+                onToggleSelect={handleToggleSelect}
                 onReorder={handleReorder}
                 onDelete={handleDelete}
                 onDuplicate={handleDuplicate}
@@ -528,9 +746,21 @@ export default function LessonBlocksEditor() {
       </div>
 
       <UndoDeleteToast
-        open={!!deletedBlock}
-        onUndo={handleUndoDelete}
-        onDismiss={() => setDeletedBlock(null)}
+        open={!!deletedBlock || !!bulkDeletedBlocks}
+        onUndo={() => {
+          if (bulkDeletedBlocks) handleUndoBulkDelete();
+          else if (deletedBlock) handleUndoDelete();
+        }}
+        onDismiss={() => {
+          setDeletedBlock(null);
+          setBulkDeletedBlocks(null);
+        }}
+        durationMs={bulkDeletedBlocks ? 12000 : 6000}
+        message={
+          bulkDeletedBlocks
+            ? `${bulkDeletedBlocks.length} block${bulkDeletedBlocks.length === 1 ? "" : "s"} deleted`
+            : "Block deleted"
+        }
       />
 
       {/* Save dialog */}
