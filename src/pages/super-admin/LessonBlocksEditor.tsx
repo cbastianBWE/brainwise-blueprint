@@ -257,6 +257,8 @@ export default function LessonBlocksEditor() {
       setSaveDialogOpen(false);
       setSaveReason("");
       await reload();
+      setSelectedClientIds(new Set());
+      setLastClickedClientId(null);
       draftStatus.resume();
       if (saveAndNavigateTo) {
         const target = saveAndNavigateTo;
