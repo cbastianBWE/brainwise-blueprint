@@ -300,6 +300,7 @@ function ContentItemEditor({
       p_is_required: isRequired,
       p_type_config: buildTypeConfig(),
       p_lesson_completion_mode: itemType === "lesson_blocks" ? lessonCompletionMode : null,
+      p_thumbnail_asset_id: thumbnailAssetId,
       p_reason: reason.trim(),
     };
 
