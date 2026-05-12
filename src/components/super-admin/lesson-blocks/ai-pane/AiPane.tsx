@@ -483,6 +483,8 @@ export function AiPane(props: Props) {
                 onAdvanceToOutline={handleAdvanceToOutline}
                 loadingOutline={loadingOutline}
                 refreshAttachedDocs={refreshAttachedDocs}
+                lengthPreference={lengthPreference}
+                onLengthChange={setLengthPreference}
               />
             )}
             {stage === "outline" && (
@@ -500,6 +502,8 @@ export function AiPane(props: Props) {
                 attachedDocumentIds={attachedDocuments.map((d) => d.out_id)}
                 mode={mode}
                 conversationMessages={messages.map((m) => ({ role: m.role, content: m.content }))}
+                lengthPreference={lengthPreference}
+                onLengthChange={setLengthPreference}
               />
             )}
             {stage === "full_content" && (
@@ -519,6 +523,8 @@ export function AiPane(props: Props) {
                 mode={mode}
                 conversationMessages={messages}
                 assetUrlMap={assetUrlMap}
+                lengthPreference={lengthPreference}
+                onLengthChange={setLengthPreference}
               />
             )}
             {stage === "built" && (
