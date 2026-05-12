@@ -39,8 +39,8 @@ export function EditorSlidePane({
 
   return (
     <aside
-      className={`editor-slide-pane absolute left-0 top-0 z-20 flex h-full w-full flex-col border-r bg-background shadow-md transition-transform duration-300 ease-out md:w-[480px] ${
-        open ? "translate-x-0" : "-translate-x-full pointer-events-none"
+      className={`editor-slide-pane sticky top-0 z-20 flex max-h-[calc(100vh-1rem)] w-full flex-col self-start border-r bg-background shadow-md transition-transform duration-300 ease-out md:w-[480px] ${
+        open ? "translate-x-0" : "-translate-x-full pointer-events-none absolute"
       }`}
       aria-hidden={!open}
     >
