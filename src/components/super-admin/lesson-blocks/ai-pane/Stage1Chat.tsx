@@ -428,8 +428,29 @@ export function Stage1Chat(props: Props) {
         )}
       </div>
 
+      {/* Generate outline CTA — sits above input, always visible when applicable */}
+      {canShowGenerateOutline && (
+        <div className="flex-shrink-0 border-t p-3">
+          <Button
+            type="button"
+            className="w-full shadow-cta"
+            disabled={loadingOutline}
+            onClick={onAdvanceToOutline}
+            style={{ backgroundColor: "#F5741A", color: "white" }}
+            title="Generate a structured outline based on this conversation."
+          >
+            {loadingOutline ? (
+              <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+            ) : (
+              <Sparkles className="mr-1 h-4 w-4" />
+            )}
+            Generate outline
+          </Button>
+        </div>
+      )}
+
       {/* Input */}
-      <div className="border-t p-3">
+      <div className="flex-shrink-0 border-t p-3">
         <div className="relative">
           <Textarea
             value={input}
