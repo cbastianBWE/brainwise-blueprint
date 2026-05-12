@@ -21,6 +21,8 @@ import { QuoteBlockForm } from "./block-forms/QuoteBlockForm";
 import { ListBlockForm } from "./block-forms/ListBlockForm";
 import { CalloutBlockForm } from "./block-forms/CalloutBlockForm";
 import { EmbedAudioBlockForm } from "./block-forms/EmbedAudioBlockForm";
+import { StatCalloutBlockForm } from "./block-forms/StatCalloutBlockForm";
+import { StatementABBlockForm } from "./block-forms/StatementABBlockForm";
 import { BlockStyleSection } from "./BlockStyleSection";
 import { mapAiError } from "./ai-pane/mapAiError";
 import { COST_ESTIMATES } from "./ai-pane/costEstimates";
@@ -31,9 +33,10 @@ interface Props {
   block: EditorBlock | null;
   onChange: (next: EditorBlock) => void;
   contentItemId: string;
+  siblingBlocks: EditorBlock[];
 }
 
-export function BlockEditorPane({ block, onChange, contentItemId }: Props) {
+export function BlockEditorPane({ block, onChange, contentItemId, siblingBlocks }: Props) {
   const [refineOpen, setRefineOpen] = useState(false);
   const [refineText, setRefineText] = useState("");
   const [refineBusy, setRefineBusy] = useState(false);
@@ -238,8 +241,15 @@ export function BlockEditorPane({ block, onChange, contentItemId }: Props) {
       {block.block_type === "embed_audio" && (
         <EmbedAudioBlockForm value={cfg} onConfigChange={handleConfig} contentItemId={contentItemId} />
       )}
+      {block.block_type === "stat_callout" && (
+        <StatCalloutBlockForm value={cfg} onConfigChange={handleConfig} />
+      )}
+      {block.block_type === "statement_a_b" && (
+        <StatementABBlockForm value={cfg} onConfigChange={handleConfig} />
+      )}
 
       <BlockStyleSection value={cfg} onConfigChange={handleConfig} />
+      <span data-sibling-count={siblingBlocks.length} className="hidden" />
     </div>
   );
 }

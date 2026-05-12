@@ -8,6 +8,11 @@ import {
   List as ListIcon,
   AlertCircle,
   Music,
+  Hash as HashIcon,
+  Columns2 as ColumnsIcon,
+  ListCollapse as AccordionIcon,
+  LayoutPanelTop as TabsIcon,
+  MousePointerClick as ButtonStackIcon,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -20,7 +25,12 @@ export type BlockType =
   | "quote"
   | "list"
   | "callout"
-  | "embed_audio";
+  | "embed_audio"
+  | "stat_callout"
+  | "statement_a_b"
+  | "accordion"
+  | "tabs"
+  | "button_stack";
 
 export type TipTapDocJSON = Record<string, unknown>;
 
@@ -110,6 +120,80 @@ export const BLOCK_TYPE_META: Record<
     icon: Music,
     defaultConfig: () => ({ asset_id: null, transcript: null, background_color: null, padding: "none" }),
   },
+  stat_callout: {
+    label: "Stat callout",
+    description: "Anchor a number with a label",
+    icon: HashIcon,
+    defaultConfig: () => ({
+      stat: "",
+      label: "",
+      body: emptyDoc(),
+      background_color: null,
+      padding: "none",
+    }),
+  },
+  statement_a_b: {
+    label: "Statement A/B",
+    description: "Side-by-side contrast",
+    icon: ColumnsIcon,
+    defaultConfig: () => ({
+      a_label: "",
+      a_body: emptyDoc(),
+      b_label: "",
+      b_body: emptyDoc(),
+      variant: "contrast",
+      background_color: null,
+      padding: "none",
+    }),
+  },
+  accordion: {
+    label: "Accordion",
+    description: "Collapsible sections",
+    icon: AccordionIcon,
+    defaultConfig: () => ({
+      items: [
+        { client_id: crypto.randomUUID(), title: "", body: emptyDoc() },
+        { client_id: crypto.randomUUID(), title: "", body: emptyDoc() },
+      ],
+      background_color: null,
+      padding: "none",
+    }),
+  },
+  tabs: {
+    label: "Tabs",
+    description: "Parallel content branches",
+    icon: TabsIcon,
+    defaultConfig: () => ({
+      tabs: [
+        { client_id: crypto.randomUUID(), label: "Tab 1", body: emptyDoc() },
+        { client_id: crypto.randomUUID(), label: "Tab 2", body: emptyDoc() },
+      ],
+      default_tab: 0,
+      style: "underline",
+      background_color: null,
+      padding: "none",
+    }),
+  },
+  button_stack: {
+    label: "Buttons",
+    description: "Link-out or jump-to-block buttons",
+    icon: ButtonStackIcon,
+    defaultConfig: () => ({
+      buttons: [
+        {
+          client_id: crypto.randomUUID(),
+          label: "",
+          action_type: "link",
+          url: "",
+          target_block_client_id: null,
+          variant: "primary",
+        },
+      ],
+      layout: "stacked",
+      background_color: null,
+      padding: "none",
+    }),
+  },
 };
 
 export const IN_SCOPE_BLOCK_TYPES: BlockType[] = [
@@ -122,6 +206,11 @@ export const IN_SCOPE_BLOCK_TYPES: BlockType[] = [
   "list",
   "callout",
   "embed_audio",
+  "stat_callout",
+  "statement_a_b",
+  "accordion",
+  "tabs",
+  "button_stack",
 ];
 
 export const CALLOUT_COLORS: Record<string, string> = {

@@ -15,6 +15,7 @@ interface Props {
   isDirty: boolean;
   saving: boolean;
   onRequestSave: () => void;
+  siblingBlocks: EditorBlock[];
 }
 
 export function EditorSlidePane({
@@ -27,6 +28,7 @@ export function EditorSlidePane({
   isDirty,
   saving,
   onRequestSave,
+  siblingBlocks,
 }: Props) {
   const effectiveOpen = mode === "edit" && open;
 
@@ -82,6 +84,7 @@ export function EditorSlidePane({
             block={block}
             onChange={onChange}
             contentItemId={contentItemId}
+            siblingBlocks={siblingBlocks}
           />
         </div>
         <div className="border-t bg-background p-3">

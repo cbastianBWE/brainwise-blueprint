@@ -111,3 +111,102 @@
 .editor-slide-pane {
   box-shadow: 0 0 24px rgba(2, 31, 54, 0.08);
 }
+
+/* === Session 63 / 64: five new block types === */
+
+/* Stat callout */
+.bw-stat-callout {
+  text-align: center;
+  padding: 1.5rem 1rem;
+}
+.bw-stat-callout-number {
+  font-family: var(--font-display, "Poppins", sans-serif);
+  font-size: clamp(2.5rem, 7vw, 4rem);
+  font-weight: 700;
+  color: #021F36;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+.bw-stat-callout-label {
+  font-size: 1.0625rem;
+  color: #4B5563;
+  margin-top: 0.5rem;
+  max-width: 32rem;
+  margin-left: auto;
+  margin-right: auto;
+  line-height: 1.4;
+}
+.bw-stat-callout-body {
+  margin-top: 1rem;
+  max-width: 36rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Statement A/B */
+.bw-statement-ab {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+@media (min-width: 768px) {
+  .bw-statement-ab {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+.bw-statement-card {
+  border-left: 4px solid #021F36;
+  background-color: hsl(var(--muted) / 0.30);
+  border-radius: 0.5rem;
+  padding: 1rem 1.25rem;
+}
+.bw-statement-card-a.is-contrast { border-left-color: #F5741A; }
+.bw-statement-card-b.is-contrast { border-left-color: #006D77; }
+.bw-statement-card-a.is-neutral,
+.bw-statement-card-b.is-neutral { border-left-color: #021F36; }
+.bw-statement-card-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #6D6875;
+  margin-bottom: 0.5rem;
+}
+
+/* Accordion */
+.bw-accordion-item {
+  border-bottom: 1px solid hsl(var(--border));
+}
+.bw-accordion-trigger {
+  font-family: var(--font-display, "Poppins", sans-serif);
+  font-weight: 600;
+  color: #021F36;
+}
+.bw-accordion-content {
+  padding-bottom: 1rem;
+}
+
+/* Tabs */
+.bw-tabs-list-underline {
+  border-bottom: 1px solid hsl(var(--border));
+  margin-bottom: 1rem;
+}
+.bw-tabs-trigger-underline[data-state="active"] {
+  color: #021F36;
+  border-bottom: 2px solid #F5741A;
+  margin-bottom: -1px;
+}
+
+/* Button stack */
+.bw-button-stack-stacked {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.bw-button-stack-stacked > * { width: 100%; }
+.bw-button-stack-inline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}

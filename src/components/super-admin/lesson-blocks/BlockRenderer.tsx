@@ -12,6 +12,19 @@ import {
   Music as MusicIcon,
   Video as VideoIcon,
 } from "lucide-react";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { Button } from "@/components/ui/button";
 import type { EditorBlock, TipTapDocJSON } from "./blockTypeMeta";
 
 interface BlockRendererProps {
@@ -275,7 +288,7 @@ export function BlockRenderer({ block, assetUrlMap }: BlockRendererProps) {
   if (block.block_type === "divider") {
     const dividerColor = (cfg.color as string | undefined) || "#021F36";
     return (
-      <div className="my-4">
+      <div className="my-4" data-block-client-id={block.client_id}>
         <div
           className="h-[3px] w-full rounded-full"
           style={{ background: dividerColor }}
@@ -332,14 +345,256 @@ export function BlockRenderer({ block, assetUrlMap }: BlockRendererProps) {
             urlMap={assetUrlMap}
           />
         );
+      case "stat_callout":
+        return (
+          <StatCalloutRender
+            stat={cfg.stat ?? ""}
+            label={cfg.label ?? ""}
+            body={cfg.body ?? null}
+            backgroundColor={bg}
+          />
+        );
+      case "statement_a_b":
+        return (
+          <StatementABRender
+            aLabel={cfg.a_label ?? ""}
+            aBody={cfg.a_body ?? null}
+            bLabel={cfg.b_label ?? ""}
+            bBody={cfg.b_body ?? null}
+            variant={cfg.variant === "neutral" ? "neutral" : "contrast"}
+          />
+        );
+      case "accordion":
+        return <AccordionRender items={cfg.items ?? []} />;
+      case "tabs":
+        return (
+          <TabsRender
+            tabs={cfg.tabs ?? []}
+            defaultTab={cfg.default_tab ?? 0}
+            style={cfg.style === "pills" ? "pills" : "underline"}
+          />
+        );
+      case "button_stack":
+        return (
+          <ButtonStackRender
+            buttons={cfg.buttons ?? []}
+            layout={cfg.layout === "inline" ? "inline" : "stacked"}
+          />
+        );
       default:
         return null;
     }
   };
 
   return (
-    <div className="block-style-wrapper" style={wrapperStyle}>
+    <div
+      className="block-style-wrapper"
+      style={wrapperStyle}
+      data-block-client-id={block.client_id}
+    >
       {renderInner()}
+    </div>
+  );
+}
+
+// === Session 64 additions — render components for 5 new block types ===
+
+function StatCalloutRender({
+  stat,
+  label,
+  body,
+}: {
+  stat: string;
+  label: string;
+  body: TipTapDocJSON | null;
+  backgroundColor: string | null;
+}) {
+  return (
+    <div className="bw-stat-callout">
+      <div className="bw-stat-callout-number">{stat || "—"}</div>
+      <div className="bw-stat-callout-label">{label}</div>
+      {body && (
+        <div className="bw-stat-callout-body">
+          <ReadOnlyTipTap json={body} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function StatementABRender({
+  aLabel,
+  aBody,
+  bLabel,
+  bBody,
+  variant,
+}: {
+  aLabel: string;
+  aBody: TipTapDocJSON | null;
+  bLabel: string;
+  bBody: TipTapDocJSON | null;
+  variant: "contrast" | "neutral";
+}) {
+  const variantClass = variant === "neutral" ? "is-neutral" : "is-contrast";
+  return (
+    <div className="bw-statement-ab">
+      <div className={`bw-statement-card bw-statement-card-a ${variantClass}`}>
+        {aLabel && <div className="bw-statement-card-label">{aLabel}</div>}
+        <div className="tiptap-prose prose-base max-w-none">
+          <ReadOnlyTipTap json={aBody} />
+        </div>
+      </div>
+      <div className={`bw-statement-card bw-statement-card-b ${variantClass}`}>
+        {bLabel && <div className="bw-statement-card-label">{bLabel}</div>}
+        <div className="tiptap-prose prose-base max-w-none">
+          <ReadOnlyTipTap json={bBody} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AccordionRender({
+  items,
+}: {
+  items: Array<{ client_id: string; title: string; body: TipTapDocJSON | null }>;
+}) {
+  if (items.length === 0) return null;
+  return (
+    <Accordion type="single" collapsible className="w-full">
+      {items.map((item) => (
+        <AccordionItem key={item.client_id} value={item.client_id} className="bw-accordion-item">
+          <AccordionTrigger className="bw-accordion-trigger">
+            {item.title || "(untitled section)"}
+          </AccordionTrigger>
+          <AccordionContent className="bw-accordion-content">
+            <div className="tiptap-prose prose-base max-w-none">
+              <ReadOnlyTipTap json={item.body} />
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+      ))}
+    </Accordion>
+  );
+}
+
+function TabsRender({
+  tabs,
+  defaultTab,
+  style,
+}: {
+  tabs: Array<{ client_id: string; label: string; body: TipTapDocJSON | null }>;
+  defaultTab: number;
+  style: "underline" | "pills";
+}) {
+  if (tabs.length === 0) return null;
+  const safeDefault = Math.min(Math.max(0, defaultTab), tabs.length - 1);
+  const defaultValue = tabs[safeDefault]?.client_id ?? tabs[0].client_id;
+  const isUnderline = style === "underline";
+  return (
+    <Tabs defaultValue={defaultValue} className="w-full">
+      <TabsList
+        className={
+          isUnderline
+            ? "bw-tabs-list-underline h-auto bg-transparent p-0 gap-2 justify-start"
+            : ""
+        }
+      >
+        {tabs.map((t) => (
+          <TabsTrigger
+            key={t.client_id}
+            value={t.client_id}
+            className={
+              isUnderline
+                ? "bw-tabs-trigger-underline rounded-none bg-transparent px-3 py-2 data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+                : ""
+            }
+          >
+            {t.label || "(untitled)"}
+          </TabsTrigger>
+        ))}
+      </TabsList>
+      {tabs.map((t) => (
+        <TabsContent key={t.client_id} value={t.client_id}>
+          <div className="tiptap-prose prose-base max-w-none">
+            <ReadOnlyTipTap json={t.body} />
+          </div>
+        </TabsContent>
+      ))}
+    </Tabs>
+  );
+}
+
+function ButtonStackRender({
+  buttons,
+  layout,
+}: {
+  buttons: Array<{
+    client_id: string;
+    label: string;
+    action_type: "link" | "jump_to_block";
+    url: string | null;
+    target_block_client_id: string | null;
+    variant: "primary" | "secondary";
+  }>;
+  layout: "stacked" | "inline";
+}) {
+  if (buttons.length === 0) return null;
+  const wrapperClass = layout === "inline" ? "bw-button-stack-inline" : "bw-button-stack-stacked";
+
+  const handleJump = (targetClientId: string | null) => {
+    if (!targetClientId) return;
+    if (typeof document === "undefined") return;
+    const target = document.querySelector(`[data-block-client-id="${targetClientId}"]`);
+    if (target) {
+      target.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
+
+  return (
+    <div className={wrapperClass}>
+      {buttons.map((b) => {
+        const buttonProps = {
+          variant: b.variant === "secondary" ? ("outline" as const) : ("default" as const),
+          style:
+            b.variant === "primary"
+              ? ({ backgroundColor: "#F5741A", color: "white" } as CSSProperties)
+              : undefined,
+        };
+        const label = b.label || "(untitled)";
+        if (b.action_type === "jump_to_block") {
+          return (
+            <Button
+              key={b.client_id}
+              {...buttonProps}
+              onClick={() => handleJump(b.target_block_client_id)}
+              disabled={!b.target_block_client_id}
+            >
+              {label}
+            </Button>
+          );
+        }
+        const url = b.url ?? "";
+        if (!url) {
+          return (
+            <Button key={b.client_id} {...buttonProps} disabled>
+              {label}
+            </Button>
+          );
+        }
+        const isExternal = url.startsWith("http://") || url.startsWith("https://");
+        return (
+          <Button key={b.client_id} {...buttonProps} asChild>
+            <a
+              href={url}
+              target={isExternal ? "_blank" : undefined}
+              rel={isExternal ? "noopener noreferrer" : undefined}
+            >
+              {label}
+            </a>
+          </Button>
+        );
+      })}
     </div>
   );
 }
