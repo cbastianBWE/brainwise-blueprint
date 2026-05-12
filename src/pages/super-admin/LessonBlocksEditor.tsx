@@ -204,6 +204,7 @@ export default function LessonBlocksEditor() {
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [saveReason, setSaveReason] = useState("");
   const [saving, setSaving] = useState(false);
+  const [saveAndNavigateTo, setSaveAndNavigateTo] = useState<string | null>(null);
 
   const reload = useCallback(async () => {
     if (!contentItemId) return;
