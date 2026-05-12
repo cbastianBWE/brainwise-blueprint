@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { Loader2, Save, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { BlockEditorPane } from "./BlockEditorPane";
 import { BLOCK_TYPE_META, type EditorBlock } from "./blockTypeMeta";
 
@@ -38,55 +39,65 @@ export function EditorSlidePane({
   const Icon = meta?.icon;
 
   return (
-    <aside
-      className={`editor-slide-pane sticky top-0 z-20 flex max-h-[calc(100vh-1rem)] w-full flex-col self-start border-r bg-background shadow-md transition-transform duration-300 ease-out md:w-[480px] ${
-        open ? "translate-x-0" : "-translate-x-full pointer-events-none absolute"
-      }`}
+    <div
+      className={cn(
+        "editor-slide-pane-outer sticky top-0 z-20 self-start",
+        open
+          ? "w-full md:w-[480px] max-h-[calc(100vh-1rem)]"
+          : "absolute left-0 top-0 h-0 w-0 overflow-hidden pointer-events-none",
+      )}
       aria-hidden={!open}
     >
-      <div className="flex items-center justify-between border-b px-4 py-3">
-        <div className="flex items-center gap-2">
-          {Icon && <Icon className="h-4 w-4 text-muted-foreground" />}
-          <div
-            className="font-display text-base font-semibold tracking-tight"
-            style={{ color: "#021F36" }}
-          >
-            {meta?.label ?? "Edit block"}
+      <aside
+        className={cn(
+          "editor-slide-pane flex h-full max-h-[calc(100vh-1rem)] w-full flex-col border-r bg-background shadow-md transition-transform duration-300 ease-out",
+          open ? "translate-x-0" : "-translate-x-full pointer-events-none",
+        )}
+      >
+        <div className="flex items-center justify-between border-b px-4 py-3">
+          <div className="flex items-center gap-2">
+            {Icon && <Icon className="h-4 w-4 text-muted-foreground" />}
+            <div
+              className="font-display text-base font-semibold tracking-tight"
+              style={{ color: "#021F36" }}
+            >
+              {meta?.label ?? "Edit block"}
+            </div>
           </div>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="h-8 w-8 p-0"
+            onClick={onClose}
+            aria-label="Close edit pane"
+          >
+            <X className="h-4 w-4" />
+          </Button>
         </div>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          className="h-8 w-8 p-0"
-          onClick={onClose}
-          aria-label="Close edit pane"
-        >
-          <X className="h-4 w-4" />
-        </Button>
-      </div>
-      <div className="flex-1 overflow-y-auto">
-        <BlockEditorPane
-          block={block}
-          onChange={onChange}
-          contentItemId={contentItemId}
-        />
-      </div>
-      <div className="border-t bg-background p-3">
-        <Button
-          type="button"
-          className="w-full shadow-cta"
-          disabled={!isDirty || saving}
-          onClick={onRequestSave}
-        >
-          {saving ? (
-            <Loader2 className="mr-1 h-4 w-4 animate-spin" />
-          ) : (
-            <Save className="mr-1 h-4 w-4" />
-          )}
-          Save lesson
-        </Button>
-      </div>
-    </aside>
+        <div className="flex-1 overflow-y-auto">
+          <BlockEditorPane
+            block={block}
+            onChange={onChange}
+            contentItemId={contentItemId}
+          />
+        </div>
+        <div className="border-t bg-background p-3">
+          <Button
+            type="button"
+            className="w-full shadow-cta"
+            disabled={!isDirty || saving}
+            onClick={onRequestSave}
+          >
+            {saving ? (
+              <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+            ) : (
+              <Save className="mr-1 h-4 w-4" />
+            )}
+            Save lesson
+          </Button>
+        </div>
+      </aside>
+    </div>
   );
 }
