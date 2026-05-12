@@ -754,6 +754,7 @@ export default function LessonBlocksEditor() {
           isDirty={isDirty}
           saving={saving}
           onRequestSave={() => setSaveDialogOpen(true)}
+          siblingBlocks={blocks}
         />
 
         <ManageBlocksSidebar
