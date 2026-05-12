@@ -71,6 +71,8 @@ export function BlockEditorPane({ block, onChange, contentItemId }: Props) {
           contentItemId={contentItemId}
         />
       )}
+
+      <BlockStyleSection value={cfg} onConfigChange={handleConfig} />
     </div>
   );
 }
