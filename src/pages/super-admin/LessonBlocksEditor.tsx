@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams, useBlocker } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
 import { ChevronLeft, Loader2, Plus, Save } from "lucide-react";
@@ -160,14 +160,32 @@ export default function LessonBlocksEditor() {
     return () => window.removeEventListener("beforeunload", handler);
   }, [isDirty]);
 
-  // Navigation blocker
-  const blocker = useBlocker(({ currentLocation, nextLocation }) =>
-    isDirty && currentLocation.pathname !== nextLocation.pathname,
-  );
+  // Navigation blocker — manual guard for back-button navigation since
+  // react-router v6 useBlocker requires a data router (we use BrowserRouter).
   const [showLeaveDialog, setShowLeaveDialog] = useState(false);
+  const [pendingNavigation, setPendingNavigation] = useState<string | null>(null);
+
+  // Intercept browser back/forward when isDirty
   useEffect(() => {
-    if (blocker.state === "blocked") setShowLeaveDialog(true);
-  }, [blocker.state]);
+    if (!isDirty) return;
+    const handlePopState = (e: PopStateEvent) => {
+      window.history.pushState(null, "", window.location.href);
+      setPendingNavigation("__browser_back__");
+      setShowLeaveDialog(true);
+    };
+    window.history.pushState(null, "", window.location.href);
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [isDirty]);
+
+  const guardedNavigate = useCallback((to: string) => {
+    if (isDirty) {
+      setPendingNavigation(to);
+      setShowLeaveDialog(true);
+    } else {
+      navigate(to);
+    }
+  }, [isDirty, navigate]);
 
   // Auto-save draft
   const draftStatus = useLessonBlockDraft({
@@ -300,7 +318,7 @@ export default function LessonBlocksEditor() {
           size="sm"
           className="-ml-2 h-auto px-2 py-1 text-muted-foreground hover:text-foreground"
           onClick={() => {
-            navigate("/super-admin/content-authoring");
+            guardedNavigate("/super-admin/content-authoring");
           }}
         >
           <ChevronLeft className="mr-1 h-4 w-4" />
