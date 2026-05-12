@@ -50,3 +50,22 @@
   height: 0;
   pointer-events: none;
 }
+
+/* Stacked editor — block hover/selection states */
+.stacked-block {
+  position: relative;
+  transition: background-color 150ms ease, border-color 150ms ease;
+}
+.stacked-block:hover {
+  background-color: hsl(var(--muted) / 0.30);
+}
+.stacked-block.is-selected {
+  background-color: hsl(var(--muted));
+  border-left: 4px solid #F5741A;
+  padding-left: 12px;
+}
+
+/* Slide-in pane shadow */
+.editor-slide-pane {
+  box-shadow: 0 0 24px rgba(2, 31, 54, 0.08);
+}
