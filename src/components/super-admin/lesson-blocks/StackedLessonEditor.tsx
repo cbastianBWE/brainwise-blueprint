@@ -13,16 +13,22 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { cn } from "@/lib/utils";
+import { Check } from "lucide-react";
 import { BlockRenderer } from "./BlockRenderer";
 import { BlockHoverToolbar } from "./BlockHoverToolbar";
 import { InlineAddButton } from "./InlineAddButton";
 import type { BlockType, EditorBlock } from "./blockTypeMeta";
 
+export type EditorMode = "edit" | "manage";
+
 interface Props {
   blocks: EditorBlock[];
   selectedClientId: string | null;
+  selectedClientIds: Set<string>;
+  mode: EditorMode;
   assetUrlMap: Map<string, string>;
   onSelectBlock: (clientId: string) => void;
+  onToggleSelect: (clientId: string, e: React.MouseEvent) => void;
   onReorder: (fromIndex: number, toIndex: number) => void;
   onDelete: (clientId: string) => void;
   onDuplicate: (clientId: string) => void;
@@ -36,8 +42,11 @@ function SortableStackBlock({
   index,
   total,
   selected,
+  manageSelected,
+  mode,
   assetUrlMap,
   onSelect,
+  onToggleSelect,
   onDelete,
   onDuplicate,
   onMoveUp,
@@ -47,8 +56,11 @@ function SortableStackBlock({
   index: number;
   total: number;
   selected: boolean;
+  manageSelected: boolean;
+  mode: EditorMode;
   assetUrlMap: Map<string, string>;
   onSelect: () => void;
+  onToggleSelect: (e: React.MouseEvent) => void;
   onDelete: () => void;
   onDuplicate: () => void;
   onMoveUp: () => void;
@@ -63,34 +75,63 @@ function SortableStackBlock({
     opacity: isDragging ? 0.4 : 1,
   };
 
+  const isManage = mode === "manage";
+
   return (
     <div
       ref={setNodeRef}
       style={style}
       className={cn(
         "stacked-block group relative -mx-4 cursor-pointer rounded-md px-4 py-4",
-        selected && "is-selected",
+        !isManage && selected && "is-selected",
+        isManage && manageSelected && "is-manage-selected",
       )}
-      onClick={onSelect}
+      onClick={(e) => {
+        if (isManage) {
+          onToggleSelect(e);
+        } else {
+          onSelect();
+        }
+      }}
+      {...(isManage ? attributes : {})}
+      {...(isManage ? listeners : {})}
     >
-      <div
-        className={cn(
-          "absolute right-2 top-2 z-10 transition-opacity",
-          selected ? "opacity-100" : "opacity-0 group-hover:opacity-100",
-        )}
-      >
-        <BlockHoverToolbar
-          isFirst={index === 0}
-          isLast={index === total - 1}
-          dragAttributes={attributes}
-          dragListeners={listeners}
-          onEdit={onSelect}
-          onMoveUp={onMoveUp}
-          onMoveDown={onMoveDown}
-          onDuplicate={onDuplicate}
-          onDelete={onDelete}
-        />
-      </div>
+      {isManage && (
+        <div className="absolute left-1 top-4 z-10">
+          <div
+            className={cn(
+              "flex h-5 w-5 items-center justify-center rounded-sm border-2 transition-colors",
+              manageSelected
+                ? "border-[#F5741A] bg-[#F5741A] text-white"
+                : "border-muted-foreground/40 bg-background",
+            )}
+          >
+            {manageSelected && <Check className="h-3.5 w-3.5" />}
+          </div>
+        </div>
+      )}
+
+      {!isManage && (
+        <div
+          className={cn(
+            "absolute right-2 top-2 z-10 transition-opacity",
+            selected ? "opacity-100" : "opacity-0 group-hover:opacity-100",
+          )}
+        >
+          <BlockHoverToolbar
+            isFirst={index === 0}
+            isLast={index === total - 1}
+            dragAttributes={attributes}
+            dragListeners={listeners}
+            onEdit={onSelect}
+            onMoveUp={onMoveUp}
+            onMoveDown={onMoveDown}
+            onDuplicate={onDuplicate}
+            onDelete={onDelete}
+          />
+        </div>
+      )}
+
       <BlockRenderer block={block} assetUrlMap={assetUrlMap} mode="editor" />
     </div>
   );
@@ -99,8 +140,11 @@ function SortableStackBlock({
 export function StackedLessonEditor({
   blocks,
   selectedClientId,
+  selectedClientIds,
+  mode,
   assetUrlMap,
   onSelectBlock,
+  onToggleSelect,
   onReorder,
   onDelete,
   onDuplicate,
@@ -121,6 +165,8 @@ export function StackedLessonEditor({
     onReorder(from, to);
   };
 
+  const isManage = mode === "manage";
+
   return (
     <DndContext
       sensors={sensors}
@@ -132,7 +178,7 @@ export function StackedLessonEditor({
         strategy={verticalListSortingStrategy}
       >
         <div className="space-y-1">
-          <InlineAddButton atIndex={0} onInsert={onInsert} />
+          {!isManage && <InlineAddButton atIndex={0} onInsert={onInsert} />}
           {blocks.map((b, i) => (
             <div key={b.client_id} className="space-y-1">
               <SortableStackBlock
@@ -140,14 +186,17 @@ export function StackedLessonEditor({
                 index={i}
                 total={blocks.length}
                 selected={selectedClientId === b.client_id}
+                manageSelected={selectedClientIds.has(b.client_id)}
+                mode={mode}
                 assetUrlMap={assetUrlMap}
                 onSelect={() => onSelectBlock(b.client_id)}
+                onToggleSelect={(e) => onToggleSelect(b.client_id, e)}
                 onDelete={() => onDelete(b.client_id)}
                 onDuplicate={() => onDuplicate(b.client_id)}
                 onMoveUp={() => onMoveUp(b.client_id)}
                 onMoveDown={() => onMoveDown(b.client_id)}
               />
-              <InlineAddButton atIndex={i + 1} onInsert={onInsert} />
+              {!isManage && <InlineAddButton atIndex={i + 1} onInsert={onInsert} />}
             </div>
           ))}
         </div>
