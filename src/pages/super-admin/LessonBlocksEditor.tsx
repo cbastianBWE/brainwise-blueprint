@@ -478,6 +478,9 @@ export default function LessonBlocksEditor() {
             setPaneOpen(false);
             setSelectedClientId(null);
           }}
+          isDirty={isDirty}
+          saving={saving}
+          onRequestSave={() => setSaveDialogOpen(true)}
         />
 
         <div
