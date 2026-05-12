@@ -66,6 +66,7 @@ import CoachManagement from "./pages/super-admin/CoachManagement";
 import CreateOrganization from "./pages/super-admin/CreateOrganization";
 import ContentAuthoring from "./pages/super-admin/ContentAuthoring";
 import AssetLibrary from "./pages/super-admin/AssetLibrary";
+import LessonBlocksEditor from "./pages/super-admin/LessonBlocksEditor";
 import EpnComplete from "./pages/EpnComplete";
 import AirsaManagerComplete from "./pages/AirsaManagerComplete";
 import VerifyConversion from "./pages/VerifyConversion";
