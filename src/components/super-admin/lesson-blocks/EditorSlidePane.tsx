@@ -46,15 +46,15 @@ export function EditorSlidePane({
     <aside
       className={cn(
         "editor-slide-pane fixed z-20 flex flex-col border-r bg-background shadow-md transition-[left] duration-300 ease-out",
-        !open && "pointer-events-none",
+        !effectiveOpen && "pointer-events-none",
       )}
       style={{
         top: 56,
-        left: open ? "var(--sidebar-width, 0px)" : "-480px",
+        left: effectiveOpen ? "var(--sidebar-width, 0px)" : "-480px",
         bottom: 0,
         width: "min(480px, calc(100vw - var(--sidebar-width, 0px)))",
       }}
-      aria-hidden={!open}
+      aria-hidden={!effectiveOpen}
     >
         <div className="flex items-center justify-between border-b px-4 py-3">
           <div className="flex items-center gap-2">
