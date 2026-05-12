@@ -9,6 +9,7 @@ interface Props {
   open: boolean;
   block: EditorBlock | null;
   contentItemId: string;
+  mode: "edit" | "manage";
   onChange: (next: EditorBlock) => void;
   onClose: () => void;
   isDirty: boolean;
@@ -20,20 +21,23 @@ export function EditorSlidePane({
   open,
   block,
   contentItemId,
+  mode,
   onChange,
   onClose,
   isDirty,
   saving,
   onRequestSave,
 }: Props) {
+  const effectiveOpen = mode === "edit" && open;
+
   useEffect(() => {
-    if (!open) return;
+    if (!effectiveOpen) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [open, onClose]);
+  }, [effectiveOpen, onClose]);
 
   const meta = block ? BLOCK_TYPE_META[block.block_type] : null;
   const Icon = meta?.icon;
