@@ -382,7 +382,15 @@ export function FileUploadField({
       ? `Library asset upload: ${libraryName ?? "(unnamed)"}`
       : contentItemId
         ? `Asset upload for ${refField ?? "field"} on content_item ${contentItemId}`
-        : `Asset upload for ${refField ?? "field"} on lesson_block ${lessonBlockId}`;
+        : lessonBlockId
+          ? `Asset upload for ${refField ?? "field"} on lesson_block ${lessonBlockId}`
+          : moduleId
+            ? `Thumbnail upload for module ${moduleId}`
+            : curriculumId
+              ? `Thumbnail upload for curriculum ${curriculumId}`
+              : certificationPathId
+                ? `Thumbnail upload for certification_path ${certificationPathId}`
+                : "Asset upload";
     const reason = (reasonOverride && reasonOverride.length >= 10) ? reasonOverride : defaultReason;
 
     const reqResp = await supabase.functions.invoke("request-asset-upload", {
@@ -394,6 +402,9 @@ export function FileUploadField({
         reason,
         content_item_id: contentItemId ?? null,
         lesson_block_id: lessonBlockId ?? null,
+        module_id: moduleId ?? null,
+        curriculum_id: curriculumId ?? null,
+        certification_path_id: certificationPathId ?? null,
         ref_field: refField ?? null,
         is_library_asset: isLibraryAsset ?? false,
         library_name: libraryName ?? null,
