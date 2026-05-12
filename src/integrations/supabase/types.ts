@@ -7234,6 +7234,15 @@ export type Database = {
         }
         Returns: Json
       }
+      _upsert_thumbnail_ref: {
+        Args: {
+          p_asset_id: string
+          p_caller_id: string
+          p_parent_id: string
+          p_parent_type: string
+        }
+        Returns: undefined
+      }
       _validate_thumbnail_asset: {
         Args: { p_asset_id: string }
         Returns: undefined
