@@ -4,6 +4,29 @@ import type { EditorBlock } from "./blockTypeMeta";
 
 type Status = "idle" | "saving" | "saved" | "error";
 
+function normalizeForCompare(v: any): any {
+  if (v === null || v === undefined) return null;
+  if (Array.isArray(v)) {
+    return v.map(normalizeForCompare).filter((x) => x !== undefined);
+  }
+  if (typeof v === "object") {
+    const out: any = {};
+    for (const k of Object.keys(v).sort()) {
+      const nv = normalizeForCompare(v[k]);
+      if (nv === undefined) continue;
+      if (Array.isArray(nv) && nv.length === 0) continue;
+      if (nv === null || nv === "") continue;
+      out[k] = nv;
+    }
+    return out;
+  }
+  return v;
+}
+
+function stableSerialize(blocks: EditorBlock[]): string {
+  return JSON.stringify(normalizeForCompare(blocks));
+}
+
 export function useLessonBlockDraft(args: {
   contentItemId: string;
   blocks: EditorBlock[];
