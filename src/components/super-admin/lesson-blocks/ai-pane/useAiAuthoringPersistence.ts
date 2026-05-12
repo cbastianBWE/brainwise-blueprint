@@ -50,7 +50,7 @@ export function useAiAuthoringPersistence(args: {
   lastSavedAt: Date | null;
   pause: () => void;
   resume: () => void;
-  flushNow: () => Promise<void>;
+  flushNow: (overrideState?: Partial<PersistenceState>) => Promise<void>;
 } {
   const { contentItemId, state, enabled } = args;
   const [status, setStatus] = useState<Status>("idle");
