@@ -60,7 +60,7 @@ export const BLOCK_TYPE_META: Record<
     label: "Divider",
     description: "Horizontal rule",
     icon: Minus,
-    defaultConfig: () => ({}),
+    defaultConfig: () => ({ color: "#021F36" }),
   },
   image: {
     label: "Image",

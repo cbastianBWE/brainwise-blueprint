@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { X } from "lucide-react";
+import { Loader2, Save, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { BlockEditorPane } from "./BlockEditorPane";
 import { BLOCK_TYPE_META, type EditorBlock } from "./blockTypeMeta";
@@ -10,6 +10,9 @@ interface Props {
   contentItemId: string;
   onChange: (next: EditorBlock) => void;
   onClose: () => void;
+  isDirty: boolean;
+  saving: boolean;
+  onRequestSave: () => void;
 }
 
 export function EditorSlidePane({
@@ -18,6 +21,9 @@ export function EditorSlidePane({
   contentItemId,
   onChange,
   onClose,
+  isDirty,
+  saving,
+  onRequestSave,
 }: Props) {
   useEffect(() => {
     if (!open) return;
@@ -33,8 +39,8 @@ export function EditorSlidePane({
 
   return (
     <aside
-      className={`editor-slide-pane fixed left-0 top-0 z-30 flex h-screen w-full flex-col border-r bg-background transition-transform duration-300 ease-out md:w-[480px] ${
-        open ? "translate-x-0" : "-translate-x-full"
+      className={`editor-slide-pane absolute left-0 top-0 z-20 flex h-full w-full flex-col border-r bg-background shadow-md transition-transform duration-300 ease-out md:w-[480px] ${
+        open ? "translate-x-0" : "-translate-x-full pointer-events-none"
       }`}
       aria-hidden={!open}
     >
@@ -65,6 +71,21 @@ export function EditorSlidePane({
           onChange={onChange}
           contentItemId={contentItemId}
         />
+      </div>
+      <div className="border-t bg-background p-3">
+        <Button
+          type="button"
+          className="w-full shadow-cta"
+          disabled={!isDirty || saving}
+          onClick={onRequestSave}
+        >
+          {saving ? (
+            <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+          ) : (
+            <Save className="mr-1 h-4 w-4" />
+          )}
+          Save lesson
+        </Button>
       </div>
     </aside>
   );

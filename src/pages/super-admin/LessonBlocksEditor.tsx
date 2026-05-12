@@ -121,7 +121,7 @@ export default function LessonBlocksEditor() {
           .from("lesson_block_drafts" as any)
           .select("*")
           .eq("content_item_id", contentItemId)
-          .eq("user_id", user.id)
+          .eq("author_id", user.id)
           .maybeSingle();
         draft = d ?? null;
       }
@@ -139,10 +139,25 @@ export default function LessonBlocksEditor() {
     };
   }, [contentItemId, itemQuery.data, toast]);
 
-  const isDirty = useMemo(
-    () => JSON.stringify(blocks) !== JSON.stringify(initialBlocks),
-    [blocks, initialBlocks],
-  );
+  const isDirty = useMemo(() => {
+    const normalize = (v: any): any => {
+      if (v === null || v === undefined) return null;
+      if (Array.isArray(v)) return v.map(normalize).filter((x) => x !== undefined);
+      if (typeof v === "object") {
+        const out: any = {};
+        for (const k of Object.keys(v).sort()) {
+          const nv = normalize(v[k]);
+          if (nv === undefined) continue;
+          if (Array.isArray(nv) && nv.length === 0) continue;
+          if (nv === null || nv === "") continue;
+          out[k] = nv;
+        }
+        return out;
+      }
+      return v;
+    };
+    return JSON.stringify(normalize(blocks)) !== JSON.stringify(normalize(initialBlocks));
+  }, [blocks, initialBlocks]);
 
   useEffect(() => {
     if (!isDirty) return;
@@ -189,6 +204,7 @@ export default function LessonBlocksEditor() {
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [saveReason, setSaveReason] = useState("");
   const [saving, setSaving] = useState(false);
+  const [saveAndNavigateTo, setSaveAndNavigateTo] = useState<string | null>(null);
 
   const reload = useCallback(async () => {
     if (!contentItemId) return;
@@ -235,9 +251,19 @@ export default function LessonBlocksEditor() {
       setSaveReason("");
       await reload();
       draftStatus.resume();
+      if (saveAndNavigateTo) {
+        const target = saveAndNavigateTo;
+        setSaveAndNavigateTo(null);
+        if (target === "__browser_back__") {
+          window.history.back();
+        } else {
+          navigate(target);
+        }
+      }
     } catch (e: any) {
       toast({ title: "Save failed", description: e.message ?? String(e), variant: "destructive" });
       draftStatus.resume();
+      setSaveAndNavigateTo(null);
     } finally {
       setSaving(false);
     }
@@ -452,6 +478,9 @@ export default function LessonBlocksEditor() {
             setPaneOpen(false);
             setSelectedClientId(null);
           }}
+          isDirty={isDirty}
+          saving={saving}
+          onRequestSave={() => setSaveDialogOpen(true)}
         />
 
         <div
@@ -535,7 +564,9 @@ export default function LessonBlocksEditor() {
             </p>
           </div>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={saving}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={saving} onClick={() => setSaveAndNavigateTo(null)}>
+              Cancel
+            </AlertDialogCancel>
             <AlertDialogAction
               disabled={saveReason.trim().length < 10 || saving}
               onClick={(e) => {
@@ -574,7 +605,8 @@ export default function LessonBlocksEditor() {
             >
               Stay
             </AlertDialogCancel>
-            <AlertDialogAction
+            <Button
+              variant="outline"
               onClick={async () => {
                 if (contentItemId) {
                   try {
@@ -596,6 +628,18 @@ export default function LessonBlocksEditor() {
               }}
             >
               Discard and leave
+            </Button>
+            <AlertDialogAction
+              className="shadow-cta"
+              onClick={(e) => {
+                e.preventDefault();
+                setShowLeaveDialog(false);
+                setSaveAndNavigateTo(pendingNavigation);
+                setPendingNavigation(null);
+                setSaveDialogOpen(true);
+              }}
+            >
+              Save and leave
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
