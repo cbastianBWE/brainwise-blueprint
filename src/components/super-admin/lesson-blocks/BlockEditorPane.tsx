@@ -180,6 +180,22 @@ export function BlockEditorPane({ block, onChange, contentItemId }: Props) {
                 </SelectContent>
               </Select>
             </div>
+            <div className="space-y-1">
+              <Label className="text-[10px] uppercase tracking-wide text-muted-foreground">Length</Label>
+              <Select
+                value={lengthPreference}
+                onValueChange={(v) => handleLengthChange(v as LengthLevel)}
+              >
+                <SelectTrigger className="h-8">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="concise">Concise</SelectItem>
+                  <SelectItem value="standard">Standard</SelectItem>
+                  <SelectItem value="detailed">Detailed</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             {refineError && (
               <div className="rounded-md border border-destructive/40 bg-destructive/5 p-2 text-xs text-destructive">
                 {refineError}
