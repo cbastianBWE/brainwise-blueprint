@@ -163,10 +163,21 @@ function QuoteRender({
   );
 }
 
-function ListRender({ items, ordered }: { items: any[]; ordered: boolean }) {
+function ListRender({
+  items,
+  ordered,
+  markerColor,
+}: {
+  items: any[];
+  ordered: boolean;
+  markerColor?: string | null;
+}) {
   const ListTag = (ordered ? "ol" : "ul") as "ol" | "ul";
+  const styleVars = markerColor
+    ? ({ "--list-marker-color": markerColor } as React.CSSProperties)
+    : undefined;
   return (
-    <div className="tiptap-prose prose-base max-w-none">
+    <div className="tiptap-prose prose-base max-w-none" style={styleVars}>
       <ListTag>
         {(items ?? []).map((it, idx) => (
           <li key={it.client_id ?? idx}>
