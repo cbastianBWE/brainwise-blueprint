@@ -250,9 +250,21 @@ export function BlockEditorPane({ block, onChange, contentItemId, siblingBlocks 
       {block.block_type === "statement_a_b" && (
         <StatementABBlockForm value={cfg} onConfigChange={handleConfig} />
       )}
+      {block.block_type === "accordion" && (
+        <AccordionBlockForm value={cfg} onConfigChange={handleConfig} />
+      )}
+      {block.block_type === "tabs" && (
+        <TabsBlockForm value={cfg} onConfigChange={handleConfig} />
+      )}
+      {block.block_type === "button_stack" && (
+        <ButtonStackBlockForm
+          value={cfg}
+          onConfigChange={handleConfig}
+          siblingBlocks={siblingBlocks.filter((b) => b.client_id !== block.client_id)}
+        />
+      )}
 
       <BlockStyleSection value={cfg} onConfigChange={handleConfig} />
-      <span data-sibling-count={siblingBlocks.length} className="hidden" />
     </div>
   );
 }
