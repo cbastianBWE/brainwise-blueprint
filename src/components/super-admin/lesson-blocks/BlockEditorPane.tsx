@@ -35,7 +35,9 @@ export function BlockEditorPane({ block, onChange, contentItemId }: Props) {
     <div className="space-y-4 p-4">
       <div className="flex items-center gap-2 border-b pb-2">
         <meta.icon className="h-4 w-4 text-muted-foreground" />
-        <div className="text-sm font-semibold">{meta.label}</div>
+        <div className="font-display text-base font-semibold tracking-tight" style={{ color: "#021F36" }}>
+          {meta.label}
+        </div>
       </div>
       {block.block_type === "text" && (
         <TextBlockForm value={cfg} onConfigChange={handleConfig} />
