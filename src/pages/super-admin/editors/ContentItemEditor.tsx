@@ -135,6 +135,21 @@ function ContentItemEditor({
     staleTime: 5 * 60 * 1000,
   });
 
+  const lessonBlocksCountQuery = useQuery({
+    queryKey: ["lesson-blocks-count", initial?.id],
+    enabled: mode === "edit" && itemType === "lesson_blocks" && !!initial?.id,
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("lesson_blocks" as any)
+        .select("id", { count: "exact", head: true })
+        .eq("content_item_id", initial!.id)
+        .is("archived_at", null);
+      if (error) throw error;
+      return count ?? 0;
+    },
+  });
+  const blockCount = lessonBlocksCountQuery.data ?? null;
+
   const reasonLen = reason.trim().length;
   const reasonOk = reasonLen >= 10;
   const archiveReasonLen = archiveReason.trim().length;
