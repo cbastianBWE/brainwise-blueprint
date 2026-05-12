@@ -408,6 +408,27 @@ function CertPathEditor({
 
       <CardContent className="space-y-6">
         <div className="space-y-4">
+          <h3 className="text-sm font-semibold text-foreground">Thumbnail</h3>
+          <p className="text-xs text-muted-foreground">
+            Optional. Shown wherever this certification path appears in catalogs. If unset, a default BrainWise placeholder displays.
+          </p>
+          {mode === "create" ? (
+            <div className="rounded-md border border-dashed p-4 text-sm italic text-muted-foreground">
+              Save the certification path first to add a thumbnail.
+            </div>
+          ) : (
+            <FileUploadField
+              assetKind="image"
+              certificationPathId={initial?.id ?? null}
+              refField="thumbnail"
+              value={thumbnailAssetId}
+              onChange={setThumbnailAssetId}
+              disabled={saving}
+            />
+          )}
+        </div>
+
+        <div className="space-y-4">
           <h3 className="text-sm font-semibold text-foreground">Identity</h3>
 
           <div className="space-y-2">
