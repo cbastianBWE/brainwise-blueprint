@@ -671,6 +671,7 @@ export default function LessonBlocksEditor() {
           open={paneOpen && !!selectedBlock}
           block={selectedBlock}
           contentItemId={contentItemId!}
+          mode={mode}
           onChange={updateBlock}
           onClose={() => {
             setPaneOpen(false);
@@ -681,10 +682,26 @@ export default function LessonBlocksEditor() {
           onRequestSave={() => setSaveDialogOpen(true)}
         />
 
+        <ManageBlocksSidebar
+          open={mode === "manage"}
+          selectedCount={selectedClientIds.size}
+          canMoveUp={canBulkMoveUp}
+          canMoveDown={canBulkMoveDown}
+          onBulkDelete={handleBulkDelete}
+          onBulkDuplicate={handleBulkDuplicate}
+          onBulkMoveUp={handleBulkMoveUp}
+          onBulkMoveDown={handleBulkMoveDown}
+          onBulkSelectAll={handleBulkSelectAll}
+          onBulkClearSelection={handleBulkClearSelection}
+          onApplyBackground={handleBulkApplyBackground}
+          onApplyPadding={handleBulkApplyPadding}
+        />
+
         <div
           className={cn(
             "flex-1 transition-all duration-300 ease-out",
-            paneOpen && !!selectedBlock ? "md:ml-[480px]" : "",
+            mode === "edit" && paneOpen && !!selectedBlock ? "md:ml-[480px]" : "",
+            mode === "manage" ? "md:mr-[320px]" : "",
           )}
         >
           {blocks.length === 0 ? (
@@ -711,8 +728,11 @@ export default function LessonBlocksEditor() {
               <StackedLessonEditor
                 blocks={blocks}
                 selectedClientId={selectedClientId}
+                selectedClientIds={selectedClientIds}
+                mode={mode}
                 assetUrlMap={assetUrlMap}
                 onSelectBlock={handleSelectBlock}
+                onToggleSelect={handleToggleSelect}
                 onReorder={handleReorder}
                 onDelete={handleDelete}
                 onDuplicate={handleDuplicate}
@@ -726,9 +746,21 @@ export default function LessonBlocksEditor() {
       </div>
 
       <UndoDeleteToast
-        open={!!deletedBlock}
-        onUndo={handleUndoDelete}
-        onDismiss={() => setDeletedBlock(null)}
+        open={!!deletedBlock || !!bulkDeletedBlocks}
+        onUndo={() => {
+          if (bulkDeletedBlocks) handleUndoBulkDelete();
+          else if (deletedBlock) handleUndoDelete();
+        }}
+        onDismiss={() => {
+          setDeletedBlock(null);
+          setBulkDeletedBlocks(null);
+        }}
+        durationMs={bulkDeletedBlocks ? 12000 : 6000}
+        message={
+          bulkDeletedBlocks
+            ? `${bulkDeletedBlocks.length} block${bulkDeletedBlocks.length === 1 ? "" : "s"} deleted`
+            : "Block deleted"
+        }
       />
 
       {/* Save dialog */}
