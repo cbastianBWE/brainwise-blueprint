@@ -37,7 +37,9 @@ export function BlockEditorPane({ block, onChange, contentItemId }: Props) {
       {block.block_type === "heading" && (
         <HeadingBlockForm value={cfg} onConfigChange={handleConfig} />
       )}
-      {block.block_type === "divider" && <DividerBlockForm />}
+      {block.block_type === "divider" && (
+        <DividerBlockForm value={cfg} onConfigChange={handleConfig} />
+      )}
       {block.block_type === "image" && (
         <ImageBlockForm
           value={cfg}
