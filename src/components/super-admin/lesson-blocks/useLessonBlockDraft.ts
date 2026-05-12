@@ -47,7 +47,7 @@ export function useLessonBlockDraft(args: {
   useEffect(() => {
     if (!enabled) return;
     if (pausedRef.current) return;
-    const serialized = JSON.stringify(blocks);
+    const serialized = stableSerialize(blocks);
     if (prevSerialized.current === null) {
       prevSerialized.current = serialized;
       return;
