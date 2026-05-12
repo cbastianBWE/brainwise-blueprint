@@ -605,7 +605,8 @@ export default function LessonBlocksEditor() {
             >
               Stay
             </AlertDialogCancel>
-            <AlertDialogAction
+            <Button
+              variant="outline"
               onClick={async () => {
                 if (contentItemId) {
                   try {
@@ -627,6 +628,18 @@ export default function LessonBlocksEditor() {
               }}
             >
               Discard and leave
+            </Button>
+            <AlertDialogAction
+              className="shadow-cta"
+              onClick={(e) => {
+                e.preventDefault();
+                setShowLeaveDialog(false);
+                setSaveAndNavigateTo(pendingNavigation);
+                setPendingNavigation(null);
+                setSaveDialogOpen(true);
+              }}
+            >
+              Save and leave
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
