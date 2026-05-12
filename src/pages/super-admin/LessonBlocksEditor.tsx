@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
-import { ChevronLeft, Edit2, Layers, Loader2, Plus, Save } from "lucide-react";
+import { ChevronLeft, Edit2, Layers, Loader2, Plus, Save, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -38,6 +38,8 @@ import {
 } from "@/components/super-admin/lesson-blocks/blockTypeMeta";
 import { useLessonBlockDraft } from "@/components/super-admin/lesson-blocks/useLessonBlockDraft";
 import { useLessonBlockAssetUrls } from "@/components/super-admin/lesson-blocks/useLessonBlockAssetUrls";
+import { AiPane } from "@/components/super-admin/lesson-blocks/ai-pane/AiPane";
+import type { AiMode, FullContentItem } from "@/components/super-admin/lesson-blocks/ai-pane/types";
 import "@/components/super-admin/lesson-blocks/lesson-blocks.css";
 
 function rowsToEditorBlocks(rows: any[]): EditorBlock[] {
@@ -73,6 +75,29 @@ export default function LessonBlocksEditor() {
   const [bulkDeletedBlocks, setBulkDeletedBlocks] = useState<
     { block: EditorBlock; index: number }[] | null
   >(null);
+  const [aiPaneOpen, setAiPaneOpen] = useState(false);
+
+  const handleAiBuildLesson = useCallback(
+    (aiBlocks: FullContentItem[], aiMode: AiMode) => {
+      const mapped: EditorBlock[] = aiBlocks.map((b) => ({
+        client_id: crypto.randomUUID(),
+        block_type: b.block_type as BlockType,
+        config: b.config as Record<string, unknown>,
+      }));
+      if (aiMode === "replace" || aiMode === "fresh") {
+        setBlocks(mapped);
+      } else {
+        setBlocks((prev) => [...prev, ...mapped]);
+      }
+      setSelectedClientId(null);
+      setPaneOpen(false);
+      toast({
+        title: "AI content added to canvas",
+        description: "Review the new blocks, then Save to commit.",
+      });
+    },
+    [toast],
+  );
 
   const itemQuery = useQuery({
     queryKey: ["lesson-blocks-editor-item", contentItemId],
@@ -667,6 +692,14 @@ export default function LessonBlocksEditor() {
             </div>
             <Badge variant={isDirty ? "secondary" : "outline"}>{statusLabel}</Badge>
             <Button
+              variant="outline"
+              onClick={() => setAiPaneOpen((v) => !v)}
+              aria-pressed={aiPaneOpen}
+            >
+              <Sparkles className="mr-1 h-4 w-4" style={{ color: "#F5741A" }} />
+              AI Draft
+            </Button>
+            <Button
               disabled={!isDirty || saving}
               onClick={() => setSaveDialogOpen(true)}
               className="shadow-cta"
@@ -738,11 +771,21 @@ export default function LessonBlocksEditor() {
           onApplyPadding={handleBulkApplyPadding}
         />
 
+        <AiPane
+          open={aiPaneOpen}
+          onClose={() => setAiPaneOpen(false)}
+          contentItemId={contentItemId!}
+          canvasBlocks={blocks}
+          assetUrlMap={assetUrlMap}
+          onBuildLesson={handleAiBuildLesson}
+        />
+
         <div
           className={cn(
             "flex-1 transition-all duration-300 ease-out",
             mode === "edit" && paneOpen && !!selectedBlock ? "md:ml-[480px]" : "",
             mode === "manage" ? "md:mr-[320px]" : "",
+            aiPaneOpen ? "md:mr-[480px]" : "",
           )}
         >
           {blocks.length === 0 ? (
