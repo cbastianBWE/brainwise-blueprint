@@ -346,7 +346,40 @@ export function Stage1Chat(props: Props) {
                 value={customVoiceExample}
                 onChange={(e) => onCustomVoiceExampleChange(e.target.value)}
               />
-            </div>
+        </div>
+
+        {/* Length selector */}
+        <div>
+          <Label className="text-xs uppercase tracking-wide text-muted-foreground">Length</Label>
+          <Select
+            value={lengthPreference}
+            onValueChange={(v) => onLengthChange(v as LengthLevel)}
+          >
+            <SelectTrigger className="mt-1 h-9">
+              <SelectValue placeholder="Select length" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="concise">
+                <div className="flex flex-col">
+                  <span>Concise</span>
+                  <span className="text-xs text-muted-foreground">Shorter, lean output</span>
+                </div>
+              </SelectItem>
+              <SelectItem value="standard">
+                <div className="flex flex-col">
+                  <span>Standard</span>
+                  <span className="text-xs text-muted-foreground">Default balance</span>
+                </div>
+              </SelectItem>
+              <SelectItem value="detailed">
+                <div className="flex flex-col">
+                  <span>Detailed</span>
+                  <span className="text-xs text-muted-foreground">Longer with examples</span>
+                </div>
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
           )}
         </div>
 
