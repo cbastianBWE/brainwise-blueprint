@@ -509,67 +509,27 @@ export default function CoachClients() {
 
   const handleRemind = async (client: ClientRow) => {
     setSendingReminderId(client.id);
-    const instrumentName = client.instrument_name || "your assessment";
-    const signupUrl = `${window.location.origin}/signup?email=${encodeURIComponent(client.client_email)}`;
-    const clientName = client.client_name?.split(" ")[0] || client.client_email.split("@")[0];
-    const coachPaid = !!client.stripe_payment_intent_id;
-
-    const bodyText = coachPaid
-      ? "This is a friendly reminder that your coach has purchased a BrainWise assessment for you and it's waiting to be completed."
-      : "This is a friendly reminder that you have a BrainWise assessment waiting. When you register, you'll be able to choose your preferred payment method.";
-
-    const html = `
-<!DOCTYPE html>
-<html lang="en">
-<head><meta charset="UTF-8"></head>
-<body style="margin:0;padding:0;background:#F9F7F1;font-family:'Montserrat','Helvetica Neue',Arial,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#F9F7F1;padding:40px 0;">
-    <tr><td align="center">
-      <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:8px;overflow:hidden;">
-        <tr><td style="background:#021F36;padding:24px 32px;">
-          <h1 style="margin:0;color:#ffffff;font-size:22px;font-family:'Poppins','Helvetica Neue',Arial,sans-serif;font-weight:800;letter-spacing:-0.01em;">BrainWise Enterprises</h1>
-        </td></tr>
-        <tr><td style="padding:32px;">
-          <h2 style="font-size:20px;color:#021F36;margin:0 0 16px;font-family:'Poppins','Helvetica Neue',Arial,sans-serif;font-weight:700;letter-spacing:-0.01em;">Hi ${clientName},</h2>
-          <p style="font-size:15px;color:#4B4751;line-height:1.6;margin:0 0 16px;font-family:'Montserrat','Helvetica Neue',Arial,sans-serif;">
-            ${bodyText}
-          </p>
-          <p style="font-size:15px;color:#4B4751;line-height:1.6;margin:0 0 8px;font-weight:600;font-family:'Montserrat','Helvetica Neue',Arial,sans-serif;">Your assessment:</p>
-          <ul style="font-size:15px;color:#4B4751;line-height:1.8;padding-left:20px;margin:0 0 16px;font-family:'Montserrat','Helvetica Neue',Arial,sans-serif;">
-            <li>${instrumentName}</li>
-          </ul>
-          <p style="font-size:14px;color:#4B4751;margin:0 0 28px;font-family:'Montserrat','Helvetica Neue',Arial,sans-serif;">
-            Please complete your assessment within <strong>14 days</strong> of your original invitation.
-          </p>
-          <table cellpadding="0" cellspacing="0" style="margin:0 0 28px;"><tr><td style="background:#F5741A;border-radius:999px;padding:14px 28px;">
-            <a href="${signupUrl}" style="color:#ffffff;text-decoration:none;font-size:15px;font-weight:600;font-family:'Montserrat','Helvetica Neue',Arial,sans-serif;">Continue Assessment</a>
-          </td></tr></table>
-          <p style="font-size:14px;color:#4B4751;margin:0;font-family:'Montserrat','Helvetica Neue',Arial,sans-serif;">Best regards,<br/><strong>The BrainWise Team</strong></p>
-        </td></tr>
-        <tr><td style="padding:20px 32px;border-top:1px solid #EDEAE0;text-align:center;">
-          <p style="font-size:12px;color:#6D6875;margin:0;font-family:'Montserrat','Helvetica Neue',Arial,sans-serif;">© ${new Date().getFullYear()} BrainWise Enterprises. All rights reserved.</p>
-        </td></tr>
-      </table>
-    </td></tr>
-  </table>
-</body>
-</html>`.trim();
-
     try {
-      const { error } = await supabase.functions.invoke("send-email", {
-        body: {
-          to: client.client_email,
-          subject: "Friendly Reminder: Your BrainWise Assessment is Waiting",
-          html,
-          email_type: "coach_reminder",
-          source: "CoachClients.handleRemind",
-        },
-      });
+      const { data, error } = await supabase.functions.invoke(
+        "coach_invitation_resend",
+        { body: { coach_client_id: client.id } }
+      );
       if (error) {
-        console.error("[CoachClients] remind send-email error:", error);
-        toast.warning("Failed to send reminder email.");
+        console.error("[CoachClients] coach_invitation_resend error:", error);
+        const errorCode = (data as { error_code?: string } | null)?.error_code;
+        const errorMessage = (data as { error_message?: string } | null)?.error_message;
+        if (errorCode === "rate_limited") {
+          toast.warning(errorMessage || "A reminder was already sent in the last 24 hours.");
+        } else if (errorCode === "nothing_to_remind") {
+          toast.info(errorMessage || "No pending assessments to remind about.");
+        } else {
+          toast.warning(errorMessage || "Failed to send reminder email.");
+        }
       } else {
-        toast.success(`Reminder sent to ${client.client_email}`);
+        const instrumentCount = (data as { instruments_count?: number } | null)?.instruments_count ?? 1;
+        toast.success(
+          `Reminder sent to ${client.client_email} for ${instrumentCount} assessment${instrumentCount !== 1 ? "s" : ""}.`
+        );
       }
     } catch (err) {
       console.error("[CoachClients] remind exception:", err);
