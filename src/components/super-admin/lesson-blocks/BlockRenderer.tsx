@@ -2,7 +2,7 @@ import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { TextStyleWithFontSize } from "./TextStyleWithFontSize";
 import { Link } from "@tiptap/extension-link";
-import { useEffect, useState, type CSSProperties, type KeyboardEvent } from "react";
+import { useEffect, useState, useRef, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
 import {
   Info,
   AlertTriangle,
@@ -26,6 +26,19 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
+import {
+  DndContext,
+  DragOverlay,
+  PointerSensor,
+  TouchSensor,
+  useDraggable,
+  useDroppable,
+  useSensor,
+  useSensors,
+  pointerWithin,
+  type DragEndEvent,
+  type DragStartEvent,
+} from "@dnd-kit/core";
 import type { EditorBlock, TipTapDocJSON } from "./blockTypeMeta";
 
 interface BlockRendererProps {
@@ -386,6 +399,17 @@ export function BlockRenderer({ block, assetUrlMap, mode }: BlockRendererProps) 
       case "flashcards":
         return (
           <FlashcardsRender
+            cards={cfg.cards ?? []}
+            gatingRequired={cfg.gating_required === true}
+            urlMap={assetUrlMap}
+            mode={mode}
+            blockClientId={block.client_id}
+          />
+        );
+      case "card_sort":
+        return (
+          <CardSortRender
+            buckets={cfg.buckets ?? []}
             cards={cfg.cards ?? []}
             gatingRequired={cfg.gating_required === true}
             urlMap={assetUrlMap}
@@ -958,5 +982,434 @@ function FlashcardsRender({
         </div>
       )}
     </div>
+  );
+}
+
+// === Session 69: card_sort renderer ===
+
+type CardSortBucket = {
+  client_id: string;
+  title: string;
+  description: string | null;
+  outline_color: string | null;
+};
+
+type CardSortCardConfig = {
+  client_id: string;
+  content: TipTapDocJSON | null;
+  correct_bucket_id: string | null;
+  image_asset_id: string | null;
+  caption: string | null;
+  background_color: string | null;
+};
+
+const CARDSORT_TEXT_COLOR_FOR_BG: Record<string, string> = {
+  "#021F36": "#FFFFFF",
+  "#F5741A": "#FFFFFF",
+  "#F9F7F1": "#021F36",
+  "#006D77": "#FFFFFF",
+  "#7a5800": "#FFFFFF",
+  "#6D6875": "#FFFFFF",
+  "#3C096C": "#FFFFFF",
+  "#2D6A4F": "#FFFFFF",
+};
+
+function getCardSortTextColorForBg(bg: string | null | undefined): string {
+  if (!bg) return "#021F36";
+  return CARDSORT_TEXT_COLOR_FOR_BG[bg] ?? "#021F36";
+}
+
+const HOLDING_AREA_ID = "card-sort-holding";
+const MIN_BUCKETS_FOR_RENDER = 2;
+const MIN_CARDS_FOR_RENDER = 4;
+
+type CardPlacement = "holding" | string;
+
+type PerCardState = {
+  placement: CardPlacement;
+  locked: boolean;
+  lastWrong: boolean;
+};
+
+function CardSortDraggableCard({
+  card,
+  state,
+  buckets,
+  urlMap,
+  isOverlay,
+}: {
+  card: CardSortCardConfig;
+  state: PerCardState;
+  buckets: CardSortBucket[];
+  urlMap: Map<string, string>;
+  isOverlay?: boolean;
+}) {
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+    id: card.client_id,
+    disabled: state.locked,
+  });
+
+  const imageUrl = card.image_asset_id ? urlMap.get(card.image_asset_id) ?? null : null;
+  const correctBucket =
+    state.lastWrong && card.correct_bucket_id
+      ? buckets.find((b) => b.client_id === card.correct_bucket_id) ?? null
+      : null;
+
+  const cardBg = card.background_color ?? null;
+  const cardStyle: CSSProperties = {
+    backgroundColor: cardBg ?? "#FFFFFF",
+    color: getCardSortTextColorForBg(cardBg),
+  };
+
+  const classes = [
+    "bw-cardsort-card",
+    state.locked ? "is-locked" : "",
+    state.lastWrong ? "is-wrong" : "",
+    isDragging ? "is-dragging" : "",
+    isOverlay ? "is-overlay" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  const tooltip = correctBucket
+    ? `Correct bucket: ${correctBucket.title || "Untitled bucket"}`
+    : undefined;
+
+  return (
+    <div
+      ref={isOverlay ? undefined : setNodeRef}
+      className={classes}
+      style={cardStyle}
+      title={tooltip}
+      {...(isOverlay ? {} : listeners)}
+      {...(isOverlay ? {} : attributes)}
+    >
+      {state.locked && (
+        <span className="bw-cardsort-card-badge bw-cardsort-card-badge-correct" aria-label="Correct">
+          ✓
+        </span>
+      )}
+      {state.lastWrong && (
+        <span className="bw-cardsort-card-badge bw-cardsort-card-badge-wrong" aria-label="Wrong">
+          ✕
+        </span>
+      )}
+      {imageUrl && (
+        <img className="bw-cardsort-card-image" src={imageUrl} alt={card.caption ?? ""} />
+      )}
+      {card.caption && <div className="bw-cardsort-card-caption">{card.caption}</div>}
+      <div className="bw-cardsort-card-body">
+        <ReadOnlyTipTap json={card.content} />
+      </div>
+    </div>
+  );
+}
+
+function CardSortDroppable({
+  id,
+  className,
+  style,
+  children,
+}: {
+  id: string;
+  className?: string;
+  style?: CSSProperties;
+  children: ReactNode;
+}) {
+  const { setNodeRef, isOver } = useDroppable({ id });
+  const cls = [className ?? "", isOver ? "is-over" : ""].filter(Boolean).join(" ");
+  return (
+    <div ref={setNodeRef} className={cls} style={style}>
+      {children}
+    </div>
+  );
+}
+
+function CardSortRender({
+  buckets,
+  cards,
+  urlMap,
+  mode,
+  blockClientId,
+}: {
+  buckets: CardSortBucket[];
+  cards: CardSortCardConfig[];
+  gatingRequired: boolean;
+  urlMap: Map<string, string>;
+  mode?: "editor" | "trainee";
+  blockClientId: string;
+}) {
+  const sessionKey = `card_sort-pos:${blockClientId}`;
+
+  const initialState = (): Record<string, PerCardState> => {
+    const out: Record<string, PerCardState> = {};
+    for (const c of cards) {
+      out[c.client_id] = { placement: "holding", locked: false, lastWrong: false };
+    }
+    return out;
+  };
+
+  const [stateById, setStateById] = useState<Record<string, PerCardState>>(initialState);
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const initializedRef = useRef(false);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 100, tolerance: 5 } }),
+  );
+
+  useEffect(() => {
+    if (initializedRef.current) return;
+    initializedRef.current = true;
+    if (mode !== "trainee" || typeof window === "undefined") return;
+    try {
+      const raw = window.sessionStorage.getItem(sessionKey);
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (!parsed || typeof parsed !== "object") return;
+      const validBucketIds = new Set(buckets.map((b) => b.client_id));
+      const next: Record<string, PerCardState> = {};
+      for (const c of cards) {
+        const prior = parsed[c.client_id];
+        if (
+          prior &&
+          (prior.placement === "holding" || validBucketIds.has(prior.placement))
+        ) {
+          next[c.client_id] = {
+            placement: prior.placement,
+            locked: prior.locked === true,
+            lastWrong: false,
+          };
+        } else {
+          next[c.client_id] = { placement: "holding", locked: false, lastWrong: false };
+        }
+      }
+      setStateById(next);
+    } catch {
+      /* ignore */
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionKey, mode]);
+
+  useEffect(() => {
+    if (mode !== "trainee" || typeof window === "undefined") return;
+    try {
+      const serializable: Record<string, { placement: CardPlacement; locked: boolean }> = {};
+      for (const id of Object.keys(stateById)) {
+        serializable[id] = {
+          placement: stateById[id].placement,
+          locked: stateById[id].locked,
+        };
+      }
+      window.sessionStorage.setItem(sessionKey, JSON.stringify(serializable));
+    } catch {
+      /* ignore quota */
+    }
+  }, [stateById, sessionKey, mode]);
+
+  useEffect(() => {
+    if (mode === "trainee") return;
+    setStateById(initialState());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cards.map((c) => c.client_id).join("|"), mode]);
+
+  const allCardsPlaced =
+    cards.length > 0 && cards.every((c) => stateById[c.client_id]?.placement !== "holding");
+  const allCorrectAndLocked =
+    cards.length > 0 && cards.every((c) => stateById[c.client_id]?.locked === true);
+
+  const handleDragStart = (e: DragStartEvent) => {
+    const id = e.active.id as string;
+    setActiveId(id);
+    setStateById((prev) => ({
+      ...prev,
+      [id]: { ...prev[id], lastWrong: false },
+    }));
+  };
+
+  const handleDragEnd = (e: DragEndEvent) => {
+    setActiveId(null);
+    const { active, over } = e;
+    if (!over) return;
+    const cardId = active.id as string;
+    const destination = over.id as string;
+    const current = stateById[cardId];
+    if (!current || current.locked) return;
+    if (destination !== HOLDING_AREA_ID && !buckets.some((b) => b.client_id === destination)) {
+      return;
+    }
+    setStateById((prev) => ({
+      ...prev,
+      [cardId]: {
+        placement: destination === HOLDING_AREA_ID ? "holding" : destination,
+        locked: false,
+        lastWrong: false,
+      },
+    }));
+  };
+
+  const handleCheck = () => {
+    setStateById((prev) => {
+      const next: Record<string, PerCardState> = { ...prev };
+      for (const c of cards) {
+        const s = prev[c.client_id];
+        if (!s || s.placement === "holding") continue;
+        const isCorrect =
+          c.correct_bucket_id !== null && s.placement === c.correct_bucket_id;
+        if (isCorrect) {
+          next[c.client_id] = { placement: s.placement, locked: true, lastWrong: false };
+        } else {
+          next[c.client_id] = { placement: "holding", locked: false, lastWrong: true };
+        }
+      }
+      return next;
+    });
+  };
+
+  const handleReset = () => {
+    setStateById(initialState());
+    if (mode === "trainee" && typeof window !== "undefined") {
+      try {
+        window.sessionStorage.removeItem(sessionKey);
+      } catch {
+        /* ignore */
+      }
+    }
+  };
+
+  if (cards.length === 0 || buckets.length === 0) {
+    return (
+      <div className="rounded-md border border-dashed p-4 text-center text-sm text-muted-foreground">
+        Add at least {MIN_BUCKETS_FOR_RENDER} buckets and {MIN_CARDS_FOR_RENDER} cards to see the sort.
+      </div>
+    );
+  }
+
+  const cardsInBucket = (bucketId: string) =>
+    cards.filter((c) => stateById[c.client_id]?.placement === bucketId);
+
+  const cardsInHolding = cards.filter((c) => stateById[c.client_id]?.placement === "holding");
+
+  const activeCard = activeId ? cards.find((c) => c.client_id === activeId) ?? null : null;
+  const activeState = activeId ? stateById[activeId] ?? null : null;
+
+  return (
+    <DndContext
+      sensors={sensors}
+      collisionDetection={pointerWithin}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+    >
+      <div className="bw-cardsort-shell">
+        <div className="bw-cardsort-progress">
+          {allCorrectAndLocked
+            ? "All cards placed correctly"
+            : `${cards.length - cardsInHolding.length} of ${cards.length} cards placed`}
+        </div>
+
+        <div
+          className="bw-cardsort-buckets"
+          data-bucket-count={Math.min(Math.max(buckets.length, 2), 4)}
+        >
+          {buckets.map((bucket) => {
+            const bucketStyle: CSSProperties = bucket.outline_color
+              ? { borderColor: bucket.outline_color }
+              : {};
+            const titleStyle: CSSProperties = bucket.outline_color
+              ? { color: bucket.outline_color }
+              : {};
+            return (
+              <CardSortDroppable
+                key={bucket.client_id}
+                id={bucket.client_id}
+                className="bw-cardsort-bucket"
+                style={bucketStyle}
+              >
+                <div className="bw-cardsort-bucket-title-wrap">
+                  <div className="bw-cardsort-bucket-title" style={titleStyle}>
+                    {bucket.title || (
+                      <span className="bw-cardsort-bucket-untitled">Untitled bucket</span>
+                    )}
+                  </div>
+                  {bucket.description && (
+                    <div className="bw-cardsort-bucket-description">{bucket.description}</div>
+                  )}
+                </div>
+
+                <div className="bw-cardsort-bucket-cards">
+                  {cardsInBucket(bucket.client_id).map((card) => (
+                    <CardSortDraggableCard
+                      key={card.client_id}
+                      card={card}
+                      state={stateById[card.client_id]}
+                      buckets={buckets}
+                      urlMap={urlMap}
+                    />
+                  ))}
+                </div>
+              </CardSortDroppable>
+            );
+          })}
+        </div>
+
+        <CardSortDroppable id={HOLDING_AREA_ID} className="bw-cardsort-holding">
+          <div className="bw-cardsort-holding-label">
+            {cardsInHolding.length > 0 ? "Drag cards into a bucket" : "Holding area (empty)"}
+          </div>
+          <div className="bw-cardsort-holding-cards">
+            {cardsInHolding.map((card) => (
+              <CardSortDraggableCard
+                key={card.client_id}
+                card={card}
+                state={stateById[card.client_id]}
+                buckets={buckets}
+                urlMap={urlMap}
+              />
+            ))}
+          </div>
+        </CardSortDroppable>
+
+        <div className="bw-cardsort-controls">
+          {!allCorrectAndLocked ? (
+            <Button
+              type="button"
+              onClick={handleCheck}
+              disabled={!allCardsPlaced}
+              style={
+                allCardsPlaced
+                  ? { backgroundColor: "#F5741A", color: "#FFFFFF" }
+                  : undefined
+              }
+            >
+              Check my answers
+            </Button>
+          ) : (
+            <div className="bw-cardsort-done">
+              <p>All cards sorted correctly.</p>
+              <button
+                type="button"
+                onClick={handleReset}
+                className="bw-cardsort-done-reset underline"
+                style={{ color: "#F5741A" }}
+              >
+                Try again
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <DragOverlay>
+        {activeCard && activeState ? (
+          <CardSortDraggableCard
+            card={activeCard}
+            state={activeState}
+            buckets={buckets}
+            urlMap={urlMap}
+            isOverlay
+          />
+        ) : null}
+      </DragOverlay>
+    </DndContext>
   );
 }
