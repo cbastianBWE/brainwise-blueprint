@@ -827,6 +827,11 @@ function FlashcardsRender({
   const frontImageUrl = current?.front_image_asset_id
     ? urlMap.get(current.front_image_asset_id) ?? null
     : null;
+  const cardBg = current?.background_color ?? null;
+  const faceStyle: CSSProperties = {
+    backgroundColor: cardBg ?? "#FFFFFF",
+    color: getFlashcardTextColorForBg(cardBg),
+  };
 
   return (
     <div
