@@ -2,7 +2,7 @@ import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { TextStyleWithFontSize } from "./TextStyleWithFontSize";
 import { Link } from "@tiptap/extension-link";
-import { useEffect, useState, type CSSProperties, type KeyboardEvent } from "react";
+import { useEffect, useState, useRef, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
 import {
   Info,
   AlertTriangle,
@@ -26,6 +26,19 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
+import {
+  DndContext,
+  DragOverlay,
+  PointerSensor,
+  TouchSensor,
+  useDraggable,
+  useDroppable,
+  useSensor,
+  useSensors,
+  pointerWithin,
+  type DragEndEvent,
+  type DragStartEvent,
+} from "@dnd-kit/core";
 import type { EditorBlock, TipTapDocJSON } from "./blockTypeMeta";
 
 interface BlockRendererProps {
@@ -386,6 +399,17 @@ export function BlockRenderer({ block, assetUrlMap, mode }: BlockRendererProps) 
       case "flashcards":
         return (
           <FlashcardsRender
+            cards={cfg.cards ?? []}
+            gatingRequired={cfg.gating_required === true}
+            urlMap={assetUrlMap}
+            mode={mode}
+            blockClientId={block.client_id}
+          />
+        );
+      case "card_sort":
+        return (
+          <CardSortRender
+            buckets={cfg.buckets ?? []}
             cards={cfg.cards ?? []}
             gatingRequired={cfg.gating_required === true}
             urlMap={assetUrlMap}
