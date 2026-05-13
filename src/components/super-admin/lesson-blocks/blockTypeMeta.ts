@@ -16,6 +16,7 @@ import {
   Layers,
   LayoutGrid,
   GitBranch,
+  HelpCircle,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
