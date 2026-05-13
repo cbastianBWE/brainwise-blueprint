@@ -153,37 +153,45 @@ function SortableButton({
 
           <RadioGroup
             value={btn.action_type}
-            onValueChange={(v) =>
+            onValueChange={(v) => {
+              const next = v as ActionType;
               onChange({
                 ...btn,
-                action_type: v as ActionType,
-                url: v === "link" ? (btn.url ?? "") : null,
+                action_type: next,
+                url: next === "link" ? (btn.url ?? "") : null,
                 target_block_client_id:
-                  v === "jump_to_block" ? btn.target_block_client_id : null,
-              })
-            }
-            className="grid grid-cols-2 gap-2"
+                  next === "jump_to_block" ? btn.target_block_client_id : null,
+                section_title: next === "continue" ? (btn.section_title ?? null) : null,
+              });
+            }}
+            className="grid grid-cols-3 gap-2"
           >
-            <Label className="flex cursor-pointer items-center gap-2 rounded-md border p-2 text-xs">
+            <Label className="flex cursor-pointer items-center gap-1.5 rounded-md border p-2 text-xs">
               <RadioGroupItem value="link" />
               <Link2 className="h-3.5 w-3.5" />
-              Link out
+              Link
             </Label>
-            <Label className="flex cursor-pointer items-center gap-2 rounded-md border p-2 text-xs">
+            <Label className="flex cursor-pointer items-center gap-1.5 rounded-md border p-2 text-xs">
               <RadioGroupItem value="jump_to_block" />
               <ArrowDownToLine className="h-3.5 w-3.5" />
-              Jump to block
+              Jump
+            </Label>
+            <Label className="flex cursor-pointer items-center gap-1.5 rounded-md border p-2 text-xs">
+              <RadioGroupItem value="continue" />
+              <ChevronRight className="h-3.5 w-3.5" />
+              Continue
             </Label>
           </RadioGroup>
 
-          {btn.action_type === "link" ? (
+          {btn.action_type === "link" && (
             <Input
               value={btn.url ?? ""}
               onChange={(e) => onChange({ ...btn, url: e.target.value })}
               placeholder="https://… or /internal/path"
               type="url"
             />
-          ) : (
+          )}
+          {btn.action_type === "jump_to_block" && (
             <Select
               value={btn.target_block_client_id ?? ""}
               onValueChange={(v) =>
@@ -208,6 +216,27 @@ function SortableButton({
                 ))}
               </SelectContent>
             </Select>
+          )}
+          {btn.action_type === "continue" && (
+            <div className="space-y-1">
+              <Label className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                Section title (optional)
+              </Label>
+              <Input
+                value={btn.section_title ?? ""}
+                onChange={(e) =>
+                  onChange({
+                    ...btn,
+                    section_title: e.target.value.length > 0 ? e.target.value : null,
+                  })
+                }
+                placeholder='e.g. "Foundations" or "Reflect"'
+                maxLength={80}
+              />
+              <p className="text-[10px] text-muted-foreground">
+                Names the section this Continue button ends. Used by the trainee view to label the section in progress indicators. Leave blank if the section doesn't need a named label.
+              </p>
+            </div>
           )}
 
           <div className="space-y-1">
