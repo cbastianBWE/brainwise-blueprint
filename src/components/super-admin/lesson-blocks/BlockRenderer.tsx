@@ -383,6 +383,16 @@ export function BlockRenderer({ block, assetUrlMap }: BlockRendererProps) {
             caption={cfg.caption ?? null}
           />
         );
+      case "flashcards":
+        return (
+          <FlashcardsRender
+            cards={cfg.cards ?? []}
+            gatingRequired={cfg.gating_required === true}
+            urlMap={assetUrlMap}
+            mode={mode}
+            blockClientId={block.client_id}
+          />
+        );
       default:
         return null;
     }
