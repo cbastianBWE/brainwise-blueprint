@@ -2081,6 +2081,53 @@ function KnowledgeCheckRender({
               </div>
             )}
 
+            {isImplemented && q.question_type === "fill_in_blank" && (
+              <div className="bw-kc-blanks">
+                {(q.blanks ?? []).map((b, bi) => {
+                  const typed = s.blankValues[b.client_id] ?? "";
+                  const trimmedTyped = typed.trim().toLowerCase();
+                  const isMatch =
+                    trimmedTyped === b.correct_value.trim().toLowerCase() ||
+                    b.acceptable_alternatives.some(
+                      (alt) => trimmedTyped === alt.trim().toLowerCase(),
+                    );
+                  const cls = [
+                    "bw-kc-blank-input",
+                    s.revealed ? "is-revealed" : "",
+                    s.lastWrong && !isMatch ? "is-wrong" : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" ");
+                  return (
+                    <div key={b.client_id} className="bw-kc-blank-row">
+                      <span className="bw-kc-blank-label">Blank {bi + 1}</span>
+                      <Input
+                        value={typed}
+                        onChange={(e) =>
+                          handleBlankChange(q.client_id, b.client_id, e.target.value)
+                        }
+                        disabled={s.revealed}
+                        className={cls}
+                        placeholder="Type your answer"
+                      />
+                      {s.revealed && (
+                        <span className="bw-kc-blank-correct">{b.correct_value}</span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {isImplemented && q.question_type === "match" && (
+              <MatchTrainee
+                question={q}
+                state={s}
+                onLink={(leftId, rightId) => handleMatchLink(q.client_id, leftId, rightId)}
+                onClear={(leftId) => handleMatchClear(q.client_id, leftId)}
+              />
+            )}
+
             {isImplemented && (
               <div className="bw-kc-controls">
                 {!s.revealed ? (
