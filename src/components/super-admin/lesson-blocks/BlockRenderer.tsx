@@ -1913,19 +1913,65 @@ function KnowledgeCheckRender({
     });
   };
 
+  const handleBlankChange = (qId: string, blankId: string, value: string) => {
+    setStateById((prev) => {
+      const s = prev[qId];
+      if (!s || s.revealed) return prev;
+      return {
+        ...prev,
+        [qId]: {
+          ...s,
+          blankValues: { ...s.blankValues, [blankId]: value },
+          lastWrong: false,
+        },
+      };
+    });
+  };
+
+  const handleMatchLink = (qId: string, leftId: string, rightId: string) => {
+    setStateById((prev) => {
+      const s = prev[qId];
+      if (!s || s.revealed) return prev;
+      const newLinks = { ...s.matchLinks, [leftId]: rightId };
+      return { ...prev, [qId]: { ...s, matchLinks: newLinks, lastWrong: false } };
+    });
+  };
+
+  const handleMatchClear = (qId: string, leftId: string) => {
+    setStateById((prev) => {
+      const s = prev[qId];
+      if (!s || s.revealed) return prev;
+      const next = { ...s.matchLinks };
+      delete next[leftId];
+      return { ...prev, [qId]: { ...s, matchLinks: next, lastWrong: false } };
+    });
+  };
+
   const handleCheck = (q: KnowledgeCheckQuestionConfig) => {
     const s = stateById[q.client_id];
     if (!s) return;
-    const choices = q.choices ?? [];
     let correct = false;
     if (q.question_type === "multiple_choice" || q.question_type === "true_false") {
-      const picked = choices.find((c) => c.client_id === s.selectedSingle);
+      const picked = (q.choices ?? []).find((c) => c.client_id === s.selectedSingle);
       correct = picked?.is_correct === true;
     } else if (q.question_type === "multi_select") {
-      const correctIds = new Set(choices.filter((c) => c.is_correct).map((c) => c.client_id));
+      const correctIds = new Set((q.choices ?? []).filter((c) => c.is_correct).map((c) => c.client_id));
       const pickedIds = new Set(s.selectedMulti);
       correct =
         correctIds.size === pickedIds.size && [...correctIds].every((id) => pickedIds.has(id));
+    } else if (q.question_type === "fill_in_blank") {
+      const blanks = q.blanks ?? [];
+      correct =
+        blanks.length > 0 &&
+        blanks.every((b) => {
+          const typed = (s.blankValues[b.client_id] ?? "").trim().toLowerCase();
+          if (typed.length === 0) return false;
+          if (typed === b.correct_value.trim().toLowerCase()) return true;
+          return b.acceptable_alternatives.some((alt) => typed === alt.trim().toLowerCase());
+        });
+    } else if (q.question_type === "match") {
+      const pairs = q.pairs ?? [];
+      correct = pairs.length > 0 && pairs.every((p) => s.matchLinks[p.client_id] === p.client_id);
     }
     setStateById((prev) => ({
       ...prev,
