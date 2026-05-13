@@ -2025,6 +2025,28 @@ function KnowledgeCheckRender({
     });
   };
 
+  const handleRankReorder = (qId: string, fromIdx: number, toIdx: number) => {
+    setStateById((prev) => {
+      const s = prev[qId];
+      if (!s || s.revealed) return prev;
+      const next = [...s.rankOrder];
+      const [moved] = next.splice(fromIdx, 1);
+      next.splice(toIdx, 0, moved);
+      return { ...prev, [qId]: { ...s, rankOrder: next, lastWrong: false } };
+    });
+  };
+
+  const handleTimelineReorder = (qId: string, fromIdx: number, toIdx: number) => {
+    setStateById((prev) => {
+      const s = prev[qId];
+      if (!s || s.revealed) return prev;
+      const next = [...s.timelineOrder];
+      const [moved] = next.splice(fromIdx, 1);
+      next.splice(toIdx, 0, moved);
+      return { ...prev, [qId]: { ...s, timelineOrder: next, lastWrong: false } };
+    });
+  };
+
   const handleCheck = (q: KnowledgeCheckQuestionConfig) => {
     const s = stateById[q.client_id];
     if (!s) return;
@@ -2050,6 +2072,16 @@ function KnowledgeCheckRender({
     } else if (q.question_type === "match") {
       const pairs = q.pairs ?? [];
       correct = pairs.length > 0 && pairs.every((p) => s.matchLinks[p.client_id] === p.client_id);
+    } else if (q.question_type === "ranking") {
+      const correctOrder = (q.items ?? []).map((i) => i.client_id);
+      correct =
+        s.rankOrder.length === correctOrder.length &&
+        s.rankOrder.every((id, idx) => id === correctOrder[idx]);
+    } else if (q.question_type === "timeline") {
+      const correctOrder = (q.events ?? []).map((e) => e.client_id);
+      correct =
+        s.timelineOrder.length === correctOrder.length &&
+        s.timelineOrder.every((id, idx) => id === correctOrder[idx]);
     }
     setStateById((prev) => ({
       ...prev,
