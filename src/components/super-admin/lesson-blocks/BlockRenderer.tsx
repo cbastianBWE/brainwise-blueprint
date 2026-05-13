@@ -2164,3 +2164,121 @@ function KnowledgeCheckRender({
     </div>
   );
 }
+
+function MatchTrainee({
+  question,
+  state,
+  onLink,
+  onClear,
+}: {
+  question: KnowledgeCheckQuestionConfig;
+  state: KCPerQuestionState;
+  onLink: (leftId: string, rightId: string) => void;
+  onClear: (leftId: string) => void;
+}) {
+  const [activeLeftId, setActiveLeftId] = useState<string | null>(null);
+  const pairs = question.pairs ?? [];
+
+  const rightsSorted = [...pairs].sort((a, b) =>
+    a.client_id < b.client_id ? -1 : a.client_id > b.client_id ? 1 : 0,
+  );
+
+  const rightLinkedTo: Record<string, string> = {};
+  for (const [leftId, rightId] of Object.entries(state.matchLinks)) {
+    rightLinkedTo[rightId] = leftId;
+  }
+
+  const handleLeftClick = (leftId: string) => {
+    if (state.revealed) return;
+    if (state.matchLinks[leftId]) {
+      onClear(leftId);
+      setActiveLeftId(null);
+      return;
+    }
+    setActiveLeftId(activeLeftId === leftId ? null : leftId);
+  };
+
+  const handleRightClick = (rightId: string) => {
+    if (state.revealed) return;
+    if (!activeLeftId) return;
+    const priorLeftForThisRight = rightLinkedTo[rightId];
+    if (priorLeftForThisRight && priorLeftForThisRight !== activeLeftId) {
+      onClear(priorLeftForThisRight);
+    }
+    onLink(activeLeftId, rightId);
+    setActiveLeftId(null);
+  };
+
+  return (
+    <div className="bw-kc-match">
+      <p className="bw-kc-match-instruction">
+        {activeLeftId
+          ? "Now click a right item to link it."
+          : "Click a left item, then click its matching right item."}
+      </p>
+      <div className="bw-kc-match-grid">
+        <div className="bw-kc-match-col">
+          {pairs.map((p) => {
+            const linkedRightId = state.matchLinks[p.client_id];
+            const linkedRight = linkedRightId
+              ? pairs.find((pp) => pp.client_id === linkedRightId)
+              : null;
+            const isActive = activeLeftId === p.client_id;
+            const isCorrect = state.revealed && linkedRightId === p.client_id;
+            const isWrong =
+              state.lastWrong && linkedRightId !== undefined && linkedRightId !== p.client_id;
+            const cls = [
+              "bw-kc-match-left",
+              isActive ? "is-active" : "",
+              isCorrect ? "is-correct" : "",
+              isWrong ? "is-wrong" : "",
+              state.revealed ? "is-locked" : "",
+            ]
+              .filter(Boolean)
+              .join(" ");
+            return (
+              <button
+                key={p.client_id}
+                type="button"
+                className={cls}
+                onClick={() => handleLeftClick(p.client_id)}
+                disabled={state.revealed}
+              >
+                <span className="bw-kc-match-text">{p.left}</span>
+                {linkedRight && (
+                  <span className="bw-kc-match-link-indicator">→ {linkedRight.right}</span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+        <div className="bw-kc-match-col">
+          {rightsSorted.map((p) => {
+            const linkedLeftId = rightLinkedTo[p.client_id];
+            const isLinked = !!linkedLeftId;
+            const isAvailableTarget = !!activeLeftId && !state.revealed;
+            const cls = [
+              "bw-kc-match-right",
+              isLinked ? "is-linked" : "",
+              isAvailableTarget ? "is-target" : "",
+              state.revealed ? "is-locked" : "",
+            ]
+              .filter(Boolean)
+              .join(" ");
+            return (
+              <button
+                key={p.client_id}
+                type="button"
+                className={cls}
+                onClick={() => handleRightClick(p.client_id)}
+                disabled={state.revealed || !activeLeftId}
+              >
+                {p.right}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
