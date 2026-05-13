@@ -437,6 +437,15 @@ export function BlockRenderer({ block, assetUrlMap, mode }: BlockRendererProps) 
             blockClientId={block.client_id}
           />
         );
+      case "knowledge_check":
+        return (
+          <KnowledgeCheckRender
+            questions={cfg.questions ?? []}
+            gatingRequired={cfg.gating_required === true}
+            mode={mode}
+            blockClientId={block.client_id}
+          />
+        );
       default:
         return null;
     }
