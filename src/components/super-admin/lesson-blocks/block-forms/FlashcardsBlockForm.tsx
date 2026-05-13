@@ -144,6 +144,17 @@ function SortableCard({
               compact
             />
           </div>
+
+          <div className="space-y-1">
+            <Label className="text-xs">Card color</Label>
+            <BrandColorSwatch
+              value={card.background_color}
+              onChange={(hex) => onChange({ ...card, background_color: hex })}
+              palette="full"
+              allowDefault
+              defaultLabel="Default"
+            />
+          </div>
         </div>
 
         <Button
