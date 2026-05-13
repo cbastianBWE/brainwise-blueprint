@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { useToast } from "@/hooks/use-toast";
+
 import InstrumentSelection from "@/components/assessment/InstrumentSelection";
 import AssessmentFlow from "@/components/assessment/AssessmentFlow";
 import { Card, CardContent } from "@/components/ui/card";
@@ -38,7 +38,7 @@ interface SelectedInstrument {
 export default function Assessment() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
-  const { toast } = useToast();
+  
   const [selectedInstrument, setSelectedInstrument] = useState<SelectedInstrument | null>(null);
   const [contextType, setContextType] = useState<'professional' | 'personal' | 'both' | null>(null);
   const [epnStarting, setEpnStarting] = useState(false);
@@ -116,28 +116,13 @@ export default function Assessment() {
 
   const handleStartEpn = async (assignmentId: string) => {
     setEpnStarting(true);
-    const { data: assessmentId, error } = await (supabase.rpc as any)(
-      "start_epn_assessment",
-      { p_assignment_id: assignmentId }
-    );
-    setEpnStarting(false);
-    if (error) {
-      console.error("start_epn_assessment failed:", error);
-      toast({
-        title: "Could not start assessment",
-        description: error.message,
-        variant: "destructive",
-      });
-      return;
-    }
-    if (!assessmentId) return;
-
     const { data: versionData } = await supabase
       .from("platform_versions")
       .select("version_string")
       .eq("is_active", true)
       .limit(1)
       .single();
+    setEpnStarting(false);
 
     setSelectedInstrument({
       instrument_id: "INST-002L",
@@ -145,7 +130,6 @@ export default function Assessment() {
       instrument_version: versionData?.version_string || "1.0",
       short_name: "EPN",
       epnAssignmentId: assignmentId,
-      preexistingAssessmentId: assessmentId as string,
     });
   };
 
