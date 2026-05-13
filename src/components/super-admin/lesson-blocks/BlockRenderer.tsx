@@ -1753,6 +1753,8 @@ function ScenarioRender({
 // === Session 71: knowledge_check renderer ===
 
 type KCChoice = { client_id: string; choice_text: string; is_correct: boolean };
+type KCBlank = { client_id: string; correct_value: string; acceptable_alternatives: string[] };
+type KCPair = { client_id: string; left: string; right: string };
 
 type KnowledgeCheckQuestionConfig = {
   client_id: string;
@@ -1767,11 +1769,15 @@ type KnowledgeCheckQuestionConfig = {
   prompt_markdown: TipTapDocJSON | null;
   explanation_markdown: TipTapDocJSON | null;
   choices?: KCChoice[];
+  blanks?: KCBlank[];
+  pairs?: KCPair[];
 };
 
 type KCPerQuestionState = {
   selectedSingle: string | null;
   selectedMulti: string[];
+  blankValues: Record<string, string>;
+  matchLinks: Record<string, string>;
   revealed: boolean;
   lastWrong: boolean;
 };
@@ -1780,10 +1786,19 @@ const KC_IMPLEMENTED_TYPES = new Set([
   "multiple_choice",
   "multi_select",
   "true_false",
+  "fill_in_blank",
+  "match",
 ]);
 
 function emptyKCState(): KCPerQuestionState {
-  return { selectedSingle: null, selectedMulti: [], revealed: false, lastWrong: false };
+  return {
+    selectedSingle: null,
+    selectedMulti: [],
+    blankValues: {},
+    matchLinks: {},
+    revealed: false,
+    lastWrong: false,
+  };
 }
 
 function KnowledgeCheckRender({
