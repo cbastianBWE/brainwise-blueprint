@@ -618,6 +618,278 @@ function MatchEditor({
   );
 }
 
+function SortableRankItem({
+  item,
+  index,
+  onChange,
+  onDelete,
+  canDelete,
+}: {
+  item: RankItem;
+  index: number;
+  onChange: (next: RankItem) => void;
+  onDelete: () => void;
+  canDelete: boolean;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: `kc-rank:${item.client_id}`,
+  });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+  return (
+    <div ref={setNodeRef} style={style} className="flex items-start gap-2 rounded-md border bg-background p-2">
+      <button
+        type="button"
+        className="mt-2 cursor-grab text-muted-foreground hover:text-foreground"
+        {...attributes}
+        {...listeners}
+        aria-label="Drag to reorder item"
+      >
+        <GripVertical className="h-4 w-4" />
+      </button>
+      <div className="flex-1 space-y-1">
+        <Label className="text-xs uppercase tracking-wide text-muted-foreground">
+          Position {index + 1} (correct order)
+        </Label>
+        <Input
+          value={item.item_text}
+          onChange={(e) => onChange({ ...item, item_text: e.target.value })}
+          maxLength={MAX_RANK_ITEM_TEXT}
+          placeholder="What goes here"
+        />
+      </div>
+      <Button
+        type="button"
+        size="icon"
+        variant="ghost"
+        className="mt-1 h-7 w-7 text-muted-foreground hover:text-destructive"
+        onClick={onDelete}
+        disabled={!canDelete}
+        aria-label="Remove item"
+      >
+        <X className="h-4 w-4" />
+      </Button>
+    </div>
+  );
+}
+
+function RankingEditor({
+  question,
+  onChange,
+}: {
+  question: Question;
+  onChange: (next: Question) => void;
+}) {
+  const items = question.items ?? [];
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
+
+  const handleDragEnd = (e: DragEndEvent) => {
+    const { active, over } = e;
+    if (!over || active.id === over.id) return;
+    const activeId = String(active.id).replace(/^kc-rank:/, "");
+    const overId = String(over.id).replace(/^kc-rank:/, "");
+    const from = items.findIndex((i) => i.client_id === activeId);
+    const to = items.findIndex((i) => i.client_id === overId);
+    if (from < 0 || to < 0) return;
+    onChange({ ...question, items: arrayMove(items, from, to) });
+  };
+
+  return (
+    <div className="space-y-2">
+      <p className="text-xs text-muted-foreground">
+        Enter items in their CORRECT order. Trainees see them shuffled and drag them back to this order.
+      </p>
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <SortableContext
+          items={items.map((i) => `kc-rank:${i.client_id}`)}
+          strategy={verticalListSortingStrategy}
+        >
+          <div className="space-y-2">
+            {items.map((it, idx) => (
+              <SortableRankItem
+                key={it.client_id}
+                item={it}
+                index={idx}
+                onChange={(next) =>
+                  onChange({
+                    ...question,
+                    items: items.map((i) => (i.client_id === next.client_id ? next : i)),
+                  })
+                }
+                onDelete={() =>
+                  onChange({
+                    ...question,
+                    items: items.filter((i) => i.client_id !== it.client_id),
+                  })
+                }
+                canDelete={items.length > MIN_RANK_ITEMS}
+              />
+            ))}
+          </div>
+        </SortableContext>
+      </DndContext>
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        onClick={() => {
+          if (items.length >= MAX_RANK_ITEMS) return;
+          onChange({
+            ...question,
+            items: [...items, { client_id: crypto.randomUUID(), item_text: "" }],
+          });
+        }}
+        disabled={items.length >= MAX_RANK_ITEMS}
+      >
+        <Plus className="mr-1 h-4 w-4" />
+        Add item
+      </Button>
+      {items.length >= MAX_RANK_ITEMS && (
+        <p className="text-xs text-muted-foreground">Max {MAX_RANK_ITEMS} items.</p>
+      )}
+    </div>
+  );
+}
+
+function SortableTimelineEvent({
+  event,
+  index,
+  onChange,
+  onDelete,
+  canDelete,
+}: {
+  event: TimelineEvent;
+  index: number;
+  onChange: (next: TimelineEvent) => void;
+  onDelete: () => void;
+  canDelete: boolean;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: `kc-event:${event.client_id}`,
+  });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+  return (
+    <div ref={setNodeRef} style={style} className="flex items-start gap-2 rounded-md border bg-background p-2">
+      <button
+        type="button"
+        className="mt-2 cursor-grab text-muted-foreground hover:text-foreground"
+        {...attributes}
+        {...listeners}
+        aria-label="Drag to reorder event"
+      >
+        <GripVertical className="h-4 w-4" />
+      </button>
+      <div className="flex-1 space-y-1">
+        <Label className="text-xs uppercase tracking-wide text-muted-foreground">
+          Event {index + 1} (correct chronological order)
+        </Label>
+        <Input
+          value={event.event_label}
+          onChange={(e) => onChange({ ...event, event_label: e.target.value })}
+          maxLength={MAX_EVENT_LABEL}
+          placeholder="What happened"
+        />
+      </div>
+      <Button
+        type="button"
+        size="icon"
+        variant="ghost"
+        className="mt-1 h-7 w-7 text-muted-foreground hover:text-destructive"
+        onClick={onDelete}
+        disabled={!canDelete}
+        aria-label="Remove event"
+      >
+        <X className="h-4 w-4" />
+      </Button>
+    </div>
+  );
+}
+
+function TimelineEditor({
+  question,
+  onChange,
+}: {
+  question: Question;
+  onChange: (next: Question) => void;
+}) {
+  const events = question.events ?? [];
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
+
+  const handleDragEnd = (e: DragEndEvent) => {
+    const { active, over } = e;
+    if (!over || active.id === over.id) return;
+    const activeId = String(active.id).replace(/^kc-event:/, "");
+    const overId = String(over.id).replace(/^kc-event:/, "");
+    const from = events.findIndex((ev) => ev.client_id === activeId);
+    const to = events.findIndex((ev) => ev.client_id === overId);
+    if (from < 0 || to < 0) return;
+    onChange({ ...question, events: arrayMove(events, from, to) });
+  };
+
+  return (
+    <div className="space-y-2">
+      <p className="text-xs text-muted-foreground">
+        Enter events in correct chronological order (earliest first). Trainees see them shuffled and drag along a horizontal axis to reorder.
+      </p>
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <SortableContext
+          items={events.map((ev) => `kc-event:${ev.client_id}`)}
+          strategy={verticalListSortingStrategy}
+        >
+          <div className="space-y-2">
+            {events.map((ev, idx) => (
+              <SortableTimelineEvent
+                key={ev.client_id}
+                event={ev}
+                index={idx}
+                onChange={(next) =>
+                  onChange({
+                    ...question,
+                    events: events.map((e) => (e.client_id === next.client_id ? next : e)),
+                  })
+                }
+                onDelete={() =>
+                  onChange({
+                    ...question,
+                    events: events.filter((e) => e.client_id !== ev.client_id),
+                  })
+                }
+                canDelete={events.length > MIN_EVENTS}
+              />
+            ))}
+          </div>
+        </SortableContext>
+      </DndContext>
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        onClick={() => {
+          if (events.length >= MAX_EVENTS) return;
+          onChange({
+            ...question,
+            events: [...events, { client_id: crypto.randomUUID(), event_label: "" }],
+          });
+        }}
+        disabled={events.length >= MAX_EVENTS}
+      >
+        <Plus className="mr-1 h-4 w-4" />
+        Add event
+      </Button>
+      {events.length >= MAX_EVENTS && (
+        <p className="text-xs text-muted-foreground">Max {MAX_EVENTS} events.</p>
+      )}
+    </div>
+  );
+}
+
 function SortableQuestion({
   question,
   index,
