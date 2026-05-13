@@ -997,15 +997,14 @@ function SortableQuestion({
               {question.question_type === "match" && (
                 <MatchEditor question={question} onChange={onChange} />
               )}
+              {question.question_type === "ranking" && (
+                <RankingEditor question={question} onChange={onChange} />
+              )}
+              {question.question_type === "timeline" && (
+                <TimelineEditor question={question} onChange={onChange} />
+              )}
             </>
-          ) : (
-            <div className="rounded-md border border-dashed bg-background p-3 text-xs text-muted-foreground">
-              <strong>
-                {QUESTION_TYPE_OPTIONS.find((o) => o.value === question.question_type)?.label}
-              </strong>{" "}
-              support lands in a follow-up session. Pick from the implemented types for now.
-            </div>
-          )}
+          ) : null}
 
           <div className="space-y-1">
             <Label className="text-xs uppercase tracking-wide text-muted-foreground">
