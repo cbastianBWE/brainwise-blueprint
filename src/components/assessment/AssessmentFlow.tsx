@@ -71,21 +71,22 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
   const autoSaveTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const advanceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Initialize assessment
+  const [needsAck, setNeedsAck] = useState(false);
+  const [confirmingAck, setConfirmingAck] = useState(false);
+  const [initChecked, setInitChecked] = useState(false);
+
+  // Phase 1: determine whether the acknowledgment screen is required.
   useEffect(() => {
-    if (!user) return;
-    const init = async () => {
+    if (!user || initChecked) return;
+    const check = async () => {
       if (raterType === 'manager' && !preexistingAssessmentId) {
         toast({ title: "Error", description: "Manager assessment requires a preexisting assessment ID.", variant: "destructive" });
         onExit();
         return;
       }
-      let aId: string;
 
-      if (preexistingAssessmentId) {
-        aId = preexistingAssessmentId;
-      } else {
-        // Check for in-progress assessment
+      let candidateId: string | null = preexistingAssessmentId ?? null;
+      if (!candidateId && !epnAssignmentId) {
         const { data: existing } = await supabase
           .from("assessments")
           .select("id")
@@ -93,39 +94,80 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
           .eq("instrument_id", instrument.instrument_id)
           .eq("status", "in_progress")
           .limit(1);
+        if (existing && existing.length > 0) candidateId = existing[0].id;
+      }
 
-        if (existing && existing.length > 0) {
-          aId = existing[0].id;
-          if (contextType) {
+      if (candidateId) {
+        const { data: existingAck } = await supabase
+          .from("assessment_acknowledgments")
+          .select("id")
+          .eq("user_id", user.id)
+          .eq("assessment_id", candidateId)
+          .eq("acknowledgment_kind", "pre_instrument")
+          .limit(1)
+          .maybeSingle();
+
+        if (existingAck) {
+          if (contextType && !preexistingAssessmentId) {
             await supabase
               .from('assessments')
               .update({ context_type: contextType })
-              .eq('id', aId);
+              .eq('id', candidateId);
           }
-        } else {
-          const { data: newA, error } = await supabase
-            .from("assessments")
-            .insert({
-              user_id: user.id,
-              instrument_id: instrument.instrument_id,
-              instrument_version: instrument.instrument_version,
-              rater_type: "self",
-              status: "in_progress",
-              context_type: contextType ?? null,
-            })
-            .select("id")
-            .single();
-          if (error || !newA) {
-            toast({ title: "Error", description: "Could not create assessment.", variant: "destructive" });
-            onExit();
-            return;
-          }
-          aId = newA.id;
+          setAssessmentId(candidateId);
+          setInitChecked(true);
+          return;
         }
       }
-      setAssessmentId(aId);
 
-      // Load items
+      setNeedsAck(true);
+      setLoading(false);
+      setInitChecked(true);
+    };
+    check();
+  }, [user, initChecked, raterType, preexistingAssessmentId, epnAssignmentId, instrument.instrument_id, contextType, onExit, toast]);
+
+  const handleAcknowledgmentConfirm = async (versionHash: string) => {
+    if (!user) return;
+    setConfirmingAck(true);
+    try {
+      let newId: string;
+      if (epnAssignmentId) {
+        const { data, error } = await supabase.rpc('start_epn_assessment', {
+          p_assignment_id: epnAssignmentId,
+          p_acknowledgment_version_hash: versionHash,
+        });
+        if (error || !data) throw error || new Error('Failed to start assessment');
+        newId = data as unknown as string;
+      } else {
+        const { data, error } = await supabase.rpc('start_assessment', {
+          p_instrument_id: instrument.instrument_id,
+          p_rater_type: raterType,
+          p_preexisting_assessment_id: preexistingAssessmentId ?? undefined,
+          p_acknowledgment_version_hash: versionHash,
+          p_context_type: contextType ?? undefined,
+        });
+        if (error) throw error;
+        const result = (data ?? {}) as { assessment_id?: string; error?: string };
+        if (result.error || !result.assessment_id) {
+          throw new Error(result.error || 'Failed to start assessment');
+        }
+        newId = result.assessment_id;
+      }
+      setNeedsAck(false);
+      setLoading(true);
+      setAssessmentId(newId);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Could not start assessment';
+      toast({ title: 'Error', description: msg, variant: 'destructive' });
+      setConfirmingAck(false);
+    }
+  };
+
+  // Phase 2: load items + existing responses once we have an assessment_id.
+  useEffect(() => {
+    if (!user || !assessmentId) return;
+    const load = async () => {
       let itemsQuery = supabase
         .from("items")
         .select("item_id, item_number, item_text, anchor_low, anchor_high, scale_type, reverse_scored, dimension_id")
@@ -146,11 +188,10 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
       }
       setItems(itemsData);
 
-      // Load existing responses
       const { data: existingResponses } = await supabase
         .from("assessment_responses")
         .select("item_id, response_value_numeric, response_value_text, readiness_level")
-        .eq("assessment_id", aId);
+        .eq("assessment_id", assessmentId);
 
       if (existingResponses && existingResponses.length > 0) {
         const map: Record<string, { numeric: number; text: string | null; readiness: string | null }> = {};
@@ -158,12 +199,10 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
           map[r.item_id] = { numeric: r.response_value_numeric, text: r.response_value_text, readiness: r.readiness_level };
         });
         setResponses(map);
-        // Resume from first unanswered
         const firstUnanswered = itemsData.findIndex((it) => !map[it.item_id]);
         if (firstUnanswered > 0) setCurrentIndex(firstUnanswered);
       }
 
-      // Load response scales for AIRSA
       if (instrument.instrument_id === "INST-003") {
         const { data: scales } = await supabase
           .from("response_scales")
@@ -173,14 +212,15 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
       }
 
       setLoading(false);
+      setConfirmingAck(false);
     };
-    init();
+    load();
 
     return () => {
       if (autoSaveTimer.current) clearInterval(autoSaveTimer.current);
       if (advanceTimer.current) clearTimeout(advanceTimer.current);
     };
-  }, [user, instrument, onExit, toast]);
+  }, [user, assessmentId, instrument.instrument_id, raterType, contextType, onExit, toast]);
 
   // Auto-save every 60s
   useEffect(() => {
