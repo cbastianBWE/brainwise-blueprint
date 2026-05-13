@@ -1433,3 +1433,309 @@ function CardSortRender({
     </DndContext>
   );
 }
+
+// === Session 70: scenario renderer ===
+
+type ScenarioChoiceConfig = {
+  client_id: string;
+  choice_text: string;
+  outcome_markdown: TipTapDocJSON | null;
+};
+
+type ScenarioMomentConfig = {
+  client_id: string;
+  moment_label: string | null;
+  setup_markdown: TipTapDocJSON | null;
+  setup_image_asset_id: string | null;
+  prompt_type: "multiple_choice" | "reflection";
+  choices: ScenarioChoiceConfig[] | null;
+  reflection_prompt: string | null;
+  outcome_markdown: TipTapDocJSON | null;
+};
+
+const REFLECTION_MAX_CHARS = 2000;
+
+type ScenarioPersistedState = {
+  cursorIdx: number;
+  reflectionResponses: Record<string, string>;
+  choiceSelected: Record<string, string>;
+};
+
+function ScenarioRender({
+  title,
+  introMarkdown,
+  moments,
+  urlMap,
+  mode,
+  blockClientId,
+}: {
+  title: string | null;
+  introMarkdown: TipTapDocJSON | null;
+  moments: ScenarioMomentConfig[];
+  gatingRequired: boolean;
+  urlMap: Map<string, string>;
+  mode?: "editor" | "trainee";
+  blockClientId: string;
+}) {
+  const sessionKey = `scenario-pos:${blockClientId}`;
+
+  const [cursorIdx, setCursorIdx] = useState(0);
+  const [reflectionResponses, setReflectionResponses] = useState<Record<string, string>>({});
+  const [choiceSelected, setChoiceSelected] = useState<Record<string, string>>({});
+  const [modalOutcome, setModalOutcome] = useState<TipTapDocJSON | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const continueBtnRef = useRef<HTMLButtonElement | null>(null);
+  const initializedRef = useRef(false);
+
+  useEffect(() => {
+    if (initializedRef.current) return;
+    initializedRef.current = true;
+    if (mode !== "trainee" || typeof window === "undefined") return;
+    try {
+      const raw = window.sessionStorage.getItem(sessionKey);
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as Partial<ScenarioPersistedState>;
+      const validMomentIds = new Set(moments.map((m) => m.client_id));
+      if (
+        typeof parsed.cursorIdx === "number" &&
+        parsed.cursorIdx >= 0 &&
+        parsed.cursorIdx <= moments.length
+      ) {
+        setCursorIdx(parsed.cursorIdx);
+      }
+      if (parsed.reflectionResponses && typeof parsed.reflectionResponses === "object") {
+        const filtered: Record<string, string> = {};
+        for (const [k, v] of Object.entries(parsed.reflectionResponses)) {
+          if (validMomentIds.has(k) && typeof v === "string") filtered[k] = v;
+        }
+        setReflectionResponses(filtered);
+      }
+      if (parsed.choiceSelected && typeof parsed.choiceSelected === "object") {
+        const filtered: Record<string, string> = {};
+        for (const [k, v] of Object.entries(parsed.choiceSelected)) {
+          if (validMomentIds.has(k) && typeof v === "string") filtered[k] = v;
+        }
+        setChoiceSelected(filtered);
+      }
+    } catch {
+      /* ignore */
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionKey, mode]);
+
+  useEffect(() => {
+    if (mode !== "trainee" || typeof window === "undefined") return;
+    try {
+      const payload: ScenarioPersistedState = {
+        cursorIdx,
+        reflectionResponses,
+        choiceSelected,
+      };
+      window.sessionStorage.setItem(sessionKey, JSON.stringify(payload));
+    } catch {
+      /* ignore quota */
+    }
+  }, [cursorIdx, reflectionResponses, choiceSelected, sessionKey, mode]);
+
+  const momentIdsKey = moments.map((m) => m.client_id).join("|");
+  useEffect(() => {
+    if (mode === "trainee") return;
+    setCursorIdx(0);
+    setReflectionResponses({});
+    setChoiceSelected({});
+    setModalOpen(false);
+    setModalOutcome(null);
+  }, [momentIdsKey, mode]);
+
+  useEffect(() => {
+    if (!modalOpen) return;
+    const t = window.setTimeout(() => {
+      continueBtnRef.current?.focus();
+    }, 30);
+    return () => window.clearTimeout(t);
+  }, [modalOpen]);
+
+  if (moments.length === 0) {
+    return (
+      <div className="rounded-md border border-dashed bg-muted/20 p-4 text-center text-sm text-muted-foreground">
+        Add at least one moment to see the scenario.
+      </div>
+    );
+  }
+
+  const allDone = cursorIdx >= moments.length;
+  const current = !allDone ? moments[cursorIdx] : null;
+  const currentImageUrl =
+    current?.setup_image_asset_id ? urlMap.get(current.setup_image_asset_id) ?? null : null;
+
+  const openOutcome = (outcomeDoc: TipTapDocJSON | null) => {
+    setModalOutcome(outcomeDoc);
+    setModalOpen(true);
+  };
+
+  const handleChoicePick = (choice: ScenarioChoiceConfig) => {
+    if (!current) return;
+    setChoiceSelected((prev) => ({ ...prev, [current.client_id]: choice.client_id }));
+    openOutcome(choice.outcome_markdown ?? null);
+  };
+
+  const handleReflectionSubmit = () => {
+    if (!current) return;
+    openOutcome(current.outcome_markdown ?? null);
+  };
+
+  const handleContinue = () => {
+    setModalOpen(false);
+    setCursorIdx((i) => i + 1);
+  };
+
+  const handleReplay = () => {
+    setCursorIdx(0);
+    setReflectionResponses({});
+    setChoiceSelected({});
+    setModalOpen(false);
+    setModalOutcome(null);
+    if (mode === "trainee" && typeof window !== "undefined") {
+      try {
+        window.sessionStorage.removeItem(sessionKey);
+      } catch {
+        /* ignore */
+      }
+    }
+  };
+
+  return (
+    <div className="bw-scenario-shell">
+      {title && <h3 className="bw-scenario-title">{title}</h3>}
+
+      {introMarkdown && (
+        <div className="bw-scenario-intro">
+          <ReadOnlyTipTap json={introMarkdown} />
+        </div>
+      )}
+
+      <div className="bw-scenario-progress">
+        {allDone
+          ? `Scenario complete · ${moments.length} moment${moments.length === 1 ? "" : "s"}`
+          : `Moment ${cursorIdx + 1} of ${moments.length}`}
+      </div>
+
+      {current && (
+        <div className="bw-scenario-moment">
+          {current.moment_label && (
+            <div className="bw-scenario-moment-label">{current.moment_label}</div>
+          )}
+
+          {currentImageUrl && (
+            <img
+              src={currentImageUrl}
+              alt=""
+              className="bw-scenario-setup-image"
+            />
+          )}
+
+          <div className="bw-scenario-setup">
+            <ReadOnlyTipTap json={current.setup_markdown ?? null} />
+          </div>
+
+          {current.prompt_type === "multiple_choice" && (
+            <div className="bw-scenario-choices">
+              {(current.choices ?? []).map((choice) => (
+                <button
+                  key={choice.client_id}
+                  type="button"
+                  className="bw-scenario-choice"
+                  onClick={() => handleChoicePick(choice)}
+                >
+                  {choice.choice_text || (
+                    <span className="bw-scenario-choice-untitled">(Untitled choice)</span>
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {current.prompt_type === "reflection" && (
+            <div className="bw-scenario-reflection">
+              {current.reflection_prompt && (
+                <p className="bw-scenario-reflection-prompt">{current.reflection_prompt}</p>
+              )}
+              <Textarea
+                value={reflectionResponses[current.client_id] ?? ""}
+                onChange={(e) =>
+                  setReflectionResponses((prev) => ({
+                    ...prev,
+                    [current.client_id]: e.target.value.slice(0, REFLECTION_MAX_CHARS),
+                  }))
+                }
+                maxLength={REFLECTION_MAX_CHARS}
+                rows={5}
+                placeholder="Your reflection…"
+                className="bw-scenario-reflection-textarea"
+              />
+              <div className="bw-scenario-reflection-meta">
+                <span>
+                  {(reflectionResponses[current.client_id] ?? "").length} / {REFLECTION_MAX_CHARS}
+                </span>
+                <Button
+                  type="button"
+                  onClick={handleReflectionSubmit}
+                  disabled={
+                    (reflectionResponses[current.client_id] ?? "").trim().length === 0
+                  }
+                  style={{ backgroundColor: "#F5741A", color: "white" }}
+                >
+                  Submit reflection
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {allDone && (
+        <div className="bw-scenario-done">
+          <p>You've finished the scenario.</p>
+          <button
+            type="button"
+            onClick={handleReplay}
+            className="bw-scenario-done-reset underline"
+            style={{ color: "#F5741A" }}
+          >
+            Replay scenario
+          </button>
+        </div>
+      )}
+
+      <Dialog
+        open={modalOpen}
+        onOpenChange={(open) => {
+          if (!open) handleContinue();
+        }}
+      >
+        <DialogContent
+          className="max-w-lg"
+          onPointerDownOutside={(e) => e.preventDefault()}
+          onInteractOutside={(e) => e.preventDefault()}
+        >
+          <DialogHeader>
+            <DialogTitle>Outcome</DialogTitle>
+          </DialogHeader>
+          <div className="bw-scenario-modal-body">
+            <ReadOnlyTipTap json={modalOutcome} />
+          </div>
+          <DialogFooter>
+            <Button
+              ref={continueBtnRef}
+              type="button"
+              onClick={handleContinue}
+              style={{ backgroundColor: "#F5741A", color: "white" }}
+            >
+              Continue
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
