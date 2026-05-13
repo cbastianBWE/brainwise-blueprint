@@ -1,49 +1,52 @@
-## Session 69 — Add `card_sort` lesson block (FE only)
+# Session 70 — Scenario block (frontend only)
 
-Backend already supports it (draft-lesson-block v12, expand-lesson-from-outline v11). Five files to touch.
+Add a new linear-narrative `scenario` block type to the lesson block editor. Backend already supports it end-to-end. Five files: four edits, one new.
 
-### File 1: `blockTypeMeta.ts` (edit)
-- Add `LayoutGrid` to lucide-react imports (alphabetical near `Layers`).
-- Append `"card_sort"` to `BlockType` union and `IN_SCOPE_BLOCK_TYPES`.
-- Insert `card_sort` entry in `BLOCK_TYPE_META` after `flashcards`. Default: 2 buckets `{client_id, title:"", description:null, outline_color:null}` + 4 cards `{client_id, content:emptyDoc(), correct_bucket_id:null, image_asset_id:null, caption:null, background_color:null}` + `gating_required:false`, `background_color:null`, `padding:"none"`.
+## Files
 
-### File 2: `block-forms/CardSortBlockForm.tsx` (new)
-Mirrors `FlashcardsBlockForm` structure: separate `DndContext` for buckets and for cards, each with vertical `SortableContext`.
-- **SortableBucket**: drag handle, title (1-4 words, max 40), optional description (max 120, textarea), `BrandColorSwatch` outline color constrained to `BUCKET_OUTLINE_COLORS = ["#2D6A4F","#F5741A","#3C096C","#021F36"]` with `allowDefault`.
-- **SortableCard**: drag handle, optional `FileUploadField` image (refField `card_sort.cards.${client_id}.image_asset_id`), optional caption (max 80, shown only when image present), `RichTextEditor` content (compact), `BrandColorSwatch` palette="full" allowDefault for `background_color`, `Select` "Correct bucket" dropdown listing buckets (label fallback `Bucket N`). Amber warning if `correct_bucket_id === null`; destructive note if previously-selected bucket was deleted.
-- Limits: 2-4 buckets, 4-12 cards (Add/Remove disable at bounds). Deleting a bucket nulls any card's `correct_bucket_id` that referenced it.
-- Bottom: gating_required `Checkbox`.
+### 1. EDIT `src/components/super-admin/lesson-blocks/blockTypeMeta.ts`
+- Add `GitBranch` to the `lucide-react` import block.
+- Append `| "scenario"` to the `BlockType` union (after `card_sort`).
+- Insert a `scenario` entry in `BLOCK_TYPE_META` after `card_sort` with: `label: "Scenario"`, `icon: GitBranch`, and `defaultConfig` seeding `title: null`, `intro_markdown: null`, one moment (`prompt_type: "multiple_choice"`, 2 empty choices, empty `setup_markdown` doc), `gating_required: false`, `background_color: null`, `padding: "none"`.
+- Append `"scenario"` to `IN_SCOPE_BLOCK_TYPES`.
 
-### File 3: `BlockEditorPane.tsx` (edit)
-- Import `CardSortBlockForm`.
-- Add dispatch branch `block.block_type === "card_sort"` before `<BlockStyleSection />`, passing `value`, `onConfigChange`, `contentItemId`.
+### 2. NEW `src/components/super-admin/lesson-blocks/block-forms/ScenarioBlockForm.tsx`
+Authoring form. Two nested `DndContext`s (moments outer, choices inner) with namespaced sortable IDs (`moment:<client_id>`, `choice:<client_id>`).
 
-### File 4: `BlockRenderer.tsx` (edit)
-- Add `useRef` to react import (alongside existing `useEffect, useState, type CSSProperties, type KeyboardEvent, type ReactNode`).
-- Add `@dnd-kit/core` imports: `DndContext, DragOverlay, PointerSensor, TouchSensor, useDraggable, useDroppable, useSensor, useSensors, pointerWithin, type DragEndEvent, type DragStartEvent`.
-- Add `case "card_sort":` in renderInner switch (after flashcards) → `<CardSortRender buckets cards gatingRequired urlMap mode blockClientId />`.
-- Append `CardSortRender` component plus types `CardSortBucket`, `CardSortCardConfig`, `PerCardState`, the `CARDSORT_TEXT_COLOR_FOR_BG` lookup (matches flashcards: Sand→Navy, others→White; null→Navy), and helpers `CardSortDraggableCard` + `CardSortDroppable`.
-  - State: `Record<id, {placement, locked, lastWrong}>`. PointerSensor + TouchSensor (100ms delay).
-  - Hydrate from `sessionStorage["card_sort-pos:${blockClientId}"]` in trainee mode; reconcile against current bucket/card client_ids (missing → holding). Persist `{placement, locked}` only (not `lastWrong`).
-  - Editor mode resets state on card-id list change so deleted cards don't linger.
-  - Drag start clears that card's `lastWrong`. Drag end moves to bucket or holding (locked cards skipped).
-  - Check button: enabled only when no cards in holding; on click, correct → `locked:true` (stays in bucket), wrong → return to holding with `lastWrong:true`.
-  - "Try again" resets state and clears sessionStorage.
-  - Bucket render: applies inline `borderColor: bucket.outline_color` when set; title centered above thin divider, then dropped cards. Card render: applies inline `backgroundColor` + auto-paired `color`; locked shows green ✓ badge, wrong shows red ✕ badge with `title` tooltip "Correct bucket: <name>"; uses `<DragOverlay>` for the active card.
+- Block-level: `title` Input (≤120 chars, null when empty), `intro_markdown` compact `RichTextEditor` (null when empty via `tipTapHasContent` check).
+- Moments list (1–12): drag handle, header with index, prompt_type icon, completion badge ("Complete" Forest #2D6A4F + `CheckCircle2` when `isMomentComplete`, otherwise muted "Needs setup" + `Circle`). Add disables at 12, Remove disables at 1.
+- Per moment: `moment_label` Input (≤80 chars, null when empty), `setup_image_asset_id` via `FileUploadField` with `refField={\`scenario.moments.${moment.client_id}.setup_image_asset_id\`}`, `setup_markdown` compact RTE, `prompt_type` `RadioGroup`.
+- **Destroy-warn on prompt_type switch**: if inactive side has content (any choice with non-empty `choice_text` or non-empty `outcome_markdown`; OR non-empty `reflection_prompt`/`outcome_markdown`), call `window.confirm()`. On cancel, abort. On accept (or no content), seed defaults for new side and null out the old side.
+- MC mode: `SortableContext` for choices (2–4). Each: `choice_text` Input (≤200) + `outcome_markdown` compact RTE.
+- Reflection mode: `reflection_prompt` Textarea (≤300, with `(N/300)` counter) + `outcome_markdown` compact RTE.
+- Bottom: `gating_required` Checkbox.
 
-### File 5: `lesson-blocks.css` (edit)
-Append `bw-cardsort-*` styles:
-- Shell, progress text, `.bw-cardsort-buckets` CSS grid driven by `data-bucket-count` (2/3/4).
-- `.bw-cardsort-bucket`: Sand background `#F9F7F1`, default 3px Slate `#6D6875` border, min-height 12rem; `.is-over` adds orange box-shadow ring.
-- `.bw-cardsort-bucket-title-wrap` centered with bottom divider; title 1.0625rem Poppins, untitled italic Slate.
-- `.bw-cardsort-holding`: white with dashed border, `.is-over` orange.
-- `.bw-cardsort-card`: relative, white default, 2px subtle border, max-width 16rem; `.is-locked` 3px Forest, `.is-wrong` 3px `#D62828` + shake keyframes; `.is-overlay` rotates 2deg.
-- `.bw-cardsort-card-badge` absolute top-right circle (correct green / wrong red).
-- Image, caption, body styles use `color: inherit` so per-card text color carries through.
-- `@media (max-width: 640px)`: collapse buckets to single column, cards full width.
+### 3. EDIT `src/components/super-admin/lesson-blocks/BlockEditorPane.tsx`
+- Import `ScenarioBlockForm` after the `CardSortBlockForm` import.
+- Add dispatch for `block_type === "scenario"` after the `card_sort` dispatch and before `<BlockStyleSection />`, passing `value`, `onConfigChange`, `contentItemId`.
 
-### Out of scope
-Per-bucket fill color, author drag-between-buckets, scoring weights, branching, partial credit. AI Refine returns configs without `outline_color`/`background_color` — renderer falls back to defaults (expected).
+### 4. EDIT `src/components/super-admin/lesson-blocks/BlockRenderer.tsx`
+- Add imports: `Dialog`, `DialogContent`, `DialogFooter`, `DialogHeader`, `DialogTitle` from `@/components/ui/dialog`; `Textarea` from `@/components/ui/textarea`. (dnd-kit imports already present from Session 69.)
+- In the `renderInner` switch, add `case "scenario":` returning `<ScenarioRender ... />` after the `card_sort` case.
+- Append new `ScenarioRender` component at end of file with types `ScenarioChoiceConfig`, `ScenarioMomentConfig`, `ScenarioPersistedState`.
 
-### Verification
-After implementation, manually verify in preview: insert via AddBlockPopover, default seed correct, reorder buckets/cards, dropdown + min/max + deleted-bucket fallback, color pickers (bucket outline + card bg), trainee preview drag (pointer + touch), Check → green-lock + red-shake-with-tooltip, reload persistence, mobile single-column collapse, DB round-trip preserves all client_ids and color fields.
+`ScenarioRender` behavior:
+- State: `cursorIdx`, `reflectionResponses` (`Record<momentId,string>`), `choiceSelected` (`Record<momentId,choiceId>`), `modalOutcome`, `modalOpen`, `continueBtnRef`.
+- sessionStorage key `scenario-pos:${blockClientId}`. Hydrate ONLY in `mode === "trainee"`; reconcile: drop any momentId not in current moments, clamp `cursorIdx` to `[0, moments.length]`. Persist on state change in trainee mode.
+- Editor mode: reset state when joined moment-client_id list changes.
+- Render block title (h3), intro `ReadOnlyTipTap`, progress text ("Moment N of M" or "Scenario complete · N moments").
+- Current moment: optional `moment_label`, optional setup `<img>` from `urlMap.get(setup_image_asset_id)`, setup `ReadOnlyTipTap`, prompt area.
+- MC: vertical full-width `<button>` per choice → opens modal with that choice's `outcome_markdown`.
+- Reflection: pull-quote prompt, Textarea (`maxLength={REFLECTION_MAX_CHARS=2000}`), Submit button orange (#F5741A), disabled until non-whitespace; opens modal with moment's top-level `outcome_markdown`.
+- End state (`cursorIdx >= moments.length`): "You've finished the scenario." + "Replay scenario" link that resets state and clears sessionStorage in trainee mode.
+- Outcome `Dialog`: `onPointerDownOutside`/`onInteractOutside` preventDefault. Footer Continue button (orange) is autofocused via `setTimeout(30)` after open. `onOpenChange(open)` routes any close path through `handleContinue` → close + advance cursor. Esc dismisses via Radix default.
+- Reflection responses NOT written to DB (state + sessionStorage only).
+
+### 5. EDIT `src/components/super-admin/lesson-blocks/lesson-blocks.css`
+Append `/* === Session 70: scenario === */` section at end of file with classes: `.bw-scenario-shell`, `.bw-scenario-title`, `.bw-scenario-intro`, `.bw-scenario-progress`, `.bw-scenario-moment`, `.bw-scenario-moment-label`, `.bw-scenario-setup-image`, `.bw-scenario-setup`, `.bw-scenario-choices`, `.bw-scenario-choice` (hover orange border + tint, focus-visible orange outline), `.bw-scenario-choice-untitled`, `.bw-scenario-reflection`, `.bw-scenario-reflection-prompt` (Sand bg + orange left-border), `.bw-scenario-reflection-textarea`, `.bw-scenario-reflection-meta`, `.bw-scenario-done`, `.bw-scenario-done-reset`, `.bw-scenario-modal-body`. Mobile `@media (max-width: 640px)`: shrink title to 1.25rem, reduce moment padding, setup image max-height 12rem.
+
+## Out of scope
+Branching, per-moment colors, DB persistence of reflection responses, scoring, skip/back controls, custom key handlers (rely on Radix autofocus + native Enter).
+
+## Verification after implement
+Build passes; insert/save/refresh round-trip preserves all client_ids, prompt_type, choices/reflection content, image refs, and labels; trainee flow advances through moments via modal Continue; sessionStorage hydrates and reconciles correctly.
