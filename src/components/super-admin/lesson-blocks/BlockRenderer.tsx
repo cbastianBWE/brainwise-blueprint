@@ -425,6 +425,18 @@ export function BlockRenderer({ block, assetUrlMap, mode }: BlockRendererProps) 
             blockClientId={block.client_id}
           />
         );
+      case "scenario":
+        return (
+          <ScenarioRender
+            title={cfg.title ?? null}
+            introMarkdown={cfg.intro_markdown ?? null}
+            moments={cfg.moments ?? []}
+            gatingRequired={cfg.gating_required === true}
+            urlMap={assetUrlMap}
+            mode={mode}
+            blockClientId={block.client_id}
+          />
+        );
       default:
         return null;
     }
