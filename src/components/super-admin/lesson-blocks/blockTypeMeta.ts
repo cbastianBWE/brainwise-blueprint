@@ -13,6 +13,7 @@ import {
   ListCollapse as AccordionIcon,
   LayoutPanelTop as TabsIcon,
   MousePointerClick as ButtonStackIcon,
+  Layers,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
