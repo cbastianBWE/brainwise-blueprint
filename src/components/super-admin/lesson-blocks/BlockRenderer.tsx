@@ -663,7 +663,26 @@ type FlashcardConfig = {
   back: TipTapDocJSON | null;
   front_image_asset_id: string | null;
   front_caption: string | null;
+  background_color: string | null;
 };
+
+// Locked auto-pair: brand background color → text color. Author picks bg;
+// renderer derives text color. Sand and null get Navy text; everything else White.
+const FLASHCARD_TEXT_COLOR_FOR_BG: Record<string, string> = {
+  "#021F36": "#FFFFFF",
+  "#F5741A": "#FFFFFF",
+  "#F9F7F1": "#021F36",
+  "#006D77": "#FFFFFF",
+  "#7a5800": "#FFFFFF",
+  "#6D6875": "#FFFFFF",
+  "#3C096C": "#FFFFFF",
+  "#2D6A4F": "#FFFFFF",
+};
+
+function getFlashcardTextColorForBg(bg: string | null | undefined): string {
+  if (!bg) return "#021F36";
+  return FLASHCARD_TEXT_COLOR_FOR_BG[bg] ?? "#021F36";
+}
 
 function FlashcardsRender({
   cards,
