@@ -691,14 +691,19 @@ function SortableQuestion({
               {question.question_type === "true_false" && (
                 <TrueFalseEditor question={question} onChange={onChange} />
               )}
+              {question.question_type === "fill_in_blank" && (
+                <FillInBlankEditor question={question} onChange={onChange} />
+              )}
+              {question.question_type === "match" && (
+                <MatchEditor question={question} onChange={onChange} />
+              )}
             </>
           ) : (
             <div className="rounded-md border border-dashed bg-background p-3 text-xs text-muted-foreground">
               <strong>
                 {QUESTION_TYPE_OPTIONS.find((o) => o.value === question.question_type)?.label}
               </strong>{" "}
-              support lands in a follow-up session. Pick Multiple choice, Multi-select, or True/False
-              for now.
+              support lands in a follow-up session. Pick from the implemented types for now.
             </div>
           )}
 
