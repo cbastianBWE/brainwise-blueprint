@@ -591,8 +591,8 @@ function ButtonStackRender({
                 className="bw-button-continue-wrapper my-8 flex w-full flex-col items-center gap-4"
               >
                 <div
-                  className="h-px w-full"
-                  style={{ backgroundColor: "#F5741A", opacity: 0.4 }}
+                  className="h-0.5 w-full"
+                  style={{ backgroundColor: "#F5741A", opacity: 0.6 }}
                 />
                 <Button
                   {...buttonProps}
