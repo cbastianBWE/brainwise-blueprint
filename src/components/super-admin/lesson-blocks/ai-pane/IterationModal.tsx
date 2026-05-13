@@ -121,13 +121,13 @@ export function IterationModal(props: Props) {
     setErrorMsg(null);
     try {
       if (target.kind === "full_block") {
-        const author_prompt = `${JSON.stringify(target.block.config)} --- Change request: ${text.trim()}`;
         const { data, error } = await supabase.functions.invoke(
           "draft-lesson-block",
           {
             body: {
               block_type: target.block.block_type,
-              author_prompt,
+              author_prompt: text.trim(),
+              lesson_context: JSON.stringify(target.block.config),
               voice_preset_key: voicePresetKey ?? undefined,
               custom_voice_guidance: customVoiceGuidance ?? undefined,
               custom_voice_example: customVoiceExample ?? undefined,
