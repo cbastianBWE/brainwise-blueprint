@@ -86,6 +86,8 @@ const IMPLEMENTED_TYPES: QuestionType[] = [
   "true_false",
   "fill_in_blank",
   "match",
+  "ranking",
+  "timeline",
 ];
 
 const MAX_BLANK_VALUE = 120;
@@ -94,6 +96,12 @@ const MAX_BLANKS = 5;
 const MAX_PAIR_TEXT = 120;
 const MIN_PAIRS = 2;
 const MAX_PAIRS = 6;
+const MAX_RANK_ITEM_TEXT = 150;
+const MIN_RANK_ITEMS = 3;
+const MAX_RANK_ITEMS = 7;
+const MAX_EVENT_LABEL = 150;
+const MIN_EVENTS = 3;
+const MAX_EVENTS = 7;
 
 function seedForQuestionType(qType: QuestionType): Partial<Question> {
   switch (qType) {
