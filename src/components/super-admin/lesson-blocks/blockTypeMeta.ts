@@ -31,7 +31,8 @@ export type BlockType =
   | "statement_a_b"
   | "accordion"
   | "tabs"
-  | "button_stack";
+  | "button_stack"
+  | "flashcards";
 
 export type TipTapDocJSON = Record<string, unknown>;
 
