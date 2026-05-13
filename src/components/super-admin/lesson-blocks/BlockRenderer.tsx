@@ -2111,7 +2111,11 @@ function KnowledgeCheckRender({
                 )
               : q.question_type === "match"
                 ? (q.pairs ?? []).every((p) => s.matchLinks[p.client_id] !== undefined)
-                : s.selectedSingle !== null);
+                : q.question_type === "ranking"
+                  ? s.rankOrder.length === (q.items ?? []).length
+                  : q.question_type === "timeline"
+                    ? s.timelineOrder.length === (q.events ?? []).length
+                    : s.selectedSingle !== null);
 
         return (
           <div key={q.client_id} className="bw-kc-question">
