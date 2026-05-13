@@ -34,6 +34,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import {
   DndContext,
   DragOverlay,
@@ -1752,6 +1753,8 @@ function ScenarioRender({
 // === Session 71: knowledge_check renderer ===
 
 type KCChoice = { client_id: string; choice_text: string; is_correct: boolean };
+type KCBlank = { client_id: string; correct_value: string; acceptable_alternatives: string[] };
+type KCPair = { client_id: string; left: string; right: string };
 
 type KnowledgeCheckQuestionConfig = {
   client_id: string;
@@ -1766,11 +1769,15 @@ type KnowledgeCheckQuestionConfig = {
   prompt_markdown: TipTapDocJSON | null;
   explanation_markdown: TipTapDocJSON | null;
   choices?: KCChoice[];
+  blanks?: KCBlank[];
+  pairs?: KCPair[];
 };
 
 type KCPerQuestionState = {
   selectedSingle: string | null;
   selectedMulti: string[];
+  blankValues: Record<string, string>;
+  matchLinks: Record<string, string>;
   revealed: boolean;
   lastWrong: boolean;
 };
@@ -1779,10 +1786,19 @@ const KC_IMPLEMENTED_TYPES = new Set([
   "multiple_choice",
   "multi_select",
   "true_false",
+  "fill_in_blank",
+  "match",
 ]);
 
 function emptyKCState(): KCPerQuestionState {
-  return { selectedSingle: null, selectedMulti: [], revealed: false, lastWrong: false };
+  return {
+    selectedSingle: null,
+    selectedMulti: [],
+    blankValues: {},
+    matchLinks: {},
+    revealed: false,
+    lastWrong: false,
+  };
 }
 
 function KnowledgeCheckRender({
@@ -1824,6 +1840,10 @@ function KnowledgeCheckRender({
             selectedMulti: Array.isArray(prior.selectedMulti)
               ? prior.selectedMulti.filter((s: any) => typeof s === "string")
               : [],
+            blankValues:
+              prior.blankValues && typeof prior.blankValues === "object" ? prior.blankValues : {},
+            matchLinks:
+              prior.matchLinks && typeof prior.matchLinks === "object" ? prior.matchLinks : {},
             revealed: prior.revealed === true,
             lastWrong: false,
           };
@@ -1847,6 +1867,8 @@ function KnowledgeCheckRender({
         payload[id] = {
           selectedSingle: s.selectedSingle,
           selectedMulti: s.selectedMulti,
+          blankValues: s.blankValues,
+          matchLinks: s.matchLinks,
           revealed: s.revealed,
         };
       }
@@ -1891,19 +1913,65 @@ function KnowledgeCheckRender({
     });
   };
 
+  const handleBlankChange = (qId: string, blankId: string, value: string) => {
+    setStateById((prev) => {
+      const s = prev[qId];
+      if (!s || s.revealed) return prev;
+      return {
+        ...prev,
+        [qId]: {
+          ...s,
+          blankValues: { ...s.blankValues, [blankId]: value },
+          lastWrong: false,
+        },
+      };
+    });
+  };
+
+  const handleMatchLink = (qId: string, leftId: string, rightId: string) => {
+    setStateById((prev) => {
+      const s = prev[qId];
+      if (!s || s.revealed) return prev;
+      const newLinks = { ...s.matchLinks, [leftId]: rightId };
+      return { ...prev, [qId]: { ...s, matchLinks: newLinks, lastWrong: false } };
+    });
+  };
+
+  const handleMatchClear = (qId: string, leftId: string) => {
+    setStateById((prev) => {
+      const s = prev[qId];
+      if (!s || s.revealed) return prev;
+      const next = { ...s.matchLinks };
+      delete next[leftId];
+      return { ...prev, [qId]: { ...s, matchLinks: next, lastWrong: false } };
+    });
+  };
+
   const handleCheck = (q: KnowledgeCheckQuestionConfig) => {
     const s = stateById[q.client_id];
     if (!s) return;
-    const choices = q.choices ?? [];
     let correct = false;
     if (q.question_type === "multiple_choice" || q.question_type === "true_false") {
-      const picked = choices.find((c) => c.client_id === s.selectedSingle);
+      const picked = (q.choices ?? []).find((c) => c.client_id === s.selectedSingle);
       correct = picked?.is_correct === true;
     } else if (q.question_type === "multi_select") {
-      const correctIds = new Set(choices.filter((c) => c.is_correct).map((c) => c.client_id));
+      const correctIds = new Set((q.choices ?? []).filter((c) => c.is_correct).map((c) => c.client_id));
       const pickedIds = new Set(s.selectedMulti);
       correct =
         correctIds.size === pickedIds.size && [...correctIds].every((id) => pickedIds.has(id));
+    } else if (q.question_type === "fill_in_blank") {
+      const blanks = q.blanks ?? [];
+      correct =
+        blanks.length > 0 &&
+        blanks.every((b) => {
+          const typed = (s.blankValues[b.client_id] ?? "").trim().toLowerCase();
+          if (typed.length === 0) return false;
+          if (typed === b.correct_value.trim().toLowerCase()) return true;
+          return b.acceptable_alternatives.some((alt) => typed === alt.trim().toLowerCase());
+        });
+    } else if (q.question_type === "match") {
+      const pairs = q.pairs ?? [];
+      correct = pairs.length > 0 && pairs.every((p) => s.matchLinks[p.client_id] === p.client_id);
     }
     setStateById((prev) => ({
       ...prev,
@@ -1927,7 +1995,13 @@ function KnowledgeCheckRender({
           isImplemented &&
           (q.question_type === "multi_select"
             ? s.selectedMulti.length > 0
-            : s.selectedSingle !== null);
+            : q.question_type === "fill_in_blank"
+              ? (q.blanks ?? []).every(
+                  (b) => (s.blankValues[b.client_id] ?? "").trim().length > 0,
+                )
+              : q.question_type === "match"
+                ? (q.pairs ?? []).every((p) => s.matchLinks[p.client_id] !== undefined)
+                : s.selectedSingle !== null);
 
         return (
           <div key={q.client_id} className="bw-kc-question">
@@ -2007,6 +2081,53 @@ function KnowledgeCheckRender({
               </div>
             )}
 
+            {isImplemented && q.question_type === "fill_in_blank" && (
+              <div className="bw-kc-blanks">
+                {(q.blanks ?? []).map((b, bi) => {
+                  const typed = s.blankValues[b.client_id] ?? "";
+                  const trimmedTyped = typed.trim().toLowerCase();
+                  const isMatch =
+                    trimmedTyped === b.correct_value.trim().toLowerCase() ||
+                    b.acceptable_alternatives.some(
+                      (alt) => trimmedTyped === alt.trim().toLowerCase(),
+                    );
+                  const cls = [
+                    "bw-kc-blank-input",
+                    s.revealed ? "is-revealed" : "",
+                    s.lastWrong && !isMatch ? "is-wrong" : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" ");
+                  return (
+                    <div key={b.client_id} className="bw-kc-blank-row">
+                      <span className="bw-kc-blank-label">Blank {bi + 1}</span>
+                      <Input
+                        value={typed}
+                        onChange={(e) =>
+                          handleBlankChange(q.client_id, b.client_id, e.target.value)
+                        }
+                        disabled={s.revealed}
+                        className={cls}
+                        placeholder="Type your answer"
+                      />
+                      {s.revealed && (
+                        <span className="bw-kc-blank-correct">{b.correct_value}</span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {isImplemented && q.question_type === "match" && (
+              <MatchTrainee
+                question={q}
+                state={s}
+                onLink={(leftId, rightId) => handleMatchLink(q.client_id, leftId, rightId)}
+                onClear={(leftId) => handleMatchClear(q.client_id, leftId)}
+              />
+            )}
+
             {isImplemented && (
               <div className="bw-kc-controls">
                 {!s.revealed ? (
@@ -2040,6 +2161,124 @@ function KnowledgeCheckRender({
       {allCorrect && questions.length > 0 && (
         <div className="bw-kc-done">All questions answered correctly.</div>
       )}
+    </div>
+  );
+}
+
+function MatchTrainee({
+  question,
+  state,
+  onLink,
+  onClear,
+}: {
+  question: KnowledgeCheckQuestionConfig;
+  state: KCPerQuestionState;
+  onLink: (leftId: string, rightId: string) => void;
+  onClear: (leftId: string) => void;
+}) {
+  const [activeLeftId, setActiveLeftId] = useState<string | null>(null);
+  const pairs = question.pairs ?? [];
+
+  const rightsSorted = [...pairs].sort((a, b) =>
+    a.client_id < b.client_id ? -1 : a.client_id > b.client_id ? 1 : 0,
+  );
+
+  const rightLinkedTo: Record<string, string> = {};
+  for (const [leftId, rightId] of Object.entries(state.matchLinks)) {
+    rightLinkedTo[rightId] = leftId;
+  }
+
+  const handleLeftClick = (leftId: string) => {
+    if (state.revealed) return;
+    if (state.matchLinks[leftId]) {
+      onClear(leftId);
+      setActiveLeftId(null);
+      return;
+    }
+    setActiveLeftId(activeLeftId === leftId ? null : leftId);
+  };
+
+  const handleRightClick = (rightId: string) => {
+    if (state.revealed) return;
+    if (!activeLeftId) return;
+    const priorLeftForThisRight = rightLinkedTo[rightId];
+    if (priorLeftForThisRight && priorLeftForThisRight !== activeLeftId) {
+      onClear(priorLeftForThisRight);
+    }
+    onLink(activeLeftId, rightId);
+    setActiveLeftId(null);
+  };
+
+  return (
+    <div className="bw-kc-match">
+      <p className="bw-kc-match-instruction">
+        {activeLeftId
+          ? "Now click a right item to link it."
+          : "Click a left item, then click its matching right item."}
+      </p>
+      <div className="bw-kc-match-grid">
+        <div className="bw-kc-match-col">
+          {pairs.map((p) => {
+            const linkedRightId = state.matchLinks[p.client_id];
+            const linkedRight = linkedRightId
+              ? pairs.find((pp) => pp.client_id === linkedRightId)
+              : null;
+            const isActive = activeLeftId === p.client_id;
+            const isCorrect = state.revealed && linkedRightId === p.client_id;
+            const isWrong =
+              state.lastWrong && linkedRightId !== undefined && linkedRightId !== p.client_id;
+            const cls = [
+              "bw-kc-match-left",
+              isActive ? "is-active" : "",
+              isCorrect ? "is-correct" : "",
+              isWrong ? "is-wrong" : "",
+              state.revealed ? "is-locked" : "",
+            ]
+              .filter(Boolean)
+              .join(" ");
+            return (
+              <button
+                key={p.client_id}
+                type="button"
+                className={cls}
+                onClick={() => handleLeftClick(p.client_id)}
+                disabled={state.revealed}
+              >
+                <span className="bw-kc-match-text">{p.left}</span>
+                {linkedRight && (
+                  <span className="bw-kc-match-link-indicator">→ {linkedRight.right}</span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+        <div className="bw-kc-match-col">
+          {rightsSorted.map((p) => {
+            const linkedLeftId = rightLinkedTo[p.client_id];
+            const isLinked = !!linkedLeftId;
+            const isAvailableTarget = !!activeLeftId && !state.revealed;
+            const cls = [
+              "bw-kc-match-right",
+              isLinked ? "is-linked" : "",
+              isAvailableTarget ? "is-target" : "",
+              state.revealed ? "is-locked" : "",
+            ]
+              .filter(Boolean)
+              .join(" ");
+            return (
+              <button
+                key={p.client_id}
+                type="button"
+                className={cls}
+                onClick={() => handleRightClick(p.client_id)}
+                disabled={state.revealed || !activeLeftId}
+              >
+                {p.right}
+              </button>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 }

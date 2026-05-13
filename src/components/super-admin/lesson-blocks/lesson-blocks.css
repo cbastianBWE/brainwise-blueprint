@@ -837,3 +837,127 @@
 @media (max-width: 640px) {
   .bw-kc-question { padding: 0.875rem; }
 }
+
+/* === Session 72: knowledge_check fill-in-blank + match === */
+
+.bw-kc-blanks {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.bw-kc-blank-row {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  flex-wrap: wrap;
+}
+
+.bw-kc-blank-label {
+  font-size: 0.8125rem;
+  color: #6D6875;
+  font-weight: 500;
+  min-width: 4.5rem;
+}
+
+.bw-kc-blank-input {
+  flex: 1 1 auto;
+  min-width: 12rem;
+}
+.bw-kc-blank-input.is-revealed {
+  border-color: #2D6A4F;
+  background: rgba(45, 106, 79, 0.06);
+}
+.bw-kc-blank-input.is-wrong {
+  border-color: #D62828;
+}
+
+.bw-kc-blank-correct {
+  font-size: 0.8125rem;
+  color: #2D6A4F;
+  font-weight: 500;
+}
+
+.bw-kc-match {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.bw-kc-match-instruction {
+  font-size: 0.8125rem;
+  color: #6D6875;
+  font-style: italic;
+}
+
+.bw-kc-match-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.bw-kc-match-col {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.bw-kc-match-left,
+.bw-kc-match-right {
+  text-align: left;
+  padding: 0.625rem 0.75rem;
+  background: #FFFFFF;
+  border: 2px solid rgba(2, 31, 54, 0.16);
+  border-radius: 0.5rem;
+  cursor: pointer;
+  font-size: 0.875rem;
+  color: #021F36;
+  line-height: 1.35;
+  transition: border-color 120ms ease, background 120ms ease;
+}
+.bw-kc-match-left:hover:not(:disabled),
+.bw-kc-match-right:hover:not(:disabled) {
+  border-color: #F5741A;
+  background: rgba(245, 116, 26, 0.04);
+}
+.bw-kc-match-left.is-active {
+  border-color: #F5741A;
+  background: rgba(245, 116, 26, 0.1);
+}
+.bw-kc-match-right.is-target {
+  border-style: dashed;
+  border-color: #F5741A;
+}
+.bw-kc-match-left.is-correct,
+.bw-kc-match-right.is-linked {
+  border-color: #2D6A4F;
+}
+.bw-kc-match-left.is-correct {
+  background: rgba(45, 106, 79, 0.06);
+}
+.bw-kc-match-left.is-wrong {
+  border-color: #D62828;
+  background: rgba(214, 40, 40, 0.06);
+}
+.bw-kc-match-left.is-locked,
+.bw-kc-match-right.is-locked {
+  cursor: not-allowed;
+}
+
+.bw-kc-match-text {
+  display: block;
+}
+
+.bw-kc-match-link-indicator {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+  color: #6D6875;
+  font-weight: 500;
+}
+
+@media (max-width: 640px) {
+  .bw-kc-match-grid {
+    grid-template-columns: 1fr;
+  }
+}
