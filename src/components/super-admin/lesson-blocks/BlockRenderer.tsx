@@ -1945,6 +1945,8 @@ function KnowledgeCheckRender({
           selectedMulti: s.selectedMulti,
           blankValues: s.blankValues,
           matchLinks: s.matchLinks,
+          rankOrder: s.rankOrder,
+          timelineOrder: s.timelineOrder,
           revealed: s.revealed,
         };
       }
