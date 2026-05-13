@@ -176,7 +176,7 @@ export const BLOCK_TYPE_META: Record<
   },
   button_stack: {
     label: "Buttons",
-    description: "Link-out or jump-to-block buttons",
+    description: "Link-out, jump-to-block, or section-break Continue buttons",
     icon: ButtonStackIcon,
     defaultConfig: () => ({
       buttons: [
@@ -186,6 +186,7 @@ export const BLOCK_TYPE_META: Record<
           action_type: "link",
           url: "",
           target_block_client_id: null,
+          section_title: null,
           variant: "primary",
         },
       ],

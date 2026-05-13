@@ -2722,6 +2722,8 @@ export type Database = {
           file_upload_size_bytes: number | null
           file_upload_url: string | null
           id: string
+          lesson_furthest_continue_client_id: string | null
+          lesson_last_block_id: string | null
           live_event_attendance_status: string | null
           live_event_marked_by: string | null
           quiz_best_score_pct: number | null
@@ -2752,6 +2754,8 @@ export type Database = {
           file_upload_size_bytes?: number | null
           file_upload_url?: string | null
           id?: string
+          lesson_furthest_continue_client_id?: string | null
+          lesson_last_block_id?: string | null
           live_event_attendance_status?: string | null
           live_event_marked_by?: string | null
           quiz_best_score_pct?: number | null
@@ -2782,6 +2786,8 @@ export type Database = {
           file_upload_size_bytes?: number | null
           file_upload_url?: string | null
           id?: string
+          lesson_furthest_continue_client_id?: string | null
+          lesson_last_block_id?: string | null
           live_event_attendance_status?: string | null
           live_event_marked_by?: string | null
           quiz_best_score_pct?: number | null
@@ -2808,6 +2814,13 @@ export type Database = {
             columns: ["content_item_id"]
             isOneToOne: false
             referencedRelation: "content_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_item_completions_lesson_last_block_id_fkey"
+            columns: ["lesson_last_block_id"]
+            isOneToOne: false
+            referencedRelation: "lesson_blocks"
             referencedColumns: ["id"]
           },
           {
@@ -4130,6 +4143,101 @@ export type Database = {
             columns: ["content_item_id"]
             isOneToOne: false
             referencedRelation: "content_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lesson_block_progress: {
+        Row: {
+          attempt_number: number
+          block_id: string
+          completed_at: string | null
+          completion_data: Json
+          completion_id: string
+          content_item_id: string
+          created_at: string
+          id: string
+          started_at: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          attempt_number: number
+          block_id: string
+          completed_at?: string | null
+          completion_data?: Json
+          completion_id: string
+          content_item_id: string
+          created_at?: string
+          id?: string
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          attempt_number?: number
+          block_id?: string
+          completed_at?: string | null
+          completion_data?: Json
+          completion_id?: string
+          content_item_id?: string
+          created_at?: string
+          id?: string
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lesson_block_progress_block_id_fkey"
+            columns: ["block_id"]
+            isOneToOne: false
+            referencedRelation: "lesson_blocks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lesson_block_progress_completion_id_fkey"
+            columns: ["completion_id"]
+            isOneToOne: false
+            referencedRelation: "content_item_completions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lesson_block_progress_content_item_id_fkey"
+            columns: ["content_item_id"]
+            isOneToOne: false
+            referencedRelation: "content_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lesson_block_progress_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lesson_block_progress_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "lesson_block_progress_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lesson_block_progress_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]

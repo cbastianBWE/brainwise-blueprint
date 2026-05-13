@@ -13,7 +13,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, X, Plus, Link2, ArrowDownToLine } from "lucide-react";
+import { GripVertical, X, Plus, Link2, ArrowDownToLine, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -28,7 +28,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { BLOCK_TYPE_META, extractTextFromTipTap, type EditorBlock } from "../blockTypeMeta";
 
-type ActionType = "link" | "jump_to_block";
+type ActionType = "link" | "jump_to_block" | "continue";
 type ButtonVariant = "primary" | "secondary";
 type Layout = "stacked" | "inline";
 
@@ -38,6 +38,7 @@ type ButtonEntry = {
   action_type: ActionType;
   url: string | null;
   target_block_client_id: string | null;
+  section_title: string | null;
   variant: ButtonVariant;
 };
 
@@ -82,8 +83,27 @@ function friendlyBlockLabel(block: EditorBlock): string {
       return `${typeLabel}${cfg.transcript ? " (with transcript)" : ""}`;
     case "divider":
       return typeLabel;
-    case "button_stack":
-      return `${typeLabel} (${(cfg.buttons ?? []).length} buttons)`;
+    case "button_stack": {
+      const btns = cfg.buttons ?? [];
+      const continueBtns = btns.filter(
+        (b: { action_type?: string }) => b?.action_type === "continue",
+      );
+      if (continueBtns.length > 0) {
+        const firstContinue = continueBtns[0] as {
+          section_title?: string | null;
+          label?: string;
+        };
+        const namedSection =
+          (firstContinue.section_title && firstContinue.section_title.trim()) ||
+          (firstContinue.label && firstContinue.label.trim()) ||
+          "";
+        if (namedSection) {
+          return `Continue: ${namedSection}`.slice(0, 80);
+        }
+        return `Continue (${continueBtns.length === 1 ? "section break" : `${continueBtns.length} section breaks`})`;
+      }
+      return `${typeLabel} (${btns.length} buttons)`;
+    }
     default:
       return typeLabel;
   }
@@ -133,37 +153,45 @@ function SortableButton({
 
           <RadioGroup
             value={btn.action_type}
-            onValueChange={(v) =>
+            onValueChange={(v) => {
+              const next = v as ActionType;
               onChange({
                 ...btn,
-                action_type: v as ActionType,
-                url: v === "link" ? (btn.url ?? "") : null,
+                action_type: next,
+                url: next === "link" ? (btn.url ?? "") : null,
                 target_block_client_id:
-                  v === "jump_to_block" ? btn.target_block_client_id : null,
-              })
-            }
-            className="grid grid-cols-2 gap-2"
+                  next === "jump_to_block" ? btn.target_block_client_id : null,
+                section_title: next === "continue" ? (btn.section_title ?? null) : null,
+              });
+            }}
+            className="grid grid-cols-3 gap-2"
           >
-            <Label className="flex cursor-pointer items-center gap-2 rounded-md border p-2 text-xs">
+            <Label className="flex cursor-pointer items-center gap-1.5 rounded-md border p-2 text-xs">
               <RadioGroupItem value="link" />
               <Link2 className="h-3.5 w-3.5" />
-              Link out
+              Link
             </Label>
-            <Label className="flex cursor-pointer items-center gap-2 rounded-md border p-2 text-xs">
+            <Label className="flex cursor-pointer items-center gap-1.5 rounded-md border p-2 text-xs">
               <RadioGroupItem value="jump_to_block" />
               <ArrowDownToLine className="h-3.5 w-3.5" />
-              Jump to block
+              Jump
+            </Label>
+            <Label className="flex cursor-pointer items-center gap-1.5 rounded-md border p-2 text-xs">
+              <RadioGroupItem value="continue" />
+              <ChevronRight className="h-3.5 w-3.5" />
+              Continue
             </Label>
           </RadioGroup>
 
-          {btn.action_type === "link" ? (
+          {btn.action_type === "link" && (
             <Input
               value={btn.url ?? ""}
               onChange={(e) => onChange({ ...btn, url: e.target.value })}
               placeholder="https://… or /internal/path"
               type="url"
             />
-          ) : (
+          )}
+          {btn.action_type === "jump_to_block" && (
             <Select
               value={btn.target_block_client_id ?? ""}
               onValueChange={(v) =>
@@ -188,6 +216,27 @@ function SortableButton({
                 ))}
               </SelectContent>
             </Select>
+          )}
+          {btn.action_type === "continue" && (
+            <div className="space-y-1">
+              <Label className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                Section title (optional)
+              </Label>
+              <Input
+                value={btn.section_title ?? ""}
+                onChange={(e) =>
+                  onChange({
+                    ...btn,
+                    section_title: e.target.value.length > 0 ? e.target.value : null,
+                  })
+                }
+                placeholder='e.g. "Foundations" or "Reflect"'
+                maxLength={80}
+              />
+              <p className="text-[10px] text-muted-foreground">
+                Names the section this Continue button ends. Used by the trainee view to label the section in progress indicators. Leave blank if the section doesn't need a named label.
+              </p>
+            </div>
           )}
 
           <div className="space-y-1">
@@ -229,7 +278,10 @@ function SortableButton({
 
 export function ButtonStackBlockForm({ value, onConfigChange, siblingBlocks }: Props) {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
-  const buttons = value.buttons ?? [];
+  const buttons = (value.buttons ?? []).map((b) => ({
+    ...b,
+    section_title: (b as { section_title?: string | null }).section_title ?? null,
+  }));
   const layout: Layout = value.layout === "inline" ? "inline" : "stacked";
 
   const handleDragEnd = (e: DragEndEvent) => {
@@ -268,6 +320,7 @@ export function ButtonStackBlockForm({ value, onConfigChange, siblingBlocks }: P
           action_type: "link",
           url: "",
           target_block_client_id: null,
+          section_title: null,
           variant: "primary",
         },
       ],

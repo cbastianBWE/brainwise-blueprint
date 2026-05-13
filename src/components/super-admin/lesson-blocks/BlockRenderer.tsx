@@ -11,6 +11,7 @@ import {
   Image as ImageIcon,
   Music as MusicIcon,
   Video as VideoIcon,
+  ChevronRight,
 } from "lucide-react";
 import {
   Tabs,
@@ -536,9 +537,10 @@ function ButtonStackRender({
   buttons: Array<{
     client_id: string;
     label: string;
-    action_type: "link" | "jump_to_block";
+    action_type: "link" | "jump_to_block" | "continue";
     url: string | null;
     target_block_client_id: string | null;
+    section_title?: string | null;
     variant: "primary" | "secondary";
   }>;
   layout: "stacked" | "inline";
@@ -578,6 +580,31 @@ function ButtonStackRender({
               >
                 {label}
               </Button>
+            );
+          }
+          if (b.action_type === "continue") {
+            const continueLabel =
+              b.label && b.label.trim().length > 0 ? b.label : "Continue";
+            return (
+              <div
+                key={b.client_id}
+                className="bw-button-continue-wrapper my-8 flex w-full flex-col items-center gap-4"
+              >
+                <div
+                  className="h-px w-full"
+                  style={{ backgroundColor: "#F5741A", opacity: 0.4 }}
+                />
+                <Button
+                  {...buttonProps}
+                  onClick={() => {
+                    /* A later phase wires reveal logic; author view is a no-op. */
+                  }}
+                  className="bw-button-continue px-8 py-3 text-base font-medium"
+                >
+                  {continueLabel}
+                  <ChevronRight className="ml-2 h-4 w-4" />
+                </Button>
+              </div>
             );
           }
           const rawUrl = (b.url ?? "").trim();
