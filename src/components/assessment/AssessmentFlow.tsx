@@ -350,6 +350,18 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
     navigate(`/my-results`);
   };
 
+  if (needsAck) {
+    return (
+      <PreAssessmentAcknowledgment
+        instrumentId={instrument.instrument_id}
+        raterType={raterType}
+        loading={confirmingAck}
+        onConfirm={handleAcknowledgmentConfirm}
+        onCancel={onExit}
+      />
+    );
+  }
+
   if (loading || submitting) {
     return (
       <div className="fixed inset-0 bg-background flex flex-col items-center justify-center gap-4">
