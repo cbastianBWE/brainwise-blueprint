@@ -280,6 +280,13 @@ export function BlockEditorPane({ block, onChange, contentItemId, siblingBlocks 
           contentItemId={contentItemId}
         />
       )}
+      {block.block_type === "scenario" && (
+        <ScenarioBlockForm
+          value={cfg}
+          onConfigChange={handleConfig}
+          contentItemId={contentItemId}
+        />
+      )}
 
       <BlockStyleSection value={cfg} onConfigChange={handleConfig} />
     </div>
