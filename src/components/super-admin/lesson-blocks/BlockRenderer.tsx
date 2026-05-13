@@ -1995,7 +1995,13 @@ function KnowledgeCheckRender({
           isImplemented &&
           (q.question_type === "multi_select"
             ? s.selectedMulti.length > 0
-            : s.selectedSingle !== null);
+            : q.question_type === "fill_in_blank"
+              ? (q.blanks ?? []).every(
+                  (b) => (s.blankValues[b.client_id] ?? "").trim().length > 0,
+                )
+              : q.question_type === "match"
+                ? (q.pairs ?? []).every((p) => s.matchLinks[p.client_id] !== undefined)
+                : s.selectedSingle !== null);
 
         return (
           <div key={q.client_id} className="bw-kc-question">
