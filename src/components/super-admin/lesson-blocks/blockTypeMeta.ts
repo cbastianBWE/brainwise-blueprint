@@ -210,6 +210,7 @@ export const BLOCK_TYPE_META: Record<
           back: emptyDoc(),
           front_image_asset_id: null,
           front_caption: null,
+          background_color: null,
         },
         {
           client_id: crypto.randomUUID(),
@@ -217,6 +218,7 @@ export const BLOCK_TYPE_META: Record<
           back: emptyDoc(),
           front_image_asset_id: null,
           front_caption: null,
+          background_color: null,
         },
       ],
       gating_required: false,

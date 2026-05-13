@@ -20,6 +20,7 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { RichTextEditor } from "../RichTextEditor";
 import { FileUploadField } from "@/components/super-admin/FileUploadField";
+import { BrandColorSwatch } from "../BrandColorSwatch";
 import type { TipTapDocJSON } from "../blockTypeMeta";
 
 type Card = {
@@ -28,6 +29,7 @@ type Card = {
   back: TipTapDocJSON;
   front_image_asset_id: string | null;
   front_caption: string | null;
+  background_color: string | null;
 };
 
 interface Props {
@@ -142,6 +144,17 @@ function SortableCard({
               compact
             />
           </div>
+
+          <div className="space-y-1">
+            <Label className="text-xs">Card color</Label>
+            <BrandColorSwatch
+              value={card.background_color}
+              onChange={(hex) => onChange({ ...card, background_color: hex })}
+              palette="full"
+              allowDefault
+              defaultLabel="Default"
+            />
+          </div>
         </div>
 
         <Button
@@ -206,6 +219,7 @@ export function FlashcardsBlockForm({ value, onConfigChange, contentItemId }: Pr
           back: emptyDoc(),
           front_image_asset_id: null,
           front_caption: null,
+          background_color: null,
         },
       ],
       gating_required: gatingRequired,

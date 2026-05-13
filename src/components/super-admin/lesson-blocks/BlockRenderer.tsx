@@ -663,7 +663,26 @@ type FlashcardConfig = {
   back: TipTapDocJSON | null;
   front_image_asset_id: string | null;
   front_caption: string | null;
+  background_color: string | null;
 };
+
+// Locked auto-pair: brand background color → text color. Author picks bg;
+// renderer derives text color. Sand and null get Navy text; everything else White.
+const FLASHCARD_TEXT_COLOR_FOR_BG: Record<string, string> = {
+  "#021F36": "#FFFFFF",
+  "#F5741A": "#FFFFFF",
+  "#F9F7F1": "#021F36",
+  "#006D77": "#FFFFFF",
+  "#7a5800": "#FFFFFF",
+  "#6D6875": "#FFFFFF",
+  "#3C096C": "#FFFFFF",
+  "#2D6A4F": "#FFFFFF",
+};
+
+function getFlashcardTextColorForBg(bg: string | null | undefined): string {
+  if (!bg) return "#021F36";
+  return FLASHCARD_TEXT_COLOR_FOR_BG[bg] ?? "#021F36";
+}
 
 function FlashcardsRender({
   cards,
@@ -808,6 +827,11 @@ function FlashcardsRender({
   const frontImageUrl = current?.front_image_asset_id
     ? urlMap.get(current.front_image_asset_id) ?? null
     : null;
+  const cardBg = current?.background_color ?? null;
+  const faceStyle: CSSProperties = {
+    backgroundColor: cardBg ?? "#FFFFFF",
+    color: getFlashcardTextColorForBg(cardBg),
+  };
 
   return (
     <div
@@ -835,7 +859,10 @@ function FlashcardsRender({
               role="button"
               aria-label="Flip card"
             >
-              <div className="bw-flashcards-face bw-flashcards-face-front">
+              <div
+                className="bw-flashcards-face bw-flashcards-face-front"
+                style={faceStyle}
+              >
                 {frontImageUrl && (
                   <img
                     src={frontImageUrl}
@@ -852,7 +879,10 @@ function FlashcardsRender({
                   <ReadOnlyTipTap json={current.front} />
                 </div>
               </div>
-              <div className="bw-flashcards-face bw-flashcards-face-back">
+              <div
+                className="bw-flashcards-face bw-flashcards-face-back"
+                style={faceStyle}
+              >
                 <div className="bw-flashcards-face-body">
                   <ReadOnlyTipTap json={current.back} />
                 </div>
