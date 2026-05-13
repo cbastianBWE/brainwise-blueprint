@@ -35,7 +35,8 @@ export type BlockType =
   | "tabs"
   | "button_stack"
   | "flashcards"
-  | "card_sort";
+  | "card_sort"
+  | "scenario";
 
 export type TipTapDocJSON = Record<string, unknown>;
 
