@@ -150,9 +150,29 @@ function seedForQuestionType(qType: QuestionType): Partial<Question> {
         events: undefined,
       };
     case "ranking":
-      return { choices: undefined, blanks: undefined, pairs: undefined, items: [], events: undefined };
+      return {
+        choices: undefined,
+        blanks: undefined,
+        pairs: undefined,
+        items: [
+          { client_id: crypto.randomUUID(), item_text: "" },
+          { client_id: crypto.randomUUID(), item_text: "" },
+          { client_id: crypto.randomUUID(), item_text: "" },
+        ],
+        events: undefined,
+      };
     case "timeline":
-      return { choices: undefined, blanks: undefined, pairs: undefined, items: undefined, events: [] };
+      return {
+        choices: undefined,
+        blanks: undefined,
+        pairs: undefined,
+        items: undefined,
+        events: [
+          { client_id: crypto.randomUUID(), event_label: "" },
+          { client_id: crypto.randomUUID(), event_label: "" },
+          { client_id: crypto.randomUUID(), event_label: "" },
+        ],
+      };
   }
 }
 
