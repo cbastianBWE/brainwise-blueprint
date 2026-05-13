@@ -961,3 +961,147 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* === Session 73: knowledge_check ranking + timeline === */
+
+.bw-kc-rank {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.bw-kc-rank-instruction,
+.bw-kc-timeline-instruction {
+  font-size: 0.8125rem;
+  color: #6D6875;
+  font-style: italic;
+}
+
+.bw-kc-rank-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.bw-kc-rank-item {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.625rem 0.75rem;
+  background: #FFFFFF;
+  border: 2px solid rgba(2, 31, 54, 0.16);
+  border-radius: 0.5rem;
+  cursor: grab;
+  font-size: 0.9375rem;
+  color: #021F36;
+  user-select: none;
+  transition: border-color 120ms ease, background 120ms ease;
+}
+.bw-kc-rank-item:hover {
+  border-color: #F5741A;
+}
+.bw-kc-rank-item.is-correct {
+  border-color: #2D6A4F;
+  background: rgba(45, 106, 79, 0.06);
+}
+.bw-kc-rank-item.is-wrong {
+  border-color: #D62828;
+  background: rgba(214, 40, 40, 0.04);
+}
+.bw-kc-rank-item.is-locked {
+  cursor: not-allowed;
+}
+
+.bw-kc-rank-index {
+  font-family: var(--font-display, "Poppins", sans-serif);
+  font-weight: 600;
+  color: #6D6875;
+  min-width: 1.5rem;
+}
+
+.bw-kc-rank-label {
+  flex: 1 1 auto;
+  line-height: 1.35;
+}
+
+.bw-kc-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.bw-kc-timeline-track {
+  display: flex;
+  flex-direction: row;
+  gap: 0.5rem;
+  padding: 0.875rem 0.5rem;
+  overflow-x: auto;
+  background: #F9F7F1;
+  border-radius: 0.5rem;
+  position: relative;
+}
+.bw-kc-timeline-track::before {
+  content: "";
+  position: absolute;
+  left: 0.5rem;
+  right: 0.5rem;
+  top: 50%;
+  height: 2px;
+  background: rgba(2, 31, 54, 0.18);
+  z-index: 0;
+}
+
+.bw-kc-timeline-event {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.5rem 0.625rem;
+  background: #FFFFFF;
+  border: 2px solid rgba(2, 31, 54, 0.16);
+  border-radius: 0.5rem;
+  cursor: grab;
+  font-size: 0.8125rem;
+  color: #021F36;
+  min-width: 7rem;
+  max-width: 9rem;
+  user-select: none;
+  text-align: center;
+  transition: border-color 120ms ease, background 120ms ease;
+}
+.bw-kc-timeline-event:hover {
+  border-color: #F5741A;
+}
+.bw-kc-timeline-event.is-correct {
+  border-color: #2D6A4F;
+  background: rgba(45, 106, 79, 0.08);
+}
+.bw-kc-timeline-event.is-wrong {
+  border-color: #D62828;
+  background: rgba(214, 40, 40, 0.04);
+}
+.bw-kc-timeline-event.is-locked {
+  cursor: not-allowed;
+}
+
+.bw-kc-timeline-index {
+  font-family: var(--font-display, "Poppins", sans-serif);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: #6D6875;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.bw-kc-timeline-label {
+  line-height: 1.35;
+}
+
+@media (max-width: 640px) {
+  .bw-kc-timeline-event {
+    min-width: 6rem;
+    max-width: 7.5rem;
+  }
+}
