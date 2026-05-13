@@ -272,6 +272,13 @@ export function BlockEditorPane({ block, onChange, contentItemId, siblingBlocks 
           contentItemId={contentItemId}
         />
       )}
+      {block.block_type === "card_sort" && (
+        <CardSortBlockForm
+          value={cfg}
+          onConfigChange={handleConfig}
+          contentItemId={contentItemId}
+        />
+      )}
 
       <BlockStyleSection value={cfg} onConfigChange={handleConfig} />
     </div>
