@@ -100,11 +100,11 @@ export function BlockEditorPane({ block, onChange, contentItemId, siblingBlocks 
     setRefineBusy(true);
     setRefineError(null);
     try {
-      const author_prompt = `${JSON.stringify(block.config)} --- Change request: ${refineText.trim()}`;
       const { data, error } = await supabase.functions.invoke("draft-lesson-block", {
         body: {
           block_type: block.block_type,
-          author_prompt,
+          author_prompt: refineText.trim(),
+          lesson_context: JSON.stringify(block.config),
           voice_preset_key: voicePresetKey ?? undefined,
           length: lengthPreference,
         },
