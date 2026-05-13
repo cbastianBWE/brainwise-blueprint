@@ -211,3 +211,123 @@
   margin-left: auto;
   margin-right: auto;
 }
+
+/* === Session 67: flashcards === */
+
+.bw-flashcards-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  outline: none;
+}
+.bw-flashcards-shell:focus-visible {
+  outline: 2px solid #F5741A;
+  outline-offset: 4px;
+  border-radius: 8px;
+}
+
+.bw-flashcards-progress {
+  text-align: center;
+  font-size: 0.875rem;
+  color: #6D6875;
+  font-family: var(--font-display, "Poppins", sans-serif);
+}
+
+.bw-flashcards-card-perspective {
+  perspective: 1200px;
+  perspective-origin: 50% 50%;
+  width: 100%;
+  max-width: 640px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.bw-flashcards-card {
+  position: relative;
+  width: 100%;
+  min-height: 320px;
+  transform-style: preserve-3d;
+  transition: transform 400ms cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+}
+.bw-flashcards-card.is-flipped {
+  transform: rotateY(180deg);
+}
+
+.bw-flashcards-face {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: stretch;
+  padding: 1.5rem 1.5rem;
+  background: #FFFFFF;
+  border: 1px solid hsl(var(--border));
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(2, 31, 54, 0.06);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  overflow-y: auto;
+}
+.bw-flashcards-face-back {
+  transform: rotateY(180deg);
+}
+
+.bw-flashcards-front-image {
+  display: block;
+  max-height: 16rem;
+  width: 100%;
+  object-fit: contain;
+  border-radius: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+.bw-flashcards-front-caption {
+  font-size: 0.875rem;
+  color: #6D6875;
+  text-align: center;
+  margin-bottom: 0.75rem;
+  line-height: 1.45;
+}
+
+.bw-flashcards-face-body {
+  width: 100%;
+}
+
+.bw-flashcards-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 640px;
+  margin-left: auto;
+  margin-right: auto;
+  gap: 0.5rem;
+}
+.bw-flashcards-controls-hint {
+  font-size: 0.8125rem;
+  color: #6D6875;
+}
+
+.bw-flashcards-rating {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  max-width: 640px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.bw-flashcards-done {
+  text-align: center;
+  padding: 1.25rem;
+  background: #F9F7F1;
+  border-radius: 0.5rem;
+  border: 1px solid hsl(var(--border));
+  font-family: var(--font-display, "Poppins", sans-serif);
+  color: #021F36;
+  font-weight: 500;
+}
+.bw-flashcards-done-reset {
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+}
