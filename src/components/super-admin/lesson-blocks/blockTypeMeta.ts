@@ -15,6 +15,7 @@ import {
   MousePointerClick as ButtonStackIcon,
   Layers,
   LayoutGrid,
+  GitBranch,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
