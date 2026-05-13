@@ -279,6 +279,28 @@ export const BLOCK_TYPE_META: Record<
       padding: "none",
     }),
   },
+  knowledge_check: {
+    label: "Knowledge check",
+    description: "1-5 questions across 7 question types",
+    icon: HelpCircle,
+    defaultConfig: () => ({
+      questions: [
+        {
+          client_id: crypto.randomUUID(),
+          question_type: "multiple_choice",
+          prompt_markdown: emptyDoc(),
+          explanation_markdown: emptyDoc(),
+          choices: [
+            { client_id: crypto.randomUUID(), choice_text: "", is_correct: false },
+            { client_id: crypto.randomUUID(), choice_text: "", is_correct: false },
+          ],
+        },
+      ],
+      gating_required: true,
+      background_color: null,
+      padding: "none",
+    }),
+  },
 };
 
 export const IN_SCOPE_BLOCK_TYPES: BlockType[] = [
@@ -299,6 +321,7 @@ export const IN_SCOPE_BLOCK_TYPES: BlockType[] = [
   "flashcards",
   "card_sort",
   "scenario",
+  "knowledge_check",
 ];
 
 export const CALLOUT_COLORS: Record<string, string> = {
