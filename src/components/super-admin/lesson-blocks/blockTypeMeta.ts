@@ -15,6 +15,7 @@ import {
   MousePointerClick as ButtonStackIcon,
   Layers,
   LayoutGrid,
+  GitBranch,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -34,7 +35,8 @@ export type BlockType =
   | "tabs"
   | "button_stack"
   | "flashcards"
-  | "card_sort";
+  | "card_sort"
+  | "scenario";
 
 export type TipTapDocJSON = Record<string, unknown>;
 
@@ -248,6 +250,33 @@ export const BLOCK_TYPE_META: Record<
       padding: "none",
     }),
   },
+  scenario: {
+    label: "Scenario",
+    description: "Linear narrative with multiple-choice or reflection moments",
+    icon: GitBranch,
+    defaultConfig: () => ({
+      title: null,
+      intro_markdown: null,
+      moments: [
+        {
+          client_id: crypto.randomUUID(),
+          moment_label: null,
+          setup_markdown: emptyDoc(),
+          setup_image_asset_id: null,
+          prompt_type: "multiple_choice",
+          choices: [
+            { client_id: crypto.randomUUID(), choice_text: "", outcome_markdown: emptyDoc() },
+            { client_id: crypto.randomUUID(), choice_text: "", outcome_markdown: emptyDoc() },
+          ],
+          reflection_prompt: null,
+          outcome_markdown: null,
+        },
+      ],
+      gating_required: false,
+      background_color: null,
+      padding: "none",
+    }),
+  },
 };
 
 export const IN_SCOPE_BLOCK_TYPES: BlockType[] = [
@@ -267,6 +296,7 @@ export const IN_SCOPE_BLOCK_TYPES: BlockType[] = [
   "button_stack",
   "flashcards",
   "card_sort",
+  "scenario",
 ];
 
 export const CALLOUT_COLORS: Record<string, string> = {
