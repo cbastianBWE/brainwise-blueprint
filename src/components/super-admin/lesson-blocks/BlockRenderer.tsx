@@ -1840,6 +1840,10 @@ function KnowledgeCheckRender({
             selectedMulti: Array.isArray(prior.selectedMulti)
               ? prior.selectedMulti.filter((s: any) => typeof s === "string")
               : [],
+            blankValues:
+              prior.blankValues && typeof prior.blankValues === "object" ? prior.blankValues : {},
+            matchLinks:
+              prior.matchLinks && typeof prior.matchLinks === "object" ? prior.matchLinks : {},
             revealed: prior.revealed === true,
             lastWrong: false,
           };
