@@ -1762,6 +1762,8 @@ function ScenarioRender({
 type KCChoice = { client_id: string; choice_text: string; is_correct: boolean };
 type KCBlank = { client_id: string; correct_value: string; acceptable_alternatives: string[] };
 type KCPair = { client_id: string; left: string; right: string };
+type KCRankItem = { client_id: string; item_text: string };
+type KCTimelineEvent = { client_id: string; event_label: string };
 
 type KnowledgeCheckQuestionConfig = {
   client_id: string;
@@ -1778,6 +1780,8 @@ type KnowledgeCheckQuestionConfig = {
   choices?: KCChoice[];
   blanks?: KCBlank[];
   pairs?: KCPair[];
+  items?: KCRankItem[];
+  events?: KCTimelineEvent[];
 };
 
 type KCPerQuestionState = {
@@ -1785,6 +1789,8 @@ type KCPerQuestionState = {
   selectedMulti: string[];
   blankValues: Record<string, string>;
   matchLinks: Record<string, string>;
+  rankOrder: string[];
+  timelineOrder: string[];
   revealed: boolean;
   lastWrong: boolean;
 };
@@ -1795,6 +1801,8 @@ const KC_IMPLEMENTED_TYPES = new Set([
   "true_false",
   "fill_in_blank",
   "match",
+  "ranking",
+  "timeline",
 ]);
 
 function emptyKCState(): KCPerQuestionState {
@@ -1803,9 +1811,22 @@ function emptyKCState(): KCPerQuestionState {
     selectedMulti: [],
     blankValues: {},
     matchLinks: {},
+    rankOrder: [],
+    timelineOrder: [],
     revealed: false,
     lastWrong: false,
   };
+}
+
+function stableShuffle<T extends { client_id: string }>(items: T[], seed: string): T[] {
+  const hashStr = (s: string): number => {
+    let h = 0;
+    for (let i = 0; i < s.length; i++) {
+      h = (h * 31 + s.charCodeAt(i)) | 0;
+    }
+    return h;
+  };
+  return [...items].sort((a, b) => hashStr(seed + a.client_id) - hashStr(seed + b.client_id));
 }
 
 function KnowledgeCheckRender({
