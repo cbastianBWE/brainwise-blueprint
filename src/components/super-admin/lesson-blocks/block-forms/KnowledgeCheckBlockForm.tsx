@@ -121,9 +121,26 @@ function seedForQuestionType(qType: QuestionType): Partial<Question> {
         events: undefined,
       };
     case "fill_in_blank":
-      return { choices: undefined, blanks: [], pairs: undefined, items: undefined, events: undefined };
+      return {
+        choices: undefined,
+        blanks: [
+          { client_id: crypto.randomUUID(), correct_value: "", acceptable_alternatives: [] },
+        ],
+        pairs: undefined,
+        items: undefined,
+        events: undefined,
+      };
     case "match":
-      return { choices: undefined, blanks: undefined, pairs: [], items: undefined, events: undefined };
+      return {
+        choices: undefined,
+        blanks: undefined,
+        pairs: [
+          { client_id: crypto.randomUUID(), left: "", right: "" },
+          { client_id: crypto.randomUUID(), left: "", right: "" },
+        ],
+        items: undefined,
+        events: undefined,
+      };
     case "ranking":
       return { choices: undefined, blanks: undefined, pairs: undefined, items: [], events: undefined };
     case "timeline":
