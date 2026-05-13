@@ -790,7 +790,7 @@ function FlashcardsRender({
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+  const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
     if (allDone) return;
     if (e.key === "ArrowLeft") {
       e.preventDefault();
