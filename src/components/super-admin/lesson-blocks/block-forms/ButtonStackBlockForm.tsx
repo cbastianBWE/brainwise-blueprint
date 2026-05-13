@@ -13,7 +13,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, X, Plus, Link2, ArrowDownToLine } from "lucide-react";
+import { GripVertical, X, Plus, Link2, ArrowDownToLine, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -28,7 +28,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { BLOCK_TYPE_META, extractTextFromTipTap, type EditorBlock } from "../blockTypeMeta";
 
-type ActionType = "link" | "jump_to_block";
+type ActionType = "link" | "jump_to_block" | "continue";
 type ButtonVariant = "primary" | "secondary";
 type Layout = "stacked" | "inline";
 
@@ -38,6 +38,7 @@ type ButtonEntry = {
   action_type: ActionType;
   url: string | null;
   target_block_client_id: string | null;
+  section_title: string | null;
   variant: ButtonVariant;
 };
 
@@ -82,8 +83,27 @@ function friendlyBlockLabel(block: EditorBlock): string {
       return `${typeLabel}${cfg.transcript ? " (with transcript)" : ""}`;
     case "divider":
       return typeLabel;
-    case "button_stack":
-      return `${typeLabel} (${(cfg.buttons ?? []).length} buttons)`;
+    case "button_stack": {
+      const btns = cfg.buttons ?? [];
+      const continueBtns = btns.filter(
+        (b: { action_type?: string }) => b?.action_type === "continue",
+      );
+      if (continueBtns.length > 0) {
+        const firstContinue = continueBtns[0] as {
+          section_title?: string | null;
+          label?: string;
+        };
+        const namedSection =
+          (firstContinue.section_title && firstContinue.section_title.trim()) ||
+          (firstContinue.label && firstContinue.label.trim()) ||
+          "";
+        if (namedSection) {
+          return `Continue: ${namedSection}`.slice(0, 80);
+        }
+        return `Continue (${continueBtns.length === 1 ? "section break" : `${continueBtns.length} section breaks`})`;
+      }
+      return `${typeLabel} (${btns.length} buttons)`;
+    }
     default:
       return typeLabel;
   }
