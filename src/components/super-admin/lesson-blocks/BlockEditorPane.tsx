@@ -264,6 +264,13 @@ export function BlockEditorPane({ block, onChange, contentItemId, siblingBlocks 
           siblingBlocks={siblingBlocks.filter((b) => b.client_id !== block.client_id)}
         />
       )}
+      {block.block_type === "flashcards" && (
+        <FlashcardsBlockForm
+          value={cfg}
+          onConfigChange={handleConfig}
+          contentItemId={contentItemId}
+        />
+      )}
 
       <BlockStyleSection value={cfg} onConfigChange={handleConfig} />
     </div>
