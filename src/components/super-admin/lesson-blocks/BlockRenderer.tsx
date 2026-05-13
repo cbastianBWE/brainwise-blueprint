@@ -2412,3 +2412,203 @@ function MatchTrainee({
     </div>
   );
 }
+
+function RankingTraineeItem({
+  id,
+  index,
+  label,
+  revealed,
+  isCorrectPosition,
+  isWrongPosition,
+}: {
+  id: string;
+  index: number;
+  label: string;
+  revealed: boolean;
+  isCorrectPosition: boolean;
+  isWrongPosition: boolean;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id,
+    disabled: revealed,
+  });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+  const cls = [
+    "bw-kc-rank-item",
+    isCorrectPosition ? "is-correct" : "",
+    isWrongPosition ? "is-wrong" : "",
+    revealed ? "is-locked" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+  return (
+    <div ref={setNodeRef} style={style} className={cls} {...attributes} {...listeners}>
+      <span className="bw-kc-rank-index">{index + 1}.</span>
+      <span className="bw-kc-rank-label">{label}</span>
+    </div>
+  );
+}
+
+function RankingTrainee({
+  question,
+  state,
+  onReorder,
+}: {
+  question: KnowledgeCheckQuestionConfig;
+  state: KCPerQuestionState;
+  onReorder: (fromIdx: number, toIdx: number) => void;
+}) {
+  const items = question.items ?? [];
+  const itemsById = new Map(items.map((i) => [i.client_id, i]));
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
+
+  const handleDragEnd = (e: DragEndEvent) => {
+    const { active, over } = e;
+    if (!over || active.id === over.id) return;
+    const activeId = String(active.id).replace(/^kc-rank-trainee:/, "");
+    const overId = String(over.id).replace(/^kc-rank-trainee:/, "");
+    const from = state.rankOrder.indexOf(activeId);
+    const to = state.rankOrder.indexOf(overId);
+    if (from < 0 || to < 0) return;
+    onReorder(from, to);
+  };
+
+  const correctOrder = items.map((i) => i.client_id);
+
+  return (
+    <div className="bw-kc-rank">
+      <p className="bw-kc-rank-instruction">Drag items into the correct order.</p>
+      <DndContext sensors={sensors} collisionDetection={pointerWithin} onDragEnd={handleDragEnd}>
+        <SortableContext
+          items={state.rankOrder.map((id) => `kc-rank-trainee:${id}`)}
+          strategy={verticalListSortingStrategy}
+        >
+          <div className="bw-kc-rank-list">
+            {state.rankOrder.map((id, idx) => {
+              const item = itemsById.get(id);
+              if (!item) return null;
+              const isCorrectPosition = state.revealed && correctOrder[idx] === id;
+              const isWrongPosition = state.lastWrong && correctOrder[idx] !== id;
+              return (
+                <RankingTraineeItem
+                  key={id}
+                  id={`kc-rank-trainee:${id}`}
+                  index={idx}
+                  label={item.item_text}
+                  revealed={state.revealed}
+                  isCorrectPosition={isCorrectPosition}
+                  isWrongPosition={isWrongPosition}
+                />
+              );
+            })}
+          </div>
+        </SortableContext>
+      </DndContext>
+    </div>
+  );
+}
+
+function TimelineTraineeItem({
+  id,
+  index,
+  label,
+  revealed,
+  isCorrectPosition,
+  isWrongPosition,
+}: {
+  id: string;
+  index: number;
+  label: string;
+  revealed: boolean;
+  isCorrectPosition: boolean;
+  isWrongPosition: boolean;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id,
+    disabled: revealed,
+  });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+  const cls = [
+    "bw-kc-timeline-event",
+    isCorrectPosition ? "is-correct" : "",
+    isWrongPosition ? "is-wrong" : "",
+    revealed ? "is-locked" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+  return (
+    <div ref={setNodeRef} style={style} className={cls} {...attributes} {...listeners}>
+      <span className="bw-kc-timeline-index">{index + 1}</span>
+      <span className="bw-kc-timeline-label">{label}</span>
+    </div>
+  );
+}
+
+function TimelineTrainee({
+  question,
+  state,
+  onReorder,
+}: {
+  question: KnowledgeCheckQuestionConfig;
+  state: KCPerQuestionState;
+  onReorder: (fromIdx: number, toIdx: number) => void;
+}) {
+  const events = question.events ?? [];
+  const eventsById = new Map(events.map((e) => [e.client_id, e]));
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
+
+  const handleDragEnd = (e: DragEndEvent) => {
+    const { active, over } = e;
+    if (!over || active.id === over.id) return;
+    const activeId = String(active.id).replace(/^kc-timeline-trainee:/, "");
+    const overId = String(over.id).replace(/^kc-timeline-trainee:/, "");
+    const from = state.timelineOrder.indexOf(activeId);
+    const to = state.timelineOrder.indexOf(overId);
+    if (from < 0 || to < 0) return;
+    onReorder(from, to);
+  };
+
+  const correctOrder = events.map((e) => e.client_id);
+
+  return (
+    <div className="bw-kc-timeline">
+      <p className="bw-kc-timeline-instruction">
+        Drag events into chronological order (earliest on the left).
+      </p>
+      <DndContext sensors={sensors} collisionDetection={pointerWithin} onDragEnd={handleDragEnd}>
+        <SortableContext
+          items={state.timelineOrder.map((id) => `kc-timeline-trainee:${id}`)}
+          strategy={horizontalListSortingStrategy}
+        >
+          <div className="bw-kc-timeline-track">
+            {state.timelineOrder.map((id, idx) => {
+              const ev = eventsById.get(id);
+              if (!ev) return null;
+              const isCorrectPosition = state.revealed && correctOrder[idx] === id;
+              const isWrongPosition = state.lastWrong && correctOrder[idx] !== id;
+              return (
+                <TimelineTraineeItem
+                  key={id}
+                  id={`kc-timeline-trainee:${id}`}
+                  index={idx}
+                  label={ev.event_label}
+                  revealed={state.revealed}
+                  isCorrectPosition={isCorrectPosition}
+                  isWrongPosition={isWrongPosition}
+                />
+              );
+            })}
+          </div>
+        </SortableContext>
+      </DndContext>
+    </div>
+  );
+}
