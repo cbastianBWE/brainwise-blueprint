@@ -388,6 +388,208 @@ function TrueFalseEditor({
   );
 }
 
+function FillInBlankEditor({
+  question,
+  onChange,
+}: {
+  question: Question;
+  onChange: (next: Question) => void;
+}) {
+  const blanks = question.blanks ?? [];
+
+  const handleBlankChange = (next: Blank) => {
+    onChange({
+      ...question,
+      blanks: blanks.map((b) => (b.client_id === next.client_id ? next : b)),
+    });
+  };
+
+  const handleAddBlank = () => {
+    if (blanks.length >= MAX_BLANKS) return;
+    onChange({
+      ...question,
+      blanks: [
+        ...blanks,
+        { client_id: crypto.randomUUID(), correct_value: "", acceptable_alternatives: [] },
+      ],
+    });
+  };
+
+  const handleDeleteBlank = (clientId: string) => {
+    if (blanks.length <= MIN_BLANKS) return;
+    onChange({ ...question, blanks: blanks.filter((b) => b.client_id !== clientId) });
+  };
+
+  const handleAlternativesChange = (blank: Blank, raw: string) => {
+    const list = raw
+      .split(",")
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0);
+    handleBlankChange({ ...blank, acceptable_alternatives: list });
+  };
+
+  return (
+    <div className="space-y-2">
+      <p className="text-xs text-muted-foreground">
+        Use ___ (three underscores) in the question prompt to mark each blank. Add one row below per blank in order of appearance.
+      </p>
+      <div className="space-y-2">
+        {blanks.map((blank, idx) => (
+          <div key={blank.client_id} className="space-y-2 rounded-md border bg-background p-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium text-muted-foreground">Blank {idx + 1}</span>
+              <Button
+                type="button"
+                size="icon"
+                variant="ghost"
+                className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                onClick={() => handleDeleteBlank(blank.client_id)}
+                aria-label="Remove blank"
+                disabled={blanks.length <= MIN_BLANKS}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">
+                Correct value (case-insensitive match)
+              </Label>
+              <Input
+                value={blank.correct_value}
+                onChange={(e) => handleBlankChange({ ...blank, correct_value: e.target.value })}
+                maxLength={MAX_BLANK_VALUE}
+                placeholder="The exact answer expected"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">
+                Acceptable alternatives (comma-separated, optional)
+              </Label>
+              <Input
+                value={blank.acceptable_alternatives.join(", ")}
+                onChange={(e) => handleAlternativesChange(blank, e.target.value)}
+                placeholder="e.g. synonym1, synonym2"
+              />
+              <p className="text-xs text-muted-foreground">
+                Each alternative is also case-insensitive. Use for valid synonyms or alternate spellings.
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        onClick={handleAddBlank}
+        disabled={blanks.length >= MAX_BLANKS}
+      >
+        <Plus className="mr-1 h-4 w-4" />
+        Add blank
+      </Button>
+      {blanks.length >= MAX_BLANKS && (
+        <p className="text-xs text-muted-foreground">Max {MAX_BLANKS} blanks per question.</p>
+      )}
+    </div>
+  );
+}
+
+function MatchEditor({
+  question,
+  onChange,
+}: {
+  question: Question;
+  onChange: (next: Question) => void;
+}) {
+  const pairs = question.pairs ?? [];
+
+  const handlePairChange = (next: Pair) => {
+    onChange({
+      ...question,
+      pairs: pairs.map((p) => (p.client_id === next.client_id ? next : p)),
+    });
+  };
+
+  const handleAddPair = () => {
+    if (pairs.length >= MAX_PAIRS) return;
+    onChange({
+      ...question,
+      pairs: [
+        ...pairs,
+        { client_id: crypto.randomUUID(), left: "", right: "" },
+      ],
+    });
+  };
+
+  const handleDeletePair = (clientId: string) => {
+    if (pairs.length <= MIN_PAIRS) return;
+    onChange({ ...question, pairs: pairs.filter((p) => p.client_id !== clientId) });
+  };
+
+  return (
+    <div className="space-y-2">
+      <p className="text-xs text-muted-foreground">
+        Define {MIN_PAIRS}-{MAX_PAIRS} pairs. Trainees see the right column shuffled and link each right item to its left match.
+      </p>
+      <div className="space-y-2">
+        {pairs.map((pair, idx) => (
+          <div key={pair.client_id} className="space-y-2 rounded-md border bg-background p-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium text-muted-foreground">Pair {idx + 1}</span>
+              <Button
+                type="button"
+                size="icon"
+                variant="ghost"
+                className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                onClick={() => handleDeletePair(pair.client_id)}
+                aria-label="Remove pair"
+                disabled={pairs.length <= MIN_PAIRS}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              <div className="space-y-1">
+                <Label className="text-xs uppercase tracking-wide text-muted-foreground">Left</Label>
+                <Input
+                  value={pair.left}
+                  onChange={(e) => handlePairChange({ ...pair, left: e.target.value })}
+                  maxLength={MAX_PAIR_TEXT}
+                  placeholder="Left item"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs uppercase tracking-wide text-muted-foreground">
+                  Right (correct match)
+                </Label>
+                <Input
+                  value={pair.right}
+                  onChange={(e) => handlePairChange({ ...pair, right: e.target.value })}
+                  maxLength={MAX_PAIR_TEXT}
+                  placeholder="Matching right item"
+                />
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        onClick={handleAddPair}
+        disabled={pairs.length >= MAX_PAIRS}
+      >
+        <Plus className="mr-1 h-4 w-4" />
+        Add pair
+      </Button>
+      {pairs.length >= MAX_PAIRS && (
+        <p className="text-xs text-muted-foreground">Max {MAX_PAIRS} pairs.</p>
+      )}
+    </div>
+  );
+}
+
 function SortableQuestion({
   question,
   index,
