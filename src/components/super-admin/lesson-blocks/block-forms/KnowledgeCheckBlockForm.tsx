@@ -74,13 +74,26 @@ const QUESTION_TYPE_OPTIONS: { value: QuestionType; label: string }[] = [
   { value: "multiple_choice", label: "Multiple choice" },
   { value: "multi_select", label: "Multi-select" },
   { value: "true_false", label: "True / False" },
-  { value: "fill_in_blank", label: "Fill in the blank (coming soon)" },
-  { value: "match", label: "Match (coming soon)" },
+  { value: "fill_in_blank", label: "Fill in the blank" },
+  { value: "match", label: "Match" },
   { value: "ranking", label: "Ranking (coming soon)" },
   { value: "timeline", label: "Timeline (coming soon)" },
 ];
 
-const IMPLEMENTED_TYPES: QuestionType[] = ["multiple_choice", "multi_select", "true_false"];
+const IMPLEMENTED_TYPES: QuestionType[] = [
+  "multiple_choice",
+  "multi_select",
+  "true_false",
+  "fill_in_blank",
+  "match",
+];
+
+const MAX_BLANK_VALUE = 120;
+const MIN_BLANKS = 1;
+const MAX_BLANKS = 5;
+const MAX_PAIR_TEXT = 120;
+const MIN_PAIRS = 2;
+const MAX_PAIRS = 6;
 
 function seedForQuestionType(qType: QuestionType): Partial<Question> {
   switch (qType) {
