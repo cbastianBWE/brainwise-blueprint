@@ -6,6 +6,7 @@ import { X } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { CoachDisclosureGate } from "@/components/coach/CoachDisclosureGate";
 
 interface CouponData {
   stripe_coupon_id: string | null;
