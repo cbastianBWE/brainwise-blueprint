@@ -2242,6 +2242,22 @@ function KnowledgeCheckRender({
               />
             )}
 
+            {isImplemented && q.question_type === "ranking" && (
+              <RankingTrainee
+                question={q}
+                state={s}
+                onReorder={(from, to) => handleRankReorder(q.client_id, from, to)}
+              />
+            )}
+
+            {isImplemented && q.question_type === "timeline" && (
+              <TimelineTrainee
+                question={q}
+                state={s}
+                onReorder={(from, to) => handleTimelineReorder(q.client_id, from, to)}
+              />
+            )}
+
             {isImplemented && (
               <div className="bw-kc-controls">
                 {!s.revealed ? (
