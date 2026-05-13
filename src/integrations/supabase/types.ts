@@ -584,6 +584,81 @@ export type Database = {
           },
         ]
       }
+      assessment_acknowledgments: {
+        Row: {
+          acknowledged_at: string
+          acknowledgment_kind: string
+          assessment_id: string
+          id: string
+          instrument_id: string
+          ip_address: unknown
+          rater_type: string
+          user_agent: string | null
+          user_id: string
+          version_hash: string
+        }
+        Insert: {
+          acknowledged_at?: string
+          acknowledgment_kind?: string
+          assessment_id: string
+          id?: string
+          instrument_id: string
+          ip_address?: unknown
+          rater_type?: string
+          user_agent?: string | null
+          user_id: string
+          version_hash: string
+        }
+        Update: {
+          acknowledged_at?: string
+          acknowledgment_kind?: string
+          assessment_id?: string
+          id?: string
+          instrument_id?: string
+          ip_address?: unknown
+          rater_type?: string
+          user_agent?: string | null
+          user_id?: string
+          version_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assessment_acknowledgments_assessment_id_fkey"
+            columns: ["assessment_id"]
+            isOneToOne: false
+            referencedRelation: "assessments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessment_acknowledgments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessment_acknowledgments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "assessment_acknowledgments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessment_acknowledgments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       assessment_purchases: {
         Row: {
           amount_paid: number
@@ -8639,6 +8714,15 @@ export type Database = {
       }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
+      start_assessment: {
+        Args: {
+          p_acknowledgment_version_hash?: string
+          p_instrument_id: string
+          p_preexisting_assessment_id?: string
+          p_rater_type?: string
+        }
+        Returns: Json
+      }
       start_epn_assessment: {
         Args: { p_assignment_id: string }
         Returns: string
