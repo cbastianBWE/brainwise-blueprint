@@ -2,7 +2,7 @@ import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { TextStyleWithFontSize } from "./TextStyleWithFontSize";
 import { Link } from "@tiptap/extension-link";
-import { useEffect, type CSSProperties } from "react";
+import { useEffect, useState, type CSSProperties, type KeyboardEvent } from "react";
 import {
   Info,
   AlertTriangle,
@@ -281,7 +281,7 @@ function paddingPxFor(token: unknown): number {
   }
 }
 
-export function BlockRenderer({ block, assetUrlMap }: BlockRendererProps) {
+export function BlockRenderer({ block, assetUrlMap, mode }: BlockRendererProps) {
   const cfg: any = block.config ?? {};
   const bg = (cfg.background_color as string | null | undefined) ?? null;
   const padPx = paddingPxFor(cfg.padding);
@@ -381,6 +381,16 @@ export function BlockRenderer({ block, assetUrlMap }: BlockRendererProps) {
             buttons={cfg.buttons ?? []}
             layout={cfg.layout === "inline" ? "inline" : "stacked"}
             caption={cfg.caption ?? null}
+          />
+        );
+      case "flashcards":
+        return (
+          <FlashcardsRender
+            cards={cfg.cards ?? []}
+            gatingRequired={cfg.gating_required === true}
+            urlMap={assetUrlMap}
+            mode={mode}
+            blockClientId={block.client_id}
           />
         );
       default:
@@ -642,5 +652,281 @@ function ButtonStackRender({
         <p className="bw-button-stack-caption">{caption}</p>
       )}
     </>
+  );
+}
+
+// === Session 67: flashcards renderer ===
+
+type FlashcardConfig = {
+  client_id: string;
+  front: TipTapDocJSON | null;
+  back: TipTapDocJSON | null;
+  front_image_asset_id: string | null;
+  front_caption: string | null;
+};
+
+function FlashcardsRender({
+  cards,
+  urlMap,
+  mode,
+  blockClientId,
+}: {
+  cards: FlashcardConfig[];
+  gatingRequired: boolean;
+  urlMap: Map<string, string>;
+  mode?: "editor" | "trainee";
+  blockClientId: string;
+}) {
+  const initialQueue = cards.map((c) => c.client_id);
+  const sessionKey = `flashcards-pos:${blockClientId}`;
+
+  const [queue, setQueue] = useState<string[]>(initialQueue);
+  const [cursorIdx, setCursorIdx] = useState(0);
+  const [completed, setCompleted] = useState<Set<string>>(new Set());
+  const [reviewCounts, setReviewCounts] = useState<Record<string, number>>({});
+  const [flipped, setFlipped] = useState(false);
+  const [hasBeenFlipped, setHasBeenFlipped] = useState<Record<string, boolean>>({});
+
+  // Hydrate from sessionStorage in trainee mode.
+  useEffect(() => {
+    if (mode !== "trainee" || typeof window === "undefined") return;
+    try {
+      const raw = window.sessionStorage.getItem(sessionKey);
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed.queue)) setQueue(parsed.queue);
+      if (typeof parsed.cursorIdx === "number") setCursorIdx(parsed.cursorIdx);
+      if (Array.isArray(parsed.completed)) setCompleted(new Set(parsed.completed));
+      if (parsed.reviewCounts && typeof parsed.reviewCounts === "object") {
+        setReviewCounts(parsed.reviewCounts);
+      }
+    } catch {
+      /* ignore */
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionKey, mode]);
+
+  // Persist to sessionStorage in trainee mode.
+  useEffect(() => {
+    if (mode !== "trainee" || typeof window === "undefined") return;
+    try {
+      window.sessionStorage.setItem(
+        sessionKey,
+        JSON.stringify({
+          queue,
+          cursorIdx,
+          completed: Array.from(completed),
+          reviewCounts,
+        }),
+      );
+    } catch {
+      /* ignore quota */
+    }
+  }, [queue, cursorIdx, completed, reviewCounts, sessionKey, mode]);
+
+  // Reset flip state when card changes.
+  useEffect(() => {
+    setFlipped(false);
+  }, [cursorIdx, queue]);
+
+  if (cards.length === 0) {
+    return (
+      <div className="flex h-32 items-center justify-center rounded-md border border-dashed bg-muted/30 text-sm text-muted-foreground">
+        No flashcards yet.
+      </div>
+    );
+  }
+
+  const cardsById = new Map(cards.map((c) => [c.client_id, c]));
+  const allDone = completed.size >= cards.length;
+  const currentId =
+    !allDone && cursorIdx < queue.length ? queue[cursorIdx] : null;
+  const current = currentId ? cardsById.get(currentId) ?? null : null;
+
+  const handleFlip = () => {
+    if (!currentId) return;
+    setFlipped((f) => !f);
+    setHasBeenFlipped((m) => ({ ...m, [currentId]: true }));
+  };
+
+  const handleGotIt = () => {
+    if (!currentId) return;
+    setCompleted((prev) => {
+      const next = new Set(prev);
+      next.add(currentId);
+      return next;
+    });
+    setCursorIdx((i) => Math.min(i + 1, queue.length));
+  };
+
+  const handleReviewAgain = () => {
+    if (!currentId) return;
+    setQueue((q) => [...q, currentId]);
+    setReviewCounts((r) => ({ ...r, [currentId]: (r[currentId] ?? 0) + 1 }));
+    setCursorIdx((i) => i + 1);
+  };
+
+  const handlePrev = () => {
+    setCursorIdx((i) => Math.max(0, i - 1));
+  };
+
+  const handleNext = () => {
+    setCursorIdx((i) => Math.min(queue.length - 1, i + 1));
+  };
+
+  const handleReset = () => {
+    setQueue(initialQueue);
+    setCursorIdx(0);
+    setCompleted(new Set());
+    setReviewCounts({});
+    setFlipped(false);
+    setHasBeenFlipped({});
+    if (mode === "trainee" && typeof window !== "undefined") {
+      try {
+        window.sessionStorage.removeItem(sessionKey);
+      } catch {
+        /* ignore */
+      }
+    }
+  };
+
+  const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+    if (allDone) return;
+    if (e.key === "ArrowLeft") {
+      e.preventDefault();
+      handlePrev();
+    } else if (e.key === "ArrowRight") {
+      e.preventDefault();
+      handleNext();
+    } else if (e.key === " " || e.key === "Enter") {
+      e.preventDefault();
+      handleFlip();
+    }
+  };
+
+  const showRating = currentId ? hasBeenFlipped[currentId] === true : false;
+  const frontImageUrl = current?.front_image_asset_id
+    ? urlMap.get(current.front_image_asset_id) ?? null
+    : null;
+
+  return (
+    <div
+      className="bw-flashcards-shell"
+      tabIndex={0}
+      onKeyDown={handleKeyDown}
+    >
+      <div className="bw-flashcards-progress">
+        {allDone || !current ? (
+          <>All cards reviewed · {cards.length} cards</>
+        ) : (
+          <>
+            Card {cursorIdx + 1} of {queue.length} · {completed.size} of{" "}
+            {cards.length} completed
+          </>
+        )}
+      </div>
+
+      {current && !allDone && (
+        <>
+          <div className="bw-flashcards-card-perspective">
+            <div
+              className={`bw-flashcards-card${flipped ? " is-flipped" : ""}`}
+              onClick={handleFlip}
+              role="button"
+              aria-label="Flip card"
+            >
+              <div className="bw-flashcards-face bw-flashcards-face-front">
+                {frontImageUrl && (
+                  <img
+                    src={frontImageUrl}
+                    alt=""
+                    className="bw-flashcards-front-image"
+                  />
+                )}
+                {current.front_caption && (
+                  <div className="bw-flashcards-front-caption">
+                    {current.front_caption}
+                  </div>
+                )}
+                <div className="bw-flashcards-face-body">
+                  <ReadOnlyTipTap json={current.front} />
+                </div>
+              </div>
+              <div className="bw-flashcards-face bw-flashcards-face-back">
+                <div className="bw-flashcards-face-body">
+                  <ReadOnlyTipTap json={current.back} />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="bw-flashcards-controls">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                handlePrev();
+              }}
+              disabled={cursorIdx === 0}
+            >
+              ← Prev
+            </Button>
+            <span className="bw-flashcards-controls-hint">
+              Click card to flip · ←/→ to navigate
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleNext();
+              }}
+              disabled={cursorIdx >= queue.length - 1}
+            >
+              Next →
+            </Button>
+          </div>
+
+          {showRating && (
+            <div className="bw-flashcards-rating">
+              <Button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleGotIt();
+                }}
+                style={{ backgroundColor: "#F5741A", color: "white" }}
+              >
+                Got it
+              </Button>
+              <Button
+                variant="outline"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleReviewAgain();
+                }}
+                style={{ borderColor: "#021F36", color: "#021F36" }}
+              >
+                Review again
+              </Button>
+            </div>
+          )}
+        </>
+      )}
+
+      {allDone && (
+        <div className="bw-flashcards-done">
+          <p>All cards reviewed · {cards.length} cards</p>
+          <button
+            type="button"
+            onClick={handleReset}
+            className="bw-flashcards-done-reset underline"
+            style={{ color: "#F5741A" }}
+          >
+            Review again
+          </button>
+        </div>
+      )}
+    </div>
   );
 }

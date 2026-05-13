@@ -7569,6 +7569,13 @@ export type Database = {
         Args: { p_asset_id: string }
         Returns: undefined
       }
+      _walk_block_config_for_asset_refs: {
+        Args: { p_block_type: string; p_config: Json }
+        Returns: {
+          out_asset_id: string
+          out_ref_field: string
+        }[]
+      }
       admin_assign_org_admin: {
         Args: {
           p_is_transfer: boolean

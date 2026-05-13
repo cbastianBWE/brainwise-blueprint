@@ -26,6 +26,7 @@ import { StatementABBlockForm } from "./block-forms/StatementABBlockForm";
 import { AccordionBlockForm } from "./block-forms/AccordionBlockForm";
 import { TabsBlockForm } from "./block-forms/TabsBlockForm";
 import { ButtonStackBlockForm } from "./block-forms/ButtonStackBlockForm";
+import { FlashcardsBlockForm } from "./block-forms/FlashcardsBlockForm";
 import { BlockStyleSection } from "./BlockStyleSection";
 import { mapAiError } from "./ai-pane/mapAiError";
 import { COST_ESTIMATES } from "./ai-pane/costEstimates";
@@ -261,6 +262,13 @@ export function BlockEditorPane({ block, onChange, contentItemId, siblingBlocks 
           value={cfg}
           onConfigChange={handleConfig}
           siblingBlocks={siblingBlocks.filter((b) => b.client_id !== block.client_id)}
+        />
+      )}
+      {block.block_type === "flashcards" && (
+        <FlashcardsBlockForm
+          value={cfg}
+          onConfigChange={handleConfig}
+          contentItemId={contentItemId}
         />
       )}
 
