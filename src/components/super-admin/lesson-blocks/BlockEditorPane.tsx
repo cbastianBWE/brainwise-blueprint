@@ -28,6 +28,7 @@ import { TabsBlockForm } from "./block-forms/TabsBlockForm";
 import { ButtonStackBlockForm } from "./block-forms/ButtonStackBlockForm";
 import { FlashcardsBlockForm } from "./block-forms/FlashcardsBlockForm";
 import { CardSortBlockForm } from "./block-forms/CardSortBlockForm";
+import { ScenarioBlockForm } from "./block-forms/ScenarioBlockForm";
 import { BlockStyleSection } from "./BlockStyleSection";
 import { mapAiError } from "./ai-pane/mapAiError";
 import { COST_ESTIMATES } from "./ai-pane/costEstimates";
