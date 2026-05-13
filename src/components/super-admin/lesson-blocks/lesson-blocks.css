@@ -260,7 +260,7 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
-  align-items: stretch;
+  align-items: center;
   padding: 1.5rem 1.5rem;
   background: #FFFFFF;
   border: 1px solid hsl(var(--border));
@@ -269,6 +269,7 @@
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
   overflow-y: auto;
+  text-align: center;
 }
 .bw-flashcards-face-back {
   transform: rotateY(180deg);
@@ -284,7 +285,8 @@
 }
 .bw-flashcards-front-caption {
   font-size: 0.875rem;
-  color: #6D6875;
+  color: inherit;
+  opacity: 0.75;
   text-align: center;
   margin-bottom: 0.75rem;
   line-height: 1.45;
@@ -292,6 +294,16 @@
 
 .bw-flashcards-face-body {
   width: 100%;
+  font-size: 1.5rem;
+  line-height: 1.4;
+  color: inherit;
+}
+.bw-flashcards-face-body p,
+.bw-flashcards-face-body li,
+.bw-flashcards-face-body strong,
+.bw-flashcards-face-body em {
+  font-size: inherit;
+  color: inherit;
 }
 
 .bw-flashcards-controls {
