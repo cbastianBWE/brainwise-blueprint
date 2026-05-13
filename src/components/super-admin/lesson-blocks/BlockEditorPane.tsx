@@ -288,6 +288,9 @@ export function BlockEditorPane({ block, onChange, contentItemId, siblingBlocks 
           contentItemId={contentItemId}
         />
       )}
+      {block.block_type === "knowledge_check" && (
+        <KnowledgeCheckBlockForm value={cfg} onConfigChange={handleConfig} />
+      )}
 
       <BlockStyleSection value={cfg} onConfigChange={handleConfig} />
     </div>
