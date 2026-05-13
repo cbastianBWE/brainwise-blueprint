@@ -1867,6 +1867,8 @@ function KnowledgeCheckRender({
         payload[id] = {
           selectedSingle: s.selectedSingle,
           selectedMulti: s.selectedMulti,
+          blankValues: s.blankValues,
+          matchLinks: s.matchLinks,
           revealed: s.revealed,
         };
       }
