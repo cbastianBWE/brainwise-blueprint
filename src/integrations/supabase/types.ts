@@ -1792,6 +1792,99 @@ export type Database = {
           },
         ]
       }
+      coach_disclosure_acceptances: {
+        Row: {
+          accepted_at: string
+          coach_user_id: string
+          id: string
+          ip_address: unknown
+          user_agent: string | null
+          version_hash: string
+          version_id: string
+        }
+        Insert: {
+          accepted_at?: string
+          coach_user_id: string
+          id?: string
+          ip_address?: unknown
+          user_agent?: string | null
+          version_hash: string
+          version_id: string
+        }
+        Update: {
+          accepted_at?: string
+          coach_user_id?: string
+          id?: string
+          ip_address?: unknown
+          user_agent?: string | null
+          version_hash?: string
+          version_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coach_disclosure_acceptances_coach_user_id_fkey"
+            columns: ["coach_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coach_disclosure_acceptances_coach_user_id_fkey"
+            columns: ["coach_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "coach_disclosure_acceptances_coach_user_id_fkey"
+            columns: ["coach_user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coach_disclosure_acceptances_coach_user_id_fkey"
+            columns: ["coach_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coach_disclosure_acceptances_version_id_fkey"
+            columns: ["version_id"]
+            isOneToOne: false
+            referencedRelation: "coach_disclosure_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      coach_disclosure_versions: {
+        Row: {
+          body_markdown: string
+          created_at: string
+          effective_from: string
+          id: string
+          is_current: boolean
+          version_hash: string
+        }
+        Insert: {
+          body_markdown: string
+          created_at?: string
+          effective_from?: string
+          id?: string
+          is_current?: boolean
+          version_hash: string
+        }
+        Update: {
+          body_markdown?: string
+          created_at?: string
+          effective_from?: string
+          id?: string
+          is_current?: boolean
+          version_hash?: string
+        }
+        Relationships: []
+      }
       coach_invitations: {
         Row: {
           accepted_at: string | null
@@ -7651,6 +7744,10 @@ export type Database = {
           out_ref_field: string
         }[]
       }
+      accept_coach_disclosure: {
+        Args: { p_version_hash: string; p_version_id: string }
+        Returns: Json
+      }
       admin_assign_org_admin: {
         Args: {
           p_is_transfer: boolean
@@ -8174,6 +8271,7 @@ export type Database = {
           out_user_id: string
         }[]
       }
+      get_coach_disclosure_status: { Args: never; Returns: Json }
       get_instrument_aggregate: {
         Args: {
           p_context_type?: string
@@ -8717,6 +8815,7 @@ export type Database = {
       start_assessment: {
         Args: {
           p_acknowledgment_version_hash?: string
+          p_context_type?: string
           p_instrument_id: string
           p_preexisting_assessment_id?: string
           p_rater_type?: string
@@ -8724,7 +8823,10 @@ export type Database = {
         Returns: Json
       }
       start_epn_assessment: {
-        Args: { p_assignment_id: string }
+        Args: {
+          p_acknowledgment_version_hash?: string
+          p_assignment_id: string
+        }
         Returns: string
       }
       submit_quiz_attempt: {
