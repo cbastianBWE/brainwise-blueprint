@@ -437,6 +437,15 @@ export function BlockRenderer({ block, assetUrlMap, mode }: BlockRendererProps) 
             blockClientId={block.client_id}
           />
         );
+      case "knowledge_check":
+        return (
+          <KnowledgeCheckRender
+            questions={cfg.questions ?? []}
+            gatingRequired={cfg.gating_required === true}
+            mode={mode}
+            blockClientId={block.client_id}
+          />
+        );
       default:
         return null;
     }
@@ -1736,6 +1745,301 @@ function ScenarioRender({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+    </div>
+  );
+}
+
+// === Session 71: knowledge_check renderer ===
+
+type KCChoice = { client_id: string; choice_text: string; is_correct: boolean };
+
+type KnowledgeCheckQuestionConfig = {
+  client_id: string;
+  question_type:
+    | "multiple_choice"
+    | "multi_select"
+    | "true_false"
+    | "fill_in_blank"
+    | "match"
+    | "ranking"
+    | "timeline";
+  prompt_markdown: TipTapDocJSON | null;
+  explanation_markdown: TipTapDocJSON | null;
+  choices?: KCChoice[];
+};
+
+type KCPerQuestionState = {
+  selectedSingle: string | null;
+  selectedMulti: string[];
+  revealed: boolean;
+  lastWrong: boolean;
+};
+
+const KC_IMPLEMENTED_TYPES = new Set([
+  "multiple_choice",
+  "multi_select",
+  "true_false",
+]);
+
+function emptyKCState(): KCPerQuestionState {
+  return { selectedSingle: null, selectedMulti: [], revealed: false, lastWrong: false };
+}
+
+function KnowledgeCheckRender({
+  questions,
+  mode,
+  blockClientId,
+}: {
+  questions: KnowledgeCheckQuestionConfig[];
+  gatingRequired: boolean;
+  mode?: "editor" | "trainee";
+  blockClientId: string;
+}) {
+  const sessionKey = `knowledge_check-pos:${blockClientId}`;
+
+  const initialState = (): Record<string, KCPerQuestionState> => {
+    const out: Record<string, KCPerQuestionState> = {};
+    for (const q of questions) out[q.client_id] = emptyKCState();
+    return out;
+  };
+
+  const [stateById, setStateById] = useState<Record<string, KCPerQuestionState>>(initialState);
+  const initializedRef = useRef(false);
+
+  useEffect(() => {
+    if (initializedRef.current) return;
+    initializedRef.current = true;
+    if (mode !== "trainee" || typeof window === "undefined") return;
+    try {
+      const raw = window.sessionStorage.getItem(sessionKey);
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (!parsed || typeof parsed !== "object") return;
+      const next: Record<string, KCPerQuestionState> = {};
+      for (const q of questions) {
+        const prior = parsed[q.client_id];
+        if (prior && typeof prior === "object") {
+          next[q.client_id] = {
+            selectedSingle: typeof prior.selectedSingle === "string" ? prior.selectedSingle : null,
+            selectedMulti: Array.isArray(prior.selectedMulti)
+              ? prior.selectedMulti.filter((s: any) => typeof s === "string")
+              : [],
+            revealed: prior.revealed === true,
+            lastWrong: false,
+          };
+        } else {
+          next[q.client_id] = emptyKCState();
+        }
+      }
+      setStateById(next);
+    } catch {
+      /* ignore */
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionKey, mode]);
+
+  useEffect(() => {
+    if (mode !== "trainee" || typeof window === "undefined") return;
+    try {
+      const payload: Record<string, any> = {};
+      for (const id of Object.keys(stateById)) {
+        const s = stateById[id];
+        payload[id] = {
+          selectedSingle: s.selectedSingle,
+          selectedMulti: s.selectedMulti,
+          revealed: s.revealed,
+        };
+      }
+      window.sessionStorage.setItem(sessionKey, JSON.stringify(payload));
+    } catch {
+      /* ignore */
+    }
+  }, [stateById, sessionKey, mode]);
+
+  const questionIdsKey = questions.map((q) => q.client_id).join("|");
+  useEffect(() => {
+    if (mode === "trainee") return;
+    setStateById(initialState());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [questionIdsKey, mode]);
+
+  if (questions.length === 0) {
+    return (
+      <div className="bw-kc-not-implemented">
+        Add at least one question to see the knowledge check.
+      </div>
+    );
+  }
+
+  const handleSingleSelect = (qId: string, choiceId: string) => {
+    setStateById((prev) => {
+      const s = prev[qId];
+      if (!s || s.revealed) return prev;
+      return { ...prev, [qId]: { ...s, selectedSingle: choiceId, lastWrong: false } };
+    });
+  };
+
+  const handleMultiToggle = (qId: string, choiceId: string) => {
+    setStateById((prev) => {
+      const s = prev[qId];
+      if (!s || s.revealed) return prev;
+      const has = s.selectedMulti.includes(choiceId);
+      const nextMulti = has
+        ? s.selectedMulti.filter((c) => c !== choiceId)
+        : [...s.selectedMulti, choiceId];
+      return { ...prev, [qId]: { ...s, selectedMulti: nextMulti, lastWrong: false } };
+    });
+  };
+
+  const handleCheck = (q: KnowledgeCheckQuestionConfig) => {
+    const s = stateById[q.client_id];
+    if (!s) return;
+    const choices = q.choices ?? [];
+    let correct = false;
+    if (q.question_type === "multiple_choice" || q.question_type === "true_false") {
+      const picked = choices.find((c) => c.client_id === s.selectedSingle);
+      correct = picked?.is_correct === true;
+    } else if (q.question_type === "multi_select") {
+      const correctIds = new Set(choices.filter((c) => c.is_correct).map((c) => c.client_id));
+      const pickedIds = new Set(s.selectedMulti);
+      correct =
+        correctIds.size === pickedIds.size && [...correctIds].every((id) => pickedIds.has(id));
+    }
+    setStateById((prev) => ({
+      ...prev,
+      [q.client_id]: {
+        ...s,
+        revealed: correct ? true : s.revealed,
+        lastWrong: !correct,
+      },
+    }));
+  };
+
+  const allCorrect = questions.every((q) => stateById[q.client_id]?.revealed === true);
+
+  return (
+    <div className="bw-kc-shell">
+      {questions.map((q, idx) => {
+        const s = stateById[q.client_id] ?? emptyKCState();
+        const isImplemented = KC_IMPLEMENTED_TYPES.has(q.question_type);
+        const choices = q.choices ?? [];
+        const canCheck =
+          isImplemented &&
+          (q.question_type === "multi_select"
+            ? s.selectedMulti.length > 0
+            : s.selectedSingle !== null);
+
+        return (
+          <div key={q.client_id} className="bw-kc-question">
+            <div className="bw-kc-question-number">
+              Question {idx + 1} of {questions.length}
+            </div>
+            <div className="bw-kc-prompt">
+              <ReadOnlyTipTap json={q.prompt_markdown} />
+            </div>
+
+            {!isImplemented && (
+              <div className="bw-kc-not-implemented">
+                This question type isn&apos;t supported yet in the trainee view.
+              </div>
+            )}
+
+            {isImplemented &&
+              (q.question_type === "multiple_choice" || q.question_type === "true_false") && (
+                <div className="bw-kc-choices">
+                  {choices.map((c) => {
+                    const selected = s.selectedSingle === c.client_id;
+                    const showCorrect = s.revealed && c.is_correct;
+                    const showWrongPick = s.lastWrong && selected && !c.is_correct;
+                    const cls = [
+                      "bw-kc-choice",
+                      selected ? "is-selected" : "",
+                      showCorrect ? "is-correct" : "",
+                      showWrongPick ? "is-wrong" : "",
+                      s.revealed ? "is-locked" : "",
+                    ]
+                      .filter(Boolean)
+                      .join(" ");
+                    return (
+                      <button
+                        key={c.client_id}
+                        type="button"
+                        className={cls}
+                        onClick={() => handleSingleSelect(q.client_id, c.client_id)}
+                        disabled={s.revealed}
+                      >
+                        {c.choice_text}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+            {isImplemented && q.question_type === "multi_select" && (
+              <div className="bw-kc-choices">
+                {choices.map((c) => {
+                  const selected = s.selectedMulti.includes(c.client_id);
+                  const showCorrect = s.revealed && c.is_correct;
+                  const showWrongPick = s.lastWrong && selected && !c.is_correct;
+                  const showMissed = s.lastWrong && !selected && c.is_correct;
+                  const cls = [
+                    "bw-kc-choice",
+                    selected ? "is-selected" : "",
+                    showCorrect ? "is-correct" : "",
+                    showWrongPick ? "is-wrong" : "",
+                    showMissed ? "is-missed" : "",
+                    s.revealed ? "is-locked" : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" ");
+                  return (
+                    <button
+                      key={c.client_id}
+                      type="button"
+                      className={cls}
+                      onClick={() => handleMultiToggle(q.client_id, c.client_id)}
+                      disabled={s.revealed}
+                    >
+                      {c.choice_text}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            {isImplemented && (
+              <div className="bw-kc-controls">
+                {!s.revealed ? (
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={() => handleCheck(q)}
+                    disabled={!canCheck}
+                    style={{ backgroundColor: "#F5741A", color: "white" }}
+                  >
+                    Check answer
+                  </Button>
+                ) : (
+                  <span className="bw-kc-correct-pill">✓ Correct</span>
+                )}
+                {s.lastWrong && !s.revealed && (
+                  <span className="bw-kc-wrong-pill">Not quite — try again</span>
+                )}
+              </div>
+            )}
+
+            {s.revealed && q.explanation_markdown && (
+              <div className="bw-kc-explanation">
+                <ReadOnlyTipTap json={q.explanation_markdown} />
+              </div>
+            )}
+          </div>
+        );
+      })}
+
+      {allCorrect && questions.length > 0 && (
+        <div className="bw-kc-done">All questions answered correctly.</div>
+      )}
     </div>
   );
 }
