@@ -48,6 +48,13 @@ import {
   type DragEndEvent,
   type DragStartEvent,
 } from "@dnd-kit/core";
+import {
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+  horizontalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import type { EditorBlock, TipTapDocJSON } from "./blockTypeMeta";
 
 interface BlockRendererProps {
@@ -1755,6 +1762,8 @@ function ScenarioRender({
 type KCChoice = { client_id: string; choice_text: string; is_correct: boolean };
 type KCBlank = { client_id: string; correct_value: string; acceptable_alternatives: string[] };
 type KCPair = { client_id: string; left: string; right: string };
+type KCRankItem = { client_id: string; item_text: string };
+type KCTimelineEvent = { client_id: string; event_label: string };
 
 type KnowledgeCheckQuestionConfig = {
   client_id: string;
@@ -1771,6 +1780,8 @@ type KnowledgeCheckQuestionConfig = {
   choices?: KCChoice[];
   blanks?: KCBlank[];
   pairs?: KCPair[];
+  items?: KCRankItem[];
+  events?: KCTimelineEvent[];
 };
 
 type KCPerQuestionState = {
@@ -1778,6 +1789,8 @@ type KCPerQuestionState = {
   selectedMulti: string[];
   blankValues: Record<string, string>;
   matchLinks: Record<string, string>;
+  rankOrder: string[];
+  timelineOrder: string[];
   revealed: boolean;
   lastWrong: boolean;
 };
@@ -1788,6 +1801,8 @@ const KC_IMPLEMENTED_TYPES = new Set([
   "true_false",
   "fill_in_blank",
   "match",
+  "ranking",
+  "timeline",
 ]);
 
 function emptyKCState(): KCPerQuestionState {
@@ -1796,9 +1811,22 @@ function emptyKCState(): KCPerQuestionState {
     selectedMulti: [],
     blankValues: {},
     matchLinks: {},
+    rankOrder: [],
+    timelineOrder: [],
     revealed: false,
     lastWrong: false,
   };
+}
+
+function stableShuffle<T extends { client_id: string }>(items: T[], seed: string): T[] {
+  const hashStr = (s: string): number => {
+    let h = 0;
+    for (let i = 0; i < s.length; i++) {
+      h = (h * 31 + s.charCodeAt(i)) | 0;
+    }
+    return h;
+  };
+  return [...items].sort((a, b) => hashStr(seed + a.client_id) - hashStr(seed + b.client_id));
 }
 
 function KnowledgeCheckRender({
@@ -1815,7 +1843,19 @@ function KnowledgeCheckRender({
 
   const initialState = (): Record<string, KCPerQuestionState> => {
     const out: Record<string, KCPerQuestionState> = {};
-    for (const q of questions) out[q.client_id] = emptyKCState();
+    for (const q of questions) {
+      const s = emptyKCState();
+      if (q.question_type === "ranking" && (q.items ?? []).length > 0) {
+        s.rankOrder = stableShuffle(q.items ?? [], `${blockClientId}:${q.client_id}`).map(
+          (i) => i.client_id,
+        );
+      } else if (q.question_type === "timeline" && (q.events ?? []).length > 0) {
+        s.timelineOrder = stableShuffle(q.events ?? [], `${blockClientId}:${q.client_id}`).map(
+          (e) => e.client_id,
+        );
+      }
+      out[q.client_id] = s;
+    }
     return out;
   };
 
@@ -1844,11 +1884,47 @@ function KnowledgeCheckRender({
               prior.blankValues && typeof prior.blankValues === "object" ? prior.blankValues : {},
             matchLinks:
               prior.matchLinks && typeof prior.matchLinks === "object" ? prior.matchLinks : {},
+            rankOrder: Array.isArray(prior.rankOrder)
+              ? prior.rankOrder.filter((s: any) => typeof s === "string")
+              : [],
+            timelineOrder: Array.isArray(prior.timelineOrder)
+              ? prior.timelineOrder.filter((s: any) => typeof s === "string")
+              : [],
             revealed: prior.revealed === true,
             lastWrong: false,
           };
         } else {
           next[q.client_id] = emptyKCState();
+        }
+      }
+      // Reconcile ranking/timeline order against current items/events; seed if empty.
+      for (const q of questions) {
+        const s = next[q.client_id];
+        if (!s) continue;
+        if (q.question_type === "ranking") {
+          if (s.rankOrder.length === 0 && (q.items ?? []).length > 0) {
+            s.rankOrder = stableShuffle(q.items ?? [], `${blockClientId}:${q.client_id}`).map(
+              (i) => i.client_id,
+            );
+          } else {
+            const validIds = new Set((q.items ?? []).map((i) => i.client_id));
+            s.rankOrder = s.rankOrder.filter((id) => validIds.has(id));
+            for (const it of q.items ?? []) {
+              if (!s.rankOrder.includes(it.client_id)) s.rankOrder.push(it.client_id);
+            }
+          }
+        } else if (q.question_type === "timeline") {
+          if (s.timelineOrder.length === 0 && (q.events ?? []).length > 0) {
+            s.timelineOrder = stableShuffle(q.events ?? [], `${blockClientId}:${q.client_id}`).map(
+              (e) => e.client_id,
+            );
+          } else {
+            const validIds = new Set((q.events ?? []).map((e) => e.client_id));
+            s.timelineOrder = s.timelineOrder.filter((id) => validIds.has(id));
+            for (const ev of q.events ?? []) {
+              if (!s.timelineOrder.includes(ev.client_id)) s.timelineOrder.push(ev.client_id);
+            }
+          }
         }
       }
       setStateById(next);
@@ -1869,6 +1945,8 @@ function KnowledgeCheckRender({
           selectedMulti: s.selectedMulti,
           blankValues: s.blankValues,
           matchLinks: s.matchLinks,
+          rankOrder: s.rankOrder,
+          timelineOrder: s.timelineOrder,
           revealed: s.revealed,
         };
       }
@@ -1947,6 +2025,28 @@ function KnowledgeCheckRender({
     });
   };
 
+  const handleRankReorder = (qId: string, fromIdx: number, toIdx: number) => {
+    setStateById((prev) => {
+      const s = prev[qId];
+      if (!s || s.revealed) return prev;
+      const next = [...s.rankOrder];
+      const [moved] = next.splice(fromIdx, 1);
+      next.splice(toIdx, 0, moved);
+      return { ...prev, [qId]: { ...s, rankOrder: next, lastWrong: false } };
+    });
+  };
+
+  const handleTimelineReorder = (qId: string, fromIdx: number, toIdx: number) => {
+    setStateById((prev) => {
+      const s = prev[qId];
+      if (!s || s.revealed) return prev;
+      const next = [...s.timelineOrder];
+      const [moved] = next.splice(fromIdx, 1);
+      next.splice(toIdx, 0, moved);
+      return { ...prev, [qId]: { ...s, timelineOrder: next, lastWrong: false } };
+    });
+  };
+
   const handleCheck = (q: KnowledgeCheckQuestionConfig) => {
     const s = stateById[q.client_id];
     if (!s) return;
@@ -1972,6 +2072,16 @@ function KnowledgeCheckRender({
     } else if (q.question_type === "match") {
       const pairs = q.pairs ?? [];
       correct = pairs.length > 0 && pairs.every((p) => s.matchLinks[p.client_id] === p.client_id);
+    } else if (q.question_type === "ranking") {
+      const correctOrder = (q.items ?? []).map((i) => i.client_id);
+      correct =
+        s.rankOrder.length === correctOrder.length &&
+        s.rankOrder.every((id, idx) => id === correctOrder[idx]);
+    } else if (q.question_type === "timeline") {
+      const correctOrder = (q.events ?? []).map((e) => e.client_id);
+      correct =
+        s.timelineOrder.length === correctOrder.length &&
+        s.timelineOrder.every((id, idx) => id === correctOrder[idx]);
     }
     setStateById((prev) => ({
       ...prev,
@@ -2001,7 +2111,11 @@ function KnowledgeCheckRender({
                 )
               : q.question_type === "match"
                 ? (q.pairs ?? []).every((p) => s.matchLinks[p.client_id] !== undefined)
-                : s.selectedSingle !== null);
+                : q.question_type === "ranking"
+                  ? s.rankOrder.length === (q.items ?? []).length
+                  : q.question_type === "timeline"
+                    ? s.timelineOrder.length === (q.events ?? []).length
+                    : s.selectedSingle !== null);
 
         return (
           <div key={q.client_id} className="bw-kc-question">
@@ -2125,6 +2239,22 @@ function KnowledgeCheckRender({
                 state={s}
                 onLink={(leftId, rightId) => handleMatchLink(q.client_id, leftId, rightId)}
                 onClear={(leftId) => handleMatchClear(q.client_id, leftId)}
+              />
+            )}
+
+            {isImplemented && q.question_type === "ranking" && (
+              <RankingTrainee
+                question={q}
+                state={s}
+                onReorder={(from, to) => handleRankReorder(q.client_id, from, to)}
+              />
+            )}
+
+            {isImplemented && q.question_type === "timeline" && (
+              <TimelineTrainee
+                question={q}
+                state={s}
+                onReorder={(from, to) => handleTimelineReorder(q.client_id, from, to)}
               />
             )}
 
@@ -2279,6 +2409,206 @@ function MatchTrainee({
           })}
         </div>
       </div>
+    </div>
+  );
+}
+
+function RankingTraineeItem({
+  id,
+  index,
+  label,
+  revealed,
+  isCorrectPosition,
+  isWrongPosition,
+}: {
+  id: string;
+  index: number;
+  label: string;
+  revealed: boolean;
+  isCorrectPosition: boolean;
+  isWrongPosition: boolean;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id,
+    disabled: revealed,
+  });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+  const cls = [
+    "bw-kc-rank-item",
+    isCorrectPosition ? "is-correct" : "",
+    isWrongPosition ? "is-wrong" : "",
+    revealed ? "is-locked" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+  return (
+    <div ref={setNodeRef} style={style} className={cls} {...attributes} {...listeners}>
+      <span className="bw-kc-rank-index">{index + 1}.</span>
+      <span className="bw-kc-rank-label">{label}</span>
+    </div>
+  );
+}
+
+function RankingTrainee({
+  question,
+  state,
+  onReorder,
+}: {
+  question: KnowledgeCheckQuestionConfig;
+  state: KCPerQuestionState;
+  onReorder: (fromIdx: number, toIdx: number) => void;
+}) {
+  const items = question.items ?? [];
+  const itemsById = new Map(items.map((i) => [i.client_id, i]));
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
+
+  const handleDragEnd = (e: DragEndEvent) => {
+    const { active, over } = e;
+    if (!over || active.id === over.id) return;
+    const activeId = String(active.id).replace(/^kc-rank-trainee:/, "");
+    const overId = String(over.id).replace(/^kc-rank-trainee:/, "");
+    const from = state.rankOrder.indexOf(activeId);
+    const to = state.rankOrder.indexOf(overId);
+    if (from < 0 || to < 0) return;
+    onReorder(from, to);
+  };
+
+  const correctOrder = items.map((i) => i.client_id);
+
+  return (
+    <div className="bw-kc-rank">
+      <p className="bw-kc-rank-instruction">Drag items into the correct order.</p>
+      <DndContext sensors={sensors} collisionDetection={pointerWithin} onDragEnd={handleDragEnd}>
+        <SortableContext
+          items={state.rankOrder.map((id) => `kc-rank-trainee:${id}`)}
+          strategy={verticalListSortingStrategy}
+        >
+          <div className="bw-kc-rank-list">
+            {state.rankOrder.map((id, idx) => {
+              const item = itemsById.get(id);
+              if (!item) return null;
+              const isCorrectPosition = state.revealed && correctOrder[idx] === id;
+              const isWrongPosition = state.lastWrong && correctOrder[idx] !== id;
+              return (
+                <RankingTraineeItem
+                  key={id}
+                  id={`kc-rank-trainee:${id}`}
+                  index={idx}
+                  label={item.item_text}
+                  revealed={state.revealed}
+                  isCorrectPosition={isCorrectPosition}
+                  isWrongPosition={isWrongPosition}
+                />
+              );
+            })}
+          </div>
+        </SortableContext>
+      </DndContext>
+    </div>
+  );
+}
+
+function TimelineTraineeItem({
+  id,
+  index,
+  label,
+  revealed,
+  isCorrectPosition,
+  isWrongPosition,
+}: {
+  id: string;
+  index: number;
+  label: string;
+  revealed: boolean;
+  isCorrectPosition: boolean;
+  isWrongPosition: boolean;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id,
+    disabled: revealed,
+  });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+  const cls = [
+    "bw-kc-timeline-event",
+    isCorrectPosition ? "is-correct" : "",
+    isWrongPosition ? "is-wrong" : "",
+    revealed ? "is-locked" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+  return (
+    <div ref={setNodeRef} style={style} className={cls} {...attributes} {...listeners}>
+      <span className="bw-kc-timeline-index">{index + 1}</span>
+      <span className="bw-kc-timeline-label">{label}</span>
+    </div>
+  );
+}
+
+function TimelineTrainee({
+  question,
+  state,
+  onReorder,
+}: {
+  question: KnowledgeCheckQuestionConfig;
+  state: KCPerQuestionState;
+  onReorder: (fromIdx: number, toIdx: number) => void;
+}) {
+  const events = question.events ?? [];
+  const eventsById = new Map(events.map((e) => [e.client_id, e]));
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
+
+  const handleDragEnd = (e: DragEndEvent) => {
+    const { active, over } = e;
+    if (!over || active.id === over.id) return;
+    const activeId = String(active.id).replace(/^kc-timeline-trainee:/, "");
+    const overId = String(over.id).replace(/^kc-timeline-trainee:/, "");
+    const from = state.timelineOrder.indexOf(activeId);
+    const to = state.timelineOrder.indexOf(overId);
+    if (from < 0 || to < 0) return;
+    onReorder(from, to);
+  };
+
+  const correctOrder = events.map((e) => e.client_id);
+
+  return (
+    <div className="bw-kc-timeline">
+      <p className="bw-kc-timeline-instruction">
+        Drag events into chronological order (earliest on the left).
+      </p>
+      <DndContext sensors={sensors} collisionDetection={pointerWithin} onDragEnd={handleDragEnd}>
+        <SortableContext
+          items={state.timelineOrder.map((id) => `kc-timeline-trainee:${id}`)}
+          strategy={horizontalListSortingStrategy}
+        >
+          <div className="bw-kc-timeline-track">
+            {state.timelineOrder.map((id, idx) => {
+              const ev = eventsById.get(id);
+              if (!ev) return null;
+              const isCorrectPosition = state.revealed && correctOrder[idx] === id;
+              const isWrongPosition = state.lastWrong && correctOrder[idx] !== id;
+              return (
+                <TimelineTraineeItem
+                  key={id}
+                  id={`kc-timeline-trainee:${id}`}
+                  index={idx}
+                  label={ev.event_label}
+                  revealed={state.revealed}
+                  isCorrectPosition={isCorrectPosition}
+                  isWrongPosition={isWrongPosition}
+                />
+              );
+            })}
+          </div>
+        </SortableContext>
+      </DndContext>
     </div>
   );
 }
