@@ -1843,7 +1843,19 @@ function KnowledgeCheckRender({
 
   const initialState = (): Record<string, KCPerQuestionState> => {
     const out: Record<string, KCPerQuestionState> = {};
-    for (const q of questions) out[q.client_id] = emptyKCState();
+    for (const q of questions) {
+      const s = emptyKCState();
+      if (q.question_type === "ranking" && (q.items ?? []).length > 0) {
+        s.rankOrder = stableShuffle(q.items ?? [], `${blockClientId}:${q.client_id}`).map(
+          (i) => i.client_id,
+        );
+      } else if (q.question_type === "timeline" && (q.events ?? []).length > 0) {
+        s.timelineOrder = stableShuffle(q.events ?? [], `${blockClientId}:${q.client_id}`).map(
+          (e) => e.client_id,
+        );
+      }
+      out[q.client_id] = s;
+    }
     return out;
   };
 
@@ -1872,11 +1884,47 @@ function KnowledgeCheckRender({
               prior.blankValues && typeof prior.blankValues === "object" ? prior.blankValues : {},
             matchLinks:
               prior.matchLinks && typeof prior.matchLinks === "object" ? prior.matchLinks : {},
+            rankOrder: Array.isArray(prior.rankOrder)
+              ? prior.rankOrder.filter((s: any) => typeof s === "string")
+              : [],
+            timelineOrder: Array.isArray(prior.timelineOrder)
+              ? prior.timelineOrder.filter((s: any) => typeof s === "string")
+              : [],
             revealed: prior.revealed === true,
             lastWrong: false,
           };
         } else {
           next[q.client_id] = emptyKCState();
+        }
+      }
+      // Reconcile ranking/timeline order against current items/events; seed if empty.
+      for (const q of questions) {
+        const s = next[q.client_id];
+        if (!s) continue;
+        if (q.question_type === "ranking") {
+          if (s.rankOrder.length === 0 && (q.items ?? []).length > 0) {
+            s.rankOrder = stableShuffle(q.items ?? [], `${blockClientId}:${q.client_id}`).map(
+              (i) => i.client_id,
+            );
+          } else {
+            const validIds = new Set((q.items ?? []).map((i) => i.client_id));
+            s.rankOrder = s.rankOrder.filter((id) => validIds.has(id));
+            for (const it of q.items ?? []) {
+              if (!s.rankOrder.includes(it.client_id)) s.rankOrder.push(it.client_id);
+            }
+          }
+        } else if (q.question_type === "timeline") {
+          if (s.timelineOrder.length === 0 && (q.events ?? []).length > 0) {
+            s.timelineOrder = stableShuffle(q.events ?? [], `${blockClientId}:${q.client_id}`).map(
+              (e) => e.client_id,
+            );
+          } else {
+            const validIds = new Set((q.events ?? []).map((e) => e.client_id));
+            s.timelineOrder = s.timelineOrder.filter((id) => validIds.has(id));
+            for (const ev of q.events ?? []) {
+              if (!s.timelineOrder.includes(ev.client_id)) s.timelineOrder.push(ev.client_id);
+            }
+          }
         }
       }
       setStateById(next);
