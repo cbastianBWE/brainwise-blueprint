@@ -76,8 +76,8 @@ const QUESTION_TYPE_OPTIONS: { value: QuestionType; label: string }[] = [
   { value: "true_false", label: "True / False" },
   { value: "fill_in_blank", label: "Fill in the blank" },
   { value: "match", label: "Match" },
-  { value: "ranking", label: "Ranking (coming soon)" },
-  { value: "timeline", label: "Timeline (coming soon)" },
+  { value: "ranking", label: "Ranking" },
+  { value: "timeline", label: "Timeline" },
 ];
 
 const IMPLEMENTED_TYPES: QuestionType[] = [
