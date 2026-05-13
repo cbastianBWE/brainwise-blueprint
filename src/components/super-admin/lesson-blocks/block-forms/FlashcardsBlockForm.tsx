@@ -219,6 +219,7 @@ export function FlashcardsBlockForm({ value, onConfigChange, contentItemId }: Pr
           back: emptyDoc(),
           front_image_asset_id: null,
           front_caption: null,
+          background_color: null,
         },
       ],
       gating_required: gatingRequired,
