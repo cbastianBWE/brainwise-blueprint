@@ -81,27 +81,29 @@ export default function AppLayout() {
             </span>
           </header>
           <main className="flex-1 overflow-auto p-6">
-            {showBanner && (
-              <div className="relative flex items-center justify-between gap-4 rounded-lg border border-primary bg-primary/10 p-4 mb-6">
-                <p className="text-sm font-medium">
-                  🎉 You have a ${couponData.coupon_amount} coach credit toward an annual subscription! Upgrade and save before it expires on {formattedExpiry}.
-                </p>
-                <div className="flex items-center gap-2 shrink-0">
-                  <Button size="sm" onClick={() => navigate("/pricing?billing=annual")}>
-                    Upgrade Now
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7"
-                    onClick={() => setDismissed(true)}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
+            <CoachDisclosureGate>
+              {showBanner && (
+                <div className="relative flex items-center justify-between gap-4 rounded-lg border border-primary bg-primary/10 p-4 mb-6">
+                  <p className="text-sm font-medium">
+                    🎉 You have a ${couponData.coupon_amount} coach credit toward an annual subscription! Upgrade and save before it expires on {formattedExpiry}.
+                  </p>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Button size="sm" onClick={() => navigate("/pricing?billing=annual")}>
+                      Upgrade Now
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      onClick={() => setDismissed(true)}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            )}
-            <Outlet />
+              )}
+              <Outlet />
+            </CoachDisclosureGate>
           </main>
         </div>
       </div>
