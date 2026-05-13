@@ -14,6 +14,7 @@ import {
   LayoutPanelTop as TabsIcon,
   MousePointerClick as ButtonStackIcon,
   Layers,
+  LayoutGrid,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -32,7 +33,8 @@ export type BlockType =
   | "accordion"
   | "tabs"
   | "button_stack"
-  | "flashcards";
+  | "flashcards"
+  | "card_sort";
 
 export type TipTapDocJSON = Record<string, unknown>;
 
@@ -226,6 +228,26 @@ export const BLOCK_TYPE_META: Record<
       padding: "none",
     }),
   },
+  card_sort: {
+    label: "Card sort",
+    description: "Drag cards into the correct bucket",
+    icon: LayoutGrid,
+    defaultConfig: () => ({
+      buckets: [
+        { client_id: crypto.randomUUID(), title: "", description: null, outline_color: null },
+        { client_id: crypto.randomUUID(), title: "", description: null, outline_color: null },
+      ],
+      cards: [
+        { client_id: crypto.randomUUID(), content: emptyDoc(), correct_bucket_id: null, image_asset_id: null, caption: null, background_color: null },
+        { client_id: crypto.randomUUID(), content: emptyDoc(), correct_bucket_id: null, image_asset_id: null, caption: null, background_color: null },
+        { client_id: crypto.randomUUID(), content: emptyDoc(), correct_bucket_id: null, image_asset_id: null, caption: null, background_color: null },
+        { client_id: crypto.randomUUID(), content: emptyDoc(), correct_bucket_id: null, image_asset_id: null, caption: null, background_color: null },
+      ],
+      gating_required: false,
+      background_color: null,
+      padding: "none",
+    }),
+  },
 };
 
 export const IN_SCOPE_BLOCK_TYPES: BlockType[] = [
@@ -244,6 +266,7 @@ export const IN_SCOPE_BLOCK_TYPES: BlockType[] = [
   "tabs",
   "button_stack",
   "flashcards",
+  "card_sort",
 ];
 
 export const CALLOUT_COLORS: Record<string, string> = {
