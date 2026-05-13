@@ -20,6 +20,7 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { RichTextEditor } from "../RichTextEditor";
 import { FileUploadField } from "@/components/super-admin/FileUploadField";
+import { BrandColorSwatch } from "../BrandColorSwatch";
 import type { TipTapDocJSON } from "../blockTypeMeta";
 
 type Card = {
@@ -28,6 +29,7 @@ type Card = {
   back: TipTapDocJSON;
   front_image_asset_id: string | null;
   front_caption: string | null;
+  background_color: string | null;
 };
 
 interface Props {
