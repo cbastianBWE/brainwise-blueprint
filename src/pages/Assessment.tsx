@@ -38,7 +38,7 @@ interface SelectedInstrument {
 export default function Assessment() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
-  const { toast } = useToast();
+  
   const [selectedInstrument, setSelectedInstrument] = useState<SelectedInstrument | null>(null);
   const [contextType, setContextType] = useState<'professional' | 'personal' | 'both' | null>(null);
   const [epnStarting, setEpnStarting] = useState(false);
