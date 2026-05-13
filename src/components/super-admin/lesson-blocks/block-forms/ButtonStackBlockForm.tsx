@@ -278,7 +278,10 @@ function SortableButton({
 
 export function ButtonStackBlockForm({ value, onConfigChange, siblingBlocks }: Props) {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
-  const buttons = value.buttons ?? [];
+  const buttons = (value.buttons ?? []).map((b) => ({
+    ...b,
+    section_title: (b as { section_title?: string | null }).section_title ?? null,
+  }));
   const layout: Layout = value.layout === "inline" ? "inline" : "stacked";
 
   const handleDragEnd = (e: DragEndEvent) => {
@@ -317,6 +320,7 @@ export function ButtonStackBlockForm({ value, onConfigChange, siblingBlocks }: P
           action_type: "link",
           url: "",
           target_block_client_id: null,
+          section_title: null,
           variant: "primary",
         },
       ],
