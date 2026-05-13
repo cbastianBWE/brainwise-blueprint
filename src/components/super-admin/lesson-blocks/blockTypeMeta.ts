@@ -198,6 +198,32 @@ export const BLOCK_TYPE_META: Record<
       padding: "none",
     }),
   },
+  flashcards: {
+    label: "Flashcards",
+    description: "Flippable cards with self-rating",
+    icon: Layers,
+    defaultConfig: () => ({
+      cards: [
+        {
+          client_id: crypto.randomUUID(),
+          front: emptyDoc(),
+          back: emptyDoc(),
+          front_image_asset_id: null,
+          front_caption: null,
+        },
+        {
+          client_id: crypto.randomUUID(),
+          front: emptyDoc(),
+          back: emptyDoc(),
+          front_image_asset_id: null,
+          front_caption: null,
+        },
+      ],
+      gating_required: false,
+      background_color: null,
+      padding: "none",
+    }),
+  },
 };
 
 export const IN_SCOPE_BLOCK_TYPES: BlockType[] = [
@@ -215,6 +241,7 @@ export const IN_SCOPE_BLOCK_TYPES: BlockType[] = [
   "accordion",
   "tabs",
   "button_stack",
+  "flashcards",
 ];
 
 export const CALLOUT_COLORS: Record<string, string> = {
