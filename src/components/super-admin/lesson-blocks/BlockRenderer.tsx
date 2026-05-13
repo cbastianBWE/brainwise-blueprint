@@ -859,7 +859,10 @@ function FlashcardsRender({
               role="button"
               aria-label="Flip card"
             >
-              <div className="bw-flashcards-face bw-flashcards-face-front">
+              <div
+                className="bw-flashcards-face bw-flashcards-face-front"
+                style={faceStyle}
+              >
                 {frontImageUrl && (
                   <img
                     src={frontImageUrl}
@@ -876,7 +879,10 @@ function FlashcardsRender({
                   <ReadOnlyTipTap json={current.front} />
                 </div>
               </div>
-              <div className="bw-flashcards-face bw-flashcards-face-back">
+              <div
+                className="bw-flashcards-face bw-flashcards-face-back"
+                style={faceStyle}
+              >
                 <div className="bw-flashcards-face-body">
                   <ReadOnlyTipTap json={current.back} />
                 </div>
