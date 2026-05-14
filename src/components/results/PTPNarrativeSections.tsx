@@ -783,7 +783,7 @@ function FacetList({
   return (
     <div className="space-y-2">
       {facets.map((facet, idx) => {
-        const facetName = PTP_ITEM_FACET_NAMES[facet.item_number ?? 0] ?? facet.item_text.slice(0, 40);
+        const facetName = facet.facet_name;
         const key = `${prefix}-${idx}`;
         const isExpanded = expandedFacets.has(key);
         const interpretation = getFacetInterpretation(facetName);
