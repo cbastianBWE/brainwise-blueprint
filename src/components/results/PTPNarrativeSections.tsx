@@ -315,7 +315,7 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
           }
         }
       }
-      }
+
 
       const sectionTypes = [
         `profile_overview_${ctx}`,
