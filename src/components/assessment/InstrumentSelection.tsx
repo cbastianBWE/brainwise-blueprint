@@ -82,6 +82,7 @@ export default function InstrumentSelection({ onSelect }: Props) {
   const [selfPayDialogLoading, setSelfPayDialogLoading] = useState(false);
   const [subscriptionPlans, setSubscriptionPlans] = useState<Array<{ plan_name: string; tier: string; billing_period: string; price_usd: number | null; stripe_price_id: string }>>([]);
   const [selfPayCoachInstrumentIds, setSelfPayCoachInstrumentIds] = useState<Set<string>>(new Set());
+  const [ptpContextProgress, setPtpContextProgress] = useState<Map<string, string>>(new Map());
   const [airsaAwaiting, setAirsaAwaiting] = useState<{ completed_at: string } | null>(null);
 
   useEffect(() => {
