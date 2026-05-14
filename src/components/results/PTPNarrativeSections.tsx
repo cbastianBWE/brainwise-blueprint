@@ -152,6 +152,7 @@ interface FacetItem {
   value: number;
   dimension_id: string;
   context_type?: string | null;
+  facet_name: string;
 }
 
 interface DimensionScore {
