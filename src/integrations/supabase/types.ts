@@ -2609,6 +2609,7 @@ export type Database = {
           lesson_block_id: string | null
           module_id: string | null
           ref_field: string
+          resource_id: string | null
         }
         Insert: {
           archived_at?: string | null
@@ -2622,6 +2623,7 @@ export type Database = {
           lesson_block_id?: string | null
           module_id?: string | null
           ref_field: string
+          resource_id?: string | null
         }
         Update: {
           archived_at?: string | null
@@ -2635,6 +2637,7 @@ export type Database = {
           lesson_block_id?: string | null
           module_id?: string | null
           ref_field?: string
+          resource_id?: string | null
         }
         Relationships: [
           {
@@ -2705,6 +2708,13 @@ export type Database = {
             columns: ["module_id"]
             isOneToOne: false
             referencedRelation: "modules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_asset_refs_resource_id_fkey"
+            columns: ["resource_id"]
+            isOneToOne: false
+            referencedRelation: "resources"
             referencedColumns: ["id"]
           },
         ]
@@ -8396,6 +8406,7 @@ export type Database = {
           p_lesson_block_id: string
           p_reason: string
           p_ref_field: string
+          p_resource_id?: string
         }
         Returns: Json
       }
@@ -9015,6 +9026,7 @@ export type Database = {
           p_original_filename: string
           p_reason: string
           p_ref_field?: string
+          p_resource_id?: string
           p_size_bytes: number
         }
         Returns: Json
