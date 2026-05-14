@@ -52,6 +52,7 @@ import {
   PTPFacetInsightsSuppressedSection,
   PTPCrossAssessmentSection,
   PTPAssessmentResponsesSection,
+  PTPNarrativeProvider,
 } from "@/components/results/PTPNarrativeSections";
 import PTPBrainOverview from "@/components/results/PTPBrainOverview";
 import PTPFullFacetCharts from "@/components/results/PTPFullFacetCharts";
@@ -1182,7 +1183,7 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
               otherAssessments: assessments.filter(a => a.result.id !== effectiveSelected?.result.id),
             };
             return (
-              <>
+              <PTPNarrativeProvider {...ptpNarrativeProps}>
                 <section>
                   <PTPProfileOverviewSection {...ptpNarrativeProps} />
                 </section>
@@ -1242,7 +1243,7 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
                 <section>
                   <PTPAssessmentResponsesSection {...ptpNarrativeProps} />
                 </section>
-              </>
+              </PTPNarrativeProvider>
             );
           })()}
 

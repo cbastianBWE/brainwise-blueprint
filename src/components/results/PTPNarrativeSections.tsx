@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { ChevronDown, ChevronUp } from "lucide-react";
 
@@ -380,11 +380,6 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
           }
         | undefined;
 
-      if (!drivingData?.elevated && !drivingData?.suppressed) {
-        setLoadingFacets(false);
-        return;
-      }
-
       const toFacetItem = (f: {
         value: number;
         facet_name: string;
@@ -399,8 +394,75 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
         facet_name: f.facet_name,
       });
 
-      const elevated = (drivingData.elevated ?? []).slice(0, 10).map(toFacetItem);
-      const suppressed = (drivingData.suppressed ?? []).slice(0, 10).map(toFacetItem);
+      let elevated: FacetItem[];
+      let suppressed: FacetItem[];
+
+      if (drivingData?.elevated || drivingData?.suppressed) {
+        // Canonical path: the driving_facets_${ctx} row exists, read it.
+        elevated = (drivingData.elevated ?? []).slice(0, 10).map(toFacetItem);
+        suppressed = (drivingData.suppressed ?? []).slice(0, 10).map(toFacetItem);
+      } else {
+        // Fallback: no driving_facets_${ctx} row (older assessments predate the
+        // generate_driving_facets path). Recompute elevated/suppressed from raw
+        // responses, same population mean/stdDev calculation the backend uses.
+        const { data: responses } = await supabase
+          .from("assessment_responses")
+          .select("response_value_numeric, is_reverse_scored, item_id")
+          .eq("assessment_id", assessmentId);
+
+        if (!responses?.length) {
+          setLoadingFacets(false);
+          return;
+        }
+
+        const itemIds = responses.map((r) => r.item_id);
+        const { data: items } = await supabase
+          .from("items")
+          .select("item_id, item_number, dimension_id, facet_name, context_type")
+          .in("item_id", itemIds);
+        const itemMap = new Map((items ?? []).map((i) => [i.item_id, i]));
+
+        let scored = responses.map((r) => {
+          const item = itemMap.get(r.item_id);
+          const raw = Number(r.response_value_numeric);
+          const value = r.is_reverse_scored ? 100 - raw : raw;
+          return {
+            value,
+            facet_name: item?.facet_name ?? "",
+            item_number: item?.item_number ?? 0,
+            dimension_id: item?.dimension_id ?? "",
+            context_type: item?.context_type ?? null,
+          };
+        });
+
+        if (ctx === "professional" || ctx === "personal") {
+          scored = scored.filter((s) => s.context_type === ctx);
+        }
+
+        if (scored.length === 0) {
+          setElevatedFacets([]);
+          setSuppressedFacets([]);
+          setLoadingFacets(false);
+          return;
+        }
+
+        const values = scored.map((s) => s.value);
+        const mean = values.reduce((a, b) => a + b, 0) / values.length;
+        const stdDev = Math.sqrt(
+          values.reduce((sum, v) => sum + (v - mean) ** 2, 0) / values.length,
+        );
+
+        elevated = scored
+          .filter((s) => s.value > mean + stdDev)
+          .sort((a, b) => b.value - a.value)
+          .slice(0, 10)
+          .map(toFacetItem);
+        suppressed = scored
+          .filter((s) => s.value < mean - stdDev)
+          .sort((a, b) => a.value - b.value)
+          .slice(0, 10)
+          .map(toFacetItem);
+      }
 
       setElevatedFacets(elevated);
       setSuppressedFacets(suppressed);
@@ -471,6 +533,41 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
     responsesExpanded,
     setResponsesExpanded,
   };
+}
+
+/* =========================================================================
+   Shared-hook context — single usePTPNarrativeData instance per report
+   =========================================================================
+   Before this, each of the six PTP section components called
+   usePTPNarrativeData independently, so one report open ran the hook six
+   times in parallel — ~24 concurrent generate-facet-interpretations invokes,
+   which overloaded the API (500/503 bursts, partial renders). The provider
+   calls the hook ONCE; every section reads the shared result via context. */
+
+type PTPNarrativeData = ReturnType<typeof usePTPNarrativeData>;
+
+const PTPNarrativeContext = createContext<PTPNarrativeData | null>(null);
+
+export function PTPNarrativeProvider({
+  children,
+  ...props
+}: PTPNarrativeSectionsProps & { children: React.ReactNode }) {
+  const data = usePTPNarrativeData(props);
+  return (
+    <PTPNarrativeContext.Provider value={data}>
+      {children}
+    </PTPNarrativeContext.Provider>
+  );
+}
+
+function usePTPNarrativeContext(): PTPNarrativeData {
+  const ctx = useContext(PTPNarrativeContext);
+  if (!ctx) {
+    throw new Error(
+      "PTP narrative section components must be rendered inside <PTPNarrativeProvider>",
+    );
+  }
+  return ctx;
 }
 
 /* =========================================================================
@@ -551,7 +648,7 @@ function CoachLimitedNotice() {
    ========================================================================= */
 
 export function PTPProfileOverviewSection(props: PTPNarrativeSectionsProps) {
-  const data = usePTPNarrativeData(props);
+  const data = usePTPNarrativeContext();
   if (isCoachLimited(props)) return <CoachLimitedNotice />;
 
   const { narrativeSections, loadingNarrativeSections } = data;
@@ -690,7 +787,7 @@ export function PTPProfileOverviewSection(props: PTPNarrativeSectionsProps) {
 }
 
 export function PTPDimensionHighlightsSection(props: PTPNarrativeSectionsProps) {
-  const data = usePTPNarrativeData(props);
+  const data = usePTPNarrativeContext();
   if (isCoachLimited(props)) return null;
   const { narrativeSections, loadingNarrativeSections } = data;
   const { dimensionScores, dimensionNameMap } = props;
@@ -883,7 +980,7 @@ function FacetList({
 }
 
 export function PTPFacetInsightsElevatedSection(props: PTPNarrativeSectionsProps) {
-  const data = usePTPNarrativeData(props);
+  const data = usePTPNarrativeContext();
   if (isCoachLimited(props)) return null;
   if (data.loadingFacets || data.elevatedFacets.length === 0) return null;
   return (
@@ -895,7 +992,7 @@ export function PTPFacetInsightsElevatedSection(props: PTPNarrativeSectionsProps
 }
 
 export function PTPFacetInsightsSuppressedSection(props: PTPNarrativeSectionsProps) {
-  const data = usePTPNarrativeData(props);
+  const data = usePTPNarrativeContext();
   if (isCoachLimited(props)) return null;
   if (data.loadingFacets || data.suppressedFacets.length === 0) return null;
   return (
@@ -907,7 +1004,7 @@ export function PTPFacetInsightsSuppressedSection(props: PTPNarrativeSectionsPro
 }
 
 export function PTPCrossAssessmentSection(props: PTPNarrativeSectionsProps) {
-  const data = usePTPNarrativeData(props);
+  const data = usePTPNarrativeContext();
   if (isCoachLimited(props)) return null;
   const { otherAssessments = [] } = props;
   if (otherAssessments.length === 0) return null;
@@ -965,7 +1062,7 @@ export function PTPCrossAssessmentSection(props: PTPNarrativeSectionsProps) {
 }
 
 export function PTPAssessmentResponsesSection(props: PTPNarrativeSectionsProps) {
-  const data = usePTPNarrativeData(props);
+  const data = usePTPNarrativeContext();
   if (isCoachLimited(props)) return null;
   const { responsesExpanded, setResponsesExpanded, assessmentResponses } = data;
   const { ptpContextTab } = props;
@@ -1075,13 +1172,15 @@ export function PTPAssessmentResponsesSection(props: PTPNarrativeSectionsProps) 
 export default function PTPNarrativeSections(props: PTPNarrativeSectionsProps) {
   if (isCoachLimited(props)) return <CoachLimitedNotice />;
   return (
-    <div className="space-y-8">
-      <PTPProfileOverviewSection {...props} />
-      <PTPDimensionHighlightsSection {...props} />
-      <PTPFacetInsightsElevatedSection {...props} />
-      <PTPFacetInsightsSuppressedSection {...props} />
-      <PTPCrossAssessmentSection {...props} />
-      <PTPAssessmentResponsesSection {...props} />
-    </div>
+    <PTPNarrativeProvider {...props}>
+      <div className="space-y-8">
+        <PTPProfileOverviewSection {...props} />
+        <PTPDimensionHighlightsSection {...props} />
+        <PTPFacetInsightsElevatedSection {...props} />
+        <PTPFacetInsightsSuppressedSection {...props} />
+        <PTPCrossAssessmentSection {...props} />
+        <PTPAssessmentResponsesSection {...props} />
+      </div>
+    </PTPNarrativeProvider>
   );
 }
