@@ -258,8 +258,7 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
       });
 
       if (ptpContextTab === "professional" || ptpContextTab === "personal") {
-        const filtered = scored.filter((s) => s.contextType === ptpContextTab);
-        if (filtered.length > 0) scored = filtered;
+        scored = scored.filter((s) => s.contextType === ptpContextTab);
       }
 
       scored.sort((a, b) => a.itemNumber - b.itemNumber);
@@ -276,111 +275,75 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
       setLoadingNarrativeSections(true);
       setNarrativeSections(null);
 
-      const { data: existing } = await supabase
+      const ctx = ptpContextTab;
+
+      const { data: cached } = await supabase
         .from("facet_interpretations")
         .select("facet_data")
         .eq("assessment_result_id", assessmentResultId)
-        .eq("section_type", `narrative_${ptpContextTab}`)
-        .single();
+        .eq("section_type", `profile_overview_${ctx}`)
+        .maybeSingle();
 
-      if (existing?.facet_data) {
-        setNarrativeSections(existing.facet_data as any);
-        setLoadingNarrativeSections(false);
-        return;
-      }
+      if (!cached?.facet_data) {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        const authHeaders = { Authorization: `Bearer ${session?.access_token}` };
 
-      const dimensionScoresObj = Object.fromEntries(dimensionScores);
+        const calls = [
+          { generate_context_narrative: true, narrative_context: ctx },
+          { generate_dimension_highlights: true, narrative_context: ctx },
+          { generate_cross_and_action: true, narrative_context: ctx },
+        ];
 
-      const dimensionItemsMap: Record<string, Array<{ facetName: string; score: number; contextType: string | null }>> = {};
-      for (const item of assessmentResponses) {
-        if (!item.dimensionId) continue;
-        if (!dimensionItemsMap[item.dimensionId]) dimensionItemsMap[item.dimensionId] = [];
-        dimensionItemsMap[item.dimensionId].push({
-          facetName: item.facetName,
-          score: item.score,
-          contextType: (item as any).contextType ?? null,
-        });
-      }
-
-      const otherAssessmentsEnriched = await Promise.all(
-        otherAssessments.map(async (a) => {
-          const { data: otherResult } = await supabase
-            .from("assessment_results")
-            .select("instrument_id, dimension_scores, assessment_id")
-            .eq("id", a.result.id)
-            .single();
-
-          if (!otherResult) return { instrument_name: a.instrument_name, completed_at: a.completed_at, dimension_scores: null, item_scores: null };
-
-          const { data: otherResponses } = await supabase
-            .from("assessment_responses")
-            .select("response_value_numeric, is_reverse_scored, item_id")
-            .eq("assessment_id", otherResult.assessment_id);
-
-          let itemScores: Array<{ facetName: string; score: number; dimensionId: string }> | null = null;
-
-          if (otherResponses?.length) {
-            const itemIds = otherResponses.map((r) => r.item_id);
-            const { data: otherItems } = await supabase
-              .from("items")
-              .select("item_id, facet_name, dimension_id")
-              .in("item_id", itemIds);
-
-            const otherItemMap = new Map((otherItems ?? []).map((i) => [i.item_id, i]));
-            itemScores = otherResponses.map((r) => {
-              const item = otherItemMap.get(r.item_id);
-              const raw = Number(r.response_value_numeric);
-              const value = r.is_reverse_scored ? 100 - raw : raw;
-              return {
-                facetName: item?.facet_name ?? r.item_id,
-                score: Math.round(value),
-                dimensionId: item?.dimension_id ?? "",
-              };
-            }).filter(s => s.facetName);
+        for (const extra of calls) {
+          const { error } = await supabase.functions.invoke("generate-facet-interpretations", {
+            body: { assessment_result_id: assessmentResultId, ...extra },
+            headers: authHeaders,
+          });
+          if (error) {
+            setLoadingNarrativeSections(false);
+            return;
           }
-
-          return {
-            instrument_name: a.instrument_name,
-            completed_at: a.completed_at,
-            dimension_scores: otherResult.dimension_scores,
-            item_scores: itemScores,
-          };
-        })
-      );
-
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      const { error } = await supabase.functions.invoke("generate-facet-interpretations", {
-        body: {
-          assessment_result_id: assessmentResultId,
-          facets: [],
-          context_tab: ptpContextTab,
-          dimension_scores: dimensionScoresObj,
-          other_assessments: otherAssessmentsEnriched,
-          dimension_items: dimensionItemsMap,
-        },
-        headers: { Authorization: `Bearer ${session?.access_token}` },
-      });
-
-      if (!error) {
-        const { data: newNarrative } = await supabase
-          .from("facet_interpretations")
-          .select("facet_data")
-          .eq("assessment_result_id", assessmentResultId)
-          .eq("section_type", `narrative_${ptpContextTab}`)
-          .single();
-
-        if (newNarrative?.facet_data) {
-          setNarrativeSections(newNarrative.facet_data as any);
         }
       }
 
+      const sectionTypes = [
+        `profile_overview_${ctx}`,
+        `personal_summary_${ctx}`,
+        `dimension_highlights_${ctx}`,
+        `cross_and_action_${ctx}`,
+      ];
+
+      const { data: rows } = await supabase
+        .from("facet_interpretations")
+        .select("section_type, facet_data")
+        .eq("assessment_result_id", assessmentResultId)
+        .in("section_type", sectionTypes);
+
+      const byType = new Map<string, any>(
+        (rows ?? []).map((r) => [r.section_type as string, r.facet_data as any]),
+      );
+
+      const profileOverview = byType.get(`profile_overview_${ctx}`);
+      const personalSummary = byType.get(`personal_summary_${ctx}`);
+      const dimensionHighlights = byType.get(`dimension_highlights_${ctx}`);
+      const crossAndAction = byType.get(`cross_and_action_${ctx}`);
+
+      const assembled: NarrativeSectionsShape = {
+        profile_overview: profileOverview?.text,
+        personal_summary: personalSummary?.personal_summary,
+        dimension_highlights: dimensionHighlights as Record<string, string> | undefined,
+        cross_assessment: crossAndAction?.cross_assessment,
+        action_plan: crossAndAction?.action_plan,
+      };
+
+      setNarrativeSections(assembled);
       setLoadingNarrativeSections(false);
     };
 
     fetchNarrativeSections();
-  }, [assessmentResultId, ptpContextTab, dimensionScores, otherAssessments, assessmentResponses]);
+  }, [assessmentResultId, ptpContextTab]);
 
   useEffect(() => {
     const fetchFacets = async () => {
@@ -420,8 +383,7 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
       });
 
       if (ptpContextTab === "professional" || ptpContextTab === "personal") {
-        const filtered = scored.filter((s) => s.context_type === ptpContextTab);
-        if (filtered.length > 0) scored = filtered;
+        scored = scored.filter((s) => s.context_type === ptpContextTab);
       }
 
       const values = scored.map((s) => s.value);
