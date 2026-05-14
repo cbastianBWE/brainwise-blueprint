@@ -552,7 +552,7 @@ export function PTPNarrativeProvider({
   children,
   ...props
 }: PTPNarrativeSectionsProps & { children: React.ReactNode }) {
-  const data = usePTPNarrativeData(props);
+  const data = usePTPNarrativeContext();
   return (
     <PTPNarrativeContext.Provider value={data}>
       {children}
@@ -648,7 +648,7 @@ function CoachLimitedNotice() {
    ========================================================================= */
 
 export function PTPProfileOverviewSection(props: PTPNarrativeSectionsProps) {
-  const data = usePTPNarrativeData(props);
+  const data = usePTPNarrativeContext();
   if (isCoachLimited(props)) return <CoachLimitedNotice />;
 
   const { narrativeSections, loadingNarrativeSections } = data;
@@ -787,7 +787,7 @@ export function PTPProfileOverviewSection(props: PTPNarrativeSectionsProps) {
 }
 
 export function PTPDimensionHighlightsSection(props: PTPNarrativeSectionsProps) {
-  const data = usePTPNarrativeData(props);
+  const data = usePTPNarrativeContext();
   if (isCoachLimited(props)) return null;
   const { narrativeSections, loadingNarrativeSections } = data;
   const { dimensionScores, dimensionNameMap } = props;
@@ -980,7 +980,7 @@ function FacetList({
 }
 
 export function PTPFacetInsightsElevatedSection(props: PTPNarrativeSectionsProps) {
-  const data = usePTPNarrativeData(props);
+  const data = usePTPNarrativeContext();
   if (isCoachLimited(props)) return null;
   if (data.loadingFacets || data.elevatedFacets.length === 0) return null;
   return (
@@ -992,7 +992,7 @@ export function PTPFacetInsightsElevatedSection(props: PTPNarrativeSectionsProps
 }
 
 export function PTPFacetInsightsSuppressedSection(props: PTPNarrativeSectionsProps) {
-  const data = usePTPNarrativeData(props);
+  const data = usePTPNarrativeContext();
   if (isCoachLimited(props)) return null;
   if (data.loadingFacets || data.suppressedFacets.length === 0) return null;
   return (
@@ -1004,7 +1004,7 @@ export function PTPFacetInsightsSuppressedSection(props: PTPNarrativeSectionsPro
 }
 
 export function PTPCrossAssessmentSection(props: PTPNarrativeSectionsProps) {
-  const data = usePTPNarrativeData(props);
+  const data = usePTPNarrativeContext();
   if (isCoachLimited(props)) return null;
   const { otherAssessments = [] } = props;
   if (otherAssessments.length === 0) return null;
@@ -1062,7 +1062,7 @@ export function PTPCrossAssessmentSection(props: PTPNarrativeSectionsProps) {
 }
 
 export function PTPAssessmentResponsesSection(props: PTPNarrativeSectionsProps) {
-  const data = usePTPNarrativeData(props);
+  const data = usePTPNarrativeContext();
   if (isCoachLimited(props)) return null;
   const { responsesExpanded, setResponsesExpanded, assessmentResponses } = data;
   const { ptpContextTab } = props;
