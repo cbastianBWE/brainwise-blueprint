@@ -252,12 +252,16 @@ export default function InstrumentSelection({ onSelect }: Props) {
     return userTier === "premium";
   };
 
-  const handleSelect = (inst: (typeof INSTRUMENTS)[0]) => {
+  const handleSelect = (
+    inst: (typeof INSTRUMENTS)[0],
+    contextType?: 'professional' | 'personal' | 'both',
+  ) => {
     onSelect({
       instrument_id: inst.instrument_id,
       instrument_name: inst.instrument_name,
       instrument_version: platformVersion || "1.0",
       short_name: inst.short_name,
+      ...(contextType ? { contextType } : {}),
     });
   };
 
