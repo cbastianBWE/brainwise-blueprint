@@ -1243,7 +1243,7 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
                 <section>
                   <PTPAssessmentResponsesSection {...ptpNarrativeProps} />
                 </section>
-              </>
+              </PTPNarrativeProvider>
             );
           })()}
 
