@@ -412,8 +412,8 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
           .from("facet_interpretations")
           .select("facet_data")
           .eq("assessment_result_id", assessmentResultId)
-          .eq("section_type", "facet_insights")
-          .single();
+          .eq("section_type", `facet_insights_${ctx}`)
+          .maybeSingle();
 
         if (existing?.facet_data) {
           setFacetInterpretations(existing.facet_data as unknown as FacetInterpretation[]);
@@ -423,15 +423,15 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
 
         const allFacets = [
           ...elevated.map((f) => ({
-            name: PTP_ITEM_FACET_NAMES[f.item_number ?? 0] ?? f.item_text.slice(0, 40),
+            name: f.facet_name,
             score: Math.round(f.value),
-            question: f.item_text,
+            question: "",
             type: "elevated",
           })),
           ...suppressed.map((f) => ({
-            name: PTP_ITEM_FACET_NAMES[f.item_number ?? 0] ?? f.item_text.slice(0, 40),
+            name: f.facet_name,
             score: Math.round(f.value),
-            question: f.item_text,
+            question: "",
             type: "suppressed",
           })),
         ];
@@ -440,9 +440,19 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
           data: { session },
         } = await supabase.auth.getSession();
         const { data, error } = await supabase.functions.invoke("generate-facet-interpretations", {
-          body: { assessment_result_id: assessmentResultId, facets: allFacets },
+          body: {
+            assessment_result_id: assessmentResultId,
+            facets: allFacets,
+            narrative_context: ctx,
+          },
           headers: { Authorization: `Bearer ${session?.access_token}` },
         });
+
+        if (!error && data?.facet_data) {
+          setFacetInterpretations(data.facet_data as FacetInterpretation[]);
+        }
+        setLoadingInterpretations(false);
+      }
 
         if (!error && data?.facet_data) {
           setFacetInterpretations(data.facet_data as FacetInterpretation[]);
