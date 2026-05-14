@@ -1172,13 +1172,15 @@ export function PTPAssessmentResponsesSection(props: PTPNarrativeSectionsProps) 
 export default function PTPNarrativeSections(props: PTPNarrativeSectionsProps) {
   if (isCoachLimited(props)) return <CoachLimitedNotice />;
   return (
-    <div className="space-y-8">
-      <PTPProfileOverviewSection {...props} />
-      <PTPDimensionHighlightsSection {...props} />
-      <PTPFacetInsightsElevatedSection {...props} />
-      <PTPFacetInsightsSuppressedSection {...props} />
-      <PTPCrossAssessmentSection {...props} />
-      <PTPAssessmentResponsesSection {...props} />
-    </div>
+    <PTPNarrativeProvider {...props}>
+      <div className="space-y-8">
+        <PTPProfileOverviewSection {...props} />
+        <PTPDimensionHighlightsSection {...props} />
+        <PTPFacetInsightsElevatedSection {...props} />
+        <PTPFacetInsightsSuppressedSection {...props} />
+        <PTPCrossAssessmentSection {...props} />
+        <PTPAssessmentResponsesSection {...props} />
+      </div>
+    </PTPNarrativeProvider>
   );
 }
