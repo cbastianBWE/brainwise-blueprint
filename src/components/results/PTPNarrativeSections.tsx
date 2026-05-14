@@ -380,11 +380,6 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
           }
         | undefined;
 
-      if (!drivingData?.elevated && !drivingData?.suppressed) {
-        setLoadingFacets(false);
-        return;
-      }
-
       const toFacetItem = (f: {
         value: number;
         facet_name: string;
@@ -399,8 +394,75 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
         facet_name: f.facet_name,
       });
 
-      const elevated = (drivingData.elevated ?? []).slice(0, 10).map(toFacetItem);
-      const suppressed = (drivingData.suppressed ?? []).slice(0, 10).map(toFacetItem);
+      let elevated: FacetItem[];
+      let suppressed: FacetItem[];
+
+      if (drivingData?.elevated || drivingData?.suppressed) {
+        // Canonical path: the driving_facets_${ctx} row exists, read it.
+        elevated = (drivingData.elevated ?? []).slice(0, 10).map(toFacetItem);
+        suppressed = (drivingData.suppressed ?? []).slice(0, 10).map(toFacetItem);
+      } else {
+        // Fallback: no driving_facets_${ctx} row (older assessments predate the
+        // generate_driving_facets path). Recompute elevated/suppressed from raw
+        // responses, same population mean/stdDev calculation the backend uses.
+        const { data: responses } = await supabase
+          .from("assessment_responses")
+          .select("response_value_numeric, is_reverse_scored, item_id")
+          .eq("assessment_id", assessmentId);
+
+        if (!responses?.length) {
+          setLoadingFacets(false);
+          return;
+        }
+
+        const itemIds = responses.map((r) => r.item_id);
+        const { data: items } = await supabase
+          .from("items")
+          .select("item_id, item_number, dimension_id, facet_name, context_type")
+          .in("item_id", itemIds);
+        const itemMap = new Map((items ?? []).map((i) => [i.item_id, i]));
+
+        let scored = responses.map((r) => {
+          const item = itemMap.get(r.item_id);
+          const raw = Number(r.response_value_numeric);
+          const value = r.is_reverse_scored ? 100 - raw : raw;
+          return {
+            value,
+            facet_name: item?.facet_name ?? "",
+            item_number: item?.item_number ?? 0,
+            dimension_id: item?.dimension_id ?? "",
+            context_type: item?.context_type ?? null,
+          };
+        });
+
+        if (ctx === "professional" || ctx === "personal") {
+          scored = scored.filter((s) => s.context_type === ctx);
+        }
+
+        if (scored.length === 0) {
+          setElevatedFacets([]);
+          setSuppressedFacets([]);
+          setLoadingFacets(false);
+          return;
+        }
+
+        const values = scored.map((s) => s.value);
+        const mean = values.reduce((a, b) => a + b, 0) / values.length;
+        const stdDev = Math.sqrt(
+          values.reduce((sum, v) => sum + (v - mean) ** 2, 0) / values.length,
+        );
+
+        elevated = scored
+          .filter((s) => s.value > mean + stdDev)
+          .sort((a, b) => b.value - a.value)
+          .slice(0, 10)
+          .map(toFacetItem);
+        suppressed = scored
+          .filter((s) => s.value < mean - stdDev)
+          .sort((a, b) => a.value - b.value)
+          .slice(0, 10)
+          .map(toFacetItem);
+      }
 
       setElevatedFacets(elevated);
       setSuppressedFacets(suppressed);
