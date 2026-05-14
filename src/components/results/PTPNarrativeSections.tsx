@@ -811,7 +811,6 @@ function FacetList({
               />
               <div className="flex-1 min-w-0">
                 <div style={{ fontSize: 14, fontWeight: 500, color: "var(--fg-1)" }}>{facetName}</div>
-                <div style={{ fontSize: 12, color: "var(--fg-3)", marginTop: 2 }}>{facet.item_text}</div>
               </div>
               <span
                 style={{
