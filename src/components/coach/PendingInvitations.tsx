@@ -228,7 +228,7 @@ export default function PendingInvitations({ coachUserId, onChanged }: Props) {
                         {r.expires_at ? format(new Date(r.expires_at), "MMM d") : "—"}
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline">{cap(r.invitation_status)}</Badge>
+                        <Badge variant="outline">{r.invitation_status === "partially_completed" ? "In Progress" : cap(r.invitation_status)}</Badge>
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1">
