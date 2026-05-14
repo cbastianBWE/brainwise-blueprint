@@ -33,6 +33,7 @@ interface SelectedInstrument {
   preexistingAssessmentId?: string;
   raterType?: 'self' | 'manager';
   targetUserName?: string;
+  contextType?: 'professional' | 'personal' | 'both';
 }
 
 export default function Assessment() {
