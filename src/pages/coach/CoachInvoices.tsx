@@ -108,7 +108,7 @@ export default function CoachInvoices() {
 
         let status: Transaction["status"] = "Sent";
         const allCompleted = items.every((r) => r.invitation_status === "completed");
-        const anyOpened = items.some((r) => r.invitation_status === "opened" || r.invitation_status === "completed");
+        const anyOpened = items.some((r) => r.invitation_status === "opened" || r.invitation_status === "completed" || r.invitation_status === "partially_completed");
         if (allCompleted) status = "Completed";
         else if (anyOpened) status = "In Progress";
 
