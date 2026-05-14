@@ -1183,7 +1183,7 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
               otherAssessments: assessments.filter(a => a.result.id !== effectiveSelected?.result.id),
             };
             return (
-              <>
+              <PTPNarrativeProvider {...ptpNarrativeProps}>
                 <section>
                   <PTPProfileOverviewSection {...ptpNarrativeProps} />
                 </section>
