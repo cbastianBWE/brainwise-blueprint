@@ -152,6 +152,7 @@ interface FacetItem {
   value: number;
   dimension_id: string;
   context_type?: string | null;
+  facet_name: string;
 }
 
 interface DimensionScore {
@@ -277,14 +278,21 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
 
       const ctx = ptpContextTab;
 
-      const { data: cached } = await supabase
+      const requiredCacheTypes = [
+        `profile_overview_${ctx}`,
+        `personal_summary_${ctx}`,
+        `dimension_highlights_${ctx}`,
+        `cross_and_action_${ctx}`,
+      ];
+      const { data: cachedRows } = await supabase
         .from("facet_interpretations")
-        .select("facet_data")
+        .select("section_type")
         .eq("assessment_result_id", assessmentResultId)
-        .eq("section_type", `profile_overview_${ctx}`)
-        .maybeSingle();
+        .in("section_type", requiredCacheTypes);
+      const cachedTypeSet = new Set((cachedRows ?? []).map((r) => r.section_type));
+      const allCached = requiredCacheTypes.every((t) => cachedTypeSet.has(t));
 
-      if (!cached?.facet_data) {
+      if (!allCached) {
         const {
           data: { session },
         } = await supabase.auth.getSession();
@@ -307,6 +315,7 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
           }
         }
       }
+
 
       const sectionTypes = [
         `profile_overview_${ctx}`,
@@ -351,55 +360,47 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
       setElevatedFacets([]);
       setSuppressedFacets([]);
 
-      const { data: responses } = await supabase
-        .from("assessment_responses")
-        .select("response_value_numeric, is_reverse_scored, item_id")
-        .eq("assessment_id", assessmentId);
+      if (!ptpContextTab) {
+        setLoadingFacets(false);
+        return;
+      }
+      const ctx = ptpContextTab;
 
-      if (!responses?.length) {
+      const { data: drivingRow } = await supabase
+        .from("facet_interpretations")
+        .select("facet_data")
+        .eq("assessment_result_id", assessmentResultId)
+        .eq("section_type", `driving_facets_${ctx}`)
+        .maybeSingle();
+
+      const drivingData = drivingRow?.facet_data as
+        | {
+            elevated?: Array<{ value: number; facet_name: string; item_number: number; dimension_id: string }>;
+            suppressed?: Array<{ value: number; facet_name: string; item_number: number; dimension_id: string }>;
+          }
+        | undefined;
+
+      if (!drivingData?.elevated && !drivingData?.suppressed) {
         setLoadingFacets(false);
         return;
       }
 
-      const itemIds = responses.map((r) => r.item_id);
-      const { data: items } = await supabase
-        .from("items")
-        .select("item_id, item_text, item_number, dimension_id, context_type")
-        .in("item_id", itemIds);
-
-      const itemMap = new Map((items ?? []).map((i) => [i.item_id, i]));
-
-      let scored: FacetItem[] = responses.map((r) => {
-        const item = itemMap.get(r.item_id);
-        const raw = Number(r.response_value_numeric);
-        const value = r.is_reverse_scored ? 100 - raw : raw;
-        return {
-          item_text: item?.item_text ?? "",
-          item_number: item?.item_number ?? null,
-          dimension_id: item?.dimension_id ?? "",
-          context_type: item?.context_type ?? null,
-          value,
-        };
+      const toFacetItem = (f: {
+        value: number;
+        facet_name: string;
+        item_number: number;
+        dimension_id: string;
+      }): FacetItem => ({
+        item_text: "",
+        item_number: f.item_number,
+        dimension_id: f.dimension_id,
+        context_type: ctx,
+        value: f.value,
+        facet_name: f.facet_name,
       });
 
-      if (ptpContextTab === "professional" || ptpContextTab === "personal") {
-        scored = scored.filter((s) => s.context_type === ptpContextTab);
-      }
-
-      const values = scored.map((s) => s.value);
-      const mean = values.reduce((a, b) => a + b, 0) / values.length;
-      const stdDev = Math.sqrt(
-        values.reduce((sum, v) => sum + (v - mean) ** 2, 0) / values.length,
-      );
-
-      const elevated = scored
-        .filter((s) => s.value > mean + stdDev)
-        .sort((a, b) => b.value - a.value)
-        .slice(0, 10);
-      const suppressed = scored
-        .filter((s) => s.value < mean - stdDev)
-        .sort((a, b) => a.value - b.value)
-        .slice(0, 10);
+      const elevated = (drivingData.elevated ?? []).slice(0, 10).map(toFacetItem);
+      const suppressed = (drivingData.suppressed ?? []).slice(0, 10).map(toFacetItem);
 
       setElevatedFacets(elevated);
       setSuppressedFacets(suppressed);
@@ -411,8 +412,8 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
           .from("facet_interpretations")
           .select("facet_data")
           .eq("assessment_result_id", assessmentResultId)
-          .eq("section_type", "facet_insights")
-          .single();
+          .eq("section_type", `facet_insights_${ctx}`)
+          .maybeSingle();
 
         if (existing?.facet_data) {
           setFacetInterpretations(existing.facet_data as unknown as FacetInterpretation[]);
@@ -422,15 +423,15 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
 
         const allFacets = [
           ...elevated.map((f) => ({
-            name: PTP_ITEM_FACET_NAMES[f.item_number ?? 0] ?? f.item_text.slice(0, 40),
+            name: f.facet_name,
             score: Math.round(f.value),
-            question: f.item_text,
+            question: "",
             type: "elevated",
           })),
           ...suppressed.map((f) => ({
-            name: PTP_ITEM_FACET_NAMES[f.item_number ?? 0] ?? f.item_text.slice(0, 40),
+            name: f.facet_name,
             score: Math.round(f.value),
-            question: f.item_text,
+            question: "",
             type: "suppressed",
           })),
         ];
@@ -439,7 +440,11 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
           data: { session },
         } = await supabase.auth.getSession();
         const { data, error } = await supabase.functions.invoke("generate-facet-interpretations", {
-          body: { assessment_result_id: assessmentResultId, facets: allFacets },
+          body: {
+            assessment_result_id: assessmentResultId,
+            facets: allFacets,
+            narrative_context: ctx,
+          },
           headers: { Authorization: `Bearer ${session?.access_token}` },
         });
 
@@ -778,7 +783,7 @@ function FacetList({
   return (
     <div className="space-y-2">
       {facets.map((facet, idx) => {
-        const facetName = PTP_ITEM_FACET_NAMES[facet.item_number ?? 0] ?? facet.item_text.slice(0, 40);
+        const facetName = facet.facet_name;
         const key = `${prefix}-${idx}`;
         const isExpanded = expandedFacets.has(key);
         const interpretation = getFacetInterpretation(facetName);
@@ -806,7 +811,6 @@ function FacetList({
               />
               <div className="flex-1 min-w-0">
                 <div style={{ fontSize: 14, fontWeight: 500, color: "var(--fg-1)" }}>{facetName}</div>
-                <div style={{ fontSize: 12, color: "var(--fg-3)", marginTop: 2 }}>{facet.item_text}</div>
               </div>
               <span
                 style={{

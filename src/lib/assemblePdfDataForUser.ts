@@ -232,73 +232,80 @@ export async function assemblePtpPdfData(params: {
   }
 
   if (isPTP) {
+    const facetSectionType = contextTab ? `facet_insights_${contextTab}` : "facet_insights";
     const { data: facetRow } = await supabase
       .from("facet_interpretations")
       .select("facet_data")
       .eq("assessment_result_id", assessmentResultId)
-      .eq("section_type", "facet_insights")
+      .eq("section_type", facetSectionType)
       .maybeSingle();
 
     const facetInterpretations: { name: string; positive_self: string[]; negative_self: string[]; positive_others: string[]; negative_others: string[] }[] =
       (facetRow?.facet_data as any) ?? [];
 
-    const { data: responses } = await supabase
-      .from("assessment_responses")
-      .select("response_value_numeric, is_reverse_scored, item_id")
-      .eq("assessment_id", result.assessment_id);
+    if (contextTab) {
+      const { data: drivingRow } = await supabase
+        .from("facet_interpretations")
+        .select("facet_data")
+        .eq("assessment_result_id", assessmentResultId)
+        .eq("section_type", `driving_facets_${contextTab}`)
+        .maybeSingle();
 
-    if (responses?.length) {
-      const itemIds = responses.map((r: any) => r.item_id);
-      const { data: items } = await supabase
-        .from("items")
-        .select("item_id, item_text, item_number, dimension_id, context_type")
-        .in("item_id", itemIds);
-      const itemMap = new Map((items ?? []).map((i: any) => [i.item_id, i]));
+      const drivingData = drivingRow?.facet_data as
+        | {
+            elevated?: Array<{ value: number; facet_name: string; item_number: number; dimension_id: string }>;
+            suppressed?: Array<{ value: number; facet_name: string; item_number: number; dimension_id: string }>;
+          }
+        | undefined;
 
-      let scored = responses.map((r: any) => {
-        const item = itemMap.get(r.item_id) as any;
-        const raw = Number(r.response_value_numeric);
-        const value = r.is_reverse_scored ? 100 - raw : raw;
-        return {
-          itemNumber: item?.item_number ?? 0,
-          facetName: PTP_ITEM_FACET_NAMES[item?.item_number ?? 0] ?? item?.item_text?.slice(0, 40) ?? "",
-          itemText: item?.item_text ?? "",
-          score: Math.round(value),
-          dimensionId: item?.dimension_id ?? "",
-          contextType: item?.context_type ?? null,
-        };
+      const mapDriving = (
+        f: { value: number; facet_name: string; item_number: number; dimension_id: string },
+      ) => ({
+        itemNumber: f.item_number,
+        facetName: f.facet_name,
+        itemText: "",
+        score: Math.round(f.value),
+        dimensionId: f.dimension_id,
+        interpretation: facetInterpretations.find((fi) => fi.name === f.facet_name) ?? null,
       });
 
-      if (contextTab === "professional" || contextTab === "personal") {
-        const filtered = scored.filter((s) => s.contextType === contextTab);
-        if (filtered.length > 0) scored = filtered;
-      }
+      elevatedFacets = (drivingData?.elevated ?? []).slice(0, 10).map(mapDriving);
+      suppressedFacets = (drivingData?.suppressed ?? []).slice(0, 10).map(mapDriving);
+    }
 
-      const values = scored.map((s) => s.score);
-      if (values.length > 0) {
-        const mean = values.reduce((a, b) => a + b, 0) / values.length;
-        const stdDev = Math.sqrt(values.reduce((sum, v) => sum + (v - mean) ** 2, 0) / values.length);
+    if (sections.assessmentResponses) {
+      const { data: responses } = await supabase
+        .from("assessment_responses")
+        .select("response_value_numeric, is_reverse_scored, item_id")
+        .eq("assessment_id", result.assessment_id);
 
-        elevatedFacets = scored
-          .filter((s) => s.score > mean + stdDev)
-          .sort((a, b) => b.score - a.score)
-          .slice(0, 10)
-          .map(({ contextType, ...rest }) => ({
-            ...rest,
-            interpretation: facetInterpretations.find((fi) => fi.name === rest.facetName) ?? null,
-          }));
+      if (responses?.length) {
+        const itemIds = responses.map((r: any) => r.item_id);
+        const { data: items } = await supabase
+          .from("items")
+          .select("item_id, item_text, item_number, dimension_id, context_type, facet_name")
+          .in("item_id", itemIds);
+        const itemMap = new Map((items ?? []).map((i: any) => [i.item_id, i]));
 
-        suppressedFacets = scored
-          .filter((s) => s.score < mean - stdDev)
-          .sort((a, b) => a.score - b.score)
-          .slice(0, 10)
-          .map(({ contextType, ...rest }) => ({
-            ...rest,
-            interpretation: facetInterpretations.find((fi) => fi.name === rest.facetName) ?? null,
-          }));
-      }
+        let scored = responses.map((r: any) => {
+          const item = itemMap.get(r.item_id) as any;
+          const raw = Number(r.response_value_numeric);
+          const value = r.is_reverse_scored ? 100 - raw : raw;
+          return {
+            itemNumber: item?.item_number ?? 0,
+            facetName: item?.facet_name ?? item?.item_text?.slice(0, 40) ?? "",
+            itemText: item?.item_text ?? "",
+            score: Math.round(value),
+            dimensionId: item?.dimension_id ?? "",
+            contextType: item?.context_type ?? null,
+          };
+        });
 
-      if (sections.assessmentResponses) {
+        if (contextTab === "professional" || contextTab === "personal") {
+          const filtered = scored.filter((s) => s.contextType === contextTab);
+          if (filtered.length > 0) scored = filtered;
+        }
+
         assessmentResponses = scored
           .sort((a, b) => a.itemNumber - b.itemNumber)
           .map(({ contextType, ...rest }) => rest);
