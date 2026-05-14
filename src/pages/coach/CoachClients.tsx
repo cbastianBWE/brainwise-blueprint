@@ -916,7 +916,7 @@ export default function CoachClients() {
                           size="sm"
                           variant="ghost"
                           className="gap-1"
-                          disabled={(c.invitation_status !== "sent" && c.invitation_status !== "opened") || sendingReminderId === c.id}
+                          disabled={(c.invitation_status !== "sent" && c.invitation_status !== "opened" && c.invitation_status !== "partially_completed") || sendingReminderId === c.id}
                           onClick={() => handleRemind(c)}
                         >
                           <Mail className="h-3 w-3" /> {sendingReminderId === c.id ? "Sending..." : "Remind"}
