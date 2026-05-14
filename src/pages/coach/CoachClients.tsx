@@ -193,7 +193,7 @@ export default function CoachClients() {
       }
       clientMap[e].assessment_count++;
       if (row.assessment_status === "completed") clientMap[e].completed_count++;
-      if (row.invitation_status === "sent" || row.invitation_status === "opened") clientMap[e].pending_count++;
+      if (row.invitation_status === "sent" || row.invitation_status === "opened" || row.invitation_status === "partially_completed") clientMap[e].pending_count++;
       if (!clientMap[e].client_name && row.client_name) clientMap[e].client_name = row.client_name;
       if (!clientMap[e].client_user_id && row.client_user_id) clientMap[e].client_user_id = row.client_user_id;
     }
