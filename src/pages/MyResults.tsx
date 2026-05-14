@@ -6,7 +6,7 @@ import { useUserProfile } from "@/hooks/useUserProfile";
 import { useAccountRole } from "@/lib/accountRoles";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { useAiUsage } from "@/hooks/useAiUsage";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -173,8 +173,6 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
   const { toast } = useToast();
   const navigate = useNavigate();
   const effectiveUserId = isCoachView && targetUserId ? targetUserId : user?.id;
-  const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
-  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
   const [assessments, setAssessments] = useState<AssessmentWithResult[]>([]);
   const [selectedId, setSelectedId] = useState<string>("");
@@ -187,10 +185,6 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
   const [loading, setLoading] = useState(true);
   const [pollingNarrative, setPollingNarrative] = useState(false);
   const [dimensionNameMap, setDimensionNameMap] = useState<Map<string, string>>(new Map());
-  const [regenerating, setRegenerating] = useState(false);
-  const [regeneratedVersion, setRegeneratedVersion] = useState<string | null>(null);
-  const [limitReached, setLimitReached] = useState<{ limit: number; tier: string } | null>(null);
-  const { fetchUsage, consumeMessage } = useAiUsage();
   const [exportModalOpen, setExportModalOpen] = useState(false);
   const [clientName, setClientName] = useState<string | null>(null);
   const [debriefPendingIds, setDebriefPendingIds] = useState<Set<string>>(new Set());
@@ -613,60 +607,7 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
     fetchSplitScores();
   }, [selected?.result.assessment_id, selected?.context_type]);
 
-  // Regenerate handler
-  const handleRegenerate = useCallback(async () => {
-    if (!selected) return;
-    setRegenerating(true);
-    setRegeneratedVersion(null);
-    setLimitReached(null);
 
-    // Consume one AI interaction from usage limit (report_generation type)
-    const usageData = await consumeMessage(effectiveTier, "report_generation");
-    if (!usageData || !usageData.allowed) {
-      setLimitReached({ limit: usageData?.limit ?? 30, tier: usageData?.tier ?? effectiveTier });
-      setRegenerating(false);
-      return;
-    }
-
-    // Call generate-report
-    const { error } = await supabase.functions.invoke("generate-report", {
-      body: { assessment_result_id: selected.result.id },
-    });
-
-    if (error) {
-      toast({ title: "Error", description: "Failed to regenerate interpretation.", variant: "destructive" });
-      setRegenerating(false);
-      return;
-    }
-
-    // Poll for updated narrative
-    const poll = setInterval(async () => {
-      const { data } = await supabase
-        .from("assessment_results")
-        .select("ai_narrative, ai_version")
-        .eq("id", selected.result.id)
-        .single();
-
-      if (data?.ai_narrative && data.ai_narrative !== selected.result.ai_narrative) {
-        setAssessments((prev) =>
-          prev.map((a) =>
-            a.result.id === selected.result.id
-              ? { ...a, result: { ...a.result, ai_narrative: data.ai_narrative, ai_version: data.ai_version } }
-              : a
-          )
-        );
-        setRegeneratedVersion(data.ai_version);
-        setRegenerating(false);
-        clearInterval(poll);
-      }
-    }, 5000);
-
-    // Timeout after 2 minutes
-    setTimeout(() => {
-      clearInterval(poll);
-      setRegenerating(false);
-    }, 120000);
-  }, [selected, consumeMessage, effectiveTier, toast]);
 
   // Derived data
   const dimensionScores = effectiveDimensionScores;
@@ -1339,86 +1280,6 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
                         <p className="text-xs text-gray-500 mt-4">
                           Generated with {selected.result.ai_version}
                         </p>
-                      )}
-                      {regeneratedVersion && (
-                        <p className="text-xs text-accent-foreground bg-accent/10 rounded px-2 py-1 inline-block">
-                          Regenerated with {regeneratedVersion}
-                        </p>
-                      )}
-                      {limitReached && (
-                        <div className="rounded-md border border-destructive/30 bg-destructive/5 p-3 flex items-center gap-2 text-sm">
-                          <AlertTriangle className="h-4 w-4 text-destructive shrink-0" />
-                          <span className="text-muted-foreground">
-                            You've used all {limitReached.limit} monthly AI messages.{" "}
-                            {limitReached.tier === "base" && (
-                              <Button variant="link" size="sm" className="h-auto p-0" onClick={() => navigate("/pricing")}>
-                                Upgrade to Premium
-                              </Button>
-                            )}
-                          </span>
-                        </div>
-                      )}
-                      {!isCoachView && (
-                        regenerating ? (
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <RefreshCw className="h-4 w-4 animate-spin" />
-                            Regenerating interpretation…
-                          </div>
-                        ) : (
-                          <>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="text-xs text-foreground border-border mt-1"
-                              onClick={() => {
-                                if (hasActiveAccess) {
-                                  setShowConfirmDialog(true);
-                                } else {
-                                  setShowUpgradeDialog(true);
-                                }
-                              }}
-                            >
-                              <RefreshCw className="mr-1 h-3 w-3" /> Regenerate Interpretation
-                            </Button>
-
-                            {/* Upgrade dialog for users without active subscription */}
-                            <AlertDialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog}>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>Subscription Required</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    Regenerating your interpretation requires an active subscription.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter className="flex flex-col items-center gap-2 sm:flex-col">
-                                  <AlertDialogAction onClick={() => { setShowUpgradeDialog(false); navigate("/pricing"); }}>
-                                    Upgrade to Premium
-                                  </AlertDialogAction>
-                                  <p className="text-xs text-muted-foreground text-center">
-                                    Base plan also includes interpretation regeneration.
-                                  </p>
-                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-
-                            {/* Existing confirmation dialog for active subscribers */}
-                            <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>Regenerate Interpretation?</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    This will regenerate your interpretation using the latest AI version. Your current interpretation will be replaced. This will use 1 of your monthly AI messages. Continue?
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                  <AlertDialogAction onClick={handleRegenerate}>Continue</AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          </>
-                        )
                       )}
                     </>
                   ) : pollingNarrative ? (
