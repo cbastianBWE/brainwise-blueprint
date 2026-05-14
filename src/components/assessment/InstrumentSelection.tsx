@@ -416,26 +416,77 @@ export default function InstrumentSelection({ onSelect }: Props) {
                   </Button>
                 );
               } else if (coachPaid) {
-                buttonContent = (
-                  <Button
-                    className="w-full bg-accent text-accent-foreground hover:bg-accent/90 border border-primary"
-                    onClick={() => handleSelect(inst)}
-                  >
-                    {isInProgress ? "Continue Assessment" : "Start Assessment (Coach Paid)"}
-                  </Button>
-                );
+                const ptpCtx = inst.instrument_id === "INST-001" ? ptpContextProgress.get(instrumentUuid) : undefined;
+                if (ptpCtx === "professional_done") {
+                  buttonContent = (
+                    <Button
+                      className="w-full bg-accent text-accent-foreground hover:bg-accent/90 border border-primary"
+                      onClick={() => handleSelect(inst, "personal")}
+                    >
+                      Continue your PTP — Personal half
+                    </Button>
+                  );
+                } else if (ptpCtx === "personal_done") {
+                  buttonContent = (
+                    <Button
+                      className="w-full bg-accent text-accent-foreground hover:bg-accent/90 border border-primary"
+                      onClick={() => handleSelect(inst, "professional")}
+                    >
+                      Continue your PTP — Professional half
+                    </Button>
+                  );
+                } else {
+                  buttonContent = (
+                    <Button
+                      className="w-full bg-accent text-accent-foreground hover:bg-accent/90 border border-primary"
+                      onClick={() => handleSelect(inst)}
+                    >
+                      {isInProgress ? "Continue Assessment" : "Start Assessment (Coach Paid)"}
+                    </Button>
+                  );
+                }
               } else if (purchaseAccess) {
-                buttonContent = (
-                  <Button className="w-full" onClick={() => handleSelect(inst)}>
-                    {startLabel}
-                  </Button>
-                );
+                const ptpCtx = inst.instrument_id === "INST-001" ? ptpContextProgress.get(instrumentUuid) : undefined;
+                if (ptpCtx === "professional_done") {
+                  buttonContent = (
+                    <Button className="w-full" onClick={() => handleSelect(inst, "personal")}>
+                      Continue your PTP — Personal half
+                    </Button>
+                  );
+                } else if (ptpCtx === "personal_done") {
+                  buttonContent = (
+                    <Button className="w-full" onClick={() => handleSelect(inst, "professional")}>
+                      Continue your PTP — Professional half
+                    </Button>
+                  );
+                } else {
+                  buttonContent = (
+                    <Button className="w-full" onClick={() => handleSelect(inst)}>
+                      {startLabel}
+                    </Button>
+                  );
+                }
               } else if (selfPayCoachInvited) {
-                buttonContent = (
-                  <Button className="w-full" onClick={() => setShowSelfPayDialog(true)}>
-                    Your Coach Wants You to Take This
-                  </Button>
-                );
+                const ptpCtx = inst.instrument_id === "INST-001" ? ptpContextProgress.get(instrumentUuid) : undefined;
+                if (ptpCtx === "professional_done") {
+                  buttonContent = (
+                    <Button className="w-full" onClick={() => handleSelect(inst, "personal")}>
+                      Continue your PTP — Personal half
+                    </Button>
+                  );
+                } else if (ptpCtx === "personal_done") {
+                  buttonContent = (
+                    <Button className="w-full" onClick={() => handleSelect(inst, "professional")}>
+                      Continue your PTP — Professional half
+                    </Button>
+                  );
+                } else {
+                  buttonContent = (
+                    <Button className="w-full" onClick={() => setShowSelfPayDialog(true)}>
+                      Your Coach Wants You to Take This
+                    </Button>
+                  );
+                }
               } else {
                 buttonContent = (
                   <Button variant="outline" className="w-full" onClick={() => navigate("/pricing")}>
