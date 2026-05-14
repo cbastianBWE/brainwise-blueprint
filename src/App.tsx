@@ -67,6 +67,7 @@ import CreateOrganization from "./pages/super-admin/CreateOrganization";
 import ContentAuthoring from "./pages/super-admin/ContentAuthoring";
 import AssetLibrary from "./pages/super-admin/AssetLibrary";
 import LessonBlocksEditor from "./pages/super-admin/LessonBlocksEditor";
+import AdminResourceAuthoring from "./pages/super-admin/AdminResourceAuthoring";
 import EpnComplete from "./pages/EpnComplete";
 import AirsaManagerComplete from "./pages/AirsaManagerComplete";
 import VerifyConversion from "./pages/VerifyConversion";
@@ -171,6 +172,7 @@ const App = () => (
               <Route path="/super-admin/company/:orgId" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><CompanyDetail /></SuperAdminSessionProvider></RoleGuard>} />
               <Route path="/super-admin/versions" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><VersionManagement /></SuperAdminSessionProvider></RoleGuard>} />
               <Route path="/super-admin/content-authoring" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><ContentAuthoring /></SuperAdminSessionProvider></RoleGuard>} />
+              <Route path="/super-admin/resources" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><AdminResourceAuthoring /></SuperAdminSessionProvider></RoleGuard>} />
               <Route path="/super-admin/asset-library" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><AssetLibrary /></SuperAdminSessionProvider></RoleGuard>} />
               <Route path="/super-admin/content-authoring/lessons/:contentItemId" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><LessonBlocksEditor /></SuperAdminSessionProvider></RoleGuard>} />
             </Route>

@@ -47,6 +47,7 @@ interface FileUploadFieldProps {
   moduleId?: string | null;
   curriculumId?: string | null;
   certificationPathId?: string | null;
+  resourceId?: string | null;
   isLibraryAsset?: boolean;
   refField?: string | null;
   libraryName?: string | null;
@@ -171,6 +172,7 @@ export function FileUploadField({
   moduleId,
   curriculumId,
   certificationPathId,
+  resourceId,
   isLibraryAsset,
   refField,
   libraryName,
