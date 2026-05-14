@@ -270,7 +270,12 @@ export default function Assessment() {
           })}
         </div>
       )}
-      <InstrumentSelection onSelect={setSelectedInstrument} />
+      <InstrumentSelection
+        onSelect={(payload) => {
+          if (payload.contextType) setContextType(payload.contextType);
+          setSelectedInstrument(payload);
+        }}
+      />
     </>
   );
 }
