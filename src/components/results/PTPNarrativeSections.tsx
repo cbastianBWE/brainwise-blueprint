@@ -552,7 +552,7 @@ export function PTPNarrativeProvider({
   children,
   ...props
 }: PTPNarrativeSectionsProps & { children: React.ReactNode }) {
-  const data = usePTPNarrativeContext();
+  const data = usePTPNarrativeData(props);
   return (
     <PTPNarrativeContext.Provider value={data}>
       {children}
