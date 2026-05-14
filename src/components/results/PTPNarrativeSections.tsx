@@ -278,14 +278,21 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
 
       const ctx = ptpContextTab;
 
-      const { data: cached } = await supabase
+      const requiredCacheTypes = [
+        `profile_overview_${ctx}`,
+        `personal_summary_${ctx}`,
+        `dimension_highlights_${ctx}`,
+        `cross_and_action_${ctx}`,
+      ];
+      const { data: cachedRows } = await supabase
         .from("facet_interpretations")
-        .select("facet_data")
+        .select("section_type")
         .eq("assessment_result_id", assessmentResultId)
-        .eq("section_type", `profile_overview_${ctx}`)
-        .maybeSingle();
+        .in("section_type", requiredCacheTypes);
+      const cachedTypeSet = new Set((cachedRows ?? []).map((r) => r.section_type));
+      const allCached = requiredCacheTypes.every((t) => cachedTypeSet.has(t));
 
-      if (!cached?.facet_data) {
+      if (!allCached) {
         const {
           data: { session },
         } = await supabase.auth.getSession();
@@ -307,6 +314,7 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
             return;
           }
         }
+      }
       }
 
       const sectionTypes = [
