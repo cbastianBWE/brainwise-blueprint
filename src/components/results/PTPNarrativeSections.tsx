@@ -453,12 +453,6 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
         }
         setLoadingInterpretations(false);
       }
-
-        if (!error && data?.facet_data) {
-          setFacetInterpretations(data.facet_data as FacetInterpretation[]);
-        }
-        setLoadingInterpretations(false);
-      }
     };
     fetchFacets();
   }, [assessmentId, assessmentResultId, ptpContextTab]);
