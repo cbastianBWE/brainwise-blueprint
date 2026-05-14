@@ -52,6 +52,7 @@ import {
   PTPFacetInsightsSuppressedSection,
   PTPCrossAssessmentSection,
   PTPAssessmentResponsesSection,
+  PTPNarrativeProvider,
 } from "@/components/results/PTPNarrativeSections";
 import PTPBrainOverview from "@/components/results/PTPBrainOverview";
 import PTPFullFacetCharts from "@/components/results/PTPFullFacetCharts";
