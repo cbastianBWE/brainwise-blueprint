@@ -87,6 +87,7 @@ const superAdminNav: NavItem[] = [
   { title: "Create Organization", url: "/super-admin/create-organization", icon: Plus },
   { title: "Version Management", url: "/super-admin/versions", icon: GitBranch },
   { title: "Content Authoring", url: "/super-admin/content-authoring", icon: Library },
+  { title: "Resource Authoring", url: "/super-admin/resources", icon: Library },
   { title: "AI Chat", url: "/ai-chat", icon: MessageSquare },
   { title: "Chat History", url: "/ai-chat/history", icon: History },
   { title: "AI Research", url: "/super-admin/ai-research", icon: FlaskConical, disabled: true, badge: "Phase 2" },

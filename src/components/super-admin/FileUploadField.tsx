@@ -47,6 +47,7 @@ interface FileUploadFieldProps {
   moduleId?: string | null;
   curriculumId?: string | null;
   certificationPathId?: string | null;
+  resourceId?: string | null;
   isLibraryAsset?: boolean;
   refField?: string | null;
   libraryName?: string | null;
@@ -171,6 +172,7 @@ export function FileUploadField({
   moduleId,
   curriculumId,
   certificationPathId,
+  resourceId,
   isLibraryAsset,
   refField,
   libraryName,
@@ -288,7 +290,9 @@ export function FileUploadField({
               ? `Thumbnail upload for curriculum ${curriculumId}`
               : certificationPathId
                 ? `Thumbnail upload for certification_path ${certificationPathId}`
-                : "Asset upload";
+                : resourceId
+                  ? `Thumbnail upload for resource ${resourceId}`
+                  : "Asset upload";
     const reason = (reasonOverride && reasonOverride.length >= 10) ? reasonOverride : defaultReason;
 
     const reqResp = await supabase.functions.invoke("request-asset-upload", {
@@ -303,6 +307,7 @@ export function FileUploadField({
         module_id: moduleId ?? null,
         curriculum_id: curriculumId ?? null,
         certification_path_id: certificationPathId ?? null,
+        resource_id: resourceId ?? null,
         ref_field: refField ?? null,
         is_library_asset: isLibraryAsset ?? false,
         library_name: libraryName ?? null,
@@ -354,7 +359,7 @@ export function FileUploadField({
 
     setState({ kind: "uploaded", assetId: asset_id });
     onChange(asset_id);
-  }, [assetKind, config, contentItemId, lessonBlockId, moduleId, curriculumId, certificationPathId, refField, isLibraryAsset, libraryName, libraryTags, reasonOverride, onChange]);
+  }, [assetKind, config, contentItemId, lessonBlockId, moduleId, curriculumId, certificationPathId, resourceId, refField, isLibraryAsset, libraryName, libraryTags, reasonOverride, onChange]);
 
   const handleReplaceUpload = useCallback(async (file: File) => {
     const oldId = value;
@@ -390,7 +395,9 @@ export function FileUploadField({
               ? `Thumbnail upload for curriculum ${curriculumId}`
               : certificationPathId
                 ? `Thumbnail upload for certification_path ${certificationPathId}`
-                : "Asset upload";
+                : resourceId
+                  ? `Thumbnail upload for resource ${resourceId}`
+                  : "Asset upload";
     const reason = (reasonOverride && reasonOverride.length >= 10) ? reasonOverride : defaultReason;
 
     const reqResp = await supabase.functions.invoke("request-asset-upload", {
@@ -405,6 +412,7 @@ export function FileUploadField({
         module_id: moduleId ?? null,
         curriculum_id: curriculumId ?? null,
         certification_path_id: certificationPathId ?? null,
+        resource_id: resourceId ?? null,
         ref_field: refField ?? null,
         is_library_asset: isLibraryAsset ?? false,
         library_name: libraryName ?? null,
@@ -462,7 +470,7 @@ export function FileUploadField({
 
     setState({ kind: "uploaded", assetId: newAssetId });
     onChange(newAssetId);
-  }, [value, assetKind, config, contentItemId, lessonBlockId, moduleId, curriculumId, certificationPathId, refField, isLibraryAsset, libraryName, libraryTags, reasonOverride, onChange]);
+  }, [value, assetKind, config, contentItemId, lessonBlockId, moduleId, curriculumId, certificationPathId, resourceId, refField, isLibraryAsset, libraryName, libraryTags, reasonOverride, onChange]);
 
   const handleFileSelected = (file: File | null | undefined) => {
     if (!file) return;
@@ -716,6 +724,19 @@ export function FileUploadField({
         p_ref_field: refField ?? "library_pick",
         p_reason: `Linked library asset to ${refField ?? "field"} via FileUploadField picker`,
       });
+      if (error) {
+        toast({ title: "Failed to link library asset", description: error.message, variant: "destructive" });
+        return;
+      }
+    } else if (resourceId) {
+      const { error } = await supabase.rpc("create_asset_ref", {
+        p_asset_id: libraryAssetId,
+        p_content_item_id: null,
+        p_lesson_block_id: null,
+        p_resource_id: resourceId,
+        p_ref_field: refField ?? "library_pick",
+        p_reason: `Linked library asset to ${refField ?? "field"} on resource ${resourceId} via FileUploadField picker`,
+      } as any);
       if (error) {
         toast({ title: "Failed to link library asset", description: error.message, variant: "destructive" });
         return;
