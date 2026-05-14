@@ -60,6 +60,7 @@ interface Props {
     instrument_name: string;
     instrument_version: string;
     short_name: string;
+    contextType?: 'professional' | 'personal' | 'both';
   }) => void;
 }
 
