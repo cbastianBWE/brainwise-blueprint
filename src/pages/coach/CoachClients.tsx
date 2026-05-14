@@ -498,6 +498,7 @@ export default function CoachClients() {
     if (!status) {
       if (invitationStatus === "sent") return <Badge variant="secondary">Sent</Badge>;
       if (invitationStatus === "opened") return <Badge variant="secondary">Opened</Badge>;
+      if (invitationStatus === "partially_completed") return <Badge variant="secondary">In Progress</Badge>;
       return <Badge variant="outline">Pending</Badge>;
     }
     switch (status) {
