@@ -191,7 +191,27 @@ export default function InstrumentSelection({ onSelect }: Props) {
         setSelfPayCoachInstrumentIds(ids);
       }
 
-      // Corp feature check: for each instrument, call user_has_feature
+      // Build per-instrument context_progress map (PTP only in practice).
+      {
+        const ctxMap = new Map<string, string>();
+        const consider = (instrumentId: string | null | undefined, ctx: string | null | undefined) => {
+          if (!instrumentId || !ctx) return;
+          const existing = ctxMap.get(instrumentId);
+          if (!existing) ctxMap.set(instrumentId, ctx);
+        };
+        (coachClientsRes.data ?? []).forEach((r: { instrument_id?: string | null; context_progress?: string | null }) =>
+          consider(r.instrument_id, r.context_progress)
+        );
+        (selfPayCoachClientsRes.data ?? []).forEach((r: { instrument_id?: string | null; context_progress?: string | null }) =>
+          consider(r.instrument_id, r.context_progress)
+        );
+        (purchasesRes.data ?? []).forEach((r: { instrument_id?: string | null; context_progress?: string | null }) => {
+          if (!r.instrument_id) return;
+          r.instrument_id.split(",").forEach((id: string) => consider(id.trim(), r.context_progress));
+        });
+        setPtpContextProgress(ctxMap);
+      }
+
       if (user) {
         const { data: userRow } = await supabase
           .from("users")
