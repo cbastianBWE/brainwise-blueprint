@@ -536,6 +536,41 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
 }
 
 /* =========================================================================
+   Shared-hook context — single usePTPNarrativeData instance per report
+   =========================================================================
+   Before this, each of the six PTP section components called
+   usePTPNarrativeData independently, so one report open ran the hook six
+   times in parallel — ~24 concurrent generate-facet-interpretations invokes,
+   which overloaded the API (500/503 bursts, partial renders). The provider
+   calls the hook ONCE; every section reads the shared result via context. */
+
+type PTPNarrativeData = ReturnType<typeof usePTPNarrativeData>;
+
+const PTPNarrativeContext = createContext<PTPNarrativeData | null>(null);
+
+export function PTPNarrativeProvider({
+  children,
+  ...props
+}: PTPNarrativeSectionsProps & { children: React.ReactNode }) {
+  const data = usePTPNarrativeData(props);
+  return (
+    <PTPNarrativeContext.Provider value={data}>
+      {children}
+    </PTPNarrativeContext.Provider>
+  );
+}
+
+function usePTPNarrativeContext(): PTPNarrativeData {
+  const ctx = useContext(PTPNarrativeContext);
+  if (!ctx) {
+    throw new Error(
+      "PTP narrative section components must be rendered inside <PTPNarrativeProvider>",
+    );
+  }
+  return ctx;
+}
+
+/* =========================================================================
    Shared style helpers
    ========================================================================= */
 
