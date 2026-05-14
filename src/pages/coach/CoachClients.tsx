@@ -193,7 +193,7 @@ export default function CoachClients() {
       }
       clientMap[e].assessment_count++;
       if (row.assessment_status === "completed") clientMap[e].completed_count++;
-      if (row.invitation_status === "sent" || row.invitation_status === "opened") clientMap[e].pending_count++;
+      if (row.invitation_status === "sent" || row.invitation_status === "opened" || row.invitation_status === "partially_completed") clientMap[e].pending_count++;
       if (!clientMap[e].client_name && row.client_name) clientMap[e].client_name = row.client_name;
       if (!clientMap[e].client_user_id && row.client_user_id) clientMap[e].client_user_id = row.client_user_id;
     }
@@ -474,7 +474,7 @@ export default function CoachClients() {
   // pendingInvitationsCount: distinct rows still awaiting redemption
   // (matches PendingInvitations card query).
   const pendingInvitationsCount = clients.filter(c => {
-    if (c.invitation_status !== "sent" && c.invitation_status !== "opened") return false;
+    if (c.invitation_status !== "sent" && c.invitation_status !== "opened" && c.invitation_status !== "partially_completed") return false;
     if (c.assessment_id !== null) return false;
     if (c.revoked_at !== null) return false;
     if (c.expires_at !== null && new Date(c.expires_at) <= new Date()) return false;
@@ -498,6 +498,7 @@ export default function CoachClients() {
     if (!status) {
       if (invitationStatus === "sent") return <Badge variant="secondary">Sent</Badge>;
       if (invitationStatus === "opened") return <Badge variant="secondary">Opened</Badge>;
+      if (invitationStatus === "partially_completed") return <Badge variant="secondary">In Progress</Badge>;
       return <Badge variant="outline">Pending</Badge>;
     }
     switch (status) {
@@ -915,7 +916,7 @@ export default function CoachClients() {
                           size="sm"
                           variant="ghost"
                           className="gap-1"
-                          disabled={(c.invitation_status !== "sent" && c.invitation_status !== "opened") || sendingReminderId === c.id}
+                          disabled={(c.invitation_status !== "sent" && c.invitation_status !== "opened" && c.invitation_status !== "partially_completed") || sendingReminderId === c.id}
                           onClick={() => handleRemind(c)}
                         >
                           <Mail className="h-3 w-3" /> {sendingReminderId === c.id ? "Sending..." : "Remind"}

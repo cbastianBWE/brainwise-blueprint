@@ -342,7 +342,8 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
         p_user_id: user.id,
         p_instrument_short_name: instrument.short_name,
         p_assessment_id: assessmentId,
-      });
+        p_context_type: contextType ?? null,
+      } as never);
     } catch (err) {
       console.error("consume_assessment_purchase failed (non-fatal):", err);
     }

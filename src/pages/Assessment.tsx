@@ -33,6 +33,7 @@ interface SelectedInstrument {
   preexistingAssessmentId?: string;
   raterType?: 'self' | 'manager';
   targetUserName?: string;
+  contextType?: 'professional' | 'personal' | 'both';
 }
 
 export default function Assessment() {
@@ -269,7 +270,12 @@ export default function Assessment() {
           })}
         </div>
       )}
-      <InstrumentSelection onSelect={setSelectedInstrument} />
+      <InstrumentSelection
+        onSelect={(payload) => {
+          if (payload.contextType) setContextType(payload.contextType);
+          setSelectedInstrument(payload);
+        }}
+      />
     </>
   );
 }

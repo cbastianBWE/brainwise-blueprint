@@ -60,6 +60,7 @@ interface Props {
     instrument_name: string;
     instrument_version: string;
     short_name: string;
+    contextType?: 'professional' | 'personal' | 'both';
   }) => void;
 }
 
@@ -81,6 +82,7 @@ export default function InstrumentSelection({ onSelect }: Props) {
   const [selfPayDialogLoading, setSelfPayDialogLoading] = useState(false);
   const [subscriptionPlans, setSubscriptionPlans] = useState<Array<{ plan_name: string; tier: string; billing_period: string; price_usd: number | null; stripe_price_id: string }>>([]);
   const [selfPayCoachInstrumentIds, setSelfPayCoachInstrumentIds] = useState<Set<string>>(new Set());
+  const [ptpContextProgress, setPtpContextProgress] = useState<Map<string, string>>(new Map());
   const [airsaAwaiting, setAirsaAwaiting] = useState<{ completed_at: string } | null>(null);
 
   useEffect(() => {
@@ -91,21 +93,19 @@ export default function InstrumentSelection({ onSelect }: Props) {
         supabase.from("platform_versions").select("version_string").eq("is_active", true).limit(1).single(),
         supabase.from("assessment_results").select("overall_profile").eq("user_id", user.id).order("created_at", { ascending: false }).limit(1),
         supabase.from("coach_clients")
-          .select("instrument_id, stripe_payment_intent_id, assessment_id")
+          .select("instrument_id, stripe_payment_intent_id, assessment_id, context_progress, paired_assessment_id")
           .eq("client_user_id", user.id)
           .not("stripe_payment_intent_id", "is", null)
-          .is("assessment_id", null)
-          .neq("invitation_status", "completed"),
-        supabase.from("assessment_purchases").select("instrument_id").eq("user_id", user.id).is("consumed_at", null),
+          .in("invitation_status", ["sent", "opened", "partially_completed"]),
+        supabase.from("assessment_purchases").select("instrument_id, context_progress").eq("user_id", user.id).is("consumed_at", null),
         supabase.from("assessments").select("instrument_id").eq("user_id", user.id).eq("status", "completed"),
         supabase.from("assessments").select("instrument_id").eq("user_id", user.id).eq("status", "in_progress"),
         supabase.from("subscription_plans").select("plan_name, tier, billing_period, price_usd, stripe_price_id").eq("is_active", true),
         supabase.from("coach_clients")
-          .select("instrument_id")
+          .select("instrument_id, context_progress")
           .eq("client_user_id", user.id)
           .is("stripe_payment_intent_id", null)
-          .is("assessment_id", null)
-          .in("invitation_status", ["sent", "opened"]),
+          .in("invitation_status", ["sent", "opened", "partially_completed"]),
         supabase.from("assessments")
           .select("id, completed_at")
           .eq("user_id", user.id)
@@ -191,7 +191,27 @@ export default function InstrumentSelection({ onSelect }: Props) {
         setSelfPayCoachInstrumentIds(ids);
       }
 
-      // Corp feature check: for each instrument, call user_has_feature
+      // Build per-instrument context_progress map (PTP only in practice).
+      {
+        const ctxMap = new Map<string, string>();
+        const consider = (instrumentId: string | null | undefined, ctx: string | null | undefined) => {
+          if (!instrumentId || !ctx) return;
+          const existing = ctxMap.get(instrumentId);
+          if (!existing) ctxMap.set(instrumentId, ctx);
+        };
+        (coachClientsRes.data ?? []).forEach((r: { instrument_id?: string | null; context_progress?: string | null }) =>
+          consider(r.instrument_id, r.context_progress)
+        );
+        (selfPayCoachClientsRes.data ?? []).forEach((r: { instrument_id?: string | null; context_progress?: string | null }) =>
+          consider(r.instrument_id, r.context_progress)
+        );
+        (purchasesRes.data ?? []).forEach((r: { instrument_id?: string | null; context_progress?: string | null }) => {
+          if (!r.instrument_id) return;
+          r.instrument_id.split(",").forEach((id: string) => consider(id.trim(), r.context_progress));
+        });
+        setPtpContextProgress(ctxMap);
+      }
+
       if (user) {
         const { data: userRow } = await supabase
           .from("users")
@@ -232,12 +252,16 @@ export default function InstrumentSelection({ onSelect }: Props) {
     return userTier === "premium";
   };
 
-  const handleSelect = (inst: (typeof INSTRUMENTS)[0]) => {
+  const handleSelect = (
+    inst: (typeof INSTRUMENTS)[0],
+    contextType?: 'professional' | 'personal' | 'both',
+  ) => {
     onSelect({
       instrument_id: inst.instrument_id,
       instrument_name: inst.instrument_name,
       instrument_version: platformVersion || "1.0",
       short_name: inst.short_name,
+      ...(contextType ? { contextType } : {}),
     });
   };
 
@@ -392,26 +416,77 @@ export default function InstrumentSelection({ onSelect }: Props) {
                   </Button>
                 );
               } else if (coachPaid) {
-                buttonContent = (
-                  <Button
-                    className="w-full bg-accent text-accent-foreground hover:bg-accent/90 border border-primary"
-                    onClick={() => handleSelect(inst)}
-                  >
-                    {isInProgress ? "Continue Assessment" : "Start Assessment (Coach Paid)"}
-                  </Button>
-                );
+                const ptpCtx = inst.instrument_id === "INST-001" ? ptpContextProgress.get(instrumentUuid) : undefined;
+                if (ptpCtx === "professional_done") {
+                  buttonContent = (
+                    <Button
+                      className="w-full bg-accent text-accent-foreground hover:bg-accent/90 border border-primary"
+                      onClick={() => handleSelect(inst, "personal")}
+                    >
+                      Continue your PTP — Personal half
+                    </Button>
+                  );
+                } else if (ptpCtx === "personal_done") {
+                  buttonContent = (
+                    <Button
+                      className="w-full bg-accent text-accent-foreground hover:bg-accent/90 border border-primary"
+                      onClick={() => handleSelect(inst, "professional")}
+                    >
+                      Continue your PTP — Professional half
+                    </Button>
+                  );
+                } else {
+                  buttonContent = (
+                    <Button
+                      className="w-full bg-accent text-accent-foreground hover:bg-accent/90 border border-primary"
+                      onClick={() => handleSelect(inst)}
+                    >
+                      {isInProgress ? "Continue Assessment" : "Start Assessment (Coach Paid)"}
+                    </Button>
+                  );
+                }
               } else if (purchaseAccess) {
-                buttonContent = (
-                  <Button className="w-full" onClick={() => handleSelect(inst)}>
-                    {startLabel}
-                  </Button>
-                );
+                const ptpCtx = inst.instrument_id === "INST-001" ? ptpContextProgress.get(instrumentUuid) : undefined;
+                if (ptpCtx === "professional_done") {
+                  buttonContent = (
+                    <Button className="w-full" onClick={() => handleSelect(inst, "personal")}>
+                      Continue your PTP — Personal half
+                    </Button>
+                  );
+                } else if (ptpCtx === "personal_done") {
+                  buttonContent = (
+                    <Button className="w-full" onClick={() => handleSelect(inst, "professional")}>
+                      Continue your PTP — Professional half
+                    </Button>
+                  );
+                } else {
+                  buttonContent = (
+                    <Button className="w-full" onClick={() => handleSelect(inst)}>
+                      {startLabel}
+                    </Button>
+                  );
+                }
               } else if (selfPayCoachInvited) {
-                buttonContent = (
-                  <Button className="w-full" onClick={() => setShowSelfPayDialog(true)}>
-                    Your Coach Wants You to Take This
-                  </Button>
-                );
+                const ptpCtx = inst.instrument_id === "INST-001" ? ptpContextProgress.get(instrumentUuid) : undefined;
+                if (ptpCtx === "professional_done") {
+                  buttonContent = (
+                    <Button className="w-full" onClick={() => handleSelect(inst, "personal")}>
+                      Continue your PTP — Personal half
+                    </Button>
+                  );
+                } else if (ptpCtx === "personal_done") {
+                  buttonContent = (
+                    <Button className="w-full" onClick={() => handleSelect(inst, "professional")}>
+                      Continue your PTP — Professional half
+                    </Button>
+                  );
+                } else {
+                  buttonContent = (
+                    <Button className="w-full" onClick={() => setShowSelfPayDialog(true)}>
+                      Your Coach Wants You to Take This
+                    </Button>
+                  );
+                }
               } else {
                 buttonContent = (
                   <Button variant="outline" className="w-full" onClick={() => navigate("/pricing")}>
