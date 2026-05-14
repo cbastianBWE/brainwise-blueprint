@@ -664,8 +664,10 @@ export type Database = {
           amount_paid: number
           consumed_at: string | null
           consumed_by_assessment_id: string | null
+          context_progress: string | null
           id: string
           instrument_id: string
+          paired_assessment_id: string | null
           purchased_at: string
           refund_amount: number | null
           refund_failure_reason: string | null
@@ -680,8 +682,10 @@ export type Database = {
           amount_paid: number
           consumed_at?: string | null
           consumed_by_assessment_id?: string | null
+          context_progress?: string | null
           id?: string
           instrument_id: string
+          paired_assessment_id?: string | null
           purchased_at?: string
           refund_amount?: number | null
           refund_failure_reason?: string | null
@@ -696,8 +700,10 @@ export type Database = {
           amount_paid?: number
           consumed_at?: string | null
           consumed_by_assessment_id?: string | null
+          context_progress?: string | null
           id?: string
           instrument_id?: string
+          paired_assessment_id?: string | null
           purchased_at?: string
           refund_amount?: number | null
           refund_failure_reason?: string | null
@@ -712,6 +718,13 @@ export type Database = {
           {
             foreignKeyName: "assessment_purchases_consumed_by_assessment_id_fkey"
             columns: ["consumed_by_assessment_id"]
+            isOneToOne: false
+            referencedRelation: "assessments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessment_purchases_paired_assessment_id_fkey"
+            columns: ["paired_assessment_id"]
             isOneToOne: false
             referencedRelation: "assessments"
             referencedColumns: ["id"]
@@ -1646,6 +1659,7 @@ export type Database = {
           client_user_id: string | null
           coach_notes: string | null
           coach_user_id: string
+          context_progress: string | null
           coupon_amount: number | null
           coupon_expires_at: string | null
           coupon_redeemed: boolean
@@ -1656,6 +1670,7 @@ export type Database = {
           instrument_id: string | null
           invitation_source: string
           invitation_status: string
+          paired_assessment_id: string | null
           refund_amount: number | null
           refund_failure_reason: string | null
           refunded_at: string | null
@@ -1673,6 +1688,7 @@ export type Database = {
           client_user_id?: string | null
           coach_notes?: string | null
           coach_user_id: string
+          context_progress?: string | null
           coupon_amount?: number | null
           coupon_expires_at?: string | null
           coupon_redeemed?: boolean
@@ -1683,6 +1699,7 @@ export type Database = {
           instrument_id?: string | null
           invitation_source?: string
           invitation_status?: string
+          paired_assessment_id?: string | null
           refund_amount?: number | null
           refund_failure_reason?: string | null
           refunded_at?: string | null
@@ -1700,6 +1717,7 @@ export type Database = {
           client_user_id?: string | null
           coach_notes?: string | null
           coach_user_id?: string
+          context_progress?: string | null
           coupon_amount?: number | null
           coupon_expires_at?: string | null
           coupon_redeemed?: boolean
@@ -1710,6 +1728,7 @@ export type Database = {
           instrument_id?: string | null
           invitation_source?: string
           invitation_status?: string
+          paired_assessment_id?: string | null
           refund_amount?: number | null
           refund_failure_reason?: string | null
           refunded_at?: string | null
@@ -1788,6 +1807,13 @@ export type Database = {
             columns: ["instrument_id"]
             isOneToOne: false
             referencedRelation: "instruments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coach_clients_paired_assessment_id_fkey"
+            columns: ["paired_assessment_id"]
+            isOneToOne: false
+            referencedRelation: "assessments"
             referencedColumns: ["id"]
           },
         ]
@@ -4637,6 +4663,75 @@ export type Database = {
           },
         ]
       }
+      module_completions: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          id: string
+          module_id: string
+          started_at: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          module_id: string
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          module_id?: string
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "module_completions_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "modules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "module_completions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "module_completions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "module_completions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "module_completions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       modules: {
         Row: {
           archived_at: string | null
@@ -6195,38 +6290,208 @@ export type Database = {
           },
         ]
       }
+      resource_access_grants: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          grant_org_id: string | null
+          grant_type: string
+          grant_value: string | null
+          id: string
+          resource_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          grant_org_id?: string | null
+          grant_type: string
+          grant_value?: string | null
+          id?: string
+          resource_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          grant_org_id?: string | null
+          grant_type?: string
+          grant_value?: string | null
+          id?: string
+          resource_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "resource_access_grants_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "resource_access_grants_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "resource_access_grants_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "resource_access_grants_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "resource_access_grants_grant_org_id_fkey"
+            columns: ["grant_org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "resource_access_grants_resource_id_fkey"
+            columns: ["resource_id"]
+            isOneToOne: false
+            referencedRelation: "resources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      resource_tabs: {
+        Row: {
+          created_at: string
+          display_order: number
+          id: string
+          is_coach_only: boolean
+          is_learning_tree: boolean
+          name: string
+          slug: string
+        }
+        Insert: {
+          created_at?: string
+          display_order: number
+          id?: string
+          is_coach_only?: boolean
+          is_learning_tree?: boolean
+          name: string
+          slug: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          is_coach_only?: boolean
+          is_learning_tree?: boolean
+          name?: string
+          slug?: string
+        }
+        Relationships: []
+      }
       resources: {
         Row: {
-          audiences: string[]
+          archived_at: string | null
+          audiences: string[] | null
           category: string
           content_type: string | null
+          created_at: string
+          created_by: string | null
           id: string
+          is_published: boolean
           published_at: string
+          resource_tab_id: string | null
           subscale_tags: string[] | null
+          summary: string | null
+          thumbnail_asset_id: string | null
           title: string
+          updated_at: string
           url_or_content: string | null
         }
         Insert: {
-          audiences: string[]
+          archived_at?: string | null
+          audiences?: string[] | null
           category?: string
           content_type?: string | null
+          created_at?: string
+          created_by?: string | null
           id?: string
+          is_published?: boolean
           published_at?: string
+          resource_tab_id?: string | null
           subscale_tags?: string[] | null
+          summary?: string | null
+          thumbnail_asset_id?: string | null
           title: string
+          updated_at?: string
           url_or_content?: string | null
         }
         Update: {
-          audiences?: string[]
+          archived_at?: string | null
+          audiences?: string[] | null
           category?: string
           content_type?: string | null
+          created_at?: string
+          created_by?: string | null
           id?: string
+          is_published?: boolean
           published_at?: string
+          resource_tab_id?: string | null
           subscale_tags?: string[] | null
+          summary?: string | null
+          thumbnail_asset_id?: string | null
           title?: string
+          updated_at?: string
           url_or_content?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "resources_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "resources_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "resources_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "resources_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "resources_resource_tab_id_fkey"
+            columns: ["resource_tab_id"]
+            isOneToOne: false
+            referencedRelation: "resource_tabs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "resources_thumbnail_asset_id_fkey"
+            columns: ["thumbnail_asset_id"]
+            isOneToOne: false
+            referencedRelation: "content_assets"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       response_scales: {
         Row: {
@@ -7913,6 +8178,10 @@ export type Database = {
         Args: { p_id: string; p_reason: string }
         Returns: Json
       }
+      archive_resource: {
+        Args: { p_id: string; p_reason: string }
+        Returns: Json
+      }
       assert_impersonation_allows: {
         Args: { p_action_category: string }
         Returns: {
@@ -8064,6 +8333,7 @@ export type Database = {
         Args: { p_assignment_id: string }
         Returns: undefined
       }
+      complete_lesson: { Args: { p_content_item_id: string }; Returns: Json }
       compose_notification_email: {
         Args: {
           p_full_name: string
@@ -8076,9 +8346,14 @@ export type Database = {
           subject: string
         }[]
       }
+      confirm_external_link: {
+        Args: { p_content_item_id: string }
+        Returns: Json
+      }
       consume_assessment_purchase: {
         Args: {
           p_assessment_id: string
+          p_context_type?: string
           p_instrument_short_name: string
           p_user_id: string
         }
@@ -8261,6 +8536,10 @@ export type Database = {
           size_bytes: number
         }[]
       }
+      get_cert_path_detail: {
+        Args: { p_certification_path_id: string; p_user_id?: string }
+        Returns: Json
+      }
       get_chain_of_command: {
         Args: { p_user_id?: string }
         Returns: {
@@ -8385,6 +8664,7 @@ export type Database = {
         Returns: Json
       }
       get_user_learning_state: { Args: { p_user_id: string }; Returns: Json }
+      get_user_resources: { Args: { p_user_id?: string }; Returns: Json }
       grant_certification: {
         Args: { p_certification_id: string; p_reason?: string }
         Returns: Json
@@ -8542,6 +8822,14 @@ export type Database = {
         Args: { p_asset_ids: string[]; p_recipient: string; p_zip_path: string }
         Returns: Json
       }
+      mark_live_event_attendance: {
+        Args: {
+          p_attendance_status: string
+          p_content_item_id: string
+          p_trainee_user_id: string
+        }
+        Returns: Json
+      }
       mark_skills_practice_signoff: {
         Args: {
           p_content_item_id: string
@@ -8688,6 +8976,14 @@ export type Database = {
         Args: { p_new_user_id: string }
         Returns: number
       }
+      record_video_progress: {
+        Args: {
+          p_content_item_id: string
+          p_last_position_seconds?: number
+          p_watch_pct: number
+        }
+        Returns: Json
+      }
       reorder_content_items: {
         Args: { p_module_id: string; p_ordered_ids: string[]; p_reason: string }
         Returns: Json
@@ -8792,6 +9088,10 @@ export type Database = {
           run_at: string
         }[]
       }
+      set_resource_access_grants: {
+        Args: { p_grants: Json; p_reason: string; p_resource_id: string }
+        Returns: Json
+      }
       sharing_preferences_upsert: {
         Args: {
           p_share_ptp_with_company_admin?: boolean
@@ -8828,6 +9128,19 @@ export type Database = {
           p_assignment_id: string
         }
         Returns: string
+      }
+      start_lesson_reattempt: {
+        Args: { p_content_item_id: string }
+        Returns: Json
+      }
+      submit_file_upload: {
+        Args: {
+          p_content_item_id: string
+          p_file_url: string
+          p_filename: string
+          p_size_bytes: number
+        }
+        Returns: Json
       }
       submit_quiz_attempt: {
         Args: { p_answers: Json; p_content_item_id: string }
@@ -8965,6 +9278,18 @@ export type Database = {
         }
         Returns: Json
       }
+      upsert_lesson_block_progress: {
+        Args: { p_block_id: string; p_completion_data?: Json; p_status: string }
+        Returns: Json
+      }
+      upsert_lesson_progress: {
+        Args: {
+          p_content_item_id: string
+          p_furthest_continue_client_id?: string
+          p_last_block_id?: string
+        }
+        Returns: Json
+      }
       upsert_module: {
         Args: {
           p_attachment_display_order: number
@@ -8980,6 +9305,20 @@ export type Database = {
           p_reason: string
           p_slug: string
           p_thumbnail_asset_id?: string
+        }
+        Returns: Json
+      }
+      upsert_resource: {
+        Args: {
+          p_content_type: string
+          p_id: string
+          p_is_published: boolean
+          p_reason: string
+          p_resource_tab_id: string
+          p_summary: string
+          p_thumbnail_asset_id?: string
+          p_title: string
+          p_url_or_content: string
         }
         Returns: Json
       }
