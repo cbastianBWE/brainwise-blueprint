@@ -92,7 +92,7 @@ export default function InstrumentSelection({ onSelect }: Props) {
         supabase.from("users").select("subscription_tier, subscription_status").eq("id", user.id).single(),
         supabase.from("platform_versions").select("version_string").eq("is_active", true).limit(1).single(),
         supabase.from("assessment_results").select("overall_profile").eq("user_id", user.id).order("created_at", { ascending: false }).limit(1),
-        supabase.from("coach_clients")
+        supabase.from("coach_clients_client_view")
           .select("instrument_id, stripe_payment_intent_id, assessment_id, context_progress, paired_assessment_id")
           .eq("client_user_id", user.id)
           .not("stripe_payment_intent_id", "is", null)
@@ -101,7 +101,7 @@ export default function InstrumentSelection({ onSelect }: Props) {
         supabase.from("assessments").select("instrument_id").eq("user_id", user.id).eq("status", "completed"),
         supabase.from("assessments").select("instrument_id").eq("user_id", user.id).eq("status", "in_progress"),
         supabase.from("subscription_plans").select("plan_name, tier, billing_period, price_usd, stripe_price_id").eq("is_active", true),
-        supabase.from("coach_clients")
+        supabase.from("coach_clients_client_view")
           .select("instrument_id, context_progress")
           .eq("client_user_id", user.id)
           .is("stripe_payment_intent_id", null)

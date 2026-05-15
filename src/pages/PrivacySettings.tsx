@@ -113,7 +113,7 @@ export default function PrivacySettings() {
     const load = async () => {
       // Coach association
       const { data: cc } = await supabase
-        .from("coach_clients")
+        .from("coach_clients_client_view")
         .select("coach_user_id")
         .eq("client_user_id", user.id)
         .limit(1);
