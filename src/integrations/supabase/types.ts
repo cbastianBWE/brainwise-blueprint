@@ -7874,29 +7874,56 @@ export type Database = {
         Row: {
           assessment_id: string | null
           client_email: string | null
+          client_first_name: string | null
+          client_last_name: string | null
           client_user_id: string | null
           coach_user_id: string | null
+          context_progress: string | null
           created_at: string | null
+          debrief_completed: boolean | null
+          expires_at: string | null
           id: string | null
+          instrument_id: string | null
           invitation_status: string | null
+          paired_assessment_id: string | null
+          results_released: boolean | null
+          stripe_payment_intent_id: string | null
         }
         Insert: {
           assessment_id?: string | null
           client_email?: string | null
+          client_first_name?: string | null
+          client_last_name?: string | null
           client_user_id?: string | null
           coach_user_id?: string | null
+          context_progress?: string | null
           created_at?: string | null
+          debrief_completed?: boolean | null
+          expires_at?: string | null
           id?: string | null
+          instrument_id?: string | null
           invitation_status?: string | null
+          paired_assessment_id?: string | null
+          results_released?: boolean | null
+          stripe_payment_intent_id?: string | null
         }
         Update: {
           assessment_id?: string | null
           client_email?: string | null
+          client_first_name?: string | null
+          client_last_name?: string | null
           client_user_id?: string | null
           coach_user_id?: string | null
+          context_progress?: string | null
           created_at?: string | null
+          debrief_completed?: boolean | null
+          expires_at?: string | null
           id?: string | null
+          instrument_id?: string | null
           invitation_status?: string | null
+          paired_assessment_id?: string | null
+          results_released?: boolean | null
+          stripe_payment_intent_id?: string | null
         }
         Relationships: [
           {
@@ -7960,6 +7987,20 @@ export type Database = {
             columns: ["coach_user_id"]
             isOneToOne: false
             referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coach_clients_instrument_id_fkey"
+            columns: ["instrument_id"]
+            isOneToOne: false
+            referencedRelation: "instruments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coach_clients_paired_assessment_id_fkey"
+            columns: ["paired_assessment_id"]
+            isOneToOne: false
+            referencedRelation: "assessments"
             referencedColumns: ["id"]
           },
         ]
