@@ -885,7 +885,7 @@ export default function CoachClients() {
                 </TableHeader>
                 <TableBody>
                   {clients
-                    .filter(c => c.client_email === selectedClientEmail)
+                    .filter(c => c.client_email === selectedClientEmail && c.revoked_at === null)
                     .map(c => (
                     <TableRow key={c.id}>
                       <TableCell className="text-sm">{c.instrument_name || "—"}</TableCell>
