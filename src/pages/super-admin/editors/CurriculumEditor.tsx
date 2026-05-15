@@ -20,20 +20,28 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
-  Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  BookOpenText, Pencil, Plus, Search, Loader2, Save, Archive,
+  BookOpenText, Pencil, Plus, Search, Loader2, Save, Archive, Copy, X,
 } from "lucide-react";
 import { slugify, CURRICULUM_MODES } from "./_shared";
 import { FileUploadField } from "@/components/super-admin/FileUploadField";
 
 function AttachedModulesSection({
   curriculumId,
+  curriculumName: _curriculumName,
   onAddClick,
   onSelectModule,
-}: { curriculumId: string; onAddClick: () => void; onSelectModule: (moduleId: string) => void }) {
+  onDetach,
+}: {
+  curriculumId: string;
+  curriculumName: string;
+  onAddClick: () => void;
+  onSelectModule: (moduleId: string) => void;
+  onDetach: (moduleId: string, moduleName: string) => void;
+}) {
   const { data, isLoading } = useQuery({
     queryKey: ["curriculum-attached-modules", curriculumId],
     queryFn: async () => {
@@ -94,6 +102,16 @@ function AttachedModulesSection({
                   title="Edit module"
                 >
                   <Pencil className="h-3.5 w-3.5" />
+                </Button>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
+                  onClick={() => onDetach(row.module.id, row.module.name)}
+                  aria-label={`Detach ${row.module.name}`}
+                  title="Detach from this curriculum"
+                >
+                  <X className="h-3.5 w-3.5" />
                 </Button>
               </div>
             </div>
@@ -166,6 +184,22 @@ function CurriculumEditor({
   const [archiveDialogOpen, setArchiveDialogOpen] = useState(false);
   const [archiveReason, setArchiveReason] = useState("");
   const [archiving, setArchiving] = useState(false);
+
+  const [detachState, setDetachState] = useState<{
+    open: boolean;
+    moduleId: string | null;
+    moduleName: string | null;
+    reason: string;
+    loading: boolean;
+  }>({ open: false, moduleId: null, moduleName: null, reason: "", loading: false });
+
+  const [duplicateState, setDuplicateState] = useState<{
+    open: boolean;
+    newSlug: string;
+    newName: string;
+    reason: string;
+    loading: boolean;
+  }>({ open: false, newSlug: "", newName: "", reason: "", loading: false });
 
   const [addModuleOpen, setAddModuleOpen] = useState(false);
   const [pullModSearch, setPullModSearch] = useState("");
@@ -432,6 +466,75 @@ function CurriculumEditor({
     setArchiveDialogOpen(false);
     setArchiveReason("");
     onArchived?.();
+  };
+
+  const handleDetachModule = async () => {
+    if (!initial?.id || !detachState.moduleId || detachState.reason.trim().length < 10) return;
+    setDetachState((s) => ({ ...s, loading: true }));
+    const { error } = await supabase.rpc("detach_module_from_curriculum", {
+      p_curriculum_id: initial.id,
+      p_module_id: detachState.moduleId,
+      p_reason: detachState.reason.trim(),
+    } as any);
+    setDetachState((s) => ({ ...s, loading: false }));
+    if (error) {
+      toast({
+        title: "Could not detach module",
+        description: error.message ?? "Unknown error.",
+        variant: "destructive",
+      });
+      return;
+    }
+    toast({
+      title: "Module detached",
+      description: `${detachState.moduleName} is no longer in this curriculum. User enrollments preserved.`,
+    });
+    setDetachState({ open: false, moduleId: null, moduleName: null, reason: "", loading: false });
+    await Promise.all([onRefetch?.(), onInvalidateAttachedModulesList?.()]);
+  };
+
+  const openDuplicateDialog = () => {
+    if (!initial) return;
+    setDuplicateState({
+      open: true,
+      newSlug: `${initial.slug}-copy`,
+      newName: `${initial.name} (Copy)`,
+      reason: "",
+      loading: false,
+    });
+  };
+
+  const handleDuplicate = async () => {
+    if (!initial?.id || duplicateState.reason.trim().length < 10) return;
+    if (duplicateState.newSlug.trim().length === 0 || duplicateState.newName.trim().length === 0) return;
+    setDuplicateState((s) => ({ ...s, loading: true }));
+    const { data, error } = await supabase.rpc("duplicate_curriculum", {
+      p_source_curriculum_id: initial.id,
+      p_new_slug: duplicateState.newSlug.trim(),
+      p_new_name: duplicateState.newName.trim(),
+      p_reason: duplicateState.reason.trim(),
+    } as any);
+    setDuplicateState((s) => ({ ...s, loading: false }));
+    if (error) {
+      const msg = error.message ?? "";
+      const friendly = msg.includes("slug_already_in_use")
+        ? "That slug is already in use. Pick a different one."
+        : msg.includes("reason_required_min_chars")
+        ? "Reason must be at least 10 characters."
+        : msg || "Could not duplicate.";
+      toast({
+        title: "Could not duplicate curriculum",
+        description: friendly,
+        variant: "destructive",
+      });
+      return;
+    }
+    toast({
+      title: "Curriculum duplicated",
+      description: `Created as draft: ${(data as any)?.new_name}. Review and publish when ready.`,
+    });
+    setDuplicateState({ open: false, newSlug: "", newName: "", reason: "", loading: false });
+    await onRefetch?.();
   };
 
   const titleText = mode === "create" ? "New curriculum" : (initial?.name ?? "Curriculum");
@@ -774,14 +877,24 @@ function CurriculumEditor({
         <div className="flex flex-wrap items-center justify-between gap-2 pt-2">
           <div className="flex items-center gap-2">
             {mode === "edit" && initial && !initial.archived_at && (
-              <Button
-                variant="destructive"
-                onClick={() => setArchiveDialogOpen(true)}
-                disabled={saving}
-              >
-                <Archive className="h-4 w-4 mr-2" />
-                Archive
-              </Button>
+              <>
+                <Button
+                  variant="destructive"
+                  onClick={() => setArchiveDialogOpen(true)}
+                  disabled={saving}
+                >
+                  <Archive className="h-4 w-4 mr-2" />
+                  Archive
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={openDuplicateDialog}
+                  disabled={saving}
+                >
+                  <Copy className="h-4 w-4 mr-2" />
+                  Duplicate
+                </Button>
+              </>
             )}
           </div>
           <div className="flex items-center gap-2">
@@ -806,8 +919,12 @@ function CurriculumEditor({
         {mode === "edit" && initial?.id && (
           <AttachedModulesSection
             curriculumId={initial.id}
+            curriculumName={initial.name ?? ""}
             onAddClick={() => setAddModuleOpen(true)}
             onSelectModule={(moduleId) => onSelectModule?.(moduleId)}
+            onDetach={(moduleId, moduleName) =>
+              setDetachState({ open: true, moduleId, moduleName, reason: "", loading: false })
+            }
           />
         )}
       </CardContent>
@@ -985,6 +1102,124 @@ function CurriculumEditor({
               </Button>
             </TabsContent>
           </Tabs>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog
+        open={detachState.open}
+        onOpenChange={(open) => !detachState.loading && setDetachState((s) => ({ ...s, open }))}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Detach this module?</AlertDialogTitle>
+            <AlertDialogDescription>
+              <span className="font-medium text-foreground">{detachState.moduleName}</span> will be
+              removed from this curriculum. The module itself is not deleted — it stays in the library as
+              an unattached module and any user enrollments in it are preserved.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="cu-detach-reason">Reason for detaching *</Label>
+            <Textarea
+              id="cu-detach-reason"
+              value={detachState.reason}
+              onChange={(e) => setDetachState((s) => ({ ...s, reason: e.target.value }))}
+              rows={3}
+              placeholder="At least 10 characters."
+              disabled={detachState.loading}
+            />
+            <p className={cn(
+              "text-xs",
+              detachState.reason.trim().length >= 10 ? "text-muted-foreground" : "text-destructive"
+            )}>
+              {detachState.reason.trim().length}/10 characters minimum.
+            </p>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={detachState.loading}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); handleDetachModule(); }}
+              disabled={detachState.reason.trim().length < 10 || detachState.loading}
+            >
+              {detachState.loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Detach
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <Dialog
+        open={duplicateState.open}
+        onOpenChange={(open) => !duplicateState.loading && setDuplicateState((s) => ({ ...s, open }))}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Duplicate this curriculum</DialogTitle>
+            <DialogDescription>
+              Creates a deep copy of the curriculum, all its modules, lessons, and content. Assets
+              (thumbnails, files) are shared by reference — not duplicated. The new curriculum starts as a
+              draft so you can review before publishing.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="cu-dup-name">New name *</Label>
+              <Input
+                id="cu-dup-name"
+                value={duplicateState.newName}
+                onChange={(e) => setDuplicateState((s) => ({ ...s, newName: e.target.value }))}
+                disabled={duplicateState.loading}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="cu-dup-slug">New slug *</Label>
+              <Input
+                id="cu-dup-slug"
+                value={duplicateState.newSlug}
+                onChange={(e) => setDuplicateState((s) => ({ ...s, newSlug: slugify(e.target.value) }))}
+                disabled={duplicateState.loading}
+              />
+              <p className="text-xs text-muted-foreground">Must be unique across all curricula.</p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="cu-dup-reason">Reason *</Label>
+              <Textarea
+                id="cu-dup-reason"
+                value={duplicateState.reason}
+                onChange={(e) => setDuplicateState((s) => ({ ...s, reason: e.target.value }))}
+                rows={3}
+                placeholder="At least 10 characters."
+                disabled={duplicateState.loading}
+              />
+              <p className={cn(
+                "text-xs",
+                duplicateState.reason.trim().length >= 10 ? "text-muted-foreground" : "text-destructive"
+              )}>
+                {duplicateState.reason.trim().length}/10 characters minimum.
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setDuplicateState((s) => ({ ...s, open: false }))}
+              disabled={duplicateState.loading}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleDuplicate}
+              disabled={
+                duplicateState.reason.trim().length < 10 ||
+                duplicateState.newSlug.trim().length === 0 ||
+                duplicateState.newName.trim().length === 0 ||
+                duplicateState.loading
+              }
+            >
+              {duplicateState.loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Duplicate
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </Card>

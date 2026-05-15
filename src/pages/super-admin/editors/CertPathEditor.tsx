@@ -21,12 +21,12 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
-  Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Trophy, GraduationCap, BookOpenText, Pencil, Plus,
-  Search, Loader2, Save, Archive,
+  Search, Loader2, Save, Archive, Copy, X,
 } from "lucide-react";
 import {
   slugify, CERT_INSTRUMENTS, CERTIFICATION_TYPES, DELIVERY_MODES,
@@ -35,9 +35,17 @@ import { FileUploadField } from "@/components/super-admin/FileUploadField";
 
 function AttachedCurriculaSection({
   certPathId,
+  certPathName: _certPathName,
   onAddClick,
   onSelectCurriculum,
-}: { certPathId: string; onAddClick: () => void; onSelectCurriculum: (curriculumId: string) => void }) {
+  onDetach,
+}: {
+  certPathId: string;
+  certPathName: string;
+  onAddClick: () => void;
+  onSelectCurriculum: (curriculumId: string) => void;
+  onDetach: (curriculumId: string, curriculumName: string) => void;
+}) {
   const { data, isLoading } = useQuery({
     queryKey: ["cert-path-attached-curricula", certPathId],
     queryFn: async () => {
@@ -98,6 +106,16 @@ function AttachedCurriculaSection({
                   title="Edit curriculum"
                 >
                   <Pencil className="h-3.5 w-3.5" />
+                </Button>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
+                  onClick={() => onDetach(row.curriculum.id, row.curriculum.name)}
+                  aria-label={`Detach ${row.curriculum.name}`}
+                  title="Detach from this path"
+                >
+                  <X className="h-3.5 w-3.5" />
                 </Button>
               </div>
             </div>
@@ -164,6 +182,22 @@ function CertPathEditor({
   const [archiveDialogOpen, setArchiveDialogOpen] = useState(false);
   const [archiveReason, setArchiveReason] = useState("");
   const [archiving, setArchiving] = useState(false);
+
+  const [detachState, setDetachState] = useState<{
+    open: boolean;
+    curriculumId: string | null;
+    curriculumName: string | null;
+    reason: string;
+    loading: boolean;
+  }>({ open: false, curriculumId: null, curriculumName: null, reason: "", loading: false });
+
+  const [duplicateState, setDuplicateState] = useState<{
+    open: boolean;
+    newSlug: string;
+    newName: string;
+    reason: string;
+    loading: boolean;
+  }>({ open: false, newSlug: "", newName: "", reason: "", loading: false });
 
   const [addCurriculumOpen, setAddCurriculumOpen] = useState(false);
 
@@ -415,6 +449,75 @@ function CertPathEditor({
     setArchiveDialogOpen(false);
     setArchiveReason("");
     onArchived?.();
+  };
+
+  const handleDetachCurriculum = async () => {
+    if (!initial?.id || !detachState.curriculumId || detachState.reason.trim().length < 10) return;
+    setDetachState((s) => ({ ...s, loading: true }));
+    const { error } = await supabase.rpc("detach_curriculum_from_certification_path", {
+      p_certification_path_id: initial.id,
+      p_curriculum_id: detachState.curriculumId,
+      p_reason: detachState.reason.trim(),
+    } as any);
+    setDetachState((s) => ({ ...s, loading: false }));
+    if (error) {
+      toast({
+        title: "Could not detach curriculum",
+        description: error.message ?? "Unknown error.",
+        variant: "destructive",
+      });
+      return;
+    }
+    toast({
+      title: "Curriculum detached",
+      description: `${detachState.curriculumName} is no longer in this path. User enrollments preserved.`,
+    });
+    setDetachState({ open: false, curriculumId: null, curriculumName: null, reason: "", loading: false });
+    await Promise.all([onRefetch?.(), onInvalidateAttachedList?.()]);
+  };
+
+  const openDuplicateDialog = () => {
+    if (!initial) return;
+    setDuplicateState({
+      open: true,
+      newSlug: `${initial.slug}-copy`,
+      newName: `${initial.name} (Copy)`,
+      reason: "",
+      loading: false,
+    });
+  };
+
+  const handleDuplicate = async () => {
+    if (!initial?.id || duplicateState.reason.trim().length < 10) return;
+    if (duplicateState.newSlug.trim().length === 0 || duplicateState.newName.trim().length === 0) return;
+    setDuplicateState((s) => ({ ...s, loading: true }));
+    const { data, error } = await supabase.rpc("duplicate_certification_path", {
+      p_source_certification_path_id: initial.id,
+      p_new_slug: duplicateState.newSlug.trim(),
+      p_new_name: duplicateState.newName.trim(),
+      p_reason: duplicateState.reason.trim(),
+    } as any);
+    setDuplicateState((s) => ({ ...s, loading: false }));
+    if (error) {
+      const msg = error.message ?? "";
+      const friendly = msg.includes("slug_already_in_use")
+        ? "That slug is already in use. Pick a different one."
+        : msg.includes("reason_required_min_chars")
+        ? "Reason must be at least 10 characters."
+        : msg || "Could not duplicate.";
+      toast({
+        title: "Could not duplicate certification path",
+        description: friendly,
+        variant: "destructive",
+      });
+      return;
+    }
+    toast({
+      title: "Certification path duplicated",
+      description: `Created as draft: ${(data as any)?.new_name}. Review and publish when ready.`,
+    });
+    setDuplicateState({ open: false, newSlug: "", newName: "", reason: "", loading: false });
+    await onRefetch?.();
   };
 
   const titleText = mode === "create" ? "New certification path" : (initial?.name ?? "Certification path");
@@ -722,14 +825,24 @@ function CertPathEditor({
         <div className="flex flex-wrap items-center justify-between gap-2 pt-2">
           <div className="flex items-center gap-2">
             {mode === "edit" && initial && !initial.archived_at && (
-              <Button
-                variant="destructive"
-                onClick={() => setArchiveDialogOpen(true)}
-                disabled={saving}
-              >
-                <Archive className="h-4 w-4 mr-2" />
-                Archive
-              </Button>
+              <>
+                <Button
+                  variant="destructive"
+                  onClick={() => setArchiveDialogOpen(true)}
+                  disabled={saving}
+                >
+                  <Archive className="h-4 w-4 mr-2" />
+                  Archive
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={openDuplicateDialog}
+                  disabled={saving}
+                >
+                  <Copy className="h-4 w-4 mr-2" />
+                  Duplicate
+                </Button>
+              </>
             )}
           </div>
           <div className="flex items-center gap-2">
@@ -752,8 +865,12 @@ function CertPathEditor({
         {mode === "edit" && initial?.id && (
           <AttachedCurriculaSection
             certPathId={initial.id}
+            certPathName={initial.name ?? ""}
             onAddClick={() => setAddCurriculumOpen(true)}
             onSelectCurriculum={(curriculumId) => onSelectCurriculum?.(curriculumId)}
+            onDetach={(curriculumId, curriculumName) =>
+              setDetachState({ open: true, curriculumId, curriculumName, reason: "", loading: false })
+            }
           />
         )}
       </CardContent>
@@ -931,6 +1048,124 @@ function CertPathEditor({
               </Button>
             </TabsContent>
           </Tabs>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog
+        open={detachState.open}
+        onOpenChange={(open) => !detachState.loading && setDetachState((s) => ({ ...s, open }))}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Detach this curriculum?</AlertDialogTitle>
+            <AlertDialogDescription>
+              <span className="font-medium text-foreground">{detachState.curriculumName}</span> will be
+              removed from this certification path. The curriculum itself is not deleted — it stays in the
+              library as an unattached curriculum and any user enrollments in it are preserved.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="cp-detach-reason">Reason for detaching *</Label>
+            <Textarea
+              id="cp-detach-reason"
+              value={detachState.reason}
+              onChange={(e) => setDetachState((s) => ({ ...s, reason: e.target.value }))}
+              rows={3}
+              placeholder="At least 10 characters."
+              disabled={detachState.loading}
+            />
+            <p className={cn(
+              "text-xs",
+              detachState.reason.trim().length >= 10 ? "text-muted-foreground" : "text-destructive"
+            )}>
+              {detachState.reason.trim().length}/10 characters minimum.
+            </p>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={detachState.loading}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); handleDetachCurriculum(); }}
+              disabled={detachState.reason.trim().length < 10 || detachState.loading}
+            >
+              {detachState.loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Detach
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <Dialog
+        open={duplicateState.open}
+        onOpenChange={(open) => !duplicateState.loading && setDuplicateState((s) => ({ ...s, open }))}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Duplicate this certification path</DialogTitle>
+            <DialogDescription>
+              Creates a deep copy of the certification path, all its curricula, modules, lessons, and
+              content. Assets (thumbnails, files) are shared by reference — not duplicated. The new path
+              starts as a draft so you can review before publishing.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="cp-dup-name">New name *</Label>
+              <Input
+                id="cp-dup-name"
+                value={duplicateState.newName}
+                onChange={(e) => setDuplicateState((s) => ({ ...s, newName: e.target.value }))}
+                disabled={duplicateState.loading}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="cp-dup-slug">New slug *</Label>
+              <Input
+                id="cp-dup-slug"
+                value={duplicateState.newSlug}
+                onChange={(e) => setDuplicateState((s) => ({ ...s, newSlug: slugify(e.target.value) }))}
+                disabled={duplicateState.loading}
+              />
+              <p className="text-xs text-muted-foreground">Must be unique across all certification paths.</p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="cp-dup-reason">Reason *</Label>
+              <Textarea
+                id="cp-dup-reason"
+                value={duplicateState.reason}
+                onChange={(e) => setDuplicateState((s) => ({ ...s, reason: e.target.value }))}
+                rows={3}
+                placeholder="At least 10 characters."
+                disabled={duplicateState.loading}
+              />
+              <p className={cn(
+                "text-xs",
+                duplicateState.reason.trim().length >= 10 ? "text-muted-foreground" : "text-destructive"
+              )}>
+                {duplicateState.reason.trim().length}/10 characters minimum.
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setDuplicateState((s) => ({ ...s, open: false }))}
+              disabled={duplicateState.loading}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleDuplicate}
+              disabled={
+                duplicateState.reason.trim().length < 10 ||
+                duplicateState.newSlug.trim().length === 0 ||
+                duplicateState.newName.trim().length === 0 ||
+                duplicateState.loading
+              }
+            >
+              {duplicateState.loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Duplicate
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </Card>

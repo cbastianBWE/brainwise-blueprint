@@ -19,7 +19,10 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Pencil, Plus, Loader2, Save, Archive, Layers } from "lucide-react";
+import {
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
+import { Pencil, Plus, Loader2, Save, Archive, Layers, Copy } from "lucide-react";
 import { slugify, ItemTypeIcon } from "./_shared";
 import { FileUploadField } from "@/components/super-admin/FileUploadField";
 
@@ -116,7 +119,7 @@ interface ModuleEditorProps {
 function ModuleEditor({
   mode, initial, allModules, allCurricula, attachToCurriculumId,
   onSaved, onArchived, onCancelCreate,
-  onRequestCreateAttachedContentItem, onSelectContentItem,
+  onRequestCreateAttachedContentItem, onSelectContentItem, onRefetch,
 }: ModuleEditorProps) {
   const { toast } = useToast();
 
@@ -155,6 +158,14 @@ function ModuleEditor({
   const [archiveDialogOpen, setArchiveDialogOpen] = useState(false);
   const [archiveReason, setArchiveReason] = useState("");
   const [archiving, setArchiving] = useState(false);
+
+  const [duplicateState, setDuplicateState] = useState<{
+    open: boolean;
+    newSlug: string;
+    newName: string;
+    reason: string;
+    loading: boolean;
+  }>({ open: false, newSlug: "", newName: "", reason: "", loading: false });
 
   useEffect(() => {
     if (autoSlug) setSlug(slugify(name));
@@ -345,6 +356,50 @@ function ModuleEditor({
     setArchiveDialogOpen(false);
     setArchiveReason("");
     onArchived?.();
+  };
+
+  const openDuplicateDialog = () => {
+    if (!initial) return;
+    setDuplicateState({
+      open: true,
+      newSlug: `${initial.slug}-copy`,
+      newName: `${initial.name} (Copy)`,
+      reason: "",
+      loading: false,
+    });
+  };
+
+  const handleDuplicate = async () => {
+    if (!initial?.id || duplicateState.reason.trim().length < 10) return;
+    if (duplicateState.newSlug.trim().length === 0 || duplicateState.newName.trim().length === 0) return;
+    setDuplicateState((s) => ({ ...s, loading: true }));
+    const { data, error } = await supabase.rpc("duplicate_module", {
+      p_source_module_id: initial.id,
+      p_new_slug: duplicateState.newSlug.trim(),
+      p_new_name: duplicateState.newName.trim(),
+      p_reason: duplicateState.reason.trim(),
+    } as any);
+    setDuplicateState((s) => ({ ...s, loading: false }));
+    if (error) {
+      const msg = error.message ?? "";
+      const friendly = msg.includes("slug_already_in_use")
+        ? "That slug is already in use. Pick a different one."
+        : msg.includes("reason_required_min_chars")
+        ? "Reason must be at least 10 characters."
+        : msg || "Could not duplicate.";
+      toast({
+        title: "Could not duplicate module",
+        description: friendly,
+        variant: "destructive",
+      });
+      return;
+    }
+    toast({
+      title: "Module duplicated",
+      description: `Created as draft: ${(data as any)?.new_name}. Review and publish when ready.`,
+    });
+    setDuplicateState({ open: false, newSlug: "", newName: "", reason: "", loading: false });
+    await onRefetch?.();
   };
 
   const titleText = mode === "create" ? "New module" : (initial?.name ?? "Module");
@@ -664,14 +719,24 @@ function ModuleEditor({
         <div className="flex flex-wrap items-center justify-between gap-2 pt-2">
           <div className="flex items-center gap-2">
             {mode === "edit" && initial && !initial.archived_at && (
-              <Button
-                variant="destructive"
-                onClick={() => setArchiveDialogOpen(true)}
-                disabled={saving}
-              >
-                <Archive className="h-4 w-4 mr-2" />
-                Archive
-              </Button>
+              <>
+                <Button
+                  variant="destructive"
+                  onClick={() => setArchiveDialogOpen(true)}
+                  disabled={saving}
+                >
+                  <Archive className="h-4 w-4 mr-2" />
+                  Archive
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={openDuplicateDialog}
+                  disabled={saving}
+                >
+                  <Copy className="h-4 w-4 mr-2" />
+                  Duplicate
+                </Button>
+              </>
             )}
           </div>
           <div className="flex items-center gap-2">
@@ -745,6 +810,81 @@ function ModuleEditor({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog
+        open={duplicateState.open}
+        onOpenChange={(open) => !duplicateState.loading && setDuplicateState((s) => ({ ...s, open }))}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Duplicate this module</DialogTitle>
+            <DialogDescription>
+              Creates a deep copy of the module, all its lessons, and content. Assets (thumbnails, files)
+              are shared by reference — not duplicated. The new module starts as a draft so you can review
+              before publishing.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="mo-dup-name">New name *</Label>
+              <Input
+                id="mo-dup-name"
+                value={duplicateState.newName}
+                onChange={(e) => setDuplicateState((s) => ({ ...s, newName: e.target.value }))}
+                disabled={duplicateState.loading}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="mo-dup-slug">New slug *</Label>
+              <Input
+                id="mo-dup-slug"
+                value={duplicateState.newSlug}
+                onChange={(e) => setDuplicateState((s) => ({ ...s, newSlug: slugify(e.target.value) }))}
+                disabled={duplicateState.loading}
+              />
+              <p className="text-xs text-muted-foreground">Must be unique across all modules.</p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="mo-dup-reason">Reason *</Label>
+              <Textarea
+                id="mo-dup-reason"
+                value={duplicateState.reason}
+                onChange={(e) => setDuplicateState((s) => ({ ...s, reason: e.target.value }))}
+                rows={3}
+                placeholder="At least 10 characters."
+                disabled={duplicateState.loading}
+              />
+              <p className={cn(
+                "text-xs",
+                duplicateState.reason.trim().length >= 10 ? "text-muted-foreground" : "text-destructive"
+              )}>
+                {duplicateState.reason.trim().length}/10 characters minimum.
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setDuplicateState((s) => ({ ...s, open: false }))}
+              disabled={duplicateState.loading}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleDuplicate}
+              disabled={
+                duplicateState.reason.trim().length < 10 ||
+                duplicateState.newSlug.trim().length === 0 ||
+                duplicateState.newName.trim().length === 0 ||
+                duplicateState.loading
+              }
+            >
+              {duplicateState.loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Duplicate
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }
