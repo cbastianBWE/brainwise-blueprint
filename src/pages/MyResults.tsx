@@ -435,11 +435,14 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
       if (isCoachView && coachUserId && shareWithCoach === false) {
         const { data: linkedRows } = await supabase
           .from("coach_clients")
-          .select("assessment_id")
+          .select("assessment_id, paired_assessment_id")
           .eq("coach_user_id", coachUserId)
           .eq("client_user_id", effectiveUserId)
           .not("assessment_id", "is", null);
-        const linkedIds = new Set((linkedRows ?? []).map(r => r.assessment_id));
+        const linkedIds = new Set([
+          ...(linkedRows ?? []).map(r => r.assessment_id).filter(Boolean),
+          ...(linkedRows ?? []).map(r => r.paired_assessment_id).filter(Boolean),
+        ]);
         filtered = combined.filter(a => linkedIds.has(a.result.assessment_id));
       }
 
