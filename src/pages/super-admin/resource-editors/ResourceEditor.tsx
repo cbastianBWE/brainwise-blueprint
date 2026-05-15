@@ -347,6 +347,29 @@ export default function ResourceEditor({
   };
   const addGrantRow = () => setGrantRows((rows) => [...rows, newGrantRow()]);
 
+  const requestModeSwitch = (target: "url" | "file") => {
+    if (target === contentMode) return;
+    const currentHasContent =
+      (contentMode === "url" && urlOrContent.trim().length > 0) ||
+      (contentMode === "file" && contentAssetId != null);
+    if (currentHasContent) {
+      setModeSwitchTarget(target);
+      return;
+    }
+    applyModeSwitch(target);
+  };
+
+  const applyModeSwitch = (target: "url" | "file") => {
+    setContentMode(target);
+    if (target === "url") {
+      setContentAssetId(null);
+    } else {
+      setUrlOrContent("");
+      setUrlKind("");
+    }
+    setModeSwitchTarget(null);
+  };
+
   const titleText = mode === "create" ? "New resource" : (initial?.title ?? "Resource");
   const reasonLen = reason.trim().length;
   const archiveReasonLen = archiveReason.trim().length;
