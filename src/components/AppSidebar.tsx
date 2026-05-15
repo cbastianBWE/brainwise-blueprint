@@ -97,15 +97,26 @@ const superAdminNav: NavItem[] = [
   { title: "AI Research", url: "/super-admin/ai-research", icon: FlaskConical, disabled: true, badge: "Phase 2" },
 ];
 
-function getNavItems(accountType: string | null | undefined): NavItem[] {
+function getNavItems(profile: { account_type?: string | null; is_practitioner_coach?: boolean } | null | undefined): NavItem[] {
+  const accountType = profile?.account_type;
   switch (accountType) {
     case "coach":
       return coachNav;
     case "company_admin":
     case "org_admin":
       return adminNav;
-    case "brainwise_super_admin":
+    case "brainwise_super_admin": {
+      if (profile?.is_practitioner_coach === true) {
+        // Drop /coach/resources from appended coach nav since super admin
+        // already has its own Resources entry above.
+        const filtered = coachNav.filter((i) => i.url !== "/coach/resources");
+        const coachToolsWithHeader = filtered.map((item, idx) =>
+          idx === 0 ? { ...item, sectionHeader: "Coach Tools" } : item
+        );
+        return [...superAdminNav, ...coachToolsWithHeader];
+      }
       return superAdminNav;
+    }
     case "corporate_employee":
       return corporateNav;
     case "individual":
