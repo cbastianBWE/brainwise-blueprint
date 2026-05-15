@@ -173,6 +173,20 @@ export default function ResourceEditor({
 
   const handleSave = async () => {
     if (!canSave) return;
+
+    if (
+      isPublished &&
+      (contentType === "worksheet" || contentType === "template") &&
+      contentAssetId == null
+    ) {
+      toast({
+        title: "Content file required",
+        description: `A content file is required before publishing a ${contentType}.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     setSaving(true);
 
     const payload: any = {
@@ -184,6 +198,7 @@ export default function ResourceEditor({
       p_content_type: contentType || null,
       p_is_published: isPublished,
       p_thumbnail_asset_id: thumbnailAssetId,
+      p_content_asset_id: contentAssetId,
       p_reason: reason.trim(),
     };
 
