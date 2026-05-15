@@ -138,7 +138,7 @@ const App = () => (
               <Route path="/shared-results" element={<SharedResults />} />
               <Route path="/ai-chat" element={<SubscriptionGate feature="ai_chat"><AiChat /></SubscriptionGate>} />
               <Route path="/ai-chat/history" element={<SubscriptionGate feature="ai_chat"><AiChatHistory /></SubscriptionGate>} />
-              <Route path="/resources" element={<SubscriptionGate><Resources /></SubscriptionGate>} />
+              <Route path="/resources" element={<Resources />} />
               <Route path="/settings" element={<SettingsPage />} />
               <Route path="/settings/privacy" element={<PrivacySettings />} />
               <Route path="/settings/sharing-requests" element={<SharingRequests />} />
