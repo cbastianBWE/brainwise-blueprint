@@ -25,6 +25,13 @@ export interface AccountRoleInfo {
   isCorp: boolean;
   isIndividual: boolean;
   isCoach: boolean;
+  /**
+   * True when the user provides coaching services — has own clients, can
+   * order assessments, see client results. Decoupled from account_type so a
+   * brainwise_super_admin can also be a practitioner coach (Pattern C).
+   * Real coaches with account_type='coach' all have this true by backfill.
+   */
+  isPractitionerCoach: boolean;
   isSuperAdmin: boolean;
   isBypassAdmin: boolean;
   /**
