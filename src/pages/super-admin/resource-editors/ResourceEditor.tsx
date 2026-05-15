@@ -76,6 +76,7 @@ export default function ResourceEditor({
   const [resourceTabId, setResourceTabId] = useState<string>(initial?.resource_tab_id ?? "");
   const [isPublished, setIsPublished] = useState<boolean>(!!initial?.is_published);
   const [thumbnailAssetId, setThumbnailAssetId] = useState<string | null>(initial?.thumbnail_asset_id ?? null);
+  const [contentAssetId, setContentAssetId] = useState<string | null>(initial?.content_asset_id ?? null);
   const [reason, setReason] = useState<string>("");
   const [saving, setSaving] = useState(false);
 
@@ -124,6 +125,7 @@ export default function ResourceEditor({
         resourceTabId !== "" ||
         isPublished ||
         thumbnailAssetId !== null ||
+        contentAssetId !== null ||
         reason.trim().length > 0
       );
     }
@@ -136,11 +138,12 @@ export default function ResourceEditor({
       resourceTabId !== (initial.resource_tab_id ?? "") ||
       isPublished !== !!initial.is_published ||
       thumbnailAssetId !== (initial.thumbnail_asset_id ?? null) ||
+      (contentAssetId ?? null) !== (initial.content_asset_id ?? null) ||
       reason.trim().length > 0
     );
   }, [
     mode, initial, title, summary, urlOrContent, contentType,
-    resourceTabId, isPublished, thumbnailAssetId, reason,
+    resourceTabId, isPublished, thumbnailAssetId, contentAssetId, reason,
   ]);
 
   const reasonOk = reason.trim().length >= 10;
@@ -160,6 +163,9 @@ export default function ResourceEditor({
       return "This resource is missing or archived.";
     }
     if (msg.includes("grants_must_be_array")) return "Could not save grants — invalid format.";
+    if (msg.includes("content_asset_id_required_for_published_downloadable")) {
+      return "A content file is required before publishing this resource.";
+    }
     if (code === "42501") return "You do not have permission to perform this action.";
     if (code === "23505") return "A resource conflict occurred.";
     return msg || "Could not save changes.";
@@ -167,6 +173,20 @@ export default function ResourceEditor({
 
   const handleSave = async () => {
     if (!canSave) return;
+
+    if (
+      isPublished &&
+      (contentType === "worksheet" || contentType === "template") &&
+      contentAssetId == null
+    ) {
+      toast({
+        title: "Content file required",
+        description: `A content file is required before publishing a ${contentType}.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     setSaving(true);
 
     const payload: any = {
@@ -178,6 +198,7 @@ export default function ResourceEditor({
       p_content_type: contentType || null,
       p_is_published: isPublished,
       p_thumbnail_asset_id: thumbnailAssetId,
+      p_content_asset_id: contentAssetId,
       p_reason: reason.trim(),
     };
 
@@ -307,6 +328,31 @@ export default function ResourceEditor({
             />
           )}
         </div>
+
+        {/* Content file (downloadable) */}
+        {(contentType === "worksheet" || contentType === "template") && (
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold text-foreground">Content file</h3>
+            <p className="text-xs text-muted-foreground">
+              The {contentType === "worksheet" ? "worksheet" : "template"} file users will download.
+              Private — served via short-lived signed URLs. Required to publish.
+            </p>
+            {mode === "create" ? (
+              <div className="rounded-md border border-dashed p-4 text-sm italic text-muted-foreground">
+                Save the resource first to upload a content file.
+              </div>
+            ) : (
+              <FileUploadField
+                assetKind="document"
+                resourceId={initial?.id ?? null}
+                refField="content"
+                value={contentAssetId}
+                onChange={setContentAssetId}
+                disabled={saving}
+              />
+            )}
+          </div>
+        )}
 
         {/* Identity */}
         <div className="space-y-4">

@@ -14,6 +14,7 @@ import { Switch } from "@/components/ui/switch";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -134,6 +135,15 @@ function ModuleEditor({
   const [isPublished, setIsPublished] = useState<boolean>(!!initial?.is_published);
   const [reason, setReason] = useState<string>("");
   const [thumbnailAssetId, setThumbnailAssetId] = useState<string | null>(initial?.thumbnail_asset_id ?? null);
+  const [isSelfEnrollable, setIsSelfEnrollable] = useState<boolean>(!!initial?.is_self_enrollable);
+  const [selfEnrollPricingMode, setSelfEnrollPricingMode] = useState<'free' | 'paid'>(
+    initial?.self_enroll_price_cents != null ? 'paid' : 'free'
+  );
+  const [selfEnrollPriceDollars, setSelfEnrollPriceDollars] = useState<string>(
+    initial?.self_enroll_price_cents != null
+      ? (initial.self_enroll_price_cents / 100).toFixed(2)
+      : ''
+  );
 
   const [attachmentDisplayOrder, setAttachmentDisplayOrder] = useState<string>("0");
   const [attachmentIsRequired, setAttachmentIsRequired] = useState<boolean>(true);
@@ -179,6 +189,7 @@ function ModuleEditor({
         estimatedMinutes.trim().length > 0 ||
         isPublished ||
         thumbnailAssetId !== null ||
+        isSelfEnrollable ||
         reason.trim().length > 0 ||
         (hasAttachmentSection && (
           attachmentDisplayOrder !== "0" ||
@@ -189,6 +200,8 @@ function ModuleEditor({
     }
     if (!initial) return false;
     const initialMin = initial.estimated_minutes == null ? "" : String(initial.estimated_minutes);
+    const initialPricingMode: 'free' | 'paid' = initial?.self_enroll_price_cents != null ? 'paid' : 'free';
+    const initialCents = initial?.self_enroll_price_cents ?? 0;
     return (
       slug !== (initial.slug ?? "") ||
       name !== (initial.name ?? "") ||
@@ -197,12 +210,17 @@ function ModuleEditor({
       estimatedMinutes !== initialMin ||
       isPublished !== !!initial.is_published ||
       thumbnailAssetId !== (initial.thumbnail_asset_id ?? null) ||
+      isSelfEnrollable !== !!initial.is_self_enrollable ||
+      selfEnrollPricingMode !== initialPricingMode ||
+      (selfEnrollPricingMode === 'paid' &&
+        Math.round(parseFloat(selfEnrollPriceDollars || '0') * 100) !== initialCents) ||
       reason.trim().length > 0
     );
   }, [
     mode, initial, startingTagsText, hasAttachmentSection,
     slug, name, description, audienceTagsText, estimatedMinutes,
     isPublished, thumbnailAssetId, reason,
+    isSelfEnrollable, selfEnrollPricingMode, selfEnrollPriceDollars,
     attachmentDisplayOrder, attachmentIsRequired, attachmentPrerequisiteModuleId,
   ]);
 
@@ -236,6 +254,19 @@ function ModuleEditor({
 
   const handleSave = async () => {
     if (!canSave) return;
+
+    if (isSelfEnrollable && selfEnrollPricingMode === 'paid') {
+      const cents = Math.round(parseFloat(selfEnrollPriceDollars || '0') * 100);
+      if (!Number.isFinite(cents) || cents <= 0) {
+        toast({
+          title: "Invalid price",
+          description: "Enter a price greater than zero, or switch to Free.",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
     setSaving(true);
 
     const minutesNum = estimatedMinutes.trim() === "" ? null : Number(estimatedMinutes);
@@ -258,6 +289,11 @@ function ModuleEditor({
         ? (attachmentPrerequisiteModuleId === "__none__" ? null : attachmentPrerequisiteModuleId)
         : null,
       p_thumbnail_asset_id: thumbnailAssetId,
+      p_is_self_enrollable: isSelfEnrollable,
+      p_self_enroll_price_cents: isSelfEnrollable && selfEnrollPricingMode === 'paid'
+        ? Math.round(parseFloat(selfEnrollPriceDollars) * 100)
+        : null,
+      p_self_enroll_currency: 'usd',
       p_reason: reason.trim(),
     };
 
@@ -460,6 +496,85 @@ function ModuleEditor({
               disabled={saving}
             />
           </div>
+        </div>
+
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label htmlFor="mod-self-enrollable" className="cursor-pointer">Self-enrollable</Label>
+              <p className="text-xs text-muted-foreground">
+                When on, users can self-enroll in this module from the All Available view.
+              </p>
+            </div>
+            <Switch
+              id="mod-self-enrollable"
+              checked={isSelfEnrollable}
+              onCheckedChange={(checked) => {
+                setIsSelfEnrollable(checked);
+                if (!checked) {
+                  setSelfEnrollPricingMode('free');
+                  setSelfEnrollPriceDollars('');
+                }
+              }}
+              disabled={saving}
+            />
+          </div>
+
+          {isSelfEnrollable && hasAttachmentSection && attachToCurriculumId && (
+            <p className="text-xs italic text-muted-foreground">
+              Note: This module is part of a curriculum. Self-enrollment only applies to standalone modules.
+            </p>
+          )}
+
+          {isSelfEnrollable && (
+            <div className="space-y-4 rounded-md border border-dashed p-4">
+              <div>
+                <Label>Pricing</Label>
+                <RadioGroup
+                  value={selfEnrollPricingMode}
+                  onValueChange={(v) => {
+                    const m = v as 'free' | 'paid';
+                    setSelfEnrollPricingMode(m);
+                    if (m === 'free') setSelfEnrollPriceDollars('');
+                  }}
+                  className="mt-2 flex gap-4"
+                  disabled={saving}
+                >
+                  <div className="flex items-center gap-2">
+                    <RadioGroupItem id="mod-pricing-free" value="free" />
+                    <Label htmlFor="mod-pricing-free" className="cursor-pointer font-normal">Free</Label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <RadioGroupItem id="mod-pricing-paid" value="paid" />
+                    <Label htmlFor="mod-pricing-paid" className="cursor-pointer font-normal">Paid</Label>
+                  </div>
+                </RadioGroup>
+              </div>
+
+              {selfEnrollPricingMode === 'paid' && (
+                <div className="space-y-1.5">
+                  <Label htmlFor="mod-price">Price (USD)</Label>
+                  <div className="flex items-center gap-2">
+                    <span className="text-muted-foreground">$</span>
+                    <Input
+                      id="mod-price"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={selfEnrollPriceDollars}
+                      onChange={(e) => setSelfEnrollPriceDollars(e.target.value)}
+                      placeholder="0.00"
+                      className="max-w-[160px]"
+                      disabled={saving}
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Users will see this as the enrollment price. The payment flow surfaces at enroll time.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {hasAttachmentSection && attachedCurriculum && (

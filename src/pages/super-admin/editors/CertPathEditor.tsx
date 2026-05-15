@@ -15,6 +15,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -147,6 +148,15 @@ function CertPathEditor({
   const [displayOrder, setDisplayOrder] = useState<string>(String(initial?.display_order ?? 0));
   const [reason, setReason] = useState<string>("");
   const [thumbnailAssetId, setThumbnailAssetId] = useState<string | null>(initial?.thumbnail_asset_id ?? null);
+  const [isSelfEnrollable, setIsSelfEnrollable] = useState<boolean>(!!initial?.is_self_enrollable);
+  const [selfEnrollPricingMode, setSelfEnrollPricingMode] = useState<'free' | 'paid'>(
+    initial?.self_enroll_price_cents != null ? 'paid' : 'free'
+  );
+  const [selfEnrollPriceDollars, setSelfEnrollPriceDollars] = useState<string>(
+    initial?.self_enroll_price_cents != null
+      ? (initial.self_enroll_price_cents / 100).toFixed(2)
+      : ''
+  );
 
   const [autoSlug, setAutoSlug] = useState<boolean>(mode === "create");
   const [saving, setSaving] = useState(false);
@@ -246,6 +256,7 @@ function CertPathEditor({
         isPublished ||
         displayOrder !== "0" ||
         thumbnailAssetId !== null ||
+        isSelfEnrollable ||
         reason.trim().length > 0
       );
     }
@@ -254,6 +265,8 @@ function CertPathEditor({
     const instrumentsEqual =
       instruments.size === initialInstruments.size &&
       Array.from(instruments).every((x) => initialInstruments.has(x));
+    const initialPricingMode: 'free' | 'paid' = initial?.self_enroll_price_cents != null ? 'paid' : 'free';
+    const initialCents = initial?.self_enroll_price_cents ?? 0;
     return (
       slug !== (initial.slug ?? "") ||
       name !== (initial.name ?? "") ||
@@ -265,12 +278,17 @@ function CertPathEditor({
       isPublished !== !!initial.is_published ||
       Number(displayOrder) !== (initial.display_order ?? 0) ||
       thumbnailAssetId !== (initial.thumbnail_asset_id ?? null) ||
+      isSelfEnrollable !== !!initial.is_self_enrollable ||
+      selfEnrollPricingMode !== initialPricingMode ||
+      (selfEnrollPricingMode === 'paid' &&
+        Math.round(parseFloat(selfEnrollPriceDollars || '0') * 100) !== initialCents) ||
       reason.trim().length > 0
     );
   }, [
     mode, initial, startingInstruments,
     slug, name, description, certificationType, deliveryMode,
-    instruments, prerequisitePathId, isPublished, displayOrder, thumbnailAssetId, reason,
+    instruments, prerequisitePathId, isPublished, displayOrder, thumbnailAssetId,
+    isSelfEnrollable, selfEnrollPricingMode, selfEnrollPriceDollars, reason,
   ]);
 
   const reasonOk = reason.trim().length >= 10;
@@ -316,6 +334,19 @@ function CertPathEditor({
 
   const handleSave = async () => {
     if (!canSave) return;
+
+    if (isSelfEnrollable && selfEnrollPricingMode === 'paid') {
+      const cents = Math.round(parseFloat(selfEnrollPriceDollars || '0') * 100);
+      if (!Number.isFinite(cents) || cents <= 0) {
+        toast({
+          title: "Invalid price",
+          description: "Enter a price greater than zero, or switch to Free.",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
     setSaving(true);
 
     const orderNum = Number(displayOrder);
@@ -331,6 +362,11 @@ function CertPathEditor({
       p_is_published: isPublished,
       p_display_order: Number.isFinite(orderNum) ? orderNum : 0,
       p_thumbnail_asset_id: thumbnailAssetId,
+      p_is_self_enrollable: isSelfEnrollable,
+      p_self_enroll_price_cents: isSelfEnrollable && selfEnrollPricingMode === 'paid'
+        ? Math.round(parseFloat(selfEnrollPriceDollars) * 100)
+        : null,
+      p_self_enroll_currency: 'usd',
       p_reason: reason.trim(),
     };
 
@@ -590,6 +626,79 @@ function CertPathEditor({
               disabled={saving}
             />
           </div>
+        </div>
+
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label htmlFor="cp-self-enrollable" className="cursor-pointer">Self-enrollable</Label>
+              <p className="text-xs text-muted-foreground">
+                When on, users can enroll themselves from the My Learning tab. When off, only admins can assign.
+              </p>
+            </div>
+            <Switch
+              id="cp-self-enrollable"
+              checked={isSelfEnrollable}
+              onCheckedChange={(checked) => {
+                setIsSelfEnrollable(checked);
+                if (!checked) {
+                  setSelfEnrollPricingMode('free');
+                  setSelfEnrollPriceDollars('');
+                }
+              }}
+              disabled={saving}
+            />
+          </div>
+
+          {isSelfEnrollable && (
+            <div className="space-y-4 rounded-md border border-dashed p-4">
+              <div>
+                <Label>Pricing</Label>
+                <RadioGroup
+                  value={selfEnrollPricingMode}
+                  onValueChange={(v) => {
+                    const m = v as 'free' | 'paid';
+                    setSelfEnrollPricingMode(m);
+                    if (m === 'free') setSelfEnrollPriceDollars('');
+                  }}
+                  className="mt-2 flex gap-4"
+                  disabled={saving}
+                >
+                  <div className="flex items-center gap-2">
+                    <RadioGroupItem id="cp-pricing-free" value="free" />
+                    <Label htmlFor="cp-pricing-free" className="cursor-pointer font-normal">Free</Label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <RadioGroupItem id="cp-pricing-paid" value="paid" />
+                    <Label htmlFor="cp-pricing-paid" className="cursor-pointer font-normal">Paid</Label>
+                  </div>
+                </RadioGroup>
+              </div>
+
+              {selfEnrollPricingMode === 'paid' && (
+                <div className="space-y-1.5">
+                  <Label htmlFor="cp-price">Price (USD)</Label>
+                  <div className="flex items-center gap-2">
+                    <span className="text-muted-foreground">$</span>
+                    <Input
+                      id="cp-price"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={selfEnrollPriceDollars}
+                      onChange={(e) => setSelfEnrollPriceDollars(e.target.value)}
+                      placeholder="0.00"
+                      className="max-w-[160px]"
+                      disabled={saving}
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Users will see this as the enrollment price. The payment flow surfaces at enroll time.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="space-y-2">
