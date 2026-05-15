@@ -122,7 +122,7 @@ function Section({
                 }
                 status={status}
                 estimatedMinutes={entity.estimated_minutes ?? null}
-                locked={!entity.is_accessible}
+                locked={entity.is_accessible === false}
                 onClick={() => onTileClick(entity, entityType)}
                 inlineCtaLabel={showEnroll ? "Enroll" : undefined}
                 onInlineCtaClick={
@@ -257,7 +257,7 @@ export default function MyLearningTab() {
   });
 
   const handleTileClick = (entity: any, t: EntityType) => {
-    if (!entity.is_accessible) {
+    if (entity.is_accessible === false) {
       setUpgradeState({
         open: true,
         entityType: t,
