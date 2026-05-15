@@ -1,8 +1,9 @@
+import { Fragment } from "react";
 import {
   LayoutDashboard, BarChart3, ClipboardList, ClipboardCheck, MessageSquare, BookOpen, Settings,
   Users, Users2, Building2, UsersRound, Activity, Heart, Award, UserCircle,
   ShieldCheck, Briefcase, GitBranch, FlaskConical, LogOut, History, Shield,
-  CreditCard, Receipt, ChevronDown, ChevronRight, Plus, FileText, UserSearch, Library,
+  CreditCard, Receipt, ChevronDown, ChevronRight, Plus, FileText, UserSearch, Library, Ticket,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
