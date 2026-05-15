@@ -844,6 +844,7 @@ export type Database = {
           assessment_id: string
           created_at: string
           dimension_scores: Json
+          facet_insights_all_total: number | null
           id: string
           instrument_id: string | null
           instrument_version: string | null
@@ -866,6 +867,7 @@ export type Database = {
           assessment_id: string
           created_at?: string
           dimension_scores: Json
+          facet_insights_all_total?: number | null
           id?: string
           instrument_id?: string | null
           instrument_version?: string | null
@@ -888,6 +890,7 @@ export type Database = {
           assessment_id?: string
           created_at?: string
           dimension_scores?: Json
+          facet_insights_all_total?: number | null
           id?: string
           instrument_id?: string | null
           instrument_version?: string | null
