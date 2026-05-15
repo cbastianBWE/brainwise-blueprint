@@ -1279,8 +1279,11 @@ export type Database = {
           display_order: number
           id: string
           is_published: boolean
+          is_self_enrollable: boolean
           name: string
           prerequisite_path_id: string | null
+          self_enroll_currency: string
+          self_enroll_price_cents: number | null
           slug: string
           thumbnail_asset_id: string | null
           updated_at: string
@@ -1297,8 +1300,11 @@ export type Database = {
           display_order?: number
           id?: string
           is_published?: boolean
+          is_self_enrollable?: boolean
           name: string
           prerequisite_path_id?: string | null
+          self_enroll_currency?: string
+          self_enroll_price_cents?: number | null
           slug: string
           thumbnail_asset_id?: string | null
           updated_at?: string
@@ -1315,8 +1321,11 @@ export type Database = {
           display_order?: number
           id?: string
           is_published?: boolean
+          is_self_enrollable?: boolean
           name?: string
           prerequisite_path_id?: string | null
+          self_enroll_currency?: string
+          self_enroll_price_cents?: number | null
           slug?: string
           thumbnail_asset_id?: string | null
           updated_at?: string
@@ -3657,8 +3666,11 @@ export type Database = {
           estimated_minutes: number | null
           id: string
           is_published: boolean
+          is_self_enrollable: boolean
           mode: string
           name: string
+          self_enroll_currency: string
+          self_enroll_price_cents: number | null
           slug: string
           thumbnail_asset_id: string | null
           updated_at: string
@@ -3673,8 +3685,11 @@ export type Database = {
           estimated_minutes?: number | null
           id?: string
           is_published?: boolean
+          is_self_enrollable?: boolean
           mode?: string
           name: string
+          self_enroll_currency?: string
+          self_enroll_price_cents?: number | null
           slug: string
           thumbnail_asset_id?: string | null
           updated_at?: string
@@ -3689,8 +3704,11 @@ export type Database = {
           estimated_minutes?: number | null
           id?: string
           is_published?: boolean
+          is_self_enrollable?: boolean
           mode?: string
           name?: string
+          self_enroll_currency?: string
+          self_enroll_price_cents?: number | null
           slug?: string
           thumbnail_asset_id?: string | null
           updated_at?: string
@@ -4850,7 +4868,10 @@ export type Database = {
           estimated_minutes: number | null
           id: string
           is_published: boolean
+          is_self_enrollable: boolean
           name: string
+          self_enroll_currency: string
+          self_enroll_price_cents: number | null
           slug: string
           thumbnail_asset_id: string | null
           updated_at: string
@@ -4865,7 +4886,10 @@ export type Database = {
           estimated_minutes?: number | null
           id?: string
           is_published?: boolean
+          is_self_enrollable?: boolean
           name: string
+          self_enroll_currency?: string
+          self_enroll_price_cents?: number | null
           slug: string
           thumbnail_asset_id?: string | null
           updated_at?: string
@@ -4880,7 +4904,10 @@ export type Database = {
           estimated_minutes?: number | null
           id?: string
           is_published?: boolean
+          is_self_enrollable?: boolean
           name?: string
+          self_enroll_currency?: string
+          self_enroll_price_cents?: number | null
           slug?: string
           thumbnail_asset_id?: string | null
           updated_at?: string
@@ -6563,6 +6590,7 @@ export type Database = {
           archived_at: string | null
           audiences: string[] | null
           category: string
+          content_asset_id: string | null
           content_type: string | null
           created_at: string
           created_by: string | null
@@ -6581,6 +6609,7 @@ export type Database = {
           archived_at?: string | null
           audiences?: string[] | null
           category?: string
+          content_asset_id?: string | null
           content_type?: string | null
           created_at?: string
           created_by?: string | null
@@ -6599,6 +6628,7 @@ export type Database = {
           archived_at?: string | null
           audiences?: string[] | null
           category?: string
+          content_asset_id?: string | null
           content_type?: string | null
           created_at?: string
           created_by?: string | null
@@ -6614,6 +6644,13 @@ export type Database = {
           url_or_content?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "resources_content_asset_id_fkey"
+            columns: ["content_asset_id"]
+            isOneToOne: false
+            referencedRelation: "content_assets"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "resources_created_by_fkey"
             columns: ["created_by"]
@@ -7394,6 +7431,149 @@ export type Database = {
             foreignKeyName: "user_demographics_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_module_assignments: {
+        Row: {
+          assigned_at: string
+          assigned_by: string | null
+          completed_at: string | null
+          due_at: string | null
+          id: string
+          module_id: string
+          notes: string | null
+          source: string
+          source_reference_id: string | null
+          status: string
+          unassigned_at: string | null
+          unassigned_by: string | null
+          unassigned_reason: string | null
+          user_id: string
+        }
+        Insert: {
+          assigned_at?: string
+          assigned_by?: string | null
+          completed_at?: string | null
+          due_at?: string | null
+          id?: string
+          module_id: string
+          notes?: string | null
+          source: string
+          source_reference_id?: string | null
+          status?: string
+          unassigned_at?: string | null
+          unassigned_by?: string | null
+          unassigned_reason?: string | null
+          user_id: string
+        }
+        Update: {
+          assigned_at?: string
+          assigned_by?: string | null
+          completed_at?: string | null
+          due_at?: string | null
+          id?: string
+          module_id?: string
+          notes?: string | null
+          source?: string
+          source_reference_id?: string | null
+          status?: string
+          unassigned_at?: string | null
+          unassigned_by?: string | null
+          unassigned_reason?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_module_assignments_assigned_by_fkey"
+            columns: ["assigned_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_module_assignments_assigned_by_fkey"
+            columns: ["assigned_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "user_module_assignments_assigned_by_fkey"
+            columns: ["assigned_by"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_module_assignments_assigned_by_fkey"
+            columns: ["assigned_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_module_assignments_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "modules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_module_assignments_unassigned_by_fkey"
+            columns: ["unassigned_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_module_assignments_unassigned_by_fkey"
+            columns: ["unassigned_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "user_module_assignments_unassigned_by_fkey"
+            columns: ["unassigned_by"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_module_assignments_unassigned_by_fkey"
+            columns: ["unassigned_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_module_assignments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_module_assignments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "user_module_assignments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_module_assignments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
           },
@@ -8453,6 +8633,17 @@ export type Database = {
         }
         Returns: Json
       }
+      assign_module_directly: {
+        Args: {
+          p_due_at?: string
+          p_module_id: string
+          p_reason?: string
+          p_source?: string
+          p_source_reference_id?: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
       audit_event_detail: {
         Args: { p_event_id: string }
         Returns: {
@@ -8905,6 +9096,17 @@ export type Database = {
         }
         Returns: Json
       }
+      get_resource_content_asset: {
+        Args: { p_resource_id: string }
+        Returns: {
+          out_asset_id: string
+          out_bucket: string
+          out_mime_type: string
+          out_original_filename: string
+          out_path: string
+          out_size_bytes: number
+        }[]
+      }
       get_user_learning_state: { Args: { p_user_id: string }; Returns: Json }
       get_user_resources: { Args: { p_user_id?: string }; Returns: Json }
       grant_certification: {
@@ -8987,6 +9189,7 @@ export type Database = {
           total_count: number
         }[]
       }
+      list_available_learning: { Args: { p_user_id?: string }; Returns: Json }
       list_available_recommendations: {
         Args: never
         Returns: {
@@ -9325,6 +9528,15 @@ export type Database = {
           }
       seat_count_available: { Args: { p_org: string }; Returns: number }
       seat_count_used: { Args: { p_org: string }; Returns: number }
+      self_enroll_in_certification_path: {
+        Args: { p_certification_path_id: string }
+        Returns: Json
+      }
+      self_enroll_in_curriculum: {
+        Args: { p_curriculum_id: string }
+        Returns: Json
+      }
+      self_enroll_in_module: { Args: { p_module_id: string }; Returns: Json }
       send_grace_period_reminders: {
         Args: never
         Returns: {
@@ -9428,6 +9640,10 @@ export type Database = {
         }
         Returns: Json
       }
+      unassign_module: {
+        Args: { p_assignment_id: string; p_reason: string }
+        Returns: Json
+      }
       update_chat_session: {
         Args: {
           p_message_count: number
@@ -9479,9 +9695,12 @@ export type Database = {
           p_display_order: number
           p_id: string
           p_is_published: boolean
+          p_is_self_enrollable?: boolean
           p_name: string
           p_prerequisite_path_id: string
           p_reason: string
+          p_self_enroll_currency?: string
+          p_self_enroll_price_cents?: number
           p_slug: string
           p_thumbnail_asset_id?: string
         }
@@ -9513,10 +9732,13 @@ export type Database = {
           p_estimated_minutes: number
           p_id: string
           p_is_published: boolean
+          p_is_self_enrollable?: boolean
           p_mode: string
           p_name: string
           p_prerequisite_curriculum_id: string
           p_reason: string
+          p_self_enroll_currency?: string
+          p_self_enroll_price_cents?: number
           p_slug: string
           p_thumbnail_asset_id?: string
         }
@@ -9544,9 +9766,12 @@ export type Database = {
           p_estimated_minutes: number
           p_id: string
           p_is_published: boolean
+          p_is_self_enrollable?: boolean
           p_name: string
           p_prerequisite_module_id: string
           p_reason: string
+          p_self_enroll_currency?: string
+          p_self_enroll_price_cents?: number
           p_slug: string
           p_thumbnail_asset_id?: string
         }
@@ -9554,6 +9779,7 @@ export type Database = {
       }
       upsert_resource: {
         Args: {
+          p_content_asset_id?: string
           p_content_type: string
           p_id: string
           p_is_published: boolean
