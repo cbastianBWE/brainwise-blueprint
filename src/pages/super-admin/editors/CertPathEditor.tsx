@@ -628,6 +628,79 @@ function CertPathEditor({
           </div>
         </div>
 
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label htmlFor="cp-self-enrollable" className="cursor-pointer">Self-enrollable</Label>
+              <p className="text-xs text-muted-foreground">
+                When on, users can enroll themselves from the My Learning tab. When off, only admins can assign.
+              </p>
+            </div>
+            <Switch
+              id="cp-self-enrollable"
+              checked={isSelfEnrollable}
+              onCheckedChange={(checked) => {
+                setIsSelfEnrollable(checked);
+                if (!checked) {
+                  setSelfEnrollPricingMode('free');
+                  setSelfEnrollPriceDollars('');
+                }
+              }}
+              disabled={saving}
+            />
+          </div>
+
+          {isSelfEnrollable && (
+            <div className="space-y-4 rounded-md border border-dashed p-4">
+              <div>
+                <Label>Pricing</Label>
+                <RadioGroup
+                  value={selfEnrollPricingMode}
+                  onValueChange={(v) => {
+                    const m = v as 'free' | 'paid';
+                    setSelfEnrollPricingMode(m);
+                    if (m === 'free') setSelfEnrollPriceDollars('');
+                  }}
+                  className="mt-2 flex gap-4"
+                  disabled={saving}
+                >
+                  <div className="flex items-center gap-2">
+                    <RadioGroupItem id="cp-pricing-free" value="free" />
+                    <Label htmlFor="cp-pricing-free" className="cursor-pointer font-normal">Free</Label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <RadioGroupItem id="cp-pricing-paid" value="paid" />
+                    <Label htmlFor="cp-pricing-paid" className="cursor-pointer font-normal">Paid</Label>
+                  </div>
+                </RadioGroup>
+              </div>
+
+              {selfEnrollPricingMode === 'paid' && (
+                <div className="space-y-1.5">
+                  <Label htmlFor="cp-price">Price (USD)</Label>
+                  <div className="flex items-center gap-2">
+                    <span className="text-muted-foreground">$</span>
+                    <Input
+                      id="cp-price"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={selfEnrollPriceDollars}
+                      onChange={(e) => setSelfEnrollPriceDollars(e.target.value)}
+                      placeholder="0.00"
+                      className="max-w-[160px]"
+                      disabled={saving}
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Users will see this as the enrollment price. The payment flow surfaces at enroll time.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
         <div className="space-y-2">
           <Label htmlFor="cp-reason">Reason for change *</Label>
           <Textarea
