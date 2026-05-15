@@ -121,11 +121,12 @@ Deno.serve(async (req: Request) => {
     }
 
     // ── Step 4 & 5: Apply reverse scoring and group by dimension ──
-    // Determine instrument type from instrument_id prefix
-    const isPTP = instrument_id.startsWith("PTP");
-    const isNAI = instrument_id.startsWith("NAI");
-    const isAIRSA = instrument_id.startsWith("AIRSA");
-    const isHSS = instrument_id.startsWith("HSS");
+    // Determine instrument type. Real IDs are INST-001..INST-004 (+ INST-002L for EPN).
+    // Keep the prefix checks as a fallback so any future PTP*/NAI*/etc. IDs still work.
+    const isPTP = instrument_id === "INST-001" || instrument_id.startsWith("PTP");
+    const isNAI = instrument_id === "INST-002" || instrument_id === "INST-002L" || instrument_id.startsWith("NAI");
+    const isAIRSA = instrument_id === "INST-003" || instrument_id.startsWith("AIRSA");
+    const isHSS = instrument_id === "INST-004" || instrument_id.startsWith("HSS");
     const isSlider = isPTP || isNAI; // 0-100 slider
 
     interface ProcessedResponse {
