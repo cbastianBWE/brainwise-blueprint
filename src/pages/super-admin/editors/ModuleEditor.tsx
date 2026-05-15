@@ -19,7 +19,10 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Pencil, Plus, Loader2, Save, Archive, Layers } from "lucide-react";
+import {
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
+import { Pencil, Plus, Loader2, Save, Archive, Layers, Copy } from "lucide-react";
 import { slugify, ItemTypeIcon } from "./_shared";
 import { FileUploadField } from "@/components/super-admin/FileUploadField";
 
