@@ -404,7 +404,7 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
         item_number: number;
         dimension_id: string;
       }): FacetItem => ({
-        item_text: "",
+        item_text: assessmentResponses.find(r => r.itemNumber === f.item_number)?.itemText ?? "",
         item_number: f.item_number,
         dimension_id: f.dimension_id,
         context_type: ctx,
@@ -505,13 +505,13 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
           ...elevated.map((f) => ({
             name: f.facet_name,
             score: Math.round(f.value),
-            question: "",
+            question: assessmentResponses.find(r => r.facetName === f.facet_name)?.itemText ?? "",
             type: "elevated",
           })),
           ...suppressed.map((f) => ({
             name: f.facet_name,
             score: Math.round(f.value),
-            question: "",
+            question: assessmentResponses.find(r => r.facetName === f.facet_name)?.itemText ?? "",
             type: "suppressed",
           })),
         ];
@@ -1070,6 +1070,15 @@ function FacetList({
               />
               <div className="flex-1 min-w-0">
                 <div style={{ fontSize: 14, fontWeight: 500, color: "var(--fg-1)" }}>{facetName}</div>
+                {facet.item_text && (
+                  <div style={{ fontSize: 12, color: "var(--fg-3)", marginTop: 2, lineHeight: 1.4 }}>
+                    {isExpanded
+                      ? facet.item_text
+                      : facet.item_text.length > 80
+                        ? facet.item_text.slice(0, 80) + "…"
+                        : facet.item_text}
+                  </div>
+                )}
               </div>
               <span
                 style={{

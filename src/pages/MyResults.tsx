@@ -1727,7 +1727,8 @@ function PTPDomainCards({
   };
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+    <div>
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
       {dimensions.map(([dimId, score]) => {
         const mean = Math.round(score.mean ?? score.level_mean ?? 0);
         const color = PTP_DIMENSION_COLORS[dimId] ?? "#021F36";
@@ -1791,6 +1792,10 @@ function PTPDomainCards({
           </div>
         );
       })}
+      </div>
+      <p style={{ fontSize: 11, color: "var(--fg-3)", marginTop: 8, textAlign: "center" }}>
+        Score ranges: <strong>Low</strong> 0–39 · <strong>Moderate</strong> 40–69 · <strong>High</strong> 70–100
+      </p>
     </div>
   );
 }
@@ -1818,7 +1823,8 @@ function NAIDomainCards({
   };
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+    <div>
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
       {dimensions.map(([dimId, score]) => {
         const mean = Math.round(score.mean ?? score.level_mean ?? 0);
         const color = NAI_DIMENSION_COLORS[dimId] ?? "#021F36";
@@ -1851,6 +1857,10 @@ function NAIDomainCards({
           </div>
         );
       })}
+      </div>
+      <p style={{ fontSize: 11, color: "var(--fg-3)", marginTop: 8, textAlign: "center" }}>
+        Score ranges: <strong>Low</strong> 0–25 · <strong>Moderate</strong> 26–50 · <strong>Elevated</strong> 51–75 · <strong>High</strong> 76–100
+      </p>
     </div>
   );
 }
