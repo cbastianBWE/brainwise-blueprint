@@ -43,6 +43,7 @@ export interface TileProps {
   inlineCtaLabel?: string;
   onInlineCtaClick?: () => void;
   locked?: boolean;
+  externalLink?: boolean;
 }
 
 function contentTypeChipFor(ct: ResourceContentType) {
