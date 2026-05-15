@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/hooks/useAuth";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import RoleGuard from "@/components/RoleGuard";
+import PractitionerCoachGuard from "@/components/PractitionerCoachGuard";
 import SubscriptionGate from "@/components/SubscriptionGate";
 import CorpRedirect from "@/components/CorpRedirect";
 import { SuperAdminSessionProvider } from "@/hooks/useSuperAdminSession";
