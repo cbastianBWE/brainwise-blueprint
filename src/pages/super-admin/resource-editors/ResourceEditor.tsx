@@ -329,6 +329,31 @@ export default function ResourceEditor({
           )}
         </div>
 
+        {/* Content file (downloadable) */}
+        {(contentType === "worksheet" || contentType === "template") && (
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold text-foreground">Content file</h3>
+            <p className="text-xs text-muted-foreground">
+              The {contentType === "worksheet" ? "worksheet" : "template"} file users will download.
+              Private — served via short-lived signed URLs. Required to publish.
+            </p>
+            {mode === "create" ? (
+              <div className="rounded-md border border-dashed p-4 text-sm italic text-muted-foreground">
+                Save the resource first to upload a content file.
+              </div>
+            ) : (
+              <FileUploadField
+                assetKind="document"
+                resourceId={initial?.id ?? null}
+                refField="content"
+                value={contentAssetId}
+                onChange={setContentAssetId}
+                disabled={saving}
+              />
+            )}
+          </div>
+        )}
+
         {/* Identity */}
         <div className="space-y-4">
           <h3 className="text-sm font-semibold text-foreground">Identity</h3>
