@@ -522,6 +522,83 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
     fetchFacets();
   }, [assessmentId, assessmentResultId, ptpContextTab]);
 
+  // ── facet_insights_all: full per-item interpretation array ──
+  // DB-first; only triggers the sequential batch loop when the user has
+  // opened the "Your assessment responses" accordion AND no row exists yet.
+  useEffect(() => {
+    if (!assessmentResultId) return;
+    let cancelled = false;
+
+    const run = async () => {
+      const { data: existing } = await supabase
+        .from("facet_interpretations")
+        .select("facet_data")
+        .eq("assessment_result_id", assessmentResultId)
+        .eq("section_type", "facet_insights_all")
+        .maybeSingle();
+      if (cancelled) return;
+
+      if (existing?.facet_data) {
+        setAllFacetInsights(existing.facet_data as FacetInterpretation[]);
+        return;
+      }
+
+      if (!responsesExpanded) return;
+
+      setLoadingAllFacetInsights(true);
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        if (cancelled) return;
+        const authHeaders = { Authorization: `Bearer ${session?.access_token}` };
+
+        const first = await supabase.functions.invoke("generate-facet-interpretations", {
+          body: { assessment_result_id: assessmentResultId, generate_all_facets: true, batch_index: 0 },
+          headers: authHeaders,
+        });
+        if (cancelled) return;
+        if (first.error) {
+          setLoadingAllFacetInsights(false);
+          return;
+        }
+        const totalBatches = (first.data as { total_batches?: number } | null)?.total_batches ?? 1;
+        let isDone = (first.data as { done?: boolean } | null)?.done === true;
+
+        for (let i = 1; i < totalBatches && !isDone; i++) {
+          const next = await supabase.functions.invoke("generate-facet-interpretations", {
+            body: { assessment_result_id: assessmentResultId, generate_all_facets: true, batch_index: i },
+            headers: authHeaders,
+          });
+          if (cancelled) return;
+          if (next.error) {
+            setLoadingAllFacetInsights(false);
+            return;
+          }
+          isDone = (next.data as { done?: boolean } | null)?.done === true;
+        }
+
+        const { data: finalRow } = await supabase
+          .from("facet_interpretations")
+          .select("facet_data")
+          .eq("assessment_result_id", assessmentResultId)
+          .eq("section_type", "facet_insights_all")
+          .maybeSingle();
+        if (cancelled) return;
+        if (finalRow?.facet_data) {
+          setAllFacetInsights(finalRow.facet_data as FacetInterpretation[]);
+        }
+      } finally {
+        if (!cancelled) setLoadingAllFacetInsights(false);
+      }
+    };
+
+    run();
+    return () => {
+      cancelled = true;
+    };
+  }, [assessmentResultId, responsesExpanded]);
+
   return {
     narrativeSections,
     loadingNarrativeSections,
@@ -535,6 +612,10 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
     setExpandedFacets,
     responsesExpanded,
     setResponsesExpanded,
+    allFacetInsights,
+    loadingAllFacetInsights,
+    allFacetsExpanded,
+    setAllFacetsExpanded,
   };
 }
 
