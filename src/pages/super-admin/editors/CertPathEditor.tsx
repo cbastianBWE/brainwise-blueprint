@@ -451,6 +451,75 @@ function CertPathEditor({
     onArchived?.();
   };
 
+  const handleDetachCurriculum = async () => {
+    if (!initial?.id || !detachState.curriculumId || detachState.reason.trim().length < 10) return;
+    setDetachState((s) => ({ ...s, loading: true }));
+    const { error } = await supabase.rpc("detach_curriculum_from_certification_path", {
+      p_certification_path_id: initial.id,
+      p_curriculum_id: detachState.curriculumId,
+      p_reason: detachState.reason.trim(),
+    } as any);
+    setDetachState((s) => ({ ...s, loading: false }));
+    if (error) {
+      toast({
+        title: "Could not detach curriculum",
+        description: error.message ?? "Unknown error.",
+        variant: "destructive",
+      });
+      return;
+    }
+    toast({
+      title: "Curriculum detached",
+      description: `${detachState.curriculumName} is no longer in this path. User enrollments preserved.`,
+    });
+    setDetachState({ open: false, curriculumId: null, curriculumName: null, reason: "", loading: false });
+    await Promise.all([onRefetch?.(), onInvalidateAttachedList?.()]);
+  };
+
+  const openDuplicateDialog = () => {
+    if (!initial) return;
+    setDuplicateState({
+      open: true,
+      newSlug: `${initial.slug}-copy`,
+      newName: `${initial.name} (Copy)`,
+      reason: "",
+      loading: false,
+    });
+  };
+
+  const handleDuplicate = async () => {
+    if (!initial?.id || duplicateState.reason.trim().length < 10) return;
+    if (duplicateState.newSlug.trim().length === 0 || duplicateState.newName.trim().length === 0) return;
+    setDuplicateState((s) => ({ ...s, loading: true }));
+    const { data, error } = await supabase.rpc("duplicate_certification_path", {
+      p_source_certification_path_id: initial.id,
+      p_new_slug: duplicateState.newSlug.trim(),
+      p_new_name: duplicateState.newName.trim(),
+      p_reason: duplicateState.reason.trim(),
+    } as any);
+    setDuplicateState((s) => ({ ...s, loading: false }));
+    if (error) {
+      const msg = error.message ?? "";
+      const friendly = msg.includes("slug_already_in_use")
+        ? "That slug is already in use. Pick a different one."
+        : msg.includes("reason_required_min_chars")
+        ? "Reason must be at least 10 characters."
+        : msg || "Could not duplicate.";
+      toast({
+        title: "Could not duplicate certification path",
+        description: friendly,
+        variant: "destructive",
+      });
+      return;
+    }
+    toast({
+      title: "Certification path duplicated",
+      description: `Created as draft: ${(data as any)?.new_name}. Review and publish when ready.`,
+    });
+    setDuplicateState({ open: false, newSlug: "", newName: "", reason: "", loading: false });
+    await onRefetch?.();
+  };
+
   const titleText = mode === "create" ? "New certification path" : (initial?.name ?? "Certification path");
   const reasonLen = reason.trim().length;
   const archiveReasonLen = archiveReason.trim().length;
