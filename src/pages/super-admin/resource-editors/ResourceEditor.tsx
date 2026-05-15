@@ -79,6 +79,9 @@ export default function ResourceEditor({
   const [thumbnailAssetId, setThumbnailAssetId] = useState<string | null>(initial?.thumbnail_asset_id ?? null);
   const [contentAssetId, setContentAssetId] = useState<string | null>(initial?.content_asset_id ?? null);
   const [reason, setReason] = useState<string>("");
+  const [urlKind, setUrlKind] = useState<"external_link" | "inline_html" | "">(
+    initial?.url_kind ?? ""
+  );
   const [saving, setSaving] = useState(false);
 
   const [archiveDialogOpen, setArchiveDialogOpen] = useState(false);
