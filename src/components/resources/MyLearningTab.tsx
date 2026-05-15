@@ -384,7 +384,7 @@ export default function MyLearningTab() {
             onEnroll={handleEnrollClick}
           />
           <Section
-            title="Standalone Curricula"
+            title="Curricula"
             items={visibleSections.standaloneCurricula}
             emptyText="No standalone curricula enrolled."
             entityType="curriculum"
@@ -394,7 +394,7 @@ export default function MyLearningTab() {
             onEnroll={handleEnrollClick}
           />
           <Section
-            title="Standalone Modules"
+            title="Modules"
             items={visibleSections.standaloneModules}
             emptyText="No standalone modules enrolled."
             entityType="module"
