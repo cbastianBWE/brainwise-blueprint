@@ -38,6 +38,7 @@ import Assessment from "./pages/Assessment";
 import AiChat from "./pages/AiChat";
 import AiChatHistory from "./pages/AiChatHistory";
 import Resources from "./pages/Resources";
+import ResourceReader from "./pages/ResourceReader";
 import Pricing from "./pages/Pricing";
 import SettingsPage from "./pages/Settings";
 import PrivacySettings from "./pages/PrivacySettings";
@@ -141,6 +142,7 @@ const App = () => (
               <Route path="/ai-chat" element={<SubscriptionGate feature="ai_chat"><AiChat /></SubscriptionGate>} />
               <Route path="/ai-chat/history" element={<SubscriptionGate feature="ai_chat"><AiChatHistory /></SubscriptionGate>} />
               <Route path="/resources" element={<Resources />} />
+              <Route path="/resources/:resourceId" element={<ResourceReader />} />
               <Route path="/settings" element={<SettingsPage />} />
               <Route path="/settings/privacy" element={<PrivacySettings />} />
               <Route path="/settings/sharing-requests" element={<SharingRequests />} />
