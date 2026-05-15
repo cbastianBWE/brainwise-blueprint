@@ -163,6 +163,9 @@ export default function ResourceEditor({
       return "This resource is missing or archived.";
     }
     if (msg.includes("grants_must_be_array")) return "Could not save grants — invalid format.";
+    if (msg.includes("content_asset_id_required_for_published_downloadable")) {
+      return "A content file is required before publishing this resource.";
+    }
     if (code === "42501") return "You do not have permission to perform this action.";
     if (code === "23505") return "A resource conflict occurred.";
     return msg || "Could not save changes.";
