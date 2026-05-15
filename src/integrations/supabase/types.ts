@@ -6603,6 +6603,7 @@ export type Database = {
           thumbnail_asset_id: string | null
           title: string
           updated_at: string
+          url_kind: string | null
           url_or_content: string | null
         }
         Insert: {
@@ -6622,6 +6623,7 @@ export type Database = {
           thumbnail_asset_id?: string | null
           title: string
           updated_at?: string
+          url_kind?: string | null
           url_or_content?: string | null
         }
         Update: {
@@ -6641,6 +6643,7 @@ export type Database = {
           thumbnail_asset_id?: string | null
           title?: string
           updated_at?: string
+          url_kind?: string | null
           url_or_content?: string | null
         }
         Relationships: [
@@ -9788,6 +9791,7 @@ export type Database = {
           p_summary: string
           p_thumbnail_asset_id?: string
           p_title: string
+          p_url_kind?: string
           p_url_or_content: string
         }
         Returns: Json
