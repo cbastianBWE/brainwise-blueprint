@@ -146,6 +146,15 @@ function CurriculumEditor({
   const [isPublished, setIsPublished] = useState<boolean>(!!initial?.is_published);
   const [reason, setReason] = useState<string>("");
   const [thumbnailAssetId, setThumbnailAssetId] = useState<string | null>(initial?.thumbnail_asset_id ?? null);
+  const [isSelfEnrollable, setIsSelfEnrollable] = useState<boolean>(!!initial?.is_self_enrollable);
+  const [selfEnrollPricingMode, setSelfEnrollPricingMode] = useState<'free' | 'paid'>(
+    initial?.self_enroll_price_cents != null ? 'paid' : 'free'
+  );
+  const [selfEnrollPriceDollars, setSelfEnrollPriceDollars] = useState<string>(
+    initial?.self_enroll_price_cents != null
+      ? (initial.self_enroll_price_cents / 100).toFixed(2)
+      : ''
+  );
 
   const [attachmentDisplayOrder, setAttachmentDisplayOrder] = useState<string>("0");
   const [attachmentIsRequired, setAttachmentIsRequired] = useState<boolean>(true);
