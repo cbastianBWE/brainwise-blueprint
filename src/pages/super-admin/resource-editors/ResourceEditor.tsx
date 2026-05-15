@@ -457,6 +457,45 @@ export default function ResourceEditor({
                 : "External link or inline body content."}
             </p>
           </div>
+
+          {(contentType === "article" || contentType === "video") &&
+            urlOrContent.trim().length > 0 &&
+            contentAssetId == null && (
+              <div className="space-y-2">
+                <Label>How should this URL behave?</Label>
+                <RadioGroup
+                  value={urlKind}
+                  onValueChange={(v) => setUrlKind(v as "external_link" | "inline_html")}
+                  disabled={saving}
+                  className="space-y-2"
+                >
+                  <div className="flex items-start gap-2">
+                    <RadioGroupItem value="external_link" id="urlkind-external" className="mt-1" />
+                    <div className="space-y-0.5">
+                      <Label htmlFor="urlkind-external" className="font-medium">
+                        External link
+                      </Label>
+                      <p className="text-xs text-muted-foreground">
+                        Clicking the tile opens this URL in a new browser tab. Best for linking to outside articles or sites the user should view at the source.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <RadioGroupItem value="inline_html" id="urlkind-inline" className="mt-1" />
+                    <div className="space-y-0.5">
+                      <Label htmlFor="urlkind-inline" className="font-medium">
+                        Inline content
+                      </Label>
+                      <p className="text-xs text-muted-foreground">
+                        {contentType === "video"
+                          ? "Embeds the video inside our app (works for YouTube and Vimeo)."
+                          : "Renders the HTML content directly inside our reader page. Use when the value above is an HTML body, not an external URL."}
+                      </p>
+                    </div>
+                  </div>
+                </RadioGroup>
+              </div>
+            )}
           <div className="space-y-2">
             <Label htmlFor="r-ctype">Content type</Label>
             <Select value={contentType} onValueChange={setContentType} disabled={saving}>
