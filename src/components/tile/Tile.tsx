@@ -80,6 +80,7 @@ export function Tile(props: TileProps) {
     inlineCtaLabel,
     onInlineCtaClick,
     locked = false,
+    externalLink = false,
   } = props;
 
   const [isHovered, setIsHovered] = useState(false);
