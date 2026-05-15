@@ -357,7 +357,7 @@ export default function MyLearningTab() {
             variant={view === "all_available" ? "default" : "outline"}
             onClick={() => setView("all_available")}
           >
-            All Available
+            Browse & Enroll
           </Button>
         </div>
         <div className="relative max-w-md flex-1 sm:max-w-xs">
