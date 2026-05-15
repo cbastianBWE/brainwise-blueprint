@@ -78,7 +78,7 @@ export default function ResourceGridTab({ tab, emptyStateText }: ResourceGridTab
     return map;
   }, [filtered]);
 
-  const handleWorksheetDownload = async (resource: Resource) => {
+  const handleFileDownload = async (resource: Resource) => {
     const { data, error } = await supabase.functions.invoke("get-resource-signed-url", {
       body: { p_resource_id: resource.resource_id },
     });
@@ -103,16 +103,10 @@ export default function ResourceGridTab({ tab, emptyStateText }: ResourceGridTab
       return;
     }
     logAccess(resource.resource_id);
-    switch (resource.content_type) {
-      case "article":
-      case "guide":
-      case "video":
-        navigate(`/resources/${resource.resource_id}`);
-        break;
-      case "worksheet":
-      case "template":
-        void handleWorksheetDownload(resource);
-        break;
+    if (resource.content_asset_id != null) {
+      void handleFileDownload(resource);
+    } else {
+      navigate(`/resources/${resource.resource_id}`);
     }
   };
 
