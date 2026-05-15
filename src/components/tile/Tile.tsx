@@ -9,6 +9,7 @@ import {
   BookOpen,
   Wrench,
   LayoutTemplate,
+  Lock,
 } from "lucide-react";
 import type {
   TileVariant,
