@@ -356,25 +356,17 @@ Deno.serve(async (req: Request) => {
         callBodies.push({ assessment_result_id: result!.id, generate_cross_and_action: true, narrative_context: ctx });
       }
 
-      const facetUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/generate-facet-interpretations`;
-      const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-
+      // Use admin.functions.invoke so auth uses whatever scheme this project's
+      // Supabase runtime expects (legacy JWT vs new signing keys). Direct fetch
+      // with `Bearer <SUPABASE_SERVICE_ROLE_KEY>` was rejected as a malformed
+      // JWT under signing-keys mode.
       const fanOut = Promise.allSettled(
         callBodies.map((body) =>
-          fetch(facetUrl, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${serviceKey}`,
-              apikey: serviceKey,
-            },
-            body: JSON.stringify(body),
-          }).then(async (r) => {
-            if (!r.ok) {
-              const txt = await r.text().catch(() => "");
-              throw new Error(`facet ${r.status}: ${txt.slice(0, 200)}`);
+          admin.functions.invoke("generate-facet-interpretations", { body }).then((res) => {
+            if (res.error) {
+              throw new Error(`facet: ${res.error.message ?? String(res.error)}`);
             }
-            return r;
+            return res;
           }),
         ),
       ).then(async (results) => {
