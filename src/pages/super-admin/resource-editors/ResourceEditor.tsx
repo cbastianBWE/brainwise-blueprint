@@ -76,6 +76,7 @@ export default function ResourceEditor({
   const [resourceTabId, setResourceTabId] = useState<string>(initial?.resource_tab_id ?? "");
   const [isPublished, setIsPublished] = useState<boolean>(!!initial?.is_published);
   const [thumbnailAssetId, setThumbnailAssetId] = useState<string | null>(initial?.thumbnail_asset_id ?? null);
+  const [contentAssetId, setContentAssetId] = useState<string | null>(initial?.content_asset_id ?? null);
   const [reason, setReason] = useState<string>("");
   const [saving, setSaving] = useState(false);
 
