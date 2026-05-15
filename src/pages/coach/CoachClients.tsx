@@ -180,6 +180,7 @@ export default function CoachClients() {
     // Derive unique clients
     const clientMap: Record<string, UniqueClient> = {};
     for (const row of enriched) {
+      if (row.revoked_at !== null) continue;
       const e = row.client_email;
       if (!clientMap[e]) {
         clientMap[e] = {
@@ -884,7 +885,7 @@ export default function CoachClients() {
                 </TableHeader>
                 <TableBody>
                   {clients
-                    .filter(c => c.client_email === selectedClientEmail)
+                    .filter(c => c.client_email === selectedClientEmail && c.revoked_at === null)
                     .map(c => (
                     <TableRow key={c.id}>
                       <TableCell className="text-sm">{c.instrument_name || "—"}</TableCell>
