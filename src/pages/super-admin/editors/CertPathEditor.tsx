@@ -107,6 +107,16 @@ function AttachedCurriculaSection({
                 >
                   <Pencil className="h-3.5 w-3.5" />
                 </Button>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
+                  onClick={() => onDetach(row.curriculum.id, row.curriculum.name)}
+                  aria-label={`Detach ${row.curriculum.name}`}
+                  title="Detach from this path"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </Button>
               </div>
             </div>
           ))}
