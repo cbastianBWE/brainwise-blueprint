@@ -103,6 +103,16 @@ function AttachedModulesSection({
                 >
                   <Pencil className="h-3.5 w-3.5" />
                 </Button>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
+                  onClick={() => onDetach(row.module.id, row.module.name)}
+                  aria-label={`Detach ${row.module.name}`}
+                  title="Detach from this curriculum"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </Button>
               </div>
             </div>
           ))}
