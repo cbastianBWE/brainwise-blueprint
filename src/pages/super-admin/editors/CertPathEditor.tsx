@@ -256,6 +256,7 @@ function CertPathEditor({
         isPublished ||
         displayOrder !== "0" ||
         thumbnailAssetId !== null ||
+        isSelfEnrollable ||
         reason.trim().length > 0
       );
     }
@@ -264,6 +265,8 @@ function CertPathEditor({
     const instrumentsEqual =
       instruments.size === initialInstruments.size &&
       Array.from(instruments).every((x) => initialInstruments.has(x));
+    const initialPricingMode: 'free' | 'paid' = initial?.self_enroll_price_cents != null ? 'paid' : 'free';
+    const initialCents = initial?.self_enroll_price_cents ?? 0;
     return (
       slug !== (initial.slug ?? "") ||
       name !== (initial.name ?? "") ||
@@ -275,12 +278,17 @@ function CertPathEditor({
       isPublished !== !!initial.is_published ||
       Number(displayOrder) !== (initial.display_order ?? 0) ||
       thumbnailAssetId !== (initial.thumbnail_asset_id ?? null) ||
+      isSelfEnrollable !== !!initial.is_self_enrollable ||
+      selfEnrollPricingMode !== initialPricingMode ||
+      (selfEnrollPricingMode === 'paid' &&
+        Math.round(parseFloat(selfEnrollPriceDollars || '0') * 100) !== initialCents) ||
       reason.trim().length > 0
     );
   }, [
     mode, initial, startingInstruments,
     slug, name, description, certificationType, deliveryMode,
-    instruments, prerequisitePathId, isPublished, displayOrder, thumbnailAssetId, reason,
+    instruments, prerequisitePathId, isPublished, displayOrder, thumbnailAssetId,
+    isSelfEnrollable, selfEnrollPricingMode, selfEnrollPriceDollars, reason,
   ]);
 
   const reasonOk = reason.trim().length >= 10;
