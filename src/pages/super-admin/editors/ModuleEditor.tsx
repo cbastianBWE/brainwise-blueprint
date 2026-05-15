@@ -159,6 +159,14 @@ function ModuleEditor({
   const [archiveReason, setArchiveReason] = useState("");
   const [archiving, setArchiving] = useState(false);
 
+  const [duplicateState, setDuplicateState] = useState<{
+    open: boolean;
+    newSlug: string;
+    newName: string;
+    reason: string;
+    loading: boolean;
+  }>({ open: false, newSlug: "", newName: "", reason: "", loading: false });
+
   useEffect(() => {
     if (autoSlug) setSlug(slugify(name));
   }, [name, autoSlug]);
