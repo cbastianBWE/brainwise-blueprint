@@ -538,13 +538,16 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
   }, [assessmentId, assessmentResultId, ptpContextTab]);
 
   // ── facet_insights_all: full per-item interpretation array ──
-  // DB-first; only triggers the sequential batch loop when the user has
-  // opened the "Your assessment responses" accordion AND no row exists yet.
+  // DB-first; triggers server-side generate-all-facets when the user opens
+  // the "Your assessment responses" accordion AND the row is missing/partial.
+  // generate-all-facets handles batching, time budget, and self-chaining.
   useEffect(() => {
     if (!assessmentResultId) return;
     let cancelled = false;
+    let pollInterval: ReturnType<typeof setInterval> | null = null;
 
     const run = async () => {
+      // 1. Load existing row from DB
       const { data: existing } = await supabase
         .from("facet_interpretations")
         .select("facet_data")
@@ -553,82 +556,92 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
         .maybeSingle();
       if (cancelled) return;
 
-      if (existing?.facet_data) {
-        setAllFacetInsights(existing.facet_data as unknown as FacetInterpretation[]);
-        return;
+      // 2. Load stored total for completeness check
+      const { data: resultMeta } = await supabase
+        .from("assessment_results")
+        .select("facet_insights_all_total")
+        .eq("id", assessmentResultId)
+        .maybeSingle();
+      if (cancelled) return;
+
+      const storedTotal: number | null = resultMeta?.facet_insights_all_total ?? null;
+      const loaded = Array.isArray(existing?.facet_data)
+        ? (existing!.facet_data as unknown as FacetInterpretation[])
+        : [];
+
+      const isComplete = storedTotal !== null && loaded.length >= storedTotal;
+
+      if (loaded.length > 0) {
+        setAllFacetInsights(loaded);
+        if (isComplete) return; // Full row — done
+        // Partial row — fall through to poll for completion
       }
 
+      // 3. Wait for accordion to open before triggering generation
       if (!responsesExpanded) return;
 
+      // 4. Trigger server-side generation — fire-and-forget so polling can
+      //    show progressive updates while the backend works through batches.
       setLoadingAllFacetInsights(true);
       try {
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
+        const { data: { session } } = await supabase.auth.getSession();
         if (cancelled) return;
-        const authHeaders = { Authorization: `Bearer ${session?.access_token}` };
 
-        const MAX_RETRIES = 2;
-        let totalBatches = 1;
+        void supabase.functions.invoke("generate-all-facets", {
+          body: { assessment_result_id: assessmentResultId },
+          headers: { Authorization: `Bearer ${session?.access_token}` },
+        }).catch((e) => console.error("[all-facets] invoke error:", e));
+      } catch (e) {
+        console.error("[all-facets] session fetch error:", e);
+      }
 
-        // Batch 0 — read total_batches from response. Retry on error.
-        for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
-          const first = await supabase.functions.invoke("generate-facet-interpretations", {
-            body: { assessment_result_id: assessmentResultId, generate_all_facets: true, batch_index: 0 },
-            headers: authHeaders,
-          });
-          if (cancelled) return;
-          console.log('[all-facets-debug] batch 0 result:', { error: first.error, data: first.data, assessmentResultId });
-          if (!first.error) {
-            totalBatches = (first.data as { total_batches?: number } | null)?.total_batches ?? 1;
-            break;
-          }
-          if (attempt === MAX_RETRIES) break;
-          await new Promise((resolve) => setTimeout(resolve, 2000));
-          if (cancelled) return;
+      // 5. Poll DB every 5s until complete or 5 min elapsed
+      const pollStart = Date.now();
+      pollInterval = setInterval(async () => {
+        if (cancelled) {
+          if (pollInterval) clearInterval(pollInterval);
+          return;
+        }
+        if (Date.now() - pollStart > 300_000) {
+          if (pollInterval) clearInterval(pollInterval);
+          setLoadingAllFacetInsights(false);
+          return;
         }
 
-        // Batches 1..N — sequential, each retried up to MAX_RETRIES times.
-        // A batch that exhausts retries breaks out of the outer loop so the
-        // final DB read still runs and any partial progress is loaded.
-        for (let i = 1; i < totalBatches; i++) {
-          if (cancelled) return;
-          let batchSucceeded = false;
-          for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
-            const next = await supabase.functions.invoke("generate-facet-interpretations", {
-              body: { assessment_result_id: assessmentResultId, generate_all_facets: true, batch_index: i },
-              headers: authHeaders,
-            });
-            if (cancelled) return;
-            if (!next.error) {
-              batchSucceeded = true;
-              break;
-            }
-            await new Promise((resolve) => setTimeout(resolve, 2000));
-            if (cancelled) return;
-          }
-          if (!batchSucceeded) break;
-        }
-
-        // Always load whatever is in the DB — full or partial.
-        const { data: finalRow } = await supabase
+        const { data: polled } = await supabase
           .from("facet_interpretations")
           .select("facet_data")
           .eq("assessment_result_id", assessmentResultId)
           .eq("section_type", "facet_insights_all")
           .maybeSingle();
         if (cancelled) return;
-        if (finalRow?.facet_data) {
-          setAllFacetInsights(finalRow.facet_data as unknown as FacetInterpretation[]);
+
+        const { data: polledMeta } = await supabase
+          .from("assessment_results")
+          .select("facet_insights_all_total")
+          .eq("id", assessmentResultId)
+          .maybeSingle();
+        if (cancelled) return;
+
+        const polledTotal: number | null = polledMeta?.facet_insights_all_total ?? null;
+        const polledArr = Array.isArray(polled?.facet_data)
+          ? (polled!.facet_data as unknown as FacetInterpretation[])
+          : [];
+
+        if (polledArr.length > 0) setAllFacetInsights(polledArr);
+
+        if (polledTotal !== null && polledArr.length >= polledTotal) {
+          if (pollInterval) clearInterval(pollInterval);
+          setLoadingAllFacetInsights(false);
         }
-      } finally {
-        if (!cancelled) setLoadingAllFacetInsights(false);
-      }
+      }, 5000);
     };
 
     run();
+
     return () => {
       cancelled = true;
+      if (pollInterval) clearInterval(pollInterval);
     };
   }, [assessmentResultId, responsesExpanded]);
 
