@@ -1221,6 +1221,10 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
             const ptpNarrativeProps = {
               assessmentResultId: effectiveSelected.result.id,
               assessmentId: effectiveSelected.result.assessment_id,
+              additionalAssessmentId:
+                ptpContextTab === 'combined' && !isBothAssessment && hasPtpTabs
+                  ? ptpPersonalResults[0]?.result.assessment_id
+                  : undefined,
               narrative: selected.result.ai_narrative,
               dimensionScores: dimensionScores as [string, { mean?: number; band?: string }][],
               dimensionNameMap,
