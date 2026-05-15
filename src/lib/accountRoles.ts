@@ -88,6 +88,7 @@ export function useAccountRole(): AccountRoleInfo {
     isCorp,
     isIndividual: accountType === "individual",
     isCoach: accountType === "coach",
+    isPractitionerCoach: profile?.is_practitioner_coach === true,
     isSuperAdmin,
     isBypassAdmin,
     canBypassAssessmentPaywall: isSuperAdmin,
