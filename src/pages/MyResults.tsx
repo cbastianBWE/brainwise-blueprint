@@ -1230,6 +1230,50 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
               ptpContextTab,
               otherAssessments: assessments.filter(a => a.result.id !== effectiveSelected?.result.id),
             };
+            if (ptpNarrativeStatus === "pending" || ptpNarrativeStatus === "generating") {
+              return (
+                <section>
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Preparing your report
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-2 text-sm text-muted-foreground">
+                      <p>
+                        We're generating your personalised narrative sections in the background. This usually takes 30–90 seconds.
+                      </p>
+                      <p>You can leave this page and come back — it will continue.</p>
+                    </CardContent>
+                  </Card>
+                </section>
+              );
+            }
+            if (ptpNarrativeStatus === "failed") {
+              return (
+                <section>
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        <AlertTriangle className="h-4 w-4 text-destructive" />
+                        Report generation incomplete
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <p className="text-sm text-muted-foreground">
+                        Some narrative sections failed to generate. You can continue — any missing sections will fill in automatically when you open them — or retry the full pipeline.
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        <Button variant="outline" size="sm" onClick={refetchPtpNarrativeStatus}>
+                          <RefreshCw className="h-3 w-3 mr-1" /> Re-check status
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </section>
+              );
+            }
             return (
               <PTPNarrativeProvider {...ptpNarrativeProps}>
                 <section>
