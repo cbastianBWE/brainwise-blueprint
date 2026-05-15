@@ -187,7 +187,18 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {navItems.map((item) => {
+                const sectionHeaderEl = item.sectionHeader ? (
+                  <div
+                    key={`hdr-${item.sectionHeader}`}
+                    className={collapsed ? "sr-only" : "px-2 pt-3 pb-1 text-[10px] uppercase tracking-wider text-sidebar-foreground/50 font-semibold"}
+                  >
+                    {item.sectionHeader}
+                  </div>
+                ) : null;
                 if (item.title === "My Clients") {
+                  return (
+                    <Fragment key={`f-${item.title}${item.url}`}>
+                      {sectionHeaderEl}
                   return (
                     <SidebarMenuItem key="my-clients">
                       <SidebarMenuButton asChild>
