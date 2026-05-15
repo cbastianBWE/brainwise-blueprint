@@ -568,31 +568,48 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
         if (cancelled) return;
         const authHeaders = { Authorization: `Bearer ${session?.access_token}` };
 
-        const first = await supabase.functions.invoke("generate-facet-interpretations", {
-          body: { assessment_result_id: assessmentResultId, generate_all_facets: true, batch_index: 0 },
-          headers: authHeaders,
-        });
-        if (cancelled) return;
-        if (first.error) {
-          setLoadingAllFacetInsights(false);
-          return;
-        }
-        const totalBatches = (first.data as { total_batches?: number } | null)?.total_batches ?? 1;
-        let isDone = (first.data as { done?: boolean } | null)?.done === true;
+        const MAX_RETRIES = 2;
+        let totalBatches = 1;
 
-        for (let i = 1; i < totalBatches && !isDone; i++) {
-          const next = await supabase.functions.invoke("generate-facet-interpretations", {
-            body: { assessment_result_id: assessmentResultId, generate_all_facets: true, batch_index: i },
+        // Batch 0 — read total_batches from response. Retry on error.
+        for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+          const first = await supabase.functions.invoke("generate-facet-interpretations", {
+            body: { assessment_result_id: assessmentResultId, generate_all_facets: true, batch_index: 0 },
             headers: authHeaders,
           });
           if (cancelled) return;
-          if (next.error) {
-            setLoadingAllFacetInsights(false);
-            return;
+          if (!first.error) {
+            totalBatches = (first.data as { total_batches?: number } | null)?.total_batches ?? 1;
+            break;
           }
-          isDone = (next.data as { done?: boolean } | null)?.done === true;
+          if (attempt === MAX_RETRIES) break;
+          await new Promise((resolve) => setTimeout(resolve, 2000));
+          if (cancelled) return;
         }
 
+        // Batches 1..N — sequential, each retried up to MAX_RETRIES times.
+        // A batch that exhausts retries breaks out of the outer loop so the
+        // final DB read still runs and any partial progress is loaded.
+        for (let i = 1; i < totalBatches; i++) {
+          if (cancelled) return;
+          let batchSucceeded = false;
+          for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+            const next = await supabase.functions.invoke("generate-facet-interpretations", {
+              body: { assessment_result_id: assessmentResultId, generate_all_facets: true, batch_index: i },
+              headers: authHeaders,
+            });
+            if (cancelled) return;
+            if (!next.error) {
+              batchSucceeded = true;
+              break;
+            }
+            await new Promise((resolve) => setTimeout(resolve, 2000));
+            if (cancelled) return;
+          }
+          if (!batchSucceeded) break;
+        }
+
+        // Always load whatever is in the DB — full or partial.
         const { data: finalRow } = await supabase
           .from("facet_interpretations")
           .select("facet_data")
