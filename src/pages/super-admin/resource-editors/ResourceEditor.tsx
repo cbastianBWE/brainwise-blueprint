@@ -423,6 +423,13 @@ export default function ResourceEditor({
               placeholder="External link or inline body content."
               disabled={saving}
             />
+            <p className="text-xs text-muted-foreground">
+              {contentType === "article" || contentType === "video"
+                ? "Provide either a URL or upload a file above — not both."
+                : contentType === "guide" || contentType === "worksheet" || contentType === "template"
+                ? "Not used for this content type. Upload a file above instead."
+                : "External link or inline body content."}
+            </p>
           </div>
           <div className="space-y-2">
             <Label htmlFor="r-ctype">Content type</Label>
