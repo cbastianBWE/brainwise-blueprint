@@ -394,9 +394,11 @@ export default function ResourceEditor({
           <div className="space-y-4">
             <h3 className="text-sm font-semibold text-foreground">Content file</h3>
             <p className="text-xs text-muted-foreground">
-              {contentType === "article" || contentType === "video"
-                ? `Optional. If you don't upload a file, provide a URL in "URL or content" below. Required to publish (one or the other).`
-                : `The ${contentType} file users will download. Private — served via short-lived signed URLs. Required to publish.`}
+              {contentType === "article"
+                ? `Optional. If you don't upload a file, provide a URL in "URL or content" below. Required to publish (one or the other). Accepts PDF, DOCX, XLSX, or PPTX.`
+                : contentType === "video"
+                  ? `Optional. If you don't upload a file, provide a URL in "URL or content" below. Required to publish (one or the other). Accepts MP4, WebM, or MOV up to 5 GB.`
+                  : `The ${contentType} file users will download. Private — served via short-lived signed URLs. Required to publish.`}
             </p>
             {mode === "create" ? (
               <div className="rounded-md border border-dashed p-4 text-sm italic text-muted-foreground">
@@ -404,7 +406,7 @@ export default function ResourceEditor({
               </div>
             ) : (
               <FileUploadField
-                assetKind="document"
+                assetKind={contentType === "video" ? "video" : "document"}
                 resourceId={initial?.id ?? null}
                 refField="content"
                 value={contentAssetId}
