@@ -221,8 +221,8 @@ export function Tile(props: TileProps) {
           </div>
         )}
 
-        {/* Inline CTA (detailPageMode only) */}
-        {detailPageMode && inlineCtaLabel && onInlineCtaClick && (
+        {/* Inline CTA */}
+        {inlineCtaLabel && onInlineCtaClick && (
           <button
             type="button"
             onClick={(e) => {
