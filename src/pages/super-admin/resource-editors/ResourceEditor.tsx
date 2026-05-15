@@ -125,6 +125,7 @@ export default function ResourceEditor({
         resourceTabId !== "" ||
         isPublished ||
         thumbnailAssetId !== null ||
+        contentAssetId !== null ||
         reason.trim().length > 0
       );
     }
@@ -137,11 +138,12 @@ export default function ResourceEditor({
       resourceTabId !== (initial.resource_tab_id ?? "") ||
       isPublished !== !!initial.is_published ||
       thumbnailAssetId !== (initial.thumbnail_asset_id ?? null) ||
+      (contentAssetId ?? null) !== (initial.content_asset_id ?? null) ||
       reason.trim().length > 0
     );
   }, [
     mode, initial, title, summary, urlOrContent, contentType,
-    resourceTabId, isPublished, thumbnailAssetId, reason,
+    resourceTabId, isPublished, thumbnailAssetId, contentAssetId, reason,
   ]);
 
   const reasonOk = reason.trim().length >= 10;
