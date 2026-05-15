@@ -15,7 +15,7 @@ export async function resolveThumbnailUrls(
 
   const { data, error } = await supabase
     .from("content_asset_versions")
-    .select("asset_id, bucket, path, content_assets!inner(status, archived_at)")
+    .select("asset_id, bucket, path, content_assets!content_asset_versions_asset_id_fkey!inner(status, archived_at)")
     .in("asset_id", assetIds)
     .is("archived_at", null)
     .eq("content_assets.status", "active");
