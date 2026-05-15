@@ -163,8 +163,20 @@ export default function ResourceEditor({
       return "This resource is missing or archived.";
     }
     if (msg.includes("grants_must_be_array")) return "Could not save grants — invalid format.";
-    if (msg.includes("content_asset_id_required_for_published_downloadable")) {
-      return "A content file is required before publishing this resource.";
+    if (msg.includes("content_asset_required_to_publish_")) {
+      const m = msg.match(/content_asset_required_to_publish_(\w+)/);
+      const type = m?.[1] ?? "resource";
+      return `A content file is required before publishing a ${type}.`;
+    }
+    if (msg.includes("url_or_file_required_to_publish_")) {
+      const m = msg.match(/url_or_file_required_to_publish_(\w+)/);
+      const type = m?.[1] ?? "resource";
+      return `Provide either a URL or a file before publishing this ${type}.`;
+    }
+    if (msg.includes("provide_url_or_file_not_both_to_publish_")) {
+      const m = msg.match(/provide_url_or_file_not_both_to_publish_(\w+)/);
+      const type = m?.[1] ?? "resource";
+      return `For ${type} resources, provide either a URL OR a file — not both.`;
     }
     if (code === "42501") return "You do not have permission to perform this action.";
     if (code === "23505") return "A resource conflict occurred.";
@@ -174,17 +186,39 @@ export default function ResourceEditor({
   const handleSave = async () => {
     if (!canSave) return;
 
-    if (
-      isPublished &&
-      (contentType === "worksheet" || contentType === "template") &&
-      contentAssetId == null
-    ) {
-      toast({
-        title: "Content file required",
-        description: `A content file is required before publishing a ${contentType}.`,
-        variant: "destructive",
-      });
-      return;
+    if (isPublished) {
+      const hasUrl = urlOrContent.trim().length > 0;
+      const hasFile = contentAssetId != null;
+
+      if (contentType === "guide" || contentType === "worksheet" || contentType === "template") {
+        if (!hasFile) {
+          toast({
+            title: "Content file required",
+            description: `A content file is required before publishing a ${contentType}.`,
+            variant: "destructive",
+          });
+          return;
+        }
+      }
+
+      if (contentType === "article" || contentType === "video") {
+        if (!hasUrl && !hasFile) {
+          toast({
+            title: "Content required",
+            description: `Provide either a URL or a file before publishing this ${contentType}.`,
+            variant: "destructive",
+          });
+          return;
+        }
+        if (hasUrl && hasFile) {
+          toast({
+            title: "Provide one, not both",
+            description: `For ${contentType} resources, provide either a URL OR a file — not both.`,
+            variant: "destructive",
+          });
+          return;
+        }
+      }
     }
 
     setSaving(true);
@@ -329,13 +363,14 @@ export default function ResourceEditor({
           )}
         </div>
 
-        {/* Content file (downloadable) */}
-        {(contentType === "worksheet" || contentType === "template") && (
+        {/* Content file */}
+        {contentType !== "" && (
           <div className="space-y-4">
             <h3 className="text-sm font-semibold text-foreground">Content file</h3>
             <p className="text-xs text-muted-foreground">
-              The {contentType === "worksheet" ? "worksheet" : "template"} file users will download.
-              Private — served via short-lived signed URLs. Required to publish.
+              {contentType === "article" || contentType === "video"
+                ? `Optional. If you don't upload a file, provide a URL in "URL or content" below. Required to publish (one or the other).`
+                : `The ${contentType} file users will download. Private — served via short-lived signed URLs. Required to publish.`}
             </p>
             {mode === "create" ? (
               <div className="rounded-md border border-dashed p-4 text-sm italic text-muted-foreground">
@@ -388,6 +423,13 @@ export default function ResourceEditor({
               placeholder="External link or inline body content."
               disabled={saving}
             />
+            <p className="text-xs text-muted-foreground">
+              {contentType === "article" || contentType === "video"
+                ? "Provide either a URL or upload a file above — not both."
+                : contentType === "guide" || contentType === "worksheet" || contentType === "template"
+                ? "Not used for this content type. Upload a file above instead."
+                : "External link or inline body content."}
+            </p>
           </div>
           <div className="space-y-2">
             <Label htmlFor="r-ctype">Content type</Label>
