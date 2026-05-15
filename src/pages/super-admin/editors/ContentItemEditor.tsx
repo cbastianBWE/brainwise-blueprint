@@ -158,7 +158,10 @@ function ContentItemEditor({
     switch (itemType) {
       case "video": {
         const t = Number(videoCompletionThreshold);
-        return videoSourceType.trim() !== "" && videoSourceId.trim() !== "" && Number.isFinite(t) && t >= 1 && t <= 100;
+        // For supabase_storage, source_id is filled in AFTER create via FileUploadField (chicken-and-egg).
+        // All other source types require the source_id at save time.
+        const sourceIdOk = videoSourceType === "supabase_storage" || videoSourceId.trim() !== "";
+        return videoSourceType.trim() !== "" && sourceIdOk && Number.isFinite(t) && t >= 1 && t <= 100;
       }
       case "quiz": {
         const t = Number(quizPassThreshold);
