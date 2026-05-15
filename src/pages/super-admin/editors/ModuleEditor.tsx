@@ -399,8 +399,7 @@ function ModuleEditor({
       description: `Created as draft: ${(data as any)?.new_name}. Review and publish when ready.`,
     });
     setDuplicateState({ open: false, newSlug: "", newName: "", reason: "", loading: false });
-    const refetch = (props as any).onRefetch as (() => void | Promise<void>) | undefined;
-    await refetch?.();
+    await onRefetch?.();
   };
 
   const titleText = mode === "create" ? "New module" : (initial?.name ?? "Module");
