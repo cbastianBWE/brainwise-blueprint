@@ -1,2 +1,2 @@
-import PlaceholderPage from "@/components/PlaceholderPage";
-export default function AdminResources() { return <PlaceholderPage title="Resources" />; }
+import Resources from "@/pages/Resources";
+export default function AdminResources() { return <Resources />; }
