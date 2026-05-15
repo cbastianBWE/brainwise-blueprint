@@ -614,7 +614,7 @@ function ContentItemEditor({
                     />
                   ) : (
                     <div className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">
-                      Save the content item first (with a placeholder source), then upload the video file.
+                      Save the content item first. After saving, you'll be able to upload the video file or pick one from the library.
                     </div>
                   )}
                 </div>
