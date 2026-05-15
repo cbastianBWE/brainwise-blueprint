@@ -1265,9 +1265,6 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
                         Some narrative sections failed to generate. You can continue — any missing sections will fill in automatically when you open them — or retry the full pipeline.
                       </p>
                       <div className="flex flex-wrap gap-2">
-                        <Button variant="outline" size="sm" onClick={refetchPtpNarrativeStatus}>
-                          <RefreshCw className="h-3 w-3 mr-1" /> Re-check status
-                        </Button>
                         <Button
                           variant="default"
                           size="sm"
