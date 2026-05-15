@@ -76,5 +76,15 @@ Deno.serve(async (req: Request) => {
 
   if (updErr) return json(500, { error: updErr.message });
 
+  // Kick generate-all-facets — it self-short-circuits if already complete
+  fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/generate-all-facets`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-internal-secret": Deno.env.get("INTERNAL_FUNCTION_SECRET") ?? "",
+    },
+    body: JSON.stringify({ assessment_result_id }),
+  }).catch((e) => console.error("[retry-ptp-narratives] generate-all-facets fire failed:", e));
+
   return json(200, { ok: true });
 });
