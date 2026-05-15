@@ -498,6 +498,85 @@ function ModuleEditor({
           </div>
         </div>
 
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label htmlFor="mod-self-enrollable" className="cursor-pointer">Self-enrollable</Label>
+              <p className="text-xs text-muted-foreground">
+                When on, users can self-enroll in this module from the All Available view.
+              </p>
+            </div>
+            <Switch
+              id="mod-self-enrollable"
+              checked={isSelfEnrollable}
+              onCheckedChange={(checked) => {
+                setIsSelfEnrollable(checked);
+                if (!checked) {
+                  setSelfEnrollPricingMode('free');
+                  setSelfEnrollPriceDollars('');
+                }
+              }}
+              disabled={saving}
+            />
+          </div>
+
+          {isSelfEnrollable && hasAttachmentSection && attachToCurriculumId && (
+            <p className="text-xs italic text-muted-foreground">
+              Note: This module is part of a curriculum. Self-enrollment only applies to standalone modules.
+            </p>
+          )}
+
+          {isSelfEnrollable && (
+            <div className="space-y-4 rounded-md border border-dashed p-4">
+              <div>
+                <Label>Pricing</Label>
+                <RadioGroup
+                  value={selfEnrollPricingMode}
+                  onValueChange={(v) => {
+                    const m = v as 'free' | 'paid';
+                    setSelfEnrollPricingMode(m);
+                    if (m === 'free') setSelfEnrollPriceDollars('');
+                  }}
+                  className="mt-2 flex gap-4"
+                  disabled={saving}
+                >
+                  <div className="flex items-center gap-2">
+                    <RadioGroupItem id="mod-pricing-free" value="free" />
+                    <Label htmlFor="mod-pricing-free" className="cursor-pointer font-normal">Free</Label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <RadioGroupItem id="mod-pricing-paid" value="paid" />
+                    <Label htmlFor="mod-pricing-paid" className="cursor-pointer font-normal">Paid</Label>
+                  </div>
+                </RadioGroup>
+              </div>
+
+              {selfEnrollPricingMode === 'paid' && (
+                <div className="space-y-1.5">
+                  <Label htmlFor="mod-price">Price (USD)</Label>
+                  <div className="flex items-center gap-2">
+                    <span className="text-muted-foreground">$</span>
+                    <Input
+                      id="mod-price"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={selfEnrollPriceDollars}
+                      onChange={(e) => setSelfEnrollPriceDollars(e.target.value)}
+                      placeholder="0.00"
+                      className="max-w-[160px]"
+                      disabled={saving}
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Users will see this as the enrollment price. The payment flow surfaces at enroll time.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
         {hasAttachmentSection && attachedCurriculum && (
           <div className="space-y-4 rounded-md border border-dashed p-4">
             <h3 className="text-sm font-semibold text-foreground">
