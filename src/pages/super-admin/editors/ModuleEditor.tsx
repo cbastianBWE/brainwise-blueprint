@@ -719,14 +719,24 @@ function ModuleEditor({
         <div className="flex flex-wrap items-center justify-between gap-2 pt-2">
           <div className="flex items-center gap-2">
             {mode === "edit" && initial && !initial.archived_at && (
-              <Button
-                variant="destructive"
-                onClick={() => setArchiveDialogOpen(true)}
-                disabled={saving}
-              >
-                <Archive className="h-4 w-4 mr-2" />
-                Archive
-              </Button>
+              <>
+                <Button
+                  variant="destructive"
+                  onClick={() => setArchiveDialogOpen(true)}
+                  disabled={saving}
+                >
+                  <Archive className="h-4 w-4 mr-2" />
+                  Archive
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={openDuplicateDialog}
+                  disabled={saving}
+                >
+                  <Copy className="h-4 w-4 mr-2" />
+                  Duplicate
+                </Button>
+              </>
             )}
           </div>
           <div className="flex items-center gap-2">
