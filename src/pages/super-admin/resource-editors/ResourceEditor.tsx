@@ -258,6 +258,7 @@ export default function ResourceEditor({
       p_is_published: isPublished,
       p_thumbnail_asset_id: thumbnailAssetId,
       p_content_asset_id: contentAssetId,
+      p_url_kind: urlKind === "" ? null : urlKind,
       p_reason: reason.trim(),
     };
 
