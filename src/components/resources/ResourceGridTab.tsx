@@ -161,6 +161,11 @@ export default function ResourceGridTab({ tab, emptyStateText }: ResourceGridTab
                     }
                     contentType={r.content_type}
                     locked={!r.is_accessible}
+                    externalLink={
+                      r.url_kind === "external_link" &&
+                      r.content_asset_id == null &&
+                      !!r.url_or_content
+                    }
                     onClick={() => handleResourceClick(r)}
                   />
                 ))}
