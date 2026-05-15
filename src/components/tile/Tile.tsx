@@ -77,6 +77,7 @@ export function Tile(props: TileProps) {
     isCurrentLocation = false,
     inlineCtaLabel,
     onInlineCtaClick,
+    locked = false,
   } = props;
 
   const [isHovered, setIsHovered] = useState(false);
