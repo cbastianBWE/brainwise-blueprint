@@ -1,101 +1,84 @@
-# PTP Generate-on-Completion + Report Gating Plan
+# Plan — Per-row expand of "Your assessment responses"
 
-## Goal
+Scope: `src/components/results/PTPNarrativeSections.tsx` only. No backend changes, no schema changes, no edits to `usePTPNarrativeData` outputs that other sections already consume. Will not touch the recently-added `narrative_status` gating (this section only renders after the gate releases, so behavior is unchanged for `failed`/`generating`/legacy rows).
 
-Eliminate the 2–3 minute spinner experience on the PTP report by (a) starting narrative generation the moment scoring finishes, and (b) gating the report page on a single readiness signal that shows a "preparing your report" screen until generation lands.
+## 1. New state in `usePTPNarrativeData`
 
-## Architecture decision
+Add four declarations alongside the existing ones (do not rename or remove anything):
 
-Use **fire-and-forget fan-out from `calculate-scores`** wrapped in `EdgeRuntime.waitUntil(...)`, dispatching N parallel child invokes of `generate-facet-interpretations`. Each child runs in its own 150s budget; the parent returns immediately. This follows the existing precedent (`calculate-scores` already fires `generate-report` unawaited) and avoids the 60s minimum latency of `pg_cron`. No new tables, no orchestrator function, no Postgres trigger.
+- `allFacetInsights: FacetInterpretation[]` — full per-item interpretation array, default `[]`.
+- `loadingAllFacetInsights: boolean` — default `false`. Flips to `true` only when the batch loop is actively running.
+- `allFacetsExpanded: Set<string>` — separate from `expandedFacets`. Keys use the `response-${itemNumber}` format so they cannot collide with the `elevated-${idx}` / `suppressed-${idx}` keys used by `FacetList`.
+- `setAllFacetsExpanded` — the matching `useState` setter, exported as-is.
 
-Readiness is tracked with a single new column `assessment_results.narrative_status` (`pending | generating | ready | failed`). One row read instead of 12–18-row `IN(...)` probes; the frontend polls this one value.
+## 2. New effect
 
-## Scope of changes
+Single `useEffect` with deps `[assessmentResultId, responsesExpanded]`. Logic in this exact order:
 
-### 1. Database migration
+1. Guard: if no `assessmentResultId`, return.
+2. Set up an `cancelled = false` flag in the closure; the cleanup sets `cancelled = true` so a navigation between assessments aborts both the DB read and the in-flight batch loop.
+3. **DB-first check** (always runs, regardless of `responsesExpanded`):
+   - `select('facet_data').from('facet_interpretations').eq('assessment_result_id', assessmentResultId).eq('section_type', 'facet_insights_all').maybeSingle()`.
+   - If a row exists → set `allFacetInsights` to `data.facet_data as FacetInterpretation[]`, leave `loadingAllFacetInsights` at `false`, return. No batch loop.
+4. If no row AND `responsesExpanded === false` → return. Wait for the user to open the accordion.
+5. If no row AND `responsesExpanded === true` → run the sequential batch loop:
+   - `setLoadingAllFacetInsights(true)`.
+   - Get session / auth header once (same pattern used elsewhere in the file).
+   - Call batch 0 via `supabase.functions.invoke('generate-facet-interpretations', { body: { assessment_result_id, generate_all_facets: true, batch_index: 0 }, headers: authHeaders })`.
+   - Read `total_batches` from the response.
+   - `for (let i = 1; i < total_batches; i++)` await each call strictly sequentially. Bail out (and `setLoadingAllFacetInsights(false)`) on `error` or `cancelled`.
+   - When `done: true` is received (or the loop completes), re-run the same DB read from step 3 to load the materialized row, set `allFacetInsights`, then `setLoadingAllFacetInsights(false)`.
+6. Cleanup: sets `cancelled = true`. The loop checks `cancelled` after each `await`; if true it returns without touching state. This handles both assessment-id changes and unmount mid-loop.
 
-Add to `assessment_results`:
-- `narrative_status text default 'pending'` (values: pending/generating/ready/failed)
-- `narrative_started_at timestamptz`
-- `narrative_completed_at timestamptz`
+Notes:
+- No `Promise.all`, no parallel batches.
+- Re-running batch 0 on a row that already exists is harmless because the backend returns `skipped: true`, but the DB-first check skips that case entirely.
+- The effect does NOT depend on `ptpContextTab` — `facet_insights_all` is one row per assessment, not context-scoped.
 
-No RLS change needed — readers of `assessment_results` already have access.
+## 3. Hook return / context additions
 
-### 2. `supabase/functions/calculate-scores/index.ts`
+Append (do not reorder existing fields) to the return object:
 
-After the `assessment_results` insert (~line 295) and before the `generate-report` fire-and-forget block:
+- `allFacetInsights`
+- `loadingAllFacetInsights`
+- `allFacetsExpanded`
+- `setAllFacetsExpanded`
 
-- Determine which contexts apply for PTP. Rules:
-  - PTP `professional` only → contexts = `['professional']`
-  - PTP `personal` only → contexts = `['personal']`
-  - PTP `both` → contexts = `['professional', 'personal', 'combined']`
-  - Non-PTP instruments → skip narrative fan-out entirely
-- Set `narrative_status = 'generating'`, `narrative_started_at = now()` on the new row.
-- Build the call list: for each context, three child calls — `generate_context_narrative`, `generate_dimension_highlights`, `generate_cross_and_action`. Plus one per-context call to seed `driving_facets_${ctx}` + `facet_insights_${ctx}` (the path used by `fetchFacets` in `PTPNarrativeSections.tsx:357+`). Total = 4 calls × N contexts (4 for single-context, 12 for `both`).
-- Wrap the fan-out in `EdgeRuntime.waitUntil(Promise.allSettled([...fetch(...)]))` so the runtime keeps the background work alive after the parent response is sent. Each `fetch` targets `${SUPABASE_URL}/functions/v1/generate-facet-interpretations` with the service-role key (same pattern as the existing `generate-report` call) and the per-call body.
-- On `Promise.allSettled` resolution, update `assessment_results` with `narrative_status = 'ready'` (or `'failed'` if any rejected) and `narrative_completed_at = now()`. Do this inside the `waitUntil`-wrapped promise so it runs after all children resolve.
+Because `PTPNarrativeContext` derives its value from `ReturnType<typeof usePTPNarrativeData>`, the four fields are picked up automatically by every consumer with no other change.
 
-The parent function still returns the `assessment_result_id` immediately as today.
+## 4. `PTPAssessmentResponsesSection` changes
 
-### 3. Frontend gating in `src/pages/MyResults.tsx`
+Destructure the four new fields from context alongside the existing three.
 
-Around line 1172 (the PTP section render block):
+The outer accordion (Your assessment responses header + chevron) stays exactly as is — same toggle, same styles, same context-tab summary line.
 
-- Add a small hook (or inline `useEffect`) that reads `narrative_status` from `assessment_results` for `effectiveSelected.result.id`, and polls every 3s while status is `pending` or `generating`. Stop polling on `ready` or `failed`.
-- Replace the unconditional `<PTPNarrativeProvider>` mount with a three-way render:
-  - `generating` / `pending` → "Your report is being prepared" card with a progress indicator (no per-section spinners visible).
-  - `failed` → an error card with a "Retry" button that re-invokes `calculate-scores` (or a smaller "regenerate narratives" path — decide during implementation; simplest is a manual retry that re-fires the same fan-out).
-  - `ready` → the existing `<PTPNarrativeProvider>{...sections}</PTPNarrativeProvider>` block exactly as today.
-- Non-PTP instruments are unaffected (their render path stays in the existing `else` branch around line 1250).
+Each response row currently a `<div>` becomes the same two-part shape `FacetList` uses:
 
-### 4. Self-healing left intact
+- A `<button>` wrapping the existing left bar / Q# + facet name / score badge, plus a `ChevronDown`/`ChevronUp` on the far right. `onClick` toggles `allFacetsExpanded` for key `response-${r.itemNumber}`.
+- The question text (`r.itemText`) stays inside the button so the row still reads the same when collapsed.
+- When `allFacetsExpanded.has(\`response-${r.itemNumber}\`)`:
+  - Render an expanded panel with `borderTop: 1px solid var(--border-1)` and `padding: 16`, matching `FacetList`'s expanded block.
+  - If `loadingAllFacetInsights === true` OR no matching interpretation found yet → `<p>Generating insights...</p>` in the same muted style `FacetList` uses.
+  - Otherwise look up `allFacetInsights.find(f => f.name === r.facetName)`. If found, render the **identical** 2-column grid (`grid md:grid-cols-2 gap-4`) with "Impact on self" / "Impact on others" headings, the same ✓ (forest) / ✗ (destructive) bullets, same font sizes/colors. Order: `positive_self` then `negative_self` on the left column; `positive_others` then `negative_others` on the right.
+  - If no interpretation match (lookup miss) → keep showing "Generating insights..." rather than an empty panel; this is the safe state when the user opens a row before the loop finishes that facet.
 
-Do **not** touch `fetchNarrativeSections` or `fetchFacets` in `PTPNarrativeSections.tsx`. They keep their on-demand invoke fallback so that:
-- Old `assessment_results` rows with `narrative_status = NULL` still render correctly (treat NULL as `ready` in the gate to preserve back-compat).
-- If a child invoke failed at completion time but the user opens the report later, the per-section path will fill the gap on first mount.
+The `borderBottom` rule on the row container is preserved (last row has none).
 
-## Technical details
+## 5. Risks / edge cases
 
-```text
-Completion flow (PTP both):
+- **Stale loop after navigation**: handled by the `cancelled` flag in cleanup. The loop must check `cancelled` after every `await` (DB read, each batch invoke) before calling `setState`.
+- **Name mismatch**: `allFacetInsights.find(f => f.name === r.facetName)` relies on the names matching exactly. `r.facetName` comes from `PTP_ITEM_FACET_NAMES` lookup. Per the constraint, do not modify `fetchResponses`. If a future backend rename diverges from `PTP_ITEM_FACET_NAMES`, the row will permanently show "Generating insights..." for that facet — flag this as a brittleness, not a bug to fix now.
+- **Key collision**: using `response-${itemNumber}` keeps `allFacetsExpanded` cleanly separate from the existing `expandedFacets` (`elevated-${idx}` / `suppressed-${idx}`). No shared state, no cross-toggle.
+- **Re-open without DB read**: if the user collapses the outer accordion and reopens it, `responsesExpanded` flips false→true and the effect re-runs. The DB-first check will now find the row and short-circuit instantly — no second batch loop.
+- **Race between DB read and batch loop**: the effect always runs the DB read first, then conditionally the loop, both inside the same async closure guarded by `cancelled`. No double-fetch.
+- **Backend 409 (out-of-order)**: cannot happen because batches are awaited strictly in order, but if it ever does the loop bails (sets loading false), the row stays collapsed-with-spinner; user can collapse and reopen to retry.
+- **Pre-generation interaction**: if `facet_insights_all` is pre-generated at assessment completion (or by a future hook into `calculate-scores`), the DB-first check loads it on mount, the section is instant, no spinner ever shows. This is the desired behavior and requires no extra wiring here.
+- **Coverage gap**: `allFacetInsights` is one flat list of 89; `assessmentResponses` may include items the backend did not interpret (unlikely but possible if item set drifts). Affected rows show "Generating insights..." indefinitely — same flag as the name-mismatch case.
+- **No regression to other sections**: `expandedFacets`, `facetInterpretations`, `loadingInterpretations`, `responsesExpanded`, and the existing return shape are all unchanged. `FacetList`, `PTPFacetInsightsElevatedSection`, `PTPFacetInsightsSuppressedSection`, and the narrative-status gate in `MyResults.tsx` are untouched.
 
-AssessmentFlow.submit()
-  └─ invoke calculate-scores         [awaited, ~1–2s]
-       ├─ insert assessment_results (narrative_status='generating')
-       ├─ EdgeRuntime.waitUntil(
-       │     Promise.allSettled([
-       │       fetch generate-facet-interpretations × 12   (parallel)
-       │     ]).then(update narrative_status='ready'|'failed')
-       │  )
-       └─ return { assessment_result_id }
-  └─ navigate('/my-results')
+## What this plan does NOT do
 
-MyResults mount:
-  └─ read narrative_status
-       ├─ pending|generating → "Preparing your report" + poll every 3s
-       ├─ ready              → render PTPNarrativeProvider as today
-       └─ failed             → error card with Retry
-```
-
-Why parallel and not sequential: each child invoke is its own HTTP request with its own 150s timeout. Anthropic-side concurrency was the cause of the original 500/503 storm only because the *frontend* was firing the same hook 6× per page open (already fixed). 12 server-side parallel calls per assessment completion is bounded and infrequent.
-
-Why `EdgeRuntime.waitUntil` and not bare unawaited `fetch`: the existing `generate-report` call uses bare unawaited `fetch` and works empirically, but it's undocumented behavior. `waitUntil` is the supported API for "keep this promise alive after the response is sent" and prevents the runtime from cancelling the fan-out under load. Falling back to bare `fetch(...).catch(...)` is acceptable if `EdgeRuntime` is undefined in the runtime version (feature-detect with `typeof EdgeRuntime !== 'undefined'`).
-
-Why a status column and not row-counting `facet_interpretations`: one read vs. an `IN(...)` over up to 18 rows; clearer semantics for `failed`; survives partial-cache states where some `_${ctx}` rows exist but generation is still in flight.
-
-Back-compat: treating `narrative_status IS NULL` as `ready` means the gate is invisible for any assessment completed before this change ships.
-
-## Out of scope
-
-- Refactoring `generate-facet-interpretations` itself (no changes to v38).
-- Removing the on-demand fetch path in `PTPNarrativeSections.tsx` (kept as self-heal).
-- NAI/AIRSA/HSS narrative pipelines (not affected).
-- `pg_cron` / `pg_net` routes (rejected: 60s floor and trigger complexity not justified).
-
-## Verification
-
-After implementation:
-1. Submit a PTP `both` assessment. Confirm `narrative_status` flips `generating → ready` within ~30–60s without the user touching the report page.
-2. Open `/my-results` immediately after submit on a slow assessment — confirm the "preparing" card renders and auto-replaces with the report when polling sees `ready`.
-3. Open an old PTP report (pre-migration row with `narrative_status = NULL`) — confirm it renders normally with the existing on-demand path.
-4. Force a child-invoke failure (temporarily break one body) — confirm `failed` state renders the retry card and the on-demand fetch in `fetchNarrativeSections` still self-heals when the user clicks into the report.
+- No edits to `generate-facet-interpretations`, `calculate-scores`, or `retry-ptp-narratives`.
+- No new DB columns, no migrations.
+- No changes to PDF assembly (`assemblePtpPdfData`) — out of scope; can be a follow-up if you want these in exports.
+- No pre-generation kickoff added to `calculate-scores`. The first user to open the accordion still pays the latency; subsequent opens are instant. Add pre-gen later if desired.
