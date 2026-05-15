@@ -338,6 +338,20 @@ Deno.serve(async (req: Request) => {
     // so by the time the user lands on /my-results the narratives are already cached.
     // Each child invoke runs in its own 150s budget. Status is updated when all settle.
     if (isPtpInstrument) {
+      // V50: Fire generate-all-facets in parallel with narrative fan-out — PTP only
+      try {
+        fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/generate-all-facets`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-internal-secret": Deno.env.get("INTERNAL_FUNCTION_SECRET") ?? "",
+          },
+          body: JSON.stringify({ assessment_result_id: result!.id }),
+        }).catch((e) => console.error("[calculate-scores] generate-all-facets fire failed:", e));
+      } catch (e) {
+        console.error("[calculate-scores] generate-all-facets fire error:", e);
+      }
+
       const ctxType = (assessment as { context_type?: string | null }).context_type ?? null;
       // Determine which contexts to pre-generate.
       // PTP both = professional + personal + combined; single context = that context only.
