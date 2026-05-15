@@ -31,6 +31,7 @@ interface NavItem {
   icon: React.ElementType;
   disabled?: boolean;
   badge?: string;
+  sectionHeader?: string;
 }
 
 const individualNav: NavItem[] = [
