@@ -69,6 +69,7 @@ export function useAccountRole(): AccountRoleInfo {
       isCorp: false,
       isIndividual: false,
       isCoach: false,
+      isPractitionerCoach: false,
       isSuperAdmin: false,
       isBypassAdmin: false,
       canBypassAssessmentPaywall: false,
