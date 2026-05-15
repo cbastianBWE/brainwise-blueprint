@@ -80,7 +80,7 @@ export default function ResourceGridTab({ tab, emptyStateText }: ResourceGridTab
 
   const handleFileDownload = async (resource: Resource) => {
     const { data, error } = await supabase.functions.invoke("get-resource-signed-url", {
-      body: { p_resource_id: resource.resource_id },
+      body: { p_resource_id: resource.resource_id, as_attachment: true },
     });
     if (error || !data?.signed_url) {
       toast({
