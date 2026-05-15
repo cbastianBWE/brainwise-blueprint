@@ -59,7 +59,7 @@ const coachNav: NavItem[] = [
   { title: "Orders & Invoices", url: "/coach/invoices", icon: Receipt },
   { title: "AI Chat", url: "/ai-chat", icon: MessageSquare },
   { title: "Chat History", url: "/ai-chat/history", icon: History },
-  { title: "Resources", url: "/coach/resources", icon: BookOpen, disabled: true, badge: "Coming Soon" },
+  { title: "Resources", url: "/coach/resources", icon: BookOpen },
   { title: "Certification", url: "/coach/certification", icon: Award, disabled: true, badge: "Coming Soon" },
   { title: "My Profile", url: "/coach/profile", icon: UserCircle, disabled: true, badge: "Coming Soon" },
 ];
