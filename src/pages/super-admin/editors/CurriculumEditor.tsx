@@ -185,6 +185,22 @@ function CurriculumEditor({
   const [archiveReason, setArchiveReason] = useState("");
   const [archiving, setArchiving] = useState(false);
 
+  const [detachState, setDetachState] = useState<{
+    open: boolean;
+    moduleId: string | null;
+    moduleName: string | null;
+    reason: string;
+    loading: boolean;
+  }>({ open: false, moduleId: null, moduleName: null, reason: "", loading: false });
+
+  const [duplicateState, setDuplicateState] = useState<{
+    open: boolean;
+    newSlug: string;
+    newName: string;
+    reason: string;
+    loading: boolean;
+  }>({ open: false, newSlug: "", newName: "", reason: "", loading: false });
+
   const [addModuleOpen, setAddModuleOpen] = useState(false);
   const [pullModSearch, setPullModSearch] = useState("");
   const [pullModAttachingId, setPullModAttachingId] = useState<string | null>(null);
