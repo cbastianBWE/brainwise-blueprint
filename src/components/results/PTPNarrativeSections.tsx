@@ -1070,15 +1070,18 @@ function FacetList({
               />
               <div className="flex-1 min-w-0">
                 <div style={{ fontSize: 14, fontWeight: 500, color: "var(--fg-1)" }}>{facetName}</div>
-                {facet.item_text && (
-                  <div style={{ fontSize: 12, color: "var(--fg-3)", marginTop: 2, lineHeight: 1.4 }}>
-                    {isExpanded
-                      ? facet.item_text
-                      : facet.item_text.length > 80
-                        ? facet.item_text.slice(0, 80) + "…"
-                        : facet.item_text}
-                  </div>
-                )}
+                {(() => {
+                  const questionText = data.assessmentResponses.find(r => r.itemNumber === facet.item_number)?.itemText ?? "";
+                  return questionText ? (
+                    <div style={{ fontSize: 12, color: "var(--fg-3)", marginTop: 2, lineHeight: 1.4 }}>
+                      {isExpanded
+                        ? questionText
+                        : questionText.length > 80
+                          ? questionText.slice(0, 80) + "…"
+                          : questionText}
+                    </div>
+                  ) : null;
+                })()}
               </div>
               <span
                 style={{
