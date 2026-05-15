@@ -10,6 +10,7 @@ import {
   Wrench,
   LayoutTemplate,
   Lock,
+  ExternalLink,
 } from "lucide-react";
 import type {
   TileVariant,
