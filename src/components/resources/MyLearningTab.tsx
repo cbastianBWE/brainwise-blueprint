@@ -417,9 +417,9 @@ export default function MyLearningTab() {
             onEnroll={handleEnrollClick}
           />
           <Section
-            title="Standalone Curricula"
+            title="Curricula"
             items={visibleSections.standaloneCurricula}
-            emptyText="No standalone curricula available right now."
+            emptyText="No curricula available for direct enrollment right now. Browse our certification paths above to find more learning content."
             entityType="curriculum"
             view={view}
             thumbnailMap={thumbnailMap}
@@ -427,9 +427,9 @@ export default function MyLearningTab() {
             onEnroll={handleEnrollClick}
           />
           <Section
-            title="Standalone Modules"
+            title="Modules"
             items={visibleSections.standaloneModules}
-            emptyText="No standalone modules available right now."
+            emptyText="No modules available for direct enrollment right now. Browse our certification paths or curricula above to find more learning content."
             entityType="module"
             view={view}
             thumbnailMap={thumbnailMap}
