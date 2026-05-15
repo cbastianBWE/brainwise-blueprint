@@ -421,34 +421,6 @@ export default function ResourceEditor({
           )}
         </div>
 
-        {/* Content file */}
-        {contentType !== "" && (
-          <div className="space-y-4">
-            <h3 className="text-sm font-semibold text-foreground">Content file</h3>
-            <p className="text-xs text-muted-foreground">
-              {contentType === "article"
-                ? `Optional. If you don't upload a file, provide a URL in "URL or content" below. Required to publish (one or the other). Accepts PDF, DOCX, XLSX, or PPTX.`
-                : contentType === "video"
-                  ? `Optional. If you don't upload a file, provide a URL in "URL or content" below. Required to publish (one or the other). Accepts MP4, WebM, or MOV up to 5 GB.`
-                  : `The ${contentType} file users will download. Private — served via short-lived signed URLs. Required to publish.`}
-            </p>
-            {mode === "create" ? (
-              <div className="rounded-md border border-dashed p-4 text-sm italic text-muted-foreground">
-                Save the resource first to upload a content file.
-              </div>
-            ) : (
-              <FileUploadField
-                assetKind={contentType === "video" ? "video" : "document"}
-                resourceId={initial?.id ?? null}
-                refField="content"
-                value={contentAssetId}
-                onChange={setContentAssetId}
-                disabled={saving}
-              />
-            )}
-          </div>
-        )}
-
         {/* Identity */}
         <div className="space-y-4">
           <h3 className="text-sm font-semibold text-foreground">Identity</h3>
@@ -473,65 +445,12 @@ export default function ResourceEditor({
               disabled={saving}
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="r-url">URL or content</Label>
-            <Textarea
-              id="r-url"
-              value={urlOrContent}
-              onChange={(e) => setUrlOrContent(e.target.value)}
-              rows={3}
-              placeholder="External link or inline body content."
-              disabled={saving}
-            />
-            <p className="text-xs text-muted-foreground">
-              {contentType === "article" || contentType === "video"
-                ? "Provide either a URL or upload a file above — not both."
-                : contentType === "guide" || contentType === "worksheet" || contentType === "template"
-                ? "Not used for this content type. Upload a file above instead."
-                : "External link or inline body content."}
-            </p>
-          </div>
+        </div>
 
-          {(contentType === "article" || contentType === "video") &&
-            urlOrContent.trim().length > 0 &&
-            contentAssetId == null && (
-              <div className="space-y-2">
-                <Label>How should this URL behave?</Label>
-                <RadioGroup
-                  value={urlKind}
-                  onValueChange={(v) => setUrlKind(v as "external_link" | "inline_html")}
-                  disabled={saving}
-                  className="space-y-2"
-                >
-                  <div className="flex items-start gap-2">
-                    <RadioGroupItem value="external_link" id="urlkind-external" className="mt-1" />
-                    <div className="space-y-0.5">
-                      <Label htmlFor="urlkind-external" className="font-medium">
-                        External link
-                      </Label>
-                      <p className="text-xs text-muted-foreground">
-                        Clicking the tile opens this URL in a new browser tab. Best for linking to outside articles or sites the user should view at the source.
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <RadioGroupItem value="inline_html" id="urlkind-inline" className="mt-1" />
-                    <div className="space-y-0.5">
-                      <Label htmlFor="urlkind-inline" className="font-medium">
-                        Inline content
-                      </Label>
-                      <p className="text-xs text-muted-foreground">
-                        {contentType === "video"
-                          ? "Embeds the video inside our app (works for YouTube and Vimeo)."
-                          : "Renders the HTML content directly inside our reader page. Use when the value above is an HTML body, not an external URL."}
-                      </p>
-                    </div>
-                  </div>
-                </RadioGroup>
-              </div>
-            )}
+        {/* Content type */}
+        <div className="space-y-4">
+          <h3 className="text-sm font-semibold text-foreground">Content type</h3>
           <div className="space-y-2">
-            <Label htmlFor="r-ctype">Content type</Label>
             <Select value={contentType} onValueChange={setContentType} disabled={saving}>
               <SelectTrigger id="r-ctype">
                 <SelectValue placeholder="Choose a content type" />
@@ -545,6 +464,137 @@ export default function ResourceEditor({
           </div>
         </div>
 
+        {/* Content */}
+        {contentType !== "" && (
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold text-foreground">Content</h3>
+
+            {/* Mode selector — article/video only */}
+            {(contentType === "article" || contentType === "video") && (
+              <div className="space-y-2">
+                <Label>How will users access this {contentType}?</Label>
+                <RadioGroup
+                  value={contentMode}
+                  onValueChange={(v) => requestModeSwitch(v as "url" | "file")}
+                  disabled={saving}
+                  className="space-y-2"
+                >
+                  <div className="flex items-start gap-2">
+                    <RadioGroupItem value="url" id="contentmode-url" className="mt-1" />
+                    <div className="space-y-0.5">
+                      <Label htmlFor="contentmode-url" className="font-medium">
+                        Link to a URL
+                      </Label>
+                      <p className="text-xs text-muted-foreground">
+                        {contentType === "video"
+                          ? "Embed a YouTube/Vimeo video or link to an external video URL."
+                          : "Embed HTML content directly or link to an external article."}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <RadioGroupItem value="file" id="contentmode-file" className="mt-1" />
+                    <div className="space-y-0.5">
+                      <Label htmlFor="contentmode-file" className="font-medium">
+                        Upload a file
+                      </Label>
+                      <p className="text-xs text-muted-foreground">
+                        {contentType === "video"
+                          ? "Upload an MP4, WebM, or MOV file (up to 5 GB)."
+                          : "Upload a PDF, DOCX, XLSX, or PPTX file for users to download."}
+                      </p>
+                    </div>
+                  </div>
+                </RadioGroup>
+              </div>
+            )}
+
+            {/* URL mode input */}
+            {(contentType === "article" || contentType === "video") && contentMode === "url" && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="r-url">URL or content</Label>
+                  <Textarea
+                    id="r-url"
+                    value={urlOrContent}
+                    onChange={(e) => setUrlOrContent(e.target.value)}
+                    rows={3}
+                    placeholder={
+                      contentType === "video"
+                        ? "Paste a YouTube, Vimeo, or other video URL."
+                        : "Paste an external article URL, or write HTML content to render inline."
+                    }
+                    disabled={saving}
+                  />
+                </div>
+                {urlOrContent.trim().length > 0 && (
+                  <div className="space-y-2">
+                    <Label>How should this URL behave?</Label>
+                    <RadioGroup
+                      value={urlKind}
+                      onValueChange={(v) => setUrlKind(v as "external_link" | "inline_html")}
+                      disabled={saving}
+                      className="space-y-2"
+                    >
+                      <div className="flex items-start gap-2">
+                        <RadioGroupItem value="external_link" id="urlkind-external" className="mt-1" />
+                        <div className="space-y-0.5">
+                          <Label htmlFor="urlkind-external" className="font-medium">
+                            External link
+                          </Label>
+                          <p className="text-xs text-muted-foreground">
+                            Clicking the tile opens this URL in a new browser tab. Best for outside articles or sites the user should view at the source.
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <RadioGroupItem value="inline_html" id="urlkind-inline" className="mt-1" />
+                        <div className="space-y-0.5">
+                          <Label htmlFor="urlkind-inline" className="font-medium">
+                            Inline content
+                          </Label>
+                          <p className="text-xs text-muted-foreground">
+                            {contentType === "video"
+                              ? "Embeds the video inside our app (works for YouTube and Vimeo)."
+                              : "Renders the HTML content directly inside our reader page. Use when the value above is an HTML body, not an external URL."}
+                          </p>
+                        </div>
+                      </div>
+                    </RadioGroup>
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* File mode uploader (article/video) OR forced file uploader (guide/worksheet/template) */}
+            {(((contentType === "article" || contentType === "video") && contentMode === "file") ||
+              contentType === "guide" || contentType === "worksheet" || contentType === "template") && (
+              <div className="space-y-2">
+                <p className="text-xs text-muted-foreground">
+                  {contentType === "video"
+                    ? "MP4, WebM, or MOV up to 5 GB. Required to publish."
+                    : contentType === "article"
+                      ? "PDF, DOCX, XLSX, or PPTX. Required to publish."
+                      : `The ${contentType} file users will download. Private — served via short-lived signed URLs. Required to publish.`}
+                </p>
+                {mode === "create" ? (
+                  <div className="rounded-md border border-dashed p-4 text-sm italic text-muted-foreground">
+                    Save the resource first to upload a content file.
+                  </div>
+                ) : (
+                  <FileUploadField
+                    assetKind={contentType === "video" ? "video" : "document"}
+                    resourceId={initial?.id ?? null}
+                    refField="content"
+                    value={contentAssetId}
+                    onChange={setContentAssetId}
+                    disabled={saving}
+                  />
+                )}
+              </div>
+            )}
+          </div>
+        )}
         {/* Tab assignment */}
         <div className="space-y-4">
           <h3 className="text-sm font-semibold text-foreground">Tab assignment</h3>
