@@ -897,6 +897,28 @@ export default function ResourceEditor({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <AlertDialog
+        open={modeSwitchTarget !== null}
+        onOpenChange={(open) => { if (!open) setModeSwitchTarget(null); }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Switch content mode?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {modeSwitchTarget === "file"
+                ? "Switching to file upload will clear the URL you've entered. Continue?"
+                : "Switching to URL will remove the uploaded file from this resource. The file remains in your asset library. Continue?"}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => modeSwitchTarget && applyModeSwitch(modeSwitchTarget)}>
+              Switch
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }
