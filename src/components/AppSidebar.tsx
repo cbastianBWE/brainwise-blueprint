@@ -91,6 +91,7 @@ const superAdminNav: NavItem[] = [
   { title: "Content Authoring", url: "/super-admin/content-authoring", icon: Library },
   { title: "Resources", url: "/resources", icon: BookOpen },
   { title: "Resource Authoring", url: "/super-admin/resources", icon: Library },
+  { title: "Comp Coupons", url: "/super-admin/coupons", icon: Ticket },
   { title: "AI Chat", url: "/ai-chat", icon: MessageSquare },
   { title: "Chat History", url: "/ai-chat/history", icon: History },
   { title: "AI Research", url: "/super-admin/ai-research", icon: FlaskConical, disabled: true, badge: "Phase 2" },
