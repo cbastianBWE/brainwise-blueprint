@@ -105,6 +105,8 @@ export default function ResourceGridTab({ tab, emptyStateText }: ResourceGridTab
     logAccess(resource.resource_id);
     if (resource.content_asset_id != null) {
       void handleFileDownload(resource);
+    } else if (resource.url_kind === "external_link" && resource.url_or_content) {
+      window.open(resource.url_or_content, "_blank", "noopener,noreferrer");
     } else {
       navigate(`/resources/${resource.resource_id}`);
     }
@@ -159,6 +161,11 @@ export default function ResourceGridTab({ tab, emptyStateText }: ResourceGridTab
                     }
                     contentType={r.content_type}
                     locked={!r.is_accessible}
+                    externalLink={
+                      r.url_kind === "external_link" &&
+                      r.content_asset_id == null &&
+                      !!r.url_or_content
+                    }
                     onClick={() => handleResourceClick(r)}
                   />
                 ))}

@@ -240,17 +240,40 @@ export default function ResourceReader() {
       <p className="italic text-muted-foreground">This resource has no content yet.</p>
     );
   } else if (ct === "article") {
-    body = hasUrl ? (
-      <article
-        className="text-base leading-relaxed [&_a]:text-primary [&_a]:underline [&_h2]:mt-6 [&_h2]:text-xl [&_h2]:font-semibold [&_h3]:mt-4 [&_h3]:text-lg [&_h3]:font-semibold [&_p]:my-3 [&_ul]:my-3 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:my-3 [&_ol]:list-decimal [&_ol]:pl-6"
-        dangerouslySetInnerHTML={{ __html: resource.url_or_content ?? "" }}
-      />
-    ) : (
-      <FileDownloadCard
-        resourceId={resource.resource_id}
-        message="This article is provided as a downloadable file."
-      />
-    );
+    if (resource.url_kind === "external_link" && hasUrl) {
+      body = (
+        <Card>
+          <CardContent className="space-y-4 p-6 text-center">
+            <p className="text-sm text-muted-foreground">
+              This article is hosted externally.
+            </p>
+            <Button
+              onClick={() => {
+                if (resource.url_or_content) {
+                  window.open(resource.url_or_content, "_blank", "noopener,noreferrer");
+                }
+              }}
+            >
+              Open article in new tab
+            </Button>
+          </CardContent>
+        </Card>
+      );
+    } else if (hasUrl) {
+      body = (
+        <article
+          className="text-base leading-relaxed [&_a]:text-primary [&_a]:underline [&_h2]:mt-6 [&_h2]:text-xl [&_h2]:font-semibold [&_h3]:mt-4 [&_h3]:text-lg [&_h3]:font-semibold [&_p]:my-3 [&_ul]:my-3 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:my-3 [&_ol]:list-decimal [&_ol]:pl-6"
+          dangerouslySetInnerHTML={{ __html: resource.url_or_content ?? "" }}
+        />
+      );
+    } else {
+      body = (
+        <FileDownloadCard
+          resourceId={resource.resource_id}
+          message="This article is provided as a downloadable file."
+        />
+      );
+    }
   } else if (ct === "video") {
     body = hasFile ? (
       <VideoPlayer resourceId={resource.resource_id} />

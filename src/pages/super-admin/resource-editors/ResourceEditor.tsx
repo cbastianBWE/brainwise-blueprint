@@ -17,6 +17,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Loader2, Save, Archive, BookOpen, Plus, X } from "lucide-react";
 import { FileUploadField } from "@/components/super-admin/FileUploadField";
 import {
@@ -78,6 +79,9 @@ export default function ResourceEditor({
   const [thumbnailAssetId, setThumbnailAssetId] = useState<string | null>(initial?.thumbnail_asset_id ?? null);
   const [contentAssetId, setContentAssetId] = useState<string | null>(initial?.content_asset_id ?? null);
   const [reason, setReason] = useState<string>("");
+  const [urlKind, setUrlKind] = useState<"external_link" | "inline_html" | "">(
+    initial?.url_kind ?? ""
+  );
   const [saving, setSaving] = useState(false);
 
   const [archiveDialogOpen, setArchiveDialogOpen] = useState(false);
@@ -126,6 +130,7 @@ export default function ResourceEditor({
         isPublished ||
         thumbnailAssetId !== null ||
         contentAssetId !== null ||
+        urlKind !== "" ||
         reason.trim().length > 0
       );
     }
@@ -139,11 +144,12 @@ export default function ResourceEditor({
       isPublished !== !!initial.is_published ||
       thumbnailAssetId !== (initial.thumbnail_asset_id ?? null) ||
       (contentAssetId ?? null) !== (initial.content_asset_id ?? null) ||
+      urlKind !== (initial.url_kind ?? "") ||
       reason.trim().length > 0
     );
   }, [
     mode, initial, title, summary, urlOrContent, contentType,
-    resourceTabId, isPublished, thumbnailAssetId, contentAssetId, reason,
+    resourceTabId, isPublished, thumbnailAssetId, contentAssetId, urlKind, reason,
   ]);
 
   const reasonOk = reason.trim().length >= 10;
@@ -177,6 +183,12 @@ export default function ResourceEditor({
       const m = msg.match(/provide_url_or_file_not_both_to_publish_(\w+)/);
       const type = m?.[1] ?? "resource";
       return `For ${type} resources, provide either a URL OR a file — not both.`;
+    }
+    if (msg.includes("url_kind_required_to_publish_")) {
+      return "Choose whether this URL should open externally or render inline before publishing.";
+    }
+    if (msg.includes("invalid_url_kind")) {
+      return "Invalid URL behavior selection. Please re-select.";
     }
     if (code === "42501") return "You do not have permission to perform this action.";
     if (code === "23505") return "A resource conflict occurred.";
@@ -221,6 +233,19 @@ export default function ResourceEditor({
       }
     }
 
+    if (isPublished && (contentType === "article" || contentType === "video")) {
+      const hasUrl = urlOrContent.trim().length > 0;
+      const hasFile = contentAssetId != null;
+      if (hasUrl && !hasFile && !urlKind) {
+        toast({
+          title: "URL behavior required",
+          description: "Choose whether this URL should open externally or render inline.",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
     setSaving(true);
 
     const payload: any = {
@@ -233,6 +258,7 @@ export default function ResourceEditor({
       p_is_published: isPublished,
       p_thumbnail_asset_id: thumbnailAssetId,
       p_content_asset_id: contentAssetId,
+      p_url_kind: urlKind === "" ? null : urlKind,
       p_reason: reason.trim(),
     };
 
@@ -431,6 +457,45 @@ export default function ResourceEditor({
                 : "External link or inline body content."}
             </p>
           </div>
+
+          {(contentType === "article" || contentType === "video") &&
+            urlOrContent.trim().length > 0 &&
+            contentAssetId == null && (
+              <div className="space-y-2">
+                <Label>How should this URL behave?</Label>
+                <RadioGroup
+                  value={urlKind}
+                  onValueChange={(v) => setUrlKind(v as "external_link" | "inline_html")}
+                  disabled={saving}
+                  className="space-y-2"
+                >
+                  <div className="flex items-start gap-2">
+                    <RadioGroupItem value="external_link" id="urlkind-external" className="mt-1" />
+                    <div className="space-y-0.5">
+                      <Label htmlFor="urlkind-external" className="font-medium">
+                        External link
+                      </Label>
+                      <p className="text-xs text-muted-foreground">
+                        Clicking the tile opens this URL in a new browser tab. Best for linking to outside articles or sites the user should view at the source.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <RadioGroupItem value="inline_html" id="urlkind-inline" className="mt-1" />
+                    <div className="space-y-0.5">
+                      <Label htmlFor="urlkind-inline" className="font-medium">
+                        Inline content
+                      </Label>
+                      <p className="text-xs text-muted-foreground">
+                        {contentType === "video"
+                          ? "Embeds the video inside our app (works for YouTube and Vimeo)."
+                          : "Renders the HTML content directly inside our reader page. Use when the value above is an HTML body, not an external URL."}
+                      </p>
+                    </div>
+                  </div>
+                </RadioGroup>
+              </div>
+            )}
           <div className="space-y-2">
             <Label htmlFor="r-ctype">Content type</Label>
             <Select value={contentType} onValueChange={setContentType} disabled={saving}>

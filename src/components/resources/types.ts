@@ -5,11 +5,14 @@ export type ResourceContentType =
   | "worksheet"
   | "template";
 
+export type ResourceUrlKind = "external_link" | "inline_html";
+
 export interface Resource {
   resource_id: string;
   title: string;
   summary: string | null;
   url_or_content: string | null;
+  url_kind: ResourceUrlKind | null;
   content_type: ResourceContentType;
   thumbnail_asset_id: string | null;
   content_asset_id: string | null;
