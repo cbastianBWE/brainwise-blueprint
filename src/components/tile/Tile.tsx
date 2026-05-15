@@ -85,7 +85,7 @@ export function Tile(props: TileProps) {
       className={cn(
         "group flex flex-col overflow-hidden rounded-lg border bg-card text-card-foreground shadow-sm transition-shadow",
         interactive && "cursor-pointer hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-        detailPageMode && isCurrentLocation && "border-l-[3px] border-l-[var(--bw-orange)]",
+        isCurrentLocation && "border-l-[3px] border-l-[var(--bw-orange)]",
       )}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
