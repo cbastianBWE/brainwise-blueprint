@@ -328,8 +328,9 @@ function RequiredOptionalChip({ state }: { state: "required" | "optional" }) {
 function hoverCtaLabelFor(
   variant: TileVariant,
   status: CompletionStatus | undefined,
+  externalLink: boolean,
 ): string {
-  if (variant === "resource") return "Open";
+  if (variant === "resource") return externalLink ? "Open in new tab" : "Open";
   if (status === "completed") return "Review";
   if (status === "in_progress") return "Resume";
   return "Start";
