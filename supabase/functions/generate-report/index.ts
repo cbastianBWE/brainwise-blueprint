@@ -67,6 +67,29 @@ Deno.serve(async (req: Request) => {
     );
   }
 
+  // Rate limit: skip for internal calls (retry-ptp-narratives, server orchestration).
+  // For user-initiated calls, check-ai-usage gates frequency against the same monthly
+  // quota pool as chat_message, with usage_type='report_generation' for analytics.
+  if (!isInternal) {
+    const authHeader = req.headers.get("Authorization")!;
+    const usageRes = await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/check-ai-usage`, {
+      method: "POST",
+      headers: {
+        Authorization: authHeader,
+        "Content-Type": "application/json",
+        apikey: Deno.env.get("SUPABASE_ANON_KEY")!,
+      },
+      body: JSON.stringify({ usage_type: "report_generation" }),
+    });
+    const usage = await usageRes.json();
+    if (!usage.allowed) {
+      return new Response(
+        JSON.stringify({ error: usage.message || "Rate limit reached", limit_reached: true }),
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+  }
+
   try {
     // ── 1. Fetch assessment_results ──
     const { data: result, error: resultErr } = await admin
