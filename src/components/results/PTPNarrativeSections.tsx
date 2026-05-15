@@ -203,6 +203,7 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
   const {
     assessmentResultId,
     assessmentId,
+    additionalAssessmentId,
     dimensionScores,
     ptpContextTab,
     otherAssessments = [],
