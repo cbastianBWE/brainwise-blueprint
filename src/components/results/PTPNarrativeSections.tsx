@@ -578,6 +578,7 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
             headers: authHeaders,
           });
           if (cancelled) return;
+          console.log('[all-facets-debug] batch 0 result:', { error: first.error, data: first.data, assessmentResultId });
           if (!first.error) {
             totalBatches = (first.data as { total_batches?: number } | null)?.total_batches ?? 1;
             break;
