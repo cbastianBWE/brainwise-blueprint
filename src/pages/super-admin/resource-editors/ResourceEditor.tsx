@@ -186,17 +186,39 @@ export default function ResourceEditor({
   const handleSave = async () => {
     if (!canSave) return;
 
-    if (
-      isPublished &&
-      (contentType === "worksheet" || contentType === "template") &&
-      contentAssetId == null
-    ) {
-      toast({
-        title: "Content file required",
-        description: `A content file is required before publishing a ${contentType}.`,
-        variant: "destructive",
-      });
-      return;
+    if (isPublished) {
+      const hasUrl = urlOrContent.trim().length > 0;
+      const hasFile = contentAssetId != null;
+
+      if (contentType === "guide" || contentType === "worksheet" || contentType === "template") {
+        if (!hasFile) {
+          toast({
+            title: "Content file required",
+            description: `A content file is required before publishing a ${contentType}.`,
+            variant: "destructive",
+          });
+          return;
+        }
+      }
+
+      if (contentType === "article" || contentType === "video") {
+        if (!hasUrl && !hasFile) {
+          toast({
+            title: "Content required",
+            description: `Provide either a URL or a file before publishing this ${contentType}.`,
+            variant: "destructive",
+          });
+          return;
+        }
+        if (hasUrl && hasFile) {
+          toast({
+            title: "Provide one, not both",
+            description: `For ${contentType} resources, provide either a URL OR a file — not both.`,
+            variant: "destructive",
+          });
+          return;
+        }
+      }
     }
 
     setSaving(true);
