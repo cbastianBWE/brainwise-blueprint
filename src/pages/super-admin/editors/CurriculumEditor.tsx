@@ -31,9 +31,17 @@ import { FileUploadField } from "@/components/super-admin/FileUploadField";
 
 function AttachedModulesSection({
   curriculumId,
+  curriculumName: _curriculumName,
   onAddClick,
   onSelectModule,
-}: { curriculumId: string; onAddClick: () => void; onSelectModule: (moduleId: string) => void }) {
+  onDetach,
+}: {
+  curriculumId: string;
+  curriculumName: string;
+  onAddClick: () => void;
+  onSelectModule: (moduleId: string) => void;
+  onDetach: (moduleId: string, moduleName: string) => void;
+}) {
   const { data, isLoading } = useQuery({
     queryKey: ["curriculum-attached-modules", curriculumId],
     queryFn: async () => {
