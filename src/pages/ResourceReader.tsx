@@ -117,7 +117,7 @@ function FileDownloadCard({
   const onClick = async () => {
     setDownloading(true);
     const { data, error } = await supabase.functions.invoke("get-resource-signed-url", {
-      body: { p_resource_id: resourceId },
+      body: { p_resource_id: resourceId, as_attachment: true },
     });
     setDownloading(false);
     if (error || !data?.signed_url) {
