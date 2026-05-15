@@ -545,6 +545,11 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
     return selected;
   }, [selected, hasPtpTabs, ptpContextTab, ptpTabOverrideId, ptpProfessionalResults, ptpPersonalResults]);
 
+  // Poll narrative readiness for the selected PTP assessment_results row.
+  // Hook is unconditional; for non-PTP / undefined IDs it stays at 'ready'.
+  const { status: ptpNarrativeStatus, refetch: refetchPtpNarrativeStatus } =
+    usePtpNarrativeStatus(effectiveSelected?.isPTP ? effectiveSelected.result.id : undefined);
+
   // Effective dimension scores
   const effectiveDimensionScores = useMemo(() => {
     if (isBothAssessment && bothSplitScores) {
