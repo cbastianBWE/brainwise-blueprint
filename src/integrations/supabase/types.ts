@@ -8381,6 +8381,23 @@ export type Database = {
         }
         Returns: Json
       }
+      _duplicate_curriculum_full: {
+        Args: {
+          p_caller_id: string
+          p_new_name: string
+          p_new_slug: string
+          p_source_curriculum_id: string
+        }
+        Returns: string
+      }
+      _duplicate_module_children: {
+        Args: {
+          p_caller_id: string
+          p_source_module_id: string
+          p_target_module_id: string
+        }
+        Returns: undefined
+      }
       _insert_comp_coupon_row: {
         Args: {
           p_applicable_account_types: string[]
@@ -8891,8 +8908,47 @@ export type Database = {
         Args: { p_dept_id: string; p_new_name: string }
         Returns: undefined
       }
+      detach_curriculum_from_certification_path: {
+        Args: {
+          p_certification_path_id: string
+          p_curriculum_id: string
+          p_reason: string
+        }
+        Returns: Json
+      }
+      detach_module_from_curriculum: {
+        Args: { p_curriculum_id: string; p_module_id: string; p_reason: string }
+        Returns: Json
+      }
       discard_lesson_block_draft: {
         Args: { p_content_item_id: string }
+        Returns: Json
+      }
+      duplicate_certification_path: {
+        Args: {
+          p_new_name: string
+          p_new_slug: string
+          p_reason: string
+          p_source_certification_path_id: string
+        }
+        Returns: Json
+      }
+      duplicate_curriculum: {
+        Args: {
+          p_new_name: string
+          p_new_slug: string
+          p_reason: string
+          p_source_curriculum_id: string
+        }
+        Returns: Json
+      }
+      duplicate_module: {
+        Args: {
+          p_new_name: string
+          p_new_slug: string
+          p_reason: string
+          p_source_module_id: string
+        }
         Returns: Json
       }
       enroll_user_in_certification_path: {
