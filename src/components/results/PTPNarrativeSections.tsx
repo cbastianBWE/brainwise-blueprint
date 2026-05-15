@@ -231,14 +231,27 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
 
   useEffect(() => {
     const fetchResponses = async () => {
-      const { data: responses } = await supabase
-        .from("assessment_responses")
-        .select("response_value_numeric, is_reverse_scored, item_id")
-        .eq("assessment_id", assessmentId);
+      const useBoth = !!additionalAssessmentId && ptpContextTab === "combined";
 
-      if (!responses?.length) return;
+      const fetches = [
+        supabase
+          .from("assessment_responses")
+          .select("response_value_numeric, is_reverse_scored, item_id")
+          .eq("assessment_id", assessmentId),
+      ];
+      if (useBoth) {
+        fetches.push(
+          supabase
+            .from("assessment_responses")
+            .select("response_value_numeric, is_reverse_scored, item_id")
+            .eq("assessment_id", additionalAssessmentId!),
+        );
+      }
+      const results = await Promise.all(fetches);
+      const merged = results.flatMap((r) => r.data ?? []);
+      if (!merged.length) return;
 
-      const itemIds = responses.map((r) => r.item_id);
+      const itemIds = merged.map((r) => r.item_id);
       const { data: items } = await supabase
         .from("items")
         .select("item_id, item_text, item_number, dimension_id, context_type")
@@ -246,7 +259,7 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
 
       const itemMap = new Map((items ?? []).map((i) => [i.item_id, i]));
 
-      let scored = responses.map((r) => {
+      let scored = merged.map((r) => {
         const item = itemMap.get(r.item_id);
         const raw = Number(r.response_value_numeric);
         const value = r.is_reverse_scored ? 100 - raw : raw;
@@ -272,7 +285,7 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
     };
 
     fetchResponses();
-  }, [assessmentId, ptpContextTab]);
+  }, [assessmentId, additionalAssessmentId, ptpContextTab]);
 
   useEffect(() => {
     const fetchNarrativeSections = async () => {
