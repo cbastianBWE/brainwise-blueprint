@@ -68,7 +68,7 @@ Deno.serve(async (req: Request) => {
     // ── Step 1: Fetch assessment ──
     const { data: assessment, error: assessmentErr } = await admin
       .from("assessments")
-      .select("user_id, instrument_id, instrument_version, status")
+      .select("user_id, instrument_id, instrument_version, status, context_type, paired_assessment_id")
       .eq("id", assessment_id)
       .single();
 
@@ -288,6 +288,8 @@ Deno.serve(async (req: Request) => {
     const ai_version = aiVersion?.version_string ?? null;
 
     // ── Step 11: Insert assessment_results ──
+    // For PTP, mark narrative_status='generating' so the report page can gate on readiness.
+    const isPtpInstrument = isPTP;
     const { data: result, error: insertErr } = await admin
       .from("assessment_results")
       .insert({
@@ -301,6 +303,8 @@ Deno.serve(async (req: Request) => {
         ai_version_history: ai_version ? [ai_version] : [],
         manager_dimension_scores: null,
         self_manager_divergence: null,
+        narrative_status: isPtpInstrument ? "generating" : null,
+        narrative_started_at: isPtpInstrument ? new Date().toISOString() : null,
       })
       .select("id")
       .single();
@@ -326,6 +330,81 @@ Deno.serve(async (req: Request) => {
       }).catch((e) => console.error("generate-report fire-and-forget error:", e));
     } catch (e) {
       console.error("Failed to trigger generate-report:", e);
+    }
+
+    // ── PTP narrative pre-generation (fire-and-forget fan-out) ──
+    // For PTP only: dispatch generate-facet-interpretations calls in the background
+    // so by the time the user lands on /my-results the narratives are already cached.
+    // Each child invoke runs in its own 150s budget. Status is updated when all settle.
+    if (isPtpInstrument) {
+      const ctxType = (assessment as { context_type?: string | null }).context_type ?? null;
+      // Determine which contexts to pre-generate.
+      // PTP both = professional + personal + combined; single context = that context only.
+      const contexts: string[] =
+        ctxType === "professional"
+          ? ["professional"]
+          : ctxType === "personal"
+          ? ["personal"]
+          : ["professional", "personal", "combined"];
+
+      const callBodies: Record<string, unknown>[] = [];
+      for (const ctx of contexts) {
+        callBodies.push({ assessment_result_id: result!.id, narrative_context: ctx });
+        callBodies.push({ assessment_result_id: result!.id, generate_context_narrative: true, narrative_context: ctx });
+        callBodies.push({ assessment_result_id: result!.id, generate_dimension_highlights: true, narrative_context: ctx });
+        callBodies.push({ assessment_result_id: result!.id, generate_cross_and_action: true, narrative_context: ctx });
+      }
+
+      const facetUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/generate-facet-interpretations`;
+      const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+
+      const fanOut = Promise.allSettled(
+        callBodies.map((body) =>
+          fetch(facetUrl, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${serviceKey}`,
+              apikey: serviceKey,
+            },
+            body: JSON.stringify(body),
+          }).then(async (r) => {
+            if (!r.ok) {
+              const txt = await r.text().catch(() => "");
+              throw new Error(`facet ${r.status}: ${txt.slice(0, 200)}`);
+            }
+            return r;
+          }),
+        ),
+      ).then(async (results) => {
+        const failures = results.filter((x) => x.status === "rejected");
+        const finalStatus = failures.length === 0 ? "ready" : "failed";
+        if (failures.length > 0) {
+          console.error(
+            `[calculate-scores] PTP narrative fan-out: ${failures.length}/${results.length} failed`,
+            failures.map((f) => (f as PromiseRejectedResult).reason?.message ?? String((f as PromiseRejectedResult).reason)),
+          );
+        }
+        await admin
+          .from("assessment_results")
+          .update({
+            narrative_status: finalStatus,
+            narrative_completed_at: new Date().toISOString(),
+          })
+          .eq("id", result!.id);
+      }).catch((e) => console.error("[calculate-scores] PTP fan-out outer error:", e));
+
+      // Keep the background promise alive after the response is sent.
+      // EdgeRuntime.waitUntil is the supported Supabase API; fall back to bare promise if absent.
+      try {
+        // @ts-expect-error EdgeRuntime is provided by the Supabase Deno runtime
+        if (typeof EdgeRuntime !== "undefined" && EdgeRuntime?.waitUntil) {
+          // @ts-expect-error EdgeRuntime is provided by the Supabase Deno runtime
+          EdgeRuntime.waitUntil(fanOut);
+        }
+      } catch (e) {
+        console.error("[calculate-scores] EdgeRuntime.waitUntil unavailable:", e);
+      }
     }
 
     // ── Step 12: Upsert ai_usage ──

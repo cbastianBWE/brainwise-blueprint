@@ -64,6 +64,49 @@ import { generateAirsaPdf, type AirsaPdfData } from "@/lib/generateAirsaPdf";
 import { assemblePtpPdfData, assembleNaiPdfData, assembleAirsaPdfData } from "@/lib/assemblePdfDataForUser";
 import { type AirsaPdfSectionsUi } from "@/components/results/ExportPdfModal";
 import AirsaCombinedReport from "@/components/results/AirsaCombinedReport";
+import { Loader2 } from "lucide-react";
+
+// Hook: poll narrative_status for a PTP assessment_results row.
+// Treats NULL (legacy rows) as 'ready' so older reports render normally.
+type PtpNarrativeStatus = "pending" | "generating" | "ready" | "failed";
+function usePtpNarrativeStatus(assessmentResultId: string | undefined): {
+  status: PtpNarrativeStatus;
+  refetch: () => void;
+} {
+  const [status, setStatus] = useState<PtpNarrativeStatus>("ready");
+  const [tick, setTick] = useState(0);
+
+  useEffect(() => {
+    if (!assessmentResultId) return;
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+
+    const poll = async () => {
+      const { data } = await supabase
+        .from("assessment_results")
+        .select("narrative_status")
+        .eq("id", assessmentResultId)
+        .maybeSingle();
+      if (cancelled) return;
+      const raw =
+        (data as { narrative_status?: string | null } | null)?.narrative_status ?? null;
+      const next: PtpNarrativeStatus =
+        raw === "generating" || raw === "pending" || raw === "failed" ? raw : "ready";
+      setStatus(next);
+      if (next === "generating" || next === "pending") {
+        timer = setTimeout(poll, 3000);
+      }
+    };
+
+    poll();
+    return () => {
+      cancelled = true;
+      if (timer) clearTimeout(timer);
+    };
+  }, [assessmentResultId, tick]);
+
+  return { status, refetch: () => setTick((t) => t + 1) };
+}
 
 // Types
 interface DimensionScore {
@@ -501,6 +544,11 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
     if (ptpContextTab === 'combined') return ptpProfessionalResults[0] ?? selected;
     return selected;
   }, [selected, hasPtpTabs, ptpContextTab, ptpTabOverrideId, ptpProfessionalResults, ptpPersonalResults]);
+
+  // Poll narrative readiness for the selected PTP assessment_results row.
+  // Hook is unconditional; for non-PTP / undefined IDs it stays at 'ready'.
+  const { status: ptpNarrativeStatus, refetch: refetchPtpNarrativeStatus } =
+    usePtpNarrativeStatus(effectiveSelected?.isPTP ? effectiveSelected.result.id : undefined);
 
   // Effective dimension scores
   const effectiveDimensionScores = useMemo(() => {
@@ -1182,6 +1230,50 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
               ptpContextTab,
               otherAssessments: assessments.filter(a => a.result.id !== effectiveSelected?.result.id),
             };
+            if (ptpNarrativeStatus === "pending" || ptpNarrativeStatus === "generating") {
+              return (
+                <section>
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Preparing your report
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-2 text-sm text-muted-foreground">
+                      <p>
+                        We're generating your personalised narrative sections in the background. This usually takes 30–90 seconds.
+                      </p>
+                      <p>You can leave this page and come back — it will continue.</p>
+                    </CardContent>
+                  </Card>
+                </section>
+              );
+            }
+            if (ptpNarrativeStatus === "failed") {
+              return (
+                <section>
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        <AlertTriangle className="h-4 w-4 text-destructive" />
+                        Report generation incomplete
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <p className="text-sm text-muted-foreground">
+                        Some narrative sections failed to generate. You can continue — any missing sections will fill in automatically when you open them — or retry the full pipeline.
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        <Button variant="outline" size="sm" onClick={refetchPtpNarrativeStatus}>
+                          <RefreshCw className="h-3 w-3 mr-1" /> Re-check status
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </section>
+              );
+            }
             return (
               <PTPNarrativeProvider {...ptpNarrativeProps}>
                 <section>
