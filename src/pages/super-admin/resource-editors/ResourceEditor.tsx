@@ -163,8 +163,20 @@ export default function ResourceEditor({
       return "This resource is missing or archived.";
     }
     if (msg.includes("grants_must_be_array")) return "Could not save grants — invalid format.";
-    if (msg.includes("content_asset_id_required_for_published_downloadable")) {
-      return "A content file is required before publishing this resource.";
+    if (msg.includes("content_asset_required_to_publish_")) {
+      const m = msg.match(/content_asset_required_to_publish_(\w+)/);
+      const type = m?.[1] ?? "resource";
+      return `A content file is required before publishing a ${type}.`;
+    }
+    if (msg.includes("url_or_file_required_to_publish_")) {
+      const m = msg.match(/url_or_file_required_to_publish_(\w+)/);
+      const type = m?.[1] ?? "resource";
+      return `Provide either a URL or a file before publishing this ${type}.`;
+    }
+    if (msg.includes("provide_url_or_file_not_both_to_publish_")) {
+      const m = msg.match(/provide_url_or_file_not_both_to_publish_(\w+)/);
+      const type = m?.[1] ?? "resource";
+      return `For ${type} resources, provide either a URL OR a file — not both.`;
     }
     if (code === "42501") return "You do not have permission to perform this action.";
     if (code === "23505") return "A resource conflict occurred.";
