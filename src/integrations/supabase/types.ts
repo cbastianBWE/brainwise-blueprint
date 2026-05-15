@@ -848,6 +848,9 @@ export type Database = {
           instrument_id: string | null
           instrument_version: string | null
           manager_dimension_scores: Json | null
+          narrative_completed_at: string | null
+          narrative_started_at: string | null
+          narrative_status: string | null
           overall_profile: Json | null
           self_manager_divergence: Json | null
           skill_level_breakdown: Json | null
@@ -867,6 +870,9 @@ export type Database = {
           instrument_id?: string | null
           instrument_version?: string | null
           manager_dimension_scores?: Json | null
+          narrative_completed_at?: string | null
+          narrative_started_at?: string | null
+          narrative_status?: string | null
           overall_profile?: Json | null
           self_manager_divergence?: Json | null
           skill_level_breakdown?: Json | null
@@ -886,6 +892,9 @@ export type Database = {
           instrument_id?: string | null
           instrument_version?: string | null
           manager_dimension_scores?: Json | null
+          narrative_completed_at?: string | null
+          narrative_started_at?: string | null
+          narrative_status?: string | null
           overall_profile?: Json | null
           self_manager_divergence?: Json | null
           skill_level_breakdown?: Json | null
