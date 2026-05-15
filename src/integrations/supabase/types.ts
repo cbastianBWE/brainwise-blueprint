@@ -6385,6 +6385,63 @@ export type Database = {
           },
         ]
       }
+      resource_access_log: {
+        Row: {
+          accessed_at: string
+          id: string
+          resource_id: string
+          user_id: string
+        }
+        Insert: {
+          accessed_at?: string
+          id?: string
+          resource_id: string
+          user_id: string
+        }
+        Update: {
+          accessed_at?: string
+          id?: string
+          resource_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "resource_access_log_resource_id_fkey"
+            columns: ["resource_id"]
+            isOneToOne: false
+            referencedRelation: "resources"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "resource_access_log_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "resource_access_log_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "resource_access_log_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "resource_access_log_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       resource_tabs: {
         Row: {
           created_at: string
@@ -8829,6 +8886,7 @@ export type Database = {
           out_tracking_notes: string
         }[]
       }
+      log_resource_access: { Args: { p_resource_id: string }; Returns: Json }
       log_super_admin_action: {
         Args: {
           p_action_type: string
