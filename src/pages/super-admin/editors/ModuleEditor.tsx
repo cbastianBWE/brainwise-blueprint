@@ -810,6 +810,81 @@ function ModuleEditor({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog
+        open={duplicateState.open}
+        onOpenChange={(open) => !duplicateState.loading && setDuplicateState((s) => ({ ...s, open }))}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Duplicate this module</DialogTitle>
+            <DialogDescription>
+              Creates a deep copy of the module, all its lessons, and content. Assets (thumbnails, files)
+              are shared by reference — not duplicated. The new module starts as a draft so you can review
+              before publishing.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="mo-dup-name">New name *</Label>
+              <Input
+                id="mo-dup-name"
+                value={duplicateState.newName}
+                onChange={(e) => setDuplicateState((s) => ({ ...s, newName: e.target.value }))}
+                disabled={duplicateState.loading}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="mo-dup-slug">New slug *</Label>
+              <Input
+                id="mo-dup-slug"
+                value={duplicateState.newSlug}
+                onChange={(e) => setDuplicateState((s) => ({ ...s, newSlug: slugify(e.target.value) }))}
+                disabled={duplicateState.loading}
+              />
+              <p className="text-xs text-muted-foreground">Must be unique across all modules.</p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="mo-dup-reason">Reason *</Label>
+              <Textarea
+                id="mo-dup-reason"
+                value={duplicateState.reason}
+                onChange={(e) => setDuplicateState((s) => ({ ...s, reason: e.target.value }))}
+                rows={3}
+                placeholder="At least 10 characters."
+                disabled={duplicateState.loading}
+              />
+              <p className={cn(
+                "text-xs",
+                duplicateState.reason.trim().length >= 10 ? "text-muted-foreground" : "text-destructive"
+              )}>
+                {duplicateState.reason.trim().length}/10 characters minimum.
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setDuplicateState((s) => ({ ...s, open: false }))}
+              disabled={duplicateState.loading}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleDuplicate}
+              disabled={
+                duplicateState.reason.trim().length < 10 ||
+                duplicateState.newSlug.trim().length === 0 ||
+                duplicateState.newName.trim().length === 0 ||
+                duplicateState.loading
+              }
+            >
+              {duplicateState.loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Duplicate
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }
