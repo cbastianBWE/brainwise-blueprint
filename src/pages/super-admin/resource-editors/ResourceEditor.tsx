@@ -184,6 +184,12 @@ export default function ResourceEditor({
       const type = m?.[1] ?? "resource";
       return `For ${type} resources, provide either a URL OR a file — not both.`;
     }
+    if (msg.includes("url_kind_required_to_publish_")) {
+      return "Choose whether this URL should open externally or render inline before publishing.";
+    }
+    if (msg.includes("invalid_url_kind")) {
+      return "Invalid URL behavior selection. Please re-select.";
+    }
     if (code === "42501") return "You do not have permission to perform this action.";
     if (code === "23505") return "A resource conflict occurred.";
     return msg || "Could not save changes.";
