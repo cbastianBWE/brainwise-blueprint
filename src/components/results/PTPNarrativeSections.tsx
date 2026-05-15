@@ -539,7 +539,7 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
       if (cancelled) return;
 
       if (existing?.facet_data) {
-        setAllFacetInsights(existing.facet_data as FacetInterpretation[]);
+        setAllFacetInsights(existing.facet_data as unknown as FacetInterpretation[]);
         return;
       }
 
@@ -586,7 +586,7 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
           .maybeSingle();
         if (cancelled) return;
         if (finalRow?.facet_data) {
-          setAllFacetInsights(finalRow.facet_data as FacetInterpretation[]);
+          setAllFacetInsights(finalRow.facet_data as unknown as FacetInterpretation[]);
         }
       } finally {
         if (!cancelled) setLoadingAllFacetInsights(false);
