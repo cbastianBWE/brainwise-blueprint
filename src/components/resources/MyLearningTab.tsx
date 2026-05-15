@@ -13,6 +13,7 @@ import { Tile } from "@/components/tile/Tile";
 import type { CompletionStatus, TileVariant } from "@/components/tile/tileVariants";
 import { resolveThumbnailUrls } from "@/lib/assetUrls";
 import UpgradeNudgeModal from "./UpgradeNudgeModal";
+import PaidEnrollmentNudgeModal from "./PaidEnrollmentNudgeModal";
 import type { UpgradeEntityType } from "./types";
 
 type EntityType = "cert_path" | "curriculum" | "module";
@@ -151,6 +152,11 @@ export default function MyLearningTab() {
     entityType: UpgradeEntityType | null;
     entityName: string | null;
   }>({ open: false, entityType: null, entityName: null });
+  const [paidNudgeState, setPaidNudgeState] = useState<{
+    open: boolean;
+    entityName: string | null;
+    priceCents: number | null;
+  }>({ open: false, entityName: null, priceCents: null });
 
   const learningQuery = useQuery({
     queryKey: ["get_user_learning_state", userId],
@@ -297,12 +303,11 @@ export default function MyLearningTab() {
     }
 
     if ((data as any)?.status === "payment_required") {
-      const cents = (data as any).price_cents ?? 0;
-      toast({
-        title: "Payment required",
-        description: `${entity.name} costs $${(cents / 100).toFixed(
-          2,
-        )}. Payment flow coming soon — contact support to enroll.`,
+      const cents = (data as any).price_cents ?? null;
+      setPaidNudgeState({
+        open: true,
+        entityName: entity.name ?? null,
+        priceCents: cents,
       });
       return;
     }
@@ -439,6 +444,15 @@ export default function MyLearningTab() {
         onOpenChange={(open) => setUpgradeState((s) => ({ ...s, open }))}
         entityType={upgradeState.entityType}
         entityName={upgradeState.entityName}
+      />
+
+      <PaidEnrollmentNudgeModal
+        open={paidNudgeState.open}
+        onOpenChange={(open) =>
+          setPaidNudgeState((s) => ({ ...s, open }))
+        }
+        entityName={paidNudgeState.entityName}
+        priceCents={paidNudgeState.priceCents}
       />
     </div>
   );
