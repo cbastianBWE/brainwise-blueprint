@@ -9,6 +9,7 @@ import {
   BookOpen,
   Wrench,
   LayoutTemplate,
+  Lock,
 } from "lucide-react";
 import type {
   TileVariant,
@@ -40,6 +41,7 @@ export interface TileProps {
   isCurrentLocation?: boolean;
   inlineCtaLabel?: string;
   onInlineCtaClick?: () => void;
+  locked?: boolean;
 }
 
 function contentTypeChipFor(ct: ResourceContentType) {
@@ -75,6 +77,7 @@ export function Tile(props: TileProps) {
     isCurrentLocation = false,
     inlineCtaLabel,
     onInlineCtaClick,
+    locked = false,
   } = props;
 
   const [isHovered, setIsHovered] = useState(false);
@@ -165,12 +168,19 @@ export function Tile(props: TileProps) {
           </div>
         )}
 
-        {/* Hover overlay (non-detailPageMode, interactive only) */}
-        {!detailPageMode && interactive && isHovered && (
+        {/* Hover overlay (non-detailPageMode, interactive, not locked) */}
+        {!detailPageMode && interactive && isHovered && !locked && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/40 transition-opacity">
             <span className="rounded-full bg-background px-3 py-1.5 text-sm font-medium text-foreground shadow">
               {hoverCtaLabelFor(variant, status)}
             </span>
+          </div>
+        )}
+
+        {/* Locked overlay */}
+        {locked && (
+          <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/60 backdrop-blur-sm">
+            <Lock className="h-8 w-8 text-foreground drop-shadow" aria-label="Locked" />
           </div>
         )}
       </div>
@@ -211,8 +221,8 @@ export function Tile(props: TileProps) {
           </div>
         )}
 
-        {/* Inline CTA (detailPageMode only) */}
-        {detailPageMode && inlineCtaLabel && onInlineCtaClick && (
+        {/* Inline CTA */}
+        {inlineCtaLabel && onInlineCtaClick && (
           <button
             type="button"
             onClick={(e) => {

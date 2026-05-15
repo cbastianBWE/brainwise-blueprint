@@ -3,23 +3,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-
-interface ResourceTab {
-  tab_id: string;
-  slug: string;
-  name: string;
-  display_order: number;
-  is_coach_only: boolean;
-  is_learning_tree: boolean;
-  // resources field is present in the RPC return but we don't render its contents in Group X.
-}
-
-interface GetUserResourcesResult {
-  user_id: string;
-  viewer_role: string;
-  generated_at: string;
-  tabs: ResourceTab[];
-}
+import AllResourcesTab from "@/components/resources/AllResourcesTab";
+import CoachResourcesTab from "@/components/resources/CoachResourcesTab";
+import MyLearningTab from "@/components/resources/MyLearningTab";
+import type { GetUserResourcesResult } from "@/components/resources/types";
 
 export default function Resources() {
   const { data, isLoading, isError, error } = useQuery({
@@ -84,15 +71,14 @@ export default function Resources() {
         </TabsList>
 
         {tabs.map((tab) => (
-          <TabsContent key={tab.slug} value={tab.slug}>
-            <Card>
-              <CardContent className="p-8 text-center">
-                <p className="text-lg font-medium text-muted-foreground">Coming soon</p>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  The {tab.name.toLowerCase()} content will appear here.
-                </p>
-              </CardContent>
-            </Card>
+          <TabsContent key={tab.slug} value={tab.slug} className="mt-6">
+            {tab.slug === "my_learning" ? (
+              <MyLearningTab />
+            ) : tab.slug === "coach_resources" ? (
+              <CoachResourcesTab tab={tab} />
+            ) : (
+              <AllResourcesTab tab={tab} />
+            )}
           </TabsContent>
         ))}
       </Tabs>
