@@ -223,6 +223,9 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
     score: number;
     dimensionId: string;
   }[]>([]);
+  const [allFacetInsights, setAllFacetInsights] = useState<FacetInterpretation[]>([]);
+  const [loadingAllFacetInsights, setLoadingAllFacetInsights] = useState(false);
+  const [allFacetsExpanded, setAllFacetsExpanded] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const fetchResponses = async () => {
