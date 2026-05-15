@@ -578,7 +578,18 @@ function ContentItemEditor({
             <div className="space-y-3">
               <div className="space-y-2">
                 <Label>Video source type</Label>
-                <Select value={videoSourceType} onValueChange={setVideoSourceType} disabled={saving}>
+                <Select
+                  value={videoSourceType}
+                  onValueChange={(newType) => {
+                    // Clear stale source_id when switching source types — prevents FileUploadField
+                    // from rendering "uploaded" state with a YouTube/Vimeo ID that isn't a content_asset_id.
+                    if (newType !== videoSourceType) {
+                      setVideoSourceId("");
+                    }
+                    setVideoSourceType(newType);
+                  }}
+                  disabled={saving}
+                >
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="supabase_storage">Supabase Storage</SelectItem>
