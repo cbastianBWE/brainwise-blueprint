@@ -175,7 +175,7 @@ export function Tile(props: TileProps) {
         {!detailPageMode && interactive && isHovered && !locked && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/40 transition-opacity">
             <span className="rounded-full bg-background px-3 py-1.5 text-sm font-medium text-foreground shadow">
-              {hoverCtaLabelFor(variant, status)}
+              {hoverCtaLabelFor(variant, status, externalLink)}
             </span>
           </div>
         )}
@@ -184,6 +184,13 @@ export function Tile(props: TileProps) {
         {locked && (
           <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/60 backdrop-blur-sm">
             <Lock className="h-8 w-8 text-foreground drop-shadow" aria-label="Locked" />
+          </div>
+        )}
+
+        {/* External link indicator */}
+        {externalLink && !locked && (
+          <div className="absolute right-2 top-2 rounded-full bg-background/90 p-1 shadow-sm" aria-label="Opens in new tab">
+            <ExternalLink className="h-3.5 w-3.5 text-foreground" />
           </div>
         )}
       </div>
