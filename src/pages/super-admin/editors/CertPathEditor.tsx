@@ -1050,6 +1050,124 @@ function CertPathEditor({
           </Tabs>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog
+        open={detachState.open}
+        onOpenChange={(open) => !detachState.loading && setDetachState((s) => ({ ...s, open }))}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Detach this curriculum?</AlertDialogTitle>
+            <AlertDialogDescription>
+              <span className="font-medium text-foreground">{detachState.curriculumName}</span> will be
+              removed from this certification path. The curriculum itself is not deleted — it stays in the
+              library as an unattached curriculum and any user enrollments in it are preserved.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="cp-detach-reason">Reason for detaching *</Label>
+            <Textarea
+              id="cp-detach-reason"
+              value={detachState.reason}
+              onChange={(e) => setDetachState((s) => ({ ...s, reason: e.target.value }))}
+              rows={3}
+              placeholder="At least 10 characters."
+              disabled={detachState.loading}
+            />
+            <p className={cn(
+              "text-xs",
+              detachState.reason.trim().length >= 10 ? "text-muted-foreground" : "text-destructive"
+            )}>
+              {detachState.reason.trim().length}/10 characters minimum.
+            </p>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={detachState.loading}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); handleDetachCurriculum(); }}
+              disabled={detachState.reason.trim().length < 10 || detachState.loading}
+            >
+              {detachState.loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Detach
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <Dialog
+        open={duplicateState.open}
+        onOpenChange={(open) => !duplicateState.loading && setDuplicateState((s) => ({ ...s, open }))}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Duplicate this certification path</DialogTitle>
+            <DialogDescription>
+              Creates a deep copy of the certification path, all its curricula, modules, lessons, and
+              content. Assets (thumbnails, files) are shared by reference — not duplicated. The new path
+              starts as a draft so you can review before publishing.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="cp-dup-name">New name *</Label>
+              <Input
+                id="cp-dup-name"
+                value={duplicateState.newName}
+                onChange={(e) => setDuplicateState((s) => ({ ...s, newName: e.target.value }))}
+                disabled={duplicateState.loading}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="cp-dup-slug">New slug *</Label>
+              <Input
+                id="cp-dup-slug"
+                value={duplicateState.newSlug}
+                onChange={(e) => setDuplicateState((s) => ({ ...s, newSlug: slugify(e.target.value) }))}
+                disabled={duplicateState.loading}
+              />
+              <p className="text-xs text-muted-foreground">Must be unique across all certification paths.</p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="cp-dup-reason">Reason *</Label>
+              <Textarea
+                id="cp-dup-reason"
+                value={duplicateState.reason}
+                onChange={(e) => setDuplicateState((s) => ({ ...s, reason: e.target.value }))}
+                rows={3}
+                placeholder="At least 10 characters."
+                disabled={duplicateState.loading}
+              />
+              <p className={cn(
+                "text-xs",
+                duplicateState.reason.trim().length >= 10 ? "text-muted-foreground" : "text-destructive"
+              )}>
+                {duplicateState.reason.trim().length}/10 characters minimum.
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setDuplicateState((s) => ({ ...s, open: false }))}
+              disabled={duplicateState.loading}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleDuplicate}
+              disabled={
+                duplicateState.reason.trim().length < 10 ||
+                duplicateState.newSlug.trim().length === 0 ||
+                duplicateState.newName.trim().length === 0 ||
+                duplicateState.loading
+              }
+            >
+              {duplicateState.loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Duplicate
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }
