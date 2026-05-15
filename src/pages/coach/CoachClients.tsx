@@ -180,6 +180,7 @@ export default function CoachClients() {
     // Derive unique clients
     const clientMap: Record<string, UniqueClient> = {};
     for (const row of enriched) {
+      if (row.revoked_at !== null) continue;
       const e = row.client_email;
       if (!clientMap[e]) {
         clientMap[e] = {
