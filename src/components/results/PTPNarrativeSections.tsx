@@ -1148,8 +1148,25 @@ export function PTPCrossAssessmentSection(props: PTPNarrativeSectionsProps) {
 export function PTPAssessmentResponsesSection(props: PTPNarrativeSectionsProps) {
   const data = usePTPNarrativeContext();
   if (isCoachLimited(props)) return null;
-  const { responsesExpanded, setResponsesExpanded, assessmentResponses } = data;
+  const {
+    responsesExpanded,
+    setResponsesExpanded,
+    assessmentResponses,
+    allFacetInsights,
+    loadingAllFacetInsights,
+    allFacetsExpanded,
+    setAllFacetsExpanded,
+  } = data;
   const { ptpContextTab } = props;
+
+  const toggleRow = (key: string) => {
+    setAllFacetsExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
 
   return (
     <div>
@@ -1205,41 +1222,98 @@ export function PTPAssessmentResponsesSection(props: PTPNarrativeSectionsProps) 
           </div>
           {assessmentResponses.map((r, idx) => {
             const color = PTP_DIMENSION_COLORS[r.dimensionId] ?? "#021F36";
+            const key = `response-${r.itemNumber}`;
+            const isExpanded = allFacetsExpanded.has(key);
+            const interpretation = allFacetInsights.find((f) => f.name === r.facetName);
+            const isLast = idx === assessmentResponses.length - 1;
             return (
               <div
                 key={idx}
-                className="flex items-start gap-3"
                 style={{
-                  padding: "12px 16px",
-                  borderBottom: idx === assessmentResponses.length - 1 ? "none" : "1px solid var(--border-1)",
+                  borderBottom: isLast ? "none" : "1px solid var(--border-1)",
                 }}
               >
-                <div
-                  className="shrink-0 self-stretch"
-                  style={{ width: 4, backgroundColor: color, minHeight: 40, borderRadius: 2 }}
-                />
-                <div className="flex-1 min-w-0">
-                  <p style={{ fontSize: 14, fontWeight: 500, color: "var(--fg-1)", margin: 0 }}>
-                    Q{r.itemNumber} — {r.facetName}
-                  </p>
-                  <p style={{ fontSize: 12, color: "var(--fg-3)", marginTop: 2, lineHeight: 1.5 }}>
-                    {r.itemText}
-                  </p>
-                </div>
-                <span
-                  style={{
-                    padding: "4px 8px",
-                    borderRadius: 4,
-                    fontSize: 12,
-                    fontWeight: 600,
-                    color: "#fff",
-                    backgroundColor: color,
-                    flexShrink: 0,
-                    marginTop: 2,
-                  }}
+                <button
+                  onClick={() => toggleRow(key)}
+                  className="w-full text-left flex items-start gap-3 transition-colors hover:bg-muted/30"
+                  style={{ padding: "12px 16px" }}
                 >
-                  {r.score}
-                </span>
+                  <div
+                    className="shrink-0 self-stretch"
+                    style={{ width: 4, backgroundColor: color, minHeight: 40, borderRadius: 2 }}
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p style={{ fontSize: 14, fontWeight: 500, color: "var(--fg-1)", margin: 0 }}>
+                      Q{r.itemNumber} — {r.facetName}
+                    </p>
+                    <p style={{ fontSize: 12, color: "var(--fg-3)", marginTop: 2, lineHeight: 1.5 }}>
+                      {r.itemText}
+                    </p>
+                  </div>
+                  <span
+                    style={{
+                      padding: "4px 8px",
+                      borderRadius: 4,
+                      fontSize: 12,
+                      fontWeight: 600,
+                      color: "#fff",
+                      backgroundColor: color,
+                      flexShrink: 0,
+                      marginTop: 2,
+                    }}
+                  >
+                    {r.score}
+                  </span>
+                  {isExpanded ? (
+                    <ChevronUp className="w-4 h-4 shrink-0 mt-1" style={{ color: "var(--fg-3)" }} />
+                  ) : (
+                    <ChevronDown className="w-4 h-4 shrink-0 mt-1" style={{ color: "var(--fg-3)" }} />
+                  )}
+                </button>
+                {isExpanded && (
+                  <div style={{ padding: 16, borderTop: "1px solid var(--border-1)", background: "var(--bw-white)" }}>
+                    {loadingAllFacetInsights || !interpretation ? (
+                      <p style={{ fontSize: 14, color: "var(--fg-3)", margin: 0 }}>Generating insights...</p>
+                    ) : (
+                      <div className="grid md:grid-cols-2 gap-4">
+                        <div>
+                          <h5 style={{ fontWeight: 600, fontSize: 14, marginBottom: 8, color: "var(--fg-1)" }}>Impact on self</h5>
+                          <ul className="space-y-1.5">
+                            {interpretation.positive_self.map((item, i) => (
+                              <li key={`ps-${i}`} className="flex gap-2" style={{ fontSize: 14, color: "var(--fg-2)" }}>
+                                <span style={{ color: "var(--bw-forest)", flexShrink: 0 }}>✓</span>
+                                <span>{item}</span>
+                              </li>
+                            ))}
+                            {interpretation.negative_self.map((item, i) => (
+                              <li key={`ns-${i}`} className="flex gap-2" style={{ fontSize: 14, color: "var(--fg-2)" }}>
+                                <span className="text-destructive shrink-0">✗</span>
+                                <span>{item}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                        <div>
+                          <h5 style={{ fontWeight: 600, fontSize: 14, marginBottom: 8, color: "var(--fg-1)" }}>Impact on others</h5>
+                          <ul className="space-y-1.5">
+                            {interpretation.positive_others.map((item, i) => (
+                              <li key={`po-${i}`} className="flex gap-2" style={{ fontSize: 14, color: "var(--fg-2)" }}>
+                                <span style={{ color: "var(--bw-forest)", flexShrink: 0 }}>✓</span>
+                                <span>{item}</span>
+                              </li>
+                            ))}
+                            {interpretation.negative_others.map((item, i) => (
+                              <li key={`no-${i}`} className="flex gap-2" style={{ fontSize: 14, color: "var(--fg-2)" }}>
+                                <span className="text-destructive shrink-0">✗</span>
+                                <span>{item}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             );
           })}
