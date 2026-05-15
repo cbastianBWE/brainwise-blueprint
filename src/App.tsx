@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/hooks/useAuth";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import RoleGuard from "@/components/RoleGuard";
+import PractitionerCoachGuard from "@/components/PractitionerCoachGuard";
 import SubscriptionGate from "@/components/SubscriptionGate";
 import CorpRedirect from "@/components/CorpRedirect";
 import { SuperAdminSessionProvider } from "@/hooks/useSuperAdminSession";
@@ -69,6 +70,7 @@ import ContentAuthoring from "./pages/super-admin/ContentAuthoring";
 import AssetLibrary from "./pages/super-admin/AssetLibrary";
 import LessonBlocksEditor from "./pages/super-admin/LessonBlocksEditor";
 import AdminResourceAuthoring from "./pages/super-admin/AdminResourceAuthoring";
+import CompCouponsManagement from "./pages/super-admin/CompCouponsManagement";
 import EpnComplete from "./pages/EpnComplete";
 import AirsaManagerComplete from "./pages/AirsaManagerComplete";
 import VerifyConversion from "./pages/VerifyConversion";
@@ -146,13 +148,13 @@ const App = () => (
               <Route path="/settings/access-history" element={<AccessHistory />} />
 
               {/* Coach */}
-              <Route path="/coach/clients" element={<RoleGuard allowedRoles={["coach"]}><CoachClients /></RoleGuard>} />
-              <Route path="/coach/order-assessment" element={<RoleGuard allowedRoles={["coach"]}><OrderAssessment /></RoleGuard>} />
-              <Route path="/coach/client-results" element={<RoleGuard allowedRoles={["coach"]}><ClientResults /></RoleGuard>} />
-              <Route path="/coach/invoices" element={<RoleGuard allowedRoles={["coach"]}><CoachInvoices /></RoleGuard>} />
+              <Route path="/coach/clients" element={<PractitionerCoachGuard><CoachClients /></PractitionerCoachGuard>} />
+              <Route path="/coach/order-assessment" element={<PractitionerCoachGuard><OrderAssessment /></PractitionerCoachGuard>} />
+              <Route path="/coach/client-results" element={<PractitionerCoachGuard><ClientResults /></PractitionerCoachGuard>} />
+              <Route path="/coach/invoices" element={<PractitionerCoachGuard><CoachInvoices /></PractitionerCoachGuard>} />
               <Route path="/coach/resources" element={<RoleGuard allowedRoles={["coach"]}><Resources /></RoleGuard>} />
-              <Route path="/coach/profile" element={<RoleGuard allowedRoles={["coach"]}><CoachProfile /></RoleGuard>} />
-              <Route path="/coach/certification" element={<RoleGuard allowedRoles={["coach"]}><Certification /></RoleGuard>} />
+              <Route path="/coach/profile" element={<PractitionerCoachGuard><CoachProfile /></PractitionerCoachGuard>} />
+              <Route path="/coach/certification" element={<PractitionerCoachGuard><Certification /></PractitionerCoachGuard>} />
 
               {/* Admin */}
               <Route path="/admin/users" element={<RoleGuard allowedRoles={["company_admin", "org_admin"]}><AdminUsers /></RoleGuard>} />
@@ -175,6 +177,7 @@ const App = () => (
               <Route path="/super-admin/versions" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><VersionManagement /></SuperAdminSessionProvider></RoleGuard>} />
               <Route path="/super-admin/content-authoring" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><ContentAuthoring /></SuperAdminSessionProvider></RoleGuard>} />
               <Route path="/super-admin/resources" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><AdminResourceAuthoring /></SuperAdminSessionProvider></RoleGuard>} />
+              <Route path="/super-admin/coupons" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><CompCouponsManagement /></SuperAdminSessionProvider></RoleGuard>} />
               <Route path="/super-admin/asset-library" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><AssetLibrary /></SuperAdminSessionProvider></RoleGuard>} />
               <Route path="/super-admin/content-authoring/lessons/:contentItemId" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><LessonBlocksEditor /></SuperAdminSessionProvider></RoleGuard>} />
             </Route>

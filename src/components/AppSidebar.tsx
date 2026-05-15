@@ -1,8 +1,9 @@
+import { Fragment } from "react";
 import {
   LayoutDashboard, BarChart3, ClipboardList, ClipboardCheck, MessageSquare, BookOpen, Settings,
   Users, Users2, Building2, UsersRound, Activity, Heart, Award, UserCircle,
   ShieldCheck, Briefcase, GitBranch, FlaskConical, LogOut, History, Shield,
-  CreditCard, Receipt, ChevronDown, ChevronRight, Plus, FileText, UserSearch, Library,
+  CreditCard, Receipt, ChevronDown, ChevronRight, Plus, FileText, UserSearch, Library, Ticket,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -30,6 +31,7 @@ interface NavItem {
   icon: React.ElementType;
   disabled?: boolean;
   badge?: string;
+  sectionHeader?: string;
 }
 
 const individualNav: NavItem[] = [
@@ -89,20 +91,32 @@ const superAdminNav: NavItem[] = [
   { title: "Content Authoring", url: "/super-admin/content-authoring", icon: Library },
   { title: "Resources", url: "/resources", icon: BookOpen },
   { title: "Resource Authoring", url: "/super-admin/resources", icon: Library },
+  { title: "Comp Coupons", url: "/super-admin/coupons", icon: Ticket },
   { title: "AI Chat", url: "/ai-chat", icon: MessageSquare },
   { title: "Chat History", url: "/ai-chat/history", icon: History },
   { title: "AI Research", url: "/super-admin/ai-research", icon: FlaskConical, disabled: true, badge: "Phase 2" },
 ];
 
-function getNavItems(accountType: string | null | undefined): NavItem[] {
+function getNavItems(profile: { account_type?: string | null; is_practitioner_coach?: boolean } | null | undefined): NavItem[] {
+  const accountType = profile?.account_type;
   switch (accountType) {
     case "coach":
       return coachNav;
     case "company_admin":
     case "org_admin":
       return adminNav;
-    case "brainwise_super_admin":
+    case "brainwise_super_admin": {
+      if (profile?.is_practitioner_coach === true) {
+        // Drop /coach/resources from appended coach nav since super admin
+        // already has its own Resources entry above.
+        const filtered = coachNav.filter((i) => i.url !== "/coach/resources");
+        const coachToolsWithHeader = filtered.map((item, idx) =>
+          idx === 0 ? { ...item, sectionHeader: "Coach Tools" } : item
+        );
+        return [...superAdminNav, ...coachToolsWithHeader];
+      }
       return superAdminNav;
+    }
     case "corporate_employee":
       return corporateNav;
     case "individual":
@@ -131,7 +145,7 @@ export function AppSidebar() {
   const { profile } = useUserProfile();
   const { isCorp } = useAccountRole();
 
-  const navItems = getNavItems(profile?.account_type);
+  const navItems = getNavItems(profile);
   const isSettingsOpen = location.pathname.startsWith('/settings');
   const isClientsOpen = location.pathname.startsWith('/coach/clients') || location.pathname.startsWith('/coach/client-results');
   const isDashboardsOpen = location.pathname.startsWith('/company/nai-dashboard')
@@ -173,48 +187,61 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {navItems.map((item) => {
+                const sectionHeaderEl = item.sectionHeader ? (
+                  <div
+                    key={`hdr-${item.sectionHeader}`}
+                    className={collapsed ? "sr-only" : "px-2 pt-3 pb-1 text-[10px] uppercase tracking-wider text-sidebar-foreground/50 font-semibold"}
+                  >
+                    {item.sectionHeader}
+                  </div>
+                ) : null;
                 if (item.title === "My Clients") {
                   return (
-                    <SidebarMenuItem key="my-clients">
-                      <SidebarMenuButton asChild>
-                        <NavLink
-                          to="/coach/clients"
-                          className="hover:bg-sidebar-accent"
-                          activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                        >
-                          <Users className="h-4 w-4 shrink-0" />
-                          {!collapsed && (
-                            <div className="flex items-center justify-between flex-1">
-                              <span>My Clients</span>
-                              {isClientsOpen
-                                ? <ChevronDown className="h-3 w-3" />
-                                : <ChevronRight className="h-3 w-3" />
-                              }
-                            </div>
-                          )}
-                        </NavLink>
-                      </SidebarMenuButton>
-                      {isClientsOpen && !collapsed && (
-                        <div className="ml-4 mt-1 space-y-1">
-                          <SidebarMenuItem key="/coach/client-results">
-                            <SidebarMenuButton asChild>
-                              <NavLink
-                                to="/coach/client-results"
-                                end
-                                className="hover:bg-sidebar-accent text-sm"
-                                activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                              >
-                                <BarChart3 className="h-3.5 w-3.5 shrink-0" />
-                                <span>Client Results</span>
-                              </NavLink>
-                            </SidebarMenuButton>
-                          </SidebarMenuItem>
-                        </div>
-                      )}
-                    </SidebarMenuItem>
+                    <Fragment key={`f-${item.title}${item.url}`}>
+                      {sectionHeaderEl}
+                      <SidebarMenuItem key="my-clients">
+                        <SidebarMenuButton asChild>
+                          <NavLink
+                            to="/coach/clients"
+                            className="hover:bg-sidebar-accent"
+                            activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                          >
+                            <Users className="h-4 w-4 shrink-0" />
+                            {!collapsed && (
+                              <div className="flex items-center justify-between flex-1">
+                                <span>My Clients</span>
+                                {isClientsOpen
+                                  ? <ChevronDown className="h-3 w-3" />
+                                  : <ChevronRight className="h-3 w-3" />
+                                }
+                              </div>
+                            )}
+                          </NavLink>
+                        </SidebarMenuButton>
+                        {isClientsOpen && !collapsed && (
+                          <div className="ml-4 mt-1 space-y-1">
+                            <SidebarMenuItem key="/coach/client-results">
+                              <SidebarMenuButton asChild>
+                                <NavLink
+                                  to="/coach/client-results"
+                                  end
+                                  className="hover:bg-sidebar-accent text-sm"
+                                  activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                                >
+                                  <BarChart3 className="h-3.5 w-3.5 shrink-0" />
+                                  <span>Client Results</span>
+                                </NavLink>
+                              </SidebarMenuButton>
+                            </SidebarMenuItem>
+                          </div>
+                        )}
+                      </SidebarMenuItem>
+                    </Fragment>
                   );
                 }
                 return (
+                  <Fragment key={`f-${item.title}${item.url}`}>
+                    {sectionHeaderEl}
                   <SidebarMenuItem key={item.title + item.url}>
                     <SidebarMenuButton asChild disabled={item.disabled}>
                       {item.disabled ? (
@@ -244,6 +271,7 @@ export function AppSidebar() {
                       )}
                     </SidebarMenuButton>
                   </SidebarMenuItem>
+                  </Fragment>
                 );
               })}
               {showDashboardsMenu && (
