@@ -104,7 +104,11 @@ export default function ResourceGridTab({ tab, emptyStateText }: ResourceGridTab
     }
     logAccess(resource.resource_id);
     if (resource.content_asset_id != null) {
-      void handleFileDownload(resource);
+      if (resource.content_type === "video") {
+        navigate(`/resources/${resource.resource_id}`);
+      } else {
+        void handleFileDownload(resource);
+      }
     } else if (resource.url_kind === "external_link" && resource.url_or_content) {
       window.open(resource.url_or_content, "_blank", "noopener,noreferrer");
     } else {
