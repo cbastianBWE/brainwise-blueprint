@@ -66,6 +66,21 @@ Deno.serve(async (req: Request) => {
       );
     }
 
+    // Length cap: prevent cost amplification via oversized inputs
+    if (message.length > 4000) {
+      return new Response(
+        JSON.stringify({ error: "message_too_long", limit: 4000 }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (!Array.isArray(conversation_history) || conversation_history.length > 50) {
+      return new Response(
+        JSON.stringify({ error: "conversation_history_too_long", limit: 50 }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // Check usage via check-ai-usage function
     const usageRes = await fetch(`${supabaseUrl}/functions/v1/check-ai-usage`, {
       method: "POST",
