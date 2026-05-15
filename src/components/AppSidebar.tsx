@@ -145,7 +145,7 @@ export function AppSidebar() {
   const { profile } = useUserProfile();
   const { isCorp } = useAccountRole();
 
-  const navItems = getNavItems(profile?.account_type);
+  const navItems = getNavItems(profile);
   const isSettingsOpen = location.pathname.startsWith('/settings');
   const isClientsOpen = location.pathname.startsWith('/coach/clients') || location.pathname.startsWith('/coach/client-results');
   const isDashboardsOpen = location.pathname.startsWith('/company/nai-dashboard')
