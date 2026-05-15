@@ -119,7 +119,7 @@ interface ModuleEditorProps {
 function ModuleEditor({
   mode, initial, allModules, allCurricula, attachToCurriculumId,
   onSaved, onArchived, onCancelCreate,
-  onRequestCreateAttachedContentItem, onSelectContentItem,
+  onRequestCreateAttachedContentItem, onSelectContentItem, onRefetch,
 }: ModuleEditorProps) {
   const { toast } = useToast();
 
