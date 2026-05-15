@@ -130,6 +130,7 @@ export default function ResourceEditor({
         isPublished ||
         thumbnailAssetId !== null ||
         contentAssetId !== null ||
+        urlKind !== "" ||
         reason.trim().length > 0
       );
     }
@@ -143,11 +144,12 @@ export default function ResourceEditor({
       isPublished !== !!initial.is_published ||
       thumbnailAssetId !== (initial.thumbnail_asset_id ?? null) ||
       (contentAssetId ?? null) !== (initial.content_asset_id ?? null) ||
+      urlKind !== (initial.url_kind ?? "") ||
       reason.trim().length > 0
     );
   }, [
     mode, initial, title, summary, urlOrContent, contentType,
-    resourceTabId, isPublished, thumbnailAssetId, contentAssetId, reason,
+    resourceTabId, isPublished, thumbnailAssetId, contentAssetId, urlKind, reason,
   ]);
 
   const reasonOk = reason.trim().length >= 10;
