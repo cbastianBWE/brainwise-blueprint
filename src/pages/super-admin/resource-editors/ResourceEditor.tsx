@@ -84,9 +84,18 @@ export default function ResourceEditor({
   );
   const [saving, setSaving] = useState(false);
 
+  // Content mode for article/video. "url" = use URL field; "file" = use uploader.
+  // For guide/worksheet/template, mode is forced to "file" and the selector is hidden.
+  // Initial inference: if existing content_asset_id, file mode; else url mode.
+  const [contentMode, setContentMode] = useState<"url" | "file">(() => {
+    if (initial?.content_asset_id) return "file";
+    return "url";
+  });
+
   const [archiveDialogOpen, setArchiveDialogOpen] = useState(false);
   const [archiveReason, setArchiveReason] = useState("");
   const [archiving, setArchiving] = useState(false);
+  const [modeSwitchTarget, setModeSwitchTarget] = useState<"url" | "file" | null>(null);
 
   // Grants state (edit mode only)
   const grantsQuery = useQuery({
