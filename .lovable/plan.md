@@ -1,16 +1,11 @@
-# Fix coach view dropping personal half of split-pair PTP
+# Fix client view showing personal results before coach release
 
 ## Problem
-In `src/pages/MyResults.tsx`, the coach filter (around line 436) selects only `coach_clients.assessment_id`. For a split-pair PTP, the personal half lives in `coach_clients.paired_assessment_id`, so it is filtered out and the coach sees only the professional tab.
+In `src/pages/MyResults.tsx`, the `debriefPendingIds` logic (~line 446) only collects `coach_clients.assessment_id`. For split-pair PTP, the personal half's id is in `paired_assessment_id`, so it's never marked pending and the client sees it before release.
 
 ## Change (single file: `src/pages/MyResults.tsx`)
-Replace the `linkedRows` query and `linkedIds` set construction inside the `if (isCoachView && coachUserId && shareWithCoach === false)` block:
+In the `ccRows` query/`pendingIds` build:
+- Add `paired_assessment_id` to `.select(...)`.
+- Use `.flatMap(r => [r.assessment_id, r.paired_assessment_id])` then `.filter(Boolean)` to include both ids in `pendingIds`.
 
-- Add `paired_assessment_id` to the `.select(...)`.
-- Build `linkedIds` from both `assessment_id` and `paired_assessment_id` values, filtering out null/undefined.
-
-Everything else in the file is untouched.
-
-## Verification
-- Coach view of a split-pair PTP client now shows professional, personal, and combined tabs.
-- Coach view of a both-in-one PTP and non-PTP assessments is unchanged.
+No other changes.
