@@ -564,17 +564,49 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
         .maybeSingle();
       if (cancelled) return;
 
+      // 2b. Split-pair combined view: also load the additional half's
+      //     facet_insights_all row. additionalAssessmentId is an
+      //     assessment_id, so resolve to assessment_result_id first.
+      let additionalLoaded: FacetInterpretation[] = [];
+      const isCombinedSplitPair = !!additionalAssessmentId && ptpContextTab === "combined";
+
+      if (isCombinedSplitPair) {
+        const { data: additionalResult } = await supabase
+          .from("assessment_results")
+          .select("id")
+          .eq("assessment_id", additionalAssessmentId!)
+          .maybeSingle();
+        if (cancelled) return;
+        if (additionalResult?.id) {
+          const { data: additionalExisting } = await supabase
+            .from("facet_interpretations")
+            .select("facet_data")
+            .eq("assessment_result_id", additionalResult.id)
+            .eq("section_type", "facet_insights_all")
+            .maybeSingle();
+          if (cancelled) return;
+          if (Array.isArray(additionalExisting?.facet_data)) {
+            additionalLoaded = additionalExisting!.facet_data as unknown as FacetInterpretation[];
+          }
+        }
+      }
+
       const storedTotal: number | null = resultMeta?.facet_insights_all_total ?? null;
-      const loaded = Array.isArray(existing?.facet_data)
+      const primaryLoaded = Array.isArray(existing?.facet_data)
         ? (existing!.facet_data as unknown as FacetInterpretation[])
         : [];
 
-      const isComplete = storedTotal !== null && loaded.length >= storedTotal;
+      // Merge primary + additional; names are unique per half so no dedup.
+      const loaded = [...primaryLoaded, ...additionalLoaded];
+
+      const isComplete = isCombinedSplitPair
+        ? primaryLoaded.length >= (storedTotal ?? 0) && additionalLoaded.length > 0
+        : storedTotal !== null && loaded.length >= storedTotal;
 
       if (loaded.length > 0) {
         setAllFacetInsights(loaded);
-        if (isComplete) return; // Full row — done
-        // Partial row — fall through to poll for completion
+        if (isComplete) return; // Full data — done
+        // Partial — fall through to poll for completion of primary row
       }
 
       // 3. Wait for accordion to open before triggering generation
