@@ -254,6 +254,19 @@ function ModuleEditor({
 
   const handleSave = async () => {
     if (!canSave) return;
+
+    if (isSelfEnrollable && selfEnrollPricingMode === 'paid') {
+      const cents = Math.round(parseFloat(selfEnrollPriceDollars || '0') * 100);
+      if (!Number.isFinite(cents) || cents <= 0) {
+        toast({
+          title: "Invalid price",
+          description: "Enter a price greater than zero, or switch to Free.",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
     setSaving(true);
 
     const minutesNum = estimatedMinutes.trim() === "" ? null : Number(estimatedMinutes);
@@ -276,6 +289,11 @@ function ModuleEditor({
         ? (attachmentPrerequisiteModuleId === "__none__" ? null : attachmentPrerequisiteModuleId)
         : null,
       p_thumbnail_asset_id: thumbnailAssetId,
+      p_is_self_enrollable: isSelfEnrollable,
+      p_self_enroll_price_cents: isSelfEnrollable && selfEnrollPricingMode === 'paid'
+        ? Math.round(parseFloat(selfEnrollPriceDollars) * 100)
+        : null,
+      p_self_enroll_currency: 'usd',
       p_reason: reason.trim(),
     };
 
