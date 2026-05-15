@@ -266,6 +266,7 @@ function CurriculumEditor({
         estimatedMinutes.trim().length > 0 ||
         isPublished ||
         thumbnailAssetId !== null ||
+        isSelfEnrollable ||
         reason.trim().length > 0 ||
         (hasAttachmentSection && (
           attachmentDisplayOrder !== "0" ||
@@ -276,6 +277,8 @@ function CurriculumEditor({
     }
     if (!initial) return false;
     const initialMin = initial.estimated_minutes == null ? "" : String(initial.estimated_minutes);
+    const initialPricingMode: 'free' | 'paid' = initial?.self_enroll_price_cents != null ? 'paid' : 'free';
+    const initialCents = initial?.self_enroll_price_cents ?? 0;
     return (
       slug !== (initial.slug ?? "") ||
       name !== (initial.name ?? "") ||
@@ -285,12 +288,17 @@ function CurriculumEditor({
       estimatedMinutes !== initialMin ||
       isPublished !== !!initial.is_published ||
       thumbnailAssetId !== (initial.thumbnail_asset_id ?? null) ||
+      isSelfEnrollable !== !!initial.is_self_enrollable ||
+      selfEnrollPricingMode !== initialPricingMode ||
+      (selfEnrollPricingMode === 'paid' &&
+        Math.round(parseFloat(selfEnrollPriceDollars || '0') * 100) !== initialCents) ||
       reason.trim().length > 0
     );
   }, [
     mode, initial, startingTagsText, hasAttachmentSection,
     slug, name, description, curriculumMode, audienceTagsText, estimatedMinutes,
     isPublished, thumbnailAssetId, reason,
+    isSelfEnrollable, selfEnrollPricingMode, selfEnrollPriceDollars,
     attachmentDisplayOrder, attachmentIsRequired, attachmentPrerequisiteCurriculumId,
   ]);
 
