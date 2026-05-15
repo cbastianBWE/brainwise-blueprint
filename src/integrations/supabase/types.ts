@@ -2408,6 +2408,92 @@ export type Database = {
           },
         ]
       }
+      comp_coupons: {
+        Row: {
+          applicable_account_types: string[] | null
+          applicable_instrument_ids: string[] | null
+          archive_reason: string | null
+          archived_at: string | null
+          created_at: string
+          created_by: string
+          description: string | null
+          duration: string
+          duration_in_months: number | null
+          id: string
+          internal_name: string
+          max_redemptions: number | null
+          notes: string | null
+          percent_off: number
+          redeem_by: string
+          stripe_coupon_id: string
+        }
+        Insert: {
+          applicable_account_types?: string[] | null
+          applicable_instrument_ids?: string[] | null
+          archive_reason?: string | null
+          archived_at?: string | null
+          created_at?: string
+          created_by: string
+          description?: string | null
+          duration: string
+          duration_in_months?: number | null
+          id?: string
+          internal_name: string
+          max_redemptions?: number | null
+          notes?: string | null
+          percent_off: number
+          redeem_by: string
+          stripe_coupon_id: string
+        }
+        Update: {
+          applicable_account_types?: string[] | null
+          applicable_instrument_ids?: string[] | null
+          archive_reason?: string | null
+          archived_at?: string | null
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          duration?: string
+          duration_in_months?: number | null
+          id?: string
+          internal_name?: string
+          max_redemptions?: number | null
+          notes?: string | null
+          percent_off?: number
+          redeem_by?: string
+          stripe_coupon_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comp_coupons_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comp_coupons_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "comp_coupons_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comp_coupons_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       company_admin_audit_log: {
         Row: {
           action_details: Json | null
@@ -7446,6 +7532,7 @@ export type Database = {
           full_name: string | null
           id: string
           is_internal_test: boolean
+          is_practitioner_coach: boolean
           notifications: Json | null
           onboarding_completed_at: string | null
           onboarding_instrument_version: string | null
@@ -7483,6 +7570,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           is_internal_test?: boolean
+          is_practitioner_coach?: boolean
           notifications?: Json | null
           onboarding_completed_at?: string | null
           onboarding_instrument_version?: string | null
@@ -7520,6 +7608,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           is_internal_test?: boolean
+          is_practitioner_coach?: boolean
           notifications?: Json | null
           onboarding_completed_at?: string | null
           onboarding_instrument_version?: string | null
@@ -8068,6 +8157,24 @@ export type Database = {
         }
         Returns: Json
       }
+      _insert_comp_coupon_row: {
+        Args: {
+          p_applicable_account_types: string[]
+          p_applicable_instrument_ids: string[]
+          p_caller_user_id: string
+          p_description: string
+          p_duration: string
+          p_duration_in_months: number
+          p_internal_name: string
+          p_max_redemptions: number
+          p_notes: string
+          p_percent_off: number
+          p_reason: string
+          p_redeem_by: string
+          p_stripe_coupon_id: string
+        }
+        Returns: string
+      }
       _upsert_thumbnail_ref: {
         Args: {
           p_asset_id: string
@@ -8243,6 +8350,10 @@ export type Database = {
       }
       archive_certification_path: {
         Args: { p_id: string; p_reason: string }
+        Returns: Json
+      }
+      archive_comp_coupon: {
+        Args: { p_coupon_id: string; p_reason: string }
         Returns: Json
       }
       archive_content_item: {
@@ -8497,6 +8608,7 @@ export type Database = {
       }
       current_user_account_type: { Args: never; Returns: string }
       current_user_department_id: { Args: never; Returns: string }
+      current_user_is_practitioner_coach: { Args: never; Returns: boolean }
       current_user_mfa_required: { Args: never; Returns: boolean }
       current_user_mfa_satisfied: { Args: never; Returns: boolean }
       current_user_org_id: { Args: never; Returns: string }
@@ -8600,6 +8712,15 @@ export type Database = {
       get_airsa_aggregate: {
         Args: { p_slice_type?: string; p_slice_value?: string }
         Returns: Json
+      }
+      get_applicable_comp_coupon: {
+        Args: { p_caller_user_id: string; p_instrument_id: string }
+        Returns: {
+          out_coupon_id: string
+          out_internal_name: string
+          out_percent_off: number
+          out_stripe_coupon_id: string
+        }[]
       }
       get_assets_due_for_archive_email: {
         Args: never
