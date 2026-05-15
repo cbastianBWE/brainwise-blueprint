@@ -158,7 +158,10 @@ function ContentItemEditor({
     switch (itemType) {
       case "video": {
         const t = Number(videoCompletionThreshold);
-        return videoSourceType.trim() !== "" && videoSourceId.trim() !== "" && Number.isFinite(t) && t >= 1 && t <= 100;
+        // For supabase_storage, source_id is filled in AFTER create via FileUploadField (chicken-and-egg).
+        // All other source types require the source_id at save time.
+        const sourceIdOk = videoSourceType === "supabase_storage" || videoSourceId.trim() !== "";
+        return videoSourceType.trim() !== "" && sourceIdOk && Number.isFinite(t) && t >= 1 && t <= 100;
       }
       case "quiz": {
         const t = Number(quizPassThreshold);
@@ -575,7 +578,18 @@ function ContentItemEditor({
             <div className="space-y-3">
               <div className="space-y-2">
                 <Label>Video source type</Label>
-                <Select value={videoSourceType} onValueChange={setVideoSourceType} disabled={saving}>
+                <Select
+                  value={videoSourceType}
+                  onValueChange={(newType) => {
+                    // Clear stale source_id when switching source types — prevents FileUploadField
+                    // from rendering "uploaded" state with a YouTube/Vimeo ID that isn't a content_asset_id.
+                    if (newType !== videoSourceType) {
+                      setVideoSourceId("");
+                    }
+                    setVideoSourceType(newType);
+                  }}
+                  disabled={saving}
+                >
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="supabase_storage">Supabase Storage</SelectItem>
@@ -600,7 +614,7 @@ function ContentItemEditor({
                     />
                   ) : (
                     <div className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">
-                      Save the content item first (with a placeholder source), then upload the video file.
+                      Save the content item first. After saving, you'll be able to upload the video file or pick one from the library.
                     </div>
                   )}
                 </div>
