@@ -434,7 +434,7 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
       let filtered = combined;
       if (isCoachView && coachUserId && shareWithCoach === false) {
         const { data: linkedRows } = await supabase
-          .from("coach_clients")
+          .from("coach_clients_client_view")
           .select("assessment_id, paired_assessment_id")
           .eq("coach_user_id", coachUserId)
           .eq("client_user_id", effectiveUserId)
@@ -451,7 +451,7 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
         const assessmentIds = filtered.map(a => a.result.assessment_id);
         if (assessmentIds.length > 0) {
           const { data: ccRows } = await supabase
-            .from('coach_clients')
+            .from('coach_clients_client_view')
             .select('assessment_id, paired_assessment_id, results_released')
             .eq('client_user_id', effectiveUserId)
             .in('assessment_id', assessmentIds);

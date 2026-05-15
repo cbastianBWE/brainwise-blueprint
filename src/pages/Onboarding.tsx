@@ -39,7 +39,7 @@ const Onboarding = () => {
     (async () => {
       // Coach client auto-link takes precedence
       const { data } = await supabase
-        .from("coach_clients")
+        .from("coach_clients_client_view")
         .select("id")
         .eq("client_user_id", user.id)
         .limit(1);
