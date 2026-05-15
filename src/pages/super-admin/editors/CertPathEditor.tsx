@@ -26,7 +26,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Trophy, GraduationCap, BookOpenText, Pencil, Plus,
-  Search, Loader2, Save, Archive,
+  Search, Loader2, Save, Archive, Copy, X,
 } from "lucide-react";
 import {
   slugify, CERT_INSTRUMENTS, CERTIFICATION_TYPES, DELIVERY_MODES,
