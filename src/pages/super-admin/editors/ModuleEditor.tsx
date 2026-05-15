@@ -358,6 +358,51 @@ function ModuleEditor({
     onArchived?.();
   };
 
+  const openDuplicateDialog = () => {
+    if (!initial) return;
+    setDuplicateState({
+      open: true,
+      newSlug: `${initial.slug}-copy`,
+      newName: `${initial.name} (Copy)`,
+      reason: "",
+      loading: false,
+    });
+  };
+
+  const handleDuplicate = async () => {
+    if (!initial?.id || duplicateState.reason.trim().length < 10) return;
+    if (duplicateState.newSlug.trim().length === 0 || duplicateState.newName.trim().length === 0) return;
+    setDuplicateState((s) => ({ ...s, loading: true }));
+    const { data, error } = await supabase.rpc("duplicate_module", {
+      p_source_module_id: initial.id,
+      p_new_slug: duplicateState.newSlug.trim(),
+      p_new_name: duplicateState.newName.trim(),
+      p_reason: duplicateState.reason.trim(),
+    } as any);
+    setDuplicateState((s) => ({ ...s, loading: false }));
+    if (error) {
+      const msg = error.message ?? "";
+      const friendly = msg.includes("slug_already_in_use")
+        ? "That slug is already in use. Pick a different one."
+        : msg.includes("reason_required_min_chars")
+        ? "Reason must be at least 10 characters."
+        : msg || "Could not duplicate.";
+      toast({
+        title: "Could not duplicate module",
+        description: friendly,
+        variant: "destructive",
+      });
+      return;
+    }
+    toast({
+      title: "Module duplicated",
+      description: `Created as draft: ${(data as any)?.new_name}. Review and publish when ready.`,
+    });
+    setDuplicateState({ open: false, newSlug: "", newName: "", reason: "", loading: false });
+    const refetch = (props as any).onRefetch as (() => void | Promise<void>) | undefined;
+    await refetch?.();
+  };
+
   const titleText = mode === "create" ? "New module" : (initial?.name ?? "Module");
   const reasonLen = reason.trim().length;
   const archiveReasonLen = archiveReason.trim().length;
