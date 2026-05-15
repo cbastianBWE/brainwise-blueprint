@@ -271,6 +271,7 @@ export function AppSidebar() {
                       )}
                     </SidebarMenuButton>
                   </SidebarMenuItem>
+                  </Fragment>
                 );
               })}
               {showDashboardsMenu && (
