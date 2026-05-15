@@ -41,6 +41,7 @@ export interface TileProps {
   isCurrentLocation?: boolean;
   inlineCtaLabel?: string;
   onInlineCtaClick?: () => void;
+  locked?: boolean;
 }
 
 function contentTypeChipFor(ct: ResourceContentType) {
