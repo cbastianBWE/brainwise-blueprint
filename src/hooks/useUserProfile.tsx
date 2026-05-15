@@ -8,6 +8,7 @@ export interface UserProfile {
   email: string;
   subscription_status: string;
   subscription_tier: string;
+  is_practitioner_coach: boolean;
 }
 
 export const useUserProfile = () => {
