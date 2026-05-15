@@ -233,6 +233,19 @@ export default function ResourceEditor({
       }
     }
 
+    if (isPublished && (contentType === "article" || contentType === "video")) {
+      const hasUrl = urlOrContent.trim().length > 0;
+      const hasFile = contentAssetId != null;
+      if (hasUrl && !hasFile && !urlKind) {
+        toast({
+          title: "URL behavior required",
+          description: "Choose whether this URL should open externally or render inline.",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
     setSaving(true);
 
     const payload: any = {
