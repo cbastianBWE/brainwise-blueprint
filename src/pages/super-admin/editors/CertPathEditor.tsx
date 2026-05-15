@@ -35,9 +35,17 @@ import { FileUploadField } from "@/components/super-admin/FileUploadField";
 
 function AttachedCurriculaSection({
   certPathId,
+  certPathName: _certPathName,
   onAddClick,
   onSelectCurriculum,
-}: { certPathId: string; onAddClick: () => void; onSelectCurriculum: (curriculumId: string) => void }) {
+  onDetach,
+}: {
+  certPathId: string;
+  certPathName: string;
+  onAddClick: () => void;
+  onSelectCurriculum: (curriculumId: string) => void;
+  onDetach: (curriculumId: string, curriculumName: string) => void;
+}) {
   const { data, isLoading } = useQuery({
     queryKey: ["cert-path-attached-curricula", certPathId],
     queryFn: async () => {
