@@ -199,47 +199,49 @@ export function AppSidebar() {
                   return (
                     <Fragment key={`f-${item.title}${item.url}`}>
                       {sectionHeaderEl}
-                  return (
-                    <SidebarMenuItem key="my-clients">
-                      <SidebarMenuButton asChild>
-                        <NavLink
-                          to="/coach/clients"
-                          className="hover:bg-sidebar-accent"
-                          activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                        >
-                          <Users className="h-4 w-4 shrink-0" />
-                          {!collapsed && (
-                            <div className="flex items-center justify-between flex-1">
-                              <span>My Clients</span>
-                              {isClientsOpen
-                                ? <ChevronDown className="h-3 w-3" />
-                                : <ChevronRight className="h-3 w-3" />
-                              }
-                            </div>
-                          )}
-                        </NavLink>
-                      </SidebarMenuButton>
-                      {isClientsOpen && !collapsed && (
-                        <div className="ml-4 mt-1 space-y-1">
-                          <SidebarMenuItem key="/coach/client-results">
-                            <SidebarMenuButton asChild>
-                              <NavLink
-                                to="/coach/client-results"
-                                end
-                                className="hover:bg-sidebar-accent text-sm"
-                                activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                              >
-                                <BarChart3 className="h-3.5 w-3.5 shrink-0" />
-                                <span>Client Results</span>
-                              </NavLink>
-                            </SidebarMenuButton>
-                          </SidebarMenuItem>
-                        </div>
-                      )}
-                    </SidebarMenuItem>
+                      <SidebarMenuItem key="my-clients">
+                        <SidebarMenuButton asChild>
+                          <NavLink
+                            to="/coach/clients"
+                            className="hover:bg-sidebar-accent"
+                            activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                          >
+                            <Users className="h-4 w-4 shrink-0" />
+                            {!collapsed && (
+                              <div className="flex items-center justify-between flex-1">
+                                <span>My Clients</span>
+                                {isClientsOpen
+                                  ? <ChevronDown className="h-3 w-3" />
+                                  : <ChevronRight className="h-3 w-3" />
+                                }
+                              </div>
+                            )}
+                          </NavLink>
+                        </SidebarMenuButton>
+                        {isClientsOpen && !collapsed && (
+                          <div className="ml-4 mt-1 space-y-1">
+                            <SidebarMenuItem key="/coach/client-results">
+                              <SidebarMenuButton asChild>
+                                <NavLink
+                                  to="/coach/client-results"
+                                  end
+                                  className="hover:bg-sidebar-accent text-sm"
+                                  activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                                >
+                                  <BarChart3 className="h-3.5 w-3.5 shrink-0" />
+                                  <span>Client Results</span>
+                                </NavLink>
+                              </SidebarMenuButton>
+                            </SidebarMenuItem>
+                          </div>
+                        )}
+                      </SidebarMenuItem>
+                    </Fragment>
                   );
                 }
                 return (
+                  <Fragment key={`f-${item.title}${item.url}`}>
+                    {sectionHeaderEl}
                   <SidebarMenuItem key={item.title + item.url}>
                     <SidebarMenuButton asChild disabled={item.disabled}>
                       {item.disabled ? (
