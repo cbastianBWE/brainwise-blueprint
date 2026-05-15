@@ -184,6 +184,7 @@ interface NarrativeSectionsShape {
 export interface PTPNarrativeSectionsProps {
   assessmentResultId: string;
   assessmentId: string;
+  additionalAssessmentId?: string;
   narrative: string | null;
   dimensionScores: [string, DimensionScore][];
   dimensionNameMap: Map<string, string>;
