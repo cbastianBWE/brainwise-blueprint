@@ -452,14 +452,14 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
         if (assessmentIds.length > 0) {
           const { data: ccRows } = await supabase
             .from('coach_clients')
-            .select('assessment_id, results_released')
+            .select('assessment_id, paired_assessment_id, results_released')
             .eq('client_user_id', effectiveUserId)
             .in('assessment_id', assessmentIds);
 
           const pendingIds = new Set<string>(
             (ccRows ?? [])
               .filter(r => r.results_released === false)
-              .map(r => r.assessment_id)
+              .flatMap(r => [r.assessment_id, r.paired_assessment_id])
               .filter(Boolean) as string[]
           );
           setDebriefPendingIds(pendingIds);
