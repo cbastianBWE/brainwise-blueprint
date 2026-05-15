@@ -1268,6 +1268,35 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
                         <Button variant="outline" size="sm" onClick={refetchPtpNarrativeStatus}>
                           <RefreshCw className="h-3 w-3 mr-1" /> Re-check status
                         </Button>
+                        <Button
+                          variant="default"
+                          size="sm"
+                          onClick={async () => {
+                            try {
+                              const { error } = await supabase.functions.invoke(
+                                "retry-ptp-narratives",
+                                { body: { assessment_result_id: effectiveSelected.result.id } },
+                              );
+                              if (error) {
+                                toast({
+                                  title: "Retry failed",
+                                  description: error.message ?? "Please try again.",
+                                  variant: "destructive",
+                                });
+                                return;
+                              }
+                              refetchPtpNarrativeStatus();
+                            } catch (e) {
+                              toast({
+                                title: "Retry failed",
+                                description: e instanceof Error ? e.message : "Please try again.",
+                                variant: "destructive",
+                              });
+                            }
+                          }}
+                        >
+                          <RefreshCw className="h-3 w-3 mr-1" /> Retry generation
+                        </Button>
                       </div>
                     </CardContent>
                   </Card>
