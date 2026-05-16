@@ -8405,6 +8405,10 @@ export type Database = {
         }
         Returns: Json
       }
+      _compute_completion_cascade: {
+        Args: { p_content_item_id: string; p_user_id: string }
+        Returns: Json
+      }
       _compute_recommended_next_for_curriculum: {
         Args: { p_curriculum_id: string; p_user_id: string }
         Returns: Json
