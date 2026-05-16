@@ -492,7 +492,7 @@ export default function LessonBlockViewer({
                   assetUrlMap={urlMap}
                   mode="trainee"
                   onBlockComplete={handleBlockComplete}
-                  onBlockProgress={handleBlockProgress}
+                  savedProgress={savedProgressByBlockId.get(row.id) ?? null}
                 />
                 {showPerBlockContinue && (
                   <div className="mt-3 flex justify-end">
