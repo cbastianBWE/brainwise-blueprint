@@ -989,8 +989,12 @@ function ContentItemEditor({
           <DialogHeader>
             <DialogTitle>AI Draft</DialogTitle>
             <DialogDescription>
-              Describe what you want the AI to write for the {aiDraftTarget === "content_item_title" ? "title" : "description"}.
-              {aiDraftTarget === "content_item_title" ? title : description ? " Existing text will be refined." : ""}
+              Describe what you want the AI to write for the {
+                aiDraftTarget === "content_item_title" ? "title"
+                : aiDraftTarget === "content_item_video_summary" ? "quick summary"
+                : "description"
+              }.
+              {(aiDraftTarget === "content_item_title" ? title : aiDraftTarget === "content_item_video_summary" ? videoAiSummary : description) ? " Existing text will be refined." : ""}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
