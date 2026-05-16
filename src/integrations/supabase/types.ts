@@ -9054,6 +9054,10 @@ export type Database = {
         }[]
       }
       get_coach_disclosure_status: { Args: never; Returns: Json }
+      get_curriculum_detail: {
+        Args: { p_curriculum_id: string; p_user_id?: string }
+        Returns: Json
+      }
       get_instrument_aggregate: {
         Args: {
           p_context_type?: string
