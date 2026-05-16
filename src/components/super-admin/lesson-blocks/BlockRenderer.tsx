@@ -1499,7 +1499,7 @@ function ScenarioRender({
   mode,
   blockClientId,
   onBlockComplete,
-  onBlockProgress,
+  savedProgress,
 }: {
   title: string | null;
   introMarkdown: TipTapDocJSON | null;
@@ -1509,67 +1509,43 @@ function ScenarioRender({
   mode?: "editor" | "trainee";
   blockClientId: string;
   onBlockComplete?: OnBlockComplete;
-  onBlockProgress?: OnBlockProgress;
+  savedProgress?: SavedBlockProgress | null;
 }) {
-  const sessionKey = `scenario-pos:${blockClientId}`;
+  // Seed state from DB-backed savedProgress when present (trainee mode).
+  const seed = (() => {
+    if (mode !== "trainee" || !savedProgress) return null;
+    const d = savedProgress.completion_data as any;
+    if (!d || typeof d !== "object") return null;
+    const validMomentIds = new Set(moments.map((m) => m.client_id));
+    const reflectionResponses: Record<string, string> = {};
+    if (d.reflectionResponses && typeof d.reflectionResponses === "object") {
+      for (const [k, v] of Object.entries(d.reflectionResponses)) {
+        if (validMomentIds.has(k) && typeof v === "string") reflectionResponses[k] = v;
+      }
+    }
+    const choiceSelected: Record<string, string> = {};
+    if (d.choiceSelected && typeof d.choiceSelected === "object") {
+      for (const [k, v] of Object.entries(d.choiceSelected)) {
+        if (validMomentIds.has(k) && typeof v === "string") choiceSelected[k] = v;
+      }
+    }
+    const cursorIdx =
+      typeof d.cursorIdx === "number" && d.cursorIdx >= 0 && d.cursorIdx <= moments.length
+        ? d.cursorIdx
+        : 0;
+    return { cursorIdx, reflectionResponses, choiceSelected };
+  })();
 
-  const [cursorIdx, setCursorIdx] = useState(0);
-  const [reflectionResponses, setReflectionResponses] = useState<Record<string, string>>({});
-  const [choiceSelected, setChoiceSelected] = useState<Record<string, string>>({});
+  const [cursorIdx, setCursorIdx] = useState(seed?.cursorIdx ?? 0);
+  const [reflectionResponses, setReflectionResponses] = useState<Record<string, string>>(
+    seed?.reflectionResponses ?? {},
+  );
+  const [choiceSelected, setChoiceSelected] = useState<Record<string, string>>(
+    seed?.choiceSelected ?? {},
+  );
   const [modalOutcome, setModalOutcome] = useState<TipTapDocJSON | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const continueBtnRef = useRef<HTMLButtonElement | null>(null);
-  const initializedRef = useRef(false);
-
-  useEffect(() => {
-    if (initializedRef.current) return;
-    initializedRef.current = true;
-    if (mode !== "trainee" || typeof window === "undefined") return;
-    try {
-      const raw = window.sessionStorage.getItem(sessionKey);
-      if (!raw) return;
-      const parsed = JSON.parse(raw) as Partial<ScenarioPersistedState>;
-      const validMomentIds = new Set(moments.map((m) => m.client_id));
-      if (
-        typeof parsed.cursorIdx === "number" &&
-        parsed.cursorIdx >= 0 &&
-        parsed.cursorIdx <= moments.length
-      ) {
-        setCursorIdx(parsed.cursorIdx);
-      }
-      if (parsed.reflectionResponses && typeof parsed.reflectionResponses === "object") {
-        const filtered: Record<string, string> = {};
-        for (const [k, v] of Object.entries(parsed.reflectionResponses)) {
-          if (validMomentIds.has(k) && typeof v === "string") filtered[k] = v;
-        }
-        setReflectionResponses(filtered);
-      }
-      if (parsed.choiceSelected && typeof parsed.choiceSelected === "object") {
-        const filtered: Record<string, string> = {};
-        for (const [k, v] of Object.entries(parsed.choiceSelected)) {
-          if (validMomentIds.has(k) && typeof v === "string") filtered[k] = v;
-        }
-        setChoiceSelected(filtered);
-      }
-    } catch {
-      /* ignore */
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionKey, mode]);
-
-  useEffect(() => {
-    if (mode !== "trainee" || typeof window === "undefined") return;
-    try {
-      const payload: ScenarioPersistedState = {
-        cursorIdx,
-        reflectionResponses,
-        choiceSelected,
-      };
-      window.sessionStorage.setItem(sessionKey, JSON.stringify(payload));
-    } catch {
-      /* ignore quota */
-    }
-  }, [cursorIdx, reflectionResponses, choiceSelected, sessionKey, mode]);
 
   const momentIdsKey = moments.map((m) => m.client_id).join("|");
   useEffect(() => {
@@ -1602,20 +1578,19 @@ function ScenarioRender({
   const currentImageUrl =
     current?.setup_image_asset_id ? urlMap.get(current.setup_image_asset_id) ?? null : null;
 
-  const completionFiredRef = useRef(false);
+  const completionFiredRef = useRef(savedProgress?.status === "completed");
   useEffect(() => {
     if (mode !== "trainee") return;
     if (allDone && !completionFiredRef.current && moments.length > 0) {
       completionFiredRef.current = true;
-      onBlockComplete?.(blockClientId);
-      onBlockProgress?.({
-        blockClientId,
-        status: "completed",
-        data: { cursorIdx, reflectionResponses, choiceSelected },
+      onBlockComplete?.(blockClientId, {
+        cursorIdx,
+        reflectionResponses,
+        choiceSelected,
       });
     }
     if (!allDone) completionFiredRef.current = false;
-  }, [allDone, mode, blockClientId, onBlockComplete, onBlockProgress, moments.length, cursorIdx, reflectionResponses, choiceSelected]);
+  }, [allDone, mode, blockClientId, onBlockComplete, moments.length, cursorIdx, reflectionResponses, choiceSelected]);
 
   const openOutcome = (outcomeDoc: TipTapDocJSON | null) => {
     setModalOutcome(outcomeDoc);
