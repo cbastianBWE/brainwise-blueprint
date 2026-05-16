@@ -3,6 +3,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   CheckCircle2,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   Loader2,
   Menu,
   RotateCcw,
@@ -43,6 +45,11 @@ interface LessonBlockRow {
   config: Record<string, unknown>;
 }
 
+interface Section {
+  blocks: LessonBlockRow[];
+  continueBlockId: string | null;
+}
+
 interface Props {
   contentItem: any;
   completion: any | null;
@@ -59,6 +66,13 @@ interface Props {
   onCascade?: (c: CascadeResult | null) => void;
 }
 
+function isContinueDelimiter(b: LessonBlockRow): boolean {
+  if (b.block_type !== "button_stack") return false;
+  const buttons = (b.config as any)?.buttons;
+  if (!Array.isArray(buttons)) return false;
+  return buttons.some((btn: any) => btn?.action_type === "continue");
+}
+
 /* ---------- viewer ---------- */
 
 export default function LessonBlockViewer({
@@ -71,9 +85,6 @@ export default function LessonBlockViewer({
 }: Props) {
   const queryClient = useQueryClient();
   const contentItemId: string = contentItem.id;
-  const completionMode: LessonCompletionMode =
-    (contentItem.lesson_completion_mode as LessonCompletionMode | undefined) ??
-    "explicit_continue";
   const isCompleted = completion?.status === "completed";
   const isSelf = viewerRole === "self";
 
@@ -130,14 +141,39 @@ export default function LessonBlockViewer({
     return m;
   }, [blockProgressQuery.data]);
 
+  /* ---- sectioning ---- */
+
+  const blocks = blocksQuery.data ?? [];
+
+  const { sections, blockIdToSectionIdx } = useMemo(() => {
+    const result: Section[] = [];
+    const idToIdx = new Map<string, number>();
+    let current: LessonBlockRow[] = [];
+    for (const b of blocks) {
+      if (isContinueDelimiter(b)) {
+        result.push({ blocks: current, continueBlockId: b.id });
+        current = [];
+      } else {
+        current.push(b);
+      }
+    }
+    result.push({ blocks: current, continueBlockId: null });
+    result.forEach((sec, idx) => {
+      for (const b of sec.blocks) idToIdx.set(b.id, idx);
+    });
+    return { sections: result, blockIdToSectionIdx: idToIdx };
+  }, [blocks]);
+
   /* ---- state ---- */
 
+  const [currentSectionIdx, setCurrentSectionIdx] = useState(0);
+  const [visitedSections, setVisitedSections] = useState<Set<number>>(new Set([0]));
   const [completedIds, setCompletedIds] = useState<Set<string>>(new Set());
-  const [scrolledToBottom, setScrolledToBottom] = useState(false);
   const [showMoreHint, setShowMoreHint] = useState(false);
   const [activeBlockId, setActiveBlockId] = useState<string | null>(null);
   const [tocOpenMobile, setTocOpenMobile] = useState(false);
 
+  const furthestSectionRef = useRef(0);
   const scrollAreaRef = useRef<HTMLDivElement | null>(null);
   const blockRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const setBlockRef = useCallback((id: string, el: HTMLDivElement | null) => {
@@ -145,16 +181,15 @@ export default function LessonBlockViewer({
     else blockRefs.current.delete(id);
   }, []);
 
-  const blocks = blocksQuery.data ?? [];
-  const editorBlocks: EditorBlock[] = useMemo(
-    () =>
-      blocks.map((b) => ({
-        client_id: b.id,
-        block_type: b.block_type,
-        config: b.config ?? {},
-      })),
-    [blocks],
-  );
+  // Track visited + furthest whenever section changes
+  useEffect(() => {
+    setVisitedSections((prev) =>
+      prev.has(currentSectionIdx) ? prev : new Set(prev).add(currentSectionIdx),
+    );
+    if (currentSectionIdx > furthestSectionRef.current) {
+      furthestSectionRef.current = currentSectionIdx;
+    }
+  }, [currentSectionIdx]);
 
   /* ---- seed completedIds from DB on (re)load ---- */
 
@@ -171,10 +206,6 @@ export default function LessonBlockViewer({
   }, [blockProgressQuery.isLoading, blockProgressQuery.data]);
 
   /* ---- per-block completion (live transitions only) ---- */
-  // Renderer fires this only on a live false → true transition, with a state
-  // snapshot. We update the in-memory gating set AND persist to DB via
-  // reportProgress. Already-complete blocks are handled by the seed above —
-  // not by this callback.
 
   const handleBlockComplete = useCallback<OnBlockComplete>(
     (blockId, completionData) => {
@@ -194,11 +225,13 @@ export default function LessonBlockViewer({
     [isSelf, reportProgress],
   );
 
-  /* ---- furthest-position tracking (debounced) ---- */
+  /* ---- furthest-position tracking (debounced, monotonic) ---- */
 
   const positionTimerRef = useRef<number | null>(null);
   useEffect(() => {
     if (!isSelf || !activeBlockId) return;
+    // Skip backward writes — only persist if we are at or past the furthest section reached.
+    if (currentSectionIdx < furthestSectionRef.current) return;
     if (positionTimerRef.current) window.clearTimeout(positionTimerRef.current);
     positionTimerRef.current = window.setTimeout(() => {
       reportProgress("upsert_lesson_progress", {
@@ -210,13 +243,15 @@ export default function LessonBlockViewer({
     return () => {
       if (positionTimerRef.current) window.clearTimeout(positionTimerRef.current);
     };
-  }, [activeBlockId, contentItemId, isSelf, reportProgress]);
+  }, [activeBlockId, contentItemId, isSelf, reportProgress, currentSectionIdx]);
 
-  /* ---- scroll tracking: active block + bottom + more-hint ---- */
+  /* ---- scroll tracking: active block + more-hint (per current section) ---- */
+
+  const currentSection = sections[currentSectionIdx];
 
   useEffect(() => {
     const root = scrollAreaRef.current;
-    if (!root || blocks.length === 0) return;
+    if (!root || !currentSection || currentSection.blocks.length === 0) return;
 
     const findScroller = (): HTMLElement | Window => {
       let el: HTMLElement | null = root.parentElement;
@@ -233,28 +268,24 @@ export default function LessonBlockViewer({
     const scroller = findScroller();
 
     const compute = () => {
-      // bottom + more-hint based on scroll container
       if (scroller === window) {
         const sh = document.documentElement.scrollHeight;
         const ch = window.innerHeight;
         const st = window.scrollY;
         const atBottom = st + ch >= sh - 24;
-        setScrolledToBottom(atBottom);
         setShowMoreHint(!atBottom);
       } else {
         const el = scroller as HTMLElement;
         const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 24;
-        setScrolledToBottom(atBottom);
         setShowMoreHint(!atBottom);
       }
-      // active block: topmost block whose top is past the viewport top
       const containerTop =
         scroller === window
           ? 0
           : (scroller as HTMLElement).getBoundingClientRect().top;
       let bestId: string | null = null;
       let bestDelta = Number.POSITIVE_INFINITY;
-      for (const b of blocks) {
+      for (const b of currentSection.blocks) {
         const el = blockRefs.current.get(b.id);
         if (!el) continue;
         const rect = el.getBoundingClientRect();
@@ -275,28 +306,36 @@ export default function LessonBlockViewer({
       target.removeEventListener("scroll", compute);
       window.removeEventListener("resize", compute);
     };
-  }, [blocks]);
+  }, [currentSection, currentSectionIdx]);
 
   /* ---- resume on mount ---- */
 
   const resumedRef = useRef(false);
   useEffect(() => {
-    if (resumedRef.current || blocks.length === 0) return;
+    if (resumedRef.current) return;
+    if (blocks.length === 0) return;
     const targetId = completion?.lesson_last_block_id as string | undefined;
     if (!targetId) {
       resumedRef.current = true;
       return;
     }
-    const el = blockRefs.current.get(targetId);
-    if (el) {
+    const idx = blockIdToSectionIdx.get(targetId);
+    if (idx === undefined) {
       resumedRef.current = true;
-      requestAnimationFrame(() => {
-        el.scrollIntoView({ behavior: "smooth", block: "start" });
-      });
+      return;
     }
-  }, [blocks, completion]);
+    resumedRef.current = true;
+    setCurrentSectionIdx(idx);
+    furthestSectionRef.current = idx;
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        const el = blockRefs.current.get(targetId);
+        el?.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    });
+  }, [blocks, completion, blockIdToSectionIdx]);
 
-  /* ---- gating logic ---- */
+  /* ---- gating ---- */
 
   const gatingRequiredBlockIds = useMemo(
     () =>
@@ -319,7 +358,25 @@ export default function LessonBlockViewer({
     return true;
   }, [gatingRequiredBlockIds, completedIds]);
 
-  const finalContinueEnabled = allGatedComplete && scrolledToBottom;
+  const allSectionsVisited = visitedSections.size === sections.length;
+  const finalContinueEnabled = allGatedComplete && allSectionsVisited;
+
+  /* ---- navigation ---- */
+
+  const scrollBodyToTop = () => {
+    requestAnimationFrame(() => {
+      scrollAreaRef.current?.scrollIntoView({ block: "start", behavior: "smooth" });
+    });
+  };
+
+  const goNext = () => {
+    setCurrentSectionIdx((i) => Math.min(i + 1, sections.length - 1));
+    scrollBodyToTop();
+  };
+  const goPrev = () => {
+    setCurrentSectionIdx((i) => Math.max(i - 1, 0));
+    scrollBodyToTop();
+  };
 
   /* ---- handlers ---- */
 
@@ -337,6 +394,9 @@ export default function LessonBlockViewer({
       p_content_item_id: contentItemId,
     });
     setCompletedIds(new Set());
+    setCurrentSectionIdx(0);
+    setVisitedSections(new Set([0]));
+    furthestSectionRef.current = 0;
     seededProgressRef.current = false;
     resumedRef.current = false;
     await queryClient.invalidateQueries({ queryKey: ["content-item-viewer", contentItemId] });
@@ -347,10 +407,20 @@ export default function LessonBlockViewer({
   };
 
   const scrollToBlock = (id: string) => {
-    const el = blockRefs.current.get(id);
-    if (!el) return;
-    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    const idx = blockIdToSectionIdx.get(id);
+    if (idx === undefined) return;
+    const needsSwitch = idx !== currentSectionIdx;
+    if (needsSwitch) setCurrentSectionIdx(idx);
     setTocOpenMobile(false);
+    const focus = () => {
+      const el = blockRefs.current.get(id);
+      el?.scrollIntoView({ behavior: "smooth", block: "start" });
+    };
+    if (needsSwitch) {
+      requestAnimationFrame(() => requestAnimationFrame(focus));
+    } else {
+      focus();
+    }
   };
 
   /* ---- render ---- */
@@ -379,6 +449,15 @@ export default function LessonBlockViewer({
     );
   }
 
+  const isFinalSection = currentSectionIdx === sections.length - 1;
+  const hasPrev = currentSectionIdx > 0;
+
+  const currentEditorBlocks: EditorBlock[] = (currentSection?.blocks ?? []).map((b) => ({
+    client_id: b.id,
+    block_type: b.block_type,
+    config: b.config ?? {},
+  }));
+
   /* ---- TOC ---- */
 
   const Toc = (
@@ -386,33 +465,35 @@ export default function LessonBlockViewer({
       <div className="px-2 pb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
         Contents
       </div>
-      {blocks.map((b) => {
-        const meta = BLOCK_TYPE_META[b.block_type];
-        const Icon = meta?.icon;
-        const required = gatingRequiredBlockIds.has(b.id);
-        const done = completedIds.has(b.id);
-        const active = activeBlockId === b.id;
-        return (
-          <button
-            key={b.id}
-            onClick={() => scrollToBlock(b.id)}
-            className={`group flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left transition-colors ${
-              active ? "bg-muted text-foreground" : "text-muted-foreground hover:bg-muted/70"
-            }`}
-          >
-            {Icon && <Icon className="h-3.5 w-3.5 shrink-0" />}
-            <span className="flex-1 truncate text-xs">{meta?.label ?? b.block_type}</span>
-            {required && (
-              <span className="rounded-full bg-[var(--bw-orange)]/10 px-1.5 py-0.5 text-[10px] font-semibold text-[var(--bw-orange)]">
-                Req
-              </span>
-            )}
-            {done && (
-              <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-[var(--bw-forest)]" />
-            )}
-          </button>
-        );
-      })}
+      {blocks
+        .filter((b) => !isContinueDelimiter(b))
+        .map((b) => {
+          const meta = BLOCK_TYPE_META[b.block_type];
+          const Icon = meta?.icon;
+          const required = gatingRequiredBlockIds.has(b.id);
+          const done = completedIds.has(b.id);
+          const active = activeBlockId === b.id;
+          return (
+            <button
+              key={b.id}
+              onClick={() => scrollToBlock(b.id)}
+              className={`group flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left transition-colors ${
+                active ? "bg-muted text-foreground" : "text-muted-foreground hover:bg-muted/70"
+              }`}
+            >
+              {Icon && <Icon className="h-3.5 w-3.5 shrink-0" />}
+              <span className="flex-1 truncate text-xs">{meta?.label ?? b.block_type}</span>
+              {required && (
+                <span className="rounded-full bg-[var(--bw-orange)]/10 px-1.5 py-0.5 text-[10px] font-semibold text-[var(--bw-orange)]">
+                  Req
+                </span>
+              )}
+              {done && (
+                <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-[var(--bw-forest)]" />
+              )}
+            </button>
+          );
+        })}
     </nav>
   );
 
@@ -441,6 +522,9 @@ export default function LessonBlockViewer({
             {Toc}
           </SheetContent>
         </Sheet>
+        <div className="text-xs text-muted-foreground">
+          Section {currentSectionIdx + 1} of {sections.length}
+        </div>
         {isCompleted && isSelf && (
           <Button variant="ghost" size="sm" onClick={handleReattempt}>
             <RotateCcw className="mr-1.5 h-3.5 w-3.5" /> Start again
@@ -470,17 +554,12 @@ export default function LessonBlockViewer({
 
         {/* Lesson body */}
         <div ref={scrollAreaRef} className="relative min-w-0 space-y-6">
-          {editorBlocks.map((eb, idx) => {
-            const row = blocks[idx];
-            const required = gatingRequiredBlockIds.has(row.id);
-            const done = completedIds.has(row.id);
-            const isLast = idx === editorBlocks.length - 1;
-            const nextRow = blocks[idx + 1];
-            const showPerBlockContinue =
-              INTERACTIVE_TYPES.has(row.block_type) &&
-              required &&
-              done &&
-              !isLast;
+          <div className="hidden lg:block text-xs text-muted-foreground">
+            Section {currentSectionIdx + 1} of {sections.length}
+          </div>
+
+          {currentEditorBlocks.map((eb, idx) => {
+            const row = currentSection.blocks[idx];
             return (
               <div
                 key={row.id}
@@ -495,60 +574,86 @@ export default function LessonBlockViewer({
                   onBlockComplete={handleBlockComplete}
                   savedProgress={savedProgressByBlockId.get(row.id) ?? null}
                 />
-                {showPerBlockContinue && (
-                  <div className="mt-3 flex justify-end">
-                    <Button
-                      size="sm"
-                      onClick={() => nextRow && scrollToBlock(nextRow.id)}
-                      className="bg-[var(--bw-orange)] text-white hover:bg-[var(--bw-orange-600)]"
-                    >
-                      Continue
-                    </Button>
-                  </div>
-                )}
               </div>
             );
           })}
 
-          {/* Final continue */}
+          {/* Section footer */}
           <div className="border-t pt-6">
-            {!isCompleted && isSelf && (
-              <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="text-xs text-muted-foreground">
-                  {!allGatedComplete
-                    ? "Complete the required activities above to finish this lesson."
-                    : !scrolledToBottom
-                      ? "Scroll to the end of the lesson to finish."
-                      : "You've completed every required activity."}
-                </div>
-                <Button
-                  size="lg"
-                  disabled={!finalContinueEnabled || isCompleting || isReporting}
-                  onClick={handleFinalContinue}
-                  className="bg-[var(--bw-orange)] text-white hover:bg-[var(--bw-orange-600)]"
-                >
-                  {isCompleting ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Saving…
-                    </>
-                  ) : (
-                    "Complete lesson"
-                  )}
-                </Button>
-              </div>
-            )}
-            {isCompleted && (
-              <div className="flex items-center justify-between rounded-md border border-[var(--bw-forest)]/30 bg-[var(--bw-forest)]/5 p-3 text-sm">
-                <span className="flex items-center gap-2 text-[var(--bw-forest)]">
-                  <CheckCircle2 className="h-4 w-4" />
-                  Lesson complete.
-                </span>
-                {isSelf && (
-                  <Button variant="ghost" size="sm" onClick={handleReattempt}>
-                    <RotateCcw className="mr-1.5 h-3.5 w-3.5" /> Start again
+            {isFinalSection ? (
+              <>
+                {!isCompleted && isSelf && (
+                  <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="text-xs text-muted-foreground">
+                      {!allGatedComplete
+                        ? "Complete the required activities above to finish this lesson."
+                        : !allSectionsVisited
+                          ? "Visit every section of the lesson to finish."
+                          : "You've completed every section."}
+                    </div>
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                      {hasPrev && (
+                        <Button variant="outline" size="lg" onClick={goPrev}>
+                          <ChevronLeft className="mr-1.5 h-4 w-4" />
+                          Previous
+                        </Button>
+                      )}
+                      <Button
+                        size="lg"
+                        disabled={!finalContinueEnabled || isCompleting || isReporting}
+                        onClick={handleFinalContinue}
+                        className="bg-[var(--bw-orange)] text-white hover:bg-[var(--bw-orange-600)]"
+                      >
+                        {isCompleting ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Saving…
+                          </>
+                        ) : (
+                          "Complete lesson"
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+                {isCompleted && (
+                  <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex items-center gap-2 rounded-md border border-[var(--bw-forest)]/30 bg-[var(--bw-forest)]/5 px-3 py-2 text-sm text-[var(--bw-forest)]">
+                      <CheckCircle2 className="h-4 w-4" />
+                      Lesson complete.
+                    </div>
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                      {hasPrev && (
+                        <Button variant="outline" size="lg" onClick={goPrev}>
+                          <ChevronLeft className="mr-1.5 h-4 w-4" />
+                          Previous
+                        </Button>
+                      )}
+                      {isSelf && (
+                        <Button variant="ghost" size="sm" onClick={handleReattempt}>
+                          <RotateCcw className="mr-1.5 h-3.5 w-3.5" /> Start again
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
+                {hasPrev && (
+                  <Button variant="outline" size="lg" onClick={goPrev}>
+                    <ChevronLeft className="mr-1.5 h-4 w-4" />
+                    Previous
                   </Button>
                 )}
+                <Button
+                  size="lg"
+                  onClick={goNext}
+                  className="bg-[var(--bw-orange)] text-white hover:bg-[var(--bw-orange-600)]"
+                >
+                  Continue
+                  <ChevronRight className="ml-1.5 h-4 w-4" />
+                </Button>
               </div>
             )}
           </div>
