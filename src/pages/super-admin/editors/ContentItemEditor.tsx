@@ -387,12 +387,13 @@ function ContentItemEditor({
     onArchived?.();
   };
 
-  const callDraftText = async (targetField: "content_item_title" | "content_item_description") => {
+  const callDraftText = async (targetField: "content_item_title" | "content_item_description" | "content_item_video_summary") => {
     if (!aiAuthorPrompt.trim()) {
       toast({ title: "Prompt required", description: "Describe what you want the AI to write.", variant: "destructive" });
       return;
     }
     if (targetField === "content_item_title") setAiDraftingTitle(true);
+    else if (targetField === "content_item_video_summary") setAiDraftingVideoSummary(true);
     else setAiDraftingDesc(true);
 
     try {
@@ -401,13 +402,20 @@ function ContentItemEditor({
         toast({ title: "Not signed in", description: "Please sign in again.", variant: "destructive" });
         setAiDraftingTitle(false);
         setAiDraftingDesc(false);
+        setAiDraftingVideoSummary(false);
         return;
       }
 
-      const currentValue = targetField === "content_item_title" ? title : description;
-      const surroundingContext = targetField === "content_item_title"
-        ? `Module: ${parentModule?.name ?? "(unknown)"}\nDescription: ${description || "(none)"}`
-        : `Module: ${parentModule?.name ?? "(unknown)"}\nTitle: ${title || "(none)"}\nItem type: ${itemType}`;
+      const currentValue =
+        targetField === "content_item_title" ? title
+        : targetField === "content_item_video_summary" ? videoAiSummary
+        : description;
+      const surroundingContext =
+        targetField === "content_item_title"
+          ? `Module: ${parentModule?.name ?? "(unknown)"}\nDescription: ${description || "(none)"}`
+          : targetField === "content_item_video_summary"
+            ? `Module: ${parentModule?.name ?? "(unknown)"}\nVideo title: ${title || "(none)"}\nVideo description: ${description || "(none)"}`
+            : `Module: ${parentModule?.name ?? "(unknown)"}\nTitle: ${title || "(none)"}\nItem type: ${itemType}`;
 
       const { data, error } = await supabase.functions.invoke("draft-text", {
         body: {
@@ -431,6 +439,7 @@ function ContentItemEditor({
 
       const payload = data as { text: string; length: number };
       if (targetField === "content_item_title") setTitle(payload.text);
+      else if (targetField === "content_item_video_summary") setVideoAiSummary(payload.text);
       else setDescription(payload.text);
 
       toast({ title: "AI draft inserted", description: `${payload.length} characters generated` });
@@ -441,10 +450,11 @@ function ContentItemEditor({
     } finally {
       setAiDraftingTitle(false);
       setAiDraftingDesc(false);
+      setAiDraftingVideoSummary(false);
     }
   };
 
-  const openAiDraft = (target: "content_item_title" | "content_item_description") => {
+  const openAiDraft = (target: "content_item_title" | "content_item_description" | "content_item_video_summary") => {
     setAiDraftTarget(target);
     setAiAuthorPrompt("");
     setAiDraftDialogOpen(true);
