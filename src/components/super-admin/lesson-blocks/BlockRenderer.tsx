@@ -437,6 +437,8 @@ export function BlockRenderer({ block, assetUrlMap, mode, onBlockComplete, onBlo
             urlMap={assetUrlMap}
             mode={mode}
             blockClientId={block.client_id}
+            onBlockComplete={onBlockComplete}
+            onBlockProgress={onBlockProgress}
           />
         );
       case "card_sort":
@@ -448,6 +450,8 @@ export function BlockRenderer({ block, assetUrlMap, mode, onBlockComplete, onBlo
             urlMap={assetUrlMap}
             mode={mode}
             blockClientId={block.client_id}
+            onBlockComplete={onBlockComplete}
+            onBlockProgress={onBlockProgress}
           />
         );
       case "scenario":
@@ -460,6 +464,8 @@ export function BlockRenderer({ block, assetUrlMap, mode, onBlockComplete, onBlo
             urlMap={assetUrlMap}
             mode={mode}
             blockClientId={block.client_id}
+            onBlockComplete={onBlockComplete}
+            onBlockProgress={onBlockProgress}
           />
         );
       case "knowledge_check":
@@ -469,6 +475,8 @@ export function BlockRenderer({ block, assetUrlMap, mode, onBlockComplete, onBlo
             gatingRequired={cfg.gating_required === true}
             mode={mode}
             blockClientId={block.client_id}
+            onBlockComplete={onBlockComplete}
+            onBlockProgress={onBlockProgress}
           />
         );
       default:
