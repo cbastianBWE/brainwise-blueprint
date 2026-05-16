@@ -337,8 +337,12 @@ export default function LessonBlockViewer({
       p_content_item_id: contentItemId,
     });
     setCompletedIds(new Set());
+    seededProgressRef.current = false;
     resumedRef.current = false;
     await queryClient.invalidateQueries({ queryKey: ["lesson-blocks", contentItemId] });
+    await queryClient.invalidateQueries({
+      queryKey: ["lesson-block-progress", contentItemId],
+    });
   };
 
   const scrollToBlock = (id: string) => {
