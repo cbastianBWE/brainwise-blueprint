@@ -235,6 +235,7 @@ function ContentItemEditor({
       videoSourceType !== (initial.video_source_type ?? "youtube_unlisted") ||
       videoSourceId !== (initial.video_source_id ?? "") ||
       videoCompletionThreshold !== (initial.video_completion_threshold_pct == null ? "95" : String(initial.video_completion_threshold_pct)) ||
+      videoAiSummary !== (initial.video_ai_summary ?? "") ||
       quizPassThreshold !== (initial.quiz_pass_threshold_pct == null ? "80" : String(initial.quiz_pass_threshold_pct)) ||
       quizShowCorrectMode !== (initial.quiz_show_correct_mode ?? "after_pass") ||
       writtenMinChars !== (initial.written_min_chars == null ? "100" : String(initial.written_min_chars)) ||
