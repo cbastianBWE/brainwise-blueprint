@@ -1198,7 +1198,7 @@ function CardSortRender({
   mode,
   blockClientId,
   onBlockComplete,
-  onBlockProgress,
+  savedProgress,
 }: {
   buckets: CardSortBucket[];
   cards: CardSortCardConfig[];
@@ -1207,10 +1207,8 @@ function CardSortRender({
   mode?: "editor" | "trainee";
   blockClientId: string;
   onBlockComplete?: OnBlockComplete;
-  onBlockProgress?: OnBlockProgress;
+  savedProgress?: SavedBlockProgress | null;
 }) {
-  const sessionKey = `card_sort-pos:${blockClientId}`;
-
   const initialState = (): Record<string, PerCardState> => {
     const out: Record<string, PerCardState> = {};
     for (const c of cards) {
@@ -1219,63 +1217,36 @@ function CardSortRender({
     return out;
   };
 
-  const [stateById, setStateById] = useState<Record<string, PerCardState>>(initialState);
+  // Seed from DB-backed savedProgress when present (trainee mode).
+  const seededState = (): Record<string, PerCardState> => {
+    const base = initialState();
+    if (mode !== "trainee" || !savedProgress) return base;
+    const d = savedProgress.completion_data as any;
+    if (!d || typeof d !== "object") return base;
+    const validBucketIds = new Set(buckets.map((b) => b.client_id));
+    for (const c of cards) {
+      const prior = d[c.client_id];
+      if (
+        prior &&
+        (prior.placement === "holding" || validBucketIds.has(prior.placement))
+      ) {
+        base[c.client_id] = {
+          placement: prior.placement,
+          locked: prior.locked === true,
+          lastWrong: false,
+        };
+      }
+    }
+    return base;
+  };
+
+  const [stateById, setStateById] = useState<Record<string, PerCardState>>(seededState);
   const [activeId, setActiveId] = useState<string | null>(null);
-  const initializedRef = useRef(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
     useSensor(TouchSensor, { activationConstraint: { delay: 100, tolerance: 5 } }),
   );
-
-  useEffect(() => {
-    if (initializedRef.current) return;
-    initializedRef.current = true;
-    if (mode !== "trainee" || typeof window === "undefined") return;
-    try {
-      const raw = window.sessionStorage.getItem(sessionKey);
-      if (!raw) return;
-      const parsed = JSON.parse(raw);
-      if (!parsed || typeof parsed !== "object") return;
-      const validBucketIds = new Set(buckets.map((b) => b.client_id));
-      const next: Record<string, PerCardState> = {};
-      for (const c of cards) {
-        const prior = parsed[c.client_id];
-        if (
-          prior &&
-          (prior.placement === "holding" || validBucketIds.has(prior.placement))
-        ) {
-          next[c.client_id] = {
-            placement: prior.placement,
-            locked: prior.locked === true,
-            lastWrong: false,
-          };
-        } else {
-          next[c.client_id] = { placement: "holding", locked: false, lastWrong: false };
-        }
-      }
-      setStateById(next);
-    } catch {
-      /* ignore */
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionKey, mode]);
-
-  useEffect(() => {
-    if (mode !== "trainee" || typeof window === "undefined") return;
-    try {
-      const serializable: Record<string, { placement: CardPlacement; locked: boolean }> = {};
-      for (const id of Object.keys(stateById)) {
-        serializable[id] = {
-          placement: stateById[id].placement,
-          locked: stateById[id].locked,
-        };
-      }
-      window.sessionStorage.setItem(sessionKey, JSON.stringify(serializable));
-    } catch {
-      /* ignore quota */
-    }
-  }, [stateById, sessionKey, mode]);
 
   useEffect(() => {
     if (mode === "trainee") return;
@@ -1288,21 +1259,20 @@ function CardSortRender({
   const allCorrectAndLocked =
     cards.length > 0 && cards.every((c) => stateById[c.client_id]?.locked === true);
 
-  // Fire onBlockComplete + reportProgress once on transition to allCorrectAndLocked.
-  const completionFiredRef = useRef(false);
+  // Fire onBlockComplete once on the LIVE false → true transition.
+  const completionFiredRef = useRef(savedProgress?.status === "completed");
   useEffect(() => {
     if (mode !== "trainee") return;
     if (allCorrectAndLocked && !completionFiredRef.current) {
       completionFiredRef.current = true;
-      onBlockComplete?.(blockClientId);
       const snapshot: Record<string, { placement: CardPlacement; locked: boolean }> = {};
       for (const id of Object.keys(stateById)) {
         snapshot[id] = { placement: stateById[id].placement, locked: stateById[id].locked };
       }
-      onBlockProgress?.({ blockClientId, status: "completed", data: snapshot });
+      onBlockComplete?.(blockClientId, snapshot);
     }
     if (!allCorrectAndLocked) completionFiredRef.current = false;
-  }, [allCorrectAndLocked, mode, blockClientId, onBlockComplete, onBlockProgress, stateById]);
+  }, [allCorrectAndLocked, mode, blockClientId, onBlockComplete, stateById]);
 
   const handleDragStart = (e: DragStartEvent) => {
     const id = e.active.id as string;
