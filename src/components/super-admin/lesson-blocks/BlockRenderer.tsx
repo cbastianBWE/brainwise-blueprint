@@ -1838,17 +1838,15 @@ function KnowledgeCheckRender({
   mode,
   blockClientId,
   onBlockComplete,
-  onBlockProgress,
+  savedProgress,
 }: {
   questions: KnowledgeCheckQuestionConfig[];
   gatingRequired: boolean;
   mode?: "editor" | "trainee";
   blockClientId: string;
   onBlockComplete?: OnBlockComplete;
-  onBlockProgress?: OnBlockProgress;
+  savedProgress?: SavedBlockProgress | null;
 }) {
-  const sessionKey = `knowledge_check-pos:${blockClientId}`;
-
   const initialState = (): Record<string, KCPerQuestionState> => {
     const out: Record<string, KCPerQuestionState> = {};
     for (const q of questions) {
@@ -1867,103 +1865,77 @@ function KnowledgeCheckRender({
     return out;
   };
 
-  const [stateById, setStateById] = useState<Record<string, KCPerQuestionState>>(initialState);
-  const initializedRef = useRef(false);
-
-  useEffect(() => {
-    if (initializedRef.current) return;
-    initializedRef.current = true;
-    if (mode !== "trainee" || typeof window === "undefined") return;
-    try {
-      const raw = window.sessionStorage.getItem(sessionKey);
-      if (!raw) return;
-      const parsed = JSON.parse(raw);
-      if (!parsed || typeof parsed !== "object") return;
-      const next: Record<string, KCPerQuestionState> = {};
-      for (const q of questions) {
-        const prior = parsed[q.client_id];
-        if (prior && typeof prior === "object") {
-          next[q.client_id] = {
-            selectedSingle: typeof prior.selectedSingle === "string" ? prior.selectedSingle : null,
-            selectedMulti: Array.isArray(prior.selectedMulti)
-              ? prior.selectedMulti.filter((s: any) => typeof s === "string")
-              : [],
-            blankValues:
-              prior.blankValues && typeof prior.blankValues === "object" ? prior.blankValues : {},
-            matchLinks:
-              prior.matchLinks && typeof prior.matchLinks === "object" ? prior.matchLinks : {},
-            rankOrder: Array.isArray(prior.rankOrder)
-              ? prior.rankOrder.filter((s: any) => typeof s === "string")
-              : [],
-            timelineOrder: Array.isArray(prior.timelineOrder)
-              ? prior.timelineOrder.filter((s: any) => typeof s === "string")
-              : [],
-            revealed: prior.revealed === true,
-            lastWrong: false,
-            attempted: prior.attempted === true || prior.revealed === true,
-          };
-        } else {
-          next[q.client_id] = emptyKCState();
-        }
-      }
-      // Reconcile ranking/timeline order against current items/events; seed if empty.
-      for (const q of questions) {
-        const s = next[q.client_id];
-        if (!s) continue;
-        if (q.question_type === "ranking") {
-          if (s.rankOrder.length === 0 && (q.items ?? []).length > 0) {
-            s.rankOrder = stableShuffle(q.items ?? [], `${blockClientId}:${q.client_id}`).map(
-              (i) => i.client_id,
-            );
-          } else {
-            const validIds = new Set((q.items ?? []).map((i) => i.client_id));
-            s.rankOrder = s.rankOrder.filter((id) => validIds.has(id));
-            for (const it of q.items ?? []) {
-              if (!s.rankOrder.includes(it.client_id)) s.rankOrder.push(it.client_id);
-            }
-          }
-        } else if (q.question_type === "timeline") {
-          if (s.timelineOrder.length === 0 && (q.events ?? []).length > 0) {
-            s.timelineOrder = stableShuffle(q.events ?? [], `${blockClientId}:${q.client_id}`).map(
-              (e) => e.client_id,
-            );
-          } else {
-            const validIds = new Set((q.events ?? []).map((e) => e.client_id));
-            s.timelineOrder = s.timelineOrder.filter((id) => validIds.has(id));
-            for (const ev of q.events ?? []) {
-              if (!s.timelineOrder.includes(ev.client_id)) s.timelineOrder.push(ev.client_id);
-            }
-          }
-        }
-      }
-      setStateById(next);
-    } catch {
-      /* ignore */
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionKey, mode]);
-
-  useEffect(() => {
-    if (mode !== "trainee" || typeof window === "undefined") return;
-    try {
-      const payload: Record<string, any> = {};
-      for (const id of Object.keys(stateById)) {
-        const s = stateById[id];
-        payload[id] = {
-          selectedSingle: s.selectedSingle,
-          selectedMulti: s.selectedMulti,
-          blankValues: s.blankValues,
-          matchLinks: s.matchLinks,
-          rankOrder: s.rankOrder,
-          timelineOrder: s.timelineOrder,
-          revealed: s.revealed,
+  // Seed from DB-backed savedProgress when present (trainee mode).
+  // The shape mirrors what the renderer wrote in onBlockComplete: { stateById }.
+  const seededState = (): Record<string, KCPerQuestionState> => {
+    const base = initialState();
+    if (mode !== "trainee" || !savedProgress) return base;
+    const d = savedProgress.completion_data as any;
+    const parsed = d && typeof d === "object" && d.stateById && typeof d.stateById === "object"
+      ? d.stateById
+      : null;
+    if (!parsed) return base;
+    const next: Record<string, KCPerQuestionState> = {};
+    for (const q of questions) {
+      const prior = parsed[q.client_id];
+      if (prior && typeof prior === "object") {
+        next[q.client_id] = {
+          selectedSingle: typeof prior.selectedSingle === "string" ? prior.selectedSingle : null,
+          selectedMulti: Array.isArray(prior.selectedMulti)
+            ? prior.selectedMulti.filter((s: any) => typeof s === "string")
+            : [],
+          blankValues:
+            prior.blankValues && typeof prior.blankValues === "object" ? prior.blankValues : {},
+          matchLinks:
+            prior.matchLinks && typeof prior.matchLinks === "object" ? prior.matchLinks : {},
+          rankOrder: Array.isArray(prior.rankOrder)
+            ? prior.rankOrder.filter((s: any) => typeof s === "string")
+            : [],
+          timelineOrder: Array.isArray(prior.timelineOrder)
+            ? prior.timelineOrder.filter((s: any) => typeof s === "string")
+            : [],
+          revealed: prior.revealed === true,
+          lastWrong: false,
+          attempted: prior.attempted === true || prior.revealed === true,
         };
+      } else {
+        next[q.client_id] = base[q.client_id] ?? emptyKCState();
       }
-      window.sessionStorage.setItem(sessionKey, JSON.stringify(payload));
-    } catch {
-      /* ignore */
     }
-  }, [stateById, sessionKey, mode]);
+    // Reconcile ranking/timeline order against current items/events.
+    for (const q of questions) {
+      const s = next[q.client_id];
+      if (!s) continue;
+      if (q.question_type === "ranking") {
+        if (s.rankOrder.length === 0 && (q.items ?? []).length > 0) {
+          s.rankOrder = stableShuffle(q.items ?? [], `${blockClientId}:${q.client_id}`).map(
+            (i) => i.client_id,
+          );
+        } else {
+          const validIds = new Set((q.items ?? []).map((i) => i.client_id));
+          s.rankOrder = s.rankOrder.filter((id) => validIds.has(id));
+          for (const it of q.items ?? []) {
+            if (!s.rankOrder.includes(it.client_id)) s.rankOrder.push(it.client_id);
+          }
+        }
+      } else if (q.question_type === "timeline") {
+        if (s.timelineOrder.length === 0 && (q.events ?? []).length > 0) {
+          s.timelineOrder = stableShuffle(q.events ?? [], `${blockClientId}:${q.client_id}`).map(
+            (e) => e.client_id,
+          );
+        } else {
+          const validIds = new Set((q.events ?? []).map((e) => e.client_id));
+          s.timelineOrder = s.timelineOrder.filter((id) => validIds.has(id));
+          for (const ev of q.events ?? []) {
+            if (!s.timelineOrder.includes(ev.client_id)) s.timelineOrder.push(ev.client_id);
+          }
+        }
+      }
+    }
+    return next;
+  };
+
+  const [stateById, setStateById] = useState<Record<string, KCPerQuestionState>>(seededState);
 
   const questionIdsKey = questions.map((q) => q.client_id).join("|");
   useEffect(() => {
