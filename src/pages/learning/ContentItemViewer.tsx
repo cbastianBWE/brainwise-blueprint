@@ -222,6 +222,7 @@ export default function ContentItemViewer() {
       viewerRole,
       reportCompletion: wrappedReport,
       isReporting,
+      onCascade: openCascade,
     };
     switch (itemType) {
       case "video":
@@ -244,7 +245,7 @@ export default function ContentItemViewer() {
   };
 
   return (
-    <div className="space-y-6 pb-10">
+    <div ref={rootRef} className="space-y-6 pb-10">
       {/* Back */}
       <div className="px-4 pt-4 sm:px-6">
         <Button variant="ghost" size="sm" onClick={() => navigate(-1)}>
