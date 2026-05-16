@@ -1324,13 +1324,7 @@ function CardSortRender({
 
   const handleReset = () => {
     setStateById(initialState());
-    if (mode === "trainee" && typeof window !== "undefined") {
-      try {
-        window.sessionStorage.removeItem(sessionKey);
-      } catch {
-        /* ignore */
-      }
-    }
+    completionFiredRef.current = false;
   };
 
   if (cards.length === 0 || buckets.length === 0) {
