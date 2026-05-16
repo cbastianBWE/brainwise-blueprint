@@ -84,13 +84,13 @@ export default function LessonBlockViewer({
     enabled: !!contentItemId,
     queryFn: async (): Promise<LessonBlockRow[]> => {
       const { data, error } = await supabase
-        .from("lesson_blocks" as any)
+        .from("lesson_blocks")
         .select("id, block_type, display_order, config")
         .eq("content_item_id", contentItemId)
         .is("archived_at", null)
         .order("display_order");
       if (error) throw error;
-      return (data as any[]) ?? [];
+      return ((data as any[]) ?? []) as LessonBlockRow[];
     },
   });
 
