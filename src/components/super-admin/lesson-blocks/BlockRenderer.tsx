@@ -2186,11 +2186,33 @@ function KnowledgeCheckRender({
         ...s,
         revealed: correct ? true : s.revealed,
         lastWrong: !correct,
+        attempted: true,
       },
     }));
   };
 
   const allCorrect = questions.every((q) => stateById[q.client_id]?.revealed === true);
+  const allAttempted =
+    questions.length > 0 &&
+    questions.every((q) => stateById[q.client_id]?.attempted === true);
+
+  // Fire onBlockComplete + reportProgress once when every question has been
+  // attempted (clicked Check at least once, right or wrong). Do NOT gate on
+  // allCorrect — that would block the lesson behind a perfect score.
+  const completionFiredRef = useRef(false);
+  useEffect(() => {
+    if (mode !== "trainee") return;
+    if (allAttempted && !completionFiredRef.current) {
+      completionFiredRef.current = true;
+      onBlockComplete?.(blockClientId);
+      onBlockProgress?.({
+        blockClientId,
+        status: "completed",
+        data: { stateById },
+      });
+    }
+    if (!allAttempted) completionFiredRef.current = false;
+  }, [allAttempted, mode, blockClientId, onBlockComplete, onBlockProgress, stateById]);
 
   return (
     <div className="bw-kc-shell">
