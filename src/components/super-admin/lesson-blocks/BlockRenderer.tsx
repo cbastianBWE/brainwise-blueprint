@@ -1659,6 +1659,21 @@ function ScenarioRender({
   const currentImageUrl =
     current?.setup_image_asset_id ? urlMap.get(current.setup_image_asset_id) ?? null : null;
 
+  const completionFiredRef = useRef(false);
+  useEffect(() => {
+    if (mode !== "trainee") return;
+    if (allDone && !completionFiredRef.current && moments.length > 0) {
+      completionFiredRef.current = true;
+      onBlockComplete?.(blockClientId);
+      onBlockProgress?.({
+        blockClientId,
+        status: "completed",
+        data: { cursorIdx, reflectionResponses, choiceSelected },
+      });
+    }
+    if (!allDone) completionFiredRef.current = false;
+  }, [allDone, mode, blockClientId, onBlockComplete, onBlockProgress, moments.length, cursorIdx, reflectionResponses, choiceSelected]);
+
   const openOutcome = (outcomeDoc: TipTapDocJSON | null) => {
     setModalOutcome(outcomeDoc);
     setModalOpen(true);
