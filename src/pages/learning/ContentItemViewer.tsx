@@ -222,6 +222,7 @@ export default function ContentItemViewer() {
       completion,
       viewerRole,
       reportCompletion: wrappedReport,
+      reportProgress,
       isReporting,
       onCascade: openCascade,
     };
@@ -240,6 +241,8 @@ export default function ContentItemViewer() {
         return <FileUploadViewer {...props} />;
       case "live_event":
         return <LiveEventViewer {...props} />;
+      case "lesson_blocks":
+        return <LessonBlockViewer {...props} />;
       default:
         return <PlaceholderViewer label={typeLabel} />;
     }
