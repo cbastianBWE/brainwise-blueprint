@@ -97,7 +97,7 @@ export function useCompletionReporter({ userId, contentItemId }: Options) {
       try {
         const before = await fetchLearningState(userId);
 
-        const { error } = await supabase.rpc(rpcName as never, rpcArgs as never);
+        const { data: rpcData, error } = await supabase.rpc(rpcName as never, rpcArgs as never);
         if (error) {
           return { ok: false, cascade: null, error: error.message };
         }
