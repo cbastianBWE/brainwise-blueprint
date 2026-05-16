@@ -775,12 +775,16 @@ function FlashcardsRender({
   urlMap,
   mode,
   blockClientId,
+  onBlockComplete,
+  onBlockProgress,
 }: {
   cards: FlashcardConfig[];
   gatingRequired: boolean;
   urlMap: Map<string, string>;
   mode?: "editor" | "trainee";
   blockClientId: string;
+  onBlockComplete?: OnBlockComplete;
+  onBlockProgress?: OnBlockProgress;
 }) {
   const initialQueue = cards.map((c) => c.client_id);
   const sessionKey = `flashcards-pos:${blockClientId}`;
