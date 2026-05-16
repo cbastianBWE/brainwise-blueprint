@@ -57,10 +57,27 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import type { EditorBlock, TipTapDocJSON } from "./blockTypeMeta";
 
+export type OnBlockComplete = (blockClientId: string) => void;
+export type OnBlockProgress = (args: {
+  blockClientId: string;
+  status: "in_progress" | "completed";
+  data: unknown;
+}) => void;
+
 interface BlockRendererProps {
   block: EditorBlock;
   assetUrlMap: Map<string, string>;
   mode?: "editor" | "trainee";
+  /**
+   * Trainee-only. Fires once when the block's per-renderer "done" flag
+   * transitions to true. Optional — when absent, renderers behave unchanged.
+   */
+  onBlockComplete?: OnBlockComplete;
+  /**
+   * Trainee-only. DB-backed progress writer. When provided, the interactive
+   * renderers call it on the completion transition with a state snapshot.
+   */
+  onBlockProgress?: OnBlockProgress;
 }
 
 function ReadOnlyTipTap({ json }: { json: TipTapDocJSON | null | undefined }) {
