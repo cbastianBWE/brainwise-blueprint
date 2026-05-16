@@ -180,6 +180,8 @@ export default function ContentItemViewer() {
         return <ExternalLinkViewer {...props} />;
       case "quiz":
         return <QuizViewer {...props} />;
+      case "skills_practice":
+        return <SkillsPracticeViewer {...props} />;
       default:
         return <PlaceholderViewer label={typeLabel} />;
     }
