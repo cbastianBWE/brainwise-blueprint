@@ -2,7 +2,7 @@ import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { TextStyleWithFontSize } from "./TextStyleWithFontSize";
 import { Link } from "@tiptap/extension-link";
-import { useEffect, useState, useRef, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
+import { useEffect, useMemo, useState, useRef, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
 import {
   Info,
   AlertTriangle,
