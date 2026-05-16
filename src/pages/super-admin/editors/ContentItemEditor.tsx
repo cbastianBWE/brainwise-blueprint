@@ -60,6 +60,7 @@ function ContentItemEditor({
   const [videoCompletionThreshold, setVideoCompletionThreshold] = useState<string>(
     initial?.video_completion_threshold_pct == null ? "95" : String(initial.video_completion_threshold_pct)
   );
+  const [videoAiSummary, setVideoAiSummary] = useState<string>(initial?.video_ai_summary ?? "");
 
   // quiz
   const [quizPassThreshold, setQuizPassThreshold] = useState<string>(
@@ -116,8 +117,9 @@ function ContentItemEditor({
   // AI draft state
   const [aiDraftingTitle, setAiDraftingTitle] = useState(false);
   const [aiDraftingDesc, setAiDraftingDesc] = useState(false);
+  const [aiDraftingVideoSummary, setAiDraftingVideoSummary] = useState(false);
   const [aiDraftDialogOpen, setAiDraftDialogOpen] = useState(false);
-  const [aiDraftTarget, setAiDraftTarget] = useState<"content_item_title" | "content_item_description" | null>(null);
+  const [aiDraftTarget, setAiDraftTarget] = useState<"content_item_title" | "content_item_description" | "content_item_video_summary" | null>(null);
   const [aiAuthorPrompt, setAiAuthorPrompt] = useState("");
   const [aiVoicePresetKey, setAiVoicePresetKey] = useState<string>("conversational_coach");
 
@@ -233,6 +235,7 @@ function ContentItemEditor({
       videoSourceType !== (initial.video_source_type ?? "youtube_unlisted") ||
       videoSourceId !== (initial.video_source_id ?? "") ||
       videoCompletionThreshold !== (initial.video_completion_threshold_pct == null ? "95" : String(initial.video_completion_threshold_pct)) ||
+      videoAiSummary !== (initial.video_ai_summary ?? "") ||
       quizPassThreshold !== (initial.quiz_pass_threshold_pct == null ? "80" : String(initial.quiz_pass_threshold_pct)) ||
       quizShowCorrectMode !== (initial.quiz_show_correct_mode ?? "after_pass") ||
       writtenMinChars !== (initial.written_min_chars == null ? "100" : String(initial.written_min_chars)) ||
@@ -248,7 +251,7 @@ function ContentItemEditor({
   }, [
     mode, initial,
     title, description, displayOrder, isRequired, thumbnailAssetId, reason,
-    videoSourceType, videoSourceId, videoCompletionThreshold,
+    videoSourceType, videoSourceId, videoCompletionThreshold, videoAiSummary,
     quizPassThreshold, quizShowCorrectMode,
     writtenMinChars, writtenMaxChars, writtenCompletionMode,
     skillsSignoffRequired, skillsActorInvitationRequired, skillsOptionalAttachment,
@@ -282,6 +285,7 @@ function ContentItemEditor({
           video_source_type: videoSourceType,
           video_source_id: videoSourceId.trim(),
           video_completion_threshold_pct: Number(videoCompletionThreshold) || 95,
+          video_ai_summary: videoAiSummary.trim(),
         };
       case "quiz":
         return {
@@ -383,12 +387,13 @@ function ContentItemEditor({
     onArchived?.();
   };
 
-  const callDraftText = async (targetField: "content_item_title" | "content_item_description") => {
+  const callDraftText = async (targetField: "content_item_title" | "content_item_description" | "content_item_video_summary") => {
     if (!aiAuthorPrompt.trim()) {
       toast({ title: "Prompt required", description: "Describe what you want the AI to write.", variant: "destructive" });
       return;
     }
     if (targetField === "content_item_title") setAiDraftingTitle(true);
+    else if (targetField === "content_item_video_summary") setAiDraftingVideoSummary(true);
     else setAiDraftingDesc(true);
 
     try {
@@ -397,13 +402,20 @@ function ContentItemEditor({
         toast({ title: "Not signed in", description: "Please sign in again.", variant: "destructive" });
         setAiDraftingTitle(false);
         setAiDraftingDesc(false);
+        setAiDraftingVideoSummary(false);
         return;
       }
 
-      const currentValue = targetField === "content_item_title" ? title : description;
-      const surroundingContext = targetField === "content_item_title"
-        ? `Module: ${parentModule?.name ?? "(unknown)"}\nDescription: ${description || "(none)"}`
-        : `Module: ${parentModule?.name ?? "(unknown)"}\nTitle: ${title || "(none)"}\nItem type: ${itemType}`;
+      const currentValue =
+        targetField === "content_item_title" ? title
+        : targetField === "content_item_video_summary" ? videoAiSummary
+        : description;
+      const surroundingContext =
+        targetField === "content_item_title"
+          ? `Module: ${parentModule?.name ?? "(unknown)"}\nDescription: ${description || "(none)"}`
+          : targetField === "content_item_video_summary"
+            ? `Module: ${parentModule?.name ?? "(unknown)"}\nVideo title: ${title || "(none)"}\nVideo description: ${description || "(none)"}`
+            : `Module: ${parentModule?.name ?? "(unknown)"}\nTitle: ${title || "(none)"}\nItem type: ${itemType}`;
 
       const { data, error } = await supabase.functions.invoke("draft-text", {
         body: {
@@ -427,6 +439,7 @@ function ContentItemEditor({
 
       const payload = data as { text: string; length: number };
       if (targetField === "content_item_title") setTitle(payload.text);
+      else if (targetField === "content_item_video_summary") setVideoAiSummary(payload.text);
       else setDescription(payload.text);
 
       toast({ title: "AI draft inserted", description: `${payload.length} characters generated` });
@@ -437,10 +450,11 @@ function ContentItemEditor({
     } finally {
       setAiDraftingTitle(false);
       setAiDraftingDesc(false);
+      setAiDraftingVideoSummary(false);
     }
   };
 
-  const openAiDraft = (target: "content_item_title" | "content_item_description") => {
+  const openAiDraft = (target: "content_item_title" | "content_item_description" | "content_item_video_summary") => {
     setAiDraftTarget(target);
     setAiAuthorPrompt("");
     setAiDraftDialogOpen(true);
@@ -649,6 +663,33 @@ function ContentItemEditor({
                   onChange={(e) => setVideoCompletionThreshold(e.target.value)}
                   disabled={saving}
                 />
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label>Quick summary (shown to trainees after they finish the video)</Label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => openAiDraft("content_item_video_summary")}
+                    disabled={saving || aiDraftingVideoSummary}
+                  >
+                    {aiDraftingVideoSummary
+                      ? <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      : <Sparkles className="h-4 w-4 mr-2" />}
+                    Generate with AI
+                  </Button>
+                </div>
+                <Textarea
+                  value={videoAiSummary}
+                  onChange={(e) => setVideoAiSummary(e.target.value)}
+                  rows={5}
+                  placeholder="3-5 short bullet takeaways. One per line, each starting with a hyphen. Optional — leave blank to hide the summary card."
+                  disabled={saving}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Optional. If filled, trainees see these bullets as a "Quick summary" card after completing the video. Generate a draft with AI, then edit before saving.
+                </p>
               </div>
             </div>
           )}
@@ -948,8 +989,12 @@ function ContentItemEditor({
           <DialogHeader>
             <DialogTitle>AI Draft</DialogTitle>
             <DialogDescription>
-              Describe what you want the AI to write for the {aiDraftTarget === "content_item_title" ? "title" : "description"}.
-              {aiDraftTarget === "content_item_title" ? title : description ? " Existing text will be refined." : ""}
+              Describe what you want the AI to write for the {
+                aiDraftTarget === "content_item_title" ? "title"
+                : aiDraftTarget === "content_item_video_summary" ? "quick summary"
+                : "description"
+              }.
+              {(aiDraftTarget === "content_item_title" ? title : aiDraftTarget === "content_item_video_summary" ? videoAiSummary : description) ? " Existing text will be refined." : ""}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
@@ -985,14 +1030,14 @@ function ContentItemEditor({
             </div>
           </div>
           <div className="flex justify-end gap-2 pt-2">
-            <Button variant="outline" onClick={() => setAiDraftDialogOpen(false)} disabled={aiDraftingTitle || aiDraftingDesc}>
+            <Button variant="outline" onClick={() => setAiDraftDialogOpen(false)} disabled={aiDraftingTitle || aiDraftingDesc || aiDraftingVideoSummary}>
               Cancel
             </Button>
             <Button
               onClick={() => aiDraftTarget && callDraftText(aiDraftTarget)}
-              disabled={!aiAuthorPrompt.trim() || aiDraftingTitle || aiDraftingDesc}
+              disabled={!aiAuthorPrompt.trim() || aiDraftingTitle || aiDraftingDesc || aiDraftingVideoSummary}
             >
-              {(aiDraftingTitle || aiDraftingDesc) && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              {(aiDraftingTitle || aiDraftingDesc || aiDraftingVideoSummary) && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               <Sparkles className="h-4 w-4 mr-2" />
               Generate
             </Button>
