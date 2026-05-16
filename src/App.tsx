@@ -41,6 +41,7 @@ import Resources from "./pages/Resources";
 import ResourceReader from "./pages/ResourceReader";
 import CertPathDetail from "./pages/learning/CertPathDetail";
 import CurriculumDetail from "./pages/learning/CurriculumDetail";
+import ModuleDetail from "./pages/learning/ModuleDetail";
 import Pricing from "./pages/Pricing";
 import SettingsPage from "./pages/Settings";
 import PrivacySettings from "./pages/PrivacySettings";
