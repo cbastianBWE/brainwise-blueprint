@@ -15,7 +15,7 @@ import { useLessonBlockAssets } from "@/hooks/useLessonBlockAssets";
 import {
   BlockRenderer,
   type OnBlockComplete,
-  type OnBlockProgress,
+  type SavedBlockProgress,
 } from "@/components/super-admin/lesson-blocks/BlockRenderer";
 import {
   BLOCK_TYPE_META,
