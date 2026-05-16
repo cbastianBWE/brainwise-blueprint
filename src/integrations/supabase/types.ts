@@ -1270,6 +1270,7 @@ export type Database = {
       certification_paths: {
         Row: {
           archived_at: string | null
+          cert_dimension_ids: Json
           cert_instrument_ids: Json
           certification_type: string
           created_at: string
@@ -1291,6 +1292,7 @@ export type Database = {
         }
         Insert: {
           archived_at?: string | null
+          cert_dimension_ids?: Json
           cert_instrument_ids?: Json
           certification_type: string
           created_at?: string
@@ -1312,6 +1314,7 @@ export type Database = {
         }
         Update: {
           archived_at?: string | null
+          cert_dimension_ids?: Json
           cert_instrument_ids?: Json
           certification_type?: string
           created_at?: string
@@ -8381,6 +8384,14 @@ export type Database = {
         }
         Returns: Json
       }
+      _compute_recommended_next_for_curriculum: {
+        Args: { p_curriculum_id: string; p_user_id: string }
+        Returns: Json
+      }
+      _compute_recommended_next_for_module: {
+        Args: { p_module_id: string; p_user_id: string }
+        Returns: Json
+      }
       _duplicate_curriculum_full: {
         Args: {
           p_caller_id: string
@@ -9747,6 +9758,7 @@ export type Database = {
       }
       upsert_certification_path: {
         Args: {
+          p_cert_dimension_ids?: Json
           p_cert_instrument_ids: Json
           p_certification_type: string
           p_delivery_mode: string
