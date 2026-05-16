@@ -1309,6 +1309,22 @@ function CardSortRender({
   const allCorrectAndLocked =
     cards.length > 0 && cards.every((c) => stateById[c.client_id]?.locked === true);
 
+  // Fire onBlockComplete + reportProgress once on transition to allCorrectAndLocked.
+  const completionFiredRef = useRef(false);
+  useEffect(() => {
+    if (mode !== "trainee") return;
+    if (allCorrectAndLocked && !completionFiredRef.current) {
+      completionFiredRef.current = true;
+      onBlockComplete?.(blockClientId);
+      const snapshot: Record<string, { placement: CardPlacement; locked: boolean }> = {};
+      for (const id of Object.keys(stateById)) {
+        snapshot[id] = { placement: stateById[id].placement, locked: stateById[id].locked };
+      }
+      onBlockProgress?.({ blockClientId, status: "completed", data: snapshot });
+    }
+    if (!allCorrectAndLocked) completionFiredRef.current = false;
+  }, [allCorrectAndLocked, mode, blockClientId, onBlockComplete, onBlockProgress, stateById]);
+
   const handleDragStart = (e: DragStartEvent) => {
     const id = e.active.id as string;
     setActiveId(id);
