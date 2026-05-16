@@ -1218,6 +1218,8 @@ function CardSortRender({
   urlMap,
   mode,
   blockClientId,
+  onBlockComplete,
+  onBlockProgress,
 }: {
   buckets: CardSortBucket[];
   cards: CardSortCardConfig[];
@@ -1225,6 +1227,8 @@ function CardSortRender({
   urlMap: Map<string, string>;
   mode?: "editor" | "trainee";
   blockClientId: string;
+  onBlockComplete?: OnBlockComplete;
+  onBlockProgress?: OnBlockProgress;
 }) {
   const sessionKey = `card_sort-pos:${blockClientId}`;
 
