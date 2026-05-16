@@ -446,7 +446,7 @@ export function BlockRenderer({ block, assetUrlMap, mode, onBlockComplete, saved
             mode={mode}
             blockClientId={block.client_id}
             onBlockComplete={onBlockComplete}
-            onBlockProgress={onBlockProgress}
+            savedProgress={savedProgress}
           />
         );
       case "card_sort":
@@ -459,7 +459,7 @@ export function BlockRenderer({ block, assetUrlMap, mode, onBlockComplete, saved
             mode={mode}
             blockClientId={block.client_id}
             onBlockComplete={onBlockComplete}
-            onBlockProgress={onBlockProgress}
+            savedProgress={savedProgress}
           />
         );
       case "scenario":
@@ -473,7 +473,7 @@ export function BlockRenderer({ block, assetUrlMap, mode, onBlockComplete, saved
             mode={mode}
             blockClientId={block.client_id}
             onBlockComplete={onBlockComplete}
-            onBlockProgress={onBlockProgress}
+            savedProgress={savedProgress}
           />
         );
       case "knowledge_check":
@@ -484,7 +484,7 @@ export function BlockRenderer({ block, assetUrlMap, mode, onBlockComplete, saved
             mode={mode}
             blockClientId={block.client_id}
             onBlockComplete={onBlockComplete}
-            onBlockProgress={onBlockProgress}
+            savedProgress={savedProgress}
           />
         );
       default:
