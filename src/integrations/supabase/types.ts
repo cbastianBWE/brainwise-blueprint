@@ -3032,6 +3032,7 @@ export type Database = {
           content_item_id: string
           created_at: string
           external_link_confirmed_at: string | null
+          external_link_reflection_text: string | null
           file_upload_filename: string | null
           file_upload_size_bytes: number | null
           file_upload_url: string | null
@@ -3064,6 +3065,7 @@ export type Database = {
           content_item_id: string
           created_at?: string
           external_link_confirmed_at?: string | null
+          external_link_reflection_text?: string | null
           file_upload_filename?: string | null
           file_upload_size_bytes?: number | null
           file_upload_url?: string | null
@@ -3096,6 +3098,7 @@ export type Database = {
           content_item_id?: string
           created_at?: string
           external_link_confirmed_at?: string | null
+          external_link_reflection_text?: string | null
           file_upload_filename?: string | null
           file_upload_size_bytes?: number | null
           file_upload_url?: string | null
@@ -3278,6 +3281,7 @@ export type Database = {
           title: string
           updated_at: string
           updated_by: string | null
+          video_ai_summary: string | null
           video_completion_threshold_pct: number | null
           video_source_id: string | null
           video_source_type: string | null
@@ -3311,6 +3315,7 @@ export type Database = {
           title: string
           updated_at?: string
           updated_by?: string | null
+          video_ai_summary?: string | null
           video_completion_threshold_pct?: number | null
           video_source_id?: string | null
           video_source_type?: string | null
@@ -3344,6 +3349,7 @@ export type Database = {
           title?: string
           updated_at?: string
           updated_by?: string | null
+          video_ai_summary?: string | null
           video_completion_threshold_pct?: number | null
           video_source_id?: string | null
           video_source_type?: string | null
@@ -8808,7 +8814,7 @@ export type Database = {
         }[]
       }
       confirm_external_link: {
-        Args: { p_content_item_id: string }
+        Args: { p_content_item_id: string; p_reflection_text?: string }
         Returns: Json
       }
       consume_assessment_purchase: {
@@ -9062,6 +9068,21 @@ export type Database = {
         }[]
       }
       get_coach_disclosure_status: { Args: never; Returns: Json }
+      get_content_item_for_viewer: {
+        Args: { p_content_item_id: string; p_user_id?: string }
+        Returns: Json
+      }
+      get_content_item_video_asset: {
+        Args: { p_content_item_id: string; p_user_id?: string }
+        Returns: {
+          out_asset_id: string
+          out_bucket: string
+          out_mime_type: string
+          out_original_filename: string
+          out_path: string
+          out_size_bytes: number
+        }[]
+      }
       get_curriculum_detail: {
         Args: { p_curriculum_id: string; p_user_id?: string }
         Returns: Json
@@ -9180,6 +9201,14 @@ export type Database = {
           p_slice_type?: string
           p_slice_value?: string
         }
+        Returns: Json
+      }
+      get_quiz_attempt_results: {
+        Args: { p_attempt_id: string }
+        Returns: Json
+      }
+      get_quiz_for_trainee: {
+        Args: { p_content_item_id: string }
         Returns: Json
       }
       get_resource_content_asset: {
