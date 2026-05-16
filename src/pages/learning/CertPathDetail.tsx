@@ -349,31 +349,31 @@ export default function CertPathDetail() {
               return (
                 <div
                   key={d.dimension_id}
-                  className="rounded-lg border bg-card p-4 border-l-4"
-                  style={{ borderLeftColor: color }}
+                  className="rounded-lg p-4 shadow-sm"
+                  style={{ backgroundColor: color }}
                 >
-                  <div className="text-sm font-semibold text-foreground">
+                  <div className="text-sm font-semibold text-white">
                     {d.dimension_name}
                   </div>
                   {d.short_name && d.short_name !== d.dimension_name && (
-                    <div className="text-xs text-muted-foreground mt-0.5">
+                    <div className="text-xs text-white/75 mt-0.5">
                       {d.short_name}
                     </div>
                   )}
                   <div className="mt-3">
                     {d.user_mean != null ? (
                       <>
-                        <div className="text-2xl font-bold text-foreground">
+                        <div className="text-2xl font-bold text-white">
                           {Math.round(d.user_mean)}
                         </div>
                         {d.user_band && (
-                          <div className="text-xs text-muted-foreground">
+                          <div className="text-xs text-white/80">
                             {titleCaseSlug(d.user_band)}
                           </div>
                         )}
                       </>
                     ) : (
-                      <div className="text-xs text-muted-foreground">
+                      <div className="text-xs text-white/85">
                         Take your {instrumentLabel} assessment to see your score
                       </div>
                     )}
