@@ -38,6 +38,8 @@ import WrittenSummaryViewer from "@/components/learning/viewers/WrittenSummaryVi
 import ExternalLinkViewer from "@/components/learning/viewers/ExternalLinkViewer";
 import QuizViewer from "@/components/learning/quiz/QuizViewer";
 import SkillsPracticeViewer from "@/components/learning/viewers/SkillsPracticeViewer";
+import FileUploadViewer from "@/components/learning/viewers/FileUploadViewer";
+import LiveEventViewer from "@/components/learning/viewers/LiveEventViewer";
 
 function getItemTypeIcon(itemType: string): { Icon: LucideIcon; color: string } {
   const map: Record<string, { Icon: LucideIcon; color: string }> = {
@@ -182,6 +184,10 @@ export default function ContentItemViewer() {
         return <QuizViewer {...props} />;
       case "skills_practice":
         return <SkillsPracticeViewer {...props} />;
+      case "file_upload":
+        return <FileUploadViewer {...props} />;
+      case "live_event":
+        return <LiveEventViewer {...props} />;
       default:
         return <PlaceholderViewer label={typeLabel} />;
     }
