@@ -3027,6 +3027,7 @@ export type Database = {
       }
       content_item_completions: {
         Row: {
+          ai_assist_used_at: string | null
           attempts_count: number
           completed_at: string | null
           content_item_id: string
@@ -3060,6 +3061,7 @@ export type Database = {
           written_review_status: string | null
         }
         Insert: {
+          ai_assist_used_at?: string | null
           attempts_count?: number
           completed_at?: string | null
           content_item_id: string
@@ -3093,6 +3095,7 @@ export type Database = {
           written_review_status?: string | null
         }
         Update: {
+          ai_assist_used_at?: string | null
           attempts_count?: number
           completed_at?: string | null
           content_item_id?: string
@@ -8756,6 +8759,10 @@ export type Database = {
       check_mfa_freshness: {
         Args: { p_max_age_seconds?: number; p_session_id: string }
         Returns: boolean
+      }
+      claim_content_item_ai_assist: {
+        Args: { p_content_item_id: string }
+        Returns: Json
       }
       close_chat_session: { Args: { p_session_id: string }; Returns: undefined }
       coach_invitation_revoke: {

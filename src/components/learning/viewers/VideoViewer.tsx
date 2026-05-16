@@ -149,23 +149,31 @@ export default function VideoViewer({
               : "Unknown error"}
           </div>
         ) : (
-          <video
-            ref={videoRef}
-            controls
-            className="mx-auto w-full max-w-4xl rounded-md bg-black"
-            src={signedUrlQuery.data.signed_url}
-            onTimeUpdate={onTimeUpdate}
-          />
+          <div className="mx-auto flex w-full max-w-4xl justify-center rounded-md bg-black">
+            <video
+              ref={videoRef}
+              controls
+              className="rounded-md"
+              style={{ maxHeight: "70vh", maxWidth: "100%", objectFit: "contain" }}
+              src={signedUrlQuery.data.signed_url}
+              onTimeUpdate={onTimeUpdate}
+            />
+          </div>
         )
       ) : embedUrl ? (
-        <div className="aspect-video w-full overflow-hidden rounded-md bg-muted">
-          <iframe
-            src={embedUrl}
-            className="h-full w-full"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-            title={contentItem.title ?? "Video"}
-          />
+        <div className="mx-auto w-full max-w-4xl">
+          <div
+            className="mx-auto overflow-hidden rounded-md bg-muted"
+            style={{ maxHeight: "70vh", aspectRatio: "16 / 9", maxWidth: "min(100%, calc(70vh * 16 / 9))" }}
+          >
+            <iframe
+              src={embedUrl}
+              className="h-full w-full"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              title={contentItem.title ?? "Video"}
+            />
+          </div>
         </div>
       ) : muxHls ? (
         <div className="rounded-md border bg-card p-4 text-sm">

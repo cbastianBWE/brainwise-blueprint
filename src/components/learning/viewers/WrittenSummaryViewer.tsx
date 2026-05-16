@@ -36,6 +36,7 @@ export default function WrittenSummaryViewer({
   const [text, setText] = useState("");
   const [suggestion, setSuggestion] = useState<string | null>(null);
   const [drafting, setDrafting] = useState(false);
+  const [assistUsed, setAssistUsed] = useState(false);
 
   if (!isSelf) {
     return (
@@ -75,16 +76,37 @@ export default function WrittenSummaryViewer({
     setDrafting(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      const { data, error } = await supabase.functions.invoke("draft-text", {
+      const { data, error } = await supabase.functions.invoke("content-item-ai-assist", {
         body: {
-          target_field: "generic_short_prose",
-          author_prompt: `Write a 2-sentence reflective writing prompt to help a learner start a written summary about: ${contentItem.title ?? ""}. ${contentItem.description ?? ""}`.trim(),
-          voice_preset_key: "conversational_coach",
+          content_item_id: contentItem.id,
+          assist_type: "written_summary_starter",
         },
         headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : undefined,
       });
-      if (error) throw error;
-      setSuggestion((data as any)?.text ?? null);
+      if (error) {
+        // FunctionsHttpError exposes the response on .context
+        const ctx = (error as any)?.context;
+        let payload: any = null;
+        if (ctx && typeof ctx.json === "function") {
+          try {
+            payload = await ctx.json();
+          } catch {
+            /* ignore */
+          }
+        }
+        if (payload?.error === "ai_assist_already_used") {
+          setAssistUsed(true);
+          return;
+        }
+        throw error;
+      }
+      const payload = data as any;
+      if (payload?.error === "ai_assist_already_used") {
+        setAssistUsed(true);
+        return;
+      }
+      setSuggestion(payload?.text ?? null);
+      setAssistUsed(true);
     } catch (e: any) {
       toast({
         title: "Could not generate suggestion",
@@ -112,21 +134,28 @@ export default function WrittenSummaryViewer({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between gap-3">
-        <h3 className="text-sm font-semibold">Your summary</h3>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={generateSuggestion}
-          disabled={drafting}
-        >
-          {drafting ? (
-            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-          ) : (
-            <Sparkles className="h-4 w-4 mr-2" />
+      <div className="flex items-start justify-between gap-3">
+        <h3 className="text-sm font-semibold pt-1.5">Your summary</h3>
+        <div className="flex flex-col items-end gap-1">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={generateSuggestion}
+            disabled={drafting || assistUsed}
+          >
+            {drafting ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <Sparkles className="h-4 w-4 mr-2" />
+            )}
+            Need a starting point?
+          </Button>
+          {assistUsed && (
+            <span className="text-xs text-muted-foreground">
+              AI starting point already used for this item.
+            </span>
           )}
-          Need a starting point?
-        </Button>
+        </div>
       </div>
 
       {suggestion && (
