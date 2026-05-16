@@ -1925,11 +1925,15 @@ function KnowledgeCheckRender({
   questions,
   mode,
   blockClientId,
+  onBlockComplete,
+  onBlockProgress,
 }: {
   questions: KnowledgeCheckQuestionConfig[];
   gatingRequired: boolean;
   mode?: "editor" | "trainee";
   blockClientId: string;
+  onBlockComplete?: OnBlockComplete;
+  onBlockProgress?: OnBlockProgress;
 }) {
   const sessionKey = `knowledge_check-pos:${blockClientId}`;
 
