@@ -29,11 +29,6 @@ function sortByStatusGroup<T extends { status_group?: string | null }>(items: T[
   });
 }
 
-function enrolledStatusToCompletionStatus(status?: string | null): CompletionStatus {
-  if (status === "completed") return "completed";
-  if (status === "in_progress") return "in_progress";
-  return null;
-}
 
 function shouldShowEnrollButton(entity: any): boolean {
   return (
