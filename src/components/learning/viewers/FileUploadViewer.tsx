@@ -5,11 +5,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
+import { mapRpcCascade, type CascadeResult } from "@/hooks/useCompletionReporter";
 
 interface Props {
   contentItem: any;
   completion: any;
   viewerRole: "self" | "mentor" | "super_admin";
+  onCascade?: (c: CascadeResult | null) => void;
 }
 
 function formatBytes(n: number | null | undefined): string {
