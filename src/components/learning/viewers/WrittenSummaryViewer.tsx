@@ -134,21 +134,28 @@ export default function WrittenSummaryViewer({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between gap-3">
-        <h3 className="text-sm font-semibold">Your summary</h3>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={generateSuggestion}
-          disabled={drafting}
-        >
-          {drafting ? (
-            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-          ) : (
-            <Sparkles className="h-4 w-4 mr-2" />
+      <div className="flex items-start justify-between gap-3">
+        <h3 className="text-sm font-semibold pt-1.5">Your summary</h3>
+        <div className="flex flex-col items-end gap-1">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={generateSuggestion}
+            disabled={drafting || assistUsed}
+          >
+            {drafting ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <Sparkles className="h-4 w-4 mr-2" />
+            )}
+            Need a starting point?
+          </Button>
+          {assistUsed && (
+            <span className="text-xs text-muted-foreground">
+              AI starting point already used for this item.
+            </span>
           )}
-          Need a starting point?
-        </Button>
+        </div>
       </div>
 
       {suggestion && (
