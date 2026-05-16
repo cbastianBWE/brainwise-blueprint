@@ -319,9 +319,7 @@ export default function LessonBlockViewer({
     return true;
   }, [gatingRequiredBlockIds, completedIds]);
 
-  const finalContinueEnabled =
-    allGatedComplete &&
-    (completionMode === "explicit_continue" ? true : scrolledToBottom);
+  const finalContinueEnabled = allGatedComplete && scrolledToBottom;
 
   /* ---- handlers ---- */
 
