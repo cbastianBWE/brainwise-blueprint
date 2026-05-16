@@ -1619,13 +1619,7 @@ function ScenarioRender({
     setChoiceSelected({});
     setModalOpen(false);
     setModalOutcome(null);
-    if (mode === "trainee" && typeof window !== "undefined") {
-      try {
-        window.sessionStorage.removeItem(sessionKey);
-      } catch {
-        /* ignore */
-      }
-    }
+    completionFiredRef.current = false;
   };
 
   return (
