@@ -339,6 +339,7 @@ export default function LessonBlockViewer({
     setCompletedIds(new Set());
     seededProgressRef.current = false;
     resumedRef.current = false;
+    await queryClient.invalidateQueries({ queryKey: ["content-item-viewer", contentItemId] });
     await queryClient.invalidateQueries({ queryKey: ["lesson-blocks", contentItemId] });
     await queryClient.invalidateQueries({
       queryKey: ["lesson-block-progress", contentItemId],
