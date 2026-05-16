@@ -5,6 +5,7 @@ export interface QuizAnswerOption {
   id: string;
   option_text: string;
   is_correct?: boolean | null;
+  match_pair_key?: string | null;
 }
 
 interface Props {
