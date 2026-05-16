@@ -98,8 +98,9 @@ export default function LessonBlockViewer({
 
   /* ---- DB-backed per-block progress (single source of truth) ---- */
 
+  const currentAttempt = (completion?.attempts_count as number | undefined) ?? 1;
   const blockProgressQuery = useQuery({
-    queryKey: ["lesson-block-progress", contentItemId],
+    queryKey: ["lesson-block-progress", contentItemId, currentAttempt],
     enabled: !!contentItemId && isSelf,
     queryFn: async () => {
       const { data: userData } = await supabase.auth.getUser();
@@ -109,7 +110,8 @@ export default function LessonBlockViewer({
         .from("lesson_block_progress")
         .select("block_id, status, completion_data")
         .eq("content_item_id", contentItemId)
-        .eq("user_id", uid);
+        .eq("user_id", uid)
+        .eq("attempt_number", currentAttempt);
       if (error) throw error;
       return (data ?? []) as Array<{ block_id: string; status: string; completion_data: unknown }>;
     },
