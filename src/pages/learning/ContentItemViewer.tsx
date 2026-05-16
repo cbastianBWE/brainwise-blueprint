@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -6,12 +6,14 @@ import {
   Award,
   BookOpen,
   Calendar,
+  ChevronDown,
   ChevronRight,
   CircleCheck,
   ExternalLink,
   FileText,
   HelpCircle,
   Loader2,
+  PartyPopper,
   PlayCircle,
   Upload,
   type LucideIcon,
@@ -71,11 +73,11 @@ function mapError(message: string): string {
   return "Could not load this item. Please try again.";
 }
 
-const CASCADE_COPY: Record<CascadeTier, { title: string; suffix: string }> = {
-  content_item: { title: "Item complete!", suffix: "" },
-  module: { title: "Module complete!", suffix: "" },
-  curriculum: { title: "Curriculum complete!", suffix: "" },
-  certification: { title: "You're certified!", suffix: "" },
+const CASCADE_COPY: Record<CascadeTier, { title: string; body: (name: string) => string }> = {
+  content_item: { title: "Item complete", body: (n) => `You finished ${n}.` },
+  module: { title: "Module complete", body: (n) => `You finished ${n}.` },
+  curriculum: { title: "Curriculum complete", body: (n) => `You completed ${n}.` },
+  certification: { title: "You're certified!", body: (n) => `You've earned ${n}.` },
 };
 
 interface PlaceholderProps {
@@ -115,16 +117,64 @@ export default function ContentItemViewer() {
     contentItemId: contentItemId ?? "",
   });
 
+  const openCascade = (c: CascadeResult | null) => {
+    if (c && c.tier !== "content_item") setCascadeModal(c);
+  };
+
   const wrappedReport = async (
     rpcName: string,
     rpcArgs: Record<string, unknown>,
   ) => {
     const result = await reportCompletion(rpcName, rpcArgs);
-    if (result.ok && result.cascade) {
-      setCascadeModal(result.cascade);
-    }
+    if (result.ok) openCascade(result.cascade);
     return result;
   };
+
+  // Auto-dismiss module-tier modal after 4s
+  useEffect(() => {
+    if (cascadeModal?.tier !== "module") return;
+    const t = setTimeout(() => setCascadeModal(null), 4000);
+    return () => clearTimeout(t);
+  }, [cascadeModal]);
+
+  // "More content below" scroll affordance
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  const [showMoreHint, setShowMoreHint] = useState(false);
+  useEffect(() => {
+    // Walk up from the root to find the actual scroll container
+    const findScroller = (): HTMLElement | Window => {
+      let el: HTMLElement | null = rootRef.current;
+      while (el && el !== document.body) {
+        const style = window.getComputedStyle(el);
+        const oy = style.overflowY;
+        if ((oy === "auto" || oy === "scroll") && el.scrollHeight > el.clientHeight) {
+          return el;
+        }
+        el = el.parentElement;
+      }
+      return window;
+    };
+    const scroller = findScroller();
+    const compute = () => {
+      if (scroller === window) {
+        const sh = document.documentElement.scrollHeight;
+        const ch = window.innerHeight;
+        const st = window.scrollY;
+        setShowMoreHint(st + ch < sh - 24);
+      } else {
+        const el = scroller as HTMLElement;
+        setShowMoreHint(el.scrollTop + el.clientHeight < el.scrollHeight - 24);
+      }
+    };
+    compute();
+    const target: any = scroller;
+    target.addEventListener("scroll", compute, { passive: true });
+    window.addEventListener("resize", compute);
+    return () => {
+      target.removeEventListener("scroll", compute);
+      window.removeEventListener("resize", compute);
+    };
+  }, [viewerQuery.data]);
 
   if (!userId || viewerQuery.isLoading) {
     return (
