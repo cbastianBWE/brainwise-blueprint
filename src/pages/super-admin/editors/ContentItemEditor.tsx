@@ -150,6 +150,21 @@ function ContentItemEditor({
   });
   const blockCount = lessonBlocksCountQuery.data ?? null;
 
+  const quizQuestionsCountQuery = useQuery({
+    queryKey: ["quiz-questions-count", initial?.id],
+    enabled: mode === "edit" && itemType === "quiz" && !!initial?.id,
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("quiz_questions")
+        .select("id", { count: "exact", head: true })
+        .eq("content_item_id", initial!.id)
+        .is("archived_at", null);
+      if (error) throw error;
+      return count ?? 0;
+    },
+  });
+  const quizQuestionCount = quizQuestionsCountQuery.data ?? null;
+
   const reasonLen = reason.trim().length;
   const reasonOk = reasonLen >= 10;
   const archiveReasonLen = archiveReason.trim().length;
@@ -640,9 +655,32 @@ function ContentItemEditor({
 
           {itemType === "quiz" && (
             <div className="space-y-3">
-              <p className="text-xs italic text-muted-foreground">
-                Quiz authoring (questions, answers) lands in a future prompt. This editor only configures the quiz wrapper.
-              </p>
+              {mode === "edit" && initial?.id ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() =>
+                    navigate(`/super-admin/content-authoring/quizzes/${initial.id}`)
+                  }
+                  disabled={saving}
+                >
+                  <ExternalLink className="mr-2 h-4 w-4" />
+                  Edit quiz questions
+                  {quizQuestionCount !== null && (
+                    <span className="ml-2 text-xs text-muted-foreground">
+                      ({quizQuestionCount === 0
+                        ? "no questions yet"
+                        : quizQuestionCount === 1
+                          ? "1 question"
+                          : `${quizQuestionCount} questions`})
+                    </span>
+                  )}
+                </Button>
+              ) : (
+                <p className="text-xs italic text-muted-foreground">
+                  Save this content item first, then you can add quiz questions.
+                </p>
+              )}
               <div className="space-y-2">
                 <Label>Pass threshold (%)</Label>
                 <Input
