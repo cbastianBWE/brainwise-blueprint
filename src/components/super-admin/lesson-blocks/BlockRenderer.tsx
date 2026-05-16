@@ -1882,6 +1882,8 @@ type KCPerQuestionState = {
   timelineOrder: string[];
   revealed: boolean;
   lastWrong: boolean;
+  /** True once trainee has clicked Check on this question at least once. */
+  attempted: boolean;
 };
 
 const KC_IMPLEMENTED_TYPES = new Set([
@@ -1904,6 +1906,7 @@ function emptyKCState(): KCPerQuestionState {
     timelineOrder: [],
     revealed: false,
     lastWrong: false,
+    attempted: false,
   };
 }
 
