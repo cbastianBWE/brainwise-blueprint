@@ -852,6 +852,27 @@ function FlashcardsRender({
     !allDone && cursorIdx < queue.length ? queue[cursorIdx] : null;
   const current = currentId ? cardsById.get(currentId) ?? null : null;
 
+  // Fire onBlockComplete + reportProgress once on transition to allDone.
+  const completionFiredRef = useRef(false);
+  useEffect(() => {
+    if (mode !== "trainee") return;
+    if (allDone && !completionFiredRef.current && cards.length > 0) {
+      completionFiredRef.current = true;
+      onBlockComplete?.(blockClientId);
+      onBlockProgress?.({
+        blockClientId,
+        status: "completed",
+        data: {
+          queue,
+          cursorIdx,
+          completed: Array.from(completed),
+          reviewCounts,
+        },
+      });
+    }
+    if (!allDone) completionFiredRef.current = false;
+  }, [allDone, mode, blockClientId, onBlockComplete, onBlockProgress, cards.length, queue, cursorIdx, completed, reviewCounts]);
+
   const handleFlip = () => {
     if (!currentId) return;
     setFlipped((f) => !f);
