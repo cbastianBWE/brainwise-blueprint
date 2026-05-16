@@ -2234,6 +2234,7 @@ function KnowledgeCheckRender({
 
             {isImplemented && q.question_type === "match" && (
               <MatchTrainee
+                blockClientId={blockClientId}
                 question={q}
                 state={s}
                 onLink={(leftId, rightId) => handleMatchLink(q.client_id, leftId, rightId)}
@@ -2295,11 +2296,13 @@ function KnowledgeCheckRender({
 }
 
 function MatchTrainee({
+  blockClientId,
   question,
   state,
   onLink,
   onClear,
 }: {
+  blockClientId: string;
   question: KnowledgeCheckQuestionConfig;
   state: KCPerQuestionState;
   onLink: (leftId: string, rightId: string) => void;
@@ -2308,8 +2311,9 @@ function MatchTrainee({
   const [activeLeftId, setActiveLeftId] = useState<string | null>(null);
   const pairs = question.pairs ?? [];
 
-  const rightsSorted = [...pairs].sort((a, b) =>
-    a.client_id < b.client_id ? -1 : a.client_id > b.client_id ? 1 : 0,
+  const rightsSorted = useMemo(
+    () => stableShuffle(pairs, `${blockClientId}:${question.client_id}:match-right`),
+    [pairs, blockClientId, question.client_id],
   );
 
   const rightLinkedTo: Record<string, string> = {};
