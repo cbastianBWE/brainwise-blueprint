@@ -1555,6 +1555,8 @@ function ScenarioRender({
   urlMap,
   mode,
   blockClientId,
+  onBlockComplete,
+  onBlockProgress,
 }: {
   title: string | null;
   introMarkdown: TipTapDocJSON | null;
@@ -1563,6 +1565,8 @@ function ScenarioRender({
   urlMap: Map<string, string>;
   mode?: "editor" | "trainee";
   blockClientId: string;
+  onBlockComplete?: OnBlockComplete;
+  onBlockProgress?: OnBlockProgress;
 }) {
   const sessionKey = `scenario-pos:${blockClientId}`;
 
