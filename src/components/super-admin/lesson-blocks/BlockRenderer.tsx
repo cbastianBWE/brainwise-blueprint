@@ -896,13 +896,7 @@ function FlashcardsRender({
     setReviewCounts({});
     setFlipped(false);
     setHasBeenFlipped({});
-    if (mode === "trainee" && typeof window !== "undefined") {
-      try {
-        window.sessionStorage.removeItem(sessionKey);
-      } catch {
-        /* ignore */
-      }
-    }
+    completionFiredRef.current = false;
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
