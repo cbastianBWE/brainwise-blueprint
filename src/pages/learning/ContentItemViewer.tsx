@@ -37,6 +37,7 @@ import VideoViewer from "@/components/learning/viewers/VideoViewer";
 import WrittenSummaryViewer from "@/components/learning/viewers/WrittenSummaryViewer";
 import ExternalLinkViewer from "@/components/learning/viewers/ExternalLinkViewer";
 import QuizViewer from "@/components/learning/quiz/QuizViewer";
+import SkillsPracticeViewer from "@/components/learning/viewers/SkillsPracticeViewer";
 
 function getItemTypeIcon(itemType: string): { Icon: LucideIcon; color: string } {
   const map: Record<string, { Icon: LucideIcon; color: string }> = {
