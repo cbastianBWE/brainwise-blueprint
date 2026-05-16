@@ -5,11 +5,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
+import { mapRpcCascade, type CascadeResult } from "@/hooks/useCompletionReporter";
 
 interface Props {
   contentItem: any;
   completion: any;
   viewerRole: "self" | "mentor" | "super_admin";
+  onCascade?: (c: CascadeResult | null) => void;
 }
 
 function formatBytes(n: number | null | undefined): string {
@@ -75,7 +77,7 @@ async function uploadFile(file: File, contentItemId: string) {
   return fin.data;
 }
 
-export default function FileUploadViewer({ contentItem, completion, viewerRole }: Props) {
+export default function FileUploadViewer({ contentItem, completion, viewerRole, onCascade }: Props) {
   const queryClient = useQueryClient();
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -144,9 +146,11 @@ export default function FileUploadViewer({ contentItem, completion, viewerRole }
 
     setUploading(true);
     try {
-      await uploadFile(file, contentItem.id);
+      const finData = await uploadFile(file, contentItem.id);
       toast({ title: "File submitted", description: file.name });
       await queryClient.invalidateQueries({ queryKey: ["content-item-viewer", contentItem.id] });
+      const cascade = mapRpcCascade((finData as any)?.cascade);
+      onCascade?.(cascade);
     } catch (err) {
       await handleError(err);
     } finally {
