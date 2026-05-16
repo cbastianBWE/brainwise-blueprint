@@ -418,7 +418,21 @@ export default function ModuleDetail() {
                       {typeLabel} · {required}
                     </div>
                   </div>
-                  <div className="flex items-center gap-1 shrink-0">
+                  <div className="flex items-center gap-2 shrink-0">
+                    {isItemCompleted &&
+                      ci?.completion?.completed_at &&
+                      (ci.item_type === "external_link" ||
+                        ci.item_type === "file_upload" ||
+                        ci.item_type === "live_event") && (
+                        <span className="text-[11px] text-muted-foreground rounded-full border border-border bg-muted px-2 py-0.5 whitespace-nowrap">
+                          Completed{" "}
+                          {new Date(ci.completion.completed_at).toLocaleDateString(undefined, {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                          })}
+                        </span>
+                      )}
                     {isItemCompleted ? (
                       <CircleCheck
                         className="h-5 w-5"
