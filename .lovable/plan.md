@@ -1,56 +1,61 @@
-## Session 77 — Prompt 2: Trainee-facing Quiz Viewer
+# Session 77 — Prompt 4 (Step 5): File Upload + Live Event Viewers
 
-### Part A — Chrome change (`src/hooks/useCompletionReporter.ts`)
+Frontend-only. Two new trainee viewers and a two-line switch wire-up. No chrome interface or prop-passing changes; no backend changes.
 
-Backward-compatible: capture `data` from the RPC and surface it.
+## Files
 
-- Add optional `result?: unknown` to `ReportResult`.
-- Change `const { error } = await supabase.rpc(...)` to `const { data, error } = await supabase.rpc(...)`.
-- Include `result: data` in the success return alongside `ok`/`cascade`.
-- No changes to cascade detection, query invalidation, or existing callers.
+1. **Create** `src/components/learning/viewers/FileUploadViewer.tsx`
+2. **Create** `src/components/learning/viewers/LiveEventViewer.tsx`
+3. **Edit** `src/pages/learning/ContentItemViewer.tsx` — only the `file_upload` and `live_event` cases in the `renderViewer()` switch. `lesson_blocks` stays on `PlaceholderViewer`. No other edits.
 
-### Part B — Quiz Viewer
+## FileUploadViewer
 
-Files to create:
+Layout (`space-y-6`):
 
-1. **`src/components/learning/quiz/QuizViewer.tsx`** — top-level viewer mounted by `ContentItemViewer` for `item_type === 'quiz'`.
-   - Receives standard `ViewerProps` (`contentItem`, `completion`, `viewerRole`, `reportCompletion`, `isReporting`).
-   - React Query fetch of `get_quiz_for_trainee(contentItem.id)`.
-   - State machine: `loading → intro → in_progress → submitting → summary` + `error`.
-   - Intro variants: zero-questions ("not ready"), fresh (`Start quiz`), prior failed (`Try again — best X%`, `Start attempt N+1`), prior passed (`Retake`, no-downgrade note). Always a "Back to module" link.
-   - In-progress: one question per screen, `currentQuestionIndex`, `answers: Record<questionId, AnswerValue>`, `lockedQuestions: Set<questionId>` (only used in `always` mode).
-   - Advance: "Save and continue" in all modes; `always` mode has an extra "Submit this question" step that reveals per-question feedback before "Continue".
-   - Disable advance until the question has a complete answer.
-   - Final submit calls `reportCompletion("submit_quiz_attempt", { p_content_item_id, p_answers })`. Use `res.result.attempt_id` to fetch summary via `get_quiz_attempt_results`.
-   - On `!res.ok`: inline submit-error with Retry, keep `answers` intact.
-   - Review mode (`viewerRole !== "self"`): render intro/questions read-only, no Start/Submit.
-   - Defensive stub for `match_picture`; allow skip, treat as unanswered.
+- **Instructions card** — title + description (`whitespace-pre-wrap`).
+- **Requirements row** — "Accepted: PDF, DOCX, ..." from `file_upload_allowed_extensions` (or "Any file type" if empty/null); "Max X MB" from `file_upload_max_bytes` (omit if null). Uses a `formatBytes(n)` helper.
+- **Upload or submitted state:**
+  - Not submitted (`!completion?.file_upload_url`): drop zone + "Choose file" (`bg-[var(--bw-orange)]`) with hidden `<input type="file">`. On select: client-side pre-validate extension (case-insensitive, strip leading dot) and size against item limits → on violation, `toast` and abort. Otherwise run `uploadFile(file, contentItemId)` (the 3-step helper from the prompt, inline). Show `Loader2` + "Uploading…". On success, `queryClient.invalidateQueries({ queryKey: ["content-item-viewer", contentItemId] })`.
+  - Submitted: green completed panel (`border-[var(--bw-forest)]/30 bg-[var(--bw-forest)]/5`, `CircleCheck`) with `file_upload_filename` + formatted size. **Download** link backed by a `useQuery` keyed by `["file-upload-read", completion.id]` that invokes `{ action: "read", content_item_id }` and renders `<a href={signed_url} target="_blank" rel="noreferrer">Download</a>`. **Replace file** button (hidden in review mode) reopens the picker and re-runs the helper.
+- **Error mapping** (via `useToast`): `file_exceeds_item_limit` → "File exceeds the {max} limit for this item"; `extension_not_allowed` → "That file type isn't accepted. Allowed: {list}"; `file_too_large` → "File exceeds the 500 MB ceiling"; otherwise raw `message`. Errors come back from `supabase.functions.invoke` either as `error` (FunctionsHttpError, parse `context.response.json()` when possible) or as `{ error: code, ... }` in `data` — handle both shapes.
+- **Review mode** (`viewerRole !== "self"`): instructions + requirements + (if submitted) submitted panel and Download. No "Choose file" / "Replace file".
+- Uses `useQueryClient` from `@tanstack/react-query` and `supabase` from `@/integrations/supabase/client`. Does **not** call `reportCompletion`; the finalize RPC writes the completion server-side, and chrome refetch surfaces the new state. Cascade modal won't fire from a file upload in v1 — accepted.
 
-2. **`src/components/learning/quiz/QuestionRendererMultipleChoice.tsx`** — large tappable cards (not radio rows), single-select. Locked-state: green check on correct, red X on wrong pick; no red-tinted backgrounds.
+## LiveEventViewer
 
-3. **`src/components/learning/quiz/QuestionRendererTrueFalse.tsx`** — two large side-by-side buttons; same locked-state pattern.
+Read-only for every role. Layout (`space-y-6`):
 
-4. **`src/components/learning/quiz/QuestionRendererSelectAll.tsx`** — multi-select tappable cards with checkbox affordance; hint line about all-or-nothing scoring; locked-state per-option (missed-correct / wrong-picked) without red backgrounds.
+- **Event card** — title + description.
+- **Schedule row** — `Calendar` icon + `new Date(event_scheduled_at).toLocaleString(undefined, { dateStyle: "long", timeStyle: "short" })`, or "Date to be announced" if null.
+- **Event reference** — muted "Event ID: {event_external_id}" line when set. No link.
+- **Attendance status panel** — switch on `completion?.live_event_attendance_status`:
+  - `null` / no completion → calm teal panel, `Clock`, "Attendance not yet recorded — your mentor will mark this after the session."
+  - `registered` → teal panel, `Calendar`, "You're registered for this event."
+  - `attended` → green forest panel, `CircleCheck`, "Attendance confirmed."
+  - `missed` → neutral gray panel (`border-[var(--bw-gray)]/30 bg-[var(--bw-gray)]/5`), `Info`, "Marked as missed. Contact your mentor if this is incorrect." Not red/destructive.
+- No buttons, no `reportCompletion`, no role gating beyond what's above.
 
-5. **`src/components/learning/quiz/QuestionRendererMatch.tsx`** — two columns, tap-to-pair (no DnD). Tap prompt → highlight; tap answer → pair with colored chip; tap paired side → unpair. Chip palette cycles Navy → Teal → Orange → Purple → Green → Mustard. Pairings tracked as `{ [promptId]: answerId }`. Locked-state shows pair check/X plus correct pairing for wrong pairs.
+## ContentItemViewer.tsx edits
 
-6. **`src/components/learning/quiz/QuizProgressBar.tsx`** — N dots: empty / Teal-filled / Teal-ring (current); in `always` mode after lock, Green or red filled. "Question N of M" label.
+Add the two imports next to the existing viewer imports and replace exactly these two switch arms:
 
-7. **`src/components/learning/quiz/QuizSummaryScreen.tsx`** — receives `submitResult` + `get_quiz_attempt_results` payload.
-   - Large score card (`text-6xl font-display`), pass/fail label, threshold, earned/total points.
-   - Passed: brand Green tint + checkmark. Failed: brand Sand background, supportive tone, no red.
-   - If `reveal_correctness === true`: per-question list with icons, user answer, correct answer, explanation; match pair-by-pair correctness.
-   - If `reveal_correctness === false`: mode-keyed subtle line (`never` vs `after_pass`).
-   - CTAs: passed → "Continue" (navigates to `/learning/module/{contentItem.module_id}`) + "Back to module" link; not-passed → "Try again" (resets local state, returns to `intro`) + "Back to module".
+```
+case "file_upload":
+  return <FileUploadViewer {...props} />;
+case "live_event":
+  return <LiveEventViewer {...props} />;
+```
 
-Shared helpers inside `QuizViewer.tsx`: `mapQuizViewerRpcError`, `AnswerValue`/`QuizQuestion`/`QuizAnswerOption` types, answer-completeness check per question type, assembling `p_answers` jsonb.
+`PlaceholderViewer`, `lesson_blocks`, the `props` spread, and `ViewerProps`-shaped contract remain untouched.
 
-### What is explicitly NOT changing
+## Style tokens (recap)
 
-- `ContentItemViewer.tsx` already routes `quiz` to a viewer — verify it imports the new `QuizViewer` from `@/components/learning/quiz/QuizViewer` (currently routes to `PlaceholderViewer` for `quiz`); wire it up.
-- No changes to cascade modal (chrome owns it), no Next-item navigation from the viewer, no direct `supabase.rpc("submit_quiz_attempt")` calls.
-- Backend RPCs untouched.
+- Completed: `border-[var(--bw-forest)]/30 bg-[var(--bw-forest)]/5`, icon `var(--bw-forest)`.
+- Calm/awaiting/registered: `border-[var(--bw-teal)]/30 bg-[var(--bw-teal)]/5`, icon `var(--bw-teal)`.
+- Missed: `border-[var(--bw-gray)]/30 bg-[var(--bw-gray)]/5`, icon `var(--bw-gray)`.
+- Primary CTA: `bg-[var(--bw-orange)] hover:bg-[var(--bw-orange-600)] text-white`.
+- `Card`, `Button` from `@/components/ui/*`; icons `Calendar`, `Clock`, `CircleCheck`, `Info`, `Upload`, `Loader2`, `FileText` from `lucide-react`.
 
-### Verification
+## Out of scope
 
-Walk the 15-step checklist against quiz `0e365d0e-81e6-4d28-a0fe-ccd749714a9d` (Test Module C) as `testclientbwe+employee@gmail.com`, including the `always`-mode toggle and zero-question case.
+Mentor attendance marking, lesson_blocks viewer, any change to other viewers, any change to `ViewerProps` or the chrome's prop spread, any client-synthesized cascade.
