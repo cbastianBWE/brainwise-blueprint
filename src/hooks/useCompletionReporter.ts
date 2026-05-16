@@ -73,5 +73,24 @@ export function useCompletionReporter({ userId: _userId, contentItemId }: Option
     [contentItemId, queryClient],
   );
 
-  return { reportCompletion, isReporting };
+  // Lightweight progress writer for incremental updates (per-block progress,
+  // furthest-position tracking, etc.). Does NOT invalidate queries, does NOT
+  // map cascade, does NOT flip isReporting — it fires many times per lesson.
+  const reportProgress = useCallback(
+    async (
+      rpcName: string,
+      rpcArgs: Record<string, unknown>,
+    ): Promise<{ ok: boolean; error?: string; result?: unknown }> => {
+      try {
+        const { data, error } = await supabase.rpc(rpcName as never, rpcArgs as never);
+        if (error) return { ok: false, error: error.message };
+        return { ok: true, result: data };
+      } catch (e: any) {
+        return { ok: false, error: e?.message ?? String(e) };
+      }
+    },
+    [],
+  );
+
+  return { reportCompletion, reportProgress, isReporting };
 }

@@ -57,10 +57,27 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import type { EditorBlock, TipTapDocJSON } from "./blockTypeMeta";
 
+export type OnBlockComplete = (blockClientId: string) => void;
+export type OnBlockProgress = (args: {
+  blockClientId: string;
+  status: "in_progress" | "completed";
+  data: unknown;
+}) => void;
+
 interface BlockRendererProps {
   block: EditorBlock;
   assetUrlMap: Map<string, string>;
   mode?: "editor" | "trainee";
+  /**
+   * Trainee-only. Fires once when the block's per-renderer "done" flag
+   * transitions to true. Optional — when absent, renderers behave unchanged.
+   */
+  onBlockComplete?: OnBlockComplete;
+  /**
+   * Trainee-only. DB-backed progress writer. When provided, the interactive
+   * renderers call it on the completion transition with a state snapshot.
+   */
+  onBlockProgress?: OnBlockProgress;
 }
 
 function ReadOnlyTipTap({ json }: { json: TipTapDocJSON | null | undefined }) {
@@ -310,7 +327,7 @@ function paddingPxFor(token: unknown): number {
   }
 }
 
-export function BlockRenderer({ block, assetUrlMap, mode }: BlockRendererProps) {
+export function BlockRenderer({ block, assetUrlMap, mode, onBlockComplete, onBlockProgress }: BlockRendererProps) {
   const cfg: any = block.config ?? {};
   const bg = (cfg.background_color as string | null | undefined) ?? null;
   const padPx = paddingPxFor(cfg.padding);
@@ -420,6 +437,8 @@ export function BlockRenderer({ block, assetUrlMap, mode }: BlockRendererProps) 
             urlMap={assetUrlMap}
             mode={mode}
             blockClientId={block.client_id}
+            onBlockComplete={onBlockComplete}
+            onBlockProgress={onBlockProgress}
           />
         );
       case "card_sort":
@@ -431,6 +450,8 @@ export function BlockRenderer({ block, assetUrlMap, mode }: BlockRendererProps) 
             urlMap={assetUrlMap}
             mode={mode}
             blockClientId={block.client_id}
+            onBlockComplete={onBlockComplete}
+            onBlockProgress={onBlockProgress}
           />
         );
       case "scenario":
@@ -443,6 +464,8 @@ export function BlockRenderer({ block, assetUrlMap, mode }: BlockRendererProps) 
             urlMap={assetUrlMap}
             mode={mode}
             blockClientId={block.client_id}
+            onBlockComplete={onBlockComplete}
+            onBlockProgress={onBlockProgress}
           />
         );
       case "knowledge_check":
@@ -452,6 +475,8 @@ export function BlockRenderer({ block, assetUrlMap, mode }: BlockRendererProps) 
             gatingRequired={cfg.gating_required === true}
             mode={mode}
             blockClientId={block.client_id}
+            onBlockComplete={onBlockComplete}
+            onBlockProgress={onBlockProgress}
           />
         );
       default:
@@ -750,12 +775,16 @@ function FlashcardsRender({
   urlMap,
   mode,
   blockClientId,
+  onBlockComplete,
+  onBlockProgress,
 }: {
   cards: FlashcardConfig[];
   gatingRequired: boolean;
   urlMap: Map<string, string>;
   mode?: "editor" | "trainee";
   blockClientId: string;
+  onBlockComplete?: OnBlockComplete;
+  onBlockProgress?: OnBlockProgress;
 }) {
   const initialQueue = cards.map((c) => c.client_id);
   const sessionKey = `flashcards-pos:${blockClientId}`;
@@ -822,6 +851,27 @@ function FlashcardsRender({
   const currentId =
     !allDone && cursorIdx < queue.length ? queue[cursorIdx] : null;
   const current = currentId ? cardsById.get(currentId) ?? null : null;
+
+  // Fire onBlockComplete + reportProgress once on transition to allDone.
+  const completionFiredRef = useRef(false);
+  useEffect(() => {
+    if (mode !== "trainee") return;
+    if (allDone && !completionFiredRef.current && cards.length > 0) {
+      completionFiredRef.current = true;
+      onBlockComplete?.(blockClientId);
+      onBlockProgress?.({
+        blockClientId,
+        status: "completed",
+        data: {
+          queue,
+          cursorIdx,
+          completed: Array.from(completed),
+          reviewCounts,
+        },
+      });
+    }
+    if (!allDone) completionFiredRef.current = false;
+  }, [allDone, mode, blockClientId, onBlockComplete, onBlockProgress, cards.length, queue, cursorIdx, completed, reviewCounts]);
 
   const handleFlip = () => {
     if (!currentId) return;
@@ -1168,6 +1218,8 @@ function CardSortRender({
   urlMap,
   mode,
   blockClientId,
+  onBlockComplete,
+  onBlockProgress,
 }: {
   buckets: CardSortBucket[];
   cards: CardSortCardConfig[];
@@ -1175,6 +1227,8 @@ function CardSortRender({
   urlMap: Map<string, string>;
   mode?: "editor" | "trainee";
   blockClientId: string;
+  onBlockComplete?: OnBlockComplete;
+  onBlockProgress?: OnBlockProgress;
 }) {
   const sessionKey = `card_sort-pos:${blockClientId}`;
 
@@ -1254,6 +1308,22 @@ function CardSortRender({
     cards.length > 0 && cards.every((c) => stateById[c.client_id]?.placement !== "holding");
   const allCorrectAndLocked =
     cards.length > 0 && cards.every((c) => stateById[c.client_id]?.locked === true);
+
+  // Fire onBlockComplete + reportProgress once on transition to allCorrectAndLocked.
+  const completionFiredRef = useRef(false);
+  useEffect(() => {
+    if (mode !== "trainee") return;
+    if (allCorrectAndLocked && !completionFiredRef.current) {
+      completionFiredRef.current = true;
+      onBlockComplete?.(blockClientId);
+      const snapshot: Record<string, { placement: CardPlacement; locked: boolean }> = {};
+      for (const id of Object.keys(stateById)) {
+        snapshot[id] = { placement: stateById[id].placement, locked: stateById[id].locked };
+      }
+      onBlockProgress?.({ blockClientId, status: "completed", data: snapshot });
+    }
+    if (!allCorrectAndLocked) completionFiredRef.current = false;
+  }, [allCorrectAndLocked, mode, blockClientId, onBlockComplete, onBlockProgress, stateById]);
 
   const handleDragStart = (e: DragStartEvent) => {
     const id = e.active.id as string;
@@ -1485,6 +1555,8 @@ function ScenarioRender({
   urlMap,
   mode,
   blockClientId,
+  onBlockComplete,
+  onBlockProgress,
 }: {
   title: string | null;
   introMarkdown: TipTapDocJSON | null;
@@ -1493,6 +1565,8 @@ function ScenarioRender({
   urlMap: Map<string, string>;
   mode?: "editor" | "trainee";
   blockClientId: string;
+  onBlockComplete?: OnBlockComplete;
+  onBlockProgress?: OnBlockProgress;
 }) {
   const sessionKey = `scenario-pos:${blockClientId}`;
 
@@ -1584,6 +1658,21 @@ function ScenarioRender({
   const current = !allDone ? moments[cursorIdx] : null;
   const currentImageUrl =
     current?.setup_image_asset_id ? urlMap.get(current.setup_image_asset_id) ?? null : null;
+
+  const completionFiredRef = useRef(false);
+  useEffect(() => {
+    if (mode !== "trainee") return;
+    if (allDone && !completionFiredRef.current && moments.length > 0) {
+      completionFiredRef.current = true;
+      onBlockComplete?.(blockClientId);
+      onBlockProgress?.({
+        blockClientId,
+        status: "completed",
+        data: { cursorIdx, reflectionResponses, choiceSelected },
+      });
+    }
+    if (!allDone) completionFiredRef.current = false;
+  }, [allDone, mode, blockClientId, onBlockComplete, onBlockProgress, moments.length, cursorIdx, reflectionResponses, choiceSelected]);
 
   const openOutcome = (outcomeDoc: TipTapDocJSON | null) => {
     setModalOutcome(outcomeDoc);
@@ -1793,6 +1882,8 @@ type KCPerQuestionState = {
   timelineOrder: string[];
   revealed: boolean;
   lastWrong: boolean;
+  /** True once trainee has clicked Check on this question at least once. */
+  attempted: boolean;
 };
 
 const KC_IMPLEMENTED_TYPES = new Set([
@@ -1815,6 +1906,7 @@ function emptyKCState(): KCPerQuestionState {
     timelineOrder: [],
     revealed: false,
     lastWrong: false,
+    attempted: false,
   };
 }
 
@@ -1833,11 +1925,15 @@ function KnowledgeCheckRender({
   questions,
   mode,
   blockClientId,
+  onBlockComplete,
+  onBlockProgress,
 }: {
   questions: KnowledgeCheckQuestionConfig[];
   gatingRequired: boolean;
   mode?: "editor" | "trainee";
   blockClientId: string;
+  onBlockComplete?: OnBlockComplete;
+  onBlockProgress?: OnBlockProgress;
 }) {
   const sessionKey = `knowledge_check-pos:${blockClientId}`;
 
@@ -1892,6 +1988,7 @@ function KnowledgeCheckRender({
               : [],
             revealed: prior.revealed === true,
             lastWrong: false,
+            attempted: prior.attempted === true || prior.revealed === true,
           };
         } else {
           next[q.client_id] = emptyKCState();
@@ -2089,11 +2186,33 @@ function KnowledgeCheckRender({
         ...s,
         revealed: correct ? true : s.revealed,
         lastWrong: !correct,
+        attempted: true,
       },
     }));
   };
 
   const allCorrect = questions.every((q) => stateById[q.client_id]?.revealed === true);
+  const allAttempted =
+    questions.length > 0 &&
+    questions.every((q) => stateById[q.client_id]?.attempted === true);
+
+  // Fire onBlockComplete + reportProgress once when every question has been
+  // attempted (clicked Check at least once, right or wrong). Do NOT gate on
+  // allCorrect — that would block the lesson behind a perfect score.
+  const completionFiredRef = useRef(false);
+  useEffect(() => {
+    if (mode !== "trainee") return;
+    if (allAttempted && !completionFiredRef.current) {
+      completionFiredRef.current = true;
+      onBlockComplete?.(blockClientId);
+      onBlockProgress?.({
+        blockClientId,
+        status: "completed",
+        data: { stateById },
+      });
+    }
+    if (!allAttempted) completionFiredRef.current = false;
+  }, [allAttempted, mode, blockClientId, onBlockComplete, onBlockProgress, stateById]);
 
   return (
     <div className="bw-kc-shell">

@@ -42,6 +42,7 @@ import QuizViewer from "@/components/learning/quiz/QuizViewer";
 import SkillsPracticeViewer from "@/components/learning/viewers/SkillsPracticeViewer";
 import FileUploadViewer from "@/components/learning/viewers/FileUploadViewer";
 import LiveEventViewer from "@/components/learning/viewers/LiveEventViewer";
+import LessonBlockViewer from "@/components/learning/viewers/LessonBlockViewer";
 
 function getItemTypeIcon(itemType: string): { Icon: LucideIcon; color: string } {
   const map: Record<string, { Icon: LucideIcon; color: string }> = {
@@ -112,7 +113,7 @@ export default function ContentItemViewer() {
     },
   });
 
-  const { reportCompletion, isReporting } = useCompletionReporter({
+  const { reportCompletion, reportProgress, isReporting } = useCompletionReporter({
     userId: userId ?? "",
     contentItemId: contentItemId ?? "",
   });
@@ -221,6 +222,7 @@ export default function ContentItemViewer() {
       completion,
       viewerRole,
       reportCompletion: wrappedReport,
+      reportProgress,
       isReporting,
       onCascade: openCascade,
     };
@@ -239,6 +241,8 @@ export default function ContentItemViewer() {
         return <FileUploadViewer {...props} />;
       case "live_event":
         return <LiveEventViewer {...props} />;
+      case "lesson_blocks":
+        return <LessonBlockViewer {...props} />;
       default:
         return <PlaceholderViewer label={typeLabel} />;
     }
