@@ -39,6 +39,7 @@ import AiChat from "./pages/AiChat";
 import AiChatHistory from "./pages/AiChatHistory";
 import Resources from "./pages/Resources";
 import ResourceReader from "./pages/ResourceReader";
+import CertPathDetail from "./pages/learning/CertPathDetail";
 import Pricing from "./pages/Pricing";
 import SettingsPage from "./pages/Settings";
 import PrivacySettings from "./pages/PrivacySettings";
