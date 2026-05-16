@@ -60,6 +60,7 @@ function ContentItemEditor({
   const [videoCompletionThreshold, setVideoCompletionThreshold] = useState<string>(
     initial?.video_completion_threshold_pct == null ? "95" : String(initial.video_completion_threshold_pct)
   );
+  const [videoAiSummary, setVideoAiSummary] = useState<string>(initial?.video_ai_summary ?? "");
 
   // quiz
   const [quizPassThreshold, setQuizPassThreshold] = useState<string>(
