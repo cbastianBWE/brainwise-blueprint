@@ -37,39 +37,56 @@ function collectCompleted(snapshot: any): {
   const curricula = new Map<string, string>();
   const certifications = new Map<string, string>();
 
-  const visit = (node: any) => {
-    if (!node || typeof node !== "object") return;
-    if (Array.isArray(node)) {
-      node.forEach(visit);
-      return;
-    }
-    // Heuristic: walk arbitrary object shape, identifying completed/certified entries.
-    const status = node.status ?? node.completion_status;
-    const name = node.name ?? node.title ?? "";
+  if (!snapshot || typeof snapshot !== "object") {
+    return { content_items, modules, curricula, certifications };
+  }
 
-    if (node.content_item_id && status === "completed") {
-      content_items.add(String(node.content_item_id));
+  const collectModule = (mod: any) => {
+    if (!mod || typeof mod !== "object") return;
+    if (mod.module_completion?.status === "completed" && mod.module_id) {
+      modules.set(String(mod.module_id), mod.name ?? "this module");
     }
-    if (node.module_id && status === "completed") {
-      modules.set(String(node.module_id), name || "this module");
+    for (const item of mod.items ?? []) {
+      if (
+        item?.completion?.status === "completed" &&
+        item.content_item_id
+      ) {
+        content_items.add(String(item.content_item_id));
+      }
     }
-    if (node.curriculum_id && status === "completed") {
-      curricula.set(String(node.curriculum_id), name || "this curriculum");
-    }
-    if (
-      node.certification_path_id &&
-      (status === "certified" || status === "completed")
-    ) {
-      certifications.set(
-        String(node.certification_path_id),
-        name || "this certification",
-      );
-    }
-
-    for (const k of Object.keys(node)) visit(node[k]);
   };
 
-  visit(snapshot);
+  for (const a of snapshot.assignments ?? []) {
+    if (!a || typeof a !== "object") continue;
+    const curriculumDone =
+      a.assignment_status === "completed" ||
+      (!a.assignment_status && a.status_group === "completed");
+    if (curriculumDone && a.curriculum_id) {
+      curricula.set(
+        String(a.curriculum_id),
+        a.curriculum?.name ?? "this curriculum",
+      );
+    }
+    for (const m of a.modules ?? []) collectModule(m);
+  }
+
+  for (const ma of snapshot.module_assignments ?? []) {
+    collectModule(ma);
+  }
+
+  for (const c of snapshot.certifications ?? []) {
+    if (!c || typeof c !== "object") continue;
+    if (
+      (c.status === "certified" || c.status === "completed") &&
+      c.certification_id
+    ) {
+      certifications.set(
+        String(c.certification_id),
+        c.certification_type ?? "your certification",
+      );
+    }
+  }
+
   return { content_items, modules, curricula, certifications };
 }
 
