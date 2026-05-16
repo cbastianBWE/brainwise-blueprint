@@ -57,27 +57,35 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import type { EditorBlock, TipTapDocJSON } from "./blockTypeMeta";
 
-export type OnBlockComplete = (blockClientId: string) => void;
-export type OnBlockProgress = (args: {
-  blockClientId: string;
+export type OnBlockComplete = (
+  blockClientId: string,
+  completionData?: unknown,
+) => void;
+
+export interface SavedBlockProgress {
   status: "in_progress" | "completed";
-  data: unknown;
-}) => void;
+  completion_data: unknown;
+}
 
 interface BlockRendererProps {
   block: EditorBlock;
   assetUrlMap: Map<string, string>;
   mode?: "editor" | "trainee";
   /**
-   * Trainee-only. Fires once when the block's per-renderer "done" flag
-   * transitions to true. Optional — when absent, renderers behave unchanged.
+   * Trainee-only. Fires once on the live false → true transition of the
+   * block's per-renderer "done" flag. Receives an optional state snapshot
+   * which the caller may persist (e.g. to lesson_block_progress).
+   * Does NOT fire for blocks that are already complete on mount — those
+   * are handled by the caller using savedProgress directly.
    */
   onBlockComplete?: OnBlockComplete;
   /**
-   * Trainee-only. DB-backed progress writer. When provided, the interactive
-   * renderers call it on the completion transition with a state snapshot.
+   * Trainee-only. DB-backed prior progress for this block. When present and
+   * status === "completed", the renderer seeds its in-memory state from
+   * completion_data and suppresses the live-completion event. The DB is the
+   * single source of truth — no sessionStorage is used.
    */
-  onBlockProgress?: OnBlockProgress;
+  savedProgress?: SavedBlockProgress | null;
 }
 
 function ReadOnlyTipTap({ json }: { json: TipTapDocJSON | null | undefined }) {
