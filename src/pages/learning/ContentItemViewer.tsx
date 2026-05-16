@@ -36,6 +36,7 @@ import {
 import VideoViewer from "@/components/learning/viewers/VideoViewer";
 import WrittenSummaryViewer from "@/components/learning/viewers/WrittenSummaryViewer";
 import ExternalLinkViewer from "@/components/learning/viewers/ExternalLinkViewer";
+import QuizViewer from "@/components/learning/quiz/QuizViewer";
 
 function getItemTypeIcon(itemType: string): { Icon: LucideIcon; color: string } {
   const map: Record<string, { Icon: LucideIcon; color: string }> = {
@@ -176,6 +177,8 @@ export default function ContentItemViewer() {
         return <WrittenSummaryViewer {...props} />;
       case "external_link":
         return <ExternalLinkViewer {...props} />;
+      case "quiz":
+        return <QuizViewer {...props} />;
       default:
         return <PlaceholderViewer label={typeLabel} />;
     }
