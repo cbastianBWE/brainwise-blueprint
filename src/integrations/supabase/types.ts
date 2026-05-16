@@ -9136,6 +9136,16 @@ export type Database = {
           out_path: string
         }[]
       }
+      get_lesson_block_assets_for_trainee: {
+        Args: { p_content_item_id: string; p_user_id?: string }
+        Returns: {
+          out_asset_id: string
+          out_asset_kind: string
+          out_bucket: string
+          out_mime_type: string
+          out_path: string
+        }[]
+      }
       get_module_detail: {
         Args: { p_module_id: string; p_user_id?: string }
         Returns: Json
