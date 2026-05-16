@@ -251,7 +251,7 @@ function ContentItemEditor({
   }, [
     mode, initial,
     title, description, displayOrder, isRequired, thumbnailAssetId, reason,
-    videoSourceType, videoSourceId, videoCompletionThreshold,
+    videoSourceType, videoSourceId, videoCompletionThreshold, videoAiSummary,
     quizPassThreshold, quizShowCorrectMode,
     writtenMinChars, writtenMaxChars, writtenCompletionMode,
     skillsSignoffRequired, skillsActorInvitationRequired, skillsOptionalAttachment,
