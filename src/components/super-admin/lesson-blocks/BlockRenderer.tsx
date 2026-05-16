@@ -1984,6 +1984,7 @@ function KnowledgeCheckRender({
               : [],
             revealed: prior.revealed === true,
             lastWrong: false,
+            attempted: prior.attempted === true || prior.revealed === true,
           };
         } else {
           next[q.client_id] = emptyKCState();
