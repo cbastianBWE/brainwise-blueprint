@@ -327,7 +327,7 @@ function paddingPxFor(token: unknown): number {
   }
 }
 
-export function BlockRenderer({ block, assetUrlMap, mode }: BlockRendererProps) {
+export function BlockRenderer({ block, assetUrlMap, mode, onBlockComplete, onBlockProgress }: BlockRendererProps) {
   const cfg: any = block.config ?? {};
   const bg = (cfg.background_color as string | null | undefined) ?? null;
   const padPx = paddingPxFor(cfg.padding);
