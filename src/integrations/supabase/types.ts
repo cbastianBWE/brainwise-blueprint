@@ -8620,6 +8620,14 @@ export type Database = {
         Args: { p_id: string; p_reason: string }
         Returns: Json
       }
+      archive_quiz_answer_option: {
+        Args: { p_id: string; p_reason: string }
+        Returns: Json
+      }
+      archive_quiz_question: {
+        Args: { p_id: string; p_reason: string }
+        Returns: Json
+      }
       archive_resource: {
         Args: { p_id: string; p_reason: string }
         Returns: Json
@@ -9512,6 +9520,14 @@ export type Database = {
         Args: { p_module_id: string; p_ordered_ids: string[]; p_reason: string }
         Returns: Json
       }
+      reorder_quiz_questions: {
+        Args: {
+          p_content_item_id: string
+          p_ordered_ids: string[]
+          p_reason: string
+        }
+        Returns: Json
+      }
       replace_asset: {
         Args: {
           p_new_asset_id: string
@@ -9853,6 +9869,33 @@ export type Database = {
           p_self_enroll_price_cents?: number
           p_slug: string
           p_thumbnail_asset_id?: string
+        }
+        Returns: Json
+      }
+      upsert_quiz_answer_option: {
+        Args: {
+          p_display_order: number
+          p_id: string
+          p_is_correct: boolean
+          p_match_pair_key: string
+          p_option_image_url: string
+          p_option_text: string
+          p_question_id: string
+          p_reason: string
+        }
+        Returns: Json
+      }
+      upsert_quiz_question: {
+        Args: {
+          p_content_item_id: string
+          p_display_order: number
+          p_explanation: string
+          p_id: string
+          p_points: number
+          p_question_image_url: string
+          p_question_text: string
+          p_question_type: string
+          p_reason: string
         }
         Returns: Json
       }
