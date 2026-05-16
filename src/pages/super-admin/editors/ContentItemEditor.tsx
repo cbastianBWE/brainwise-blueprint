@@ -117,8 +117,9 @@ function ContentItemEditor({
   // AI draft state
   const [aiDraftingTitle, setAiDraftingTitle] = useState(false);
   const [aiDraftingDesc, setAiDraftingDesc] = useState(false);
+  const [aiDraftingVideoSummary, setAiDraftingVideoSummary] = useState(false);
   const [aiDraftDialogOpen, setAiDraftDialogOpen] = useState(false);
-  const [aiDraftTarget, setAiDraftTarget] = useState<"content_item_title" | "content_item_description" | null>(null);
+  const [aiDraftTarget, setAiDraftTarget] = useState<"content_item_title" | "content_item_description" | "content_item_video_summary" | null>(null);
   const [aiAuthorPrompt, setAiAuthorPrompt] = useState("");
   const [aiVoicePresetKey, setAiVoicePresetKey] = useState<string>("conversational_coach");
 
