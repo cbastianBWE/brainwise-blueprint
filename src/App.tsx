@@ -144,6 +144,7 @@ const App = () => (
               <Route path="/ai-chat/history" element={<SubscriptionGate feature="ai_chat"><AiChatHistory /></SubscriptionGate>} />
               <Route path="/resources" element={<Resources />} />
               <Route path="/resources/:resourceId" element={<ResourceReader />} />
+              <Route path="/learning/cert-path/:certPathId" element={<CertPathDetail />} />
               <Route path="/settings" element={<SettingsPage />} />
               <Route path="/settings/privacy" element={<PrivacySettings />} />
               <Route path="/settings/sharing-requests" element={<SharingRequests />} />
