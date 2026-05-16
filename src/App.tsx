@@ -42,6 +42,7 @@ import ResourceReader from "./pages/ResourceReader";
 import CertPathDetail from "./pages/learning/CertPathDetail";
 import CurriculumDetail from "./pages/learning/CurriculumDetail";
 import ModuleDetail from "./pages/learning/ModuleDetail";
+import ContentItemViewer from "./pages/learning/ContentItemViewer";
 import Pricing from "./pages/Pricing";
 import SettingsPage from "./pages/Settings";
 import PrivacySettings from "./pages/PrivacySettings";
@@ -150,6 +151,7 @@ const App = () => (
               <Route path="/learning/cert-path/:certPathId" element={<CertPathDetail />} />
               <Route path="/learning/curriculum/:curriculumId" element={<CurriculumDetail />} />
               <Route path="/learning/module/:moduleId" element={<ModuleDetail />} />
+              <Route path="/learning/content-item/:contentItemId" element={<ContentItemViewer />} />
               <Route path="/settings" element={<SettingsPage />} />
               <Route path="/settings/privacy" element={<PrivacySettings />} />
               <Route path="/settings/sharing-requests" element={<SharingRequests />} />
