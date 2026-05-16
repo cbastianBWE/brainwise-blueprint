@@ -307,7 +307,7 @@ export default function CertPathDetail() {
       {/* At-a-glance metadata */}
       <div className="px-4 sm:px-6 flex flex-wrap gap-2">
         <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs text-muted-foreground bg-muted border border-border">
-          {curricula.length} curricula
+          {curricula.length === 1 ? "1 curriculum" : `${curricula.length} curricula`}
         </span>
         {totalMinutes > 0 && (
           <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs text-muted-foreground bg-muted border border-border">
