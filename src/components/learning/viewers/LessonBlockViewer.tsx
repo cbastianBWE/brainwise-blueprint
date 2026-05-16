@@ -515,11 +515,11 @@ export default function LessonBlockViewer({
             {!isCompleted && isSelf && (
               <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="text-xs text-muted-foreground">
-                  {allGatedComplete
-                    ? completionMode === "scroll_and_checks" && !scrolledToBottom
+                  {!allGatedComplete
+                    ? "Complete the required activities above to finish this lesson."
+                    : !scrolledToBottom
                       ? "Scroll to the end of the lesson to finish."
-                      : "You've completed every required activity."
-                    : "Complete the required activities above to finish this lesson."}
+                      : "You've completed every required activity."}
                 </div>
                 <Button
                   size="lg"
