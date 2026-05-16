@@ -363,37 +363,123 @@ export default function ContentItemViewer() {
         )}
       </div>
 
-      {/* Cascade celebration modal */}
-      <Dialog open={!!cascadeModal} onOpenChange={(o) => !o && setCascadeModal(null)}>
+      {/* Cascade celebration modal — per-tier treatment */}
+      <Dialog
+        open={!!cascadeModal && cascadeModal.tier !== "content_item"}
+        onOpenChange={(o) => !o && setCascadeModal(null)}
+      >
         <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              {cascadeModal ? CASCADE_COPY[cascadeModal.tier].title : ""}
-            </DialogTitle>
-            <DialogDescription>
-              {cascadeModal?.entityName
-                ? `Great work on ${cascadeModal.entityName}.`
-                : "Great work!"}
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="gap-2 sm:gap-2">
-            {nextItem && (
-              <Button
-                onClick={() => {
-                  setCascadeModal(null);
-                  navigate(`/learning/content-item/${nextItem.content_item_id}`);
+          {cascadeModal?.tier === "module" && (
+            <>
+              <DialogHeader>
+                <div className="flex items-center gap-2">
+                  <CircleCheck className="h-6 w-6" style={{ color: "var(--bw-forest)" }} />
+                  <DialogTitle>{CASCADE_COPY.module.title}</DialogTitle>
+                </div>
+                <DialogDescription>
+                  {CASCADE_COPY.module.body(cascadeModal.entityName)}
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter className="gap-2 sm:gap-2">
+                {certPath && (
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setCascadeModal(null);
+                      navigate(`/learning/cert-path/${certPath.certification_path_id}`);
+                    }}
+                  >
+                    Back to cert path
+                  </Button>
+                )}
+                <Button
+                  onClick={() => {
+                    setCascadeModal(null);
+                    if (nextItem) navigate(`/learning/content-item/${nextItem.content_item_id}`);
+                  }}
+                  className="bg-[var(--bw-orange)] hover:bg-[var(--bw-orange-600)] text-white"
+                >
+                  Next
+                </Button>
+              </DialogFooter>
+            </>
+          )}
+
+          {cascadeModal?.tier === "curriculum" && (
+            <>
+              <div
+                className="-mx-6 -mt-6 mb-2 h-2 rounded-t-md"
+                style={{
+                  background:
+                    "linear-gradient(90deg, var(--bw-orange), var(--bw-plum))",
                 }}
-                className="bg-[var(--bw-orange)] hover:bg-[var(--bw-orange-600)] text-white"
+              />
+              <DialogHeader>
+                <div className="flex items-center gap-2">
+                  <PartyPopper className="h-6 w-6" style={{ color: "var(--bw-orange)" }} />
+                  <DialogTitle>{CASCADE_COPY.curriculum.title}</DialogTitle>
+                </div>
+                <DialogDescription>
+                  {CASCADE_COPY.curriculum.body(cascadeModal.entityName)}
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter className="gap-2 sm:gap-2">
+                <Button variant="outline" onClick={() => setCascadeModal(null)}>
+                  Continue
+                </Button>
+                {nextItem && (
+                  <Button
+                    onClick={() => {
+                      setCascadeModal(null);
+                      navigate(`/learning/content-item/${nextItem.content_item_id}`);
+                    }}
+                    className="bg-[var(--bw-orange)] hover:bg-[var(--bw-orange-600)] text-white"
+                  >
+                    Next item
+                  </Button>
+                )}
+              </DialogFooter>
+            </>
+          )}
+
+          {cascadeModal?.tier === "certification" && (
+            <>
+              <div
+                className="-mx-6 -mt-6 mb-2 rounded-t-md p-6 text-center"
+                style={{
+                  background:
+                    "linear-gradient(135deg, var(--bw-orange), var(--bw-plum))",
+                }}
               >
-                Next item
-              </Button>
-            )}
-            <Button variant="outline" onClick={() => setCascadeModal(null)}>
-              Continue
-            </Button>
-          </DialogFooter>
+                <Award className="h-12 w-12 mx-auto text-white" />
+              </div>
+              <DialogHeader>
+                <DialogTitle>{CASCADE_COPY.certification.title}</DialogTitle>
+                <DialogDescription>
+                  {CASCADE_COPY.certification.body(cascadeModal.entityName)}
+                </DialogDescription>
+              </DialogHeader>
+              <div className="rounded-md border border-dashed bg-muted/40 p-4 text-sm text-muted-foreground text-center">
+                Your certificate and sharing options will be available soon.
+              </div>
+              <DialogFooter className="gap-2 sm:gap-2">
+                <Button variant="outline" onClick={() => setCascadeModal(null)}>
+                  Continue
+                </Button>
+              </DialogFooter>
+            </>
+          )}
         </DialogContent>
       </Dialog>
+
+      {/* "More content below" scroll affordance */}
+      <div
+        className="pointer-events-none fixed inset-x-0 bottom-0 z-30 h-16 bg-gradient-to-t from-background to-transparent flex items-end justify-center pb-2 transition-opacity duration-200"
+        style={{ opacity: showMoreHint ? 1 : 0 }}
+        aria-hidden="true"
+      >
+        <ChevronDown className="h-5 w-5 text-muted-foreground animate-bounce" />
+      </div>
     </div>
   );
 }
