@@ -664,6 +664,33 @@ function ContentItemEditor({
                   disabled={saving}
                 />
               </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label>Quick summary (shown to trainees after they finish the video)</Label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => openAiDraft("content_item_video_summary")}
+                    disabled={saving || aiDraftingVideoSummary}
+                  >
+                    {aiDraftingVideoSummary
+                      ? <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      : <Sparkles className="h-4 w-4 mr-2" />}
+                    Generate with AI
+                  </Button>
+                </div>
+                <Textarea
+                  value={videoAiSummary}
+                  onChange={(e) => setVideoAiSummary(e.target.value)}
+                  rows={5}
+                  placeholder="3-5 short bullet takeaways. One per line, each starting with a hyphen. Optional — leave blank to hide the summary card."
+                  disabled={saving}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Optional. If filled, trainees see these bullets as a "Quick summary" card after completing the video. Generate a draft with AI, then edit before saving.
+                </p>
+              </div>
             </div>
           )}
 
