@@ -10,8 +10,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 import { Tile } from "@/components/tile/Tile";
-import type { CompletionStatus, TileVariant } from "@/components/tile/tileVariants";
+import type { TileVariant } from "@/components/tile/tileVariants";
 import { resolveThumbnailUrls } from "@/lib/assetUrls";
+import { enrolledStatusToCompletionStatus } from "@/lib/learningStatus";
 import UpgradeNudgeModal from "./UpgradeNudgeModal";
 import PaidEnrollmentNudgeModal from "./PaidEnrollmentNudgeModal";
 import type { UpgradeEntityType } from "./types";
@@ -28,11 +29,6 @@ function sortByStatusGroup<T extends { status_group?: string | null }>(items: T[
   });
 }
 
-function enrolledStatusToCompletionStatus(status?: string | null): CompletionStatus {
-  if (status === "completed") return "completed";
-  if (status === "in_progress") return "in_progress";
-  return null;
-}
 
 function shouldShowEnrollButton(entity: any): boolean {
   return (
