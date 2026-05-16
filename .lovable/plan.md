@@ -1,55 +1,56 @@
-# Session 77 — Prompt 0: Content Item Viewer Chrome + 3 Viewers
+## Session 77 — Prompt 2: Trainee-facing Quiz Viewer
 
-## Overview
+### Part A — Chrome change (`src/hooks/useCompletionReporter.ts`)
 
-Ship `/learning/content-item/:contentItemId` — the trainee-facing viewer page that completes the learning hierarchy below ModuleDetail. All backend RPCs already exist and are verified. This prompt is purely frontend: 1 page (chrome), 3 viewers, 2 hooks, 1 route, and 1 button label fix.
+Backward-compatible: capture `data` from the RPC and surface it.
 
-## Files
+- Add optional `result?: unknown` to `ReportResult`.
+- Change `const { error } = await supabase.rpc(...)` to `const { data, error } = await supabase.rpc(...)`.
+- Include `result: data` in the success return alongside `ok`/`cascade`.
+- No changes to cascade detection, query invalidation, or existing callers.
 
-### New
-1. `src/hooks/useAssetResolver.ts` — thin `useQuery` wrapper around existing `resolveThumbnailUrls`; returns `{ urls, isLoading }` map of asset_id → URL.
-2. `src/hooks/useCompletionReporter.ts` — captures `get_user_learning_state` before/after a completion RPC, diffs to find highest cascaded tier (content_item → module → curriculum → certification), invalidates query keys, returns `CascadeResult | null`.
-3. `src/pages/learning/ContentItemViewer.tsx` — the chrome: data fetch via `get_content_item_for_viewer`, breadcrumb pills (cert path › curriculum › module), header band (title, item-type label, Required/Optional, Completed badge), `item_type` branch into viewer, Prev/Next footer, single celebration modal on cascade.
-4. `src/components/learning/viewers/VideoViewer.tsx` — handles 5 source types (supabase_storage native player w/ timeupdate tracking; YouTube/Vimeo/Cloudflare iframes; Mux HLS fallback link). Reports progress every ~15s and at threshold. Embed sources get a "Mark as watched" button. Renders "Quick summary" bullet card from `video_ai_summary` after completion.
-5. `src/components/learning/viewers/WrittenSummaryViewer.tsx` — Textarea + char count gated on `written_min_chars`/`max_chars`; Submit calls `submit_written_summary`; "Need a starting point?" button calls `draft-text` edge function and shows suggestion in a panel above (not inserted into) the textarea.
-6. `src/components/learning/viewers/ExternalLinkViewer.tsx` — "Open resource" external link button + optional reflection Textarea + "Mark as done" button calling `confirm_external_link`. Completed state shows saved reflection.
+### Part B — Quiz Viewer
 
-### Edited
-7. `src/App.tsx` — add `ContentItemViewer` import and `<Route path="/learning/content-item/:contentItemId" element={<ContentItemViewer />} />` alongside existing learning routes.
-8. `src/pages/super-admin/editors/ContentItemEditor.tsx` — rename the video "Quick summary" generate button label from "Generate with AI" to "AI Draft" (single string change; matches title/description buttons).
+Files to create:
 
-## Chrome contract — props passed to every viewer
+1. **`src/components/learning/quiz/QuizViewer.tsx`** — top-level viewer mounted by `ContentItemViewer` for `item_type === 'quiz'`.
+   - Receives standard `ViewerProps` (`contentItem`, `completion`, `viewerRole`, `reportCompletion`, `isReporting`).
+   - React Query fetch of `get_quiz_for_trainee(contentItem.id)`.
+   - State machine: `loading → intro → in_progress → submitting → summary` + `error`.
+   - Intro variants: zero-questions ("not ready"), fresh (`Start quiz`), prior failed (`Try again — best X%`, `Start attempt N+1`), prior passed (`Retake`, no-downgrade note). Always a "Back to module" link.
+   - In-progress: one question per screen, `currentQuestionIndex`, `answers: Record<questionId, AnswerValue>`, `lockedQuestions: Set<questionId>` (only used in `always` mode).
+   - Advance: "Save and continue" in all modes; `always` mode has an extra "Submit this question" step that reveals per-question feedback before "Continue".
+   - Disable advance until the question has a complete answer.
+   - Final submit calls `reportCompletion("submit_quiz_attempt", { p_content_item_id, p_answers })`. Use `res.result.attempt_id` to fetch summary via `get_quiz_attempt_results`.
+   - On `!res.ok`: inline submit-error with Retry, keep `answers` intact.
+   - Review mode (`viewerRole !== "self"`): render intro/questions read-only, no Start/Submit.
+   - Defensive stub for `match_picture`; allow skip, treat as unanswered.
 
-```ts
-interface ViewerProps {
-  contentItem: ContentItemShape;
-  completion: CompletionShape | null;
-  viewerRole: "self" | "mentor" | "super_admin";
-  reportCompletion: (rpcName: string, rpcArgs: Record<string, unknown>) =>
-    Promise<{ ok: boolean; cascade: CascadeResult | null; error?: string }>;
-  isReporting: boolean;
-  resolveAsset: (assetId: string | null | undefined) => string | undefined;
-}
-```
+2. **`src/components/learning/quiz/QuestionRendererMultipleChoice.tsx`** — large tappable cards (not radio rows), single-select. Locked-state: green check on correct, red X on wrong pick; no red-tinted backgrounds.
 
-`viewerRole !== "self"` puts all viewers in read-only review mode (no completion writes, no Submit/Mark buttons).
+3. **`src/components/learning/quiz/QuestionRendererTrueFalse.tsx`** — two large side-by-side buttons; same locked-state pattern.
 
-## Cascade collapse
+4. **`src/components/learning/quiz/QuestionRendererSelectAll.tsx`** — multi-select tappable cards with checkbox affordance; hint line about all-or-nothing scoring; locked-state per-option (missed-correct / wrong-picked) without red backgrounds.
 
-After `reportCompletion` resolves, if cascade is non-null, show ONE modal at the highest transitioned tier with copy keyed by tier ("Item complete!" / "Module complete!" / "Curriculum complete!" / "You're certified!") naming `cascade.entityName`. Continue button dismisses; Next item button (when `next_item` exists) navigates onward.
+5. **`src/components/learning/quiz/QuestionRendererMatch.tsx`** — two columns, tap-to-pair (no DnD). Tap prompt → highlight; tap answer → pair with colored chip; tap paired side → unpair. Chip palette cycles Navy → Teal → Orange → Purple → Green → Mustard. Pairings tracked as `{ [promptId]: answerId }`. Locked-state shows pair check/X plus correct pairing for wrong pairs.
 
-## Errors
+6. **`src/components/learning/quiz/QuizProgressBar.tsx`** — N dots: empty / Teal-filled / Teal-ring (current); in `always` mode after lock, Green or red filled. "Question N of M" label.
 
-Mapped from RPC error messages: `content_item_not_assigned` → "You don't have access to this item." · `content_item_not_found` → "This item could not be found." · `parent_module_unavailable` → "This item isn't available right now." · default → generic. Each error card has a Back button.
+7. **`src/components/learning/quiz/QuizSummaryScreen.tsx`** — receives `submitResult` + `get_quiz_attempt_results` payload.
+   - Large score card (`text-6xl font-display`), pass/fail label, threshold, earned/total points.
+   - Passed: brand Green tint + checkmark. Failed: brand Sand background, supportive tone, no red.
+   - If `reveal_correctness === true`: per-question list with icons, user answer, correct answer, explanation; match pair-by-pair correctness.
+   - If `reveal_correctness === false`: mode-keyed subtle line (`never` vs `after_pass`).
+   - CTAs: passed → "Continue" (navigates to `/learning/module/{contentItem.module_id}`) + "Back to module" link; not-passed → "Try again" (resets local state, returns to `intro`) + "Back to module".
 
-## Placeholder viewers
+Shared helpers inside `QuizViewer.tsx`: `mapQuizViewerRpcError`, `AnswerValue`/`QuizQuestion`/`QuizAnswerOption` types, answer-completeness check per question type, assembling `p_answers` jsonb.
 
-`quiz`, `skills_practice`, `file_upload`, `live_event`, `lesson_blocks` render a "This {type label} viewer is coming soon." card. Prev/Next still work.
+### What is explicitly NOT changing
 
-## Styling
+- `ContentItemViewer.tsx` already routes `quiz` to a viewer — verify it imports the new `QuizViewer` from `@/components/learning/quiz/QuizViewer` (currently routes to `PlaceholderViewer` for `quiz`); wire it up.
+- No changes to cascade modal (chrome owns it), no Next-item navigation from the viewer, no direct `supabase.rpc("submit_quiz_attempt")` calls.
+- Backend RPCs untouched.
 
-Mirrors ModuleDetail: `px-4 sm:px-6` spacing, ghost Back button with `ArrowLeft`, pills `rounded-full px-3 py-1 text-xs bg-muted border` separated by `ChevronRight`. Completed badge `bg-[var(--bw-forest)]` + `CircleCheck`. Primary CTAs `bg-[var(--bw-orange)] hover:bg-[var(--bw-orange-600)] text-white`. Reuses `getItemTypeIcon` map (copied from ModuleDetail) and `CONTENT_ITEM_TYPE_LABEL` from `@/components/tile/tileVariants`. No bg-image hero (compact header band only — viewer is one tier below ModuleDetail).
+### Verification
 
-## Out of scope
-
-The five not-yet-built viewers (quiz/skills/file/event/lesson), reading back the written summary body (no v1 RPC), any HLS playback library for Mux, any backend or schema change.
+Walk the 15-step checklist against quiz `0e365d0e-81e6-4d28-a0fe-ccd749714a9d` (Test Module C) as `testclientbwe+employee@gmail.com`, including the `always`-mode toggle and zero-question case.
