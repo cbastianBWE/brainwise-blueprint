@@ -15,7 +15,7 @@ import { useLessonBlockAssets } from "@/hooks/useLessonBlockAssets";
 import {
   BlockRenderer,
   type OnBlockComplete,
-  type OnBlockProgress,
+  type SavedBlockProgress,
 } from "@/components/super-admin/lesson-blocks/BlockRenderer";
 import {
   BLOCK_TYPE_META,
@@ -96,6 +96,38 @@ export default function LessonBlockViewer({
 
   const { urlMap, isLoading: assetsLoading } = useLessonBlockAssets(contentItemId);
 
+  /* ---- DB-backed per-block progress (single source of truth) ---- */
+
+  const blockProgressQuery = useQuery({
+    queryKey: ["lesson-block-progress", contentItemId],
+    enabled: !!contentItemId && isSelf,
+    queryFn: async () => {
+      const { data: userData } = await supabase.auth.getUser();
+      const uid = userData?.user?.id;
+      if (!uid) return [] as Array<{ block_id: string; status: string; completion_data: unknown }>;
+      const { data, error } = await supabase
+        .from("lesson_block_progress")
+        .select("block_id, status, completion_data")
+        .eq("content_item_id", contentItemId)
+        .eq("user_id", uid);
+      if (error) throw error;
+      return (data ?? []) as Array<{ block_id: string; status: string; completion_data: unknown }>;
+    },
+  });
+
+  const savedProgressByBlockId = useMemo(() => {
+    const m = new Map<string, SavedBlockProgress>();
+    for (const row of blockProgressQuery.data ?? []) {
+      if (row.status === "completed" || row.status === "in_progress") {
+        m.set(row.block_id, {
+          status: row.status,
+          completion_data: row.completion_data,
+        });
+      }
+    }
+    return m;
+  }, [blockProgressQuery.data]);
+
   /* ---- state ---- */
 
   const [completedIds, setCompletedIds] = useState<Set<string>>(new Set());
@@ -122,24 +154,39 @@ export default function LessonBlockViewer({
     [blocks],
   );
 
-  /* ---- per-block completion ---- */
+  /* ---- seed completedIds from DB on (re)load ---- */
 
-  const handleBlockComplete = useCallback<OnBlockComplete>((blockId) => {
-    setCompletedIds((prev) => {
-      if (prev.has(blockId)) return prev;
-      const next = new Set(prev);
-      next.add(blockId);
-      return next;
-    });
-  }, []);
+  const seededProgressRef = useRef(false);
+  useEffect(() => {
+    if (seededProgressRef.current) return;
+    if (blockProgressQuery.isLoading) return;
+    seededProgressRef.current = true;
+    const next = new Set<string>();
+    for (const row of blockProgressQuery.data ?? []) {
+      if (row.status === "completed") next.add(row.block_id);
+    }
+    if (next.size > 0) setCompletedIds(next);
+  }, [blockProgressQuery.isLoading, blockProgressQuery.data]);
 
-  const handleBlockProgress = useCallback<OnBlockProgress>(
-    ({ blockClientId, status, data }) => {
+  /* ---- per-block completion (live transitions only) ---- */
+  // Renderer fires this only on a live false → true transition, with a state
+  // snapshot. We update the in-memory gating set AND persist to DB via
+  // reportProgress. Already-complete blocks are handled by the seed above —
+  // not by this callback.
+
+  const handleBlockComplete = useCallback<OnBlockComplete>(
+    (blockId, completionData) => {
+      setCompletedIds((prev) => {
+        if (prev.has(blockId)) return prev;
+        const next = new Set(prev);
+        next.add(blockId);
+        return next;
+      });
       if (!isSelf) return;
       reportProgress("upsert_lesson_block_progress", {
-        p_block_id: blockClientId,
-        p_status: status,
-        p_completion_data: data ?? {},
+        p_block_id: blockId,
+        p_status: "completed",
+        p_completion_data: completionData ?? {},
       });
     },
     [isSelf, reportProgress],
@@ -290,8 +337,12 @@ export default function LessonBlockViewer({
       p_content_item_id: contentItemId,
     });
     setCompletedIds(new Set());
+    seededProgressRef.current = false;
     resumedRef.current = false;
     await queryClient.invalidateQueries({ queryKey: ["lesson-blocks", contentItemId] });
+    await queryClient.invalidateQueries({
+      queryKey: ["lesson-block-progress", contentItemId],
+    });
   };
 
   const scrollToBlock = (id: string) => {
@@ -441,7 +492,7 @@ export default function LessonBlockViewer({
                   assetUrlMap={urlMap}
                   mode="trainee"
                   onBlockComplete={handleBlockComplete}
-                  onBlockProgress={handleBlockProgress}
+                  savedProgress={savedProgressByBlockId.get(row.id) ?? null}
                 />
                 {showPerBlockContinue && (
                   <div className="mt-3 flex justify-end">

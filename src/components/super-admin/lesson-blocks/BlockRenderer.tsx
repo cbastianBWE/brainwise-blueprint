@@ -57,27 +57,35 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import type { EditorBlock, TipTapDocJSON } from "./blockTypeMeta";
 
-export type OnBlockComplete = (blockClientId: string) => void;
-export type OnBlockProgress = (args: {
-  blockClientId: string;
+export type OnBlockComplete = (
+  blockClientId: string,
+  completionData?: unknown,
+) => void;
+
+export interface SavedBlockProgress {
   status: "in_progress" | "completed";
-  data: unknown;
-}) => void;
+  completion_data: unknown;
+}
 
 interface BlockRendererProps {
   block: EditorBlock;
   assetUrlMap: Map<string, string>;
   mode?: "editor" | "trainee";
   /**
-   * Trainee-only. Fires once when the block's per-renderer "done" flag
-   * transitions to true. Optional — when absent, renderers behave unchanged.
+   * Trainee-only. Fires once on the live false → true transition of the
+   * block's per-renderer "done" flag. Receives an optional state snapshot
+   * which the caller may persist (e.g. to lesson_block_progress).
+   * Does NOT fire for blocks that are already complete on mount — those
+   * are handled by the caller using savedProgress directly.
    */
   onBlockComplete?: OnBlockComplete;
   /**
-   * Trainee-only. DB-backed progress writer. When provided, the interactive
-   * renderers call it on the completion transition with a state snapshot.
+   * Trainee-only. DB-backed prior progress for this block. When present and
+   * status === "completed", the renderer seeds its in-memory state from
+   * completion_data and suppresses the live-completion event. The DB is the
+   * single source of truth — no sessionStorage is used.
    */
-  onBlockProgress?: OnBlockProgress;
+  savedProgress?: SavedBlockProgress | null;
 }
 
 function ReadOnlyTipTap({ json }: { json: TipTapDocJSON | null | undefined }) {
@@ -327,7 +335,7 @@ function paddingPxFor(token: unknown): number {
   }
 }
 
-export function BlockRenderer({ block, assetUrlMap, mode, onBlockComplete, onBlockProgress }: BlockRendererProps) {
+export function BlockRenderer({ block, assetUrlMap, mode, onBlockComplete, savedProgress }: BlockRendererProps) {
   const cfg: any = block.config ?? {};
   const bg = (cfg.background_color as string | null | undefined) ?? null;
   const padPx = paddingPxFor(cfg.padding);
@@ -438,7 +446,7 @@ export function BlockRenderer({ block, assetUrlMap, mode, onBlockComplete, onBlo
             mode={mode}
             blockClientId={block.client_id}
             onBlockComplete={onBlockComplete}
-            onBlockProgress={onBlockProgress}
+            savedProgress={savedProgress}
           />
         );
       case "card_sort":
@@ -451,7 +459,7 @@ export function BlockRenderer({ block, assetUrlMap, mode, onBlockComplete, onBlo
             mode={mode}
             blockClientId={block.client_id}
             onBlockComplete={onBlockComplete}
-            onBlockProgress={onBlockProgress}
+            savedProgress={savedProgress}
           />
         );
       case "scenario":
@@ -465,7 +473,7 @@ export function BlockRenderer({ block, assetUrlMap, mode, onBlockComplete, onBlo
             mode={mode}
             blockClientId={block.client_id}
             onBlockComplete={onBlockComplete}
-            onBlockProgress={onBlockProgress}
+            savedProgress={savedProgress}
           />
         );
       case "knowledge_check":
@@ -476,7 +484,7 @@ export function BlockRenderer({ block, assetUrlMap, mode, onBlockComplete, onBlo
             mode={mode}
             blockClientId={block.client_id}
             onBlockComplete={onBlockComplete}
-            onBlockProgress={onBlockProgress}
+            savedProgress={savedProgress}
           />
         );
       default:
@@ -776,7 +784,7 @@ function FlashcardsRender({
   mode,
   blockClientId,
   onBlockComplete,
-  onBlockProgress,
+  savedProgress,
 }: {
   cards: FlashcardConfig[];
   gatingRequired: boolean;
@@ -784,54 +792,34 @@ function FlashcardsRender({
   mode?: "editor" | "trainee";
   blockClientId: string;
   onBlockComplete?: OnBlockComplete;
-  onBlockProgress?: OnBlockProgress;
+  savedProgress?: SavedBlockProgress | null;
 }) {
   const initialQueue = cards.map((c) => c.client_id);
-  const sessionKey = `flashcards-pos:${blockClientId}`;
 
-  const [queue, setQueue] = useState<string[]>(initialQueue);
-  const [cursorIdx, setCursorIdx] = useState(0);
-  const [completed, setCompleted] = useState<Set<string>>(new Set());
-  const [reviewCounts, setReviewCounts] = useState<Record<string, number>>({});
+  // Seed state from DB-backed savedProgress when present (trainee mode).
+  const seed = (() => {
+    if (mode !== "trainee" || !savedProgress) return null;
+    const d = savedProgress.completion_data as any;
+    if (!d || typeof d !== "object") return null;
+    return {
+      queue: Array.isArray(d.queue) ? (d.queue as string[]) : initialQueue,
+      cursorIdx: typeof d.cursorIdx === "number" ? d.cursorIdx : 0,
+      completed: new Set<string>(Array.isArray(d.completed) ? d.completed : []),
+      reviewCounts:
+        d.reviewCounts && typeof d.reviewCounts === "object" ? d.reviewCounts : {},
+    };
+  })();
+
+  const [queue, setQueue] = useState<string[]>(seed?.queue ?? initialQueue);
+  const [cursorIdx, setCursorIdx] = useState(seed?.cursorIdx ?? 0);
+  const [completed, setCompleted] = useState<Set<string>>(
+    seed?.completed ?? new Set(),
+  );
+  const [reviewCounts, setReviewCounts] = useState<Record<string, number>>(
+    seed?.reviewCounts ?? {},
+  );
   const [flipped, setFlipped] = useState(false);
   const [hasBeenFlipped, setHasBeenFlipped] = useState<Record<string, boolean>>({});
-
-  // Hydrate from sessionStorage in trainee mode.
-  useEffect(() => {
-    if (mode !== "trainee" || typeof window === "undefined") return;
-    try {
-      const raw = window.sessionStorage.getItem(sessionKey);
-      if (!raw) return;
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed.queue)) setQueue(parsed.queue);
-      if (typeof parsed.cursorIdx === "number") setCursorIdx(parsed.cursorIdx);
-      if (Array.isArray(parsed.completed)) setCompleted(new Set(parsed.completed));
-      if (parsed.reviewCounts && typeof parsed.reviewCounts === "object") {
-        setReviewCounts(parsed.reviewCounts);
-      }
-    } catch {
-      /* ignore */
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionKey, mode]);
-
-  // Persist to sessionStorage in trainee mode.
-  useEffect(() => {
-    if (mode !== "trainee" || typeof window === "undefined") return;
-    try {
-      window.sessionStorage.setItem(
-        sessionKey,
-        JSON.stringify({
-          queue,
-          cursorIdx,
-          completed: Array.from(completed),
-          reviewCounts,
-        }),
-      );
-    } catch {
-      /* ignore quota */
-    }
-  }, [queue, cursorIdx, completed, reviewCounts, sessionKey, mode]);
 
   // Reset flip state when card changes.
   useEffect(() => {
@@ -852,26 +840,23 @@ function FlashcardsRender({
     !allDone && cursorIdx < queue.length ? queue[cursorIdx] : null;
   const current = currentId ? cardsById.get(currentId) ?? null : null;
 
-  // Fire onBlockComplete + reportProgress once on transition to allDone.
-  const completionFiredRef = useRef(false);
+  // Fire onBlockComplete once on the LIVE false → true transition. Blocks
+  // already complete on mount (savedProgress.status === "completed") are
+  // handled by the viewer using savedProgress directly, so suppress here.
+  const completionFiredRef = useRef(savedProgress?.status === "completed");
   useEffect(() => {
     if (mode !== "trainee") return;
     if (allDone && !completionFiredRef.current && cards.length > 0) {
       completionFiredRef.current = true;
-      onBlockComplete?.(blockClientId);
-      onBlockProgress?.({
-        blockClientId,
-        status: "completed",
-        data: {
-          queue,
-          cursorIdx,
-          completed: Array.from(completed),
-          reviewCounts,
-        },
+      onBlockComplete?.(blockClientId, {
+        queue,
+        cursorIdx,
+        completed: Array.from(completed),
+        reviewCounts,
       });
     }
     if (!allDone) completionFiredRef.current = false;
-  }, [allDone, mode, blockClientId, onBlockComplete, onBlockProgress, cards.length, queue, cursorIdx, completed, reviewCounts]);
+  }, [allDone, mode, blockClientId, onBlockComplete, cards.length, queue, cursorIdx, completed, reviewCounts]);
 
   const handleFlip = () => {
     if (!currentId) return;
@@ -911,13 +896,7 @@ function FlashcardsRender({
     setReviewCounts({});
     setFlipped(false);
     setHasBeenFlipped({});
-    if (mode === "trainee" && typeof window !== "undefined") {
-      try {
-        window.sessionStorage.removeItem(sessionKey);
-      } catch {
-        /* ignore */
-      }
-    }
+    completionFiredRef.current = false;
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
@@ -1219,7 +1198,7 @@ function CardSortRender({
   mode,
   blockClientId,
   onBlockComplete,
-  onBlockProgress,
+  savedProgress,
 }: {
   buckets: CardSortBucket[];
   cards: CardSortCardConfig[];
@@ -1228,10 +1207,8 @@ function CardSortRender({
   mode?: "editor" | "trainee";
   blockClientId: string;
   onBlockComplete?: OnBlockComplete;
-  onBlockProgress?: OnBlockProgress;
+  savedProgress?: SavedBlockProgress | null;
 }) {
-  const sessionKey = `card_sort-pos:${blockClientId}`;
-
   const initialState = (): Record<string, PerCardState> => {
     const out: Record<string, PerCardState> = {};
     for (const c of cards) {
@@ -1240,63 +1217,36 @@ function CardSortRender({
     return out;
   };
 
-  const [stateById, setStateById] = useState<Record<string, PerCardState>>(initialState);
+  // Seed from DB-backed savedProgress when present (trainee mode).
+  const seededState = (): Record<string, PerCardState> => {
+    const base = initialState();
+    if (mode !== "trainee" || !savedProgress) return base;
+    const d = savedProgress.completion_data as any;
+    if (!d || typeof d !== "object") return base;
+    const validBucketIds = new Set(buckets.map((b) => b.client_id));
+    for (const c of cards) {
+      const prior = d[c.client_id];
+      if (
+        prior &&
+        (prior.placement === "holding" || validBucketIds.has(prior.placement))
+      ) {
+        base[c.client_id] = {
+          placement: prior.placement,
+          locked: prior.locked === true,
+          lastWrong: false,
+        };
+      }
+    }
+    return base;
+  };
+
+  const [stateById, setStateById] = useState<Record<string, PerCardState>>(seededState);
   const [activeId, setActiveId] = useState<string | null>(null);
-  const initializedRef = useRef(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
     useSensor(TouchSensor, { activationConstraint: { delay: 100, tolerance: 5 } }),
   );
-
-  useEffect(() => {
-    if (initializedRef.current) return;
-    initializedRef.current = true;
-    if (mode !== "trainee" || typeof window === "undefined") return;
-    try {
-      const raw = window.sessionStorage.getItem(sessionKey);
-      if (!raw) return;
-      const parsed = JSON.parse(raw);
-      if (!parsed || typeof parsed !== "object") return;
-      const validBucketIds = new Set(buckets.map((b) => b.client_id));
-      const next: Record<string, PerCardState> = {};
-      for (const c of cards) {
-        const prior = parsed[c.client_id];
-        if (
-          prior &&
-          (prior.placement === "holding" || validBucketIds.has(prior.placement))
-        ) {
-          next[c.client_id] = {
-            placement: prior.placement,
-            locked: prior.locked === true,
-            lastWrong: false,
-          };
-        } else {
-          next[c.client_id] = { placement: "holding", locked: false, lastWrong: false };
-        }
-      }
-      setStateById(next);
-    } catch {
-      /* ignore */
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionKey, mode]);
-
-  useEffect(() => {
-    if (mode !== "trainee" || typeof window === "undefined") return;
-    try {
-      const serializable: Record<string, { placement: CardPlacement; locked: boolean }> = {};
-      for (const id of Object.keys(stateById)) {
-        serializable[id] = {
-          placement: stateById[id].placement,
-          locked: stateById[id].locked,
-        };
-      }
-      window.sessionStorage.setItem(sessionKey, JSON.stringify(serializable));
-    } catch {
-      /* ignore quota */
-    }
-  }, [stateById, sessionKey, mode]);
 
   useEffect(() => {
     if (mode === "trainee") return;
@@ -1309,21 +1259,20 @@ function CardSortRender({
   const allCorrectAndLocked =
     cards.length > 0 && cards.every((c) => stateById[c.client_id]?.locked === true);
 
-  // Fire onBlockComplete + reportProgress once on transition to allCorrectAndLocked.
-  const completionFiredRef = useRef(false);
+  // Fire onBlockComplete once on the LIVE false → true transition.
+  const completionFiredRef = useRef(savedProgress?.status === "completed");
   useEffect(() => {
     if (mode !== "trainee") return;
     if (allCorrectAndLocked && !completionFiredRef.current) {
       completionFiredRef.current = true;
-      onBlockComplete?.(blockClientId);
       const snapshot: Record<string, { placement: CardPlacement; locked: boolean }> = {};
       for (const id of Object.keys(stateById)) {
         snapshot[id] = { placement: stateById[id].placement, locked: stateById[id].locked };
       }
-      onBlockProgress?.({ blockClientId, status: "completed", data: snapshot });
+      onBlockComplete?.(blockClientId, snapshot);
     }
     if (!allCorrectAndLocked) completionFiredRef.current = false;
-  }, [allCorrectAndLocked, mode, blockClientId, onBlockComplete, onBlockProgress, stateById]);
+  }, [allCorrectAndLocked, mode, blockClientId, onBlockComplete, stateById]);
 
   const handleDragStart = (e: DragStartEvent) => {
     const id = e.active.id as string;
@@ -1375,13 +1324,7 @@ function CardSortRender({
 
   const handleReset = () => {
     setStateById(initialState());
-    if (mode === "trainee" && typeof window !== "undefined") {
-      try {
-        window.sessionStorage.removeItem(sessionKey);
-      } catch {
-        /* ignore */
-      }
-    }
+    completionFiredRef.current = false;
   };
 
   if (cards.length === 0 || buckets.length === 0) {
@@ -1556,7 +1499,7 @@ function ScenarioRender({
   mode,
   blockClientId,
   onBlockComplete,
-  onBlockProgress,
+  savedProgress,
 }: {
   title: string | null;
   introMarkdown: TipTapDocJSON | null;
@@ -1566,67 +1509,43 @@ function ScenarioRender({
   mode?: "editor" | "trainee";
   blockClientId: string;
   onBlockComplete?: OnBlockComplete;
-  onBlockProgress?: OnBlockProgress;
+  savedProgress?: SavedBlockProgress | null;
 }) {
-  const sessionKey = `scenario-pos:${blockClientId}`;
+  // Seed state from DB-backed savedProgress when present (trainee mode).
+  const seed = (() => {
+    if (mode !== "trainee" || !savedProgress) return null;
+    const d = savedProgress.completion_data as any;
+    if (!d || typeof d !== "object") return null;
+    const validMomentIds = new Set(moments.map((m) => m.client_id));
+    const reflectionResponses: Record<string, string> = {};
+    if (d.reflectionResponses && typeof d.reflectionResponses === "object") {
+      for (const [k, v] of Object.entries(d.reflectionResponses)) {
+        if (validMomentIds.has(k) && typeof v === "string") reflectionResponses[k] = v;
+      }
+    }
+    const choiceSelected: Record<string, string> = {};
+    if (d.choiceSelected && typeof d.choiceSelected === "object") {
+      for (const [k, v] of Object.entries(d.choiceSelected)) {
+        if (validMomentIds.has(k) && typeof v === "string") choiceSelected[k] = v;
+      }
+    }
+    const cursorIdx =
+      typeof d.cursorIdx === "number" && d.cursorIdx >= 0 && d.cursorIdx <= moments.length
+        ? d.cursorIdx
+        : 0;
+    return { cursorIdx, reflectionResponses, choiceSelected };
+  })();
 
-  const [cursorIdx, setCursorIdx] = useState(0);
-  const [reflectionResponses, setReflectionResponses] = useState<Record<string, string>>({});
-  const [choiceSelected, setChoiceSelected] = useState<Record<string, string>>({});
+  const [cursorIdx, setCursorIdx] = useState(seed?.cursorIdx ?? 0);
+  const [reflectionResponses, setReflectionResponses] = useState<Record<string, string>>(
+    seed?.reflectionResponses ?? {},
+  );
+  const [choiceSelected, setChoiceSelected] = useState<Record<string, string>>(
+    seed?.choiceSelected ?? {},
+  );
   const [modalOutcome, setModalOutcome] = useState<TipTapDocJSON | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const continueBtnRef = useRef<HTMLButtonElement | null>(null);
-  const initializedRef = useRef(false);
-
-  useEffect(() => {
-    if (initializedRef.current) return;
-    initializedRef.current = true;
-    if (mode !== "trainee" || typeof window === "undefined") return;
-    try {
-      const raw = window.sessionStorage.getItem(sessionKey);
-      if (!raw) return;
-      const parsed = JSON.parse(raw) as Partial<ScenarioPersistedState>;
-      const validMomentIds = new Set(moments.map((m) => m.client_id));
-      if (
-        typeof parsed.cursorIdx === "number" &&
-        parsed.cursorIdx >= 0 &&
-        parsed.cursorIdx <= moments.length
-      ) {
-        setCursorIdx(parsed.cursorIdx);
-      }
-      if (parsed.reflectionResponses && typeof parsed.reflectionResponses === "object") {
-        const filtered: Record<string, string> = {};
-        for (const [k, v] of Object.entries(parsed.reflectionResponses)) {
-          if (validMomentIds.has(k) && typeof v === "string") filtered[k] = v;
-        }
-        setReflectionResponses(filtered);
-      }
-      if (parsed.choiceSelected && typeof parsed.choiceSelected === "object") {
-        const filtered: Record<string, string> = {};
-        for (const [k, v] of Object.entries(parsed.choiceSelected)) {
-          if (validMomentIds.has(k) && typeof v === "string") filtered[k] = v;
-        }
-        setChoiceSelected(filtered);
-      }
-    } catch {
-      /* ignore */
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionKey, mode]);
-
-  useEffect(() => {
-    if (mode !== "trainee" || typeof window === "undefined") return;
-    try {
-      const payload: ScenarioPersistedState = {
-        cursorIdx,
-        reflectionResponses,
-        choiceSelected,
-      };
-      window.sessionStorage.setItem(sessionKey, JSON.stringify(payload));
-    } catch {
-      /* ignore quota */
-    }
-  }, [cursorIdx, reflectionResponses, choiceSelected, sessionKey, mode]);
 
   const momentIdsKey = moments.map((m) => m.client_id).join("|");
   useEffect(() => {
@@ -1659,20 +1578,19 @@ function ScenarioRender({
   const currentImageUrl =
     current?.setup_image_asset_id ? urlMap.get(current.setup_image_asset_id) ?? null : null;
 
-  const completionFiredRef = useRef(false);
+  const completionFiredRef = useRef(savedProgress?.status === "completed");
   useEffect(() => {
     if (mode !== "trainee") return;
     if (allDone && !completionFiredRef.current && moments.length > 0) {
       completionFiredRef.current = true;
-      onBlockComplete?.(blockClientId);
-      onBlockProgress?.({
-        blockClientId,
-        status: "completed",
-        data: { cursorIdx, reflectionResponses, choiceSelected },
+      onBlockComplete?.(blockClientId, {
+        cursorIdx,
+        reflectionResponses,
+        choiceSelected,
       });
     }
     if (!allDone) completionFiredRef.current = false;
-  }, [allDone, mode, blockClientId, onBlockComplete, onBlockProgress, moments.length, cursorIdx, reflectionResponses, choiceSelected]);
+  }, [allDone, mode, blockClientId, onBlockComplete, moments.length, cursorIdx, reflectionResponses, choiceSelected]);
 
   const openOutcome = (outcomeDoc: TipTapDocJSON | null) => {
     setModalOutcome(outcomeDoc);
@@ -1701,13 +1619,7 @@ function ScenarioRender({
     setChoiceSelected({});
     setModalOpen(false);
     setModalOutcome(null);
-    if (mode === "trainee" && typeof window !== "undefined") {
-      try {
-        window.sessionStorage.removeItem(sessionKey);
-      } catch {
-        /* ignore */
-      }
-    }
+    completionFiredRef.current = false;
   };
 
   return (
@@ -1926,17 +1838,15 @@ function KnowledgeCheckRender({
   mode,
   blockClientId,
   onBlockComplete,
-  onBlockProgress,
+  savedProgress,
 }: {
   questions: KnowledgeCheckQuestionConfig[];
   gatingRequired: boolean;
   mode?: "editor" | "trainee";
   blockClientId: string;
   onBlockComplete?: OnBlockComplete;
-  onBlockProgress?: OnBlockProgress;
+  savedProgress?: SavedBlockProgress | null;
 }) {
-  const sessionKey = `knowledge_check-pos:${blockClientId}`;
-
   const initialState = (): Record<string, KCPerQuestionState> => {
     const out: Record<string, KCPerQuestionState> = {};
     for (const q of questions) {
@@ -1955,103 +1865,77 @@ function KnowledgeCheckRender({
     return out;
   };
 
-  const [stateById, setStateById] = useState<Record<string, KCPerQuestionState>>(initialState);
-  const initializedRef = useRef(false);
-
-  useEffect(() => {
-    if (initializedRef.current) return;
-    initializedRef.current = true;
-    if (mode !== "trainee" || typeof window === "undefined") return;
-    try {
-      const raw = window.sessionStorage.getItem(sessionKey);
-      if (!raw) return;
-      const parsed = JSON.parse(raw);
-      if (!parsed || typeof parsed !== "object") return;
-      const next: Record<string, KCPerQuestionState> = {};
-      for (const q of questions) {
-        const prior = parsed[q.client_id];
-        if (prior && typeof prior === "object") {
-          next[q.client_id] = {
-            selectedSingle: typeof prior.selectedSingle === "string" ? prior.selectedSingle : null,
-            selectedMulti: Array.isArray(prior.selectedMulti)
-              ? prior.selectedMulti.filter((s: any) => typeof s === "string")
-              : [],
-            blankValues:
-              prior.blankValues && typeof prior.blankValues === "object" ? prior.blankValues : {},
-            matchLinks:
-              prior.matchLinks && typeof prior.matchLinks === "object" ? prior.matchLinks : {},
-            rankOrder: Array.isArray(prior.rankOrder)
-              ? prior.rankOrder.filter((s: any) => typeof s === "string")
-              : [],
-            timelineOrder: Array.isArray(prior.timelineOrder)
-              ? prior.timelineOrder.filter((s: any) => typeof s === "string")
-              : [],
-            revealed: prior.revealed === true,
-            lastWrong: false,
-            attempted: prior.attempted === true || prior.revealed === true,
-          };
-        } else {
-          next[q.client_id] = emptyKCState();
-        }
-      }
-      // Reconcile ranking/timeline order against current items/events; seed if empty.
-      for (const q of questions) {
-        const s = next[q.client_id];
-        if (!s) continue;
-        if (q.question_type === "ranking") {
-          if (s.rankOrder.length === 0 && (q.items ?? []).length > 0) {
-            s.rankOrder = stableShuffle(q.items ?? [], `${blockClientId}:${q.client_id}`).map(
-              (i) => i.client_id,
-            );
-          } else {
-            const validIds = new Set((q.items ?? []).map((i) => i.client_id));
-            s.rankOrder = s.rankOrder.filter((id) => validIds.has(id));
-            for (const it of q.items ?? []) {
-              if (!s.rankOrder.includes(it.client_id)) s.rankOrder.push(it.client_id);
-            }
-          }
-        } else if (q.question_type === "timeline") {
-          if (s.timelineOrder.length === 0 && (q.events ?? []).length > 0) {
-            s.timelineOrder = stableShuffle(q.events ?? [], `${blockClientId}:${q.client_id}`).map(
-              (e) => e.client_id,
-            );
-          } else {
-            const validIds = new Set((q.events ?? []).map((e) => e.client_id));
-            s.timelineOrder = s.timelineOrder.filter((id) => validIds.has(id));
-            for (const ev of q.events ?? []) {
-              if (!s.timelineOrder.includes(ev.client_id)) s.timelineOrder.push(ev.client_id);
-            }
-          }
-        }
-      }
-      setStateById(next);
-    } catch {
-      /* ignore */
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionKey, mode]);
-
-  useEffect(() => {
-    if (mode !== "trainee" || typeof window === "undefined") return;
-    try {
-      const payload: Record<string, any> = {};
-      for (const id of Object.keys(stateById)) {
-        const s = stateById[id];
-        payload[id] = {
-          selectedSingle: s.selectedSingle,
-          selectedMulti: s.selectedMulti,
-          blankValues: s.blankValues,
-          matchLinks: s.matchLinks,
-          rankOrder: s.rankOrder,
-          timelineOrder: s.timelineOrder,
-          revealed: s.revealed,
+  // Seed from DB-backed savedProgress when present (trainee mode).
+  // The shape mirrors what the renderer wrote in onBlockComplete: { stateById }.
+  const seededState = (): Record<string, KCPerQuestionState> => {
+    const base = initialState();
+    if (mode !== "trainee" || !savedProgress) return base;
+    const d = savedProgress.completion_data as any;
+    const parsed = d && typeof d === "object" && d.stateById && typeof d.stateById === "object"
+      ? d.stateById
+      : null;
+    if (!parsed) return base;
+    const next: Record<string, KCPerQuestionState> = {};
+    for (const q of questions) {
+      const prior = parsed[q.client_id];
+      if (prior && typeof prior === "object") {
+        next[q.client_id] = {
+          selectedSingle: typeof prior.selectedSingle === "string" ? prior.selectedSingle : null,
+          selectedMulti: Array.isArray(prior.selectedMulti)
+            ? prior.selectedMulti.filter((s: any) => typeof s === "string")
+            : [],
+          blankValues:
+            prior.blankValues && typeof prior.blankValues === "object" ? prior.blankValues : {},
+          matchLinks:
+            prior.matchLinks && typeof prior.matchLinks === "object" ? prior.matchLinks : {},
+          rankOrder: Array.isArray(prior.rankOrder)
+            ? prior.rankOrder.filter((s: any) => typeof s === "string")
+            : [],
+          timelineOrder: Array.isArray(prior.timelineOrder)
+            ? prior.timelineOrder.filter((s: any) => typeof s === "string")
+            : [],
+          revealed: prior.revealed === true,
+          lastWrong: false,
+          attempted: prior.attempted === true || prior.revealed === true,
         };
+      } else {
+        next[q.client_id] = base[q.client_id] ?? emptyKCState();
       }
-      window.sessionStorage.setItem(sessionKey, JSON.stringify(payload));
-    } catch {
-      /* ignore */
     }
-  }, [stateById, sessionKey, mode]);
+    // Reconcile ranking/timeline order against current items/events.
+    for (const q of questions) {
+      const s = next[q.client_id];
+      if (!s) continue;
+      if (q.question_type === "ranking") {
+        if (s.rankOrder.length === 0 && (q.items ?? []).length > 0) {
+          s.rankOrder = stableShuffle(q.items ?? [], `${blockClientId}:${q.client_id}`).map(
+            (i) => i.client_id,
+          );
+        } else {
+          const validIds = new Set((q.items ?? []).map((i) => i.client_id));
+          s.rankOrder = s.rankOrder.filter((id) => validIds.has(id));
+          for (const it of q.items ?? []) {
+            if (!s.rankOrder.includes(it.client_id)) s.rankOrder.push(it.client_id);
+          }
+        }
+      } else if (q.question_type === "timeline") {
+        if (s.timelineOrder.length === 0 && (q.events ?? []).length > 0) {
+          s.timelineOrder = stableShuffle(q.events ?? [], `${blockClientId}:${q.client_id}`).map(
+            (e) => e.client_id,
+          );
+        } else {
+          const validIds = new Set((q.events ?? []).map((e) => e.client_id));
+          s.timelineOrder = s.timelineOrder.filter((id) => validIds.has(id));
+          for (const ev of q.events ?? []) {
+            if (!s.timelineOrder.includes(ev.client_id)) s.timelineOrder.push(ev.client_id);
+          }
+        }
+      }
+    }
+    return next;
+  };
+
+  const [stateById, setStateById] = useState<Record<string, KCPerQuestionState>>(seededState);
 
   const questionIdsKey = questions.map((q) => q.client_id).join("|");
   useEffect(() => {
@@ -2196,23 +2080,19 @@ function KnowledgeCheckRender({
     questions.length > 0 &&
     questions.every((q) => stateById[q.client_id]?.attempted === true);
 
-  // Fire onBlockComplete + reportProgress once when every question has been
-  // attempted (clicked Check at least once, right or wrong). Do NOT gate on
-  // allCorrect — that would block the lesson behind a perfect score.
-  const completionFiredRef = useRef(false);
+  // Fire onBlockComplete once when every question has been attempted (clicked
+  // Check at least once, right or wrong). Do NOT gate on allCorrect — that
+  // would block the lesson behind a perfect score. Suppress for blocks already
+  // complete on mount via savedProgress.
+  const completionFiredRef = useRef(savedProgress?.status === "completed");
   useEffect(() => {
     if (mode !== "trainee") return;
     if (allAttempted && !completionFiredRef.current) {
       completionFiredRef.current = true;
-      onBlockComplete?.(blockClientId);
-      onBlockProgress?.({
-        blockClientId,
-        status: "completed",
-        data: { stateById },
-      });
+      onBlockComplete?.(blockClientId, { stateById });
     }
     if (!allAttempted) completionFiredRef.current = false;
-  }, [allAttempted, mode, blockClientId, onBlockComplete, onBlockProgress, stateById]);
+  }, [allAttempted, mode, blockClientId, onBlockComplete, stateById]);
 
   return (
     <div className="bw-kc-shell">
