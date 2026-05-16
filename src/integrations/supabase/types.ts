@@ -3047,9 +3047,13 @@ export type Database = {
           reviewer_comments: string | null
           reviewer_user_id: string | null
           skills_attachment_url: string | null
+          skills_mentor_attachment_url: string | null
           skills_mentor_signed_off: boolean
           skills_mentor_signed_off_at: string | null
           skills_mentor_signed_off_by: string | null
+          skills_revision_comment: string | null
+          skills_revision_requested_at: string | null
+          skills_revision_requested_by: string | null
           skills_trainee_signed_off: boolean
           skills_trainee_signed_off_at: string | null
           started_at: string | null
@@ -3081,9 +3085,13 @@ export type Database = {
           reviewer_comments?: string | null
           reviewer_user_id?: string | null
           skills_attachment_url?: string | null
+          skills_mentor_attachment_url?: string | null
           skills_mentor_signed_off?: boolean
           skills_mentor_signed_off_at?: string | null
           skills_mentor_signed_off_by?: string | null
+          skills_revision_comment?: string | null
+          skills_revision_requested_at?: string | null
+          skills_revision_requested_by?: string | null
           skills_trainee_signed_off?: boolean
           skills_trainee_signed_off_at?: string | null
           started_at?: string | null
@@ -3115,9 +3123,13 @@ export type Database = {
           reviewer_comments?: string | null
           reviewer_user_id?: string | null
           skills_attachment_url?: string | null
+          skills_mentor_attachment_url?: string | null
           skills_mentor_signed_off?: boolean
           skills_mentor_signed_off_at?: string | null
           skills_mentor_signed_off_by?: string | null
+          skills_revision_comment?: string | null
+          skills_revision_requested_at?: string | null
+          skills_revision_requested_by?: string | null
           skills_trainee_signed_off?: boolean
           skills_trainee_signed_off_at?: string | null
           started_at?: string | null
@@ -9676,6 +9688,15 @@ export type Database = {
       }
       set_resource_access_grants: {
         Args: { p_grants: Json; p_reason: string; p_resource_id: string }
+        Returns: Json
+      }
+      set_skills_practice_attachment: {
+        Args: {
+          p_content_item_id: string
+          p_role: string
+          p_storage_path: string
+          p_trainee_user_id?: string
+        }
         Returns: Json
       }
       sharing_preferences_upsert: {
