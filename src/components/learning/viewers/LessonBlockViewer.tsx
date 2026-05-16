@@ -98,8 +98,9 @@ export default function LessonBlockViewer({
 
   /* ---- DB-backed per-block progress (single source of truth) ---- */
 
+  const currentAttempt = (completion?.attempts_count as number | undefined) ?? 1;
   const blockProgressQuery = useQuery({
-    queryKey: ["lesson-block-progress", contentItemId],
+    queryKey: ["lesson-block-progress", contentItemId, currentAttempt],
     enabled: !!contentItemId && isSelf,
     queryFn: async () => {
       const { data: userData } = await supabase.auth.getUser();
@@ -109,7 +110,8 @@ export default function LessonBlockViewer({
         .from("lesson_block_progress")
         .select("block_id, status, completion_data")
         .eq("content_item_id", contentItemId)
-        .eq("user_id", uid);
+        .eq("user_id", uid)
+        .eq("attempt_number", currentAttempt);
       if (error) throw error;
       return (data ?? []) as Array<{ block_id: string; status: string; completion_data: unknown }>;
     },
@@ -317,9 +319,7 @@ export default function LessonBlockViewer({
     return true;
   }, [gatingRequiredBlockIds, completedIds]);
 
-  const finalContinueEnabled =
-    allGatedComplete &&
-    (completionMode === "explicit_continue" ? true : scrolledToBottom);
+  const finalContinueEnabled = allGatedComplete && scrolledToBottom;
 
   /* ---- handlers ---- */
 
@@ -339,6 +339,7 @@ export default function LessonBlockViewer({
     setCompletedIds(new Set());
     seededProgressRef.current = false;
     resumedRef.current = false;
+    await queryClient.invalidateQueries({ queryKey: ["content-item-viewer", contentItemId] });
     await queryClient.invalidateQueries({ queryKey: ["lesson-blocks", contentItemId] });
     await queryClient.invalidateQueries({
       queryKey: ["lesson-block-progress", contentItemId],
@@ -514,11 +515,11 @@ export default function LessonBlockViewer({
             {!isCompleted && isSelf && (
               <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="text-xs text-muted-foreground">
-                  {allGatedComplete
-                    ? completionMode === "scroll_and_checks" && !scrolledToBottom
+                  {!allGatedComplete
+                    ? "Complete the required activities above to finish this lesson."
+                    : !scrolledToBottom
                       ? "Scroll to the end of the lesson to finish."
-                      : "You've completed every required activity."
-                    : "Complete the required activities above to finish this lesson."}
+                      : "You've completed every required activity."}
                 </div>
                 <Button
                   size="lg"
