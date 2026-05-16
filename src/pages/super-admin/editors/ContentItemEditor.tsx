@@ -1030,14 +1030,14 @@ function ContentItemEditor({
             </div>
           </div>
           <div className="flex justify-end gap-2 pt-2">
-            <Button variant="outline" onClick={() => setAiDraftDialogOpen(false)} disabled={aiDraftingTitle || aiDraftingDesc}>
+            <Button variant="outline" onClick={() => setAiDraftDialogOpen(false)} disabled={aiDraftingTitle || aiDraftingDesc || aiDraftingVideoSummary}>
               Cancel
             </Button>
             <Button
               onClick={() => aiDraftTarget && callDraftText(aiDraftTarget)}
-              disabled={!aiAuthorPrompt.trim() || aiDraftingTitle || aiDraftingDesc}
+              disabled={!aiAuthorPrompt.trim() || aiDraftingTitle || aiDraftingDesc || aiDraftingVideoSummary}
             >
-              {(aiDraftingTitle || aiDraftingDesc) && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              {(aiDraftingTitle || aiDraftingDesc || aiDraftingVideoSummary) && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               <Sparkles className="h-4 w-4 mr-2" />
               Generate
             </Button>
