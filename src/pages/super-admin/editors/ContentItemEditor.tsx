@@ -285,6 +285,7 @@ function ContentItemEditor({
           video_source_type: videoSourceType,
           video_source_id: videoSourceId.trim(),
           video_completion_threshold_pct: Number(videoCompletionThreshold) || 95,
+          video_ai_summary: videoAiSummary.trim(),
         };
       case "quiz":
         return {
