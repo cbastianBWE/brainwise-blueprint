@@ -784,7 +784,7 @@ function FlashcardsRender({
   mode,
   blockClientId,
   onBlockComplete,
-  onBlockProgress,
+  savedProgress,
 }: {
   cards: FlashcardConfig[];
   gatingRequired: boolean;
@@ -792,54 +792,34 @@ function FlashcardsRender({
   mode?: "editor" | "trainee";
   blockClientId: string;
   onBlockComplete?: OnBlockComplete;
-  onBlockProgress?: OnBlockProgress;
+  savedProgress?: SavedBlockProgress | null;
 }) {
   const initialQueue = cards.map((c) => c.client_id);
-  const sessionKey = `flashcards-pos:${blockClientId}`;
 
-  const [queue, setQueue] = useState<string[]>(initialQueue);
-  const [cursorIdx, setCursorIdx] = useState(0);
-  const [completed, setCompleted] = useState<Set<string>>(new Set());
-  const [reviewCounts, setReviewCounts] = useState<Record<string, number>>({});
+  // Seed state from DB-backed savedProgress when present (trainee mode).
+  const seed = (() => {
+    if (mode !== "trainee" || !savedProgress) return null;
+    const d = savedProgress.completion_data as any;
+    if (!d || typeof d !== "object") return null;
+    return {
+      queue: Array.isArray(d.queue) ? (d.queue as string[]) : initialQueue,
+      cursorIdx: typeof d.cursorIdx === "number" ? d.cursorIdx : 0,
+      completed: new Set<string>(Array.isArray(d.completed) ? d.completed : []),
+      reviewCounts:
+        d.reviewCounts && typeof d.reviewCounts === "object" ? d.reviewCounts : {},
+    };
+  })();
+
+  const [queue, setQueue] = useState<string[]>(seed?.queue ?? initialQueue);
+  const [cursorIdx, setCursorIdx] = useState(seed?.cursorIdx ?? 0);
+  const [completed, setCompleted] = useState<Set<string>>(
+    seed?.completed ?? new Set(),
+  );
+  const [reviewCounts, setReviewCounts] = useState<Record<string, number>>(
+    seed?.reviewCounts ?? {},
+  );
   const [flipped, setFlipped] = useState(false);
   const [hasBeenFlipped, setHasBeenFlipped] = useState<Record<string, boolean>>({});
-
-  // Hydrate from sessionStorage in trainee mode.
-  useEffect(() => {
-    if (mode !== "trainee" || typeof window === "undefined") return;
-    try {
-      const raw = window.sessionStorage.getItem(sessionKey);
-      if (!raw) return;
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed.queue)) setQueue(parsed.queue);
-      if (typeof parsed.cursorIdx === "number") setCursorIdx(parsed.cursorIdx);
-      if (Array.isArray(parsed.completed)) setCompleted(new Set(parsed.completed));
-      if (parsed.reviewCounts && typeof parsed.reviewCounts === "object") {
-        setReviewCounts(parsed.reviewCounts);
-      }
-    } catch {
-      /* ignore */
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionKey, mode]);
-
-  // Persist to sessionStorage in trainee mode.
-  useEffect(() => {
-    if (mode !== "trainee" || typeof window === "undefined") return;
-    try {
-      window.sessionStorage.setItem(
-        sessionKey,
-        JSON.stringify({
-          queue,
-          cursorIdx,
-          completed: Array.from(completed),
-          reviewCounts,
-        }),
-      );
-    } catch {
-      /* ignore quota */
-    }
-  }, [queue, cursorIdx, completed, reviewCounts, sessionKey, mode]);
 
   // Reset flip state when card changes.
   useEffect(() => {
@@ -860,26 +840,23 @@ function FlashcardsRender({
     !allDone && cursorIdx < queue.length ? queue[cursorIdx] : null;
   const current = currentId ? cardsById.get(currentId) ?? null : null;
 
-  // Fire onBlockComplete + reportProgress once on transition to allDone.
-  const completionFiredRef = useRef(false);
+  // Fire onBlockComplete once on the LIVE false → true transition. Blocks
+  // already complete on mount (savedProgress.status === "completed") are
+  // handled by the viewer using savedProgress directly, so suppress here.
+  const completionFiredRef = useRef(savedProgress?.status === "completed");
   useEffect(() => {
     if (mode !== "trainee") return;
     if (allDone && !completionFiredRef.current && cards.length > 0) {
       completionFiredRef.current = true;
-      onBlockComplete?.(blockClientId);
-      onBlockProgress?.({
-        blockClientId,
-        status: "completed",
-        data: {
-          queue,
-          cursorIdx,
-          completed: Array.from(completed),
-          reviewCounts,
-        },
+      onBlockComplete?.(blockClientId, {
+        queue,
+        cursorIdx,
+        completed: Array.from(completed),
+        reviewCounts,
       });
     }
     if (!allDone) completionFiredRef.current = false;
-  }, [allDone, mode, blockClientId, onBlockComplete, onBlockProgress, cards.length, queue, cursorIdx, completed, reviewCounts]);
+  }, [allDone, mode, blockClientId, onBlockComplete, cards.length, queue, cursorIdx, completed, reviewCounts]);
 
   const handleFlip = () => {
     if (!currentId) return;
