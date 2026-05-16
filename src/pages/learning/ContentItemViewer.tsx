@@ -113,7 +113,7 @@ export default function ContentItemViewer() {
     },
   });
 
-  const { reportCompletion, isReporting } = useCompletionReporter({
+  const { reportCompletion, reportProgress, isReporting } = useCompletionReporter({
     userId: userId ?? "",
     contentItemId: contentItemId ?? "",
   });
