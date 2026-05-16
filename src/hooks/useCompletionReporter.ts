@@ -18,6 +18,7 @@ interface ReportResult {
   ok: boolean;
   cascade: CascadeResult | null;
   error?: string;
+  result?: unknown;
 }
 
 /**
