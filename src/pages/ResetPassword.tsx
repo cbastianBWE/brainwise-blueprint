@@ -80,7 +80,21 @@ const ResetPassword = () => {
     }
   };
 
-  if (!isRecovery) {
+  if (status === "checking") {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <img src="/brain-icon.png" alt="BrainWise" className="mx-auto h-10 w-10 mb-2" />
+            <CardTitle className="text-2xl">Verifying your reset link...</CardTitle>
+            <CardDescription>Just a moment.</CardDescription>
+          </CardHeader>
+        </Card>
+      </div>
+    );
+  }
+
+  if (status === "invalid") {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <Card className="w-full max-w-md">
