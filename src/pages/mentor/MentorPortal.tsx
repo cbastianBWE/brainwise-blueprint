@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ChevronDown, ChevronRight, Loader2, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,6 +18,13 @@ import {
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import MentorProgressTree from "@/components/mentor/MentorProgressTree";
+import ReviewDrawer from "@/components/mentor/ReviewDrawer";
+
+interface DrawerState {
+  contentItemId: string;
+  itemType: string;
+  traineeId: string;
+}
 
 interface Trainee {
   trainee_user_id: string;
