@@ -1264,8 +1264,10 @@ function AssignUnassignTab() {
         </div>
       );
     }
-    const opts = mentorListQuery.data?.trainees ?? [];
-    const traineeById = new Map(opts.map((t) => [t.trainee_user_id, t]));
+    const opts = mentorListQuery.data ?? [];
+    const traineeById = new Map(
+      (traineeListQuery.data?.trainees ?? []).map((t) => [t.trainee_user_id, t]),
+    );
     return (
       <div className="space-y-3">
         <div className="space-y-2">
@@ -1277,11 +1279,17 @@ function AssignUnassignTab() {
               />
             </SelectTrigger>
             <SelectContent>
-              {opts.map((o) => (
-                <SelectItem key={o.trainee_user_id} value={o.trainee_user_id}>
-                  {o.full_name || o.email}
-                </SelectItem>
-              ))}
+              {opts.length === 0 && !mentorListQuery.isLoading ? (
+                <div className="px-3 py-2 text-xs text-muted-foreground">
+                  No users have the mentor role yet. Grant it in the Assign Mentor Role tab.
+                </div>
+              ) : (
+                opts.map((o) => (
+                  <SelectItem key={o.out_user_id} value={o.out_user_id}>
+                    {o.out_full_name || o.out_email}
+                  </SelectItem>
+                ))
+              )}
             </SelectContent>
           </Select>
         </div>
