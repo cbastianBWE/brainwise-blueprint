@@ -8006,6 +8006,7 @@ export type Database = {
           full_name: string | null
           id: string
           is_internal_test: boolean
+          is_mentor: boolean
           is_practitioner_coach: boolean
           notifications: Json | null
           onboarding_completed_at: string | null
@@ -8044,6 +8045,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           is_internal_test?: boolean
+          is_mentor?: boolean
           is_practitioner_coach?: boolean
           notifications?: Json | null
           onboarding_completed_at?: string | null
@@ -8082,6 +8084,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           is_internal_test?: boolean
+          is_mentor?: boolean
           is_practitioner_coach?: boolean
           notifications?: Json | null
           onboarding_completed_at?: string | null
@@ -9223,6 +9226,7 @@ export type Database = {
       }
       current_user_account_type: { Args: never; Returns: string }
       current_user_department_id: { Args: never; Returns: string }
+      current_user_is_mentor: { Args: never; Returns: boolean }
       current_user_is_practitioner_coach: { Args: never; Returns: boolean }
       current_user_mfa_required: { Args: never; Returns: boolean }
       current_user_mfa_satisfied: { Args: never; Returns: boolean }
@@ -10053,6 +10057,10 @@ export type Database = {
           reminders_logged: number
           run_at: string
         }[]
+      }
+      set_mentor_role: {
+        Args: { p_is_mentor: boolean; p_reason: string; p_user_id: string }
+        Returns: Json
       }
       set_resource_access_grants: {
         Args: { p_grants: Json; p_reason: string; p_resource_id: string }
