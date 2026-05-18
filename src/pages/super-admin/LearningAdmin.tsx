@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import * as XLSX from "xlsx";
 import {
   Loader2,
   Search,
@@ -9,7 +10,20 @@ import {
   GraduationCap,
   BookOpen,
   Layers,
+  Download,
+  Upload,
+  CalendarClock,
 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -90,6 +104,47 @@ interface MentorAssignmentRow {
   trainee_full_name: string | null;
   trainee_email?: string | null;
   mentor_full_name: string | null;
+}
+
+type ScheduledStatus =
+  | "pending"
+  | "processing"
+  | "completed"
+  | "partial"
+  | "failed"
+  | "cancelled";
+
+interface ScheduledRow {
+  id: string;
+  assignment_type: string;
+  user_count: number;
+  scheduled_for: string;
+  status: ScheduledStatus;
+  reason: string | null;
+  scheduled_by_name: string | null;
+  created_at: string;
+  processed_at: string | null;
+  result: unknown;
+  failure_summary: string | null;
+}
+
+interface ImportRowResult {
+  row_number: number;
+  status: string;
+  detail: string | null;
+}
+interface ImportResult {
+  total: number;
+  succeeded: number;
+  failed: number;
+  rows: ImportRowResult[];
+}
+
+interface ImportReference {
+  certification_paths: { id: string; name: string }[];
+  curricula: { id: string; name: string }[];
+  modules: { id: string; name: string }[];
+  mentors: { user_id: string; full_name: string | null; email: string | null }[];
 }
 
 const TYPE_LABEL: Record<AssignType, string> = {
@@ -561,6 +616,23 @@ function AssignUnassignTab() {
   const [unassignResult, setUnassignResult] = useState<BulkResult | null>(null);
   const [tableSearch, setTableSearch] = useState("");
 
+  // Scheduling state
+  const [dueDate, setDueDate] = useState("");
+  const [scheduleLater, setScheduleLater] = useState(false);
+  const [scheduledFor, setScheduledFor] = useState("");
+  const [mentorCertId, setMentorCertId] = useState<string>("");
+
+  // Import state
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [importing, setImporting] = useState(false);
+  const [importResult, setImportResult] = useState<ImportResult | null>(null);
+
+  // Cancel-schedule state
+  const [cancelTargetId, setCancelTargetId] = useState<string | null>(null);
+  const [cancelling, setCancelling] = useState(false);
+
+  const todayStr = new Date().toISOString().slice(0, 10);
+
   const onTypeChange = (v: AssignType) => {
     setType(v);
     setTargetId("");
@@ -573,7 +645,45 @@ function AssignUnassignTab() {
 
   const invalidate = () => {
     INVALIDATE_KEYS.forEach((key) => qc.invalidateQueries({ queryKey: key as unknown as any[] }));
+    qc.invalidateQueries({ queryKey: ["list_scheduled_assignments"] });
   };
+
+  // Always-loaded queries for import + scheduling
+  const certPathsAllQuery = useQuery({
+    queryKey: ["la_certification_paths_all"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("certification_paths")
+        .select("id,name")
+        .is("archived_at", null);
+      if (error) throw error;
+      return (data ?? []) as OptionRow[];
+    },
+  });
+
+  const importReferenceQuery = useQuery({
+    queryKey: ["get_learning_import_reference"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc(
+        "get_learning_import_reference" as never,
+        {} as never,
+      );
+      if (error) throw error;
+      return data as ImportReference;
+    },
+  });
+
+  const scheduledQuery = useQuery({
+    queryKey: ["list_scheduled_assignments"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc(
+        "list_scheduled_assignments" as never,
+        {} as never,
+      );
+      if (error) throw error;
+      return data as { scheduled_assignments: ScheduledRow[] };
+    },
+  });
 
   // Target options
   const certPathsQuery = useQuery({
@@ -660,9 +770,50 @@ function AssignUnassignTab() {
       });
       return;
     }
+    if (scheduleLater) {
+      if (!scheduledFor) {
+        toast({ title: "Pick a scheduled date", variant: "destructive" });
+        return;
+      }
+      if (scheduledFor < todayStr) {
+        toast({ title: "Scheduled date must be today or later", variant: "destructive" });
+        return;
+      }
+      if (type === "mentor" && !mentorCertId) {
+        toast({ title: "Select a certification for the mentor", variant: "destructive" });
+        return;
+      }
+    }
     setSubmitting(true);
     setAssignResult(null);
     try {
+      const dueAtIso = dueDate ? new Date(dueDate + "T00:00:00").toISOString() : null;
+
+      if (scheduleLater) {
+        const targetForSchedule = type === "mentor" ? mentorId : targetId;
+        const { data, error } = await supabase.rpc(
+          "create_scheduled_assignment" as never,
+          {
+            p_assignment_type: type,
+            p_target_id: targetForSchedule,
+            p_user_ids: traineeIds,
+            p_scheduled_for: scheduledFor,
+            p_reason: reason,
+            p_mentor_certification_id: type === "mentor" ? mentorCertId : null,
+          } as never,
+        );
+        if (error) throw error;
+        toast({ title: `Assignment scheduled for ${scheduledFor}` });
+        setReason("");
+        setDueDate("");
+        setScheduleLater(false);
+        setScheduledFor("");
+        setMentorCertId("");
+        setTraineeIds([]);
+        invalidate();
+        return;
+      }
+
       let rpcName: string;
       let payload: any;
       if (type === "cert_path") {
@@ -671,7 +822,7 @@ function AssignUnassignTab() {
           p_user_ids: traineeIds,
           p_certification_path_id: targetId,
           p_reason: reason,
-          p_due_at: null,
+          p_due_at: dueAtIso,
         };
       } else if (type === "curriculum") {
         rpcName = "assign_curriculum_bulk";
@@ -681,7 +832,7 @@ function AssignUnassignTab() {
           p_source: "direct_assignment",
           p_certification_id: null,
           p_source_reference_id: null,
-          p_due_at: null,
+          p_due_at: dueAtIso,
           p_reason: reason,
         };
       } else if (type === "module") {
@@ -691,7 +842,7 @@ function AssignUnassignTab() {
           p_module_id: targetId,
           p_source: "direct_assignment",
           p_source_reference_id: null,
-          p_due_at: null,
+          p_due_at: dueAtIso,
           p_reason: reason,
         };
       } else {
@@ -715,6 +866,120 @@ function AssignUnassignTab() {
       });
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  // -------- Import handlers --------
+  const handleDownloadTemplate = () => {
+    const ref = importReferenceQuery.data;
+    if (!ref) {
+      toast({ title: "Reference data still loading…", variant: "destructive" });
+      return;
+    }
+    const wb = XLSX.utils.book_new();
+    const assignments = [
+      ["operation", "type", "target_name", "user_email", "reason"],
+      [
+        "assign",
+        "curriculum",
+        ref.curricula[0]?.name ?? "Curriculum name",
+        ref.mentors[0]?.email ?? "someone@example.com",
+        "Example justification text",
+      ],
+    ];
+    XLSX.utils.book_append_sheet(
+      wb,
+      XLSX.utils.aoa_to_sheet(assignments),
+      "Assignments",
+    );
+
+    const certNames = ref.certification_paths.map((c) => c.name);
+    const curNames = ref.curricula.map((c) => c.name);
+    const modNames = ref.modules.map((m) => m.name);
+    const mentorEmails = ref.mentors.map((m) => m.email ?? "");
+    const max = Math.max(certNames.length, curNames.length, modNames.length, mentorEmails.length);
+    const refRows: string[][] = [
+      ["Certification Paths", "Curricula", "Modules", "Mentor Emails"],
+    ];
+    for (let i = 0; i < max; i++) {
+      refRows.push([
+        certNames[i] ?? "",
+        curNames[i] ?? "",
+        modNames[i] ?? "",
+        mentorEmails[i] ?? "",
+      ]);
+    }
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(refRows), "Reference");
+    XLSX.writeFile(wb, "learning-admin-import-template.xlsx");
+  };
+
+  const handleFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImporting(true);
+    setImportResult(null);
+    try {
+      const buf = await file.arrayBuffer();
+      const wb = XLSX.read(buf, { type: "array" });
+      const sheetName = wb.SheetNames.includes("Assignments")
+        ? "Assignments"
+        : wb.SheetNames[0];
+      const sheet = wb.Sheets[sheetName];
+      const json = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { defval: "" });
+      const rows = json
+        .map((r, idx) => ({
+          row_number: idx + 2,
+          operation: String(r.operation ?? "").trim(),
+          type: String(r.type ?? "").trim(),
+          target_name: String(r.target_name ?? "").trim(),
+          user_email: String(r.user_email ?? "").trim(),
+          reason: String(r.reason ?? "").trim(),
+        }))
+        .filter(
+          (r) => r.operation || r.type || r.target_name || r.user_email || r.reason,
+        );
+      if (rows.length === 0) {
+        toast({ title: "No rows found in the spreadsheet", variant: "destructive" });
+        return;
+      }
+      const { data, error } = await supabase.functions.invoke("learning-admin-import", {
+        body: { rows },
+      });
+      if (error) throw error;
+      setImportResult(data as ImportResult);
+      invalidate();
+    } catch (err: any) {
+      toast({
+        title: "Import failed",
+        description: err.message ?? String(err),
+        variant: "destructive",
+      });
+    } finally {
+      setImporting(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const handleCancelSchedule = async () => {
+    if (!cancelTargetId) return;
+    setCancelling(true);
+    try {
+      const { error } = await supabase.rpc(
+        "cancel_scheduled_assignment" as never,
+        { p_id: cancelTargetId } as never,
+      );
+      if (error) throw error;
+      toast({ title: "Scheduled assignment cancelled" });
+      qc.invalidateQueries({ queryKey: ["list_scheduled_assignments"] });
+    } catch (err: any) {
+      toast({
+        title: "Cancel failed",
+        description: err.message ?? String(err),
+        variant: "destructive",
+      });
+    } finally {
+      setCancelling(false);
+      setCancelTargetId(null);
     }
   };
 
@@ -1036,10 +1301,66 @@ function AssignUnassignTab() {
               rows={3}
             />
           </div>
+          {type !== "mentor" && (
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Due date (optional)</label>
+              <Input
+                type="date"
+                value={dueDate}
+                onChange={(e) => setDueDate(e.target.value)}
+                className="max-w-xs"
+              />
+            </div>
+          )}
+          <div className="space-y-3 rounded-md border p-3">
+            <label className="flex items-center gap-2 text-sm font-medium cursor-pointer">
+              <Checkbox
+                checked={scheduleLater}
+                onCheckedChange={(v) => setScheduleLater(!!v)}
+              />
+              Schedule for a future date instead of assigning now
+            </label>
+            {scheduleLater && (
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Scheduled date</label>
+                  <Input
+                    type="date"
+                    min={todayStr}
+                    value={scheduledFor}
+                    onChange={(e) => setScheduledFor(e.target.value)}
+                  />
+                </div>
+                {type === "mentor" && (
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Certification</label>
+                    <Select value={mentorCertId} onValueChange={setMentorCertId}>
+                      <SelectTrigger>
+                        <SelectValue
+                          placeholder={
+                            certPathsAllQuery.isLoading
+                              ? "Loading…"
+                              : "Choose a certification"
+                          }
+                        />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {(certPathsAllQuery.data ?? []).map((c) => (
+                          <SelectItem key={c.id} value={c.id}>
+                            {c.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
           <div>
             <Button onClick={handleAssign} disabled={submitting}>
               {submitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              Confirm assignment
+              {scheduleLater ? "Schedule assignment" : "Confirm assignment"}
             </Button>
           </div>
           <ResultPanel result={assignResult} />
@@ -1081,6 +1402,159 @@ function AssignUnassignTab() {
           )}
         </section>
       )}
+
+      {/* ---------- Import from spreadsheet ---------- */}
+      <section className="space-y-3 rounded-lg border p-4">
+        <div className="flex items-start justify-between gap-3 flex-wrap">
+          <div>
+            <h2 className="text-lg font-semibold flex items-center gap-2">
+              <Upload className="h-4 w-4" /> Import from spreadsheet
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Download the template, fill in assign/unassign rows, then upload to apply in bulk.
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              onClick={handleDownloadTemplate}
+              disabled={importReferenceQuery.isLoading}
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Download template
+            </Button>
+            <Button onClick={() => fileInputRef.current?.click()} disabled={importing}>
+              {importing && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              <Upload className="h-4 w-4 mr-2" />
+              Upload spreadsheet
+            </Button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".xlsx,.xls,.csv"
+              className="hidden"
+              onChange={handleFileSelected}
+            />
+          </div>
+        </div>
+        {importResult && (
+          <div className="rounded-md border p-3 space-y-2">
+            <div className="text-sm font-medium">
+              {importResult.succeeded} of {importResult.total} succeeded, {importResult.failed}{" "}
+              failed
+            </div>
+            {importResult.rows.filter((r) => r.status !== "success").length > 0 && (
+              <ul className="text-sm text-destructive space-y-1 max-h-60 overflow-y-auto">
+                {importResult.rows
+                  .filter((r) => r.status !== "success")
+                  .map((r) => (
+                    <li key={r.row_number}>
+                      Row {r.row_number}: {r.detail ?? r.status}
+                    </li>
+                  ))}
+              </ul>
+            )}
+          </div>
+        )}
+      </section>
+
+      {/* ---------- Scheduled assignments ---------- */}
+      <section className="space-y-3 rounded-lg border p-4">
+        <h2 className="text-lg font-semibold flex items-center gap-2">
+          <CalendarClock className="h-4 w-4" /> Scheduled assignments
+        </h2>
+        {scheduledQuery.isLoading ? (
+          <div className="flex items-center justify-center p-6 text-sm text-muted-foreground">
+            <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Loading…
+          </div>
+        ) : (scheduledQuery.data?.scheduled_assignments ?? []).length === 0 ? (
+          <div className="rounded-md border p-6 text-sm text-muted-foreground text-center">
+            No scheduled assignments.
+          </div>
+        ) : (
+          <div className="rounded-md border overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Scheduled date</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead># learners</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Scheduled by</TableHead>
+                  <TableHead>Created</TableHead>
+                  <TableHead className="w-24 text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {(scheduledQuery.data?.scheduled_assignments ?? []).map((row) => {
+                  const variant: "default" | "secondary" | "destructive" | "outline" =
+                    row.status === "failed"
+                      ? "destructive"
+                      : row.status === "cancelled"
+                        ? "outline"
+                        : row.status === "pending" || row.status === "completed"
+                          ? "default"
+                          : "secondary";
+                  return (
+                    <TableRow key={row.id}>
+                      <TableCell>{row.scheduled_for}</TableCell>
+                      <TableCell>{row.assignment_type}</TableCell>
+                      <TableCell>{row.user_count}</TableCell>
+                      <TableCell>
+                        <div className="space-y-1">
+                          <Badge variant={variant}>{row.status}</Badge>
+                          {(row.status === "partial" || row.status === "failed") &&
+                            row.failure_summary && (
+                              <div className="text-xs text-muted-foreground max-w-xs">
+                                {row.failure_summary}
+                              </div>
+                            )}
+                        </div>
+                      </TableCell>
+                      <TableCell>{row.scheduled_by_name ?? "—"}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">
+                        {new Date(row.created_at).toLocaleString()}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {row.status === "pending" ? (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setCancelTargetId(row.id)}
+                          >
+                            Cancel
+                          </Button>
+                        ) : null}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+      </section>
+
+      <AlertDialog
+        open={!!cancelTargetId}
+        onOpenChange={(o) => !o && !cancelling && setCancelTargetId(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancel scheduled assignment?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will mark the scheduled assignment as cancelled. It will not run.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={cancelling}>Keep it</AlertDialogCancel>
+            <AlertDialogAction onClick={handleCancelSchedule} disabled={cancelling}>
+              {cancelling && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Cancel assignment
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

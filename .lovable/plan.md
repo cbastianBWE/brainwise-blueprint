@@ -1,62 +1,81 @@
-## Goal
-Rebuild `src/pages/super-admin/LearningAdmin.tsx` as a two-tab page (Trainees + Assign/Unassign), extract the existing `ResultPanel` into its own component, and reuse v1's assign/unassign logic intact within the second tab. No route, sidebar, backend, or RPC changes.
+## Scope
 
-## Files
+Single-file extension of `src/pages/super-admin/LearningAdmin.tsx` — specifically the existing `AssignUnassignTab` component. No backend, no migrations, no edge functions. `xlsx` is already installed.
 
-**Create**
-- `src/components/learning-admin/ResultPanel.tsx` — exact extraction of v1's `ResultPanel` + `BulkResult` type.
+Untouched: `TraineesTab`, `SingleUserAssignDialog`, `ResultPanel`, `TraineeMultiSelect`, `App.tsx`, `AppSidebar.tsx`.
 
-**Rewrite**
-- `src/pages/super-admin/LearningAdmin.tsx` — new shell with `Tabs` ("Trainees" / "Assign / Unassign"), split into two child components defined in the same file (or co-located) for clarity.
+## 1. Due date + schedule-for-later (assign flow only)
 
-**Untouched**: `App.tsx`, `AppSidebar.tsx`, `TraineeMultiSelect.tsx`, all backend.
+In `AssignUnassignTab`, add state:
+- `dueDate: string` (YYYY-MM-DD, optional)
+- `scheduleLater: boolean`
+- `scheduledFor: string` (required when `scheduleLater`)
+- `mentorCertId: string | null` — already-needed for mentor scheduling; also surface a certification picker in the mentor assign panel (loaded from `certification_paths`) when `scheduleLater && type === "mentor"`. Required in that case.
 
-## Tab 1 — Trainees
+Render below the justification textarea (only when `op === "assign"`):
+- `<Input type="date" />` labeled "Due date (optional)" — hidden when `type === "mentor"` (no due date support).
+- `<Checkbox />` "Schedule for a future date instead of assigning now."
+- When checked: required `<Input type="date" />` "Scheduled date" with `min={today}`.
+- When checked + mentor type: required certification `Select`.
 
-Mirrors `src/pages/super-admin/Users.tsx`:
-- Debounced (250ms) search `Input`, page state, `PAGE_SIZE = 25`.
-- `useQuery(["learning-admin-users", debouncedQuery, page])` → `supabase.rpc("search_impersonation_targets", { p_query: debouncedQuery.length >= 2 ? debouncedQuery : null, p_limit: 25, p_offset: page*25 })`.
-- Skeleton loading rows, empty state, pagination footer using `total_count` from row[0] — identical UX to Users.tsx.
-- Columns: Name · Email · Account Type (Badge via `accountTypeBadgeVariant`) · Organization · Actions.
-- Actions: `DropdownMenu` with three items: "Assign certification path", "Assign curriculum", "Assign module". Each `onSelect` opens a single shared `Dialog` with `mode` = type + `targetUser` = the row.
+`handleAssign` changes:
+- Compute `dueAtIso = dueDate ? new Date(dueDate).toISOString() : null`.
+- If `!scheduleLater`: keep existing branch structure, but pass `p_due_at: dueAtIso` for cert_path / curriculum / module. Mentor branch unchanged.
+- If `scheduleLater`:
+  - Validate scheduled date present and `>= today` client-side (server also rejects).
+  - For mentor type, require `mentorCertId`.
+  - Call `supabase.rpc("create_scheduled_assignment" as never, { p_assignment_type, p_target_id, p_user_ids, p_scheduled_for, p_reason, p_mentor_certification_id } as never)` where `p_assignment_type` ∈ `"cert_path" | "curriculum" | "module" | "mentor"`, `p_target_id` is `targetId` (or `mentorId` for mentor), `p_user_ids` is `traineeIds`, `p_scheduled_for` is the YYYY-MM-DD string, `p_mentor_certification_id` is `mentorCertId` for mentor else `null`.
+  - On success: `toast({ title: "Assignment scheduled for " + scheduledFor })`, reset form, invalidate `["list_scheduled_assignments"]` + the existing three keys.
+  - On error: surface `err.message` in destructive toast (covers past-date rejection).
 
-### Single-user assign dialog
-- Loads target options on demand: cert paths via `from("certification_paths").select("id,name").is("archived_at",null)`, curricula via `from("curricula")...`, modules via `from("modules")...` — each gated by `enabled: open && mode === X`.
-- Pre-shows the trainee name read-only.
-- `Select` for the target item + `Textarea` justification (min 10).
-- Confirm → matching bulk RPC with `p_user_ids: [targetUser.user_id]` and the v1 payload shape.
-- ResultPanel renders inline; invalidate `["list_all_learning_assignments"]`, `["get_user_learning_state"]`, `["list_mentor_trainees"]` on success.
+## 2. Bulk Excel import section
 
-## Tab 2 — Assign / Unassign
+New "Import from spreadsheet" card inside `AssignUnassignTab`, rendered above the existing assign/unassign panels and visible regardless of `op`. Local state for the parsed-result panel and a hidden `<input type="file">` ref.
 
-Full v1 logic, restructured as inline page sections rather than a dialog-triggered flow:
-- Top: an operation toggle (`Tabs` or two `Button` toggle) → `"assign" | "unassign"`.
-- Type `Select`: Certification Path / Curriculum / Module / Mentor.
+**Download template button:**
+- `import * as XLSX from "xlsx"` at top of file.
+- Fetch reference via `useQuery(["learning_import_reference"], () => supabase.rpc("get_learning_import_reference" as never, {} as never))` — enabled lazily on first dropdown open or button click is fine; simplest: always enabled when tab mounts.
+- On click: build a workbook with two sheets:
+  - `Assignments`: header `["operation","type","target_name","user_email","reason"]` + one example row `["assign","curriculum","PTP VILT 1","someone@example.com","Example justification text"]`.
+  - `Reference`: a labeled grid (parallel columns) listing `certification_paths[].name`, `curricula[].name`, `modules[].name`, `mentors[].email`. Build via `XLSX.utils.aoa_to_sheet` padding to equal length.
+- `XLSX.writeFile(wb, "learning-admin-import-template.xlsx")`.
 
-### Assign panel (inline, not a dialog)
-- Target picker (cert path / curriculum / module from their tables; mentor uses `list_mentor_trainees` Select).
-- `TraineeMultiSelect`.
-- Justification `Textarea` (min 10).
-- Confirm button → same RPCs and payloads as v1 (`enroll_users_in_certification_path_bulk`, `assign_curriculum_bulk`, `assign_module_bulk`, `assign_mentor_bulk`).
-- `ResultPanel` below.
+**File picker:**
+- `<Input type="file" accept=".xlsx,.xls,.csv" />` → on change:
+  - Read file as `ArrayBuffer`, `XLSX.read`, pick `wb.Sheets["Assignments"]` (fallback to first sheet), `XLSX.utils.sheet_to_json(sheet, { defval: "" })`.
+  - Map each non-empty row to `{ row_number: index + 2, operation, type, target_name, user_email, reason }` trimmed.
+  - `supabase.functions.invoke("learning-admin-import", { body: { rows } })`.
+  - Store `{ total, succeeded, failed, rows }` in local state and render below picker: summary line + a list of `failed` rows (`Row {row_number}: {detail}`).
+  - On transport error: destructive toast.
+  - On success: invalidate `["list_all_learning_assignments"]`, `["get_user_learning_state"]`, `["list_mentor_trainees"]`, `["list_scheduled_assignments"]`.
+- Reset the file input value so the same file can be reuploaded.
 
-### Unassign panel
-- Cert Path: shows "Certification revocation is handled individually." note.
-- Else: cross-trainee table from `rpc("list_all_learning_assignments")`, filtered by selected type, with search `Input`, header + per-row `Checkbox`, justification `Textarea`, Unassign button → `unassign_curriculum_bulk` / `unassign_module_bulk` / `unassign_mentor_bulk` (mentor passes `p_end_reason: "removed_by_admin"`).
-- `ResultPanel` below.
+## 3. Scheduled assignments list section
 
-### Common
-- All successful assign/unassign in either tab invalidate the three query keys above.
-- Errors: `ResultPanel` shows RPC validation failures (the RPC returns failures in-band); transport errors → destructive toast.
-- Copy: "trainee" / "learner".
+New "Scheduled assignments" card inside `AssignUnassignTab`, always visible (below the import card or below the assign/unassign panels — place at the bottom of the tab).
 
-## Out of scope (Prompt C2)
-Schedule-for-later, bulk import. Page leaves natural seams (the assign panel is a discrete section that can later sprout a "Schedule" toggle) but does not implement them.
+- `useQuery(["list_scheduled_assignments"], () => supabase.rpc("list_scheduled_assignments" as never, {} as never))` returning `{ scheduled_assignments: ScheduledRow[] }`.
+- `Table` columns: Scheduled date · Type · # users · Status · Scheduled by · Created · Actions.
+- Status rendered via `Badge` with variant by status (`pending`→default, `processing`→secondary, `completed`→default (success-styled via className), `partial`→secondary, `failed`→destructive, `cancelled`→outline).
+- For `partial` / `failed`, show `failure_summary` under the row (expandable detail cell or muted text below status).
+- Actions: when `status === "pending"`, a "Cancel" button → `AlertDialog` confirm → `supabase.rpc("cancel_scheduled_assignment" as never, { p_id: row.id } as never)` → toast + invalidate `["list_scheduled_assignments"]`. Non-pending: empty cell.
+- Loading skeleton row; empty state ("No scheduled assignments.").
+
+## Types
+
+Add light local types (no edit to `supabase/types.ts`):
+```ts
+type ScheduledStatus = "pending" | "processing" | "completed" | "partial" | "failed" | "cancelled";
+interface ScheduledRow { id: string; assignment_type: string; user_count: number; scheduled_for: string; status: ScheduledStatus; reason: string | null; scheduled_by_name: string | null; created_at: string; processed_at: string | null; result: any; failure_summary: string | null; }
+interface ImportResult { total: number; succeeded: number; failed: number; rows: { row_number: number; status: string; detail: string | null }[]; }
+```
 
 ## Verification
-1. Build compiles cleanly; route loads with two tabs.
-2. Trainees tab: list + search + pagination behaves identically to Users.tsx.
-3. Trainees row menu → Assign curriculum to that single user → ResultPanel shows real `succeeded/failed`.
-4. Assign tab with 2+ trainees: result panel shows accurate counts; already-assigned trainees appear as per-row failures.
-5. Unassign tab: rows disappear after a successful call and stop appearing in the Mentor Portal progress tree.
-6. Justification < 10 chars: ResultPanel surfaces the RPC's validation error (no crash).
+
+- `bun run build` clean.
+- Assign curriculum to a trainee with a due date → succeeds; due date visible on the trainee's progress tree.
+- Schedule for tomorrow → success toast, row appears in Scheduled list as `pending`.
+- Cancel that row → status flips to `cancelled`.
+- Download template → xlsx with `Assignments` + `Reference` sheets containing real values.
+- Upload template with one good row + one bad email → result shows 1/1 with the failure's `detail`; good row visible in Mentor Portal.
+- Past scheduled date → RPC error surfaced in destructive toast, no crash.
