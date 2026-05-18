@@ -9703,6 +9703,7 @@ export type Database = {
         }[]
       }
       list_mentor_trainees: { Args: never; Returns: Json }
+      list_my_certifications: { Args: never; Returns: Json }
       list_org_interventions: {
         Args: {
           p_assigned_owner?: string
