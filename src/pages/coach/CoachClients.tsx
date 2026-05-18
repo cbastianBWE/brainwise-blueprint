@@ -302,6 +302,7 @@ export default function CoachClients() {
     setFirstName(""); setLastName(""); setEmail(""); setNote("");
     setSelectedInstruments([]); setInstrumentError(false);
     setResultsReleased(false);
+    setIsActorDebrief(false);
   };
 
   const toggleInstrument = (instrumentId: string) => {
