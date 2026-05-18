@@ -722,10 +722,12 @@ export default function CoachClients() {
               <DialogDescription>Set up an assessment for a new or existing client</DialogDescription>
             </DialogHeader>
             <Tabs defaultValue="coach-pays" className="mt-2">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="coach-pays">I'll Pay for My Client</TabsTrigger>
-                <TabsTrigger value="client-pays">Client Pays Themselves</TabsTrigger>
-              </TabsList>
+              {!isActorDebrief && (
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="coach-pays">I'll Pay for My Client</TabsTrigger>
+                  <TabsTrigger value="client-pays">Client Pays Themselves</TabsTrigger>
+                </TabsList>
+              )}
 
               {/* Shared form fields */}
               <div className="space-y-3 mt-4">
