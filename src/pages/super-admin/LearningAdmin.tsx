@@ -879,6 +879,11 @@ function AssignUnassignTab() {
     setAssignResult(null);
     try {
       const dueAtIso = dueDate ? new Date(dueDate + "T00:00:00").toISOString() : null;
+      if (dueDate && dueDate < todayStr) {
+        toast({ title: "Due date cannot be in the past", variant: "destructive" });
+        setSubmitting(false);
+        return;
+      }
 
       if (scheduleLater) {
         const targetForSchedule = type === "mentor" ? mentorId : targetId;
