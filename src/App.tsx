@@ -43,6 +43,7 @@ import CertPathDetail from "./pages/learning/CertPathDetail";
 import CurriculumDetail from "./pages/learning/CurriculumDetail";
 import ModuleDetail from "./pages/learning/ModuleDetail";
 import ContentItemViewer from "./pages/learning/ContentItemViewer";
+import CertificationPage from "./pages/learning/CertificationPage";
 import Pricing from "./pages/Pricing";
 import SettingsPage from "./pages/Settings";
 import PrivacySettings from "./pages/PrivacySettings";
