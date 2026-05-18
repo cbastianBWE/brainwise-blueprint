@@ -106,6 +106,47 @@ interface MentorAssignmentRow {
   mentor_full_name: string | null;
 }
 
+type ScheduledStatus =
+  | "pending"
+  | "processing"
+  | "completed"
+  | "partial"
+  | "failed"
+  | "cancelled";
+
+interface ScheduledRow {
+  id: string;
+  assignment_type: string;
+  user_count: number;
+  scheduled_for: string;
+  status: ScheduledStatus;
+  reason: string | null;
+  scheduled_by_name: string | null;
+  created_at: string;
+  processed_at: string | null;
+  result: unknown;
+  failure_summary: string | null;
+}
+
+interface ImportRowResult {
+  row_number: number;
+  status: string;
+  detail: string | null;
+}
+interface ImportResult {
+  total: number;
+  succeeded: number;
+  failed: number;
+  rows: ImportRowResult[];
+}
+
+interface ImportReference {
+  certification_paths: { id: string; name: string }[];
+  curricula: { id: string; name: string }[];
+  modules: { id: string; name: string }[];
+  mentors: { user_id: string; full_name: string | null; email: string | null }[];
+}
+
 const TYPE_LABEL: Record<AssignType, string> = {
   cert_path: "Certification Path",
   curriculum: "Curriculum",
