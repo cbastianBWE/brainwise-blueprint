@@ -250,6 +250,8 @@ function ContentItemEditor({
       skillsSignoffRequired !== (initial.skills_signoff_required ?? "trainee_only") ||
       skillsActorInvitationRequired !== (initial.skills_actor_invitation_required ?? false) ||
       skillsOptionalAttachment !== (initial.skills_optional_attachment ?? false) ||
+      skillsTraineeInputEnabled !== ((initial as any).skills_trainee_input_enabled ?? false) ||
+      skillsTraineeInputLabel !== ((initial as any).skills_trainee_input_label ?? "") ||
       externalUrl !== (initial.external_url ?? "") ||
       eventExternalId !== (initial.event_external_id ?? "") ||
       lessonCompletionMode !== (initial.lesson_completion_mode ?? "explicit_continue")
