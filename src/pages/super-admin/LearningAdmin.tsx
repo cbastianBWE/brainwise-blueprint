@@ -749,6 +749,80 @@ function AssignUnassignTab() {
     enabled: op === "assign" && type === "mentor",
   });
 
+  // Reset mentor resolutions when mentor changes or context leaves
+  useEffect(() => {
+    setMentorResolutions({});
+  }, [mentorId, type, op]);
+
+  // Resolve per-trainee certifications for current mentor
+  useEffect(() => {
+    if (op !== "assign" || type !== "mentor" || !mentorId) return;
+    setMentorResolutions((prev) => {
+      const next: Record<string, MentorResolution> = {};
+      for (const id of traineeIds) if (prev[id]) next[id] = prev[id];
+      return next;
+    });
+    const missing = traineeIds.filter((id) => !mentorResolutions[id]);
+    if (missing.length === 0) return;
+    let cancelled = false;
+    setMentorResolutions((prev) => {
+      const next = { ...prev };
+      for (const id of missing) {
+        next[id] = {
+          trainee_user_id: id,
+          loading: true,
+          certifications: [],
+          selectedCertId: null,
+          error: null,
+        };
+      }
+      return next;
+    });
+    (async () => {
+      await Promise.all(
+        missing.map(async (traineeId) => {
+          try {
+            const { data, error } = await supabase.rpc(
+              "get_mentorable_certifications" as never,
+              { p_mentor_user_id: mentorId, p_trainee_user_id: traineeId } as never,
+            );
+            if (error) throw error;
+            const certs =
+              ((data as { certifications?: MentorableCert[] })?.certifications ?? []) as
+                MentorableCert[];
+            if (cancelled) return;
+            setMentorResolutions((prev) => ({
+              ...prev,
+              [traineeId]: {
+                trainee_user_id: traineeId,
+                loading: false,
+                certifications: certs,
+                selectedCertId: certs.length === 1 ? certs[0].certification_id : null,
+                error: null,
+              },
+            }));
+          } catch (err: any) {
+            if (cancelled) return;
+            setMentorResolutions((prev) => ({
+              ...prev,
+              [traineeId]: {
+                trainee_user_id: traineeId,
+                loading: false,
+                certifications: [],
+                selectedCertId: null,
+                error: err?.message ?? "Failed to load",
+              },
+            }));
+          }
+        }),
+      );
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [traineeIds, mentorId, type, op]);
+
   // Unassign table data
   const allAssignmentsQuery = useQuery({
     queryKey: ["list_all_learning_assignments"],
