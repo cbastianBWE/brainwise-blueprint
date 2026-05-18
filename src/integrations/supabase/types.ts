@@ -6823,6 +6823,162 @@ export type Database = {
           },
         ]
       }
+      skills_practice_iterations: {
+        Row: {
+          completion_id: string | null
+          content_item_id: string
+          created_at: string
+          id: string
+          iteration_number: number
+          mentor_attachment_url: string | null
+          mentor_signed_off_at: string | null
+          mentor_signed_off_by: string | null
+          outcome: string
+          revision_comment: string | null
+          revision_requested_at: string | null
+          revision_requested_by: string | null
+          trainee_attachment_url: string | null
+          trainee_signed_off_at: string | null
+          trainee_user_id: string
+          updated_at: string
+        }
+        Insert: {
+          completion_id?: string | null
+          content_item_id: string
+          created_at?: string
+          id?: string
+          iteration_number: number
+          mentor_attachment_url?: string | null
+          mentor_signed_off_at?: string | null
+          mentor_signed_off_by?: string | null
+          outcome?: string
+          revision_comment?: string | null
+          revision_requested_at?: string | null
+          revision_requested_by?: string | null
+          trainee_attachment_url?: string | null
+          trainee_signed_off_at?: string | null
+          trainee_user_id: string
+          updated_at?: string
+        }
+        Update: {
+          completion_id?: string | null
+          content_item_id?: string
+          created_at?: string
+          id?: string
+          iteration_number?: number
+          mentor_attachment_url?: string | null
+          mentor_signed_off_at?: string | null
+          mentor_signed_off_by?: string | null
+          outcome?: string
+          revision_comment?: string | null
+          revision_requested_at?: string | null
+          revision_requested_by?: string | null
+          trainee_attachment_url?: string | null
+          trainee_signed_off_at?: string | null
+          trainee_user_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "skills_practice_iterations_completion_id_fkey"
+            columns: ["completion_id"]
+            isOneToOne: false
+            referencedRelation: "content_item_completions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "skills_practice_iterations_content_item_id_fkey"
+            columns: ["content_item_id"]
+            isOneToOne: false
+            referencedRelation: "content_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "skills_practice_iterations_mentor_signed_off_by_fkey"
+            columns: ["mentor_signed_off_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "skills_practice_iterations_mentor_signed_off_by_fkey"
+            columns: ["mentor_signed_off_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "skills_practice_iterations_mentor_signed_off_by_fkey"
+            columns: ["mentor_signed_off_by"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "skills_practice_iterations_mentor_signed_off_by_fkey"
+            columns: ["mentor_signed_off_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "skills_practice_iterations_revision_requested_by_fkey"
+            columns: ["revision_requested_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "skills_practice_iterations_revision_requested_by_fkey"
+            columns: ["revision_requested_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "skills_practice_iterations_revision_requested_by_fkey"
+            columns: ["revision_requested_by"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "skills_practice_iterations_revision_requested_by_fkey"
+            columns: ["revision_requested_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "skills_practice_iterations_trainee_user_id_fkey"
+            columns: ["trainee_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "skills_practice_iterations_trainee_user_id_fkey"
+            columns: ["trainee_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "skills_practice_iterations_trainee_user_id_fkey"
+            columns: ["trainee_user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "skills_practice_iterations_trainee_user_id_fkey"
+            columns: ["trainee_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subscription_plans: {
         Row: {
           billing_period: string
@@ -8668,6 +8824,18 @@ export type Database = {
         }[]
       }
       assert_super_admin: { Args: never; Returns: undefined }
+      assign_curriculum_bulk: {
+        Args: {
+          p_certification_id: string
+          p_curriculum_id: string
+          p_due_at: string
+          p_reason: string
+          p_source: string
+          p_source_reference_id: string
+          p_user_ids: string[]
+        }
+        Returns: Json
+      }
       assign_curriculum_directly: {
         Args: {
           p_certification_id?: string
@@ -8694,6 +8862,26 @@ export type Database = {
           p_mentor_user_id: string
           p_reason?: string
           p_trainee_user_id: string
+        }
+        Returns: Json
+      }
+      assign_mentor_bulk: {
+        Args: {
+          p_certification_id: string
+          p_mentor_user_id: string
+          p_reason: string
+          p_trainee_user_ids: string[]
+        }
+        Returns: Json
+      }
+      assign_module_bulk: {
+        Args: {
+          p_due_at: string
+          p_module_id: string
+          p_reason: string
+          p_source: string
+          p_source_reference_id: string
+          p_user_ids: string[]
         }
         Returns: Json
       }
@@ -9008,6 +9196,15 @@ export type Database = {
         }
         Returns: Json
       }
+      enroll_users_in_certification_path_bulk: {
+        Args: {
+          p_certification_path_id: string
+          p_due_at?: string
+          p_reason: string
+          p_user_ids: string[]
+        }
+        Returns: Json
+      }
       export_audit_events: { Args: { p_filters?: Json }; Returns: Json }
       finalize_asset_upload: {
         Args: { p_asset_id: string; p_reason: string }
@@ -9261,6 +9458,14 @@ export type Database = {
         Args: { p_certification_id: string; p_reason?: string }
         Returns: Json
       }
+      has_lms_permission: {
+        Args: {
+          p_capability: string
+          p_trainee_user_id?: string
+          p_user_id: string
+        }
+        Returns: boolean
+      }
       has_required_demographics: {
         Args: { p_user_id: string }
         Returns: boolean
@@ -9360,6 +9565,7 @@ export type Database = {
           out_title: string
         }[]
       }
+      list_mentor_trainees: { Args: never; Returns: Json }
       list_org_interventions: {
         Args: {
           p_assigned_owner?: string
@@ -9632,6 +9838,14 @@ export type Database = {
         }
         Returns: Json
       }
+      request_skills_revision: {
+        Args: {
+          p_content_item_id: string
+          p_revision_comment: string
+          p_trainee_user_id: string
+        }
+        Returns: Json
+      }
       revoke_certification: {
         Args: { p_certification_id: string; p_reason: string }
         Returns: Json
@@ -9797,6 +10011,10 @@ export type Database = {
         Args: { p_assignment_id: string; p_reason: string }
         Returns: Json
       }
+      unassign_curriculum_bulk: {
+        Args: { p_assignment_ids: string[]; p_reason: string }
+        Returns: Json
+      }
       unassign_mentor: {
         Args: {
           p_assignment_id: string
@@ -9805,8 +10023,20 @@ export type Database = {
         }
         Returns: Json
       }
+      unassign_mentor_bulk: {
+        Args: {
+          p_assignment_ids: string[]
+          p_end_reason: string
+          p_reason: string
+        }
+        Returns: Json
+      }
       unassign_module: {
         Args: { p_assignment_id: string; p_reason: string }
+        Returns: Json
+      }
+      unassign_module_bulk: {
+        Args: { p_assignment_ids: string[]; p_reason: string }
         Returns: Json
       }
       update_chat_session: {
