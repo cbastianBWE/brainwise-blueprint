@@ -143,6 +143,15 @@ export default function MentorTraineeDetail() {
           )}
         </CardContent>
       </Card>
+
+      <ReviewDrawer
+        open={drawer !== null}
+        onOpenChange={(o) => !o && setDrawer(null)}
+        contentItemId={drawer?.contentItemId ?? null}
+        itemType={drawer?.itemType ?? null}
+        traineeId={traineeId ?? null}
+        onActionComplete={handleActionComplete}
+      />
     </div>
   );
 }
