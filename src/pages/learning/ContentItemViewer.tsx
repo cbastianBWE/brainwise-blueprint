@@ -477,3 +477,264 @@ export default function ContentItemViewer() {
     </div>
   );
 }
+
+interface CredentialResult {
+  certification: {
+    certification_id: string;
+    certification_type: string;
+    status: string;
+    certified_at: string | null;
+  };
+  display_name: string;
+  recipient: { user_id: string; full_name: string };
+  is_certified: boolean;
+}
+
+const LINKEDIN_ORG_ID = "118614203";
+
+const BADGE_ASSETS: Record<
+  string,
+  { label: string; src: string; filename: string }[]
+> = {
+  ptp_coach: [
+    {
+      label: "LinkedIn Navy",
+      src: "/badges/ptp-coach-linkedin-badge-dark.png",
+      filename: "BrainWise-ptp_coach-LinkedIn-Badge-Navy.png",
+    },
+    {
+      label: "LinkedIn Cream",
+      src: "/badges/ptp-coach-linkedin-badge-light.png",
+      filename: "BrainWise-ptp_coach-LinkedIn-Badge-Cream.png",
+    },
+    {
+      label: "Email Navy",
+      src: "/badges/ptp-coach-email-banner-dark.png",
+      filename: "BrainWise-ptp_coach-Email-Banner-Navy.png",
+    },
+    {
+      label: "Email Cream",
+      src: "/badges/ptp-coach-email-banner-light.png",
+      filename: "BrainWise-ptp_coach-Email-Banner-Cream.png",
+    },
+  ],
+};
+
+function triggerBlobDownload(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function CertificationMarquee({
+  entityId,
+  fallbackName,
+  onClose,
+  onView,
+}: {
+  entityId: string | null;
+  fallbackName: string;
+  onClose: () => void;
+  onView: () => void;
+}) {
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const [canvasReady, setCanvasReady] = useState(false);
+
+  const credQuery = useQuery({
+    queryKey: ["certification-credential", entityId],
+    enabled: !!entityId,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc(
+        "get_certification_credential" as never,
+        { p_certification_id: entityId } as never,
+      );
+      if (error) throw error;
+      return data as unknown as CredentialResult;
+    },
+  });
+
+  const header = (
+    <div
+      className="-mx-6 -mt-6 mb-2 rounded-t-md p-6 text-center"
+      style={{
+        background: "linear-gradient(135deg, var(--bw-orange), var(--bw-plum))",
+      }}
+    >
+      <Award className="h-12 w-12 mx-auto text-white" />
+    </div>
+  );
+
+  if (!entityId || credQuery.isError) {
+    return (
+      <>
+        {header}
+        <DialogHeader>
+          <DialogTitle>You're certified!</DialogTitle>
+          <DialogDescription>You've earned {fallbackName}.</DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>
+            Continue
+          </Button>
+        </DialogFooter>
+      </>
+    );
+  }
+
+  if (credQuery.isLoading || !credQuery.data) {
+    return (
+      <>
+        {header}
+        <div className="py-10 flex justify-center">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </div>
+      </>
+    );
+  }
+
+  const cred = credQuery.data;
+  const certType = cred.certification.certification_type;
+  const certifiedAt = cred.certification.certified_at;
+  const displayName = cred.display_name;
+  const recipientName = cred.recipient.full_name;
+  const hasTemplate = certType === "ptp_coach";
+  const badges = BADGE_ASSETS[certType] ?? [];
+
+  const onReady = (c: HTMLCanvasElement) => {
+    canvasRef.current = c;
+    setCanvasReady(true);
+  };
+
+  const handlePng = () => {
+    const c = canvasRef.current;
+    if (!c) return;
+    c.toBlob((blob) => {
+      if (!blob) return;
+      triggerBlobDownload(blob, `BrainWise-${certType}-Certificate.png`);
+    }, "image/png");
+  };
+
+  const handlePdf = () => {
+    const c = canvasRef.current;
+    if (!c) return;
+    const pdf = new jsPDF({
+      orientation: "landscape",
+      unit: "px",
+      format: [c.width, c.height],
+    });
+    pdf.addImage(c.toDataURL("image/png"), "PNG", 0, 0, c.width, c.height);
+    pdf.save(`BrainWise-${certType}-Certificate.pdf`);
+  };
+
+  const handleLinkedIn = () => {
+    const params = new URLSearchParams({
+      startTask: "CERTIFICATION_NAME",
+      name: displayName,
+      organizationId: LINKEDIN_ORG_ID,
+    });
+    if (certifiedAt) {
+      const d = new Date(certifiedAt);
+      params.set("issueYear", String(d.getFullYear()));
+      params.set("issueMonth", String(d.getMonth() + 1));
+    }
+    window.open(
+      `https://www.linkedin.com/profile/add?${params.toString()}`,
+      "_blank",
+      "noopener,noreferrer",
+    );
+  };
+
+  const handleBadge = async (src: string, filename: string) => {
+    try {
+      const res = await fetch(src);
+      const blob = await res.blob();
+      triggerBlobDownload(blob, filename);
+    } catch {
+      /* no-op */
+    }
+  };
+
+  return (
+    <>
+      {header}
+      <DialogHeader>
+        <DialogTitle>You're certified!</DialogTitle>
+        <DialogDescription>You've earned {displayName}.</DialogDescription>
+      </DialogHeader>
+
+      {hasTemplate ? (
+        <div className="rounded-md overflow-hidden border bg-[var(--bw-navy)]">
+          <CertificateCanvas
+            recipientName={recipientName}
+            certifiedAt={certifiedAt}
+            certificationType={certType}
+            onReady={onReady}
+          />
+        </div>
+      ) : (
+        <div className="rounded-md border bg-muted/40 p-4 text-sm text-muted-foreground text-center">
+          A downloadable certificate for this certification is coming soon.
+        </div>
+      )}
+
+      <div className="flex flex-wrap gap-2">
+        {hasTemplate && (
+          <>
+            <Button
+              size="sm"
+              onClick={handlePng}
+              disabled={!canvasReady}
+              className="bg-[var(--bw-orange)] hover:bg-[var(--bw-orange-600)] text-white"
+            >
+              <Download className="h-4 w-4 mr-1" /> PNG
+            </Button>
+            <Button size="sm" variant="outline" onClick={handlePdf} disabled={!canvasReady}>
+              <FileText className="h-4 w-4 mr-1" /> PDF
+            </Button>
+          </>
+        )}
+        <Button size="sm" variant="outline" onClick={handleLinkedIn}>
+          <Linkedin className="h-4 w-4 mr-1" /> LinkedIn
+        </Button>
+      </div>
+
+      {badges.length > 0 && (
+        <div className="rounded-md border bg-card p-3">
+          <div className="text-xs font-medium text-muted-foreground mb-2">
+            Badges & email signature
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {badges.map((b) => (
+              <Button
+                key={b.src}
+                size="sm"
+                variant="outline"
+                onClick={() => handleBadge(b.src, b.filename)}
+              >
+                <Download className="h-4 w-4 mr-1" />
+                {b.label}
+              </Button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <DialogFooter className="gap-2 sm:gap-2">
+        <Button variant="outline" onClick={onClose}>
+          Continue
+        </Button>
+        <Button
+          onClick={onView}
+          className="bg-[var(--bw-orange)] hover:bg-[var(--bw-orange-600)] text-white"
+        >
+          View my certificate
+        </Button>
+      </DialogFooter>
+    </>
+  );
+}
