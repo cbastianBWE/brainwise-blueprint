@@ -494,6 +494,108 @@ export default function CoachClients() {
     setSubmitting(false);
   };
 
+  const handleOrderActorDebrief = async () => {
+    if (!actorCert) return;
+    if (!email) {
+      toast.error("Please fill in client email.");
+      return;
+    }
+    setSubmitting(true);
+    const { error } = await (supabase as any).rpc("create_actor_debrief_order", {
+      p_actor_email: email.trim().toLowerCase(),
+      p_actor_first_name: firstName.trim() || null,
+      p_certification_id: actorCert.id,
+      p_coach_note: note.trim() || null,
+    });
+    if (error) {
+      const map: Record<string, string> = {
+        actor_debrief_cap_reached: "You have used all 3 actor debriefs for this certification.",
+        free_use_window_expired: "Your free certification-practice window has expired.",
+        actor_debrief_not_supported_for_cert_type: "Actor debriefs are not available for this certification type yet.",
+        not_your_certification: "That certification does not belong to you.",
+        certification_not_active: "Your certification is not active.",
+        invalid_email_format: "Please enter a valid email address.",
+        certification_not_found: "Certification not found.",
+      };
+      const key = (error.message || "").split(":")[0].trim();
+      toast.error(map[key] ?? ("Could not create actor debrief: " + error.message));
+      setSubmitting(false);
+      return;
+    }
+
+    // Send the same styled invitation email used by handleOrderClientPays
+    const ptpName = "Personal Threat Profile";
+    const instrumentListHtml = `<li style="margin-bottom:6px;">${ptpName}</li>`;
+    const coachNoteHtml = note
+      ? `<blockquote style="border-left:4px solid #F5741A;margin:20px 0;padding:12px 16px;background:#ffffff;border-radius:4px;font-style:italic;color:#4B4751;font-family:'Montserrat','Helvetica Neue',Arial,sans-serif;">"${note}"</blockquote>`
+      : "";
+    const signupUrl = `${window.location.origin}/signup?email=${encodeURIComponent(email)}`;
+    const html = `
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"></head>
+<body style="margin:0;padding:0;background:#F9F7F1;font-family:'Montserrat','Helvetica Neue',Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#F9F7F1;padding:40px 0;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:8px;overflow:hidden;">
+        <tr><td style="background:#021F36;padding:24px 32px;">
+          <h1 style="margin:0;color:#ffffff;font-size:22px;font-family:'Poppins','Helvetica Neue',Arial,sans-serif;font-weight:800;letter-spacing:-0.01em;">BrainWise Enterprises</h1>
+        </td></tr>
+        <tr><td style="padding:32px;">
+          <h2 style="font-size:20px;color:#021F36;margin:0 0 16px;font-family:'Poppins','Helvetica Neue',Arial,sans-serif;font-weight:700;letter-spacing:-0.01em;">Hi ${firstName || "there"},</h2>
+          <p style="font-size:15px;color:#4B4751;line-height:1.6;margin:0 0 16px;font-family:'Montserrat','Helvetica Neue',Arial,sans-serif;font-weight:400;">
+            You've been invited to complete a BrainWise assessment.
+          </p>
+          <ul style="font-size:15px;color:#4B4751;line-height:1.8;padding-left:20px;margin:0 0 16px;font-family:'Montserrat','Helvetica Neue',Arial,sans-serif;">
+            ${instrumentListHtml}
+          </ul>
+          ${coachNoteHtml}
+          <p style="font-size:14px;color:#4B4751;margin:0 0 28px;font-family:'Montserrat','Helvetica Neue',Arial,sans-serif;">
+            Please complete your assessment within <strong>14 days</strong> of receiving this invitation.
+          </p>
+          <table cellpadding="0" cellspacing="0" style="margin:0 0 28px;"><tr><td style="background:#F5741A;border-radius:999px;padding:14px 28px;">
+            <a href="${signupUrl}" style="color:#ffffff;text-decoration:none;font-size:15px;font-weight:600;font-family:'Montserrat','Helvetica Neue',Arial,sans-serif;">Get Started</a>
+          </td></tr></table>
+          <p style="font-size:14px;color:#4B4751;margin:0;font-family:'Montserrat','Helvetica Neue',Arial,sans-serif;">Best regards,<br/><strong>The BrainWise Team</strong></p>
+        </td></tr>
+        <tr><td style="padding:20px 32px;border-top:1px solid #EDEAE0;text-align:center;">
+          <p style="font-size:12px;color:#6D6875;margin:0;font-family:'Montserrat','Helvetica Neue',Arial,sans-serif;">© ${new Date().getFullYear()} BrainWise Enterprises. All rights reserved.</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`.trim();
+
+    try {
+      const { error: emailError } = await supabase.functions.invoke("send-email", {
+        body: {
+          to: email,
+          subject: "You've Been Invited to Complete a BrainWise Assessment",
+          html,
+          email_type: "coach_invitation_actor_debrief",
+          source: "CoachClients.handleOrderActorDebrief",
+        },
+      });
+      if (emailError) {
+        console.error("[CoachClients] send-email error:", emailError);
+        toast.warning("Actor debrief created but invitation email failed to send.");
+      } else {
+        toast.success("Actor debrief invitation sent.");
+      }
+    } catch (emailErr) {
+      console.error("[CoachClients] send-email exception:", emailErr);
+      toast.warning("Actor debrief created but invitation email failed to send.");
+    }
+
+    setActorsUsed(n => n + 1);
+    resetForm();
+    setIsActorDebrief(false);
+    setModalOpen(false);
+    fetchClients();
+    setSubmitting(false);
+  };
+
   // Stats
   // totalSignedUpClients: distinct emails where the client has a user account
   // (client_user_id IS NOT NULL means signup completed and trigger fired).
