@@ -265,6 +265,12 @@ const SuperAdminUsers = () => {
         target={justificationTarget}
         onClose={() => setJustificationTarget(null)}
       />
+
+      <UserDetailsModal
+        open={!!detailsTarget}
+        onOpenChange={(o) => !o && setDetailsTarget(null)}
+        target={detailsTarget}
+      />
     </div>
   );
 };
