@@ -36,6 +36,7 @@ export function mapRpcCascade(raw: any): CascadeResult | null {
   return {
     tier: tier as CascadeTier,
     entityName: (raw.entity_name as string | null) ?? "this",
+    entityId: (raw.entity_id as string | null) ?? null,
   };
 }
 
