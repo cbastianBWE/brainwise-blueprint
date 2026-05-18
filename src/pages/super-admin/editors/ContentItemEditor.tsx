@@ -312,6 +312,8 @@ function ContentItemEditor({
           skills_signoff_required: skillsSignoffRequired,
           skills_actor_invitation_required: skillsActorInvitationRequired,
           skills_optional_attachment: skillsOptionalAttachment,
+          skills_trainee_input_enabled: skillsTraineeInputEnabled,
+          skills_trainee_input_label: skillsTraineeInputLabel.trim() || null,
         };
       case "file_upload":
         return {
