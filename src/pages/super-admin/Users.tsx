@@ -203,6 +203,9 @@ const SuperAdminUsers = () => {
                             Impersonate
                           </DropdownMenuItem>
                         )}
+                        <DropdownMenuItem onSelect={() => setDetailsTarget(row)}>
+                          View user details
+                        </DropdownMenuItem>
                         <DropdownMenuItem disabled>
                           Reset MFA
                           <span className="ml-2 text-xs text-muted-foreground">(coming soon)</span>
