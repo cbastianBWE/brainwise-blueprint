@@ -39,6 +39,7 @@ export default function CertificateCanvas({
     const draw = async () => {
       const ctx = canvas.getContext("2d");
       if (!ctx) return;
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
 
       // Ensure Montserrat is loaded before measuring/drawing.
       try {
@@ -62,12 +63,15 @@ export default function CertificateCanvas({
       });
       if (cancelled) return;
 
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      const cw = canvas.width;
+      const ch = canvas.height;
+
+      ctx.clearRect(0, 0, cw, ch);
+      ctx.drawImage(img, 0, 0, cw, ch);
 
       // Recipient name — centered between "This certifies that" and "has successfully completed"
-      const maxNameWidth = canvas.width * 0.74;
-      let nameSize = Math.round(canvas.height * 0.046);
+      const maxNameWidth = cw * 0.74;
+      let nameSize = Math.round(ch * 0.046);
       ctx.fillStyle = "#FFFFFF";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
@@ -76,17 +80,17 @@ export default function CertificateCanvas({
         nameSize -= 2;
         ctx.font = `bold ${nameSize}px Montserrat, sans-serif`;
       }
-      ctx.fillText(recipientName, canvas.width * 0.5, canvas.height * 0.306);
+      ctx.fillText(recipientName, cw * 0.5, ch * 0.306);
 
-      // Date — inline, same row as the baked "AWARDED ON" label
+      // Date — centered directly below the baked "AWARDED ON" label
       if (certifiedAt) {
-        const dateSize = Math.round(canvas.height * 0.016);
+        const dateSize = Math.round(ch * 0.016);
         ctx.fillStyle = "#F9F7F1";
         ctx.font = `bold ${dateSize}px Montserrat, sans-serif`;
-        ctx.textAlign = "left";
+        ctx.textAlign = "center";
         ctx.textBaseline = "middle";
         const dateText = format(new Date(certifiedAt), "MMMM d, yyyy");
-        ctx.fillText(dateText, canvas.width * 0.485, canvas.height * 0.65);
+        ctx.fillText(dateText, cw * 0.5, ch * 0.70);
       }
 
       if (!cancelled) onReadyRef.current?.(canvas);
