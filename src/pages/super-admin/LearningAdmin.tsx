@@ -575,6 +575,23 @@ function AssignUnassignTab() {
   const [unassignResult, setUnassignResult] = useState<BulkResult | null>(null);
   const [tableSearch, setTableSearch] = useState("");
 
+  // Scheduling state
+  const [dueDate, setDueDate] = useState("");
+  const [scheduleLater, setScheduleLater] = useState(false);
+  const [scheduledFor, setScheduledFor] = useState("");
+  const [mentorCertId, setMentorCertId] = useState<string>("");
+
+  // Import state
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [importing, setImporting] = useState(false);
+  const [importResult, setImportResult] = useState<ImportResult | null>(null);
+
+  // Cancel-schedule state
+  const [cancelTargetId, setCancelTargetId] = useState<string | null>(null);
+  const [cancelling, setCancelling] = useState(false);
+
+  const todayStr = new Date().toISOString().slice(0, 10);
+
   const onTypeChange = (v: AssignType) => {
     setType(v);
     setTargetId("");
