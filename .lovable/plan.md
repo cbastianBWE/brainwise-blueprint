@@ -1,108 +1,61 @@
-# Mentor Portal — Prompt 1 of 3 (read-only surfaces)
+## Mentor Portal — Prompt 2: Review drawer, panels, mentor upload
 
-Build read-only roster, reusable nested progress tree, and trainee detail page. No mutations. Uses deployed RPCs `list_mentor_trainees` and `get_user_learning_state`.
+Build write-action surfaces for mentors. No backend changes — all RPCs and the `skills-practice-attachment-upload` Edge Function already exist.
 
-## Files to create
+### New files
 
-### 1. `src/components/mentor/MentorProgressTree.tsx`
+**1. `src/components/mentor/ReviewDrawer.tsx`**
+- Right-side shadcn `Sheet`. Props: `{ open, onOpenChange, contentItemId, itemType, traineeId, onActionComplete }`.
+- Dispatches by `itemType` to the matching panel; unknown types render a read-only "no mentor review action" message.
+- Does no fetching itself. Sheet header shows item type label; body renders the panel.
 
-Pure presentational component. Props:
-```ts
-interface MentorProgressTreeProps {
-  learningState: any;              // full result of get_user_learning_state
-  onItemClick?: (contentItemId: string, itemType: string) => void; // unused this prompt
-}
-```
+**2. `src/components/mentor/SkillsPracticeReviewPanel.tsx`**
+- `useQuery(["get_content_item_for_viewer", contentItemId, traineeId])` → `supabase.rpc("get_content_item_for_viewer", { p_content_item_id, p_user_id: traineeId })`.
+- Renders: title, description (scenario), trainee attachment (if `completion.skills_attachment_url` — fetched via Edge Function `action: "read"`, `role: "trainee"`), attempt history from `skills_iterations` newest-first (each as "Attempt N" with trainee/mentor sign-off times, revision comment, outcome).
+- Mentor actions:
+  - **Sign Off** → `rpc("mark_skills_practice_signoff", { p_content_item_id, p_signoff_type: "mentor", p_trainee_user_id: traineeId })`. Hidden when `completion.skills_mentor_signed_off === true` (show signed-off state instead).
+  - **Request Revision** → reveal `Textarea` (required, non-empty), submit → `rpc("request_skills_revision", { p_content_item_id, p_trainee_user_id: traineeId, p_revision_comment })`.
+- **Mentor attachment upload** — mirrors `SkillsPracticeViewer.tsx` (lines 127–206) three-step flow exactly, with `role: "mentor"` and `trainee_user_id: traineeId` added to every Edge Function body:
+  1. `invoke("skills-practice-attachment-upload", { body: { action: "request", content_item_id, role: "mentor", trainee_user_id, mime_type, size_bytes, original_filename } })`
+  2. `supabase.storage.from(bucket).uploadToSignedUrl(storage_path, upload_token, file)`
+  3. `invoke(..., { body: { action: "finalize", content_item_id, role: "mentor", trainee_user_id, storage_path } })`
+- Display existing mentor attachment if `completion.skills_mentor_attachment_url` set: `invoke(..., { body: { action: "read", content_item_id, role: "mentor", trainee_user_id } })`; render `<img>` if MIME starts with `image/`, else "Open attachment" link.
+- Same client limits: `MAX_BYTES = 200 * 1024 * 1024`, identical `ALLOWED_MIME` set as the trainee viewer.
 
-**Input shape (flat, must be grouped):**
-```
-learningState = {
-  user_id, viewer_role, generated_at,
-  assignments: [...],          // curriculum assignments
-  module_assignments: [...],   // standalone module assignments
-  certifications: [...],       // cert enrollment records
-  mentor_relationships: [...], // ignore
-}
-```
-Each `assignments[i]`: `assignment_id`, `curriculum_id`, `source` ('certification_path' | 'direct_assignment'), `cert_path_id` (uuid or null), `certification_id`, `status_group`, `curriculum: { name, slug, ... }`, `modules: [...]`.
-Each module: `module_id`, `name`, `module_completion` (object | null), `items: [...]`.
-Each item: `content_item_id`, `item_type`, `title`, `skills_signoff_required`, `completion` (object | null).
+**3. `src/components/mentor/LiveEventReviewPanel.tsx`**
+- Loads same RPC. Displays title, description, `content_item.event_scheduled_at`, and current `completion.live_event_attendance_status`.
+- Three buttons: Registered, Attended, Missed → `rpc("mark_live_event_attendance", { p_content_item_id, p_trainee_user_id, p_attendance_status })`. Current status visually highlighted.
 
-**Rendering — four tiers, grouped client-side:**
+**4. `src/components/mentor/WrittenSummaryReviewPanel.tsx`**
+- Loads same RPC, reads `written_submission`.
+- If null → "The trainee has not submitted this written summary yet."
+- Otherwise show `content` and `char_count`.
+- If `review_decision` set → read-only display of decision + `reviewer_comments`.
+- If null → Approve (optional comment) and Request Revision (required `Textarea`) → both call `rpc("mentor_review_submission", { p_submission_id, p_decision, p_comments })`.
 
-- **Cert Path tier**: group `assignments` by non-null `cert_path_id`. Label each group using `certifications` array — match on `certification_id`, take `certification_type`, map to friendly label via `CERT_LABELS`. Copy the `CERT_TYPES` / `CERT_LABELS` map from `src/pages/super-admin/CoachManagement.tsx` (lines 37–46) into a small shared spot (either inline at top of this file or `src/lib/certLabels.ts` — pick inline to keep scope tight). Cert-path status = matched `certifications[].status`.
-- **Curriculum tier**: one node per assignment under its cert path. Key on `assignment_id` (NOT `curriculum_id` — same curriculum can appear via cert path AND direct assignment). Status = `assignment.status_group`. Display `curriculum.name`.
-- **Module tier**: `assignment.modules[]`. Status = `module.module_completion?.status ?? 'not_started'`. Display `module.name`.
-- **Content Item tier**: `module.items[]`. Status = `item.completion?.status ?? 'not_started'`. Display `item.title`. Every `completion` access must be null-safe.
+### Edited files
 
-**Two standalone sections** (outside any cert-path group):
-- "Directly Assigned Curricula" — assignments where `cert_path_id === null`.
-- "Directly Assigned Modules" — top-level `module_assignments[]` (standalone modules with no curriculum parent).
+**5. `src/pages/mentor/MentorPortal.tsx`**
+- Add state `{ contentItemId, itemType, traineeId } | null` for open drawer; `useQueryClient()`.
+- Pass `onItemClick={(itemId, itemType) => setOpen({ contentItemId: itemId, itemType, traineeId: t.trainee_user_id })}` to each `<MentorProgressTree>` inside its expanded `TraineeRow`.
+- Render one `<ReviewDrawer>` at page level controlled by the state.
+- `onActionComplete` invalidates `["get_content_item_for_viewer", contentItemId, traineeId]`, `["get_user_learning_state", traineeId]`, `["list_mentor_trainees"]`.
 
-**Status → badge color** (semantic Tailwind tokens, no raw colors):
-`in_progress` amber · `completed` green · `not_started` muted · `certified` purple · `revision_requested` orange. Reuse the existing `Badge` from `@/components/ui/badge` with a local `statusBadgeClass(status)` helper. If an existing learning-status pill helper turns up while implementing, prefer it.
+**6. `src/pages/mentor/MentorTraineeDetail.tsx`**
+- Same drawer state + `useQueryClient()`. Pass `onItemClick` to `<MentorProgressTree>` using route param `traineeId`. Render one `<ReviewDrawer>`. Same three invalidations on `onActionComplete`.
 
-**"Needs review" flag** (null-safe). Flag an item when:
-- `item.completion?.status === 'revision_requested'`, OR
-- `item.item_type` is one of `skills_practice`/`live_event`/`written_summary` AND `item.completion?.status === 'in_progress'`.
+### Common panel behavior
+- Each action button: loading spinner + disabled while RPC/upload in flight.
+- Errors → `useToast` destructive toast with message; never crash.
+- Success → success toast, then `onActionComplete()`. Drawer stays open and shows refreshed state.
+- All access to `completion`, `written_submission`, and `skills_iterations` entries is null-guarded.
 
-Items with `completion === null` are never flagged. Render as a small colored dot or "Needs review" pill next to the title.
+### Constraints
+- `useQuery`/`useQueryClient` from `@tanstack/react-query`; `supabase` from `@/integrations/supabase/client`; shadcn from `@/components/ui/*` (Sheet, Textarea, Button, Badge).
+- Copy uses "trainee"/"learner", never "coach".
+- Match styling already in `MentorProgressTree.tsx` (status-badge color map, `cn` helper).
+- No `localStorage`/`sessionStorage`. No new backend, RPCs, migrations, or Edge Functions.
+- `MentorProgressTree.tsx` is not modified — it already plumbs `onItemClick`.
 
-**Interactivity**: items become buttons that call `onItemClick(content_item_id, item_type)` only when `onItemClick` is provided. Not passed by any caller in this prompt.
-
-**Defensive**: handle missing/empty `assignments`, `module_assignments`, `certifications`, `modules`, `items` without errors. No data fetching here.
-
-### 2. `src/pages/mentor/MentorPortal.tsx`
-
-Standard `AppLayout` route, content inside a `Card` (mirror `CoachManagement.tsx`).
-
-- `useQuery(["list_mentor_trainees"], () => supabase.rpc("list_mentor_trainees"))` — no arguments.
-- Result: `{ viewer_role, generated_at, trainees: [{ trainee_user_id, full_name, email, pending_action_count }] }`.
-- If `viewer_role === "none"` → friendly empty state ("You have no assigned trainees yet."). Not an error.
-- Header summary: total trainees + total pending actions (sum).
-- `Input` search — case-insensitive substring on `full_name`/`email`.
-- Tabs: "Needs Review" (`pending_action_count > 0`) and "All Trainees". Default to "Needs Review" if any trainee has pending actions, otherwise "All".
-- Sort: `pending_action_count` desc, then `full_name` asc.
-- `Table` cols: chevron toggle | name (link to `/mentor/trainee/${trainee_user_id}`) | email | pending count `Badge` (amber when > 0, muted when 0).
-- Local `expandedIds: Set<string>` state. Chevron toggles expansion; name link navigates and must NOT toggle — `e.stopPropagation()` on the link.
-- Lazy fetch on expand: `useQuery(["get_user_learning_state", traineeUserId], () => supabase.rpc("get_user_learning_state", { p_user_id: traineeUserId }), { enabled: expandedIds.has(id) })`. Inline spinner while loading, then `<MentorProgressTree learningState={data} />` (no `onItemClick`).
-
-### 3. `src/pages/mentor/MentorTraineeDetail.tsx`
-
-Route `/mentor/trainee/:traineeId`.
-
-- `const { traineeId } = useParams()`.
-- `useQuery(["get_user_learning_state", traineeId], () => supabase.rpc("get_user_learning_state", { p_user_id: traineeId }))` — exact param name `p_user_id`.
-- Also `useQuery(["list_mentor_trainees"], ...)` (cache-shared with roster) to look up `full_name` + `email` by matching `trainee_user_id` — these are NOT in `get_user_learning_state`.
-- Header shows trainee name + email + overall certification status (read from `learningState.certifications[]` — display each cert's `certification_type` → `CERT_LABELS` + its status).
-- Body: `<MentorProgressTree learningState={data} />` (no `onItemClick`).
-- Back button to `/mentor` (mirror `CurriculumDetail.tsx` pattern).
-- Standard loading/error states.
-
-## Files to edit
-
-### 4. `src/App.tsx`
-Add imports next to other learning imports:
-```tsx
-import MentorPortal from "./pages/mentor/MentorPortal";
-import MentorTraineeDetail from "./pages/mentor/MentorTraineeDetail";
-```
-Inside the Coach route group, after `/coach/certification`:
-```tsx
-<Route path="/mentor" element={<PractitionerCoachGuard><MentorPortal /></PractitionerCoachGuard>} />
-<Route path="/mentor/trainee/:traineeId" element={<PractitionerCoachGuard><MentorTraineeDetail /></PractitionerCoachGuard>} />
-```
-
-### 5. `src/components/AppSidebar.tsx`
-Add `GraduationCap` to the existing lucide import block. In `coachNav`, after "My Clients" and before "Orders & Invoices":
-```ts
-{ title: "Mentor Portal", url: "/mentor", icon: GraduationCap },
-```
-Existing super-admin appended-coach-nav logic surfaces this entry under "Coach Tools".
-
-## Conventions
-
-- `useQuery` from `@tanstack/react-query`, `supabase` from `@/integrations/supabase/client`, shadcn from `@/components/ui/*`.
-- User-facing copy: "trainee" / "learner", never "coach".
-- No mutations, no `localStorage`/`sessionStorage`, no new RPCs/migrations.
-- Semantic Tailwind tokens only.
+### Verification
+After implementation, confirm: build passes; drawer opens from both pages; skills sign-off, revision, and mentor upload work; live event attendance updates; written summary approve/revision works; roster pending count refreshes after each action; non-reviewable item types render the read-only message.
