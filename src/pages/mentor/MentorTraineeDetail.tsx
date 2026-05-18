@@ -45,6 +45,17 @@ function prettyStatus(s: string | null | undefined): string {
 export default function MentorTraineeDetail() {
   const { traineeId } = useParams<{ traineeId: string }>();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [drawer, setDrawer] = useState<DrawerState | null>(null);
+
+  const handleActionComplete = () => {
+    if (!drawer || !traineeId) return;
+    queryClient.invalidateQueries({
+      queryKey: ["get_content_item_for_viewer", drawer.contentItemId, traineeId],
+    });
+    queryClient.invalidateQueries({ queryKey: ["get_user_learning_state", traineeId] });
+    queryClient.invalidateQueries({ queryKey: ["list_mentor_trainees"] });
+  };
 
   const rosterQuery = useQuery({
     queryKey: ["list_mentor_trainees"],
