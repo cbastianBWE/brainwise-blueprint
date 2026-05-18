@@ -71,12 +71,19 @@ export default function SkillsPracticeViewer({
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [traineeInputDraft, setTraineeInputDraft] = useState<string>(
+    (completion?.skills_trainee_input_text as string | null) ?? ""
+  );
+  const [savingTraineeInput, setSavingTraineeInput] = useState(false);
 
   const isSelf = viewerRole === "self";
   const signoffRequired: "trainee_only" | "mentor_only" | "both_required" =
     contentItem.skills_signoff_required ?? "trainee_only";
   const allowAttachment = contentItem.skills_optional_attachment === true;
   const actorRequired = contentItem.skills_actor_invitation_required === true;
+  const traineeInputEnabled = contentItem.skills_trainee_input_enabled === true;
+  const traineeInputLabel = contentItem.skills_trainee_input_label || "Your response";
+  const savedTraineeInput = (completion?.skills_trainee_input_text as string | null) ?? "";
 
   const traineeSigned = completion?.skills_trainee_signed_off === true;
   const mentorSigned = completion?.skills_mentor_signed_off === true;
