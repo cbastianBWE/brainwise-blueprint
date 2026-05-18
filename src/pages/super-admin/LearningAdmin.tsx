@@ -1402,6 +1402,159 @@ function AssignUnassignTab() {
           )}
         </section>
       )}
+
+      {/* ---------- Import from spreadsheet ---------- */}
+      <section className="space-y-3 rounded-lg border p-4">
+        <div className="flex items-start justify-between gap-3 flex-wrap">
+          <div>
+            <h2 className="text-lg font-semibold flex items-center gap-2">
+              <Upload className="h-4 w-4" /> Import from spreadsheet
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Download the template, fill in assign/unassign rows, then upload to apply in bulk.
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              onClick={handleDownloadTemplate}
+              disabled={importReferenceQuery.isLoading}
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Download template
+            </Button>
+            <Button onClick={() => fileInputRef.current?.click()} disabled={importing}>
+              {importing && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              <Upload className="h-4 w-4 mr-2" />
+              Upload spreadsheet
+            </Button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".xlsx,.xls,.csv"
+              className="hidden"
+              onChange={handleFileSelected}
+            />
+          </div>
+        </div>
+        {importResult && (
+          <div className="rounded-md border p-3 space-y-2">
+            <div className="text-sm font-medium">
+              {importResult.succeeded} of {importResult.total} succeeded, {importResult.failed}{" "}
+              failed
+            </div>
+            {importResult.rows.filter((r) => r.status !== "success").length > 0 && (
+              <ul className="text-sm text-destructive space-y-1 max-h-60 overflow-y-auto">
+                {importResult.rows
+                  .filter((r) => r.status !== "success")
+                  .map((r) => (
+                    <li key={r.row_number}>
+                      Row {r.row_number}: {r.detail ?? r.status}
+                    </li>
+                  ))}
+              </ul>
+            )}
+          </div>
+        )}
+      </section>
+
+      {/* ---------- Scheduled assignments ---------- */}
+      <section className="space-y-3 rounded-lg border p-4">
+        <h2 className="text-lg font-semibold flex items-center gap-2">
+          <CalendarClock className="h-4 w-4" /> Scheduled assignments
+        </h2>
+        {scheduledQuery.isLoading ? (
+          <div className="flex items-center justify-center p-6 text-sm text-muted-foreground">
+            <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Loading…
+          </div>
+        ) : (scheduledQuery.data?.scheduled_assignments ?? []).length === 0 ? (
+          <div className="rounded-md border p-6 text-sm text-muted-foreground text-center">
+            No scheduled assignments.
+          </div>
+        ) : (
+          <div className="rounded-md border overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Scheduled date</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead># learners</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Scheduled by</TableHead>
+                  <TableHead>Created</TableHead>
+                  <TableHead className="w-24 text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {(scheduledQuery.data?.scheduled_assignments ?? []).map((row) => {
+                  const variant: "default" | "secondary" | "destructive" | "outline" =
+                    row.status === "failed"
+                      ? "destructive"
+                      : row.status === "cancelled"
+                        ? "outline"
+                        : row.status === "pending" || row.status === "completed"
+                          ? "default"
+                          : "secondary";
+                  return (
+                    <TableRow key={row.id}>
+                      <TableCell>{row.scheduled_for}</TableCell>
+                      <TableCell>{row.assignment_type}</TableCell>
+                      <TableCell>{row.user_count}</TableCell>
+                      <TableCell>
+                        <div className="space-y-1">
+                          <Badge variant={variant}>{row.status}</Badge>
+                          {(row.status === "partial" || row.status === "failed") &&
+                            row.failure_summary && (
+                              <div className="text-xs text-muted-foreground max-w-xs">
+                                {row.failure_summary}
+                              </div>
+                            )}
+                        </div>
+                      </TableCell>
+                      <TableCell>{row.scheduled_by_name ?? "—"}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">
+                        {new Date(row.created_at).toLocaleString()}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {row.status === "pending" ? (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setCancelTargetId(row.id)}
+                          >
+                            Cancel
+                          </Button>
+                        ) : null}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+      </section>
+
+      <AlertDialog
+        open={!!cancelTargetId}
+        onOpenChange={(o) => !o && !cancelling && setCancelTargetId(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancel scheduled assignment?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will mark the scheduled assignment as cancelled. It will not run.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={cancelling}>Keep it</AlertDialogCancel>
+            <AlertDialogAction onClick={handleCancelSchedule} disabled={cancelling}>
+              {cancelling && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Cancel assignment
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
