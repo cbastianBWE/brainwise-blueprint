@@ -80,7 +80,7 @@ export default function CertificateCanvas({
         nameSize -= 2;
         ctx.font = `bold ${nameSize}px Montserrat, sans-serif`;
       }
-      ctx.fillText(recipientName, cw * 0.5, ch * 0.310);
+      ctx.fillText(recipientName, cw * 0.5, ch * 0.336);
 
       // Date — centered directly below the baked "AWARDED ON" label
       if (certifiedAt) {
@@ -90,7 +90,7 @@ export default function CertificateCanvas({
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
         const dateText = format(new Date(certifiedAt), "MMMM d, yyyy");
-        ctx.fillText(dateText, cw * 0.5, ch * 0.689);
+        ctx.fillText(dateText, cw * 0.415, ch * 0.689);
       }
 
       if (!cancelled) onReadyRef.current?.(canvas);
