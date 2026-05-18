@@ -263,6 +263,7 @@ function ContentItemEditor({
     quizPassThreshold, quizShowCorrectMode,
     writtenMinChars, writtenMaxChars, writtenCompletionMode,
     skillsSignoffRequired, skillsActorInvitationRequired, skillsOptionalAttachment,
+    skillsTraineeInputEnabled, skillsTraineeInputLabel,
     externalUrl, eventExternalId, lessonCompletionMode,
   ]);
 
