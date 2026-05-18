@@ -937,18 +937,41 @@ function AssignUnassignTab() {
           p_reason: reason,
         };
       } else {
-        rpcName = "assign_mentor_bulk";
-        payload = {
-          p_trainee_user_ids: traineeIds,
-          p_mentor_user_id: mentorId,
-          p_certification_id: null,
-          p_reason: reason,
-        };
+        const pairs = traineeIds
+          .map((id) => mentorResolutions[id])
+          .filter((r) => r && r.selectedCertId)
+          .map((r) => ({
+            trainee_user_id: r!.trainee_user_id,
+            certification_id: r!.selectedCertId,
+          }));
+        if (pairs.length === 0) {
+          toast({
+            title: "No trainees with a resolvable certification",
+            variant: "destructive",
+          });
+          setSubmitting(false);
+          return;
+        }
+        const { data, error } = await supabase.rpc(
+          "assign_mentor_pairs_bulk" as never,
+          {
+            p_mentor_user_id: mentorId,
+            p_pairs: pairs,
+            p_reason: reason,
+          } as never,
+        );
+        if (error) throw error;
+        setAssignResult(data as BulkResult);
+        setMentorResolutions({});
+        setTraineeIds([]);
+        invalidate();
+        return;
       }
       const { data, error } = await supabase.rpc(rpcName as never, payload as never);
       if (error) throw error;
       setAssignResult(data as BulkResult);
       invalidate();
+
     } catch (err: any) {
       toast({
         title: "Request failed",
