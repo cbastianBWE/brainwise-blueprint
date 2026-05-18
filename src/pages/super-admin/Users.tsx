@@ -70,6 +70,7 @@ const SuperAdminUsers = () => {
     full_name: string | null;
     account_type: string | null;
   } | null>(null);
+  const [detailsTarget, setDetailsTarget] = useState<SearchRow | null>(null);
 
   useEffect(() => {
     const id = window.setTimeout(() => setDebouncedQuery(query), 250);
