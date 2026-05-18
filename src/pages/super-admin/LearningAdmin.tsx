@@ -770,9 +770,50 @@ function AssignUnassignTab() {
       });
       return;
     }
+    if (scheduleLater) {
+      if (!scheduledFor) {
+        toast({ title: "Pick a scheduled date", variant: "destructive" });
+        return;
+      }
+      if (scheduledFor < todayStr) {
+        toast({ title: "Scheduled date must be today or later", variant: "destructive" });
+        return;
+      }
+      if (type === "mentor" && !mentorCertId) {
+        toast({ title: "Select a certification for the mentor", variant: "destructive" });
+        return;
+      }
+    }
     setSubmitting(true);
     setAssignResult(null);
     try {
+      const dueAtIso = dueDate ? new Date(dueDate + "T00:00:00").toISOString() : null;
+
+      if (scheduleLater) {
+        const targetForSchedule = type === "mentor" ? mentorId : targetId;
+        const { data, error } = await supabase.rpc(
+          "create_scheduled_assignment" as never,
+          {
+            p_assignment_type: type,
+            p_target_id: targetForSchedule,
+            p_user_ids: traineeIds,
+            p_scheduled_for: scheduledFor,
+            p_reason: reason,
+            p_mentor_certification_id: type === "mentor" ? mentorCertId : null,
+          } as never,
+        );
+        if (error) throw error;
+        toast({ title: `Assignment scheduled for ${scheduledFor}` });
+        setReason("");
+        setDueDate("");
+        setScheduleLater(false);
+        setScheduledFor("");
+        setMentorCertId("");
+        setTraineeIds([]);
+        invalidate();
+        return;
+      }
+
       let rpcName: string;
       let payload: any;
       if (type === "cert_path") {
@@ -781,7 +822,7 @@ function AssignUnassignTab() {
           p_user_ids: traineeIds,
           p_certification_path_id: targetId,
           p_reason: reason,
-          p_due_at: null,
+          p_due_at: dueAtIso,
         };
       } else if (type === "curriculum") {
         rpcName = "assign_curriculum_bulk";
@@ -791,7 +832,7 @@ function AssignUnassignTab() {
           p_source: "direct_assignment",
           p_certification_id: null,
           p_source_reference_id: null,
-          p_due_at: null,
+          p_due_at: dueAtIso,
           p_reason: reason,
         };
       } else if (type === "module") {
@@ -801,7 +842,7 @@ function AssignUnassignTab() {
           p_module_id: targetId,
           p_source: "direct_assignment",
           p_source_reference_id: null,
-          p_due_at: null,
+          p_due_at: dueAtIso,
           p_reason: reason,
         };
       } else {
@@ -825,6 +866,120 @@ function AssignUnassignTab() {
       });
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  // -------- Import handlers --------
+  const handleDownloadTemplate = () => {
+    const ref = importReferenceQuery.data;
+    if (!ref) {
+      toast({ title: "Reference data still loading…", variant: "destructive" });
+      return;
+    }
+    const wb = XLSX.utils.book_new();
+    const assignments = [
+      ["operation", "type", "target_name", "user_email", "reason"],
+      [
+        "assign",
+        "curriculum",
+        ref.curricula[0]?.name ?? "Curriculum name",
+        ref.mentors[0]?.email ?? "someone@example.com",
+        "Example justification text",
+      ],
+    ];
+    XLSX.utils.book_append_sheet(
+      wb,
+      XLSX.utils.aoa_to_sheet(assignments),
+      "Assignments",
+    );
+
+    const certNames = ref.certification_paths.map((c) => c.name);
+    const curNames = ref.curricula.map((c) => c.name);
+    const modNames = ref.modules.map((m) => m.name);
+    const mentorEmails = ref.mentors.map((m) => m.email ?? "");
+    const max = Math.max(certNames.length, curNames.length, modNames.length, mentorEmails.length);
+    const refRows: string[][] = [
+      ["Certification Paths", "Curricula", "Modules", "Mentor Emails"],
+    ];
+    for (let i = 0; i < max; i++) {
+      refRows.push([
+        certNames[i] ?? "",
+        curNames[i] ?? "",
+        modNames[i] ?? "",
+        mentorEmails[i] ?? "",
+      ]);
+    }
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(refRows), "Reference");
+    XLSX.writeFile(wb, "learning-admin-import-template.xlsx");
+  };
+
+  const handleFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImporting(true);
+    setImportResult(null);
+    try {
+      const buf = await file.arrayBuffer();
+      const wb = XLSX.read(buf, { type: "array" });
+      const sheetName = wb.SheetNames.includes("Assignments")
+        ? "Assignments"
+        : wb.SheetNames[0];
+      const sheet = wb.Sheets[sheetName];
+      const json = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { defval: "" });
+      const rows = json
+        .map((r, idx) => ({
+          row_number: idx + 2,
+          operation: String(r.operation ?? "").trim(),
+          type: String(r.type ?? "").trim(),
+          target_name: String(r.target_name ?? "").trim(),
+          user_email: String(r.user_email ?? "").trim(),
+          reason: String(r.reason ?? "").trim(),
+        }))
+        .filter(
+          (r) => r.operation || r.type || r.target_name || r.user_email || r.reason,
+        );
+      if (rows.length === 0) {
+        toast({ title: "No rows found in the spreadsheet", variant: "destructive" });
+        return;
+      }
+      const { data, error } = await supabase.functions.invoke("learning-admin-import", {
+        body: { rows },
+      });
+      if (error) throw error;
+      setImportResult(data as ImportResult);
+      invalidate();
+    } catch (err: any) {
+      toast({
+        title: "Import failed",
+        description: err.message ?? String(err),
+        variant: "destructive",
+      });
+    } finally {
+      setImporting(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const handleCancelSchedule = async () => {
+    if (!cancelTargetId) return;
+    setCancelling(true);
+    try {
+      const { error } = await supabase.rpc(
+        "cancel_scheduled_assignment" as never,
+        { p_id: cancelTargetId } as never,
+      );
+      if (error) throw error;
+      toast({ title: "Scheduled assignment cancelled" });
+      qc.invalidateQueries({ queryKey: ["list_scheduled_assignments"] });
+    } catch (err: any) {
+      toast({
+        title: "Cancel failed",
+        description: err.message ?? String(err),
+        variant: "destructive",
+      });
+    } finally {
+      setCancelling(false);
+      setCancelTargetId(null);
     }
   };
 
