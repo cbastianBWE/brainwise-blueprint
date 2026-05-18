@@ -209,6 +209,9 @@ export default function MentorPortal() {
                     trainee={t}
                     expanded={expanded.has(t.trainee_user_id)}
                     onToggle={() => toggleExpanded(t.trainee_user_id)}
+                    onItemClick={(contentItemId, itemType) =>
+                      setDrawer({ contentItemId, itemType, traineeId: t.trainee_user_id })
+                    }
                   />
                 ))
               )}
@@ -216,6 +219,15 @@ export default function MentorPortal() {
           </Table>
         </CardContent>
       </Card>
+
+      <ReviewDrawer
+        open={drawer !== null}
+        onOpenChange={(o) => !o && setDrawer(null)}
+        contentItemId={drawer?.contentItemId ?? null}
+        itemType={drawer?.itemType ?? null}
+        traineeId={drawer?.traineeId ?? null}
+        onActionComplete={handleActionComplete}
+      />
     </div>
   );
 }
