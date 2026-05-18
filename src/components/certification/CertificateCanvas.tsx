@@ -65,7 +65,7 @@ export default function CertificateCanvas({
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
-      // Recipient name
+      // Recipient name — centered between "This certifies that" and "has successfully completed"
       const maxNameWidth = canvas.width * 0.74;
       let nameSize = Math.round(canvas.height * 0.046);
       ctx.fillStyle = "#FFFFFF";
@@ -76,15 +76,17 @@ export default function CertificateCanvas({
         nameSize -= 2;
         ctx.font = `bold ${nameSize}px Montserrat, sans-serif`;
       }
-      ctx.fillText(recipientName, canvas.width * 0.5, canvas.height * 0.285);
+      ctx.fillText(recipientName, canvas.width * 0.5, canvas.height * 0.306);
 
-      // Date
+      // Date — inline, same row as the baked "AWARDED ON" label
       if (certifiedAt) {
-        const dateSize = Math.round(canvas.height * 0.018);
+        const dateSize = Math.round(canvas.height * 0.016);
         ctx.fillStyle = "#F9F7F1";
         ctx.font = `bold ${dateSize}px Montserrat, sans-serif`;
+        ctx.textAlign = "left";
+        ctx.textBaseline = "middle";
         const dateText = format(new Date(certifiedAt), "MMMM d, yyyy");
-        ctx.fillText(dateText, canvas.width * 0.5, canvas.height * 0.692);
+        ctx.fillText(dateText, canvas.width * 0.485, canvas.height * 0.65);
       }
 
       if (!cancelled) onReadyRef.current?.(canvas);
