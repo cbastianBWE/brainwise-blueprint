@@ -19,7 +19,18 @@ const IMPERSONATION_DENIED_MESSAGE =
 export async function callIdentityMutation<T = any>(
   body: IdentityMutationAction,
 ): Promise<IdentityMutationResult<T>> {
-  const { data, error } = await supabase.functions.invoke("identity-mutation", { body });
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) {
+    return { ok: false, error: "Your session has expired. Please try again.", code: "NO_SESSION" };
+  }
+
+  const { data, error } = await supabase.functions.invoke("identity-mutation", {
+    body: {
+      ...body,
+      access_token: session.access_token,
+      refresh_token: session.refresh_token,
+    },
+  });
 
   if (!error && data && !data.error) {
     return { ok: true, data: data as T };
