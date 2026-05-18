@@ -89,6 +89,12 @@ function ContentItemEditor({
   const [skillsOptionalAttachment, setSkillsOptionalAttachment] = useState<boolean>(
     initial?.skills_optional_attachment ?? false
   );
+  const [skillsTraineeInputEnabled, setSkillsTraineeInputEnabled] = useState<boolean>(
+    (initial as any)?.skills_trainee_input_enabled ?? false
+  );
+  const [skillsTraineeInputLabel, setSkillsTraineeInputLabel] = useState<string>(
+    (initial as any)?.skills_trainee_input_label ?? ""
+  );
 
   // file_upload
   const [fileUploadMaxMb, setFileUploadMaxMb] = useState<string>(
@@ -244,6 +250,8 @@ function ContentItemEditor({
       skillsSignoffRequired !== (initial.skills_signoff_required ?? "trainee_only") ||
       skillsActorInvitationRequired !== (initial.skills_actor_invitation_required ?? false) ||
       skillsOptionalAttachment !== (initial.skills_optional_attachment ?? false) ||
+      skillsTraineeInputEnabled !== ((initial as any).skills_trainee_input_enabled ?? false) ||
+      skillsTraineeInputLabel !== ((initial as any).skills_trainee_input_label ?? "") ||
       externalUrl !== (initial.external_url ?? "") ||
       eventExternalId !== (initial.event_external_id ?? "") ||
       lessonCompletionMode !== (initial.lesson_completion_mode ?? "explicit_continue")
@@ -255,6 +263,7 @@ function ContentItemEditor({
     quizPassThreshold, quizShowCorrectMode,
     writtenMinChars, writtenMaxChars, writtenCompletionMode,
     skillsSignoffRequired, skillsActorInvitationRequired, skillsOptionalAttachment,
+    skillsTraineeInputEnabled, skillsTraineeInputLabel,
     externalUrl, eventExternalId, lessonCompletionMode,
   ]);
 
@@ -303,6 +312,8 @@ function ContentItemEditor({
           skills_signoff_required: skillsSignoffRequired,
           skills_actor_invitation_required: skillsActorInvitationRequired,
           skills_optional_attachment: skillsOptionalAttachment,
+          skills_trainee_input_enabled: skillsTraineeInputEnabled,
+          skills_trainee_input_label: skillsTraineeInputLabel.trim() || null,
         };
       case "file_upload":
         return {
@@ -806,6 +817,30 @@ function ContentItemEditor({
                 <Label htmlFor="ci-optatt" className="cursor-pointer">Optional attachment allowed</Label>
                 <Switch id="ci-optatt" checked={skillsOptionalAttachment} onCheckedChange={setSkillsOptionalAttachment} disabled={saving} />
               </div>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="ci-trainee-input" className="cursor-pointer">Trainee text response field</Label>
+                <Switch
+                  id="ci-trainee-input"
+                  checked={skillsTraineeInputEnabled}
+                  onCheckedChange={setSkillsTraineeInputEnabled}
+                  disabled={saving}
+                />
+              </div>
+              {skillsTraineeInputEnabled && (
+                <div className="space-y-2">
+                  <Label htmlFor="ci-trainee-input-label">Trainee field prompt</Label>
+                  <Input
+                    id="ci-trainee-input-label"
+                    value={skillsTraineeInputLabel}
+                    onChange={(e) => setSkillsTraineeInputLabel(e.target.value)}
+                    placeholder="e.g. List the actors you debriefed"
+                    disabled={saving}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Shown to the trainee as the prompt above their text box. The trainee's response is visible to their mentor.
+                  </p>
+                </div>
+              )}
             </div>
           )}
 

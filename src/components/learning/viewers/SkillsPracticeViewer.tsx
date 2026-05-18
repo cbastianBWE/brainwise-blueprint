@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import type { CascadeResult } from "@/hooks/useCompletionReporter";
 
@@ -71,12 +72,19 @@ export default function SkillsPracticeViewer({
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [traineeInputDraft, setTraineeInputDraft] = useState<string>(
+    (completion?.skills_trainee_input_text as string | null) ?? ""
+  );
+  const [savingTraineeInput, setSavingTraineeInput] = useState(false);
 
   const isSelf = viewerRole === "self";
   const signoffRequired: "trainee_only" | "mentor_only" | "both_required" =
     contentItem.skills_signoff_required ?? "trainee_only";
   const allowAttachment = contentItem.skills_optional_attachment === true;
   const actorRequired = contentItem.skills_actor_invitation_required === true;
+  const traineeInputEnabled = contentItem.skills_trainee_input_enabled === true;
+  const traineeInputLabel = contentItem.skills_trainee_input_label || "Your response";
+  const savedTraineeInput = (completion?.skills_trainee_input_text as string | null) ?? "";
 
   const traineeSigned = completion?.skills_trainee_signed_off === true;
   const mentorSigned = completion?.skills_mentor_signed_off === true;
@@ -121,6 +129,33 @@ export default function SkillsPracticeViewer({
       });
     }
   };
+
+  const handleSaveTraineeInput = async () => {
+    setSavingTraineeInput(true);
+    const { error } = await (supabase as any).rpc("save_skills_trainee_input", {
+      p_content_item_id: contentItem.id,
+      p_text: traineeInputDraft,
+    });
+    if (error) {
+      const msg = (error.message || "").split(":")[0].trim();
+      const map: Record<string, string> = {
+        item_already_completed: "This item is already complete — the response can no longer be edited.",
+        trainee_input_not_enabled_for_this_item: "A text response isn't enabled for this item.",
+      };
+      toast({
+        title: "Could not save",
+        description: map[msg] ?? error.message,
+        variant: "destructive",
+      });
+    } else {
+      toast({ title: "Response saved" });
+      await queryClient.invalidateQueries({
+        queryKey: ["content-item-viewer", contentItem.id],
+      });
+    }
+    setSavingTraineeInput(false);
+  };
+
 
   const handlePickFile = () => fileInputRef.current?.click();
 
@@ -250,6 +285,45 @@ export default function SkillsPracticeViewer({
           </div>
         )}
       </div>
+
+      {/* Trainee text response field */}
+      {traineeInputEnabled && (
+        <div className="rounded-lg border bg-card p-5 space-y-3">
+          <h3 className="font-semibold">{traineeInputLabel}</h3>
+          {isSelf ? (
+            isCompleted ? (
+              savedTraineeInput ? (
+                <p className="text-sm text-foreground/90 whitespace-pre-wrap">{savedTraineeInput}</p>
+              ) : (
+                <p className="text-sm text-muted-foreground italic">No response provided.</p>
+              )
+            ) : (
+              <>
+                <Textarea
+                  value={traineeInputDraft}
+                  onChange={(e) => setTraineeInputDraft(e.target.value)}
+                  rows={5}
+                  placeholder="Type your response…"
+                  disabled={savingTraineeInput}
+                />
+                <Button
+                  onClick={handleSaveTraineeInput}
+                  disabled={savingTraineeInput}
+                  variant="outline"
+                  size="sm"
+                >
+                  {savingTraineeInput && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                  Save response
+                </Button>
+              </>
+            )
+          ) : savedTraineeInput ? (
+            <p className="text-sm text-foreground/90 whitespace-pre-wrap">{savedTraineeInput}</p>
+          ) : (
+            <p className="text-sm text-muted-foreground italic">No response provided yet.</p>
+          )}
+        </div>
+      )}
 
       {/* Revision requested */}
       {hasRevision && (
