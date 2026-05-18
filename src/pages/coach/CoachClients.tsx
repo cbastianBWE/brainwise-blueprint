@@ -95,6 +95,15 @@ export default function CoachClients() {
   const [shareableModalOpen, setShareableModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"clients" | "pending">("clients");
   const [perAssessmentPrice, setPerAssessmentPrice] = useState<number | null>(null);
+  const [actorCert, setActorCert] = useState<{ id: string; certification_type: string; status: string; free_uses_expire_at: string | null } | null>(null);
+  const [actorsUsed, setActorsUsed] = useState<number>(0);
+  const [isActorDebrief, setIsActorDebrief] = useState(false);
+
+  const canOfferActorDebrief =
+    !!actorCert
+    && actorCert.certification_type === 'ptp_coach'
+    && (!actorCert.free_uses_expire_at || new Date(actorCert.free_uses_expire_at) > new Date())
+    && actorsUsed < 3;
 
   const fetchClients = async () => {
     if (!user) return;
