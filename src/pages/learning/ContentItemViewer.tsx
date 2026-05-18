@@ -451,31 +451,17 @@ export default function ContentItemViewer() {
           )}
 
           {cascadeModal?.tier === "certification" && (
-            <>
-              <div
-                className="-mx-6 -mt-6 mb-2 rounded-t-md p-6 text-center"
-                style={{
-                  background:
-                    "linear-gradient(135deg, var(--bw-orange), var(--bw-plum))",
-                }}
-              >
-                <Award className="h-12 w-12 mx-auto text-white" />
-              </div>
-              <DialogHeader>
-                <DialogTitle>{CASCADE_COPY.certification.title}</DialogTitle>
-                <DialogDescription>
-                  {CASCADE_COPY.certification.body(cascadeModal.entityName)}
-                </DialogDescription>
-              </DialogHeader>
-              <div className="rounded-md border border-dashed bg-muted/40 p-4 text-sm text-muted-foreground text-center">
-                Your certificate and sharing options will be available soon.
-              </div>
-              <DialogFooter className="gap-2 sm:gap-2">
-                <Button variant="outline" onClick={() => setCascadeModal(null)}>
-                  Continue
-                </Button>
-              </DialogFooter>
-            </>
+            <CertificationMarquee
+              entityId={cascadeModal.entityId}
+              fallbackName={cascadeModal.entityName}
+              onClose={() => setCascadeModal(null)}
+              onView={() => {
+                const id = cascadeModal.entityId;
+                setCascadeModal(null);
+                if (id) navigate(`/coach/certification?cert=${id}`);
+                else navigate("/coach/certification");
+              }}
+            />
           )}
         </DialogContent>
       </Dialog>
