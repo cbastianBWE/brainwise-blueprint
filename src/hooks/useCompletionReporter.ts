@@ -7,6 +7,7 @@ export type CascadeTier = "content_item" | "module" | "curriculum" | "certificat
 export interface CascadeResult {
   tier: CascadeTier;
   entityName: string;
+  entityId: string | null;
 }
 
 interface Options {
