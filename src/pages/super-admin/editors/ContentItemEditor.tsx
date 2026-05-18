@@ -817,6 +817,30 @@ function ContentItemEditor({
                 <Label htmlFor="ci-optatt" className="cursor-pointer">Optional attachment allowed</Label>
                 <Switch id="ci-optatt" checked={skillsOptionalAttachment} onCheckedChange={setSkillsOptionalAttachment} disabled={saving} />
               </div>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="ci-trainee-input" className="cursor-pointer">Trainee text response field</Label>
+                <Switch
+                  id="ci-trainee-input"
+                  checked={skillsTraineeInputEnabled}
+                  onCheckedChange={setSkillsTraineeInputEnabled}
+                  disabled={saving}
+                />
+              </div>
+              {skillsTraineeInputEnabled && (
+                <div className="space-y-2">
+                  <Label htmlFor="ci-trainee-input-label">Trainee field prompt</Label>
+                  <Input
+                    id="ci-trainee-input-label"
+                    value={skillsTraineeInputLabel}
+                    onChange={(e) => setSkillsTraineeInputLabel(e.target.value)}
+                    placeholder="e.g. List the actors you debriefed"
+                    disabled={saving}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Shown to the trainee as the prompt above their text box. The trainee's response is visible to their mentor.
+                  </p>
+                </div>
+              )}
             </div>
           )}
 
