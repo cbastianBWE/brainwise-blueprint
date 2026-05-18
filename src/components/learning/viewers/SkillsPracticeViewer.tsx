@@ -130,6 +130,33 @@ export default function SkillsPracticeViewer({
     }
   };
 
+  const handleSaveTraineeInput = async () => {
+    setSavingTraineeInput(true);
+    const { error } = await (supabase as any).rpc("save_skills_trainee_input", {
+      p_content_item_id: contentItem.id,
+      p_text: traineeInputDraft,
+    });
+    if (error) {
+      const msg = (error.message || "").split(":")[0].trim();
+      const map: Record<string, string> = {
+        item_already_completed: "This item is already complete — the response can no longer be edited.",
+        trainee_input_not_enabled_for_this_item: "A text response isn't enabled for this item.",
+      };
+      toast({
+        title: "Could not save",
+        description: map[msg] ?? error.message,
+        variant: "destructive",
+      });
+    } else {
+      toast({ title: "Response saved" });
+      await queryClient.invalidateQueries({
+        queryKey: ["content-item-viewer", contentItem.id],
+      });
+    }
+    setSavingTraineeInput(false);
+  };
+
+
   const handlePickFile = () => fileInputRef.current?.click();
 
   const handleFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
