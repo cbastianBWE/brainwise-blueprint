@@ -23,6 +23,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import JustificationModal from "@/components/impersonation/JustificationModal";
+import UserDetailsModal from "@/components/super-admin/UserDetailsModal";
 
 interface SearchRow {
   user_id: string;
@@ -69,6 +70,7 @@ const SuperAdminUsers = () => {
     full_name: string | null;
     account_type: string | null;
   } | null>(null);
+  const [detailsTarget, setDetailsTarget] = useState<SearchRow | null>(null);
 
   useEffect(() => {
     const id = window.setTimeout(() => setDebouncedQuery(query), 250);
@@ -201,6 +203,9 @@ const SuperAdminUsers = () => {
                             Impersonate
                           </DropdownMenuItem>
                         )}
+                        <DropdownMenuItem onSelect={() => setDetailsTarget(row)}>
+                          View user details
+                        </DropdownMenuItem>
                         <DropdownMenuItem disabled>
                           Reset MFA
                           <span className="ml-2 text-xs text-muted-foreground">(coming soon)</span>
@@ -259,6 +264,12 @@ const SuperAdminUsers = () => {
       <JustificationModal
         target={justificationTarget}
         onClose={() => setJustificationTarget(null)}
+      />
+
+      <UserDetailsModal
+        open={!!detailsTarget}
+        onOpenChange={(o) => !o && setDetailsTarget(null)}
+        target={detailsTarget}
       />
     </div>
   );

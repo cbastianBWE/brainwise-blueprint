@@ -1,28 +1,44 @@
-## Skills-practice trainee text field
+## User Details modal with free-attempts grant
 
-Frontend only. Backend (columns, `save_skills_trainee_input` RPC, `upsert_content_item` extension) is already live.
+Frontend only. Backend RPC `grant_additional_free_attempts` is live.
 
-### Part A — `src/pages/super-admin/editors/ContentItemEditor.tsx`
+### New: `src/components/super-admin/UserDetailsModal.tsx`
 
-1. **State** (after line 91, with other skills_practice state): add `skillsTraineeInputEnabled` (bool, from `initial?.skills_trainee_input_enabled`) and `skillsTraineeInputLabel` (string, from `initial?.skills_trainee_input_label`).
-2. **Dirty check** (lines 244–246): add comparisons for both new fields; add them to the dependency array at line 257.
-3. **Payload** (`buildTypeConfig`, `case "skills_practice"` at lines 301–306): add `skills_trainee_input_enabled` and `skills_trainee_input_label` (trimmed or null).
-4. **JSX** (inside the `itemType === "skills_practice"` block, after the "Optional attachment allowed" row): add a Switch row labeled "Trainee text response field"; when on, render an Input for the prompt label with placeholder "e.g. List the actors you debriefed" and a muted helper line explaining it's shown to the trainee and visible to the mentor.
+Props: `open`, `onOpenChange`, `target` (`{ user_id, email, full_name, account_type, organization_name } | null`).
 
-### Part B — `src/components/learning/viewers/SkillsPracticeViewer.tsx`
+Dialog with `DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto"`, structured in sections for extensibility.
 
-1. **Derived flags** (near `allowAttachment`/`actorRequired`): `traineeInputEnabled`, `traineeInputLabel` (default "Your response"), `savedTraineeInput`.
-2. **Local state** (near `uploading`): `traineeInputDraft` (seeded from completion), `savingTraineeInput`.
-3. **Handler** `handleSaveTraineeInput`: calls `supabase.rpc("save_skills_trainee_input", { p_content_item_id, p_text })`; maps `item_already_completed` and `trainee_input_not_enabled_for_this_item` to friendly toasts; on success toasts "Response saved" and invalidates the `["content-item-viewer", contentItem.id]` query.
-4. **JSX**: new bordered card (`rounded-lg border bg-card p-5 space-y-3`, matching "Supporting evidence") placed after the Practice scenario card and before the Revision block. Render only when `traineeInputEnabled`.
-   - Trainee (`isSelf`) and not completed: heading = `traineeInputLabel`, Textarea bound to draft, "Save response" button (disabled while saving).
-   - Trainee + completed: show saved text read-only.
-   - Mentor / super_admin: read-only saved text under the label; muted "No response provided yet." when empty.
+**Section 1 — User information (always):** read-only display of full_name, email, formatted account_type, organization_name.
+
+**Section 2 — Free assessment attempts (only when `account_type === "coach"`):**
+
+- `useQuery` keyed `["coach-certifications", target?.user_id]`, enabled only when modal is open and target is a coach. Queries `coach_certifications` (`id, certification_type, status, free_assessment_uses, free_uses_expire_at`) filtered by `user_id`, ordered by `created_at` asc.
+- Empty state: "This coach has no certifications."
+- Otherwise list each certification: type, status, and readable rendering of `free_assessment_uses` (mapping instrument codes INST-001 PTP / INST-002 NAI / INST-003 AIRSA / INST-004 HSS to labels, e.g. "PTP: 3, NAI: 0").
+- Grant control:
+  - Select certification (from list)
+  - Select instrument (INST-001..INST-004 with readable labels)
+  - Number Input `count` (min 1)
+  - Textarea `reason`
+  - "Grant attempts" button disabled until certification, instrument, count ≥ 1, and `reason.trim().length >= 10`.
+  - Helper line under control: action requires MFA and is audit-logged.
+- Submit: `supabase.rpc("grant_additional_free_attempts", { p_certification_id, p_instrument_id, p_count, p_reason })`.
+- Error code → toast mapping: `reason_required_min_chars`, `count_must_be_positive`, `invalid_instrument_id`, `certification_not_found`, fallback `"Could not grant attempts: " + error.message`.
+- Success: toast `"Granted {count} attempt(s)."`, reset count + reason, invalidate `["coach-certifications", target.user_id]`.
+
+### Edit: `src/pages/super-admin/Users.tsx`
+
+- Add `const [detailsTarget, setDetailsTarget] = useState<SearchRow | null>(null);`.
+- In the kebab `DropdownMenuContent`, add `<DropdownMenuItem onSelect={() => setDetailsTarget(row)}>View user details</DropdownMenuItem>` directly under the (enabled) Impersonate item — shown for all users.
+- Near the existing `JustificationModal`, render `<UserDetailsModal open={!!detailsTarget} onOpenChange={(o) => !o && setDetailsTarget(null)} target={detailsTarget} />`.
+- Do not touch Impersonate, the justification modal, or disabled "coming soon" items.
 
 ### Acceptance
 
-- Editor: toggle reveals label input; values persist via `upsert_content_item`; reopen shows them.
-- Viewer trainee: prompt + textbox + save toast; becomes read-only after completion.
-- Viewer mentor: reads trainee response (or empty-state) read-only.
-- When disabled: no new UI in either surface.
-- No migrations/RPCs created.
+- "View user details" appears on every kebab row and opens the modal.
+- Basic info always shown; free-attempts section only for coaches.
+- Granting calls the RPC and refreshes the displayed pool on success.
+- Grant button gated by all four inputs (cert, instrument, count ≥ 1, reason ≥ 10 chars).
+- Empty-state shown for coach with no certifications.
+- Modal scrolls on small viewports.
+- No migrations or RPCs created.
