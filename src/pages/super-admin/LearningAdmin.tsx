@@ -1758,12 +1758,16 @@ export default function LearningAdmin() {
             <TabsList>
               <TabsTrigger value="trainees">Trainees</TabsTrigger>
               <TabsTrigger value="assign">Assign / Unassign</TabsTrigger>
+              <TabsTrigger value="mentor-role">Assign Mentor Role</TabsTrigger>
             </TabsList>
             <TabsContent value="trainees" className="pt-4">
               <TraineesTab />
             </TabsContent>
             <TabsContent value="assign" className="pt-4">
               <AssignUnassignTab />
+            </TabsContent>
+            <TabsContent value="mentor-role" className="pt-4">
+              <MentorRoleTab />
             </TabsContent>
           </Tabs>
         </CardContent>
