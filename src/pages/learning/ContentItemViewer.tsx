@@ -9,15 +9,19 @@ import {
   ChevronDown,
   ChevronRight,
   CircleCheck,
+  Download,
   ExternalLink,
   FileText,
   HelpCircle,
+  Linkedin,
   Loader2,
   PartyPopper,
   PlayCircle,
   Upload,
   type LucideIcon,
 } from "lucide-react";
+import { jsPDF } from "jspdf";
+import CertificateCanvas from "@/components/certification/CertificateCanvas";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
