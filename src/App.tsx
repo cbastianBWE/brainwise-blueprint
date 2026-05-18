@@ -7,6 +7,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import RoleGuard from "@/components/RoleGuard";
 import PractitionerCoachGuard from "@/components/PractitionerCoachGuard";
+import MentorGuard from "@/components/MentorGuard";
 import SubscriptionGate from "@/components/SubscriptionGate";
 import CorpRedirect from "@/components/CorpRedirect";
 import { SuperAdminSessionProvider } from "@/hooks/useSuperAdminSession";
@@ -171,8 +172,8 @@ const App = () => (
               <Route path="/coach/resources" element={<RoleGuard allowedRoles={["coach"]}><Resources /></RoleGuard>} />
               <Route path="/coach/profile" element={<PractitionerCoachGuard><CoachProfile /></PractitionerCoachGuard>} />
               <Route path="/coach/certification" element={<PractitionerCoachGuard><CertificationPage /></PractitionerCoachGuard>} />
-              <Route path="/mentor" element={<PractitionerCoachGuard><MentorPortal /></PractitionerCoachGuard>} />
-              <Route path="/mentor/trainee/:traineeId" element={<PractitionerCoachGuard><MentorTraineeDetail /></PractitionerCoachGuard>} />
+              <Route path="/mentor" element={<MentorGuard><MentorPortal /></MentorGuard>} />
+              <Route path="/mentor/trainee/:traineeId" element={<MentorGuard><MentorTraineeDetail /></MentorGuard>} />
 
               {/* Admin */}
               <Route path="/admin/users" element={<RoleGuard allowedRoles={["company_admin", "org_admin"]}><AdminUsers /></RoleGuard>} />

@@ -58,7 +58,7 @@ const coachNav: NavItem[] = [
   { title: "My Assessments", url: "/assessment", icon: ClipboardList },
   { title: "My Results", url: "/my-results", icon: BarChart3 },
   { title: "My Clients", url: "/coach/clients", icon: Users },
-  { title: "Mentor Portal", url: "/mentor", icon: GraduationCap },
+  
   { title: "Orders & Invoices", url: "/coach/invoices", icon: Receipt },
   { title: "AI Chat", url: "/ai-chat", icon: MessageSquare },
   { title: "Chat History", url: "/ai-chat/history", icon: History },
@@ -145,9 +145,18 @@ export function AppSidebar() {
   const location = useLocation();
   const { signOut } = useAuth();
   const { profile } = useUserProfile();
-  const { isCorp } = useAccountRole();
+  const { isCorp, isMentor, isSuperAdmin } = useAccountRole();
 
-  const navItems = getNavItems(profile);
+  const baseNavItems = getNavItems(profile);
+  const navItems = (() => {
+    if (!(isMentor || isSuperAdmin)) return baseNavItems;
+    const clientsIdx = baseNavItems.findIndex((i) => i.url === "/coach/clients");
+    if (clientsIdx === -1) return baseNavItems;
+    const mentorItem: NavItem = { title: "Mentor Portal", url: "/mentor", icon: GraduationCap };
+    const copy = [...baseNavItems];
+    copy.splice(clientsIdx + 1, 0, mentorItem);
+    return copy;
+  })();
   const isSettingsOpen = location.pathname.startsWith('/settings');
   const isClientsOpen = location.pathname.startsWith('/coach/clients') || location.pathname.startsWith('/coach/client-results');
   const isDashboardsOpen = location.pathname.startsWith('/company/nai-dashboard')

@@ -1737,6 +1737,269 @@ function AssignUnassignTab() {
   );
 }
 
+// ---------- Tab 3: Mentor Role ----------
+
+function MentorRoleTab() {
+  const { toast } = useToast();
+  const qc = useQueryClient();
+  const [query, setQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
+  const [page, setPage] = useState(0);
+  const [dialogTarget, setDialogTarget] = useState<SearchRow | null>(null);
+  const [dialogGrant, setDialogGrant] = useState(true);
+  const [reason, setReason] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    const id = window.setTimeout(() => setDebouncedQuery(query), 250);
+    return () => window.clearTimeout(id);
+  }, [query]);
+
+  useEffect(() => {
+    setPage(0);
+  }, [debouncedQuery]);
+
+  const searchQueryKey = ["learning-admin-mentor-search", debouncedQuery, page] as const;
+  const { data: results, isLoading, error } = useQuery({
+    queryKey: searchQueryKey,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("search_impersonation_targets", {
+        p_query: debouncedQuery.length >= 2 ? debouncedQuery : null,
+        p_limit: PAGE_SIZE,
+        p_offset: page * PAGE_SIZE,
+      } as any);
+      if (error) throw error;
+      return (data ?? []) as SearchRow[];
+    },
+    staleTime: 30_000,
+  });
+
+  const userIds = useMemo(() => (results ?? []).map((r) => r.user_id), [results]);
+
+  const { data: mentorMap } = useQuery({
+    queryKey: ["learning-admin-mentor-flags", userIds],
+    queryFn: async () => {
+      if (userIds.length === 0) return {} as Record<string, boolean>;
+      const { data, error } = await supabase
+        .from("users")
+        .select("id, is_mentor")
+        .in("id", userIds);
+      if (error) throw error;
+      const map: Record<string, boolean> = {};
+      (data ?? []).forEach((u: any) => {
+        map[u.id] = u.is_mentor === true;
+      });
+      return map;
+    },
+    enabled: userIds.length > 0,
+    staleTime: 15_000,
+  });
+
+  const totalCount = Number(results?.[0]?.total_count ?? 0);
+  const showPagination = totalCount > PAGE_SIZE;
+
+  const openDialog = (row: SearchRow, grant: boolean) => {
+    setDialogTarget(row);
+    setDialogGrant(grant);
+    setReason("");
+  };
+
+  const closeDialog = () => {
+    if (submitting) return;
+    setDialogTarget(null);
+    setReason("");
+  };
+
+  const handleConfirm = async () => {
+    if (!dialogTarget) return;
+    if (reason.trim().length < 10) {
+      toast({ title: "Justification must be at least 10 characters", variant: "destructive" });
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const { error } = await supabase.rpc("set_mentor_role" as never, {
+        p_user_id: dialogTarget.user_id,
+        p_is_mentor: dialogGrant,
+        p_reason: reason,
+      } as never);
+      if (error) throw error;
+      toast({
+        title: dialogGrant ? "Mentor role granted" : "Mentor role revoked",
+        description: dialogTarget.full_name || dialogTarget.email,
+      });
+      qc.invalidateQueries({ queryKey: ["learning-admin-mentor-flags"] });
+      qc.invalidateQueries({ queryKey: searchQueryKey as unknown as any[] });
+      setDialogTarget(null);
+      setReason("");
+    } catch (err: any) {
+      toast({
+        title: "Request failed",
+        description: err.message ?? String(err),
+        variant: "destructive",
+      });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="relative max-w-xl">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search by email, name, or organization (min 2 characters)"
+          className="pl-9"
+        />
+      </div>
+
+      <div className="rounded-lg border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Name</TableHead>
+              <TableHead>Email</TableHead>
+              <TableHead>Account Type</TableHead>
+              <TableHead>Mentor Status</TableHead>
+              <TableHead className="text-right">Action</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {isLoading &&
+              Array.from({ length: 5 }).map((_, i) => (
+                <TableRow key={`skel-${i}`}>
+                  {Array.from({ length: 5 }).map((__, j) => (
+                    <TableCell key={j}>
+                      <Skeleton className="h-4 w-full" />
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))}
+
+            {!isLoading && error && (
+              <TableRow>
+                <TableCell colSpan={5} className="text-center py-8">
+                  <p className="text-sm text-destructive">Search failed. Please try again.</p>
+                  <p className="text-xs text-muted-foreground mt-1">{(error as Error).message}</p>
+                </TableCell>
+              </TableRow>
+            )}
+
+            {!isLoading && !error && results && results.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={5} className="text-center py-8 text-sm text-muted-foreground">
+                  No users found.
+                </TableCell>
+              </TableRow>
+            )}
+
+            {!isLoading && !error && results?.map((row) => {
+              const isMentor = mentorMap?.[row.user_id] === true;
+              return (
+                <TableRow key={row.user_id}>
+                  <TableCell>{row.full_name || "—"}</TableCell>
+                  <TableCell className="text-muted-foreground">{row.email}</TableCell>
+                  <TableCell>
+                    <Badge variant={accountTypeBadgeVariant(row.account_type)}>
+                      {formatAccountType(row.account_type)}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    {isMentor ? (
+                      <Badge variant="default">Mentor</Badge>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {isMentor ? (
+                      <Button size="sm" variant="outline" onClick={() => openDialog(row, false)}>
+                        Revoke
+                      </Button>
+                    ) : (
+                      <Button size="sm" onClick={() => openDialog(row, true)}>
+                        Grant
+                      </Button>
+                    )}
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </div>
+
+      {showPagination && (
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-muted-foreground">
+            Page {page + 1} of {Math.ceil(totalCount / PAGE_SIZE)} ({totalCount} total)
+          </p>
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setPage((p) => Math.max(0, p - 1))}
+              disabled={page === 0}
+            >
+              <ChevronLeft className="h-4 w-4" /> Prev
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setPage((p) => p + 1)}
+              disabled={(page + 1) * PAGE_SIZE >= totalCount}
+            >
+              Next <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
+
+      <Dialog open={!!dialogTarget} onOpenChange={(o) => !o && closeDialog()}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>
+              {dialogGrant ? "Grant mentor role" : "Revoke mentor role"}
+            </DialogTitle>
+            {dialogTarget && (
+              <DialogDescription>
+                User:{" "}
+                <span className="font-medium text-foreground">
+                  {dialogTarget.full_name || dialogTarget.email}
+                </span>
+              </DialogDescription>
+            )}
+          </DialogHeader>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Justification (min 10 chars)</label>
+            <Textarea
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder={
+                dialogGrant
+                  ? "Why is this user being granted mentor capability?"
+                  : "Why is mentor capability being revoked?"
+              }
+              rows={3}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={closeDialog} disabled={submitting}>
+              Cancel
+            </Button>
+            <Button onClick={handleConfirm} disabled={submitting}>
+              {submitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Confirm
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
 // ---------- Page shell ----------
 
 export default function LearningAdmin() {
@@ -1758,12 +2021,16 @@ export default function LearningAdmin() {
             <TabsList>
               <TabsTrigger value="trainees">Trainees</TabsTrigger>
               <TabsTrigger value="assign">Assign / Unassign</TabsTrigger>
+              <TabsTrigger value="mentor-role">Assign Mentor Role</TabsTrigger>
             </TabsList>
             <TabsContent value="trainees" className="pt-4">
               <TraineesTab />
             </TabsContent>
             <TabsContent value="assign" className="pt-4">
               <AssignUnassignTab />
+            </TabsContent>
+            <TabsContent value="mentor-role" className="pt-4">
+              <MentorRoleTab />
             </TabsContent>
           </Tabs>
         </CardContent>

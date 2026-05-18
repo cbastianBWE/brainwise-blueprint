@@ -32,6 +32,13 @@ export interface AccountRoleInfo {
    * Real coaches with account_type='coach' all have this true by backfill.
    */
   isPractitionerCoach: boolean;
+  /**
+   * True when the user has been granted mentor capability via users.is_mentor.
+   * Standalone capability, independent of account_type and of whether any
+   * trainees are currently assigned. Backend RPC `set_mentor_role` controls
+   * this flag; frontend uses it to gate the /mentor routes and sidebar entry.
+   */
+  isMentor: boolean;
   isSuperAdmin: boolean;
   isBypassAdmin: boolean;
   /**
@@ -70,6 +77,7 @@ export function useAccountRole(): AccountRoleInfo {
       isIndividual: false,
       isCoach: false,
       isPractitionerCoach: false,
+      isMentor: false,
       isSuperAdmin: false,
       isBypassAdmin: false,
       canBypassAssessmentPaywall: false,
@@ -89,6 +97,7 @@ export function useAccountRole(): AccountRoleInfo {
     isIndividual: accountType === "individual",
     isCoach: accountType === "coach",
     isPractitionerCoach: profile?.is_practitioner_coach === true,
+    isMentor: profile?.is_mentor === true,
     isSuperAdmin,
     isBypassAdmin,
     canBypassAssessmentPaywall: isSuperAdmin,
