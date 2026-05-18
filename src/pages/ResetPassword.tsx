@@ -13,17 +13,33 @@ const ResetPassword = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [isRecovery, setIsRecovery] = useState(false);
+  const [status, setStatus] = useState<"checking" | "ready" | "invalid">("checking");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
-    const hash = window.location.hash;
-    if (hash.includes("type=recovery")) {
-      setIsRecovery(true);
-    }
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "PASSWORD_RECOVERY") {
+        setStatus("ready");
+      } else if (event === "SIGNED_IN" && session) {
+        setStatus((s) => (s === "checking" ? "ready" : s));
+      }
+    });
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) setStatus((s) => (s === "checking" ? "ready" : s));
+    });
+
+    const timeoutId = setTimeout(() => {
+      setStatus((s) => (s === "checking" ? "invalid" : s));
+    }, 3500);
+
+    return () => {
+      subscription.unsubscribe();
+      clearTimeout(timeoutId);
+    };
   }, []);
 
   const validatePassword = (pw: string) => ({
@@ -46,6 +62,12 @@ const ResetPassword = () => {
       return;
     }
 
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      toast({ title: "Error", description: "Your reset link has expired. Please request a new password reset.", variant: "destructive" });
+      return;
+    }
+
     setLoading(true);
     const result = await callIdentityMutation({ action: 'update_password', new_password: password });
     setLoading(false);
@@ -58,7 +80,21 @@ const ResetPassword = () => {
     }
   };
 
-  if (!isRecovery) {
+  if (status === "checking") {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <img src="/brain-icon.png" alt="BrainWise" className="mx-auto h-10 w-10 mb-2" />
+            <CardTitle className="text-2xl">Verifying your reset link...</CardTitle>
+            <CardDescription>Just a moment.</CardDescription>
+          </CardHeader>
+        </Card>
+      </div>
+    );
+  }
+
+  if (status === "invalid") {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <Card className="w-full max-w-md">

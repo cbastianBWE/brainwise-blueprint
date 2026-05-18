@@ -1,52 +1,81 @@
-## Group V — Prompt 2: Cert-path celebration marquee
+## Fix: Password reset "Auth session missing!" error
 
-Three coordinated, narrowly-scoped frontend changes. No backend, no new RPC.
+**File:** `src/pages/ResetPassword.tsx` (single-file change)
 
-### 1) `src/hooks/useCompletionReporter.ts` — plumb `entityId`
+### Problem
+The page string-matches `window.location.hash` for `type=recovery`, which races Supabase's `detectSessionInUrl` (default true). The client consumes/clears the hash before the `useEffect` reads it, so either the form never shows, or it shows without a real session — causing `callIdentityMutation` to hit the Edge Function with no auth token → "Auth session missing!".
 
-- Extend `CascadeResult` with `entityId: string | null`.
-- In `mapRpcCascade`, also read `raw.entity_id` and return it (fallback `null`).
-- Nothing else changes. Existing consumers reading `tier`/`entityName` are unaffected.
+### Changes
 
-### 2) `src/pages/learning/ContentItemViewer.tsx` — replace the certification-tier stub
+**1. Replace `isRecovery` boolean with a three-state `status`**
 
-Leave the `module` and `curriculum` branches and the 4s auto-dismiss effect untouched.
+Remove:
+```ts
+const [isRecovery, setIsRecovery] = useState(false);
+useEffect(() => {
+  const hash = window.location.hash;
+  if (hash.includes("type=recovery")) setIsRecovery(true);
+}, []);
+```
 
-Replace **only** the `cascadeModal?.tier === "certification"` branch (lines ~449–475) with the full marquee:
+Add:
+```ts
+const [status, setStatus] = useState<"checking" | "ready" | "invalid">("checking");
 
-- Widen the dialog for this tier only — `<DialogContent className="sm:max-w-3xl">`. Module/curriculum keep default width.
-- Keep the existing orange→plum gradient header with the `Award` icon.
-- Add a `useQuery` keyed `["certification-credential", cascadeModal?.entityId]`, enabled only when `tier === "certification"` and `entityId` is truthy. Calls `supabase.rpc("get_certification_credential", { p_certification_id: cascadeModal.entityId })` — same call/key as the certification hub.
-- States:
-  - `entityId` null OR query error → fallback: "You're certified!" + single `Continue` button (no crash).
-  - Loading → small centered `Loader2`.
-  - Success → render the marquee body.
-- Marquee body:
-  - Heading "You're certified!" + line naming the cert via RPC `display_name`.
-  - `<CertificateCanvas recipientName={recipient.full_name} certifiedAt={certification.certified_at} certificationType={certification.certification_type} onReady={...} />` — the same component the hub uses. Scaled to fit dialog width (CSS only; canvas keeps full export resolution).
-  - Action row: `Download PNG`, `Download PDF`, `Share on LinkedIn`. PNG via `canvas.toBlob`, PDF via `jspdf`, LinkedIn via the Add-to-Profile URL (organizationId `118614203`, `startTask=CERTIFICATION_NAME`, `name=display_name`, `issueYear`/`issueMonth` parsed from `certified_at`). PNG/PDF disabled until `onReady` fires. Duplicating the few lines from the hub is acceptable; no shared-helper refactor needed.
-  - Compact badge/banner downloads — the four static assets used by the hub (PTP coach LinkedIn navy/cream + email banner navy/cream). Small icon-row treatment, each fetches the asset and triggers a blob download.
-  - Footer buttons:
-    - Primary `View my certificate` — `setCascadeModal(null)` then `navigate("/coach/certification?cert=" + cascadeModal.entityId)`.
-    - Secondary `Continue` — `setCascadeModal(null)`.
-- Imports to add at top of the file: `useQuery` from `@tanstack/react-query`, `supabase`, `CertificateCanvas`, `jsPDF`, `Loader2`, `Download`, `FileText`, `Linkedin` icons.
+useEffect(() => {
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
 
-Non-PTP cert types: `CertificateCanvas` renders nothing for unmapped templates — render a small "Certificate coming soon" note in place of the preview and hide PNG/PDF. Other actions still work.
+  const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    if (event === "PASSWORD_RECOVERY") {
+      setStatus("ready");
+    } else if (event === "SIGNED_IN" && session) {
+      setStatus("ready");
+    }
+  });
 
-### 3) `src/components/AppSidebar.tsx` — enable the Certification nav item
+  // Client may have processed the hash before we subscribed
+  supabase.auth.getSession().then(({ data: { session } }) => {
+    if (session) setStatus((s) => (s === "checking" ? "ready" : s));
+  });
 
-Single line edit at line 66. Remove `disabled: true` and `badge: "Coming Soon"` from the `/coach/certification` entry only. Every other `Coming Soon` nav item is untouched.
+  timeoutId = setTimeout(() => {
+    setStatus((s) => (s === "checking" ? "invalid" : s));
+  }, 3500);
 
-Result: `{ title: "Certification", url: "/coach/certification", icon: Award }`.
+  return () => {
+    subscription.unsubscribe();
+    if (timeoutId) clearTimeout(timeoutId);
+  };
+}, []);
+```
 
-### Out of scope
-- Module/curriculum cascade branches.
-- Any backend/RPC change.
-- LinkedIn OG link-share preview.
+**2. Render per status**
+- `"checking"` → new centered card: "Verifying your reset link..." (brand-token styled, matches existing card layout).
+- `"invalid"` → existing "Invalid Link" card (unchanged markup).
+- `"ready"` → existing "Set New Password" form (unchanged markup).
 
-### Acceptance check after implementation
-- Completing a cert-path final item fires the marquee with the personalized certificate, working downloads, LinkedIn share, and badge downloads.
-- `View my certificate` lands on `/coach/certification?cert=<id>` and the hub opens that tab.
-- Module + curriculum celebrations still work (regression).
-- Sidebar "Certification" is clickable, no badge.
-- Null/failed `entityId` → graceful fallback, no crash.
+**3. Harden `handleSubmit`**
+
+After the password-validity and password-match checks (unchanged), before `callIdentityMutation`:
+```ts
+const { data: { session } } = await supabase.auth.getSession();
+if (!session) {
+  toast({
+    title: "Error",
+    description: "Your reset link has expired. Please request a new password reset.",
+    variant: "destructive",
+  });
+  return;
+}
+```
+Then the existing `callIdentityMutation({ action: 'update_password', new_password: password })` call runs unchanged.
+
+### Not changing
+- Form fields, password-strength checks, show/hide toggles, password-match validation.
+- `callIdentityMutation` call itself.
+- Styling, brand tokens, card layout.
+- Success → `/login` redirect.
+- `src/integrations/supabase/client.ts` (auto-generated; `detectSessionInUrl: true` is correct).
+
+### Acceptance check
+Real reset link → "Verifying..." → form → submit succeeds → `/login`. Direct visit with no token → "Invalid Link" after ~3.5s. Expired link → either invalid-link card or clear "request a new reset" toast — never the opaque Edge Function error.
