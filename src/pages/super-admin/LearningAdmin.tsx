@@ -1301,10 +1301,66 @@ function AssignUnassignTab() {
               rows={3}
             />
           </div>
+          {type !== "mentor" && (
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Due date (optional)</label>
+              <Input
+                type="date"
+                value={dueDate}
+                onChange={(e) => setDueDate(e.target.value)}
+                className="max-w-xs"
+              />
+            </div>
+          )}
+          <div className="space-y-3 rounded-md border p-3">
+            <label className="flex items-center gap-2 text-sm font-medium cursor-pointer">
+              <Checkbox
+                checked={scheduleLater}
+                onCheckedChange={(v) => setScheduleLater(!!v)}
+              />
+              Schedule for a future date instead of assigning now
+            </label>
+            {scheduleLater && (
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Scheduled date</label>
+                  <Input
+                    type="date"
+                    min={todayStr}
+                    value={scheduledFor}
+                    onChange={(e) => setScheduledFor(e.target.value)}
+                  />
+                </div>
+                {type === "mentor" && (
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Certification</label>
+                    <Select value={mentorCertId} onValueChange={setMentorCertId}>
+                      <SelectTrigger>
+                        <SelectValue
+                          placeholder={
+                            certPathsAllQuery.isLoading
+                              ? "Loading…"
+                              : "Choose a certification"
+                          }
+                        />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {(certPathsAllQuery.data ?? []).map((c) => (
+                          <SelectItem key={c.id} value={c.id}>
+                            {c.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
           <div>
             <Button onClick={handleAssign} disabled={submitting}>
               {submitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              Confirm assignment
+              {scheduleLater ? "Schedule assignment" : "Confirm assignment"}
             </Button>
           </div>
           <ResultPanel result={assignResult} />
