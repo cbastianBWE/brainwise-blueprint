@@ -1,41 +1,28 @@
-## Actor Debrief toggle — single-client Order Assessment modal
+## Skills-practice trainee text field
 
-All edits in `src/pages/coach/CoachClients.tsx`. Frontend only.
+Frontend only. Backend (columns, `save_skills_trainee_input` RPC, `upsert_content_item` extension) is already live.
 
-### 1. Modal sizing (line 588)
-Change `<DialogContent className="max-w-lg">` → `className="max-w-lg max-h-[90vh] overflow-y-auto"`.
+### Part A — `src/pages/super-admin/editors/ContentItemEditor.tsx`
 
-### 2. New state + fetches
-Add near existing state:
-- `actorCert: { id, certification_type, status, free_uses_expire_at } | null`
-- `actorsUsed: number` (default 0)
-- `isActorDebrief: boolean` (default false)
+1. **State** (after line 91, with other skills_practice state): add `skillsTraineeInputEnabled` (bool, from `initial?.skills_trainee_input_enabled`) and `skillsTraineeInputLabel` (string, from `initial?.skills_trainee_input_label`).
+2. **Dirty check** (lines 244–246): add comparisons for both new fields; add them to the dependency array at line 257.
+3. **Payload** (`buildTypeConfig`, `case "skills_practice"` at lines 301–306): add `skills_trainee_input_enabled` and `skills_trainee_input_label` (trimmed or null).
+4. **JSX** (inside the `itemType === "skills_practice"` block, after the "Optional attachment allowed" row): add a Switch row labeled "Trainee text response field"; when on, render an Input for the prompt label with placeholder "e.g. List the actors you debriefed" and a muted helper line explaining it's shown to the trainee and visible to the mentor.
 
-Extend the existing `coach_certifications` effect (lines 209–231) to additionally fetch the oldest row for `user.id` where `status in ('in_progress','certified')`, selecting `id, certification_type, status, free_uses_expire_at`. Store in `actorCert`. If found, query `coach_certification_actors` count where `certification_id = actorCert.id` and `status in ('invited','started','completed')`; set `actorsUsed`.
+### Part B — `src/components/learning/viewers/SkillsPracticeViewer.tsx`
 
-Derived:
-```ts
-const canOfferActorDebrief =
-  !!actorCert
-  && actorCert.certification_type === 'ptp_coach'
-  && (!actorCert.free_uses_expire_at || new Date(actorCert.free_uses_expire_at) > new Date())
-  && actorsUsed < 3;
-```
+1. **Derived flags** (near `allowAttachment`/`actorRequired`): `traineeInputEnabled`, `traineeInputLabel` (default "Your response"), `savedTraineeInput`.
+2. **Local state** (near `uploading`): `traineeInputDraft` (seeded from completion), `savingTraineeInput`.
+3. **Handler** `handleSaveTraineeInput`: calls `supabase.rpc("save_skills_trainee_input", { p_content_item_id, p_text })`; maps `item_already_completed` and `trainee_input_not_enabled_for_this_item` to friendly toasts; on success toasts "Response saved" and invalidates the `["content-item-viewer", contentItem.id]` query.
+4. **JSX**: new bordered card (`rounded-lg border bg-card p-5 space-y-3`, matching "Supporting evidence") placed after the Practice scenario card and before the Revision block. Render only when `traineeInputEnabled`.
+   - Trainee (`isSelf`) and not completed: heading = `traineeInputLabel`, Textarea bound to draft, "Save response" button (disabled while saving).
+   - Trainee + completed: show saved text read-only.
+   - Mentor / super_admin: read-only saved text under the label; muted "No response provided yet." when empty.
 
-### 3. Toggle row in modal
-Directly below the "Allow client to see results immediately" row (line 655–661), conditionally render (when `canOfferActorDebrief`) a matching bordered row with label "This is an actor debrief (certification practice)", subtext "Covered by your certification — no payment required. {3 - actorsUsed} of 3 remaining.", and a Switch bound to `isActorDebrief`.
+### Acceptance
 
-### 4. Collapse tabs when toggle ON
-Wrap `TabsList` (594–597) and both `TabsContent` blocks (664–674) so they render only when `!isActorDebrief`. When `isActorDebrief`, render in place a single full-width button "Send Actor Debrief Invitation" calling `handleOrderActorDebrief` (disabled while submitting or no email).
-
-### 5. Instrument section when toggle ON
-Replace the checkbox block (619–654) with a read-only line "Instrument: PTP (Personal Threat Profile)" when `isActorDebrief`. Otherwise render existing checkboxes unchanged.
-
-### 6. `handleOrderActorDebrief`
-New handler mirroring the spec. Calls `supabase.rpc("create_actor_debrief_order", { p_actor_email, p_actor_first_name, p_certification_id: actorCert.id, p_coach_note })`. On error, map known error codes (cap_reached, free_use_window_expired, actor_debrief_not_supported_for_cert_type, not_your_certification, certification_not_active, invalid_email_format) to readable toasts. On success, invoke `send-email` reusing the exact HTML template and signup-URL construction from `handleOrderClientPays` (lines ~438–456), but with `email_type: "coach_invitation_actor_debrief"` and `source: "CoachClients.handleOrderActorDebrief"`. Then toast success, `resetForm()`, `setIsActorDebrief(false)`, close modal, `fetchClients()`.
-
-### 7. Reset
-Add `setIsActorDebrief(false)` inside `resetForm` (line 273).
-
-### Out of scope
-BulkInviteModal, ShareableLinkModal, other order surfaces, the empty-state "no certifications" message (it remains for the non-actor path).
+- Editor: toggle reveals label input; values persist via `upsert_content_item`; reopen shows them.
+- Viewer trainee: prompt + textbox + save toast; becomes read-only after completion.
+- Viewer mentor: reads trainee response (or empty-state) read-only.
+- When disabled: no new UI in either surface.
+- No migrations/RPCs created.
