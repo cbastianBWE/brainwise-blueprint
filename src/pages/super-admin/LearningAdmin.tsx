@@ -147,6 +147,13 @@ interface ImportReference {
   mentors: { user_id: string; full_name: string | null; email: string | null }[];
 }
 
+type EligibleMentor = {
+  out_user_id: string;
+  out_full_name: string | null;
+  out_email: string | null;
+  out_account_type: string | null;
+};
+
 const TYPE_LABEL: Record<AssignType, string> = {
   cert_path: "Certification Path",
   curriculum: "Curriculum",
