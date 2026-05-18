@@ -236,10 +236,12 @@ function TraineeRow({
   trainee,
   expanded,
   onToggle,
+  onItemClick,
 }: {
   trainee: Trainee;
   expanded: boolean;
   onToggle: () => void;
+  onItemClick: (contentItemId: string, itemType: string) => void;
 }) {
   const pending = trainee.pending_action_count || 0;
   const stateQuery = useQuery({
