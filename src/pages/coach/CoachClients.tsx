@@ -236,6 +236,25 @@ export default function CoachClients() {
       });
       setAllowedInstrumentIds(allowed);
       setCertsLoaded(true);
+
+      // Fetch trainee's own certification for actor-debrief eligibility
+      const { data: ownCertData } = await (supabase as any)
+        .from("coach_certifications")
+        .select("id, certification_type, status, free_uses_expire_at")
+        .eq("user_id", user.id)
+        .in("status", ["in_progress", "certified"])
+        .order("created_at", { ascending: true })
+        .limit(1);
+      const ownCert = ownCertData?.[0] ?? null;
+      setActorCert(ownCert);
+      if (ownCert?.id) {
+        const { count } = await (supabase as any)
+          .from("coach_certification_actors")
+          .select("*", { count: "exact", head: true })
+          .eq("certification_id", ownCert.id)
+          .in("status", ["invited", "started", "completed"]);
+        setActorsUsed(count ?? 0);
+      }
     })();
   }, [user]);
 
