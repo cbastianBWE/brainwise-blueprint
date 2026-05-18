@@ -622,6 +622,9 @@ function AssignUnassignTab() {
   const [scheduledFor, setScheduledFor] = useState("");
   const [mentorCertId, setMentorCertId] = useState<string>("");
 
+  // Per-trainee mentor certification resolution
+  const [mentorResolutions, setMentorResolutions] = useState<Record<string, MentorResolution>>({});
+
   // Import state
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [importing, setImporting] = useState(false);
