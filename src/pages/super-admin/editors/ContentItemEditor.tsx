@@ -89,6 +89,12 @@ function ContentItemEditor({
   const [skillsOptionalAttachment, setSkillsOptionalAttachment] = useState<boolean>(
     initial?.skills_optional_attachment ?? false
   );
+  const [skillsTraineeInputEnabled, setSkillsTraineeInputEnabled] = useState<boolean>(
+    (initial as any)?.skills_trainee_input_enabled ?? false
+  );
+  const [skillsTraineeInputLabel, setSkillsTraineeInputLabel] = useState<string>(
+    (initial as any)?.skills_trainee_input_label ?? ""
+  );
 
   // file_upload
   const [fileUploadMaxMb, setFileUploadMaxMb] = useState<string>(
