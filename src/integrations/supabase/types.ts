@@ -6761,6 +6761,117 @@ export type Database = {
         }
         Relationships: []
       }
+      scheduled_assignments: {
+        Row: {
+          assignment_type: string
+          cancelled_at: string | null
+          cancelled_by: string | null
+          created_at: string
+          failure_summary: string | null
+          id: string
+          mentor_certification_id: string | null
+          processed_at: string | null
+          reason: string
+          result: Json | null
+          scheduled_by: string
+          scheduled_for: string
+          status: string
+          target_id: string
+          user_ids: string[]
+        }
+        Insert: {
+          assignment_type: string
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          created_at?: string
+          failure_summary?: string | null
+          id?: string
+          mentor_certification_id?: string | null
+          processed_at?: string | null
+          reason: string
+          result?: Json | null
+          scheduled_by: string
+          scheduled_for: string
+          status?: string
+          target_id: string
+          user_ids: string[]
+        }
+        Update: {
+          assignment_type?: string
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          created_at?: string
+          failure_summary?: string | null
+          id?: string
+          mentor_certification_id?: string | null
+          processed_at?: string | null
+          reason?: string
+          result?: Json | null
+          scheduled_by?: string
+          scheduled_for?: string
+          status?: string
+          target_id?: string
+          user_ids?: string[]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scheduled_assignments_cancelled_by_fkey"
+            columns: ["cancelled_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scheduled_assignments_cancelled_by_fkey"
+            columns: ["cancelled_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "scheduled_assignments_cancelled_by_fkey"
+            columns: ["cancelled_by"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scheduled_assignments_cancelled_by_fkey"
+            columns: ["cancelled_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scheduled_assignments_scheduled_by_fkey"
+            columns: ["scheduled_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scheduled_assignments_scheduled_by_fkey"
+            columns: ["scheduled_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "scheduled_assignments_scheduled_by_fkey"
+            columns: ["scheduled_by"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scheduled_assignments_scheduled_by_fkey"
+            columns: ["scheduled_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sharing_preferences: {
         Row: {
           created_at: string
@@ -8960,6 +9071,7 @@ export type Database = {
         Returns: number
       }
       cancel_individual_conversion: { Args: never; Returns: Json }
+      cancel_scheduled_assignment: { Args: { p_id: string }; Returns: Json }
       check_mfa_freshness: {
         Args: { p_max_age_seconds?: number; p_session_id: string }
         Returns: boolean
@@ -9093,6 +9205,17 @@ export type Database = {
           p_tracking_notes?: string
         }
         Returns: string
+      }
+      create_scheduled_assignment: {
+        Args: {
+          p_assignment_type: string
+          p_mentor_certification_id?: string
+          p_reason: string
+          p_scheduled_for: string
+          p_target_id: string
+          p_user_ids: string[]
+        }
+        Returns: Json
       }
       current_user_account_type: { Args: never; Returns: string }
       current_user_department_id: { Args: never; Returns: string }
@@ -9324,6 +9447,7 @@ export type Database = {
         }
         Returns: Json
       }
+      get_learning_import_reference: { Args: never; Returns: Json }
       get_lesson_block_assets: {
         Args: { p_content_item_id: string; p_extra_asset_ids?: string[] }
         Returns: {
@@ -9606,6 +9730,7 @@ export type Database = {
           out_tracking_notes: string
         }[]
       }
+      list_scheduled_assignments: { Args: never; Returns: Json }
       log_resource_access: { Args: { p_resource_id: string }; Returns: Json }
       log_super_admin_action: {
         Args: {
@@ -9752,6 +9877,7 @@ export type Database = {
         Args: { p_owner_user_id: string; p_viewer_user_id: string }
         Returns: boolean
       }
+      process_due_scheduled_assignments: { Args: never; Returns: Json }
       promote_to_library: {
         Args: {
           p_asset_id: string
