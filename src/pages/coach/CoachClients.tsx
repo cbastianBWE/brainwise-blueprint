@@ -716,7 +716,7 @@ export default function CoachClients() {
         )}
 
         <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-          <DialogContent className="max-w-lg">
+          <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Order Assessment</DialogTitle>
               <DialogDescription>Set up an assessment for a new or existing client</DialogDescription>
