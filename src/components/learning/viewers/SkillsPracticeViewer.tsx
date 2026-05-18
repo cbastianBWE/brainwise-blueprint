@@ -286,6 +286,45 @@ export default function SkillsPracticeViewer({
         )}
       </div>
 
+      {/* Trainee text response field */}
+      {traineeInputEnabled && (
+        <div className="rounded-lg border bg-card p-5 space-y-3">
+          <h3 className="font-semibold">{traineeInputLabel}</h3>
+          {isSelf ? (
+            isCompleted ? (
+              savedTraineeInput ? (
+                <p className="text-sm text-foreground/90 whitespace-pre-wrap">{savedTraineeInput}</p>
+              ) : (
+                <p className="text-sm text-muted-foreground italic">No response provided.</p>
+              )
+            ) : (
+              <>
+                <Textarea
+                  value={traineeInputDraft}
+                  onChange={(e) => setTraineeInputDraft(e.target.value)}
+                  rows={5}
+                  placeholder="Type your response…"
+                  disabled={savingTraineeInput}
+                />
+                <Button
+                  onClick={handleSaveTraineeInput}
+                  disabled={savingTraineeInput}
+                  variant="outline"
+                  size="sm"
+                >
+                  {savingTraineeInput && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                  Save response
+                </Button>
+              </>
+            )
+          ) : savedTraineeInput ? (
+            <p className="text-sm text-foreground/90 whitespace-pre-wrap">{savedTraineeInput}</p>
+          ) : (
+            <p className="text-sm text-muted-foreground italic">No response provided yet.</p>
+          )}
+        </div>
+      )}
+
       {/* Revision requested */}
       {hasRevision && (
         <div
