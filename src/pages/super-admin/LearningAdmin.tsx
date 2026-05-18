@@ -747,6 +747,15 @@ function AssignUnassignTab() {
     enabled: op === "assign" && type === "module",
   });
   const mentorListQuery = useQuery({
+    queryKey: ["list_eligible_mentors"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("list_eligible_mentors" as never, {} as never);
+      if (error) throw error;
+      return (data ?? []) as EligibleMentor[];
+    },
+    enabled: op === "assign" && type === "mentor",
+  });
+  const traineeListQuery = useQuery({
     queryKey: ["list_mentor_trainees"],
     queryFn: async () => {
       const { data, error } = await supabase.rpc("list_mentor_trainees" as never, {} as never);
