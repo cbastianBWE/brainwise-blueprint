@@ -170,7 +170,7 @@ const App = () => (
               <Route path="/coach/invoices" element={<PractitionerCoachGuard><CoachInvoices /></PractitionerCoachGuard>} />
               <Route path="/coach/resources" element={<RoleGuard allowedRoles={["coach"]}><Resources /></RoleGuard>} />
               <Route path="/coach/profile" element={<PractitionerCoachGuard><CoachProfile /></PractitionerCoachGuard>} />
-              <Route path="/coach/certification" element={<PractitionerCoachGuard><Certification /></PractitionerCoachGuard>} />
+              <Route path="/coach/certification" element={<PractitionerCoachGuard><CertificationPage /></PractitionerCoachGuard>} />
               <Route path="/mentor" element={<PractitionerCoachGuard><MentorPortal /></PractitionerCoachGuard>} />
               <Route path="/mentor/trainee/:traineeId" element={<PractitionerCoachGuard><MentorTraineeDetail /></PractitionerCoachGuard>} />
 
