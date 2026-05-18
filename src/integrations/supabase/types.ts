@@ -9519,6 +9519,7 @@ export type Database = {
           out_uploaded_at: string
         }[]
       }
+      list_all_learning_assignments: { Args: never; Returns: Json }
       list_audit_events: {
         Args: { p_filters?: Json; p_limit?: number; p_offset?: number }
         Returns: {
