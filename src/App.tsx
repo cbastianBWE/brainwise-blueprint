@@ -156,6 +156,7 @@ const App = () => (
               <Route path="/learning/curriculum/:curriculumId" element={<CurriculumDetail />} />
               <Route path="/learning/module/:moduleId" element={<ModuleDetail />} />
               <Route path="/learning/content-item/:contentItemId" element={<ContentItemViewer />} />
+              <Route path="/certifications/:certificationId" element={<CertificationPage />} />
               <Route path="/settings" element={<SettingsPage />} />
               <Route path="/settings/privacy" element={<PrivacySettings />} />
               <Route path="/settings/sharing-requests" element={<SharingRequests />} />
