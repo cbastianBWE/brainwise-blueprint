@@ -1474,47 +1474,77 @@ export type Database = {
           access_code: string
           actor_email: string
           actor_first_name: string | null
-          actor_type: string
+          actor_type: string | null
+          assessment_id: string | null
           certification_id: string
+          coach_client_id: string | null
           coach_user_id: string
           completed_at: string | null
           created_at: string
           id: string
           instrument_id: string
+          started_at: string | null
           status: string
         }
         Insert: {
           access_code?: string
           actor_email: string
           actor_first_name?: string | null
-          actor_type: string
+          actor_type?: string | null
+          assessment_id?: string | null
           certification_id: string
+          coach_client_id?: string | null
           coach_user_id: string
           completed_at?: string | null
           created_at?: string
           id?: string
           instrument_id: string
+          started_at?: string | null
           status?: string
         }
         Update: {
           access_code?: string
           actor_email?: string
           actor_first_name?: string | null
-          actor_type?: string
+          actor_type?: string | null
+          assessment_id?: string | null
           certification_id?: string
+          coach_client_id?: string | null
           coach_user_id?: string
           completed_at?: string | null
           created_at?: string
           id?: string
           instrument_id?: string
+          started_at?: string | null
           status?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "coach_certification_actors_assessment_id_fkey"
+            columns: ["assessment_id"]
+            isOneToOne: false
+            referencedRelation: "assessments"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "coach_certification_actors_certification_id_fkey"
             columns: ["certification_id"]
             isOneToOne: false
             referencedRelation: "coach_certifications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coach_certification_actors_coach_client_id_fkey"
+            columns: ["coach_client_id"]
+            isOneToOne: false
+            referencedRelation: "coach_clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coach_certification_actors_coach_client_id_fkey"
+            columns: ["coach_client_id"]
+            isOneToOne: false
+            referencedRelation: "coach_clients_client_view"
             referencedColumns: ["id"]
           },
           {
@@ -1555,6 +1585,7 @@ export type Database = {
           created_at: string
           enrolled_by: string
           free_assessment_uses: Json
+          free_uses_expire_at: string | null
           id: string
           notes: string | null
           post_certification_benefit_applied_at: string | null
@@ -1568,6 +1599,7 @@ export type Database = {
           created_at?: string
           enrolled_by: string
           free_assessment_uses?: Json
+          free_uses_expire_at?: string | null
           id?: string
           notes?: string | null
           post_certification_benefit_applied_at?: string | null
@@ -1581,6 +1613,7 @@ export type Database = {
           created_at?: string
           enrolled_by?: string
           free_assessment_uses?: Json
+          free_uses_expire_at?: string | null
           id?: string
           notes?: string | null
           post_certification_benefit_applied_at?: string | null
@@ -1676,6 +1709,7 @@ export type Database = {
       }
       coach_clients: {
         Row: {
+          actor_id: string | null
           assessment_id: string | null
           client_email: string
           client_first_name: string | null
@@ -1705,6 +1739,7 @@ export type Database = {
           stripe_refund_id: string | null
         }
         Insert: {
+          actor_id?: string | null
           assessment_id?: string | null
           client_email: string
           client_first_name?: string | null
@@ -1734,6 +1769,7 @@ export type Database = {
           stripe_refund_id?: string | null
         }
         Update: {
+          actor_id?: string | null
           assessment_id?: string | null
           client_email?: string
           client_first_name?: string | null
@@ -1763,6 +1799,13 @@ export type Database = {
           stripe_refund_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "coach_clients_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "coach_certification_actors"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "coach_clients_assessment_id_fkey"
             columns: ["assessment_id"]
@@ -3054,6 +3097,7 @@ export type Database = {
           skills_revision_comment: string | null
           skills_revision_requested_at: string | null
           skills_revision_requested_by: string | null
+          skills_trainee_input_text: string | null
           skills_trainee_signed_off: boolean
           skills_trainee_signed_off_at: string | null
           started_at: string | null
@@ -3092,6 +3136,7 @@ export type Database = {
           skills_revision_comment?: string | null
           skills_revision_requested_at?: string | null
           skills_revision_requested_by?: string | null
+          skills_trainee_input_text?: string | null
           skills_trainee_signed_off?: boolean
           skills_trainee_signed_off_at?: string | null
           started_at?: string | null
@@ -3130,6 +3175,7 @@ export type Database = {
           skills_revision_comment?: string | null
           skills_revision_requested_at?: string | null
           skills_revision_requested_by?: string | null
+          skills_trainee_input_text?: string | null
           skills_trainee_signed_off?: boolean
           skills_trainee_signed_off_at?: string | null
           started_at?: string | null
@@ -3292,6 +3338,8 @@ export type Database = {
           skills_actor_invitation_required: boolean
           skills_optional_attachment: boolean
           skills_signoff_required: string | null
+          skills_trainee_input_enabled: boolean
+          skills_trainee_input_label: string | null
           thumbnail_asset_id: string | null
           title: string
           updated_at: string
@@ -3326,6 +3374,8 @@ export type Database = {
           skills_actor_invitation_required?: boolean
           skills_optional_attachment?: boolean
           skills_signoff_required?: string | null
+          skills_trainee_input_enabled?: boolean
+          skills_trainee_input_label?: string | null
           thumbnail_asset_id?: string | null
           title: string
           updated_at?: string
@@ -3360,6 +3410,8 @@ export type Database = {
           skills_actor_invitation_required?: boolean
           skills_optional_attachment?: boolean
           skills_signoff_required?: string | null
+          skills_trainee_input_enabled?: boolean
+          skills_trainee_input_label?: string | null
           thumbnail_asset_id?: string | null
           title?: string
           updated_at?: string
@@ -9186,6 +9238,15 @@ export type Database = {
         Args: { p_token: string }
         Returns: Json
       }
+      create_actor_debrief_order: {
+        Args: {
+          p_actor_email: string
+          p_actor_first_name: string
+          p_certification_id: string
+          p_coach_note?: string
+        }
+        Returns: Json
+      }
       create_asset_ref: {
         Args: {
           p_asset_id: string
@@ -9594,6 +9655,15 @@ export type Database = {
       }
       get_user_learning_state: { Args: { p_user_id: string }; Returns: Json }
       get_user_resources: { Args: { p_user_id?: string }; Returns: Json }
+      grant_additional_free_attempts: {
+        Args: {
+          p_certification_id: string
+          p_count: number
+          p_instrument_id: string
+          p_reason: string
+        }
+        Returns: Json
+      }
       grant_certification: {
         Args: { p_certification_id: string; p_reason?: string }
         Returns: Json
@@ -10024,6 +10094,10 @@ export type Database = {
           p_tracking_notes?: string
         }
         Returns: string
+      }
+      save_skills_trainee_input: {
+        Args: { p_content_item_id: string; p_text: string }
+        Returns: Json
       }
       search_impersonation_targets:
         | {
