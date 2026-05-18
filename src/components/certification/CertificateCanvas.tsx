@@ -90,7 +90,7 @@ export default function CertificateCanvas({
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
         const dateText = format(new Date(certifiedAt), "MMMM d, yyyy");
-        ctx.fillText(dateText, cw * 0.415, ch * 0.689);
+        ctx.fillText(dateText, cw * 0.5, ch * 0.689);
       }
 
       if (!cancelled) onReadyRef.current?.(canvas);
