@@ -136,7 +136,10 @@ export default function MentorTraineeDetail() {
               Failed to load trainee progress.
             </div>
           ) : (
-            <MentorProgressTree learningState={stateQuery.data} />
+            <MentorProgressTree
+              learningState={stateQuery.data}
+              onItemClick={(contentItemId, itemType) => setDrawer({ contentItemId, itemType })}
+            />
           )}
         </CardContent>
       </Card>
