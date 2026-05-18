@@ -62,6 +62,12 @@ const ResetPassword = () => {
       return;
     }
 
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      toast({ title: "Error", description: "Your reset link has expired. Please request a new password reset.", variant: "destructive" });
+      return;
+    }
+
     setLoading(true);
     const result = await callIdentityMutation({ action: 'update_password', new_password: password });
     setLoading(false);
