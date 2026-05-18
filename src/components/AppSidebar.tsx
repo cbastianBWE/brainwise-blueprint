@@ -4,6 +4,7 @@ import {
   Users, Users2, Building2, UsersRound, Activity, Heart, Award, UserCircle,
   ShieldCheck, Briefcase, GitBranch, FlaskConical, LogOut, History, Shield,
   CreditCard, Receipt, ChevronDown, ChevronRight, Plus, FileText, UserSearch, Library, Ticket,
+  GraduationCap,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -57,7 +58,7 @@ const coachNav: NavItem[] = [
   { title: "My Assessments", url: "/assessment", icon: ClipboardList },
   { title: "My Results", url: "/my-results", icon: BarChart3 },
   { title: "My Clients", url: "/coach/clients", icon: Users },
-  
+  { title: "Mentor Portal", url: "/mentor", icon: GraduationCap },
   { title: "Orders & Invoices", url: "/coach/invoices", icon: Receipt },
   { title: "AI Chat", url: "/ai-chat", icon: MessageSquare },
   { title: "Chat History", url: "/ai-chat/history", icon: History },
