@@ -595,6 +595,20 @@ function TraineesTab() {
 
 // ---------- Tab 2: Assign / Unassign ----------
 
+interface MentorableCert {
+  certification_id: string;
+  certification_type: string;
+  status: string;
+}
+interface MentorResolution {
+  trainee_user_id: string;
+  loading: boolean;
+  certifications: MentorableCert[];
+  selectedCertId: string | null;
+  error: string | null;
+}
+
+
 function AssignUnassignTab() {
   const { toast } = useToast();
   const qc = useQueryClient();
