@@ -307,7 +307,7 @@ function TraineeRow({
               <div className="text-sm text-destructive py-4">Failed to load progress.</div>
             ) : (
               <div className="py-2">
-                <MentorProgressTree learningState={stateQuery.data} />
+                <MentorProgressTree learningState={stateQuery.data} onItemClick={onItemClick} />
               </div>
             )}
           </TableCell>
