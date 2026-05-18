@@ -147,6 +147,13 @@ interface ImportReference {
   mentors: { user_id: string; full_name: string | null; email: string | null }[];
 }
 
+type EligibleMentor = {
+  out_user_id: string;
+  out_full_name: string | null;
+  out_email: string | null;
+  out_account_type: string | null;
+};
+
 const TYPE_LABEL: Record<AssignType, string> = {
   cert_path: "Certification Path",
   curriculum: "Curriculum",
@@ -740,6 +747,15 @@ function AssignUnassignTab() {
     enabled: op === "assign" && type === "module",
   });
   const mentorListQuery = useQuery({
+    queryKey: ["list_eligible_mentors"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("list_eligible_mentors" as never, {} as never);
+      if (error) throw error;
+      return (data ?? []) as EligibleMentor[];
+    },
+    enabled: op === "assign" && type === "mentor",
+  });
+  const traineeListQuery = useQuery({
     queryKey: ["list_mentor_trainees"],
     queryFn: async () => {
       const { data, error } = await supabase.rpc("list_mentor_trainees" as never, {} as never);
@@ -1248,8 +1264,10 @@ function AssignUnassignTab() {
         </div>
       );
     }
-    const opts = mentorListQuery.data?.trainees ?? [];
-    const traineeById = new Map(opts.map((t) => [t.trainee_user_id, t]));
+    const opts = mentorListQuery.data ?? [];
+    const traineeById = new Map(
+      (traineeListQuery.data?.trainees ?? []).map((t) => [t.trainee_user_id, t]),
+    );
     return (
       <div className="space-y-3">
         <div className="space-y-2">
@@ -1261,11 +1279,17 @@ function AssignUnassignTab() {
               />
             </SelectTrigger>
             <SelectContent>
-              {opts.map((o) => (
-                <SelectItem key={o.trainee_user_id} value={o.trainee_user_id}>
-                  {o.full_name || o.email}
-                </SelectItem>
-              ))}
+              {opts.length === 0 && !mentorListQuery.isLoading ? (
+                <div className="px-3 py-2 text-xs text-muted-foreground">
+                  No users have the mentor role yet. Grant it in the Assign Mentor Role tab.
+                </div>
+              ) : (
+                opts.map((o) => (
+                  <SelectItem key={o.out_user_id} value={o.out_user_id}>
+                    {o.out_full_name || o.out_email}
+                  </SelectItem>
+                ))
+              )}
             </SelectContent>
           </Select>
         </div>

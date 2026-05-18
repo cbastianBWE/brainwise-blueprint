@@ -1,47 +1,93 @@
-# Mentor Role — Frontend Wiring (Session 82, P1)
 
-Backend (`users.is_mentor`, `set_mentor_role` RPC, `assign_mentor` gate) is already live. This is frontend-only — no migrations, no RPC definitions.
+# Fix mentor picker source in LearningAdmin → AssignUnassignTab
 
-## Changes
+Frontend-only edit to `src/pages/super-admin/LearningAdmin.tsx`. The dropdown currently calls `list_mentor_trainees` (a trainee roster) and treats trainees as mentor options. Repoint it to the existing `list_eligible_mentors()` RPC.
 
-### 1. `src/hooks/useUserProfile.tsx`
-- Add `is_mentor: boolean;` to `UserProfile` interface.
-- Add `is_mentor` to the `.select(...)` column string.
+## Changes (single file: `src/pages/super-admin/LearningAdmin.tsx`)
 
-### 2. `src/lib/accountRoles.ts`
-- Add `isMentor: boolean` to `AccountRoleInfo` with a doc comment: standalone capability independent of `account_type` and of trainee assignments.
-- In the loading/no-account branch, default `isMentor: false`.
-- In the returned object, derive `isMentor: profile?.is_mentor === true` (mirrors `isPractitionerCoach` exactly).
+### 1. Add an `EligibleMentor` type (near the existing `Trainee` type, ~line 147)
 
-### 3. NEW `src/components/MentorGuard.tsx`
-Copy `PractitionerCoachGuard` shape. Pull `isMentor`, `isSuperAdmin`, `loading` from `useAccountRole`. While loading → spinner. Allows when `isMentor || isSuperAdmin`; otherwise `<Navigate to="/dashboard" replace />`.
+```ts
+type EligibleMentor = {
+  out_user_id: string;
+  out_full_name: string | null;
+  out_email: string | null;
+  out_account_type: string | null;
+};
+```
 
-### 4. `src/App.tsx`
-Swap the two `/mentor` routes from `PractitionerCoachGuard` to `MentorGuard`:
-- `/mentor` → `<MentorGuard><MentorPortal /></MentorGuard>`
-- `/mentor/trainee/:traineeId` → `<MentorGuard><MentorTraineeDetail /></MentorGuard>`
+### 2. Replace `mentorListQuery` (lines 742–750)
 
-Add `MentorGuard` import. Leave `PractitionerCoachGuard` import and all other coach routes alone.
+```ts
+const mentorListQuery = useQuery({
+  queryKey: ["list_eligible_mentors"],
+  queryFn: async () => {
+    const { data, error } = await supabase.rpc("list_eligible_mentors" as never, {} as never);
+    if (error) throw error;
+    return (data ?? []) as EligibleMentor[];
+  },
+  enabled: op === "assign" && type === "mentor",
+});
+```
 
-### 5. `src/components/AppSidebar.tsx`
-- Remove the hardcoded `{ title: "Mentor Portal", url: "/mentor", icon: GraduationCap }` line from `coachNav`.
-- In the component body, after computing `navItems = getNavItems(profile)`, conditionally inject the Mentor Portal entry immediately after the "My Clients" entry when `isMentor || isSuperAdmin`. Pull `isMentor, isSuperAdmin` from `useAccountRole()` (already imported). Implementation: find index of item with `url === "/coach/clients"`; if found and gate passes, splice a new `{ title: "Mentor Portal", url: "/mentor", icon: GraduationCap }` after it into a local copy of `navItems`.
+### 3. Add a separate trainee lookup query so per-trainee labels still work
 
-### 6. `src/pages/super-admin/LearningAdmin.tsx`
-Add a third tab "Assign Mentor Role":
-- New `MentorRoleTab` component reusing the `TraineesTab` search pattern: debounced query + `search_impersonation_targets` RPC + paginated table.
-- Columns: Name, Email, Account Type, Mentor Status (Badge: "Mentor" / "—"), Action button (Grant / Revoke).
-- Action opens a reason dialog (Textarea, min 10 chars) that calls `supabase.rpc("set_mentor_role", { p_user_id, p_is_mentor, p_reason })`.
-- On success: toast + invalidate the search query so the badge refreshes.
-- Mentor status comes from the search RPC if it returns `is_mentor`; otherwise fetch in a separate batched query keyed by visible user ids using `users` table select on `id, is_mentor` (read-only). Confirm in implementation which is available; prefer extending nothing backend-side — if `search_impersonation_targets` lacks `is_mentor`, do the supplementary `users` select.
-- Add the third `<TabsTrigger value="mentor-role">Assign Mentor Role</TabsTrigger>` and matching `<TabsContent value="mentor-role"><MentorRoleTab /></TabsContent>` in the existing `<Tabs defaultValue="trainees">` block at line ~1757.
+The old code re-used the mentor query's trainee rows to build `traineeById`. After repointing, that map would only contain mentors. Add a sibling query that mirrors `TraineeMultiSelect`'s cache key (so it dedupes):
+
+```ts
+const traineeListQuery = useQuery({
+  queryKey: ["list_mentor_trainees"],
+  queryFn: async () => {
+    const { data, error } = await supabase.rpc("list_mentor_trainees" as never, {} as never);
+    if (error) throw error;
+    return data as { trainees: Trainee[] };
+  },
+  enabled: op === "assign" && type === "mentor",
+});
+```
+
+### 4. Update the picker render block (lines 1251–1270)
+
+```tsx
+const opts = mentorListQuery.data ?? [];
+const traineeById = new Map(
+  (traineeListQuery.data?.trainees ?? []).map((t) => [t.trainee_user_id, t]),
+);
+return (
+  <div className="space-y-3">
+    <div className="space-y-2">
+      <label className="text-sm font-medium">Mentor</label>
+      <Select value={mentorId} onValueChange={setMentorId}>
+        <SelectTrigger>
+          <SelectValue
+            placeholder={mentorListQuery.isLoading ? "Loading…" : "Choose a mentor"}
+          />
+        </SelectTrigger>
+        <SelectContent>
+          {opts.length === 0 && !mentorListQuery.isLoading ? (
+            <div className="px-3 py-2 text-xs text-muted-foreground">
+              No users have the mentor role yet. Grant it in the Assign Mentor Role tab.
+            </div>
+          ) : (
+            opts.map((o) => (
+              <SelectItem key={o.out_user_id} value={o.out_user_id}>
+                {o.out_full_name || o.out_email}
+              </SelectItem>
+            ))
+          )}
+        </SelectContent>
+      </Select>
+    </div>
+    {/* per-trainee block below stays unchanged; traineeById now comes from the trainee query */}
+```
+
+Leave the per-trainee certification block (lines 1272+) as-is — it already reads from `traineeById`, which now correctly resolves trainees.
 
 ## Acceptance
-1. Non-mentor, non-super-admin user visiting `/mentor` is redirected to `/dashboard`.
-2. User with `is_mentor=true` (any `account_type`) can access `/mentor` and `/mentor/trainee/:id`.
-3. Super admin can access `/mentor` even without `is_mentor=true`.
-4. "Mentor Portal" sidebar entry only appears for `isMentor || isSuperAdmin`; it sits directly after "My Clients" for coaches and super-admin-as-coach.
-5. Coaches who are not mentors no longer see the Mentor Portal entry.
-6. Learning Admin shows a third "Assign Mentor Role" tab for super admins.
-7. Granting mentor role via the new tab causes the target user's sidebar to show Mentor Portal on next load.
-8. Revoking mentor role removes their `/mentor` access on next navigation.
+
+1. Mentor dropdown lists only users with `is_mentor = true`.
+2. Trainees no longer appear in the Mentor dropdown.
+3. Selecting a mentor passes their real user id to `get_mentorable_certifications` and `assign_mentor_pairs_bulk`.
+4. Per-trainee certification block still shows trainee names (from `list_mentor_trainees`).
+5. Empty state copy renders when no mentors exist.
+6. No other tabs or queries are affected.
