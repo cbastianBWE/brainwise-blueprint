@@ -1483,6 +1483,7 @@ function AssignUnassignTab() {
               <label className="text-sm font-medium">Due date (optional)</label>
               <Input
                 type="date"
+                min={todayStr}
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
                 className="max-w-xs"
