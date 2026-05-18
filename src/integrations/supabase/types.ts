@@ -9706,6 +9706,15 @@ export type Database = {
           out_title: string
         }[]
       }
+      list_eligible_mentors: {
+        Args: never
+        Returns: {
+          out_account_type: string
+          out_email: string
+          out_full_name: string
+          out_user_id: string
+        }[]
+      }
       list_mentor_trainees: { Args: never; Returns: Json }
       list_my_certifications: { Args: never; Returns: Json }
       list_org_interventions: {
