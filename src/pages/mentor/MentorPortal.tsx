@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ChevronDown, ChevronRight, Loader2, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,6 +18,13 @@ import {
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import MentorProgressTree from "@/components/mentor/MentorProgressTree";
+import ReviewDrawer from "@/components/mentor/ReviewDrawer";
+
+interface DrawerState {
+  contentItemId: string;
+  itemType: string;
+  traineeId: string;
+}
 
 interface Trainee {
   trainee_user_id: string;
@@ -50,6 +57,17 @@ export default function MentorPortal() {
   const [search, setSearch] = useState("");
   const [tab, setTab] = useState<"needs" | "all" | null>(null);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [drawer, setDrawer] = useState<DrawerState | null>(null);
+  const queryClient = useQueryClient();
+
+  const handleActionComplete = () => {
+    if (!drawer) return;
+    queryClient.invalidateQueries({
+      queryKey: ["get_content_item_for_viewer", drawer.contentItemId, drawer.traineeId],
+    });
+    queryClient.invalidateQueries({ queryKey: ["get_user_learning_state", drawer.traineeId] });
+    queryClient.invalidateQueries({ queryKey: ["list_mentor_trainees"] });
+  };
 
   const effectiveTab = tab ?? (totalPending > 0 ? "needs" : "all");
 
@@ -191,6 +209,9 @@ export default function MentorPortal() {
                     trainee={t}
                     expanded={expanded.has(t.trainee_user_id)}
                     onToggle={() => toggleExpanded(t.trainee_user_id)}
+                    onItemClick={(contentItemId, itemType) =>
+                      setDrawer({ contentItemId, itemType, traineeId: t.trainee_user_id })
+                    }
                   />
                 ))
               )}
@@ -198,6 +219,15 @@ export default function MentorPortal() {
           </Table>
         </CardContent>
       </Card>
+
+      <ReviewDrawer
+        open={drawer !== null}
+        onOpenChange={(o) => !o && setDrawer(null)}
+        contentItemId={drawer?.contentItemId ?? null}
+        itemType={drawer?.itemType ?? null}
+        traineeId={drawer?.traineeId ?? null}
+        onActionComplete={handleActionComplete}
+      />
     </div>
   );
 }
@@ -206,10 +236,12 @@ function TraineeRow({
   trainee,
   expanded,
   onToggle,
+  onItemClick,
 }: {
   trainee: Trainee;
   expanded: boolean;
   onToggle: () => void;
+  onItemClick: (contentItemId: string, itemType: string) => void;
 }) {
   const pending = trainee.pending_action_count || 0;
   const stateQuery = useQuery({
@@ -275,7 +307,7 @@ function TraineeRow({
               <div className="text-sm text-destructive py-4">Failed to load progress.</div>
             ) : (
               <div className="py-2">
-                <MentorProgressTree learningState={stateQuery.data} />
+                <MentorProgressTree learningState={stateQuery.data} onItemClick={onItemClick} />
               </div>
             )}
           </TableCell>

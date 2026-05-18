@@ -1,6 +1,6 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import MentorProgressTree from "@/components/mentor/MentorProgressTree";
+import ReviewDrawer from "@/components/mentor/ReviewDrawer";
+
+interface DrawerState {
+  contentItemId: string;
+  itemType: string;
+}
 
 const CERT_LABELS: Record<string, string> = {
   ptp_coach: "PTP Certified Coach",
@@ -39,6 +45,17 @@ function prettyStatus(s: string | null | undefined): string {
 export default function MentorTraineeDetail() {
   const { traineeId } = useParams<{ traineeId: string }>();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [drawer, setDrawer] = useState<DrawerState | null>(null);
+
+  const handleActionComplete = () => {
+    if (!drawer || !traineeId) return;
+    queryClient.invalidateQueries({
+      queryKey: ["get_content_item_for_viewer", drawer.contentItemId, traineeId],
+    });
+    queryClient.invalidateQueries({ queryKey: ["get_user_learning_state", traineeId] });
+    queryClient.invalidateQueries({ queryKey: ["list_mentor_trainees"] });
+  };
 
   const rosterQuery = useQuery({
     queryKey: ["list_mentor_trainees"],
@@ -119,10 +136,22 @@ export default function MentorTraineeDetail() {
               Failed to load trainee progress.
             </div>
           ) : (
-            <MentorProgressTree learningState={stateQuery.data} />
+            <MentorProgressTree
+              learningState={stateQuery.data}
+              onItemClick={(contentItemId, itemType) => setDrawer({ contentItemId, itemType })}
+            />
           )}
         </CardContent>
       </Card>
+
+      <ReviewDrawer
+        open={drawer !== null}
+        onOpenChange={(o) => !o && setDrawer(null)}
+        contentItemId={drawer?.contentItemId ?? null}
+        itemType={drawer?.itemType ?? null}
+        traineeId={traineeId ?? null}
+        onActionComplete={handleActionComplete}
+      />
     </div>
   );
 }
