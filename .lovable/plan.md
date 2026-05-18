@@ -1,121 +1,62 @@
-# Learning Admin (Prompt 3 of 3)
-
-Build the super-admin management surface for assigning and unassigning learning. All backend RPCs already exist — no migrations.
+## Goal
+Rebuild `src/pages/super-admin/LearningAdmin.tsx` as a two-tab page (Trainees + Assign/Unassign), extract the existing `ResultPanel` into its own component, and reuse v1's assign/unassign logic intact within the second tab. No route, sidebar, backend, or RPC changes.
 
 ## Files
 
-**New**
-- `src/pages/super-admin/LearningAdmin.tsx`
-- `src/components/learning-admin/TraineeMultiSelect.tsx`
+**Create**
+- `src/components/learning-admin/ResultPanel.tsx` — exact extraction of v1's `ResultPanel` + `BulkResult` type.
 
-**Edited**
-- `src/App.tsx` — add route
-- `src/components/AppSidebar.tsx` — add nav entry
+**Rewrite**
+- `src/pages/super-admin/LearningAdmin.tsx` — new shell with `Tabs` ("Trainees" / "Assign / Unassign"), split into two child components defined in the same file (or co-located) for clarity.
 
-## Routing
+**Untouched**: `App.tsx`, `AppSidebar.tsx`, `TraineeMultiSelect.tsx`, all backend.
 
-In `src/App.tsx`, import `LearningAdmin`. After the `/super-admin/content-authoring` route, add:
+## Tab 1 — Trainees
 
-```tsx
-<Route path="/super-admin/learning-admin" element={
-  <RoleGuard allowedRoles={["brainwise_super_admin"]}>
-    <SuperAdminSessionProvider><LearningAdmin /></SuperAdminSessionProvider>
-  </RoleGuard>
-} />
-```
+Mirrors `src/pages/super-admin/Users.tsx`:
+- Debounced (250ms) search `Input`, page state, `PAGE_SIZE = 25`.
+- `useQuery(["learning-admin-users", debouncedQuery, page])` → `supabase.rpc("search_impersonation_targets", { p_query: debouncedQuery.length >= 2 ? debouncedQuery : null, p_limit: 25, p_offset: page*25 })`.
+- Skeleton loading rows, empty state, pagination footer using `total_count` from row[0] — identical UX to Users.tsx.
+- Columns: Name · Email · Account Type (Badge via `accountTypeBadgeVariant`) · Organization · Actions.
+- Actions: `DropdownMenu` with three items: "Assign certification path", "Assign curriculum", "Assign module". Each `onSelect` opens a single shared `Dialog` with `mode` = type + `targetUser` = the row.
 
-## Sidebar
+### Single-user assign dialog
+- Loads target options on demand: cert paths via `from("certification_paths").select("id,name").is("archived_at",null)`, curricula via `from("curricula")...`, modules via `from("modules")...` — each gated by `enabled: open && mode === X`.
+- Pre-shows the trainee name read-only.
+- `Select` for the target item + `Textarea` justification (min 10).
+- Confirm → matching bulk RPC with `p_user_ids: [targetUser.user_id]` and the v1 payload shape.
+- ResultPanel renders inline; invalidate `["list_all_learning_assignments"]`, `["get_user_learning_state"]`, `["list_mentor_trainees"]` on success.
 
-In `superAdminNav`, immediately after "Content Authoring":
+## Tab 2 — Assign / Unassign
 
-```ts
-{ title: "Learning Admin", url: "/super-admin/learning-admin", icon: GraduationCap }
-```
+Full v1 logic, restructured as inline page sections rather than a dialog-triggered flow:
+- Top: an operation toggle (`Tabs` or two `Button` toggle) → `"assign" | "unassign"`.
+- Type `Select`: Certification Path / Curriculum / Module / Mentor.
 
-`GraduationCap` already imported.
+### Assign panel (inline, not a dialog)
+- Target picker (cert path / curriculum / module from their tables; mentor uses `list_mentor_trainees` Select).
+- `TraineeMultiSelect`.
+- Justification `Textarea` (min 10).
+- Confirm button → same RPCs and payloads as v1 (`enroll_users_in_certification_path_bulk`, `assign_curriculum_bulk`, `assign_module_bulk`, `assign_mentor_bulk`).
+- `ResultPanel` below.
 
-## TraineeMultiSelect component
+### Unassign panel
+- Cert Path: shows "Certification revocation is handled individually." note.
+- Else: cross-trainee table from `rpc("list_all_learning_assignments")`, filtered by selected type, with search `Input`, header + per-row `Checkbox`, justification `Textarea`, Unassign button → `unassign_curriculum_bulk` / `unassign_module_bulk` / `unassign_mentor_bulk` (mentor passes `p_end_reason: "removed_by_admin"`).
+- `ResultPanel` below.
 
-Props: `{ selectedIds: string[]; onChange: (ids: string[]) => void }`.
-- `useQuery(["list_mentor_trainees"], () => supabase.rpc("list_mentor_trainees"))` → trainees array.
-- Search `Input` filters by name/email (case-insensitive).
-- Scrollable list of `Checkbox` rows (name + email).
-- Selected ids render above as removable `Badge` chips with × button.
-- Loading skeleton + empty state.
+### Common
+- All successful assign/unassign in either tab invalidate the three query keys above.
+- Errors: `ResultPanel` shows RPC validation failures (the RPC returns failures in-band); transport errors → destructive toast.
+- Copy: "trainee" / "learner".
 
-## LearningAdmin page
-
-`AppLayout`-wrapped page. One `Card` containing `Tabs` with a single tab "Assignments" (extensible).
-
-Inside the tab:
-- Top: `Select` for assignment type — Certification Path · Curriculum · Module · Mentor.
-- Section 1: **Assign** — primary button opens a `Dialog`.
-- Section 2: **Unassign** — searchable `Table` of existing assignments matching the selected type.
-
-### Assign dialogs (one per type)
-
-Each dialog contains:
-- `<TraineeMultiSelect />`
-- Target picker (`Select`) — content varies by type
-- Justification `Textarea` (required; client check ≥10 chars to match RPC)
-- Confirm button (loading state, disabled while in flight)
-
-Target sources and RPC calls:
-
-| Type | Target source | RPC |
-|------|---------------|-----|
-| Cert Path | `supabase.from("certification_paths").select("id,name").is("archived_at",null)` | `enroll_users_in_certification_path_bulk({ p_user_ids, p_certification_path_id, p_reason, p_due_at: null })` |
-| Curriculum | `from("curricula").select("id,name").is("archived_at",null)` | `assign_curriculum_bulk({ p_user_ids, p_curriculum_id, p_source: "direct_assignment", p_certification_id: null, p_source_reference_id: null, p_due_at: null, p_reason })` |
-| Module | `from("modules").select("id,name").is("archived_at",null)` | `assign_module_bulk({ p_user_ids, p_module_id, p_source: "direct_assignment", p_source_reference_id: null, p_due_at: null, p_reason })` |
-| Mentor | Mentor `Select` populated from same `list_mentor_trainees` user list | `assign_mentor_bulk({ p_trainee_user_ids, p_mentor_user_id, p_certification_id: null, p_reason })` |
-
-### Unassign section
-
-`useQuery(["list_all_learning_assignments"], () => supabase.rpc("list_all_learning_assignments"))` returns `{ curriculum_assignments, module_assignments, mentor_assignments }`.
-
-Render a `Table` driven by the selected type:
-
-- **Curriculum** rows: checkbox · trainee (name+email) · curriculum · source · status. → `unassign_curriculum_bulk({ p_assignment_ids, p_reason })`
-- **Module** rows: checkbox · trainee · module · status. → `unassign_module_bulk({ p_assignment_ids, p_reason })`
-- **Mentor** rows: checkbox · trainee · mentor. → `unassign_mentor_bulk({ p_assignment_ids, p_end_reason: "removed_by_admin", p_reason })`
-- **Cert Path**: render note "Certification revocation is handled individually." No control.
-
-Above the table: search `Input` filtering by trainee name/email and the curriculum/module/mentor name.
-Below the table: justification `Textarea` (≥10 chars) + Unassign button (loading/disabled in flight).
-
-### Result display
-
-Every bulk RPC returns `{ operation, requested, succeeded, failed, results: [...] }`. After every call, render an inline result panel (not a generic toast):
-
-- Headline: `"{succeeded} of {requested} succeeded, {failed} failed"`.
-- If `failed > 0`, list each failing `results[]` row with its `status` and `detail` error.
-
-Transport errors (the `error` from `supabase.rpc`) → destructive toast.
-
-### Cache invalidation + cleanup
-
-On successful assign/unassign:
-- `queryClient.invalidateQueries({ queryKey: ["list_all_learning_assignments"] })`
-- `queryClient.invalidateQueries({ queryKey: ["get_user_learning_state"] })` (broad)
-- `queryClient.invalidateQueries({ queryKey: ["list_mentor_trainees"] })`
-- Clear dialog selections / table row selections.
-
-## Conventions
-
-- `useQuery` / `useQueryClient` from `@tanstack/react-query`.
-- `supabase` from `@/integrations/supabase/client`.
-- All shadcn primitives from `@/components/ui/*` (Card, Tabs, Dialog, Select, Input, Textarea, Button, Badge, Checkbox, Table).
-- RPC calls use `supabase.rpc("name" as never, {...} as never)` pattern from mentor panels.
-- Copy uses "trainee"/"learner", never "coach".
-- No localStorage/sessionStorage, no backend changes.
-- Loading + empty states for every picker and the unassign table.
+## Out of scope (Prompt C2)
+Schedule-for-later, bulk import. Page leaves natural seams (the assign panel is a discrete section that can later sprout a "Schedule" toggle) but does not implement them.
 
 ## Verification
-
-1. Build compiles; no TS or console errors.
-2. "Learning Admin" appears in super-admin sidebar; route loads.
-3. Bulk enroll in cert path shows real succeeded/failed summary (already-enrolled = expected failure).
-4. Bulk curriculum and mentor assigns show real summaries.
-5. Cross-trainee curriculum unassign removes items and updates Mentor Portal progress trees after invalidation.
-6. Unassign table search filters by trainee + target name.
-7. Partial-failure batches list per-row failures; too-short justification surfaces RPC error inline, no crash.
+1. Build compiles cleanly; route loads with two tabs.
+2. Trainees tab: list + search + pagination behaves identically to Users.tsx.
+3. Trainees row menu → Assign curriculum to that single user → ResultPanel shows real `succeeded/failed`.
+4. Assign tab with 2+ trainees: result panel shows accurate counts; already-assigned trainees appear as per-row failures.
+5. Unassign tab: rows disappear after a successful call and stop appearing in the Mentor Portal progress tree.
+6. Justification < 10 chars: ResultPanel surfaces the RPC's validation error (no crash).
