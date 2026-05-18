@@ -9,6 +9,7 @@ export interface UserProfile {
   subscription_status: string;
   subscription_tier: string;
   is_practitioner_coach: boolean;
+  is_mentor: boolean;
 }
 
 export const useUserProfile = () => {
@@ -26,7 +27,7 @@ export const useUserProfile = () => {
     const fetchProfile = async () => {
       const { data } = await supabase
         .from("users")
-        .select("full_name, account_type, email, subscription_status, subscription_tier, is_practitioner_coach")
+        .select("full_name, account_type, email, subscription_status, subscription_tier, is_practitioner_coach, is_mentor")
         .eq("id", user.id)
         .single();
 
