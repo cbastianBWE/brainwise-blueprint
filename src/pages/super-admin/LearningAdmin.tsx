@@ -1249,23 +1249,81 @@ function AssignUnassignTab() {
       );
     }
     const opts = mentorListQuery.data?.trainees ?? [];
+    const traineeById = new Map(opts.map((t) => [t.trainee_user_id, t]));
     return (
-      <div className="space-y-2">
-        <label className="text-sm font-medium">Mentor</label>
-        <Select value={mentorId} onValueChange={setMentorId}>
-          <SelectTrigger>
-            <SelectValue
-              placeholder={mentorListQuery.isLoading ? "Loading…" : "Choose a mentor"}
-            />
-          </SelectTrigger>
-          <SelectContent>
-            {opts.map((o) => (
-              <SelectItem key={o.trainee_user_id} value={o.trainee_user_id}>
-                {o.full_name || o.email}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      <div className="space-y-3">
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Mentor</label>
+          <Select value={mentorId} onValueChange={setMentorId}>
+            <SelectTrigger>
+              <SelectValue
+                placeholder={mentorListQuery.isLoading ? "Loading…" : "Choose a mentor"}
+              />
+            </SelectTrigger>
+            <SelectContent>
+              {opts.map((o) => (
+                <SelectItem key={o.trainee_user_id} value={o.trainee_user_id}>
+                  {o.full_name || o.email}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        {mentorId && traineeIds.length > 0 && (
+          <div className="space-y-2 rounded-md border p-3">
+            <div className="text-sm font-medium">Per-trainee certification</div>
+            {traineeIds.map((tid) => {
+              const t = traineeById.get(tid);
+              const label = t?.full_name || t?.email || tid;
+              const r = mentorResolutions[tid];
+              return (
+                <div
+                  key={tid}
+                  className="flex items-center justify-between gap-3 border-b last:border-b-0 py-2"
+                >
+                  <div className="text-sm">{label}</div>
+                  <div className="min-w-[16rem] text-right">
+                    {!r || r.loading ? (
+                      <span className="text-xs text-muted-foreground">Resolving…</span>
+                    ) : r.error ? (
+                      <span className="text-xs text-destructive">{r.error}</span>
+                    ) : r.certifications.length === 0 ? (
+                      <span className="text-xs text-destructive">
+                        No certification this mentor is qualified for — this trainee will be
+                        skipped
+                      </span>
+                    ) : r.certifications.length === 1 ? (
+                      <span className="text-xs text-muted-foreground">
+                        {r.certifications[0].certification_type} ({r.certifications[0].status})
+                      </span>
+                    ) : (
+                      <Select
+                        value={r.selectedCertId ?? ""}
+                        onValueChange={(v) =>
+                          setMentorResolutions((prev) => ({
+                            ...prev,
+                            [tid]: { ...prev[tid], selectedCertId: v },
+                          }))
+                        }
+                      >
+                        <SelectTrigger className="h-8">
+                          <SelectValue placeholder="Choose certification" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {r.certifications.map((c) => (
+                            <SelectItem key={c.certification_id} value={c.certification_id}>
+                              {c.certification_type} ({c.status})
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     );
   };
