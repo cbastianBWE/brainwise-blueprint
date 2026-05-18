@@ -645,7 +645,45 @@ function AssignUnassignTab() {
 
   const invalidate = () => {
     INVALIDATE_KEYS.forEach((key) => qc.invalidateQueries({ queryKey: key as unknown as any[] }));
+    qc.invalidateQueries({ queryKey: ["list_scheduled_assignments"] });
   };
+
+  // Always-loaded queries for import + scheduling
+  const certPathsAllQuery = useQuery({
+    queryKey: ["la_certification_paths_all"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("certification_paths")
+        .select("id,name")
+        .is("archived_at", null);
+      if (error) throw error;
+      return (data ?? []) as OptionRow[];
+    },
+  });
+
+  const importReferenceQuery = useQuery({
+    queryKey: ["get_learning_import_reference"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc(
+        "get_learning_import_reference" as never,
+        {} as never,
+      );
+      if (error) throw error;
+      return data as ImportReference;
+    },
+  });
+
+  const scheduledQuery = useQuery({
+    queryKey: ["list_scheduled_assignments"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc(
+        "list_scheduled_assignments" as never,
+        {} as never,
+      );
+      if (error) throw error;
+      return data as { scheduled_assignments: ScheduledRow[] };
+    },
+  });
 
   // Target options
   const certPathsQuery = useQuery({
