@@ -376,7 +376,7 @@ export default function ContentItemViewer() {
         open={!!cascadeModal && cascadeModal.tier !== "content_item"}
         onOpenChange={(o) => !o && setCascadeModal(null)}
       >
-        <DialogContent>
+        <DialogContent className={cascadeModal?.tier === "certification" ? "sm:max-w-3xl" : ""}>
           {cascadeModal?.tier === "module" && (
             <>
               <DialogHeader>
