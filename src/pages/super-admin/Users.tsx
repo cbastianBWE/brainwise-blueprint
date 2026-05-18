@@ -23,6 +23,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import JustificationModal from "@/components/impersonation/JustificationModal";
+import UserDetailsModal from "@/components/super-admin/UserDetailsModal";
 
 interface SearchRow {
   user_id: string;
