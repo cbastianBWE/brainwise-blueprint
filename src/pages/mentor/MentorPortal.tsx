@@ -57,6 +57,17 @@ export default function MentorPortal() {
   const [search, setSearch] = useState("");
   const [tab, setTab] = useState<"needs" | "all" | null>(null);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [drawer, setDrawer] = useState<DrawerState | null>(null);
+  const queryClient = useQueryClient();
+
+  const handleActionComplete = () => {
+    if (!drawer) return;
+    queryClient.invalidateQueries({
+      queryKey: ["get_content_item_for_viewer", drawer.contentItemId, drawer.traineeId],
+    });
+    queryClient.invalidateQueries({ queryKey: ["get_user_learning_state", drawer.traineeId] });
+    queryClient.invalidateQueries({ queryKey: ["list_mentor_trainees"] });
+  };
 
   const effectiveTab = tab ?? (totalPending > 0 ? "needs" : "all");
 
