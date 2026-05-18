@@ -8985,6 +8985,10 @@ export type Database = {
         }
         Returns: Json
       }
+      assign_mentor_pairs_bulk: {
+        Args: { p_mentor_user_id: string; p_pairs: Json; p_reason: string }
+        Returns: Json
+      }
       assign_module_bulk: {
         Args: {
           p_due_at: string
@@ -9466,6 +9470,10 @@ export type Database = {
           out_mime_type: string
           out_path: string
         }[]
+      }
+      get_mentorable_certifications: {
+        Args: { p_mentor_user_id: string; p_trainee_user_id: string }
+        Returns: Json
       }
       get_module_detail: {
         Args: { p_module_id: string; p_user_id?: string }
