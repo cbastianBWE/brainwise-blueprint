@@ -185,11 +185,18 @@ export default function InstrumentSelection({ onSelect }: Props) {
       if (plansRes.data) setSubscriptionPlans(plansRes.data);
 
       if (selfPayCoachClientsRes.data) {
-        const ids = new Set<string>();
+        const selfPayIds = new Set<string>();
+        const actorIds = new Set<string>();
         selfPayCoachClientsRes.data.forEach((row) => {
-          if (row.instrument_id) ids.add(row.instrument_id);
+          if (!row.instrument_id) return;
+          if (row.invitation_source === "actor_debrief") {
+            actorIds.add(row.instrument_id);
+          } else {
+            selfPayIds.add(row.instrument_id);
+          }
         });
-        setSelfPayCoachInstrumentIds(ids);
+        setSelfPayCoachInstrumentIds(selfPayIds);
+        setActorDebriefInstrumentIds(actorIds);
       }
 
       // Build per-instrument context_progress map (PTP only in practice).
