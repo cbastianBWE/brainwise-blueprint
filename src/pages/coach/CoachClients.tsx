@@ -103,7 +103,7 @@ export default function CoachClients() {
     !!actorCert
     && actorCert.certification_type === 'ptp_coach'
     && (!actorCert.free_uses_expire_at || new Date(actorCert.free_uses_expire_at) > new Date())
-    && actorsUsed < 3;
+    && actorsUsed < 4;
 
   const fetchClients = async () => {
     if (!user) return;
@@ -807,7 +807,7 @@ export default function CoachClients() {
                     <div className="space-y-0.5 pr-3">
                       <Label className="text-sm">This is an actor debrief (certification practice)</Label>
                       <p className="text-xs text-muted-foreground">
-                        Covered by your certification — no payment required. {3 - actorsUsed} of 3 remaining.
+                        Covered by your certification — no payment required. {4 - actorsUsed} of 4 remaining.
                       </p>
                     </div>
                     <Switch checked={isActorDebrief} onCheckedChange={setIsActorDebrief} />
