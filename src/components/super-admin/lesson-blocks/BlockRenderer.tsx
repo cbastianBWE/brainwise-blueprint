@@ -2,6 +2,7 @@ import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { TextStyleWithFontSize } from "./TextStyleWithFontSize";
 import { Link } from "@tiptap/extension-link";
+import { isSafeHttpUrl } from "@/lib/safeUrl";
 import { useEffect, useMemo, useState, useRef, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
 import {
   Info,
@@ -91,7 +92,7 @@ interface BlockRendererProps {
 function ReadOnlyTipTap({ json }: { json: TipTapDocJSON | null | undefined }) {
   const editor = useEditor({
     editable: false,
-    extensions: [StarterKit, TextStyleWithFontSize, Link.configure({ openOnClick: true })],
+    extensions: [StarterKit, TextStyleWithFontSize, Link.configure({ openOnClick: true, validate: isSafeHttpUrl })],
     content: json ?? "",
   });
   useEffect(() => {
@@ -729,15 +730,22 @@ function ButtonStackRender({
             rawUrl.startsWith("tel:");
           const url = hasScheme ? rawUrl : `https://${rawUrl}`;
           const isExternal = url.startsWith("http://") || url.startsWith("https://");
+          const safe = isSafeHttpUrl(url);
           return (
             <Button key={b.client_id} {...buttonProps} asChild>
-              <a
-                href={url}
-                target={isExternal ? "_blank" : undefined}
-                rel={isExternal ? "noopener noreferrer" : undefined}
-              >
-                {label}
-              </a>
+              {safe ? (
+                <a
+                  href={url}
+                  target={isExternal ? "_blank" : undefined}
+                  rel={isExternal ? "noopener noreferrer" : undefined}
+                >
+                  {label}
+                </a>
+              ) : (
+                <a href="#" onClick={(e) => e.preventDefault()} aria-disabled="true">
+                  {label}
+                </a>
+              )}
             </Button>
           );
         })}

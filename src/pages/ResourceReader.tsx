@@ -2,11 +2,13 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronLeft, Loader2 } from "lucide-react";
+import DOMPurify from "dompurify";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { useResourceAccessLog } from "@/hooks/useResourceAccessLog";
+import { isSafeHttpUrl } from "@/lib/safeUrl";
 import UpgradeNudgeModal from "@/components/resources/UpgradeNudgeModal";
 import type {
   GetUserResourcesResult,
@@ -42,11 +44,23 @@ function VideoEmbed({ url }: { url: string | null }) {
   }
   const embed = detectVideoEmbed(url);
   if (!embed) {
+    const safe = isSafeHttpUrl(url);
     return (
       <p className="text-sm">
-        <a href={url} target="_blank" rel="noopener noreferrer" className="text-primary underline">
-          Open video in a new tab
-        </a>
+        {safe ? (
+          <a href={url} target="_blank" rel="noopener noreferrer" className="text-primary underline">
+            Open video in a new tab
+          </a>
+        ) : (
+          <a
+            href="#"
+            onClick={(e) => e.preventDefault()}
+            aria-disabled="true"
+            className="text-primary underline opacity-50 cursor-not-allowed"
+          >
+            Open video in a new tab
+          </a>
+        )}
       </p>
     );
   }
@@ -263,7 +277,11 @@ export default function ResourceReader() {
       body = (
         <article
           className="text-base leading-relaxed [&_a]:text-primary [&_a]:underline [&_h2]:mt-6 [&_h2]:text-xl [&_h2]:font-semibold [&_h3]:mt-4 [&_h3]:text-lg [&_h3]:font-semibold [&_p]:my-3 [&_ul]:my-3 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:my-3 [&_ol]:list-decimal [&_ol]:pl-6"
-          dangerouslySetInnerHTML={{ __html: resource.url_or_content ?? "" }}
+          dangerouslySetInnerHTML={{
+            __html: DOMPurify.sanitize(resource.url_or_content ?? "", {
+              USE_PROFILES: { html: true },
+            }),
+          }}
         />
       );
     } else {
