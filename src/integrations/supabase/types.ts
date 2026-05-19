@@ -8982,6 +8982,7 @@ export type Database = {
         Args: { p_id: string; p_reason: string }
         Returns: Json
       }
+      archive_notification: { Args: { p_id: string }; Returns: Json }
       archive_quiz_answer_option: {
         Args: { p_id: string; p_reason: string }
         Returns: Json
@@ -9607,6 +9608,7 @@ export type Database = {
         }
         Returns: Json
       }
+      get_notification_preferences: { Args: never; Returns: Json }
       get_org_intervention_history: {
         Args: { p_intervention_id: string }
         Returns: {
@@ -9669,7 +9671,12 @@ export type Database = {
           out_size_bytes: number
         }[]
       }
+      get_unread_notification_count: { Args: never; Returns: number }
       get_user_learning_state: { Args: { p_user_id: string }; Returns: Json }
+      get_user_notifications: {
+        Args: { p_before?: string; p_filter?: string; p_limit?: number }
+        Returns: Json
+      }
       get_user_resources: { Args: { p_user_id?: string }; Returns: Json }
       grant_additional_free_attempts: {
         Args: {
@@ -9856,6 +9863,7 @@ export type Database = {
         }
         Returns: string
       }
+      mark_all_notifications_read: { Args: never; Returns: Json }
       mark_archive_email_sent: {
         Args: { p_asset_ids: string[]; p_recipient: string; p_zip_path: string }
         Returns: Json
@@ -9868,6 +9876,7 @@ export type Database = {
         }
         Returns: Json
       }
+      mark_notifications_read: { Args: { p_ids: string[] }; Returns: Json }
       mark_skills_practice_signoff: {
         Args: {
           p_content_item_id: string
@@ -9941,6 +9950,15 @@ export type Database = {
           self_rater_email: string
           self_rater_full_name: string
           self_rater_user_id: string
+        }[]
+      }
+      notification_display: {
+        Args: { p_notification_type: string; p_payload: Json }
+        Returns: {
+          action_label: string
+          action_url: string
+          body: string
+          title: string
         }[]
       }
       notify_user: {
@@ -10190,6 +10208,10 @@ export type Database = {
           p_reason: string
           p_user_id: string
         }
+        Returns: Json
+      }
+      set_notification_preference: {
+        Args: { p_channel: string; p_notification_type: string }
         Returns: Json
       }
       set_resource_access_grants: {
