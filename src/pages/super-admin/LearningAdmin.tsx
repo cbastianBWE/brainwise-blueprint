@@ -65,6 +65,13 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import TraineeMultiSelect from "@/components/learning-admin/TraineeMultiSelect";
 import ResultPanel, { type BulkResult } from "@/components/learning-admin/ResultPanel";
+import CompletionControlTab from "@/components/learning-admin/CompletionControlTab";
+import {
+  PAGE_SIZE,
+  SearchRow,
+  accountTypeBadgeVariant,
+  formatAccountType,
+} from "@/components/learning-admin/learnerSearchShared";
 
 // ---------- shared types ----------
 
@@ -168,43 +175,6 @@ const INVALIDATE_KEYS = [
 ] as const;
 
 // ---------- Tab 1: Trainees ----------
-
-interface SearchRow {
-  user_id: string;
-  email: string;
-  full_name: string | null;
-  account_type: string | null;
-  organization_id: string | null;
-  organization_name: string | null;
-  total_count: number;
-}
-
-const PAGE_SIZE = 25;
-
-const formatAccountType = (t: string | null): string => {
-  if (!t) return "Unknown";
-  return t
-    .split("_")
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(" ");
-};
-
-const accountTypeBadgeVariant = (
-  t: string | null,
-): "default" | "secondary" | "destructive" | "outline" => {
-  if (!t) return "outline";
-  switch (t) {
-    case "brainwise_super_admin":
-      return "destructive";
-    case "org_admin":
-    case "company_admin":
-      return "default";
-    case "coach":
-      return "secondary";
-    default:
-      return "outline";
-  }
-};
 
 type SingleAssignMode = "cert_path" | "curriculum" | "module";
 
@@ -2046,6 +2016,7 @@ export default function LearningAdmin() {
               <TabsTrigger value="trainees">Trainees</TabsTrigger>
               <TabsTrigger value="assign">Assign / Unassign</TabsTrigger>
               <TabsTrigger value="mentor-role">Assign Mentor Role</TabsTrigger>
+              <TabsTrigger value="completion-control">Completion Control</TabsTrigger>
             </TabsList>
             <TabsContent value="trainees" className="pt-4">
               <TraineesTab />
@@ -2055,6 +2026,9 @@ export default function LearningAdmin() {
             </TabsContent>
             <TabsContent value="mentor-role" className="pt-4">
               <MentorRoleTab />
+            </TabsContent>
+            <TabsContent value="completion-control" className="pt-4">
+              <CompletionControlTab />
             </TabsContent>
           </Tabs>
         </CardContent>
