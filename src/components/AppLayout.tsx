@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { CoachDisclosureGate } from "@/components/coach/CoachDisclosureGate";
+import { NotificationBell } from "@/components/notifications/NotificationBell";
 
 interface CouponData {
   stripe_coupon_id: string | null;
@@ -79,6 +80,9 @@ export default function AppLayout() {
             >
               BrainWise Enterprises
             </span>
+            <div className="ml-auto flex items-center">
+              <NotificationBell />
+            </div>
           </header>
           <main className="flex-1 overflow-auto p-6">
             <CoachDisclosureGate>
