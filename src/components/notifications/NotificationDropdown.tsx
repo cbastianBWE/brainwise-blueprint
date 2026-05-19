@@ -5,7 +5,7 @@ import { formatDistanceToNow } from "date-fns";
 import { Bell, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import type { NotificationRow } from "@/types/notifications";
+import type { NotificationRow, GetUserNotificationsResult } from "@/types/notifications";
 
 interface Props {
   open: boolean;
@@ -37,7 +37,8 @@ export function NotificationDropdown({ open, onClose }: Props) {
         p_filter: "all",
       });
       if (error) throw error;
-      return (data ?? []) as unknown as NotificationRow[];
+      const result = (data ?? {}) as unknown as GetUserNotificationsResult;
+      return (result.items ?? []) as NotificationRow[];
     },
     enabled: open,
     staleTime: 0,

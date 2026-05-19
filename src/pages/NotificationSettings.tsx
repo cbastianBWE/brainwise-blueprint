@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
-import type { NotificationChannel, NotificationPreferenceRow } from "@/types/notifications";
+import type { NotificationChannel, NotificationPreferenceRow, GetNotificationPreferencesResult } from "@/types/notifications";
 
 const CHANNEL_OPTIONS: { value: NotificationChannel; label: string }[] = [
   { value: "both", label: "Both (email + in-app)" },
@@ -25,7 +25,8 @@ export default function NotificationSettings() {
     queryFn: async () => {
       const { data, error } = await supabase.rpc("get_notification_preferences");
       if (error) throw error;
-      return (data ?? []) as unknown as NotificationPreferenceRow[];
+      const result = (data ?? {}) as unknown as GetNotificationPreferencesResult;
+      return (result.preferences ?? []) as NotificationPreferenceRow[];
     },
   });
 
