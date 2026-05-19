@@ -103,7 +103,7 @@ export default function CoachClients() {
     !!actorCert
     && actorCert.certification_type === 'ptp_coach'
     && (!actorCert.free_uses_expire_at || new Date(actorCert.free_uses_expire_at) > new Date())
-    && actorsUsed < 3;
+    && actorsUsed < 4;
 
   const fetchClients = async () => {
     if (!user) return;
