@@ -464,27 +464,22 @@ export default function CoachClients() {
 </body>
 </html>`.trim();
 
-      try {
-        const { error: emailError } = await supabase.functions.invoke("send-email", {
-          body: {
-            to: email,
-            subject: "You've Been Invited to Complete a BrainWise Assessment",
-            html,
-            email_type: "coach_invitation_self_pay",
-            source: "CoachClients.handleOrderClientPays",
-          },
-        });
-        if (emailError) {
-          console.error("[CoachClients] send-email error:", emailError);
-          toast.warning("Client records created but invitation email failed to send.");
-        } else {
-          toast.success("Invitation sent!", {
-            description: `${firstName} ${lastName} (${email}) has been invited for ${selectedNames.length} assessment${selectedNames.length > 1 ? "s" : ""}.`,
-          });
-        }
-      } catch (emailErr) {
-        console.error("[CoachClients] send-email exception:", emailErr);
+      const { data: emailData, error: emailError } = await (supabase as any).rpc(
+        "send_coach_invitation_email",
+        {
+          p_to: email,
+          p_subject: "You've Been Invited to Complete a BrainWise Assessment",
+          p_html: html,
+          p_email_type: "coach_invitation_self_pay",
+        },
+      );
+      if (emailError || !emailData?.dispatched) {
+        console.error("[CoachClients] send_coach_invitation_email failed:", emailError);
         toast.warning("Client records created but invitation email failed to send.");
+      } else {
+        toast.success("Invitation sent!", {
+          description: `${firstName} ${lastName} (${email}) has been invited for ${selectedNames.length} assessment${selectedNames.length > 1 ? "s" : ""}.`,
+        });
       }
 
       resetForm();
@@ -502,29 +497,8 @@ export default function CoachClients() {
       return;
     }
     setSubmitting(true);
-    const { error } = await (supabase as any).rpc("create_actor_debrief_order", {
-      p_actor_email: email.trim().toLowerCase(),
-      p_actor_first_name: firstName.trim() || null,
-      p_certification_id: actorCert.id,
-      p_coach_note: note.trim() || null,
-    });
-    if (error) {
-      const map: Record<string, string> = {
-        actor_debrief_cap_reached: "You have used all 3 actor debriefs for this certification.",
-        free_use_window_expired: "Your free certification-practice window has expired.",
-        actor_debrief_not_supported_for_cert_type: "Actor debriefs are not available for this certification type yet.",
-        not_your_certification: "That certification does not belong to you.",
-        certification_not_active: "Your certification is not active.",
-        invalid_email_format: "Please enter a valid email address.",
-        certification_not_found: "Certification not found.",
-      };
-      const key = (error.message || "").split(":")[0].trim();
-      toast.error(map[key] ?? ("Could not create actor debrief: " + error.message));
-      setSubmitting(false);
-      return;
-    }
 
-    // Send the same styled invitation email used by handleOrderClientPays
+    // Build the invitation email HTML (same style as handleOrderClientPays)
     const ptpName = "Personal Threat Profile";
     const instrumentListHtml = `<li style="margin-bottom:6px;">${ptpName}</li>`;
     const coachNoteHtml = note
@@ -568,25 +542,33 @@ export default function CoachClients() {
 </body>
 </html>`.trim();
 
-    try {
-      const { error: emailError } = await supabase.functions.invoke("send-email", {
-        body: {
-          to: email,
-          subject: "You've Been Invited to Complete a BrainWise Assessment",
-          html,
-          email_type: "coach_invitation_actor_debrief",
-          source: "CoachClients.handleOrderActorDebrief",
-        },
-      });
-      if (emailError) {
-        console.error("[CoachClients] send-email error:", emailError);
-        toast.warning("Actor debrief created but invitation email failed to send.");
-      } else {
-        toast.success("Actor debrief invitation sent.");
-      }
-    } catch (emailErr) {
-      console.error("[CoachClients] send-email exception:", emailErr);
-      toast.warning("Actor debrief created but invitation email failed to send.");
+    const { data, error } = await (supabase as any).rpc("create_actor_debrief_order", {
+      p_actor_email: email.trim().toLowerCase(),
+      p_actor_first_name: firstName.trim() || null,
+      p_certification_id: actorCert.id,
+      p_coach_note: note.trim() || null,
+      p_email_html: html,
+    });
+    if (error) {
+      const map: Record<string, string> = {
+        actor_debrief_cap_reached: "You have used all 3 actor debriefs for this certification.",
+        free_use_window_expired: "Your free certification-practice window has expired.",
+        actor_debrief_not_supported_for_cert_type: "Actor debriefs are not available for this certification type yet.",
+        not_your_certification: "That certification does not belong to you.",
+        certification_not_active: "Your certification is not active.",
+        invalid_email_format: "Please enter a valid email address.",
+        certification_not_found: "Certification not found.",
+      };
+      const key = (error.message || "").split(":")[0].trim();
+      toast.error(map[key] ?? ("Could not create actor debrief: " + error.message));
+      setSubmitting(false);
+      return;
+    }
+
+    if (data?.email_dispatched) {
+      toast.success("Actor debrief invitation sent.");
+    } else {
+      toast.warning("Actor debrief created — the invitation email may be delayed.");
     }
 
     setActorsUsed(n => n + 1);
