@@ -2016,6 +2016,7 @@ export default function LearningAdmin() {
               <TabsTrigger value="trainees">Trainees</TabsTrigger>
               <TabsTrigger value="assign">Assign / Unassign</TabsTrigger>
               <TabsTrigger value="mentor-role">Assign Mentor Role</TabsTrigger>
+              <TabsTrigger value="completion-control">Completion Control</TabsTrigger>
             </TabsList>
             <TabsContent value="trainees" className="pt-4">
               <TraineesTab />
@@ -2025,6 +2026,9 @@ export default function LearningAdmin() {
             </TabsContent>
             <TabsContent value="mentor-role" className="pt-4">
               <MentorRoleTab />
+            </TabsContent>
+            <TabsContent value="completion-control" className="pt-4">
+              <CompletionControlTab />
             </TabsContent>
           </Tabs>
         </CardContent>
