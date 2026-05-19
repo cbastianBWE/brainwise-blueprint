@@ -400,6 +400,7 @@ export default function InstrumentSelection({ onSelect }: Props) {
               const hasCompleted = completedInstrumentIds.has(inst.instrument_id);
               const purchaseAccess = hasPurchase;
               const selfPayCoachInvited = selfPayCoachInstrumentIds.has(instrumentUuid);
+              const actorDebrief = actorDebriefInstrumentIds.has(instrumentUuid);
 
               const isInProgress = inProgressInstrumentIds.has(inst.instrument_id);
               const startLabel = isInProgress ? "Continue Assessment" : "Start Assessment";
