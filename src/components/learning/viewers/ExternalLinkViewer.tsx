@@ -3,6 +3,7 @@ import { ExternalLink, Loader2, CircleCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { isSafeHttpUrl } from "@/lib/safeUrl";
 import type { CascadeResult } from "@/hooks/useCompletionReporter";
 
 interface ViewerProps {
@@ -60,14 +61,25 @@ export default function ExternalLinkViewer({
           </div>
           <div className="text-xs text-muted-foreground break-all">{url}</div>
           <div>
-            <a
-              href={url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium bg-[var(--bw-orange)] hover:bg-[var(--bw-orange-600)] text-white"
-            >
-              <ExternalLink className="h-4 w-4" /> Open resource
-            </a>
+            {isSafeHttpUrl(url) ? (
+              <a
+                href={url!}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium bg-[var(--bw-orange)] hover:bg-[var(--bw-orange-600)] text-white"
+              >
+                <ExternalLink className="h-4 w-4" /> Open resource
+              </a>
+            ) : (
+              <a
+                href="#"
+                onClick={(e) => e.preventDefault()}
+                aria-disabled="true"
+                className="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium bg-[var(--bw-orange)] hover:bg-[var(--bw-orange-600)] text-white opacity-50 cursor-not-allowed"
+              >
+                <ExternalLink className="h-4 w-4" /> Open resource
+              </a>
+            )}
           </div>
         </div>
       ) : (

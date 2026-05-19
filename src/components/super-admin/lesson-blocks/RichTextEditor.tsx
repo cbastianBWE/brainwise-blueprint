@@ -4,6 +4,7 @@ import StarterKit from "@tiptap/starter-kit";
 import { TextStyleWithFontSize } from "./TextStyleWithFontSize";
 import { Link } from "@tiptap/extension-link";
 import { Placeholder } from "@tiptap/extensions";
+import { isSafeHttpUrl } from "@/lib/safeUrl";
 import {
   Bold as BoldIcon,
   Italic as ItalicIcon,
@@ -47,7 +48,7 @@ export function RichTextEditor({
     extensions: [
       StarterKit,
       TextStyleWithFontSize,
-      Link.configure({ openOnClick: false }),
+      Link.configure({ openOnClick: false, validate: isSafeHttpUrl }),
       Placeholder.configure({ placeholder: placeholder ?? "" }),
     ],
     content: value ?? "",
