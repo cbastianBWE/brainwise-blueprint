@@ -9,7 +9,7 @@ import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
-import type { NotificationRow, NotificationFilter } from "@/types/notifications";
+import type { NotificationRow, NotificationFilter, GetUserNotificationsResult } from "@/types/notifications";
 
 const PAGE_SIZE = 20;
 
