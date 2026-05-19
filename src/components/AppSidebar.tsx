@@ -4,7 +4,7 @@ import {
   Users, Users2, Building2, UsersRound, Activity, Heart, Award, UserCircle,
   ShieldCheck, Briefcase, GitBranch, FlaskConical, LogOut, History, Shield,
   CreditCard, Receipt, ChevronDown, ChevronRight, Plus, FileText, UserSearch, Library, Ticket,
-  GraduationCap,
+  GraduationCap, Bell,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -165,6 +165,7 @@ export function AppSidebar() {
   const showDashboardsMenu = profile?.account_type === 'company_admin' || profile?.account_type === 'org_admin' || profile?.account_type === 'brainwise_super_admin';
   const settingsSubItems: { title: string; url: string; icon: React.ElementType; disabled?: boolean; badge?: string }[] = [
     { title: 'General Settings', url: '/settings', icon: Settings },
+    { title: 'Notifications', url: '/settings/notifications', icon: Bell },
     { title: 'Privacy & Permissions', url: '/settings/privacy', icon: Shield },
     { title: 'Access History', url: '/settings/access-history', icon: History },
     ...(isCorp ? [] : [{ title: 'Billing & Receipts', url: '/settings/billing', icon: CreditCard }]),
@@ -172,6 +173,7 @@ export function AppSidebar() {
 
   const coachSettingsSubItems: typeof settingsSubItems = [
     { title: 'General Settings', url: '/settings', icon: Settings },
+    { title: 'Notifications', url: '/settings/notifications', icon: Bell },
     { title: 'Privacy & Permissions', url: '/settings/privacy', icon: Shield },
     { title: 'Access History', url: '/settings/access-history', icon: History },
     { title: 'Billing & Receipts', url: '/settings/billing', icon: CreditCard, disabled: true, badge: 'Coming Soon' },

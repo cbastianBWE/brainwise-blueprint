@@ -48,6 +48,8 @@ import CertificationPage from "./pages/learning/CertificationPage";
 import Pricing from "./pages/Pricing";
 import SettingsPage from "./pages/Settings";
 import PrivacySettings from "./pages/PrivacySettings";
+import NotificationsPage from "./pages/Notifications";
+import NotificationSettings from "./pages/NotificationSettings";
 import SharingRequests from "./pages/SharingRequests";
 import PeerSharingOptIn from "./pages/PeerSharingOptIn";
 import PeerAccessResponded from "./pages/PeerAccessResponded";
@@ -160,6 +162,8 @@ const App = () => (
               
               <Route path="/settings" element={<SettingsPage />} />
               <Route path="/settings/privacy" element={<PrivacySettings />} />
+              <Route path="/settings/notifications" element={<NotificationSettings />} />
+              <Route path="/notifications" element={<NotificationsPage />} />
               <Route path="/settings/sharing-requests" element={<SharingRequests />} />
               <Route path="/settings/billing" element={<CorpRedirect toastMessage="Your organization handles billing directly."><BillingSettings /></CorpRedirect>} />
               <Route path="/settings/access-history" element={<AccessHistory />} />
