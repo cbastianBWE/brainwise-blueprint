@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
-import type { NotificationChannel, NotificationPreferenceRow } from "@/types/notifications";
+import type { NotificationChannel, NotificationPreferenceRow, GetNotificationPreferencesResult } from "@/types/notifications";
 
 const CHANNEL_OPTIONS: { value: NotificationChannel; label: string }[] = [
   { value: "both", label: "Both (email + in-app)" },
