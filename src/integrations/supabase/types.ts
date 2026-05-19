@@ -9244,6 +9244,7 @@ export type Database = {
           p_actor_first_name: string
           p_certification_id: string
           p_coach_note?: string
+          p_email_html?: string
         }
         Returns: Json
       }
@@ -10134,6 +10135,15 @@ export type Database = {
         Returns: Json
       }
       self_enroll_in_module: { Args: { p_module_id: string }; Returns: Json }
+      send_coach_invitation_email: {
+        Args: {
+          p_email_type?: string
+          p_html: string
+          p_subject: string
+          p_to: string
+        }
+        Returns: Json
+      }
       send_grace_period_reminders: {
         Args: never
         Returns: {
