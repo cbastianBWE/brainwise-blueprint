@@ -103,7 +103,7 @@ export default function InstrumentSelection({ onSelect }: Props) {
         supabase.from("assessments").select("instrument_id").eq("user_id", user.id).eq("status", "in_progress"),
         supabase.from("subscription_plans").select("plan_name, tier, billing_period, price_usd, stripe_price_id").eq("is_active", true),
         supabase.from("coach_clients_client_view")
-          .select("instrument_id, context_progress")
+          .select("instrument_id, context_progress, invitation_source")
           .eq("client_user_id", user.id)
           .is("stripe_payment_intent_id", null)
           .in("invitation_status", ["sent", "opened", "partially_completed"]),
