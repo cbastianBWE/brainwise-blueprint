@@ -37,7 +37,8 @@ export function NotificationDropdown({ open, onClose }: Props) {
         p_filter: "all",
       });
       if (error) throw error;
-      return (data ?? []) as unknown as NotificationRow[];
+      const result = (data ?? {}) as unknown as GetUserNotificationsResult;
+      return (result.items ?? []) as NotificationRow[];
     },
     enabled: open,
     staleTime: 0,
