@@ -281,13 +281,6 @@ const timezones = [
 
 const dateFormats = ["MM/DD/YYYY", "DD/MM/YYYY", "YYYY-MM-DD"];
 
-const notificationKeys = [
-  { key: "assessment_reminders", label: "Assessment Reminders" },
-  { key: "coach_messages", label: "Coach Messages" },
-  { key: "platform_updates", label: "Platform Updates" },
-  { key: "new_results", label: "New Results Available" },
-] as const;
-
 const formatAccountType = (t: string | null) => {
   const map: Record<string, string> = {
     individual: "Individual",
@@ -297,20 +290,6 @@ const formatAccountType = (t: string | null) => {
     corporate_employee: "Corporate Employee",
   };
   return map[t ?? ""] ?? t ?? "Unknown";
-};
-
-interface Notifications {
-  assessment_reminders: boolean;
-  coach_messages: boolean;
-  platform_updates: boolean;
-  new_results: boolean;
-}
-
-const defaultNotifications: Notifications = {
-  assessment_reminders: true,
-  coach_messages: true,
-  platform_updates: true,
-  new_results: true,
 };
 
 export default function SettingsPage() {
@@ -325,7 +304,6 @@ export default function SettingsPage() {
   const [accountType, setAccountType] = useState<string | null>(null);
   const [timezone, setTimezone] = useState("America/New_York");
   const [dateFormat, setDateFormat] = useState("MM/DD/YYYY");
-  const [notifications, setNotifications] = useState<Notifications>(defaultNotifications);
 
   const showSaved = useCallback((field: string) => {
     setSavedField(field);
@@ -337,7 +315,7 @@ export default function SettingsPage() {
     (async () => {
       const { data, error } = await supabase
         .from("users")
-        .select("full_name, email, account_type, timezone, date_format, notifications")
+        .select("full_name, email, account_type, timezone, date_format")
         .eq("id", user.id)
         .single();
       if (error) {
@@ -350,7 +328,6 @@ export default function SettingsPage() {
       setAccountType(data.account_type);
       setTimezone(data.timezone ?? "America/New_York");
       setDateFormat(data.date_format ?? "MM/DD/YYYY");
-      setNotifications({ ...defaultNotifications, ...(data.notifications as Partial<Notifications> ?? {}) });
       setLoading(false);
     })();
   }, [user]);
