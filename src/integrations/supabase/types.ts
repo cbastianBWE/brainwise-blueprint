@@ -8777,6 +8777,18 @@ export type Database = {
         }
         Returns: string
       }
+      _manual_completion_blocking_cert: {
+        Args: { p_curriculum_id: string; p_user_id: string }
+        Returns: string
+      }
+      _manual_recompute_curriculum_assignment: {
+        Args: { p_assignment_id: string }
+        Returns: string
+      }
+      _manual_recompute_module: {
+        Args: { p_module_id: string; p_user_id: string }
+        Returns: string
+      }
       _upsert_thumbnail_ref: {
         Args: {
           p_asset_id: string
@@ -10154,8 +10166,30 @@ export type Database = {
           run_at: string
         }[]
       }
+      set_content_item_completion: {
+        Args: {
+          p_complete: boolean
+          p_content_item_id: string
+          p_reason: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
+      set_curriculum_completion: {
+        Args: { p_assignment_id: string; p_complete: boolean; p_reason: string }
+        Returns: Json
+      }
       set_mentor_role: {
         Args: { p_is_mentor: boolean; p_reason: string; p_user_id: string }
+        Returns: Json
+      }
+      set_module_completion: {
+        Args: {
+          p_complete: boolean
+          p_module_id: string
+          p_reason: string
+          p_user_id: string
+        }
         Returns: Json
       }
       set_resource_access_grants: {
