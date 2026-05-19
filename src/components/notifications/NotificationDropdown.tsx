@@ -5,7 +5,7 @@ import { formatDistanceToNow } from "date-fns";
 import { Bell, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import type { NotificationRow } from "@/types/notifications";
+import type { NotificationRow, GetUserNotificationsResult } from "@/types/notifications";
 
 interface Props {
   open: boolean;
