@@ -242,6 +242,7 @@ export default function CoachClients() {
         .from("coach_certifications")
         .select("id, certification_type, status, free_uses_expire_at")
         .eq("user_id", user.id)
+        .eq("certification_type", "ptp_coach")
         .in("status", ["in_progress", "certified"])
         .order("created_at", { ascending: true })
         .limit(1);
