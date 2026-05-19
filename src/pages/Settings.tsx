@@ -360,13 +360,6 @@ export default function SettingsPage() {
     showSaved(field);
   };
 
-  const toggleNotification = async (key: keyof Notifications, value: boolean) => {
-    const updated = { ...notifications, [key]: value };
-    setNotifications(updated);
-    const { error } = await supabase.from("users").update({ notifications: updated }).eq("id", user!.id);
-    if (error) { toast.error("Failed to save notification setting"); return; }
-    showSaved(key);
-  };
 
   const deleteAccount = async () => {
     try {
@@ -496,21 +489,14 @@ export default function SettingsPage() {
           <CardTitle className="flex items-center gap-2 text-lg">
             <Bell className="h-5 w-5" /> Notifications
           </CardTitle>
+          <CardDescription>
+            Manage which notifications you receive and how.
+          </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          {notificationKeys.map(({ key, label }) => (
-            <div key={key} className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Label htmlFor={key}>{label}</Label>
-                <SavedBadge field={key} />
-              </div>
-              <Switch
-                id={key}
-                checked={notifications[key]}
-                onCheckedChange={(v) => toggleNotification(key, v)}
-              />
-            </div>
-          ))}
+        <CardContent>
+          <Button variant="outline" onClick={() => navigate('/settings/notifications')}>
+            Manage notifications
+          </Button>
         </CardContent>
       </Card>
 
