@@ -464,27 +464,22 @@ export default function CoachClients() {
 </body>
 </html>`.trim();
 
-      try {
-        const { error: emailError } = await supabase.functions.invoke("send-email", {
-          body: {
-            to: email,
-            subject: "You've Been Invited to Complete a BrainWise Assessment",
-            html,
-            email_type: "coach_invitation_self_pay",
-            source: "CoachClients.handleOrderClientPays",
-          },
-        });
-        if (emailError) {
-          console.error("[CoachClients] send-email error:", emailError);
-          toast.warning("Client records created but invitation email failed to send.");
-        } else {
-          toast.success("Invitation sent!", {
-            description: `${firstName} ${lastName} (${email}) has been invited for ${selectedNames.length} assessment${selectedNames.length > 1 ? "s" : ""}.`,
-          });
-        }
-      } catch (emailErr) {
-        console.error("[CoachClients] send-email exception:", emailErr);
+      const { data: emailData, error: emailError } = await (supabase as any).rpc(
+        "send_coach_invitation_email",
+        {
+          p_to: email,
+          p_subject: "You've Been Invited to Complete a BrainWise Assessment",
+          p_html: html,
+          p_email_type: "coach_invitation_self_pay",
+        },
+      );
+      if (emailError || !emailData?.dispatched) {
+        console.error("[CoachClients] send_coach_invitation_email failed:", emailError);
         toast.warning("Client records created but invitation email failed to send.");
+      } else {
+        toast.success("Invitation sent!", {
+          description: `${firstName} ${lastName} (${email}) has been invited for ${selectedNames.length} assessment${selectedNames.length > 1 ? "s" : ""}.`,
+        });
       }
 
       resetForm();
