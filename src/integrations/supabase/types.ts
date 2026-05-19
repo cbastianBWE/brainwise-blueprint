@@ -8413,6 +8413,7 @@ export type Database = {
           expires_at: string | null
           id: string | null
           instrument_id: string | null
+          invitation_source: string | null
           invitation_status: string | null
           paired_assessment_id: string | null
           results_released: boolean | null
@@ -8431,6 +8432,7 @@ export type Database = {
           expires_at?: string | null
           id?: string | null
           instrument_id?: string | null
+          invitation_source?: string | null
           invitation_status?: string | null
           paired_assessment_id?: string | null
           results_released?: boolean | null
@@ -8449,6 +8451,7 @@ export type Database = {
           expires_at?: string | null
           id?: string | null
           instrument_id?: string | null
+          invitation_source?: string | null
           invitation_status?: string | null
           paired_assessment_id?: string | null
           results_released?: boolean | null

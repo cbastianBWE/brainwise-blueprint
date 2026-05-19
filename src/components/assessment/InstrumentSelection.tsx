@@ -82,6 +82,7 @@ export default function InstrumentSelection({ onSelect }: Props) {
   const [selfPayDialogLoading, setSelfPayDialogLoading] = useState(false);
   const [subscriptionPlans, setSubscriptionPlans] = useState<Array<{ plan_name: string; tier: string; billing_period: string; price_usd: number | null; stripe_price_id: string }>>([]);
   const [selfPayCoachInstrumentIds, setSelfPayCoachInstrumentIds] = useState<Set<string>>(new Set());
+  const [actorDebriefInstrumentIds, setActorDebriefInstrumentIds] = useState<Set<string>>(new Set());
   const [ptpContextProgress, setPtpContextProgress] = useState<Map<string, string>>(new Map());
   const [airsaAwaiting, setAirsaAwaiting] = useState<{ completed_at: string } | null>(null);
 
@@ -93,7 +94,7 @@ export default function InstrumentSelection({ onSelect }: Props) {
         supabase.from("platform_versions").select("version_string").eq("is_active", true).limit(1).single(),
         supabase.from("assessment_results").select("overall_profile").eq("user_id", user.id).order("created_at", { ascending: false }).limit(1),
         supabase.from("coach_clients_client_view")
-          .select("instrument_id, stripe_payment_intent_id, assessment_id, context_progress, paired_assessment_id")
+          .select("instrument_id, stripe_payment_intent_id, assessment_id, context_progress, paired_assessment_id, invitation_source")
           .eq("client_user_id", user.id)
           .not("stripe_payment_intent_id", "is", null)
           .in("invitation_status", ["sent", "opened", "partially_completed"]),
@@ -102,7 +103,7 @@ export default function InstrumentSelection({ onSelect }: Props) {
         supabase.from("assessments").select("instrument_id").eq("user_id", user.id).eq("status", "in_progress"),
         supabase.from("subscription_plans").select("plan_name, tier, billing_period, price_usd, stripe_price_id").eq("is_active", true),
         supabase.from("coach_clients_client_view")
-          .select("instrument_id, context_progress")
+          .select("instrument_id, context_progress, invitation_source")
           .eq("client_user_id", user.id)
           .is("stripe_payment_intent_id", null)
           .in("invitation_status", ["sent", "opened", "partially_completed"]),
@@ -184,11 +185,18 @@ export default function InstrumentSelection({ onSelect }: Props) {
       if (plansRes.data) setSubscriptionPlans(plansRes.data);
 
       if (selfPayCoachClientsRes.data) {
-        const ids = new Set<string>();
+        const selfPayIds = new Set<string>();
+        const actorIds = new Set<string>();
         selfPayCoachClientsRes.data.forEach((row) => {
-          if (row.instrument_id) ids.add(row.instrument_id);
+          if (!row.instrument_id) return;
+          if (row.invitation_source === "actor_debrief") {
+            actorIds.add(row.instrument_id);
+          } else {
+            selfPayIds.add(row.instrument_id);
+          }
         });
-        setSelfPayCoachInstrumentIds(ids);
+        setSelfPayCoachInstrumentIds(selfPayIds);
+        setActorDebriefInstrumentIds(actorIds);
       }
 
       // Build per-instrument context_progress map (PTP only in practice).
@@ -392,6 +400,7 @@ export default function InstrumentSelection({ onSelect }: Props) {
               const hasCompleted = completedInstrumentIds.has(inst.instrument_id);
               const purchaseAccess = hasPurchase;
               const selfPayCoachInvited = selfPayCoachInstrumentIds.has(instrumentUuid);
+              const actorDebrief = actorDebriefInstrumentIds.has(instrumentUuid);
 
               const isInProgress = inProgressInstrumentIds.has(inst.instrument_id);
               const startLabel = isInProgress ? "Continue Assessment" : "Start Assessment";
@@ -466,6 +475,12 @@ export default function InstrumentSelection({ onSelect }: Props) {
                     </Button>
                   );
                 }
+              } else if (actorDebrief) {
+                buttonContent = (
+                  <Button className="w-full" onClick={() => handleSelect(inst)}>
+                    {startLabel}
+                  </Button>
+                );
               } else if (selfPayCoachInvited) {
                 const ptpCtx = inst.instrument_id === "INST-001" ? ptpContextProgress.get(instrumentUuid) : undefined;
                 if (ptpCtx === "professional_done") {
@@ -498,7 +513,7 @@ export default function InstrumentSelection({ onSelect }: Props) {
               return (
                 <Card
                   key={inst.instrument_id}
-                  className={`relative transition-all ${isRecommended ? "ring-2 ring-primary" : ""} ${canBypassAssessmentPaywall || isCorp || subscriptionAccess || coachPaid || selfPayCoachInvited || purchaseAccess ? "hover:shadow-md" : "opacity-80"}`}
+                  className={`relative transition-all ${isRecommended ? "ring-2 ring-primary" : ""} ${canBypassAssessmentPaywall || isCorp || subscriptionAccess || coachPaid || selfPayCoachInvited || purchaseAccess || actorDebrief ? "hover:shadow-md" : "opacity-80"}`}
                 >
                   {isRecommended && (
                     <div className="absolute -top-3 left-4">
