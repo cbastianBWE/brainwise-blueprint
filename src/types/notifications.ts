@@ -27,3 +27,15 @@ export interface NotificationPreferenceRow {
   effective_channel: NotificationChannel;
   user_configurable: boolean;
 }
+
+export interface GetUserNotificationsResult {
+  items: NotificationRow[];
+  unread_count: number;
+  limit: number;
+  filter: string;
+}
+
+export interface GetNotificationPreferencesResult {
+  preferences: NotificationPreferenceRow[];
+}
+
