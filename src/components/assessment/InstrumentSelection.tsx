@@ -475,6 +475,12 @@ export default function InstrumentSelection({ onSelect }: Props) {
                     </Button>
                   );
                 }
+              } else if (actorDebrief) {
+                buttonContent = (
+                  <Button className="w-full" onClick={() => handleSelect(inst)}>
+                    {startLabel}
+                  </Button>
+                );
               } else if (selfPayCoachInvited) {
                 const ptpCtx = inst.instrument_id === "INST-001" ? ptpContextProgress.get(instrumentUuid) : undefined;
                 if (ptpCtx === "professional_done") {
