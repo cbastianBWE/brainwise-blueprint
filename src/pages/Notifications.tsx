@@ -1,6 +1,6 @@
-import { useState, useMemo } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
 import { Archive, Bell, Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -28,47 +28,50 @@ export default function Notifications() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [filter, setFilter] = useState<NotificationFilter>("all");
-  const [pages, setPages] = useState<NotificationRow[][]>([]);
+  const [items, setItems] = useState<NotificationRow[]>([]);
   const [reachedEnd, setReachedEnd] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [error, setError] = useState(false);
 
-  const before = useMemo(() => {
-    const flat = pages.flat();
-    return flat.length > 0 ? flat[flat.length - 1].created_at : undefined;
-  }, [pages]);
-
-  const { isLoading, isFetching, isError, refetch } = useQuery({
-    queryKey: ["notif", "list", filter, pages.length],
-    queryFn: async () => {
+  const fetchPage = async (cursor: string | undefined, replace: boolean) => {
+    if (replace) setLoading(true);
+    else setLoadingMore(true);
+    setError(false);
+    try {
       const { data, error } = await supabase.rpc("get_user_notifications", {
         p_limit: PAGE_SIZE,
-        p_before: before,
+        p_before: cursor,
         p_filter: filter,
       });
       if (error) throw error;
       const rows = (data ?? []) as unknown as NotificationRow[];
-      setPages((prev) => {
-        const next = [...prev];
-        next[next.length === 0 ? 0 : next.length - 1] = rows;
-        // ensure last index aligns with pages.length used as a key
-        if (next.length < pages.length + 1) next.push(rows);
-        return next;
-      });
-      if (rows.length < PAGE_SIZE) setReachedEnd(true);
-      return rows;
-    },
-  });
-
-  const items = pages.flat();
-
-  const changeFilter = (f: NotificationFilter) => {
-    setFilter(f);
-    setPages([]);
-    setReachedEnd(false);
+      setItems((prev) => (replace ? rows : [...prev, ...rows]));
+      setReachedEnd(rows.length < PAGE_SIZE);
+    } catch {
+      setError(true);
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
+    }
   };
 
+  useEffect(() => {
+    setItems([]);
+    setReachedEnd(false);
+    fetchPage(undefined, true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filter]);
+
   const loadMore = () => {
-    if (reachedEnd || isFetching) return;
-    setPages((prev) => [...prev, []]);
+    if (reachedEnd || loadingMore || items.length === 0) return;
+    fetchPage(items[items.length - 1].created_at, false);
+  };
+
+  const refresh = () => {
+    setItems([]);
+    setReachedEnd(false);
+    fetchPage(undefined, true);
   };
 
   const handleArchive = async (id: string) => {
@@ -77,11 +80,9 @@ export default function Notifications() {
       toast.error("Couldn't archive");
       return;
     }
-    setPages([]);
-    setReachedEnd(false);
     queryClient.invalidateQueries({ queryKey: ["notif", "unreadCount"] });
     queryClient.invalidateQueries({ queryKey: ["notif", "dropdown"] });
-    refetch();
+    refresh();
   };
 
   const handleMarkAllRead = async () => {
@@ -90,11 +91,9 @@ export default function Notifications() {
       toast.error("Couldn't mark all read");
       return;
     }
-    setPages([]);
-    setReachedEnd(false);
     queryClient.invalidateQueries({ queryKey: ["notif", "unreadCount"] });
     queryClient.invalidateQueries({ queryKey: ["notif", "dropdown"] });
-    refetch();
+    refresh();
   };
 
   const handleRowClick = (n: NotificationRow) => {
@@ -117,7 +116,7 @@ export default function Notifications() {
         </Button>
       </div>
 
-      <Tabs value={filter} onValueChange={(v) => changeFilter(v as NotificationFilter)}>
+      <Tabs value={filter} onValueChange={(v) => setFilter(v as NotificationFilter)}>
         <TabsList>
           <TabsTrigger value="all">All</TabsTrigger>
           <TabsTrigger value="unread">Unread</TabsTrigger>
@@ -125,7 +124,7 @@ export default function Notifications() {
         </TabsList>
       </Tabs>
 
-      {isLoading && items.length === 0 && (
+      {loading && (
         <Card className="divide-y">
           {Array.from({ length: 5 }).map((_, i) => (
             <div key={i} className="p-4 space-y-2">
@@ -136,14 +135,14 @@ export default function Notifications() {
         </Card>
       )}
 
-      {isError && (
+      {error && !loading && (
         <Card className="p-6 text-center space-y-3">
           <p className="text-sm text-muted-foreground">Couldn't load notifications.</p>
-          <Button size="sm" variant="outline" onClick={() => refetch()}>Retry</Button>
+          <Button size="sm" variant="outline" onClick={refresh}>Retry</Button>
         </Card>
       )}
 
-      {!isLoading && !isError && items.length === 0 && (
+      {!loading && !error && items.length === 0 && (
         <Card className="p-10 flex flex-col items-center text-muted-foreground">
           <Bell className="h-10 w-10 mb-3 opacity-40" />
           <p className="text-sm">{emptyCopy}</p>
@@ -199,8 +198,8 @@ export default function Notifications() {
 
       {!reachedEnd && items.length > 0 && (
         <div className="flex justify-center">
-          <Button variant="outline" onClick={loadMore} disabled={isFetching}>
-            {isFetching ? <Loader2 className="h-4 w-4 animate-spin" /> : "Load more"}
+          <Button variant="outline" onClick={loadMore} disabled={loadingMore}>
+            {loadingMore ? <Loader2 className="h-4 w-4 animate-spin" /> : "Load more"}
           </Button>
         </div>
       )}
