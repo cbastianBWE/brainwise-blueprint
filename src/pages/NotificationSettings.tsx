@@ -25,7 +25,8 @@ export default function NotificationSettings() {
     queryFn: async () => {
       const { data, error } = await supabase.rpc("get_notification_preferences");
       if (error) throw error;
-      return (data ?? []) as unknown as NotificationPreferenceRow[];
+      const result = (data ?? {}) as unknown as GetNotificationPreferencesResult;
+      return (result.preferences ?? []) as NotificationPreferenceRow[];
     },
   });
 
