@@ -118,6 +118,7 @@ export default function CompletionConfirmDialog({ target, onClose, invalidateKey
     setSubmitting(true);
     try {
       let error: { message: string } | null = null;
+      let data: any = null;
       if (target.tier === "content_item") {
         const res = await supabase.rpc("set_content_item_completion" as never, {
           p_user_id: target.userId,
@@ -126,6 +127,7 @@ export default function CompletionConfirmDialog({ target, onClose, invalidateKey
           p_reason: reason,
         } as never);
         error = (res as any).error;
+        data = (res as any).data;
       } else if (target.tier === "module") {
         const res = await supabase.rpc("set_module_completion" as never, {
           p_user_id: target.userId,
@@ -134,6 +136,7 @@ export default function CompletionConfirmDialog({ target, onClose, invalidateKey
           p_reason: reason,
         } as never);
         error = (res as any).error;
+        data = (res as any).data;
       } else if (target.tier === "curriculum") {
         const res = await supabase.rpc("set_curriculum_completion" as never, {
           p_assignment_id: target.assignmentId,
@@ -141,6 +144,7 @@ export default function CompletionConfirmDialog({ target, onClose, invalidateKey
           p_reason: reason,
         } as never);
         error = (res as any).error;
+        data = (res as any).data;
       } else {
         const fn = target.complete ? "grant_certification" : "revoke_certification";
         const res = await supabase.rpc(fn, {
@@ -151,10 +155,20 @@ export default function CompletionConfirmDialog({ target, onClose, invalidateKey
       }
       if (error) throw error;
 
-      toast({
-        title: target.complete ? "Marked complete" : "Marked incomplete",
-        description: target.entityName,
-      });
+      const changed = data?.changed;
+      if (changed === false) {
+        toast({
+          title: "No change",
+          description:
+            data?.note ??
+            "This item was already in the requested state. No change was made.",
+        });
+      } else {
+        toast({
+          title: target.complete ? "Marked complete" : "Marked incomplete",
+          description: target.entityName,
+        });
+      }
       qc.invalidateQueries({ queryKey: invalidateKey as unknown as any[] });
       onClose();
     } catch (err: any) {
