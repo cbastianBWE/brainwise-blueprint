@@ -94,7 +94,7 @@ export default function InstrumentSelection({ onSelect }: Props) {
         supabase.from("platform_versions").select("version_string").eq("is_active", true).limit(1).single(),
         supabase.from("assessment_results").select("overall_profile").eq("user_id", user.id).order("created_at", { ascending: false }).limit(1),
         supabase.from("coach_clients_client_view")
-          .select("instrument_id, stripe_payment_intent_id, assessment_id, context_progress, paired_assessment_id")
+          .select("instrument_id, stripe_payment_intent_id, assessment_id, context_progress, paired_assessment_id, invitation_source")
           .eq("client_user_id", user.id)
           .not("stripe_payment_intent_id", "is", null)
           .in("invitation_status", ["sent", "opened", "partially_completed"]),
