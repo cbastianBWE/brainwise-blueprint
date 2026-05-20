@@ -116,6 +116,8 @@ export default function Assessment() {
         instrument_version: data?.version_string || "1.0",
         short_name: shortName,
       });
+      setEntitlementSource('paid_purchase');
+
 
       setSearchParams({}, { replace: true });
     };
