@@ -93,10 +93,12 @@ export default function InstrumentSelection({ onSelect }: Props) {
   const [ptpContextProgress, setPtpContextProgress] = useState<Map<string, string>>(new Map());
   const [airsaAwaiting, setAirsaAwaiting] = useState<{ completed_at: string } | null>(null);
 
+  const [freeCertPoolInstrumentIds, setFreeCertPoolInstrumentIds] = useState<Set<string>>(new Set());
+
   useEffect(() => {
     if (!user) return;
     const load = async () => {
-      const [userRes, versionRes, resultsRes, coachClientsRes, purchasesRes, completedRes, inProgressRes, plansRes, selfPayCoachClientsRes, awaitingRes] = await Promise.all([
+      const [userRes, versionRes, resultsRes, coachClientsRes, purchasesRes, completedRes, inProgressRes, plansRes, selfPayCoachClientsRes, awaitingRes, certsRes] = await Promise.all([
         supabase.from("users").select("subscription_tier, subscription_status").eq("id", user.id).single(),
         supabase.from("platform_versions").select("version_string").eq("is_active", true).limit(1).single(),
         supabase.from("assessment_results").select("overall_profile").eq("user_id", user.id).order("created_at", { ascending: false }).limit(1),
