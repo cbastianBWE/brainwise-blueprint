@@ -36,12 +36,19 @@ interface SelectedInstrument {
   contextType?: 'professional' | 'personal' | 'both';
 }
 
+type EntitlementSource =
+  | 'free_cert_pool'
+  | 'paid_purchase'
+  | 'coach_paid_client'
+  | 'self_pay_coach_invite';
+
 export default function Assessment() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
-  
+
   const [selectedInstrument, setSelectedInstrument] = useState<SelectedInstrument | null>(null);
   const [contextType, setContextType] = useState<'professional' | 'personal' | 'both' | null>(null);
+  const [entitlementSource, setEntitlementSource] = useState<EntitlementSource | null>(null);
   const [epnStarting, setEpnStarting] = useState(false);
 
 
@@ -109,6 +116,8 @@ export default function Assessment() {
         instrument_version: data?.version_string || "1.0",
         short_name: shortName,
       });
+      setEntitlementSource('paid_purchase');
+
 
       setSearchParams({}, { replace: true });
     };
@@ -164,6 +173,7 @@ export default function Assessment() {
       <AssessmentFlow
         instrument={selectedInstrument}
         contextType={contextType}
+        entitlementSource={entitlementSource}
         preexistingAssessmentId={selectedInstrument.preexistingAssessmentId}
         epnAssignmentId={selectedInstrument.epnAssignmentId}
         raterType={selectedInstrument.raterType}
@@ -171,6 +181,7 @@ export default function Assessment() {
         onExit={() => {
           setSelectedInstrument(null);
           setContextType(null);
+          setEntitlementSource(null);
         }}
       />
     );
@@ -273,6 +284,7 @@ export default function Assessment() {
       <InstrumentSelection
         onSelect={(payload) => {
           if (payload.contextType) setContextType(payload.contextType);
+          if (payload.entitlementSource) setEntitlementSource(payload.entitlementSource);
           setSelectedInstrument(payload);
         }}
       />

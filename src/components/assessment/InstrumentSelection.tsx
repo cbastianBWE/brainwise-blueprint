@@ -54,6 +54,12 @@ const INSTRUMENTS = [
   },
 ];
 
+type EntitlementSource =
+  | 'free_cert_pool'
+  | 'paid_purchase'
+  | 'coach_paid_client'
+  | 'self_pay_coach_invite';
+
 interface Props {
   onSelect: (instrument: {
     instrument_id: string;
@@ -61,6 +67,7 @@ interface Props {
     instrument_version: string;
     short_name: string;
     contextType?: 'professional' | 'personal' | 'both';
+    entitlementSource?: EntitlementSource;
   }) => void;
 }
 
@@ -86,10 +93,12 @@ export default function InstrumentSelection({ onSelect }: Props) {
   const [ptpContextProgress, setPtpContextProgress] = useState<Map<string, string>>(new Map());
   const [airsaAwaiting, setAirsaAwaiting] = useState<{ completed_at: string } | null>(null);
 
+  const [freeCertPoolInstrumentIds, setFreeCertPoolInstrumentIds] = useState<Set<string>>(new Set());
+
   useEffect(() => {
     if (!user) return;
     const load = async () => {
-      const [userRes, versionRes, resultsRes, coachClientsRes, purchasesRes, completedRes, inProgressRes, plansRes, selfPayCoachClientsRes, awaitingRes] = await Promise.all([
+      const [userRes, versionRes, resultsRes, coachClientsRes, purchasesRes, completedRes, inProgressRes, plansRes, selfPayCoachClientsRes, awaitingRes, certsRes] = await Promise.all([
         supabase.from("users").select("subscription_tier, subscription_status").eq("id", user.id).single(),
         supabase.from("platform_versions").select("version_string").eq("is_active", true).limit(1).single(),
         supabase.from("assessment_results").select("overall_profile").eq("user_id", user.id).order("created_at", { ascending: false }).limit(1),
@@ -98,7 +107,7 @@ export default function InstrumentSelection({ onSelect }: Props) {
           .eq("client_user_id", user.id)
           .not("stripe_payment_intent_id", "is", null)
           .in("invitation_status", ["sent", "opened", "partially_completed"]),
-        supabase.from("assessment_purchases").select("instrument_id, context_progress").eq("user_id", user.id).is("consumed_at", null),
+        supabase.from("assessment_purchases").select("instrument_id, context_progress").eq("user_id", user.id).is("consumed_at", null).is("coach_client_id", null),
         supabase.from("assessments").select("instrument_id").eq("user_id", user.id).eq("status", "completed"),
         supabase.from("assessments").select("instrument_id").eq("user_id", user.id).eq("status", "in_progress"),
         supabase.from("subscription_plans").select("plan_name, tier, billing_period, price_usd, stripe_price_id").eq("is_active", true),
@@ -117,6 +126,10 @@ export default function InstrumentSelection({ onSelect }: Props) {
           .order("completed_at", { ascending: false })
           .limit(1)
           .maybeSingle(),
+        supabase.from("coach_certifications")
+          .select("certification_type, status, free_assessment_uses, free_uses_expire_at")
+          .eq("user_id", user.id)
+          .in("status", ["in_progress", "certified"]),
       ]);
 
       if (awaitingRes.data) {
@@ -199,6 +212,28 @@ export default function InstrumentSelection({ onSelect }: Props) {
         setActorDebriefInstrumentIds(actorIds);
       }
 
+      // Compute cert-pool eligibility — mirrors link_assessment_to_coach_client trigger branch (b) OR-clause exactly.
+      {
+        const eligible = new Set<string>();
+        const nowMs = Date.now();
+        for (const cert of certsRes.data ?? []) {
+          if (cert.free_uses_expire_at && new Date(cert.free_uses_expire_at).getTime() <= nowMs) continue;
+          const uses = (cert.free_assessment_uses ?? {}) as Record<string, number>;
+          const has = (code: string) => (uses[code] ?? 0) > 0;
+          const ct = cert.certification_type;
+          if (ct === "ptp_coach" && has("INST-001")) eligible.add("INST-001");
+          if (["ai_transformation_coach", "ai_transformation_ptp_coach", "my_brainwise_coach"].includes(ct)) {
+            if (has("INST-002")) eligible.add("INST-002");
+            if (has("INST-003")) eligible.add("INST-003");
+            if (has("INST-004")) eligible.add("INST-004");
+          }
+          if (["ai_transformation_ptp_coach", "my_brainwise_coach"].includes(ct) && has("INST-001")) {
+            eligible.add("INST-001");
+          }
+        }
+        setFreeCertPoolInstrumentIds(eligible);
+      }
+
       // Build per-instrument context_progress map (PTP only in practice).
       {
         const ctxMap = new Map<string, string>();
@@ -263,6 +298,7 @@ export default function InstrumentSelection({ onSelect }: Props) {
   const handleSelect = (
     inst: (typeof INSTRUMENTS)[0],
     contextType?: 'professional' | 'personal' | 'both',
+    entitlementSource?: EntitlementSource,
   ) => {
     onSelect({
       instrument_id: inst.instrument_id,
@@ -270,6 +306,7 @@ export default function InstrumentSelection({ onSelect }: Props) {
       instrument_version: platformVersion || "1.0",
       short_name: inst.short_name,
       ...(contextType ? { contextType } : {}),
+      ...(entitlementSource ? { entitlementSource } : {}),
     });
   };
 
@@ -401,6 +438,7 @@ export default function InstrumentSelection({ onSelect }: Props) {
               const purchaseAccess = hasPurchase;
               const selfPayCoachInvited = selfPayCoachInstrumentIds.has(instrumentUuid);
               const actorDebrief = actorDebriefInstrumentIds.has(instrumentUuid);
+              const hasFreeCertPool = freeCertPoolInstrumentIds.has(inst.instrument_id);
 
               const isInProgress = inProgressInstrumentIds.has(inst.instrument_id);
               const startLabel = isInProgress ? "Continue Assessment" : "Start Assessment";
@@ -420,7 +458,7 @@ export default function InstrumentSelection({ onSelect }: Props) {
                 );
               } else if (subscriptionAccess) {
                 buttonContent = (
-                  <Button className="w-full" onClick={() => handleSelect(inst)}>
+                  <Button className="w-full" onClick={() => handleSelect(inst, undefined, 'paid_purchase')}>
                     {startLabel}
                   </Button>
                 );
@@ -430,7 +468,7 @@ export default function InstrumentSelection({ onSelect }: Props) {
                   buttonContent = (
                     <Button
                       className="w-full bg-accent text-accent-foreground hover:bg-accent/90 border border-primary"
-                      onClick={() => handleSelect(inst, "personal")}
+                      onClick={() => handleSelect(inst, "personal", 'coach_paid_client')}
                     >
                       Continue your PTP — Personal half
                     </Button>
@@ -439,7 +477,7 @@ export default function InstrumentSelection({ onSelect }: Props) {
                   buttonContent = (
                     <Button
                       className="w-full bg-accent text-accent-foreground hover:bg-accent/90 border border-primary"
-                      onClick={() => handleSelect(inst, "professional")}
+                      onClick={() => handleSelect(inst, "professional", 'coach_paid_client')}
                     >
                       Continue your PTP — Professional half
                     </Button>
@@ -448,7 +486,7 @@ export default function InstrumentSelection({ onSelect }: Props) {
                   buttonContent = (
                     <Button
                       className="w-full bg-accent text-accent-foreground hover:bg-accent/90 border border-primary"
-                      onClick={() => handleSelect(inst)}
+                      onClick={() => handleSelect(inst, undefined, 'coach_paid_client')}
                     >
                       {isInProgress ? "Continue Assessment" : "Start Assessment (Coach Paid)"}
                     </Button>
@@ -458,26 +496,37 @@ export default function InstrumentSelection({ onSelect }: Props) {
                 const ptpCtx = inst.instrument_id === "INST-001" ? ptpContextProgress.get(instrumentUuid) : undefined;
                 if (ptpCtx === "professional_done") {
                   buttonContent = (
-                    <Button className="w-full" onClick={() => handleSelect(inst, "personal")}>
+                    <Button className="w-full" onClick={() => handleSelect(inst, "personal", 'paid_purchase')}>
                       Continue your PTP — Personal half
                     </Button>
                   );
                 } else if (ptpCtx === "personal_done") {
                   buttonContent = (
-                    <Button className="w-full" onClick={() => handleSelect(inst, "professional")}>
+                    <Button className="w-full" onClick={() => handleSelect(inst, "professional", 'paid_purchase')}>
                       Continue your PTP — Professional half
                     </Button>
                   );
                 } else {
                   buttonContent = (
-                    <Button className="w-full" onClick={() => handleSelect(inst)}>
+                    <Button className="w-full" onClick={() => handleSelect(inst, undefined, 'paid_purchase')}>
                       {startLabel}
                     </Button>
                   );
                 }
-              } else if (actorDebrief) {
+              } else if (hasFreeCertPool) {
                 buttonContent = (
-                  <Button className="w-full" onClick={() => handleSelect(inst)}>
+                  <Button className="w-full" onClick={() => handleSelect(inst, undefined, 'free_cert_pool')}>
+                    {isInProgress ? "Continue Assessment" : "Start Assessment (Coach Cert)"}
+                  </Button>
+                );
+              } else if (actorDebrief) {
+                // Note: 'coach_paid_client' here conflates the actor-debrief case with the
+                // coach-paid-client-invite case. Both share the same entitlement story: the
+                // coach's pool was already decremented at order time, so the trigger must
+                // not re-decrement on completion. Split into a dedicated enum value later
+                // if per-source analytics are needed.
+                buttonContent = (
+                  <Button className="w-full" onClick={() => handleSelect(inst, undefined, 'coach_paid_client')}>
                     {startLabel}
                   </Button>
                 );
@@ -485,13 +534,13 @@ export default function InstrumentSelection({ onSelect }: Props) {
                 const ptpCtx = inst.instrument_id === "INST-001" ? ptpContextProgress.get(instrumentUuid) : undefined;
                 if (ptpCtx === "professional_done") {
                   buttonContent = (
-                    <Button className="w-full" onClick={() => handleSelect(inst, "personal")}>
+                    <Button className="w-full" onClick={() => handleSelect(inst, "personal", 'self_pay_coach_invite')}>
                       Continue your PTP — Personal half
                     </Button>
                   );
                 } else if (ptpCtx === "personal_done") {
                   buttonContent = (
-                    <Button className="w-full" onClick={() => handleSelect(inst, "professional")}>
+                    <Button className="w-full" onClick={() => handleSelect(inst, "professional", 'self_pay_coach_invite')}>
                       Continue your PTP — Professional half
                     </Button>
                   );
@@ -513,7 +562,7 @@ export default function InstrumentSelection({ onSelect }: Props) {
               return (
                 <Card
                   key={inst.instrument_id}
-                  className={`relative transition-all ${isRecommended ? "ring-2 ring-primary" : ""} ${canBypassAssessmentPaywall || isCorp || subscriptionAccess || coachPaid || selfPayCoachInvited || purchaseAccess || actorDebrief ? "hover:shadow-md" : "opacity-80"}`}
+                  className={`relative transition-all ${isRecommended ? "ring-2 ring-primary" : ""} ${canBypassAssessmentPaywall || isCorp || subscriptionAccess || coachPaid || selfPayCoachInvited || purchaseAccess || actorDebrief || hasFreeCertPool ? "hover:shadow-md" : "opacity-80"}`}
                 >
                   {isRecommended && (
                     <div className="absolute -top-3 left-4">

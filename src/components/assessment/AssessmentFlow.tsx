@@ -51,9 +51,10 @@ interface Props {
   epnAssignmentId?: string;
   raterType?: 'self' | 'manager';
   targetUserName?: string;
+  entitlementSource?: 'free_cert_pool' | 'paid_purchase' | 'coach_paid_client' | 'self_pay_coach_invite' | null;
 }
 
-export default function AssessmentFlow({ instrument, onExit, contextType, preexistingAssessmentId, epnAssignmentId, raterType = 'self', targetUserName }: Props) {
+export default function AssessmentFlow({ instrument, onExit, contextType, preexistingAssessmentId, epnAssignmentId, raterType = 'self', targetUserName, entitlementSource }: Props) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -115,6 +116,16 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
               .eq('id', candidateId);
           }
           setAssessmentId(candidateId);
+          if (entitlementSource && !epnAssignmentId && raterType !== 'manager') {
+            supabase
+              .from("assessments")
+              .update({ entitlement_source: entitlementSource })
+              .eq("id", candidateId)
+              .is("entitlement_source", null)
+              .then(({ error }) => {
+                if (error) console.error("Failed to stamp entitlement_source on resume (non-fatal):", error);
+              });
+          }
           setInitChecked(true);
           return;
         }
@@ -157,6 +168,15 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
       setNeedsAck(false);
       setLoading(true);
       setAssessmentId(newId);
+      if (entitlementSource && !epnAssignmentId && raterType !== 'manager') {
+        supabase
+          .from("assessments")
+          .update({ entitlement_source: entitlementSource })
+          .eq("id", newId)
+          .then(({ error }) => {
+            if (error) console.error("Failed to stamp entitlement_source (non-fatal):", error);
+          });
+      }
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Could not start assessment';
       toast({ title: 'Error', description: msg, variant: 'destructive' });
