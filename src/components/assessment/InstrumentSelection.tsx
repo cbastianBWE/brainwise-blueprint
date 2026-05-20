@@ -126,6 +126,10 @@ export default function InstrumentSelection({ onSelect }: Props) {
           .order("completed_at", { ascending: false })
           .limit(1)
           .maybeSingle(),
+        supabase.from("coach_certifications")
+          .select("certification_type, status, free_assessment_uses, free_uses_expire_at")
+          .eq("user_id", user.id)
+          .in("status", ["in_progress", "certified"]),
       ]);
 
       if (awaitingRes.data) {
