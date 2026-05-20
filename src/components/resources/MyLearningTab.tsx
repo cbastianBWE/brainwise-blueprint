@@ -11,7 +11,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 import { Tile } from "@/components/tile/Tile";
 import type { TileVariant } from "@/components/tile/tileVariants";
-import { resolveThumbnailUrls } from "@/lib/assetUrls";
+import { resolveThumbnailUrls, type ThumbnailMeta } from "@/lib/assetUrls";
 import { enrolledStatusToCompletionStatus } from "@/lib/learningStatus";
 import UpgradeNudgeModal from "./UpgradeNudgeModal";
 import PaidEnrollmentNudgeModal from "./PaidEnrollmentNudgeModal";
@@ -76,7 +76,7 @@ interface SectionProps {
   emptyText: string;
   entityType: EntityType;
   view: "enrolled" | "all_available";
-  thumbnailMap: Map<string, string> | undefined;
+  thumbnailMap: Map<string, ThumbnailMeta> | undefined;
   onTileClick: (entity: any, t: EntityType) => void;
   onEnroll: (entity: any, t: EntityType) => void;
 }
