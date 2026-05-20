@@ -212,6 +212,28 @@ export default function InstrumentSelection({ onSelect }: Props) {
         setActorDebriefInstrumentIds(actorIds);
       }
 
+      // Compute cert-pool eligibility — mirrors link_assessment_to_coach_client trigger branch (b) OR-clause exactly.
+      {
+        const eligible = new Set<string>();
+        const nowMs = Date.now();
+        for (const cert of certsRes.data ?? []) {
+          if (cert.free_uses_expire_at && new Date(cert.free_uses_expire_at).getTime() <= nowMs) continue;
+          const uses = (cert.free_assessment_uses ?? {}) as Record<string, number>;
+          const has = (code: string) => (uses[code] ?? 0) > 0;
+          const ct = cert.certification_type;
+          if (ct === "ptp_coach" && has("INST-001")) eligible.add("INST-001");
+          if (["ai_transformation_coach", "ai_transformation_ptp_coach", "my_brainwise_coach"].includes(ct)) {
+            if (has("INST-002")) eligible.add("INST-002");
+            if (has("INST-003")) eligible.add("INST-003");
+            if (has("INST-004")) eligible.add("INST-004");
+          }
+          if (["ai_transformation_ptp_coach", "my_brainwise_coach"].includes(ct) && has("INST-001")) {
+            eligible.add("INST-001");
+          }
+        }
+        setFreeCertPoolInstrumentIds(eligible);
+      }
+
       // Build per-instrument context_progress map (PTP only in practice).
       {
         const ctxMap = new Map<string, string>();
