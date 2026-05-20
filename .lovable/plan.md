@@ -1,166 +1,54 @@
-# Steps 6–9: Coach free-attempt gate + entitlement_source tagging
+All four questions answered. Shipping as one PR with the locked decisions below.
 
-Frontend-only. Backend already shipped (migrations + webhook v27 + RPC + trigger). Three files.
+### Decisions locked
 
-## 1. `src/components/assessment/InstrumentSelection.tsx`
+- **Icon:** `/brain-icon.png` as-is (verified transparent, orange glyph).
+- **Fallback when `dominantColor` is null:** the existing diagonal navy gradient, composed inside the same `backgroundImage` string as the darkening overlay.
+- **Drop `bg-cover bg-center`** from all three hero `<div>`s (no-ops once no `url(...)` is in the background).
+- **No loading skeleton** for color (backfill complete).
+- Warm-icon-on-warm-bg risk accepted for v1.
 
-### 1a. Filter coach-bought rows (line 101)
+### Files touched (5)
 
-Add `.is("coach_client_id", null)` to the `assessment_purchases` query in the `Promise.all` block.
+1. **`src/lib/assetUrls.ts`**
+   - Export `ThumbnailMeta = { url: string; dominantColor: string | null }`.
+   - Change return type to `Promise<Map<string, ThumbnailMeta>>`.
+   - Extend embed select to `content_assets!...!inner(status, archived_at, dominant_color)`.
+   - Defensive `Array.isArray(row.content_assets)` unwrap when reading `dominant_color`.
 
-### 1b. Load cert pool
+2. **`src/hooks/useAssetResolver.ts`** (line 21 area)
+   - When building the `Record<string, string>`, extract `.url` from each entry so the hook's public shape stays a URL map.
 
-Add to the same `Promise.all`:
+3. **`src/pages/learning/CertPathDetail.tsx`**
+   - Line 177 (hero): replace `heroThumbUrl`/`heroBackground` with the `heroMeta` + overlay-composed pattern below.
+   - Line 413 (child Tile): `?.url ?? null`.
+   - Hero `<div>`: drop `bg-cover bg-center`; add brain icon `<img src="/brain-icon.png" alt="" aria-hidden="true" className="absolute top-4 right-4 h-12 w-12 md:h-14 md:w-14 opacity-90" />` as first child, before the existing `absolute inset-0 ...` overlay container.
+
+4. **`src/pages/learning/CurriculumDetail.tsx`**
+   - Same hero rewrite (line 150 area).
+   - Line 341 (child Tile): `?.url ?? null`.
+
+5. **`src/pages/learning/ModuleDetail.tsx`**
+   - Same hero rewrite (line 174 area).
+
+6. **`src/components/resources/ResourceGridTab.tsx`** (line 163) — `?.url ?? null`.
+
+7. **`src/components/resources/MyLearningTab.tsx`** (line 117) — `?.url ?? null`.
+
+### Hero background snippet (used in all 3 detail pages)
+
 ```ts
-supabase.from("coach_certifications")
-  .select("certification_type, status, free_assessment_uses, free_uses_expire_at")
-  .eq("user_id", user.id)
-  .in("status", ["in_progress", "certified"]),
+const heroMeta = entity.thumbnail_asset_id
+  ? thumbnailMap?.get(entity.thumbnail_asset_id) ?? null
+  : null;
+const overlay = "linear-gradient(to top, rgba(0,0,0,0.6), rgba(0,0,0,0.2))";
+const fallbackBg =
+  "linear-gradient(135deg, var(--bw-navy) 0%, var(--bw-navy-700) 100%)";
+const heroBackground = heroMeta?.dominantColor
+  ? `${overlay}, ${heroMeta.dominantColor}`
+  : `${overlay}, ${fallbackBg}`;
 ```
 
-New state slot near line 87:
-```ts
-const [freeCertPoolInstrumentIds, setFreeCertPoolInstrumentIds] = useState<Set<string>>(new Set());
-```
+### Out of scope
 
-After the query resolves, compute eligible INST codes (mirrors trigger branch (b) eligibility OR-clause exactly):
-```ts
-const eligible = new Set<string>();
-const now = Date.now();
-for (const cert of certsRes.data ?? []) {
-  if (cert.free_uses_expire_at && new Date(cert.free_uses_expire_at).getTime() <= now) continue;
-  const uses = (cert.free_assessment_uses ?? {}) as Record<string, number>;
-  const has = (code: string) => (uses[code] ?? 0) > 0;
-  const ct = cert.certification_type;
-  if (ct === "ptp_coach" && has("INST-001")) eligible.add("INST-001");
-  if (["ai_transformation_coach","ai_transformation_ptp_coach","my_brainwise_coach"].includes(ct)) {
-    if (has("INST-002")) eligible.add("INST-002");
-    if (has("INST-003")) eligible.add("INST-003");
-    if (has("INST-004")) eligible.add("INST-004");
-  }
-  if (["ai_transformation_ptp_coach","my_brainwise_coach"].includes(ct) && has("INST-001")) {
-    eligible.add("INST-001");
-  }
-}
-setFreeCertPoolInstrumentIds(eligible);
-```
-
-### 1c. Props + handleSelect signature
-
-Add `EntitlementSource` type alias; extend `Props.onSelect` with optional `entitlementSource`. Extend `handleSelect` with third arg `entitlementSource?: EntitlementSource`; spread into payload only when defined.
-
-### 1d. Cert-pool branch in render
-
-In the per-card render, after `const actorDebrief = ...`:
-```ts
-const hasFreeCertPool = freeCertPoolInstrumentIds.has(inst.instrument_id);
-```
-
-Insert between `purchaseAccess` (ends line 477) and `actorDebrief` (starts line 478):
-```tsx
-} else if (hasFreeCertPool) {
-  buttonContent = (
-    <Button className="w-full" onClick={() => handleSelect(inst, undefined, 'free_cert_pool')}>
-      {isInProgress ? "Continue Assessment" : "Start Assessment (Coach Cert)"}
-    </Button>
-  );
-}
-```
-No PTP context 3-way (cert-pool doesn't track half-completion via `ptpContextProgress`; `isInProgress` covers resume).
-
-### 1e. Update hover className (line 516)
-
-Append `|| hasFreeCertPool` to the `hover:shadow-md` condition.
-
-### 1f. Tag every existing branch
-
-| Branch | Third arg to handleSelect |
-|---|---|
-| `canBypassAssessmentPaywall` | omit (super admin) |
-| `isCorp` | omit (corporate-funded) |
-| `subscriptionAccess` | `'paid_purchase'` |
-| `coachPaid` (all 3 PTP sub-cases) | `'coach_paid_client'` |
-| `purchaseAccess` (all 3 PTP sub-cases) | `'paid_purchase'` |
-| `hasFreeCertPool` | `'free_cert_pool'` |
-| `actorDebrief` | `'coach_paid_client'` + inline comment |
-| `selfPayCoachInvited` default (Stripe dialog) | omit — checkout will trigger fresh start via autostart path; tag set there |
-| `selfPayCoachInvited` PTP continuation cases | `'self_pay_coach_invite'` |
-| else (pricing nav) | n/a |
-
-Inline comment above the `actorDebrief` branch:
-```ts
-// Note: 'coach_paid_client' here conflates the actor-debrief case with the
-// coach-paid-client-invite case. Both share the same entitlement story:
-// the coach's pool was already decremented at order time, so the trigger
-// must not re-decrement on completion. Split into a dedicated enum value
-// later if per-source analytics are needed.
-```
-
-## 2. `src/pages/Assessment.tsx`
-
-Add state near line 44:
-```ts
-const [entitlementSource, setEntitlementSource] = useState<
-  'free_cert_pool' | 'paid_purchase' | 'coach_paid_client' | 'self_pay_coach_invite' | null
->(null);
-```
-
-Update `<InstrumentSelection onSelect>` to capture `payload.entitlementSource`.
-
-Pass `entitlementSource={entitlementSource}` to `<AssessmentFlow>`. Reset to `null` in `onExit`.
-
-The post-payment autostart `useEffect` (lines 79–106): set `entitlementSource` to `'paid_purchase'` when autostart fires (the user just paid via Stripe checkout).
-
-EPN (`handleStartEpn`) and manager AIRSA (`handleStartManagerAirsa`) paths: do **not** set `entitlementSource`. Leave null.
-
-## 3. `src/components/assessment/AssessmentFlow.tsx`
-
-### 3a. Props
-
-Add to `Props` interface (line 41):
-```ts
-entitlementSource?: 'free_cert_pool' | 'paid_purchase' | 'coach_paid_client' | 'self_pay_coach_invite' | null;
-```
-Destructure on line 56.
-
-### 3b. Phase 1 init (resume path)
-
-After `setAssessmentId(candidateId)` on line 117, fire-and-forget atomic UPDATE — only writes if currently NULL. Skip when EPN or manager:
-```ts
-if (entitlementSource && !epnAssignmentId && raterType !== 'manager') {
-  supabase
-    .from("assessments")
-    .update({ entitlement_source: entitlementSource })
-    .eq("id", candidateId)
-    .is("entitlement_source", null)
-    .then(({ error }) => {
-      if (error) console.error("Failed to stamp entitlement_source on resume (non-fatal):", error);
-    });
-}
-```
-
-### 3c. handleAcknowledgmentConfirm (fresh start)
-
-After `setAssessmentId(newId)` on line 159, inside the try, before the catch — fire-and-forget unconditional UPDATE (row was just created, guaranteed NULL). Skip when EPN or manager:
-```ts
-if (entitlementSource && !epnAssignmentId && raterType !== 'manager') {
-  supabase
-    .from("assessments")
-    .update({ entitlement_source: entitlementSource })
-    .eq("id", newId)
-    .then(({ error }) => {
-      if (error) console.error("Failed to stamp entitlement_source (non-fatal):", error);
-    });
-}
-```
-
-Best-effort. Failure mode: trigger branch (b) won't decrement pool → user gets a free attempt without pool drain. Favors the user; acceptable.
-
-## Verification after merge
-
-- Cheryl (certified PTP coach, pool=0, 2 coach-bought purchases): all 4 cards → paywall. No "Start" on PTP.
-- Patrice (new PTP coach, INST-001:6): INST-001 → "Start Assessment (Coach Cert)". INST-002/003/004 → paywall.
-- Patrice completes PTP via cert pool → `coach_certifications.free_assessment_uses['INST-001']` drops from 6 to 5. Re-visit `/assessment` confirms.
-- Brand-new individual base tier: all 4 → paywall (unchanged).
-- Subscribed individual: subscriptionAccess fires first, `entitlement_source='paid_purchase'` stamped.
-- `consume_assessment_purchase` continues to no-op when user has no self-redeemable rows (coach-bought rows now correctly excluded by RPC).
+Tile components, editors, RPCs, edge functions, backend. Frontend-only.

@@ -160,7 +160,7 @@ export default function ResourceGridTab({ tab, emptyStateText }: ResourceGridTab
                     summary={r.summary}
                     thumbnailUrl={
                       r.thumbnail_asset_id
-                        ? thumbnailMap?.get(r.thumbnail_asset_id) ?? null
+                        ? thumbnailMap?.get(r.thumbnail_asset_id)?.url ?? null
                         : null
                     }
                     contentType={r.content_type}
