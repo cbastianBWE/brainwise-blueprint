@@ -2981,6 +2981,7 @@ export type Database = {
           asset_kind: string
           created_at: string
           current_version_id: string | null
+          dominant_color: string | null
           id: string
           is_library_asset: boolean
           library_name: string | null
@@ -2997,6 +2998,7 @@ export type Database = {
           asset_kind: string
           created_at?: string
           current_version_id?: string | null
+          dominant_color?: string | null
           id?: string
           is_library_asset?: boolean
           library_name?: string | null
@@ -3013,6 +3015,7 @@ export type Database = {
           asset_kind?: string
           created_at?: string
           current_version_id?: string | null
+          dominant_color?: string | null
           id?: string
           is_library_asset?: boolean
           library_name?: string | null
