@@ -24,7 +24,7 @@ export function useAssetResolver(assetIds: (string | null | undefined)[]) {
 
   const urls = useMemo(() => {
     const out: Record<string, string> = {};
-    if (data) for (const [k, v] of data.entries()) out[k] = v;
+    if (data) for (const [k, v] of data.entries()) out[k] = v.url;
     return out;
   }, [data]);
 

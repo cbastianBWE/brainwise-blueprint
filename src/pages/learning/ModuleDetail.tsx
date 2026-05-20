@@ -170,13 +170,16 @@ export default function ModuleDetail() {
     );
   }
 
-  const heroThumbUrl = module_.thumbnail_asset_id
+  const heroMeta = module_.thumbnail_asset_id
     ? thumbnailMap?.get(module_.thumbnail_asset_id) ?? null
     : null;
 
-  const heroBackground = heroThumbUrl
-    ? `linear-gradient(to top, rgba(0,0,0,0.6), rgba(0,0,0,0.2)), url(${heroThumbUrl})`
-    : `linear-gradient(to top, rgba(0,0,0,0.6), rgba(0,0,0,0.2)), linear-gradient(135deg, var(--bw-navy) 0%, var(--bw-navy-700) 100%)`;
+  const heroOverlay = "linear-gradient(to top, rgba(0,0,0,0.6), rgba(0,0,0,0.2))";
+  const heroFallback =
+    "linear-gradient(135deg, var(--bw-navy) 0%, var(--bw-navy-700) 100%)";
+  const heroBackground = heroMeta?.dominantColor
+    ? `${heroOverlay}, ${heroMeta.dominantColor}`
+    : `${heroOverlay}, ${heroFallback}`;
 
   const isCompleted = moduleCompletion?.status === "completed";
   const hasAnyItemCompleted = contentItems.some(
@@ -263,9 +266,15 @@ export default function ModuleDetail() {
 
       {/* Hero */}
       <div
-        className="relative h-[180px] md:h-[240px] lg:h-[320px] w-full bg-cover bg-center"
+        className="relative h-[180px] md:h-[240px] lg:h-[320px] w-full"
         style={{ backgroundImage: heroBackground }}
       >
+        <img
+          src="/brain-icon.png"
+          alt=""
+          aria-hidden="true"
+          className="absolute top-4 right-4 h-12 w-12 md:h-14 md:w-14 opacity-90 pointer-events-none"
+        />
         <div className="absolute inset-0 flex flex-col justify-between p-4 md:p-6">
           <div />
           <div className="flex items-end justify-between gap-4">

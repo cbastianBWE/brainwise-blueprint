@@ -114,7 +114,7 @@ function Section({
                 summary={entity.description}
                 thumbnailUrl={
                   entity.thumbnail_asset_id
-                    ? thumbnailMap?.get(entity.thumbnail_asset_id) ?? null
+                    ? thumbnailMap?.get(entity.thumbnail_asset_id)?.url ?? null
                     : null
                 }
                 status={status}
