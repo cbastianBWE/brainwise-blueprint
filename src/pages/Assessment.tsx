@@ -284,6 +284,7 @@ export default function Assessment() {
       <InstrumentSelection
         onSelect={(payload) => {
           if (payload.contextType) setContextType(payload.contextType);
+          if (payload.entitlementSource) setEntitlementSource(payload.entitlementSource);
           setSelectedInstrument(payload);
         }}
       />
