@@ -438,6 +438,7 @@ export default function InstrumentSelection({ onSelect }: Props) {
               const purchaseAccess = hasPurchase;
               const selfPayCoachInvited = selfPayCoachInstrumentIds.has(instrumentUuid);
               const actorDebrief = actorDebriefInstrumentIds.has(instrumentUuid);
+              const hasFreeCertPool = freeCertPoolInstrumentIds.has(inst.instrument_id);
 
               const isInProgress = inProgressInstrumentIds.has(inst.instrument_id);
               const startLabel = isInProgress ? "Continue Assessment" : "Start Assessment";
@@ -457,7 +458,7 @@ export default function InstrumentSelection({ onSelect }: Props) {
                 );
               } else if (subscriptionAccess) {
                 buttonContent = (
-                  <Button className="w-full" onClick={() => handleSelect(inst)}>
+                  <Button className="w-full" onClick={() => handleSelect(inst, undefined, 'paid_purchase')}>
                     {startLabel}
                   </Button>
                 );
@@ -467,7 +468,7 @@ export default function InstrumentSelection({ onSelect }: Props) {
                   buttonContent = (
                     <Button
                       className="w-full bg-accent text-accent-foreground hover:bg-accent/90 border border-primary"
-                      onClick={() => handleSelect(inst, "personal")}
+                      onClick={() => handleSelect(inst, "personal", 'coach_paid_client')}
                     >
                       Continue your PTP — Personal half
                     </Button>
@@ -476,7 +477,7 @@ export default function InstrumentSelection({ onSelect }: Props) {
                   buttonContent = (
                     <Button
                       className="w-full bg-accent text-accent-foreground hover:bg-accent/90 border border-primary"
-                      onClick={() => handleSelect(inst, "professional")}
+                      onClick={() => handleSelect(inst, "professional", 'coach_paid_client')}
                     >
                       Continue your PTP — Professional half
                     </Button>
@@ -485,7 +486,7 @@ export default function InstrumentSelection({ onSelect }: Props) {
                   buttonContent = (
                     <Button
                       className="w-full bg-accent text-accent-foreground hover:bg-accent/90 border border-primary"
-                      onClick={() => handleSelect(inst)}
+                      onClick={() => handleSelect(inst, undefined, 'coach_paid_client')}
                     >
                       {isInProgress ? "Continue Assessment" : "Start Assessment (Coach Paid)"}
                     </Button>
@@ -495,26 +496,37 @@ export default function InstrumentSelection({ onSelect }: Props) {
                 const ptpCtx = inst.instrument_id === "INST-001" ? ptpContextProgress.get(instrumentUuid) : undefined;
                 if (ptpCtx === "professional_done") {
                   buttonContent = (
-                    <Button className="w-full" onClick={() => handleSelect(inst, "personal")}>
+                    <Button className="w-full" onClick={() => handleSelect(inst, "personal", 'paid_purchase')}>
                       Continue your PTP — Personal half
                     </Button>
                   );
                 } else if (ptpCtx === "personal_done") {
                   buttonContent = (
-                    <Button className="w-full" onClick={() => handleSelect(inst, "professional")}>
+                    <Button className="w-full" onClick={() => handleSelect(inst, "professional", 'paid_purchase')}>
                       Continue your PTP — Professional half
                     </Button>
                   );
                 } else {
                   buttonContent = (
-                    <Button className="w-full" onClick={() => handleSelect(inst)}>
+                    <Button className="w-full" onClick={() => handleSelect(inst, undefined, 'paid_purchase')}>
                       {startLabel}
                     </Button>
                   );
                 }
-              } else if (actorDebrief) {
+              } else if (hasFreeCertPool) {
                 buttonContent = (
-                  <Button className="w-full" onClick={() => handleSelect(inst)}>
+                  <Button className="w-full" onClick={() => handleSelect(inst, undefined, 'free_cert_pool')}>
+                    {isInProgress ? "Continue Assessment" : "Start Assessment (Coach Cert)"}
+                  </Button>
+                );
+              } else if (actorDebrief) {
+                // Note: 'coach_paid_client' here conflates the actor-debrief case with the
+                // coach-paid-client-invite case. Both share the same entitlement story: the
+                // coach's pool was already decremented at order time, so the trigger must
+                // not re-decrement on completion. Split into a dedicated enum value later
+                // if per-source analytics are needed.
+                buttonContent = (
+                  <Button className="w-full" onClick={() => handleSelect(inst, undefined, 'coach_paid_client')}>
                     {startLabel}
                   </Button>
                 );
@@ -522,13 +534,13 @@ export default function InstrumentSelection({ onSelect }: Props) {
                 const ptpCtx = inst.instrument_id === "INST-001" ? ptpContextProgress.get(instrumentUuid) : undefined;
                 if (ptpCtx === "professional_done") {
                   buttonContent = (
-                    <Button className="w-full" onClick={() => handleSelect(inst, "personal")}>
+                    <Button className="w-full" onClick={() => handleSelect(inst, "personal", 'self_pay_coach_invite')}>
                       Continue your PTP — Personal half
                     </Button>
                   );
                 } else if (ptpCtx === "personal_done") {
                   buttonContent = (
-                    <Button className="w-full" onClick={() => handleSelect(inst, "professional")}>
+                    <Button className="w-full" onClick={() => handleSelect(inst, "professional", 'self_pay_coach_invite')}>
                       Continue your PTP — Professional half
                     </Button>
                   );
@@ -550,7 +562,7 @@ export default function InstrumentSelection({ onSelect }: Props) {
               return (
                 <Card
                   key={inst.instrument_id}
-                  className={`relative transition-all ${isRecommended ? "ring-2 ring-primary" : ""} ${canBypassAssessmentPaywall || isCorp || subscriptionAccess || coachPaid || selfPayCoachInvited || purchaseAccess || actorDebrief ? "hover:shadow-md" : "opacity-80"}`}
+                  className={`relative transition-all ${isRecommended ? "ring-2 ring-primary" : ""} ${canBypassAssessmentPaywall || isCorp || subscriptionAccess || coachPaid || selfPayCoachInvited || purchaseAccess || actorDebrief || hasFreeCertPool ? "hover:shadow-md" : "opacity-80"}`}
                 >
                   {isRecommended && (
                     <div className="absolute -top-3 left-4">
