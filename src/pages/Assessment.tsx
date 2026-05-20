@@ -36,12 +36,19 @@ interface SelectedInstrument {
   contextType?: 'professional' | 'personal' | 'both';
 }
 
+type EntitlementSource =
+  | 'free_cert_pool'
+  | 'paid_purchase'
+  | 'coach_paid_client'
+  | 'self_pay_coach_invite';
+
 export default function Assessment() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
-  
+
   const [selectedInstrument, setSelectedInstrument] = useState<SelectedInstrument | null>(null);
   const [contextType, setContextType] = useState<'professional' | 'personal' | 'both' | null>(null);
+  const [entitlementSource, setEntitlementSource] = useState<EntitlementSource | null>(null);
   const [epnStarting, setEpnStarting] = useState(false);
 
 
