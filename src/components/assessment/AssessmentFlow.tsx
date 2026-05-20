@@ -116,6 +116,16 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
               .eq('id', candidateId);
           }
           setAssessmentId(candidateId);
+          if (entitlementSource && !epnAssignmentId && raterType !== 'manager') {
+            supabase
+              .from("assessments")
+              .update({ entitlement_source: entitlementSource })
+              .eq("id", candidateId)
+              .is("entitlement_source", null)
+              .then(({ error }) => {
+                if (error) console.error("Failed to stamp entitlement_source on resume (non-fatal):", error);
+              });
+          }
           setInitChecked(true);
           return;
         }
