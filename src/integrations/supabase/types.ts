@@ -662,6 +662,7 @@ export type Database = {
       assessment_purchases: {
         Row: {
           amount_paid: number
+          coach_client_id: string | null
           consumed_at: string | null
           consumed_by_assessment_id: string | null
           context_progress: string | null
@@ -680,6 +681,7 @@ export type Database = {
         }
         Insert: {
           amount_paid: number
+          coach_client_id?: string | null
           consumed_at?: string | null
           consumed_by_assessment_id?: string | null
           context_progress?: string | null
@@ -698,6 +700,7 @@ export type Database = {
         }
         Update: {
           amount_paid?: number
+          coach_client_id?: string | null
           consumed_at?: string | null
           consumed_by_assessment_id?: string | null
           context_progress?: string | null
@@ -715,6 +718,20 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "assessment_purchases_coach_client_id_fkey"
+            columns: ["coach_client_id"]
+            isOneToOne: false
+            referencedRelation: "coach_clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessment_purchases_coach_client_id_fkey"
+            columns: ["coach_client_id"]
+            isOneToOne: false
+            referencedRelation: "coach_clients_client_view"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "assessment_purchases_consumed_by_assessment_id_fkey"
             columns: ["consumed_by_assessment_id"]
@@ -954,6 +971,7 @@ export type Database = {
         Row: {
           completed_at: string | null
           context_type: string | null
+          entitlement_source: string | null
           id: string
           instrument_id: string
           instrument_version: string
@@ -971,6 +989,7 @@ export type Database = {
         Insert: {
           completed_at?: string | null
           context_type?: string | null
+          entitlement_source?: string | null
           id?: string
           instrument_id: string
           instrument_version: string
@@ -988,6 +1007,7 @@ export type Database = {
         Update: {
           completed_at?: string | null
           context_type?: string | null
+          entitlement_source?: string | null
           id?: string
           instrument_id?: string
           instrument_version?: string
