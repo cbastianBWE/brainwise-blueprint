@@ -153,9 +153,12 @@ export default function CurriculumDetail() {
   const heroOverlay = "linear-gradient(to top, rgba(0,0,0,0.6), rgba(0,0,0,0.2))";
   const heroFallback =
     "linear-gradient(135deg, var(--bw-navy) 0%, var(--bw-navy-700) 100%)";
-  const heroBackground = heroMeta?.dominantColor
-    ? `${heroOverlay}, ${heroMeta.dominantColor}`
+  // Bare hex colors are not valid in background-image; split solid into
+  // background-color and keep gradient(s) in background-image.
+  const heroBackgroundImage = heroMeta?.dominantColor
+    ? heroOverlay
     : `${heroOverlay}, ${heroFallback}`;
+  const heroBackgroundColor = heroMeta?.dominantColor ?? "transparent";
 
   const isCompleted = userAssignment?.status === "completed";
   const isEnrolled = !!userAssignment;
