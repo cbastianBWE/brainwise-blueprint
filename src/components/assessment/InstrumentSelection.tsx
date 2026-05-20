@@ -54,6 +54,12 @@ const INSTRUMENTS = [
   },
 ];
 
+type EntitlementSource =
+  | 'free_cert_pool'
+  | 'paid_purchase'
+  | 'coach_paid_client'
+  | 'self_pay_coach_invite';
+
 interface Props {
   onSelect: (instrument: {
     instrument_id: string;
@@ -61,6 +67,7 @@ interface Props {
     instrument_version: string;
     short_name: string;
     contextType?: 'professional' | 'personal' | 'both';
+    entitlementSource?: EntitlementSource;
   }) => void;
 }
 
