@@ -245,7 +245,7 @@ export default function CertPathDetail() {
       {/* Hero */}
       <div
         className="relative h-[180px] md:h-[240px] lg:h-[320px] w-full"
-        style={{ backgroundImage: heroBackground }}
+        style={{ backgroundImage: heroBackgroundImage, backgroundColor: heroBackgroundColor }}
       >
         <img
           src="/brain-icon.png"
