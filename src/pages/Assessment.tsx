@@ -173,6 +173,7 @@ export default function Assessment() {
       <AssessmentFlow
         instrument={selectedInstrument}
         contextType={contextType}
+        entitlementSource={entitlementSource}
         preexistingAssessmentId={selectedInstrument.preexistingAssessmentId}
         epnAssignmentId={selectedInstrument.epnAssignmentId}
         raterType={selectedInstrument.raterType}
@@ -180,6 +181,7 @@ export default function Assessment() {
         onExit={() => {
           setSelectedInstrument(null);
           setContextType(null);
+          setEntitlementSource(null);
         }}
       />
     );
