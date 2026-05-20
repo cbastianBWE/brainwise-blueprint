@@ -298,6 +298,7 @@ export default function InstrumentSelection({ onSelect }: Props) {
   const handleSelect = (
     inst: (typeof INSTRUMENTS)[0],
     contextType?: 'professional' | 'personal' | 'both',
+    entitlementSource?: EntitlementSource,
   ) => {
     onSelect({
       instrument_id: inst.instrument_id,
@@ -305,6 +306,7 @@ export default function InstrumentSelection({ onSelect }: Props) {
       instrument_version: platformVersion || "1.0",
       short_name: inst.short_name,
       ...(contextType ? { contextType } : {}),
+      ...(entitlementSource ? { entitlementSource } : {}),
     });
   };
 
