@@ -168,6 +168,15 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
       setNeedsAck(false);
       setLoading(true);
       setAssessmentId(newId);
+      if (entitlementSource && !epnAssignmentId && raterType !== 'manager') {
+        supabase
+          .from("assessments")
+          .update({ entitlement_source: entitlementSource })
+          .eq("id", newId)
+          .then(({ error }) => {
+            if (error) console.error("Failed to stamp entitlement_source (non-fatal):", error);
+          });
+      }
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Could not start assessment';
       toast({ title: 'Error', description: msg, variant: 'destructive' });
