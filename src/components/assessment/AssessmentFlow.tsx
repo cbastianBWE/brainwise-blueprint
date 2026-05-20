@@ -51,9 +51,10 @@ interface Props {
   epnAssignmentId?: string;
   raterType?: 'self' | 'manager';
   targetUserName?: string;
+  entitlementSource?: 'free_cert_pool' | 'paid_purchase' | 'coach_paid_client' | 'self_pay_coach_invite' | null;
 }
 
-export default function AssessmentFlow({ instrument, onExit, contextType, preexistingAssessmentId, epnAssignmentId, raterType = 'self', targetUserName }: Props) {
+export default function AssessmentFlow({ instrument, onExit, contextType, preexistingAssessmentId, epnAssignmentId, raterType = 'self', targetUserName, entitlementSource }: Props) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
