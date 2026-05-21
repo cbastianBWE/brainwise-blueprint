@@ -11,7 +11,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 import { Tile } from "@/components/tile/Tile";
 import type { TileVariant } from "@/components/tile/tileVariants";
-import { resolveThumbnailUrls, type ThumbnailMeta } from "@/lib/assetUrls";
+import { resolveTierThumbnailUrls, type ThumbnailMeta } from "@/lib/assetUrls";
 import { enrolledStatusToCompletionStatus } from "@/lib/learningStatus";
 import UpgradeNudgeModal from "./UpgradeNudgeModal";
 import PaidEnrollmentNudgeModal from "./PaidEnrollmentNudgeModal";
@@ -241,22 +241,86 @@ export default function MyLearningTab() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [view, enrolledSections, availableSections, search]);
 
-  const assetIds = useMemo(() => {
-    const ids = new Set<string>();
-    const collect = (arr: any[]) => {
-      for (const it of arr) if (it?.thumbnail_asset_id) ids.add(it.thumbnail_asset_id);
-    };
-    collect(visibleSections.certPaths);
-    collect(visibleSections.standaloneCurricula);
-    collect(visibleSections.standaloneModules);
-    return Array.from(ids).sort();
-  }, [visibleSections]);
+  // Collect entity ids per tier so we can call the SECURITY DEFINER tier
+  // thumbnail RPC for each type. Items missing thumbnail_asset_id are
+  // skipped (no point asking the RPC for them).
+  const certPathIds = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          visibleSections.certPaths
+            .filter((e) => e?.thumbnail_asset_id)
+            .map((e) => e.cert_path_id)
+            .filter((id): id is string => typeof id === "string"),
+        ),
+      ).sort(),
+    [visibleSections.certPaths],
+  );
+  const curriculumIds = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          visibleSections.standaloneCurricula
+            .filter((e) => e?.thumbnail_asset_id)
+            .map((e) => e.curriculum_id)
+            .filter((id): id is string => typeof id === "string"),
+        ),
+      ).sort(),
+    [visibleSections.standaloneCurricula],
+  );
+  const moduleIds = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          visibleSections.standaloneModules
+            .filter((e) => e?.thumbnail_asset_id)
+            .map((e) => e.module_id)
+            .filter((id): id is string => typeof id === "string"),
+        ),
+      ).sort(),
+    [visibleSections.standaloneModules],
+  );
 
-  const { data: thumbnailMap } = useQuery({
-    queryKey: ["thumbnail-urls", assetIds],
-    queryFn: () => resolveThumbnailUrls(assetIds),
-    enabled: assetIds.length > 0,
+  const certPathThumbQuery = useQuery({
+    queryKey: ["tier-thumb", "cert_path", certPathIds],
+    queryFn: () => resolveTierThumbnailUrls("cert_path", certPathIds),
+    enabled: certPathIds.length > 0,
   });
+  const curriculumThumbQuery = useQuery({
+    queryKey: ["tier-thumb", "curriculum", curriculumIds],
+    queryFn: () => resolveTierThumbnailUrls("curriculum", curriculumIds),
+    enabled: curriculumIds.length > 0,
+  });
+  const moduleThumbQuery = useQuery({
+    queryKey: ["tier-thumb", "module", moduleIds],
+    queryFn: () => resolveTierThumbnailUrls("module", moduleIds),
+    enabled: moduleIds.length > 0,
+  });
+
+  // Re-index Map<entity_id, url> → Map<thumbnail_asset_id, ThumbnailMeta>
+  // so the existing Section component keeps reading
+  // `thumbnailMap?.get(entity.thumbnail_asset_id)?.url` unchanged.
+  const thumbnailMap = useMemo(() => {
+    const out = new Map<string, ThumbnailMeta>();
+    const fold = (entities: any[], urlMap: Map<string, string> | undefined, idKey: string) => {
+      if (!urlMap) return;
+      for (const e of entities) {
+        const url = urlMap.get(e?.[idKey]);
+        if (url && e?.thumbnail_asset_id) {
+          out.set(e.thumbnail_asset_id, { url, dominantColor: null });
+        }
+      }
+    };
+    fold(visibleSections.certPaths, certPathThumbQuery.data, "cert_path_id");
+    fold(visibleSections.standaloneCurricula, curriculumThumbQuery.data, "curriculum_id");
+    fold(visibleSections.standaloneModules, moduleThumbQuery.data, "module_id");
+    return out;
+  }, [
+    visibleSections,
+    certPathThumbQuery.data,
+    curriculumThumbQuery.data,
+    moduleThumbQuery.data,
+  ]);
 
   const handleTileClick = (entity: any, t: EntityType) => {
     if (entity.is_accessible === false) {

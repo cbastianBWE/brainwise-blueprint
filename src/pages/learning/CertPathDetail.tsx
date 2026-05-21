@@ -12,7 +12,7 @@ import {
   INSTRUMENT_BADGE_LABEL,
   type InstrumentCode,
 } from "@/components/tile/tileVariants";
-import { resolveThumbnailUrls } from "@/lib/assetUrls";
+import { resolveTierThumbnailRows, resolveTierThumbnailUrls } from "@/lib/assetUrls";
 import { enrolledStatusToCompletionStatus } from "@/lib/learningStatus";
 import PaidEnrollmentNudgeModal from "@/components/resources/PaidEnrollmentNudgeModal";
 
@@ -92,19 +92,30 @@ export default function CertPathDetail() {
   const curricula: any[] = data?.curricula ?? [];
   const dimensions: any[] = data?.dimension_competencies ?? [];
 
-  const assetIds = useMemo(() => {
-    const ids = new Set<string>();
-    if (certPath?.thumbnail_asset_id) ids.add(certPath.thumbnail_asset_id);
-    for (const c of curricula) {
-      if (c?.thumbnail_asset_id) ids.add(c.thumbnail_asset_id);
-    }
-    return Array.from(ids).sort();
-  }, [certPath, curricula]);
+  const curriculumIds = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          curricula
+            .filter((c) => c?.thumbnail_asset_id)
+            .map((c) => c.curriculum_id)
+            .filter((id): id is string => typeof id === "string"),
+        ),
+      ).sort(),
+    [curricula],
+  );
 
-  const { data: thumbnailMap } = useQuery({
-    queryKey: ["thumbnail-urls", assetIds],
-    queryFn: () => resolveThumbnailUrls(assetIds),
-    enabled: assetIds.length > 0,
+  const { data: heroMap } = useQuery({
+    queryKey: ["tier-thumb-rows", "cert_path", certPathId],
+    queryFn: () =>
+      resolveTierThumbnailRows("cert_path", certPathId ? [certPathId] : []),
+    enabled: !!certPathId,
+  });
+
+  const { data: curriculaThumbMap } = useQuery({
+    queryKey: ["tier-thumb", "curriculum", curriculumIds],
+    queryFn: () => resolveTierThumbnailUrls("curriculum", curriculumIds),
+    enabled: curriculumIds.length > 0,
   });
 
   const handleEnroll = async () => {
@@ -173,9 +184,8 @@ export default function CertPathDetail() {
     );
   }
 
-  const heroMeta = certPath.thumbnail_asset_id
-    ? thumbnailMap?.get(certPath.thumbnail_asset_id) ?? null
-    : null;
+  const heroMeta = certPathId ? heroMap?.get(certPathId) ?? null : null;
+
 
   const heroOverlay = "linear-gradient(to top, rgba(0,0,0,0.6), rgba(0,0,0,0.2))";
   const heroFallback =
@@ -420,11 +430,7 @@ export default function CertPathDetail() {
                 variant="curriculum"
                 name={c.name}
                 summary={c.description}
-                thumbnailUrl={
-                  c.thumbnail_asset_id
-                    ? thumbnailMap?.get(c.thumbnail_asset_id)?.url ?? null
-                    : null
-                }
+                thumbnailUrl={curriculaThumbMap?.get(c.curriculum_id) ?? null}
                 status={enrolledStatusToCompletionStatus(
                   c.user_assignment?.status,
                 )}
