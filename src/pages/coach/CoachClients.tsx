@@ -554,7 +554,7 @@ export default function CoachClients() {
     });
     if (error) {
       const map: Record<string, string> = {
-        actor_debrief_cap_reached: "You have used all 3 actor debriefs for this certification.",
+        actor_debrief_cap_reached: "You have used all 4 actor debriefs for this certification.",
         free_use_window_expired: "Your free certification-practice window has expired.",
         actor_debrief_not_supported_for_cert_type: "Actor debriefs are not available for this certification type yet.",
         not_your_certification: "That certification does not belong to you.",
