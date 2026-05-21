@@ -896,16 +896,18 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
         <h1 className="text-2xl font-bold text-foreground">
           {viewLabel ?? (isCoachView ? "Client Results" : "My Results")}
         </h1>
-        {assessments.length > 1 && (
+        {dropdownEntries.length > 1 && (
           <Select value={selectedId} onValueChange={setSelectedId}>
             <SelectTrigger className="w-full sm:w-72">
               <SelectValue placeholder="Select assessment" />
             </SelectTrigger>
             <SelectContent>
-              {assessments.map((a) => (
+              {dropdownEntries.map((a) => (
                 <SelectItem key={a.result.id} value={a.result.id}>
                   {a.isAwaitingSupervisor
                     ? `AIRSA — Awaiting Supervisor (${format(new Date(a.completed_at!), "MMM yyyy")})`
+                    : a.isPTP && a.context_type === 'both'
+                    ? `${a.instrument_name} — ${format(new Date(a.completed_at!), "MMM yyyy")}`
                     : a.isPTP && a.context_type
                     ? `PTP ${a.context_type.charAt(0).toUpperCase() + a.context_type.slice(1)} — ${format(new Date(a.completed_at!), "MMM yyyy")}`
                     : `${a.instrument_name} — ${format(new Date(a.completed_at!), "MMM yyyy")}`
