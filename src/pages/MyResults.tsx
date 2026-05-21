@@ -144,6 +144,7 @@ interface AssessmentWithResult {
   scale_type: string | null;
   isPTP: boolean;
   context_type: string | null;
+  paired_assessment_id: string | null;
   isAwaitingSupervisor?: boolean;
   pairedManager?: {
     id: string;
