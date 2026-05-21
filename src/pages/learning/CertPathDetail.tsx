@@ -430,11 +430,7 @@ export default function CertPathDetail() {
                 variant="curriculum"
                 name={c.name}
                 summary={c.description}
-                thumbnailUrl={
-                  c.thumbnail_asset_id
-                    ? thumbnailMap?.get(c.thumbnail_asset_id)?.url ?? null
-                    : null
-                }
+                thumbnailUrl={curriculaThumbMap?.get(c.curriculum_id) ?? null}
                 status={enrolledStatusToCompletionStatus(
                   c.user_assignment?.status,
                 )}

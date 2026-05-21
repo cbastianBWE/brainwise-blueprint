@@ -7,7 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Tile } from "@/components/tile/Tile";
-import { resolveThumbnailUrls } from "@/lib/assetUrls";
+import { resolveTierThumbnailRows, resolveTierThumbnailUrls } from "@/lib/assetUrls";
 import { enrolledStatusToCompletionStatus } from "@/lib/learningStatus";
 import PaidEnrollmentNudgeModal from "@/components/resources/PaidEnrollmentNudgeModal";
 
@@ -64,19 +64,30 @@ export default function CurriculumDetail() {
   const modules: any[] = data?.modules ?? [];
   const parentCertPaths: any[] = data?.parent_cert_paths ?? [];
 
-  const assetIds = useMemo(() => {
-    const ids = new Set<string>();
-    if (curriculum?.thumbnail_asset_id) ids.add(curriculum.thumbnail_asset_id);
-    for (const m of modules) {
-      if (m?.thumbnail_asset_id) ids.add(m.thumbnail_asset_id);
-    }
-    return Array.from(ids).sort();
-  }, [curriculum, modules]);
+  const moduleIds = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          modules
+            .filter((m) => m?.thumbnail_asset_id)
+            .map((m) => m.module_id)
+            .filter((id): id is string => typeof id === "string"),
+        ),
+      ).sort(),
+    [modules],
+  );
 
-  const { data: thumbnailMap } = useQuery({
-    queryKey: ["thumbnail-urls", assetIds],
-    queryFn: () => resolveThumbnailUrls(assetIds),
-    enabled: assetIds.length > 0,
+  const { data: heroMap } = useQuery({
+    queryKey: ["tier-thumb-rows", "curriculum", curriculumId],
+    queryFn: () =>
+      resolveTierThumbnailRows("curriculum", curriculumId ? [curriculumId] : []),
+    enabled: !!curriculumId,
+  });
+
+  const { data: moduleThumbMap } = useQuery({
+    queryKey: ["tier-thumb", "module", moduleIds],
+    queryFn: () => resolveTierThumbnailUrls("module", moduleIds),
+    enabled: moduleIds.length > 0,
   });
 
   const handleEnroll = async () => {
@@ -146,9 +157,8 @@ export default function CurriculumDetail() {
     );
   }
 
-  const heroMeta = curriculum.thumbnail_asset_id
-    ? thumbnailMap?.get(curriculum.thumbnail_asset_id) ?? null
-    : null;
+  const heroMeta = curriculumId ? heroMap?.get(curriculumId) ?? null : null;
+
 
   const heroOverlay = "linear-gradient(to top, rgba(0,0,0,0.6), rgba(0,0,0,0.2))";
   const heroFallback =
