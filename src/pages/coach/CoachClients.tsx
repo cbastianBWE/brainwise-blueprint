@@ -105,6 +105,9 @@ export default function CoachClients() {
     && (!actorCert.free_uses_expire_at || new Date(actorCert.free_uses_expire_at) > new Date())
     && actorsUsed < 4;
 
+  const canOrderAssessment = allowedInstrumentIds.size > 0 || canOfferActorDebrief;
+  const actorOnlyMode = certsLoaded && allowedInstrumentIds.size === 0 && canOfferActorDebrief;
+
   const fetchClients = async () => {
     if (!user) return;
     setLoading(true);
