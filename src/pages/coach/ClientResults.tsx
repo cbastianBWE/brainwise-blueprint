@@ -16,8 +16,13 @@ interface ClientInfo {
 
 interface AssessmentInfo {
   assessment_id: string;
+  instrument_id: string | null;
   instrument_name: string;
   completed_at: string;
+  context_type: 'professional' | 'personal' | 'both' | null;
+  paired_assessment_id: string | null;
+  isPTP: boolean;
+  isPairedPTP: boolean;
 }
 
 export default function ClientResults() {
