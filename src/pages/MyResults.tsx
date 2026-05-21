@@ -498,6 +498,49 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
     [assessments, selectedId]
   );
 
+  // Dropdown entries: collapse paired PTPs (one professional + one personal whose paired_assessment_id
+  // mutually reference each other) into a single umbrella entry keyed on the professional row's result.id.
+  // Single-context PTPs and non-PTP rows pass through unchanged. Two professional retakes will NOT
+  // collapse because their paired_assessment_id points at a personal row, not at each other.
+  const dropdownEntries = useMemo<AssessmentWithResult[]>(() => {
+    const idToAssessment = new Map(assessments.map((a) => [a.result.assessment_id, a]));
+    const consumed = new Set<string>();
+    const out: AssessmentWithResult[] = [];
+    for (const a of assessments) {
+      if (consumed.has(a.result.assessment_id)) continue;
+      if (
+        a.isPTP &&
+        a.paired_assessment_id &&
+        (a.context_type === 'professional' || a.context_type === 'personal')
+      ) {
+        const partner = idToAssessment.get(a.paired_assessment_id);
+        if (
+          partner &&
+          partner.isPTP &&
+          partner.paired_assessment_id === a.result.assessment_id &&
+          (partner.context_type === 'professional' || partner.context_type === 'personal') &&
+          partner.context_type !== a.context_type
+        ) {
+          const pro = a.context_type === 'professional' ? a : partner;
+          const per = a.context_type === 'personal' ? a : partner;
+          const latest =
+            new Date(pro.completed_at ?? 0).getTime() >= new Date(per.completed_at ?? 0).getTime()
+              ? pro.completed_at
+              : per.completed_at;
+          out.push({ ...pro, completed_at: latest, context_type: 'both' });
+          consumed.add(pro.result.assessment_id);
+          consumed.add(per.result.assessment_id);
+          continue;
+        }
+      }
+      out.push(a);
+      consumed.add(a.result.assessment_id);
+    }
+    out.sort((x, y) => new Date(y.completed_at ?? 0).getTime() - new Date(x.completed_at ?? 0).getTime());
+    return out;
+  }, [assessments]);
+
+
   const isNAI = (selected?.result.instrument_id ?? "").includes("INST-002");
 
   // PTP tab logic
