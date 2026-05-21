@@ -387,7 +387,11 @@ function AssessmentList({
                 <div className="min-w-0">
                   <p className="font-medium truncate">{a.instrument_name}</p>
                   <p className="text-sm text-muted-foreground">
-                    {new Date(a.completed_at).toLocaleDateString()}
+                    {a.isPTP && a.isPairedPTP
+                      ? `Professional + Personal · ${new Date(a.completed_at).toLocaleDateString()}`
+                      : a.isPTP && (a.context_type === 'professional' || a.context_type === 'personal')
+                      ? `${a.context_type === 'professional' ? 'Professional' : 'Personal'} · ${new Date(a.completed_at).toLocaleDateString()}`
+                      : new Date(a.completed_at).toLocaleDateString()}
                   </p>
                 </div>
               </CardContent>
