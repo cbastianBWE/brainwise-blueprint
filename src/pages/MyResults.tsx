@@ -434,7 +434,7 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
       let filtered = combined;
       if (isCoachView && coachUserId && shareWithCoach === false) {
         const { data: linkedRows } = await supabase
-          .from("coach_clients_client_view")
+          .from("coach_clients")
           .select("assessment_id, paired_assessment_id")
           .eq("coach_user_id", coachUserId)
           .eq("client_user_id", effectiveUserId)
