@@ -1045,11 +1045,12 @@ export default function CoachClients() {
                 disabled={certsLoaded && allowedInstrumentIds.size === 0}
                 onClick={() => {
                   resetForm();
+                  if (actorOnlyMode) setIsActorDebrief(true);
                   setEmail(selectedClientEmail);
                   setModalOpen(true);
                 }}
                 title={certsLoaded && allowedInstrumentIds.size === 0
-                  ? "You need an active certification to order assessments"
+                  ? (actorOnlyMode ? "Available after certification" : "You need an active certification to order assessments")
                   : undefined}
               >
                 <Plus className="h-3 w-3" /> Order Assessment for This Client
