@@ -302,7 +302,7 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
       const assessmentIds = results.map((r) => r.assessment_id);
       const { data: assessmentRows } = await supabase
         .from("assessments")
-        .select("id, completed_at, instrument_id, context_type")
+        .select("id, completed_at, instrument_id, context_type, paired_assessment_id")
         .in("id", assessmentIds);
 
       // Get unique instrument IDs
