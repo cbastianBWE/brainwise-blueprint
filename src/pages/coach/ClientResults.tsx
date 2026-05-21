@@ -261,7 +261,7 @@ function AssessmentList({
         }
       }
 
-      // Fetch instrument names for display
+      // Fetch instrument names + assessment context/pairing for display
       const instrumentIds = [
         ...new Set(resultRows.map((r) => r.instrument_id).filter(Boolean)),
       ];
@@ -276,15 +276,80 @@ function AssessmentList({
         );
       }
 
-      setAssessments(
-        resultRows.map((r) => ({
+      const fetchedAssessmentIds = resultRows.map((r) => r.assessment_id);
+      let assessmentMeta: Record<string, { context_type: string | null; paired_assessment_id: string | null }> = {};
+      if (fetchedAssessmentIds.length > 0) {
+        const { data: aRows } = await supabase
+          .from("assessments")
+          .select("id, context_type, paired_assessment_id")
+          .in("id", fetchedAssessmentIds);
+        assessmentMeta = Object.fromEntries(
+          (aRows ?? []).map((a) => [a.id, { context_type: a.context_type ?? null, paired_assessment_id: a.paired_assessment_id ?? null }])
+        );
+      }
+
+      // Build raw enriched entries
+      const fetchedIdSet = new Set(fetchedAssessmentIds);
+      const rawEntries: AssessmentInfo[] = resultRows.map((r) => {
+        const meta = assessmentMeta[r.assessment_id];
+        const isPTP = (r.instrument_id ?? "").toUpperCase().includes("INST-001");
+        return {
           assessment_id: r.assessment_id,
+          instrument_id: r.instrument_id,
           instrument_name:
-            (r.instrument_id && instrumentMap[r.instrument_id]) ||
-            "Assessment",
+            (r.instrument_id && instrumentMap[r.instrument_id]) || "Assessment",
           completed_at: r.created_at,
-        }))
-      );
+          context_type: (meta?.context_type as AssessmentInfo['context_type']) ?? null,
+          paired_assessment_id: meta?.paired_assessment_id ?? null,
+          isPTP,
+          isPairedPTP: false,
+        };
+      });
+
+      // Group paired PTPs: collapse (professional, personal) pairs whose paired_assessment_id mutually references each other
+      // into ONE entry keyed on the professional assessment_id. Two professional retakes will NOT collapse (their
+      // paired_assessment_id points at a personal row, not at each other).
+      const consumed = new Set<string>();
+      const grouped: AssessmentInfo[] = [];
+      for (const e of rawEntries) {
+        if (consumed.has(e.assessment_id)) continue;
+        if (
+          e.isPTP &&
+          e.paired_assessment_id &&
+          fetchedIdSet.has(e.paired_assessment_id) &&
+          (e.context_type === 'professional' || e.context_type === 'personal')
+        ) {
+          const partner = rawEntries.find(
+            (p) =>
+              p.assessment_id === e.paired_assessment_id &&
+              p.isPTP &&
+              p.paired_assessment_id === e.assessment_id &&
+              (p.context_type === 'professional' || p.context_type === 'personal') &&
+              p.context_type !== e.context_type
+          );
+          if (partner) {
+            const pro = e.context_type === 'professional' ? e : partner;
+            const per = e.context_type === 'personal' ? e : partner;
+            const latest = new Date(pro.completed_at) >= new Date(per.completed_at) ? pro.completed_at : per.completed_at;
+            grouped.push({
+              ...pro,
+              completed_at: latest,
+              context_type: 'both',
+              isPairedPTP: true,
+            });
+            consumed.add(pro.assessment_id);
+            consumed.add(per.assessment_id);
+            continue;
+          }
+        }
+        grouped.push(e);
+        consumed.add(e.assessment_id);
+      }
+
+      // Re-sort by completed_at desc (grouping may have shifted dates)
+      grouped.sort((a, b) => new Date(b.completed_at).getTime() - new Date(a.completed_at).getTime());
+
+      setAssessments(grouped);
       setLoading(false);
     })();
   }, [clientUserId, coachUserId]);
