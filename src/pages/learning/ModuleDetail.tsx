@@ -22,7 +22,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { resolveThumbnailUrls } from "@/lib/assetUrls";
+import { resolveTierThumbnailRows } from "@/lib/assetUrls";
 import { CONTENT_ITEM_TYPE_LABEL } from "@/components/tile/tileVariants";
 import PaidEnrollmentNudgeModal from "@/components/resources/PaidEnrollmentNudgeModal";
 
@@ -89,19 +89,11 @@ export default function ModuleDetail() {
   const parentCurricula: any[] = data?.parent_curricula ?? [];
   const parentCertPaths: any[] = data?.parent_cert_paths ?? [];
 
-  const assetIds = useMemo(() => {
-    const ids = new Set<string>();
-    if (module_?.thumbnail_asset_id) ids.add(module_.thumbnail_asset_id);
-    for (const ci of contentItems) {
-      if (ci?.thumbnail_asset_id) ids.add(ci.thumbnail_asset_id);
-    }
-    return Array.from(ids).sort();
-  }, [module_, contentItems]);
-
-  const { data: thumbnailMap } = useQuery({
-    queryKey: ["thumbnail-urls", assetIds],
-    queryFn: () => resolveThumbnailUrls(assetIds),
-    enabled: assetIds.length > 0,
+  const { data: heroMap } = useQuery({
+    queryKey: ["tier-thumb-rows", "module", moduleId],
+    queryFn: () =>
+      resolveTierThumbnailRows("module", moduleId ? [moduleId] : []),
+    enabled: !!moduleId,
   });
 
   const handleEnroll = async () => {
@@ -170,9 +162,8 @@ export default function ModuleDetail() {
     );
   }
 
-  const heroMeta = module_.thumbnail_asset_id
-    ? thumbnailMap?.get(module_.thumbnail_asset_id) ?? null
-    : null;
+  const heroMeta = moduleId ? heroMap?.get(moduleId) ?? null : null;
+
 
   const heroOverlay = "linear-gradient(to top, rgba(0,0,0,0.6), rgba(0,0,0,0.2))";
   const heroFallback =

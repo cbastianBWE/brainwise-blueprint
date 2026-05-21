@@ -358,11 +358,7 @@ export default function CurriculumDetail() {
                 variant="module"
                 name={m.name}
                 summary={m.description}
-                thumbnailUrl={
-                  m.thumbnail_asset_id
-                    ? thumbnailMap?.get(m.thumbnail_asset_id)?.url ?? null
-                    : null
-                }
+                thumbnailUrl={moduleThumbMap?.get(m.module_id) ?? null}
                 status={enrolledStatusToCompletionStatus(
                   m.module_completion?.status,
                 )}
