@@ -144,6 +144,7 @@ interface AssessmentWithResult {
   scale_type: string | null;
   isPTP: boolean;
   context_type: string | null;
+  paired_assessment_id: string | null;
   isAwaitingSupervisor?: boolean;
   pairedManager?: {
     id: string;
@@ -301,7 +302,7 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
       const assessmentIds = results.map((r) => r.assessment_id);
       const { data: assessmentRows } = await supabase
         .from("assessments")
-        .select("id, completed_at, instrument_id, context_type")
+        .select("id, completed_at, instrument_id, context_type, paired_assessment_id")
         .in("id", assessmentIds);
 
       // Get unique instrument IDs
@@ -342,6 +343,7 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
           scale_type: instrument?.scale_type ?? null,
           isPTP: (r.instrument_id ?? "").toUpperCase().includes("INST-001"),
           context_type: assessmentMap.get(r.assessment_id)?.context_type ?? null,
+          paired_assessment_id: (assessmentMap.get(r.assessment_id) as any)?.paired_assessment_id ?? null,
         };
       });
 
@@ -411,6 +413,7 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
             scale_type: null,
             isPTP: false,
             context_type: null,
+            paired_assessment_id: row.paired_assessment_id ?? null,
             isAwaitingSupervisor: true,
             pairedManager,
           });
@@ -494,6 +497,49 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
     () => assessments.find((a) => a.result.id === selectedId),
     [assessments, selectedId]
   );
+
+  // Dropdown entries: collapse paired PTPs (one professional + one personal whose paired_assessment_id
+  // mutually reference each other) into a single umbrella entry keyed on the professional row's result.id.
+  // Single-context PTPs and non-PTP rows pass through unchanged. Two professional retakes will NOT
+  // collapse because their paired_assessment_id points at a personal row, not at each other.
+  const dropdownEntries = useMemo<AssessmentWithResult[]>(() => {
+    const idToAssessment = new Map(assessments.map((a) => [a.result.assessment_id, a]));
+    const consumed = new Set<string>();
+    const out: AssessmentWithResult[] = [];
+    for (const a of assessments) {
+      if (consumed.has(a.result.assessment_id)) continue;
+      if (
+        a.isPTP &&
+        a.paired_assessment_id &&
+        (a.context_type === 'professional' || a.context_type === 'personal')
+      ) {
+        const partner = idToAssessment.get(a.paired_assessment_id);
+        if (
+          partner &&
+          partner.isPTP &&
+          partner.paired_assessment_id === a.result.assessment_id &&
+          (partner.context_type === 'professional' || partner.context_type === 'personal') &&
+          partner.context_type !== a.context_type
+        ) {
+          const pro = a.context_type === 'professional' ? a : partner;
+          const per = a.context_type === 'personal' ? a : partner;
+          const latest =
+            new Date(pro.completed_at ?? 0).getTime() >= new Date(per.completed_at ?? 0).getTime()
+              ? pro.completed_at
+              : per.completed_at;
+          out.push({ ...pro, completed_at: latest, context_type: 'both' });
+          consumed.add(pro.result.assessment_id);
+          consumed.add(per.result.assessment_id);
+          continue;
+        }
+      }
+      out.push(a);
+      consumed.add(a.result.assessment_id);
+    }
+    out.sort((x, y) => new Date(y.completed_at ?? 0).getTime() - new Date(x.completed_at ?? 0).getTime());
+    return out;
+  }, [assessments]);
+
 
   const isNAI = (selected?.result.instrument_id ?? "").includes("INST-002");
 
@@ -850,16 +896,18 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
         <h1 className="text-2xl font-bold text-foreground">
           {viewLabel ?? (isCoachView ? "Client Results" : "My Results")}
         </h1>
-        {assessments.length > 1 && (
+        {dropdownEntries.length > 1 && (
           <Select value={selectedId} onValueChange={setSelectedId}>
             <SelectTrigger className="w-full sm:w-72">
               <SelectValue placeholder="Select assessment" />
             </SelectTrigger>
             <SelectContent>
-              {assessments.map((a) => (
+              {dropdownEntries.map((a) => (
                 <SelectItem key={a.result.id} value={a.result.id}>
                   {a.isAwaitingSupervisor
                     ? `AIRSA — Awaiting Supervisor (${format(new Date(a.completed_at!), "MMM yyyy")})`
+                    : a.isPTP && a.context_type === 'both'
+                    ? `${a.instrument_name} — ${format(new Date(a.completed_at!), "MMM yyyy")}`
                     : a.isPTP && a.context_type
                     ? `PTP ${a.context_type.charAt(0).toUpperCase() + a.context_type.slice(1)} — ${format(new Date(a.completed_at!), "MMM yyyy")}`
                     : `${a.instrument_name} — ${format(new Date(a.completed_at!), "MMM yyyy")}`
