@@ -9694,6 +9694,10 @@ export type Database = {
           out_size_bytes: number
         }[]
       }
+      get_thumbnail_urls_for_entities: {
+        Args: { p_entity_ids: string[]; p_entity_type: string }
+        Returns: Json
+      }
       get_unread_notification_count: { Args: never; Returns: number }
       get_user_learning_state: { Args: { p_user_id: string }; Returns: Json }
       get_user_notifications: {
