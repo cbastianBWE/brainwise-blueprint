@@ -230,17 +230,20 @@ function AssessmentList({
           .order("created_at", { ascending: false });
         resultRows = data ?? [];
       } else {
-        // Only show results linked via coach_clients
+        // Only show results linked via coach_clients (include paired_assessment_id for PTP)
         const { data: linked } = await supabase
           .from("coach_clients")
-          .select("assessment_id")
+          .select("assessment_id, paired_assessment_id")
           .eq("coach_user_id", coachUserId)
-          .eq("client_user_id", clientUserId)
-          .not("assessment_id", "is", null);
+          .eq("client_user_id", clientUserId);
 
-        const linkedIds = (linked ?? [])
-          .map((r) => r.assessment_id)
-          .filter((id): id is string => !!id);
+        const linkedIds = [
+          ...new Set(
+            (linked ?? [])
+              .flatMap((r) => [r.assessment_id, r.paired_assessment_id])
+              .filter((id): id is string => !!id)
+          ),
+        ];
 
         if (linkedIds.length > 0) {
           const { data } = await supabase
@@ -348,12 +351,12 @@ function CoachResultsView({
     (async () => {
       setPermLoading(true);
 
-      // Check if assessment was ordered through coach flow
+      // Check if assessment was ordered through coach flow (match either assessment_id or paired_assessment_id for PTP)
       const { data: coachClient } = await supabase
         .from("coach_clients")
         .select("id")
         .eq("coach_user_id", coachUserId)
-        .eq("assessment_id", assessmentId)
+        .or(`assessment_id.eq.${assessmentId},paired_assessment_id.eq.${assessmentId}`)
         .maybeSingle();
 
       if (coachClient) {
