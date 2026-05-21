@@ -658,6 +658,96 @@ export default function CoachClients() {
     }
   };
 
+  const sharedFormFields = (
+    <div className="space-y-3 mt-4">
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-1">
+          <Label className="text-sm">First Name</Label>
+          <Input value={firstName} onChange={e => setFirstName(e.target.value)} placeholder="Jane" />
+        </div>
+        <div className="space-y-1">
+          <Label className="text-sm">Last Name</Label>
+          <Input value={lastName} onChange={e => setLastName(e.target.value)} placeholder="Doe" />
+        </div>
+      </div>
+      <div className="space-y-1">
+        <Label className="text-sm">Client Email</Label>
+        <Input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="jane@company.com" />
+      </div>
+      <div className="space-y-1">
+        <Label className="text-sm">Personal Note <span className="text-muted-foreground">(optional)</span></Label>
+        <Textarea value={note} onChange={e => setNote(e.target.value)} placeholder="A brief message to your client..." rows={2} />
+      </div>
+      {(isActorDebrief || actorOnlyMode) ? (
+        <div className="space-y-2">
+          <Label className="text-sm">Assessment Instrument</Label>
+          <div className="rounded-md border border-border p-3 text-sm">
+            <span className="font-medium">Instrument:</span> PTP (Personal Threat Profile){actorOnlyMode ? " — covered by your in-progress certification." : ""}
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          <Label className="text-sm">Assessment Instruments <span className="text-muted-foreground">(select at least one)</span></Label>
+          <div className={`space-y-2 rounded-md border p-3 ${instrumentError ? "border-destructive" : "border-border"}`}>
+            {INSTRUMENTS.filter(inst => allowedInstrumentIds.has(inst.id)).map(inst => (
+              <label key={inst.id} className="flex items-start gap-3 cursor-pointer">
+                <Checkbox
+                  checked={selectedInstruments.includes(inst.id)}
+                  onCheckedChange={() => toggleInstrument(inst.id)}
+                  className="mt-0.5"
+                />
+                <div className="flex-1">
+                  <span className="font-medium text-sm">{inst.id}</span>
+                  <span className="text-muted-foreground text-xs ml-2">— {inst.name}</span>
+                  <p className="text-xs text-muted-foreground mt-0.5">{inst.desc}</p>
+                </div>
+              </label>
+            ))}
+            {certsLoaded && allowedInstrumentIds.size === 0 && (
+              <div className="rounded-md border border-dashed border-muted-foreground/30 p-4 text-sm text-muted-foreground">
+                You don't have any active certifications. Complete a certification path to start ordering assessments for clients.{" "}
+                <a href="/certifications" className="text-primary underline underline-offset-2">View certifications</a>
+              </div>
+            )}
+          </div>
+          {instrumentError && (
+            <p className="text-xs text-destructive">Please select at least one instrument.</p>
+          )}
+          {selectedInstruments.length > 0 && (
+            <p className="text-xs text-muted-foreground">
+              {selectedInstruments.length} instrument{selectedInstruments.length !== 1 ? "s" : ""} selected
+              {" "}— {perAssessmentPrice !== null
+                ? `$${(selectedInstruments.length * perAssessmentPrice).toFixed(2)} total`
+                : "loading price…"}
+            </p>
+          )}
+        </div>
+      )}
+      <div className="flex items-center justify-between rounded-md border p-3">
+        <div className="space-y-0.5">
+          <Label className="text-sm">Allow client to see results immediately</Label>
+          <p className="text-xs text-muted-foreground">If off, client must wait for coach debrief before viewing results</p>
+        </div>
+        <Switch checked={resultsReleased} onCheckedChange={setResultsReleased} />
+      </div>
+      {canOfferActorDebrief && (
+        <div className="flex items-center justify-between rounded-md border p-3">
+          <div className="space-y-0.5 pr-3">
+            <Label className="text-sm">This is an actor debrief (certification practice)</Label>
+            <p className="text-xs text-muted-foreground">
+              {actorOnlyMode
+                ? `You're in your certification practice phase — only actor debriefs are available until you're fully certified. ${4 - actorsUsed} of 4 remaining.`
+                : `Covered by your certification — no payment required. ${4 - actorsUsed} of 4 remaining.`}
+            </p>
+          </div>
+          <Switch checked={isActorDebrief} onCheckedChange={setIsActorDebrief} disabled={actorOnlyMode} />
+        </div>
+      )}
+    </div>
+  );
+
+
+
   return (
     <div className="py-8 px-4 max-w-7xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
