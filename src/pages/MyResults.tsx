@@ -413,6 +413,7 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
             scale_type: null,
             isPTP: false,
             context_type: null,
+            paired_assessment_id: row.paired_assessment_id ?? null,
             isAwaitingSupervisor: true,
             pairedManager,
           });
