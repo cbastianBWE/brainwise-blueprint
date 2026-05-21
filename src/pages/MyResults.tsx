@@ -343,6 +343,7 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
           scale_type: instrument?.scale_type ?? null,
           isPTP: (r.instrument_id ?? "").toUpperCase().includes("INST-001"),
           context_type: assessmentMap.get(r.assessment_id)?.context_type ?? null,
+          paired_assessment_id: (assessmentMap.get(r.assessment_id) as any)?.paired_assessment_id ?? null,
         };
       });
 
