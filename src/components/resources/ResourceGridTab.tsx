@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Tile } from "@/components/tile/Tile";
 import { useResourceAccessLog } from "@/hooks/useResourceAccessLog";
-import { resolveThumbnailUrls } from "@/lib/assetUrls";
+import { resolveTierThumbnailUrls } from "@/lib/assetUrls";
 import UpgradeNudgeModal from "./UpgradeNudgeModal";
 import type { Resource, ResourceTab, UpgradeEntityType } from "./types";
 
@@ -45,18 +45,25 @@ export default function ResourceGridTab({ tab, emptyStateText }: ResourceGridTab
 
   const resources = tab.resources ?? [];
 
-  const assetIds = useMemo(() => {
-    const ids = new Set<string>();
-    for (const r of resources) {
-      if (r.thumbnail_asset_id) ids.add(r.thumbnail_asset_id);
-    }
-    return Array.from(ids).sort();
-  }, [resources]);
+  // Resource thumbnails route through the SECURITY DEFINER tier RPC keyed
+  // by resource_id, not asset_id, so trainees can read thumbnails on
+  // resources gated by their own access rules.
+  const resourceIds = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          resources
+            .filter((r) => r.thumbnail_asset_id)
+            .map((r) => r.resource_id),
+        ),
+      ).sort(),
+    [resources],
+  );
 
   const { data: thumbnailMap } = useQuery({
-    queryKey: ["thumbnail-urls", assetIds],
-    queryFn: () => resolveThumbnailUrls(assetIds),
-    enabled: assetIds.length > 0,
+    queryKey: ["tier-thumb", "resource", resourceIds],
+    queryFn: () => resolveTierThumbnailUrls("resource", resourceIds),
+    enabled: resourceIds.length > 0,
   });
 
   const filtered = useMemo(() => {
@@ -158,11 +165,7 @@ export default function ResourceGridTab({ tab, emptyStateText }: ResourceGridTab
                     variant="resource"
                     name={r.title}
                     summary={r.summary}
-                    thumbnailUrl={
-                      r.thumbnail_asset_id
-                        ? thumbnailMap?.get(r.thumbnail_asset_id)?.url ?? null
-                        : null
-                    }
+                    thumbnailUrl={thumbnailMap?.get(r.resource_id) ?? null}
                     contentType={r.content_type}
                     locked={!r.is_accessible}
                     externalLink={
