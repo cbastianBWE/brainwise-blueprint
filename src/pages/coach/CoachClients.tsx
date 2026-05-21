@@ -105,6 +105,9 @@ export default function CoachClients() {
     && (!actorCert.free_uses_expire_at || new Date(actorCert.free_uses_expire_at) > new Date())
     && actorsUsed < 4;
 
+  const canOrderAssessment = allowedInstrumentIds.size > 0 || canOfferActorDebrief;
+  const actorOnlyMode = certsLoaded && allowedInstrumentIds.size === 0 && canOfferActorDebrief;
+
   const fetchClients = async () => {
     if (!user) return;
     setLoading(true);
@@ -551,7 +554,7 @@ export default function CoachClients() {
     });
     if (error) {
       const map: Record<string, string> = {
-        actor_debrief_cap_reached: "You have used all 3 actor debriefs for this certification.",
+        actor_debrief_cap_reached: "You have used all 4 actor debriefs for this certification.",
         free_use_window_expired: "Your free certification-practice window has expired.",
         actor_debrief_not_supported_for_cert_type: "Actor debriefs are not available for this certification type yet.",
         not_your_certification: "That certification does not belong to you.",
@@ -655,6 +658,96 @@ export default function CoachClients() {
     }
   };
 
+  const sharedFormFields = (
+    <div className="space-y-3 mt-4">
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-1">
+          <Label className="text-sm">First Name</Label>
+          <Input value={firstName} onChange={e => setFirstName(e.target.value)} placeholder="Jane" />
+        </div>
+        <div className="space-y-1">
+          <Label className="text-sm">Last Name</Label>
+          <Input value={lastName} onChange={e => setLastName(e.target.value)} placeholder="Doe" />
+        </div>
+      </div>
+      <div className="space-y-1">
+        <Label className="text-sm">Client Email</Label>
+        <Input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="jane@company.com" />
+      </div>
+      <div className="space-y-1">
+        <Label className="text-sm">Personal Note <span className="text-muted-foreground">(optional)</span></Label>
+        <Textarea value={note} onChange={e => setNote(e.target.value)} placeholder="A brief message to your client..." rows={2} />
+      </div>
+      {(isActorDebrief || actorOnlyMode) ? (
+        <div className="space-y-2">
+          <Label className="text-sm">Assessment Instrument</Label>
+          <div className="rounded-md border border-border p-3 text-sm">
+            <span className="font-medium">Instrument:</span> PTP (Personal Threat Profile){actorOnlyMode ? " — covered by your in-progress certification." : ""}
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          <Label className="text-sm">Assessment Instruments <span className="text-muted-foreground">(select at least one)</span></Label>
+          <div className={`space-y-2 rounded-md border p-3 ${instrumentError ? "border-destructive" : "border-border"}`}>
+            {INSTRUMENTS.filter(inst => allowedInstrumentIds.has(inst.id)).map(inst => (
+              <label key={inst.id} className="flex items-start gap-3 cursor-pointer">
+                <Checkbox
+                  checked={selectedInstruments.includes(inst.id)}
+                  onCheckedChange={() => toggleInstrument(inst.id)}
+                  className="mt-0.5"
+                />
+                <div className="flex-1">
+                  <span className="font-medium text-sm">{inst.id}</span>
+                  <span className="text-muted-foreground text-xs ml-2">— {inst.name}</span>
+                  <p className="text-xs text-muted-foreground mt-0.5">{inst.desc}</p>
+                </div>
+              </label>
+            ))}
+            {certsLoaded && allowedInstrumentIds.size === 0 && (
+              <div className="rounded-md border border-dashed border-muted-foreground/30 p-4 text-sm text-muted-foreground">
+                You don't have any active certifications. Complete a certification path to start ordering assessments for clients.{" "}
+                <a href="/certifications" className="text-primary underline underline-offset-2">View certifications</a>
+              </div>
+            )}
+          </div>
+          {instrumentError && (
+            <p className="text-xs text-destructive">Please select at least one instrument.</p>
+          )}
+          {selectedInstruments.length > 0 && (
+            <p className="text-xs text-muted-foreground">
+              {selectedInstruments.length} instrument{selectedInstruments.length !== 1 ? "s" : ""} selected
+              {" "}— {perAssessmentPrice !== null
+                ? `$${(selectedInstruments.length * perAssessmentPrice).toFixed(2)} total`
+                : "loading price…"}
+            </p>
+          )}
+        </div>
+      )}
+      <div className="flex items-center justify-between rounded-md border p-3">
+        <div className="space-y-0.5">
+          <Label className="text-sm">Allow client to see results immediately</Label>
+          <p className="text-xs text-muted-foreground">If off, client must wait for coach debrief before viewing results</p>
+        </div>
+        <Switch checked={resultsReleased} onCheckedChange={setResultsReleased} />
+      </div>
+      {canOfferActorDebrief && (
+        <div className="flex items-center justify-between rounded-md border p-3">
+          <div className="space-y-0.5 pr-3">
+            <Label className="text-sm">This is an actor debrief (certification practice)</Label>
+            <p className="text-xs text-muted-foreground">
+              {actorOnlyMode
+                ? `You're in your certification practice phase — only actor debriefs are available until you're fully certified. ${4 - actorsUsed} of 4 remaining.`
+                : `Covered by your certification — no payment required. ${4 - actorsUsed} of 4 remaining.`}
+            </p>
+          </div>
+          <Switch checked={isActorDebrief} onCheckedChange={setIsActorDebrief} disabled={actorOnlyMode} />
+        </div>
+      )}
+    </div>
+  );
+
+
+
   return (
     <div className="py-8 px-4 max-w-7xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
@@ -662,7 +755,7 @@ export default function CoachClients() {
           <h1 className="text-2xl font-bold text-foreground">My Clients</h1>
           <p className="text-sm text-muted-foreground mt-1">Manage your coaching clients and assessments</p>
         </div>
-        {certsLoaded && allowedInstrumentIds.size === 0 ? (
+        {!canOrderAssessment ? (
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -685,15 +778,45 @@ export default function CoachClients() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => { resetForm(); setModalOpen(true); }}>
+              <DropdownMenuItem onClick={() => { resetForm(); if (actorOnlyMode) setIsActorDebrief(true); setModalOpen(true); }}>
                 Single client
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setBulkModalOpen(true)}>
-                Bulk invite
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setShareableModalOpen(true)}>
-                Generate shareable link
-              </DropdownMenuItem>
+              {actorOnlyMode ? (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div>
+                        <DropdownMenuItem disabled onSelect={(e) => e.preventDefault()}>
+                          Bulk invite
+                        </DropdownMenuItem>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent side="left">Available after certification</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              ) : (
+                <DropdownMenuItem onClick={() => setBulkModalOpen(true)}>
+                  Bulk invite
+                </DropdownMenuItem>
+              )}
+              {actorOnlyMode ? (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div>
+                        <DropdownMenuItem disabled onSelect={(e) => e.preventDefault()}>
+                          Generate shareable link
+                        </DropdownMenuItem>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent side="left">Available after certification</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              ) : (
+                <DropdownMenuItem onClick={() => setShareableModalOpen(true)}>
+                  Generate shareable link
+                </DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         )}
@@ -704,123 +827,40 @@ export default function CoachClients() {
               <DialogTitle>Order Assessment</DialogTitle>
               <DialogDescription>Set up an assessment for a new or existing client</DialogDescription>
             </DialogHeader>
-            <Tabs defaultValue="coach-pays" className="mt-2">
-              {!isActorDebrief && (
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="coach-pays">I'll Pay for My Client</TabsTrigger>
-                  <TabsTrigger value="client-pays">Client Pays Themselves</TabsTrigger>
-                </TabsList>
-              )}
-
-              {/* Shared form fields */}
-              <div className="space-y-3 mt-4">
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1">
-                    <Label className="text-sm">First Name</Label>
-                    <Input value={firstName} onChange={e => setFirstName(e.target.value)} placeholder="Jane" />
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-sm">Last Name</Label>
-                    <Input value={lastName} onChange={e => setLastName(e.target.value)} placeholder="Doe" />
-                  </div>
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-sm">Client Email</Label>
-                  <Input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="jane@company.com" />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-sm">Personal Note <span className="text-muted-foreground">(optional)</span></Label>
-                  <Textarea value={note} onChange={e => setNote(e.target.value)} placeholder="A brief message to your client..." rows={2} />
-                </div>
-                {isActorDebrief ? (
-                  <div className="space-y-2">
-                    <Label className="text-sm">Assessment Instrument</Label>
-                    <div className="rounded-md border border-border p-3 text-sm">
-                      <span className="font-medium">Instrument:</span> PTP (Personal Threat Profile)
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    <Label className="text-sm">Assessment Instruments <span className="text-muted-foreground">(select at least one)</span></Label>
-                    <div className={`space-y-2 rounded-md border p-3 ${instrumentError ? "border-destructive" : "border-border"}`}>
-                      {INSTRUMENTS.filter(inst => allowedInstrumentIds.has(inst.id)).map(inst => (
-                        <label key={inst.id} className="flex items-start gap-3 cursor-pointer">
-                          <Checkbox
-                            checked={selectedInstruments.includes(inst.id)}
-                            onCheckedChange={() => toggleInstrument(inst.id)}
-                            className="mt-0.5"
-                          />
-                          <div className="flex-1">
-                            <span className="font-medium text-sm">{inst.id}</span>
-                            <span className="text-muted-foreground text-xs ml-2">— {inst.name}</span>
-                            <p className="text-xs text-muted-foreground mt-0.5">{inst.desc}</p>
-                          </div>
-                        </label>
-                      ))}
-                      {certsLoaded && allowedInstrumentIds.size === 0 && (
-                        <div className="rounded-md border border-dashed border-muted-foreground/30 p-4 text-sm text-muted-foreground">
-                          You don't have any active certifications. Complete a certification path to start ordering assessments for clients.{" "}
-                          <a href="/certifications" className="text-primary underline underline-offset-2">View certifications</a>
-                        </div>
-                      )}
-                    </div>
-                    {instrumentError && (
-                      <p className="text-xs text-destructive">Please select at least one instrument.</p>
-                    )}
-                    {selectedInstruments.length > 0 && (
-                      <p className="text-xs text-muted-foreground">
-                        {selectedInstruments.length} instrument{selectedInstruments.length !== 1 ? "s" : ""} selected
-                        {" "}— {perAssessmentPrice !== null
-                          ? `$${(selectedInstruments.length * perAssessmentPrice).toFixed(2)} total`
-                          : "loading price…"}
-                      </p>
-                    )}
-                  </div>
-                )}
-                <div className="flex items-center justify-between rounded-md border p-3">
-                  <div className="space-y-0.5">
-                    <Label className="text-sm">Allow client to see results immediately</Label>
-                    <p className="text-xs text-muted-foreground">If off, client must wait for coach debrief before viewing results</p>
-                  </div>
-                  <Switch checked={resultsReleased} onCheckedChange={setResultsReleased} />
-                </div>
-                {canOfferActorDebrief && (
-                  <div className="flex items-center justify-between rounded-md border p-3">
-                    <div className="space-y-0.5 pr-3">
-                      <Label className="text-sm">This is an actor debrief (certification practice)</Label>
-                      <p className="text-xs text-muted-foreground">
-                        Covered by your certification — no payment required. {4 - actorsUsed} of 4 remaining.
-                      </p>
-                    </div>
-                    <Switch checked={isActorDebrief} onCheckedChange={setIsActorDebrief} />
-                  </div>
-                )}
-              </div>
-
-              {isActorDebrief ? (
+            {isActorDebrief ? (
+              <div className="mt-2">
+                {sharedFormFields}
                 <div className="mt-4">
                   <Button className="w-full gap-2" onClick={handleOrderActorDebrief} disabled={submitting || !email}>
                     <Send className="h-4 w-4" /> {submitting ? "Sending..." : "Send Actor Debrief Invitation"}
                   </Button>
                 </div>
-              ) : (
-                <>
-                  <TabsContent value="coach-pays" className="mt-4">
-                    <Button className="w-full gap-2" onClick={handleOrderCoachPays} disabled={submitting || !email}>
-                      <ClipboardCheck className="h-4 w-4" /> {submitting ? "Processing..." : "Proceed to Payment"}
-                    </Button>
-                  </TabsContent>
+              </div>
+            ) : (
+              <Tabs defaultValue="coach-pays" className="mt-2">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="coach-pays">I'll Pay for My Client</TabsTrigger>
+                  <TabsTrigger value="client-pays">Client Pays Themselves</TabsTrigger>
+                </TabsList>
 
-                  <TabsContent value="client-pays" className="mt-4">
-                    <Button className="w-full gap-2" onClick={handleOrderClientPays} disabled={submitting || !email}>
-                      <Send className="h-4 w-4" /> {submitting ? "Sending..." : "Send Invitation"}
-                    </Button>
-                  </TabsContent>
-                </>
-              )}
-            </Tabs>
+                {sharedFormFields}
+
+                <TabsContent value="coach-pays" className="mt-4">
+                  <Button className="w-full gap-2" onClick={handleOrderCoachPays} disabled={submitting || !email}>
+                    <ClipboardCheck className="h-4 w-4" /> {submitting ? "Processing..." : "Proceed to Payment"}
+                  </Button>
+                </TabsContent>
+
+                <TabsContent value="client-pays" className="mt-4">
+                  <Button className="w-full gap-2" onClick={handleOrderClientPays} disabled={submitting || !email}>
+                    <Send className="h-4 w-4" /> {submitting ? "Sending..." : "Send Invitation"}
+                  </Button>
+                </TabsContent>
+              </Tabs>
+            )}
           </DialogContent>
         </Dialog>
+
 
         <BulkInviteModal
           open={bulkModalOpen}
@@ -900,7 +940,7 @@ export default function CoachClients() {
                 Get started by ordering an assessment for your first client.
               </p>
             </div>
-            {certsLoaded && allowedInstrumentIds.size === 0 ? (
+            {!canOrderAssessment ? (
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -916,7 +956,7 @@ export default function CoachClients() {
                 </Tooltip>
               </TooltipProvider>
             ) : (
-              <Button className="gap-2" onClick={() => { resetForm(); setModalOpen(true); }}>
+              <Button className="gap-2" onClick={() => { resetForm(); if (actorOnlyMode) setIsActorDebrief(true); setModalOpen(true); }}>
                 <Plus className="h-4 w-4" /> Order Your First Assessment
               </Button>
             )}
@@ -1005,11 +1045,12 @@ export default function CoachClients() {
                 disabled={certsLoaded && allowedInstrumentIds.size === 0}
                 onClick={() => {
                   resetForm();
+                  if (actorOnlyMode) setIsActorDebrief(true);
                   setEmail(selectedClientEmail);
                   setModalOpen(true);
                 }}
                 title={certsLoaded && allowedInstrumentIds.size === 0
-                  ? "You need an active certification to order assessments"
+                  ? (actorOnlyMode ? "Available after certification" : "You need an active certification to order assessments")
                   : undefined}
               >
                 <Plus className="h-3 w-3" /> Order Assessment for This Client
