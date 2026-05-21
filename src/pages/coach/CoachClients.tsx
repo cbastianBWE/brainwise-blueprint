@@ -940,7 +940,7 @@ export default function CoachClients() {
                 Get started by ordering an assessment for your first client.
               </p>
             </div>
-            {certsLoaded && allowedInstrumentIds.size === 0 ? (
+            {!canOrderAssessment ? (
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -956,7 +956,7 @@ export default function CoachClients() {
                 </Tooltip>
               </TooltipProvider>
             ) : (
-              <Button className="gap-2" onClick={() => { resetForm(); setModalOpen(true); }}>
+              <Button className="gap-2" onClick={() => { resetForm(); if (actorOnlyMode) setIsActorDebrief(true); setModalOpen(true); }}>
                 <Plus className="h-4 w-4" /> Order Your First Assessment
               </Button>
             )}
