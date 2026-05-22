@@ -1,85 +1,45 @@
-Phase 11.C cycle 2a — wire four single-row justified actions through a new shared `JustifiedActionDialog` primitive, plus the cycle 1.5 patch for the full-page member route. Backend is already shipped (15-arg `search_impersonation_targets`, all seven action RPCs verified live).
 
-## Part 1 — Cycle 1.5 patch (Members.tsx)
+# Phase 11.C cycle 2b — Part 1
 
-Two surgical edits:
-- Main search query (~line 158): add `p_specific_user_id: null` as the final arg.
-- `directMember` query (~lines 200–225): rewrite `queryFn` to pass all 15 named params with `p_specific_user_id: routeUserId` and return `arr[0] ?? null`. Removes the client-side `.find()` and the alphabetical-first fallthrough.
+Create exactly 8 new files under `src/components/members/bulk/`. No existing files modified. Toolbar wiring deferred to Part 2.
 
-## Part 2 — New shared primitive
+## Files to create
 
-**New file:** `src/components/justified-action/JustifiedActionDialog.tsx` (≤220 lines)
+1. **`types.ts`** — Shared types: `BulkAssignType`, `BulkResult`, `BulkChunkResult`, `ImportReference`, `ImportRowResult`, `ImportResult`, `MentorableCert`, `MentorResolution`, `ScheduledAssignment` (last four pre-defined for Part 2).
 
-Action-agnostic dialog. Caller owns the mutation (per §121); the dialog only owns the justification UX.
+2. **`BulkProgress.tsx`** — Progress UI primitive (Progress bar + tallies + Cancel button). Status text honors cancelled state: `Cancelled. {N} of {M} processed.`
 
-Exports:
-- `JustifiedActionResult` — `{ changed: boolean; note?: string }`
-- `JustifiedActionDialogProps` — `{ open, onOpenChange, title, description?, onSubmit, mapError?, successTitle, noopTitle?, confirmLabel? }`
-- default export `JustifiedActionDialog`
+3. **`useBulkChunkRunner.ts`** — Generic chunking hook. `useRef` for cancel flag (sync read in loop). Each chunk in try/catch — one failure doesn't abort. Default chunkSize=50. Exposes `start/cancel/reset/isRunning/cancelled/processed/succeeded/failed/results`.
 
-Behavior:
-- shadcn `Dialog` shell with title, optional description, labeled `Textarea` (rows=3), `{trimmed.length}/10 minimum characters` counter, inline error region, `[Cancel]` + `[Confirm]` footer (Confirm shows `Loader2` while submitting).
-- Confirm disabled when `reason.trim().length < 10` OR submitting. Cancel disabled while submitting.
-- `handleOpenChange` blocks close while submitting.
-- `useEffect` on `open` resets `reason`, `submitting`, `errorMessage` when closing.
-- `handleConfirm`: calls `onSubmit(reason.trim())`. On success: toast with `successTitle` if `changed`, else `noopTitle ?? "No change made"` with `note` as description. On throw: try built-in `defaultMapError` first, then caller `mapError`, fall back to raw message.
-- `defaultMapError` covers `reason_required_min_chars`, `authentication_required`, `target_user_not_found`.
-- NO internal switch on action type.
+4. **`BulkAssignModal.tsx`** — Type picker (cert_path / curriculum / module). Target dropdown driven by direct table queries (published + non-archived). Optional due date. Reason ≥10 chars. Dispatches `enroll_users_in_certification_path_bulk` / `assign_curriculum_bulk` / `assign_module_bulk` (with `p_source: 'direct_assignment'` and the null FKs spec'd). Chunked at 50. Invalidates `members-search`, `list_all_learning_assignments`, `get_user_learning_state`.
 
-## Part 3 — Wire four single-row actions
+5. **`BulkAssignMentorModal.tsx`** — Mentor picker via `search_impersonation_targets` (all 15 named params, `p_is_mentor: true`). Per-trainee resolution via `get_mentorable_certifications`: 0 certs = skipped (red), 1 = auto-selected readonly, 2+ = dropdown. Builds `pairs[]` only from resolved trainees. Single-shot `assign_mentor_pairs_bulk` (no chunking). Invalidates `members-search`, `list_mentor_trainees`.
 
-### 3A — Mentor toggle (`MemberDrawer.tsx`)
-- Remove `disabled` + Tooltip wrapper on header Switch; `onCheckedChange` opens `mentorDialogOpen`.
-- New state: `mentorDialogOpen`, `queryClient = useQueryClient()`.
-- Compute `nextIsMentor = !member.is_mentor`.
-- Render `JustifiedActionDialog` outside `SheetContent` calling `set_mentor_role(p_user_id, p_is_mentor: nextIsMentor, p_reason)`. Map result to `{changed, note}` — synthesize note for `changed=false` ("This user is already a mentor." / "…not a mentor."). Invalidate `["members-search"]`. Success title flips by direction.
-- `useEffect` on `mentorDialogOpen` → `setHasUnsavedChanges(mentorDialogOpen)`.
+6. **`BulkUnassignModal.tsx`** — Type picker (curriculum / module only). Pre-call resolver: `user_id → assignment_id` from `user_curriculum_assignments` / `user_module_assignments` where `status='active'`. Missing users surfaced as inline note. Chunked `unassign_curriculum_bulk` / `unassign_module_bulk` over assignment IDs (runner's `userIds` arg is treated as opaque IDs; code comment notes the misnomer).
 
-### 3B — Mark actions (`MemberDrawerLearning.tsx`)
-- New prop `setHasUnsavedChanges: (v: boolean) => void`.
-- Replace toast-firing `onMark` with `setMarkTarget(t)`. Add `markTarget` state and `queryClient`.
-- `useEffect` on `markTarget` → propagates non-null to parent's `setHasUnsavedChanges`.
-- Render `JustifiedActionDialog` when `markTarget` non-null. `onSubmit` branches on `markTarget.tier`:
-  - `cert_path` → `grant_certification` / `revoke_certification` with `p_certification_id`
-  - `curriculum` → `set_curriculum_completion` with **`p_assignment_id`** (not curriculum_id)
-  - `module` → `set_module_completion` with `p_module_id`
-  - `content_item` → `set_content_item_completion` with `p_content_item_id`
-- Invalidate `["get_user_learning_state", userId]`.
-- `mapError` covers `manual_incomplete_blocked_certified_cert_path`, `content_item_not_found_or_archived`, `module_not_found_or_archived`, `curriculum_assignment_not_found`, `curriculum_assignment_unassigned`, `certification_already_granted`, `certification_already_revoked`.
-- Local `getActionLabels(t)` helper builds title/description/successTitle per tier and direction.
-- `AdminLearningTree` props are NOT extended.
+7. **`BulkUnassignMentorModal.tsx`** — Mentor picker + two reason fields (`p_end_reason` visible to trainee, `p_reason` audit) each ≥10 chars. Resolver against `coach_mentor_assignments` where `ended_at IS NULL`. Chunked `unassign_mentor_bulk`. Invalidates `members-search`, `list_mentor_trainees`.
 
-### 3C — Grant attempts (`MemberDrawerCoach.tsx`)
-- New prop `setHasUnsavedChanges`.
-- Remove `disabled` from cert Select, instrument Select, count Input.
-- **Remove inline reason Textarea entirely** (reason lives in dialog now).
-- Remove Tooltip wrapper around Grant button; gate via `canOpenDialog = !!cert && !!instrument && Number.isFinite(countNum) && countNum >= 1`.
-- Click opens `grantDialogOpen`. Dialog `onSubmit` calls `grant_additional_free_attempts` with `p_instrument_id` as the **text code** (`PTP`/`NAI`/`AIRSA`/`HSS`). Invalidate `["coach-certifications", userId]`. Reset `count`/`selectedInstrument` after success.
-- `mapError` handles `count_must_be_positive`, `invalid_instrument_id`, `certification_not_found`.
-- `useEffect` on `grantDialogOpen` propagates to parent.
-- Caption reworded from "requires MFA and is audit-logged" → "is audit-logged".
+8. **`BulkOverrideCompletionModal.tsx`** — Tier picker (curriculum / module / content_item — NO cert_path). Direction radio (complete / incomplete, default complete). content_item query: `content_items` `is_archived=false` order by title limit 500. Chunked dispatch to the three `set_*_completion_bulk` RPCs. Invalidates `members-search`, `get_user_learning_state`.
 
-### 3D — Prop drilling (`MemberDrawer.tsx`)
-Pass `setHasUnsavedChanges` to `MemberDrawerLearning` and `MemberDrawerCoach`. Mentor toggle uses its own effect directly. `hasUnsavedChanges` setter from cycle 1 is repurposed (lift to allow setter access).
+## Cross-cutting rules
 
-## Hard guardrails (no scope creep)
+- All `.rpc()` calls use `as any` boundary casts (codebase pattern).
+- Every modal blocks close while `runner.isRunning`; resets runner state on close.
+- Outer-catch toasts only; per-row failures stay in inline result panel.
+- Result panel after run shows failed rows only (succeeded omitted to reduce noise).
+- All Tailwind colors stay as spec'd amber/emerald/purple — token migration is 11.D.
 
-- Don't migrate `JustificationModal`; per-row Impersonate stays on it.
-- Don't touch bulk actions, legacy LearningAdmin/Users/UserDetailsModal/CompletionConfirmDialog/CompletionControlTab.
-- Don't extend `AdminLearningTree` props or move the file.
-- Don't add filter chips above the learning tree.
-- Don't call any `_bulk` RPC or `get_user_completion_export`.
-- Don't touch the four disabled overflow menu items.
-- Don't internally switch on action type inside the dialog.
+## Hard guardrails
 
-## File set
-
-- **New:** `src/components/justified-action/JustifiedActionDialog.tsx`
-- **Edit:** `src/pages/super-admin/Members.tsx`
-- **Edit:** `src/components/members/MemberDrawer.tsx`
-- **Edit:** `src/components/members/MemberDrawerLearning.tsx`
-- **Edit:** `src/components/members/MemberDrawerCoach.tsx`
+- No existing file touched (verify `MembersBulkActionsBar`, `MemberDrawerAudit`, `Members.tsx`, `JustifiedActionDialog` byte-identical).
+- No backend migrations, no RPC changes, no edge functions.
+- No `JustifiedActionDialog` import from any bulk modal.
+- No mentor option in `BulkUnassignModal` type picker.
+- No cert_path option in `BulkOverrideCompletionModal` tier picker.
+- Each new file under 400 lines.
 
 ## Verification
 
-Run the verification grep block from the prompt after build; fix any FAIL before shipping. Key items: 15-arg RPC calls; dialog exports + action-agnostic; curriculum branch uses `p_assignment_id`; instrument arg is text code; reason Textarea removed from coach tab; invalidations on the right query keys; no forbidden file touches.
+After build, self-grep against the checklist in the prompt. Report PASS/FAIL per item with one-line evidence. Stop on any FAIL.
+
+Awaiting approval to switch to build mode.
