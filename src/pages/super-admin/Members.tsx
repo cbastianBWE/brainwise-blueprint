@@ -174,6 +174,7 @@ export default function Members() {
         p_has_supervisor: filters.has_supervisor,
         p_sort_column: sort.column,
         p_sort_direction: sort.direction,
+        p_specific_user_id: null,
       } as any);
       if (error) throw error;
       return (data ?? []) as unknown as MemberRow[];
