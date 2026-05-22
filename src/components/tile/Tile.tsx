@@ -11,6 +11,7 @@ import {
   LayoutTemplate,
   Lock,
   ExternalLink,
+  Loader2,
 } from "lucide-react";
 import type {
   TileVariant,
