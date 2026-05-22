@@ -340,7 +340,13 @@ export default function ResourceReader() {
 
   return (
     <div className="container mx-auto max-w-3xl p-6">
-      <Button variant="ghost" onClick={() => navigate("/resources")}>
+      <Button
+        variant="ghost"
+        onClick={() => {
+          if (window.history.length > 1) navigate(-1);
+          else navigate("/resources");
+        }}
+      >
         <ChevronLeft className="mr-1 h-4 w-4" /> Back to Resources
       </Button>
 
