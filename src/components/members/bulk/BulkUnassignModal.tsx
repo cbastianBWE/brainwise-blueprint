@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -34,6 +34,7 @@ interface BulkUnassignModalProps {
   selectedUserIds: string[];
   traineeLabels: Map<string, string>;
   onComplete: () => void;
+  initialType?: UnassignType;
 }
 
 async function resolveAssignmentIds(
@@ -63,14 +64,19 @@ export default function BulkUnassignModal({
   onOpenChange,
   selectedUserIds,
   onComplete,
+  initialType,
 }: BulkUnassignModalProps) {
   const queryClient = useQueryClient();
-  const [type, setType] = useState<UnassignType>("curriculum");
+  const [type, setType] = useState<UnassignType>(initialType ?? "curriculum");
   const [targetId, setTargetId] = useState("");
   const [reason, setReason] = useState("");
   const [resolvedAssignmentIds, setResolvedAssignmentIds] = useState<string[]>([]);
   const [missingUserIds, setMissingUserIds] = useState<string[]>([]);
   const [resolveError, setResolveError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (open && initialType) setType(initialType);
+  }, [open, initialType]);
 
   const curriculaQuery = useQuery({
     queryKey: ["curricula-list"],

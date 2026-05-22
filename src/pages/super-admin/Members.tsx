@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { CalendarClock, ChevronLeft, ChevronRight, Upload } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,8 @@ import MembersFilterBar from "@/components/members/MembersFilterBar";
 import MembersBulkActionsBar from "@/components/members/MembersBulkActionsBar";
 import ColumnVisibilityMenu from "@/components/members/ColumnVisibilityMenu";
 import MemberDrawer from "@/components/members/MemberDrawer";
+import BulkImportModal from "@/components/members/bulk/BulkImportModal";
+import ScheduleAssignmentModal from "@/components/members/bulk/ScheduleAssignmentModal";
 import JustificationModal from "@/components/impersonation/JustificationModal";
 import {
   MEMBER_COLUMN_IDS,
@@ -75,6 +77,7 @@ export default function Members() {
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { userId: routeUserId } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -93,6 +96,10 @@ export default function Members() {
 
   // Impersonation modal target
   const [impersonateTarget, setImpersonateTarget] = useState<MemberRow | null>(null);
+
+  // Page-level bulk modals (not tied to selection)
+  const [bulkImportOpen, setBulkImportOpen] = useState(false);
+  const [pageScheduleOpen, setPageScheduleOpen] = useState(false);
 
   // Saved views (loaded from ui_preferences)
   const [savedViews, setSavedViews] = useState<SavedView[]>([]);
@@ -185,6 +192,12 @@ export default function Members() {
 
   const totalCount = Number(rows?.[0]?.total_count ?? 0);
   const showPagination = totalCount > PAGE_SIZE;
+
+  const traineeLabels = useMemo(() => {
+    const map = new Map<string, string>();
+    (rows ?? []).forEach((r) => map.set(r.user_id, r.full_name || r.email));
+    return map;
+  }, [rows]);
 
   // Drawer state derived from URL.
   const drawerUserId = searchParams.get("member");
@@ -373,11 +386,21 @@ export default function Members() {
 
   return (
     <div className="container mx-auto p-6 space-y-4">
-      <div>
-        <h1 className="text-2xl font-semibold">Members</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Browse, search, and manage all platform members.
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold">Members</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Browse, search, and manage all platform members.
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => setBulkImportOpen(true)}>
+            <Upload className="h-4 w-4 mr-1" /> Bulk Import
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => setPageScheduleOpen(true)}>
+            <CalendarClock className="h-4 w-4 mr-1" /> Schedule
+          </Button>
+        </div>
       </div>
 
       <MembersFilterBar
@@ -403,7 +426,13 @@ export default function Members() {
 
       <MembersBulkActionsBar
         selectedCount={selectedIds.size}
+        selectedUserIds={Array.from(selectedIds)}
+        traineeLabels={traineeLabels}
         onClear={() => setSelectedIds(new Set())}
+        onActionComplete={() => {
+          setSelectedIds(new Set());
+          queryClient.invalidateQueries({ queryKey: ["members-search"] });
+        }}
       />
 
       <MembersTable
@@ -470,6 +499,16 @@ export default function Members() {
             : null
         }
         onClose={() => setImpersonateTarget(null)}
+      />
+
+      <BulkImportModal open={bulkImportOpen} onOpenChange={setBulkImportOpen} />
+      <ScheduleAssignmentModal
+        open={pageScheduleOpen}
+        onOpenChange={setPageScheduleOpen}
+        traineeLabels={traineeLabels}
+        onComplete={() => {
+          queryClient.invalidateQueries({ queryKey: ["list_scheduled_assignments"] });
+        }}
       />
     </div>
   );

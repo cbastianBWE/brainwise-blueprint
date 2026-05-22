@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -33,6 +33,7 @@ interface BulkAssignModalProps {
   selectedUserIds: string[];
   traineeLabels: Map<string, string>;
   onComplete: () => void;
+  initialType?: BulkAssignType;
 }
 
 export default function BulkAssignModal({
@@ -40,12 +41,18 @@ export default function BulkAssignModal({
   onOpenChange,
   selectedUserIds,
   onComplete,
+  initialType,
 }: BulkAssignModalProps) {
   const queryClient = useQueryClient();
-  const [type, setType] = useState<BulkAssignType>("cert_path");
+  const [type, setType] = useState<BulkAssignType>(initialType ?? "cert_path");
   const [targetId, setTargetId] = useState<string>("");
   const [dueDate, setDueDate] = useState<string>("");
   const [reason, setReason] = useState<string>("");
+
+  // Re-sync type when modal reopens with a different initialType.
+  useEffect(() => {
+    if (open && initialType) setType(initialType);
+  }, [open, initialType]);
 
   const certPathsQuery = useQuery({
     queryKey: ["certification-paths-list"],
