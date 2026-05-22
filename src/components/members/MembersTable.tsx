@@ -316,15 +316,15 @@ export default function MembersTable({
                     </TableCell>
                   )}
                   {showCol("email") && (
-                    <TableCell>{highlightMatch(row.email, searchQuery)}</TableCell>
+                    <TableCell className="hidden sm:table-cell">{highlightMatch(row.email, searchQuery)}</TableCell>
                   )}
                   {showCol("account_type") && (
-                    <TableCell>
+                    <TableCell className="hidden sm:table-cell">
                       <Badge variant="outline">{formatAccountType(row.account_type)}</Badge>
                     </TableCell>
                   )}
                   {showCol("mentor") && (
-                    <TableCell>
+                    <TableCell className="hidden lg:table-cell">
                       {row.is_mentor ? (
                         <Badge variant="secondary">Mentor</Badge>
                       ) : (
@@ -333,7 +333,7 @@ export default function MembersTable({
                     </TableCell>
                   )}
                   {showCol("organization") && (
-                    <TableCell>
+                    <TableCell className="hidden lg:table-cell">
                       {row.organization_name ? (
                         highlightMatch(row.organization_name, searchQuery)
                       ) : (
@@ -342,7 +342,7 @@ export default function MembersTable({
                     </TableCell>
                   )}
                   {showCol("active_assignments") && (
-                    <TableCell>
+                    <TableCell className="hidden md:table-cell">
                       {row.active_assignment_count > 0 ? (
                         row.active_assignment_count
                       ) : (
@@ -351,7 +351,7 @@ export default function MembersTable({
                     </TableCell>
                   )}
                   {showCol("certifications") && (
-                    <TableCell>
+                    <TableCell className="hidden md:table-cell">
                       {row.account_type === "coach" || row.certification_count > 0 ? (
                         <span className="inline-flex items-center gap-2 text-sm">
                           {row.certification_count}
@@ -369,7 +369,7 @@ export default function MembersTable({
                   )}
                   {showCol("status") && <TableCell>{statusBadge(row.account_status)}</TableCell>}
                   {showCol("last_login") && (
-                    <TableCell>
+                    <TableCell className="hidden lg:table-cell">
                       {row.last_sign_in_at ? (
                         formatDistanceToNow(new Date(row.last_sign_in_at), { addSuffix: true })
                       ) : (
