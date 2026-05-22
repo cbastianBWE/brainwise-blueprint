@@ -34,6 +34,7 @@ interface BulkUnassignModalProps {
   selectedUserIds: string[];
   traineeLabels: Map<string, string>;
   onComplete: () => void;
+  initialType?: UnassignType;
 }
 
 async function resolveAssignmentIds(
@@ -63,9 +64,10 @@ export default function BulkUnassignModal({
   onOpenChange,
   selectedUserIds,
   onComplete,
+  initialType,
 }: BulkUnassignModalProps) {
   const queryClient = useQueryClient();
-  const [type, setType] = useState<UnassignType>("curriculum");
+  const [type, setType] = useState<UnassignType>(initialType ?? "curriculum");
   const [targetId, setTargetId] = useState("");
   const [reason, setReason] = useState("");
   const [resolvedAssignmentIds, setResolvedAssignmentIds] = useState<string[]>([]);

@@ -33,6 +33,7 @@ interface BulkAssignModalProps {
   selectedUserIds: string[];
   traineeLabels: Map<string, string>;
   onComplete: () => void;
+  initialType?: BulkAssignType;
 }
 
 export default function BulkAssignModal({
@@ -40,12 +41,17 @@ export default function BulkAssignModal({
   onOpenChange,
   selectedUserIds,
   onComplete,
+  initialType,
 }: BulkAssignModalProps) {
   const queryClient = useQueryClient();
-  const [type, setType] = useState<BulkAssignType>("cert_path");
+  const [type, setType] = useState<BulkAssignType>(initialType ?? "cert_path");
   const [targetId, setTargetId] = useState<string>("");
   const [dueDate, setDueDate] = useState<string>("");
   const [reason, setReason] = useState<string>("");
+
+  // Sync internal type with initialType when modal reopens with a different sub-flow.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useState(() => initialType);
 
   const certPathsQuery = useQuery({
     queryKey: ["certification-paths-list"],
