@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -49,9 +49,10 @@ export default function BulkAssignModal({
   const [dueDate, setDueDate] = useState<string>("");
   const [reason, setReason] = useState<string>("");
 
-  // Sync internal type with initialType when modal reopens with a different sub-flow.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useState(() => initialType);
+  // Re-sync type when modal reopens with a different initialType.
+  useEffect(() => {
+    if (open && initialType) setType(initialType);
+  }, [open, initialType]);
 
   const certPathsQuery = useQuery({
     queryKey: ["certification-paths-list"],
