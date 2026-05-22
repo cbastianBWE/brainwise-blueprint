@@ -16,6 +16,93 @@ import { resolveTierThumbnailRows, resolveTierThumbnailUrls } from "@/lib/assetU
 import { enrolledStatusToCompletionStatus } from "@/lib/learningStatus";
 import PaidEnrollmentNudgeModal from "@/components/resources/PaidEnrollmentNudgeModal";
 
+interface RecommendedNext {
+  content_item_id: string;
+  item_type: string;
+  module_id: string;
+  module_name: string;
+  content_item_title: string;
+  curriculum_id: string | null;
+}
+
+interface DimensionCompetency {
+  dimension_id: string;
+  dimension_name: string;
+  short_name: string | null;
+  instrument_id: string;
+  user_mean: number | null;
+  user_band: string | null;
+}
+
+interface UserAssignment {
+  assignment_id: string;
+  status: string;
+  source: string;
+  assigned_at: string;
+  due_at: string | null;
+  completed_at: string | null;
+}
+
+// Loose-typed nested objects intentionally — only the flat fields below are
+// consumed by this component. If a future round adds nested reads, type those
+// shapes properly at that time.
+interface Curriculum {
+  curriculum_id: string;
+  slug: string;
+  name: string;
+  description: string | null;
+  mode: string | null;
+  estimated_minutes: number | null;
+  thumbnail_asset_id: string | null;
+  display_order: number;
+  prerequisite_curriculum_id: string | null;
+  is_required: boolean;
+  user_assignment: UserAssignment | null;
+}
+
+interface CertificationPath {
+  id: string;
+  slug: string;
+  name: string;
+  description: string | null;
+  certification_type: string | null;
+  delivery_mode: string | null;
+  display_order: number;
+  prerequisite_path_id: string | null;
+  cert_instrument_ids: string[];
+  cert_dimension_ids: string[];
+  thumbnail_asset_id: string | null;
+}
+
+interface UserCertification {
+  certification_id: string;
+  certification_type: string;
+  status: "in_progress" | "certified" | "revoked" | string;
+  enrolled_by: string;
+  created_at: string;
+  certified_at: string | null;
+  certified_by: string | null;
+  free_assessment_uses: number;
+}
+
+interface CertPathDetailResponse {
+  certification_path: CertificationPath;
+  dimension_competencies: DimensionCompetency[];
+  user_certification: UserCertification | null;
+  curricula: Curriculum[];
+  recommended_next: RecommendedNext | null;
+  user_id: string;
+  viewer_role: "self" | "mentor" | "super_admin";
+  generated_at: string;
+}
+
+interface EnrollPaymentRequired {
+  status: "payment_required";
+  price_cents: number | null;
+}
+
+type EnrollResponse = EnrollPaymentRequired | Record<string, unknown> | null;
+
 const DIMENSION_COLOR: Record<string, string> = {
   // PTP
   "DIM-PTP-01": "var(--bw-navy)",
