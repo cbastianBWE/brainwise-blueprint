@@ -193,6 +193,12 @@ export default function Members() {
   const totalCount = Number(rows?.[0]?.total_count ?? 0);
   const showPagination = totalCount > PAGE_SIZE;
 
+  const traineeLabels = useMemo(() => {
+    const map = new Map<string, string>();
+    (rows ?? []).forEach((r) => map.set(r.user_id, r.full_name || r.email));
+    return map;
+  }, [rows]);
+
   // Drawer state derived from URL.
   const drawerUserId = searchParams.get("member");
   const rawTab = searchParams.get("tab");
