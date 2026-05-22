@@ -46,6 +46,14 @@ export type ResourceContentType =
  *   AIRSA = Forest  (--bw-forest)
  *   HSS   = Slate   (--bw-slate)
  */
+/**
+ * Instrument codes recognized by Tile's instrument-badge rendering.
+ *
+ * Update this union whenever a new instrument is added to the platform.
+ * Source of truth: `instruments.instrument_id` column in Supabase.
+ * Currently mirrors INST-001 (PTP), INST-002 (NAI), INST-003 (AIRSA),
+ * INST-004 (HSS). Add INST-005, INST-006, etc. here when introduced.
+ */
 export type InstrumentCode = "INST-001" | "INST-002" | "INST-003" | "INST-004";
 
 export const INSTRUMENT_BADGE_LABEL: Record<InstrumentCode, string> = {

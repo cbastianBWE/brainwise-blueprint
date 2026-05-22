@@ -11,6 +11,7 @@ import {
   LayoutTemplate,
   Lock,
   ExternalLink,
+  Loader2,
 } from "lucide-react";
 import type {
   TileVariant,
@@ -42,6 +43,8 @@ export interface TileProps {
   isCurrentLocation?: boolean;
   inlineCtaLabel?: string;
   onInlineCtaClick?: () => void;
+  inlineCtaLoading?: boolean;
+  recommendedNextLabel?: string | null;
   locked?: boolean;
   externalLink?: boolean;
 }
@@ -79,6 +82,8 @@ export function Tile(props: TileProps) {
     isCurrentLocation = false,
     inlineCtaLabel,
     onInlineCtaClick,
+    inlineCtaLoading = false,
+    recommendedNextLabel,
     locked = false,
     externalLink = false,
   } = props;
@@ -203,6 +208,12 @@ export function Tile(props: TileProps) {
           <p className="line-clamp-2 text-xs text-muted-foreground">{summary}</p>
         )}
 
+        {recommendedNextLabel && (
+          <p className="truncate text-xs font-medium" style={{ color: "var(--bw-teal)" }}>
+            {recommendedNextLabel}
+          </p>
+        )}
+
         {/* Bottom metadata row — variant-dependent. Resources have no bottom row. */}
         {variant !== "resource" && (
           <div className="mt-1 flex flex-wrap items-center gap-1.5">
@@ -235,12 +246,14 @@ export function Tile(props: TileProps) {
         {inlineCtaLabel && onInlineCtaClick && (
           <button
             type="button"
+            disabled={inlineCtaLoading}
             onClick={(e) => {
               e.stopPropagation();
               onInlineCtaClick();
             }}
-            className="mt-2 rounded border border-input bg-background px-3 py-1.5 text-sm font-medium hover:bg-accent"
+            className="mt-2 inline-flex items-center justify-center gap-1.5 rounded border border-input bg-background px-3 py-1.5 text-sm font-medium hover:bg-accent disabled:cursor-not-allowed disabled:opacity-60"
           >
+            {inlineCtaLoading && <Loader2 className="h-3 w-3 animate-spin" />}
             {inlineCtaLabel}
           </button>
         )}
@@ -262,7 +275,7 @@ function StatusPill({
     return (
       <span
         className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold"
-        style={{ backgroundColor: "var(--bw-amber)", color: "#FFFFFF" }}
+        style={{ backgroundColor: "var(--bw-teal)", color: "#FFFFFF" }}
       >
         <CircleDot className="h-3 w-3" />
         In progress

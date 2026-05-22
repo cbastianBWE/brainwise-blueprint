@@ -444,7 +444,7 @@ export default function ModuleDetail() {
                     ) : isItemInProgress ? (
                       <Clock
                         className="h-5 w-5"
-                        style={{ color: "var(--bw-amber)" }}
+                        style={{ color: "var(--bw-teal)" }}
                       />
                     ) : (
                       <Circle className="h-5 w-5 text-muted-foreground" />
