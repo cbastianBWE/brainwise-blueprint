@@ -459,6 +459,7 @@ export default function Members() {
           </p>
           <div className="flex items-center gap-2">
             <Button
+              aria-label="Previous page"
               variant="outline"
               size="sm"
               disabled={page === 0}
@@ -467,6 +468,7 @@ export default function Members() {
               <ChevronLeft className="h-4 w-4" />
             </Button>
             <Button
+              aria-label="Next page"
               variant="outline"
               size="sm"
               disabled={(page + 1) * PAGE_SIZE >= totalCount}
