@@ -10202,53 +10202,41 @@ export type Database = {
         Args: { p_content_item_id: string; p_text: string }
         Returns: Json
       }
-      search_impersonation_targets:
-        | {
-            Args: { p_limit?: number; p_query: string }
-            Returns: {
-              account_type: string
-              email: string
-              full_name: string
-              organization_id: string
-              organization_name: string
-              user_id: string
-            }[]
-          }
-        | {
-            Args: {
-              p_account_status_in?: string[]
-              p_account_types?: string[]
-              p_certification_statuses?: string[]
-              p_created_within?: string
-              p_has_active_assignments?: boolean
-              p_has_supervisor?: boolean
-              p_is_mentor?: boolean
-              p_last_active_within?: string
-              p_limit?: number
-              p_offset?: number
-              p_organization_ids?: string[]
-              p_query: string
-              p_sort_column?: string
-              p_sort_direction?: string
-              p_specific_user_id?: string
-            }
-            Returns: {
-              account_status: string
-              account_type: string
-              active_assignment_count: number
-              certification_count: number
-              email: string
-              full_name: string
-              is_mentor: boolean
-              last_sign_in_at: string
-              organization_id: string
-              organization_name: string
-              show_coach_tab: boolean
-              total_count: number
-              user_id: string
-              worst_certification_status: string
-            }[]
-          }
+      search_impersonation_targets: {
+        Args: {
+          p_account_status_in?: string[]
+          p_account_types?: string[]
+          p_certification_statuses?: string[]
+          p_created_within?: string
+          p_has_active_assignments?: boolean
+          p_has_supervisor?: boolean
+          p_is_mentor?: boolean
+          p_last_active_within?: string
+          p_limit?: number
+          p_offset?: number
+          p_organization_ids?: string[]
+          p_query: string
+          p_sort_column?: string
+          p_sort_direction?: string
+          p_specific_user_id?: string
+        }
+        Returns: {
+          account_status: string
+          account_type: string
+          active_assignment_count: number
+          certification_count: number
+          email: string
+          full_name: string
+          is_mentor: boolean
+          last_sign_in_at: string
+          organization_id: string
+          organization_name: string
+          show_coach_tab: boolean
+          total_count: number
+          user_id: string
+          worst_certification_status: string
+        }[]
+      }
       seat_count_available: { Args: { p_org: string }; Returns: number }
       seat_count_used: { Args: { p_org: string }; Returns: number }
       self_enroll_in_certification_path: {
