@@ -51,13 +51,37 @@ interface ScheduleAssignmentModalProps {
 const STATUSES = ["pending", "processing", "completed", "partial", "failed", "cancelled"] as const;
 type Status = (typeof STATUSES)[number];
 
-const statusBadgeClass: Record<Status, string> = {
-  pending: "bg-amber-100 text-amber-800 border-amber-300",
-  processing: "bg-teal-100 text-teal-800 border-teal-300",
-  completed: "bg-emerald-100 text-emerald-800 border-emerald-300",
-  partial: "bg-amber-100 text-amber-800 border-amber-300",
-  failed: "bg-destructive/10 text-destructive border-destructive/40",
-  cancelled: "bg-muted text-muted-foreground border-muted-foreground/30",
+const statusBadgeStyle: Record<Status, React.CSSProperties> = {
+  pending: {
+    backgroundColor: "color-mix(in oklab, var(--bw-amber) 18%, white)",
+    color: "var(--bw-mustard)",
+    borderColor: "color-mix(in oklab, var(--bw-amber) 35%, white)",
+  },
+  processing: {
+    backgroundColor: "color-mix(in oklab, var(--bw-teal) 12%, white)",
+    color: "var(--bw-teal)",
+    borderColor: "color-mix(in oklab, var(--bw-teal) 30%, white)",
+  },
+  completed: {
+    backgroundColor: "color-mix(in oklab, var(--bw-forest) 12%, white)",
+    color: "var(--bw-forest)",
+    borderColor: "color-mix(in oklab, var(--bw-forest) 30%, white)",
+  },
+  partial: {
+    backgroundColor: "color-mix(in oklab, var(--bw-amber) 18%, white)",
+    color: "var(--bw-mustard)",
+    borderColor: "color-mix(in oklab, var(--bw-amber) 35%, white)",
+  },
+  failed: {
+    backgroundColor: "color-mix(in oklab, hsl(var(--destructive)) 12%, white)",
+    color: "hsl(var(--destructive))",
+    borderColor: "color-mix(in oklab, hsl(var(--destructive)) 30%, white)",
+  },
+  cancelled: {
+    backgroundColor: "color-mix(in oklab, var(--bw-slate) 10%, white)",
+    color: "var(--bw-slate)",
+    borderColor: "color-mix(in oklab, var(--bw-slate) 25%, white)",
+  },
 };
 
 function TypeIcon({ type }: { type: AssignType }) {
@@ -451,7 +475,14 @@ export default function ScheduleAssignmentModal({
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="rounded-md border border-amber-300 bg-amber-50 p-2 text-xs text-amber-800">
+                <div
+                  className="rounded-md border p-2 text-xs"
+                  style={{
+                    backgroundColor: "color-mix(in oklab, var(--bw-amber) 18%, white)",
+                    color: "var(--bw-mustard)",
+                    borderColor: "color-mix(in oklab, var(--bw-amber) 35%, white)",
+                  }}
+                >
                   Scheduled mentor assignments support one certification for all selected trainees.
                   For per-trainee certifications, use the immediate Bulk Assign Mentor flow.
                 </div>
@@ -612,7 +643,7 @@ export default function ScheduleAssignmentModal({
                           {row.assignment_type.replace("_", " ")}
                         </span>
                         <span className="text-muted-foreground">{row.user_count} users</span>
-                        <Badge variant="outline" className={statusBadgeClass[row.status as Status]}>
+                        <Badge variant="outline" className="border" style={statusBadgeStyle[row.status as Status]}>
                           {row.status}
                         </Badge>
                         <span className="text-xs text-muted-foreground">
