@@ -16,6 +16,93 @@ import { resolveTierThumbnailRows, resolveTierThumbnailUrls } from "@/lib/assetU
 import { enrolledStatusToCompletionStatus } from "@/lib/learningStatus";
 import PaidEnrollmentNudgeModal from "@/components/resources/PaidEnrollmentNudgeModal";
 
+interface RecommendedNext {
+  content_item_id: string;
+  item_type: string;
+  module_id: string;
+  module_name: string;
+  content_item_title: string;
+  curriculum_id: string | null;
+}
+
+interface DimensionCompetency {
+  dimension_id: string;
+  dimension_name: string;
+  short_name: string | null;
+  instrument_id: string;
+  user_mean: number | null;
+  user_band: string | null;
+}
+
+interface UserAssignment {
+  assignment_id: string;
+  status: string;
+  source: string;
+  assigned_at: string;
+  due_at: string | null;
+  completed_at: string | null;
+}
+
+// Loose-typed nested objects intentionally — only the flat fields below are
+// consumed by this component. If a future round adds nested reads, type those
+// shapes properly at that time.
+interface Curriculum {
+  curriculum_id: string;
+  slug: string;
+  name: string;
+  description: string | null;
+  mode: string | null;
+  estimated_minutes: number | null;
+  thumbnail_asset_id: string | null;
+  display_order: number;
+  prerequisite_curriculum_id: string | null;
+  is_required: boolean;
+  user_assignment: UserAssignment | null;
+}
+
+interface CertificationPath {
+  id: string;
+  slug: string;
+  name: string;
+  description: string | null;
+  certification_type: string | null;
+  delivery_mode: string | null;
+  display_order: number;
+  prerequisite_path_id: string | null;
+  cert_instrument_ids: string[];
+  cert_dimension_ids: string[];
+  thumbnail_asset_id: string | null;
+}
+
+interface UserCertification {
+  certification_id: string;
+  certification_type: string;
+  status: "in_progress" | "certified" | "revoked" | string;
+  enrolled_by: string;
+  created_at: string;
+  certified_at: string | null;
+  certified_by: string | null;
+  free_assessment_uses: number;
+}
+
+interface CertPathDetailResponse {
+  certification_path: CertificationPath;
+  dimension_competencies: DimensionCompetency[];
+  user_certification: UserCertification | null;
+  curricula: Curriculum[];
+  recommended_next: RecommendedNext | null;
+  user_id: string;
+  viewer_role: "self" | "mentor" | "super_admin";
+  generated_at: string;
+}
+
+interface EnrollPaymentRequired {
+  status: "payment_required";
+  price_cents: number | null;
+}
+
+type EnrollResponse = EnrollPaymentRequired | Record<string, unknown> | null;
+
 const DIMENSION_COLOR: Record<string, string> = {
   // PTP
   "DIM-PTP-01": "var(--bw-navy)",
@@ -69,6 +156,8 @@ export default function CertPathDetail() {
     priceCents: number | null;
   }>({ open: false, entityName: null, priceCents: null });
 
+  const [isEnrolling, setIsEnrolling] = useState(false);
+
   const certPathQuery = useQuery({
     queryKey: ["get_cert_path_detail", certPathId, userId],
     enabled: !!certPathId && !!userId,
@@ -81,16 +170,16 @@ export default function CertPathDetail() {
         } as never,
       );
       if (error) throw error;
-      return data as any;
+      return data as unknown as CertPathDetailResponse;
     },
   });
 
   const data = certPathQuery.data;
-  const certPath = data?.certification_path ?? null;
-  const userCertification = data?.user_certification ?? null;
-  const recommendedNext = data?.recommended_next ?? null;
-  const curricula: any[] = data?.curricula ?? [];
-  const dimensions: any[] = data?.dimension_competencies ?? [];
+  const certPath: CertificationPath | null = data?.certification_path ?? null;
+  const userCertification: UserCertification | null = data?.user_certification ?? null;
+  const recommendedNext: RecommendedNext | null = data?.recommended_next ?? null;
+  const curricula: Curriculum[] = data?.curricula ?? [];
+  const dimensions: DimensionCompetency[] = data?.dimension_competencies ?? [];
 
   const curriculumIds = useMemo(
     () =>
@@ -119,66 +208,88 @@ export default function CertPathDetail() {
   });
 
   const handleEnroll = async () => {
-    if (!certPathId || !certPath) return;
+    if (!certPathId || !certPath || isEnrolling) return;
+    setIsEnrolling(true);
+    try {
+      const { data: rpcData, error } = await supabase.rpc(
+        "self_enroll_in_certification_path" as never,
+        { p_certification_path_id: certPathId } as never,
+      );
 
-    const { data: rpcData, error } = await supabase.rpc(
-      "self_enroll_in_certification_path" as never,
-      { p_certification_path_id: certPathId } as never,
-    );
+      if (error) {
+        const msg = error.message || error.toString() || "Unknown error";
+        let description = msg;
+        if (msg.includes("not_self_enrollable"))
+          description = "This certification path isn't open for self-enrollment.";
+        else if (msg.includes("already_assigned_active"))
+          description = "You're already enrolled.";
+        else if (msg.includes("already_has_active_certification"))
+          description = "You already have an active certification of this type.";
+        else if (msg.includes("not_published"))
+          description = "This certification path isn't available yet.";
+        toast({ title: "Could not enroll", description, variant: "destructive" });
+        return;
+      }
 
-    if (error) {
-      const msg = error.message || error.toString() || "Unknown error";
-      let description = msg;
-      if (msg.includes("not_self_enrollable"))
-        description = "This certification path isn't open for self-enrollment.";
-      else if (msg.includes("already_assigned_active"))
-        description = "You're already enrolled.";
-      else if (msg.includes("already_has_active_certification"))
-        description = "You already have an active certification of this type.";
-      else if (msg.includes("not_published"))
-        description = "This certification path isn't available yet.";
-      toast({ title: "Could not enroll", description, variant: "destructive" });
-      return;
-    }
+      const enrollResponse = rpcData as unknown as EnrollResponse;
+      if (enrollResponse && (enrollResponse as EnrollPaymentRequired).status === "payment_required") {
+        const paidResponse = enrollResponse as EnrollPaymentRequired;
+        setPaidNudgeState({
+          open: true,
+          entityName: certPath.name ?? null,
+          priceCents: paidResponse.price_cents ?? null,
+        });
+        return;
+      }
 
-    if ((rpcData as any)?.status === "payment_required") {
-      setPaidNudgeState({
-        open: true,
-        entityName: certPath.name ?? null,
-        priceCents: (rpcData as any).price_cents ?? null,
+      toast({
+        title: "Enrolled!",
+        description: `You're enrolled in ${certPath.name}.`,
       });
-      return;
+      await queryClient.invalidateQueries({
+        queryKey: ["get_cert_path_detail", certPathId],
+      });
+      await queryClient.invalidateQueries({ queryKey: ["get_user_learning_state"] });
+      await queryClient.invalidateQueries({ queryKey: ["list_available_learning"] });
+    } finally {
+      setIsEnrolling(false);
     }
-
-    toast({
-      title: "Enrolled!",
-      description: `You're enrolled in ${certPath.name}.`,
-    });
-    await queryClient.invalidateQueries({
-      queryKey: ["get_cert_path_detail", certPathId],
-    });
-    await queryClient.invalidateQueries({ queryKey: ["get_user_learning_state"] });
-    await queryClient.invalidateQueries({ queryKey: ["list_available_learning"] });
   };
 
   if (certPathQuery.isLoading || !userId) {
     return (
-      <div className="flex min-h-[30vh] items-center justify-center">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      <div
+        className="flex min-h-[30vh] items-center justify-center"
+        role="status"
+        aria-label="Loading certification path"
+      >
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" aria-hidden="true" />
       </div>
     );
   }
 
   if (certPathQuery.isError || !certPath) {
-    const err = certPathQuery.error as any;
+    const err = certPathQuery.error as Error | null;
     return (
       <div className="p-6 space-y-4">
-        <Button variant="ghost" size="sm" onClick={() => navigate("/resources")}>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => {
+            if (window.history.length > 1) navigate(-1);
+            else navigate("/resources");
+          }}
+        >
           <ArrowLeft className="h-4 w-4 mr-1" /> Back
         </Button>
-        <div className="rounded-md border border-destructive/30 bg-card p-6 text-destructive">
-          Could not load this certification path.{" "}
-          {err?.message ?? "Please try again."}
+        <div className="rounded-md border border-destructive/30 bg-card p-6 text-destructive space-y-3">
+          <div>
+            Could not load this certification path.{" "}
+            {err?.message ?? "Please try again."}
+          </div>
+          <Button size="sm" onClick={() => certPathQuery.refetch()}>
+            Retry
+          </Button>
         </div>
       </div>
     );
@@ -206,9 +317,15 @@ export default function CertPathDetail() {
   );
   const anyMissingScore = dimensions.some((d) => d.user_mean == null);
 
-  // CTA branch
-  let cta: { label: string; onClick: () => void; outline?: boolean } | null =
-    null;
+  // CTA decision tree, ordered by precedence:
+  //   1. Certified                            → "Review"
+  //   2. Enrolled + has recommended_next      → "Resume" (deep-links to content viewer)
+  //   3. Not enrolled                         → "Enroll" (with paid-nudge branching)
+  //   4. Enrolled + no recommended_next       → "Start" (fallback for edge case of
+  //                                              enrollment with zero progress AND
+  //                                              zero recommended item, e.g. cert path
+  //                                              with no required content yet)
+  let cta: { label: string; onClick: () => void; outline?: boolean } | null = null;
   if (isCertified) {
     cta = {
       label: "Review",
@@ -222,9 +339,7 @@ export default function CertPathDetail() {
     cta = {
       label: "Resume",
       onClick: () => {
-        // TODO Group W: route directly to content item viewer using
-        // recommendedNext.content_item_id once viewers ship.
-        navigate(`/learning/curriculum/${recommendedNext.curriculum_id}`);
+        navigate(`/learning/content-item/${recommendedNext.content_item_id}`);
       },
     };
   } else if (!isEnrolled) {
@@ -246,7 +361,10 @@ export default function CertPathDetail() {
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => navigate("/resources")}
+          onClick={() => {
+            if (window.history.length > 1) navigate(-1);
+            else navigate("/resources");
+          }}
         >
           <ArrowLeft className="h-4 w-4 mr-1" /> Back
         </Button>
@@ -257,6 +375,7 @@ export default function CertPathDetail() {
         className="relative h-[180px] md:h-[240px] lg:h-[320px] w-full"
         style={{ backgroundImage: heroBackgroundImage, backgroundColor: heroBackgroundColor }}
       >
+        {/* Brand glyph is decorative — cert path name below provides semantic content. */}
         <img
           src="/brain-icon.png"
           alt=""
@@ -281,7 +400,7 @@ export default function CertPathDetail() {
           </div>
           <div className="flex items-end justify-between gap-4">
             <div className="min-w-0 flex-1">
-              <h1 className="text-3xl md:text-4xl font-bold text-white">
+              <h1 className="text-3xl md:text-4xl font-bold text-white line-clamp-2">
                 {certPath.name}
               </h1>
               {certPath.description && (
@@ -314,13 +433,17 @@ export default function CertPathDetail() {
         {cta && (
           <Button
             onClick={cta.onClick}
+            disabled={cta.label === "Enroll" && isEnrolling}
             variant={cta.outline ? "outline" : "default"}
             className={
               cta.outline
                 ? undefined
-                : "bg-[var(--bw-orange)] hover:bg-[var(--bw-orange-600)] text-white"
+                : "bg-[var(--bw-orange)] hover:bg-[var(--bw-orange-600)] text-white disabled:opacity-60"
             }
           >
+            {cta.label === "Enroll" && isEnrolling && (
+              <Loader2 className="h-3 w-3 animate-spin mr-1.5" aria-hidden="true" />
+            )}
             {cta.label}
           </Button>
         )}
@@ -404,14 +527,31 @@ export default function CertPathDetail() {
               );
             })}
           </div>
-          {anyMissingScore && (
-            <button
-              onClick={() => navigate("/dashboard")}
-              className="text-sm text-primary hover:underline mt-2"
-            >
-              Take your assessments to see your full competency picture
-            </button>
-          )}
+          {anyMissingScore && (() => {
+            const missingInstrumentLabels = Array.from(
+              new Set(
+                dimensions
+                  .filter((d) => d.user_mean == null)
+                  .map((d) => INSTRUMENT_BADGE_LABEL[d.instrument_id as InstrumentCode] ?? d.instrument_id)
+              )
+            );
+            const labelText =
+              missingInstrumentLabels.length === 0
+                ? "your assessments"
+                : missingInstrumentLabels.length === 1
+                  ? `your ${missingInstrumentLabels[0]} assessment`
+                  : missingInstrumentLabels.length === 2
+                    ? `your ${missingInstrumentLabels[0]} and ${missingInstrumentLabels[1]} assessments`
+                    : `your ${missingInstrumentLabels.slice(0, -1).join(", ")}, and ${missingInstrumentLabels[missingInstrumentLabels.length - 1]} assessments`;
+            return (
+              <button
+                onClick={() => navigate("/dashboard")}
+                className="text-sm text-primary hover:underline mt-2"
+              >
+                Take {labelText} to see your full competency picture
+              </button>
+            );
+          })()}
         </section>
       )}
 
