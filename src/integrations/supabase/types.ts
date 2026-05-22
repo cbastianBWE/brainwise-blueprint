@@ -8102,6 +8102,7 @@ export type Database = {
           timezone: string | null
           tos_accepted_at: string | null
           tos_version_accepted: string | null
+          ui_preferences: Json
         }
         Insert: {
           account_status?: string
@@ -8141,6 +8142,7 @@ export type Database = {
           timezone?: string | null
           tos_accepted_at?: string | null
           tos_version_accepted?: string | null
+          ui_preferences?: Json
         }
         Update: {
           account_status?: string
@@ -8180,6 +8182,7 @@ export type Database = {
           timezone?: string | null
           tos_accepted_at?: string | null
           tos_version_accepted?: string | null
+          ui_preferences?: Json
         }
         Relationships: [
           {
@@ -9699,6 +9702,22 @@ export type Database = {
         Returns: Json
       }
       get_unread_notification_count: { Args: never; Returns: number }
+      get_user_completion_export: {
+        Args: { p_user_ids: string[] }
+        Returns: {
+          assigned_at: string
+          completed_at: string
+          parent_path: string
+          started_at: string
+          status: string
+          target_id: string
+          target_name: string
+          tier: string
+          user_email: string
+          user_full_name: string
+          user_id: string
+        }[]
+      }
       get_user_learning_state: { Args: { p_user_id: string }; Returns: Json }
       get_user_notifications: {
         Args: { p_before?: string; p_filter?: string; p_limit?: number }
@@ -9877,6 +9896,29 @@ export type Database = {
         }[]
       }
       list_scheduled_assignments: { Args: never; Returns: Json }
+      list_user_audit_history: {
+        Args: {
+          p_categories?: string[]
+          p_limit?: number
+          p_offset?: number
+          p_user_id: string
+        }
+        Returns: {
+          action_type: string
+          actor_account_type: string
+          actor_email: string
+          actor_name: string
+          actor_user_id: string
+          after_value: Json
+          audit_id: string
+          before_value: Json
+          category: string
+          created_at: string
+          detail: Json
+          reason: string
+          total_count: number
+        }[]
+      }
       log_resource_access: { Args: { p_resource_id: string }; Returns: Json }
       log_super_admin_action: {
         Args: {
@@ -10173,15 +10215,37 @@ export type Database = {
             }[]
           }
         | {
-            Args: { p_limit?: number; p_offset?: number; p_query: string }
+            Args: {
+              p_account_status_in?: string[]
+              p_account_types?: string[]
+              p_certification_statuses?: string[]
+              p_created_within?: string
+              p_has_active_assignments?: boolean
+              p_has_supervisor?: boolean
+              p_is_mentor?: boolean
+              p_last_active_within?: string
+              p_limit?: number
+              p_offset?: number
+              p_organization_ids?: string[]
+              p_query: string
+              p_sort_column?: string
+              p_sort_direction?: string
+            }
             Returns: {
+              account_status: string
               account_type: string
+              active_assignment_count: number
+              certification_count: number
               email: string
               full_name: string
+              is_mentor: boolean
+              last_sign_in_at: string
               organization_id: string
               organization_name: string
+              show_coach_tab: boolean
               total_count: number
               user_id: string
+              worst_certification_status: string
             }[]
           }
       seat_count_available: { Args: { p_org: string }; Returns: number }
@@ -10220,8 +10284,26 @@ export type Database = {
         }
         Returns: Json
       }
+      set_content_item_completion_bulk: {
+        Args: {
+          p_complete: boolean
+          p_content_item_id: string
+          p_reason: string
+          p_user_ids: string[]
+        }
+        Returns: Json
+      }
       set_curriculum_completion: {
         Args: { p_assignment_id: string; p_complete: boolean; p_reason: string }
+        Returns: Json
+      }
+      set_curriculum_completion_bulk: {
+        Args: {
+          p_complete: boolean
+          p_curriculum_id: string
+          p_reason: string
+          p_user_ids: string[]
+        }
         Returns: Json
       }
       set_mentor_role: {
@@ -10234,6 +10316,15 @@ export type Database = {
           p_module_id: string
           p_reason: string
           p_user_id: string
+        }
+        Returns: Json
+      }
+      set_module_completion_bulk: {
+        Args: {
+          p_complete: boolean
+          p_module_id: string
+          p_reason: string
+          p_user_ids: string[]
         }
         Returns: Json
       }
