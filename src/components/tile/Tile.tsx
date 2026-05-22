@@ -82,6 +82,8 @@ export function Tile(props: TileProps) {
     isCurrentLocation = false,
     inlineCtaLabel,
     onInlineCtaClick,
+    inlineCtaLoading = false,
+    recommendedNextLabel,
     locked = false,
     externalLink = false,
   } = props;
