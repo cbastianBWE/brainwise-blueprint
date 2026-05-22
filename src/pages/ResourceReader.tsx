@@ -94,19 +94,28 @@ function useResourceSignedUrl(resourceId: string) {
 }
 
 function VideoPlayer({ resourceId }: { resourceId: string }) {
-  const { data, isLoading, isError, error } = useResourceSignedUrl(resourceId);
+  const { data, isLoading, isError, error, refetch } = useResourceSignedUrl(resourceId);
   if (isLoading) {
     return (
-      <div className="flex aspect-video w-full items-center justify-center rounded-md bg-muted">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      <div
+        className="flex aspect-video w-full items-center justify-center rounded-md bg-muted"
+        role="status"
+        aria-label="Loading video"
+      >
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" aria-hidden="true" />
       </div>
     );
   }
   if (isError || !data?.signed_url) {
     return (
-      <p className="text-sm text-destructive">
-        Could not load video: {error instanceof Error ? error.message : "Unknown error"}
-      </p>
+      <div className="space-y-3">
+        <p className="text-sm text-destructive">
+          Could not load video: {error instanceof Error ? error.message : "Unknown error"}
+        </p>
+        <Button size="sm" onClick={() => refetch()}>
+          Retry
+        </Button>
+      </div>
     );
   }
   return (
