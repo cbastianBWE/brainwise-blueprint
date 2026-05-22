@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import ContentItemArtifactPanel from "./ContentItemArtifactPanel";
-import type { MarkTarget } from "./CompletionConfirmDialog";
+import type { MarkTarget } from "./learning-tree-types";
 
 const CERT_LABELS: Record<string, string> = {
   ptp_coach: "PTP Certified Coach",
