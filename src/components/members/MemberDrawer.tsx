@@ -1,5 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { MoreHorizontal } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -23,8 +25,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import JustificationModal from "@/components/impersonation/JustificationModal";
+import JustifiedActionDialog from "@/components/justified-action/JustifiedActionDialog";
 import type { MemberRow } from "./types";
 import MemberDrawerLearning from "./MemberDrawerLearning";
 import MemberDrawerAssignments from "./MemberDrawerAssignments";
@@ -38,7 +40,7 @@ interface Props {
   member: MemberRow | null;
   activeTab: TabId;
   currentUserId: string | undefined;
-  embedded?: boolean; // full-page mode
+  embedded?: boolean;
   onTabChange: (tab: TabId) => void;
   onClose: () => void;
 }
@@ -52,20 +54,28 @@ function MemberDrawerBody({
   member,
   activeTab,
   currentUserId,
+  setHasUnsavedChanges,
   onTabChange,
 }: {
   member: MemberRow;
   activeTab: TabId;
   currentUserId: string | undefined;
+  setHasUnsavedChanges: (v: boolean) => void;
   onTabChange: (t: TabId) => void;
 }) {
+  const queryClient = useQueryClient();
   const [impersonateTarget, setImpersonateTarget] = useState<MemberRow | null>(null);
+  const [mentorDialogOpen, setMentorDialogOpen] = useState(false);
   const isSelf = member.user_id === currentUserId;
   const showCoach = member.show_coach_tab;
+  const nextIsMentor = !member.is_mentor;
+
+  useEffect(() => {
+    setHasUnsavedChanges(mentorDialogOpen);
+  }, [mentorDialogOpen, setHasUnsavedChanges]);
 
   return (
     <div className="flex flex-col h-full">
-      {/* Sticky header */}
       <div className="sticky top-0 z-10 border-b bg-background p-4 space-y-3">
         <div className="flex items-start gap-3">
           <div className="flex-1 min-w-0">
@@ -90,15 +100,13 @@ function MemberDrawerBody({
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <span className="flex items-center gap-1.5">
-                  <span className="text-xs text-muted-foreground">Mentor</span>
-                  <Switch checked={member.is_mentor} disabled />
-                </span>
-              </TooltipTrigger>
-              <TooltipContent>Available in cycle 2a</TooltipContent>
-            </Tooltip>
+            <span className="flex items-center gap-1.5">
+              <span className="text-xs text-muted-foreground">Mentor</span>
+              <Switch
+                checked={member.is_mentor}
+                onCheckedChange={() => setMentorDialogOpen(true)}
+              />
+            </span>
             <Button
               size="sm"
               disabled={isSelf}
@@ -137,7 +145,12 @@ function MemberDrawerBody({
       </div>
 
       <div className="flex-1 overflow-y-auto">
-        {activeTab === "learning" && <MemberDrawerLearning userId={member.user_id} />}
+        {activeTab === "learning" && (
+          <MemberDrawerLearning
+            userId={member.user_id}
+            setHasUnsavedChanges={setHasUnsavedChanges}
+          />
+        )}
         {activeTab === "assignments" && <MemberDrawerAssignments />}
         {activeTab === "coach" && showCoach && (
           <MemberDrawerCoach
@@ -146,6 +159,7 @@ function MemberDrawerBody({
             email={member.email}
             accountType={member.account_type}
             organizationName={member.organization_name}
+            setHasUnsavedChanges={setHasUnsavedChanges}
           />
         )}
         {activeTab === "audit" && <MemberDrawerAudit userId={member.user_id} />}
@@ -164,6 +178,41 @@ function MemberDrawerBody({
         }
         onClose={() => setImpersonateTarget(null)}
       />
+
+      <JustifiedActionDialog
+        open={mentorDialogOpen}
+        onOpenChange={setMentorDialogOpen}
+        title={nextIsMentor ? "Grant mentor role" : "Revoke mentor role"}
+        description={
+          <span>
+            You are about to {nextIsMentor ? "grant" : "revoke"} the mentor role for{" "}
+            <strong>{member.full_name ?? member.email}</strong>.
+          </span>
+        }
+        successTitle={nextIsMentor ? "Mentor role granted" : "Mentor role revoked"}
+        onSubmit={async (reason) => {
+          const { data, error } = await supabase.rpc("set_mentor_role" as any, {
+            p_user_id: member.user_id,
+            p_is_mentor: nextIsMentor,
+            p_reason: reason,
+          } as any);
+          if (error) throw error;
+          const result = data as {
+            user_id: string;
+            is_mentor: boolean;
+            changed: boolean;
+          };
+          await queryClient.invalidateQueries({ queryKey: ["members-search"] });
+          return {
+            changed: result.changed,
+            note: result.changed
+              ? undefined
+              : nextIsMentor
+                ? "This user is already a mentor."
+                : "This user is already not a mentor.",
+          };
+        }}
+      />
     </div>
   );
 }
@@ -177,8 +226,7 @@ export default function MemberDrawer({
   onTabChange,
   onClose,
 }: Props) {
-  // Cycle 1: always false; cycle 2a will flip when forms are dirty.
-  const [hasUnsavedChanges] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [confirmDiscardOpen, setConfirmDiscardOpen] = useState(false);
 
   const handleOpenChange = (nextOpen: boolean) => {
@@ -198,6 +246,7 @@ export default function MemberDrawer({
           member={member}
           activeTab={activeTab}
           currentUserId={currentUserId}
+          setHasUnsavedChanges={setHasUnsavedChanges}
           onTabChange={onTabChange}
         />
       </div>
@@ -213,6 +262,7 @@ export default function MemberDrawer({
               member={member}
               activeTab={activeTab}
               currentUserId={currentUserId}
+              setHasUnsavedChanges={setHasUnsavedChanges}
               onTabChange={onTabChange}
             />
           )}
