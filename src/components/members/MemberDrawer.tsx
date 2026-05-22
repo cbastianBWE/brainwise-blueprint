@@ -114,6 +114,7 @@ function MemberDrawerBody({
               <Switch
                 checked={member.is_mentor}
                 onCheckedChange={() => setMentorDialogOpen(true)}
+                aria-label={`Mentor role for ${member.full_name ?? member.email}`}
               />
             </span>
             <Button
