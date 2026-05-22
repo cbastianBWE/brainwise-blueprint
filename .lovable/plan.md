@@ -1,63 +1,85 @@
-# Phase 10 Round 5 — ResourceGridTab + ResourceReader
+Phase 11.C cycle 2a — wire four single-row justified actions through a new shared `JustifiedActionDialog` primitive, plus the cycle 1.5 patch for the full-page member route. Backend is already shipped (15-arg `search_impersonation_targets`, all seven action RPCs verified live).
 
-Verified both files against the spec. All line anchors match. No issues to flag. Backend: NONE. Migrations: NONE. Types: NONE (resources subsystem already properly typed).
+## Part 1 — Cycle 1.5 patch (Members.tsx)
 
-## Pre-flight verification results
+Two surgical edits:
+- Main search query (~line 158): add `p_specific_user_id: null` as the final arg.
+- `directMember` query (~lines 200–225): rewrite `queryFn` to pass all 15 named params with `p_specific_user_id: routeUserId` and return `arr[0] ?? null`. Removes the client-side `.find()` and the alphabetical-first fallthrough.
 
-- `src/components/resources/ResourceGridTab.tsx` (195 lines): handleFileDownload at 88-101, handleResourceClick at 103, search Input at 140-145 — all match spec.
-- `src/pages/ResourceReader.tsx` (330 lines): useQuery destructure at 172, loading state at 196-202, VideoPlayer at 96-119, not-found branch at 204-217, not-accessible Back at 223, main Back near 313 — all match spec.
-- `src/components/resources/types.ts` exports `Resource`, `ResourceTab`, `GetUserResourcesResult`, `UpgradeEntityType` — confirmed.
-- `useResourceAccessLog` hook is fire-and-forget — confirmed.
+## Part 2 — New shared primitive
 
-## Edits
+**New file:** `src/components/justified-action/JustifiedActionDialog.tsx` (≤220 lines)
 
-### A. `src/components/resources/ResourceGridTab.tsx`
+Action-agnostic dialog. Caller owns the mutation (per §121); the dialog only owns the justification UX.
 
-**A1.** Add `aria-label="Search resources"` to the search `<Input>` (lines 140-145).
+Exports:
+- `JustifiedActionResult` — `{ changed: boolean; note?: string }`
+- `JustifiedActionDialogProps` — `{ open, onOpenChange, title, description?, onSubmit, mapError?, successTitle, noopTitle?, confirmLabel? }`
+- default export `JustifiedActionDialog`
 
-**A2.** Wrap `handleFileDownload` body in `try { ... } catch (err) { toast(...) }` (lines 88-101). Catch block fires the same "Could not download" toast with `err instanceof Error ? err.message : "An unexpected error occurred."`. Logical change is the wrapper + 1 catch block; ~14 lines of indentation churn expected in the diff.
+Behavior:
+- shadcn `Dialog` shell with title, optional description, labeled `Textarea` (rows=3), `{trimmed.length}/10 minimum characters` counter, inline error region, `[Cancel]` + `[Confirm]` footer (Confirm shows `Loader2` while submitting).
+- Confirm disabled when `reason.trim().length < 10` OR submitting. Cancel disabled while submitting.
+- `handleOpenChange` blocks close while submitting.
+- `useEffect` on `open` resets `reason`, `submitting`, `errorMessage` when closing.
+- `handleConfirm`: calls `onSubmit(reason.trim())`. On success: toast with `successTitle` if `changed`, else `noopTitle ?? "No change made"` with `note` as description. On throw: try built-in `defaultMapError` first, then caller `mapError`, fall back to raw message.
+- `defaultMapError` covers `reason_required_min_chars`, `authentication_required`, `target_user_not_found`.
+- NO internal switch on action type.
 
-**A3.** Insert the 6-line block comment documenting tile-click routing precedence above `handleResourceClick` (line 103). No body change.
+## Part 3 — Wire four single-row actions
 
-### B. `src/pages/ResourceReader.tsx`
+### 3A — Mentor toggle (`MemberDrawer.tsx`)
+- Remove `disabled` + Tooltip wrapper on header Switch; `onCheckedChange` opens `mentorDialogOpen`.
+- New state: `mentorDialogOpen`, `queryClient = useQueryClient()`.
+- Compute `nextIsMentor = !member.is_mentor`.
+- Render `JustifiedActionDialog` outside `SheetContent` calling `set_mentor_role(p_user_id, p_is_mentor: nextIsMentor, p_reason)`. Map result to `{changed, note}` — synthesize note for `changed=false` ("This user is already a mentor." / "…not a mentor."). Invalidate `["members-search"]`. Success title flips by direction.
+- `useEffect` on `mentorDialogOpen` → `setHasUnsavedChanges(mentorDialogOpen)`.
 
-**B1.** Main loading state (lines 196-202): add `role="status"`, `aria-label="Loading resource"` to wrapper div, `aria-hidden="true"` on Loader2.
+### 3B — Mark actions (`MemberDrawerLearning.tsx`)
+- New prop `setHasUnsavedChanges: (v: boolean) => void`.
+- Replace toast-firing `onMark` with `setMarkTarget(t)`. Add `markTarget` state and `queryClient`.
+- `useEffect` on `markTarget` → propagates non-null to parent's `setHasUnsavedChanges`.
+- Render `JustifiedActionDialog` when `markTarget` non-null. `onSubmit` branches on `markTarget.tier`:
+  - `cert_path` → `grant_certification` / `revoke_certification` with `p_certification_id`
+  - `curriculum` → `set_curriculum_completion` with **`p_assignment_id`** (not curriculum_id)
+  - `module` → `set_module_completion` with `p_module_id`
+  - `content_item` → `set_content_item_completion` with `p_content_item_id`
+- Invalidate `["get_user_learning_state", userId]`.
+- `mapError` covers `manual_incomplete_blocked_certified_cert_path`, `content_item_not_found_or_archived`, `module_not_found_or_archived`, `curriculum_assignment_not_found`, `curriculum_assignment_unassigned`, `certification_already_granted`, `certification_already_revoked`.
+- Local `getActionLabels(t)` helper builds title/description/successTitle per tier and direction.
+- `AdminLearningTree` props are NOT extended.
 
-**B2.** `VideoPlayer` (lines 96-119):
-- Add `refetch` to the `useResourceSignedUrl` destructure.
-- Loading state gets `role="status"`, `aria-label="Loading video"`, `aria-hidden="true"` on Loader2.
-- Error branch becomes a `<div className="space-y-3">` containing the existing `<p>` plus `<Button size="sm" onClick={() => refetch()}>Retry</Button>`.
+### 3C — Grant attempts (`MemberDrawerCoach.tsx`)
+- New prop `setHasUnsavedChanges`.
+- Remove `disabled` from cert Select, instrument Select, count Input.
+- **Remove inline reason Textarea entirely** (reason lives in dialog now).
+- Remove Tooltip wrapper around Grant button; gate via `canOpenDialog = !!cert && !!instrument && Number.isFinite(countNum) && countNum >= 1`.
+- Click opens `grantDialogOpen`. Dialog `onSubmit` calls `grant_additional_free_attempts` with `p_instrument_id` as the **text code** (`PTP`/`NAI`/`AIRSA`/`HSS`). Invalidate `["coach-certifications", userId]`. Reset `count`/`selectedInstrument` after success.
+- `mapError` handles `count_must_be_positive`, `invalid_instrument_id`, `certification_not_found`.
+- `useEffect` on `grantDialogOpen` propagates to parent.
+- Caption reworded from "requires MFA and is audit-logged" → "is audit-logged".
 
-**B3.** Resource-not-found branch (lines 204-217):
-- Add `refetch` to the outer `useQuery` destructure on line 172.
-- Back button gets the `navigate(-1)`-with-fallback handler.
-- Card copy expanded to "Resource not found. If you expected to see this resource, it may have been moved or you may have lost access."
-- Add `<Button size="sm" onClick={() => refetch()}>Retry</Button>` inside the card. CardContent gets `space-y-4`.
+### 3D — Prop drilling (`MemberDrawer.tsx`)
+Pass `setHasUnsavedChanges` to `MemberDrawerLearning` and `MemberDrawerCoach`. Mentor toggle uses its own effect directly. `hasUnsavedChanges` setter from cycle 1 is repurposed (lift to allow setter access).
 
-**B4.** Apply the `navigate(-1)`-with-fallback handler to the two remaining direct-navigate Back buttons:
-- Line 223 (not-accessible branch)
-- Line ~313 (main render)
+## Hard guardrails (no scope creep)
 
-Both replace `onClick={() => navigate("/resources")}` with the conditional `if (window.history.length > 1) navigate(-1); else navigate("/resources");`.
+- Don't migrate `JustificationModal`; per-row Impersonate stays on it.
+- Don't touch bulk actions, legacy LearningAdmin/Users/UserDetailsModal/CompletionConfirmDialog/CompletionControlTab.
+- Don't extend `AdminLearningTree` props or move the file.
+- Don't add filter chips above the learning tree.
+- Don't call any `_bulk` RPC or `get_user_completion_export`.
+- Don't touch the four disabled overflow menu items.
+- Don't internally switch on action type inside the dialog.
 
-## Post-edit self-check
+## File set
 
-Run after edits, report results in completion message:
+- **New:** `src/components/justified-action/JustifiedActionDialog.tsx`
+- **Edit:** `src/pages/super-admin/Members.tsx`
+- **Edit:** `src/components/members/MemberDrawer.tsx`
+- **Edit:** `src/components/members/MemberDrawerLearning.tsx`
+- **Edit:** `src/components/members/MemberDrawerCoach.tsx`
 
-1. `rg "navigate\(\"/resources\"\)" src/pages/ResourceReader.tsx` → **3 matches** (all inside `else` fallback branches).
-2. `rg "aria-label" src/components/resources/ResourceGridTab.tsx src/pages/ResourceReader.tsx` → **≥3 matches** (Search input + 2 loading states).
-3. `rg "refetch" src/pages/ResourceReader.tsx` → **≥4 matches** (2 destructures + 2 onClick callsites).
-4. `rg "try \{" src/components/resources/ResourceGridTab.tsx` → **1 match**.
-5. Confirm no other files modified.
+## Verification
 
-## Do-not-touch (within-file)
-
-- `detectVideoEmbed`, `VideoEmbed`, `useResourceSignedUrl` signature, `FileDownloadCard`, DOMPurify config, content-type branching, `GROUP_ORDER` / `CONTENT_TYPE_GROUP_LABELS`, access-log `useEffect`.
-
-## Do-not-touch (other files)
-
-types.ts, UpgradeNudgeModal, useResourceAccessLog, safeUrl, Tile, tileVariants, MyLearningTab, CertPathDetail (R2 closed), CurriculumDetail + ModuleDetail (R3 closed), App.tsx, any edge function, any migration, any RPC.
-
-## Scope
-
-7 sections across 2 files. Single Lovable cycle. No backend, no migrations, no shared-file edits.
+Run the verification grep block from the prompt after build; fix any FAIL before shipping. Key items: 15-arg RPC calls; dialog exports + action-agnostic; curriculum branch uses `p_assignment_id`; instrument arg is text code; reason Textarea removed from coach tab; invalidations on the right query keys; no forbidden file touches.

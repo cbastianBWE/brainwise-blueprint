@@ -1,11 +1,10 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -13,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import JustifiedActionDialog from "@/components/justified-action/JustifiedActionDialog";
 
 interface Props {
   userId: string;
@@ -21,13 +20,14 @@ interface Props {
   email: string;
   accountType: string | null;
   organizationName: string | null;
+  setHasUnsavedChanges: (v: boolean) => void;
 }
 
 const INSTRUMENTS: { code: string; label: string }[] = [
-  { code: "INST-001", label: "PTP" },
-  { code: "INST-002", label: "NAI" },
-  { code: "INST-003", label: "AIRSA" },
-  { code: "INST-004", label: "HSS" },
+  { code: "PTP", label: "PTP" },
+  { code: "NAI", label: "NAI" },
+  { code: "AIRSA", label: "AIRSA" },
+  { code: "HSS", label: "HSS" },
 ];
 
 interface CertRow {
@@ -50,20 +50,29 @@ const renderPool = (uses: Record<string, number> | null) => {
     .join(", ");
 };
 
+const instrumentLabel = (code: string) =>
+  INSTRUMENTS.find((i) => i.code === code)?.label ?? code;
+
 export default function MemberDrawerCoach({
   userId,
   fullName,
   email,
   accountType,
   organizationName,
+  setHasUnsavedChanges,
 }: Props) {
+  const queryClient = useQueryClient();
   const [selectedCertId, setSelectedCertId] = useState<string>("");
   const [selectedInstrument, setSelectedInstrument] = useState<string>("");
   const [count, setCount] = useState<string>("1");
-  const [reason, setReason] = useState<string>("");
+  const [grantDialogOpen, setGrantDialogOpen] = useState(false);
+
+  useEffect(() => {
+    setHasUnsavedChanges(grantDialogOpen);
+  }, [grantDialogOpen, setHasUnsavedChanges]);
 
   const certsQuery = useQuery({
-    queryKey: ["member-coach-certs", userId],
+    queryKey: ["coach-certifications", userId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("coach_certifications")
@@ -74,6 +83,17 @@ export default function MemberDrawerCoach({
       return (data ?? []) as unknown as CertRow[];
     },
   });
+
+  const countNum = Number(count);
+  const canOpenDialog =
+    !!selectedCertId &&
+    !!selectedInstrument &&
+    Number.isFinite(countNum) &&
+    countNum >= 1;
+
+  const selectedCertLabel =
+    certsQuery.data?.find((c) => c.id === selectedCertId)?.certification_type ??
+    "this certification";
 
   return (
     <div className="p-4 space-y-6">
@@ -133,7 +153,7 @@ export default function MemberDrawerCoach({
             <div className="rounded-md border p-3 space-y-3">
               <div className="space-y-2">
                 <Label>Certification</Label>
-                <Select value={selectedCertId} onValueChange={setSelectedCertId} disabled>
+                <Select value={selectedCertId} onValueChange={setSelectedCertId}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select certification" />
                   </SelectTrigger>
@@ -149,14 +169,14 @@ export default function MemberDrawerCoach({
 
               <div className="space-y-2">
                 <Label>Instrument</Label>
-                <Select value={selectedInstrument} onValueChange={setSelectedInstrument} disabled>
+                <Select value={selectedInstrument} onValueChange={setSelectedInstrument}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select instrument" />
                   </SelectTrigger>
                   <SelectContent>
                     {INSTRUMENTS.map((i) => (
                       <SelectItem key={i.code} value={i.code}>
-                        {i.label} ({i.code})
+                        {i.label}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -170,36 +190,63 @@ export default function MemberDrawerCoach({
                   min={1}
                   value={count}
                   onChange={(e) => setCount(e.target.value)}
-                  disabled
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label>Justification reason</Label>
-                <Textarea
-                  rows={3}
-                  value={reason}
-                  onChange={(e) => setReason(e.target.value)}
-                  placeholder="At least 10 characters explaining why…"
-                  disabled
-                />
-              </div>
-
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span className="block w-full">
-                    <Button disabled className="w-full">
-                      Grant attempts
-                    </Button>
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent>Available in cycle 2a</TooltipContent>
-              </Tooltip>
+              <Button
+                onClick={() => setGrantDialogOpen(true)}
+                disabled={!canOpenDialog}
+                className="w-full"
+              >
+                Grant attempts
+              </Button>
 
               <p className="text-xs text-muted-foreground">
-                This action requires MFA and is audit-logged.
+                This action is audit-logged.
               </p>
             </div>
+
+            <JustifiedActionDialog
+              open={grantDialogOpen}
+              onOpenChange={setGrantDialogOpen}
+              title="Grant additional free attempts"
+              description={
+                <span>
+                  You are about to grant <strong>{count}</strong> additional{" "}
+                  <strong>{instrumentLabel(selectedInstrument)}</strong> attempt(s) on{" "}
+                  <strong>{selectedCertLabel}</strong> for{" "}
+                  <strong>{fullName ?? "this user"}</strong>.
+                </span>
+              }
+              successTitle={`Granted ${count} attempt(s)`}
+              onSubmit={async (reason) => {
+                const { error } = await supabase.rpc(
+                  "grant_additional_free_attempts" as any,
+                  {
+                    p_certification_id: selectedCertId,
+                    p_instrument_id: selectedInstrument,
+                    p_count: Number(count),
+                    p_reason: reason,
+                  } as any,
+                );
+                if (error) throw error;
+                await queryClient.invalidateQueries({
+                  queryKey: ["coach-certifications", userId],
+                });
+                setCount("1");
+                setSelectedInstrument("");
+                return { changed: true };
+              }}
+              mapError={(raw) => {
+                if (raw.includes("count_must_be_positive"))
+                  return "Count must be a positive number.";
+                if (raw.includes("invalid_instrument_id"))
+                  return "Please select a valid instrument.";
+                if (raw.includes("certification_not_found"))
+                  return "That certification could not be found.";
+                return null;
+              }}
+            />
           </>
         )}
       </section>
