@@ -156,6 +156,8 @@ export default function CertPathDetail() {
     priceCents: number | null;
   }>({ open: false, entityName: null, priceCents: null });
 
+  const [isEnrolling, setIsEnrolling] = useState(false);
+
   const certPathQuery = useQuery({
     queryKey: ["get_cert_path_detail", certPathId, userId],
     enabled: !!certPathId && !!userId,
