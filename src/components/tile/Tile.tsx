@@ -208,6 +208,12 @@ export function Tile(props: TileProps) {
           <p className="line-clamp-2 text-xs text-muted-foreground">{summary}</p>
         )}
 
+        {recommendedNextLabel && (
+          <p className="truncate text-xs font-medium" style={{ color: "var(--bw-teal)" }}>
+            {recommendedNextLabel}
+          </p>
+        )}
+
         {/* Bottom metadata row — variant-dependent. Resources have no bottom row. */}
         {variant !== "resource" && (
           <div className="mt-1 flex flex-wrap items-center gap-1.5">
