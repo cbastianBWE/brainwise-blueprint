@@ -1,78 +1,63 @@
+# Phase 10 Round 5 — ResourceGridTab + ResourceReader
 
-# Tier thumbnail RPC wiring (frontend only)
+Verified both files against the spec. All line anchors match. No issues to flag. Backend: NONE. Migrations: NONE. Types: NONE (resources subsystem already properly typed).
 
-Backend already deployed: `public.get_thumbnail_urls_for_entities(p_entity_type text, p_entity_ids uuid[])` and the flat name/description/thumbnail_asset_id on `get_user_learning_state` assignment rows.
+## Pre-flight verification results
 
-## 1. `src/lib/assetUrls.ts` — add helpers, keep `resolveThumbnailUrls`
+- `src/components/resources/ResourceGridTab.tsx` (195 lines): handleFileDownload at 88-101, handleResourceClick at 103, search Input at 140-145 — all match spec.
+- `src/pages/ResourceReader.tsx` (330 lines): useQuery destructure at 172, loading state at 196-202, VideoPlayer at 96-119, not-found branch at 204-217, not-accessible Back at 223, main Back near 313 — all match spec.
+- `src/components/resources/types.ts` exports `Resource`, `ResourceTab`, `GetUserResourcesResult`, `UpgradeEntityType` — confirmed.
+- `useResourceAccessLog` hook is fire-and-forget — confirmed.
 
-Append two new exports. Existing `resolveThumbnailUrls` untouched.
+## Edits
 
-```ts
-export type TierEntityType = "cert_path" | "curriculum" | "module" | "resource";
+### A. `src/components/resources/ResourceGridTab.tsx`
 
-interface TierThumbnailRow {
-  entity_id: string; asset_id: string;
-  bucket: string; path: string;
-  dominant_color: string | null;
-}
+**A1.** Add `aria-label="Search resources"` to the search `<Input>` (lines 140-145).
 
-// Full meta (used by detail-page heroes that also want dominantColor)
-export async function resolveTierThumbnailRows(
-  entityType: TierEntityType, entityIds: string[]
-): Promise<Map<string, ThumbnailMeta>> { ... }
+**A2.** Wrap `handleFileDownload` body in `try { ... } catch (err) { toast(...) }` (lines 88-101). Catch block fires the same "Could not download" toast with `err instanceof Error ? err.message : "An unexpected error occurred."`. Logical change is the wrapper + 1 catch block; ~14 lines of indentation churn expected in the diff.
 
-// URL-only convenience (used by tile grids)
-export async function resolveTierThumbnailUrls(
-  entityType: TierEntityType, entityIds: string[]
-): Promise<Map<string, string>> { ... }
-```
+**A3.** Insert the 6-line block comment documenting tile-click routing precedence above `handleResourceClick` (line 103). No body change.
 
-Both call `supabase.rpc("get_thumbnail_urls_for_entities", { p_entity_type, p_entity_ids })`, then `supabase.storage.from(bucket).getPublicUrl(path)` per row. Errors log + return empty map.
+### B. `src/pages/ResourceReader.tsx`
 
-## 2. `src/components/resources/MyLearningTab.tsx`
+**B1.** Main loading state (lines 196-202): add `role="status"`, `aria-label="Loading resource"` to wrapper div, `aria-hidden="true"` on Loader2.
 
-Replace the single `assetIds` collection + `resolveThumbnailUrls` query with three keyed queries (one per entity type), then derive a single `thumbnailMap: Map<thumbnail_asset_id, url>` that the existing `Section` component continues to read via `entity.thumbnail_asset_id`.
+**B2.** `VideoPlayer` (lines 96-119):
+- Add `refetch` to the `useResourceSignedUrl` destructure.
+- Loading state gets `role="status"`, `aria-label="Loading video"`, `aria-hidden="true"` on Loader2.
+- Error branch becomes a `<div className="space-y-3">` containing the existing `<p>` plus `<Button size="sm" onClick={() => refetch()}>Retry</Button>`.
 
-Implementation:
-- Build three id arrays from `visibleSections`: `certPathIds` (`entity.cert_path_id`), `curriculumIds` (`entity.curriculum_id`), `moduleIds` (`entity.module_id`). Cover both Enrolled and Browse & Enroll — same call.
-- Three `useQuery` hooks calling `resolveTierThumbnailUrls("cert_path"|"curriculum"|"module", ids)`. Keys: `["tier-thumb","cert_path",ids]` etc.
-- Each returns `Map<entity_id, url>`. Re-index into `Map<thumbnail_asset_id, url>` by walking `visibleSections.*` and pairing `entity.thumbnail_asset_id → urlMap.get(entityId)`. Pass that combined map to `Section` so the existing `thumbnailMap?.get(entity.thumbnail_asset_id)?.url` access keeps working with zero changes inside `Section`.
-- Now relies on the flat `entity.name`/`entity.description`/`entity.thumbnail_asset_id` from the updated RPC — no code change needed there since `Section` already reads those fields directly.
+**B3.** Resource-not-found branch (lines 204-217):
+- Add `refetch` to the outer `useQuery` destructure on line 172.
+- Back button gets the `navigate(-1)`-with-fallback handler.
+- Card copy expanded to "Resource not found. If you expected to see this resource, it may have been moved or you may have lost access."
+- Add `<Button size="sm" onClick={() => refetch()}>Retry</Button>` inside the card. CardContent gets `space-y-4`.
 
-## 3. `src/components/resources/ResourceGridTab.tsx`
+**B4.** Apply the `navigate(-1)`-with-fallback handler to the two remaining direct-navigate Back buttons:
+- Line 223 (not-accessible branch)
+- Line ~313 (main render)
 
-Swap `resolveThumbnailUrls(assetIds)` for `resolveTierThumbnailUrls("resource", resourceIds)`. Index the resulting map by `resource_id` instead of `thumbnail_asset_id`, and update the Tile prop to `thumbnailMap?.get(r.resource_id) ?? null` (drop the `r.thumbnail_asset_id` indirection).
+Both replace `onClick={() => navigate("/resources")}` with the conditional `if (window.history.length > 1) navigate(-1); else navigate("/resources");`.
 
-## 4. `src/pages/learning/CertPathDetail.tsx`
+## Post-edit self-check
 
-- Hero: `useQuery` calling `resolveTierThumbnailRows("cert_path", [certPathId])` → `heroMeta = map.get(certPathId)`. Keeps `dominantColor` for the existing `heroBackgroundColor` split. Drop the `certPath.thumbnail_asset_id` indirection.
-- Child curricula tiles: separate `useQuery` calling `resolveTierThumbnailUrls("curriculum", curriculumIds)` → tile reads `curriculaThumbMap?.get(c.curriculum_id) ?? null`.
-- Remove `resolveThumbnailUrls` import.
+Run after edits, report results in completion message:
 
-## 5. `src/pages/learning/CurriculumDetail.tsx`
+1. `rg "navigate\(\"/resources\"\)" src/pages/ResourceReader.tsx` → **3 matches** (all inside `else` fallback branches).
+2. `rg "aria-label" src/components/resources/ResourceGridTab.tsx src/pages/ResourceReader.tsx` → **≥3 matches** (Search input + 2 loading states).
+3. `rg "refetch" src/pages/ResourceReader.tsx` → **≥4 matches** (2 destructures + 2 onClick callsites).
+4. `rg "try \{" src/components/resources/ResourceGridTab.tsx` → **1 match**.
+5. Confirm no other files modified.
 
-- Hero: `resolveTierThumbnailRows("curriculum", [curriculumId])`.
-- Child module tiles: `resolveTierThumbnailUrls("module", moduleIds)` keyed by `m.module_id`.
-- Remove `resolveThumbnailUrls` import.
+## Do-not-touch (within-file)
 
-## 6. `src/pages/learning/ModuleDetail.tsx`
+- `detectVideoEmbed`, `VideoEmbed`, `useResourceSignedUrl` signature, `FileDownloadCard`, DOMPurify config, content-type branching, `GROUP_ORDER` / `CONTENT_TYPE_GROUP_LABELS`, access-log `useEffect`.
 
-- Hero: `resolveTierThumbnailRows("module", [moduleId])`.
-- Content-item rows currently don't render thumbnails (the file's `assetIds` collects `ci.thumbnail_asset_id` but the list renders icons, not thumbnails) — but to be safe, keep `resolveThumbnailUrls` for `contentItems[*].thumbnail_asset_id` so any future thumbnail rendering on content items still works through the standard RLS chain. **Decision needed**: keep the existing content-item asset query untouched (uses `resolveThumbnailUrls`), or drop it entirely since nothing reads it. Default: keep it, minimal-touch.
+## Do-not-touch (other files)
 
-## Verification (manual, after build)
+types.ts, UpgradeNudgeModal, useResourceAccessLog, safeUrl, Tile, tileVariants, MyLearningTab, CertPathDetail (R2 closed), CurriculumDetail + ModuleDetail (R3 closed), App.tsx, any edge function, any migration, any RPC.
 
-Impersonate Caroline Perry (`afc2279f-2c13-4bc0-b712-2dbd4952528f`) as super admin:
+## Scope
 
-1. Resources > My Learning > Enrolled → cert path tile shows title + description + thumbnail image.
-2. Resources > My Learning > Browse & Enroll → cert path tile thumbnail renders.
-3. Cert path detail → hero image + child curriculum tile thumbnails render.
-4. Curriculum detail → hero image + child module tile thumbnails render.
-5. Module detail → hero image renders.
-6. All Resources tab → resource tile thumbnails render.
-
-## Out of scope (per prompt)
-
-- No changes to `resolveThumbnailUrls`, any RPC, `Tile.tsx`, or dominant-color tile rendering.
-
-Ready to switch to build mode and ship.
+7 sections across 2 files. Single Lovable cycle. No backend, no migrations, no shared-file edits.
