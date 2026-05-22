@@ -26,6 +26,122 @@ import { resolveTierThumbnailRows } from "@/lib/assetUrls";
 import { CONTENT_ITEM_TYPE_LABEL } from "@/components/tile/tileVariants";
 import PaidEnrollmentNudgeModal from "@/components/resources/PaidEnrollmentNudgeModal";
 
+interface RecommendedNext {
+  content_item_id: string;
+  item_type: string;
+  module_id: string;
+  module_name: string;
+  content_item_title: string;
+  curriculum_id: string | null;
+}
+
+interface ContentItemCompletion {
+  completion_id: string;
+  status: string;
+  started_at: string | null;
+  completed_at: string | null;
+  attempts_count: number;
+  video_watch_pct: number | null;
+  video_last_position_seconds: number | null;
+  quiz_best_score_pct: number | null;
+  quiz_passed: boolean | null;
+  written_review_status: string | null;
+  skills_trainee_signed_off: boolean | null;
+  skills_mentor_signed_off: boolean | null;
+  reviewer_comments: string | null;
+}
+
+interface ContentItem {
+  content_item_id: string;
+  item_type: string;
+  title: string;
+  description: string | null;
+  display_order: number;
+  is_required: boolean;
+  thumbnail_asset_id: string | null;
+  video_source_type: string | null;
+  video_source_id: string | null;
+  video_completion_threshold_pct: number | null;
+  quiz_pass_threshold_pct: number | null;
+  quiz_show_correct_mode: string | null;
+  written_min_chars: number | null;
+  written_max_chars: number | null;
+  written_completion_mode: string | null;
+  skills_signoff_required: string | null;
+  skills_actor_invitation_required: boolean | null;
+  external_url: string | null;
+  event_scheduled_at: string | null;
+  lesson_completion_mode: string | null;
+  config: Record<string, unknown> | null;
+  completion: ContentItemCompletion | null;
+  name?: string | null;
+}
+
+interface ModuleCompletion {
+  completion_id: string;
+  status: string;
+  started_at: string | null;
+  completed_at: string | null;
+}
+
+interface UserAssignment {
+  assignment_id: string;
+  status: string;
+  source: string;
+  source_reference_id: string | null;
+  assigned_at: string;
+  due_at: string | null;
+  completed_at: string | null;
+}
+
+interface ParentCurriculum {
+  curriculum_id: string;
+  slug: string;
+  name: string;
+  display_order: number;
+  prerequisite_module_id: string | null;
+  is_required: boolean;
+}
+
+interface ParentCertPath {
+  certification_path_id: string;
+  slug: string;
+  name: string;
+}
+
+interface ModuleRecord {
+  id: string;
+  slug: string;
+  name: string;
+  description: string | null;
+  estimated_minutes: number | null;
+  thumbnail_asset_id: string | null;
+  is_published: boolean;
+  is_self_enrollable: boolean;
+  self_enroll_price_cents: number | null;
+  self_enroll_currency: string | null;
+}
+
+interface ModuleDetailResponse {
+  module: ModuleRecord;
+  parent_curricula: ParentCurriculum[];
+  parent_cert_paths: ParentCertPath[];
+  user_assignment: UserAssignment | null;
+  module_completion: ModuleCompletion | null;
+  content_items: ContentItem[];
+  recommended_next: RecommendedNext | null;
+  user_id: string;
+  viewer_role: "self" | "mentor" | "super_admin";
+  generated_at: string;
+}
+
+interface EnrollPaymentRequired {
+  status: "payment_required";
+  price_cents: number | null;
+}
+
+type EnrollResponse = EnrollPaymentRequired | Record<string, unknown> | null;
+
 function titleCaseSlug(s?: string | null): string {
   if (!s) return "";
   return s
@@ -67,6 +183,8 @@ export default function ModuleDetail() {
     priceCents: number | null;
   }>({ open: false, entityName: null, priceCents: null });
 
+  const [isEnrolling, setIsEnrolling] = useState(false);
+
   const moduleQuery = useQuery({
     queryKey: ["get_module_detail", moduleId, userId],
     enabled: !!moduleId && !!userId,
@@ -76,18 +194,18 @@ export default function ModuleDetail() {
         p_user_id: userId,
       } as never);
       if (error) throw error;
-      return data as any;
+      return data as unknown as ModuleDetailResponse;
     },
   });
 
   const data = moduleQuery.data;
-  const module_ = data?.module ?? null;
-  const userAssignment = data?.user_assignment ?? null;
-  const moduleCompletion = data?.module_completion ?? null;
-  const recommendedNext = data?.recommended_next ?? null;
-  const contentItems: any[] = data?.content_items ?? [];
-  const parentCurricula: any[] = data?.parent_curricula ?? [];
-  const parentCertPaths: any[] = data?.parent_cert_paths ?? [];
+  const module_: ModuleRecord | null = data?.module ?? null;
+  const userAssignment: UserAssignment | null = data?.user_assignment ?? null;
+  const moduleCompletion: ModuleCompletion | null = data?.module_completion ?? null;
+  const recommendedNext: RecommendedNext | null = data?.recommended_next ?? null;
+  const contentItems: ContentItem[] = data?.content_items ?? [];
+  const parentCurricula: ParentCurriculum[] = data?.parent_curricula ?? [];
+  const parentCertPaths: ParentCertPath[] = data?.parent_cert_paths ?? [];
 
   const { data: heroMap } = useQuery({
     queryKey: ["tier-thumb-rows", "module", moduleId],
@@ -97,66 +215,88 @@ export default function ModuleDetail() {
   });
 
   const handleEnroll = async () => {
-    if (!moduleId || !module_) return;
+    if (!moduleId || !module_ || isEnrolling) return;
+    setIsEnrolling(true);
+    try {
+      const { data: rpcData, error } = await supabase.rpc(
+        "self_enroll_in_module" as never,
+        { p_module_id: moduleId } as never,
+      );
 
-    const { data: rpcData, error } = await supabase.rpc(
-      "self_enroll_in_module" as never,
-      { p_module_id: moduleId } as never,
-    );
+      if (error) {
+        const msg = error.message || error.toString() || "Unknown error";
+        let description = msg;
+        if (msg.includes("not_self_enrollable"))
+          description = "This module isn't open for self-enrollment.";
+        else if (msg.includes("already_assigned_active"))
+          description = "You're already enrolled.";
+        else if (msg.includes("is_not_standalone"))
+          description =
+            "This module is part of a curriculum — enroll at the curriculum or path level.";
+        else if (msg.includes("not_published"))
+          description = "This module isn't available yet.";
+        toast({ title: "Could not enroll", description, variant: "destructive" });
+        return;
+      }
 
-    if (error) {
-      const msg = error.message || error.toString() || "Unknown error";
-      let description = msg;
-      if (msg.includes("not_self_enrollable"))
-        description = "This module isn't open for self-enrollment.";
-      else if (msg.includes("already_assigned_active"))
-        description = "You're already enrolled.";
-      else if (msg.includes("is_not_standalone"))
-        description =
-          "This module is part of a curriculum — enroll at the curriculum or path level.";
-      else if (msg.includes("not_published"))
-        description = "This module isn't available yet.";
-      toast({ title: "Could not enroll", description, variant: "destructive" });
-      return;
-    }
+      const enrollResponse = rpcData as unknown as EnrollResponse;
+      if (enrollResponse && (enrollResponse as EnrollPaymentRequired).status === "payment_required") {
+        const paidResponse = enrollResponse as EnrollPaymentRequired;
+        setPaidNudgeState({
+          open: true,
+          entityName: module_.name ?? null,
+          priceCents: paidResponse.price_cents ?? null,
+        });
+        return;
+      }
 
-    if ((rpcData as any)?.status === "payment_required") {
-      setPaidNudgeState({
-        open: true,
-        entityName: module_.name ?? null,
-        priceCents: (rpcData as any).price_cents ?? null,
+      toast({
+        title: "Enrolled!",
+        description: `You're enrolled in ${module_.name}.`,
       });
-      return;
+      await queryClient.invalidateQueries({
+        queryKey: ["get_module_detail", moduleId],
+      });
+      await queryClient.invalidateQueries({ queryKey: ["get_user_learning_state"] });
+      await queryClient.invalidateQueries({ queryKey: ["list_available_learning"] });
+    } finally {
+      setIsEnrolling(false);
     }
-
-    toast({
-      title: "Enrolled!",
-      description: `You're enrolled in ${module_.name}.`,
-    });
-    await queryClient.invalidateQueries({
-      queryKey: ["get_module_detail", moduleId],
-    });
-    await queryClient.invalidateQueries({ queryKey: ["get_user_learning_state"] });
-    await queryClient.invalidateQueries({ queryKey: ["list_available_learning"] });
   };
 
   if (moduleQuery.isLoading || !userId) {
     return (
-      <div className="flex min-h-[30vh] items-center justify-center">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      <div
+        className="flex min-h-[30vh] items-center justify-center"
+        role="status"
+        aria-label="Loading module"
+      >
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" aria-hidden="true" />
       </div>
     );
   }
 
   if (moduleQuery.isError || !module_) {
-    const err = moduleQuery.error as any;
+    const err = moduleQuery.error as Error | null;
     return (
       <div className="p-6 space-y-4">
-        <Button variant="ghost" size="sm" onClick={() => navigate(-1)}>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => {
+            if (window.history.length > 1) navigate(-1);
+            else navigate("/resources");
+          }}
+        >
           <ArrowLeft className="h-4 w-4 mr-1" /> Back
         </Button>
-        <div className="rounded-md border border-destructive/30 bg-card p-6 text-destructive">
-          Could not load this module. {err?.message ?? "Please try again."}
+        <div className="rounded-md border border-destructive/30 bg-card p-6 text-destructive space-y-3">
+          <div>
+            Could not load this module. {err?.message ?? "Please try again."}
+          </div>
+          <Button size="sm" onClick={() => moduleQuery.refetch()}>
+            Retry
+          </Button>
         </div>
       </div>
     );
@@ -195,7 +335,13 @@ export default function ModuleDetail() {
   const parentRequired =
     firstParentCurriculum && firstParentCurriculum.is_required === true;
 
-  // CTA branching
+  // CTA decision tree, ordered by precedence:
+  //   1. Completed                                                  → "Review" (first content item)
+  //   2. recommendedNext + accessible                               → "Resume" (deep-link)
+  //   3. Not enrolled + not in curriculum + self-enrollable         → "Enroll" (with paid-nudge branching)
+  //   4. Not enrolled + not in curriculum + not self-enrollable     → notice: "Not currently open for enrollment"
+  //   5. In curriculum + no recommended_next + not completed        → "Enroll via {curriculum name}"
+  //   6. Accessible + no recommended_next + not completed           → "Start" (first content item)
   let cta:
     | { label: string; onClick: () => void; outline?: boolean }
     | null = null;
@@ -208,7 +354,6 @@ export default function ModuleDetail() {
       label: "Review",
       outline: true,
       onClick: () => {
-        // TODO Group W: route to content item viewer once it ships.
         if (contentItems[0])
           navigate(`/learning/content-item/${contentItems[0].content_item_id}`);
       },
@@ -218,7 +363,6 @@ export default function ModuleDetail() {
     cta = {
       label: "Resume",
       onClick: () => {
-        // TODO Group W: route to content item viewer once it ships.
         navigate(`/learning/content-item/${recommendedNext.content_item_id}`);
       },
     };
@@ -240,7 +384,6 @@ export default function ModuleDetail() {
       cta = {
         label: "Start",
         onClick: () => {
-          // TODO Group W: route to content item viewer once it ships.
           navigate(
             `/learning/content-item/${contentItems[0].content_item_id}`,
           );
@@ -253,7 +396,14 @@ export default function ModuleDetail() {
     <div className="space-y-6 pb-10">
       {/* Back */}
       <div className="px-4 pt-4 sm:px-6">
-        <Button variant="ghost" size="sm" onClick={() => navigate(-1)}>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => {
+            if (window.history.length > 1) navigate(-1);
+            else navigate("/resources");
+          }}
+        >
           <ArrowLeft className="h-4 w-4 mr-1" /> Back
         </Button>
       </div>
@@ -263,6 +413,7 @@ export default function ModuleDetail() {
         className="relative h-[180px] md:h-[240px] lg:h-[320px] w-full"
         style={{ backgroundImage: heroBackgroundImage, backgroundColor: heroBackgroundColor }}
       >
+        {/* Brand glyph is decorative — module name below provides semantic content. */}
         <img
           src="/brain-icon.png"
           alt=""
@@ -273,7 +424,7 @@ export default function ModuleDetail() {
           <div />
           <div className="flex items-end justify-between gap-4">
             <div className="min-w-0 flex-1">
-              <h1 className="text-3xl md:text-4xl font-bold text-white">
+              <h1 className="text-3xl md:text-4xl font-bold text-white line-clamp-2">
                 {module_.name}
               </h1>
               {module_.description && (
@@ -319,13 +470,17 @@ export default function ModuleDetail() {
         {cta && (
           <Button
             onClick={cta.onClick}
+            disabled={cta.label === "Enroll" && isEnrolling}
             variant={cta.outline ? "outline" : "default"}
             className={
               cta.outline
                 ? undefined
-                : "bg-[var(--bw-orange)] hover:bg-[var(--bw-orange-600)] text-white"
+                : "bg-[var(--bw-orange)] hover:bg-[var(--bw-orange-600)] text-white disabled:opacity-60"
             }
           >
+            {cta.label === "Enroll" && isEnrolling && (
+              <Loader2 className="h-3 w-3 animate-spin mr-1.5" aria-hidden="true" />
+            )}
             {cta.label}
           </Button>
         )}
@@ -392,11 +547,11 @@ export default function ModuleDetail() {
                 <div
                   key={ci.content_item_id}
                   onClick={() =>
-                    // TODO Group W: content item viewer route ships here.
                     navigate(`/learning/content-item/${ci.content_item_id}`)
                   }
                   role="button"
                   tabIndex={0}
+                  aria-label={`Open content item: ${ci.title ?? ci.name ?? "Untitled"}`}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" || e.key === " ") {
                       e.preventDefault();

@@ -11,6 +11,112 @@ import { resolveTierThumbnailRows, resolveTierThumbnailUrls } from "@/lib/assetU
 import { enrolledStatusToCompletionStatus } from "@/lib/learningStatus";
 import PaidEnrollmentNudgeModal from "@/components/resources/PaidEnrollmentNudgeModal";
 
+interface RecommendedNext {
+  content_item_id: string;
+  item_type: string;
+  module_id: string;
+  module_name: string;
+  content_item_title: string;
+  curriculum_id: string | null;
+}
+
+interface ContentItemCompletion {
+  completion_id: string;
+  status: string;
+  started_at: string | null;
+  completed_at: string | null;
+  attempts_count: number;
+  video_watch_pct: number | null;
+  quiz_best_score_pct: number | null;
+  quiz_passed: boolean | null;
+}
+
+interface ModuleCompletion {
+  completion_id: string;
+  status: string;
+  started_at: string | null;
+  completed_at: string | null;
+}
+
+interface UserAssignment {
+  assignment_id: string;
+  status: string;
+  source: string;
+  source_reference_id: string | null;
+  assigned_at: string;
+  due_at: string | null;
+  completed_at: string | null;
+}
+
+interface ContentItem {
+  content_item_id: string;
+  item_type: string;
+  title: string;
+  description: string | null;
+  display_order: number;
+  is_required: boolean;
+  thumbnail_asset_id: string | null;
+  video_source_type: string | null;
+  video_source_id: string | null;
+  video_completion_threshold_pct: number | null;
+  quiz_pass_threshold_pct: number | null;
+  completion: ContentItemCompletion | null;
+}
+
+interface ModuleRecord {
+  module_id: string;
+  slug: string;
+  name: string;
+  description: string | null;
+  estimated_minutes: number | null;
+  thumbnail_asset_id: string | null;
+  display_order: number;
+  prerequisite_module_id: string | null;
+  is_required: boolean;
+  module_completion: ModuleCompletion | null;
+  items: ContentItem[];
+}
+
+interface ParentCertPath {
+  certification_path_id: string;
+  slug: string;
+  name: string;
+  display_order: number;
+  is_required: boolean;
+}
+
+interface CurriculumRecord {
+  id: string;
+  slug: string;
+  name: string;
+  description: string | null;
+  mode: string | null;
+  estimated_minutes: number | null;
+  thumbnail_asset_id: string | null;
+  is_published: boolean;
+  is_self_enrollable: boolean;
+  self_enroll_price_cents: number | null;
+  self_enroll_currency: string | null;
+}
+
+interface CurriculumDetailResponse {
+  curriculum: CurriculumRecord;
+  parent_cert_paths: ParentCertPath[];
+  user_assignment: UserAssignment | null;
+  modules: ModuleRecord[];
+  recommended_next: RecommendedNext | null;
+  user_id: string;
+  viewer_role: "self" | "mentor" | "super_admin";
+  generated_at: string;
+}
+
+interface EnrollPaymentRequired {
+  status: "payment_required";
+  price_cents: number | null;
+}
+
+type EnrollResponse = EnrollPaymentRequired | Record<string, unknown> | null;
+
 function titleCaseSlug(s?: string | null): string {
   if (!s) return "";
   return s
@@ -20,7 +126,7 @@ function titleCaseSlug(s?: string | null): string {
     .join(" ");
 }
 
-function prereqLabel(module: any, modules: any[]): string | null {
+function prereqLabel(module: ModuleRecord, modules: ModuleRecord[]): string | null {
   const pid = module?.prerequisite_module_id;
   if (!pid) return null;
   const m = modules.find((x) => x.module_id === pid);
@@ -41,6 +147,8 @@ export default function CurriculumDetail() {
     priceCents: number | null;
   }>({ open: false, entityName: null, priceCents: null });
 
+  const [isEnrolling, setIsEnrolling] = useState(false);
+
   const curriculumQuery = useQuery({
     queryKey: ["get_curriculum_detail", curriculumId, userId],
     enabled: !!curriculumId && !!userId,
@@ -53,16 +161,16 @@ export default function CurriculumDetail() {
         } as never,
       );
       if (error) throw error;
-      return data as any;
+      return data as unknown as CurriculumDetailResponse;
     },
   });
 
   const data = curriculumQuery.data;
-  const curriculum = data?.curriculum ?? null;
-  const userAssignment = data?.user_assignment ?? null;
-  const recommendedNext = data?.recommended_next ?? null;
-  const modules: any[] = data?.modules ?? [];
-  const parentCertPaths: any[] = data?.parent_cert_paths ?? [];
+  const curriculum: CurriculumRecord | null = data?.curriculum ?? null;
+  const userAssignment: UserAssignment | null = data?.user_assignment ?? null;
+  const recommendedNext: RecommendedNext | null = data?.recommended_next ?? null;
+  const modules: ModuleRecord[] = data?.modules ?? [];
+  const parentCertPaths: ParentCertPath[] = data?.parent_cert_paths ?? [];
 
   const moduleIds = useMemo(
     () =>
@@ -91,67 +199,89 @@ export default function CurriculumDetail() {
   });
 
   const handleEnroll = async () => {
-    if (!curriculumId || !curriculum) return;
+    if (!curriculumId || !curriculum || isEnrolling) return;
+    setIsEnrolling(true);
+    try {
+      const { data: rpcData, error } = await supabase.rpc(
+        "self_enroll_in_curriculum" as never,
+        { p_curriculum_id: curriculumId } as never,
+      );
 
-    const { data: rpcData, error } = await supabase.rpc(
-      "self_enroll_in_curriculum" as never,
-      { p_curriculum_id: curriculumId } as never,
-    );
+      if (error) {
+        const msg = error.message || error.toString() || "Unknown error";
+        let description = msg;
+        if (msg.includes("not_self_enrollable"))
+          description = "This curriculum isn't open for self-enrollment.";
+        else if (msg.includes("already_assigned_active"))
+          description = "You're already enrolled.";
+        else if (msg.includes("is_not_standalone"))
+          description =
+            "This curriculum is part of a certification path — enroll at the path level.";
+        else if (msg.includes("not_published"))
+          description = "This curriculum isn't available yet.";
+        toast({ title: "Could not enroll", description, variant: "destructive" });
+        return;
+      }
 
-    if (error) {
-      const msg = error.message || error.toString() || "Unknown error";
-      let description = msg;
-      if (msg.includes("not_self_enrollable"))
-        description = "This curriculum isn't open for self-enrollment.";
-      else if (msg.includes("already_assigned_active"))
-        description = "You're already enrolled.";
-      else if (msg.includes("is_not_standalone"))
-        description =
-          "This curriculum is part of a certification path — enroll at the path level.";
-      else if (msg.includes("not_published"))
-        description = "This curriculum isn't available yet.";
-      toast({ title: "Could not enroll", description, variant: "destructive" });
-      return;
-    }
+      const enrollResponse = rpcData as unknown as EnrollResponse;
+      if (enrollResponse && (enrollResponse as EnrollPaymentRequired).status === "payment_required") {
+        const paidResponse = enrollResponse as EnrollPaymentRequired;
+        setPaidNudgeState({
+          open: true,
+          entityName: curriculum.name ?? null,
+          priceCents: paidResponse.price_cents ?? null,
+        });
+        return;
+      }
 
-    if ((rpcData as any)?.status === "payment_required") {
-      setPaidNudgeState({
-        open: true,
-        entityName: curriculum.name ?? null,
-        priceCents: (rpcData as any).price_cents ?? null,
+      toast({
+        title: "Enrolled!",
+        description: `You're enrolled in ${curriculum.name}.`,
       });
-      return;
+      await queryClient.invalidateQueries({
+        queryKey: ["get_curriculum_detail", curriculumId],
+      });
+      await queryClient.invalidateQueries({ queryKey: ["get_user_learning_state"] });
+      await queryClient.invalidateQueries({ queryKey: ["list_available_learning"] });
+    } finally {
+      setIsEnrolling(false);
     }
-
-    toast({
-      title: "Enrolled!",
-      description: `You're enrolled in ${curriculum.name}.`,
-    });
-    await queryClient.invalidateQueries({
-      queryKey: ["get_curriculum_detail", curriculumId],
-    });
-    await queryClient.invalidateQueries({ queryKey: ["get_user_learning_state"] });
-    await queryClient.invalidateQueries({ queryKey: ["list_available_learning"] });
   };
 
   if (curriculumQuery.isLoading || !userId) {
     return (
-      <div className="flex min-h-[30vh] items-center justify-center">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      <div
+        className="flex min-h-[30vh] items-center justify-center"
+        role="status"
+        aria-label="Loading curriculum"
+      >
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" aria-hidden="true" />
       </div>
     );
   }
 
   if (curriculumQuery.isError || !curriculum) {
-    const err = curriculumQuery.error as any;
+    const err = curriculumQuery.error as Error | null;
     return (
       <div className="p-6 space-y-4">
-        <Button variant="ghost" size="sm" onClick={() => navigate(-1)}>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => {
+            if (window.history.length > 1) navigate(-1);
+            else navigate("/resources");
+          }}
+        >
           <ArrowLeft className="h-4 w-4 mr-1" /> Back
         </Button>
-        <div className="rounded-md border border-destructive/30 bg-card p-6 text-destructive">
-          Could not load this curriculum.{" "}
-          {err?.message ?? "Please try again."}
+        <div className="rounded-md border border-destructive/30 bg-card p-6 text-destructive space-y-3">
+          <div>
+            Could not load this curriculum.{" "}
+            {err?.message ?? "Please try again."}
+          </div>
+          <Button size="sm" onClick={() => curriculumQuery.refetch()}>
+            Retry
+          </Button>
         </div>
       </div>
     );
@@ -185,7 +315,13 @@ export default function CurriculumDetail() {
       ? Number(curriculum.estimated_minutes)
       : summedMinutes;
 
-  // CTA branch
+  // CTA decision tree, ordered by precedence:
+  //   1. Completed                                       → "Review" (jumps to first module)
+  //   2. Enrolled + has recommended_next                 → "Resume" (deep-links to content viewer)
+  //   3. Not enrolled + not self-enrollable + has parent → "Enroll in {parent cert path}"
+  //   4. Not enrolled + not self-enrollable + no parent  → notice: "Not currently open for enrollment"
+  //   5. Not enrolled (self-enrollable)                  → "Enroll" (with paid-nudge branching)
+  //   6. Enrolled + no recommended_next + not completed  → "Start" (fallback edge case)
   let cta:
     | { label: string; onClick: () => void; outline?: boolean }
     | null = null;
@@ -206,9 +342,7 @@ export default function CurriculumDetail() {
     cta = {
       label: "Resume",
       onClick: () => {
-        // TODO Group W: route directly to content item viewer using
-        // recommendedNext.content_item_id once viewers ship.
-        navigate(`/learning/module/${recommendedNext.module_id}`);
+        navigate(`/learning/content-item/${recommendedNext.content_item_id}`);
       },
     };
   } else if (!isEnrolled && !isSelfEnrollable && firstParent) {
@@ -240,7 +374,14 @@ export default function CurriculumDetail() {
     <div className="space-y-6 pb-10">
       {/* Back button */}
       <div className="px-4 pt-4 sm:px-6">
-        <Button variant="ghost" size="sm" onClick={() => navigate(-1)}>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => {
+            if (window.history.length > 1) navigate(-1);
+            else navigate("/resources");
+          }}
+        >
           <ArrowLeft className="h-4 w-4 mr-1" /> Back
         </Button>
       </div>
@@ -250,6 +391,7 @@ export default function CurriculumDetail() {
         className="relative h-[180px] md:h-[240px] lg:h-[320px] w-full"
         style={{ backgroundImage: heroBackgroundImage, backgroundColor: heroBackgroundColor }}
       >
+        {/* Brand glyph is decorative — curriculum name below provides semantic content. */}
         <img
           src="/brain-icon.png"
           alt=""
@@ -260,7 +402,7 @@ export default function CurriculumDetail() {
           <div />
           <div className="flex items-end justify-between gap-4">
             <div className="min-w-0 flex-1">
-              <h1 className="text-3xl md:text-4xl font-bold text-white">
+              <h1 className="text-3xl md:text-4xl font-bold text-white line-clamp-2">
                 {curriculum.name}
               </h1>
               {curriculum.description && (
@@ -304,13 +446,17 @@ export default function CurriculumDetail() {
         {cta && (
           <Button
             onClick={cta.onClick}
+            disabled={cta.label === "Enroll" && isEnrolling}
             variant={cta.outline ? "outline" : "default"}
             className={
               cta.outline
                 ? undefined
-                : "bg-[var(--bw-orange)] hover:bg-[var(--bw-orange-600)] text-white"
+                : "bg-[var(--bw-orange)] hover:bg-[var(--bw-orange-600)] text-white disabled:opacity-60"
             }
           >
+            {cta.label === "Enroll" && isEnrolling && (
+              <Loader2 className="h-3 w-3 animate-spin mr-1.5" aria-hidden="true" />
+            )}
             {cta.label}
           </Button>
         )}
