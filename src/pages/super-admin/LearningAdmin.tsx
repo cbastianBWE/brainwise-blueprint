@@ -24,6 +24,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -1997,8 +1999,18 @@ function MentorRoleTab() {
 // ---------- Page shell ----------
 
 export default function LearningAdmin() {
+  const navigate = useNavigate();
   return (
     <div className="container mx-auto py-6 space-y-6">
+      <Alert>
+        <AlertTitle>This page is being replaced by Members</AlertTitle>
+        <AlertDescription>
+          Completion controls have moved to <strong>Members → click a user → Learning tab</strong>. Mentor role management has moved to <strong>Members → click a user → header → Mentor toggle</strong>.
+          <Button variant="link" className="px-0 ml-2" onClick={() => navigate('/super-admin/members')}>
+            Open Members
+          </Button>
+        </AlertDescription>
+      </Alert>
       <div>
         <h1 className="text-3xl font-bold">Learning Admin</h1>
         <p className="text-muted-foreground">

@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { Search, MoreHorizontal, UserCog, ChevronLeft, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -61,6 +63,7 @@ const accountTypeBadgeVariant = (
 
 const SuperAdminUsers = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [page, setPage] = useState(0);
@@ -109,6 +112,15 @@ const SuperAdminUsers = () => {
 
   return (
     <div className="container mx-auto p-6 space-y-6">
+      <Alert>
+        <AlertTitle>This page is being replaced by Members</AlertTitle>
+        <AlertDescription>
+          User search has moved to Members → search bar. Impersonation has moved to Members → user row → Impersonate.
+          <Button variant="link" className="px-0 ml-2" onClick={() => navigate('/super-admin/members')}>
+            Open Members
+          </Button>
+        </AlertDescription>
+      </Alert>
       <div>
         <h1 className="text-2xl font-semibold">User Management</h1>
         <p className="text-sm text-muted-foreground mt-1">
