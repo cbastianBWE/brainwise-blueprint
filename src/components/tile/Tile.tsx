@@ -43,6 +43,8 @@ export interface TileProps {
   isCurrentLocation?: boolean;
   inlineCtaLabel?: string;
   onInlineCtaClick?: () => void;
+  inlineCtaLoading?: boolean;
+  recommendedNextLabel?: string | null;
   locked?: boolean;
   externalLink?: boolean;
 }
