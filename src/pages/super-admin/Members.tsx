@@ -380,11 +380,21 @@ export default function Members() {
 
   return (
     <div className="container mx-auto p-6 space-y-4">
-      <div>
-        <h1 className="text-2xl font-semibold">Members</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Browse, search, and manage all platform members.
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold">Members</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Browse, search, and manage all platform members.
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => setBulkImportOpen(true)}>
+            <Upload className="h-4 w-4 mr-1" /> Bulk Import
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => setPageScheduleOpen(true)}>
+            <CalendarClock className="h-4 w-4 mr-1" /> Schedule
+          </Button>
+        </div>
       </div>
 
       <MembersFilterBar
@@ -410,7 +420,13 @@ export default function Members() {
 
       <MembersBulkActionsBar
         selectedCount={selectedIds.size}
+        selectedUserIds={Array.from(selectedIds)}
+        traineeLabels={traineeLabels}
         onClear={() => setSelectedIds(new Set())}
+        onActionComplete={() => {
+          setSelectedIds(new Set());
+          queryClient.invalidateQueries({ queryKey: ["members-search"] });
+        }}
       />
 
       <MembersTable
@@ -477,6 +493,16 @@ export default function Members() {
             : null
         }
         onClose={() => setImpersonateTarget(null)}
+      />
+
+      <BulkImportModal open={bulkImportOpen} onOpenChange={setBulkImportOpen} />
+      <ScheduleAssignmentModal
+        open={pageScheduleOpen}
+        onOpenChange={setPageScheduleOpen}
+        traineeLabels={traineeLabels}
+        onComplete={() => {
+          queryClient.invalidateQueries({ queryKey: ["list_scheduled_assignments"] });
+        }}
       />
     </div>
   );
