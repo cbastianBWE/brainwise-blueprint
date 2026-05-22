@@ -70,6 +70,7 @@ import CompanyDashboard from "./pages/company/CompanyDashboard";
 import PTPDashboard from "./pages/company/PTPDashboard";
 import AirsaDashboard from "./pages/company/AirsaDashboard";
 import InterventionsPage from "./pages/company/InterventionsPage";
+import Members from "./pages/super-admin/Members";
 import PlatformHealth from "./pages/super-admin/PlatformHealth";
 import SuperAdminUsers from "./pages/super-admin/Users";
 import CompanyAccounts from "./pages/super-admin/CompanyAccounts";
