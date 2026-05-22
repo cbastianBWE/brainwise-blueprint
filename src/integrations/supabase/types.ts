@@ -10230,6 +10230,7 @@ export type Database = {
               p_query: string
               p_sort_column?: string
               p_sort_direction?: string
+              p_specific_user_id?: string
             }
             Returns: {
               account_status: string
