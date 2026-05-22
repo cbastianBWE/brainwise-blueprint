@@ -173,12 +173,12 @@ export default function MembersTable({
               </TableHead>
             )}
             {showCol("email") && (
-              <TableHead>
+              <TableHead className="hidden sm:table-cell">
                 <SortHeader label="Email" columnKey="email" sort={sort} onSortChange={onSortChange} />
               </TableHead>
             )}
             {showCol("account_type") && (
-              <TableHead>
+              <TableHead className="hidden sm:table-cell">
                 <SortHeader
                   label="Account type"
                   columnKey="account_type"
@@ -187,9 +187,9 @@ export default function MembersTable({
                 />
               </TableHead>
             )}
-            {showCol("mentor") && <TableHead>Mentor</TableHead>}
+            {showCol("mentor") && <TableHead className="hidden lg:table-cell">Mentor</TableHead>}
             {showCol("organization") && (
-              <TableHead>
+              <TableHead className="hidden lg:table-cell">
                 <SortHeader
                   label="Organization"
                   columnKey="organization"
@@ -199,7 +199,7 @@ export default function MembersTable({
               </TableHead>
             )}
             {showCol("active_assignments") && (
-              <TableHead>
+              <TableHead className="hidden md:table-cell">
                 <SortHeader
                   label="Active assignments"
                   columnKey="active_assignments"
@@ -209,7 +209,7 @@ export default function MembersTable({
               </TableHead>
             )}
             {showCol("certifications") && (
-              <TableHead>
+              <TableHead className="hidden md:table-cell">
                 <SortHeader
                   label="Certifications"
                   columnKey="certification_count"
@@ -229,7 +229,7 @@ export default function MembersTable({
               </TableHead>
             )}
             {showCol("last_login") && (
-              <TableHead>
+              <TableHead className="hidden lg:table-cell">
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <span>
