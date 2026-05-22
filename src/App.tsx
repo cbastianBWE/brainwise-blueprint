@@ -192,6 +192,8 @@ const App = () => (
               <Route path="/admin/resources" element={<RoleGuard allowedRoles={["company_admin", "org_admin"]}><AdminResources /></RoleGuard>} />
 
               {/* Super Admin */}
+              <Route path="/super-admin/members" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><Members /></SuperAdminSessionProvider></RoleGuard>} />
+              <Route path="/super-admin/members/:userId" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><Members /></SuperAdminSessionProvider></RoleGuard>} />
               <Route path="/super-admin/users" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><SuperAdminUsers /></SuperAdminSessionProvider></RoleGuard>} />
               <Route path="/super-admin/health" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><PlatformHealth /></SuperAdminSessionProvider></RoleGuard>} />
               <Route path="/super-admin/coaches" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><CoachManagement /></SuperAdminSessionProvider></RoleGuard>} />
@@ -211,7 +213,7 @@ const App = () => (
             {/* Legacy redirects */}
             <Route path="/coach-portal" element={<ProtectedRoute><AppLayout /></ProtectedRoute>} />
             <Route path="/admin" element={<ProtectedRoute><AppLayout /></ProtectedRoute>} />
-            <Route path="/super-admin" element={<Navigate to="/super-admin/users" replace />} />
+            <Route path="/super-admin" element={<Navigate to="/super-admin/members" replace />} />
 
             <Route path="*" element={<NotFound />} />
             </Routes>
