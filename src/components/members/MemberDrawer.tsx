@@ -157,7 +157,13 @@ function MemberDrawerBody({
             setHasUnsavedChanges={setHasUnsavedChanges}
           />
         )}
-        {activeTab === "assignments" && <MemberDrawerAssignments />}
+        {activeTab === "assignments" && (
+          <MemberDrawerAssignments
+            userId={member.user_id}
+            fullName={member.full_name}
+            setHasUnsavedChanges={setHasUnsavedChanges}
+          />
+        )}
         {activeTab === "coach" && showCoach && (
           <MemberDrawerCoach
             userId={member.user_id}
