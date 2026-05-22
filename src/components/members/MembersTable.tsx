@@ -156,7 +156,7 @@ export default function MembersTable({
     1 + visibleColumns.filter((c) => c !== "actions").length + 1;
 
   return (
-    <div className="rounded-lg border">
+    <div className="rounded-lg border overflow-x-auto">
       <Table>
         <TableHeader>
           <TableRow>
