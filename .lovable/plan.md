@@ -1,45 +1,61 @@
+# Phase 11.D — Legacy delete + brand color tokens
 
-# Phase 11.C cycle 2b — Part 1
+Verified the prompt against the current tree. Plan is accurate with two small caveats called out below.
 
-Create exactly 8 new files under `src/components/members/bulk/`. No existing files modified. Toolbar wiring deferred to Part 2.
+## Pre-flight findings
 
-## Files to create
+- `GraduationCap` is still used on line 156 of `AppSidebar.tsx` (Mentor Portal nav item). **Keep the import** — only `UserSearch` becomes orphaned and gets removed.
+- `ResultPanel.tsx`'s only consumer is `LearningAdmin.tsx` (being deleted). Plan defers its removal to 11.E — honoring that.
+- `ContentItemArtifactPanel.tsx` exists in `learning-admin/` but is not in the delete list and not mentioned by the prompt. Leave it alone.
+- All 6 delete targets exist. All 4 token-migration files contain the raw Tailwind classes the prompt describes (exact line numbers confirmed).
 
-1. **`types.ts`** — Shared types: `BulkAssignType`, `BulkResult`, `BulkChunkResult`, `ImportReference`, `ImportRowResult`, `ImportResult`, `MentorableCert`, `MentorResolution`, `ScheduledAssignment` (last four pre-defined for Part 2).
+## Part 1 — Legacy delete + route/nav cleanup
 
-2. **`BulkProgress.tsx`** — Progress UI primitive (Progress bar + tallies + Cancel button). Status text honors cancelled state: `Cancelled. {N} of {M} processed.`
+**Delete (6 files):**
+- `src/pages/super-admin/LearningAdmin.tsx`
+- `src/pages/super-admin/Users.tsx`
+- `src/components/super-admin/UserDetailsModal.tsx`
+- `src/components/learning-admin/CompletionControlTab.tsx`
+- `src/components/learning-admin/TraineeMultiSelect.tsx`
+- `src/components/learning-admin/learnerSearchShared.ts`
 
-3. **`useBulkChunkRunner.ts`** — Generic chunking hook. `useRef` for cancel flag (sync read in loop). Each chunk in try/catch — one failure doesn't abort. Default chunkSize=50. Exposes `start/cancel/reset/isRunning/cancelled/processed/succeeded/failed/results`.
+**Keep (explicitly):** `AdminLearningTree.tsx`, `CompletionConfirmDialog.tsx`, `ResultPanel.tsx`, `ContentItemArtifactPanel.tsx`.
 
-4. **`BulkAssignModal.tsx`** — Type picker (cert_path / curriculum / module). Target dropdown driven by direct table queries (published + non-archived). Optional due date. Reason ≥10 chars. Dispatches `enroll_users_in_certification_path_bulk` / `assign_curriculum_bulk` / `assign_module_bulk` (with `p_source: 'direct_assignment'` and the null FKs spec'd). Chunked at 50. Invalidates `members-search`, `list_all_learning_assignments`, `get_user_learning_state`.
+**`src/App.tsx`:**
+- Remove imports on lines 75 and 82 (`SuperAdminUsers`, `LearningAdmin`).
+- Replace the two route elements (lines 197, 205) with `<Navigate to="/super-admin/members" replace />` wrapped in the same `RoleGuard`+`SuperAdminSessionProvider` is unnecessary for a redirect — simplify to a bare `<Route path="..." element={<Navigate to="/super-admin/members" replace />} />`. Keep the existing wildcard fallback untouched.
 
-5. **`BulkAssignMentorModal.tsx`** — Mentor picker via `search_impersonation_targets` (all 15 named params, `p_is_mentor: true`). Per-trainee resolution via `get_mentorable_certifications`: 0 certs = skipped (red), 1 = auto-selected readonly, 2+ = dropdown. Builds `pairs[]` only from resolved trainees. Single-shot `assign_mentor_pairs_bulk` (no chunking). Invalidates `members-search`, `list_mentor_trainees`.
+**`src/components/AppSidebar.tsx`:**
+- Delete lines 87 and 94 (the two Legacy entries).
+- Remove `UserSearch` from the icon import on line 6.
+- Keep `GraduationCap` (still used by Mentor Portal item).
 
-6. **`BulkUnassignModal.tsx`** — Type picker (curriculum / module only). Pre-call resolver: `user_id → assignment_id` from `user_curriculum_assignments` / `user_module_assignments` where `status='active'`. Missing users surfaced as inline note. Chunked `unassign_curriculum_bulk` / `unassign_module_bulk` over assignment IDs (runner's `userIds` arg is treated as opaque IDs; code comment notes the misnomer).
+## Part 2 — Brand color tokens (4 files)
 
-7. **`BulkUnassignMentorModal.tsx`** — Mentor picker + two reason fields (`p_end_reason` visible to trainee, `p_reason` audit) each ≥10 chars. Resolver against `coach_mentor_assignments` where `ended_at IS NULL`. Chunked `unassign_mentor_bulk`. Invalidates `members-search`, `list_mentor_trainees`.
+Apply the `color-mix(in oklab, var(--bw-*) X%, white)` pattern from the prompt.
 
-8. **`BulkOverrideCompletionModal.tsx`** — Tier picker (curriculum / module / content_item — NO cert_path). Direction radio (complete / incomplete, default complete). content_item query: `content_items` `is_archived=false` order by title limit 500. Chunked dispatch to the three `set_*_completion_bulk` RPCs. Invalidates `members-search`, `get_user_learning_state`.
+**`src/components/members/MemberDrawer.tsx`** (line 94): Active badge → forest tint + forest text. "Not active" stays on shadcn `secondary`.
 
-## Cross-cutting rules
+**`src/components/members/MembersTable.tsx`**:
+- Line 60: Active badge → forest tint.
+- Lines ~70–90: Refactor the cert-status conditional className into a small `getCertBadgeStyle(status)` helper returning `React.CSSProperties` — `certified` → forest, `in_progress` → amber tint + mustard text, `revoked` → destructive tint. Apply via `style=` with `className="border"` retained so borderColor takes effect.
 
-- All `.rpc()` calls use `as any` boundary casts (codebase pattern).
-- Every modal blocks close while `runner.isRunning`; resets runner state on close.
-- Outer-catch toasts only; per-row failures stay in inline result panel.
-- Result panel after run shows failed rows only (succeeded omitted to reduce noise).
-- All Tailwind colors stay as spec'd amber/emerald/purple — token migration is 11.D.
+**`src/components/members/bulk/ScheduleAssignmentModal.tsx`**:
+- Replace `STATUS_BADGE_CLASS` map (lines 55–58 + the rest of the map) with `STATUS_BADGE_STYLE: Record<Status, React.CSSProperties>` covering pending/processing/completed/partial/failed/cancelled per the prompt's spec.
+- Switch the Badge usage from `className={STATUS_BADGE_CLASS[status]}` to `style={STATUS_BADGE_STYLE[status]} className="border"`.
+- Line 454 missing-users amber banner → amber tint bg + mustard text + amber tint border.
 
-## Hard guardrails
-
-- No existing file touched (verify `MembersBulkActionsBar`, `MemberDrawerAudit`, `Members.tsx`, `JustifiedActionDialog` byte-identical).
-- No backend migrations, no RPC changes, no edge functions.
-- No `JustifiedActionDialog` import from any bulk modal.
-- No mentor option in `BulkUnassignModal` type picker.
-- No cert_path option in `BulkOverrideCompletionModal` tier picker.
-- Each new file under 400 lines.
+**`src/components/members/bulk/BulkUnassignModal.tsx`**:
+- Line 252 missing-users amber banner → same amber-tint pattern.
+- Line 278 `text-amber-600` heading → `var(--bw-mustard)`.
 
 ## Verification
 
-After build, self-grep against the checklist in the prompt. Report PASS/FAIL per item with one-line evidence. Stop on any FAIL.
+After edits, run grep to confirm:
+- The 6 deleted paths return no matches.
+- `rg "bg-(emerald|amber|teal)-(50|100)|text-(emerald|amber|teal)-(600|800|900)"` returns zero hits in the 4 migrated files.
+- `rg "SuperAdminUsers|Legacy:"` returns zero hits in `src/App.tsx` and `src/components/AppSidebar.tsx`.
+- `AdminLearningTree.tsx` and `CompletionConfirmDialog.tsx` untouched.
+- TypeScript build clean.
 
-Awaiting approval to switch to build mode.
+No new files, no backend work, no a11y/mobile passes.
