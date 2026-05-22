@@ -79,7 +79,7 @@ export default function BulkUnassignModal({
       const { data, error } = await supabase
         .from("curricula")
         .select("id, name")
-        .eq("is_archived", false)
+        .is("archived_at", null)
         .eq("is_published", true)
         .order("name");
       if (error) throw error;
@@ -94,7 +94,7 @@ export default function BulkUnassignModal({
       const { data, error } = await supabase
         .from("modules")
         .select("id, name")
-        .eq("is_archived", false)
+        .is("archived_at", null)
         .eq("is_published", true)
         .order("name");
       if (error) throw error;
