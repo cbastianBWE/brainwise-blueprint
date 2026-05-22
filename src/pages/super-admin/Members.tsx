@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { CalendarClock, ChevronLeft, ChevronRight, Upload } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,8 @@ import MembersFilterBar from "@/components/members/MembersFilterBar";
 import MembersBulkActionsBar from "@/components/members/MembersBulkActionsBar";
 import ColumnVisibilityMenu from "@/components/members/ColumnVisibilityMenu";
 import MemberDrawer from "@/components/members/MemberDrawer";
+import BulkImportModal from "@/components/members/bulk/BulkImportModal";
+import ScheduleAssignmentModal from "@/components/members/bulk/ScheduleAssignmentModal";
 import JustificationModal from "@/components/impersonation/JustificationModal";
 import {
   MEMBER_COLUMN_IDS,
@@ -75,6 +77,7 @@ export default function Members() {
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { userId: routeUserId } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -93,6 +96,10 @@ export default function Members() {
 
   // Impersonation modal target
   const [impersonateTarget, setImpersonateTarget] = useState<MemberRow | null>(null);
+
+  // Page-level bulk modals (not tied to selection)
+  const [bulkImportOpen, setBulkImportOpen] = useState(false);
+  const [pageScheduleOpen, setPageScheduleOpen] = useState(false);
 
   // Saved views (loaded from ui_preferences)
   const [savedViews, setSavedViews] = useState<SavedView[]>([]);
