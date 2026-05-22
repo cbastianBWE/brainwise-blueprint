@@ -281,7 +281,7 @@ export default function CoachInvoices() {
       status === "Completed"
         ? "bg-[var(--bw-forest)] hover:opacity-90 text-white"
         : status === "In Progress"
-        ? "bg-[var(--bw-amber)] hover:opacity-90 text-white"
+        ? "bg-[var(--bw-teal)] hover:opacity-90 text-white"
         : "bg-muted text-muted-foreground";
     return (
       <Badge variant={variant} className={cls}>
