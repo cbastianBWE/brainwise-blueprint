@@ -86,20 +86,34 @@ export default function ResourceGridTab({ tab, emptyStateText }: ResourceGridTab
   }, [filtered]);
 
   const handleFileDownload = async (resource: Resource) => {
-    const { data, error } = await supabase.functions.invoke("get-resource-signed-url", {
-      body: { p_resource_id: resource.resource_id, as_attachment: true },
-    });
-    if (error || !data?.signed_url) {
+    try {
+      const { data, error } = await supabase.functions.invoke("get-resource-signed-url", {
+        body: { p_resource_id: resource.resource_id, as_attachment: true },
+      });
+      if (error || !data?.signed_url) {
+        toast({
+          title: "Could not download",
+          description: data?.error || error?.message || "Content not available.",
+          variant: "destructive",
+        });
+        return;
+      }
+      window.open(data.signed_url, "_blank", "noopener,noreferrer");
+    } catch (err) {
       toast({
         title: "Could not download",
-        description: data?.error || error?.message || "Content not available.",
+        description: err instanceof Error ? err.message : "An unexpected error occurred.",
         variant: "destructive",
       });
-      return;
     }
-    window.open(data.signed_url, "_blank", "noopener,noreferrer");
   };
 
+  // Resource click routing, ordered by precedence:
+  //   1. Locked (!is_accessible)                                 → UpgradeNudgeModal (no navigation)
+  //   2. Has content_asset_id + content_type === "video"         → reader page (signed-URL video player)
+  //   3. Has content_asset_id (non-video)                        → file download (signed URL, new tab)
+  //   4. url_kind === "external_link" + url_or_content present   → window.open (external URL, new tab)
+  //   5. Inline content (article HTML, etc.)                     → reader page
   const handleResourceClick = (resource: Resource) => {
     if (!resource.is_accessible) {
       setUpgradeState({
