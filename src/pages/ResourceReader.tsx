@@ -178,7 +178,7 @@ export default function ResourceReader() {
   const logAccess = useResourceAccessLog();
   const [upgradeOpen, setUpgradeOpen] = useState(false);
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, refetch } = useQuery({
     queryKey: ["get_user_resources"],
     queryFn: async () => {
       const { data, error } = await supabase.rpc("get_user_resources" as never);
