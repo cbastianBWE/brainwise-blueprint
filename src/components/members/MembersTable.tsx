@@ -388,7 +388,7 @@ export default function MembersTable({
                           variant="ghost"
                           size="icon"
                           className="opacity-0 group-hover:opacity-100 md:opacity-0 md:group-hover:opacity-100"
-                          aria-label="Row actions"
+                          aria-label={`Row actions for ${row.full_name ?? row.email}`}
                         >
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
