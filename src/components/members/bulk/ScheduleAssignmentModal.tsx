@@ -405,7 +405,7 @@ export default function ScheduleAssignmentModal({
 
   return (
     <Dialog open={open} onOpenChange={(o) => !submitting && onOpenChange(o)}>
-      <DialogContent className="max-w-3xl">
+      <DialogContent className="max-w-3xl w-[calc(100vw-2rem)] sm:w-full">
         <DialogHeader>
           <DialogTitle>Schedule assignment</DialogTitle>
           <DialogDescription>
