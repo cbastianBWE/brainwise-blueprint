@@ -156,7 +156,7 @@ export default function MembersTable({
     1 + visibleColumns.filter((c) => c !== "actions").length + 1;
 
   return (
-    <div className="rounded-lg border">
+    <div className="rounded-lg border overflow-x-auto">
       <Table>
         <TableHeader>
           <TableRow>
@@ -173,12 +173,12 @@ export default function MembersTable({
               </TableHead>
             )}
             {showCol("email") && (
-              <TableHead>
+              <TableHead className="hidden sm:table-cell">
                 <SortHeader label="Email" columnKey="email" sort={sort} onSortChange={onSortChange} />
               </TableHead>
             )}
             {showCol("account_type") && (
-              <TableHead>
+              <TableHead className="hidden sm:table-cell">
                 <SortHeader
                   label="Account type"
                   columnKey="account_type"
@@ -187,9 +187,9 @@ export default function MembersTable({
                 />
               </TableHead>
             )}
-            {showCol("mentor") && <TableHead>Mentor</TableHead>}
+            {showCol("mentor") && <TableHead className="hidden lg:table-cell">Mentor</TableHead>}
             {showCol("organization") && (
-              <TableHead>
+              <TableHead className="hidden lg:table-cell">
                 <SortHeader
                   label="Organization"
                   columnKey="organization"
@@ -199,7 +199,7 @@ export default function MembersTable({
               </TableHead>
             )}
             {showCol("active_assignments") && (
-              <TableHead>
+              <TableHead className="hidden md:table-cell">
                 <SortHeader
                   label="Active assignments"
                   columnKey="active_assignments"
@@ -209,7 +209,7 @@ export default function MembersTable({
               </TableHead>
             )}
             {showCol("certifications") && (
-              <TableHead>
+              <TableHead className="hidden md:table-cell">
                 <SortHeader
                   label="Certifications"
                   columnKey="certification_count"
@@ -229,7 +229,7 @@ export default function MembersTable({
               </TableHead>
             )}
             {showCol("last_login") && (
-              <TableHead>
+              <TableHead className="hidden lg:table-cell">
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <span>
@@ -316,15 +316,15 @@ export default function MembersTable({
                     </TableCell>
                   )}
                   {showCol("email") && (
-                    <TableCell>{highlightMatch(row.email, searchQuery)}</TableCell>
+                    <TableCell className="hidden sm:table-cell">{highlightMatch(row.email, searchQuery)}</TableCell>
                   )}
                   {showCol("account_type") && (
-                    <TableCell>
+                    <TableCell className="hidden sm:table-cell">
                       <Badge variant="outline">{formatAccountType(row.account_type)}</Badge>
                     </TableCell>
                   )}
                   {showCol("mentor") && (
-                    <TableCell>
+                    <TableCell className="hidden lg:table-cell">
                       {row.is_mentor ? (
                         <Badge variant="secondary">Mentor</Badge>
                       ) : (
@@ -333,7 +333,7 @@ export default function MembersTable({
                     </TableCell>
                   )}
                   {showCol("organization") && (
-                    <TableCell>
+                    <TableCell className="hidden lg:table-cell">
                       {row.organization_name ? (
                         highlightMatch(row.organization_name, searchQuery)
                       ) : (
@@ -342,7 +342,7 @@ export default function MembersTable({
                     </TableCell>
                   )}
                   {showCol("active_assignments") && (
-                    <TableCell>
+                    <TableCell className="hidden md:table-cell">
                       {row.active_assignment_count > 0 ? (
                         row.active_assignment_count
                       ) : (
@@ -351,7 +351,7 @@ export default function MembersTable({
                     </TableCell>
                   )}
                   {showCol("certifications") && (
-                    <TableCell>
+                    <TableCell className="hidden md:table-cell">
                       {row.account_type === "coach" || row.certification_count > 0 ? (
                         <span className="inline-flex items-center gap-2 text-sm">
                           {row.certification_count}
@@ -369,7 +369,7 @@ export default function MembersTable({
                   )}
                   {showCol("status") && <TableCell>{statusBadge(row.account_status)}</TableCell>}
                   {showCol("last_login") && (
-                    <TableCell>
+                    <TableCell className="hidden lg:table-cell">
                       {row.last_sign_in_at ? (
                         formatDistanceToNow(new Date(row.last_sign_in_at), { addSuffix: true })
                       ) : (
@@ -388,7 +388,7 @@ export default function MembersTable({
                           variant="ghost"
                           size="icon"
                           className="opacity-0 group-hover:opacity-100 md:opacity-0 md:group-hover:opacity-100"
-                          aria-label="Row actions"
+                          aria-label={`Row actions for ${row.full_name ?? row.email}`}
                         >
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>

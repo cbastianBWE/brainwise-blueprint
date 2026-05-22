@@ -92,6 +92,7 @@ function MemberDrawerBody({
               </span>
               {member.account_status === "active" ? (
                 <Badge
+                  aria-label="Account status: Active"
                   className="border-transparent"
                   style={{
                     backgroundColor: "color-mix(in oklab, var(--bw-forest) 12%, white)",
@@ -101,7 +102,9 @@ function MemberDrawerBody({
                   Active
                 </Badge>
               ) : (
-                <Badge variant="secondary">Not active</Badge>
+                <Badge aria-label="Account status: Not active" variant="secondary">
+                  Not active
+                </Badge>
               )}
             </div>
           </div>
@@ -111,6 +114,7 @@ function MemberDrawerBody({
               <Switch
                 checked={member.is_mentor}
                 onCheckedChange={() => setMentorDialogOpen(true)}
+                aria-label={`Mentor role for ${member.full_name ?? member.email}`}
               />
             </span>
             <Button

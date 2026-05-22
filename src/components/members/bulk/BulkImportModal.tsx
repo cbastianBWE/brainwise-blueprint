@@ -133,7 +133,7 @@ export default function BulkImportModal({ open, onOpenChange }: BulkImportModalP
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl w-[calc(100vw-2rem)] sm:w-full">
         <DialogHeader>
           <DialogTitle>Bulk import assignments</DialogTitle>
           <DialogDescription>
