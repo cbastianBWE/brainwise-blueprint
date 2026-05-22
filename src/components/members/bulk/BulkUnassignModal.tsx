@@ -249,7 +249,14 @@ export default function BulkUnassignModal({
           </div>
 
           {missingUserIds.length > 0 && (
-            <div className="rounded-md border border-amber-300 bg-amber-50 p-2 text-xs text-amber-800">
+            <div
+              className="rounded-md border p-2 text-xs"
+              style={{
+                backgroundColor: "color-mix(in oklab, var(--bw-amber) 18%, white)",
+                color: "var(--bw-mustard)",
+                borderColor: "color-mix(in oklab, var(--bw-amber) 35%, white)",
+              }}
+            >
               Note: {missingUserIds.length} user(s) have no active assignment for this target and
               will be skipped.
             </div>
@@ -275,7 +282,7 @@ export default function BulkUnassignModal({
 
           {failedRows.length > 0 && !runner.isRunning && (
             <div className="max-h-40 overflow-y-auto rounded-md border bg-muted/20 p-2 text-xs">
-              <div className="mb-1 font-semibold text-amber-600">
+              <div className="mb-1 font-semibold" style={{ color: "var(--bw-mustard)" }}>
                 {failedRows.length} failure(s):
               </div>
               {failedRows.map((r, idx) => (

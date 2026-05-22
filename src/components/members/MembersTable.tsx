@@ -57,7 +57,13 @@ const formatAccountType = (t: string | null): string => {
 function statusBadge(status: string) {
   if (status === "active") {
     return (
-      <Badge className="bg-emerald-100 text-emerald-900 border-transparent hover:bg-emerald-100">
+      <Badge
+        className="border-transparent"
+        style={{
+          backgroundColor: "color-mix(in oklab, var(--bw-forest) 12%, white)",
+          color: "var(--bw-forest)",
+        }}
+      >
         Active
       </Badge>
     );
@@ -69,18 +75,38 @@ function statusBadge(status: string) {
   );
 }
 
+function getCertBadgeStyle(status: string): React.CSSProperties | undefined {
+  if (status === "certified") {
+    return {
+      backgroundColor: "color-mix(in oklab, var(--bw-forest) 12%, white)",
+      color: "var(--bw-forest)",
+    };
+  }
+  if (status === "in_progress") {
+    return {
+      backgroundColor: "color-mix(in oklab, var(--bw-amber) 18%, white)",
+      color: "var(--bw-mustard)",
+    };
+  }
+  if (status === "revoked") {
+    return {
+      backgroundColor: "color-mix(in oklab, hsl(var(--destructive)) 12%, white)",
+      color: "hsl(var(--destructive))",
+    };
+  }
+  return undefined;
+}
+
 function certStatusPill(status: string | null) {
   if (!status) return null;
-  const cls =
-    status === "revoked"
-      ? "bg-destructive/10 text-destructive border-transparent"
-      : status === "in_progress"
-        ? "bg-amber-100 text-amber-900 border-transparent hover:bg-amber-100"
-        : status === "certified"
-          ? "bg-purple-100 text-purple-900 border-transparent hover:bg-purple-100"
-          : "bg-muted text-muted-foreground border-transparent";
+  const style = getCertBadgeStyle(status);
+  const fallback = style ? "" : "bg-muted text-muted-foreground";
   const label = status.split("_").map((s) => s.charAt(0).toUpperCase() + s.slice(1)).join(" ");
-  return <Badge className={`text-[10px] ${cls}`}>{label}</Badge>;
+  return (
+    <Badge className={`text-[10px] border-transparent ${fallback}`} style={style}>
+      {label}
+    </Badge>
+  );
 }
 
 function SortHeader({

@@ -3,7 +3,7 @@ import {
   LayoutDashboard, BarChart3, ClipboardList, ClipboardCheck, MessageSquare, BookOpen, Settings,
   Users, Users2, Building2, UsersRound, Activity, Heart, Award, UserCircle,
   ShieldCheck, Briefcase, GitBranch, FlaskConical, LogOut, History, Shield,
-  CreditCard, Receipt, ChevronDown, ChevronRight, Plus, FileText, UserSearch, Library, Ticket,
+  CreditCard, Receipt, ChevronDown, ChevronRight, Plus, FileText, Library, Ticket,
   GraduationCap, Bell,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
@@ -84,14 +84,14 @@ const superAdminNav: NavItem[] = [
   { title: "Assessment", url: "/assessment", icon: ClipboardList },
   { title: "My Results", url: "/my-results", icon: FileText },
   { title: "Members", url: "/super-admin/members", icon: Users },
-  { title: "Legacy: Users", url: "/super-admin/users", icon: UserSearch },
+  
   { title: "Platform Health", url: "/super-admin/health", icon: Heart },
   { title: "Coach Management", url: "/super-admin/coaches", icon: Users },
   { title: "Company Accounts", url: "/super-admin/companies", icon: Briefcase },
   { title: "Create Organization", url: "/super-admin/create-organization", icon: Plus },
   { title: "Version Management", url: "/super-admin/versions", icon: GitBranch },
   { title: "Content Authoring", url: "/super-admin/content-authoring", icon: Library },
-  { title: "Legacy: Learning Admin", url: "/super-admin/learning-admin", icon: GraduationCap },
+  
   { title: "Resources", url: "/resources", icon: BookOpen },
   { title: "Resource Authoring", url: "/super-admin/resources", icon: Library },
   { title: "Comp Coupons", url: "/super-admin/coupons", icon: Ticket },

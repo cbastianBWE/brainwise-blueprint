@@ -91,7 +91,13 @@ function MemberDrawerBody({
                 {member.organization_name ?? "—"}
               </span>
               {member.account_status === "active" ? (
-                <Badge className="bg-emerald-100 text-emerald-900 border-transparent hover:bg-emerald-100">
+                <Badge
+                  className="border-transparent"
+                  style={{
+                    backgroundColor: "color-mix(in oklab, var(--bw-forest) 12%, white)",
+                    color: "var(--bw-forest)",
+                  }}
+                >
                   Active
                 </Badge>
               ) : (
