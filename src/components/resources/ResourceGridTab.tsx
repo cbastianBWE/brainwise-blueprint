@@ -155,6 +155,7 @@ export default function ResourceGridTab({ tab, emptyStateText }: ResourceGridTab
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search resources…"
+          aria-label="Search resources"
           className="pl-9"
         />
       </div>
