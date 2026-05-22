@@ -94,19 +94,28 @@ function useResourceSignedUrl(resourceId: string) {
 }
 
 function VideoPlayer({ resourceId }: { resourceId: string }) {
-  const { data, isLoading, isError, error } = useResourceSignedUrl(resourceId);
+  const { data, isLoading, isError, error, refetch } = useResourceSignedUrl(resourceId);
   if (isLoading) {
     return (
-      <div className="flex aspect-video w-full items-center justify-center rounded-md bg-muted">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      <div
+        className="flex aspect-video w-full items-center justify-center rounded-md bg-muted"
+        role="status"
+        aria-label="Loading video"
+      >
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" aria-hidden="true" />
       </div>
     );
   }
   if (isError || !data?.signed_url) {
     return (
-      <p className="text-sm text-destructive">
-        Could not load video: {error instanceof Error ? error.message : "Unknown error"}
-      </p>
+      <div className="space-y-3">
+        <p className="text-sm text-destructive">
+          Could not load video: {error instanceof Error ? error.message : "Unknown error"}
+        </p>
+        <Button size="sm" onClick={() => refetch()}>
+          Retry
+        </Button>
+      </div>
     );
   }
   return (
@@ -169,7 +178,7 @@ export default function ResourceReader() {
   const logAccess = useResourceAccessLog();
   const [upgradeOpen, setUpgradeOpen] = useState(false);
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, refetch } = useQuery({
     queryKey: ["get_user_resources"],
     queryFn: async () => {
       const { data, error } = await supabase.rpc("get_user_resources" as never);
@@ -195,8 +204,12 @@ export default function ResourceReader() {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-[40vh] items-center justify-center">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      <div
+        className="flex min-h-[40vh] items-center justify-center"
+        role="status"
+        aria-label="Loading resource"
+      >
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" aria-hidden="true" />
       </div>
     );
   }
@@ -204,12 +217,23 @@ export default function ResourceReader() {
   if (!resource) {
     return (
       <div className="container mx-auto p-6">
-        <Button variant="ghost" onClick={() => navigate("/resources")}>
+        <Button
+          variant="ghost"
+          onClick={() => {
+            if (window.history.length > 1) navigate(-1);
+            else navigate("/resources");
+          }}
+        >
           <ChevronLeft className="mr-1 h-4 w-4" /> Back to Resources
         </Button>
         <Card className="mt-4">
-          <CardContent className="p-8 text-center">
-            <p className="text-sm text-muted-foreground">Resource not found.</p>
+          <CardContent className="space-y-4 p-8 text-center">
+            <p className="text-sm text-muted-foreground">
+              Resource not found. If you expected to see this resource, it may have been moved or you may have lost access.
+            </p>
+            <Button size="sm" onClick={() => refetch()}>
+              Retry
+            </Button>
           </CardContent>
         </Card>
       </div>
@@ -220,7 +244,13 @@ export default function ResourceReader() {
     const upgradeType: UpgradeEntityType = resource.content_type;
     return (
       <div className="container mx-auto p-6">
-        <Button variant="ghost" onClick={() => navigate("/resources")}>
+        <Button
+          variant="ghost"
+          onClick={() => {
+            if (window.history.length > 1) navigate(-1);
+            else navigate("/resources");
+          }}
+        >
           <ChevronLeft className="mr-1 h-4 w-4" /> Back to Resources
         </Button>
         <Card className="mt-4">
@@ -310,7 +340,13 @@ export default function ResourceReader() {
 
   return (
     <div className="container mx-auto max-w-3xl p-6">
-      <Button variant="ghost" onClick={() => navigate("/resources")}>
+      <Button
+        variant="ghost"
+        onClick={() => {
+          if (window.history.length > 1) navigate(-1);
+          else navigate("/resources");
+        }}
+      >
         <ChevronLeft className="mr-1 h-4 w-4" /> Back to Resources
       </Button>
 
