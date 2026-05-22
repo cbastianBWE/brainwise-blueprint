@@ -204,8 +204,12 @@ export default function ResourceReader() {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-[40vh] items-center justify-center">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      <div
+        className="flex min-h-[40vh] items-center justify-center"
+        role="status"
+        aria-label="Loading resource"
+      >
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" aria-hidden="true" />
       </div>
     );
   }
@@ -213,12 +217,23 @@ export default function ResourceReader() {
   if (!resource) {
     return (
       <div className="container mx-auto p-6">
-        <Button variant="ghost" onClick={() => navigate("/resources")}>
+        <Button
+          variant="ghost"
+          onClick={() => {
+            if (window.history.length > 1) navigate(-1);
+            else navigate("/resources");
+          }}
+        >
           <ChevronLeft className="mr-1 h-4 w-4" /> Back to Resources
         </Button>
         <Card className="mt-4">
-          <CardContent className="p-8 text-center">
-            <p className="text-sm text-muted-foreground">Resource not found.</p>
+          <CardContent className="space-y-4 p-8 text-center">
+            <p className="text-sm text-muted-foreground">
+              Resource not found. If you expected to see this resource, it may have been moved or you may have lost access.
+            </p>
+            <Button size="sm" onClick={() => refetch()}>
+              Retry
+            </Button>
           </CardContent>
         </Card>
       </div>
