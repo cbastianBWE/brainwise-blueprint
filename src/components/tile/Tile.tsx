@@ -246,12 +246,14 @@ export function Tile(props: TileProps) {
         {inlineCtaLabel && onInlineCtaClick && (
           <button
             type="button"
+            disabled={inlineCtaLoading}
             onClick={(e) => {
               e.stopPropagation();
               onInlineCtaClick();
             }}
-            className="mt-2 rounded border border-input bg-background px-3 py-1.5 text-sm font-medium hover:bg-accent"
+            className="mt-2 inline-flex items-center justify-center gap-1.5 rounded border border-input bg-background px-3 py-1.5 text-sm font-medium hover:bg-accent disabled:cursor-not-allowed disabled:opacity-60"
           >
+            {inlineCtaLoading && <Loader2 className="h-3 w-3 animate-spin" />}
             {inlineCtaLabel}
           </button>
         )}
