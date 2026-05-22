@@ -53,6 +53,8 @@ export default function WrittenSummaryViewer({
     const completed = status === "completed";
     return (
       <div className="rounded-lg border bg-card p-6 space-y-3">
+        {/* Amber is intentional here: this is a pending-review state (waiting on mentor),
+            not an in-progress state. Do not blanket-swap to teal during palette polish. */}
         <div className="flex items-center gap-2 text-sm" style={{ color: completed ? "var(--bw-forest)" : "var(--bw-amber)" }}>
           <CircleCheck className="h-4 w-4" />
           {completed ? "Completed" : `Submitted for review${reviewStatus ? ` (${reviewStatus})` : ""}`}
