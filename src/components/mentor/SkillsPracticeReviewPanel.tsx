@@ -350,7 +350,7 @@ export default function SkillsPracticeReviewPanel({ contentItemId, traineeId, on
               onClick={handleRequestRevision}
               disabled={requestingRevision || !revisionComment.trim()}
             >
-              {requestingRevision && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              {requestingRevision && <Loader2 aria-hidden="true" className="h-4 w-4 mr-2 animate-spin" />}
               Submit revision request
             </Button>
           </div>
