@@ -5,7 +5,30 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useToast } from "@/hooks/use-toast";
+
+type WrittenSubmission = {
+  id: string;
+  completion_id: string | null;
+  iteration_number: number;
+  content: string;
+  char_count: number;
+  submitted_at: string;
+  review_decision: "approved" | "revision_requested" | null;
+  reviewer_comments: string | null;
+  reviewer_user_id: string | null;
+  reviewed_at: string | null;
+};
+
+function formatDateTime(d?: string | null): string {
+  if (!d) return "—";
+  try {
+    return new Date(d).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
+  } catch {
+    return d;
+  }
+}
 
 interface Props {
   contentItemId: string;
@@ -34,15 +57,19 @@ export default function WrittenSummaryReviewPanel({ contentItemId, traineeId, on
   });
 
   const contentItem = detailQuery.data?.content_item ?? null;
-  const submission = detailQuery.data?.written_submission ?? null;
+  const submissions: WrittenSubmission[] = Array.isArray(detailQuery.data?.written_submissions)
+    ? detailQuery.data.written_submissions
+    : [];
+  const latest: WrittenSubmission | null =
+    submissions.length > 0 ? submissions[submissions.length - 1] : null;
 
   const callReview = async (decision: "approved" | "revision_requested", comments: string | null) => {
-    if (!submission?.id) {
+    if (!latest?.id) {
       toast({ title: "No submission", description: "Cannot review yet.", variant: "destructive" });
       return;
     }
     const { error } = await supabase.rpc("mentor_review_submission" as never, {
-      p_submission_id: submission.id,
+      p_submission_id: latest.id,
       p_decision: decision,
       p_comments: comments,
     } as never);
@@ -105,37 +132,91 @@ export default function WrittenSummaryReviewPanel({ contentItemId, traineeId, on
         )}
       </div>
 
-      {!submission ? (
+      {submissions.length === 0 ? (
         <p className="text-sm text-muted-foreground py-4">
           The trainee has not submitted this written summary yet.
         </p>
       ) : (
         <>
-          <div className="rounded-lg border bg-card p-4 space-y-2">
-            <div className="flex items-center justify-between">
-              <h4 className="text-sm font-semibold">Trainee submission</h4>
-              {typeof submission.char_count === "number" && (
-                <span className="text-xs text-muted-foreground">{submission.char_count} chars</span>
-              )}
-            </div>
-            <p className="text-sm text-foreground/90 whitespace-pre-wrap leading-relaxed">
-              {submission.content ?? ""}
-            </p>
+          <div className="space-y-3">
+            <h4 className="text-sm font-semibold">Iteration history</h4>
+            {submissions.map((s, idx) => {
+              const isLatest = idx === submissions.length - 1;
+              const decisionLabel =
+                s.review_decision === "approved"
+                  ? "Approved"
+                  : s.review_decision === "revision_requested"
+                    ? "Revision requested"
+                    : null;
+              return (
+                <div key={s.id} className="rounded-lg border bg-card p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-sm">Iteration {s.iteration_number}</span>
+                      {decisionLabel && (
+                        <Badge variant="secondary" className="text-[10px] capitalize">
+                          {decisionLabel}
+                        </Badge>
+                      )}
+                    </div>
+                    <span className="text-xs text-muted-foreground">{formatDateTime(s.submitted_at)}</span>
+                  </div>
+
+                  <Collapsible defaultOpen={isLatest} className="group">
+                    <div className="text-sm text-foreground/90 leading-relaxed group-data-[state=open]:hidden">
+                      {s.content && s.content.length > 120 ? s.content.slice(0, 120) + "…" : s.content ?? ""}
+                    </div>
+                    <CollapsibleContent>
+                      <div className="text-sm text-foreground/90 whitespace-pre-wrap leading-relaxed">
+                        {s.content ?? ""}
+                      </div>
+                    </CollapsibleContent>
+                    <div className="flex items-center justify-between pt-2">
+                      <CollapsibleTrigger asChild>
+                        <Button variant="ghost" size="sm">
+                          <span className="group-data-[state=open]:hidden">Show full submission</span>
+                          <span className="group-data-[state=closed]:hidden">Hide</span>
+                        </Button>
+                      </CollapsibleTrigger>
+                      <span className="text-xs text-muted-foreground">{s.char_count} chars</span>
+                    </div>
+                  </Collapsible>
+
+                  {s.review_decision && (
+                    <div className="pt-2 border-t space-y-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-semibold text-muted-foreground">Review decision</span>
+                        <Badge variant="secondary" className="text-[10px] capitalize">
+                          {decisionLabel}
+                        </Badge>
+                      </div>
+                      {s.reviewer_comments &&
+                        (s.reviewer_comments.length > 200 ? (
+                          <Collapsible defaultOpen={false} className="group">
+                            <div className="text-sm whitespace-pre-wrap group-data-[state=open]:hidden">
+                              {s.reviewer_comments.slice(0, 80) + "…"}
+                            </div>
+                            <CollapsibleContent>
+                              <div className="text-sm whitespace-pre-wrap">{s.reviewer_comments}</div>
+                            </CollapsibleContent>
+                            <CollapsibleTrigger asChild>
+                              <Button variant="ghost" size="sm">
+                                <span className="group-data-[state=open]:hidden">Show full comment</span>
+                                <span className="group-data-[state=closed]:hidden">Hide</span>
+                              </Button>
+                            </CollapsibleTrigger>
+                          </Collapsible>
+                        ) : (
+                          <p className="text-sm whitespace-pre-wrap">{s.reviewer_comments}</p>
+                        ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
 
-          {submission.review_decision ? (
-            <div className="rounded-lg border bg-card p-4 space-y-2">
-              <div className="flex items-center gap-2">
-                <h4 className="text-sm font-semibold">Review decision</h4>
-                <Badge variant="secondary" className="text-[10px] capitalize">
-                  {String(submission.review_decision).replace(/_/g, " ")}
-                </Badge>
-              </div>
-              {submission.reviewer_comments && (
-                <p className="text-sm text-foreground/90 whitespace-pre-wrap">{submission.reviewer_comments}</p>
-              )}
-            </div>
-          ) : (
+          {latest && latest.review_decision === null && (
             <div className="rounded-lg border bg-card p-4 space-y-3">
               <h4 className="text-sm font-semibold">Mentor actions</h4>
               <div className="space-y-2">

@@ -68,22 +68,38 @@ function WrittenSummaryArtifact({ item, userId }: { item: any; userId: string })
   const q = useViewerDetail(item.content_item_id, userId, true);
   if (q.isLoading) return <Loader2 className="h-4 w-4 animate-spin" />;
   if (q.error) return <EmptyNote>Could not load submission.</EmptyNote>;
+
   const completion = q.data?.completion;
-  const submission = q.data?.written_submission ?? completion?.written_submission_text;
-  if (!completion && !submission) {
+  const submissions: any[] = Array.isArray(q.data?.written_submissions)
+    ? q.data.written_submissions
+    : [];
+  const latest = submissions.length > 0 ? submissions[submissions.length - 1] : null;
+
+  if (!completion && submissions.length === 0) {
     return <EmptyNote>The learner has not started this item.</EmptyNote>;
   }
+
   return (
     <div className="space-y-2">
       <KV label="Review status" value={completion?.written_review_status ?? "—"} />
-      <KV label="Char count" value={submission ? String(submission.length) : "—"} />
-      {completion?.reviewer_comments && (
-        <KV label="Reviewer comments" value={completion.reviewer_comments} />
+      <KV label="Iterations" value={String(submissions.length)} />
+      {latest && (
+        <>
+          <KV label="Latest iteration" value={`#${latest.iteration_number}`} />
+          <KV label="Char count" value={String(latest.char_count ?? "—")} />
+          {latest.review_decision && (
+            <KV label="Latest decision" value={String(latest.review_decision).replace(/_/g, " ")} />
+          )}
+          {latest.reviewer_comments && (
+            <KV label="Reviewer comments" value={latest.reviewer_comments} />
+          )}
+          <div className="text-sm font-medium pt-2">Latest submission content</div>
+          <div className="text-sm whitespace-pre-wrap rounded border p-3 bg-muted/30 max-h-60 overflow-y-auto">
+            {latest.content ?? "(empty)"}
+          </div>
+        </>
       )}
-      <div className="text-sm font-medium pt-2">Submission</div>
-      <div className="text-sm whitespace-pre-wrap rounded border p-3 bg-muted/30 max-h-60 overflow-y-auto">
-        {submission ?? "(empty)"}
-      </div>
+      {!latest && <EmptyNote>No submissions yet.</EmptyNote>}
     </div>
   );
 }
