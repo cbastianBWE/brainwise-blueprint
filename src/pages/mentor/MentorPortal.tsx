@@ -109,8 +109,12 @@ export default function MentorPortal() {
   if (rosterQuery.isLoading) {
     return (
       <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <div
+          role="status"
+          aria-label="Loading"
+          className="flex items-center justify-center py-12"
+        >
+          <Loader2 aria-hidden="true" className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
       </div>
     );
@@ -120,13 +124,17 @@ export default function MentorPortal() {
     return (
       <div className="container mx-auto px-4 py-8">
         <Card>
-          <CardContent className="py-10 text-center text-sm text-destructive">
-            Failed to load mentor portal.
+          <CardContent className="py-10 text-center space-y-3">
+            <p className="text-sm text-destructive">Failed to load mentor portal.</p>
+            <Button variant="outline" size="sm" onClick={() => rosterQuery.refetch()}>
+              Retry
+            </Button>
           </CardContent>
         </Card>
       </div>
     );
   }
+
 
   if (viewerRole === "none") {
     return (
