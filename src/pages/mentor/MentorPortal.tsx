@@ -26,6 +26,12 @@ interface DrawerState {
   traineeId: string;
 }
 
+const pendingActionPillStyle: React.CSSProperties = {
+  backgroundColor: "color-mix(in oklab, var(--bw-amber) 18%, white)",
+  color: "var(--bw-mustard)",
+};
+
+
 interface Trainee {
   trainee_user_id: string;
   full_name: string | null;
