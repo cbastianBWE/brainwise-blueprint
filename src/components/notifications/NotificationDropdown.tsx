@@ -163,6 +163,7 @@ export function NotificationDropdown({ open, onClose }: Props) {
         <button
           type="button"
           className="text-sm text-primary hover:underline"
+          aria-label="View all notifications"
           onClick={() => {
             onClose();
             navigate("/notifications");
