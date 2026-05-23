@@ -92,9 +92,9 @@ export function KeyMomentsNodeView({
       )}
 
       <NodeViewContent
-        as="ol"
         className="newsletter-key-moments__list relative space-y-4 pl-6"
       />
+
 
       <div className="mt-4">
         <button
