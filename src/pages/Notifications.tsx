@@ -213,8 +213,13 @@ export default function Notifications() {
 
       {!reachedEnd && items.length > 0 && (
         <div className="flex justify-center">
-          <Button variant="outline" onClick={loadMore} disabled={loadingMore}>
-            {loadingMore ? <Loader2 className="h-4 w-4 animate-spin" /> : "Load more"}
+          <Button
+            variant="outline"
+            onClick={loadMore}
+            disabled={loadingMore}
+            aria-label={loadingMore ? "Loading more notifications" : "Load more notifications"}
+          >
+            {loadingMore ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : "Load more"}
           </Button>
         </div>
       )}
