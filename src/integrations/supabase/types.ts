@@ -5459,6 +5459,7 @@ export type Database = {
           created_at: string
           email: string
           id: string
+          linked_user_id: string | null
           referrer_url: string | null
           resend_contact_id: string | null
           source: string | null
@@ -5475,6 +5476,7 @@ export type Database = {
           created_at?: string
           email: string
           id?: string
+          linked_user_id?: string | null
           referrer_url?: string | null
           resend_contact_id?: string | null
           source?: string | null
@@ -5491,6 +5493,7 @@ export type Database = {
           created_at?: string
           email?: string
           id?: string
+          linked_user_id?: string | null
           referrer_url?: string | null
           resend_contact_id?: string | null
           source?: string | null
@@ -5499,7 +5502,36 @@ export type Database = {
           unsubscribed_at?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "newsletter_subscribers_linked_user_id_fkey"
+            columns: ["linked_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "newsletter_subscribers_linked_user_id_fkey"
+            columns: ["linked_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "newsletter_subscribers_linked_user_id_fkey"
+            columns: ["linked_user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "newsletter_subscribers_linked_user_id_fkey"
+            columns: ["linked_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       notification_types_catalog: {
         Row: {
@@ -9953,6 +9985,8 @@ export type Database = {
           out_stripe_coupon_id: string
         }[]
       }
+      get_article_for_reader: { Args: { p_slug: string }; Returns: Json }
+      get_article_version: { Args: { p_version_id: string }; Returns: Json }
       get_assets_due_for_archive_email: {
         Args: never
         Returns: {
@@ -10263,6 +10297,16 @@ export type Database = {
         }[]
       }
       list_all_learning_assignments: { Args: never; Returns: Json }
+      list_article_versions: { Args: { p_article_id: string }; Returns: Json }
+      list_articles_for_archive: {
+        Args: {
+          p_category_id?: string
+          p_gate_filter?: string
+          p_limit?: number
+          p_offset?: number
+        }
+        Returns: Json
+      }
       list_audit_events: {
         Args: { p_filters?: Json; p_limit?: number; p_offset?: number }
         Returns: {
@@ -10545,6 +10589,10 @@ export type Database = {
         Args: { p_owner_user_id: string; p_viewer_user_id: string }
         Returns: boolean
       }
+      preview_article_as_viewer_class: {
+        Args: { p_article_id: string; p_viewer_class: string }
+        Returns: Json
+      }
       process_due_scheduled_assignments: { Args: never; Returns: Json }
       promote_to_library: {
         Args: {
@@ -10555,6 +10603,7 @@ export type Database = {
         }
         Returns: Json
       }
+      prune_newsletter_draft_versions: { Args: never; Returns: Json }
       pseudonymize_user: {
         Args: { p_reason?: string; p_user_id: string }
         Returns: number
