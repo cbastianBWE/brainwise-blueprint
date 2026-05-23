@@ -6,9 +6,13 @@ import type { NewsletterImageWidth } from "../types";
  *
  * Canonical reference is `attrs.asset_id` (per §133). The `src` attribute on
  * the emitted <img> is intentionally left empty in renderHTML output; the
- * runtime layer (editor NodeView in G4-A, reader resolver in G6) populates it
- * by joining against content_assets at render time. This makes the doc
- * portable across Storage path migrations and CDN swaps.
+ * runtime layer (editor NodeView in G4-A, reader resolver in G6) populates
+ * it by joining against content_assets at render time.
+ *
+ * `import_failed_src` (G4-A forward-compat) is set by the convert-html-to-tiptap
+ * Edge Function when an image fetch fails during HTML import. When non-null,
+ * the editor NodeView renders a broken-image card with a "Re-upload" affordance
+ * instead of attempting to resolve asset_id.
  */
 export const NewsletterImage = Node.create({
   name: "newsletterImage",
@@ -23,6 +27,7 @@ export const NewsletterImage = Node.create({
       alt: { default: "" },
       caption: { default: "" },
       width: { default: "inline" as NewsletterImageWidth },
+      import_failed_src: { default: null as string | null },
     };
   },
 
@@ -41,6 +46,8 @@ export const NewsletterImage = Node.create({
             width:
               (el.getAttribute("data-width") as NewsletterImageWidth) ||
               "inline",
+            import_failed_src:
+              el.getAttribute("data-import-failed-src") || null,
           };
         },
       },
@@ -52,6 +59,17 @@ export const NewsletterImage = Node.create({
     const caption = (node.attrs.caption as string) || "";
     const alt = (node.attrs.alt as string) || "";
     const assetId = (node.attrs.asset_id as string | null) || "";
+    const importFailedSrc = (node.attrs.import_failed_src as string | null) || "";
+
+    const wrapperAttrs: Record<string, string> = {
+      "data-newsletter-image": "true",
+      "data-asset-id": assetId,
+      "data-width": width,
+      class: `newsletter-image newsletter-image--${width}`,
+    };
+    if (importFailedSrc) {
+      wrapperAttrs["data-import-failed-src"] = importFailedSrc;
+    }
 
     const children: Array<[string, Record<string, string>] | [string, Record<string, string>, string]> = [
       ["img", { src: "", alt }],
@@ -62,12 +80,7 @@ export const NewsletterImage = Node.create({
 
     return [
       "figure",
-      mergeAttributes(HTMLAttributes, {
-        "data-newsletter-image": "true",
-        "data-asset-id": assetId,
-        "data-width": width,
-        class: `newsletter-image newsletter-image--${width}`,
-      }),
+      mergeAttributes(HTMLAttributes, wrapperAttrs),
       ...children,
     ] as any;
   },
