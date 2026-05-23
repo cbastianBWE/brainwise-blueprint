@@ -20,6 +20,7 @@ import Cookies from "./pages/marketing/Cookies";
 import InternationalCompliance from "./pages/marketing/InternationalCompliance";
 import Services from "./pages/marketing/Services";
 import OurApproach from "./pages/marketing/OurApproach";
+import Podcast from "./pages/marketing/Podcast";
 import Contact from "./pages/marketing/Contact";
 import Products from "./pages/marketing/Products";
 import PricingRouter from "./pages/PricingRouter";
@@ -127,6 +128,7 @@ const App = () => (
             <Route path="/services" element={<Services />} />
             <Route path="/our-approach" element={<OurApproach />} />
             <Route path="/evolve" element={<Navigate to="/our-approach" replace />} />
+            <Route path="/podcast" element={<Podcast />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/products" element={<Products />} />
             <Route path="/pricing" element={<PricingRouter />} />
