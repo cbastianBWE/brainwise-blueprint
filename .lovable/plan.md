@@ -1,66 +1,76 @@
+## Cycle G4-B: Newsletter authoring pages
 
-# Cycle G4-A — Newsletter authoring editor primitive
+Two new super-admin pages + a small extension to `FileUploadField` + route registrations. No backend changes — all 15 RPCs and the v5 upload Edge Function already accept the newsletter article scope.
 
-Build the reusable `NewsletterEditor` component and all sub-primitives per spec. No page, no save wiring, no backend changes. One small G4-0 patch bundled.
+### Files
 
-## Scope
+**Modify**
+1. `src/components/super-admin/FileUploadField.tsx` — add optional `newsletterArticleId?: string | null` prop. Forward as `newsletter_article_id` in the `request-asset-upload` body for both `startUpload` and `handleReplaceUpload`. Add a reason-fallback branch: `Asset upload for ${refField ?? "field"} on newsletter_article ${newsletterArticleId}`. No other behavioral changes; existing callers unaffected.
+2. `src/App.tsx` — import `AdminNewsletter` and `AdminNewsletterArticle`; register the two routes inside the protected `AppLayout` block with `RoleGuard(["brainwise_super_admin"])` + `SuperAdminSessionProvider`.
 
-Component-only deliverable. Consumers (G4-B page) will mount `<NewsletterEditor articleId initialContent onChange />`. Everything inside that surface — toolbar, NodeViews, bubble menu, slash menu, floating "+" — lives in this cycle.
+**Create**
+3. `src/pages/super-admin/AdminNewsletter.tsx` — list page at `/super-admin/newsletter`.
+4. `src/pages/super-admin/AdminNewsletterArticle.tsx` — detail/editor page at `/super-admin/newsletter/:articleId` (`"new"` = create).
 
-## File list (13 new + 1 patch)
+I will also extract a few small co-located helpers inside `AdminNewsletterArticle.tsx` to keep the file manageable (status pill, transition dialog, schedule dialog, author picker, slug row, auto-save hook). If any single one grows past ~150 lines I'll split it into a sibling file under `src/components/newsletter/admin/`; I'll flag in the response if I do.
 
-**G4-0 patch**
-- `src/components/newsletter/tiptap/nodes/Image.ts` — add `import_failed_src: string|null` attr; serialize to `data-import-failed-src` in renderHTML; parse back in parseHTML. No other changes.
+### List page shape
 
-**NodeViews** — `src/components/newsletter/tiptap/nodeviews/`
-- `ImageNodeView.tsx` — resolves `asset_id` → public URL via `content_asset_versions` join; broken-state card when `import_failed_src` set; inline editable caption + alt; width pill (inline/wide/full_bleed); upload via `request-asset-upload` → `finalize-asset-upload`.
-- `CalloutNodeView.tsx` — `NodeViewContent` body; variant dropdown (5 variants); editable title row.
-- `StatCalloutNodeView.tsx` — atom; controlled inputs for value/label/source with 300ms debounced attr commits.
-- `EmbedNodeView.tsx` — configured vs unconfigured states; URL→provider parser (YouTube/Vimeo/Spotify/generic) mirroring Edge Function `walkIframe`; iframe src via `buildEmbedSrc`; edit dialog.
-- `PullquoteNodeView.tsx` — `NodeViewContent` quote body + attribution input.
-- `TwoColumnNodeView.tsx` + `TwoColumnPaneNodeView.tsx` — CSS grid 1fr 1fr; per-pane focus ring; empty-pane "Type / for blocks" placeholder.
-- `KeyMomentsNodeView.tsx` + `KeyMomentNodeView.tsx` — timeline container + "Add moment" + per-moment title/body NodeViewContent.
+- Header: H1 "Newsletter" font-display 3xl navy, subtitle slate-500, right "New article" CTA → `/super-admin/newsletter/new`.
+- Sticky controls bar: search (250ms debounce, magnifier icon), status Select (default "All non-archived"), gate Select (default "Any gate"), right-aligned "X articles" count.
+- shadcn Table: Title (+ slug muted below), Status badge, Gate badge, Authors avatar stack, Updated relative (date-fns), kebab (Open / Copy slug / Archive-with-confirm).
+- Row click → detail page.
+- Loading = 5-row Skeleton. Empty-ever vs filtered-empty differentiated.
+- Pagination Prev/Next, `limit=20`, URL synced via `?page=N&status=&gate=&q=`.
+- React Query key `["newsletter-articles", { status, gate, search, page }]` → `supabase.rpc("list_admin_newsletter_articles", ...)`.
+- Status badge palette exactly as specified (slate/teal/emerald/amber/slate-dark).
 
-**Editor shell** — `src/components/newsletter/editor/`
-- `NewsletterToolbar.tsx` — sticky top toolbar (heading select, marks, lists, link popover, image upload, divider, slash hint). Mobile wraps to two rows.
-- `NewsletterBubbleMenu.tsx` — extension factory using `@tiptap/extension-bubble-menu` v3 API; Bold/Italic/Strike/Code/Link/H2/H3/Lead.
-- `NewsletterSlashMenu.tsx` — `@tiptap/suggestion` + tippy.js; 16 commands across BASIC/EDITORIAL/MEDIA/LAYOUT; arrow/Enter/Esc keyboard nav; fade-in zoom-95 animation.
-- `NewsletterFloatingPlus.tsx` — listens to selection updates; uses `view.coordsAtPos` for positioning; throttled ~50ms; click opens slash menu at cursor.
-- `NewsletterEditor.tsx` — composes everything; exports `NewsletterEditorContext` so NodeViews access `articleId`; wires NodeViews via `addNodeView` on each custom node extension (cleaner than per-editor `nodeViews` map and keeps Image/Callout/etc. encapsulated).
+### Detail page shape
 
-## Technical decisions
+- Sticky header (white, border-b): ← Back link · title input inline · right cluster (auto-save pill, status pill dropdown, Preview button stub).
+- Body two-column lg+ (editor 70% / sidebar 30%), stacked below lg.
+- Editor column:
+  - Cover image FileUploadField (refField=`cover`, min-h-[280px] wrapper, label "Cover image").
+  - Title input: large font-display 700 36px navy, borderless, placeholder "Untitled article", autoFocus on create.
+  - Slug row: `brainwiseenterprises.com/newsletter/<slug>` — click-to-edit inline swap. Auto-derive from title only while slug is empty OR equals the previous derivation; once user edits manually, lock derivation for the article's session.
+  - Excerpt textarea with live char count + min-20 warning when gated.
+  - `<NewsletterEditor articleId={realArticleId} initialContent={bodyTiptap} onChange={setBodyTiptap} />`.
+- Sidebar tabs (Settings / SEO):
+  - Settings: Visibility RadioGroup (public/subscribers/plan_tier) with Checkbox stack for tiers when plan_tier; Authors multi-picker (query `users` where `account_type='brainwise_super_admin'`, chips with remove); Schedule card (visible only when draft|unpublished) opening a Calendar+time+reason Dialog; OG image FileUploadField (refField=`og_image`, 160px tall).
+  - SEO: seo_title, seo_description, canonical_url.
+- Status pill dropdown — state-aware actions exactly as specified per current status. Each opens an AlertDialog with a required reason input (min 10 chars validated client-side before enabling Confirm). Calls the right RPC, then invalidates `["newsletter-article", id]` and `["newsletter-articles"]`, sonner toast on success/error.
 
-- **NodeView wiring**: extend each G4-0 node with `.extend({ addNodeView() { return ReactNodeViewRenderer(X) } })` inside the editor module (don't mutate G4-0 source). This keeps the shared schema usable by the read-only reader (G6) without dragging React NodeViews into it.
-- **Asset URL resolution**: small hook `useNewsletterImageUrl(asset_id)` querying `content_asset_versions` for the current version's storage path, then `supabase.storage.from('newsletter-article-images').getPublicUrl(path)`. Cached per asset_id in a module-level `Map` to avoid refetching across NodeView remounts.
-- **Floating +**: absolute-positioned overlay inside the editor wrapper (relative parent). Uses `editor.on('selectionUpdate' | 'transaction')` with rAF throttle. Hidden unless current node is an empty top-level paragraph.
-- **BubbleMenu v3**: use `BubbleMenu.configure({ element, shouldShow })` extension, not the deprecated `<BubbleMenu>` React child. Render the menu DOM in a portal sibling and pass its ref as `element`.
-- **Suggestion v3**: standard `Suggestion({ char: '/', items, render })` with a tippy-backed render lifecycle (onStart/onUpdate/onKeyDown/onExit). Filtering done in `items({query})`.
-- **Embed URL parser**: shared `parseEmbedUrl(url)` helper colocated in `EmbedNodeView.tsx`; covers `youtube.com/watch?v=`, `youtu.be/`, `youtube.com/embed/`, `vimeo.com/<digits>`, `open.spotify.com/<kind>/<id>` and `/embed/<kind>/<id>`.
-- **Animations**: Tailwind `transition-*` + `animate-in fade-in zoom-in-95 duration-150`. No framer-motion.
+### Auto-save
 
-## Deps to add
+Single `useAutoSave` hook inside the file:
+- Watches a `draft` object containing every editable field.
+- On change → status="unsaved", clear timer, schedule 2000ms.
+- On flush → status="saving", call `upsert_article` with ALL current fields (decision: use `upsert_article` exclusively, not `auto_save_article` — `upsert_article` is the only RPC that covers slug/gate/cover/og/authors; the spec explicitly endorses this) with reason `"Auto-save: editor pause"`.
+- On success → status="saved" + timestamp. On error → toast + status="unsaved".
+- Force-flush triggers: `visibilitychange` (hidden), unmount cleanup, and a `flushNow()` exposed for state-transition handlers to call before opening their dialog.
+- `p_reason` requirement (min 10): "Auto-save: editor pause" = 24 chars ✓.
 
-```
-@tiptap/extension-bubble-menu  ^3.x (match existing TipTap version)
-@tiptap/suggestion             ^3.x
-tippy.js                       ^6.3.7
-```
+### Create mode (`articleId === "new"`)
 
-Will pin to whatever resolves consistent with the existing `@tiptap/*` minor in package.json at install time.
+- No RPC calls until first user edit.
+- First auto-save calls `upsert_article(p_article_id: null, …)`, receives `article_id`, then `navigate('/super-admin/newsletter/${article_id}', { replace: true })`.
+- Cover/OG `FileUploadField` is disabled (with tooltip "Save the draft first to enable image uploads") until we have a real article id, because uploads need `newsletter_article_id`. Same constraint surfaces inside the editor — `<NewsletterEditor>` receives `articleId={null}` in create mode, and the toolbar/slash-menu image entries are already wired by G4-A to show "Save the draft first" notices; if they aren't, I'll add a thin `articleId == null → disabled` guard at this page's level by passing a sentinel and a wrapping `<TooltipProvider>` notice. (Flagging in response if G4-A's editor doesn't already handle null `articleId`.)
+- Defaults exactly as spec: gate=`public`, allowed_plan_tiers=`[]`, source_type=`native`, authors=`[currentUserId]`, body=`{type:"doc",content:[{type:"paragraph"}]}`.
 
-## Out of scope (explicitly NOT this cycle)
+### Preview button
 
-Editor page, save/publish/schedule, article list, cover/og_image fields, paste-HTML modal, version history UI, reader, backend, tests.
+Stub: `onClick={() => window.open(`/newsletter/${slug}`, "_blank")}` if slug exists, else disabled with tooltip "Set a slug to preview". Will 404 until G6, which is acceptable for dev.
 
-## Verification
+### Sidebar nav
 
-- TS compiles clean.
-- `NewsletterEditor` mounts without runtime errors when given an empty doc `{type:'doc',content:[{type:'paragraph'}]}`.
-- Manual smoke against article `26fcbaef-fb10-4ab5-aaf6-798e31a2e2f5` for image upload path (deferred to G4-B mount; verified by code inspection here).
-- Slash menu shows 16 commands in 4 groups; each inserts the correct node.
-- Bubble menu appears on text selection with all 8 controls.
-- Each NodeView renders with selection ring, hover handles, and inline editors as specified.
+Search `AppSidebar.tsx` for the super-admin section and add a "Newsletter" entry with `Newspaper` icon pointing to `/super-admin/newsletter`. If the structure isn't an obvious add (e.g. it's data-driven from a config I can't fully understand from one read), I'll leave a `TODO(nav)` comment in `AdminNewsletter.tsx` instead of guessing — per spec.
 
-## Site impact
+### Out of scope (not building)
 
-Zero until G4-B mounts this on a route. Existing `RichTextEditor` (lesson blocks) untouched. G4-0 `Image.ts` patch is additive (new optional attr default null) — no schema break for existing/empty docs.
+Paste-HTML modal, version-history UI, public reader, real preview, tests, backend changes, broader nav redesign.
+
+### Open risks / will flag in response
+
+- Whether G4-A's `NewsletterEditor` already gracefully handles `articleId == null` in create mode (toolbar/slash image entry). If not, I'll add a minimal disabled-state wrapper at the page level.
+- Whether `upsert_article`'s `p_reason` is enforced on auto-save (spec says min 10; my reason string is 24 chars, fine).
+- Whether `list_admin_newsletter_articles` returns `authors` already shaped for avatar display, or if I need a second query. I'll inspect the RPC return shape on first run and adapt — if it's missing, I'll join `users` in the page via a secondary query keyed off the page's id set.
