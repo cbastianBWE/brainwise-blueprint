@@ -69,6 +69,32 @@ interface UniqueClient {
   pending_count: number;
 }
 
+interface CoachCertificationActiveRow {
+  certification_type: string;
+  status: string;
+}
+
+interface OwnCertRow {
+  id: string;
+  certification_type: string;
+  status: string;
+  free_uses_expire_at: string | null;
+}
+
+interface SendCoachInvitationEmailResult {
+  dispatched: boolean;
+}
+
+interface CreateActorDebriefOrderResult {
+  actor_id: string;
+  coach_client_id: string;
+  instrument_id: string;
+  actors_used: number;
+  actor_cap: number;
+  expires_at: string;
+  email_dispatched: boolean;
+}
+
 export default function CoachClients() {
   const { user } = useAuth();
   const navigate = useNavigate();
