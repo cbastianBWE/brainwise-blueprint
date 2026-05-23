@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
+import SocialLinks from "@/components/marketing/SocialLinks";
 
 const linkStyle: React.CSSProperties = {
   color: "rgba(255,255,255,0.72)",
@@ -71,7 +72,7 @@ export default function MarketingFooter() {
           style={{
             marginTop: 40,
             display: "grid",
-            gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
+            gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr 1fr",
             gap: isMobile ? 32 : 48,
           }}
         >
@@ -109,6 +110,10 @@ export default function MarketingFooter() {
             >
               support@brainwiseenterprises.com
             </div>
+          </div>
+          <div>
+            <div style={columnHeading}>Follow</div>
+            <SocialLinks variant="onDark" ariaLabel="BrainWise social media" />
           </div>
         </div>
 
