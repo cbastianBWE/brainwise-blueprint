@@ -334,7 +334,7 @@ export default function CoachInvoices() {
             <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} placeholder="From" />
             <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} placeholder="To" />
             <Button variant="outline" onClick={clearFilters} className="gap-1">
-              <X className="h-4 w-4" /> Clear Filters
+              <X className="h-4 w-4" aria-hidden="true" /> Clear Filters
             </Button>
           </div>
         </CardContent>
