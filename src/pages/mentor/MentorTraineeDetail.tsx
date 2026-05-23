@@ -105,6 +105,11 @@ export default function MentorTraineeDetail() {
     ? stateQuery.data.certifications
     : [];
 
+  const mentorRelationships: any[] = Array.isArray(stateQuery.data?.mentor_relationships)
+    ? stateQuery.data.mentor_relationships
+    : [];
+
+
   return (
     <div className="container mx-auto px-4 py-8 space-y-6">
       <Button variant="ghost" size="sm" onClick={() => navigate("/mentor")} className="gap-2">
