@@ -49,40 +49,29 @@ export function NewsletterBubbleMenu({ editor }: NewsletterBubbleMenuProps) {
     elRef.current = el;
     setMounted(true);
 
-    const ext = BubbleMenuExt.configure({
+    const pluginKey = new PluginKey("newsletterBubbleMenu");
+    const plugin = BubbleMenuPlugin({
+      editor,
       element: el,
-      pluginKey: "newsletterBubbleMenu",
+      pluginKey,
       shouldShow: ({ editor, from, to, state }) => {
         if (!editor.isEditable) return false;
         if (from === to) return false;
-        // Hide inside atom/embeddable nodes where text marks don't apply.
         const $from = state.doc.resolve(from);
-        const parent = $from.parent;
         const blockedParents = new Set([
           "newsletterStatCallout",
           "newsletterEmbed",
           "newsletterImage",
         ]);
-        if (blockedParents.has(parent.type.name)) return false;
+        if (blockedParents.has($from.parent.type.name)) return false;
         return true;
       },
     });
-
-    editor.extensionManager.extensions.push(ext);
-    editor.registerPlugin(
-      ext.config.addProseMirrorPlugins!.call({
-        editor,
-        options: ext.options,
-        storage: ext.storage,
-        name: ext.name,
-        parent: undefined,
-        type: undefined as any,
-      } as any)[0],
-    );
+    editor.registerPlugin(plugin);
 
     return () => {
       try {
-        editor.unregisterPlugin("newsletterBubbleMenu");
+        editor.unregisterPlugin(pluginKey);
       } catch {
         /* noop */
       }
@@ -91,6 +80,7 @@ export function NewsletterBubbleMenu({ editor }: NewsletterBubbleMenuProps) {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editor]);
+
 
   // Reset link mode whenever selection moves
   useEffect(() => {
