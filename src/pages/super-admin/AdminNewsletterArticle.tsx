@@ -138,7 +138,7 @@ export default function AdminNewsletterArticle() {
       if (!articleId) return null;
       const { data, error } = await supabase
         .from("newsletter_articles")
-        .select("id, title, slug, excerpt, body_tiptap, gate, allowed_plan_tiers, cover_asset_id, og_image_asset_id, seo_title, seo_description, canonical_url, source_type, status, publish_at")
+        .select("id, title, slug, excerpt, body_tiptap, gate, allowed_plan_tiers, cover_asset_id, og_image_asset_id, seo_title, seo_description, canonical_url, source_type, status, scheduled_for")
         .eq("id", articleId)
         .maybeSingle();
       if (error) throw error;
@@ -163,7 +163,7 @@ export default function AdminNewsletterArticle() {
         canonical_url: data.canonical_url ?? "",
         source_type: (data.source_type as "html_import" | "native") ?? "native",
         status: (data.status as Status) ?? "draft",
-        publish_at: data.publish_at ?? null,
+        publish_at: data.scheduled_for ?? null,
       };
     },
   });
