@@ -97,7 +97,7 @@ export const evolveInstruments = [
     id: "airsa",
     title: "AIRSA — AI Readiness Skills Assessment",
     summary:
-      "Measures functional AI fluency across 48 specific skills and capabilities. Core EVOLVE instrument.",
+      "Measures functional AI fluency across 24 specific skills and capabilities. Core EVOLVE instrument.",
   },
   {
     id: "hss",
