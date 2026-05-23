@@ -7,6 +7,7 @@ const navLinks = [
   { label: "Pricing", to: "/pricing" },
   { label: "Services", to: "/services" },
   { label: "Our Approach", to: "/our-approach" },
+  { label: "Podcast", to: "/podcast" },
   { label: "Contact", to: "/contact" },
 ];
 
