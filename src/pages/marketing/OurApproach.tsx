@@ -17,9 +17,9 @@ import {
   researchFailures,
   researchSuccesses,
   differentiators,
-} from "@/content/marketing/evolveContent";
+} from "@/content/marketing/ourApproachContent";
 
-export default function Evolve() {
+export default function OurApproach() {
   const navigate = useNavigate();
   const [briefingOpen, setBriefingOpen] = useState(false);
   const [w, setW] = useState(typeof window !== "undefined" ? window.innerWidth : 1280);

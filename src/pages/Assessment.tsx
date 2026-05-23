@@ -9,20 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-
-const INSTRUMENT_ID_TO_SHORT_NAME: Record<string, string> = {
-  "INST-001": "PTP",
-  "INST-002": "NAI",
-  "INST-003": "AIRSA",
-  "INST-004": "HSS",
-};
-
-const INSTRUMENT_ID_TO_NAME: Record<string, string> = {
-  "INST-001": "Personal Threat Profile",
-  "INST-002": "Neuroscience Adoption Index",
-  "INST-003": "AI Readiness Skills Assessment",
-  "INST-004": "Habit Stabilization Scorecard",
-};
+import { INSTRUMENT_ID_TO_SHORT_NAME, INSTRUMENT_ID_TO_NAME } from "@/lib/instruments";
 
 interface SelectedInstrument {
   instrument_id: string;
@@ -97,6 +84,9 @@ export default function Assessment() {
     const instrumentId = searchParams.get("instrument");
     const autostart = searchParams.get("autostart");
     if (!instrumentId || autostart !== "true") return;
+
+    // EPN is started via handleStartEpn(assignmentId), not via URL autostart. Guard against accidental autostart routing.
+    if (instrumentId === "INST-002L") return;
 
     const shortName = INSTRUMENT_ID_TO_SHORT_NAME[instrumentId];
     const instrumentName = INSTRUMENT_ID_TO_NAME[instrumentId];
