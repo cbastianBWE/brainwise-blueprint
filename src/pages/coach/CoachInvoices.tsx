@@ -43,21 +43,21 @@ export default function CoachInvoices() {
   // Export by client dropdown
   const [exportClient, setExportClient] = useState("");
 
-  useEffect(() => {
+  const fetchTransactions = async () => {
     if (!user) return;
-    (async () => {
-      setLoading(true);
-
+    setLoading(true);
+    setError(null);
+    try {
       // Fetch coach_clients with payment intent
-      const { data: rows, error } = await supabase
+      const { data: rows, error: rowsError } = await supabase
         .from("coach_clients")
         .select("id, created_at, client_email, instrument_id, invitation_status, stripe_payment_intent_id")
         .eq("coach_user_id", user.id)
         .not("stripe_payment_intent_id", "is", null);
 
-      if (error || !rows || rows.length === 0) {
+      if (rowsError) throw new Error(rowsError.message);
+      if (!rows || rows.length === 0) {
         setTransactions([]);
-        setLoading(false);
         return;
       }
 
@@ -126,8 +126,18 @@ export default function CoachInvoices() {
 
       txList.sort((a, b) => b.created_at.localeCompare(a.created_at));
       setTransactions(txList);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Failed to load transactions";
+      setError(msg);
+      setTransactions([]);
+    } finally {
       setLoading(false);
-    })();
+    }
+  };
+
+  useEffect(() => {
+    fetchTransactions();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const filtered = useMemo(() => {
