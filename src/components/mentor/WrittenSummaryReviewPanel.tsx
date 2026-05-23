@@ -240,7 +240,7 @@ export default function WrittenSummaryReviewPanel({ contentItemId, traineeId, on
                 />
                 <div className="flex flex-wrap gap-2">
                   <Button onClick={handleApprove} disabled={approving || requesting}>
-                    {approving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                    {approving && <Loader2 aria-hidden="true" className="h-4 w-4 mr-2 animate-spin" />}
                     Approve
                   </Button>
                   <Button
