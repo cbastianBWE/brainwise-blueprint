@@ -1,52 +1,66 @@
-# G4-0: Shared TipTap extensions module + newsletter-prose.css
 
-Note: You're in plan mode. Approving this plan switches to build mode and I'll execute the spec verbatim. The spec itself is fully locked — this plan is just the implementation checklist.
+# Cycle G4-A — Newsletter authoring editor primitive
 
-## Scope (locked by prompt)
+Build the reusable `NewsletterEditor` component and all sub-primitives per spec. No page, no save wiring, no backend changes. One small G4-0 patch bundled.
 
-Schema + styling foundation only. No editor UI, no toolbar, no NodeViews, no pages, no routes, no backend changes. Three downstream cycles (G4-A authoring, G6 reader, `convert_html_to_tiptap`) consume this module.
+## Scope
 
-## Files to create (11)
+Component-only deliverable. Consumers (G4-B page) will mount `<NewsletterEditor articleId initialContent onChange />`. Everything inside that surface — toolbar, NodeViews, bubble menu, slash menu, floating "+" — lives in this cycle.
 
-```text
-src/components/newsletter/tiptap/
-  types.ts                       NewsletterTipTapDoc/Node unions, CalloutVariant, EmbedProvider, per-node attrs
-  buildExtensions.ts             Factory returning Extension[]; StarterKit (heading levels 2-4 only) + Link + Placeholder + TextStyleWithFontSize + 7 custom nodes
-  index.ts                       Barrel export
-  nodes/
-    Image.ts                     newsletterImage; atom block; attrs {asset_id, alt, caption, width}; renderHTML emits <figure data-newsletter-image data-asset-id> with empty src (resolved at runtime per §133)
-    Callout.ts                   newsletterCallout; block+ content; attrs {variant, title?}; 5 variants info/warning/quote/tldr/key_takeaway
-    StatCallout.ts               newsletterStatCallout; atom; attrs {value, label, source?}
-    Embed.ts                     newsletterEmbed; atom; attrs {provider, embed_id, url, title?}; exports buildEmbedSrc() helper with youtube-nocookie / spotify / vimeo / generic (https-only via isSafeHttpUrl)
-    Pullquote.ts                 newsletterPullquote; inline*; attrs {attribution?}
-    TwoColumn.ts                 Exports NewsletterTwoColumn (content: 'newsletterTwoColumnPane newsletterTwoColumnPane') AND NewsletterTwoColumnPane (not in 'block' group so it's only valid inside parent)
-    KeyMoments.ts                Exports NewsletterKeyMoments (content: 'newsletterKeyMoment+', attrs {title?}) AND NewsletterKeyMoment (not in 'block' group, inline* content, attrs {title})
+## File list (13 new + 1 patch)
 
-src/styles/newsletter-prose.css  All selectors scoped under .newsletter-prose; uses marketing-tokens.css vars; NOT imported globally
+**G4-0 patch**
+- `src/components/newsletter/tiptap/nodes/Image.ts` — add `import_failed_src: string|null` attr; serialize to `data-import-failed-src` in renderHTML; parse back in parseHTML. No other changes.
+
+**NodeViews** — `src/components/newsletter/tiptap/nodeviews/`
+- `ImageNodeView.tsx` — resolves `asset_id` → public URL via `content_asset_versions` join; broken-state card when `import_failed_src` set; inline editable caption + alt; width pill (inline/wide/full_bleed); upload via `request-asset-upload` → `finalize-asset-upload`.
+- `CalloutNodeView.tsx` — `NodeViewContent` body; variant dropdown (5 variants); editable title row.
+- `StatCalloutNodeView.tsx` — atom; controlled inputs for value/label/source with 300ms debounced attr commits.
+- `EmbedNodeView.tsx` — configured vs unconfigured states; URL→provider parser (YouTube/Vimeo/Spotify/generic) mirroring Edge Function `walkIframe`; iframe src via `buildEmbedSrc`; edit dialog.
+- `PullquoteNodeView.tsx` — `NodeViewContent` quote body + attribution input.
+- `TwoColumnNodeView.tsx` + `TwoColumnPaneNodeView.tsx` — CSS grid 1fr 1fr; per-pane focus ring; empty-pane "Type / for blocks" placeholder.
+- `KeyMomentsNodeView.tsx` + `KeyMomentNodeView.tsx` — timeline container + "Add moment" + per-moment title/body NodeViewContent.
+
+**Editor shell** — `src/components/newsletter/editor/`
+- `NewsletterToolbar.tsx` — sticky top toolbar (heading select, marks, lists, link popover, image upload, divider, slash hint). Mobile wraps to two rows.
+- `NewsletterBubbleMenu.tsx` — extension factory using `@tiptap/extension-bubble-menu` v3 API; Bold/Italic/Strike/Code/Link/H2/H3/Lead.
+- `NewsletterSlashMenu.tsx` — `@tiptap/suggestion` + tippy.js; 16 commands across BASIC/EDITORIAL/MEDIA/LAYOUT; arrow/Enter/Esc keyboard nav; fade-in zoom-95 animation.
+- `NewsletterFloatingPlus.tsx` — listens to selection updates; uses `view.coordsAtPos` for positioning; throttled ~50ms; click opens slash menu at cursor.
+- `NewsletterEditor.tsx` — composes everything; exports `NewsletterEditorContext` so NodeViews access `articleId`; wires NodeViews via `addNodeView` on each custom node extension (cleaner than per-editor `nodeViews` map and keeps Image/Callout/etc. encapsulated).
+
+## Technical decisions
+
+- **NodeView wiring**: extend each G4-0 node with `.extend({ addNodeView() { return ReactNodeViewRenderer(X) } })` inside the editor module (don't mutate G4-0 source). This keeps the shared schema usable by the read-only reader (G6) without dragging React NodeViews into it.
+- **Asset URL resolution**: small hook `useNewsletterImageUrl(asset_id)` querying `content_asset_versions` for the current version's storage path, then `supabase.storage.from('newsletter-article-images').getPublicUrl(path)`. Cached per asset_id in a module-level `Map` to avoid refetching across NodeView remounts.
+- **Floating +**: absolute-positioned overlay inside the editor wrapper (relative parent). Uses `editor.on('selectionUpdate' | 'transaction')` with rAF throttle. Hidden unless current node is an empty top-level paragraph.
+- **BubbleMenu v3**: use `BubbleMenu.configure({ element, shouldShow })` extension, not the deprecated `<BubbleMenu>` React child. Render the menu DOM in a portal sibling and pass its ref as `element`.
+- **Suggestion v3**: standard `Suggestion({ char: '/', items, render })` with a tippy-backed render lifecycle (onStart/onUpdate/onKeyDown/onExit). Filtering done in `items({query})`.
+- **Embed URL parser**: shared `parseEmbedUrl(url)` helper colocated in `EmbedNodeView.tsx`; covers `youtube.com/watch?v=`, `youtu.be/`, `youtube.com/embed/`, `vimeo.com/<digits>`, `open.spotify.com/<kind>/<id>` and `/embed/<kind>/<id>`.
+- **Animations**: Tailwind `transition-*` + `animate-in fade-in zoom-in-95 duration-150`. No framer-motion.
+
+## Deps to add
+
+```
+@tiptap/extension-bubble-menu  ^3.x (match existing TipTap version)
+@tiptap/suggestion             ^3.x
+tippy.js                       ^6.3.7
 ```
 
-## Implementation notes
+Will pin to whatever resolves consistent with the existing `@tiptap/*` minor in package.json at install time.
 
-- `renderHTML` is the canonical render path for both editor fallback and read-only reader. No NodeViews in this cycle.
-- Image `src` and Embed iframe `src` are intentionally empty in `renderHTML` — runtime layer (G4-A/G6) resolves them. This enforces §133 (asset_id canonical) and prevents XSS on embeds.
-- `buildEmbedSrc('generic', ...)` validates `url` via `isSafeHttpUrl` AND requires https; returns `''` on rejection.
-- StarterKit: disable built-in heading, re-enable with `levels: [2, 3, 4]` (H1 reserved for article title field).
-- `buildExtensions({ editable })`: editable flag accepted but unused in v1 (same array for both modes); kept in signature for G6 to specialize later.
-- Reuse existing `TextStyleWithFontSize` from `src/components/super-admin/lesson-blocks/`.
-- Reuse `isSafeHttpUrl` from `@/lib/safeUrl` for Link validation and generic embed validation.
+## Out of scope (explicitly NOT this cycle)
 
-## Deps
-
-All required TipTap packages are already installed per the prompt. Will verify against `package.json` and add only if missing (none expected). G4-A-only deps (bubble-menu, suggestion, tippy) explicitly NOT added.
-
-## CSS
-
-`newsletter-prose.css` written per the detailed spec in the prompt — typography scale, body prose, and per-node BEM-style classes (`.newsletter-image`, `.newsletter-callout--{variant}`, `.newsletter-stat-callout__value`, etc.) all scoped under `.newsletter-prose`. Mobile: two-column collapses to single column at ≤768px. Pullquote uses `::before` decorative left-quote in `--bw-orange-100` (background decoration only — not a CTA, doesn't violate the orange-for-UI rule).
+Editor page, save/publish/schedule, article list, cover/og_image fields, paste-HTML modal, version history UI, reader, backend, tests.
 
 ## Verification
 
-After build: confirm 11 files exist, barrel exports resolve, `buildEmbedSrc` returns expected values for the two acceptance test cases, all CSS selectors prefixed with `.newsletter-prose`, no editor/page/route files touched. TypeScript check runs automatically.
+- TS compiles clean.
+- `NewsletterEditor` mounts without runtime errors when given an empty doc `{type:'doc',content:[{type:'paragraph'}]}`.
+- Manual smoke against article `26fcbaef-fb10-4ab5-aaf6-798e31a2e2f5` for image upload path (deferred to G4-B mount; verified by code inspection here).
+- Slash menu shows 16 commands in 4 groups; each inserts the correct node.
+- Bubble menu appears on text selection with all 8 controls.
+- Each NodeView renders with selection ring, hover handles, and inline editors as specified.
 
-## Site-wide impact
+## Site impact
 
-Zero. Nothing imports this module yet. `newsletter-prose.css` is not imported globally — only pages that opt in by wrapping content in `.newsletter-prose` will pick it up (none exist yet). No changes to routing, auth, existing editors, or any current page.
+Zero until G4-B mounts this on a route. Existing `RichTextEditor` (lesson blocks) untouched. G4-0 `Image.ts` patch is additive (new optional attr default null) — no schema break for existing/empty docs.
