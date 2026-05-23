@@ -152,7 +152,7 @@ export default function AdminNewsletterArticle() {
         title: data.title ?? "",
         slug: data.slug ?? "",
         excerpt: data.excerpt ?? "",
-        body_tiptap: (data.body_tiptap as NewsletterTipTapDoc) ?? EMPTY_DOC,
+        body_tiptap: (data.body_tiptap as unknown as NewsletterTipTapDoc) ?? EMPTY_DOC,
         gate: (data.gate as Gate) ?? "public",
         allowed_plan_tiers: (data.allowed_plan_tiers as PlanTier[]) ?? [],
         cover_asset_id: data.cover_asset_id ?? null,
