@@ -377,7 +377,7 @@ export default function CoachInvoices() {
             onClick={() => generatePdf(filtered, `Date range: ${dateFrom || "start"} – ${dateTo || "now"}`)}
             className="gap-2"
           >
-            <Download className="h-4 w-4" /> Export Range as PDF
+            <Download className="h-4 w-4" aria-hidden="true" /> Export Range as PDF
           </Button>
         )}
       </div>
