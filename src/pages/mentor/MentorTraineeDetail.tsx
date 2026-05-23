@@ -22,20 +22,34 @@ const CERT_LABELS: Record<string, string> = {
   my_brainwise_coach: "My BrainWise Coach",
 };
 
-function statusBadgeClass(status: string | null | undefined): string {
+function statusBadgeClass(_status: string | null | undefined): string {
+  return "border-transparent";
+}
+
+function statusBadgeStyle(status: string | null | undefined): React.CSSProperties | undefined {
   switch (status) {
     case "in_progress":
-      return "bg-amber-100 text-amber-900 hover:bg-amber-100 border-transparent dark:bg-amber-900/30 dark:text-amber-200";
-    case "completed":
-      return "bg-emerald-100 text-emerald-900 hover:bg-emerald-100 border-transparent dark:bg-emerald-900/30 dark:text-emerald-200";
-    case "certified":
-      return "bg-purple-100 text-purple-900 hover:bg-purple-100 border-transparent dark:bg-purple-900/30 dark:text-purple-200";
     case "revision_requested":
-      return "bg-orange-100 text-orange-900 hover:bg-orange-100 border-transparent dark:bg-orange-900/30 dark:text-orange-200";
+      return {
+        backgroundColor: "color-mix(in oklab, var(--bw-amber) 18%, white)",
+        color: "var(--bw-mustard)",
+      };
+    case "completed":
+    case "certified":
+      return {
+        backgroundColor: "color-mix(in oklab, var(--bw-forest) 12%, white)",
+        color: "var(--bw-forest)",
+      };
+    case "revoked":
+      return {
+        backgroundColor: "color-mix(in oklab, hsl(var(--destructive)) 12%, white)",
+        color: "hsl(var(--destructive))",
+      };
     default:
-      return "bg-muted text-muted-foreground hover:bg-muted border-transparent";
+      return undefined;
   }
 }
+
 
 function prettyStatus(s: string | null | undefined): string {
   if (!s) return "Not started";
@@ -116,9 +130,11 @@ export default function MentorTraineeDetail() {
                     <Badge
                       key={c.certification_id ?? label}
                       className={cn("text-xs", statusBadgeClass(c?.status))}
+                      style={statusBadgeStyle(c?.status)}
                     >
                       {label}: {prettyStatus(c?.status)}
                     </Badge>
+
                   );
                 })}
               </div>
@@ -127,14 +143,21 @@ export default function MentorTraineeDetail() {
         </CardHeader>
         <CardContent>
           {stateQuery.isLoading ? (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground py-8 justify-center">
-              <Loader2 className="h-4 w-4 animate-spin" />
+            <div
+              role="status"
+              className="flex items-center gap-2 text-sm text-muted-foreground py-8 justify-center"
+            >
+              <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin" />
               Loading progress…
             </div>
           ) : stateQuery.error ? (
-            <div className="text-sm text-destructive py-8 text-center">
-              Failed to load trainee progress.
+            <div className="py-8 text-center space-y-3">
+              <p className="text-sm text-destructive">Failed to load trainee progress.</p>
+              <Button variant="outline" size="sm" onClick={() => stateQuery.refetch()}>
+                Retry
+              </Button>
             </div>
+
           ) : (
             <MentorProgressTree
               learningState={stateQuery.data}

@@ -112,14 +112,26 @@ export default function WrittenSummaryReviewPanel({ contentItemId, traineeId, on
 
   if (detailQuery.isLoading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+      <div
+        role="status"
+        aria-label="Loading"
+        className="flex items-center justify-center py-12"
+      >
+        <Loader2 aria-hidden="true" className="h-5 w-5 animate-spin text-muted-foreground" />
       </div>
     );
   }
   if (detailQuery.error || !contentItem) {
-    return <p className="text-sm text-destructive py-8 text-center">Failed to load review details.</p>;
+    return (
+      <div className="py-8 text-center space-y-3">
+        <p className="text-sm text-destructive">Failed to load review details.</p>
+        <Button variant="outline" size="sm" onClick={() => detailQuery.refetch()}>
+          Retry
+        </Button>
+      </div>
+    );
   }
+
 
   return (
     <div className="space-y-6">
@@ -228,7 +240,7 @@ export default function WrittenSummaryReviewPanel({ contentItemId, traineeId, on
                 />
                 <div className="flex flex-wrap gap-2">
                   <Button onClick={handleApprove} disabled={approving || requesting}>
-                    {approving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                    {approving && <Loader2 aria-hidden="true" className="h-4 w-4 mr-2 animate-spin" />}
                     Approve
                   </Button>
                   <Button
@@ -254,7 +266,7 @@ export default function WrittenSummaryReviewPanel({ contentItemId, traineeId, on
                     onClick={handleRequestRevision}
                     disabled={requesting || !revisionComment.trim()}
                   >
-                    {requesting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                    {requesting && <Loader2 aria-hidden="true" className="h-4 w-4 mr-2 animate-spin" />}
                     Submit revision request
                   </Button>
                 </div>

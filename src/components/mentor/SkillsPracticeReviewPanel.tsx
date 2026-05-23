@@ -200,14 +200,26 @@ export default function SkillsPracticeReviewPanel({ contentItemId, traineeId, on
 
   if (detailQuery.isLoading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+      <div
+        role="status"
+        aria-label="Loading"
+        className="flex items-center justify-center py-12"
+      >
+        <Loader2 aria-hidden="true" className="h-5 w-5 animate-spin text-muted-foreground" />
       </div>
     );
   }
   if (detailQuery.error || !contentItem) {
-    return <p className="text-sm text-destructive py-8 text-center">Failed to load review details.</p>;
+    return (
+      <div className="py-8 text-center space-y-3">
+        <p className="text-sm text-destructive">Failed to load review details.</p>
+        <Button variant="outline" size="sm" onClick={() => detailQuery.refetch()}>
+          Retry
+        </Button>
+      </div>
+    );
   }
+
 
   const traineeMime: string | undefined = completion?.skills_attachment_mime;
   const mentorMime: string | undefined = completion?.skills_mentor_attachment_mime;
@@ -232,9 +244,10 @@ export default function SkillsPracticeReviewPanel({ contentItemId, traineeId, on
             <h4 className="text-sm font-semibold">Trainee attachment</h4>
           </div>
           {traineeAttachmentQuery.isLoading ? (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin" /> Loading…
+            <div role="status" className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin" /> Loading…
             </div>
+
           ) : traineeAttachmentQuery.data ? (
             <>
               {isImage(traineeMime) && (
@@ -302,7 +315,7 @@ export default function SkillsPracticeReviewPanel({ contentItemId, traineeId, on
         <h4 className="text-sm font-semibold">Mentor actions</h4>
         {mentorSigned ? (
           <div className="flex items-center gap-2 text-sm">
-            <CircleCheck className="h-4 w-4 text-emerald-600" />
+            <CircleCheck className="h-4 w-4" style={{ color: "var(--bw-forest)" }} aria-hidden="true" />
             <span>
               You signed off
               {completion?.skills_mentor_signed_off_at ? ` on ${formatDate(completion.skills_mentor_signed_off_at)}` : ""}.
@@ -311,7 +324,7 @@ export default function SkillsPracticeReviewPanel({ contentItemId, traineeId, on
         ) : (
           <div className="flex flex-wrap gap-2">
             <Button onClick={handleSignOff} disabled={signingOff || requestingRevision}>
-              {signingOff && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              {signingOff && <Loader2 aria-hidden="true" className="h-4 w-4 mr-2 animate-spin" />}
               Sign Off
             </Button>
             <Button
@@ -337,7 +350,7 @@ export default function SkillsPracticeReviewPanel({ contentItemId, traineeId, on
               onClick={handleRequestRevision}
               disabled={requestingRevision || !revisionComment.trim()}
             >
-              {requestingRevision && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              {requestingRevision && <Loader2 aria-hidden="true" className="h-4 w-4 mr-2 animate-spin" />}
               Submit revision request
             </Button>
           </div>
@@ -352,9 +365,10 @@ export default function SkillsPracticeReviewPanel({ contentItemId, traineeId, on
         </div>
         {mentorAttachmentUrl ? (
           mentorAttachmentQuery.isLoading ? (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin" /> Loading…
+            <div role="status" className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin" /> Loading…
             </div>
+
           ) : mentorAttachmentQuery.data ? (
             <div className="space-y-2">
               {isImage(mentorMime) && (
@@ -376,7 +390,7 @@ export default function SkillsPracticeReviewPanel({ contentItemId, traineeId, on
 
         <div>
           <Button variant="outline" size="sm" onClick={handlePickFile} disabled={uploading}>
-            {uploading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Upload className="h-4 w-4 mr-2" />}
+            {uploading ? <Loader2 aria-hidden="true" className="h-4 w-4 mr-2 animate-spin" /> : <Upload aria-hidden="true" className="h-4 w-4 mr-2" />}
             {mentorAttachmentUrl ? "Replace" : "Upload attachment"}
           </Button>
           <p className={cn("text-xs text-muted-foreground mt-2")}>
