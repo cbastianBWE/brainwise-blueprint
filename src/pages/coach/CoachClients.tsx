@@ -513,7 +513,7 @@ export default function CoachClients() {
           p_email_type: "coach_invitation_self_pay",
         },
       );
-      const emailResult = emailData as SendCoachInvitationEmailResult | null;
+      const emailResult = emailData as unknown as SendCoachInvitationEmailResult | null;
       if (emailError || !emailResult?.dispatched) {
         console.error("[CoachClients] send_coach_invitation_email failed:", emailError);
         toast.warning("Client records created but invitation email failed to send.");
@@ -590,7 +590,7 @@ export default function CoachClients() {
       p_coach_note: note.trim() || null,
       p_email_html: html,
     });
-    const result = data as CreateActorDebriefOrderResult | null;
+    const result = data as unknown as CreateActorDebriefOrderResult | null;
     if (error) {
       const map: Record<string, string> = {
         actor_debrief_cap_reached: "You have used all 4 actor debriefs for this certification.",
@@ -800,7 +800,7 @@ export default function CoachClients() {
               <TooltipTrigger asChild>
                 <span tabIndex={0}>
                   <Button className="gap-2" disabled>
-                    <Plus className="h-4 w-4" /> Order Assessment <ChevronDown className="h-4 w-4" />
+                    <Plus className="h-4 w-4" aria-hidden="true" /> Order Assessment <ChevronDown className="h-4 w-4" aria-hidden="true" />
                   </Button>
                 </span>
               </TooltipTrigger>
@@ -813,7 +813,7 @@ export default function CoachClients() {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button className="gap-2">
-                <Plus className="h-4 w-4" /> Order Assessment <ChevronDown className="h-4 w-4" />
+                <Plus className="h-4 w-4" aria-hidden="true" /> Order Assessment <ChevronDown className="h-4 w-4" aria-hidden="true" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -871,7 +871,7 @@ export default function CoachClients() {
                 {sharedFormFields}
                 <div className="mt-4">
                   <Button className="w-full gap-2" onClick={handleOrderActorDebrief} disabled={submitting || !email}>
-                    <Send className="h-4 w-4" /> {submitting ? "Sending..." : "Send Actor Debrief Invitation"}
+                    <Send className="h-4 w-4" aria-hidden="true" /> {submitting ? "Sending..." : "Send Actor Debrief Invitation"}
                   </Button>
                 </div>
               </div>
@@ -886,13 +886,13 @@ export default function CoachClients() {
 
                 <TabsContent value="coach-pays" className="mt-4">
                   <Button className="w-full gap-2" onClick={handleOrderCoachPays} disabled={submitting || !email}>
-                    <ClipboardCheck className="h-4 w-4" /> {submitting ? "Processing..." : "Proceed to Payment"}
+                    <ClipboardCheck className="h-4 w-4" aria-hidden="true" /> {submitting ? "Processing..." : "Proceed to Payment"}
                   </Button>
                 </TabsContent>
 
                 <TabsContent value="client-pays" className="mt-4">
                   <Button className="w-full gap-2" onClick={handleOrderClientPays} disabled={submitting || !email}>
-                    <Send className="h-4 w-4" /> {submitting ? "Sending..." : "Send Invitation"}
+                    <Send className="h-4 w-4" aria-hidden="true" /> {submitting ? "Sending..." : "Send Invitation"}
                   </Button>
                 </TabsContent>
               </Tabs>
@@ -922,7 +922,7 @@ export default function CoachClients() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardContent className="flex items-center gap-3 py-4">
-            <div className="rounded-lg bg-primary/10 p-2"><Users className="h-5 w-5 text-primary" /></div>
+            <div className="rounded-lg bg-primary/10 p-2"><Users className="h-5 w-5 text-primary" aria-hidden="true" /></div>
             <div>
               <p className="text-2xl font-bold text-foreground">{totalSignedUpClients}</p>
               <p className="text-xs text-muted-foreground">Total Clients</p>
@@ -931,7 +931,7 @@ export default function CoachClients() {
         </Card>
         <Card>
           <CardContent className="flex items-center gap-3 py-4">
-            <div className="rounded-lg bg-primary/10 p-2"><Mail className="h-5 w-5 text-primary" /></div>
+            <div className="rounded-lg bg-primary/10 p-2"><Mail className="h-5 w-5 text-primary" aria-hidden="true" /></div>
             <div>
               <p className="text-2xl font-bold text-foreground">{pendingInvitationsCount}</p>
               <p className="text-xs text-muted-foreground">Pending Invitations</p>
@@ -940,7 +940,7 @@ export default function CoachClients() {
         </Card>
         <Card>
           <CardContent className="flex items-center gap-3 py-4">
-            <div className="rounded-lg bg-accent/10 p-2"><ClipboardCheck className="h-5 w-5 text-accent" /></div>
+            <div className="rounded-lg bg-accent/10 p-2"><ClipboardCheck className="h-5 w-5 text-accent" aria-hidden="true" /></div>
             <div>
               <p className="text-2xl font-bold text-foreground">{completedThisMonth}</p>
               <p className="text-xs text-muted-foreground">Completed This Month</p>
@@ -949,7 +949,7 @@ export default function CoachClients() {
         </Card>
         <Card>
           <CardContent className="flex items-center gap-3 py-4">
-            <div className="rounded-lg bg-destructive/10 p-2"><Clock className="h-5 w-5 text-destructive" /></div>
+            <div className="rounded-lg bg-destructive/10 p-2"><Clock className="h-5 w-5 text-destructive" aria-hidden="true" /></div>
             <div>
               <p className="text-2xl font-bold text-foreground">{assessmentsPending}</p>
               <p className="text-xs text-muted-foreground">Assessments Pending</p>
@@ -988,7 +988,7 @@ export default function CoachClients() {
       ) : clients.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-16 space-y-4">
-            <Users className="h-12 w-12 text-muted-foreground/40" />
+            <Users className="h-12 w-12 text-muted-foreground/40" aria-hidden="true" />
             <div className="text-center">
               <h3 className="text-lg font-medium text-foreground">No clients yet</h3>
               <p className="text-sm text-muted-foreground mt-1">
@@ -1001,7 +1001,7 @@ export default function CoachClients() {
                   <TooltipTrigger asChild>
                     <span tabIndex={0}>
                       <Button className="gap-2" disabled>
-                        <Plus className="h-4 w-4" /> Order Your First Assessment
+                        <Plus className="h-4 w-4" aria-hidden="true" /> Order Your First Assessment
                       </Button>
                     </span>
                   </TooltipTrigger>
@@ -1012,7 +1012,7 @@ export default function CoachClients() {
               </TooltipProvider>
             ) : (
               <Button className="gap-2" onClick={() => { resetForm(); if (actorOnlyMode) setIsActorDebrief(true); setModalOpen(true); }}>
-                <Plus className="h-4 w-4" /> Order Your First Assessment
+                <Plus className="h-4 w-4" aria-hidden="true" /> Order Your First Assessment
               </Button>
             )}
           </CardContent>
@@ -1098,7 +1098,7 @@ export default function CoachClients() {
           <CardHeader>
             <div className="flex items-center gap-3 mb-2">
               <Button variant="ghost" size="sm" className="gap-1" onClick={() => setSelectedClientEmail(null)}>
-                <ArrowLeft className="h-4 w-4" /> Back to Clients
+                <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Back to Clients
               </Button>
             </div>
             <CardTitle className="text-lg">
@@ -1120,7 +1120,7 @@ export default function CoachClients() {
                   ? (actorOnlyMode ? "Available after certification" : "You need an active certification to order assessments")
                   : undefined}
               >
-                <Plus className="h-3 w-3" /> Order Assessment for This Client
+                <Plus className="h-3 w-3" aria-hidden="true" /> Order Assessment for This Client
               </Button>
             </div>
           </CardHeader>
@@ -1165,7 +1165,7 @@ export default function CoachClients() {
                           disabled={c.assessment_status !== "completed"}
                           onClick={() => navigate(`/coach/client-results?user_id=${c.client_user_id}&assessment_id=${c.assessment_id}`)}
                         >
-                          <Eye className="h-3 w-3" /> Results
+                          <Eye className="h-3 w-3" aria-hidden="true" /> Results
                         </Button>
                         <Button
                           size="sm"
@@ -1174,7 +1174,7 @@ export default function CoachClients() {
                           disabled={(c.invitation_status !== "sent" && c.invitation_status !== "opened" && c.invitation_status !== "partially_completed") || sendingReminderId === c.id}
                           onClick={() => handleRemind(c)}
                         >
-                          <Mail className="h-3 w-3" /> {sendingReminderId === c.id ? "Sending..." : "Remind"}
+                          <Mail className="h-3 w-3" aria-hidden="true" /> {sendingReminderId === c.id ? "Sending..." : "Remind"}
                         </Button>
                         {c.invitation_status === "completed" && c.assessment_status === "completed" && (
                           <Button
