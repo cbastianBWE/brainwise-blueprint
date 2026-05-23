@@ -390,7 +390,7 @@ export default function SkillsPracticeReviewPanel({ contentItemId, traineeId, on
 
         <div>
           <Button variant="outline" size="sm" onClick={handlePickFile} disabled={uploading}>
-            {uploading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Upload className="h-4 w-4 mr-2" />}
+            {uploading ? <Loader2 aria-hidden="true" className="h-4 w-4 mr-2 animate-spin" /> : <Upload aria-hidden="true" className="h-4 w-4 mr-2" />}
             {mentorAttachmentUrl ? "Replace" : "Upload attachment"}
           </Button>
           <p className={cn("text-xs text-muted-foreground mt-2")}>
