@@ -126,14 +126,16 @@ export default function Notifications() {
       </Tabs>
 
       {loading && (
-        <Card className="divide-y">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="p-4 space-y-2">
-              <Skeleton className="h-4 w-1/3" />
-              <Skeleton className="h-3 w-2/3" />
-            </div>
-          ))}
-        </Card>
+        <div role="status" aria-label="Loading notifications">
+          <Card className="divide-y">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="p-4 space-y-2">
+                <Skeleton className="h-4 w-1/3" />
+                <Skeleton className="h-3 w-2/3" />
+              </div>
+            ))}
+          </Card>
+        </div>
       )}
 
       {error && !loading && (
