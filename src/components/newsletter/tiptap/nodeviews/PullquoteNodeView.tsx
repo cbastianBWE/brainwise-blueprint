@@ -54,7 +54,7 @@ export function PullquoteNodeView({
           color: "var(--bw-navy)",
         }}
       >
-        <NodeViewContent as="span" />
+        <NodeViewContent />
       </p>
 
       {attribution || focused ? (
