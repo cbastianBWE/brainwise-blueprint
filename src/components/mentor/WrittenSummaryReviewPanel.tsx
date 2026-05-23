@@ -266,7 +266,7 @@ export default function WrittenSummaryReviewPanel({ contentItemId, traineeId, on
                     onClick={handleRequestRevision}
                     disabled={requesting || !revisionComment.trim()}
                   >
-                    {requesting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                    {requesting && <Loader2 aria-hidden="true" className="h-4 w-4 mr-2 animate-spin" />}
                     Submit revision request
                   </Button>
                 </div>
