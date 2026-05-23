@@ -5169,6 +5169,338 @@ export type Database = {
           },
         ]
       }
+      newsletter_article_authors: {
+        Row: {
+          article_id: string
+          author_order: number
+          author_user_id: string
+        }
+        Insert: {
+          article_id: string
+          author_order?: number
+          author_user_id: string
+        }
+        Update: {
+          article_id?: string
+          author_order?: number
+          author_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "newsletter_article_authors_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "newsletter_articles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "newsletter_article_authors_author_user_id_fkey"
+            columns: ["author_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "newsletter_article_authors_author_user_id_fkey"
+            columns: ["author_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "newsletter_article_authors_author_user_id_fkey"
+            columns: ["author_user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "newsletter_article_authors_author_user_id_fkey"
+            columns: ["author_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      newsletter_article_versions: {
+        Row: {
+          article_id: string
+          body_tiptap: Json
+          created_at: string
+          created_by_user_id: string
+          excerpt_snapshot: string | null
+          id: string
+          metadata_snapshot: Json
+          restored_from_version_id: string | null
+          title_snapshot: string
+          version_name: string | null
+          version_number: number
+          version_type: string
+        }
+        Insert: {
+          article_id: string
+          body_tiptap: Json
+          created_at?: string
+          created_by_user_id: string
+          excerpt_snapshot?: string | null
+          id?: string
+          metadata_snapshot?: Json
+          restored_from_version_id?: string | null
+          title_snapshot: string
+          version_name?: string | null
+          version_number: number
+          version_type: string
+        }
+        Update: {
+          article_id?: string
+          body_tiptap?: Json
+          created_at?: string
+          created_by_user_id?: string
+          excerpt_snapshot?: string | null
+          id?: string
+          metadata_snapshot?: Json
+          restored_from_version_id?: string | null
+          title_snapshot?: string
+          version_name?: string | null
+          version_number?: number
+          version_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "newsletter_article_versions_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "newsletter_articles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "newsletter_article_versions_created_by_user_id_fkey"
+            columns: ["created_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "newsletter_article_versions_created_by_user_id_fkey"
+            columns: ["created_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "newsletter_article_versions_created_by_user_id_fkey"
+            columns: ["created_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "newsletter_article_versions_created_by_user_id_fkey"
+            columns: ["created_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "newsletter_article_versions_restored_from_version_id_fkey"
+            columns: ["restored_from_version_id"]
+            isOneToOne: false
+            referencedRelation: "newsletter_article_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      newsletter_articles: {
+        Row: {
+          allowed_plan_tiers: string[]
+          archived_at: string | null
+          body_html_rendered: string | null
+          body_tiptap: Json
+          canonical_url: string | null
+          cover_asset_id: string | null
+          created_at: string
+          created_by_user_id: string
+          excerpt: string | null
+          gate: string
+          id: string
+          og_image_asset_id: string | null
+          published_at: string | null
+          read_time_minutes: number | null
+          scheduled_for: string | null
+          seo_description: string | null
+          seo_title: string | null
+          slug: string
+          source_type: string
+          status: string
+          title: string
+          updated_at: string
+          word_count: number | null
+        }
+        Insert: {
+          allowed_plan_tiers?: string[]
+          archived_at?: string | null
+          body_html_rendered?: string | null
+          body_tiptap?: Json
+          canonical_url?: string | null
+          cover_asset_id?: string | null
+          created_at?: string
+          created_by_user_id: string
+          excerpt?: string | null
+          gate?: string
+          id?: string
+          og_image_asset_id?: string | null
+          published_at?: string | null
+          read_time_minutes?: number | null
+          scheduled_for?: string | null
+          seo_description?: string | null
+          seo_title?: string | null
+          slug: string
+          source_type?: string
+          status?: string
+          title: string
+          updated_at?: string
+          word_count?: number | null
+        }
+        Update: {
+          allowed_plan_tiers?: string[]
+          archived_at?: string | null
+          body_html_rendered?: string | null
+          body_tiptap?: Json
+          canonical_url?: string | null
+          cover_asset_id?: string | null
+          created_at?: string
+          created_by_user_id?: string
+          excerpt?: string | null
+          gate?: string
+          id?: string
+          og_image_asset_id?: string | null
+          published_at?: string | null
+          read_time_minutes?: number | null
+          scheduled_for?: string | null
+          seo_description?: string | null
+          seo_title?: string | null
+          slug?: string
+          source_type?: string
+          status?: string
+          title?: string
+          updated_at?: string
+          word_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "newsletter_articles_cover_asset_id_fkey"
+            columns: ["cover_asset_id"]
+            isOneToOne: false
+            referencedRelation: "content_assets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "newsletter_articles_created_by_user_id_fkey"
+            columns: ["created_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "newsletter_articles_created_by_user_id_fkey"
+            columns: ["created_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "newsletter_articles_created_by_user_id_fkey"
+            columns: ["created_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "newsletter_articles_created_by_user_id_fkey"
+            columns: ["created_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "newsletter_articles_og_image_asset_id_fkey"
+            columns: ["og_image_asset_id"]
+            isOneToOne: false
+            referencedRelation: "content_assets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      newsletter_subscribe_attempts: {
+        Row: {
+          attempted_at: string
+          id: string
+          ip_address: unknown
+        }
+        Insert: {
+          attempted_at?: string
+          id?: string
+          ip_address: unknown
+        }
+        Update: {
+          attempted_at?: string
+          id?: string
+          ip_address?: unknown
+        }
+        Relationships: []
+      }
+      newsletter_subscribers: {
+        Row: {
+          confirmation_token_expires_at: string | null
+          confirmation_token_hash: string | null
+          confirmed_at: string | null
+          consent_evidence: string | null
+          created_at: string
+          email: string
+          id: string
+          referrer_url: string | null
+          resend_contact_id: string | null
+          source: string | null
+          status: string
+          unsubscribe_token_hash: string | null
+          unsubscribed_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          confirmation_token_expires_at?: string | null
+          confirmation_token_hash?: string | null
+          confirmed_at?: string | null
+          consent_evidence?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          referrer_url?: string | null
+          resend_contact_id?: string | null
+          source?: string | null
+          status: string
+          unsubscribe_token_hash?: string | null
+          unsubscribed_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          confirmation_token_expires_at?: string | null
+          confirmation_token_hash?: string | null
+          confirmed_at?: string | null
+          consent_evidence?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          referrer_url?: string | null
+          resend_contact_id?: string | null
+          source?: string | null
+          status?: string
+          unsubscribe_token_hash?: string | null
+          unsubscribed_at?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       notification_types_catalog: {
         Row: {
           category: string
@@ -8906,6 +9238,15 @@ export type Database = {
         Args: { p_module_id: string; p_user_id: string }
         Returns: string
       }
+      _snapshot_article_version: {
+        Args: {
+          p_article_id: string
+          p_restored_from_version_id?: string
+          p_version_name?: string
+          p_version_type: string
+        }
+        Returns: string
+      }
       _upsert_thumbnail_ref: {
         Args: {
           p_asset_id: string
@@ -9230,6 +9571,20 @@ export type Database = {
         }[]
       }
       audit_session_replay: { Args: { p_session_id: string }; Returns: Json }
+      auto_save_article: {
+        Args: {
+          p_article_id: string
+          p_body_tiptap: Json
+          p_canonical_url?: string
+          p_excerpt?: string
+          p_read_time_minutes?: number
+          p_seo_description?: string
+          p_seo_title?: string
+          p_title?: string
+          p_word_count?: number
+        }
+        Returns: Json
+      }
       bulk_coach_invitation_create: {
         Args: { p_rows: Json }
         Returns: {
@@ -9310,6 +9665,10 @@ export type Database = {
           expires_at: string
           instrument_id: string
         }[]
+      }
+      commit_article_version: {
+        Args: { p_article_id: string; p_reason: string; p_version_name: string }
+        Returns: Json
       }
       complete_epn_assessment: {
         Args: { p_assignment_id: string }
@@ -9420,6 +9779,7 @@ export type Database = {
         Returns: Json
       }
       current_user_account_type: { Args: never; Returns: string }
+      current_user_active_plan_tier: { Args: never; Returns: string }
       current_user_department_id: { Args: never; Returns: string }
       current_user_is_mentor: { Args: never; Returns: boolean }
       current_user_is_practitioner_coach: { Args: never; Returns: boolean }
@@ -9848,6 +10208,10 @@ export type Database = {
           description: string
         }[]
       }
+      import_newsletter_subscribers_bulk: {
+        Args: { p_reason: string; p_subscribers: Json }
+        Returns: Json
+      }
       invitation_create: {
         Args: {
           p_account_type?: string
@@ -10269,6 +10633,10 @@ export type Database = {
         }
         Returns: Json
       }
+      restore_article_version: {
+        Args: { p_reason: string; p_version_id: string }
+        Returns: Json
+      }
       revoke_certification: {
         Args: { p_certification_id: string; p_reason: string }
         Returns: Json
@@ -10584,6 +10952,28 @@ export type Database = {
           out_id: string
           out_updated_at: string
         }[]
+      }
+      upsert_article: {
+        Args: {
+          p_allowed_plan_tiers: string[]
+          p_article_id: string
+          p_author_user_ids: string[]
+          p_body_tiptap: Json
+          p_canonical_url: string
+          p_cover_asset_id: string
+          p_excerpt: string
+          p_gate: string
+          p_og_image_asset_id: string
+          p_read_time_minutes: number
+          p_reason: string
+          p_seo_description: string
+          p_seo_title: string
+          p_slug: string
+          p_source_type: string
+          p_title: string
+          p_word_count: number
+        }
+        Returns: Json
       }
       upsert_certification_path: {
         Args: {
