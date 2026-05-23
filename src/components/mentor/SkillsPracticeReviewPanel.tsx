@@ -315,7 +315,7 @@ export default function SkillsPracticeReviewPanel({ contentItemId, traineeId, on
         <h4 className="text-sm font-semibold">Mentor actions</h4>
         {mentorSigned ? (
           <div className="flex items-center gap-2 text-sm">
-            <CircleCheck className="h-4 w-4 text-emerald-600" />
+            <CircleCheck className="h-4 w-4" style={{ color: "var(--bw-forest)" }} aria-hidden="true" />
             <span>
               You signed off
               {completion?.skills_mentor_signed_off_at ? ` on ${formatDate(completion.skills_mentor_signed_off_at)}` : ""}.
