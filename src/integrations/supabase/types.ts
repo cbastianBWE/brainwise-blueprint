@@ -4277,6 +4277,65 @@ export type Database = {
           },
         ]
       }
+      feedback_templates: {
+        Row: {
+          created_at: string
+          id: string
+          mentor_user_id: string
+          panel_type: string
+          template_name: string
+          template_text: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          mentor_user_id: string
+          panel_type: string
+          template_name: string
+          template_text: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          mentor_user_id?: string
+          panel_type?: string
+          template_name?: string
+          template_text?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feedback_templates_mentor_user_id_fkey"
+            columns: ["mentor_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "feedback_templates_mentor_user_id_fkey"
+            columns: ["mentor_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "feedback_templates_mentor_user_id_fkey"
+            columns: ["mentor_user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "feedback_templates_mentor_user_id_fkey"
+            columns: ["mentor_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       impersonation_sessions: {
         Row: {
           audit_log_id: string | null
@@ -4884,6 +4943,38 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mentor_trainee_notes: {
+        Row: {
+          assignment_id: string
+          created_at: string
+          id: string
+          note_text: string
+          updated_at: string
+        }
+        Insert: {
+          assignment_id: string
+          created_at?: string
+          id?: string
+          note_text: string
+          updated_at?: string
+        }
+        Update: {
+          assignment_id?: string
+          created_at?: string
+          id?: string
+          note_text?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mentor_trainee_notes_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "coach_mentor_assignments"
             referencedColumns: ["id"]
           },
         ]
@@ -9351,6 +9442,7 @@ export type Database = {
           out_storage_path: string
         }[]
       }
+      delete_feedback_template: { Args: { p_id: string }; Returns: Json }
       delete_org_intervention: {
         Args: { p_intervention_id: string }
         Returns: boolean
@@ -9853,6 +9945,11 @@ export type Database = {
           out_full_name: string
           out_user_id: string
         }[]
+      }
+      list_feedback_templates: { Args: { p_panel_type: string }; Returns: Json }
+      list_mentor_trainee_notes: {
+        Args: { p_trainee_user_id: string }
+        Returns: Json
       }
       list_mentor_trainees: { Args: never; Returns: Json }
       list_my_certifications: { Args: never; Returns: Json }
@@ -10547,6 +10644,15 @@ export type Database = {
         }
         Returns: Json
       }
+      upsert_feedback_template: {
+        Args: {
+          p_id: string
+          p_name: string
+          p_panel_type: string
+          p_text: string
+        }
+        Returns: Json
+      }
       upsert_lesson_block_progress: {
         Args: { p_block_id: string; p_completion_data?: Json; p_status: string }
         Returns: Json
@@ -10557,6 +10663,10 @@ export type Database = {
           p_furthest_continue_client_id?: string
           p_last_block_id?: string
         }
+        Returns: Json
+      }
+      upsert_mentor_trainee_note: {
+        Args: { p_assignment_id: string; p_id: string; p_note_text: string }
         Returns: Json
       }
       upsert_module: {
