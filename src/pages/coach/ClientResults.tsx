@@ -6,7 +6,7 @@ import MyResults from "@/pages/MyResults";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, User, FileText, Loader2, Search } from "lucide-react";
+import { ArrowLeft, User, FileText, Loader2, Search, AlertCircle } from "lucide-react";
 
 interface ClientInfo {
   id: string;
@@ -89,17 +89,20 @@ function ClientList({
 }) {
   const [clients, setClients] = useState<ClientInfo[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
 
-  useEffect(() => {
+  const fetchClients = async () => {
     if (!coachUserId) return;
-    (async () => {
-      setLoading(true);
+    setLoading(true);
+    setError(null);
+    try {
       // Get all coach_clients rows for this coach
-      const { data: rows } = await supabase
+      const { data: rows, error: rowsError } = await supabase
         .from("coach_clients")
         .select("client_user_id")
         .eq("coach_user_id", coachUserId);
+      if (rowsError) throw new Error(rowsError.message);
 
       // Deduplicate and filter out null client_user_ids
       const uniqueIds = [
@@ -112,25 +115,56 @@ function ClientList({
 
       if (uniqueIds.length === 0) {
         setClients([]);
-        setLoading(false);
         return;
       }
 
       // Fetch user info for each unique client
-      const { data: users } = await supabase
+      const { data: users, error: usersError } = await supabase
         .from("users")
         .select("id, full_name, email")
         .in("id", uniqueIds);
+      if (usersError) throw new Error(usersError.message);
 
       setClients(users ?? []);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Failed to load clients";
+      setError(msg);
+      setClients([]);
+    } finally {
       setLoading(false);
-    })();
+    }
+  };
+
+  useEffect(() => {
+    fetchClients();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [coachUserId]);
 
   if (loading) {
     return (
       <div className="p-6 max-w-3xl mx-auto flex justify-center py-20">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <Loader2
+          className="h-6 w-6 animate-spin text-muted-foreground"
+          role="status"
+          aria-label="Loading clients"
+        />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-6 max-w-3xl mx-auto">
+        <h1 className="text-2xl font-bold mb-4">Client Results</h1>
+        <div className="flex flex-col items-center justify-center py-12 space-y-3">
+          <AlertCircle className="h-8 w-8 text-destructive" aria-hidden="true" />
+          <p className="text-sm text-muted-foreground text-center">
+            Couldn't load clients: {error}
+          </p>
+          <Button variant="outline" size="sm" onClick={fetchClients}>
+            Retry
+          </Button>
+        </div>
       </div>
     );
   }
@@ -147,7 +181,7 @@ function ClientList({
       <h1 className="text-2xl font-bold mb-4">Client Results</h1>
       {clients.length > 0 && (
         <div className="relative mb-4">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" aria-hidden="true" />
           <Input
             placeholder="Search by name or email…"
             value={search}
@@ -174,7 +208,7 @@ function ClientList({
               onClick={() => onSelect(c.id)}
             >
               <CardContent className="flex items-center gap-3 p-4">
-                <User className="h-5 w-5 text-muted-foreground shrink-0" />
+                <User className="h-5 w-5 text-muted-foreground shrink-0" aria-hidden="true" />
                 <div className="min-w-0">
                   <p className="font-medium truncate">
                     {c.full_name || "Unnamed"}
@@ -208,18 +242,20 @@ function AssessmentList({
   const [assessments, setAssessments] = useState<AssessmentInfo[]>([]);
   const [clientName, setClientName] = useState("");
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+  const fetchAssessments = async () => {
     if (!clientUserId || !coachUserId) return;
-    (async () => {
-      setLoading(true);
-
+    setLoading(true);
+    setError(null);
+    try {
       // Fetch client info + share preference
-      const { data: clientData } = await supabase
+      const { data: clientData, error: clientErr } = await supabase
         .from("users")
         .select("full_name, share_results_with_coach")
         .eq("id", clientUserId)
         .single();
+      if (clientErr) throw new Error(clientErr.message);
 
       setClientName(clientData?.full_name || "Client");
       const shareWithCoach = clientData?.share_results_with_coach ?? false;
@@ -228,19 +264,21 @@ function AssessmentList({
 
       if (shareWithCoach) {
         // Show all completed results
-        const { data } = await supabase
+        const { data, error: arErr } = await supabase
           .from("assessment_results")
           .select("assessment_id, instrument_id, created_at")
           .eq("user_id", clientUserId)
           .order("created_at", { ascending: false });
+        if (arErr) throw new Error(arErr.message);
         resultRows = data ?? [];
       } else {
         // Only show results linked via coach_clients (include paired_assessment_id for PTP)
-        const { data: linked } = await supabase
+        const { data: linked, error: linkedErr } = await supabase
           .from("coach_clients")
           .select("assessment_id, paired_assessment_id")
           .eq("coach_user_id", coachUserId)
           .eq("client_user_id", clientUserId);
+        if (linkedErr) throw new Error(linkedErr.message);
 
         const linkedIds = [
           ...new Set(
@@ -251,12 +289,13 @@ function AssessmentList({
         ];
 
         if (linkedIds.length > 0) {
-          const { data } = await supabase
+          const { data, error: arErr2 } = await supabase
             .from("assessment_results")
             .select("assessment_id, instrument_id, created_at")
             .eq("user_id", clientUserId)
             .in("assessment_id", linkedIds)
             .order("created_at", { ascending: false });
+          if (arErr2) throw new Error(arErr2.message);
           resultRows = data ?? [];
         }
       }
@@ -267,10 +306,11 @@ function AssessmentList({
       ];
       let instrumentMap: Record<string, string> = {};
       if (instrumentIds.length > 0) {
-        const { data: instruments } = await supabase
+        const { data: instruments, error: instErr } = await supabase
           .from("instruments")
           .select("instrument_id, instrument_name")
           .in("instrument_id", instrumentIds as string[]);
+        if (instErr) throw new Error(instErr.message);
         instrumentMap = Object.fromEntries(
           (instruments ?? []).map((i) => [i.instrument_id, i.instrument_name])
         );
@@ -279,10 +319,11 @@ function AssessmentList({
       const fetchedAssessmentIds = resultRows.map((r) => r.assessment_id);
       let assessmentMeta: Record<string, { context_type: string | null; paired_assessment_id: string | null }> = {};
       if (fetchedAssessmentIds.length > 0) {
-        const { data: aRows } = await supabase
+        const { data: aRows, error: aErr } = await supabase
           .from("assessments")
           .select("id, context_type, paired_assessment_id")
           .in("id", fetchedAssessmentIds);
+        if (aErr) throw new Error(aErr.message);
         assessmentMeta = Object.fromEntries(
           (aRows ?? []).map((a) => [a.id, { context_type: a.context_type ?? null, paired_assessment_id: a.paired_assessment_id ?? null }])
         );
@@ -350,14 +391,47 @@ function AssessmentList({
       grouped.sort((a, b) => new Date(b.completed_at).getTime() - new Date(a.completed_at).getTime());
 
       setAssessments(grouped);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Failed to load assessments";
+      setError(msg);
+      setAssessments([]);
+    } finally {
       setLoading(false);
-    })();
+    }
+  };
+
+  useEffect(() => {
+    fetchAssessments();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clientUserId, coachUserId]);
 
   if (loading) {
     return (
       <div className="p-6 max-w-3xl mx-auto flex justify-center py-20">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <Loader2
+          className="h-6 w-6 animate-spin text-muted-foreground"
+          role="status"
+          aria-label="Loading assessments"
+        />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-6 max-w-3xl mx-auto">
+        <Button variant="ghost" size="sm" className="mb-4" onClick={onBack}>
+          <ArrowLeft className="h-4 w-4 mr-1" aria-hidden="true" /> Back to clients
+        </Button>
+        <div className="flex flex-col items-center justify-center py-12 space-y-3">
+          <AlertCircle className="h-8 w-8 text-destructive" aria-hidden="true" />
+          <p className="text-sm text-muted-foreground text-center">
+            Couldn't load assessments: {error}
+          </p>
+          <Button variant="outline" size="sm" onClick={fetchAssessments}>
+            Retry
+          </Button>
+        </div>
       </div>
     );
   }
@@ -365,7 +439,7 @@ function AssessmentList({
   return (
     <div className="p-6 max-w-3xl mx-auto">
       <Button variant="ghost" size="sm" className="mb-4" onClick={onBack}>
-        <ArrowLeft className="h-4 w-4 mr-1" /> Back to clients
+        <ArrowLeft className="h-4 w-4 mr-1" aria-hidden="true" /> Back to clients
       </Button>
       <h1 className="text-2xl font-bold mb-1">{clientName}</h1>
       <p className="text-muted-foreground mb-6">Completed assessments</p>
@@ -383,7 +457,7 @@ function AssessmentList({
               onClick={() => onSelect(a.assessment_id)}
             >
               <CardContent className="flex items-center gap-3 p-4">
-                <FileText className="h-5 w-5 text-muted-foreground shrink-0" />
+                <FileText className="h-5 w-5 text-muted-foreground shrink-0" aria-hidden="true" />
                 <div className="min-w-0">
                   <p className="font-medium truncate">{a.instrument_name}</p>
                   <p className="text-sm text-muted-foreground">
@@ -419,44 +493,83 @@ function CoachResultsView({
   const navigate = useNavigate();
   const [permissionLevel, setPermissionLevel] = useState<'full_results' | 'score_summary' | null>(null);
   const [permLoading, setPermLoading] = useState(true);
+  const [permError, setPermError] = useState<string | null>(null);
 
-  useEffect(() => {
+  const resolvePermission = async () => {
     if (!userId || !assessmentId || !coachUserId) return;
-    (async () => {
-      setPermLoading(true);
-
+    setPermLoading(true);
+    setPermError(null);
+    try {
       // Check if assessment was ordered through coach flow (match either assessment_id or paired_assessment_id for PTP)
-      const { data: coachClient } = await supabase
+      const { data: coachClient, error: ccError } = await supabase
         .from("coach_clients")
         .select("id")
         .eq("coach_user_id", coachUserId)
         .or(`assessment_id.eq.${assessmentId},paired_assessment_id.eq.${assessmentId}`)
         .maybeSingle();
+      if (ccError) throw new Error(ccError.message);
 
       if (coachClient) {
         setPermissionLevel("full_results");
-        setPermLoading(false);
         return;
       }
 
       // Fallback: check permissions table
-      const { data: perm } = await supabase
+      const { data: perm, error: permErr } = await supabase
         .from("permissions")
         .select("permission_level")
         .eq("owner_user_id", userId)
         .eq("viewer_user_id", coachUserId)
         .maybeSingle();
+      if (permErr) throw new Error(permErr.message);
 
       const level = perm?.permission_level as 'full_results' | 'score_summary' | null;
       setPermissionLevel(level ?? "score_summary");
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Failed to resolve viewing permission";
+      setPermError(msg);
+    } finally {
       setPermLoading(false);
-    })();
+    }
+  };
+
+  useEffect(() => {
+    resolvePermission();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, assessmentId, coachUserId]);
 
   if (permLoading) {
     return (
       <div className="p-6 max-w-5xl mx-auto flex justify-center py-20">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <Loader2
+          className="h-6 w-6 animate-spin text-muted-foreground"
+          role="status"
+          aria-label="Loading client results"
+        />
+      </div>
+    );
+  }
+
+  if (permError) {
+    return (
+      <div className="p-6 max-w-5xl mx-auto">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="mb-4"
+          onClick={() => navigate(-1)}
+        >
+          <ArrowLeft className="h-4 w-4 mr-1" aria-hidden="true" /> Back
+        </Button>
+        <div className="flex flex-col items-center justify-center py-12 space-y-3">
+          <AlertCircle className="h-8 w-8 text-destructive" aria-hidden="true" />
+          <p className="text-sm text-muted-foreground text-center">
+            Couldn't load client results: {permError}
+          </p>
+          <Button variant="outline" size="sm" onClick={resolvePermission}>
+            Retry
+          </Button>
+        </div>
       </div>
     );
   }
@@ -469,7 +582,7 @@ function CoachResultsView({
         className="mb-4"
         onClick={() => navigate(-1)}
       >
-        <ArrowLeft className="h-4 w-4 mr-1" /> Back
+        <ArrowLeft className="h-4 w-4 mr-1" aria-hidden="true" /> Back
       </Button>
       <MyResults
         isCoachView

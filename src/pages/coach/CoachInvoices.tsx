@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { FileText, Download, Search, X } from "lucide-react";
+import { FileText, Download, Search, X, Loader2, AlertCircle } from "lucide-react";
 
 interface Transaction {
   payment_intent_id: string;
@@ -28,6 +28,7 @@ export default function CoachInvoices() {
   const { user } = useAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [instrumentNames, setInstrumentNames] = useState<string[]>([]);
 
   // Filters
@@ -42,21 +43,21 @@ export default function CoachInvoices() {
   // Export by client dropdown
   const [exportClient, setExportClient] = useState("");
 
-  useEffect(() => {
+  const fetchTransactions = async () => {
     if (!user) return;
-    (async () => {
-      setLoading(true);
-
+    setLoading(true);
+    setError(null);
+    try {
       // Fetch coach_clients with payment intent
-      const { data: rows, error } = await supabase
+      const { data: rows, error: rowsError } = await supabase
         .from("coach_clients")
         .select("id, created_at, client_email, instrument_id, invitation_status, stripe_payment_intent_id")
         .eq("coach_user_id", user.id)
         .not("stripe_payment_intent_id", "is", null);
 
-      if (error || !rows || rows.length === 0) {
+      if (rowsError) throw new Error(rowsError.message);
+      if (!rows || rows.length === 0) {
         setTransactions([]);
-        setLoading(false);
         return;
       }
 
@@ -125,8 +126,18 @@ export default function CoachInvoices() {
 
       txList.sort((a, b) => b.created_at.localeCompare(a.created_at));
       setTransactions(txList);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Failed to load transactions";
+      setError(msg);
+      setTransactions([]);
+    } finally {
       setLoading(false);
-    })();
+    }
+  };
+
+  useEffect(() => {
+    fetchTransactions();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const filtered = useMemo(() => {
@@ -299,7 +310,7 @@ export default function CoachInvoices() {
         <CardContent className="pt-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 items-end">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" aria-hidden="true" />
               <Input
                 placeholder="Search client..."
                 value={search}
@@ -323,7 +334,7 @@ export default function CoachInvoices() {
             <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} placeholder="From" />
             <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} placeholder="To" />
             <Button variant="outline" onClick={clearFilters} className="gap-1">
-              <X className="h-4 w-4" /> Clear Filters
+              <X className="h-4 w-4" aria-hidden="true" /> Clear Filters
             </Button>
           </div>
         </CardContent>
@@ -332,7 +343,7 @@ export default function CoachInvoices() {
       {/* Export buttons */}
       <div className="flex flex-wrap gap-3">
         <Button variant="outline" onClick={() => generatePdf(filtered, search || instrumentFilter !== "all" ? "Filtered results" : undefined)} className="gap-2">
-          <Download className="h-4 w-4" /> Export All as PDF
+          <Download className="h-4 w-4" aria-hidden="true" /> Export All as PDF
         </Button>
         <div className="flex gap-2 items-center">
           <Select value={exportClient} onValueChange={setExportClient}>
@@ -366,7 +377,7 @@ export default function CoachInvoices() {
             onClick={() => generatePdf(filtered, `Date range: ${dateFrom || "start"} – ${dateTo || "now"}`)}
             className="gap-2"
           >
-            <Download className="h-4 w-4" /> Export Range as PDF
+            <Download className="h-4 w-4" aria-hidden="true" /> Export Range as PDF
           </Button>
         )}
       </div>
@@ -376,44 +387,66 @@ export default function CoachInvoices() {
         <CardContent className="p-0">
           {loading ? (
             <div className="flex justify-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+              <Loader2
+                className="h-8 w-8 animate-spin text-muted-foreground"
+                role="status"
+                aria-label="Loading transactions"
+              />
             </div>
+          ) : error ? (
+            <div className="flex flex-col items-center justify-center py-12 space-y-3">
+              <AlertCircle className="h-8 w-8 text-destructive" aria-hidden="true" />
+              <p className="text-sm text-muted-foreground text-center">
+                Couldn't load transactions: {error}
+              </p>
+              <Button variant="outline" size="sm" onClick={fetchTransactions}>
+                Retry
+              </Button>
+            </div>
+          ) : transactions.length === 0 ? (
+            <p className="text-center text-muted-foreground py-12">
+              No transactions yet. Orders you place for clients will appear here.
+            </p>
           ) : filtered.length === 0 ? (
-            <p className="text-center text-muted-foreground py-12">No transactions found.</p>
+            <p className="text-center text-muted-foreground py-12">
+              No transactions match your filters.
+            </p>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Client</TableHead>
-                  <TableHead>Assessments</TableHead>
-                  <TableHead>Amount</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filtered.map((tx) => (
-                  <TableRow key={tx.payment_intent_id}>
-                    <TableCell>{format(parseISO(tx.created_at), "MMM d, yyyy")}</TableCell>
-                    <TableCell>{tx.client_name}</TableCell>
-                    <TableCell className="max-w-[200px] truncate">{tx.instruments.join(", ")}</TableCell>
-                    <TableCell>${tx.total_amount.toFixed(2)}</TableCell>
-                    <TableCell>{statusBadge(tx.status)}</TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        <Button variant="ghost" size="sm" onClick={() => setReceiptTx(tx)} className="gap-1">
-                          <FileText className="h-4 w-4" /> View Receipt
-                        </Button>
-                        <Button variant="ghost" size="sm" onClick={() => exportSinglePdf(tx)} className="gap-1">
-                          <Download className="h-4 w-4" /> Export PDF
-                        </Button>
-                      </div>
-                    </TableCell>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Client</TableHead>
+                    <TableHead>Assessments</TableHead>
+                    <TableHead>Amount</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {filtered.map((tx) => (
+                    <TableRow key={tx.payment_intent_id}>
+                      <TableCell>{format(parseISO(tx.created_at), "MMM d, yyyy")}</TableCell>
+                      <TableCell>{tx.client_name}</TableCell>
+                      <TableCell className="max-w-[200px] truncate">{tx.instruments.join(", ")}</TableCell>
+                      <TableCell>${tx.total_amount.toFixed(2)}</TableCell>
+                      <TableCell>{statusBadge(tx.status)}</TableCell>
+                      <TableCell>
+                        <div className="flex gap-2">
+                          <Button variant="ghost" size="sm" onClick={() => setReceiptTx(tx)} className="gap-1">
+                            <FileText className="h-4 w-4" aria-hidden="true" /> View Receipt
+                          </Button>
+                          <Button variant="ghost" size="sm" onClick={() => exportSinglePdf(tx)} className="gap-1">
+                            <Download className="h-4 w-4" aria-hidden="true" /> Export PDF
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>

@@ -1,208 +1,96 @@
-# Cycle B — WrittenSummary version history + ContentItemArtifactPanel bug fix
+# Phase 10 Round 7a — Coach surfaces polish plan
 
-Two files, drop-and-break on the singular `written_submission` key. No Loader2 / palette / a11y changes (Cycle A). No other components touched.
-
-## File 1: `src/components/mentor/WrittenSummaryReviewPanel.tsx`
-
-### Add type + local helper (top of file, after imports, before `interface Props`)
-
-```ts
-type WrittenSubmission = {
-  id: string;
-  completion_id: string | null;
-  iteration_number: number;
-  content: string;
-  char_count: number;
-  submitted_at: string;
-  review_decision: 'approved' | 'revision_requested' | null;
-  reviewer_comments: string | null;
-  reviewer_user_id: string | null;
-  reviewed_at: string | null;
-};
-
-function formatDateTime(d?: string | null): string {
-  if (!d) return "—";
-  try {
-    return new Date(d).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
-  } catch {
-    return d;
-  }
-}
-```
-
-Mirrors `LiveEventReviewPanel.tsx` / `SkillsPracticeReviewPanel.tsx`. No date-fns.
-
-### Add import
-
-```ts
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-```
-
-### Replace line 37 (singular read)
-
-```ts
-const submissions: WrittenSubmission[] = Array.isArray(detailQuery.data?.written_submissions)
-  ? detailQuery.data.written_submissions
-  : [];
-const latest: WrittenSubmission | null = submissions.length > 0
-  ? submissions[submissions.length - 1]
-  : null;
-```
-
-### `callReview` (lines 39-51): `submission?.id` → `latest?.id`. Guard copy unchanged.
-
-### Replace render conditional (lines 108-183)
-
-1. **`submissions.length === 0`** — preserve copy: "The trainee has not submitted this written summary yet." (`text-sm text-muted-foreground py-4`).
-
-2. **`submissions.length >= 1`** — "Iteration history" heading, then iteration cards in ASC order (no reverse), then conditional mentor-actions card.
-
-   **Iteration card (corrected Collapsible pattern — `className="group"` on Root, `group-data-[state=...]` on children):**
-
-   ```tsx
-   <div className="rounded-lg border bg-card p-4 space-y-3">
-     <div className="flex items-center justify-between">
-       <div className="flex items-center gap-2">
-         <span className="font-medium text-sm">Iteration {iteration_number}</span>
-         {review_decision && (
-           <Badge variant="secondary" className="text-[10px] capitalize">
-             {review_decision === 'approved' ? 'Approved' : 'Revision requested'}
-           </Badge>
-         )}
-       </div>
-       <span className="text-xs text-muted-foreground">{formatDateTime(submitted_at)}</span>
-     </div>
-
-     <Collapsible defaultOpen={isLatest} className="group">
-       <div className="text-sm text-foreground/90 leading-relaxed group-data-[state=open]:hidden">
-         {content.length > 120 ? content.slice(0, 120) + "…" : content}
-       </div>
-       <CollapsibleContent>
-         <div className="text-sm text-foreground/90 whitespace-pre-wrap leading-relaxed">
-           {content}
-         </div>
-       </CollapsibleContent>
-       <div className="flex items-center justify-between pt-2">
-         <CollapsibleTrigger asChild>
-           <Button variant="ghost" size="sm">
-             <span className="group-data-[state=open]:hidden">Show full submission</span>
-             <span className="group-data-[state=closed]:hidden">Hide</span>
-           </Button>
-         </CollapsibleTrigger>
-         <span className="text-xs text-muted-foreground">{char_count} chars</span>
-       </div>
-     </Collapsible>
-
-     {review_decision && (
-       <div className="pt-2 border-t space-y-2">
-         <div className="flex items-center gap-2">
-           <span className="text-xs font-semibold text-muted-foreground">Review decision</span>
-           <Badge variant="secondary" className="text-[10px] capitalize">{decision label}</Badge>
-         </div>
-         {reviewer_comments && (
-           reviewer_comments.length > 200
-             ? <Collapsible defaultOpen={false} className="group">
-                 <div className="text-sm whitespace-pre-wrap group-data-[state=open]:hidden">
-                   {reviewer_comments.slice(0, 80) + "…"}
-                 </div>
-                 <CollapsibleContent>
-                   <div className="text-sm whitespace-pre-wrap">{reviewer_comments}</div>
-                 </CollapsibleContent>
-                 <CollapsibleTrigger asChild>
-                   <Button variant="ghost" size="sm">
-                     <span className="group-data-[state=open]:hidden">Show full comment</span>
-                     <span className="group-data-[state=closed]:hidden">Hide</span>
-                   </Button>
-                 </CollapsibleTrigger>
-               </Collapsible>
-             : <p className="text-sm whitespace-pre-wrap">{reviewer_comments}</p>
-         )}
-       </div>
-     )}
-   </div>
-   ```
-
-   Pattern rationale: Radix sets `data-state="open|closed"` on the Collapsible Root. `className="group"` on Root creates a group context; children use `group-data-[state=...]:hidden` to read from Root. Bare `data-[state=...]` reads from the element itself, which would silently fail on the preview div. Mirrors `src/components/ui/navigation-menu.tsx` chevron rotation pattern.
-
-   `isLatest` = `index === submissions.length - 1`.
-
-3. **Mentor actions Card** — render ONLY when `latest !== null && latest.review_decision === null`. Existing block preserved verbatim. When `latest.review_decision !== null`, omit entirely.
-
-### Untouched in File 1
-
-- Loader2 spinners (Cycle A)
-- Loading / error / no-contentItem branches
-- `handleApprove`, `handleRequestRevision` bodies
-- Toast copy
-- Existing `data as any` cast
-- All other imports
-
-## File 2: `src/components/learning-admin/ContentItemArtifactPanel.tsx`
-
-### Replace ONLY `WrittenSummaryArtifact` body (lines 67-89)
-
-```tsx
-function WrittenSummaryArtifact({ item, userId }: { item: any; userId: string }) {
-  const q = useViewerDetail(item.content_item_id, userId, true);
-  if (q.isLoading) return <Loader2 className="h-4 w-4 animate-spin" />;
-  if (q.error) return <EmptyNote>Could not load submission.</EmptyNote>;
-
-  const completion = q.data?.completion;
-  const submissions: any[] = Array.isArray(q.data?.written_submissions)
-    ? q.data.written_submissions
-    : [];
-  const latest = submissions.length > 0 ? submissions[submissions.length - 1] : null;
-
-  if (!completion && submissions.length === 0) {
-    return <EmptyNote>The learner has not started this item.</EmptyNote>;
-  }
-
-  return (
-    <div className="space-y-2">
-      <KV label="Review status" value={completion?.written_review_status ?? "—"} />
-      <KV label="Iterations" value={String(submissions.length)} />
-      {latest && (
-        <>
-          <KV label="Latest iteration" value={`#${latest.iteration_number}`} />
-          <KV label="Char count" value={String(latest.char_count ?? "—")} />
-          {latest.review_decision && (
-            <KV label="Latest decision" value={String(latest.review_decision).replace(/_/g, " ")} />
-          )}
-          {latest.reviewer_comments && (
-            <KV label="Reviewer comments" value={latest.reviewer_comments} />
-          )}
-          <div className="text-sm font-medium pt-2">Latest submission content</div>
-          <div className="text-sm whitespace-pre-wrap rounded border p-3 bg-muted/30 max-h-60 overflow-y-auto">
-            {latest.content ?? "(empty)"}
-          </div>
-        </>
-      )}
-      {!latest && <EmptyNote>No submissions yet.</EmptyNote>}
-    </div>
-  );
-}
-```
-
-Removes: dead `completion?.written_submission_text` fallback; buggy `submission.length`; buggy `{submission ?? "(empty)"}` render.
-
-### Untouched in File 2
-
-- `useViewerDetail` (lines 51-65)
-- Every other sub-component
-- Dispatcher (lines 396-434)
-- Imports
-
-## QA gate (post-ship, in preview)
-
-1. **Production smoke** — super-admin opens AdminLearningTree on trainee `dcc0afce-4c27-4127-afb5-3d81b0ab0a2f`, expands the written_summary item. Must show real content string; KV "Iterations" = "1"; KV "Latest iteration" = "#1".
-
-2. **Revision-requested edge** — seed via `mentor_review_submission` with `p_decision='revision_requested'` and non-null non-empty `p_comments`. Audit row expected via `log_super_admin_action`. State CANNOT be reverted (`submission_already_reviewed` on second call) — seeded state persists; trainee can resubmit to create iteration #2 with `review_decision: null`. Verify:
-   - Mentor portal `WrittenSummaryReviewPanel`: iteration #1 card with "Revision requested" badge, reviewer comments, submission content visible (collapsed preview or expanded). Mentor actions block does NOT render.
-   - Super-admin AdminLearningTree `WrittenSummaryArtifact`: KV "Latest decision" = "revision requested", reviewer comments KV visible, submission content visible in scroll container.
+Two files only. Pure additive polish: error states with Retry, Loader2 a11y, decorative-icon `aria-hidden`, and one mobile-overflow wrapper. Zero behavioral / SQL / logic changes.
 
 ## Files touched (exhaustive)
 
-- `src/components/mentor/WrittenSummaryReviewPanel.tsx`
-- `src/components/learning-admin/ContentItemArtifactPanel.tsx`
+1. `src/pages/coach/ClientResults.tsx`
+2. `src/pages/coach/CoachInvoices.tsx`
 
-No backend. No other frontend. Only new import: `Collapsible` in File 1.
+No other files. No backend, no new deps, no new components, no token/theme edits.
+
+---
+
+## File 1: `src/pages/coach/ClientResults.tsx`
+
+### Import edit (L9)
+Extend the existing lucide-react import to add `AlertCircle`. No other import changes.
+
+### Change 1 — `ClientList` (L83–193)
+Apply Shape A:
+- Add `const [error, setError] = useState<string | null>(null);` alongside existing `loading` / `clients` / `search` state.
+- Extract the current useEffect IIFE (L94–128) into a `fetchClients` async callback inside the component. SQL bodies (`coach_clients` select, `users` select) preserved byte-identical; add the two missing `error:` destructures and throw on them; wrap whole thing in try/catch/finally setting the new error state.
+- `useEffect(() => { fetchClients(); }, [coachUserId]);`
+- Replace loading block (L130–136) — add `role="status"` and `aria-label="Loading clients"` on `<Loader2 />`.
+- Insert error-state block before `const q = search.toLowerCase()` (L138): `<AlertCircle />` + message + outline Retry button calling `fetchClients`, wrapped in the standard `p-6 max-w-3xl mx-auto` page shell with the page H1.
+- Add `aria-hidden="true"` to decorative `<Search />` (L150) and `<User />` (L177).
+
+### Change 2 — `AssessmentList` (L197–404)
+Same Shape A:
+- Add `error` state.
+- Extract useEffect body (L212–355) into `fetchAssessments`. All queries preserved verbatim (`users` clientData, `assessment_results` two branches, `coach_clients` linked, `instruments`, `assessments` meta). Add missing `error:` destructures and throws. Wrap in try/catch/finally.
+- Replace loading block (L357–363) with Loader2 + `role="status"` + `aria-label="Loading assessments"`.
+- Insert error-state block immediately after: includes the Back-to-clients button (with `aria-hidden` on its ArrowLeft), AlertCircle, message, Retry calling `fetchAssessments`.
+- Add `aria-hidden="true"` to decorative `<ArrowLeft />` (L368) and `<FileText />` (L386).
+
+### Change 3 — `CoachResultsView` (L408–483)
+- Add `const [permError, setPermError] = useState<string | null>(null);` alongside `permissionLevel` / `permLoading`.
+- Extract IIFE (L425–453) into `resolvePermission`. Both queries inside (coach_clients with the `.or()` clause + `.maybeSingle()`, then permissions fallback with `.maybeSingle()`) preserved exactly; add `error:` destructures + throws; wrap in try/catch/finally.
+- Replace loading block (L456–462) — Loader2 with `role="status"` + `aria-label="Loading client results"`.
+- Insert error-state block immediately after: Back button (navigate(-1), ArrowLeft `aria-hidden`), AlertCircle, message, Retry calling `resolvePermission`.
+- Add `aria-hidden="true"` to decorative `<ArrowLeft />` (L472).
+
+### Verbatim-preservation blocks (confirmed, NOT modified)
+- **L309–347** — paired-PTP mutually-paired collapse loop (`for (const e of rawEntries)` … through pushing the grouped entry, the `grouped.sort` follows at L347-ish). Load-bearing §118 logic, untouched apart from being inside the extracted `fetchAssessments` callback.
+- **L422–454 query bodies** — permission resolver `coach_clients` `.or(...).maybeSingle()` then `permissions` `.eq().eq().maybeSingle()` fallback chain, including ordering. Untouched apart from being inside `resolvePermission` and gaining error destructures + throws (no logic change).
+- **L474–480** — `<MyResults isCoachView targetUserId={userId} preSelectedAssessmentId={assessmentId} coachUserId={coachUserId} permissionLevel={permissionLevel} />` embed and props. Untouched.
+
+---
+
+## File 2: `src/pages/coach/CoachInvoices.tsx`
+
+### Import edit (L13)
+Extend lucide-react import to add `Loader2, AlertCircle`. No other import changes.
+
+### Change 1 — Shape A extraction + error state
+- Add `const [error, setError] = useState<string | null>(null);` next to existing `loading`.
+- Extract useEffect body (L45–130) into `fetchTransactions` callback. The `coach_clients` select gets its existing `error: rowsError` check kept; all subsequent code (instrument-name lookup, name-by-email lookup, grouped construction, txList map, sort, setTransactions) inside the try block byte-identical. Add try/catch/finally with error-state assignment.
+- `useEffect(() => { fetchTransactions(); }, [user]);`
+
+### Change 2 — Loading/empty render ladder (L377–417 region)
+Replace the two-branch (loading / filter-empty) ladder with the four-branch ladder per spec:
+1. `loading` → `<Loader2 className="h-8 w-8 animate-spin text-muted-foreground" role="status" aria-label="Loading transactions" />`
+2. `error` → AlertCircle + message + Retry button calling `fetchTransactions`
+3. `transactions.length === 0` → "No transactions yet. Orders you place for clients will appear here."
+4. `filtered.length === 0` → "No transactions match your filters."
+5. else → existing `<Table>` (wrapped per Change 3)
+
+### Change 3 — Mobile overflow wrapper
+Wrap the existing `<Table>…</Table>` element (and only that element) in `<div className="overflow-x-auto">…</div>`. No table-cell, column-width, badge, or content changes.
+
+### Change 4 — Decorative icon `aria-hidden="true"`
+Add `aria-hidden="true"` to: `<Search />` L302, `<X />` L326 (Clear Filters), `<Download />` L335 (Export All), `<Download />` L369 (Export Range), `<FileText />` L406 (View Receipt), `<Download />` L409 (Export PDF row).
+
+### Verbatim-preservation blocks (confirmed, NOT modified)
+- **L25** `PRICE_PER_INSTRUMENT = 29.99`.
+- **L62–128 fetch body** — instrumentMap build (`instruments.forEach`), nameMap build (`users.forEach`), `grouped` object construction, `txList = Object.values(grouped).map(...)`, `txList.sort(...)` by `created_at` desc. Untouched logic; only relocated inside `fetchTransactions` try block with error-state shell around it.
+- **L132–152** `filtered` useMemo.
+- **L154–157** `uniqueClients` useMemo.
+- **L167–225** `generatePdf` function.
+- **L227–275** `exportSinglePdf` function.
+- **L277–291** `statusBadge` function (§120 forest/teal colors kept).
+- **L422–458** Receipt modal Dialog rendering.
+
+---
+
+## Items flagged (NOT implementing — flagging only)
+None. The spec is self-contained; every change fits cleanly into the Shape A / a11y / overflow patterns. No additional changes proposed.
+
+## Confirmation
+- Exactly two files in the diff: `src/pages/coach/ClientResults.tsx`, `src/pages/coach/CoachInvoices.tsx`.
+- No other files touched (no `CoachClients.tsx`, no shared components, no tokens, no migrations).
+- No new dependencies, no new shadcn primitives.
+- No business logic, SQL, PDF, grouping, filter, sort, or permission-resolver logic changes.
+- All listed verbatim-preservation blocks remain byte-identical inside the extracted callbacks.
+
+Awaiting approval to ship.
