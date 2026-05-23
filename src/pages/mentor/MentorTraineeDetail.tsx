@@ -64,6 +64,7 @@ export default function MentorTraineeDetail() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [drawer, setDrawer] = useState<DrawerState | null>(null);
+  const [activeTab, setActiveTab] = useState<"progress" | "summary" | "notes">("progress");
 
   const handleActionComplete = () => {
     if (!drawer || !traineeId) return;
