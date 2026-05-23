@@ -153,9 +153,12 @@ export function AppSidebar() {
     if (!(isMentor || isSuperAdmin)) return baseNavItems;
     const clientsIdx = baseNavItems.findIndex((i) => i.url === "/coach/clients");
     if (clientsIdx === -1) return baseNavItems;
-    const mentorItem: NavItem = { title: "Mentor Portal", url: "/mentor", icon: GraduationCap };
+    const mentorItems: NavItem[] = [
+      { title: "Mentor Portal", url: "/mentor", icon: GraduationCap },
+      { title: "Feedback Templates", url: "/mentor/feedback-templates", icon: MessageSquare },
+    ];
     const copy = [...baseNavItems];
-    copy.splice(clientsIdx + 1, 0, mentorItem);
+    copy.splice(clientsIdx + 1, 0, ...mentorItems);
     return copy;
   })();
   const isSettingsOpen = location.pathname.startsWith('/settings');
