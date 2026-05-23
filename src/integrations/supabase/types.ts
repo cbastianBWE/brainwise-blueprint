@@ -2781,6 +2781,7 @@ export type Database = {
           id: string
           lesson_block_id: string | null
           module_id: string | null
+          newsletter_article_id: string | null
           ref_field: string
           resource_id: string | null
         }
@@ -2795,6 +2796,7 @@ export type Database = {
           id?: string
           lesson_block_id?: string | null
           module_id?: string | null
+          newsletter_article_id?: string | null
           ref_field: string
           resource_id?: string | null
         }
@@ -2809,6 +2811,7 @@ export type Database = {
           id?: string
           lesson_block_id?: string | null
           module_id?: string | null
+          newsletter_article_id?: string | null
           ref_field?: string
           resource_id?: string | null
         }
@@ -2881,6 +2884,13 @@ export type Database = {
             columns: ["module_id"]
             isOneToOne: false
             referencedRelation: "modules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_asset_refs_newsletter_article_id_fkey"
+            columns: ["newsletter_article_id"]
+            isOneToOne: false
+            referencedRelation: "newsletter_articles"
             referencedColumns: ["id"]
           },
           {
@@ -9211,6 +9221,14 @@ export type Database = {
         }
         Returns: Json
       }
+      _cascade_archive_asset_refs_for_newsletter_article: {
+        Args: {
+          p_archive_reason: string
+          p_article_id: string
+          p_caller_id: string
+        }
+        Returns: Json
+      }
       _compute_completion_cascade: {
         Args: { p_content_item_id: string; p_user_id: string }
         Returns: Json
@@ -9270,6 +9288,14 @@ export type Database = {
         Args: { p_module_id: string; p_user_id: string }
         Returns: string
       }
+      _rebind_newsletter_article_asset_refs: {
+        Args: { p_article_id: string; p_caller_id: string }
+        Returns: Json
+      }
+      _send_newsletter_confirmation_email_internal: {
+        Args: { p_raw_token: string; p_subscriber_id: string }
+        Returns: Json
+      }
       _snapshot_article_version: {
         Args: {
           p_article_id: string
@@ -9278,6 +9304,10 @@ export type Database = {
           p_version_type: string
         }
         Returns: string
+      }
+      _sync_to_resend_audience_internal: {
+        Args: { p_action: string; p_subscriber_id: string }
+        Returns: Json
       }
       _upsert_thumbnail_ref: {
         Args: {
@@ -9297,6 +9327,13 @@ export type Database = {
         Returns: {
           out_asset_id: string
           out_ref_field: string
+        }[]
+      }
+      _walk_tiptap_for_image_asset_refs: {
+        Args: { p_body_tiptap: Json }
+        Returns: {
+          out_asset_id: string
+          out_ref_path: string
         }[]
       }
       accept_coach_disclosure: {
@@ -9731,6 +9768,10 @@ export type Database = {
         Args: { p_content_item_id: string; p_reflection_text?: string }
         Returns: Json
       }
+      confirm_newsletter_subscription: {
+        Args: { p_token: string }
+        Returns: Json
+      }
       consume_assessment_purchase: {
         Args: {
           p_assessment_id: string
@@ -9932,6 +9973,7 @@ export type Database = {
         }
         Returns: Json
       }
+      expire_pending_newsletter_confirmations: { Args: never; Returns: Json }
       export_audit_events: { Args: { p_filters?: Json }; Returns: Json }
       finalize_asset_upload: {
         Args: { p_asset_id: string; p_reason: string }
@@ -10369,6 +10411,10 @@ export type Database = {
       }
       list_mentor_trainees: { Args: never; Returns: Json }
       list_my_certifications: { Args: never; Returns: Json }
+      list_newsletter_subscribers: {
+        Args: { p_limit?: number; p_offset?: number; p_status_filter?: string }
+        Returns: Json
+      }
       list_org_interventions: {
         Args: {
           p_assigned_owner?: string
@@ -10604,6 +10650,7 @@ export type Database = {
         Returns: Json
       }
       prune_newsletter_draft_versions: { Args: never; Returns: Json }
+      prune_newsletter_subscribe_attempts: { Args: never; Returns: Json }
       pseudonymize_user: {
         Args: { p_reason?: string; p_user_id: string }
         Returns: number
@@ -10922,6 +10969,10 @@ export type Database = {
         Args: { p_content: string; p_content_item_id: string }
         Returns: Json
       }
+      subscribe_to_newsletter: {
+        Args: { p_email: string; p_source?: string; p_turnstile_token: string }
+        Returns: Json
+      }
       super_admin_list_orgs_with_usage: {
         Args: never
         Returns: {
@@ -10980,6 +11031,7 @@ export type Database = {
         Args: { p_article_id: string; p_reason: string }
         Returns: Json
       }
+      unsubscribe_from_newsletter: { Args: { p_token: string }; Returns: Json }
       update_chat_session: {
         Args: {
           p_message_count: number
