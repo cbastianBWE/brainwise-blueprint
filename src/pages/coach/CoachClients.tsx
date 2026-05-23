@@ -27,13 +27,19 @@ import { format } from "date-fns";
 import BulkInviteModal from "@/components/coach/BulkInviteModal";
 import ShareableLinkModal from "@/components/coach/ShareableLinkModal";
 import PendingInvitations from "@/components/coach/PendingInvitations";
+import { INSTRUMENTS as CANONICAL_INSTRUMENTS } from "@/lib/instruments";
 
-const INSTRUMENTS = [
-  { id: "PTP", uuid: "02618e9a-d411-44cf-b316-fe368edeac03", name: "Personal Threat Profile", desc: "Measures nonconscious threat responses influencing behavior." },
-  { id: "NAI", uuid: "77d1290f-1daf-44e0-931f-b9b8ad185520", name: "Neuroscience Adoption Index", desc: "Measures beliefs and threat responses related to AI adoption." },
-  { id: "AIRSA", uuid: "abb62120-8cc8-435f-babc-dd6a27fbc235", name: "AI Readiness Skills Assessment", desc: "Assesses readiness to adopt and leverage AI tools." },
-  { id: "HSS", uuid: "90216d9d-153c-4b7b-abe0-1d7845c9e6e0", name: "Habit Stabilization Scorecard", desc: "Measures stability of behavioral changes related to AI." },
-];
+// Adapter: canonical instruments → CoachClients-internal shape used in 7+ callsites
+// throughout this file (form rendering, getSelectedUuids, toggleInstrument, etc.).
+// Filter out admin-assignment-only variants (EPN) — they're not offered via coach order flow.
+const INSTRUMENTS = CANONICAL_INSTRUMENTS
+  .filter((i) => !i.requires_assignment)
+  .map((i) => ({
+    id: i.short_name,
+    uuid: i.uuid,
+    name: i.name,
+    desc: i.description,
+  }));
 
 const CERT_TYPE_TO_INSTRUMENTS: Record<string, string[]> = {
   ptp_coach: ["PTP"],

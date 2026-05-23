@@ -7,6 +7,7 @@ import MarketingButton from "@/components/marketing/MarketingButton";
 import Eyebrow from "@/components/marketing/Eyebrow";
 import DotArc from "@/components/marketing/DotArc";
 import BriefingModal from "@/components/marketing/BriefingModal";
+import { PUBLIC_INSTRUMENTS } from "@/lib/instruments";
 
 const stats = [
   { value: "15%", label: "Only the share of people who are actually self-aware", citation: "Eurich, Harvard Business Review (2018)", color: "var(--bw-orange)" },
@@ -15,12 +16,18 @@ const stats = [
   { value: "4", label: "Validated BrainWise instruments. 168 items. Oxford-grounded.", citation: "", color: "var(--bw-plum)" },
 ];
 
-const instruments = [
-  { name: "PTP", body: "Personal Threat & Reward Profile. Maps protective and reward-seeking patterns across five dimensions. 89 items." },
-  { name: "NAI", body: "Neuroscience of AI Adoption. Measures readiness for AI on the C.A.F.E.S. dimensions: Certainty, Agency, Fairness, Ego stability, Saturation. 25 items." },
-  { name: "AIRSA", body: "AI Readiness Skills Assessment. Behavioral readiness for AI-augmented work. 48 items." },
-  { name: "HSS", body: "Habit Strength Scale. Tracks formation of AI behavior habits over time. 6 items." },
-];
+// Instrument tiles for the homepage. Body copy is hand-tuned per-instrument; names
+// and counts flow from PUBLIC_INSTRUMENTS to prevent drift from the public.instruments DB canonical.
+const INSTRUMENT_BODY_COPY: Record<string, string> = {
+  PTP: "Maps protective and reward-seeking patterns across five dimensions.",
+  NAI: "Measures readiness for AI on the C.A.F.E.S. dimensions: Certainty, Agency, Fairness, Ego stability, Saturation.",
+  AIRSA: "Behavioral readiness for AI-augmented work across 8 domains.",
+  HSS: "Tracks formation of AI behavior habits over time.",
+};
+const instruments = PUBLIC_INSTRUMENTS.map((inst) => ({
+  name: inst.short_name,
+  body: `${inst.name}. ${INSTRUMENT_BODY_COPY[inst.short_name] ?? inst.description} ${inst.total_items} items.`,
+}));
 
 function useIsBelow(width: number) {
   const [v, setV] = useState(typeof window !== "undefined" ? window.innerWidth < width : false);
