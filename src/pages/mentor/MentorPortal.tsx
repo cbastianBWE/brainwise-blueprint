@@ -303,9 +303,10 @@ function TraineeRow({
           <Badge
             className={cn(
               pending > 0
-                ? "bg-amber-100 text-amber-900 hover:bg-amber-100 border-transparent dark:bg-amber-900/30 dark:text-amber-200"
+                ? "border-transparent"
                 : "bg-muted text-muted-foreground hover:bg-muted border-transparent",
             )}
+            style={pending > 0 ? pendingActionPillStyle : undefined}
           >
             {pending}
           </Badge>
@@ -315,13 +316,22 @@ function TraineeRow({
         <TableRow>
           <TableCell colSpan={4} className="bg-muted/30">
             {stateQuery.isLoading ? (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground py-4">
-                <Loader2 className="h-4 w-4 animate-spin" />
+              <div
+                role="status"
+                className="flex items-center gap-2 text-sm text-muted-foreground py-4"
+              >
+                <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin" />
                 Loading progress…
               </div>
             ) : stateQuery.error ? (
-              <div className="text-sm text-destructive py-4">Failed to load progress.</div>
+              <div className="py-4 text-center space-y-3">
+                <p className="text-sm text-destructive">Failed to load progress.</p>
+                <Button variant="outline" size="sm" onClick={() => stateQuery.refetch()}>
+                  Retry
+                </Button>
+              </div>
             ) : (
+
               <div className="py-2">
                 <MentorProgressTree learningState={stateQuery.data} onItemClick={onItemClick} />
               </div>
