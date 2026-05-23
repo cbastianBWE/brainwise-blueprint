@@ -33,6 +33,8 @@ export interface NewsletterImageAttrs {
   alt: string;
   caption: string;
   width: NewsletterImageWidth;
+  /** Forward-compat: set by convert-html-to-tiptap when image fetch fails. */
+  import_failed_src: string | null;
 }
 
 export interface NewsletterCalloutAttrs {
