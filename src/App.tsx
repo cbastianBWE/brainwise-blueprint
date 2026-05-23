@@ -86,6 +86,8 @@ import AssetLibrary from "./pages/super-admin/AssetLibrary";
 import LessonBlocksEditor from "./pages/super-admin/LessonBlocksEditor";
 import QuizQuestionsEditor from "./pages/super-admin/QuizQuestionsEditor";
 import AdminResourceAuthoring from "./pages/super-admin/AdminResourceAuthoring";
+import AdminNewsletter from "./pages/super-admin/AdminNewsletter";
+import AdminNewsletterArticle from "./pages/super-admin/AdminNewsletterArticle";
 import CompCouponsManagement from "./pages/super-admin/CompCouponsManagement";
 import EpnComplete from "./pages/EpnComplete";
 import AirsaManagerComplete from "./pages/AirsaManagerComplete";
