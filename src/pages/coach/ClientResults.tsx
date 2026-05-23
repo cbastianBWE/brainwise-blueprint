@@ -6,7 +6,7 @@ import MyResults from "@/pages/MyResults";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, User, FileText, Loader2, Search } from "lucide-react";
+import { ArrowLeft, User, FileText, Loader2, Search, AlertCircle } from "lucide-react";
 
 interface ClientInfo {
   id: string;
