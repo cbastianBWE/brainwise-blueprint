@@ -419,6 +419,12 @@ export default function SkillsPracticeReviewPanel({ contentItemId, traineeId, on
           accept="image/*,video/mp4,video/webm,video/quicktime,application/pdf,.docx,.xlsx,.pptx"
         />
       </div>
+      <SaveAsTemplateDialog
+        open={saveDialogOpen}
+        onOpenChange={setSaveDialogOpen}
+        panelType="skills_practice"
+        initialText={revisionComment}
+      />
     </div>
   );
 }
