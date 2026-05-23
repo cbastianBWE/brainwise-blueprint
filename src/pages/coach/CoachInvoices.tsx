@@ -28,6 +28,7 @@ export default function CoachInvoices() {
   const { user } = useAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [instrumentNames, setInstrumentNames] = useState<string[]>([]);
 
   // Filters
