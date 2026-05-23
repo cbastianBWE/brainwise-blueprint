@@ -1,96 +1,81 @@
-# Phase 10 Round 7a — Coach surfaces polish plan
 
-Two files only. Pure additive polish: error states with Retry, Loader2 a11y, decorative-icon `aria-hidden`, and one mobile-overflow wrapper. Zero behavioral / SQL / logic changes.
+# Phase 10 Round 7b — CoachClients.tsx polish
 
-## Files touched (exhaustive)
+## Scope
+**Exactly one file:** `src/pages/coach/CoachClients.tsx` (1149 lines).
+No backend, no migrations, no new RPCs, no new deps, no other files.
 
-1. `src/pages/coach/ClientResults.tsx`
-2. `src/pages/coach/CoachInvoices.tsx`
+## Verbatim-preservation blocks (confirmed via re-read)
 
-No other files. No backend, no new deps, no new components, no token/theme edits.
+| Lines | Block | Status |
+|---|---|---|
+| L31–43 | `INSTRUMENTS` + `CERT_TYPE_TO_INSTRUMENTS` constants | preserved byte-identical |
+| L45–70 | `ClientRow` / `UniqueClient` interfaces | preserved byte-identical |
+| L98 | `actorCert` inline state type | preserved (not centralized into `OwnCertRow`) |
+| L102–109 | `canOfferActorDebrief` / `canOrderAssessment` / `actorOnlyMode` (§114) | preserved byte-identical |
+| L111–217 | `fetchClients` enrich loop + unique-client derivation | logic preserved; only wrapping shell (try/catch/finally + initial query error destructure) added per Change 7b |
+| L341–351 | `handleOrderCoachPays` payload object | preserved byte-identical |
+| L352, L357, L372 | `console.log` debug statements | preserved byte-identical |
+| L354–356 | `supabase.functions.invoke("create-checkout", { body: payload })` | preserved byte-identical |
+| L369–374 | URL redirect block | preserved byte-identical |
+| L375–380 | outer try/catch/finally shape | preserved byte-identical |
+| L383–494 (handleOrderClientPays) | full body incl. email HTML template L433–468 | preserved; only L470–478 RPC cast micro-edit per Change 4 |
+| L496–583 (handleOrderActorDebrief) | full body incl. email HTML template L511–546 | preserved; only L548–554 RPC cast micro-edit per Change 5 |
+| L556–564 | actor-debrief error-code map (all 7 keys) | preserved byte-identical |
+| L585–613 | stats derivation predicates | preserved byte-identical |
+| L615–627 | `getStatusBadge` | preserved byte-identical |
+| L629–659 | `handleRemind` + `coach_invitation_resend` branching | preserved byte-identical |
+| L661–746 | `sharedFormFields` JSX | preserved (only Change 7d `aria-hidden` adds touch icons inside, none of which fall in this range — confirmed icons in 7d are all outside 661–746) |
+| L1141–1145 | `<PendingInvitations>` embed | preserved byte-identical |
 
----
+## Changes (with current-file line numbers)
 
-## File 1: `src/pages/coach/ClientResults.tsx`
+### Change 1 — Imports (L24-ish lucide-react line)
+Add `Loader2, AlertCircle` to existing lucide-react import. No other import edits.
 
-### Import edit (L9)
-Extend the existing lucide-react import to add `AlertCircle`. No other import changes.
+### Change 2 — New interfaces (insert below L70)
+Add `CoachCertificationActiveRow`, `OwnCertRow`, `SendCoachInvitationEmailResult`, `CreateActorDebriefOrderResult`. L98 `actorCert` inline state shape unchanged.
 
-### Change 1 — `ClientList` (L83–193)
-Apply Shape A:
-- Add `const [error, setError] = useState<string | null>(null);` alongside existing `loading` / `clients` / `search` state.
-- Extract the current useEffect IIFE (L94–128) into a `fetchClients` async callback inside the component. SQL bodies (`coach_clients` select, `users` select) preserved byte-identical; add the two missing `error:` destructures and throw on them; wrap whole thing in try/catch/finally setting the new error state.
-- `useEffect(() => { fetchClients(); }, [coachUserId]);`
-- Replace loading block (L130–136) — add `role="status"` and `aria-label="Loading clients"` on `<Loader2 />`.
-- Insert error-state block before `const q = search.toLowerCase()` (L138): `<AlertCircle />` + message + outline Retry button calling `fetchClients`, wrapped in the standard `p-6 max-w-3xl mx-auto` page shell with the page H1.
-- Add `aria-hidden="true"` to decorative `<Search />` (L150) and `<User />` (L177).
+### Change 3 — cert-fetch useEffect typed rewrite (L221–263)
+Replace three `(supabase as any)` casts and `(row: any)` callback. Query bodies (`.from/.select/.eq/.in/.order/.limit`) byte-identical. `ownCert` line gets `(ownCertData?.[0] as OwnCertRow | undefined) ?? null`. State setters (`setAllowedInstrumentIds`, `setCertsLoaded`, `setActorCert`, `setActorsUsed`) and their args unchanged.
 
-### Change 2 — `AssessmentList` (L197–404)
-Same Shape A:
-- Add `error` state.
-- Extract useEffect body (L212–355) into `fetchAssessments`. All queries preserved verbatim (`users` clientData, `assessment_results` two branches, `coach_clients` linked, `instruments`, `assessments` meta). Add missing `error:` destructures and throws. Wrap in try/catch/finally.
-- Replace loading block (L357–363) with Loader2 + `role="status"` + `aria-label="Loading assessments"`.
-- Insert error-state block immediately after: includes the Back-to-clients button (with `aria-hidden` on its ArrowLeft), AlertCircle, message, Retry calling `fetchAssessments`.
-- Add `aria-hidden="true"` to decorative `<ArrowLeft />` (L368) and `<FileText />` (L386).
+### Change 4 — `send_coach_invitation_email` RPC typed call (L470–478)
+**Verified L10348–10356 of `src/integrations/supabase/types.ts`: function is in the generated RPC union with Args matching `p_to/p_subject/p_html/p_email_type?` and `Returns: Json`.** → Use the **clean** `supabase.rpc("send_coach_invitation_email", {...})` call, no `as never`. Narrow output via `emailData as SendCoachInvitationEmailResult | null`. Downstream `if (emailError || !emailResult?.dispatched)` and toast branches preserved byte-identical (just `emailData?.dispatched` → `emailResult?.dispatched`).
 
-### Change 3 — `CoachResultsView` (L408–483)
-- Add `const [permError, setPermError] = useState<string | null>(null);` alongside `permissionLevel` / `permLoading`.
-- Extract IIFE (L425–453) into `resolvePermission`. Both queries inside (coach_clients with the `.or()` clause + `.maybeSingle()`, then permissions fallback with `.maybeSingle()`) preserved exactly; add `error:` destructures + throws; wrap in try/catch/finally.
-- Replace loading block (L456–462) — Loader2 with `role="status"` + `aria-label="Loading client results"`.
-- Insert error-state block immediately after: Back button (navigate(-1), ArrowLeft `aria-hidden`), AlertCircle, message, Retry calling `resolvePermission`.
-- Add `aria-hidden="true"` to decorative `<ArrowLeft />` (L472).
+### Change 5 — `create_actor_debrief_order` RPC typed call (L548–554)
+**Verified L9374–9383 of `src/integrations/supabase/types.ts`: function is in the generated RPC union with Args matching `p_actor_email/p_actor_first_name/p_certification_id/p_coach_note?/p_email_html?` and `Returns: Json`.** → Use the **clean** `supabase.rpc("create_actor_debrief_order", {...})` call, no `as never`. Narrow output via `result = data as CreateActorDebriefOrderResult | null`. L555–569 error block (incl. L556–564 verbatim error map) preserved byte-identical. L571 `data?.email_dispatched` → `result?.email_dispatched`.
 
-### Verbatim-preservation blocks (confirmed, NOT modified)
-- **L309–347** — paired-PTP mutually-paired collapse loop (`for (const e of rawEntries)` … through pushing the grouped entry, the `grouped.sort` follows at L347-ish). Load-bearing §118 logic, untouched apart from being inside the extracted `fetchAssessments` callback.
-- **L422–454 query bodies** — permission resolver `coach_clients` `.or(...).maybeSingle()` then `permissions` `.eq().eq().maybeSingle()` fallback chain, including ordering. Untouched apart from being inside `resolvePermission` and gaining error destructures + throws (no logic change).
-- **L474–480** — `<MyResults isCoachView targetUserId={userId} preSelectedAssessmentId={assessmentId} coachUserId={coachUserId} permissionLevel={permissionLevel} />` embed and props. Untouched.
+**Fallback note:** If TypeScript rejects either literal at build time (unexpected given the generated union shows both), fall back to the `as never` pattern on the function name + args only. Default plan is the clean version.
 
----
+### Change 6 — `(error as any).context?.json?.()` narrow (L363)
+Replace `(error as any)` cast with local typed alias `errWithContext = error as { context?: { json?: () => Promise<{ error?: string } | undefined> } }`. Rest of L358–368 block (try/catch shape, `error instanceof Error`, `"context" in error` guard, `body?.error` extraction, `throw new Error(errorMsg)`) preserved byte-identical.
 
-## File 2: `src/pages/coach/CoachInvoices.tsx`
+### Change 7a — Loader2 swap in clients tab (L929–932)
+Replace raw `<div animate-spin>` spinner with `<Loader2 className="h-8 w-8 animate-spin text-muted-foreground" role="status" aria-label="Loading clients" />` matching Round 7a convention.
 
-### Import edit (L13)
-Extend lucide-react import to add `Loader2, AlertCircle`. No other import changes.
+### Change 7b — `clientsError` state + try/catch wrap in `fetchClients` (L78-ish + L111–217) + error-state render branch (L928-region)
+1. Add `const [clientsError, setClientsError] = useState<string | null>(null);` alongside `loading`.
+2. Wrap `fetchClients` body in `try/catch/finally`: add `setClientsError(null)` after `setLoading(true)`; destructure `error: ccError` on initial `coach_clients` SELECT and `throw new Error(ccError.message)`; enrichment loop (L123–190) and unique-client derivation (L192–215) **inside** try, byte-identical; move `setClients`/`setUniqueClients` into try; catch sets `clientsError` and clears lists; `setLoading(false)` in finally.
+3. Add new render branch between `loading` and `clients.length === 0`: Card with `<AlertCircle aria-hidden="true" />`, message `Couldn't load clients: {clientsError}`, outline Retry button calling `fetchClients`.
 
-### Change 1 — Shape A extraction + error state
-- Add `const [error, setError] = useState<string | null>(null);` next to existing `loading`.
-- Extract useEffect body (L45–130) into `fetchTransactions` callback. The `coach_clients` select gets its existing `error: rowsError` check kept; all subsequent code (instrument-name lookup, name-by-email lookup, grouped construction, txList map, sort, setTransactions) inside the try block byte-identical. Add try/catch/finally with error-state assignment.
-- `useEffect(() => { fetchTransactions(); }, [user]);`
+### Change 7c — filter-empty distinction in roster (L995–1023)
+Hoist filtered list to `filteredUniqueClients` derived value (inside `selectedClientEmail === null` branch). `<TableBody>` becomes conditional: if `filteredUniqueClients.length === 0` render single `<TableRow><TableCell colSpan={6}>` with "No clients match your search." (when query non-empty) or "No clients to display." fallback; else map preserved byte-identical (existing TableCell rows L1003–1021 unchanged).
 
-### Change 2 — Loading/empty render ladder (L377–417 region)
-Replace the two-branch (loading / filter-empty) ladder with the four-branch ladder per spec:
-1. `loading` → `<Loader2 className="h-8 w-8 animate-spin text-muted-foreground" role="status" aria-label="Loading transactions" />`
-2. `error` → AlertCircle + message + Retry button calling `fetchTransactions`
-3. `transactions.length === 0` → "No transactions yet. Orders you place for clients will appear here."
-4. `filtered.length === 0` → "No transactions match your filters."
-5. else → existing `<Table>` (wrapped per Change 3)
+### Change 7d — decorative-icon `aria-hidden="true"` sweep
+Add `aria-hidden="true"` to icons at the listed lines: L764 (×2), L777 (×2), L835, L850, L856, L886, L895, L904, L913, L936, L949, L960, L1018, L1034, L1056, L1101, L1110. No other attribute changes; L913 Clock color stays `text-destructive` per spec.
 
-### Change 3 — Mobile overflow wrapper
-Wrap the existing `<Table>…</Table>` element (and only that element) in `<div className="overflow-x-auto">…</div>`. No table-cell, column-width, badge, or content changes.
-
-### Change 4 — Decorative icon `aria-hidden="true"`
-Add `aria-hidden="true"` to: `<Search />` L302, `<X />` L326 (Clear Filters), `<Download />` L335 (Export All), `<Download />` L369 (Export Range), `<FileText />` L406 (View Receipt), `<Download />` L409 (Export PDF row).
-
-### Verbatim-preservation blocks (confirmed, NOT modified)
-- **L25** `PRICE_PER_INSTRUMENT = 29.99`.
-- **L62–128 fetch body** — instrumentMap build (`instruments.forEach`), nameMap build (`users.forEach`), `grouped` object construction, `txList = Object.values(grouped).map(...)`, `txList.sort(...)` by `created_at` desc. Untouched logic; only relocated inside `fetchTransactions` try block with error-state shell around it.
-- **L132–152** `filtered` useMemo.
-- **L154–157** `uniqueClients` useMemo.
-- **L167–225** `generatePdf` function.
-- **L227–275** `exportSinglePdf` function.
-- **L277–291** `statusBadge` function (§120 forest/teal colors kept).
-- **L422–458** Receipt modal Dialog rendering.
-
----
-
-## Items flagged (NOT implementing — flagging only)
-None. The spec is self-contained; every change fits cleanly into the Shape A / a11y / overflow patterns. No additional changes proposed.
+## Items flagged (NOT implementing)
+None. Every change fits the spec's typed-RPC / a11y / try-catch / filter-empty patterns cleanly. No additional changes proposed.
 
 ## Confirmation
-- Exactly two files in the diff: `src/pages/coach/ClientResults.tsx`, `src/pages/coach/CoachInvoices.tsx`.
-- No other files touched (no `CoachClients.tsx`, no shared components, no tokens, no migrations).
+- Exactly one file in the diff: `src/pages/coach/CoachClients.tsx`.
+- No other files (no shared components, no types.ts edits, no migrations, no edge-function edits).
 - No new dependencies, no new shadcn primitives.
-- No business logic, SQL, PDF, grouping, filter, sort, or permission-resolver logic changes.
-- All listed verbatim-preservation blocks remain byte-identical inside the extracted callbacks.
+- Only new lucide imports: `Loader2`, `AlertCircle`.
+- Create-checkout payload, invoke call, redirect, debug logs, and try/catch/finally shape (L341–381) byte-identical.
+- Actor-debrief 7-key error map (L556–564) byte-identical.
+- §114 eligibility booleans (L102–109) byte-identical.
+- Email HTML template strings (L433–468, L511–546) byte-identical.
+- Stats derivation, `getStatusBadge`, `handleRemind`, `<PendingInvitations>` embed all byte-identical.
 
 Awaiting approval to ship.

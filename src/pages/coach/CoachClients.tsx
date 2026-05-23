@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import {
-  Users, ClipboardCheck, Clock, Plus, Send, Eye, Mail, ArrowLeft, ChevronDown,
+  Users, ClipboardCheck, Clock, Plus, Send, Eye, Mail, ArrowLeft, ChevronDown, Loader2, AlertCircle,
 } from "lucide-react";
 import { format } from "date-fns";
 import BulkInviteModal from "@/components/coach/BulkInviteModal";
@@ -69,6 +69,32 @@ interface UniqueClient {
   pending_count: number;
 }
 
+interface CoachCertificationActiveRow {
+  certification_type: string;
+  status: string;
+}
+
+interface OwnCertRow {
+  id: string;
+  certification_type: string;
+  status: string;
+  free_uses_expire_at: string | null;
+}
+
+interface SendCoachInvitationEmailResult {
+  dispatched: boolean;
+}
+
+interface CreateActorDebriefOrderResult {
+  actor_id: string;
+  coach_client_id: string;
+  instrument_id: string;
+  actors_used: number;
+  actor_cap: number;
+  expires_at: string;
+  email_dispatched: boolean;
+}
+
 export default function CoachClients() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -76,6 +102,7 @@ export default function CoachClients() {
   const [uniqueClients, setUniqueClients] = useState<UniqueClient[]>([]);
   const [selectedClientEmail, setSelectedClientEmail] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [clientsError, setClientsError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
 
@@ -111,109 +138,118 @@ export default function CoachClients() {
   const fetchClients = async () => {
     if (!user) return;
     setLoading(true);
+    setClientsError(null);
 
-    const { data: ccRows } = await supabase
-      .from("coach_clients")
-      .select("id, client_email, client_user_id, invitation_status, assessment_id, instrument_id, coach_notes, created_at, stripe_payment_intent_id, debrief_completed, results_released, revoked_at, expires_at")
-      .eq("coach_user_id", user.id)
-      .order("created_at", { ascending: false });
+    try {
+      const { data: ccRows, error: ccError } = await supabase
+        .from("coach_clients")
+        .select("id, client_email, client_user_id, invitation_status, assessment_id, instrument_id, coach_notes, created_at, stripe_payment_intent_id, debrief_completed, results_released, revoked_at, expires_at")
+        .eq("coach_user_id", user.id)
+        .order("created_at", { ascending: false });
+      if (ccError) throw new Error(ccError.message);
+      if (!ccRows) { setLoading(false); return; }
 
-    if (!ccRows) { setLoading(false); return; }
+      const enriched: ClientRow[] = [];
 
-    const enriched: ClientRow[] = [];
+      for (const cc of ccRows) {
+        let clientName: string | null = null;
+        let assessmentStatus: string | null = null;
+        let completedAt: string | null = null;
+        let instrumentName: string | null = null;
 
-    for (const cc of ccRows) {
-      let clientName: string | null = null;
-      let assessmentStatus: string | null = null;
-      let completedAt: string | null = null;
-      let instrumentName: string | null = null;
-
-      if (cc.client_user_id) {
-        const { data: u } = await supabase
-          .from("users")
-          .select("full_name")
-          .eq("id", cc.client_user_id)
-          .single();
-        clientName = u?.full_name || null;
-      }
-
-      if (cc.assessment_id) {
-        const { data: a } = await supabase
-          .from("assessments")
-          .select("status, completed_at, instrument_id")
-          .eq("id", cc.assessment_id)
-          .single();
-        if (a) {
-          assessmentStatus = a.status;
-          completedAt = a.completed_at;
-          const { data: inst } = await supabase
-            .from("instruments")
-            .select("instrument_name")
-            .eq("instrument_id", a.instrument_id)
-            .limit(1)
+        if (cc.client_user_id) {
+          const { data: u } = await supabase
+            .from("users")
+            .select("full_name")
+            .eq("id", cc.client_user_id)
             .single();
-          instrumentName = inst?.instrument_name || a.instrument_id;
+          clientName = u?.full_name || null;
         }
-      } else if (cc.instrument_id) {
-        // No assessment yet, but we have the instrument_id from coach_clients
-        const instMatch = INSTRUMENTS.find(i => i.uuid === cc.instrument_id);
-        instrumentName = instMatch?.name || null;
-        if (!instrumentName) {
-          // Try DB lookup by UUID id column
-          const { data: inst } = await supabase
-            .from("instruments")
-            .select("instrument_name")
-            .eq("id", cc.instrument_id)
-            .limit(1)
+
+        if (cc.assessment_id) {
+          const { data: a } = await supabase
+            .from("assessments")
+            .select("status, completed_at, instrument_id")
+            .eq("id", cc.assessment_id)
             .single();
-          instrumentName = inst?.instrument_name || null;
+          if (a) {
+            assessmentStatus = a.status;
+            completedAt = a.completed_at;
+            const { data: inst } = await supabase
+              .from("instruments")
+              .select("instrument_name")
+              .eq("instrument_id", a.instrument_id)
+              .limit(1)
+              .single();
+            instrumentName = inst?.instrument_name || a.instrument_id;
+          }
+        } else if (cc.instrument_id) {
+          // No assessment yet, but we have the instrument_id from coach_clients
+          const instMatch = INSTRUMENTS.find(i => i.uuid === cc.instrument_id);
+          instrumentName = instMatch?.name || null;
+          if (!instrumentName) {
+            // Try DB lookup by UUID id column
+            const { data: inst } = await supabase
+              .from("instruments")
+              .select("instrument_name")
+              .eq("id", cc.instrument_id)
+              .limit(1)
+              .single();
+            instrumentName = inst?.instrument_name || null;
+          }
         }
+
+        enriched.push({
+          id: cc.id,
+          client_email: cc.client_email,
+          client_user_id: cc.client_user_id,
+          client_name: clientName,
+          invitation_status: cc.invitation_status,
+          assessment_id: cc.assessment_id,
+          assessment_status: assessmentStatus,
+          completed_at: completedAt,
+          instrument_name: instrumentName,
+          created_at: cc.created_at,
+          stripe_payment_intent_id: cc.stripe_payment_intent_id,
+          debrief_completed: cc.debrief_completed,
+          results_released: cc.results_released,
+          revoked_at: cc.revoked_at,
+          expires_at: cc.expires_at,
+        });
       }
 
-      enriched.push({
-        id: cc.id,
-        client_email: cc.client_email,
-        client_user_id: cc.client_user_id,
-        client_name: clientName,
-        invitation_status: cc.invitation_status,
-        assessment_id: cc.assessment_id,
-        assessment_status: assessmentStatus,
-        completed_at: completedAt,
-        instrument_name: instrumentName,
-        created_at: cc.created_at,
-        stripe_payment_intent_id: cc.stripe_payment_intent_id,
-        debrief_completed: cc.debrief_completed,
-        results_released: cc.results_released,
-        revoked_at: cc.revoked_at,
-        expires_at: cc.expires_at,
-      });
-    }
-
-    // Derive unique clients
-    const clientMap: Record<string, UniqueClient> = {};
-    for (const row of enriched) {
-      if (row.revoked_at !== null) continue;
-      const e = row.client_email;
-      if (!clientMap[e]) {
-        clientMap[e] = {
-          client_email: e,
-          client_user_id: row.client_user_id,
-          client_name: row.client_name,
-          assessment_count: 0,
-          completed_count: 0,
-          pending_count: 0,
-        };
+      // Derive unique clients
+      const clientMap: Record<string, UniqueClient> = {};
+      for (const row of enriched) {
+        if (row.revoked_at !== null) continue;
+        const e = row.client_email;
+        if (!clientMap[e]) {
+          clientMap[e] = {
+            client_email: e,
+            client_user_id: row.client_user_id,
+            client_name: row.client_name,
+            assessment_count: 0,
+            completed_count: 0,
+            pending_count: 0,
+          };
+        }
+        clientMap[e].assessment_count++;
+        if (row.assessment_status === "completed") clientMap[e].completed_count++;
+        if (row.invitation_status === "sent" || row.invitation_status === "opened" || row.invitation_status === "partially_completed") clientMap[e].pending_count++;
+        if (!clientMap[e].client_name && row.client_name) clientMap[e].client_name = row.client_name;
+        if (!clientMap[e].client_user_id && row.client_user_id) clientMap[e].client_user_id = row.client_user_id;
       }
-      clientMap[e].assessment_count++;
-      if (row.assessment_status === "completed") clientMap[e].completed_count++;
-      if (row.invitation_status === "sent" || row.invitation_status === "opened" || row.invitation_status === "partially_completed") clientMap[e].pending_count++;
-      if (!clientMap[e].client_name && row.client_name) clientMap[e].client_name = row.client_name;
-      if (!clientMap[e].client_user_id && row.client_user_id) clientMap[e].client_user_id = row.client_user_id;
-    }
 
-    setClients(enriched);
-    setUniqueClients(Object.values(clientMap));
-    setLoading(false);
+      setClients(enriched);
+      setUniqueClients(Object.values(clientMap));
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Failed to load clients";
+      setClientsError(msg);
+      setClients([]);
+      setUniqueClients([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => { fetchClients(); }, [user]);
@@ -221,7 +257,7 @@ export default function CoachClients() {
   useEffect(() => {
     if (!user) return;
     (async () => {
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("coach_certifications")
         .select("certification_type, status")
         .eq("user_id", user.id)
@@ -233,7 +269,7 @@ export default function CoachClients() {
         return;
       }
       const allowed = new Set<string>();
-      (data ?? []).forEach((row: any) => {
+      (data ?? []).forEach((row: CoachCertificationActiveRow) => {
         const ids = CERT_TYPE_TO_INSTRUMENTS[row.certification_type] ?? [];
         ids.forEach(id => allowed.add(id));
       });
@@ -241,7 +277,7 @@ export default function CoachClients() {
       setCertsLoaded(true);
 
       // Fetch trainee's own certification for actor-debrief eligibility
-      const { data: ownCertData } = await (supabase as any)
+      const { data: ownCertData } = await supabase
         .from("coach_certifications")
         .select("id, certification_type, status, free_uses_expire_at")
         .eq("user_id", user.id)
@@ -249,10 +285,10 @@ export default function CoachClients() {
         .in("status", ["in_progress", "certified"])
         .order("created_at", { ascending: true })
         .limit(1);
-      const ownCert = ownCertData?.[0] ?? null;
+      const ownCert = (ownCertData?.[0] as OwnCertRow | undefined) ?? null;
       setActorCert(ownCert);
       if (ownCert?.id) {
-        const { count } = await (supabase as any)
+        const { count } = await supabase
           .from("coach_certification_actors")
           .select("*", { count: "exact", head: true })
           .eq("certification_id", ownCert.id)
@@ -360,7 +396,8 @@ export default function CoachClients() {
         try {
           if (error instanceof Error) errorMsg = error.message;
           if (typeof error === "object" && "context" in error) {
-            const body = await (error as any).context?.json?.();
+            const errWithContext = error as { context?: { json?: () => Promise<{ error?: string } | undefined> } };
+            const body = await errWithContext.context?.json?.();
             if (body?.error) errorMsg = body.error;
           }
         } catch { /* ignore parse errors */ }
@@ -467,7 +504,7 @@ export default function CoachClients() {
 </body>
 </html>`.trim();
 
-      const { data: emailData, error: emailError } = await (supabase as any).rpc(
+      const { data: emailData, error: emailError } = await supabase.rpc(
         "send_coach_invitation_email",
         {
           p_to: email,
@@ -476,7 +513,8 @@ export default function CoachClients() {
           p_email_type: "coach_invitation_self_pay",
         },
       );
-      if (emailError || !emailData?.dispatched) {
+      const emailResult = emailData as unknown as SendCoachInvitationEmailResult | null;
+      if (emailError || !emailResult?.dispatched) {
         console.error("[CoachClients] send_coach_invitation_email failed:", emailError);
         toast.warning("Client records created but invitation email failed to send.");
       } else {
@@ -545,13 +583,14 @@ export default function CoachClients() {
 </body>
 </html>`.trim();
 
-    const { data, error } = await (supabase as any).rpc("create_actor_debrief_order", {
+    const { data, error } = await supabase.rpc("create_actor_debrief_order", {
       p_actor_email: email.trim().toLowerCase(),
       p_actor_first_name: firstName.trim() || null,
       p_certification_id: actorCert.id,
       p_coach_note: note.trim() || null,
       p_email_html: html,
     });
+    const result = data as unknown as CreateActorDebriefOrderResult | null;
     if (error) {
       const map: Record<string, string> = {
         actor_debrief_cap_reached: "You have used all 4 actor debriefs for this certification.",
@@ -568,7 +607,7 @@ export default function CoachClients() {
       return;
     }
 
-    if (data?.email_dispatched) {
+    if (result?.email_dispatched) {
       toast.success("Actor debrief invitation sent.");
     } else {
       toast.warning("Actor debrief created — the invitation email may be delayed.");
@@ -761,7 +800,7 @@ export default function CoachClients() {
               <TooltipTrigger asChild>
                 <span tabIndex={0}>
                   <Button className="gap-2" disabled>
-                    <Plus className="h-4 w-4" /> Order Assessment <ChevronDown className="h-4 w-4" />
+                    <Plus className="h-4 w-4" aria-hidden="true" /> Order Assessment <ChevronDown className="h-4 w-4" aria-hidden="true" />
                   </Button>
                 </span>
               </TooltipTrigger>
@@ -774,7 +813,7 @@ export default function CoachClients() {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button className="gap-2">
-                <Plus className="h-4 w-4" /> Order Assessment <ChevronDown className="h-4 w-4" />
+                <Plus className="h-4 w-4" aria-hidden="true" /> Order Assessment <ChevronDown className="h-4 w-4" aria-hidden="true" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -832,7 +871,7 @@ export default function CoachClients() {
                 {sharedFormFields}
                 <div className="mt-4">
                   <Button className="w-full gap-2" onClick={handleOrderActorDebrief} disabled={submitting || !email}>
-                    <Send className="h-4 w-4" /> {submitting ? "Sending..." : "Send Actor Debrief Invitation"}
+                    <Send className="h-4 w-4" aria-hidden="true" /> {submitting ? "Sending..." : "Send Actor Debrief Invitation"}
                   </Button>
                 </div>
               </div>
@@ -847,13 +886,13 @@ export default function CoachClients() {
 
                 <TabsContent value="coach-pays" className="mt-4">
                   <Button className="w-full gap-2" onClick={handleOrderCoachPays} disabled={submitting || !email}>
-                    <ClipboardCheck className="h-4 w-4" /> {submitting ? "Processing..." : "Proceed to Payment"}
+                    <ClipboardCheck className="h-4 w-4" aria-hidden="true" /> {submitting ? "Processing..." : "Proceed to Payment"}
                   </Button>
                 </TabsContent>
 
                 <TabsContent value="client-pays" className="mt-4">
                   <Button className="w-full gap-2" onClick={handleOrderClientPays} disabled={submitting || !email}>
-                    <Send className="h-4 w-4" /> {submitting ? "Sending..." : "Send Invitation"}
+                    <Send className="h-4 w-4" aria-hidden="true" /> {submitting ? "Sending..." : "Send Invitation"}
                   </Button>
                 </TabsContent>
               </Tabs>
@@ -883,7 +922,7 @@ export default function CoachClients() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardContent className="flex items-center gap-3 py-4">
-            <div className="rounded-lg bg-primary/10 p-2"><Users className="h-5 w-5 text-primary" /></div>
+            <div className="rounded-lg bg-primary/10 p-2"><Users className="h-5 w-5 text-primary" aria-hidden="true" /></div>
             <div>
               <p className="text-2xl font-bold text-foreground">{totalSignedUpClients}</p>
               <p className="text-xs text-muted-foreground">Total Clients</p>
@@ -892,7 +931,7 @@ export default function CoachClients() {
         </Card>
         <Card>
           <CardContent className="flex items-center gap-3 py-4">
-            <div className="rounded-lg bg-primary/10 p-2"><Mail className="h-5 w-5 text-primary" /></div>
+            <div className="rounded-lg bg-primary/10 p-2"><Mail className="h-5 w-5 text-primary" aria-hidden="true" /></div>
             <div>
               <p className="text-2xl font-bold text-foreground">{pendingInvitationsCount}</p>
               <p className="text-xs text-muted-foreground">Pending Invitations</p>
@@ -901,7 +940,7 @@ export default function CoachClients() {
         </Card>
         <Card>
           <CardContent className="flex items-center gap-3 py-4">
-            <div className="rounded-lg bg-accent/10 p-2"><ClipboardCheck className="h-5 w-5 text-accent" /></div>
+            <div className="rounded-lg bg-accent/10 p-2"><ClipboardCheck className="h-5 w-5 text-accent" aria-hidden="true" /></div>
             <div>
               <p className="text-2xl font-bold text-foreground">{completedThisMonth}</p>
               <p className="text-xs text-muted-foreground">Completed This Month</p>
@@ -910,7 +949,7 @@ export default function CoachClients() {
         </Card>
         <Card>
           <CardContent className="flex items-center gap-3 py-4">
-            <div className="rounded-lg bg-destructive/10 p-2"><Clock className="h-5 w-5 text-destructive" /></div>
+            <div className="rounded-lg bg-destructive/10 p-2"><Clock className="h-5 w-5 text-destructive" aria-hidden="true" /></div>
             <div>
               <p className="text-2xl font-bold text-foreground">{assessmentsPending}</p>
               <p className="text-xs text-muted-foreground">Assessments Pending</p>
@@ -928,12 +967,28 @@ export default function CoachClients() {
         <TabsContent value="clients" className="mt-4">
           {loading ? (
         <div className="flex items-center justify-center py-16">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+          <Loader2
+            className="h-8 w-8 animate-spin text-muted-foreground"
+            role="status"
+            aria-label="Loading clients"
+          />
         </div>
+      ) : clientsError ? (
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-16 space-y-3">
+            <AlertCircle className="h-8 w-8 text-destructive" aria-hidden="true" />
+            <p className="text-sm text-muted-foreground text-center">
+              Couldn't load clients: {clientsError}
+            </p>
+            <Button variant="outline" size="sm" onClick={fetchClients}>
+              Retry
+            </Button>
+          </CardContent>
+        </Card>
       ) : clients.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-16 space-y-4">
-            <Users className="h-12 w-12 text-muted-foreground/40" />
+            <Users className="h-12 w-12 text-muted-foreground/40" aria-hidden="true" />
             <div className="text-center">
               <h3 className="text-lg font-medium text-foreground">No clients yet</h3>
               <p className="text-sm text-muted-foreground mt-1">
@@ -946,7 +1001,7 @@ export default function CoachClients() {
                   <TooltipTrigger asChild>
                     <span tabIndex={0}>
                       <Button className="gap-2" disabled>
-                        <Plus className="h-4 w-4" /> Order Your First Assessment
+                        <Plus className="h-4 w-4" aria-hidden="true" /> Order Your First Assessment
                       </Button>
                     </span>
                   </TooltipTrigger>
@@ -957,7 +1012,7 @@ export default function CoachClients() {
               </TooltipProvider>
             ) : (
               <Button className="gap-2" onClick={() => { resetForm(); if (actorOnlyMode) setIsActorDebrief(true); setModalOpen(true); }}>
-                <Plus className="h-4 w-4" /> Order Your First Assessment
+                <Plus className="h-4 w-4" aria-hidden="true" /> Order Your First Assessment
               </Button>
             )}
           </CardContent>
@@ -993,13 +1048,24 @@ export default function CoachClients() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {uniqueClients
-                    .filter(uc => {
+                  {(() => {
+                    const filteredUniqueClients = uniqueClients.filter(uc => {
                       if (!searchQuery.trim()) return true;
                       const q = searchQuery.toLowerCase();
                       return (uc.client_name?.toLowerCase().includes(q) || uc.client_email.toLowerCase().includes(q));
-                    })
-                    .map(uc => (
+                    });
+                    if (filteredUniqueClients.length === 0) {
+                      return (
+                        <TableRow>
+                          <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                            {searchQuery.trim()
+                              ? "No clients match your search."
+                              : "No clients to display."}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    }
+                    return filteredUniqueClients.map(uc => (
                     <TableRow key={uc.client_email}>
                       <TableCell className="font-medium">
                         {uc.client_name || uc.client_email}
@@ -1015,11 +1081,12 @@ export default function CoachClients() {
                           className="gap-1"
                           onClick={() => { setSelectedClientEmail(uc.client_email); setSearchQuery(""); }}
                         >
-                          <Eye className="h-3 w-3" /> View Assessments
+                          <Eye className="h-3 w-3" aria-hidden="true" /> View Assessments
                         </Button>
                       </TableCell>
                     </TableRow>
-                  ))}
+                  ));
+                  })()}
                 </TableBody>
               </Table>
             </div>
@@ -1031,7 +1098,7 @@ export default function CoachClients() {
           <CardHeader>
             <div className="flex items-center gap-3 mb-2">
               <Button variant="ghost" size="sm" className="gap-1" onClick={() => setSelectedClientEmail(null)}>
-                <ArrowLeft className="h-4 w-4" /> Back to Clients
+                <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Back to Clients
               </Button>
             </div>
             <CardTitle className="text-lg">
@@ -1053,7 +1120,7 @@ export default function CoachClients() {
                   ? (actorOnlyMode ? "Available after certification" : "You need an active certification to order assessments")
                   : undefined}
               >
-                <Plus className="h-3 w-3" /> Order Assessment for This Client
+                <Plus className="h-3 w-3" aria-hidden="true" /> Order Assessment for This Client
               </Button>
             </div>
           </CardHeader>
@@ -1098,7 +1165,7 @@ export default function CoachClients() {
                           disabled={c.assessment_status !== "completed"}
                           onClick={() => navigate(`/coach/client-results?user_id=${c.client_user_id}&assessment_id=${c.assessment_id}`)}
                         >
-                          <Eye className="h-3 w-3" /> Results
+                          <Eye className="h-3 w-3" aria-hidden="true" /> Results
                         </Button>
                         <Button
                           size="sm"
@@ -1107,7 +1174,7 @@ export default function CoachClients() {
                           disabled={(c.invitation_status !== "sent" && c.invitation_status !== "opened" && c.invitation_status !== "partially_completed") || sendingReminderId === c.id}
                           onClick={() => handleRemind(c)}
                         >
-                          <Mail className="h-3 w-3" /> {sendingReminderId === c.id ? "Sending..." : "Remind"}
+                          <Mail className="h-3 w-3" aria-hidden="true" /> {sendingReminderId === c.id ? "Sending..." : "Remind"}
                         </Button>
                         {c.invitation_status === "completed" && c.assessment_status === "completed" && (
                           <Button
