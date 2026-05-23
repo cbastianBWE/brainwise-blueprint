@@ -102,6 +102,7 @@ export default function CoachClients() {
   const [uniqueClients, setUniqueClients] = useState<UniqueClient[]>([]);
   const [selectedClientEmail, setSelectedClientEmail] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [clientsError, setClientsError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
 
@@ -137,109 +138,118 @@ export default function CoachClients() {
   const fetchClients = async () => {
     if (!user) return;
     setLoading(true);
+    setClientsError(null);
 
-    const { data: ccRows } = await supabase
-      .from("coach_clients")
-      .select("id, client_email, client_user_id, invitation_status, assessment_id, instrument_id, coach_notes, created_at, stripe_payment_intent_id, debrief_completed, results_released, revoked_at, expires_at")
-      .eq("coach_user_id", user.id)
-      .order("created_at", { ascending: false });
+    try {
+      const { data: ccRows, error: ccError } = await supabase
+        .from("coach_clients")
+        .select("id, client_email, client_user_id, invitation_status, assessment_id, instrument_id, coach_notes, created_at, stripe_payment_intent_id, debrief_completed, results_released, revoked_at, expires_at")
+        .eq("coach_user_id", user.id)
+        .order("created_at", { ascending: false });
+      if (ccError) throw new Error(ccError.message);
+      if (!ccRows) { setLoading(false); return; }
 
-    if (!ccRows) { setLoading(false); return; }
+      const enriched: ClientRow[] = [];
 
-    const enriched: ClientRow[] = [];
+      for (const cc of ccRows) {
+        let clientName: string | null = null;
+        let assessmentStatus: string | null = null;
+        let completedAt: string | null = null;
+        let instrumentName: string | null = null;
 
-    for (const cc of ccRows) {
-      let clientName: string | null = null;
-      let assessmentStatus: string | null = null;
-      let completedAt: string | null = null;
-      let instrumentName: string | null = null;
-
-      if (cc.client_user_id) {
-        const { data: u } = await supabase
-          .from("users")
-          .select("full_name")
-          .eq("id", cc.client_user_id)
-          .single();
-        clientName = u?.full_name || null;
-      }
-
-      if (cc.assessment_id) {
-        const { data: a } = await supabase
-          .from("assessments")
-          .select("status, completed_at, instrument_id")
-          .eq("id", cc.assessment_id)
-          .single();
-        if (a) {
-          assessmentStatus = a.status;
-          completedAt = a.completed_at;
-          const { data: inst } = await supabase
-            .from("instruments")
-            .select("instrument_name")
-            .eq("instrument_id", a.instrument_id)
-            .limit(1)
+        if (cc.client_user_id) {
+          const { data: u } = await supabase
+            .from("users")
+            .select("full_name")
+            .eq("id", cc.client_user_id)
             .single();
-          instrumentName = inst?.instrument_name || a.instrument_id;
+          clientName = u?.full_name || null;
         }
-      } else if (cc.instrument_id) {
-        // No assessment yet, but we have the instrument_id from coach_clients
-        const instMatch = INSTRUMENTS.find(i => i.uuid === cc.instrument_id);
-        instrumentName = instMatch?.name || null;
-        if (!instrumentName) {
-          // Try DB lookup by UUID id column
-          const { data: inst } = await supabase
-            .from("instruments")
-            .select("instrument_name")
-            .eq("id", cc.instrument_id)
-            .limit(1)
+
+        if (cc.assessment_id) {
+          const { data: a } = await supabase
+            .from("assessments")
+            .select("status, completed_at, instrument_id")
+            .eq("id", cc.assessment_id)
             .single();
-          instrumentName = inst?.instrument_name || null;
+          if (a) {
+            assessmentStatus = a.status;
+            completedAt = a.completed_at;
+            const { data: inst } = await supabase
+              .from("instruments")
+              .select("instrument_name")
+              .eq("instrument_id", a.instrument_id)
+              .limit(1)
+              .single();
+            instrumentName = inst?.instrument_name || a.instrument_id;
+          }
+        } else if (cc.instrument_id) {
+          // No assessment yet, but we have the instrument_id from coach_clients
+          const instMatch = INSTRUMENTS.find(i => i.uuid === cc.instrument_id);
+          instrumentName = instMatch?.name || null;
+          if (!instrumentName) {
+            // Try DB lookup by UUID id column
+            const { data: inst } = await supabase
+              .from("instruments")
+              .select("instrument_name")
+              .eq("id", cc.instrument_id)
+              .limit(1)
+              .single();
+            instrumentName = inst?.instrument_name || null;
+          }
         }
+
+        enriched.push({
+          id: cc.id,
+          client_email: cc.client_email,
+          client_user_id: cc.client_user_id,
+          client_name: clientName,
+          invitation_status: cc.invitation_status,
+          assessment_id: cc.assessment_id,
+          assessment_status: assessmentStatus,
+          completed_at: completedAt,
+          instrument_name: instrumentName,
+          created_at: cc.created_at,
+          stripe_payment_intent_id: cc.stripe_payment_intent_id,
+          debrief_completed: cc.debrief_completed,
+          results_released: cc.results_released,
+          revoked_at: cc.revoked_at,
+          expires_at: cc.expires_at,
+        });
       }
 
-      enriched.push({
-        id: cc.id,
-        client_email: cc.client_email,
-        client_user_id: cc.client_user_id,
-        client_name: clientName,
-        invitation_status: cc.invitation_status,
-        assessment_id: cc.assessment_id,
-        assessment_status: assessmentStatus,
-        completed_at: completedAt,
-        instrument_name: instrumentName,
-        created_at: cc.created_at,
-        stripe_payment_intent_id: cc.stripe_payment_intent_id,
-        debrief_completed: cc.debrief_completed,
-        results_released: cc.results_released,
-        revoked_at: cc.revoked_at,
-        expires_at: cc.expires_at,
-      });
-    }
-
-    // Derive unique clients
-    const clientMap: Record<string, UniqueClient> = {};
-    for (const row of enriched) {
-      if (row.revoked_at !== null) continue;
-      const e = row.client_email;
-      if (!clientMap[e]) {
-        clientMap[e] = {
-          client_email: e,
-          client_user_id: row.client_user_id,
-          client_name: row.client_name,
-          assessment_count: 0,
-          completed_count: 0,
-          pending_count: 0,
-        };
+      // Derive unique clients
+      const clientMap: Record<string, UniqueClient> = {};
+      for (const row of enriched) {
+        if (row.revoked_at !== null) continue;
+        const e = row.client_email;
+        if (!clientMap[e]) {
+          clientMap[e] = {
+            client_email: e,
+            client_user_id: row.client_user_id,
+            client_name: row.client_name,
+            assessment_count: 0,
+            completed_count: 0,
+            pending_count: 0,
+          };
+        }
+        clientMap[e].assessment_count++;
+        if (row.assessment_status === "completed") clientMap[e].completed_count++;
+        if (row.invitation_status === "sent" || row.invitation_status === "opened" || row.invitation_status === "partially_completed") clientMap[e].pending_count++;
+        if (!clientMap[e].client_name && row.client_name) clientMap[e].client_name = row.client_name;
+        if (!clientMap[e].client_user_id && row.client_user_id) clientMap[e].client_user_id = row.client_user_id;
       }
-      clientMap[e].assessment_count++;
-      if (row.assessment_status === "completed") clientMap[e].completed_count++;
-      if (row.invitation_status === "sent" || row.invitation_status === "opened" || row.invitation_status === "partially_completed") clientMap[e].pending_count++;
-      if (!clientMap[e].client_name && row.client_name) clientMap[e].client_name = row.client_name;
-      if (!clientMap[e].client_user_id && row.client_user_id) clientMap[e].client_user_id = row.client_user_id;
-    }
 
-    setClients(enriched);
-    setUniqueClients(Object.values(clientMap));
-    setLoading(false);
+      setClients(enriched);
+      setUniqueClients(Object.values(clientMap));
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Failed to load clients";
+      setClientsError(msg);
+      setClients([]);
+      setUniqueClients([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => { fetchClients(); }, [user]);
@@ -247,7 +257,7 @@ export default function CoachClients() {
   useEffect(() => {
     if (!user) return;
     (async () => {
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("coach_certifications")
         .select("certification_type, status")
         .eq("user_id", user.id)
@@ -259,7 +269,7 @@ export default function CoachClients() {
         return;
       }
       const allowed = new Set<string>();
-      (data ?? []).forEach((row: any) => {
+      (data ?? []).forEach((row: CoachCertificationActiveRow) => {
         const ids = CERT_TYPE_TO_INSTRUMENTS[row.certification_type] ?? [];
         ids.forEach(id => allowed.add(id));
       });
@@ -267,7 +277,7 @@ export default function CoachClients() {
       setCertsLoaded(true);
 
       // Fetch trainee's own certification for actor-debrief eligibility
-      const { data: ownCertData } = await (supabase as any)
+      const { data: ownCertData } = await supabase
         .from("coach_certifications")
         .select("id, certification_type, status, free_uses_expire_at")
         .eq("user_id", user.id)
@@ -275,10 +285,10 @@ export default function CoachClients() {
         .in("status", ["in_progress", "certified"])
         .order("created_at", { ascending: true })
         .limit(1);
-      const ownCert = ownCertData?.[0] ?? null;
+      const ownCert = (ownCertData?.[0] as OwnCertRow | undefined) ?? null;
       setActorCert(ownCert);
       if (ownCert?.id) {
-        const { count } = await (supabase as any)
+        const { count } = await supabase
           .from("coach_certification_actors")
           .select("*", { count: "exact", head: true })
           .eq("certification_id", ownCert.id)
@@ -386,7 +396,8 @@ export default function CoachClients() {
         try {
           if (error instanceof Error) errorMsg = error.message;
           if (typeof error === "object" && "context" in error) {
-            const body = await (error as any).context?.json?.();
+            const errWithContext = error as { context?: { json?: () => Promise<{ error?: string } | undefined> } };
+            const body = await errWithContext.context?.json?.();
             if (body?.error) errorMsg = body.error;
           }
         } catch { /* ignore parse errors */ }
@@ -493,7 +504,7 @@ export default function CoachClients() {
 </body>
 </html>`.trim();
 
-      const { data: emailData, error: emailError } = await (supabase as any).rpc(
+      const { data: emailData, error: emailError } = await supabase.rpc(
         "send_coach_invitation_email",
         {
           p_to: email,
@@ -502,7 +513,8 @@ export default function CoachClients() {
           p_email_type: "coach_invitation_self_pay",
         },
       );
-      if (emailError || !emailData?.dispatched) {
+      const emailResult = emailData as SendCoachInvitationEmailResult | null;
+      if (emailError || !emailResult?.dispatched) {
         console.error("[CoachClients] send_coach_invitation_email failed:", emailError);
         toast.warning("Client records created but invitation email failed to send.");
       } else {
@@ -571,13 +583,14 @@ export default function CoachClients() {
 </body>
 </html>`.trim();
 
-    const { data, error } = await (supabase as any).rpc("create_actor_debrief_order", {
+    const { data, error } = await supabase.rpc("create_actor_debrief_order", {
       p_actor_email: email.trim().toLowerCase(),
       p_actor_first_name: firstName.trim() || null,
       p_certification_id: actorCert.id,
       p_coach_note: note.trim() || null,
       p_email_html: html,
     });
+    const result = data as CreateActorDebriefOrderResult | null;
     if (error) {
       const map: Record<string, string> = {
         actor_debrief_cap_reached: "You have used all 4 actor debriefs for this certification.",
@@ -594,7 +607,7 @@ export default function CoachClients() {
       return;
     }
 
-    if (data?.email_dispatched) {
+    if (result?.email_dispatched) {
       toast.success("Actor debrief invitation sent.");
     } else {
       toast.warning("Actor debrief created — the invitation email may be delayed.");
@@ -954,8 +967,24 @@ export default function CoachClients() {
         <TabsContent value="clients" className="mt-4">
           {loading ? (
         <div className="flex items-center justify-center py-16">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+          <Loader2
+            className="h-8 w-8 animate-spin text-muted-foreground"
+            role="status"
+            aria-label="Loading clients"
+          />
         </div>
+      ) : clientsError ? (
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-16 space-y-3">
+            <AlertCircle className="h-8 w-8 text-destructive" aria-hidden="true" />
+            <p className="text-sm text-muted-foreground text-center">
+              Couldn't load clients: {clientsError}
+            </p>
+            <Button variant="outline" size="sm" onClick={fetchClients}>
+              Retry
+            </Button>
+          </CardContent>
+        </Card>
       ) : clients.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-16 space-y-4">
@@ -1019,13 +1048,24 @@ export default function CoachClients() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {uniqueClients
-                    .filter(uc => {
+                  {(() => {
+                    const filteredUniqueClients = uniqueClients.filter(uc => {
                       if (!searchQuery.trim()) return true;
                       const q = searchQuery.toLowerCase();
                       return (uc.client_name?.toLowerCase().includes(q) || uc.client_email.toLowerCase().includes(q));
-                    })
-                    .map(uc => (
+                    });
+                    if (filteredUniqueClients.length === 0) {
+                      return (
+                        <TableRow>
+                          <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                            {searchQuery.trim()
+                              ? "No clients match your search."
+                              : "No clients to display."}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    }
+                    return filteredUniqueClients.map(uc => (
                     <TableRow key={uc.client_email}>
                       <TableCell className="font-medium">
                         {uc.client_name || uc.client_email}
@@ -1041,11 +1081,12 @@ export default function CoachClients() {
                           className="gap-1"
                           onClick={() => { setSelectedClientEmail(uc.client_email); setSearchQuery(""); }}
                         >
-                          <Eye className="h-3 w-3" /> View Assessments
+                          <Eye className="h-3 w-3" aria-hidden="true" /> View Assessments
                         </Button>
                       </TableCell>
                     </TableRow>
-                  ))}
+                  ));
+                  })()}
                 </TableBody>
               </Table>
             </div>
