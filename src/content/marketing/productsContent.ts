@@ -46,11 +46,11 @@ export const assessments: MarketingCardData[] = [
     id: "airsa",
     title: "AI Readiness Skills Assessment (AIRSA)",
     summary:
-      "Measure functional AI fluency across 48 specific skills and capabilities.",
+      "Measure functional AI fluency across 24 specific skills and capabilities.",
     body:
-      "Where PTP and NAI measure the psychology of adoption, AIRSA measures the practical reality. It evaluates 48 specific AI-related skills ranging from prompt engineering and tool selection to verification, ethics, and integration. AIRSA is most useful when an organization has decided to invest in AI training and needs a baseline of where teams actually are today, plus a measurable signal to track improvement over time.",
+      "Where PTP and NAI measure the psychology of adoption, AIRSA measures the practical reality. It evaluates 24 specific AI-related skills ranging from prompt engineering and tool selection to verification, ethics, and integration. AIRSA is most useful when an organization has decided to invest in AI training and needs a baseline of where teams actually are today, plus a measurable signal to track improvement over time.",
     benefits: [
-      "48-item assessment, ~15 minutes to complete",
+      "24-item assessment, ~10 minutes to complete",
       "Skills-level readout showing strengths and gaps",
       "Suitable for pre-training baselines and post-training measurement",
       "Aggregate org-level reporting for L&D programs",
@@ -63,9 +63,9 @@ export const assessments: MarketingCardData[] = [
     summary:
       "Track whether new AI behaviors are actually sticking after training.",
     body:
-      "The Habit Stabilization Scorecard answers a different question from the other three instruments: not \"are you ready\" or \"do you have the skills,\" but \"is the change actually holding?\" HSS is a brief 6-item check-in designed to be administered repeatedly after a training program or change initiative. Its purpose is to detect drift early — when new behaviors slip and intervention is still cheap.",
+      "The Habit Stabilization Scorecard answers a different question from the other three instruments: not \"are you ready\" or \"do you have the skills,\" but \"is the change actually holding?\" HSS is a brief 3-item check-in designed to be administered repeatedly after a training program or change initiative. Its purpose is to detect drift early — when new behaviors slip and intervention is still cheap.",
     benefits: [
-      "6-item assessment, ~2 minutes to complete",
+      "3-item assessment, ~1 minute to complete",
       "Designed for repeated administration over weeks or months",
       "Early-warning signal for behavioral drift",
       "Pairs naturally with corporate change initiatives",
