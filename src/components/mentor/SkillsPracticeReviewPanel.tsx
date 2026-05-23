@@ -200,14 +200,26 @@ export default function SkillsPracticeReviewPanel({ contentItemId, traineeId, on
 
   if (detailQuery.isLoading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+      <div
+        role="status"
+        aria-label="Loading"
+        className="flex items-center justify-center py-12"
+      >
+        <Loader2 aria-hidden="true" className="h-5 w-5 animate-spin text-muted-foreground" />
       </div>
     );
   }
   if (detailQuery.error || !contentItem) {
-    return <p className="text-sm text-destructive py-8 text-center">Failed to load review details.</p>;
+    return (
+      <div className="py-8 text-center space-y-3">
+        <p className="text-sm text-destructive">Failed to load review details.</p>
+        <Button variant="outline" size="sm" onClick={() => detailQuery.refetch()}>
+          Retry
+        </Button>
+      </div>
+    );
   }
+
 
   const traineeMime: string | undefined = completion?.skills_attachment_mime;
   const mentorMime: string | undefined = completion?.skills_mentor_attachment_mime;
