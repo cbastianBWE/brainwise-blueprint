@@ -161,8 +161,20 @@ export default function Notifications() {
               <div
                 key={n.id}
                 onClick={() => handleRowClick(n)}
+                role={clickable ? "button" : undefined}
+                tabIndex={clickable ? 0 : undefined}
+                onKeyDown={
+                  clickable
+                    ? (e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          handleRowClick(n);
+                        }
+                      }
+                    : undefined
+                }
                 className={`flex gap-3 p-4 ${
-                  clickable ? "cursor-pointer hover:bg-accent" : ""
+                  clickable ? "cursor-pointer hover:bg-accent focus:bg-accent" : ""
                 } ${!n.read_at ? "bg-primary/5" : ""}`}
               >
                 <div className="pt-1.5">
