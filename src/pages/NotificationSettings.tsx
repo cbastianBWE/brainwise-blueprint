@@ -88,8 +88,12 @@ export default function NotificationSettings() {
         </CardHeader>
         <CardContent>
           {isLoading && (
-            <div className="flex items-center justify-center py-10">
-              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            <div
+              role="status"
+              aria-label="Loading preferences"
+              className="flex items-center justify-center py-10"
+            >
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" aria-hidden="true" />
             </div>
           )}
           {isError && (
