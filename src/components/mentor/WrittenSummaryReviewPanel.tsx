@@ -297,6 +297,18 @@ export default function WrittenSummaryReviewPanel({ contentItemId, traineeId, on
           )}
         </>
       )}
+      <SaveAsTemplateDialog
+        open={saveDialogTarget !== null}
+        onOpenChange={(o) => !o && setSaveDialogTarget(null)}
+        panelType="written_summary"
+        initialText={
+          saveDialogTarget === "approve"
+            ? approveComment
+            : saveDialogTarget === "revision"
+              ? revisionComment
+              : ""
+        }
+      />
     </div>
   );
 }
