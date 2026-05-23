@@ -89,17 +89,20 @@ function ClientList({
 }) {
   const [clients, setClients] = useState<ClientInfo[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
 
-  useEffect(() => {
+  const fetchClients = async () => {
     if (!coachUserId) return;
-    (async () => {
-      setLoading(true);
+    setLoading(true);
+    setError(null);
+    try {
       // Get all coach_clients rows for this coach
-      const { data: rows } = await supabase
+      const { data: rows, error: rowsError } = await supabase
         .from("coach_clients")
         .select("client_user_id")
         .eq("coach_user_id", coachUserId);
+      if (rowsError) throw new Error(rowsError.message);
 
       // Deduplicate and filter out null client_user_ids
       const uniqueIds = [
@@ -112,25 +115,56 @@ function ClientList({
 
       if (uniqueIds.length === 0) {
         setClients([]);
-        setLoading(false);
         return;
       }
 
       // Fetch user info for each unique client
-      const { data: users } = await supabase
+      const { data: users, error: usersError } = await supabase
         .from("users")
         .select("id, full_name, email")
         .in("id", uniqueIds);
+      if (usersError) throw new Error(usersError.message);
 
       setClients(users ?? []);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Failed to load clients";
+      setError(msg);
+      setClients([]);
+    } finally {
       setLoading(false);
-    })();
+    }
+  };
+
+  useEffect(() => {
+    fetchClients();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [coachUserId]);
 
   if (loading) {
     return (
       <div className="p-6 max-w-3xl mx-auto flex justify-center py-20">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <Loader2
+          className="h-6 w-6 animate-spin text-muted-foreground"
+          role="status"
+          aria-label="Loading clients"
+        />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-6 max-w-3xl mx-auto">
+        <h1 className="text-2xl font-bold mb-4">Client Results</h1>
+        <div className="flex flex-col items-center justify-center py-12 space-y-3">
+          <AlertCircle className="h-8 w-8 text-destructive" aria-hidden="true" />
+          <p className="text-sm text-muted-foreground text-center">
+            Couldn't load clients: {error}
+          </p>
+          <Button variant="outline" size="sm" onClick={fetchClients}>
+            Retry
+          </Button>
+        </div>
       </div>
     );
   }
@@ -147,7 +181,7 @@ function ClientList({
       <h1 className="text-2xl font-bold mb-4">Client Results</h1>
       {clients.length > 0 && (
         <div className="relative mb-4">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" aria-hidden="true" />
           <Input
             placeholder="Search by name or email…"
             value={search}
@@ -174,7 +208,7 @@ function ClientList({
               onClick={() => onSelect(c.id)}
             >
               <CardContent className="flex items-center gap-3 p-4">
-                <User className="h-5 w-5 text-muted-foreground shrink-0" />
+                <User className="h-5 w-5 text-muted-foreground shrink-0" aria-hidden="true" />
                 <div className="min-w-0">
                   <p className="font-medium truncate">
                     {c.full_name || "Unnamed"}
