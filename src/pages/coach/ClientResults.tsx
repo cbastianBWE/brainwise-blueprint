@@ -493,44 +493,83 @@ function CoachResultsView({
   const navigate = useNavigate();
   const [permissionLevel, setPermissionLevel] = useState<'full_results' | 'score_summary' | null>(null);
   const [permLoading, setPermLoading] = useState(true);
+  const [permError, setPermError] = useState<string | null>(null);
 
-  useEffect(() => {
+  const resolvePermission = async () => {
     if (!userId || !assessmentId || !coachUserId) return;
-    (async () => {
-      setPermLoading(true);
-
+    setPermLoading(true);
+    setPermError(null);
+    try {
       // Check if assessment was ordered through coach flow (match either assessment_id or paired_assessment_id for PTP)
-      const { data: coachClient } = await supabase
+      const { data: coachClient, error: ccError } = await supabase
         .from("coach_clients")
         .select("id")
         .eq("coach_user_id", coachUserId)
         .or(`assessment_id.eq.${assessmentId},paired_assessment_id.eq.${assessmentId}`)
         .maybeSingle();
+      if (ccError) throw new Error(ccError.message);
 
       if (coachClient) {
         setPermissionLevel("full_results");
-        setPermLoading(false);
         return;
       }
 
       // Fallback: check permissions table
-      const { data: perm } = await supabase
+      const { data: perm, error: permErr } = await supabase
         .from("permissions")
         .select("permission_level")
         .eq("owner_user_id", userId)
         .eq("viewer_user_id", coachUserId)
         .maybeSingle();
+      if (permErr) throw new Error(permErr.message);
 
       const level = perm?.permission_level as 'full_results' | 'score_summary' | null;
       setPermissionLevel(level ?? "score_summary");
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Failed to resolve viewing permission";
+      setPermError(msg);
+    } finally {
       setPermLoading(false);
-    })();
+    }
+  };
+
+  useEffect(() => {
+    resolvePermission();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, assessmentId, coachUserId]);
 
   if (permLoading) {
     return (
       <div className="p-6 max-w-5xl mx-auto flex justify-center py-20">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <Loader2
+          className="h-6 w-6 animate-spin text-muted-foreground"
+          role="status"
+          aria-label="Loading client results"
+        />
+      </div>
+    );
+  }
+
+  if (permError) {
+    return (
+      <div className="p-6 max-w-5xl mx-auto">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="mb-4"
+          onClick={() => navigate(-1)}
+        >
+          <ArrowLeft className="h-4 w-4 mr-1" aria-hidden="true" /> Back
+        </Button>
+        <div className="flex flex-col items-center justify-center py-12 space-y-3">
+          <AlertCircle className="h-8 w-8 text-destructive" aria-hidden="true" />
+          <p className="text-sm text-muted-foreground text-center">
+            Couldn't load client results: {permError}
+          </p>
+          <Button variant="outline" size="sm" onClick={resolvePermission}>
+            Retry
+          </Button>
+        </div>
       </div>
     );
   }
@@ -543,7 +582,7 @@ function CoachResultsView({
         className="mb-4"
         onClick={() => navigate(-1)}
       >
-        <ArrowLeft className="h-4 w-4 mr-1" /> Back
+        <ArrowLeft className="h-4 w-4 mr-1" aria-hidden="true" /> Back
       </Button>
       <MyResults
         isCoachView
