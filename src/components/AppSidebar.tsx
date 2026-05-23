@@ -4,7 +4,7 @@ import {
   Users, Users2, Building2, UsersRound, Activity, Heart, Award, UserCircle,
   ShieldCheck, Briefcase, GitBranch, FlaskConical, LogOut, History, Shield,
   CreditCard, Receipt, ChevronDown, ChevronRight, Plus, FileText, Library, Ticket,
-  GraduationCap, Bell,
+  GraduationCap, Bell, Newspaper,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -91,6 +91,7 @@ const superAdminNav: NavItem[] = [
   { title: "Create Organization", url: "/super-admin/create-organization", icon: Plus },
   { title: "Version Management", url: "/super-admin/versions", icon: GitBranch },
   { title: "Content Authoring", url: "/super-admin/content-authoring", icon: Library },
+  { title: "Newsletter", url: "/super-admin/newsletter", icon: Newspaper },
   
   { title: "Resources", url: "/resources", icon: BookOpen },
   { title: "Resource Authoring", url: "/super-admin/resources", icon: Library },
