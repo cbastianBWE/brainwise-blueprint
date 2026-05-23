@@ -240,7 +240,14 @@ export default function WrittenSummaryReviewPanel({ contentItemId, traineeId, on
             <div className="rounded-lg border bg-card p-4 space-y-3">
               <h4 className="text-sm font-semibold">Mentor actions</h4>
               <div className="space-y-2">
+                <FeedbackTemplatePicker
+                  panelType="written_summary"
+                  onInsert={insertIntoApprove}
+                  onSaveAsTemplate={() => setSaveDialogTarget("approve")}
+                  disableSave={approveComment.trim().length === 0}
+                />
                 <Textarea
+                  ref={approveTextareaRef}
                   value={approveComment}
                   onChange={(e) => setApproveComment(e.target.value)}
                   placeholder="Optional comment for approval…"
@@ -263,7 +270,14 @@ export default function WrittenSummaryReviewPanel({ contentItemId, traineeId, on
 
               {showRevisionInput && (
                 <div className="space-y-2 pt-2 border-t">
+                  <FeedbackTemplatePicker
+                    panelType="written_summary"
+                    onInsert={insertIntoRevision}
+                    onSaveAsTemplate={() => setSaveDialogTarget("revision")}
+                    disableSave={revisionComment.trim().length === 0}
+                  />
                   <Textarea
+                    ref={revisionTextareaRef}
                     value={revisionComment}
                     onChange={(e) => setRevisionComment(e.target.value)}
                     placeholder="Explain what the trainee should revise…"
