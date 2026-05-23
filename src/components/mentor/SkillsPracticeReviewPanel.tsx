@@ -7,6 +7,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import FeedbackTemplatePicker from "@/components/mentor/FeedbackTemplatePicker";
+import SaveAsTemplateDialog from "@/components/mentor/SaveAsTemplateDialog";
+import { useInsertAtCursor } from "@/hooks/useInsertAtCursor";
 
 interface Props {
   contentItemId: string;
@@ -47,6 +50,9 @@ export default function SkillsPracticeReviewPanel({ contentItemId, traineeId, on
   const [requestingRevision, setRequestingRevision] = useState(false);
   const [showRevisionInput, setShowRevisionInput] = useState(false);
   const [revisionComment, setRevisionComment] = useState("");
+  const revisionTextareaRef = useRef<HTMLTextAreaElement>(null);
+  const insertIntoRevision = useInsertAtCursor(revisionTextareaRef, revisionComment, setRevisionComment);
+  const [saveDialogOpen, setSaveDialogOpen] = useState(false);
 
   const detailQuery = useQuery({
     queryKey: ["get_content_item_for_viewer", contentItemId, traineeId],
@@ -339,7 +345,14 @@ export default function SkillsPracticeReviewPanel({ contentItemId, traineeId, on
 
         {showRevisionInput && !mentorSigned && (
           <div className="space-y-2">
+            <FeedbackTemplatePicker
+              panelType="skills_practice"
+              onInsert={insertIntoRevision}
+              onSaveAsTemplate={() => setSaveDialogOpen(true)}
+              disableSave={revisionComment.trim().length === 0}
+            />
             <Textarea
+              ref={revisionTextareaRef}
               value={revisionComment}
               onChange={(e) => setRevisionComment(e.target.value)}
               placeholder="Explain what the trainee should revise…"
@@ -406,6 +419,12 @@ export default function SkillsPracticeReviewPanel({ contentItemId, traineeId, on
           accept="image/*,video/mp4,video/webm,video/quicktime,application/pdf,.docx,.xlsx,.pptx"
         />
       </div>
+      <SaveAsTemplateDialog
+        open={saveDialogOpen}
+        onOpenChange={setSaveDialogOpen}
+        panelType="skills_practice"
+        initialText={revisionComment}
+      />
     </div>
   );
 }

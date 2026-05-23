@@ -62,6 +62,7 @@ import CoachProfile from "./pages/coach/CoachProfile";
 
 import MentorPortal from "./pages/mentor/MentorPortal";
 import MentorTraineeDetail from "./pages/mentor/MentorTraineeDetail";
+import FeedbackTemplates from "./pages/mentor/FeedbackTemplates";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminTeams from "./pages/admin/AdminTeams";
 import AdminResources from "./pages/admin/AdminResources";
@@ -179,6 +180,7 @@ const App = () => (
               <Route path="/coach/certification" element={<PractitionerCoachGuard><CertificationPage /></PractitionerCoachGuard>} />
               <Route path="/mentor" element={<MentorGuard><MentorPortal /></MentorGuard>} />
               <Route path="/mentor/trainee/:traineeId" element={<MentorGuard><MentorTraineeDetail /></MentorGuard>} />
+              <Route path="/mentor/feedback-templates" element={<MentorGuard><FeedbackTemplates /></MentorGuard>} />
 
               {/* Admin */}
               <Route path="/admin/users" element={<RoleGuard allowedRoles={["company_admin", "org_admin"]}><AdminUsers /></RoleGuard>} />

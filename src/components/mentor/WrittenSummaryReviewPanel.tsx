@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,6 +7,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useToast } from "@/hooks/use-toast";
+import FeedbackTemplatePicker from "@/components/mentor/FeedbackTemplatePicker";
+import SaveAsTemplateDialog from "@/components/mentor/SaveAsTemplateDialog";
+import { useInsertAtCursor } from "@/hooks/useInsertAtCursor";
 
 type WrittenSubmission = {
   id: string;
@@ -43,6 +46,11 @@ export default function WrittenSummaryReviewPanel({ contentItemId, traineeId, on
   const [showRevisionInput, setShowRevisionInput] = useState(false);
   const [approving, setApproving] = useState(false);
   const [requesting, setRequesting] = useState(false);
+  const approveTextareaRef = useRef<HTMLTextAreaElement>(null);
+  const revisionTextareaRef = useRef<HTMLTextAreaElement>(null);
+  const insertIntoApprove = useInsertAtCursor(approveTextareaRef, approveComment, setApproveComment);
+  const insertIntoRevision = useInsertAtCursor(revisionTextareaRef, revisionComment, setRevisionComment);
+  const [saveDialogTarget, setSaveDialogTarget] = useState<"approve" | "revision" | null>(null);
 
   const detailQuery = useQuery({
     queryKey: ["get_content_item_for_viewer", contentItemId, traineeId],
@@ -232,7 +240,14 @@ export default function WrittenSummaryReviewPanel({ contentItemId, traineeId, on
             <div className="rounded-lg border bg-card p-4 space-y-3">
               <h4 className="text-sm font-semibold">Mentor actions</h4>
               <div className="space-y-2">
+                <FeedbackTemplatePicker
+                  panelType="written_summary"
+                  onInsert={insertIntoApprove}
+                  onSaveAsTemplate={() => setSaveDialogTarget("approve")}
+                  disableSave={approveComment.trim().length === 0}
+                />
                 <Textarea
+                  ref={approveTextareaRef}
                   value={approveComment}
                   onChange={(e) => setApproveComment(e.target.value)}
                   placeholder="Optional comment for approval…"
@@ -255,7 +270,14 @@ export default function WrittenSummaryReviewPanel({ contentItemId, traineeId, on
 
               {showRevisionInput && (
                 <div className="space-y-2 pt-2 border-t">
+                  <FeedbackTemplatePicker
+                    panelType="written_summary"
+                    onInsert={insertIntoRevision}
+                    onSaveAsTemplate={() => setSaveDialogTarget("revision")}
+                    disableSave={revisionComment.trim().length === 0}
+                  />
                   <Textarea
+                    ref={revisionTextareaRef}
                     value={revisionComment}
                     onChange={(e) => setRevisionComment(e.target.value)}
                     placeholder="Explain what the trainee should revise…"
@@ -275,6 +297,18 @@ export default function WrittenSummaryReviewPanel({ contentItemId, traineeId, on
           )}
         </>
       )}
+      <SaveAsTemplateDialog
+        open={saveDialogTarget !== null}
+        onOpenChange={(o) => !o && setSaveDialogTarget(null)}
+        panelType="written_summary"
+        initialText={
+          saveDialogTarget === "approve"
+            ? approveComment
+            : saveDialogTarget === "revision"
+              ? revisionComment
+              : ""
+        }
+      />
     </div>
   );
 }
