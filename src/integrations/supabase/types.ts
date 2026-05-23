@@ -10325,6 +10325,16 @@ export type Database = {
       is_impersonating: { Args: never; Returns: boolean }
       is_impersonating_act: { Args: never; Returns: boolean }
       is_internal_user: { Args: { p_user_id: string }; Returns: boolean }
+      list_admin_newsletter_articles: {
+        Args: {
+          p_gate_filter?: string
+          p_limit?: number
+          p_offset?: number
+          p_search?: string
+          p_status_filter?: string
+        }
+        Returns: Json
+      }
       list_ai_authoring_session_documents: {
         Args: { p_content_item_id: string }
         Returns: {
@@ -10341,12 +10351,7 @@ export type Database = {
       list_all_learning_assignments: { Args: never; Returns: Json }
       list_article_versions: { Args: { p_article_id: string }; Returns: Json }
       list_articles_for_archive: {
-        Args: {
-          p_category_id?: string
-          p_gate_filter?: string
-          p_limit?: number
-          p_offset?: number
-        }
+        Args: { p_gate_filter?: string; p_limit?: number; p_offset?: number }
         Returns: Json
       }
       list_audit_events: {
@@ -10715,6 +10720,7 @@ export type Database = {
           p_library_tags?: string[]
           p_mime_type: string
           p_module_id?: string
+          p_newsletter_article_id?: string
           p_original_filename: string
           p_reason: string
           p_ref_field?: string
