@@ -143,14 +143,21 @@ export default function MentorTraineeDetail() {
         </CardHeader>
         <CardContent>
           {stateQuery.isLoading ? (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground py-8 justify-center">
-              <Loader2 className="h-4 w-4 animate-spin" />
+            <div
+              role="status"
+              className="flex items-center gap-2 text-sm text-muted-foreground py-8 justify-center"
+            >
+              <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin" />
               Loading progress…
             </div>
           ) : stateQuery.error ? (
-            <div className="text-sm text-destructive py-8 text-center">
-              Failed to load trainee progress.
+            <div className="py-8 text-center space-y-3">
+              <p className="text-sm text-destructive">Failed to load trainee progress.</p>
+              <Button variant="outline" size="sm" onClick={() => stateQuery.refetch()}>
+                Retry
+              </Button>
             </div>
+
           ) : (
             <MentorProgressTree
               learningState={stateQuery.data}
