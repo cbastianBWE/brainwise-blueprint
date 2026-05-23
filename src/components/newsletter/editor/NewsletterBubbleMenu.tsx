@@ -12,7 +12,8 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { type Editor } from "@tiptap/react";
-import { BubbleMenu as BubbleMenuExt } from "@tiptap/extension-bubble-menu";
+import { BubbleMenuPlugin } from "@tiptap/extension-bubble-menu";
+import { PluginKey } from "@tiptap/pm/state";
 import {
   Bold as BoldIcon,
   Italic as ItalicIcon,
