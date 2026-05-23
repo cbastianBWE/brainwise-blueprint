@@ -172,12 +172,14 @@ export default function MentorPortal() {
               <Badge
                 className={cn(
                   totalPending > 0
-                    ? "bg-amber-100 text-amber-900 hover:bg-amber-100 border-transparent dark:bg-amber-900/30 dark:text-amber-200"
+                    ? "border-transparent"
                     : "bg-muted text-muted-foreground hover:bg-muted border-transparent",
                 )}
+                style={totalPending > 0 ? pendingActionPillStyle : undefined}
               >
                 {totalPending} pending action{totalPending === 1 ? "" : "s"}
               </Badge>
+
             </div>
           </div>
         </CardHeader>
