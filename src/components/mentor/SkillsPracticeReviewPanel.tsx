@@ -244,9 +244,10 @@ export default function SkillsPracticeReviewPanel({ contentItemId, traineeId, on
             <h4 className="text-sm font-semibold">Trainee attachment</h4>
           </div>
           {traineeAttachmentQuery.isLoading ? (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin" /> Loading…
+            <div role="status" className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin" /> Loading…
             </div>
+
           ) : traineeAttachmentQuery.data ? (
             <>
               {isImage(traineeMime) && (
