@@ -387,44 +387,66 @@ export default function CoachInvoices() {
         <CardContent className="p-0">
           {loading ? (
             <div className="flex justify-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+              <Loader2
+                className="h-8 w-8 animate-spin text-muted-foreground"
+                role="status"
+                aria-label="Loading transactions"
+              />
             </div>
+          ) : error ? (
+            <div className="flex flex-col items-center justify-center py-12 space-y-3">
+              <AlertCircle className="h-8 w-8 text-destructive" aria-hidden="true" />
+              <p className="text-sm text-muted-foreground text-center">
+                Couldn't load transactions: {error}
+              </p>
+              <Button variant="outline" size="sm" onClick={fetchTransactions}>
+                Retry
+              </Button>
+            </div>
+          ) : transactions.length === 0 ? (
+            <p className="text-center text-muted-foreground py-12">
+              No transactions yet. Orders you place for clients will appear here.
+            </p>
           ) : filtered.length === 0 ? (
-            <p className="text-center text-muted-foreground py-12">No transactions found.</p>
+            <p className="text-center text-muted-foreground py-12">
+              No transactions match your filters.
+            </p>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Client</TableHead>
-                  <TableHead>Assessments</TableHead>
-                  <TableHead>Amount</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filtered.map((tx) => (
-                  <TableRow key={tx.payment_intent_id}>
-                    <TableCell>{format(parseISO(tx.created_at), "MMM d, yyyy")}</TableCell>
-                    <TableCell>{tx.client_name}</TableCell>
-                    <TableCell className="max-w-[200px] truncate">{tx.instruments.join(", ")}</TableCell>
-                    <TableCell>${tx.total_amount.toFixed(2)}</TableCell>
-                    <TableCell>{statusBadge(tx.status)}</TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        <Button variant="ghost" size="sm" onClick={() => setReceiptTx(tx)} className="gap-1">
-                          <FileText className="h-4 w-4" /> View Receipt
-                        </Button>
-                        <Button variant="ghost" size="sm" onClick={() => exportSinglePdf(tx)} className="gap-1">
-                          <Download className="h-4 w-4" /> Export PDF
-                        </Button>
-                      </div>
-                    </TableCell>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Client</TableHead>
+                    <TableHead>Assessments</TableHead>
+                    <TableHead>Amount</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {filtered.map((tx) => (
+                    <TableRow key={tx.payment_intent_id}>
+                      <TableCell>{format(parseISO(tx.created_at), "MMM d, yyyy")}</TableCell>
+                      <TableCell>{tx.client_name}</TableCell>
+                      <TableCell className="max-w-[200px] truncate">{tx.instruments.join(", ")}</TableCell>
+                      <TableCell>${tx.total_amount.toFixed(2)}</TableCell>
+                      <TableCell>{statusBadge(tx.status)}</TableCell>
+                      <TableCell>
+                        <div className="flex gap-2">
+                          <Button variant="ghost" size="sm" onClick={() => setReceiptTx(tx)} className="gap-1">
+                            <FileText className="h-4 w-4" aria-hidden="true" /> View Receipt
+                          </Button>
+                          <Button variant="ghost" size="sm" onClick={() => exportSinglePdf(tx)} className="gap-1">
+                            <Download className="h-4 w-4" aria-hidden="true" /> Export PDF
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>
