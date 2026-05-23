@@ -242,18 +242,20 @@ function AssessmentList({
   const [assessments, setAssessments] = useState<AssessmentInfo[]>([]);
   const [clientName, setClientName] = useState("");
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+  const fetchAssessments = async () => {
     if (!clientUserId || !coachUserId) return;
-    (async () => {
-      setLoading(true);
-
+    setLoading(true);
+    setError(null);
+    try {
       // Fetch client info + share preference
-      const { data: clientData } = await supabase
+      const { data: clientData, error: clientErr } = await supabase
         .from("users")
         .select("full_name, share_results_with_coach")
         .eq("id", clientUserId)
         .single();
+      if (clientErr) throw new Error(clientErr.message);
 
       setClientName(clientData?.full_name || "Client");
       const shareWithCoach = clientData?.share_results_with_coach ?? false;
@@ -262,19 +264,21 @@ function AssessmentList({
 
       if (shareWithCoach) {
         // Show all completed results
-        const { data } = await supabase
+        const { data, error: arErr } = await supabase
           .from("assessment_results")
           .select("assessment_id, instrument_id, created_at")
           .eq("user_id", clientUserId)
           .order("created_at", { ascending: false });
+        if (arErr) throw new Error(arErr.message);
         resultRows = data ?? [];
       } else {
         // Only show results linked via coach_clients (include paired_assessment_id for PTP)
-        const { data: linked } = await supabase
+        const { data: linked, error: linkedErr } = await supabase
           .from("coach_clients")
           .select("assessment_id, paired_assessment_id")
           .eq("coach_user_id", coachUserId)
           .eq("client_user_id", clientUserId);
+        if (linkedErr) throw new Error(linkedErr.message);
 
         const linkedIds = [
           ...new Set(
@@ -285,12 +289,13 @@ function AssessmentList({
         ];
 
         if (linkedIds.length > 0) {
-          const { data } = await supabase
+          const { data, error: arErr2 } = await supabase
             .from("assessment_results")
             .select("assessment_id, instrument_id, created_at")
             .eq("user_id", clientUserId)
             .in("assessment_id", linkedIds)
             .order("created_at", { ascending: false });
+          if (arErr2) throw new Error(arErr2.message);
           resultRows = data ?? [];
         }
       }
@@ -301,10 +306,11 @@ function AssessmentList({
       ];
       let instrumentMap: Record<string, string> = {};
       if (instrumentIds.length > 0) {
-        const { data: instruments } = await supabase
+        const { data: instruments, error: instErr } = await supabase
           .from("instruments")
           .select("instrument_id, instrument_name")
           .in("instrument_id", instrumentIds as string[]);
+        if (instErr) throw new Error(instErr.message);
         instrumentMap = Object.fromEntries(
           (instruments ?? []).map((i) => [i.instrument_id, i.instrument_name])
         );
@@ -313,10 +319,11 @@ function AssessmentList({
       const fetchedAssessmentIds = resultRows.map((r) => r.assessment_id);
       let assessmentMeta: Record<string, { context_type: string | null; paired_assessment_id: string | null }> = {};
       if (fetchedAssessmentIds.length > 0) {
-        const { data: aRows } = await supabase
+        const { data: aRows, error: aErr } = await supabase
           .from("assessments")
           .select("id, context_type, paired_assessment_id")
           .in("id", fetchedAssessmentIds);
+        if (aErr) throw new Error(aErr.message);
         assessmentMeta = Object.fromEntries(
           (aRows ?? []).map((a) => [a.id, { context_type: a.context_type ?? null, paired_assessment_id: a.paired_assessment_id ?? null }])
         );
@@ -384,14 +391,47 @@ function AssessmentList({
       grouped.sort((a, b) => new Date(b.completed_at).getTime() - new Date(a.completed_at).getTime());
 
       setAssessments(grouped);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Failed to load assessments";
+      setError(msg);
+      setAssessments([]);
+    } finally {
       setLoading(false);
-    })();
+    }
+  };
+
+  useEffect(() => {
+    fetchAssessments();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clientUserId, coachUserId]);
 
   if (loading) {
     return (
       <div className="p-6 max-w-3xl mx-auto flex justify-center py-20">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <Loader2
+          className="h-6 w-6 animate-spin text-muted-foreground"
+          role="status"
+          aria-label="Loading assessments"
+        />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-6 max-w-3xl mx-auto">
+        <Button variant="ghost" size="sm" className="mb-4" onClick={onBack}>
+          <ArrowLeft className="h-4 w-4 mr-1" aria-hidden="true" /> Back to clients
+        </Button>
+        <div className="flex flex-col items-center justify-center py-12 space-y-3">
+          <AlertCircle className="h-8 w-8 text-destructive" aria-hidden="true" />
+          <p className="text-sm text-muted-foreground text-center">
+            Couldn't load assessments: {error}
+          </p>
+          <Button variant="outline" size="sm" onClick={fetchAssessments}>
+            Retry
+          </Button>
+        </div>
       </div>
     );
   }
