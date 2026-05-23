@@ -164,9 +164,8 @@ export default function Podcast() {
                 style={{
                   fontFamily: "'Poppins', sans-serif",
                   fontWeight: 700,
-                  fontSize: 12,
-                  letterSpacing: "0.22em",
-                  textTransform: "uppercase",
+                  fontSize: 13,
+                  letterSpacing: "0.02em",
                   color: "var(--bw-orange)",
                   marginTop: 24,
                 }}

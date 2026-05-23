@@ -27,12 +27,11 @@ export const LISTEN_PLATFORMS: ListenPlatform[] = [
   { name: "Pandora",        href: "https://www.pandora.com/podcast/my-brainwise-coach/PC:1001110015",     tier: "secondary" },
   { name: "Castbox",        href: "https://castbox.fm/channel/id6664240",                                 tier: "secondary" },
   { name: "Deezer",         href: "https://www.deezer.com/us/show/1002290202",                            tier: "secondary" },
-  { name: "RSS Feed",       href: "https://anchor.fm/s/106acb1cc/podcast/rss",                            tier: "secondary" },
 ];
 
 export const podcastMeta = {
   /** Tagline shown below the title in the hero. */
-  tagline: "Stay curious. Stay compassionate. Stay BrainWise.",
+  tagline: "Stay Curious. Stay Compassionate. Stay BrainWise.",
   /** Pagination size for the archive grid. */
   episodesPerPage: 12,
   /** Hosts string for SEO + page footer credit (RSS author field is "My BrainWise Coach", not the host names). */
