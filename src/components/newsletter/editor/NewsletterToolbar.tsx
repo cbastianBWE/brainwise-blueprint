@@ -49,6 +49,13 @@ export function NewsletterToolbar({
 }: NewsletterToolbarProps) {
 
   const fileRef = useRef<HTMLInputElement | null>(null);
+  useEffect(() => {
+    if (!imageInputRef) return;
+    imageInputRef.current = { open: () => fileRef.current?.click() };
+    return () => {
+      if (imageInputRef) imageInputRef.current = null;
+    };
+  }, [imageInputRef]);
   const [linkOpen, setLinkOpen] = useState(false);
   const [linkUrl, setLinkUrl] = useState("");
   const [uploading, setUploading] = useState(false);
