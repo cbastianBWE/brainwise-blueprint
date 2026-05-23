@@ -46,6 +46,11 @@ export default function WrittenSummaryReviewPanel({ contentItemId, traineeId, on
   const [showRevisionInput, setShowRevisionInput] = useState(false);
   const [approving, setApproving] = useState(false);
   const [requesting, setRequesting] = useState(false);
+  const approveTextareaRef = useRef<HTMLTextAreaElement>(null);
+  const revisionTextareaRef = useRef<HTMLTextAreaElement>(null);
+  const insertIntoApprove = useInsertAtCursor(approveTextareaRef, approveComment, setApproveComment);
+  const insertIntoRevision = useInsertAtCursor(revisionTextareaRef, revisionComment, setRevisionComment);
+  const [saveDialogTarget, setSaveDialogTarget] = useState<"approve" | "revision" | null>(null);
 
   const detailQuery = useQuery({
     queryKey: ["get_content_item_for_viewer", contentItemId, traineeId],
