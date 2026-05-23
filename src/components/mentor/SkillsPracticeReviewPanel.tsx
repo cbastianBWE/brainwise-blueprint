@@ -324,7 +324,7 @@ export default function SkillsPracticeReviewPanel({ contentItemId, traineeId, on
         ) : (
           <div className="flex flex-wrap gap-2">
             <Button onClick={handleSignOff} disabled={signingOff || requestingRevision}>
-              {signingOff && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              {signingOff && <Loader2 aria-hidden="true" className="h-4 w-4 mr-2 animate-spin" />}
               Sign Off
             </Button>
             <Button
