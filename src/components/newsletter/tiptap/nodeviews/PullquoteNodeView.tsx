@@ -44,7 +44,7 @@ export function PullquoteNodeView({
         <GripVertical className="h-4 w-4 text-[var(--fg-4)]" />
       </div>
 
-      <p
+      <NodeViewContent
         className="newsletter-pullquote__text"
         style={{
           fontFamily: "var(--font-display)",
@@ -53,9 +53,8 @@ export function PullquoteNodeView({
           lineHeight: 1.35,
           color: "var(--bw-navy)",
         }}
-      >
-        <NodeViewContent />
-      </p>
+      />
+
 
       {attribution || focused ? (
         <input
