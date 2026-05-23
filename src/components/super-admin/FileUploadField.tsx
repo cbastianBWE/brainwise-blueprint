@@ -364,7 +364,7 @@ export function FileUploadField({
 
     setState({ kind: "uploaded", assetId: asset_id });
     onChange(asset_id);
-  }, [assetKind, config, contentItemId, lessonBlockId, moduleId, curriculumId, certificationPathId, resourceId, refField, isLibraryAsset, libraryName, libraryTags, reasonOverride, onChange]);
+  }, [assetKind, config, contentItemId, lessonBlockId, moduleId, curriculumId, certificationPathId, resourceId, newsletterArticleId, refField, isLibraryAsset, libraryName, libraryTags, reasonOverride, onChange]);
 
   const handleReplaceUpload = useCallback(async (file: File) => {
     const oldId = value;
