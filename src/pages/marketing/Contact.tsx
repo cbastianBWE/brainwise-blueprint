@@ -5,6 +5,7 @@ import MarketingNav from "@/components/marketing/MarketingNav";
 import MarketingFooter from "@/components/marketing/MarketingFooter";
 import MarketingButton from "@/components/marketing/MarketingButton";
 import Eyebrow from "@/components/marketing/Eyebrow";
+import SocialLinks from "@/components/marketing/SocialLinks";
 
 const inquiryOptions = [
   { value: "general", label: "General" },
@@ -340,6 +341,29 @@ export default function Contact() {
                 )}
               </form>
             )}
+          </div>
+          {/* Social links — quieter alternative to the form */}
+          <div
+            style={{
+              marginTop: 24,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 16,
+              flexWrap: "wrap",
+            }}
+          >
+            <span
+              style={{
+                fontFamily: "'Montserrat', sans-serif",
+                fontWeight: 500,
+                fontSize: 13,
+                color: "var(--bw-slate)",
+              }}
+            >
+              Or find us on social
+            </span>
+            <SocialLinks variant="onLight" ariaLabel="BrainWise social media" />
           </div>
         </div>
       </section>
