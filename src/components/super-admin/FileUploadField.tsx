@@ -174,6 +174,7 @@ export function FileUploadField({
   curriculumId,
   certificationPathId,
   resourceId,
+  newsletterArticleId,
   isLibraryAsset,
   refField,
   libraryName,
