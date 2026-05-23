@@ -9412,6 +9412,10 @@ export type Database = {
         Args: { p_certification_id: string }
         Returns: Json
       }
+      archive_article: {
+        Args: { p_article_id: string; p_reason: string }
+        Returns: Json
+      }
       archive_asset_manual: {
         Args: { p_asset_id: string; p_force?: boolean; p_reason: string }
         Returns: Json
@@ -9618,6 +9622,10 @@ export type Database = {
         Returns: number
       }
       cancel_individual_conversion: { Args: never; Returns: Json }
+      cancel_scheduled_article: {
+        Args: { p_article_id: string; p_reason: string }
+        Returns: Json
+      }
       cancel_scheduled_assignment: { Args: { p_id: string }; Returns: Json }
       check_mfa_freshness: {
         Args: { p_max_age_seconds?: number; p_session_id: string }
@@ -10551,6 +10559,10 @@ export type Database = {
         Args: { p_reason?: string; p_user_id: string }
         Returns: number
       }
+      publish_article: {
+        Args: { p_article_id: string; p_reason: string }
+        Returns: Json
+      }
       reap_pending_uploads: { Args: never; Returns: Json }
       reconcile_supervisors_for_org: {
         Args: { p_organization_id: string }
@@ -10665,6 +10677,10 @@ export type Database = {
       }
       save_skills_trainee_input: {
         Args: { p_content_item_id: string; p_text: string }
+        Returns: Json
+      }
+      schedule_article: {
+        Args: { p_article_id: string; p_publish_at: string; p_reason: string }
         Returns: Json
       }
       search_impersonation_targets: {
@@ -10909,6 +10925,10 @@ export type Database = {
       }
       unassign_module_bulk: {
         Args: { p_assignment_ids: string[]; p_reason: string }
+        Returns: Json
+      }
+      unpublish_article: {
+        Args: { p_article_id: string; p_reason: string }
         Returns: Json
       }
       update_chat_session: {
