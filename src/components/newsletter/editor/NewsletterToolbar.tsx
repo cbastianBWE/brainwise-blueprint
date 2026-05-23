@@ -39,6 +39,8 @@ interface NewsletterToolbarProps {
   imageInputRef?: React.MutableRefObject<{ open: () => void } | null>;
 }
 
+type BlockKey = "paragraph" | "h2" | "h3" | "h4";
+
 export function NewsletterToolbar({
   editor,
   articleId,
@@ -46,14 +48,6 @@ export function NewsletterToolbar({
   imageInputRef,
 }: NewsletterToolbarProps) {
 
-
-type BlockKey = "paragraph" | "h2" | "h3" | "h4";
-
-export function NewsletterToolbar({
-  editor,
-  articleId,
-  disabled,
-}: NewsletterToolbarProps) {
   const fileRef = useRef<HTMLInputElement | null>(null);
   const [linkOpen, setLinkOpen] = useState(false);
   const [linkUrl, setLinkUrl] = useState("");
