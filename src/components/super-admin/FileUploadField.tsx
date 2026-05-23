@@ -48,6 +48,7 @@ interface FileUploadFieldProps {
   curriculumId?: string | null;
   certificationPathId?: string | null;
   resourceId?: string | null;
+  newsletterArticleId?: string | null;
   isLibraryAsset?: boolean;
   refField?: string | null;
   libraryName?: string | null;
