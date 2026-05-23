@@ -125,8 +125,20 @@ export function NotificationDropdown({ open, onClose }: Props) {
             <div
               key={n.id}
               onClick={() => handleRowClick(n)}
+              role={clickable ? "button" : undefined}
+              tabIndex={clickable ? 0 : undefined}
+              onKeyDown={
+                clickable
+                  ? (e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        handleRowClick(n);
+                      }
+                    }
+                  : undefined
+              }
               className={`px-4 py-3 border-b last:border-b-0 flex gap-3 ${
-                clickable ? "cursor-pointer hover:bg-accent" : ""
+                clickable ? "cursor-pointer hover:bg-accent focus:bg-accent" : ""
               } ${wasUnread ? "bg-primary/5" : ""}`}
             >
               <div className="pt-1.5">
