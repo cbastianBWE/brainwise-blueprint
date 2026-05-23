@@ -223,13 +223,3 @@ export default function MentorTraineeDetail() {
     </div>
   );
 }
-        open={drawer !== null}
-        onOpenChange={(o) => !o && setDrawer(null)}
-        contentItemId={drawer?.contentItemId ?? null}
-        itemType={drawer?.itemType ?? null}
-        traineeId={traineeId ?? null}
-        onActionComplete={handleActionComplete}
-      />
-    </div>
-  );
-}
