@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import {
-  Users, ClipboardCheck, Clock, Plus, Send, Eye, Mail, ArrowLeft, ChevronDown,
+  Users, ClipboardCheck, Clock, Plus, Send, Eye, Mail, ArrowLeft, ChevronDown, Loader2, AlertCircle,
 } from "lucide-react";
 import { format } from "date-fns";
 import BulkInviteModal from "@/components/coach/BulkInviteModal";
