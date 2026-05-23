@@ -22,20 +22,34 @@ const CERT_LABELS: Record<string, string> = {
   my_brainwise_coach: "My BrainWise Coach",
 };
 
-function statusBadgeClass(status: string | null | undefined): string {
+function statusBadgeClass(_status: string | null | undefined): string {
+  return "border-transparent";
+}
+
+function statusBadgeStyle(status: string | null | undefined): React.CSSProperties | undefined {
   switch (status) {
     case "in_progress":
-      return "bg-amber-100 text-amber-900 hover:bg-amber-100 border-transparent dark:bg-amber-900/30 dark:text-amber-200";
-    case "completed":
-      return "bg-emerald-100 text-emerald-900 hover:bg-emerald-100 border-transparent dark:bg-emerald-900/30 dark:text-emerald-200";
-    case "certified":
-      return "bg-purple-100 text-purple-900 hover:bg-purple-100 border-transparent dark:bg-purple-900/30 dark:text-purple-200";
     case "revision_requested":
-      return "bg-orange-100 text-orange-900 hover:bg-orange-100 border-transparent dark:bg-orange-900/30 dark:text-orange-200";
+      return {
+        backgroundColor: "color-mix(in oklab, var(--bw-amber) 18%, white)",
+        color: "var(--bw-mustard)",
+      };
+    case "completed":
+    case "certified":
+      return {
+        backgroundColor: "color-mix(in oklab, var(--bw-forest) 12%, white)",
+        color: "var(--bw-forest)",
+      };
+    case "revoked":
+      return {
+        backgroundColor: "color-mix(in oklab, hsl(var(--destructive)) 12%, white)",
+        color: "hsl(var(--destructive))",
+      };
     default:
-      return "bg-muted text-muted-foreground hover:bg-muted border-transparent";
+      return undefined;
   }
 }
+
 
 function prettyStatus(s: string | null | undefined): string {
   if (!s) return "Not started";
