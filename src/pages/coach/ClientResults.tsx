@@ -457,7 +457,7 @@ function AssessmentList({
               onClick={() => onSelect(a.assessment_id)}
             >
               <CardContent className="flex items-center gap-3 p-4">
-                <FileText className="h-5 w-5 text-muted-foreground shrink-0" />
+                <FileText className="h-5 w-5 text-muted-foreground shrink-0" aria-hidden="true" />
                 <div className="min-w-0">
                   <p className="font-medium truncate">{a.instrument_name}</p>
                   <p className="text-sm text-muted-foreground">
