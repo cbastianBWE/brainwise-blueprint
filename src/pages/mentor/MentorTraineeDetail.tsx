@@ -6,8 +6,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import MentorProgressTree from "@/components/mentor/MentorProgressTree";
+import MentorTraineeCumulativeProgress from "@/components/mentor/MentorTraineeCumulativeProgress";
+import MentorTraineeNotesPanel from "@/components/mentor/MentorTraineeNotesPanel";
 import ReviewDrawer from "@/components/mentor/ReviewDrawer";
 
 interface DrawerState {
@@ -61,6 +64,7 @@ export default function MentorTraineeDetail() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [drawer, setDrawer] = useState<DrawerState | null>(null);
+  const [activeTab, setActiveTab] = useState<"progress" | "summary" | "notes">("progress");
 
   const handleActionComplete = () => {
     if (!drawer || !traineeId) return;
@@ -100,6 +104,11 @@ export default function MentorTraineeDetail() {
   const certifications: any[] = Array.isArray(stateQuery.data?.certifications)
     ? stateQuery.data.certifications
     : [];
+
+  const mentorRelationships: any[] = Array.isArray(stateQuery.data?.mentor_relationships)
+    ? stateQuery.data.mentor_relationships
+    : [];
+
 
   return (
     <div className="container mx-auto px-4 py-8 space-y-6">
@@ -141,31 +150,67 @@ export default function MentorTraineeDetail() {
             )}
           </div>
         </CardHeader>
-        <CardContent>
-          {stateQuery.isLoading ? (
-            <div
-              role="status"
-              className="flex items-center gap-2 text-sm text-muted-foreground py-8 justify-center"
-            >
-              <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin" />
-              Loading progress…
-            </div>
-          ) : stateQuery.error ? (
-            <div className="py-8 text-center space-y-3">
-              <p className="text-sm text-destructive">Failed to load trainee progress.</p>
-              <Button variant="outline" size="sm" onClick={() => stateQuery.refetch()}>
-                Retry
-              </Button>
-            </div>
-
-          ) : (
-            <MentorProgressTree
-              learningState={stateQuery.data}
-              onItemClick={(contentItemId, itemType) => setDrawer({ contentItemId, itemType })}
-            />
-          )}
-        </CardContent>
       </Card>
+
+      {stateQuery.isLoading ? (
+        <div
+          role="status"
+          className="flex items-center gap-2 text-sm text-muted-foreground py-8 justify-center"
+        >
+          <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin" />
+          Loading progress…
+        </div>
+      ) : stateQuery.error ? (
+        <div className="py-8 text-center space-y-3">
+          <p className="text-sm text-destructive">Failed to load trainee progress.</p>
+          <Button variant="outline" size="sm" onClick={() => stateQuery.refetch()}>
+            Retry
+          </Button>
+        </div>
+      ) : (
+        <Tabs
+          value={activeTab}
+          onValueChange={(v) => setActiveTab(v as "progress" | "summary" | "notes")}
+        >
+          <TabsList>
+            <TabsTrigger value="progress">Progress</TabsTrigger>
+            <TabsTrigger value="summary">Summary</TabsTrigger>
+            <TabsTrigger value="notes">Notes</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="progress">
+            <Card>
+              <CardContent className="pt-6">
+                <MentorProgressTree
+                  learningState={stateQuery.data}
+                  onItemClick={(contentItemId, itemType) =>
+                    setDrawer({ contentItemId, itemType })
+                  }
+                />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="summary">
+            <Card>
+              <CardContent className="pt-6">
+                <MentorTraineeCumulativeProgress learningState={stateQuery.data} />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="notes">
+            <Card>
+              <CardContent className="pt-6">
+                <MentorTraineeNotesPanel
+                  traineeId={traineeId ?? ""}
+                  mentorRelationships={mentorRelationships}
+                />
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      )}
 
       <ReviewDrawer
         open={drawer !== null}
