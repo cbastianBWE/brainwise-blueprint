@@ -91,6 +91,7 @@ const superAdminNav: NavItem[] = [
   { title: "Create Organization", url: "/super-admin/create-organization", icon: Plus },
   { title: "Version Management", url: "/super-admin/versions", icon: GitBranch },
   { title: "Content Authoring", url: "/super-admin/content-authoring", icon: Library },
+  { title: "Newsletter", url: "/super-admin/newsletter", icon: Newspaper },
   
   { title: "Resources", url: "/resources", icon: BookOpen },
   { title: "Resource Authoring", url: "/super-admin/resources", icon: Library },
