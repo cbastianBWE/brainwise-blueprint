@@ -89,6 +89,7 @@ export function NotificationDropdown({ open, onClose }: Props) {
         <button
           type="button"
           onClick={handleMarkAllRead}
+          aria-label="Mark all notifications as read"
           className="text-xs text-muted-foreground hover:text-foreground"
         >
           Mark all read
