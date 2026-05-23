@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,6 +7,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useToast } from "@/hooks/use-toast";
+import FeedbackTemplatePicker from "@/components/mentor/FeedbackTemplatePicker";
+import SaveAsTemplateDialog from "@/components/mentor/SaveAsTemplateDialog";
+import { useInsertAtCursor } from "@/hooks/useInsertAtCursor";
 
 type WrittenSubmission = {
   id: string;
