@@ -343,7 +343,7 @@ export default function CoachInvoices() {
       {/* Export buttons */}
       <div className="flex flex-wrap gap-3">
         <Button variant="outline" onClick={() => generatePdf(filtered, search || instrumentFilter !== "all" ? "Filtered results" : undefined)} className="gap-2">
-          <Download className="h-4 w-4" /> Export All as PDF
+          <Download className="h-4 w-4" aria-hidden="true" /> Export All as PDF
         </Button>
         <div className="flex gap-2 items-center">
           <Select value={exportClient} onValueChange={setExportClient}>
