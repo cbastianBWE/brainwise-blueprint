@@ -130,9 +130,11 @@ export default function MentorTraineeDetail() {
                     <Badge
                       key={c.certification_id ?? label}
                       className={cn("text-xs", statusBadgeClass(c?.status))}
+                      style={statusBadgeStyle(c?.status)}
                     >
                       {label}: {prettyStatus(c?.status)}
                     </Badge>
+
                   );
                 })}
               </div>
