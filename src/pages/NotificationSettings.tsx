@@ -73,7 +73,7 @@ export default function NotificationSettings() {
   return (
     <div className="max-w-2xl mx-auto p-4 md:p-6 space-y-4">
       <div>
-        <h1 className="text-2xl font-bold">Notifications</h1>
+        <h1 className="text-2xl font-bold">Notification preferences</h1>
         <p className="text-sm text-muted-foreground">
           Choose how you want to be notified for each event.
         </p>
@@ -88,8 +88,12 @@ export default function NotificationSettings() {
         </CardHeader>
         <CardContent>
           {isLoading && (
-            <div className="flex items-center justify-center py-10">
-              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            <div
+              role="status"
+              aria-label="Loading preferences"
+              className="flex items-center justify-center py-10"
+            >
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" aria-hidden="true" />
             </div>
           )}
           {isError && (

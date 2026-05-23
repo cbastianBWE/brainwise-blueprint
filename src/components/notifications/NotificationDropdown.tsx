@@ -89,6 +89,7 @@ export function NotificationDropdown({ open, onClose }: Props) {
         <button
           type="button"
           onClick={handleMarkAllRead}
+          aria-label="Mark all notifications as read"
           className="text-xs text-muted-foreground hover:text-foreground"
         >
           Mark all read
@@ -96,8 +97,12 @@ export function NotificationDropdown({ open, onClose }: Props) {
       </div>
       <div className="flex-1 overflow-y-auto">
         {isLoading && (
-          <div className="flex items-center justify-center py-10">
-            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+          <div
+            role="status"
+            aria-label="Loading notifications"
+            className="flex items-center justify-center py-10"
+          >
+            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" aria-hidden="true" />
           </div>
         )}
         {isError && (
@@ -120,8 +125,20 @@ export function NotificationDropdown({ open, onClose }: Props) {
             <div
               key={n.id}
               onClick={() => handleRowClick(n)}
+              role={clickable ? "button" : undefined}
+              tabIndex={clickable ? 0 : undefined}
+              onKeyDown={
+                clickable
+                  ? (e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        handleRowClick(n);
+                      }
+                    }
+                  : undefined
+              }
               className={`px-4 py-3 border-b last:border-b-0 flex gap-3 ${
-                clickable ? "cursor-pointer hover:bg-accent" : ""
+                clickable ? "cursor-pointer hover:bg-accent focus:bg-accent" : ""
               } ${wasUnread ? "bg-primary/5" : ""}`}
             >
               <div className="pt-1.5">
@@ -146,6 +163,7 @@ export function NotificationDropdown({ open, onClose }: Props) {
         <button
           type="button"
           className="text-sm text-primary hover:underline"
+          aria-label="View all notifications"
           onClick={() => {
             onClose();
             navigate("/notifications");

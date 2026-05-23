@@ -126,14 +126,16 @@ export default function Notifications() {
       </Tabs>
 
       {loading && (
-        <Card className="divide-y">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="p-4 space-y-2">
-              <Skeleton className="h-4 w-1/3" />
-              <Skeleton className="h-3 w-2/3" />
-            </div>
-          ))}
-        </Card>
+        <div role="status" aria-label="Loading notifications">
+          <Card className="divide-y">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="p-4 space-y-2">
+                <Skeleton className="h-4 w-1/3" />
+                <Skeleton className="h-3 w-2/3" />
+              </div>
+            ))}
+          </Card>
+        </div>
       )}
 
       {error && !loading && (
@@ -159,8 +161,20 @@ export default function Notifications() {
               <div
                 key={n.id}
                 onClick={() => handleRowClick(n)}
+                role={clickable ? "button" : undefined}
+                tabIndex={clickable ? 0 : undefined}
+                onKeyDown={
+                  clickable
+                    ? (e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          handleRowClick(n);
+                        }
+                      }
+                    : undefined
+                }
                 className={`flex gap-3 p-4 ${
-                  clickable ? "cursor-pointer hover:bg-accent" : ""
+                  clickable ? "cursor-pointer hover:bg-accent focus:bg-accent" : ""
                 } ${!n.read_at ? "bg-primary/5" : ""}`}
               >
                 <div className="pt-1.5">
@@ -199,8 +213,13 @@ export default function Notifications() {
 
       {!reachedEnd && items.length > 0 && (
         <div className="flex justify-center">
-          <Button variant="outline" onClick={loadMore} disabled={loadingMore}>
-            {loadingMore ? <Loader2 className="h-4 w-4 animate-spin" /> : "Load more"}
+          <Button
+            variant="outline"
+            onClick={loadMore}
+            disabled={loadingMore}
+            aria-label={loadingMore ? "Loading more notifications" : "Load more notifications"}
+          >
+            {loadingMore ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : "Load more"}
           </Button>
         </div>
       )}
