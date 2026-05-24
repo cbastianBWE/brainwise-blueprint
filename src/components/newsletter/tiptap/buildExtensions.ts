@@ -79,6 +79,8 @@ export function buildExtensions(opts: BuildExtensionsOptions): Extensions {
     NewsletterEyebrow,
     NewsletterLead,
     NewsletterAside,
+    NewsletterSectionRule,
+    NewsletterMasthead,
     Accent,
     SmallCaps,
     Superscript,
