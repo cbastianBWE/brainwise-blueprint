@@ -11,6 +11,7 @@ import {
   Image as ImageIcon,
   Minus,
   Loader2,
+  FileCode,
 } from "lucide-react";
 import {
   Select,
@@ -37,6 +38,7 @@ interface NewsletterToolbarProps {
   articleId: string;
   disabled?: boolean;
   imageInputRef?: React.MutableRefObject<{ open: () => void } | null>;
+  onOpenImportHtml?: () => void;
 }
 
 type BlockKey = "paragraph" | "h2" | "h3" | "h4";
@@ -46,6 +48,7 @@ export function NewsletterToolbar({
   articleId,
   disabled,
   imageInputRef,
+  onOpenImportHtml,
 }: NewsletterToolbarProps) {
 
   const fileRef = useRef<HTMLInputElement | null>(null);
@@ -303,6 +306,23 @@ export function NewsletterToolbar({
           e.target.value = "";
         }}
       />
+
+      {onOpenImportHtml && (
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          className="h-7 w-7 p-0"
+          onClick={onOpenImportHtml}
+          disabled={disabled}
+          aria-label="Import HTML"
+          title="Import HTML"
+        >
+          <FileCode className="h-3.5 w-3.5" />
+        </Button>
+      )}
+
+
 
       <Button
         type="button"

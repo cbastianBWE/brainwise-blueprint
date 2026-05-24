@@ -67,6 +67,7 @@ export interface NewsletterEditorProps {
   onChange: (next: NewsletterTipTapDoc) => void;
   disabled?: boolean;
   placeholder?: string;
+  onOpenImportHtml?: () => void;
 }
 
 // Each node + its corresponding React NodeView. Extending here (not in G4-0)
@@ -137,6 +138,7 @@ export function NewsletterEditor({
   onChange,
   disabled,
   placeholder,
+  onOpenImportHtml,
 }: NewsletterEditorProps) {
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
@@ -203,6 +205,7 @@ export function NewsletterEditor({
           articleId={articleId}
           disabled={disabled}
           imageInputRef={toolbarFileRef}
+          onOpenImportHtml={onOpenImportHtml}
         />
         <div
           ref={wrapperRef}

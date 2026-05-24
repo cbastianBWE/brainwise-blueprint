@@ -71,6 +71,7 @@ import { FileUploadField } from "@/components/super-admin/FileUploadField";
 import { NewsletterEditor } from "@/components/newsletter/editor/NewsletterEditor";
 import type { NewsletterTipTapDoc } from "@/components/newsletter/tiptap/types";
 import VersionHistorySheet from "@/components/newsletter/versions/VersionHistorySheet";
+import ImportHtmlModal from "@/components/newsletter/editor/ImportHtmlModal";
 
 type Status = "draft" | "scheduled" | "published" | "unpublished" | "archived";
 type Gate = "public" | "subscribers" | "plan_tier";
@@ -367,6 +368,7 @@ export default function AdminNewsletterArticle() {
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [versionHistoryOpen, setVersionHistoryOpen] = useState(false);
   const [openingVersionHistory, setOpeningVersionHistory] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
 
   const handleOpenVersionHistory = async () => {
     if (!articleIdRef.current) return;
@@ -616,6 +618,7 @@ export default function AdminNewsletterArticle() {
                   articleId={articleId ?? ""}
                   initialContent={draft.body_tiptap}
                   onChange={(next) => setField("body_tiptap", next)}
+                  onOpenImportHtml={articleId ? () => setImportOpen(true) : undefined}
                 />
               )}
             </section>
@@ -863,6 +866,21 @@ export default function AdminNewsletterArticle() {
             onRestored={() => {
               setHydrated(false);
               refreshArticle();
+            }}
+          />
+        )}
+
+        {articleId && (
+          <ImportHtmlModal
+            articleId={articleId}
+            open={importOpen}
+            onOpenChange={setImportOpen}
+            onImported={(newBody) => {
+              markDirty();
+              setDraft((d) => ({ ...d, body_tiptap: newBody, source_type: "html_import" }));
+              // Flush save shortly after state commits so dirty draft persists.
+              setTimeout(() => { void flushSave("HTML import: replace body"); }, 0);
+              toast.success("Imported", { description: "HTML content is now in the editor." });
             }}
           />
         )}
