@@ -3,6 +3,8 @@ import { Mark, mergeAttributes } from "@tiptap/core";
 declare module "@tiptap/core" {
   interface Commands<ReturnType> {
     underline: {
+      setUnderline: () => ReturnType;
+      unsetUnderline: () => ReturnType;
       toggleUnderline: () => ReturnType;
     };
   }
@@ -39,6 +41,14 @@ export const Underline = Mark.create({
 
   addCommands() {
     return {
+      setUnderline:
+        () =>
+        ({ commands }) =>
+          commands.setMark(this.name),
+      unsetUnderline:
+        () =>
+        ({ commands }) =>
+          commands.unsetMark(this.name),
       toggleUnderline:
         () =>
         ({ commands }) =>

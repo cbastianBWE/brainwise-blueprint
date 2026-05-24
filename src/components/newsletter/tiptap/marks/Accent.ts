@@ -83,10 +83,10 @@ export const Accent = Mark.create({
     ];
   },
 
-  renderHTML({ node, HTMLAttributes }) {
-    const color = (node.attrs.color as AccentColor) || "orange";
-    const style = (node.attrs.style as AccentStyle) || "plain";
-    const weight = (node.attrs.weight as AccentWeight) || "normal";
+  renderHTML({ mark, HTMLAttributes }) {
+    const color = (mark.attrs.color as AccentColor) || "orange";
+    const style = (mark.attrs.style as AccentStyle) || "plain";
+    const weight = (mark.attrs.weight as AccentWeight) || "normal";
 
     const classes = ["newsletter-accent", `newsletter-accent--${color}`];
     if (style === "italic") classes.push("newsletter-accent--italic");

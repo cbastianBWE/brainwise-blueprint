@@ -37,8 +37,8 @@ export const Highlight = Mark.create({
     ];
   },
 
-  renderHTML({ node, HTMLAttributes }) {
-    const color = (node.attrs.color as HighlightColor) || "yellow";
+  renderHTML({ mark, HTMLAttributes }) {
+    const color = (mark.attrs.color as HighlightColor) || "yellow";
     return [
       "mark",
       mergeAttributes(HTMLAttributes, {
