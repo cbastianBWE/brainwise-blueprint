@@ -70,6 +70,10 @@ export interface NewsletterEditorProps {
   onOpenImportHtml?: () => void;
 }
 
+export interface NewsletterEditorHandle {
+  setContent: (next: NewsletterTipTapDoc) => void;
+}
+
 // Each node + its corresponding React NodeView. Extending here (not in G4-0)
 // keeps the shared schema headless.
 const NodeImageEdit = NewsletterImage.extend({
