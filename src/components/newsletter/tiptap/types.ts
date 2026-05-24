@@ -143,6 +143,19 @@ export interface NewsletterMastheadAttrs {
   logo_glyph: string | null;
 }
 
+export interface BylineEntry {
+  text: string;
+  bold: boolean;
+  link: string | null;
+}
+
+export type NewsletterBylineSeparatorStyle = "dot" | "pipe" | "slash";
+
+export interface NewsletterBylineAttrs {
+  entries: BylineEntry[];
+  separator_style: NewsletterBylineSeparatorStyle;
+}
+
 // Custom newsletter nodes
 export type CustomNewsletterNode =
   | BaseNode<"newsletterImage", NewsletterImageAttrs>
@@ -158,7 +171,8 @@ export type CustomNewsletterNode =
   | BaseNode<"newsletterLead", NewsletterLeadAttrs>
   | BaseNode<"newsletterAside", NewsletterAsideAttrs>
   | BaseNode<"newsletterSectionRule", NewsletterSectionRuleAttrs>
-  | BaseNode<"newsletterMasthead", NewsletterMastheadAttrs>;
+  | BaseNode<"newsletterMasthead", NewsletterMastheadAttrs>
+  | BaseNode<"newsletterByline", NewsletterBylineAttrs>;
 
 export type NewsletterTipTapNode =
   | TipTapTextNode
