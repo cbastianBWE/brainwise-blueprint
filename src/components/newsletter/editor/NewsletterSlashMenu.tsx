@@ -68,7 +68,7 @@ export interface SlashCommandItem {
   id: string;
   label: string;
   description: string;
-  category: "BASIC" | "EDITORIAL" | "MEDIA" | "LAYOUT";
+  category: "BASIC" | "EDITORIAL" | "MEDIA" | "LAYOUT" | "TECHNICAL";
   icon: ComponentType<{ className?: string }>;
   /** Aliases for filtering. */
   keywords?: string[];
