@@ -178,6 +178,26 @@ const NodeCodeBlockEdit = NewsletterCodeBlock.extend({
     return ReactNodeViewRenderer(CodeBlockNodeView);
   },
 });
+const NodeMathEdit = NewsletterMath.extend({
+  addNodeView() {
+    return ReactNodeViewRenderer(MathNodeView);
+  },
+});
+const NodeTerminalEdit = NewsletterTerminal.extend({
+  addNodeView() {
+    return ReactNodeViewRenderer(TerminalNodeView);
+  },
+});
+const NodeCodeDiffEdit = NewsletterCodeDiff.extend({
+  addNodeView() {
+    return ReactNodeViewRenderer(CodeDiffNodeView);
+  },
+});
+const NodeChartEdit = NewsletterChart.extend({
+  addNodeView() {
+    return ReactNodeViewRenderer(ChartNodeView);
+  },
+});
 
 const EDITABLE_NODE_OVERRIDES = [
   NodeImageEdit,
@@ -196,6 +216,10 @@ const EDITABLE_NODE_OVERRIDES = [
   NodeDomainRowEdit,
   NodeIndexCardEdit,
   NodeCodeBlockEdit,
+  NodeMathEdit,
+  NodeTerminalEdit,
+  NodeCodeDiffEdit,
+  NodeChartEdit,
 ];
 
 const OVERRIDE_NAMES = new Set(EDITABLE_NODE_OVERRIDES.map((n) => n.name));
