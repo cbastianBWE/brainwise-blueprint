@@ -23,7 +23,7 @@
  *   ref_field='inline_image'. The image NodeView reads articleId from
  *   NewsletterEditorContext.
  */
-import { useEffect, useMemo, useRef } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef } from "react";
 import { EditorContent, ReactNodeViewRenderer, useEditor } from "@tiptap/react";
 import {
   buildExtensions,
