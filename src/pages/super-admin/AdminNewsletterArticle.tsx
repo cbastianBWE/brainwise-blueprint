@@ -849,6 +849,23 @@ export default function AdminNewsletterArticle() {
             return true;
           }}
         />
+
+        {articleId && (
+          <VersionHistorySheet
+            articleId={articleId}
+            open={versionHistoryOpen}
+            onOpenChange={setVersionHistoryOpen}
+            currentDraft={{
+              body_tiptap: draft.body_tiptap,
+              title: draft.title,
+              excerpt: draft.excerpt,
+            }}
+            onRestored={() => {
+              setHydrated(false);
+              refreshArticle();
+            }}
+          />
+        )}
       </div>
     </TooltipProvider>
   );
