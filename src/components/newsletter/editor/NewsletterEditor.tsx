@@ -67,6 +67,7 @@ export interface NewsletterEditorProps {
   onChange: (next: NewsletterTipTapDoc) => void;
   disabled?: boolean;
   placeholder?: string;
+  onOpenImportHtml?: () => void;
 }
 
 // Each node + its corresponding React NodeView. Extending here (not in G4-0)
