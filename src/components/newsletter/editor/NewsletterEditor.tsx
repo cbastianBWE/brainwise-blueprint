@@ -136,14 +136,10 @@ const EDITABLE_NODE_OVERRIDES = [
 
 const OVERRIDE_NAMES = new Set(EDITABLE_NODE_OVERRIDES.map((n) => n.name));
 
-export function NewsletterEditor({
-  articleId,
-  initialContent,
-  onChange,
-  disabled,
-  placeholder,
-  onOpenImportHtml,
-}: NewsletterEditorProps) {
+export const NewsletterEditor = forwardRef<NewsletterEditorHandle, NewsletterEditorProps>(function NewsletterEditor(
+  { articleId, initialContent, onChange, disabled, placeholder, onOpenImportHtml },
+  ref,
+) {
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
   const wrapperRef = useRef<HTMLDivElement | null>(null);
