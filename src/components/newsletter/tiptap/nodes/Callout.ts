@@ -46,6 +46,7 @@ export const NewsletterCallout = Node.create({
     return [
       {
         tag: "aside[data-newsletter-callout]",
+        priority: 51,
         getAttrs: (el) => {
           if (!(el instanceof HTMLElement)) return false;
           return {
