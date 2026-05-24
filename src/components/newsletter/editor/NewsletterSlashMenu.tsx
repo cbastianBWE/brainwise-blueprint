@@ -39,6 +39,7 @@ import {
   MessageSquareMore,
   SeparatorHorizontal,
   BookMarked,
+  User,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -289,6 +290,21 @@ export const SLASH_COMMANDS: SlashCommandItem[] = [
           type: "newsletterAside",
           attrs: { label: null, tone: "default" },
           content: [{ type: "paragraph" }],
+        })
+        .run(),
+  },
+  {
+    id: "byline",
+    label: "Byline",
+    description: "Author and meta strip with editable entries.",
+    category: "EDITORIAL",
+    icon: User,
+    keywords: ["author", "meta", "byline", "credit"],
+    run: (e, r) =>
+      deleteRange(e, r)
+        .insertContent({
+          type: "newsletterByline",
+          attrs: { entries: [], separator_style: "dot" },
         })
         .run(),
   },
