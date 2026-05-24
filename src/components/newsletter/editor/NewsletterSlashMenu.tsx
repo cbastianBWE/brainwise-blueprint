@@ -40,6 +40,7 @@ import {
   SeparatorHorizontal,
   BookMarked,
   User,
+  CheckSquare,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -374,6 +375,55 @@ export const SLASH_COMMANDS: SlashCommandItem[] = [
               type: "newsletterKeyMoment",
               attrs: { title: "" },
               content: [{ type: "paragraph" }],
+            },
+          ],
+        })
+        .run(),
+  },
+  {
+    id: "step-list",
+    label: "Step list",
+    description: "Numbered process with editable step titles.",
+    category: "LAYOUT",
+    icon: ListOrdered,
+    keywords: ["steps", "process", "numbered", "how-to"],
+    run: (e, r) =>
+      deleteRange(e, r)
+        .insertContent({
+          type: "newsletterStepList",
+          attrs: { style: "vertical", connector: "line" },
+          content: [
+            {
+              type: "newsletterStep",
+              content: [
+                {
+                  type: "heading",
+                  attrs: { level: 4 },
+                  content: [{ type: "text", text: "Step title" }],
+                },
+                { type: "paragraph" },
+              ],
+            },
+          ],
+        })
+        .run(),
+  },
+  {
+    id: "checklist",
+    label: "Checklist",
+    description: "Task list with clickable checkboxes.",
+    category: "LAYOUT",
+    icon: CheckSquare,
+    keywords: ["checklist", "tasks", "todo", "checkboxes"],
+    run: (e, r) =>
+      deleteRange(e, r)
+        .insertContent({
+          type: "newsletterChecklist",
+          content: [
+            {
+              type: "newsletterChecklistItem",
+              attrs: { checked: false },
+              content: [{ type: "text", text: " " }],
             },
           ],
         })

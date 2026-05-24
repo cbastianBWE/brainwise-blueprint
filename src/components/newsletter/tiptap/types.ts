@@ -156,6 +156,15 @@ export interface NewsletterBylineAttrs {
   separator_style: NewsletterBylineSeparatorStyle;
 }
 
+export interface NewsletterStepListAttrs {
+  style: "vertical" | "horizontal";
+  connector: "line" | "arrow" | "none";
+}
+
+export interface NewsletterChecklistItemAttrs {
+  checked: boolean;
+}
+
 // Custom newsletter nodes
 export type CustomNewsletterNode =
   | BaseNode<"newsletterImage", NewsletterImageAttrs>
@@ -172,7 +181,11 @@ export type CustomNewsletterNode =
   | BaseNode<"newsletterAside", NewsletterAsideAttrs>
   | BaseNode<"newsletterSectionRule", NewsletterSectionRuleAttrs>
   | BaseNode<"newsletterMasthead", NewsletterMastheadAttrs>
-  | BaseNode<"newsletterByline", NewsletterBylineAttrs>;
+  | BaseNode<"newsletterByline", NewsletterBylineAttrs>
+  | BaseNode<"newsletterStepList", NewsletterStepListAttrs>
+  | BaseNode<"newsletterStep">
+  | BaseNode<"newsletterChecklist">
+  | BaseNode<"newsletterChecklistItem", NewsletterChecklistItemAttrs>;
 
 export type NewsletterTipTapNode =
   | TipTapTextNode
