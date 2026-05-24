@@ -181,7 +181,7 @@ export const NewsletterEditor = forwardRef<NewsletterEditorHandle, NewsletterEdi
   useImperativeHandle(ref, () => ({
     setContent: (next: NewsletterTipTapDoc) => {
       if (!editor) return;
-      editor.commands.setContent(next, true);
+      editor.commands.setContent(next, { emitUpdate: true });
     },
   }), [editor]);
 
