@@ -251,7 +251,7 @@ export type CustomNewsletterNode =
   | BaseNode<"newsletterStatCallout", NewsletterStatCalloutAttrs>
   | BaseNode<"newsletterEmbed", NewsletterEmbedAttrs>
   | BaseNode<"newsletterPullquote", NewsletterPullquoteAttrs>
-  | BaseNode<"newsletterTwoColumn">
+  | BaseNode<"newsletterTwoColumn", NewsletterTwoColumnAttrs>
   | BaseNode<"newsletterTwoColumnPane">
   | BaseNode<"newsletterKeyMoments", NewsletterKeyMomentsAttrs>
   | BaseNode<"newsletterKeyMoment", NewsletterKeyMomentAttrs>

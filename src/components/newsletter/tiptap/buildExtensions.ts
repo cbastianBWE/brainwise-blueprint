@@ -1,6 +1,7 @@
 import type { Extensions } from "@tiptap/core";
 import StarterKit from "@tiptap/starter-kit";
 import { Link } from "@tiptap/extension-link";
+import { CodeBlock } from "@tiptap/extension-code-block";
 import { Placeholder } from "@tiptap/extensions";
 import { isSafeHttpUrl } from "@/lib/safeUrl";
 import { TextStyleWithFontSize } from "@/components/super-admin/lesson-blocks/TextStyleWithFontSize";
@@ -61,6 +62,34 @@ export interface BuildExtensionsOptions {
   editable: boolean;
   placeholder?: string;
 }
+
+/**
+ * Extended CodeBlock — adds `filename` and `highlight_lines` attrs alongside
+ * the built-in `language`. Registered standalone after disabling the
+ * StarterKit-bundled CodeBlock so the schema name "codeBlock" resolves to
+ * this extended class.
+ */
+export const NewsletterCodeBlock = CodeBlock.extend({
+  addAttributes() {
+    return {
+      ...this.parent?.(),
+      filename: {
+        default: null as string | null,
+        parseHTML: (el) => el.getAttribute("data-filename") || null,
+        renderHTML: (attrs) =>
+          attrs.filename ? { "data-filename": attrs.filename } : {},
+      },
+      highlight_lines: {
+        default: null as string | null,
+        parseHTML: (el) => el.getAttribute("data-highlight-lines") || null,
+        renderHTML: (attrs) =>
+          attrs.highlight_lines
+            ? { "data-highlight-lines": attrs.highlight_lines }
+            : {},
+      },
+    };
+  },
+});
 
 /**
  * Single source of truth for the newsletter TipTap schema. Consumed by:
