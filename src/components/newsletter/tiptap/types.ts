@@ -165,6 +165,48 @@ export interface NewsletterChecklistItemAttrs {
   checked: boolean;
 }
 
+export type DomainTagVariant =
+  | "threat"
+  | "reward"
+  | "neutral"
+  | "success"
+  | "warning";
+
+export interface NewsletterDomainGridAttrs {
+  style: "rows" | "cards";
+  show_numbers: boolean;
+}
+
+export interface NewsletterDomainRowAttrs {
+  number: string;
+  label: string;
+  tag_text: string | null;
+  tag_variant: DomainTagVariant | null;
+  description: string;
+  count_value: string;
+  count_label: string;
+}
+
+export type IndexCardAccentColor =
+  | "orange"
+  | "forest"
+  | "teal"
+  | "plum"
+  | "mustard"
+  | "navy";
+
+export interface NewsletterIndexRowAttrs {
+  columns: 2 | 3;
+}
+
+export interface NewsletterIndexCardAttrs {
+  tag: string;
+  name: string;
+  formula: string | null;
+  note: string;
+  accent_color: IndexCardAccentColor;
+}
+
 // Custom newsletter nodes
 export type CustomNewsletterNode =
   | BaseNode<"newsletterImage", NewsletterImageAttrs>
@@ -185,7 +227,11 @@ export type CustomNewsletterNode =
   | BaseNode<"newsletterStepList", NewsletterStepListAttrs>
   | BaseNode<"newsletterStep">
   | BaseNode<"newsletterChecklist">
-  | BaseNode<"newsletterChecklistItem", NewsletterChecklistItemAttrs>;
+  | BaseNode<"newsletterChecklistItem", NewsletterChecklistItemAttrs>
+  | BaseNode<"newsletterDomainGrid", NewsletterDomainGridAttrs>
+  | BaseNode<"newsletterDomainRow", NewsletterDomainRowAttrs>
+  | BaseNode<"newsletterIndexRow", NewsletterIndexRowAttrs>
+  | BaseNode<"newsletterIndexCard", NewsletterIndexCardAttrs>;
 
 export type NewsletterTipTapNode =
   | TipTapTextNode
