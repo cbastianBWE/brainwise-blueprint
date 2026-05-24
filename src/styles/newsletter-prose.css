@@ -512,3 +512,80 @@
 .newsletter-prose .newsletter-accent--italic       { font-style: italic; }
 .newsletter-prose .newsletter-accent--bold-italic  { font-style: italic; font-weight: 700; }
 .newsletter-prose .newsletter-accent--heavy        { font-weight: 700; }
+
+/* ===== Section rule ===== */
+.newsletter-prose .newsletter-section-rule {
+  margin: var(--bw-section-rule-margin-top) 0 var(--bw-section-rule-margin-bottom);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.newsletter-prose .newsletter-section-rule__rule {
+  flex: 1;
+  border: 0;
+  border-top: var(--bw-stripe-thin) solid var(--bw-slate-300);
+  margin: 0;
+}
+.newsletter-prose .newsletter-section-rule__number {
+  font-family: var(--bw-mono-font);
+  font-size: var(--bw-editorial-label-size);
+  text-transform: uppercase;
+  letter-spacing: var(--bw-editorial-letterspacing);
+  color: var(--bw-slate-500);
+  flex-shrink: 0;
+}
+.newsletter-prose .newsletter-section-rule__title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--bw-orange);
+  flex-shrink: 0;
+}
+.newsletter-prose .newsletter-section-rule--plain {
+  justify-content: center;
+}
+.newsletter-prose .newsletter-section-rule--dot {
+  justify-content: center;
+  gap: 12px;
+}
+.newsletter-prose .newsletter-section-rule__dot {
+  font-size: 18px;
+  color: var(--bw-slate-500);
+  line-height: 1;
+}
+
+/* ===== Masthead ===== */
+.newsletter-prose .newsletter-masthead {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 16px 0;
+  margin: 0 0 32px;
+  border-bottom: var(--bw-stripe-thin) solid var(--bw-slate-300);
+  font-family: var(--bw-mono-font);
+  font-size: var(--bw-editorial-label-size);
+  text-transform: uppercase;
+  letter-spacing: var(--bw-editorial-letterspacing);
+  color: var(--bw-slate-700);
+}
+.newsletter-prose .newsletter-masthead__glyph {
+  font-size: 18px;
+  color: var(--bw-orange);
+  line-height: 1;
+}
+.newsletter-prose .newsletter-masthead__publication {
+  font-weight: 700;
+  color: var(--bw-navy);
+}
+.newsletter-prose .newsletter-masthead__issue,
+.newsletter-prose .newsletter-masthead__date {
+  color: var(--bw-slate-500);
+}
+.newsletter-prose .newsletter-masthead__separator {
+  color: var(--bw-slate-300);
+  font-size: 12px;
+}
