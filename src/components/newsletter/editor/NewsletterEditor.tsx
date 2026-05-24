@@ -138,6 +138,7 @@ export function NewsletterEditor({
   onChange,
   disabled,
   placeholder,
+  onOpenImportHtml,
 }: NewsletterEditorProps) {
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
