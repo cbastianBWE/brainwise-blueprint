@@ -1,5 +1,14 @@
 import { Node, mergeAttributes } from "@tiptap/core";
 
+const GAP_VALUES = ["tight", "normal", "wide"] as const;
+type GapValue = (typeof GAP_VALUES)[number];
+
+function clampGap(v: string | null): GapValue {
+  return (GAP_VALUES as readonly string[]).includes(v ?? "")
+    ? (v as GapValue)
+    : "normal";
+}
+
 /**
  * newsletterTwoColumn — side-by-side prose layout.
  *
@@ -16,15 +25,34 @@ export const NewsletterTwoColumn = Node.create({
   defining: true,
   isolating: true,
 
-  parseHTML() {
-    return [{ tag: "div[data-newsletter-two-column]" }];
+  addAttributes() {
+    return {
+      gap: {
+        default: "normal" as GapValue,
+        parseHTML: (el) => clampGap(el.getAttribute("data-gap")),
+        renderHTML: (attrs) => ({ "data-gap": attrs.gap }),
+      },
+    };
   },
 
-  renderHTML({ HTMLAttributes }) {
+  parseHTML() {
+    return [
+      {
+        tag: "div[data-newsletter-two-column]",
+        getAttrs: (el) => {
+          if (!(el instanceof HTMLElement)) return false;
+          return { gap: clampGap(el.getAttribute("data-gap")) };
+        },
+      },
+    ];
+  },
+
+  renderHTML({ node, HTMLAttributes }) {
     return [
       "div",
       mergeAttributes(HTMLAttributes, {
         "data-newsletter-two-column": "true",
+        "data-gap": node.attrs.gap,
         class: "newsletter-two-column",
       }),
       [

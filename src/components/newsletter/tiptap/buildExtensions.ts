@@ -1,6 +1,7 @@
 import type { Extensions } from "@tiptap/core";
 import StarterKit from "@tiptap/starter-kit";
 import { Link } from "@tiptap/extension-link";
+import { CodeBlock } from "@tiptap/extension-code-block";
 import { Placeholder } from "@tiptap/extensions";
 import { isSafeHttpUrl } from "@/lib/safeUrl";
 import { TextStyleWithFontSize } from "@/components/super-admin/lesson-blocks/TextStyleWithFontSize";
@@ -63,6 +64,34 @@ export interface BuildExtensionsOptions {
 }
 
 /**
+ * Extended CodeBlock — adds `filename` and `highlight_lines` attrs alongside
+ * the built-in `language`. Registered standalone after disabling the
+ * StarterKit-bundled CodeBlock so the schema name "codeBlock" resolves to
+ * this extended class.
+ */
+export const NewsletterCodeBlock = CodeBlock.extend({
+  addAttributes() {
+    return {
+      ...this.parent?.(),
+      filename: {
+        default: null as string | null,
+        parseHTML: (el) => el.getAttribute("data-filename") || null,
+        renderHTML: (attrs) =>
+          attrs.filename ? { "data-filename": attrs.filename } : {},
+      },
+      highlight_lines: {
+        default: null as string | null,
+        parseHTML: (el) => el.getAttribute("data-highlight-lines") || null,
+        renderHTML: (attrs) =>
+          attrs.highlight_lines
+            ? { "data-highlight-lines": attrs.highlight_lines }
+            : {},
+      },
+    };
+  },
+});
+
+/**
  * Single source of truth for the newsletter TipTap schema. Consumed by:
  *   - G4-A authoring editor (editable: true)
  *   - G6 read-only public reader (editable: false)
@@ -80,6 +109,8 @@ export function buildExtensions(opts: BuildExtensionsOptions): Extensions {
       heading: { levels: [2, 3, 4] },
       // We register our own link extension below with safe-URL validation.
       link: false,
+      // We register our own extended CodeBlock (NewsletterCodeBlock) below.
+      codeBlock: false,
     }),
     TextStyleWithFontSize,
     Link.configure({
@@ -91,6 +122,7 @@ export function buildExtensions(opts: BuildExtensionsOptions): Extensions {
     Placeholder.configure({
       placeholder: opts.placeholder ?? "",
     }),
+    NewsletterCodeBlock,
     NewsletterImage,
     NewsletterCallout,
     NewsletterStatCallout,

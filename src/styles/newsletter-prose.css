@@ -1233,3 +1233,64 @@
   margin-left: auto;
   margin-right: 0;
 }
+
+/* ============================================================
+   Bundle A3b: TwoColumn gap + KeyMoments numbered/accent +
+   codeBlock filename/language/highlight_lines
+   ============================================================ */
+
+.newsletter-prose .newsletter-two-column[data-gap="tight"] .newsletter-two-column__panes {
+  gap: 8px;
+}
+
+.newsletter-prose .newsletter-two-column[data-gap="normal"] .newsletter-two-column__panes {
+  gap: 32px;
+}
+
+.newsletter-prose .newsletter-two-column[data-gap="wide"] .newsletter-two-column__panes {
+  gap: 64px;
+}
+
+.newsletter-prose .newsletter-key-moments[data-accent-color="orange"] {
+  --bw-km-accent: var(--bw-orange, #F5741A);
+}
+.newsletter-prose .newsletter-key-moments[data-accent-color="forest"] {
+  --bw-km-accent: var(--bw-accent-forest, #2D6A4F);
+}
+.newsletter-prose .newsletter-key-moments[data-accent-color="teal"] {
+  --bw-km-accent: var(--bw-accent-teal, #006D77);
+}
+.newsletter-prose .newsletter-key-moments[data-accent-color="plum"] {
+  --bw-km-accent: var(--bw-accent-plum, #3C096C);
+}
+.newsletter-prose .newsletter-key-moments[data-accent-color="mustard"] {
+  --bw-km-accent: var(--bw-accent-mustard, #8a6400);
+}
+.newsletter-prose .newsletter-key-moments[data-accent-color="navy"] {
+  --bw-km-accent: var(--bw-navy, #021F36);
+}
+
+.newsletter-prose .newsletter-key-moments[data-numbered="false"] .newsletter-key-moment {
+  counter-increment: none;
+}
+
+.newsletter-prose .newsletter-key-moments[data-numbered="false"] .newsletter-key-moment::before {
+  content: "\2022"; /* • bullet */
+  color: var(--bw-km-accent, var(--bw-orange));
+}
+
+/* codeBlock — filename header bar (visual line-highlight painting deferred) */
+.newsletter-prose pre[data-filename]::before {
+  content: attr(data-filename);
+  display: block;
+  font-family: var(--bw-mono-font, monospace);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: var(--bw-editorial-letterspacing, 0.05em);
+  text-transform: uppercase;
+  color: var(--bw-slate-700, #6D6875);
+  padding: 6px 12px;
+  background: var(--bw-slate-100, #e8e8e3);
+  border-bottom: 1px solid var(--bw-slate-300, #d4d4cf);
+  margin-bottom: 0;
+}
