@@ -21,6 +21,8 @@ import {
 import { NewsletterEyebrow } from "./nodes/Eyebrow";
 import { NewsletterLead } from "./nodes/Lead";
 import { NewsletterAside } from "./nodes/Aside";
+import { NewsletterSectionRule } from "./nodes/SectionRule";
+import { NewsletterMasthead } from "./nodes/Masthead";
 
 import { Accent } from "./marks/Accent";
 import { SmallCaps } from "./marks/SmallCaps";
