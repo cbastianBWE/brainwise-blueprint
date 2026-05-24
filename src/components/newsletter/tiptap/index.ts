@@ -48,6 +48,7 @@ export { NewsletterTerminal } from "./nodes/Terminal";
 export { NewsletterCodeDiff } from "./nodes/CodeDiff";
 export { NewsletterChart } from "./nodes/Chart";
 export { NewsletterAudio } from "./nodes/Audio";
+export { NewsletterImageCompare } from "./nodes/ImageCompare";
 export { Accent } from "./marks/Accent";
 export { SmallCaps } from "./marks/SmallCaps";
 export { Superscript } from "./marks/Superscript";
