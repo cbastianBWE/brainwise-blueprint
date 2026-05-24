@@ -37,6 +37,8 @@ import {
   Tag,
   AlignLeft,
   MessageSquareMore,
+  SeparatorHorizontal,
+  BookMarked,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -101,6 +103,21 @@ export const SLASH_COMMANDS: SlashCommandItem[] = [
     icon: Minus,
     keywords: ["hr", "rule"],
     run: (e, r) => deleteRange(e, r).setHorizontalRule().run(),
+  },
+  {
+    id: "section-rule",
+    label: "Section rule",
+    description: "Numbered or styled section divider.",
+    category: "BASIC",
+    icon: SeparatorHorizontal,
+    keywords: ["divider", "section", "break", "hr"],
+    run: (e, r) =>
+      deleteRange(e, r)
+        .insertContent({
+          type: "newsletterSectionRule",
+          attrs: { number: "", style: "plain", title: null },
+        })
+        .run(),
   },
   {
     id: "code",
@@ -343,6 +360,26 @@ export const SLASH_COMMANDS: SlashCommandItem[] = [
               content: [{ type: "paragraph" }],
             },
           ],
+        })
+        .run(),
+  },
+  {
+    id: "masthead",
+    label: "Masthead",
+    description: "Publication identity strip with issue and date labels.",
+    category: "LAYOUT",
+    icon: BookMarked,
+    keywords: ["header", "publication", "issue", "topbar"],
+    run: (e, r) =>
+      deleteRange(e, r)
+        .insertContent({
+          type: "newsletterMasthead",
+          attrs: {
+            publication: "",
+            issue_label: null,
+            date_label: null,
+            logo_glyph: null,
+          },
         })
         .run(),
   },
