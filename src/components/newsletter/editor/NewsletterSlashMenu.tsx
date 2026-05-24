@@ -105,6 +105,21 @@ export const SLASH_COMMANDS: SlashCommandItem[] = [
     run: (e, r) => deleteRange(e, r).setHorizontalRule().run(),
   },
   {
+    id: "section-rule",
+    label: "Section rule",
+    description: "Numbered or styled section divider.",
+    category: "BASIC",
+    icon: SeparatorHorizontal,
+    keywords: ["divider", "section", "break", "hr"],
+    run: (e, r) =>
+      deleteRange(e, r)
+        .insertContent({
+          type: "newsletterSectionRule",
+          attrs: { number: "", style: "plain", title: null },
+        })
+        .run(),
+  },
+  {
     id: "code",
     label: "Code block",
     description: "Preformatted code with syntax styling.",
