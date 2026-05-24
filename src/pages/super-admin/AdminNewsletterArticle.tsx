@@ -232,6 +232,7 @@ export default function AdminNewsletterArticle() {
   draftRef.current = draft;
   const articleIdRef = useRef<string | null>(articleId);
   articleIdRef.current = articleId;
+  const editorHandleRef = useRef<NewsletterEditorHandle | null>(null);
   const saveTimerRef = useRef<NodeJS.Timeout | null>(null);
   const savingPromiseRef = useRef<Promise<void> | null>(null);
   // suppress auto-save during initial hydration of existing article
