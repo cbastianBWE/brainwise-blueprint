@@ -79,7 +79,6 @@ export function NewsletterBubbleMenu({ editor }: NewsletterBubbleMenuProps) {
       pluginKey,
       shouldShow: ({ editor, from, to, state }) => {
         if (!editor.isEditable) return false;
-        if (from === to) return false;
         const $from = state.doc.resolve(from);
         const blockedParents = new Set([
           "newsletterStatCallout",
@@ -90,6 +89,10 @@ export function NewsletterBubbleMenu({ editor }: NewsletterBubbleMenuProps) {
           "newsletterMasthead",
         ]);
         if (blockedParents.has($from.parent.type.name)) return false;
+        // Allow collapsed caret inside a table cell so table action
+        // buttons appear without requiring a text selection.
+        if (editor.isActive("table")) return true;
+        if (from === to) return false;
         return true;
       },
     });
