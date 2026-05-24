@@ -48,6 +48,7 @@ export function NewsletterToolbar({
   articleId,
   disabled,
   imageInputRef,
+  onOpenImportHtml,
 }: NewsletterToolbarProps) {
 
   const fileRef = useRef<HTMLInputElement | null>(null);
