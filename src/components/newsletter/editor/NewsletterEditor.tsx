@@ -233,6 +233,6 @@ export const NewsletterEditor = forwardRef<NewsletterEditorHandle, NewsletterEdi
       </div>
     </NewsletterEditorContext.Provider>
   );
-}
+});
 
 export { NewsletterEditorContext } from "./NewsletterEditorContext";
