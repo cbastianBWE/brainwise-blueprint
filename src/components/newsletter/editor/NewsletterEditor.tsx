@@ -70,6 +70,7 @@ import { MathNodeView } from "@/components/newsletter/tiptap/nodeviews/MathNodeV
 import { TerminalNodeView } from "@/components/newsletter/tiptap/nodeviews/TerminalNodeView";
 import { CodeDiffNodeView } from "@/components/newsletter/tiptap/nodeviews/CodeDiffNodeView";
 import { ChartNodeView } from "@/components/newsletter/tiptap/nodeviews/ChartNodeView";
+import { AudioNodeView } from "@/components/newsletter/tiptap/nodeviews/AudioNodeView";
 import { NewsletterToolbar } from "./NewsletterToolbar";
 import { NewsletterBubbleMenu } from "./NewsletterBubbleMenu";
 import { NewsletterFloatingPlus } from "./NewsletterFloatingPlus";
