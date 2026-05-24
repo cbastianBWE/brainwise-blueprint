@@ -242,6 +242,25 @@ export function EmbedNodeView({
                 placeholder="Accessible label"
               />
             </div>
+            <div>
+              <label className="text-xs font-medium text-[var(--fg-2)]">
+                Aspect ratio
+              </label>
+              <select
+                value={inputAspect}
+                onChange={(e) =>
+                  setInputAspect(
+                    e.target.value as "16:9" | "4:3" | "1:1" | "9:16",
+                  )
+                }
+                className="mt-1 block w-full rounded-md border border-[var(--border-1)] bg-white px-3 py-2 text-sm text-[var(--fg-1)] focus:border-[#F5741A] focus:outline-none"
+              >
+                <option value="16:9">16:9 (Widescreen)</option>
+                <option value="4:3">4:3 (Standard)</option>
+                <option value="1:1">1:1 (Square)</option>
+                <option value="9:16">9:16 (Vertical)</option>
+              </select>
+            </div>
             {genericWarning && (
               <div className="flex items-start gap-2 rounded border border-amber-300 bg-amber-50 p-2 text-xs text-amber-900">
                 <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
