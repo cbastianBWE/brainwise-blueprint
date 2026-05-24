@@ -35,17 +35,21 @@ export interface NewsletterImageAttrs {
   width: NewsletterImageWidth;
   /** Forward-compat: set by convert-html-to-tiptap when image fetch fails. */
   import_failed_src: string | null;
+  lightbox: boolean;
+  lazy_load: boolean;
 }
 
 export interface NewsletterCalloutAttrs {
   variant: CalloutVariant;
   title: string | null;
+  with_icon: boolean;
 }
 
 export interface NewsletterStatCalloutAttrs {
   value: string;
   label: string;
   source: string | null;
+  trend: "up" | "down" | "flat" | null;
 }
 
 export interface NewsletterEmbedAttrs {
@@ -53,10 +57,12 @@ export interface NewsletterEmbedAttrs {
   embed_id: string;
   url: string;
   title: string | null;
+  aspect_ratio: "16:9" | "4:3" | "1:1" | "9:16";
 }
 
 export interface NewsletterPullquoteAttrs {
   attribution: string | null;
+  alignment: "left" | "center" | "right";
 }
 
 export interface NewsletterKeyMomentsAttrs {

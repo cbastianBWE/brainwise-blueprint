@@ -98,6 +98,18 @@ export const NewsletterEmbed = Node.create({
       embed_id: { default: "" },
       url: { default: "" },
       title: { default: null as string | null },
+      aspect_ratio: {
+        default: "16:9" as "16:9" | "4:3" | "1:1" | "9:16",
+        parseHTML: (el) => {
+          const v = (el as HTMLElement).getAttribute("data-aspect-ratio");
+          return ["16:9", "4:3", "1:1", "9:16"].includes(v || "")
+            ? (v as "16:9" | "4:3" | "1:1" | "9:16")
+            : "16:9";
+        },
+        renderHTML: (attrs) => ({
+          "data-aspect-ratio": attrs.aspect_ratio,
+        }),
+      },
     };
   },
 
@@ -107,11 +119,15 @@ export const NewsletterEmbed = Node.create({
         tag: "div[data-newsletter-embed]",
         getAttrs: (el) => {
           if (!(el instanceof HTMLElement)) return false;
+          const ar = el.getAttribute("data-aspect-ratio");
           return {
             provider: el.getAttribute("data-provider") || "youtube",
             embed_id: el.getAttribute("data-embed-id") || "",
             url: el.getAttribute("data-url") || "",
             title: el.getAttribute("data-title") || null,
+            aspect_ratio: ["16:9", "4:3", "1:1", "9:16"].includes(ar || "")
+              ? ar
+              : "16:9",
           };
         },
       },
@@ -123,6 +139,8 @@ export const NewsletterEmbed = Node.create({
     const embed_id = (node.attrs.embed_id as string) || "";
     const url = (node.attrs.url as string) || "";
     const title = (node.attrs.title as string | null) || "";
+    const aspectRatio =
+      (node.attrs.aspect_ratio as "16:9" | "4:3" | "1:1" | "9:16") || "16:9";
 
     return [
       "div",
@@ -132,6 +150,7 @@ export const NewsletterEmbed = Node.create({
         "data-embed-id": embed_id,
         "data-url": url,
         "data-title": title,
+        "data-aspect-ratio": aspectRatio,
         class: "newsletter-embed",
       }),
       [

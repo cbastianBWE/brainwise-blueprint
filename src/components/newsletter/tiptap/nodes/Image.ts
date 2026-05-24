@@ -28,6 +28,23 @@ export const NewsletterImage = Node.create({
       caption: { default: "" },
       width: { default: "inline" as NewsletterImageWidth },
       import_failed_src: { default: null as string | null },
+      lightbox: {
+        default: false,
+        parseHTML: (el) =>
+          (el as HTMLElement).getAttribute("data-lightbox") === "true",
+        renderHTML: (attrs) =>
+          attrs.lightbox ? { "data-lightbox": "true" } : {},
+      },
+      lazy_load: {
+        default: true,
+        parseHTML: (el) => {
+          const v = (el as HTMLElement).getAttribute("data-lazy-load");
+          // Default true: only false if explicitly set to "false"
+          return v !== "false";
+        },
+        renderHTML: (attrs) =>
+          attrs.lazy_load ? {} : { "data-lazy-load": "false" },
+      },
     };
   },
 
@@ -48,6 +65,8 @@ export const NewsletterImage = Node.create({
               "inline",
             import_failed_src:
               el.getAttribute("data-import-failed-src") || null,
+            lightbox: el.getAttribute("data-lightbox") === "true",
+            lazy_load: el.getAttribute("data-lazy-load") !== "false",
           };
         },
       },
@@ -60,6 +79,8 @@ export const NewsletterImage = Node.create({
     const alt = (node.attrs.alt as string) || "";
     const assetId = (node.attrs.asset_id as string | null) || "";
     const importFailedSrc = (node.attrs.import_failed_src as string | null) || "";
+    const lightbox = !!node.attrs.lightbox;
+    const lazyLoad = node.attrs.lazy_load !== false;
 
     const wrapperAttrs: Record<string, string> = {
       "data-newsletter-image": "true",
@@ -70,9 +91,20 @@ export const NewsletterImage = Node.create({
     if (importFailedSrc) {
       wrapperAttrs["data-import-failed-src"] = importFailedSrc;
     }
+    if (lightbox) {
+      wrapperAttrs["data-lightbox"] = "true";
+    }
+    if (!lazyLoad) {
+      wrapperAttrs["data-lazy-load"] = "false";
+    }
+
+    const imgAttrs: Record<string, string> = { src: "", alt };
+    if (lazyLoad) {
+      imgAttrs.loading = "lazy";
+    }
 
     const children: Array<[string, Record<string, string>] | [string, Record<string, string>, string]> = [
-      ["img", { src: "", alt }],
+      ["img", imgAttrs],
     ];
     if (caption) {
       children.push(["figcaption", {}, caption]);
