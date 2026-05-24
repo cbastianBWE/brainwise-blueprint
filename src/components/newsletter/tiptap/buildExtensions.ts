@@ -29,6 +29,14 @@ import {
   NewsletterChecklist,
   NewsletterChecklistItem,
 } from "./nodes/Checklist";
+import {
+  NewsletterDomainGrid,
+  NewsletterDomainRow,
+} from "./nodes/DomainGrid";
+import {
+  NewsletterIndexRow,
+  NewsletterIndexCard,
+} from "./nodes/IndexRow";
 
 import { Accent } from "./marks/Accent";
 import { SmallCaps } from "./marks/SmallCaps";
@@ -92,6 +100,10 @@ export function buildExtensions(opts: BuildExtensionsOptions): Extensions {
     NewsletterStep,
     NewsletterChecklist,
     NewsletterChecklistItem,
+    NewsletterDomainGrid,
+    NewsletterDomainRow,
+    NewsletterIndexRow,
+    NewsletterIndexCard,
     Accent,
     SmallCaps,
     Superscript,
