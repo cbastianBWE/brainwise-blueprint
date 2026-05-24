@@ -869,6 +869,21 @@ export default function AdminNewsletterArticle() {
             }}
           />
         )}
+
+        {articleId && (
+          <ImportHtmlModal
+            articleId={articleId}
+            open={importOpen}
+            onOpenChange={setImportOpen}
+            onImported={(newBody) => {
+              markDirty();
+              setDraft((d) => ({ ...d, body_tiptap: newBody, source_type: "html_import" }));
+              // Flush save shortly after state commits so dirty draft persists.
+              setTimeout(() => { void flushSave("HTML import: replace body"); }, 0);
+              toast.success("Imported", { description: "HTML content is now in the editor." });
+            }}
+          />
+        )}
       </div>
     </TooltipProvider>
   );
