@@ -60,6 +60,12 @@ import { NewsletterCodeDiff } from "./nodes/CodeDiff";
 import { NewsletterChart } from "./nodes/Chart";
 import { NewsletterAudio } from "./nodes/Audio";
 import { NewsletterImageCompare } from "./nodes/ImageCompare";
+import { NewsletterFooterMeta } from "./nodes/FooterMeta";
+import {
+  NewsletterCitations,
+  NewsletterCitationEntry,
+} from "./nodes/Citations";
+import { NewsletterFurtherReading } from "./nodes/FurtherReading";
 
 import { Accent } from "./marks/Accent";
 import { SmallCaps } from "./marks/SmallCaps";
@@ -185,6 +191,10 @@ export function buildExtensions(opts: BuildExtensionsOptions): Extensions {
     NewsletterChart,
     NewsletterAudio,
     NewsletterImageCompare,
+    NewsletterFooterMeta,
+    NewsletterCitations,
+    NewsletterCitationEntry,
+    NewsletterFurtherReading,
     Accent,
     SmallCaps,
     Superscript,

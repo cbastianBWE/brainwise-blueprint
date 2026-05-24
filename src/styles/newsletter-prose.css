@@ -1753,3 +1753,144 @@
   outline: 2px solid var(--bw-orange, #F5741A);
   outline-offset: 2px;
 }
+
+/* ============================================================
+ * Bundle P6a — FooterMeta + Citations + FurtherReading
+ * ============================================================ */
+
+.newsletter-prose [data-newsletter-footer-meta] {
+  margin-top: var(--bw-section-rule-mt, 3rem);
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--bw-hairline, rgba(0, 0, 0, 0.08));
+  font-size: 0.875rem;
+  color: var(--bw-text-secondary);
+}
+.newsletter-prose [data-newsletter-footer-meta-tags] {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 0.75rem 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.newsletter-prose [data-newsletter-footer-meta-tag] {
+  display: inline-block;
+  padding: 0.125rem 0.5rem;
+  background: var(--bw-sand, var(--bw-cream-200));
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-family: var(--bw-mono-font);
+  color: var(--bw-text-primary);
+}
+.newsletter-prose [data-newsletter-footer-meta-labels] {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  font-family: var(--bw-mono-font);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 0.75rem;
+}
+
+/* Citations — CSS counters drive auto-numbering. */
+.newsletter-prose [data-newsletter-citations] {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  border-left: 3px solid var(--bw-text-primary);
+  background: var(--bw-sand, var(--bw-cream-200));
+}
+.newsletter-prose [data-newsletter-citations-title] {
+  font-family: var(--bw-mono-font);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.75rem;
+  margin: 0 0 1rem 0;
+}
+.newsletter-prose [data-newsletter-citations-list] {
+  counter-reset: citation 0;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.newsletter-prose [data-newsletter-citation-entry] {
+  counter-increment: citation;
+  margin: 0 0 0.75rem 0;
+  padding-left: 2rem;
+  position: relative;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+.newsletter-prose
+  [data-newsletter-citations][data-style="numbered"]
+  [data-newsletter-citation-entry]::before {
+  content: counter(citation) ". ";
+  position: absolute;
+  left: 0;
+  font-family: var(--bw-mono-font);
+  font-weight: 600;
+  color: var(--bw-text-primary);
+}
+.newsletter-prose
+  [data-newsletter-citations][data-style="bracketed"]
+  [data-newsletter-citation-entry]::before {
+  content: "[" counter(citation) "] ";
+  position: absolute;
+  left: 0;
+  font-family: var(--bw-mono-font);
+  font-weight: 600;
+  color: var(--bw-text-primary);
+}
+.newsletter-prose [data-newsletter-citation-entry-link] {
+  margin-left: 0.5rem;
+  text-decoration: none;
+  color: var(--bw-orange, #F5741A);
+  font-size: 0.75rem;
+  vertical-align: super;
+}
+
+/* FurtherReading */
+.newsletter-prose [data-newsletter-further-reading] {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  border-top: 1px solid var(--bw-hairline, rgba(0, 0, 0, 0.08));
+  border-bottom: 1px solid var(--bw-hairline, rgba(0, 0, 0, 0.08));
+}
+.newsletter-prose [data-newsletter-further-reading-title] {
+  font-family: var(--bw-mono-font);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.75rem;
+  margin: 0 0 1rem 0;
+}
+.newsletter-prose [data-newsletter-further-reading-list] {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.newsletter-prose [data-newsletter-further-reading-entry] {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+.newsletter-prose [data-newsletter-further-reading-entry-link] {
+  color: var(--bw-text-primary);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  font-weight: 500;
+}
+.newsletter-prose [data-newsletter-further-reading-entry-source] {
+  font-family: var(--bw-mono-font);
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--bw-text-secondary);
+}
+.newsletter-prose [data-newsletter-further-reading-entry-description] {
+  color: var(--bw-text-secondary);
+  font-size: 0.8125rem;
+}

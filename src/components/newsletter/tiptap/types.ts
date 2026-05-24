@@ -271,6 +271,35 @@ export interface NewsletterStatGridAttrs {
   columns: 2 | 3 | 4;
 }
 
+// ---- Pass 6 (P6a): FooterMeta / Citations / FurtherReading ----
+
+export interface NewsletterFooterMetaAttrs {
+  tags: string[];
+  issue_label: string | null;
+  published_label: string | null;
+}
+
+export interface NewsletterCitationsAttrs {
+  style: "numbered" | "bracketed";
+  title: string | null;
+}
+
+export interface NewsletterCitationEntryAttrs {
+  link: string | null;
+}
+
+export interface NewsletterFurtherReadingEntry {
+  title: string;
+  url: string;
+  source: string | null;
+  description: string | null;
+}
+
+export interface NewsletterFurtherReadingAttrs {
+  entries: NewsletterFurtherReadingEntry[];
+  title: string | null;
+}
+
 // ---- Pass 5 Tier 1: Math / Terminal / CodeDiff / Chart ----
 
 export type MathDisplay = "inline" | "block";
@@ -350,7 +379,11 @@ export type CustomNewsletterNode =
   | BaseNode<"newsletterCodeDiff", NewsletterCodeDiffAttrs>
   | BaseNode<"newsletterChart", NewsletterChartAttrs>
   | BaseNode<"newsletterAudio", NewsletterAudioAttrs>
-  | BaseNode<"newsletterImageCompare", NewsletterImageCompareAttrs>;
+  | BaseNode<"newsletterImageCompare", NewsletterImageCompareAttrs>
+  | BaseNode<"newsletterFooterMeta", NewsletterFooterMetaAttrs>
+  | BaseNode<"newsletterCitations", NewsletterCitationsAttrs>
+  | BaseNode<"newsletterCitationEntry", NewsletterCitationEntryAttrs>
+  | BaseNode<"newsletterFurtherReading", NewsletterFurtherReadingAttrs>;
 
 export type NewsletterTipTapNode =
   | TipTapTextNode

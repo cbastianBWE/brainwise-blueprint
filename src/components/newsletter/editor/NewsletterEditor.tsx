@@ -48,6 +48,10 @@ import {
   NewsletterChart,
   NewsletterAudio,
   NewsletterImageCompare,
+  NewsletterFooterMeta,
+  NewsletterCitations,
+  NewsletterCitationEntry,
+  NewsletterFurtherReading,
 } from "@/components/newsletter/tiptap";
 import { NewsletterCodeBlock } from "@/components/newsletter/tiptap/buildExtensions";
 import type { NewsletterTipTapDoc } from "@/components/newsletter/tiptap/types";
@@ -73,6 +77,10 @@ import { CodeDiffNodeView } from "@/components/newsletter/tiptap/nodeviews/CodeD
 import { ChartNodeView } from "@/components/newsletter/tiptap/nodeviews/ChartNodeView";
 import { AudioNodeView } from "@/components/newsletter/tiptap/nodeviews/AudioNodeView";
 import { ImageCompareNodeView } from "@/components/newsletter/tiptap/nodeviews/ImageCompareNodeView";
+import { FooterMetaNodeView } from "@/components/newsletter/tiptap/nodeviews/FooterMetaNodeView";
+import { CitationsNodeView } from "@/components/newsletter/tiptap/nodeviews/CitationsNodeView";
+import { CitationEntryNodeView } from "@/components/newsletter/tiptap/nodeviews/CitationEntryNodeView";
+import { FurtherReadingNodeView } from "@/components/newsletter/tiptap/nodeviews/FurtherReadingNodeView";
 import { NewsletterToolbar } from "./NewsletterToolbar";
 import { NewsletterBubbleMenu } from "./NewsletterBubbleMenu";
 import { NewsletterFloatingPlus } from "./NewsletterFloatingPlus";
@@ -212,6 +220,26 @@ const NodeImageCompareEdit = NewsletterImageCompare.extend({
     return ReactNodeViewRenderer(ImageCompareNodeView);
   },
 });
+const NodeFooterMetaEdit = NewsletterFooterMeta.extend({
+  addNodeView() {
+    return ReactNodeViewRenderer(FooterMetaNodeView);
+  },
+});
+const NodeCitationsEdit = NewsletterCitations.extend({
+  addNodeView() {
+    return ReactNodeViewRenderer(CitationsNodeView);
+  },
+});
+const NodeCitationEntryEdit = NewsletterCitationEntry.extend({
+  addNodeView() {
+    return ReactNodeViewRenderer(CitationEntryNodeView);
+  },
+});
+const NodeFurtherReadingEdit = NewsletterFurtherReading.extend({
+  addNodeView() {
+    return ReactNodeViewRenderer(FurtherReadingNodeView);
+  },
+});
 
 const EDITABLE_NODE_OVERRIDES = [
   NodeImageEdit,
@@ -236,6 +264,10 @@ const EDITABLE_NODE_OVERRIDES = [
   NodeChartEdit,
   NodeAudioEdit,
   NodeImageCompareEdit,
+  NodeFooterMetaEdit,
+  NodeCitationsEdit,
+  NodeCitationEntryEdit,
+  NodeFurtherReadingEdit,
 ];
 
 const OVERRIDE_NAMES = new Set(EDITABLE_NODE_OVERRIDES.map((n) => n.name));
