@@ -114,18 +114,18 @@ function firstNWords(text: string, n: number): string {
 function truncateDocByWords(doc: NewsletterTipTapDoc, maxWords: number): NewsletterTipTapDoc {
   // Best-effort: trim trailing top-level blocks once the cumulative plain-text
   // word count exceeds maxWords. Keeps the preview safe for any node mix.
-  const content = (doc.content ?? []) as Array<NewsletterTipTapDoc>;
-  const kept: typeof content = [];
+  const content = ((doc as unknown as { content?: unknown[] }).content ?? []) as unknown[];
+  const kept: unknown[] = [];
   let words = 0;
   for (const node of content) {
-    const t = tipTapDocToPlainText({ type: "doc", content: [node] } as NewsletterTipTapDoc);
+    const t = tipTapDocToPlainText({ type: "doc", content: [node] } as unknown as NewsletterTipTapDoc);
     const w = t.split(/\s+/).filter(Boolean).length;
     if (words + w > maxWords && kept.length > 0) break;
     kept.push(node);
     words += w;
     if (words >= maxWords) break;
   }
-  return { type: "doc", content: kept } as NewsletterTipTapDoc;
+  return { type: "doc", content: kept } as unknown as NewsletterTipTapDoc;
 }
 
 export default function ImportHtmlModal({
