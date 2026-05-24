@@ -363,6 +363,26 @@ export const SLASH_COMMANDS: SlashCommandItem[] = [
         })
         .run(),
   },
+  {
+    id: "masthead",
+    label: "Masthead",
+    description: "Publication identity strip with issue and date labels.",
+    category: "LAYOUT",
+    icon: BookMarked,
+    keywords: ["header", "publication", "issue", "topbar"],
+    run: (e, r) =>
+      deleteRange(e, r)
+        .insertContent({
+          type: "newsletterMasthead",
+          attrs: {
+            publication: "",
+            issue_label: null,
+            date_label: null,
+            logo_glyph: null,
+          },
+        })
+        .run(),
+  },
 ];
 
 function filterItems(query: string): SlashCommandItem[] {
