@@ -42,6 +42,10 @@ import {
   NewsletterChecklistItem,
   NewsletterDomainRow,
   NewsletterIndexCard,
+  NewsletterMath,
+  NewsletterTerminal,
+  NewsletterCodeDiff,
+  NewsletterChart,
 } from "@/components/newsletter/tiptap";
 import { NewsletterCodeBlock } from "@/components/newsletter/tiptap/buildExtensions";
 import type { NewsletterTipTapDoc } from "@/components/newsletter/tiptap/types";
