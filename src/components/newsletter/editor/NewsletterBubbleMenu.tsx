@@ -38,6 +38,23 @@ import {
 import { cn } from "@/lib/utils";
 import { isSafeHttpUrl } from "@/lib/safeUrl";
 
+type AccentColor = "orange" | "forest" | "teal" | "plum" | "mustard" | "navy";
+type AccentStyle = "plain" | "italic" | "bold-italic";
+type AccentWeight = "normal" | "heavy";
+type HighlightColor = "yellow" | "orange" | "forest" | "pink" | "blue";
+
+type Mode =
+  | { kind: "default" }
+  | { kind: "link"; url: string }
+  | { kind: "abbr"; title: string }
+  | {
+      kind: "accent";
+      color: AccentColor;
+      style: AccentStyle;
+      weight: AccentWeight;
+    }
+  | { kind: "highlight"; color: HighlightColor };
+
 interface NewsletterBubbleMenuProps {
   editor: Editor;
 }
@@ -45,10 +62,7 @@ interface NewsletterBubbleMenuProps {
 export function NewsletterBubbleMenu({ editor }: NewsletterBubbleMenuProps) {
   const elRef = useRef<HTMLDivElement | null>(null);
   const [mounted, setMounted] = useState(false);
-  const [linkMode, setLinkMode] = useState(false);
-  const [linkUrl, setLinkUrl] = useState("");
-  const [abbrMode, setAbbrMode] = useState(false);
-  const [abbrTitle, setAbbrTitle] = useState("");
+  const [mode, setMode] = useState<Mode>({ kind: "default" });
 
   // Create the host element once on mount and register the extension.
   useEffect(() => {
@@ -71,6 +85,9 @@ export function NewsletterBubbleMenu({ editor }: NewsletterBubbleMenuProps) {
           "newsletterStatCallout",
           "newsletterEmbed",
           "newsletterImage",
+          "newsletterSectionRule",
+          "newsletterByline",
+          "newsletterMasthead",
         ]);
         if (blockedParents.has($from.parent.type.name)) return false;
         return true;
@@ -90,41 +107,44 @@ export function NewsletterBubbleMenu({ editor }: NewsletterBubbleMenuProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editor]);
 
-
   // Reset submenu modes whenever selection moves
   useEffect(() => {
-    const handler = () => {
-      setLinkMode(false);
-      setLinkUrl("");
-      setAbbrMode(false);
-      setAbbrTitle("");
-    };
+    const handler = () => setMode({ kind: "default" });
     editor.on("selectionUpdate", handler);
     return () => {
       editor.off("selectionUpdate", handler);
     };
   }, [editor]);
 
+  // Escape closes any open submenu
+  useEffect(() => {
+    if (mode.kind === "default") return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMode({ kind: "default" });
+    };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [mode.kind]);
+
   if (!mounted || !elRef.current) return null;
 
-  const applyLink = () => {
-    const url = linkUrl.trim();
-    if (!url) {
+  const applyLink = (url: string) => {
+    const trimmed = url.trim();
+    if (!trimmed) {
       editor.chain().focus().unsetLink().run();
-    } else if (isSafeHttpUrl(url)) {
+    } else if (isSafeHttpUrl(trimmed)) {
       editor
         .chain()
         .focus()
         .extendMarkRange("link")
-        .setLink({ href: url })
+        .setLink({ href: trimmed })
         .run();
     }
-    setLinkMode(false);
-    setLinkUrl("");
+    setMode({ kind: "default" });
   };
 
-  const applyAbbr = () => {
-    const t = abbrTitle.trim();
+  const applyAbbr = (title: string) => {
+    const t = title.trim();
     if (t) {
       editor
         .chain()
@@ -135,8 +155,7 @@ export function NewsletterBubbleMenu({ editor }: NewsletterBubbleMenuProps) {
     } else {
       editor.chain().focus().unsetMark("abbr").run();
     }
-    setAbbrMode(false);
-    setAbbrTitle("");
+    setMode({ kind: "default" });
   };
 
   const Btn = ({
@@ -177,21 +196,18 @@ export function NewsletterBubbleMenu({ editor }: NewsletterBubbleMenuProps) {
     </Tooltip>
   );
 
-  const node = (
-    <TooltipProvider delayDuration={300}>
-      <div
-        className="flex items-center gap-0.5 rounded-full border border-[var(--border-1)] bg-white p-1 shadow-md animate-in fade-in zoom-in-95 duration-150"
-        onMouseDown={(e) => e.preventDefault()}
-      >
-        {linkMode ? (
+  const renderBody = () => {
+    switch (mode.kind) {
+      case "link": {
+        const url = mode.url;
+        return (
           <>
             <input
               type="text"
-              value={linkUrl}
-              onChange={(e) => setLinkUrl(e.target.value)}
+              value={url}
+              onChange={(e) => setMode({ kind: "link", url: e.target.value })}
               onKeyDown={(e) => {
-                if (e.key === "Enter") applyLink();
-                if (e.key === "Escape") setLinkMode(false);
+                if (e.key === "Enter") applyLink(url);
               }}
               placeholder="Paste URL"
               autoFocus
@@ -201,25 +217,27 @@ export function NewsletterBubbleMenu({ editor }: NewsletterBubbleMenuProps) {
               type="button"
               onMouseDown={(e) => {
                 e.preventDefault();
-                applyLink();
+                applyLink(url);
               }}
               className="rounded-full bg-[#F5741A] px-3 py-1 text-[11px] font-semibold text-white hover:bg-[#E06714]"
             >
               Apply
             </button>
           </>
-        ) : abbrMode ? (
+        );
+      }
+      case "abbr": {
+        const title = mode.title;
+        return (
           <>
             <input
               type="text"
-              value={abbrTitle}
-              onChange={(e) => setAbbrTitle(e.target.value)}
+              value={title}
+              onChange={(e) =>
+                setMode({ kind: "abbr", title: e.target.value })
+              }
               onKeyDown={(e) => {
-                if (e.key === "Enter") applyAbbr();
-                if (e.key === "Escape") {
-                  setAbbrMode(false);
-                  setAbbrTitle("");
-                }
+                if (e.key === "Enter") applyAbbr(title);
               }}
               placeholder="Expanded form (e.g. World Health Organization)"
               autoFocus
@@ -229,14 +247,222 @@ export function NewsletterBubbleMenu({ editor }: NewsletterBubbleMenuProps) {
               type="button"
               onMouseDown={(e) => {
                 e.preventDefault();
-                applyAbbr();
+                applyAbbr(title);
               }}
               className="rounded-full bg-[#F5741A] px-3 py-1 text-[11px] font-semibold text-white hover:bg-[#E06714]"
             >
               Apply
             </button>
           </>
-        ) : (
+        );
+      }
+      case "accent": {
+        const m = mode;
+        const ACCENT_COLORS: AccentColor[] = [
+          "orange",
+          "forest",
+          "teal",
+          "plum",
+          "mustard",
+          "navy",
+        ];
+        const ACCENT_STYLES: AccentStyle[] = ["plain", "italic", "bold-italic"];
+        const ACCENT_WEIGHTS: AccentWeight[] = ["normal", "heavy"];
+        const STYLE_LABELS: Record<AccentStyle, string> = {
+          plain: "Plain",
+          italic: "Italic",
+          "bold-italic": "Bold-Italic",
+        };
+        const WEIGHT_LABELS: Record<AccentWeight, string> = {
+          normal: "Normal",
+          heavy: "Heavy",
+        };
+        return (
+          <div className="flex w-72 flex-col gap-2 p-1">
+            <div className="flex items-center gap-1.5">
+              <span className="w-12 text-[10px] uppercase tracking-wider text-[var(--fg-3)]">
+                Color
+              </span>
+              {ACCENT_COLORS.map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    setMode({ ...m, color: c });
+                  }}
+                  className={cn(
+                    "h-6 w-6 rounded-full border-2 transition-all",
+                    m.color === c
+                      ? "border-[#F5741A] scale-110"
+                      : "border-transparent hover:scale-105",
+                  )}
+                  style={{ background: `var(--bw-accent-${c})` }}
+                  aria-label={c}
+                />
+              ))}
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="w-12 text-[10px] uppercase tracking-wider text-[var(--fg-3)]">
+                Style
+              </span>
+              {ACCENT_STYLES.map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    setMode({ ...m, style: s });
+                  }}
+                  className={cn(
+                    "rounded-full px-3 py-0.5 text-[11px] font-medium transition-colors",
+                    m.style === s
+                      ? "bg-[#F5741A]/15 text-[#F5741A]"
+                      : "text-[var(--fg-2)] hover:bg-[var(--bw-cream-200)]",
+                  )}
+                >
+                  {STYLE_LABELS[s]}
+                </button>
+              ))}
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="w-12 text-[10px] uppercase tracking-wider text-[var(--fg-3)]">
+                Weight
+              </span>
+              {ACCENT_WEIGHTS.map((w) => (
+                <button
+                  key={w}
+                  type="button"
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    setMode({ ...m, weight: w });
+                  }}
+                  className={cn(
+                    "rounded-full px-3 py-0.5 text-[11px] font-medium transition-colors",
+                    m.weight === w
+                      ? "bg-[#F5741A]/15 text-[#F5741A]"
+                      : "text-[var(--fg-2)] hover:bg-[var(--bw-cream-200)]",
+                  )}
+                >
+                  {WEIGHT_LABELS[w]}
+                </button>
+              ))}
+            </div>
+            <div className="flex items-center gap-1 pt-1">
+              <button
+                type="button"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  editor
+                    .chain()
+                    .focus()
+                    .setMark("accent", {
+                      color: m.color,
+                      style: m.style,
+                      weight: m.weight,
+                    })
+                    .run();
+                  setMode({ kind: "default" });
+                }}
+                className="rounded-full bg-[#F5741A] px-3 py-1 text-[11px] font-semibold text-white hover:bg-[#E06714]"
+              >
+                Apply
+              </button>
+              <button
+                type="button"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  editor.chain().focus().unsetMark("accent").run();
+                  setMode({ kind: "default" });
+                }}
+                className="rounded-full px-3 py-1 text-[11px] font-medium text-[var(--fg-2)] hover:bg-[var(--bw-cream-200)]"
+              >
+                Remove
+              </button>
+              <button
+                type="button"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  setMode({ kind: "default" });
+                }}
+                className="ml-auto rounded-full px-2 py-1 text-[11px] text-[var(--fg-3)] hover:bg-[var(--bw-cream-200)]"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        );
+      }
+      case "highlight": {
+        const m = mode;
+        const HIGHLIGHT_COLORS: HighlightColor[] = [
+          "yellow",
+          "orange",
+          "forest",
+          "pink",
+          "blue",
+        ];
+        const COLOR_BG: Record<HighlightColor, string> = {
+          yellow: "color-mix(in oklch, var(--bw-amber) 30%, white)",
+          orange: "color-mix(in oklch, var(--bw-orange) 20%, white)",
+          forest: "color-mix(in oklch, var(--bw-forest) 18%, white)",
+          pink: "color-mix(in oklch, #FF7B9D 22%, white)",
+          blue: "color-mix(in oklch, var(--bw-teal) 18%, white)",
+        };
+        return (
+          <div className="flex items-center gap-1.5 p-1">
+            <span className="text-[10px] uppercase tracking-wider text-[var(--fg-3)]">
+              Highlight
+            </span>
+            {HIGHLIGHT_COLORS.map((c) => (
+              <button
+                key={c}
+                type="button"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  editor
+                    .chain()
+                    .focus()
+                    .setMark("highlight", { color: c })
+                    .run();
+                  setMode({ kind: "default" });
+                }}
+                className={cn(
+                  "h-6 w-6 rounded-full border-2 transition-all",
+                  m.color === c
+                    ? "border-[#F5741A] scale-110"
+                    : "border-transparent hover:scale-105",
+                )}
+                style={{ background: COLOR_BG[c] }}
+                aria-label={c}
+              />
+            ))}
+            <button
+              type="button"
+              onMouseDown={(e) => {
+                e.preventDefault();
+                editor.chain().focus().unsetMark("highlight").run();
+                setMode({ kind: "default" });
+              }}
+              className="ml-1 rounded-full px-2 py-1 text-[11px] font-medium text-[var(--fg-2)] hover:bg-[var(--bw-cream-200)]"
+            >
+              Remove
+            </button>
+            <button
+              type="button"
+              onMouseDown={(e) => {
+                e.preventDefault();
+                setMode({ kind: "default" });
+              }}
+              className="rounded-full px-2 py-1 text-[11px] text-[var(--fg-3)] hover:bg-[var(--bw-cream-200)]"
+            >
+              Cancel
+            </button>
+          </div>
+        );
+      }
+      default:
+        return (
           <>
             <Btn
               label="Bold"
@@ -271,7 +497,9 @@ export function NewsletterBubbleMenu({ editor }: NewsletterBubbleMenuProps) {
             <Btn
               label="Superscript"
               active={editor.isActive("superscript")}
-              onClick={() => editor.chain().focus().toggleSuperscript().run()}
+              onClick={() =>
+                editor.chain().focus().toggleSuperscript().run()
+              }
             >
               <SuperscriptIcon className="h-3.5 w-3.5" />
             </Btn>
@@ -293,9 +521,13 @@ export function NewsletterBubbleMenu({ editor }: NewsletterBubbleMenuProps) {
             <Btn
               label="Highlight"
               active={editor.isActive("highlight")}
-              onClick={() =>
-                editor.chain().focus().toggleHighlight({ color: "yellow" }).run()
-              }
+              onClick={() => {
+                const existing = editor.getAttributes("highlight");
+                setMode({
+                  kind: "highlight",
+                  color: (existing.color as HighlightColor) ?? "yellow",
+                });
+              }}
             >
               <Highlighter className="h-3.5 w-3.5" />
             </Btn>
@@ -309,17 +541,15 @@ export function NewsletterBubbleMenu({ editor }: NewsletterBubbleMenuProps) {
             <Btn
               label="Accent"
               active={editor.isActive("accent")}
-              onClick={() =>
-                editor
-                  .chain()
-                  .focus()
-                  .toggleAccent({
-                    color: "orange",
-                    style: "plain",
-                    weight: "normal",
-                  })
-                  .run()
-              }
+              onClick={() => {
+                const existing = editor.getAttributes("accent");
+                setMode({
+                  kind: "accent",
+                  color: (existing.color as AccentColor) ?? "orange",
+                  style: (existing.style as AccentStyle) ?? "plain",
+                  weight: (existing.weight as AccentWeight) ?? "normal",
+                });
+              }}
             >
               <Palette className="h-3.5 w-3.5" />
             </Btn>
@@ -330,8 +560,7 @@ export function NewsletterBubbleMenu({ editor }: NewsletterBubbleMenuProps) {
                 const existingTitle = editor.getAttributes("abbr").title as
                   | string
                   | undefined;
-                setAbbrTitle(existingTitle ?? "");
-                setAbbrMode(true);
+                setMode({ kind: "abbr", title: existingTitle ?? "" });
               }}
             >
               <BookOpen className="h-3.5 w-3.5" />
@@ -349,9 +578,10 @@ export function NewsletterBubbleMenu({ editor }: NewsletterBubbleMenuProps) {
               shortcut="⌘K"
               active={editor.isActive("link")}
               onClick={() => {
-                const current = editor.getAttributes("link").href ?? "";
-                setLinkUrl(current);
-                setLinkMode(true);
+                const current = (editor.getAttributes("link").href as
+                  | string
+                  | undefined) ?? "";
+                setMode({ kind: "link", url: current });
               }}
             >
               <LinkIcon className="h-3.5 w-3.5" />
@@ -376,7 +606,20 @@ export function NewsletterBubbleMenu({ editor }: NewsletterBubbleMenuProps) {
               H3
             </Btn>
           </>
+        );
+    }
+  };
+
+  const node = (
+    <TooltipProvider delayDuration={300}>
+      <div
+        className={cn(
+          "flex rounded-2xl border border-[var(--border-1)] bg-white p-1 shadow-md animate-in fade-in zoom-in-95 duration-150",
+          mode.kind === "accent" ? "items-stretch" : "items-center gap-0.5",
         )}
+        onMouseDown={(e) => e.preventDefault()}
+      >
+        {renderBody()}
       </div>
     </TooltipProvider>
   );
