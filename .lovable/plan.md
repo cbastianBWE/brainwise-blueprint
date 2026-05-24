@@ -1,47 +1,26 @@
-# Bundle A1b-1 — SectionRule + Masthead + Bubble Menu Pickers
+## Bundle A2a-1 — StepList + Checklist composite nodes (APPROVED)
 
-Implements the spec exactly. Byline is deferred to A1b-2.
+Two new parent+child node pairs for the newsletter editor, following the TwoColumn / KeyMoments composite pattern. One React NodeView for ChecklistItem (clickable checkbox), wired via the existing `EDITABLE_NODE_OVERRIDES` registry in `NewsletterEditor.tsx` so the schema modules stay headless.
 
-## New files (4)
+### Files to create
 
-1. **`src/components/newsletter/tiptap/nodes/SectionRule.ts`** — Atom node, `parseHTML` covers `hr.section-rule`/`hr[data-numbered]`/`hr.dot-divider` (all priority 60) + `div.section-rule`/`div.section-break`/`[data-newsletter-section-rule]` fallbacks. **No bare `hr` selector** so StarterKit HorizontalRule still handles plain `<hr>`. `renderHTML` emits a `<div data-newsletter-section-rule>` wrapper with style-specific children (rule/number/title/dots).
+1. `src/components/newsletter/tiptap/nodes/StepList.ts` — exports `NewsletterStepList` and `NewsletterStep`. Headless, no React. Parent parseHTML at priority 60.
+2. `src/components/newsletter/tiptap/nodes/Checklist.ts` — exports `NewsletterChecklist` and `NewsletterChecklistItem`. **Headless — no React imports, no `addNodeView()`.** Parent parseHTML at priority 60. ChecklistItem has `checked` attr with parse/render round-trip via `data-checked`.
+3. `src/components/newsletter/tiptap/nodeviews/ChecklistItemNodeView.tsx` — React NodeView using `NodeViewWrapper` + `NodeViewContent`. Clickable checkbox toggles `checked` via `updateAttributes`.
 
-2. **`src/components/newsletter/tiptap/nodes/Masthead.ts`** — Atom node with `publication`, `issue_label`, `date_label`, `logo_glyph` attrs. Renders `<header data-newsletter-masthead>` with glyph / publication / issue / date spans separated by middots.
+### Files to edit
 
-3. **`src/components/newsletter/tiptap/nodeviews/SectionRuleNodeView.tsx`** (~120 LOC) — Follows StatCalloutNodeView pattern: `NodeViewWrapper` div, trash + drag-handle affordances, 300ms-debounced commits, `selected` ring. Style picker pills (Numbered/Plain/Titled/Dot), conditional number/title text inputs, live preview block below.
+4. `types.ts` — add `NewsletterStepListAttrs`, `NewsletterChecklistItemAttrs`; extend `CustomNewsletterNode` union with four new variants.
+5. `buildExtensions.ts` — import + register the four new nodes.
+6. `index.ts` — re-export the four new nodes.
+7. `NewsletterEditor.tsx` — exactly three edits:
+   - Import `ChecklistItemNodeView`.
+   - Define `NodeChecklistItemEdit = NewsletterChecklistItem.extend({ addNodeView() { return ReactNodeViewRenderer(ChecklistItemNodeView); } })`.
+   - Append `NodeChecklistItemEdit` to `EDITABLE_NODE_OVERRIDES`.
+8. `NewsletterSlashMenu.tsx` — add `CheckSquare` icon import; append `step-list` and `checklist` LAYOUT items after `key-moments`.
+9. `newsletter-prose.css` — append `Bundle A2a-1` block with rules for StepList (grid + counter + conditional connector) and Checklist (reader path with `--checked` modifier + NodeView checkbox styles).
 
-4. **`src/components/newsletter/tiptap/nodeviews/MastheadNodeView.tsx`** (~90 LOC) — `NodeViewWrapper` header, trash + drag handles, single row with native `<select>` for glyph (immediate commit) + 3 debounced text inputs (publication, issue, date). Empty strings commit as `null` for optional fields.
-
-## Modified files (7)
-
-5. **`src/components/newsletter/tiptap/types.ts`** — Add `NewsletterSectionRuleStyle` type alias, `NewsletterSectionRuleAttrs`, `NewsletterMastheadAttrs` interfaces. Add 2 new `BaseNode` members to `CustomNewsletterNode` union. (No Byline yet.)
-
-6. **`src/components/newsletter/tiptap/buildExtensions.ts`** — Import + append `NewsletterSectionRule`, `NewsletterMasthead` to array after `NewsletterAside`.
-
-7. **`src/components/newsletter/tiptap/index.ts`** — Re-export the 2 new nodes.
-
-8. **`src/components/newsletter/editor/NewsletterEditor.tsx`** — Import 2 new nodes + 2 NodeView components; add `NodeSectionRuleEdit` and `NodeMastheadEdit` via `.extend({ addNodeView })`; append both to `EDITABLE_NODE_OVERRIDES`. `OVERRIDE_NAMES` derives automatically.
-
-9. **`src/components/newsletter/editor/NewsletterSlashMenu.tsx`** — Import `SeparatorHorizontal`, `BookMarked` icons; add `section-rule` (BASIC) and `masthead` (LAYOUT) slash items inserting atoms with default attrs.
-
-10. **`src/components/newsletter/editor/NewsletterBubbleMenu.tsx`** — Largest edit:
-    - **(A) Mode refactor**: replace 4 `useState` calls (linkMode/linkUrl/abbrMode/abbrTitle) with single discriminated union `Mode = default | link | abbr | accent | highlight`. Hoist `AccentColor/AccentStyle/AccentWeight/HighlightColor` type aliases above component. Reset handler now `setMode({ kind: "default" })`. Replace all `linkMode/abbrMode` branches with `switch (mode.kind)`, guarding field access with discriminants.
-    - **(B) Escape handler**: useEffect that registers `keydown` while `mode.kind !== "default"`, resets on Escape.
-    - **(C) `blockedParents`**: add `newsletterSectionRule`, `newsletterByline`, `newsletterMasthead`.
-    - **(D) Accent picker**: replace Accent button onClick with `setMode({ kind: "accent", ...editor.getAttributes("accent") })`; render 3 rows (color swatches, style pills, weight pills) + Apply/Remove/Cancel.
-    - **(E) Highlight picker**: replace Highlight button onClick with `setMode({ kind: "highlight", color: ... })`; render single color row, click-to-apply, with Remove/Cancel.
-
-11. **`src/styles/newsletter-prose.css`** — Append SectionRule (`.newsletter-section-rule` + `__rule`/`__number`/`__title`/`__dot` + variant modifiers) and Masthead (`.newsletter-masthead` + `__glyph`/`__publication`/`__issue`/`__date`/`__separator`) CSS blocks, scoped under `.newsletter-prose`.
-
-## Out of scope (do not touch)
-
-- Byline node + NodeView (A1b-2)
-- Reader NodeViews — renderHTML is sufficient (no async resolution)
-- `convert-html-to-tiptap` Edge Function
-- `AdminNewsletterArticle.tsx`
-- Bare `hr` parseHTML on SectionRule
-- New `@tiptap/extension-*` packages
-
-## Verification
-
-Type-check clean; editor mounts; slash items insert atoms; NodeViews edit + commit; bubble menu Link/Abbr behavior unchanged after refactor; Escape closes submenus; Accent/Highlight pickers apply marks correctly.
+### Acceptance
+- `tsc --noEmit` clean.
+- No new npm packages.
+- A1a/A1b shipped files untouched beyond the additive union/array edits.
