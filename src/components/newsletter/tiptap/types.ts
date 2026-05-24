@@ -123,7 +123,19 @@ export type StarterKitNode =
       highlight_lines?: string | null;
     }>
   | BaseNode<"horizontalRule">
-  | BaseNode<"hardBreak">;
+  | BaseNode<"hardBreak">
+  | BaseNode<"table">
+  | BaseNode<"tableRow">
+  | BaseNode<"tableHeader", {
+      colspan?: number;
+      rowspan?: number;
+      colwidth?: number[] | null;
+    }>
+  | BaseNode<"tableCell", {
+      colspan?: number;
+      rowspan?: number;
+      colwidth?: number[] | null;
+    }>;
 
 export interface NewsletterEyebrowAttrs {
   variant: "default" | "accent" | "muted";
