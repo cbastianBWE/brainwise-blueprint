@@ -589,3 +589,49 @@
   color: var(--bw-slate-300);
   font-size: 12px;
 }
+
+/* ============================================================
+   Custom node: newsletterByline
+   ============================================================ */
+.newsletter-prose .newsletter-byline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 24px 0;
+  font-family: var(--bw-mono-font);
+  font-size: var(--bw-editorial-label-size);
+  text-transform: uppercase;
+  letter-spacing: var(--bw-editorial-letterspacing);
+  color: var(--bw-slate-700);
+}
+.newsletter-prose .newsletter-byline--empty {
+  min-height: 24px;
+  opacity: 0.5;
+}
+.newsletter-prose .newsletter-byline--empty::before {
+  content: "(empty byline)";
+  font-style: italic;
+}
+.newsletter-prose .newsletter-byline__entry {
+  display: inline-flex;
+  align-items: center;
+}
+.newsletter-prose .newsletter-byline__entry strong {
+  font-weight: 700;
+  color: var(--bw-navy);
+}
+.newsletter-prose .newsletter-byline__link {
+  color: var(--bw-navy);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+  transition: color var(--dur-fast) var(--ease-standard);
+}
+.newsletter-prose .newsletter-byline__link:hover {
+  color: var(--bw-orange);
+}
+.newsletter-prose .newsletter-byline__sep {
+  color: var(--bw-slate-300);
+  font-size: 12px;
+}

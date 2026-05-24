@@ -23,6 +23,7 @@ import { NewsletterLead } from "./nodes/Lead";
 import { NewsletterAside } from "./nodes/Aside";
 import { NewsletterSectionRule } from "./nodes/SectionRule";
 import { NewsletterMasthead } from "./nodes/Masthead";
+import { NewsletterByline } from "./nodes/Byline";
 
 import { Accent } from "./marks/Accent";
 import { SmallCaps } from "./marks/SmallCaps";
@@ -81,6 +82,7 @@ export function buildExtensions(opts: BuildExtensionsOptions): Extensions {
     NewsletterAside,
     NewsletterSectionRule,
     NewsletterMasthead,
+    NewsletterByline,
     Accent,
     SmallCaps,
     Superscript,

@@ -19,6 +19,7 @@ export { NewsletterLead } from "./nodes/Lead";
 export { NewsletterAside } from "./nodes/Aside";
 export { NewsletterSectionRule } from "./nodes/SectionRule";
 export { NewsletterMasthead } from "./nodes/Masthead";
+export { NewsletterByline } from "./nodes/Byline";
 export { Accent } from "./marks/Accent";
 export { SmallCaps } from "./marks/SmallCaps";
 export { Superscript } from "./marks/Superscript";
