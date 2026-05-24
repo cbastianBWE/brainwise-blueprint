@@ -128,6 +128,21 @@ export interface AbbrMarkAttrs {
   title: string;
 }
 
+export type NewsletterSectionRuleStyle = "numbered" | "plain" | "titled" | "dot";
+
+export interface NewsletterSectionRuleAttrs {
+  number: string;
+  style: NewsletterSectionRuleStyle;
+  title: string | null;
+}
+
+export interface NewsletterMastheadAttrs {
+  publication: string;
+  issue_label: string | null;
+  date_label: string | null;
+  logo_glyph: string | null;
+}
+
 // Custom newsletter nodes
 export type CustomNewsletterNode =
   | BaseNode<"newsletterImage", NewsletterImageAttrs>
