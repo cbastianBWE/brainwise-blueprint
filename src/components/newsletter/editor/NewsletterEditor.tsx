@@ -36,6 +36,8 @@ import {
   NewsletterStatCallout,
   NewsletterTwoColumn,
   NewsletterTwoColumnPane,
+  NewsletterSectionRule,
+  NewsletterMasthead,
 } from "@/components/newsletter/tiptap";
 import type { NewsletterTipTapDoc } from "@/components/newsletter/tiptap/types";
 import { ImageNodeView } from "@/components/newsletter/tiptap/nodeviews/ImageNodeView";
@@ -47,6 +49,8 @@ import { TwoColumnNodeView } from "@/components/newsletter/tiptap/nodeviews/TwoC
 import { TwoColumnPaneNodeView } from "@/components/newsletter/tiptap/nodeviews/TwoColumnPaneNodeView";
 import { KeyMomentsNodeView } from "@/components/newsletter/tiptap/nodeviews/KeyMomentsNodeView";
 import { KeyMomentNodeView } from "@/components/newsletter/tiptap/nodeviews/KeyMomentNodeView";
+import { SectionRuleNodeView } from "@/components/newsletter/tiptap/nodeviews/SectionRuleNodeView";
+import { MastheadNodeView } from "@/components/newsletter/tiptap/nodeviews/MastheadNodeView";
 import { NewsletterToolbar } from "./NewsletterToolbar";
 import { NewsletterBubbleMenu } from "./NewsletterBubbleMenu";
 import { NewsletterFloatingPlus } from "./NewsletterFloatingPlus";
