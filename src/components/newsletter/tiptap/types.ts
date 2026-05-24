@@ -259,6 +259,14 @@ export interface NewsletterAudioAttrs {
   transcript_url: string | null;
 }
 
+export interface NewsletterImageCompareAttrs {
+  before_asset_id: string | null;
+  after_asset_id: string | null;
+  before_label: string;
+  after_label: string;
+  default_position: number;
+}
+
 export interface NewsletterStatGridAttrs {
   columns: 2 | 3 | 4;
 }
@@ -341,7 +349,8 @@ export type CustomNewsletterNode =
   | BaseNode<"newsletterTerminal", NewsletterTerminalAttrs>
   | BaseNode<"newsletterCodeDiff", NewsletterCodeDiffAttrs>
   | BaseNode<"newsletterChart", NewsletterChartAttrs>
-  | BaseNode<"newsletterAudio", NewsletterAudioAttrs>;
+  | BaseNode<"newsletterAudio", NewsletterAudioAttrs>
+  | BaseNode<"newsletterImageCompare", NewsletterImageCompareAttrs>;
 
 export type NewsletterTipTapNode =
   | TipTapTextNode

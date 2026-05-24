@@ -47,6 +47,7 @@ import {
   NewsletterCodeDiff,
   NewsletterChart,
   NewsletterAudio,
+  NewsletterImageCompare,
 } from "@/components/newsletter/tiptap";
 import { NewsletterCodeBlock } from "@/components/newsletter/tiptap/buildExtensions";
 import type { NewsletterTipTapDoc } from "@/components/newsletter/tiptap/types";
@@ -71,6 +72,7 @@ import { TerminalNodeView } from "@/components/newsletter/tiptap/nodeviews/Termi
 import { CodeDiffNodeView } from "@/components/newsletter/tiptap/nodeviews/CodeDiffNodeView";
 import { ChartNodeView } from "@/components/newsletter/tiptap/nodeviews/ChartNodeView";
 import { AudioNodeView } from "@/components/newsletter/tiptap/nodeviews/AudioNodeView";
+import { ImageCompareNodeView } from "@/components/newsletter/tiptap/nodeviews/ImageCompareNodeView";
 import { NewsletterToolbar } from "./NewsletterToolbar";
 import { NewsletterBubbleMenu } from "./NewsletterBubbleMenu";
 import { NewsletterFloatingPlus } from "./NewsletterFloatingPlus";
@@ -205,6 +207,11 @@ const NodeAudioEdit = NewsletterAudio.extend({
     return ReactNodeViewRenderer(AudioNodeView);
   },
 });
+const NodeImageCompareEdit = NewsletterImageCompare.extend({
+  addNodeView() {
+    return ReactNodeViewRenderer(ImageCompareNodeView);
+  },
+});
 
 const EDITABLE_NODE_OVERRIDES = [
   NodeImageEdit,
@@ -228,6 +235,7 @@ const EDITABLE_NODE_OVERRIDES = [
   NodeCodeDiffEdit,
   NodeChartEdit,
   NodeAudioEdit,
+  NodeImageCompareEdit,
 ];
 
 const OVERRIDE_NAMES = new Set(EDITABLE_NODE_OVERRIDES.map((n) => n.name));

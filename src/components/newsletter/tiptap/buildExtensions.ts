@@ -59,6 +59,7 @@ import { NewsletterTerminal } from "./nodes/Terminal";
 import { NewsletterCodeDiff } from "./nodes/CodeDiff";
 import { NewsletterChart } from "./nodes/Chart";
 import { NewsletterAudio } from "./nodes/Audio";
+import { NewsletterImageCompare } from "./nodes/ImageCompare";
 
 import { Accent } from "./marks/Accent";
 import { SmallCaps } from "./marks/SmallCaps";
@@ -183,6 +184,7 @@ export function buildExtensions(opts: BuildExtensionsOptions): Extensions {
     NewsletterCodeDiff,
     NewsletterChart,
     NewsletterAudio,
+    NewsletterImageCompare,
     Accent,
     SmallCaps,
     Superscript,
