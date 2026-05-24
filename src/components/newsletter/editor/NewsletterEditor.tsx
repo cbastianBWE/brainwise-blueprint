@@ -65,6 +65,10 @@ import { ChecklistItemNodeView } from "@/components/newsletter/tiptap/nodeviews/
 import { DomainRowNodeView } from "@/components/newsletter/tiptap/nodeviews/DomainRowNodeView";
 import { IndexCardNodeView } from "@/components/newsletter/tiptap/nodeviews/IndexCardNodeView";
 import { CodeBlockNodeView } from "@/components/newsletter/tiptap/nodeviews/CodeBlockNodeView";
+import { MathNodeView } from "@/components/newsletter/tiptap/nodeviews/MathNodeView";
+import { TerminalNodeView } from "@/components/newsletter/tiptap/nodeviews/TerminalNodeView";
+import { CodeDiffNodeView } from "@/components/newsletter/tiptap/nodeviews/CodeDiffNodeView";
+import { ChartNodeView } from "@/components/newsletter/tiptap/nodeviews/ChartNodeView";
 import { NewsletterToolbar } from "./NewsletterToolbar";
 import { NewsletterBubbleMenu } from "./NewsletterBubbleMenu";
 import { NewsletterFloatingPlus } from "./NewsletterFloatingPlus";
