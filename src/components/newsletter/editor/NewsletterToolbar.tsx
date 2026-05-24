@@ -38,6 +38,7 @@ interface NewsletterToolbarProps {
   articleId: string;
   disabled?: boolean;
   imageInputRef?: React.MutableRefObject<{ open: () => void } | null>;
+  onOpenImportHtml?: () => void;
 }
 
 type BlockKey = "paragraph" | "h2" | "h3" | "h4";
