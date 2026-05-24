@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { NodeViewWrapper, type NodeViewProps } from "@tiptap/react";
-import { Trash2, GripVertical } from "lucide-react";
+import { Trash2, GripVertical, TrendingUp, TrendingDown, Minus, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function StatCalloutNodeView({
