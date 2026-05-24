@@ -618,6 +618,7 @@ export default function AdminNewsletterArticle() {
                   articleId={articleId ?? ""}
                   initialContent={draft.body_tiptap}
                   onChange={(next) => setField("body_tiptap", next)}
+                  onOpenImportHtml={articleId ? () => setImportOpen(true) : undefined}
                 />
               )}
             </section>
