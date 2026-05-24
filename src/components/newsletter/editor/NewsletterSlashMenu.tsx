@@ -37,6 +37,8 @@ import {
   Tag,
   AlignLeft,
   MessageSquareMore,
+  SeparatorHorizontal,
+  BookMarked,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
