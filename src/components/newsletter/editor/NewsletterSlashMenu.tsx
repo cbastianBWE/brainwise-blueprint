@@ -54,6 +54,8 @@ import {
   Table as TableIcon,
   Music,
   SplitSquareHorizontal,
+  Tags,
+  BookOpen,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -319,6 +321,58 @@ export const SLASH_COMMANDS: SlashCommandItem[] = [
         .insertContent({
           type: "newsletterByline",
           attrs: { entries: [], separator_style: "dot" },
+        })
+        .run(),
+  },
+  {
+    id: "footer-meta",
+    label: "Footer meta",
+    description: "Tags + issue label at article end.",
+    category: "EDITORIAL",
+    icon: Tags,
+    keywords: ["footer", "tags", "meta", "end"],
+    run: (e, r) =>
+      deleteRange(e, r)
+        .insertContent({
+          type: "newsletterFooterMeta",
+          attrs: { tags: [], issue_label: null, published_label: null },
+        })
+        .run(),
+  },
+  {
+    id: "citations",
+    label: "Citations",
+    description: "Numbered or bracketed citation list.",
+    category: "EDITORIAL",
+    icon: BookMarked,
+    keywords: ["citation", "references", "footnotes", "sources"],
+    run: (e, r) =>
+      deleteRange(e, r)
+        .insertContent({
+          type: "newsletterCitations",
+          attrs: { style: "numbered", title: null },
+          content: [
+            {
+              type: "newsletterCitationEntry",
+              attrs: { link: null },
+              content: [{ type: "text", text: " " }],
+            },
+          ],
+        })
+        .run(),
+  },
+  {
+    id: "further-reading",
+    label: "Further reading",
+    description: "External link list at article end.",
+    category: "EDITORIAL",
+    icon: BookOpen,
+    keywords: ["reading", "links", "related", "further"],
+    run: (e, r) =>
+      deleteRange(e, r)
+        .insertContent({
+          type: "newsletterFurtherReading",
+          attrs: { entries: [], title: null },
         })
         .run(),
   },
