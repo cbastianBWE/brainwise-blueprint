@@ -28,6 +28,14 @@ import {
   Keyboard as KeyboardIcon,
   BookOpen,
   Palette,
+  ArrowUpToLine,
+  ArrowDownToLine,
+  ArrowLeftToLine,
+  ArrowRightToLine,
+  Rows3,
+  Columns3,
+  Heading as HeadingIcon,
+  Trash2,
 } from "lucide-react";
 import {
   Tooltip,
@@ -79,7 +87,6 @@ export function NewsletterBubbleMenu({ editor }: NewsletterBubbleMenuProps) {
       pluginKey,
       shouldShow: ({ editor, from, to, state }) => {
         if (!editor.isEditable) return false;
-        if (from === to) return false;
         const $from = state.doc.resolve(from);
         const blockedParents = new Set([
           "newsletterStatCallout",
@@ -90,6 +97,10 @@ export function NewsletterBubbleMenu({ editor }: NewsletterBubbleMenuProps) {
           "newsletterMasthead",
         ]);
         if (blockedParents.has($from.parent.type.name)) return false;
+        // Allow collapsed caret inside a table cell so table action
+        // buttons appear without requiring a text selection.
+        if (editor.isActive("table")) return true;
+        if (from === to) return false;
         return true;
       },
     });
@@ -605,6 +616,78 @@ export function NewsletterBubbleMenu({ editor }: NewsletterBubbleMenuProps) {
             >
               H3
             </Btn>
+            {editor.isActive("table") && (
+              <>
+                <div className="mx-1 h-4 w-px bg-[var(--border-1)]" />
+                <Btn
+                  label="Row above"
+                  onClick={() =>
+                    editor.chain().focus().addRowBefore().run()
+                  }
+                >
+                  <ArrowUpToLine className="h-3.5 w-3.5" />
+                </Btn>
+                <Btn
+                  label="Row below"
+                  onClick={() =>
+                    editor.chain().focus().addRowAfter().run()
+                  }
+                >
+                  <ArrowDownToLine className="h-3.5 w-3.5" />
+                </Btn>
+                <Btn
+                  label="Delete row"
+                  onClick={() => editor.chain().focus().deleteRow().run()}
+                >
+                  <Rows3 className="h-3.5 w-3.5" />
+                </Btn>
+                <div className="mx-1 h-4 w-px bg-[var(--border-1)]" />
+                <Btn
+                  label="Column before"
+                  onClick={() =>
+                    editor.chain().focus().addColumnBefore().run()
+                  }
+                >
+                  <ArrowLeftToLine className="h-3.5 w-3.5" />
+                </Btn>
+                <Btn
+                  label="Column after"
+                  onClick={() =>
+                    editor.chain().focus().addColumnAfter().run()
+                  }
+                >
+                  <ArrowRightToLine className="h-3.5 w-3.5" />
+                </Btn>
+                <Btn
+                  label="Delete column"
+                  onClick={() =>
+                    editor.chain().focus().deleteColumn().run()
+                  }
+                >
+                  <Columns3 className="h-3.5 w-3.5" />
+                </Btn>
+                <div className="mx-1 h-4 w-px bg-[var(--border-1)]" />
+                <Btn
+                  label="Toggle header row"
+                  onClick={() =>
+                    editor.chain().focus().toggleHeaderRow().run()
+                  }
+                >
+                  <HeadingIcon className="h-3.5 w-3.5" />
+                </Btn>
+                <button
+                  type="button"
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    editor.chain().focus().deleteTable().run();
+                  }}
+                  title="Delete table"
+                  className="flex h-7 min-w-[28px] items-center justify-center rounded-full px-2 text-xs font-medium text-red-600 transition-colors hover:bg-red-50 hover:text-red-700"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              </>
+            )}
           </>
         );
     }

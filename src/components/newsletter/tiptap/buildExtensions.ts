@@ -2,6 +2,12 @@ import type { Extensions } from "@tiptap/core";
 import StarterKit from "@tiptap/starter-kit";
 import { Link } from "@tiptap/extension-link";
 import { CodeBlock } from "@tiptap/extension-code-block";
+import {
+  Table,
+  TableRow,
+  TableHeader,
+  TableCell,
+} from "@tiptap/extension-table";
 import { Placeholder } from "@tiptap/extensions";
 import { isSafeHttpUrl } from "@/lib/safeUrl";
 import { TextStyleWithFontSize } from "@/components/super-admin/lesson-blocks/TextStyleWithFontSize";
@@ -96,6 +102,17 @@ export const NewsletterCodeBlock = CodeBlock.extend({
 });
 
 /**
+ * Newsletter Table — class hook for the reader stylesheet.
+ * Sub-extensions (TableRow / TableHeader / TableCell) ship as-is.
+ */
+export const NewsletterTable = Table.configure({
+  resizable: false,
+  HTMLAttributes: {
+    class: "newsletter-table",
+  },
+});
+
+/**
  * Single source of truth for the newsletter TipTap schema. Consumed by:
  *   - G4-A authoring editor (editable: true)
  *   - G6 read-only public reader (editable: false)
@@ -127,6 +144,10 @@ export function buildExtensions(opts: BuildExtensionsOptions): Extensions {
       placeholder: opts.placeholder ?? "",
     }),
     NewsletterCodeBlock,
+    NewsletterTable,
+    TableRow,
+    TableHeader,
+    TableCell,
     NewsletterImage,
     NewsletterCallout,
     NewsletterStatCallout,
