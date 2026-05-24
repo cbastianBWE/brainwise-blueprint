@@ -13,9 +13,9 @@ import {
 import { cn } from "@/lib/utils";
 import { useNewsletterEditorContext } from "../../editor/NewsletterEditorContext";
 import {
-  uploadNewsletterImage,
+  uploadNewsletterAsset,
   type UploadProgress,
-} from "../../editor/uploadNewsletterImage";
+} from "../../editor/uploadNewsletterAsset";
 import {
   invalidateNewsletterImageUrl,
   useNewsletterImageUrl,
@@ -61,7 +61,8 @@ export function ImageNodeView({
     setUploading(true);
     setProgress({ loaded: 0, total: file.size, pct: 0 });
     try {
-      const { asset_id: newId } = await uploadNewsletterImage({
+      const { asset_id: newId } = await uploadNewsletterAsset({
+        kind: "image",
         file,
         articleId,
         refField: "inline_image",

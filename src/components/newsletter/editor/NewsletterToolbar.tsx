@@ -29,7 +29,7 @@ import {
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { isSafeHttpUrl } from "@/lib/safeUrl";
-import { uploadNewsletterImage } from "./uploadNewsletterImage";
+import { uploadNewsletterAsset } from "./uploadNewsletterAsset";
 import { invalidateNewsletterImageUrl } from "./useNewsletterImageUrl";
 import { useToast } from "@/hooks/use-toast";
 
@@ -107,7 +107,8 @@ export function NewsletterToolbar({
   const handleImageFile = async (file: File) => {
     setUploading(true);
     try {
-      const { asset_id } = await uploadNewsletterImage({
+      const { asset_id } = await uploadNewsletterAsset({
+        kind: "image",
         file,
         articleId,
         refField: "inline_image",

@@ -1,23 +1,50 @@
 /**
- * Shared upload helper used by image NodeViews and the toolbar image button.
+ * Shared upload helper used by newsletter NodeViews and the toolbar for image
+ * and audio assets.
  *
  * Wraps the request-asset-upload → tus → finalize-asset-upload flow for the
- * newsletter-article-images bucket. Returns the new asset_id on success.
+ * newsletter-article-images bucket (which per H2-MIG-8 also accepts audio
+ * MIMEs and 100MB ceiling). Returns the new asset_id on success.
  */
 import * as tus from "tus-js-client";
 import { supabase } from "@/integrations/supabase/client";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
 
-const ALLOWED_MIME = [
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-  "image/gif",
-  "image/svg+xml",
-  "image/avif",
-];
-const MAX_BYTES = 20 * 1024 * 1024;
+export type AssetKind = "image" | "audio";
+
+const ALLOWED_MIME: Record<AssetKind, string[]> = {
+  image: [
+    "image/jpeg",
+    "image/png",
+    "image/webp",
+    "image/gif",
+    "image/svg+xml",
+    "image/avif",
+  ],
+  audio: [
+    "audio/mpeg",
+    "audio/wav",
+    "audio/webm",
+    "audio/ogg",
+    "audio/mp4",
+  ],
+};
+
+const MAX_BYTES: Record<AssetKind, number> = {
+  image: 20 * 1024 * 1024, // 20MB
+  audio: 100 * 1024 * 1024, // 100MB
+};
+
+const DEFAULT_REF_FIELD: Record<AssetKind, string> = {
+  image: "inline_image",
+  audio: "inline_audio",
+};
+
+const HUMAN_MAX: Record<AssetKind, string> = {
+  image: "20MB",
+  audio: "100MB",
+};
 
 export interface UploadProgress {
   loaded: number;
@@ -25,24 +52,31 @@ export interface UploadProgress {
   pct: number;
 }
 
-export interface NewsletterImageUploadOptions {
+export interface NewsletterAssetUploadOptions {
+  kind: AssetKind;
   file: File;
   articleId: string;
   refField?: string;
   onProgress?: (p: UploadProgress) => void;
 }
 
-export async function uploadNewsletterImage({
+export async function uploadNewsletterAsset({
+  kind,
   file,
   articleId,
-  refField = "inline_image",
+  refField,
   onProgress,
-}: NewsletterImageUploadOptions): Promise<{ asset_id: string }> {
-  if (file.size > MAX_BYTES) {
-    throw new Error(`File too large (${Math.round(file.size / 1024)} KB). Max 20 MB.`);
+}: NewsletterAssetUploadOptions): Promise<{ asset_id: string }> {
+  const effectiveRefField = refField ?? DEFAULT_REF_FIELD[kind];
+  const kindLabel = kind === "audio" ? "Audio" : "Image";
+
+  if (file.size > MAX_BYTES[kind]) {
+    throw new Error(
+      `${kindLabel} file too large (${Math.round(file.size / 1024)} KB). Max ${HUMAN_MAX[kind]}.`,
+    );
   }
-  if (!ALLOWED_MIME.includes(file.type)) {
-    throw new Error(`Unsupported type: ${file.type || "(unknown)"}`);
+  if (!ALLOWED_MIME[kind].includes(file.type)) {
+    throw new Error(`Unsupported ${kind} type: ${file.type || "(unknown)"}`);
   }
 
   const {
@@ -56,13 +90,13 @@ export async function uploadNewsletterImage({
 
   const reqResp = await supabase.functions.invoke("request-asset-upload", {
     body: {
-      asset_kind: "image",
+      asset_kind: kind,
       size_bytes: file.size,
       mime_type: file.type,
       original_filename: file.name,
-      reason: `Newsletter image upload for ${refField} on article ${articleId}`,
+      reason: `Newsletter ${kind} upload for ${effectiveRefField} on article ${articleId}`,
       newsletter_article_id: articleId,
-      ref_field: refField,
+      ref_field: effectiveRefField,
     },
   });
   if (reqResp.error || !reqResp.data?.signed_upload_url) {
@@ -108,7 +142,10 @@ export async function uploadNewsletterImage({
   });
 
   const finResp = await supabase.functions.invoke("finalize-asset-upload", {
-    body: { asset_id, reason: `Finalize newsletter image upload for article ${articleId}` },
+    body: {
+      asset_id,
+      reason: `Finalize newsletter ${kind} upload for article ${articleId}`,
+    },
   });
   if (finResp.error || finResp.data?.success === false) {
     throw new Error(
