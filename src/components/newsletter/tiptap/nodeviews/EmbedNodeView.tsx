@@ -85,6 +85,8 @@ export function EmbedNodeView({
   const embed_id: string = node.attrs.embed_id ?? "";
   const url: string = node.attrs.url ?? "";
   const title: string = node.attrs.title ?? "";
+  const aspectRatio: "16:9" | "4:3" | "1:1" | "9:16" =
+    (node.attrs.aspect_ratio ?? "16:9") as "16:9" | "4:3" | "1:1" | "9:16";
 
   const configured = !!embed_id || (provider === "generic" && !!url);
   const iframeSrc = configured ? buildEmbedSrc(provider, embed_id, url) : "";
@@ -92,11 +94,23 @@ export function EmbedNodeView({
   const [dialogOpen, setDialogOpen] = useState<boolean>(!configured ? false : false);
   const [inputUrl, setInputUrl] = useState<string>(url);
   const [inputTitle, setInputTitle] = useState<string>(title);
+  const [inputAspect, setInputAspect] = useState<"16:9" | "4:3" | "1:1" | "9:16">(
+    aspectRatio,
+  );
   const [genericWarning, setGenericWarning] = useState<string | null>(null);
+
+  const aspectClass =
+    ({
+      "16:9": "aspect-video",
+      "4:3": "aspect-[4/3]",
+      "1:1": "aspect-square",
+      "9:16": "aspect-[9/16] mx-auto max-w-[400px]",
+    } as const)[aspectRatio] || "aspect-video";
 
   const openDialog = () => {
     setInputUrl(url);
     setInputTitle(title);
+    setInputAspect(aspectRatio);
     setGenericWarning(null);
     setDialogOpen(true);
   };
@@ -117,6 +131,7 @@ export function EmbedNodeView({
       embed_id: parsed.embed_id,
       url: parsed.url,
       title: inputTitle.trim() || null,
+      aspect_ratio: inputAspect,
     });
     setDialogOpen(false);
   };
@@ -163,7 +178,7 @@ export function EmbedNodeView({
 
       {configured ? (
         iframeSrc ? (
-          <div className="aspect-video w-full overflow-hidden rounded-lg bg-black">
+          <div className={cn("w-full overflow-hidden rounded-lg bg-black", aspectClass)}>
             <iframe
               src={iframeSrc}
               title={title || "Embedded media"}
@@ -226,6 +241,25 @@ export function EmbedNodeView({
                 onChange={(e) => setInputTitle(e.target.value)}
                 placeholder="Accessible label"
               />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-[var(--fg-2)]">
+                Aspect ratio
+              </label>
+              <select
+                value={inputAspect}
+                onChange={(e) =>
+                  setInputAspect(
+                    e.target.value as "16:9" | "4:3" | "1:1" | "9:16",
+                  )
+                }
+                className="mt-1 block w-full rounded-md border border-[var(--border-1)] bg-white px-3 py-2 text-sm text-[var(--fg-1)] focus:border-[#F5741A] focus:outline-none"
+              >
+                <option value="16:9">16:9 (Widescreen)</option>
+                <option value="4:3">4:3 (Standard)</option>
+                <option value="1:1">1:1 (Square)</option>
+                <option value="9:16">9:16 (Vertical)</option>
+              </select>
             </div>
             {genericWarning && (
               <div className="flex items-start gap-2 rounded border border-amber-300 bg-amber-50 p-2 text-xs text-amber-900">

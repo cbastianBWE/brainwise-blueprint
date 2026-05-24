@@ -7,6 +7,8 @@ import {
   Upload,
   Loader2,
   Image as ImageIcon,
+  Maximize2,
+  Clock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useNewsletterEditorContext } from "../../editor/NewsletterEditorContext";
@@ -132,6 +134,39 @@ export function ImageNodeView({
             </button>
           ))}
           <div className="mx-1 h-4 w-px bg-[var(--border-1)]" />
+          <button
+            type="button"
+            onClick={() =>
+              updateAttributes({ lightbox: !node.attrs.lightbox })
+            }
+            title="Toggle lightbox on click in reader"
+            aria-label="Toggle lightbox on click in reader"
+            className={cn(
+              "rounded-full p-1 transition-colors",
+              node.attrs.lightbox
+                ? "bg-[#F5741A] text-white"
+                : "text-[var(--fg-2)] hover:bg-[var(--bw-cream-200)]",
+            )}
+          >
+            <Maximize2 className="h-3.5 w-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={() =>
+              updateAttributes({ lazy_load: !(node.attrs.lazy_load !== false) })
+            }
+            title="Lazy-load (defer offscreen images)"
+            aria-label="Lazy-load (defer offscreen images)"
+            className={cn(
+              "rounded-full p-1 transition-colors",
+              node.attrs.lazy_load !== false
+                ? "bg-[#F5741A] text-white"
+                : "text-[var(--fg-2)] hover:bg-[var(--bw-cream-200)]",
+            )}
+          >
+            <Clock className="h-3.5 w-3.5" />
+          </button>
+          <div className="mx-1 h-4 w-px bg-[var(--border-1)] " />
           <button
             type="button"
             onClick={triggerFilePicker}

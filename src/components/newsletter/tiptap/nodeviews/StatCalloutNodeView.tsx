@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { NodeViewWrapper, type NodeViewProps } from "@tiptap/react";
-import { Trash2, GripVertical } from "lucide-react";
+import { Trash2, GripVertical, TrendingUp, TrendingDown, Minus, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function StatCalloutNodeView({
@@ -71,6 +71,46 @@ export function StatCalloutNodeView({
           color: "var(--bw-navy)",
         }}
       />
+      <div className="flex items-center justify-center gap-1 py-2">
+        {([
+          { value: "up", Icon: TrendingUp, label: "Trend up" },
+          { value: "down", Icon: TrendingDown, label: "Trend down" },
+          { value: "flat", Icon: Minus, label: "Trend flat" },
+        ] as const).map(({ value: tv, Icon, label }) => {
+          const active = node.attrs.trend === tv;
+          return (
+            <button
+              key={tv}
+              type="button"
+              onClick={() => updateAttributes({ trend: tv })}
+              aria-label={label}
+              title={label}
+              className={cn(
+                "rounded-full p-1.5 transition-colors",
+                active
+                  ? "bg-[#F5741A] text-white"
+                  : "text-[var(--bw-slate-500)] hover:bg-[var(--bw-cream-200)]",
+              )}
+            >
+              <Icon className="h-3.5 w-3.5" />
+            </button>
+          );
+        })}
+        <button
+          type="button"
+          onClick={() => updateAttributes({ trend: null })}
+          aria-label="Clear trend"
+          title="Clear trend"
+          className={cn(
+            "rounded-full p-1.5 transition-colors",
+            node.attrs.trend
+              ? "border border-[#F5741A]/40 text-[var(--bw-slate-500)] hover:bg-[var(--bw-cream-200)]"
+              : "text-[var(--bw-slate-500)] hover:bg-[var(--bw-cream-200)]",
+          )}
+        >
+          <X className="h-3.5 w-3.5" />
+        </button>
+      </div>
       <textarea
         value={label}
         onChange={(e) => setLabel(e.target.value)}

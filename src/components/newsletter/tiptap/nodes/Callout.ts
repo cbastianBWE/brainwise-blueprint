@@ -39,6 +39,13 @@ export const NewsletterCallout = Node.create({
         },
       },
       title: { default: null as string | null },
+      with_icon: {
+        default: false,
+        parseHTML: (el) =>
+          (el as HTMLElement).getAttribute("data-with-icon") === "true",
+        renderHTML: (attrs) =>
+          attrs.with_icon ? { "data-with-icon": "true" } : {},
+      },
     };
   },
 
@@ -54,6 +61,7 @@ export const NewsletterCallout = Node.create({
             title:
               el.querySelector(".newsletter-callout__title")?.textContent ??
               null,
+            with_icon: el.getAttribute("data-with-icon") === "true",
           };
         },
       },
@@ -63,6 +71,7 @@ export const NewsletterCallout = Node.create({
   renderHTML({ node, HTMLAttributes }) {
     const variant = (node.attrs.variant as CalloutVariant) || "info";
     const title = node.attrs.title as string | null;
+    const withIcon = !!node.attrs.with_icon;
 
     const inner: any[] = [];
     if (title) {
@@ -75,6 +84,7 @@ export const NewsletterCallout = Node.create({
       mergeAttributes(HTMLAttributes, {
         "data-newsletter-callout": "true",
         "data-variant": variant,
+        ...(withIcon ? { "data-with-icon": "true" } : {}),
         class: `newsletter-callout newsletter-callout--${variant}`,
       }),
       ...inner,

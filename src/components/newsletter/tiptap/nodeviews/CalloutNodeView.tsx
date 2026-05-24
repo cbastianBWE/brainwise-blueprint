@@ -96,6 +96,21 @@ export function CalloutNodeView({
                   </button>
                 );
               })}
+              <div className="my-1 border-t border-[var(--border-1)]" />
+              <label
+                className="flex cursor-pointer items-center gap-2 rounded px-3 py-1.5 text-xs font-medium text-[var(--fg-2)] hover:bg-[var(--bw-cream-200)]"
+                onMouseDown={(e) => e.preventDefault()}
+              >
+                <input
+                  type="checkbox"
+                  checked={!!node.attrs.with_icon}
+                  onChange={(e) =>
+                    updateAttributes({ with_icon: e.target.checked })
+                  }
+                  className="h-3.5 w-3.5 accent-[#F5741A]"
+                />
+                Show variant icon
+              </label>
             </div>
           )}
         </div>
