@@ -23,7 +23,7 @@
  *   ref_field='inline_image'. The image NodeView reads articleId from
  *   NewsletterEditorContext.
  */
-import { useEffect, useMemo, useRef } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef } from "react";
 import { EditorContent, ReactNodeViewRenderer, useEditor } from "@tiptap/react";
 import {
   buildExtensions,
@@ -68,6 +68,10 @@ export interface NewsletterEditorProps {
   disabled?: boolean;
   placeholder?: string;
   onOpenImportHtml?: () => void;
+}
+
+export interface NewsletterEditorHandle {
+  setContent: (next: NewsletterTipTapDoc) => void;
 }
 
 // Each node + its corresponding React NodeView. Extending here (not in G4-0)
@@ -132,14 +136,10 @@ const EDITABLE_NODE_OVERRIDES = [
 
 const OVERRIDE_NAMES = new Set(EDITABLE_NODE_OVERRIDES.map((n) => n.name));
 
-export function NewsletterEditor({
-  articleId,
-  initialContent,
-  onChange,
-  disabled,
-  placeholder,
-  onOpenImportHtml,
-}: NewsletterEditorProps) {
+export const NewsletterEditor = forwardRef<NewsletterEditorHandle, NewsletterEditorProps>(function NewsletterEditor(
+  { articleId, initialContent, onChange, disabled, placeholder, onOpenImportHtml },
+  ref,
+) {
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
   const wrapperRef = useRef<HTMLDivElement | null>(null);
@@ -177,6 +177,13 @@ export function NewsletterEditor({
     },
     [extensions],
   );
+
+  useImperativeHandle(ref, () => ({
+    setContent: (next: NewsletterTipTapDoc) => {
+      if (!editor) return;
+      editor.commands.setContent(next, { emitUpdate: true });
+    },
+  }), [editor]);
 
   useEffect(() => {
     editor?.setEditable(!disabled);
@@ -226,6 +233,6 @@ export function NewsletterEditor({
       </div>
     </NewsletterEditorContext.Provider>
   );
-}
+});
 
 export { NewsletterEditorContext } from "./NewsletterEditorContext";

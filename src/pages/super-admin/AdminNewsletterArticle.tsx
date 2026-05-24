@@ -68,7 +68,7 @@ import {
 import { cn } from "@/lib/utils";
 
 import { FileUploadField } from "@/components/super-admin/FileUploadField";
-import { NewsletterEditor } from "@/components/newsletter/editor/NewsletterEditor";
+import { NewsletterEditor, type NewsletterEditorHandle } from "@/components/newsletter/editor/NewsletterEditor";
 import type { NewsletterTipTapDoc } from "@/components/newsletter/tiptap/types";
 import VersionHistorySheet from "@/components/newsletter/versions/VersionHistorySheet";
 import ImportHtmlModal from "@/components/newsletter/editor/ImportHtmlModal";
@@ -232,6 +232,7 @@ export default function AdminNewsletterArticle() {
   draftRef.current = draft;
   const articleIdRef = useRef<string | null>(articleId);
   articleIdRef.current = articleId;
+  const editorHandleRef = useRef<NewsletterEditorHandle | null>(null);
   const saveTimerRef = useRef<NodeJS.Timeout | null>(null);
   const savingPromiseRef = useRef<Promise<void> | null>(null);
   // suppress auto-save during initial hydration of existing article
@@ -615,6 +616,7 @@ export default function AdminNewsletterArticle() {
                 </div>
               ) : (
                 <NewsletterEditor
+                  ref={editorHandleRef}
                   articleId={articleId ?? ""}
                   initialContent={draft.body_tiptap}
                   onChange={(next) => setField("body_tiptap", next)}
@@ -878,7 +880,9 @@ export default function AdminNewsletterArticle() {
             onImported={(newBody) => {
               markDirty();
               setDraft((d) => ({ ...d, body_tiptap: newBody, source_type: "html_import" }));
-              // Flush save shortly after state commits so dirty draft persists.
+              // Imperatively update the editor surface — initialContent prop changes don't
+              // trigger TipTap to re-render existing instances.
+              editorHandleRef.current?.setContent(newBody);
               setTimeout(() => { void flushSave("HTML import: replace body"); }, 0);
               toast.success("Imported", { description: "HTML content is now in the editor." });
             }}
