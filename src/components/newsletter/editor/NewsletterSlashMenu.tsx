@@ -52,6 +52,7 @@ import {
   GitCompare,
   LineChart,
   Table as TableIcon,
+  Music,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -349,6 +350,26 @@ export const SLASH_COMMANDS: SlashCommandItem[] = [
       // Defer so the deletion commits before the file dialog opens.
       setTimeout(() => ctx.pickImage?.(), 0);
     },
+  },
+  {
+    id: "audio",
+    label: "Audio",
+    description: "Upload an audio file (MP3, WAV, OGG, etc.).",
+    category: "MEDIA",
+    icon: Music,
+    keywords: ["audio", "podcast", "music", "sound", "voice"],
+    run: (e, r) =>
+      deleteRange(e, r)
+        .insertContent({
+          type: "newsletterAudio",
+          attrs: {
+            asset_id: null,
+            title: "",
+            duration_seconds: 0,
+            transcript_url: null,
+          },
+        })
+        .run(),
   },
 
   // LAYOUT

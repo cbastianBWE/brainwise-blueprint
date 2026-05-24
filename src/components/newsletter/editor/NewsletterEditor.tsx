@@ -200,6 +200,11 @@ const NodeChartEdit = NewsletterChart.extend({
     return ReactNodeViewRenderer(ChartNodeView);
   },
 });
+const NodeAudioEdit = NewsletterAudio.extend({
+  addNodeView() {
+    return ReactNodeViewRenderer(AudioNodeView);
+  },
+});
 
 const EDITABLE_NODE_OVERRIDES = [
   NodeImageEdit,
@@ -222,6 +227,7 @@ const EDITABLE_NODE_OVERRIDES = [
   NodeTerminalEdit,
   NodeCodeDiffEdit,
   NodeChartEdit,
+  NodeAudioEdit,
 ];
 
 const OVERRIDE_NAMES = new Set(EDITABLE_NODE_OVERRIDES.map((n) => n.name));

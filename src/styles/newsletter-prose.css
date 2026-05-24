@@ -1543,3 +1543,45 @@
 .newsletter-prose .newsletter-table p {
   margin: 0;
 }
+
+/* ============================================================
+   Bundle A5c: Audio
+   ============================================================ */
+
+.newsletter-prose .newsletter-audio {
+  margin: 24px 0;
+  padding: 16px;
+  background: var(--bw-slate-100, #e8e8e3);
+  border-radius: 6px;
+  border-left: 3px solid var(--bw-accent-teal, #006D77);
+}
+
+.newsletter-prose .newsletter-audio audio {
+  width: 100%;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.newsletter-prose .newsletter-audio__caption {
+  margin-top: 8px;
+  font-family: var(--font-primary);
+  font-size: 14px;
+  font-style: italic;
+  color: var(--bw-slate-700, #6D6875);
+  text-align: center;
+}
+
+.newsletter-prose .newsletter-audio__transcript {
+  display: inline-block;
+  margin-top: 8px;
+  font-family: var(--bw-mono-font, monospace);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: var(--bw-editorial-letterspacing, 0.05em);
+  color: var(--bw-orange, #F5741A);
+  text-decoration: none;
+}
+
+.newsletter-prose .newsletter-audio__transcript:hover {
+  text-decoration: underline;
+}
