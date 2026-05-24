@@ -484,6 +484,28 @@ export default function AdminNewsletterArticle() {
             />
             <Tooltip>
               <TooltipTrigger asChild>
+                <span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    disabled={isCreate || !articleId || openingVersionHistory}
+                    onClick={handleOpenVersionHistory}
+                  >
+                    {openingVersionHistory ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <History className="h-4 w-4" />
+                    )}{" "}
+                    Version history
+                  </Button>
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                {isCreate ? "Save the draft first" : "View past versions and restore"}
+              </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
                 <Button
                   variant="ghost"
                   size="sm"
