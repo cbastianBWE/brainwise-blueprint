@@ -51,6 +51,7 @@ import {
   Terminal,
   GitCompare,
   LineChart,
+  Table as TableIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
