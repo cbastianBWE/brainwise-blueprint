@@ -1,5 +1,21 @@
 import { Node, mergeAttributes } from "@tiptap/core";
 
+const ACCENT_COLORS = [
+  "orange",
+  "forest",
+  "teal",
+  "plum",
+  "mustard",
+  "navy",
+] as const;
+type AccentColor = (typeof ACCENT_COLORS)[number];
+
+function clampAccent(v: string | null): AccentColor {
+  return (ACCENT_COLORS as readonly string[]).includes(v ?? "")
+    ? (v as AccentColor)
+    : "orange";
+}
+
 /**
  * newsletterKeyMoments — timeline-style numbered list.
  *
@@ -17,6 +33,17 @@ export const NewsletterKeyMoments = Node.create({
   addAttributes() {
     return {
       title: { default: null as string | null },
+      numbered: {
+        default: true,
+        parseHTML: (el) => el.getAttribute("data-numbered") !== "false",
+        renderHTML: (attrs) =>
+          attrs.numbered ? {} : { "data-numbered": "false" },
+      },
+      accent_color: {
+        default: "orange" as AccentColor,
+        parseHTML: (el) => clampAccent(el.getAttribute("data-accent-color")),
+        renderHTML: (attrs) => ({ "data-accent-color": attrs.accent_color }),
+      },
     };
   },
 
@@ -30,6 +57,8 @@ export const NewsletterKeyMoments = Node.create({
             title:
               el.querySelector(".newsletter-key-moments__title")
                 ?.textContent ?? null,
+            numbered: el.getAttribute("data-numbered") !== "false",
+            accent_color: clampAccent(el.getAttribute("data-accent-color")),
           };
         },
       },
@@ -48,6 +77,8 @@ export const NewsletterKeyMoments = Node.create({
       "section",
       mergeAttributes(HTMLAttributes, {
         "data-newsletter-key-moments": "true",
+        "data-accent-color": node.attrs.accent_color,
+        ...(node.attrs.numbered ? {} : { "data-numbered": "false" }),
         class: "newsletter-key-moments",
       }),
       ...inner,

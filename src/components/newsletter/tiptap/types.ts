@@ -65,8 +65,24 @@ export interface NewsletterPullquoteAttrs {
   alignment: "left" | "center" | "right";
 }
 
+export type TwoColumnGap = "tight" | "normal" | "wide";
+
+export interface NewsletterTwoColumnAttrs {
+  gap: TwoColumnGap;
+}
+
+export type KeyMomentsAccentColor =
+  | "orange"
+  | "forest"
+  | "teal"
+  | "plum"
+  | "mustard"
+  | "navy";
+
 export interface NewsletterKeyMomentsAttrs {
   title: string | null;
+  numbered: boolean;
+  accent_color: KeyMomentsAccentColor;
 }
 
 export interface NewsletterKeyMomentAttrs {
@@ -101,7 +117,11 @@ export type StarterKitNode =
   | BaseNode<"orderedList", { start?: number }>
   | BaseNode<"listItem">
   | BaseNode<"blockquote">
-  | BaseNode<"codeBlock", { language?: string | null }>
+  | BaseNode<"codeBlock", {
+      language?: string | null;
+      filename?: string | null;
+      highlight_lines?: string | null;
+    }>
   | BaseNode<"horizontalRule">
   | BaseNode<"hardBreak">;
 
