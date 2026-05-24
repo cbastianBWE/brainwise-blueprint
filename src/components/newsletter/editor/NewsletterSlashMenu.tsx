@@ -47,6 +47,10 @@ import {
   Columns4,
   Images,
   BarChart3,
+  Calculator,
+  Terminal,
+  GitCompare,
+  LineChart,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
