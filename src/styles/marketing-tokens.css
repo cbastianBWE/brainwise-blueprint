@@ -52,7 +52,33 @@
   --container-lg: 1440px;
   --gutter: var(--s-6);
   --section-y: var(--s-24);
+
+  /* Group H newsletter visual vocabulary tokens (Session 96 H2 add) */
+  --bw-mono-font: 'JetBrains Mono', ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, monospace;
+  --bw-mustard: #8a6400;
+  --bw-editorial-label-size: 11px;
+  --bw-editorial-letterspacing: 0.12em;
+  --bw-stripe-thin: 1px;
+  --bw-stripe-medium: 2px;
+  --bw-stripe-thick: 3px;
+  --bw-section-rule-margin-top: 80px;
+  --bw-section-rule-margin-bottom: 32px;
+  --bw-dropcap-size: 82px;
+  --bw-dropcap-color: var(--bw-orange);
+  --bw-accent-orange: var(--bw-orange);
+  --bw-accent-forest: var(--bw-forest);
+  --bw-accent-teal: var(--bw-teal);
+  --bw-accent-plum: var(--bw-plum);
+  --bw-accent-mustard: var(--bw-mustard);
+  --bw-accent-navy: var(--bw-navy);
+  --bw-content-width-narrow: 640px;
+  --bw-content-width-standard: 780px;
+  --bw-content-width-wide: 920px;
+  --bw-grid-gap-tight: 8px;
+  --bw-grid-gap-normal: 16px;
+  --bw-grid-gap-wide: 32px;
 }
+
 
 .bw-marketing-root { font-family: var(--font-primary); color: var(--fg-1); }
 .bw-marketing-root *, .bw-marketing-root *::before, .bw-marketing-root *::after { box-sizing: border-box; }
