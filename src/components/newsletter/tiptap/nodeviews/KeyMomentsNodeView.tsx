@@ -46,15 +46,58 @@ export function KeyMomentsNodeView({
       .run();
   };
 
+  const numbered = node.attrs.numbered !== false;
+  const accentColor = (node.attrs.accent_color as string) || "orange";
+
   return (
     <NodeViewWrapper
       as="section"
       data-newsletter-key-moments="true"
+      data-accent-color={accentColor}
+      {...(numbered ? {} : { "data-numbered": "false" })}
       className={cn(
         "newsletter-key-moments group/nl-km relative my-8 rounded-lg bg-[var(--bw-cream-200)] p-8 transition-shadow duration-150",
         selected && "ring-2 ring-[#F5741A]",
       )}
     >
+      <div className="mb-3 flex items-center justify-between gap-3 pr-10">
+        <button
+          type="button"
+          onClick={() => updateAttributes({ numbered: !numbered })}
+          aria-pressed={numbered}
+          className={cn(
+            "inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-medium transition-colors",
+            numbered
+              ? "bg-[#F5741A] text-white"
+              : "text-[var(--bw-slate-500)] hover:bg-white/60",
+          )}
+        >
+          <ListOrdered className="h-3.5 w-3.5" />
+          Numbered
+        </button>
+        <div className="flex items-center gap-1.5">
+          {ACCENT_SWATCHES.map((sw) => {
+            const active = accentColor === sw.value;
+            return (
+              <button
+                key={sw.value}
+                type="button"
+                onClick={() => updateAttributes({ accent_color: sw.value })}
+                aria-label={sw.label}
+                aria-pressed={active}
+                title={sw.label}
+                className={cn(
+                  "h-[18px] w-[18px] rounded-full transition-shadow",
+                  sw.bg,
+                  active &&
+                    "ring-2 ring-white ring-offset-2 ring-offset-[var(--bw-cream-200)]",
+                )}
+              />
+            );
+          })}
+        </div>
+      </div>
+
       <button
         type="button"
         onClick={deleteNode}
