@@ -5331,9 +5331,15 @@ export type Database = {
           cover_asset_id: string | null
           created_at: string
           created_by_user_id: string
+          default_layout_width: string
           excerpt: string | null
+          eyebrow_text: string | null
           gate: string
           id: string
+          is_issue_based: boolean
+          issue_label: string | null
+          masthead_logo_glyph: string | null
+          masthead_publication: string | null
           og_image_asset_id: string | null
           published_at: string | null
           read_time_minutes: number | null
@@ -5343,6 +5349,8 @@ export type Database = {
           slug: string
           source_type: string
           status: string
+          tags: string[]
+          theme_variant: string
           title: string
           updated_at: string
           word_count: number | null
@@ -5356,9 +5364,15 @@ export type Database = {
           cover_asset_id?: string | null
           created_at?: string
           created_by_user_id: string
+          default_layout_width?: string
           excerpt?: string | null
+          eyebrow_text?: string | null
           gate?: string
           id?: string
+          is_issue_based?: boolean
+          issue_label?: string | null
+          masthead_logo_glyph?: string | null
+          masthead_publication?: string | null
           og_image_asset_id?: string | null
           published_at?: string | null
           read_time_minutes?: number | null
@@ -5368,6 +5382,8 @@ export type Database = {
           slug: string
           source_type?: string
           status?: string
+          tags?: string[]
+          theme_variant?: string
           title: string
           updated_at?: string
           word_count?: number | null
@@ -5381,9 +5397,15 @@ export type Database = {
           cover_asset_id?: string | null
           created_at?: string
           created_by_user_id?: string
+          default_layout_width?: string
           excerpt?: string | null
+          eyebrow_text?: string | null
           gate?: string
           id?: string
+          is_issue_based?: boolean
+          issue_label?: string | null
+          masthead_logo_glyph?: string | null
+          masthead_publication?: string | null
           og_image_asset_id?: string | null
           published_at?: string | null
           read_time_minutes?: number | null
@@ -5393,6 +5415,8 @@ export type Database = {
           slug?: string
           source_type?: string
           status?: string
+          tags?: string[]
+          theme_variant?: string
           title?: string
           updated_at?: string
           word_count?: number | null
@@ -5438,6 +5462,144 @@ export type Database = {
             columns: ["og_image_asset_id"]
             isOneToOne: false
             referencedRelation: "content_assets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      newsletter_poll_votes: {
+        Row: {
+          option_id: string
+          poll_id: string
+          voted_at: string
+          voter_user_id: string
+        }
+        Insert: {
+          option_id: string
+          poll_id: string
+          voted_at?: string
+          voter_user_id: string
+        }
+        Update: {
+          option_id?: string
+          poll_id?: string
+          voted_at?: string
+          voter_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "newsletter_poll_votes_poll_id_fkey"
+            columns: ["poll_id"]
+            isOneToOne: false
+            referencedRelation: "newsletter_polls"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "newsletter_poll_votes_voter_user_id_fkey"
+            columns: ["voter_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "newsletter_poll_votes_voter_user_id_fkey"
+            columns: ["voter_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "newsletter_poll_votes_voter_user_id_fkey"
+            columns: ["voter_user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "newsletter_poll_votes_voter_user_id_fkey"
+            columns: ["voter_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      newsletter_polls: {
+        Row: {
+          archived_at: string | null
+          article_id: string
+          created_at: string
+          created_by_user_id: string
+          id: string
+          is_locked: boolean
+          node_id: string
+          options: Json
+          question: string
+          style: string
+          updated_at: string
+          votes_visible: boolean
+        }
+        Insert: {
+          archived_at?: string | null
+          article_id: string
+          created_at?: string
+          created_by_user_id: string
+          id?: string
+          is_locked?: boolean
+          node_id: string
+          options: Json
+          question: string
+          style?: string
+          updated_at?: string
+          votes_visible?: boolean
+        }
+        Update: {
+          archived_at?: string | null
+          article_id?: string
+          created_at?: string
+          created_by_user_id?: string
+          id?: string
+          is_locked?: boolean
+          node_id?: string
+          options?: Json
+          question?: string
+          style?: string
+          updated_at?: string
+          votes_visible?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "newsletter_polls_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "newsletter_articles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "newsletter_polls_created_by_user_id_fkey"
+            columns: ["created_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "newsletter_polls_created_by_user_id_fkey"
+            columns: ["created_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "newsletter_polls_created_by_user_id_fkey"
+            columns: ["created_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "newsletter_polls_created_by_user_id_fkey"
+            columns: ["created_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
@@ -8532,6 +8694,7 @@ export type Database = {
         Row: {
           account_status: string
           account_type: string | null
+          bio: string | null
           conversion_token: string | null
           conversion_token_expires_at: string | null
           coupon_amount: number | null
@@ -8572,6 +8735,7 @@ export type Database = {
         Insert: {
           account_status?: string
           account_type?: string | null
+          bio?: string | null
           conversion_token?: string | null
           conversion_token_expires_at?: string | null
           coupon_amount?: number | null
@@ -8612,6 +8776,7 @@ export type Database = {
         Update: {
           account_status?: string
           account_type?: string | null
+          bio?: string | null
           conversion_token?: string | null
           conversion_token_expires_at?: string | null
           coupon_amount?: number | null
@@ -9514,6 +9679,10 @@ export type Database = {
         Returns: Json
       }
       archive_notification: { Args: { p_id: string }; Returns: Json }
+      archive_poll: {
+        Args: { p_poll_id: string; p_reason: string }
+        Returns: Json
+      }
       archive_quiz_answer_option: {
         Args: { p_id: string; p_reason: string }
         Returns: Json
@@ -9847,6 +10016,18 @@ export type Database = {
           p_tracking_notes?: string
         }
         Returns: string
+      }
+      create_poll: {
+        Args: {
+          p_article_id: string
+          p_node_id: string
+          p_options: Json
+          p_question: string
+          p_reason: string
+          p_style: string
+          p_votes_visible: boolean
+        }
+        Returns: Json
       }
       create_scheduled_assignment: {
         Args: {
@@ -10206,6 +10387,7 @@ export type Database = {
           subscription_tier: string
         }[]
       }
+      get_poll_results: { Args: { p_poll_id: string }; Returns: Json }
       get_ptp_leader_workforce_delta: {
         Args: {
           p_organization_id: string
@@ -11061,6 +11243,22 @@ export type Database = {
         }
         Returns: Json
       }
+      update_poll: {
+        Args: {
+          p_is_locked: boolean
+          p_options: Json
+          p_poll_id: string
+          p_question: string
+          p_reason: string
+          p_style: string
+          p_votes_visible: boolean
+        }
+        Returns: Json
+      }
+      update_user_bio: {
+        Args: { p_bio: string; p_reason: string; p_user_id: string }
+        Returns: Json
+      }
       upsert_ai_authoring_conversation: {
         Args: {
           p_attached_document_ids: string[]
@@ -11088,8 +11286,14 @@ export type Database = {
           p_body_tiptap: Json
           p_canonical_url: string
           p_cover_asset_id: string
+          p_default_layout_width: string
           p_excerpt: string
+          p_eyebrow_text: string
           p_gate: string
+          p_is_issue_based: boolean
+          p_issue_label: string
+          p_masthead_logo_glyph: string
+          p_masthead_publication: string
           p_og_image_asset_id: string
           p_read_time_minutes: number
           p_reason: string
@@ -11097,6 +11301,8 @@ export type Database = {
           p_seo_title: string
           p_slug: string
           p_source_type: string
+          p_tags: string[]
+          p_theme_variant: string
           p_title: string
           p_word_count: number
         }
@@ -11298,6 +11504,10 @@ export type Database = {
           super_admin_user_id: string
           target_user_id: string
         }[]
+      }
+      vote_on_poll: {
+        Args: { p_option_id: string; p_poll_id: string }
+        Returns: Json
       }
     }
     Enums: {
