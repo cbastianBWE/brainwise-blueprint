@@ -109,6 +109,8 @@ export function buildExtensions(opts: BuildExtensionsOptions): Extensions {
       heading: { levels: [2, 3, 4] },
       // We register our own link extension below with safe-URL validation.
       link: false,
+      // We register our own extended CodeBlock (NewsletterCodeBlock) below.
+      codeBlock: false,
     }),
     TextStyleWithFontSize,
     Link.configure({
@@ -120,6 +122,7 @@ export function buildExtensions(opts: BuildExtensionsOptions): Extensions {
     Placeholder.configure({
       placeholder: opts.placeholder ?? "",
     }),
+    NewsletterCodeBlock,
     NewsletterImage,
     NewsletterCallout,
     NewsletterStatCallout,
