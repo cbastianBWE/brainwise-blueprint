@@ -34,6 +34,9 @@ import {
   Image as ImageIcon,
   Columns2,
   ListOrdered,
+  Tag,
+  AlignLeft,
+  MessageSquareMore,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -221,6 +224,54 @@ export const SLASH_COMMANDS: SlashCommandItem[] = [
         .insertContent({
           type: "newsletterStatCallout",
           attrs: { value: "", label: "", source: null },
+        })
+        .run(),
+  },
+  {
+    id: "eyebrow",
+    label: "Eyebrow",
+    description: "Small-caps category tag above a heading.",
+    category: "EDITORIAL",
+    icon: Tag,
+    keywords: ["kicker", "category", "tag"],
+    run: (e, r) =>
+      deleteRange(e, r)
+        .insertContent({
+          type: "newsletterEyebrow",
+          attrs: { variant: "default", with_rule: true },
+          content: [{ type: "text", text: " " }],
+        })
+        .run(),
+  },
+  {
+    id: "lead",
+    label: "Lead paragraph",
+    description: "Large opening paragraph (deck, lede, or pullout style).",
+    category: "EDITORIAL",
+    icon: AlignLeft,
+    keywords: ["lede", "deck", "standfirst"],
+    run: (e, r) =>
+      deleteRange(e, r)
+        .insertContent({
+          type: "newsletterLead",
+          attrs: { dropcap: false, style: "deck" },
+          content: [{ type: "text", text: " " }],
+        })
+        .run(),
+  },
+  {
+    id: "aside",
+    label: "Aside",
+    description: "Secondary content box for tangential notes.",
+    category: "EDITORIAL",
+    icon: MessageSquareMore,
+    keywords: ["sidebar", "background"],
+    run: (e, r) =>
+      deleteRange(e, r)
+        .insertContent({
+          type: "newsletterAside",
+          attrs: { label: null, tone: "default" },
+          content: [{ type: "paragraph" }],
         })
         .run(),
   },

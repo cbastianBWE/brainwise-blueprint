@@ -14,3 +14,14 @@ export {
   NewsletterKeyMoments,
   NewsletterKeyMoment,
 } from "./nodes/KeyMoments";
+export { NewsletterEyebrow } from "./nodes/Eyebrow";
+export { NewsletterLead } from "./nodes/Lead";
+export { NewsletterAside } from "./nodes/Aside";
+export { Accent } from "./marks/Accent";
+export { SmallCaps } from "./marks/SmallCaps";
+export { Superscript } from "./marks/Superscript";
+export { Subscript } from "./marks/Subscript";
+export { Underline } from "./marks/Underline";
+export { Highlight } from "./marks/Highlight";
+export { Keyboard } from "./marks/Keyboard";
+export { Abbr } from "./marks/Abbr";

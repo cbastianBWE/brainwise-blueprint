@@ -99,6 +99,35 @@ export type StarterKitNode =
   | BaseNode<"horizontalRule">
   | BaseNode<"hardBreak">;
 
+export interface NewsletterEyebrowAttrs {
+  variant: "default" | "accent" | "muted";
+  with_rule: boolean;
+}
+
+export interface NewsletterLeadAttrs {
+  dropcap: boolean;
+  style: "deck" | "lede" | "pullout";
+}
+
+export interface NewsletterAsideAttrs {
+  label: string | null;
+  tone: "default" | "subtle";
+}
+
+export interface HighlightMarkAttrs {
+  color: "yellow" | "orange" | "forest" | "pink" | "blue";
+}
+
+export interface AccentMarkAttrs {
+  color: "orange" | "forest" | "teal" | "plum" | "mustard" | "navy";
+  style: "plain" | "italic" | "bold-italic";
+  weight: "normal" | "heavy";
+}
+
+export interface AbbrMarkAttrs {
+  title: string;
+}
+
 // Custom newsletter nodes
 export type CustomNewsletterNode =
   | BaseNode<"newsletterImage", NewsletterImageAttrs>
@@ -109,7 +138,10 @@ export type CustomNewsletterNode =
   | BaseNode<"newsletterTwoColumn">
   | BaseNode<"newsletterTwoColumnPane">
   | BaseNode<"newsletterKeyMoments", NewsletterKeyMomentsAttrs>
-  | BaseNode<"newsletterKeyMoment", NewsletterKeyMomentAttrs>;
+  | BaseNode<"newsletterKeyMoment", NewsletterKeyMomentAttrs>
+  | BaseNode<"newsletterEyebrow", NewsletterEyebrowAttrs>
+  | BaseNode<"newsletterLead", NewsletterLeadAttrs>
+  | BaseNode<"newsletterAside", NewsletterAsideAttrs>;
 
 export type NewsletterTipTapNode =
   | TipTapTextNode

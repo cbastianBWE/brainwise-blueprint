@@ -18,6 +18,18 @@ import {
   NewsletterKeyMoments,
   NewsletterKeyMoment,
 } from "./nodes/KeyMoments";
+import { NewsletterEyebrow } from "./nodes/Eyebrow";
+import { NewsletterLead } from "./nodes/Lead";
+import { NewsletterAside } from "./nodes/Aside";
+
+import { Accent } from "./marks/Accent";
+import { SmallCaps } from "./marks/SmallCaps";
+import { Superscript } from "./marks/Superscript";
+import { Subscript } from "./marks/Subscript";
+import { Underline } from "./marks/Underline";
+import { Highlight } from "./marks/Highlight";
+import { Keyboard } from "./marks/Keyboard";
+import { Abbr } from "./marks/Abbr";
 
 export interface BuildExtensionsOptions {
   editable: boolean;
@@ -62,5 +74,16 @@ export function buildExtensions(opts: BuildExtensionsOptions): Extensions {
     NewsletterTwoColumnPane,
     NewsletterKeyMoments,
     NewsletterKeyMoment,
+    NewsletterEyebrow,
+    NewsletterLead,
+    NewsletterAside,
+    Accent,
+    SmallCaps,
+    Superscript,
+    Subscript,
+    Underline,
+    Highlight,
+    Keyboard,
+    Abbr,
   ];
 }
