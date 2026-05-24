@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import SocialLinks from "@/components/marketing/SocialLinks";
+import SubscribeForm from "@/components/marketing/newsletter/SubscribeForm";
 
 const linkStyle: React.CSSProperties = {
   color: "rgba(255,255,255,0.72)",
