@@ -71,6 +71,7 @@ import { FileUploadField } from "@/components/super-admin/FileUploadField";
 import { NewsletterEditor } from "@/components/newsletter/editor/NewsletterEditor";
 import type { NewsletterTipTapDoc } from "@/components/newsletter/tiptap/types";
 import VersionHistorySheet from "@/components/newsletter/versions/VersionHistorySheet";
+import ImportHtmlModal from "@/components/newsletter/editor/ImportHtmlModal";
 
 type Status = "draft" | "scheduled" | "published" | "unpublished" | "archived";
 type Gate = "public" | "subscribers" | "plan_tier";
