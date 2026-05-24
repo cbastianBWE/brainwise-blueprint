@@ -41,6 +41,8 @@ import {
   BookMarked,
   User,
   CheckSquare,
+  Hash,
+  Layers,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -424,6 +426,72 @@ export const SLASH_COMMANDS: SlashCommandItem[] = [
               type: "newsletterChecklistItem",
               attrs: { checked: false },
               content: [{ type: "text", text: " " }],
+            },
+          ],
+        })
+        .run(),
+  },
+  {
+    id: "domain-grid",
+    label: "Domain grid",
+    description: "Numbered metric rows with tags and counts.",
+    category: "LAYOUT",
+    icon: Hash,
+    keywords: ["grid", "domains", "metrics", "rows"],
+    run: (e, r) =>
+      deleteRange(e, r)
+        .insertContent({
+          type: "newsletterDomainGrid",
+          attrs: { style: "rows", show_numbers: true },
+          content: [
+            {
+              type: "newsletterDomainRow",
+              attrs: {
+                number: "01",
+                label: "",
+                tag_text: null,
+                tag_variant: null,
+                description: "",
+                count_value: "",
+                count_label: "",
+              },
+            },
+          ],
+        })
+        .run(),
+  },
+  {
+    id: "index-row",
+    label: "Index cards",
+    description: "Side-by-side comparison metric cards.",
+    category: "LAYOUT",
+    icon: Layers,
+    keywords: ["indices", "metrics", "comparison", "cards"],
+    run: (e, r) =>
+      deleteRange(e, r)
+        .insertContent({
+          type: "newsletterIndexRow",
+          attrs: { columns: 2 },
+          content: [
+            {
+              type: "newsletterIndexCard",
+              attrs: {
+                tag: "",
+                name: "",
+                formula: null,
+                note: "",
+                accent_color: "orange",
+              },
+            },
+            {
+              type: "newsletterIndexCard",
+              attrs: {
+                tag: "",
+                name: "",
+                formula: null,
+                note: "",
+                accent_color: "forest",
+              },
             },
           ],
         })

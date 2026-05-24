@@ -25,6 +25,14 @@ export {
   NewsletterChecklist,
   NewsletterChecklistItem,
 } from "./nodes/Checklist";
+export {
+  NewsletterDomainGrid,
+  NewsletterDomainRow,
+} from "./nodes/DomainGrid";
+export {
+  NewsletterIndexRow,
+  NewsletterIndexCard,
+} from "./nodes/IndexRow";
 export { Accent } from "./marks/Accent";
 export { SmallCaps } from "./marks/SmallCaps";
 export { Superscript } from "./marks/Superscript";
