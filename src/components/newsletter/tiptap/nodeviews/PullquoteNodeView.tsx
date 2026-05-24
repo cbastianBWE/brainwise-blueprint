@@ -4,7 +4,7 @@ import {
   NodeViewWrapper,
   type NodeViewProps,
 } from "@tiptap/react";
-import { Trash2, GripVertical } from "lucide-react";
+import { Trash2, GripVertical, AlignLeft, AlignCenter, AlignRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function PullquoteNodeView({
@@ -26,17 +26,46 @@ export function PullquoteNodeView({
         selected && "ring-2 ring-[#F5741A] ring-offset-2 ring-offset-white",
       )}
     >
-      <button
-        type="button"
-        onClick={deleteNode}
+      <div
         className={cn(
-          "absolute right-2 top-2 z-20 rounded-full bg-white/95 p-1.5 text-[var(--fg-2)] shadow-md transition-opacity duration-150 hover:bg-red-50 hover:text-[var(--danger)]",
+          "absolute right-2 top-2 z-20 flex items-center gap-1 rounded-full bg-white/95 px-1 py-1 shadow-md transition-opacity duration-150",
           selected ? "opacity-100" : "opacity-0 group-hover/nl-pq:opacity-100",
         )}
-        aria-label="Delete pullquote"
       >
-        <Trash2 className="h-3.5 w-3.5" />
-      </button>
+        {([
+          { value: "left", Icon: AlignLeft, label: "Align left" },
+          { value: "center", Icon: AlignCenter, label: "Align center" },
+          { value: "right", Icon: AlignRight, label: "Align right" },
+        ] as const).map(({ value: av, Icon, label }) => {
+          const active = (node.attrs.alignment ?? "center") === av;
+          return (
+            <button
+              key={av}
+              type="button"
+              onClick={() => updateAttributes({ alignment: av })}
+              aria-label={label}
+              title={label}
+              className={cn(
+                "rounded-full p-1 transition-colors",
+                active
+                  ? "bg-[#F5741A] text-white"
+                  : "text-[var(--bw-slate-500)] hover:bg-[var(--bw-cream-200)]",
+              )}
+            >
+              <Icon className="h-3.5 w-3.5" />
+            </button>
+          );
+        })}
+        <div className="mx-1 h-4 w-px bg-[var(--border-1)]" />
+        <button
+          type="button"
+          onClick={deleteNode}
+          className="rounded-full p-1 text-[var(--fg-2)] transition-colors hover:bg-red-50 hover:text-[var(--danger)]"
+          aria-label="Delete pullquote"
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </button>
+      </div>
       <div
         className="absolute -left-7 top-1/2 -translate-y-1/2 cursor-grab opacity-0 transition-opacity duration-150 group-hover/nl-pq:opacity-100"
         data-drag-handle
