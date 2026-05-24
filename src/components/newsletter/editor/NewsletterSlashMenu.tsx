@@ -53,6 +53,7 @@ import {
   LineChart,
   Table as TableIcon,
   Music,
+  SplitSquareHorizontal,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -367,6 +368,27 @@ export const SLASH_COMMANDS: SlashCommandItem[] = [
             title: "",
             duration_seconds: 0,
             transcript_url: null,
+          },
+        })
+        .run(),
+  },
+  {
+    id: "image-compare",
+    label: "Image compare",
+    description: "Before/after image with draggable divider.",
+    category: "MEDIA",
+    icon: SplitSquareHorizontal,
+    keywords: ["compare", "before", "after", "diff", "slider"],
+    run: (e, r) =>
+      deleteRange(e, r)
+        .insertContent({
+          type: "newsletterImageCompare",
+          attrs: {
+            before_asset_id: null,
+            after_asset_id: null,
+            before_label: "Before",
+            after_label: "After",
+            default_position: 50,
           },
         })
         .run(),
