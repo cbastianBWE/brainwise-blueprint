@@ -126,7 +126,7 @@ export function CitationsNodeView({
       />
 
       <NodeViewContent
-        as="ol"
+        as={"ol" as any}
         data-newsletter-citations-list="true"
         className="m-0 list-none p-0"
       />

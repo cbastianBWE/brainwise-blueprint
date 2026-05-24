@@ -45,7 +45,7 @@ export function CitationEntryNodeView({
           <GripVertical className="h-3 w-3 text-[var(--fg-4)]" />
         </span>
         <NodeViewContent
-          as="span"
+          as={"span" as any}
           data-newsletter-citation-entry-body="true"
           className="flex-1"
         />
