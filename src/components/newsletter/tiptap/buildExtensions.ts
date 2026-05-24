@@ -2,6 +2,12 @@ import type { Extensions } from "@tiptap/core";
 import StarterKit from "@tiptap/starter-kit";
 import { Link } from "@tiptap/extension-link";
 import { CodeBlock } from "@tiptap/extension-code-block";
+import {
+  Table,
+  TableRow,
+  TableHeader,
+  TableCell,
+} from "@tiptap/extension-table";
 import { Placeholder } from "@tiptap/extensions";
 import { isSafeHttpUrl } from "@/lib/safeUrl";
 import { TextStyleWithFontSize } from "@/components/super-admin/lesson-blocks/TextStyleWithFontSize";
