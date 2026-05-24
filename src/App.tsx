@@ -136,6 +136,11 @@ const App = () => (
             <Route path="/evolve" element={<Navigate to="/our-approach" replace />} />
             <Route path="/podcast" element={<Podcast />} />
             <Route path="/contact" element={<Contact />} />
+            {/* Newsletter — confirm/unsubscribe MUST precede :slug to avoid being swallowed */}
+            <Route path="/newsletter" element={<Newsletter />} />
+            <Route path="/newsletter/confirm/:token" element={<NewsletterConfirm />} />
+            <Route path="/newsletter/unsubscribe/:token" element={<NewsletterUnsubscribe />} />
+            <Route path="/newsletter/:slug" element={<NewsletterArticle />} />
             <Route path="/products" element={<Products />} />
             <Route path="/pricing" element={<PricingRouter />} />
             <Route path="/_dev/tile-preview" element={<TilePreview />} />
