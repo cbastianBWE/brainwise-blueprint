@@ -80,7 +80,7 @@ export function CodeBlockNodeView({ node, updateAttributes }: NodeViewProps) {
         aria-label="Highlight lines"
       />
       <pre className="m-0 block bg-white px-3 py-3 font-mono text-sm text-slate-800 whitespace-pre-wrap">
-        <NodeViewContent as="code" />
+        <NodeViewContent as={"code" as any} />
       </pre>
     </NodeViewWrapper>
   );
