@@ -23,6 +23,10 @@ import OurApproach from "./pages/marketing/OurApproach";
 import Podcast from "./pages/marketing/Podcast";
 import Contact from "./pages/marketing/Contact";
 import Products from "./pages/marketing/Products";
+import Newsletter from "./pages/marketing/Newsletter";
+import NewsletterArticle from "./pages/marketing/NewsletterArticle";
+import NewsletterConfirm from "./pages/marketing/NewsletterConfirm";
+import NewsletterUnsubscribe from "./pages/marketing/NewsletterUnsubscribe";
 import PricingRouter from "./pages/PricingRouter";
 import TilePreview from "./pages/_dev/TilePreview";
 import NotFound from "./pages/NotFound";
@@ -132,6 +136,11 @@ const App = () => (
             <Route path="/evolve" element={<Navigate to="/our-approach" replace />} />
             <Route path="/podcast" element={<Podcast />} />
             <Route path="/contact" element={<Contact />} />
+            {/* Newsletter — confirm/unsubscribe MUST precede :slug to avoid being swallowed */}
+            <Route path="/newsletter" element={<Newsletter />} />
+            <Route path="/newsletter/confirm/:token" element={<NewsletterConfirm />} />
+            <Route path="/newsletter/unsubscribe/:token" element={<NewsletterUnsubscribe />} />
+            <Route path="/newsletter/:slug" element={<NewsletterArticle />} />
             <Route path="/products" element={<Products />} />
             <Route path="/pricing" element={<PricingRouter />} />
             <Route path="/_dev/tile-preview" element={<TilePreview />} />
