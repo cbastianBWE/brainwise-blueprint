@@ -48,6 +48,10 @@ import {
 } from "./nodes/FourColumn";
 import { NewsletterImageGallery } from "./nodes/ImageGallery";
 import { NewsletterStatGrid } from "./nodes/StatGrid";
+import { NewsletterMath } from "./nodes/Math";
+import { NewsletterTerminal } from "./nodes/Terminal";
+import { NewsletterCodeDiff } from "./nodes/CodeDiff";
+import { NewsletterChart } from "./nodes/Chart";
 
 import { Accent } from "./marks/Accent";
 import { SmallCaps } from "./marks/SmallCaps";
@@ -152,6 +156,10 @@ export function buildExtensions(opts: BuildExtensionsOptions): Extensions {
     NewsletterFourColumnPane,
     NewsletterImageGallery,
     NewsletterStatGrid,
+    NewsletterMath,
+    NewsletterTerminal,
+    NewsletterCodeDiff,
+    NewsletterChart,
     Accent,
     SmallCaps,
     Superscript,

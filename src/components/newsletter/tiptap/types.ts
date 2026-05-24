@@ -244,6 +244,49 @@ export interface NewsletterStatGridAttrs {
   columns: 2 | 3 | 4;
 }
 
+// ---- Pass 5 Tier 1: Math / Terminal / CodeDiff / Chart ----
+
+export type MathDisplay = "inline" | "block";
+
+export interface NewsletterMathAttrs {
+  latex: string;
+  display: MathDisplay;
+}
+
+export type TerminalTheme = "dark" | "light";
+
+export interface TerminalCommand {
+  prompt: string;
+  command: string;
+  output: string;
+}
+
+export interface NewsletterTerminalAttrs {
+  commands: TerminalCommand[];
+  theme: TerminalTheme;
+}
+
+export interface NewsletterCodeDiffAttrs {
+  before_text: string;
+  after_text: string;
+  language: string | null;
+  filename: string | null;
+}
+
+export type ChartType =
+  | "line"
+  | "bar"
+  | "pie"
+  | "donut"
+  | "area"
+  | "image";
+
+export interface NewsletterChartAttrs {
+  chart_type: ChartType;
+  data_json: string;
+  caption: string | null;
+}
+
 // Custom newsletter nodes
 export type CustomNewsletterNode =
   | BaseNode<"newsletterImage", NewsletterImageAttrs>
@@ -274,7 +317,11 @@ export type CustomNewsletterNode =
   | BaseNode<"newsletterFourColumn">
   | BaseNode<"newsletterFourColumnPane">
   | BaseNode<"newsletterImageGallery", NewsletterImageGalleryAttrs>
-  | BaseNode<"newsletterStatGrid", NewsletterStatGridAttrs>;
+  | BaseNode<"newsletterStatGrid", NewsletterStatGridAttrs>
+  | BaseNode<"newsletterMath", NewsletterMathAttrs>
+  | BaseNode<"newsletterTerminal", NewsletterTerminalAttrs>
+  | BaseNode<"newsletterCodeDiff", NewsletterCodeDiffAttrs>
+  | BaseNode<"newsletterChart", NewsletterChartAttrs>;
 
 export type NewsletterTipTapNode =
   | TipTapTextNode

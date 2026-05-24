@@ -47,6 +47,10 @@ import {
   Columns4,
   Images,
   BarChart3,
+  Calculator,
+  Terminal,
+  GitCompare,
+  LineChart,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -64,7 +68,7 @@ export interface SlashCommandItem {
   id: string;
   label: string;
   description: string;
-  category: "BASIC" | "EDITORIAL" | "MEDIA" | "LAYOUT";
+  category: "BASIC" | "EDITORIAL" | "MEDIA" | "LAYOUT" | "TECHNICAL";
   icon: ComponentType<{ className?: string }>;
   /** Aliases for filtering. */
   keywords?: string[];
@@ -614,6 +618,79 @@ export const SLASH_COMMANDS: SlashCommandItem[] = [
             issue_label: null,
             date_label: null,
             logo_glyph: null,
+          },
+        })
+        .run(),
+  },
+  // TECHNICAL
+  {
+    id: "math",
+    label: "Math equation",
+    description: "LaTeX-formatted equation (rendering in phase 2).",
+    category: "TECHNICAL",
+    icon: Calculator,
+    keywords: ["latex", "equation", "formula", "math"],
+    run: (e, r) =>
+      deleteRange(e, r)
+        .insertContent({
+          type: "newsletterMath",
+          attrs: { latex: "", display: "block" },
+        })
+        .run(),
+  },
+  {
+    id: "terminal",
+    label: "Terminal",
+    description: "Command-line block with prompt + command + output.",
+    category: "TECHNICAL",
+    icon: Terminal,
+    keywords: ["cli", "shell", "command", "bash", "terminal"],
+    run: (e, r) =>
+      deleteRange(e, r)
+        .insertContent({
+          type: "newsletterTerminal",
+          attrs: {
+            commands: [{ prompt: "$", command: "", output: "" }],
+            theme: "dark",
+          },
+        })
+        .run(),
+  },
+  {
+    id: "code-diff",
+    label: "Code diff",
+    description: "Side-by-side before/after code comparison.",
+    category: "TECHNICAL",
+    icon: GitCompare,
+    keywords: ["diff", "compare", "before", "after", "code"],
+    run: (e, r) =>
+      deleteRange(e, r)
+        .insertContent({
+          type: "newsletterCodeDiff",
+          attrs: {
+            before_text: "",
+            after_text: "",
+            language: null,
+            filename: null,
+          },
+        })
+        .run(),
+  },
+  {
+    id: "chart",
+    label: "Chart",
+    description: "Data visualization (preview in phase 2).",
+    category: "TECHNICAL",
+    icon: LineChart,
+    keywords: ["chart", "graph", "viz", "data"],
+    run: (e, r) =>
+      deleteRange(e, r)
+        .insertContent({
+          type: "newsletterChart",
+          attrs: {
+            chart_type: "line",
+            data_json: "",
+            caption: null,
           },
         })
         .run(),

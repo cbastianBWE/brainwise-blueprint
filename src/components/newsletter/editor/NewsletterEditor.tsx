@@ -42,6 +42,10 @@ import {
   NewsletterChecklistItem,
   NewsletterDomainRow,
   NewsletterIndexCard,
+  NewsletterMath,
+  NewsletterTerminal,
+  NewsletterCodeDiff,
+  NewsletterChart,
 } from "@/components/newsletter/tiptap";
 import { NewsletterCodeBlock } from "@/components/newsletter/tiptap/buildExtensions";
 import type { NewsletterTipTapDoc } from "@/components/newsletter/tiptap/types";
@@ -61,6 +65,10 @@ import { ChecklistItemNodeView } from "@/components/newsletter/tiptap/nodeviews/
 import { DomainRowNodeView } from "@/components/newsletter/tiptap/nodeviews/DomainRowNodeView";
 import { IndexCardNodeView } from "@/components/newsletter/tiptap/nodeviews/IndexCardNodeView";
 import { CodeBlockNodeView } from "@/components/newsletter/tiptap/nodeviews/CodeBlockNodeView";
+import { MathNodeView } from "@/components/newsletter/tiptap/nodeviews/MathNodeView";
+import { TerminalNodeView } from "@/components/newsletter/tiptap/nodeviews/TerminalNodeView";
+import { CodeDiffNodeView } from "@/components/newsletter/tiptap/nodeviews/CodeDiffNodeView";
+import { ChartNodeView } from "@/components/newsletter/tiptap/nodeviews/ChartNodeView";
 import { NewsletterToolbar } from "./NewsletterToolbar";
 import { NewsletterBubbleMenu } from "./NewsletterBubbleMenu";
 import { NewsletterFloatingPlus } from "./NewsletterFloatingPlus";
@@ -170,6 +178,26 @@ const NodeCodeBlockEdit = NewsletterCodeBlock.extend({
     return ReactNodeViewRenderer(CodeBlockNodeView);
   },
 });
+const NodeMathEdit = NewsletterMath.extend({
+  addNodeView() {
+    return ReactNodeViewRenderer(MathNodeView);
+  },
+});
+const NodeTerminalEdit = NewsletterTerminal.extend({
+  addNodeView() {
+    return ReactNodeViewRenderer(TerminalNodeView);
+  },
+});
+const NodeCodeDiffEdit = NewsletterCodeDiff.extend({
+  addNodeView() {
+    return ReactNodeViewRenderer(CodeDiffNodeView);
+  },
+});
+const NodeChartEdit = NewsletterChart.extend({
+  addNodeView() {
+    return ReactNodeViewRenderer(ChartNodeView);
+  },
+});
 
 const EDITABLE_NODE_OVERRIDES = [
   NodeImageEdit,
@@ -188,6 +216,10 @@ const EDITABLE_NODE_OVERRIDES = [
   NodeDomainRowEdit,
   NodeIndexCardEdit,
   NodeCodeBlockEdit,
+  NodeMathEdit,
+  NodeTerminalEdit,
+  NodeCodeDiffEdit,
+  NodeChartEdit,
 ];
 
 const OVERRIDE_NAMES = new Set(EDITABLE_NODE_OVERRIDES.map((n) => n.name));
