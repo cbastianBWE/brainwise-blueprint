@@ -20,6 +20,11 @@ export { NewsletterAside } from "./nodes/Aside";
 export { NewsletterSectionRule } from "./nodes/SectionRule";
 export { NewsletterMasthead } from "./nodes/Masthead";
 export { NewsletterByline } from "./nodes/Byline";
+export { NewsletterStepList, NewsletterStep } from "./nodes/StepList";
+export {
+  NewsletterChecklist,
+  NewsletterChecklistItem,
+} from "./nodes/Checklist";
 export { Accent } from "./marks/Accent";
 export { SmallCaps } from "./marks/SmallCaps";
 export { Superscript } from "./marks/Superscript";

@@ -39,6 +39,7 @@ import {
   NewsletterSectionRule,
   NewsletterMasthead,
   NewsletterByline,
+  NewsletterChecklistItem,
 } from "@/components/newsletter/tiptap";
 import type { NewsletterTipTapDoc } from "@/components/newsletter/tiptap/types";
 import { ImageNodeView } from "@/components/newsletter/tiptap/nodeviews/ImageNodeView";
@@ -53,6 +54,7 @@ import { KeyMomentNodeView } from "@/components/newsletter/tiptap/nodeviews/KeyM
 import { SectionRuleNodeView } from "@/components/newsletter/tiptap/nodeviews/SectionRuleNodeView";
 import { MastheadNodeView } from "@/components/newsletter/tiptap/nodeviews/MastheadNodeView";
 import { BylineNodeView } from "@/components/newsletter/tiptap/nodeviews/BylineNodeView";
+import { ChecklistItemNodeView } from "@/components/newsletter/tiptap/nodeviews/ChecklistItemNodeView";
 import { NewsletterToolbar } from "./NewsletterToolbar";
 import { NewsletterBubbleMenu } from "./NewsletterBubbleMenu";
 import { NewsletterFloatingPlus } from "./NewsletterFloatingPlus";
@@ -142,6 +144,11 @@ const NodeBylineEdit = NewsletterByline.extend({
     return ReactNodeViewRenderer(BylineNodeView);
   },
 });
+const NodeChecklistItemEdit = NewsletterChecklistItem.extend({
+  addNodeView() {
+    return ReactNodeViewRenderer(ChecklistItemNodeView);
+  },
+});
 
 const EDITABLE_NODE_OVERRIDES = [
   NodeImageEdit,
@@ -156,6 +163,7 @@ const EDITABLE_NODE_OVERRIDES = [
   NodeSectionRuleEdit,
   NodeMastheadEdit,
   NodeBylineEdit,
+  NodeChecklistItemEdit,
 ];
 
 const OVERRIDE_NAMES = new Set(EDITABLE_NODE_OVERRIDES.map((n) => n.name));
