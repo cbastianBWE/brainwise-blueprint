@@ -1,76 +1,64 @@
-## Cycle G4-B: Newsletter authoring pages
 
-Two new super-admin pages + a small extension to `FileUploadField` + route registrations. No backend changes — all 15 RPCs and the v5 upload Edge Function already accept the newsletter article scope.
+# Cycle G5 — Version history + diff viewer
 
-### Files
+Build the version history UI for the newsletter article detail page. All backend RPCs (`list_article_versions`, `get_article_version`, `commit_article_version`, `restore_article_version`) already exist.
 
-**Modify**
-1. `src/components/super-admin/FileUploadField.tsx` — add optional `newsletterArticleId?: string | null` prop. Forward as `newsletter_article_id` in the `request-asset-upload` body for both `startUpload` and `handleReplaceUpload`. Add a reason-fallback branch: `Asset upload for ${refField ?? "field"} on newsletter_article ${newsletterArticleId}`. No other behavioral changes; existing callers unaffected.
-2. `src/App.tsx` — import `AdminNewsletter` and `AdminNewsletterArticle`; register the two routes inside the protected `AppLayout` block with `RoleGuard(["brainwise_super_admin"])` + `SuperAdminSessionProvider`.
+## Files to create
 
-**Create**
-3. `src/pages/super-admin/AdminNewsletter.tsx` — list page at `/super-admin/newsletter`.
-4. `src/pages/super-admin/AdminNewsletterArticle.tsx` — detail/editor page at `/super-admin/newsletter/:articleId` (`"new"` = create).
+1. **`src/components/newsletter/versions/types.ts`** — local TS types: `VersionType`, `VersionListItem`, `VersionFull`, `CurrentDraft`. Mirrors RPC return shapes.
 
-I will also extract a few small co-located helpers inside `AdminNewsletterArticle.tsx` to keep the file manageable (status pill, transition dialog, schedule dialog, author picker, slug row, auto-save hook). If any single one grows past ~150 lines I'll split it into a sibling file under `src/components/newsletter/admin/`; I'll flag in the response if I do.
+2. **`src/components/newsletter/versions/tipTapDocToPlainText.ts`** — recursive walker. Block separator `\n\n`. Text nodes contribute `text`. Custom nodes serialized as semantic tokens:
+   - `newsletterImage` → `[image: {alt}] {caption}`
+   - `newsletterEmbed` → `[embed: {provider} — {title || url}]`
+   - `newsletterStatCallout` → `[stat: {value} — {label}]`
+   - `newsletterCallout` → `[{variant}{: title}]` then children
+   - `newsletterPullquote`, `newsletterKeyMoments`, `newsletterKeyMoment`, `newsletterTwoColumn[Pane]` recurse into children with appropriate prefix labels
+   - Kept inline in the diff panel file per spec; extracted to its own file because I want to unit-friendly-test it later.
 
-### List page shape
+3. **`src/components/newsletter/versions/SaveSnapshotDialog.tsx`** — shadcn `Dialog` with name (1–80) + reason (≥10) inputs. Save calls `commit_article_version`. Toast + `onSaved()`.
 
-- Header: H1 "Newsletter" font-display 3xl navy, subtitle slate-500, right "New article" CTA → `/super-admin/newsletter/new`.
-- Sticky controls bar: search (250ms debounce, magnifier icon), status Select (default "All non-archived"), gate Select (default "Any gate"), right-aligned "X articles" count.
-- shadcn Table: Title (+ slug muted below), Status badge, Gate badge, Authors avatar stack, Updated relative (date-fns), kebab (Open / Copy slug / Archive-with-confirm).
-- Row click → detail page.
-- Loading = 5-row Skeleton. Empty-ever vs filtered-empty differentiated.
-- Pagination Prev/Next, `limit=20`, URL synced via `?page=N&status=&gate=&q=`.
-- React Query key `["newsletter-articles", { status, gate, search, page }]` → `supabase.rpc("list_admin_newsletter_articles", ...)`.
-- Status badge palette exactly as specified (slate/teal/emerald/amber/slate-dark).
+4. **`src/components/newsletter/versions/RestoreVersionDialog.tsx`** — shadcn `Dialog`. Version preview card, default-ON checkbox "Save current draft as a named revision first" with conditional name input (default `Pre-restore checkpoint — {now}`), reason textarea (≥10). On confirm: optional `commit_article_version` first (abort on failure), then `restore_article_version`. Toast + `onRestored()`.
 
-### Detail page shape
+5. **`src/components/newsletter/versions/VersionDiffPanel.tsx`** — right pane. Loads selected version via `get_article_version` (React Query, key `["newsletter-article-version", versionId]`). Header strip (name/type badge/v#, Restore button). Sticky amber caveat banner. Inline `diffWords` of title, excerpt, and `tipTapDocToPlainText(body)` for both sides. Added → `bg-emerald-50 text-emerald-900`; removed → `bg-rose-50 text-rose-900 line-through`. Diff body rendered inside `.newsletter-prose`. Empty state when all chunks equal. Skeleton while loading. Opens `RestoreVersionDialog` on Restore click.
 
-- Sticky header (white, border-b): ← Back link · title input inline · right cluster (auto-save pill, status pill dropdown, Preview button stub).
-- Body two-column lg+ (editor 70% / sidebar 30%), stacked below lg.
-- Editor column:
-  - Cover image FileUploadField (refField=`cover`, min-h-[280px] wrapper, label "Cover image").
-  - Title input: large font-display 700 36px navy, borderless, placeholder "Untitled article", autoFocus on create.
-  - Slug row: `brainwiseenterprises.com/newsletter/<slug>` — click-to-edit inline swap. Auto-derive from title only while slug is empty OR equals the previous derivation; once user edits manually, lock derivation for the article's session.
-  - Excerpt textarea with live char count + min-20 warning when gated.
-  - `<NewsletterEditor articleId={realArticleId} initialContent={bodyTiptap} onChange={setBodyTiptap} />`.
-- Sidebar tabs (Settings / SEO):
-  - Settings: Visibility RadioGroup (public/subscribers/plan_tier) with Checkbox stack for tiers when plan_tier; Authors multi-picker (query `users` where `account_type='brainwise_super_admin'`, chips with remove); Schedule card (visible only when draft|unpublished) opening a Calendar+time+reason Dialog; OG image FileUploadField (refField=`og_image`, 160px tall).
-  - SEO: seo_title, seo_description, canonical_url.
-- Status pill dropdown — state-aware actions exactly as specified per current status. Each opens an AlertDialog with a required reason input (min 10 chars validated client-side before enabling Confirm). Calls the right RPC, then invalidates `["newsletter-article", id]` and `["newsletter-articles"]`, sonner toast on success/error.
+6. **`src/components/newsletter/versions/VersionHistorySheet.tsx`** — default export. shadcn `Sheet` (side="right"). Width mechanic: apply a custom `className` on `SheetContent` that conditionally toggles `sm:max-w-[400px]` vs `sm:max-w-[960px]` (the default `w-3/4` is overridden by `!w-[400px]` / `!w-[960px]` with a `transition-[width,max-width] duration-200 ease-[var(--ease-standard)]`). When no version selected → narrow; selected → wide with split panes.
+   - `onOpenChange` wrapper: when transitioning to `true`, first `await onBeforeOpen()` (shows a brief spinner state on the trigger via parent), then sets internal `open`.
+   - Versions fetched with React Query `["newsletter-article-versions", articleId]` → `list_article_versions`.
+   - Header: "Version history" + subtitle `{total} versions saved · {published count} published landmarks` + "Save snapshot" button (opens `SaveSnapshotDialog`).
+   - Left pane (320px, ScrollArea): grouping algorithm:
+     1. Sort all items desc by `created_at`.
+     2. Group by day: `isToday` → "Today", `isYesterday` → "Yesterday", else `format(d, 'PPPP')`. Headers: font-display uppercase 11px tracking-widest text-slate-400.
+     3. Within day, walk sorted items and collapse consecutive `draft` items into a single disclosure row "{N} draft auto-saves". Landmarks rendered as full cards.
+   - Type badge palette per spec.
+   - Selected row: 4px left border `--bw-orange`, `bg-orange-50/30`. Arrow-up/down keyboard nav within visible (non-collapsed) rows; Enter selects.
+   - Empty state, capped footer, 6-row Skeleton while loading.
+   - Right pane: `<VersionDiffPanel />` when selectedVersionId; otherwise centered "Select a version to compare".
 
-### Auto-save
+## Files to modify
 
-Single `useAutoSave` hook inside the file:
-- Watches a `draft` object containing every editable field.
-- On change → status="unsaved", clear timer, schedule 2000ms.
-- On flush → status="saving", call `upsert_article` with ALL current fields (decision: use `upsert_article` exclusively, not `auto_save_article` — `upsert_article` is the only RPC that covers slug/gate/cover/og/authors; the spec explicitly endorses this) with reason `"Auto-save: editor pause"`.
-- On success → status="saved" + timestamp. On error → toast + status="unsaved".
-- Force-flush triggers: `visibilitychange` (hidden), unmount cleanup, and a `flushNow()` exposed for state-transition handlers to call before opening their dialog.
-- `p_reason` requirement (min 10): "Auto-save: editor pause" = 24 chars ✓.
+7. **`src/pages/super-admin/AdminNewsletterArticle.tsx`**
+   - Add `History` icon import.
+   - Add `versionHistoryOpen` state + `versionHistoryOpening` (button spinner) state.
+   - Add ghost "Version history" button in header next to Preview. Disabled when `articleId === "new"` with Tooltip "Save the draft first".
+   - `handleOpenVersionHistory`: set opening true → `await flushNow()` (already exists in `useAutoSave`) → set opening false → open sheet.
+   - Mount `<VersionHistorySheet>` at page bottom. Pass `articleId`, `currentDraft: { body_tiptap: draft.body_tiptap, title: draft.title, excerpt: draft.excerpt }`, `onBeforeOpen: flushNow`, `onRestored`: invalidate `["newsletter-article", articleId]` query and reset local `draft` from the refetched article (re-using existing hydration path).
 
-### Create mode (`articleId === "new"`)
+8. **`package.json`** — add `"diff": "^7.0.0"` and `"@types/diff": "^7.0.0"` (devDependencies). Pin: `diff@7.0.0`.
 
-- No RPC calls until first user edit.
-- First auto-save calls `upsert_article(p_article_id: null, …)`, receives `article_id`, then `navigate('/super-admin/newsletter/${article_id}', { replace: true })`.
-- Cover/OG `FileUploadField` is disabled (with tooltip "Save the draft first to enable image uploads") until we have a real article id, because uploads need `newsletter_article_id`. Same constraint surfaces inside the editor — `<NewsletterEditor>` receives `articleId={null}` in create mode, and the toolbar/slash-menu image entries are already wired by G4-A to show "Save the draft first" notices; if they aren't, I'll add a thin `articleId == null → disabled` guard at this page's level by passing a sentinel and a wrapping `<TooltipProvider>` notice. (Flagging in response if G4-A's editor doesn't already handle null `articleId`.)
-- Defaults exactly as spec: gate=`public`, allowed_plan_tiers=`[]`, source_type=`native`, authors=`[currentUserId]`, body=`{type:"doc",content:[{type:"paragraph"}]}`.
+## Architectural decisions
 
-### Preview button
+- **Sheet width mechanic**: rather than two separate Sheets or a portal, single Sheet whose `SheetContent` width animates between 400px and 960px via Tailwind transition on `max-width`/`width` with `!important` overrides. Diff panel mounted in DOM only when a version is selected, so no wasted RPC.
+- **Flush-before-open**: trigger button owns the spinner; Sheet's `onOpenChange(true)` is gated behind `await onBeforeOpen()`. If flush rejects, toast error and don't open.
+- **`tipTapDocToPlainText`**: extracted into its own file (not inline). Custom newsletter nodes emit bracketed semantic tokens so word-diff still surfaces meaningful structural changes (e.g., a swapped image alt or stat value) without being a real structural diff. Caveat banner covers everything else.
+- **Restore checkpoint**: pre-restore snapshot uses fixed reason `"Pre-restore checkpoint"` (12 chars, passes ≥10 validation). User's typed reason is forwarded to `restore_article_version` only.
+- **Grouping within a day**: collapse only *consecutive* drafts between landmarks, matching the spec's example layout. A landmark interrupts the run.
 
-Stub: `onClick={() => window.open(`/newsletter/${slug}`, "_blank")}` if slug exists, else disabled with tooltip "Set a slug to preview". Will 404 until G6, which is acceptable for dev.
+## Risks / open questions
 
-### Sidebar nav
+- `list_article_versions` shape assumed exactly as documented; if `items` array is named differently (e.g. `versions`), adapt the destructure in one place.
+- `useAutoSave` is assumed to expose `flushNow(): Promise<void>` (built in G4-B). If it's synchronous or named differently, will adapt.
+- Whether `--bw-orange` / `--bw-plum` CSS vars exist in `index.css`. If not, fall back to Tailwind `orange-500` / `violet-700` classes.
 
-Search `AppSidebar.tsx` for the super-admin section and add a "Newsletter" entry with `Newspaper` icon pointing to `/super-admin/newsletter`. If the structure isn't an obvious add (e.g. it's data-driven from a config I can't fully understand from one read), I'll leave a `TODO(nav)` comment in `AdminNewsletter.tsx` instead of guessing — per spec.
+## Out of scope
 
-### Out of scope (not building)
-
-Paste-HTML modal, version-history UI, public reader, real preview, tests, backend changes, broader nav redesign.
-
-### Open risks / will flag in response
-
-- Whether G4-A's `NewsletterEditor` already gracefully handles `articleId == null` in create mode (toolbar/slash image entry). If not, I'll add a minimal disabled-state wrapper at the page level.
-- Whether `upsert_article`'s `p_reason` is enforced on auto-save (spec says min 10; my reason string is 24 chars, fine).
-- Whether `list_admin_newsletter_articles` returns `authors` already shaped for avatar display, or if I need a second query. I'll inspect the RPC return shape on first run and adapt — if it's missing, I'll join `users` in the page via a secondary query keyed off the page's id set.
+Side-by-side diff, structural-aware diff, load-more pagination, prune UI, two-version compare, preview-as-viewer, public reader, paste-HTML modal.

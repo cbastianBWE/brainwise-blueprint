@@ -12,6 +12,7 @@ import {
   Pencil,
   AlertCircle,
   CalendarClock,
+  History,
   X,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -69,6 +70,7 @@ import { cn } from "@/lib/utils";
 import { FileUploadField } from "@/components/super-admin/FileUploadField";
 import { NewsletterEditor } from "@/components/newsletter/editor/NewsletterEditor";
 import type { NewsletterTipTapDoc } from "@/components/newsletter/tiptap/types";
+import VersionHistorySheet from "@/components/newsletter/versions/VersionHistorySheet";
 
 type Status = "draft" | "scheduled" | "published" | "unpublished" | "archived";
 type Gate = "public" | "subscribers" | "plan_tier";
@@ -363,6 +365,21 @@ export default function AdminNewsletterArticle() {
   const [transitionReason, setTransitionReason] = useState("");
   const [transitioning, setTransitioning] = useState(false);
   const [scheduleOpen, setScheduleOpen] = useState(false);
+  const [versionHistoryOpen, setVersionHistoryOpen] = useState(false);
+  const [openingVersionHistory, setOpeningVersionHistory] = useState(false);
+
+  const handleOpenVersionHistory = async () => {
+    if (!articleIdRef.current) return;
+    setOpeningVersionHistory(true);
+    try {
+      if (dirtyRef.current || savingPromiseRef.current) {
+        await flushSave("Auto-save: opening version history");
+      }
+    } finally {
+      setOpeningVersionHistory(false);
+      setVersionHistoryOpen(true);
+    }
+  };
 
   const refreshArticle = () => {
     if (articleIdRef.current) {
@@ -465,6 +482,28 @@ export default function AdminNewsletterArticle() {
                 }
               }}
             />
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    disabled={isCreate || !articleId || openingVersionHistory}
+                    onClick={handleOpenVersionHistory}
+                  >
+                    {openingVersionHistory ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <History className="h-4 w-4" />
+                    )}{" "}
+                    Version history
+                  </Button>
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                {isCreate ? "Save the draft first" : "View past versions and restore"}
+              </TooltipContent>
+            </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -810,6 +849,23 @@ export default function AdminNewsletterArticle() {
             return true;
           }}
         />
+
+        {articleId && (
+          <VersionHistorySheet
+            articleId={articleId}
+            open={versionHistoryOpen}
+            onOpenChange={setVersionHistoryOpen}
+            currentDraft={{
+              body_tiptap: draft.body_tiptap,
+              title: draft.title,
+              excerpt: draft.excerpt,
+            }}
+            onRestored={() => {
+              setHydrated(false);
+              refreshArticle();
+            }}
+          />
+        )}
       </div>
     </TooltipProvider>
   );
