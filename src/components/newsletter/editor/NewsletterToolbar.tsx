@@ -307,6 +307,23 @@ export function NewsletterToolbar({
         }}
       />
 
+      {onOpenImportHtml && (
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          className="h-7 w-7 p-0"
+          onClick={onOpenImportHtml}
+          disabled={disabled}
+          aria-label="Import HTML"
+          title="Import HTML"
+        >
+          <FileCode className="h-3.5 w-3.5" />
+        </Button>
+      )}
+
+
+
       <Button
         type="button"
         size="sm"
