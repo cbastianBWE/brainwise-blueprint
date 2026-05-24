@@ -15,7 +15,8 @@ const ACCENT_SWATCHES: Array<{ value: string; bg: string; label: string }> = [
   { value: "mustard", bg: "bg-[#8a6400]", label: "Mustard" },
   { value: "navy", bg: "bg-[#021F36]", label: "Navy" },
 ];
-import { cn } from "@/lib/utils";
+
+
 
 export function KeyMomentsNodeView({
   node,
