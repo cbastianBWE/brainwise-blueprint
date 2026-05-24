@@ -207,6 +207,17 @@ export interface NewsletterIndexCardAttrs {
   accent_color: IndexCardAccentColor;
 }
 
+export type GalleryGap = "tight" | "normal" | "wide";
+
+export interface NewsletterImageGalleryAttrs {
+  columns: 2 | 3 | 4;
+  gap: GalleryGap;
+}
+
+export interface NewsletterStatGridAttrs {
+  columns: 2 | 3 | 4;
+}
+
 // Custom newsletter nodes
 export type CustomNewsletterNode =
   | BaseNode<"newsletterImage", NewsletterImageAttrs>
@@ -231,7 +242,13 @@ export type CustomNewsletterNode =
   | BaseNode<"newsletterDomainGrid", NewsletterDomainGridAttrs>
   | BaseNode<"newsletterDomainRow", NewsletterDomainRowAttrs>
   | BaseNode<"newsletterIndexRow", NewsletterIndexRowAttrs>
-  | BaseNode<"newsletterIndexCard", NewsletterIndexCardAttrs>;
+  | BaseNode<"newsletterIndexCard", NewsletterIndexCardAttrs>
+  | BaseNode<"newsletterThreeColumn">
+  | BaseNode<"newsletterThreeColumnPane">
+  | BaseNode<"newsletterFourColumn">
+  | BaseNode<"newsletterFourColumnPane">
+  | BaseNode<"newsletterImageGallery", NewsletterImageGalleryAttrs>
+  | BaseNode<"newsletterStatGrid", NewsletterStatGridAttrs>;
 
 export type NewsletterTipTapNode =
   | TipTapTextNode

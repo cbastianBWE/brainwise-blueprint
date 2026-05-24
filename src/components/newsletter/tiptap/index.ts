@@ -33,6 +33,16 @@ export {
   NewsletterIndexRow,
   NewsletterIndexCard,
 } from "./nodes/IndexRow";
+export {
+  NewsletterThreeColumn,
+  NewsletterThreeColumnPane,
+} from "./nodes/ThreeColumn";
+export {
+  NewsletterFourColumn,
+  NewsletterFourColumnPane,
+} from "./nodes/FourColumn";
+export { NewsletterImageGallery } from "./nodes/ImageGallery";
+export { NewsletterStatGrid } from "./nodes/StatGrid";
 export { Accent } from "./marks/Accent";
 export { SmallCaps } from "./marks/SmallCaps";
 export { Superscript } from "./marks/Superscript";

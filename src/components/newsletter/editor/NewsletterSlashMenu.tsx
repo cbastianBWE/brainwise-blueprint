@@ -43,6 +43,10 @@ import {
   CheckSquare,
   Hash,
   Layers,
+  Columns3,
+  Columns4,
+  Images,
+  BarChart3,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -493,6 +497,103 @@ export const SLASH_COMMANDS: SlashCommandItem[] = [
                 accent_color: "forest",
               },
             },
+          ],
+        })
+        .run(),
+  },
+  {
+    id: "three-column",
+    label: "Three columns",
+    description: "Three side-by-side panes (collapses on mobile).",
+    category: "LAYOUT",
+    icon: Columns3,
+    keywords: ["three", "3col", "columns", "tri"],
+    run: (e, r) =>
+      deleteRange(e, r)
+        .insertContent({
+          type: "newsletterThreeColumn",
+          content: [
+            { type: "newsletterThreeColumnPane", content: [{ type: "paragraph" }] },
+            { type: "newsletterThreeColumnPane", content: [{ type: "paragraph" }] },
+            { type: "newsletterThreeColumnPane", content: [{ type: "paragraph" }] },
+          ],
+        })
+        .run(),
+  },
+  {
+    id: "four-column",
+    label: "Four columns",
+    description: "Four side-by-side panes (stacks 2x2 on tablet).",
+    category: "LAYOUT",
+    icon: Columns4,
+    keywords: ["four", "4col", "columns", "quad"],
+    run: (e, r) =>
+      deleteRange(e, r)
+        .insertContent({
+          type: "newsletterFourColumn",
+          content: [
+            { type: "newsletterFourColumnPane", content: [{ type: "paragraph" }] },
+            { type: "newsletterFourColumnPane", content: [{ type: "paragraph" }] },
+            { type: "newsletterFourColumnPane", content: [{ type: "paragraph" }] },
+            { type: "newsletterFourColumnPane", content: [{ type: "paragraph" }] },
+          ],
+        })
+        .run(),
+  },
+  {
+    id: "image-gallery",
+    label: "Image gallery",
+    description: "Multi-image grid; each cell uploads independently.",
+    category: "LAYOUT",
+    icon: Images,
+    keywords: ["gallery", "grid", "images", "photos"],
+    run: (e, r) =>
+      deleteRange(e, r)
+        .insertContent({
+          type: "newsletterImageGallery",
+          attrs: { columns: 2, gap: "normal" },
+          content: [
+            {
+              type: "newsletterImage",
+              attrs: {
+                asset_id: null,
+                alt: "",
+                caption: "",
+                width: "inline",
+                import_failed_src: null,
+              },
+            },
+            {
+              type: "newsletterImage",
+              attrs: {
+                asset_id: null,
+                alt: "",
+                caption: "",
+                width: "inline",
+                import_failed_src: null,
+              },
+            },
+          ],
+        })
+        .run(),
+  },
+  {
+    id: "stat-grid",
+    label: "Stat grid",
+    description: "Grid of multiple stat callouts.",
+    category: "LAYOUT",
+    icon: BarChart3,
+    keywords: ["stats", "grid", "metrics", "numbers"],
+    run: (e, r) =>
+      deleteRange(e, r)
+        .insertContent({
+          type: "newsletterStatGrid",
+          attrs: { columns: 4 },
+          content: [
+            { type: "newsletterStatCallout", attrs: { value: "", label: "", source: null } },
+            { type: "newsletterStatCallout", attrs: { value: "", label: "", source: null } },
+            { type: "newsletterStatCallout", attrs: { value: "", label: "", source: null } },
+            { type: "newsletterStatCallout", attrs: { value: "", label: "", source: null } },
           ],
         })
         .run(),

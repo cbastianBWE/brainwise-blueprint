@@ -37,6 +37,16 @@ import {
   NewsletterIndexRow,
   NewsletterIndexCard,
 } from "./nodes/IndexRow";
+import {
+  NewsletterThreeColumn,
+  NewsletterThreeColumnPane,
+} from "./nodes/ThreeColumn";
+import {
+  NewsletterFourColumn,
+  NewsletterFourColumnPane,
+} from "./nodes/FourColumn";
+import { NewsletterImageGallery } from "./nodes/ImageGallery";
+import { NewsletterStatGrid } from "./nodes/StatGrid";
 
 import { Accent } from "./marks/Accent";
 import { SmallCaps } from "./marks/SmallCaps";
@@ -104,6 +114,12 @@ export function buildExtensions(opts: BuildExtensionsOptions): Extensions {
     NewsletterDomainRow,
     NewsletterIndexRow,
     NewsletterIndexCard,
+    NewsletterThreeColumn,
+    NewsletterThreeColumnPane,
+    NewsletterFourColumn,
+    NewsletterFourColumnPane,
+    NewsletterImageGallery,
+    NewsletterStatGrid,
     Accent,
     SmallCaps,
     Superscript,
