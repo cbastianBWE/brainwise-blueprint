@@ -1,64 +1,97 @@
 
-# Cycle G5 — Version history + diff viewer
+# Cycle G6 — Public newsletter reader (revised)
 
-Build the version history UI for the newsletter article detail page. All backend RPCs (`list_article_versions`, `get_article_version`, `commit_article_version`, `restore_article_version`) already exist.
+Public-facing newsletter pages on the marketing site. All backend RPCs (`list_articles_for_archive`, `get_article_for_reader`, `subscribe_to_newsletter`, `confirm_newsletter_subscription`, `unsubscribe_from_newsletter`) are live. Marketing pages use inline styles + CSS vars (matching `Podcast.tsx`), not Tailwind utilities. Reader uses `.newsletter-prose` from G4-0 and two lightweight reader-only NodeViews for runtime URL resolution.
 
-## Files to create
+## Files to create (9)
 
-1. **`src/components/newsletter/versions/types.ts`** — local TS types: `VersionType`, `VersionListItem`, `VersionFull`, `CurrentDraft`. Mirrors RPC return shapes.
+1. **`src/components/marketing/newsletter/SubscribeForm.tsx`**
+   - Props: `source: string`, `variant?: "inline" | "banner" | "footer"`, `onSubscribed?: () => void`.
+   - Email input + Submit + Turnstile widget container.
+   - Module-level `loadTurnstile(): Promise<void>` injects `https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit` once per app (idempotent). On mount, await it, then `window.turnstile.render(divRef, { sitekey: '0x4AAAAAADVBROvQ5jLUUIxJ', callback: setToken })`. Guard StrictMode double-render with a ref.
+   - Submit → `supabase.rpc('subscribe_to_newsletter', { p_email, p_turnstile_token, p_source })`. Disable while pending. Success → swap UI for "Check your inbox to confirm." Failure → sonner toast + `window.turnstile.reset(widgetId)`.
+   - Three visual variants via inline styles (`inline` cream card / `banner` full-width navy→orange / `footer` compact dark).
 
-2. **`src/components/newsletter/versions/tipTapDocToPlainText.ts`** — recursive walker. Block separator `\n\n`. Text nodes contribute `text`. Custom nodes serialized as semantic tokens:
-   - `newsletterImage` → `[image: {alt}] {caption}`
-   - `newsletterEmbed` → `[embed: {provider} — {title || url}]`
-   - `newsletterStatCallout` → `[stat: {value} — {label}]`
-   - `newsletterCallout` → `[{variant}{: title}]` then children
-   - `newsletterPullquote`, `newsletterKeyMoments`, `newsletterKeyMoment`, `newsletterTwoColumn[Pane]` recurse into children with appropriate prefix labels
-   - Kept inline in the diff panel file per spec; extracted to its own file because I want to unit-friendly-test it later.
+2. **`src/components/marketing/newsletter/NewsletterArticleCard.tsx`**
+   - Card for archive grid + "More from the newsletter". Cover via `useNewsletterImageUrl`, title (font-display navy), 2-line clamp excerpt, eyebrow with author + relative date + read-time (granted) or "Subscribers only" / "Plan tier required" pill (paywall). Whole card a `<Link>` with hover lift.
 
-3. **`src/components/newsletter/versions/SaveSnapshotDialog.tsx`** — shadcn `Dialog` with name (1–80) + reason (≥10) inputs. Save calls `commit_article_version`. Toast + `onSaved()`.
+3. **`src/components/marketing/newsletter/PaywallCard.tsx`**
+   - Cream-bg card. Lock icon, headline, subtitle, primary CTA (Subscribe → expands inline `SubscribeForm` / Upgrade → `/pricing`), secondary "Already subscribed? Sign in" → `/login?redirect=/newsletter/${slug}`.
 
-4. **`src/components/newsletter/versions/RestoreVersionDialog.tsx`** — shadcn `Dialog`. Version preview card, default-ON checkbox "Save current draft as a named revision first" with conditional name input (default `Pre-restore checkpoint — {now}`), reason textarea (≥10). On confirm: optional `commit_article_version` first (abort on failure), then `restore_article_version`. Toast + `onRestored()`.
+4. **`src/components/marketing/newsletter/reader-nodeviews/ImageReaderNodeView.tsx`**
+   - `NodeViewWrapper` as `<figure>` with `width` class from attrs. Resolves `asset_id` via `useNewsletterImageUrl`. Skeleton while loading; `<img alt={attrs.alt} loading="lazy">` + `<figcaption>{attrs.caption}</figcaption>` when caption present. No editing affordances.
 
-5. **`src/components/newsletter/versions/VersionDiffPanel.tsx`** — right pane. Loads selected version via `get_article_version` (React Query, key `["newsletter-article-version", versionId]`). Header strip (name/type badge/v#, Restore button). Sticky amber caveat banner. Inline `diffWords` of title, excerpt, and `tipTapDocToPlainText(body)` for both sides. Added → `bg-emerald-50 text-emerald-900`; removed → `bg-rose-50 text-rose-900 line-through`. Diff body rendered inside `.newsletter-prose`. Empty state when all chunks equal. Skeleton while loading. Opens `RestoreVersionDialog` on Restore click.
+5. **`src/components/marketing/newsletter/reader-nodeviews/EmbedReaderNodeView.tsx`**
+   - `NodeViewWrapper`. Calls `buildEmbedSrc(provider, embed_id, url)` (exported from G4-0 schema module — will verify import path during build). If returned src non-empty: `<iframe src ... allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen loading="lazy" referrerpolicy="strict-origin-when-cross-origin">` with provider-appropriate aspect ratio. Else: muted "Invalid embed" placeholder. Optional `<figcaption>` for `attrs.title`.
 
-6. **`src/components/newsletter/versions/VersionHistorySheet.tsx`** — default export. shadcn `Sheet` (side="right"). Width mechanic: apply a custom `className` on `SheetContent` that conditionally toggles `sm:max-w-[400px]` vs `sm:max-w-[960px]` (the default `w-3/4` is overridden by `!w-[400px]` / `!w-[960px]` with a `transition-[width,max-width] duration-200 ease-[var(--ease-standard)]`). When no version selected → narrow; selected → wide with split panes.
-   - `onOpenChange` wrapper: when transitioning to `true`, first `await onBeforeOpen()` (shows a brief spinner state on the trigger via parent), then sets internal `open`.
-   - Versions fetched with React Query `["newsletter-article-versions", articleId]` → `list_article_versions`.
-   - Header: "Version history" + subtitle `{total} versions saved · {published count} published landmarks` + "Save snapshot" button (opens `SaveSnapshotDialog`).
-   - Left pane (320px, ScrollArea): grouping algorithm:
-     1. Sort all items desc by `created_at`.
-     2. Group by day: `isToday` → "Today", `isYesterday` → "Yesterday", else `format(d, 'PPPP')`. Headers: font-display uppercase 11px tracking-widest text-slate-400.
-     3. Within day, walk sorted items and collapse consecutive `draft` items into a single disclosure row "{N} draft auto-saves". Landmarks rendered as full cards.
-   - Type badge palette per spec.
-   - Selected row: 4px left border `--bw-orange`, `bg-orange-50/30`. Arrow-up/down keyboard nav within visible (non-collapsed) rows; Enter selects.
-   - Empty state, capped footer, 6-row Skeleton while loading.
-   - Right pane: `<VersionDiffPanel />` when selectedVersionId; otherwise centered "Select a version to compare".
+6. **`src/pages/marketing/Newsletter.tsx`** (archive at `/newsletter`)
+   - `MarketingNav` + hero (navy bg, `Eyebrow` "Field notes", H1, subtitle, inline `SubscribeForm source="archive_hero"`).
+   - Filter chips: All / Public / Subscribers / Plan tier → `p_gate_filter`. Pagination state (limit 12).
+   - React Query `["newsletter-archive", gate, page]` → `list_articles_for_archive`. Featured = first item rendered larger; rest 3-col responsive grid of `NewsletterArticleCard`.
+   - 6-card skeleton loading, warm empty state with embedded SubscribeForm, Prev / page X of Y / Next.
+   - `MarketingFooter`.
+   - Meta + JSON-LD `Blog` via small inline `setPageMeta` helper (no new deps).
 
-## Files to modify
+7. **`src/pages/marketing/NewsletterArticle.tsx`** (reader at `/newsletter/:slug`)
+   - `useParams<{slug}>`, React Query `["newsletter-article", slug]` → `get_article_for_reader`.
+   - **Branches**:
+     - `not_found` → Nav + centered "Article not found" + "Back to newsletter" + Footer.
+     - `paywall` → Nav + hero (cover, eyebrow with `authors_lite` + `published_at`, title, excerpt) + `<PaywallCard>` + Footer. **No body.**
+     - `granted` → Nav + hero (full-bleed cover above title, eyebrow authors + date + read time, title font-display 800) + body in `.newsletter-prose` container (max-w 720, centered) rendering `<EditorContent>`. Author byline footer. Cream "Subscribe" CTA section with `SubscribeForm source="article_footer"`. "More from the newsletter" — separate React Query for 4 recent articles, filter current id, take 3, render via `NewsletterArticleCard` grid. Footer.
+   - **Extension wiring** (per addendum):
+     ```ts
+     const extensions = useMemo(() => {
+       const base = buildExtensions({ editable: false });
+       return base.map(ext => {
+         if (ext.name === "newsletterImage") return ext.extend({ addNodeView: () => ReactNodeViewRenderer(ImageReaderNodeView) });
+         if (ext.name === "newsletterEmbed") return ext.extend({ addNodeView: () => ReactNodeViewRenderer(EmbedReaderNodeView) });
+         return ext;
+       });
+     }, []);
+     const editor = useEditor({ extensions, content: article.body_tiptap, editable: false }, [extensions, article.body_tiptap]);
+     ```
+   - Defensive `null`-check `body_tiptap` before mounting the editor.
+   - Per-page meta (title/description/og:*/twitter/JSON-LD `BlogPosting`) via `setPageMeta`. `og:image` resolved from `og_image_asset_id` (fallback `cover_asset_id`).
 
-7. **`src/pages/super-admin/AdminNewsletterArticle.tsx`**
-   - Add `History` icon import.
-   - Add `versionHistoryOpen` state + `versionHistoryOpening` (button spinner) state.
-   - Add ghost "Version history" button in header next to Preview. Disabled when `articleId === "new"` with Tooltip "Save the draft first".
-   - `handleOpenVersionHistory`: set opening true → `await flushNow()` (already exists in `useAutoSave`) → set opening false → open sheet.
-   - Mount `<VersionHistorySheet>` at page bottom. Pass `articleId`, `currentDraft: { body_tiptap: draft.body_tiptap, title: draft.title, excerpt: draft.excerpt }`, `onBeforeOpen: flushNow`, `onRestored`: invalidate `["newsletter-article", articleId]` query and reset local `draft` from the refetched article (re-using existing hydration path).
+8. **`src/pages/marketing/NewsletterConfirm.tsx`** (`/newsletter/confirm/:token`)
+   - On mount call `confirm_newsletter_subscription`. States: loading / success ("You're confirmed!" + CTA `/newsletter`) / error ("Link invalid or expired"). Nav + centered card + Footer.
 
-8. **`package.json`** — add `"diff": "^7.0.0"` and `"@types/diff": "^7.0.0"` (devDependencies). Pin: `diff@7.0.0`.
+9. **`src/pages/marketing/NewsletterUnsubscribe.tsx`** (`/newsletter/unsubscribe/:token`)
+   - On mount call `unsubscribe_from_newsletter`. States: loading / success ("Unsubscribed" + small "Changed your mind?" inline `SubscribeForm source="resubscribe_from_unsubscribe"`) / error. Nav + Footer.
+
+## Files to modify (3)
+
+10. **`src/components/marketing/MarketingFooter.tsx`**
+    - Insert full-width subscribe banner row above the wordmark/tagline row. Darker navy bg + `border-bottom: 1px solid rgba(255,255,255,0.1)`, 48px (24px mobile) padding, left-aligned "Join the newsletter" heading + 1-line subtitle + `<SubscribeForm variant="footer" source="footer_banner" />` (stacks on mobile).
+    - Add `<Link to="/newsletter">Newsletter</Link>` above Podcast in the Explore column.
+
+11. **`src/components/marketing/MarketingNav.tsx`**
+    - Insert `{ label: "Newsletter", to: "/newsletter" }` into `navLinks` between Podcast and Contact.
+
+12. **`src/App.tsx`**
+    - Import the four new pages. Add four public routes (NOT under `ProtectedRoute`), ordered specific → generic with an inline comment explaining why:
+      ```
+      <Route path="/newsletter" element={<Newsletter />} />
+      <Route path="/newsletter/confirm/:token" element={<NewsletterConfirm />} />
+      <Route path="/newsletter/unsubscribe/:token" element={<NewsletterUnsubscribe />} />
+      <Route path="/newsletter/:slug" element={<NewsletterArticle />} />
+      ```
 
 ## Architectural decisions
 
-- **Sheet width mechanic**: rather than two separate Sheets or a portal, single Sheet whose `SheetContent` width animates between 400px and 960px via Tailwind transition on `max-width`/`width` with `!important` overrides. Diff panel mounted in DOM only when a version is selected, so no wasted RPC.
-- **Flush-before-open**: trigger button owns the spinner; Sheet's `onOpenChange(true)` is gated behind `await onBeforeOpen()`. If flush rejects, toast error and don't open.
-- **`tipTapDocToPlainText`**: extracted into its own file (not inline). Custom newsletter nodes emit bracketed semantic tokens so word-diff still surfaces meaningful structural changes (e.g., a swapped image alt or stat value) without being a real structural diff. Caveat banner covers everything else.
-- **Restore checkpoint**: pre-restore snapshot uses fixed reason `"Pre-restore checkpoint"` (12 chars, passes ≥10 validation). User's typed reason is forwarded to `restore_article_version` only.
-- **Grouping within a day**: collapse only *consecutive* drafts between landmarks, matching the spec's example layout. A landmark interrupts the run.
+- **Turnstile script lifecycle**: one module-level idempotent loader promise; injected only when a SubscribeForm mounts. Explicit `window.turnstile.render` + StrictMode-safe ref guard + `reset()` after failed submit.
+- **Reader NodeViews** (per addendum): only `newsletterImage` and `newsletterEmbed` get overrides — all other custom nodes have static `renderHTML` from G4-0 and render correctly via the schema's default serialization. Pattern mirrors G4-A (`.extend({ addNodeView })`), keeping G4-0 headless and unmodified.
+- **Route ordering**: confirm/unsubscribe precede `:slug` so they don't get swallowed as slugs. Documented with a code comment.
+- **Meta tags**: inline `setPageMeta` helper (upsert by `name`/`property`, cleanup on unmount). No new dep (`react-helmet-async` not currently in tree).
+- **OG-image SSR caveat**: client-side `og:image` injection won't help LinkedIn/Slack crawlers. Still useful for Twitter and JS-executing crawlers (Google). Will surface honestly in the response.
+- **Paywall security**: RPC never returns `body_tiptap` for paywall items; the reader also defensively null-checks before mounting the editor.
 
 ## Risks / open questions
 
-- `list_article_versions` shape assumed exactly as documented; if `items` array is named differently (e.g. `versions`), adapt the destructure in one place.
-- `useAutoSave` is assumed to expose `flushNow(): Promise<void>` (built in G4-B). If it's synchronous or named differently, will adapt.
-- Whether `--bw-orange` / `--bw-plum` CSS vars exist in `index.css`. If not, fall back to Tailwind `orange-500` / `violet-700` classes.
+- Exact export path for `buildEmbedSrc` — assumed `@/components/newsletter/tiptap` (alongside `buildExtensions`). Will adapt during build.
+- Whether `Podcast.tsx` already defines a meta-tag helper to copy. Will reuse if present, otherwise inline a 30-line `setPageMeta`.
+- Turnstile widget interaction with React StrictMode double-mount — guarded with a ref.
 
 ## Out of scope
 
-Side-by-side diff, structural-aware diff, load-more pagination, prune UI, two-version compare, preview-as-viewer, public reader, paste-HTML modal.
+SSR meta (G3), RSS (G9), comments, email dispatch (G8), related-by-tag, author bios, preview-as-viewer.
