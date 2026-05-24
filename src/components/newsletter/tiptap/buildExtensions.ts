@@ -102,6 +102,17 @@ export const NewsletterCodeBlock = CodeBlock.extend({
 });
 
 /**
+ * Newsletter Table — class hook for the reader stylesheet.
+ * Sub-extensions (TableRow / TableHeader / TableCell) ship as-is.
+ */
+export const NewsletterTable = Table.configure({
+  resizable: false,
+  HTMLAttributes: {
+    class: "newsletter-table",
+  },
+});
+
+/**
  * Single source of truth for the newsletter TipTap schema. Consumed by:
  *   - G4-A authoring editor (editable: true)
  *   - G6 read-only public reader (editable: false)
