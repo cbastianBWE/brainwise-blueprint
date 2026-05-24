@@ -38,6 +38,45 @@ export default function MarketingFooter() {
   return (
     <footer style={{ background: "var(--bw-navy)", padding: "56px 48px 32px" }}>
       <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+        {/* Subscribe banner */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: isMobile ? "1fr" : "1fr 1.2fr",
+            gap: isMobile ? 24 : 48,
+            alignItems: "center",
+            padding: isMobile ? "0 0 32px" : "0 0 48px",
+            marginBottom: isMobile ? 32 : 48,
+            borderBottom: "1px solid rgba(255,255,255,0.12)",
+          }}
+        >
+          <div>
+            <div
+              style={{
+                fontFamily: "'Poppins', sans-serif",
+                fontWeight: 700,
+                fontSize: isMobile ? 22 : 26,
+                color: "#fff",
+                letterSpacing: "-0.01em",
+                marginBottom: 8,
+              }}
+            >
+              Join the newsletter
+            </div>
+            <div
+              style={{
+                fontFamily: "'Montserrat', sans-serif",
+                fontSize: 14,
+                color: "rgba(255,255,255,0.7)",
+                lineHeight: 1.55,
+              }}
+            >
+              Field notes on behavior change, leadership, and applied neuroscience.
+            </div>
+          </div>
+          <SubscribeForm variant="footer" source="footer_banner" />
+        </div>
+
         {/* Top: wordmark + tagline */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
