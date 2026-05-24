@@ -880,7 +880,9 @@ export default function AdminNewsletterArticle() {
             onImported={(newBody) => {
               markDirty();
               setDraft((d) => ({ ...d, body_tiptap: newBody, source_type: "html_import" }));
-              // Flush save shortly after state commits so dirty draft persists.
+              // Imperatively update the editor surface — initialContent prop changes don't
+              // trigger TipTap to re-render existing instances.
+              editorHandleRef.current?.setContent(newBody);
               setTimeout(() => { void flushSave("HTML import: replace body"); }, 0);
               toast.success("Imported", { description: "HTML content is now in the editor." });
             }}
