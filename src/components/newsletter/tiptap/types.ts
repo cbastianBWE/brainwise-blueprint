@@ -349,7 +349,8 @@ export type CustomNewsletterNode =
   | BaseNode<"newsletterTerminal", NewsletterTerminalAttrs>
   | BaseNode<"newsletterCodeDiff", NewsletterCodeDiffAttrs>
   | BaseNode<"newsletterChart", NewsletterChartAttrs>
-  | BaseNode<"newsletterAudio", NewsletterAudioAttrs>;
+  | BaseNode<"newsletterAudio", NewsletterAudioAttrs>
+  | BaseNode<"newsletterImageCompare", NewsletterImageCompareAttrs>;
 
 export type NewsletterTipTapNode =
   | TipTapTextNode
