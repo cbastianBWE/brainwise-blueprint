@@ -178,6 +178,13 @@ export const NewsletterEditor = forwardRef<NewsletterEditorHandle, NewsletterEdi
     [extensions],
   );
 
+  useImperativeHandle(ref, () => ({
+    setContent: (next: NewsletterTipTapDoc) => {
+      if (!editor) return;
+      editor.commands.setContent(next, true);
+    },
+  }), [editor]);
+
   useEffect(() => {
     editor?.setEditable(!disabled);
   }, [editor, disabled]);
