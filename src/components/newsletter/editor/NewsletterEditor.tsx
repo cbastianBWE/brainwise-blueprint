@@ -125,6 +125,16 @@ const NodeKeyMomentEdit = NewsletterKeyMoment.extend({
     return ReactNodeViewRenderer(KeyMomentNodeView);
   },
 });
+const NodeSectionRuleEdit = NewsletterSectionRule.extend({
+  addNodeView() {
+    return ReactNodeViewRenderer(SectionRuleNodeView);
+  },
+});
+const NodeMastheadEdit = NewsletterMasthead.extend({
+  addNodeView() {
+    return ReactNodeViewRenderer(MastheadNodeView);
+  },
+});
 
 const EDITABLE_NODE_OVERRIDES = [
   NodeImageEdit,
@@ -136,6 +146,8 @@ const EDITABLE_NODE_OVERRIDES = [
   NodeTwoColumnPaneEdit,
   NodeKeyMomentsEdit,
   NodeKeyMomentEdit,
+  NodeSectionRuleEdit,
+  NodeMastheadEdit,
 ];
 
 const OVERRIDE_NAMES = new Set(EDITABLE_NODE_OVERRIDES.map((n) => n.name));
