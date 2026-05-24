@@ -205,6 +205,7 @@ export function NewsletterEditor({
           articleId={articleId}
           disabled={disabled}
           imageInputRef={toolbarFileRef}
+          onOpenImportHtml={onOpenImportHtml}
         />
         <div
           ref={wrapperRef}
