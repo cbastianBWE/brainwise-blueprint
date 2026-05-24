@@ -20,7 +20,14 @@ import {
   Strikethrough,
   Code as CodeIcon,
   Link as LinkIcon,
-  Type as TypeIcon,
+  Underline as UnderlineIcon,
+  Highlighter,
+  Superscript as SuperscriptIcon,
+  Subscript as SubscriptIcon,
+  CaseSensitive,
+  Keyboard as KeyboardIcon,
+  BookOpen,
+  Palette,
 } from "lucide-react";
 import {
   Tooltip,
@@ -40,6 +47,8 @@ export function NewsletterBubbleMenu({ editor }: NewsletterBubbleMenuProps) {
   const [mounted, setMounted] = useState(false);
   const [linkMode, setLinkMode] = useState(false);
   const [linkUrl, setLinkUrl] = useState("");
+  const [abbrMode, setAbbrMode] = useState(false);
+  const [abbrTitle, setAbbrTitle] = useState("");
 
   // Create the host element once on mount and register the extension.
   useEffect(() => {
@@ -82,11 +91,13 @@ export function NewsletterBubbleMenu({ editor }: NewsletterBubbleMenuProps) {
   }, [editor]);
 
 
-  // Reset link mode whenever selection moves
+  // Reset submenu modes whenever selection moves
   useEffect(() => {
     const handler = () => {
       setLinkMode(false);
       setLinkUrl("");
+      setAbbrMode(false);
+      setAbbrTitle("");
     };
     editor.on("selectionUpdate", handler);
     return () => {
@@ -95,8 +106,6 @@ export function NewsletterBubbleMenu({ editor }: NewsletterBubbleMenuProps) {
   }, [editor]);
 
   if (!mounted || !elRef.current) return null;
-
-  const isLeadActive = editor.getAttributes("textStyle").fontSize === "lead";
 
   const applyLink = () => {
     const url = linkUrl.trim();
@@ -112,6 +121,22 @@ export function NewsletterBubbleMenu({ editor }: NewsletterBubbleMenuProps) {
     }
     setLinkMode(false);
     setLinkUrl("");
+  };
+
+  const applyAbbr = () => {
+    const t = abbrTitle.trim();
+    if (t) {
+      editor
+        .chain()
+        .focus()
+        .extendMarkRange("abbr")
+        .setMark("abbr", { title: t })
+        .run();
+    } else {
+      editor.chain().focus().unsetMark("abbr").run();
+    }
+    setAbbrMode(false);
+    setAbbrTitle("");
   };
 
   const Btn = ({
@@ -183,6 +208,34 @@ export function NewsletterBubbleMenu({ editor }: NewsletterBubbleMenuProps) {
               Apply
             </button>
           </>
+        ) : abbrMode ? (
+          <>
+            <input
+              type="text"
+              value={abbrTitle}
+              onChange={(e) => setAbbrTitle(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") applyAbbr();
+                if (e.key === "Escape") {
+                  setAbbrMode(false);
+                  setAbbrTitle("");
+                }
+              }}
+              placeholder="Expanded form (e.g. World Health Organization)"
+              autoFocus
+              className="h-7 w-64 rounded-full border-0 bg-transparent px-3 text-xs text-[var(--fg-1)] placeholder:text-[var(--fg-4)] focus:outline-none"
+            />
+            <button
+              type="button"
+              onMouseDown={(e) => {
+                e.preventDefault();
+                applyAbbr();
+              }}
+              className="rounded-full bg-[#F5741A] px-3 py-1 text-[11px] font-semibold text-white hover:bg-[#E06714]"
+            >
+              Apply
+            </button>
+          </>
         ) : (
           <>
             <Btn
@@ -207,6 +260,81 @@ export function NewsletterBubbleMenu({ editor }: NewsletterBubbleMenuProps) {
               onClick={() => editor.chain().focus().toggleStrike().run()}
             >
               <Strikethrough className="h-3.5 w-3.5" />
+            </Btn>
+            <Btn
+              label="Small caps"
+              active={editor.isActive("smallCaps")}
+              onClick={() => editor.chain().focus().toggleSmallCaps().run()}
+            >
+              <CaseSensitive className="h-3.5 w-3.5" />
+            </Btn>
+            <Btn
+              label="Superscript"
+              active={editor.isActive("superscript")}
+              onClick={() => editor.chain().focus().toggleSuperscript().run()}
+            >
+              <SuperscriptIcon className="h-3.5 w-3.5" />
+            </Btn>
+            <Btn
+              label="Subscript"
+              active={editor.isActive("subscript")}
+              onClick={() => editor.chain().focus().toggleSubscript().run()}
+            >
+              <SubscriptIcon className="h-3.5 w-3.5" />
+            </Btn>
+            <Btn
+              label="Underline"
+              shortcut="⌘U"
+              active={editor.isActive("underline")}
+              onClick={() => editor.chain().focus().toggleUnderline().run()}
+            >
+              <UnderlineIcon className="h-3.5 w-3.5" />
+            </Btn>
+            <Btn
+              label="Highlight"
+              active={editor.isActive("highlight")}
+              onClick={() =>
+                editor.chain().focus().toggleHighlight({ color: "yellow" }).run()
+              }
+            >
+              <Highlighter className="h-3.5 w-3.5" />
+            </Btn>
+            <Btn
+              label="Keyboard"
+              active={editor.isActive("keyboard")}
+              onClick={() => editor.chain().focus().toggleKeyboard().run()}
+            >
+              <KeyboardIcon className="h-3.5 w-3.5" />
+            </Btn>
+            <Btn
+              label="Accent"
+              active={editor.isActive("accent")}
+              onClick={() =>
+                editor
+                  .chain()
+                  .focus()
+                  .toggleAccent({
+                    color: "orange",
+                    style: "plain",
+                    weight: "normal",
+                  })
+                  .run()
+              }
+            >
+              <Palette className="h-3.5 w-3.5" />
+            </Btn>
+            <Btn
+              label="Abbreviation"
+              active={editor.isActive("abbr")}
+              onClick={() => {
+                const existingTitle = editor.getAttributes("abbr").title as
+                  | string
+                  | undefined;
+                setAbbrTitle(existingTitle ?? "");
+                setAbbrMode(true);
+              }}
+            >
+              <BookOpen className="h-3.5 w-3.5" />
             </Btn>
             <Btn
               label="Inline code"
@@ -246,21 +374,6 @@ export function NewsletterBubbleMenu({ editor }: NewsletterBubbleMenuProps) {
               }
             >
               H3
-            </Btn>
-            <Btn
-              label="Lead paragraph"
-              active={isLeadActive}
-              onClick={() => {
-                const chain = editor.chain().focus();
-                if (isLeadActive) {
-                  chain.setMark("textStyle", { fontSize: null }).run();
-                } else {
-                  chain.setMark("textStyle", { fontSize: "lead" }).run();
-                }
-              }}
-            >
-              <TypeIcon className="mr-1 h-3 w-3" />
-              Lead
             </Btn>
           </>
         )}
