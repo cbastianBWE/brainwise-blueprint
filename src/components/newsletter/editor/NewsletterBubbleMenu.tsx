@@ -28,6 +28,14 @@ import {
   Keyboard as KeyboardIcon,
   BookOpen,
   Palette,
+  ArrowUpToLine,
+  ArrowDownToLine,
+  ArrowLeftToLine,
+  ArrowRightToLine,
+  Rows3,
+  Columns3,
+  Heading as HeadingIcon,
+  Trash2,
 } from "lucide-react";
 import {
   Tooltip,
