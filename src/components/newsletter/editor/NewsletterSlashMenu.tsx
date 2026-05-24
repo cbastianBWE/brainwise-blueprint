@@ -696,6 +696,18 @@ export const SLASH_COMMANDS: SlashCommandItem[] = [
         })
         .run(),
   },
+  {
+    id: "table",
+    label: "Table",
+    description: "Data table with header row, 3 columns × 3 rows.",
+    category: "TECHNICAL",
+    icon: TableIcon,
+    keywords: ["table", "grid", "data", "rows", "columns"],
+    run: (e, r) =>
+      deleteRange(e, r)
+        .insertTable({ rows: 3, cols: 3, withHeaderRow: true })
+        .run(),
+  },
 ];
 
 function filterItems(query: string): SlashCommandItem[] {
