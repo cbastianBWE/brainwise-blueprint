@@ -252,6 +252,13 @@ export interface NewsletterImageGalleryAttrs {
   gap: GalleryGap;
 }
 
+export interface NewsletterAudioAttrs {
+  asset_id: string | null;
+  title: string;
+  duration_seconds: number;
+  transcript_url: string | null;
+}
+
 export interface NewsletterStatGridAttrs {
   columns: 2 | 3 | 4;
 }
@@ -333,7 +340,8 @@ export type CustomNewsletterNode =
   | BaseNode<"newsletterMath", NewsletterMathAttrs>
   | BaseNode<"newsletterTerminal", NewsletterTerminalAttrs>
   | BaseNode<"newsletterCodeDiff", NewsletterCodeDiffAttrs>
-  | BaseNode<"newsletterChart", NewsletterChartAttrs>;
+  | BaseNode<"newsletterChart", NewsletterChartAttrs>
+  | BaseNode<"newsletterAudio", NewsletterAudioAttrs>;
 
 export type NewsletterTipTapNode =
   | TipTapTextNode
