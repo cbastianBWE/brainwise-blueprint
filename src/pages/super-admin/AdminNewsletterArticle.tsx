@@ -271,6 +271,16 @@ export default function AdminNewsletterArticle() {
         p_word_count: wordCount,
         p_read_time_minutes: readTime,
         p_reason: reason.length >= 10 ? reason : "Auto-save: editor pause",
+        // H2 columns — UI surfaces land in H3; pass nullish defaults so the
+        // RPC signature is satisfied without changing save behaviour.
+        p_default_layout_width: null as unknown as string,
+        p_eyebrow_text: null as unknown as string,
+        p_is_issue_based: null as unknown as boolean,
+        p_issue_label: null as unknown as string,
+        p_masthead_logo_glyph: null as unknown as string,
+        p_masthead_publication: null as unknown as string,
+        p_tags: null as unknown as string[],
+        p_theme_variant: null as unknown as string,
       });
       if (error) throw error;
       const resp = (data ?? {}) as { article_id?: string; is_create?: boolean };
