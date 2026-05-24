@@ -365,6 +365,21 @@ export default function AdminNewsletterArticle() {
   const [transitionReason, setTransitionReason] = useState("");
   const [transitioning, setTransitioning] = useState(false);
   const [scheduleOpen, setScheduleOpen] = useState(false);
+  const [versionHistoryOpen, setVersionHistoryOpen] = useState(false);
+  const [openingVersionHistory, setOpeningVersionHistory] = useState(false);
+
+  const handleOpenVersionHistory = async () => {
+    if (!articleIdRef.current) return;
+    setOpeningVersionHistory(true);
+    try {
+      if (dirtyRef.current || savingPromiseRef.current) {
+        await flushSave("Auto-save: opening version history");
+      }
+    } finally {
+      setOpeningVersionHistory(false);
+      setVersionHistoryOpen(true);
+    }
+  };
 
   const refreshArticle = () => {
     if (articleIdRef.current) {
