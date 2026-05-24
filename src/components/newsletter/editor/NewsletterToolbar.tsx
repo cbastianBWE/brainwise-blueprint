@@ -11,6 +11,7 @@ import {
   Image as ImageIcon,
   Minus,
   Loader2,
+  FileCode,
 } from "lucide-react";
 import {
   Select,
