@@ -68,7 +68,7 @@ import {
 import { cn } from "@/lib/utils";
 
 import { FileUploadField } from "@/components/super-admin/FileUploadField";
-import { NewsletterEditor } from "@/components/newsletter/editor/NewsletterEditor";
+import { NewsletterEditor, type NewsletterEditorHandle } from "@/components/newsletter/editor/NewsletterEditor";
 import type { NewsletterTipTapDoc } from "@/components/newsletter/tiptap/types";
 import VersionHistorySheet from "@/components/newsletter/versions/VersionHistorySheet";
 import ImportHtmlModal from "@/components/newsletter/editor/ImportHtmlModal";
