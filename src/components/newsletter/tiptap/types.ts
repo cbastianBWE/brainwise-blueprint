@@ -156,7 +156,9 @@ export type CustomNewsletterNode =
   | BaseNode<"newsletterKeyMoment", NewsletterKeyMomentAttrs>
   | BaseNode<"newsletterEyebrow", NewsletterEyebrowAttrs>
   | BaseNode<"newsletterLead", NewsletterLeadAttrs>
-  | BaseNode<"newsletterAside", NewsletterAsideAttrs>;
+  | BaseNode<"newsletterAside", NewsletterAsideAttrs>
+  | BaseNode<"newsletterSectionRule", NewsletterSectionRuleAttrs>
+  | BaseNode<"newsletterMasthead", NewsletterMastheadAttrs>;
 
 export type NewsletterTipTapNode =
   | TipTapTextNode
