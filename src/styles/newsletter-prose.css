@@ -635,3 +635,121 @@
   color: var(--bw-slate-300);
   font-size: 12px;
 }
+
+/* ============================================================
+   Bundle A2a-1: StepList + Checklist
+   ============================================================ */
+
+.newsletter-prose .newsletter-step-list {
+  list-style: none;
+  padding: 0;
+  margin: 32px 0;
+  counter-reset: step-counter;
+}
+
+.newsletter-prose .newsletter-step {
+  display: grid;
+  grid-template-columns: 48px 1fr;
+  gap: 16px;
+  margin-bottom: 24px;
+  counter-increment: step-counter;
+  position: relative;
+}
+
+.newsletter-prose .newsletter-step::before {
+  content: counter(step-counter, decimal-leading-zero);
+  font-family: var(--bw-mono-font);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--bw-orange);
+  line-height: 1.4;
+  padding-top: 4px;
+}
+
+/* Connector line (only when style=vertical AND connector=line) */
+.newsletter-prose .newsletter-step-list[data-step-style="vertical"][data-connector="line"]
+  .newsletter-step:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  left: 16px;
+  top: 32px;
+  bottom: -16px;
+  width: 1px;
+  background: var(--bw-slate-300);
+}
+
+.newsletter-prose .newsletter-step > h4 {
+  grid-column: 2;
+  margin: 0 0 8px 0;
+  font-size: 18px;
+  color: var(--bw-navy);
+}
+
+.newsletter-prose .newsletter-step > *:not(h4) {
+  grid-column: 2;
+}
+
+.newsletter-prose .newsletter-checklist {
+  list-style: none;
+  padding: 0;
+  margin: 32px 0;
+}
+
+.newsletter-prose .newsletter-checklist-item {
+  display: grid;
+  grid-template-columns: 24px 1fr;
+  gap: 12px;
+  margin-bottom: 12px;
+  align-items: start;
+}
+
+.newsletter-prose .newsletter-checklist-item--checked {
+  color: var(--bw-slate-500);
+  text-decoration: line-through;
+}
+
+/* NodeView-rendered checklist item (editor mode) */
+.newsletter-prose .newsletter-checklist-item-view {
+  display: grid;
+  grid-template-columns: 24px 1fr;
+  gap: 12px;
+  margin-bottom: 12px;
+  align-items: start;
+  list-style: none;
+}
+
+.newsletter-prose .newsletter-checklist-item-view__checkbox {
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid var(--bw-slate-500);
+  border-radius: 3px;
+  cursor: pointer;
+  background: white;
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 120ms ease;
+  padding: 0;
+}
+
+.newsletter-prose .newsletter-checklist-item-view__checkbox:hover {
+  border-color: var(--bw-orange);
+}
+
+.newsletter-prose .newsletter-checklist-item-view__checkbox--checked {
+  background: var(--bw-orange);
+  border-color: var(--bw-orange);
+}
+
+.newsletter-prose .newsletter-checklist-item-view__checkbox--checked::after {
+  content: "\2713";
+  color: white;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.newsletter-prose .newsletter-checklist-item-view__body--checked {
+  color: var(--bw-slate-500);
+  text-decoration: line-through;
+}
