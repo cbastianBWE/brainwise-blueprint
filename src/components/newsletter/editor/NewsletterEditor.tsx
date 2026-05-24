@@ -46,6 +46,7 @@ import {
   NewsletterTerminal,
   NewsletterCodeDiff,
   NewsletterChart,
+  NewsletterAudio,
 } from "@/components/newsletter/tiptap";
 import { NewsletterCodeBlock } from "@/components/newsletter/tiptap/buildExtensions";
 import type { NewsletterTipTapDoc } from "@/components/newsletter/tiptap/types";
