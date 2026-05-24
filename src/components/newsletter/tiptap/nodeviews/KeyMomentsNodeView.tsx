@@ -4,7 +4,17 @@ import {
   NodeViewWrapper,
   type NodeViewProps,
 } from "@tiptap/react";
-import { Plus, Trash2, GripVertical } from "lucide-react";
+import { Plus, Trash2, GripVertical, ListOrdered } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+const ACCENT_SWATCHES: Array<{ value: string; bg: string; label: string }> = [
+  { value: "orange", bg: "bg-[#F5741A]", label: "Orange" },
+  { value: "forest", bg: "bg-[#2D6A4F]", label: "Forest" },
+  { value: "teal", bg: "bg-[#006D77]", label: "Teal" },
+  { value: "plum", bg: "bg-[#3C096C]", label: "Plum" },
+  { value: "mustard", bg: "bg-[#8a6400]", label: "Mustard" },
+  { value: "navy", bg: "bg-[#021F36]", label: "Navy" },
+];
 import { cn } from "@/lib/utils";
 
 export function KeyMomentsNodeView({
