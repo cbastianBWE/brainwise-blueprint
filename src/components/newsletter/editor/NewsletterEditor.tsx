@@ -38,6 +38,7 @@ import {
   NewsletterTwoColumnPane,
   NewsletterSectionRule,
   NewsletterMasthead,
+  NewsletterByline,
 } from "@/components/newsletter/tiptap";
 import type { NewsletterTipTapDoc } from "@/components/newsletter/tiptap/types";
 import { ImageNodeView } from "@/components/newsletter/tiptap/nodeviews/ImageNodeView";
@@ -51,6 +52,7 @@ import { KeyMomentsNodeView } from "@/components/newsletter/tiptap/nodeviews/Key
 import { KeyMomentNodeView } from "@/components/newsletter/tiptap/nodeviews/KeyMomentNodeView";
 import { SectionRuleNodeView } from "@/components/newsletter/tiptap/nodeviews/SectionRuleNodeView";
 import { MastheadNodeView } from "@/components/newsletter/tiptap/nodeviews/MastheadNodeView";
+import { BylineNodeView } from "@/components/newsletter/tiptap/nodeviews/BylineNodeView";
 import { NewsletterToolbar } from "./NewsletterToolbar";
 import { NewsletterBubbleMenu } from "./NewsletterBubbleMenu";
 import { NewsletterFloatingPlus } from "./NewsletterFloatingPlus";
@@ -135,6 +137,11 @@ const NodeMastheadEdit = NewsletterMasthead.extend({
     return ReactNodeViewRenderer(MastheadNodeView);
   },
 });
+const NodeBylineEdit = NewsletterByline.extend({
+  addNodeView() {
+    return ReactNodeViewRenderer(BylineNodeView);
+  },
+});
 
 const EDITABLE_NODE_OVERRIDES = [
   NodeImageEdit,
@@ -148,6 +155,7 @@ const EDITABLE_NODE_OVERRIDES = [
   NodeKeyMomentEdit,
   NodeSectionRuleEdit,
   NodeMastheadEdit,
+  NodeBylineEdit,
 ];
 
 const OVERRIDE_NAMES = new Set(EDITABLE_NODE_OVERRIDES.map((n) => n.name));
