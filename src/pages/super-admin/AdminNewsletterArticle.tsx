@@ -1087,7 +1087,11 @@ export default function AdminNewsletterArticle() {
           <ImportHtmlModal
             articleId={articleId}
             open={importOpen}
-            onOpenChange={setImportOpen}
+            onOpenChange={(next) => {
+              setImportOpen(next);
+              if (!next) setAiImportHtml(undefined);
+            }}
+            initialHtml={aiImportHtml}
             onImported={(newBody) => {
               markDirty();
               setDraft((d) => ({ ...d, body_tiptap: newBody, source_type: "html_import" }));
@@ -1099,6 +1103,16 @@ export default function AdminNewsletterArticle() {
             }}
           />
         )}
+
+        <NewsletterAiPane
+          open={aiPaneOpen && !!articleId}
+          onClose={() => setAiPaneOpen(false)}
+          articleId={articleId}
+          onImportHtml={(html) => {
+            setAiImportHtml(html);
+            setImportOpen(true);
+          }}
+        />
       </div>
     </TooltipProvider>
   );
