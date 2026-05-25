@@ -198,6 +198,21 @@ export function NewsletterBubbleMenu({ editor }: NewsletterBubbleMenuProps) {
     setMode({ kind: "default" });
   };
 
+  const applyFootnoteRef = (footnote_text: string) => {
+    const ft = footnote_text.trim();
+    if (ft) {
+      editor
+        .chain()
+        .focus()
+        .extendMarkRange("footnoteRef")
+        .setMark("footnoteRef", { footnote_text: ft })
+        .run();
+    } else {
+      editor.chain().focus().unsetMark("footnoteRef").run();
+    }
+    setMode({ kind: "default" });
+  };
+
   const Btn = ({
     label,
     shortcut,
