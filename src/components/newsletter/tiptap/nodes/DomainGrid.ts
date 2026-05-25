@@ -35,9 +35,17 @@ export const NewsletterDomainGrid = Node.create({
     };
   },
 
-  // §151 (H5 Cycle 2): no import-fallback rule. content: "newsletterDomainRow+" is a BrainWise-specific pattern with no plausible external equivalent. External markup cannot satisfy the schema's content expression and ProseMirror's content coercion would drop the wrapper silently.
+  // §151 (H5 Follow-up): import-fallback rules below pair with NewsletterDomainRow's
+  // own class-based fallback. The child fallback fires on each .domain-row element,
+  // producing valid newsletterDomainRow atom nodes that satisfy this parent's
+  // "newsletterDomainRow+" content expression. ProseMirror content coercion
+  // succeeds in this paired-rule pattern.
   parseHTML() {
-    return [{ tag: "section[data-newsletter-domain-grid]" }];
+    return [
+      { tag: "section[data-newsletter-domain-grid]" },
+      { tag: "div.domain-grid", priority: 51 },
+      { tag: "section.domain-grid", priority: 51 },
+    ];
   },
 
   renderHTML({ HTMLAttributes }) {
@@ -92,6 +100,49 @@ export const NewsletterDomainRow = Node.create({
             description: el.getAttribute("data-description") || "",
             count_value: el.getAttribute("data-count-value") || "",
             count_label: el.getAttribute("data-count-label") || "",
+          };
+        },
+      },
+      {
+        // §151 (H5 Follow-up): external import fallback for .domain-row markup.
+        // getAttrs reads visible text BEFORE atom-discard. tag_text/tag_variant
+        // intentionally left null on import (chip is opt-in via editor).
+        tag: "div.domain-row",
+        priority: 51,
+        getAttrs: (el) => {
+          if (!(el instanceof HTMLElement)) return false;
+
+          const labelEl = el.querySelector(".domain-label");
+          const label = labelEl
+            ? Array.from(labelEl.childNodes)
+                .filter((n) => n.nodeType === 3)
+                .map((n) => n.textContent ?? "")
+                .join("")
+                .trim()
+            : "";
+
+          const description =
+            el.querySelector(".domain-desc")?.textContent?.trim() ?? "";
+
+          const countEl = el.querySelector(".domain-count");
+          const count_label =
+            countEl?.querySelector("span")?.textContent?.trim() ?? "";
+          const count_value = countEl
+            ? Array.from(countEl.childNodes)
+                .filter((n) => n.nodeType === 3)
+                .map((n) => n.textContent ?? "")
+                .join("")
+                .trim()
+            : "";
+
+          return {
+            number: "",
+            label,
+            tag_text: null,
+            tag_variant: null,
+            description,
+            count_value,
+            count_label,
           };
         },
       },
