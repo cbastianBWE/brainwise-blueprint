@@ -52,7 +52,7 @@ import { tipTapDocToPlainText } from "@/components/newsletter/versions/tipTapDoc
 
 const SUPABASE_URL = "https://svprhtzawnbzmumxnhsq.supabase.co";
 const SUPABASE_ANON_KEY =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBiYXNlIiwicmVmIjoic3Zwcmh0emF3bmJ6bXVteG5oc3EiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc3NTY3NzYwNCwiZXhwIjoyMDkxMjUzNjA0fQ.R9WzFR4olqp1tdWa-pj-2WSL2L0Mjcf2tSA8LhOWclA";
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN2cHJodHphd25iem11bXhuaHNxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2Nzc2MDQsImV4cCI6MjA5MTI1MzYwNH0.R9WzFR4olqp1tdWa-pj-2WSL2L0Mjcf2tSA8LhOWclA";
 const MAX_BYTES = 5 * 1024 * 1024;
 const MAX_IMAGES_PER_IMPORT = 30;
 
