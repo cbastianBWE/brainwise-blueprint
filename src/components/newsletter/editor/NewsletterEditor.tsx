@@ -324,6 +324,7 @@ const EDITABLE_NODE_OVERRIDES = [
   NodeAuthorBioEdit,
   NodeCtaEdit,
   NodeSubscribeBlockEdit,
+  NodePollEdit,
   NodeDisclosureEdit,
   NodeRelatedArticlesEdit,
   NodeFootnotesEdit,
