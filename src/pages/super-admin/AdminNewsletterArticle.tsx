@@ -1178,7 +1178,40 @@ export default function AdminNewsletterArticle() {
               .setTextSelection({ from: editorSelection.to, to: editorSelection.to })
               .run();
           }}
+          onOpenStockPicker={openPexelsPicker}
         />
+
+        {articleId && (
+          <PexelsPicker
+            open={pexelsPickerOpen}
+            onOpenChange={(next) => {
+              setPexelsPickerOpen(next);
+              if (!next) setPexelsPickerInitialQuery("");
+            }}
+            articleId={articleId}
+            initialQuery={pexelsPickerInitialQuery}
+            onPicked={({ asset_id, attribution, alt }) => {
+              const editor = editorHandleRef.current?.getEditor();
+              if (!editor) return;
+              editor
+                .chain()
+                .focus()
+                .insertContent({
+                  type: "newsletterImage",
+                  attrs: {
+                    asset_id,
+                    alt,
+                    caption: "",
+                    attribution,
+                  },
+                })
+                .run();
+              setPexelsPickerOpen(false);
+              setPexelsPickerInitialQuery("");
+              markDirty();
+            }}
+          />
+        )}
       </div>
     </TooltipProvider>
   );
