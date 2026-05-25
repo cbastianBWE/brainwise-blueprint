@@ -279,6 +279,34 @@ export function ImageNodeView({
         className="mt-2 w-full border-0 bg-transparent text-center text-sm italic text-[var(--fg-3)] placeholder:text-[var(--fg-4)] focus:outline-none focus:ring-0"
       />
 
+      {/* Attribution (Pexels etc. — required by license) */}
+      {node.attrs.attribution && (
+        <div className="mt-1 text-center text-xs italic text-[var(--fg-4)]">
+          Photo by{" "}
+          <a
+            href={node.attrs.attribution.photographer_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline hover:text-[var(--fg-2)]"
+          >
+            {node.attrs.attribution.photographer}
+          </a>
+          {node.attrs.attribution.source === "pexels" && (
+            <>
+              {" "}on{" "}
+              <a
+                href={node.attrs.attribution.source_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline hover:text-[var(--fg-2)]"
+              >
+                Pexels
+              </a>
+            </>
+          )}
+        </div>
+      )}
+
       {/* Alt text editor */}
       <div className="mt-1 flex items-center justify-center gap-2 text-[11px] text-[var(--fg-4)]">
         {altOpen ? (

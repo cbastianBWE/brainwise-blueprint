@@ -116,6 +116,7 @@ export interface NewsletterEditorProps {
   disabled?: boolean;
   placeholder?: string;
   onOpenImportHtml?: () => void;
+  onOpenStockPicker?: () => void;
   /** Article tags — surfaced to NodeViews via context (P7b). */
   tags?: string[] | null;
   /** Article category_id — surfaced to NodeViews via context (P7b). */
@@ -334,7 +335,7 @@ const EDITABLE_NODE_OVERRIDES = [
 const OVERRIDE_NAMES = new Set(EDITABLE_NODE_OVERRIDES.map((n) => n.name));
 
 export const NewsletterEditor = forwardRef<NewsletterEditorHandle, NewsletterEditorProps>(function NewsletterEditor(
-  { articleId, initialContent, onChange, disabled, placeholder, onOpenImportHtml, tags, categoryId },
+  { articleId, initialContent, onChange, disabled, placeholder, onOpenImportHtml, onOpenStockPicker, tags, categoryId },
   ref,
 ) {
   const onChangeRef = useRef(onChange);
@@ -411,6 +412,7 @@ export const NewsletterEditor = forwardRef<NewsletterEditorHandle, NewsletterEdi
           disabled={disabled}
           imageInputRef={toolbarFileRef}
           onOpenImportHtml={onOpenImportHtml}
+          onOpenStockPicker={onOpenStockPicker}
         />
         <div
           ref={wrapperRef}

@@ -28,6 +28,13 @@ export type NewsletterImageWidth = "inline" | "full_bleed" | "wide";
 
 // ---- Per-node attrs interfaces ----
 
+export interface NewsletterImageAttribution {
+  source: "pexels" | null;
+  photographer: string;
+  photographer_url: string;
+  source_url: string;
+}
+
 export interface NewsletterImageAttrs {
   asset_id: string | null;
   alt: string;
@@ -37,6 +44,8 @@ export interface NewsletterImageAttrs {
   import_failed_src: string | null;
   lightbox: boolean;
   lazy_load: boolean;
+  /** Cycle 4: stock-image provider attribution (required by license). */
+  attribution: NewsletterImageAttribution | null;
 }
 
 export interface NewsletterCalloutAttrs {
