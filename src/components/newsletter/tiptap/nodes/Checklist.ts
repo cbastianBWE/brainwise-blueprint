@@ -22,6 +22,10 @@ export const NewsletterChecklist = Node.create({
         tag: "ul[data-newsletter-checklist]",
         priority: 60,
       },
+      // §151 (H5 Cycle 2): import-fallback rules for external task lists.
+      { tag: "ul.task-list", priority: 51 },
+      { tag: "ul.checklist", priority: 51 },
+      { tag: 'ul[class~="todo"]', priority: 51 },
     ];
   },
 
@@ -71,6 +75,30 @@ export const NewsletterChecklistItem = Node.create({
           if (!(el instanceof HTMLElement)) return false;
           return {
             checked: el.getAttribute("data-checked") === "true",
+          };
+        },
+      },
+      // §151 (H5 Cycle 2): import-fallback rules. Reads <input type="checkbox">
+      // state when present; defaults to false otherwise (Q7).
+      {
+        tag: "ul.task-list > li",
+        priority: 51,
+        getAttrs: (el) => {
+          if (!(el instanceof HTMLElement)) return false;
+          const cb = el.querySelector("input[type='checkbox']");
+          return {
+            checked: cb instanceof HTMLInputElement ? cb.checked : false,
+          };
+        },
+      },
+      {
+        tag: "ul.checklist > li",
+        priority: 51,
+        getAttrs: (el) => {
+          if (!(el instanceof HTMLElement)) return false;
+          const cb = el.querySelector("input[type='checkbox']");
+          return {
+            checked: cb instanceof HTMLInputElement ? cb.checked : false,
           };
         },
       },

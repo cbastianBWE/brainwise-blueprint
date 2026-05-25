@@ -35,6 +35,7 @@ export const NewsletterDomainGrid = Node.create({
     };
   },
 
+  // §151 (H5 Cycle 2): no import-fallback rule. content: "newsletterDomainRow+" is a BrainWise-specific pattern with no plausible external equivalent. External markup cannot satisfy the schema's content expression and ProseMirror's content coercion would drop the wrapper silently.
   parseHTML() {
     return [{ tag: "section[data-newsletter-domain-grid]" }];
   },

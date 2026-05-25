@@ -35,6 +35,7 @@ export const NewsletterTwoColumn = Node.create({
     };
   },
 
+  // §151 (H5 Cycle 2): no import-fallback rule. Exact-count content "newsletterTwoColumnPane newsletterTwoColumnPane" is impossible to satisfy from arbitrary external <div> markup. ProseMirror's content coercion would drop the wrapper silently.
   parseHTML() {
     return [
       {

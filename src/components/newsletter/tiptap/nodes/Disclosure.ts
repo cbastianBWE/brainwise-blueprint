@@ -43,6 +43,15 @@ export const NewsletterDisclosure = Node.create({
           };
         },
       },
+      // §151 (H5 Cycle 2): import-fallback for native HTML5 <details>.
+      {
+        tag: "details",
+        priority: 51,
+        getAttrs: (el) => {
+          if (!(el instanceof HTMLElement)) return false;
+          return { default_open: el.hasAttribute("open") };
+        },
+      },
     ];
   },
 
@@ -71,6 +80,8 @@ export const NewsletterDisclosureSummary = Node.create({
   parseHTML() {
     return [
       { tag: "summary[data-newsletter-disclosure-summary]", priority: 60 },
+      // §151 (H5 Cycle 2): import-fallback for native HTML5 <details><summary>.
+      { tag: "details > summary", priority: 51 },
     ];
   },
 

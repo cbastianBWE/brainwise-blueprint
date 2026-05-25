@@ -1,57 +1,57 @@
-# H4 ImportHtmlModal client-side refactor
+# H5 Cycle 2 — Composite import-fallback rules
 
-Single-file edit of `src/components/newsletter/editor/ImportHtmlModal.tsx`. Moves HTML→TipTap tree-walking from the deprecated `convert-html-to-tiptap` Edge Function into the browser via `generateJSON`; new `import-html-images` Edge Function (already deployed) is called only to fetch/upload images.
+## Recon results (all confirmed before planning)
 
-## Scope
+- **Content expressions**: verified verbatim against all 10 composite files. Match the spec table exactly.
+- **GFM TaskList extension**: NOT loaded. `grep -rniE "TaskList|TaskItem|task-list|@tiptap/extension-task" src/components/newsletter/ package.json` returns nothing. `ul.task-list` / `ul.checklist` selectors are free for our use.
+- **Selector collisions**: no other extension claims `<details>`, `ul.task-list`, `ul.checklist`, `ol.references`, `ol.citations`, or `section.citations` / `section.references`. The only existing rules on these tags are the canonical `data-newsletter-*`-scoped ones inside Citations.ts and Disclosure.ts themselves.
+- **Citations canonical `contentElement`**: uses `[data-newsletter-citations-list]` sentinel which external markup will not have — the fallback needs its own `contentElement` that finds the inner `<ol>` or `<ul>`. Confirmed.
 
-- Edit only `src/components/newsletter/editor/ImportHtmlModal.tsx` (~150–180 LOC delta).
-- No other files touched. No package additions. No SQL.
-- `convert-html-to-tiptap` stays ACTIVE as fallback (untouched) for Session 101 soak.
+## Answers to open questions
 
-## Changes inside the file
+**Q7 (Checklist checkbox requirement)**: Do NOT require an `<input type="checkbox">` to exist. Class-marked `ul.task-list` / `ul.checklist` items without an explicit checkbox should still match and default `checked: false`. Rationale: many external sources (Notion exports, Ghost) mark task lists by class but render checkboxes via CSS pseudo-elements. Requiring the input would silently drop those lists. The `getAttrs` reads the checkbox state when present, falls back to `false` otherwise — matches the spec's stated default.
 
-1. **Imports**: add `import { generateJSON } from "@tiptap/core";`. Keep all existing imports.
+Re the `<input>` element leaking into the parsed inline content: ProseMirror's default text/inline parser ignores `<input>` (no matching node/mark rule and it's a void element with no text). No `contentElement` filtering needed — verified by the existing `inline*` parse path. If smoke shows a stray artifact we add `contentElement: (el) => { const c = el.cloneNode(true) as HTMLElement; c.querySelectorAll("input").forEach(i => i.remove()); return c; }` as a follow-up.
 
-2. **Constants**: add `MAX_IMAGES_PER_IMPORT = 30` below `MAX_BYTES`.
+**Q8 (Citations contentElement strategy)**: Keep separate rules for the `<section>` wrapper case vs the bare `<ol>` case. The `section.citations` / `section.references` rules use `contentElement: (el) => el.querySelector("ol, ul") || el` to descend into the list. The `ol.citations` / `ol.references` rules omit `contentElement` entirely — when the matched element IS the list, ProseMirror walks its children directly, which is what we want. Mixing them into a single rule with a conditional `contentElement` works but is harder to reason about; two pairs of rules mirrors the canonical pattern already in the file.
 
-3. **Types**:
-   - Replace `ConversionFailure` kinds: drop `tag_dropped` and `image_limit_exceeded`; add `redirect_loop`, `phase_deadline_exceeded`; drop `tag_name`; keep `original_src?`.
-   - Drop `tags_dropped` from `ConversionResponse.stats`.
-   - Add new `ImportImagesResponse` interface for the new Edge Function shape.
-   - Extend `ImportState.converting` with optional `subLabel?: string`.
+## Files modified (3)
 
-4. **ERROR_MESSAGES**: add `too_many_images_client_preflight` and `doc_generation_failed`.
+### `src/components/newsletter/tiptap/nodes/Checklist.ts`
+- Add to `NewsletterChecklist.parseHTML()` after canonical rule: `ul.task-list`, `ul.checklist`, `ul[class~="todo"]` — all `priority: 51`, no `getAttrs`.
+- Add to `NewsletterChecklistItem.parseHTML()` after canonical rule: `ul.task-list > li` and `ul.checklist > li` — `priority: 51`, `getAttrs` reads `input[type="checkbox"]` checked state, defaults `false`. Per Q7, does NOT gate on checkbox presence.
 
-5. **New helper `rewriteImgsToSyntheticFigures(parsedDoc, resolutions)`** placed before the component. Walks every `<img>` and replaces it (or its enclosing `<figure>`) with a synthetic `<figure data-newsletter-image="true" data-width="inline">` carrying either `data-asset-id` (success) or `data-import-failed-src` (failure), preserving `alt` and any `<figcaption>` text. Skips images already inside a `figure[data-newsletter-image]` (round-trip). This is required because the newsletterImage `parseHTML` rule matches `figure[data-newsletter-image]` only.
+### `src/components/newsletter/tiptap/nodes/Citations.ts`
+- Add helper `citationsParentFallbackAttrs(el)` after `clampStyle` — returns `{ style: "numbered", title: first h1-h6 textContent }`.
+- Add helper `citationEntryFallbackAttrs(el)` — returns `{ link: first <a>'s href ?? null }`.
+- Add to `NewsletterCitations.parseHTML()` after canonical rules: `section.citations`, `section.references` (both with `getAttrs` + `contentElement` descending to first `<ol>` or `<ul>`), plus `ol.citations`, `ol.references` (no `contentElement`, fixed numbered/null attrs). All `priority: 51`.
+- Add to `NewsletterCitationEntry.parseHTML()` after canonical rule: `section.citations li`, `section.references li`, `ol.citations > li`, `ol.references > li` — all `priority: 51`, `getAttrs` via `citationEntryFallbackAttrs`. Accept asymmetric round-trip (anchor stays inline in body instead of being rendered as separate `↗` link).
 
-6. **Rewrite `runConversion`** to the new pipeline:
-   1. Size guard → `setState converting`.
-   2. `DOMParser.parseFromString(html, "text/html")` with try/catch → `html_parse_failed` on error.
-   3. Collect unique `<img>` srcs, split `data:` URIs from network URIs.
-   4. Client-side preflight: if network URI count > 30 → error `too_many_images_client_preflight`.
-   5. If network URIs > 0: POST `{image_urls, newsletter_article_id}` to `/functions/v1/import-html-images` with session bearer + apikey, AbortController wired into `abortRef`. Show `subLabel: "Fetching N image(s)…"`. Handle abort, network_error, non-OK body, invalid_response identically to current code.
-   6. Merge data-URI srcs into resolutions as synthetic `scheme_rejected` failures.
-   7. Call `rewriteImgsToSyntheticFigures(parsedDoc, resolutions)`.
-   8. `generateJSON(parsedDoc.body.innerHTML, buildExtensions({editable: false}))` inside try/catch → `doc_generation_failed` on error.
-   9. Build `ConversionResponse`: stats sum server stats + data-URI count (added to attempted + failed); failures list flattens every `resolutions[url].failure` with `original_src: url`.
-   10. Preview text via existing `tipTapDocToPlainText` + `firstNWords(…, 200)`. Honor `closedDuringConvertRef`. `setState success`.
+### `src/components/newsletter/tiptap/nodes/Disclosure.ts`
+- Add to `NewsletterDisclosure.parseHTML()` after canonical rule: `details` (no class qualifier — native HTML5 semantic) — `priority: 51`, `getAttrs` reads `open` attribute into `default_open`.
+- Add to `NewsletterDisclosureSummary.parseHTML()` after canonical rule: `details > summary` — `priority: 51`, no `getAttrs`.
 
-7. **SuccessView**:
-   - Stat grid `sm:grid-cols-4` → `sm:grid-cols-3`; remove the "Tags dropped" `<StatCard>`.
-   - Remove the `{f.tag_name && …}` line from the failure list (no longer in type).
+## Files comment-only (7) — parent node's `parseHTML()` only
 
-8. **Converting phase render**: if straightforward, render `state.subLabel` as a small muted line below the existing "Converting HTML…" label. Optional polish; skip if it complicates the diff.
+Single-line doc comment immediately above the `parseHTML() {` of the parent node:
 
-## What stays untouched
+| File | Comment |
+|---|---|
+| DomainGrid.ts | `// §151 (H5 Cycle 2): no import-fallback rule. content: "newsletterDomainRow+" is a BrainWise-specific pattern with no plausible external equivalent. External markup cannot satisfy the schema's content expression and ProseMirror's content coercion would drop the wrapper silently.` |
+| FourColumn.ts | `// §151 (H5 Cycle 2): no import-fallback rule. Exact-count content "newsletterFourColumnPane newsletterFourColumnPane newsletterFourColumnPane newsletterFourColumnPane" is impossible to satisfy from arbitrary external <div> markup. ProseMirror's content coercion would drop the wrapper silently.` |
+| IndexRow.ts | `// §151 (H5 Cycle 2): no import-fallback rule. content: "newsletterIndexCard+" is a BrainWise-specific glossary pattern with no plausible external equivalent. External markup cannot satisfy the schema's content expression and ProseMirror's content coercion would drop the wrapper silently.` |
+| KeyMoments.ts | `// §151 (H5 Cycle 2): no import-fallback rule. content: "newsletterKeyMoment+" is a BrainWise-specific timeline pattern with no reliable external structural equivalent. External markup cannot satisfy the schema's content expression and ProseMirror's content coercion would drop the wrapper silently.` |
+| StepList.ts | `// §151 (H5 Cycle 2): no import-fallback rule. Parent "newsletterStep+" plus child "heading block*" requirement (heading-first) creates a two-layer coercion failure. External markup cannot satisfy the schema's content expression and ProseMirror's content coercion would drop the wrapper silently.` |
+| ThreeColumn.ts | `// §151 (H5 Cycle 2): no import-fallback rule. Exact-count content "newsletterThreeColumnPane newsletterThreeColumnPane newsletterThreeColumnPane" is impossible to satisfy from arbitrary external <div> markup. ProseMirror's content coercion would drop the wrapper silently.` |
+| TwoColumn.ts | `// §151 (H5 Cycle 2): no import-fallback rule. Exact-count content "newsletterTwoColumnPane newsletterTwoColumnPane" is impossible to satisfy from arbitrary external <div> markup. ProseMirror's content coercion would drop the wrapper silently.` |
 
-- `nodes/Image.ts`, all of `tiptap/`, `buildExtensions.ts`.
-- `convert-html-to-tiptap` Edge Function.
-- File reader, drag-and-drop, paste textarea, `PreviewRenderer`, `onImported` callback shape, hardcoded `SUPABASE_URL` / `SUPABASE_ANON_KEY`.
-- `package.json` (fallback: only if `generateJSON` import fails type-check, add `@tiptap/html@^3.23.0` and re-import from there).
+## Out of scope
+
+- No changes to `addAttributes`, `renderHTML`, schema content expressions, or canonical parseHTML rules (priority 60).
+- No package additions, schema migrations, or build-config changes.
+- No edits to ImportHtmlModal, buildExtensions.ts, or composite child nodes other than the three shipping cases above.
 
 ## Verification
 
-- `npx tsc -b --noEmit` returns 0.
-- Confirm `figure[data-newsletter-image]` parseHTML rule unchanged.
-- Confirm no new dependency unless the documented fallback was required.
-- Confirm `convert-html-to-tiptap/` directory untouched.
+- `tsc -b --noEmit` clean.
+- Spot-check each modified file: canonical rules unchanged, new rules appended at end of array with explicit `priority: 51`, helpers placed before `Node.create` calls.
