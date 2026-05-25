@@ -5210,6 +5210,119 @@ export type Database = {
           },
         ]
       }
+      newsletter_ai_conversations: {
+        Row: {
+          article_id: string
+          author_id: string
+          created_at: string
+          id: string
+          last_model_used: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          article_id: string
+          author_id: string
+          created_at?: string
+          id?: string
+          last_model_used?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          article_id?: string
+          author_id?: string
+          created_at?: string
+          id?: string
+          last_model_used?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "newsletter_ai_conversations_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "newsletter_articles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "newsletter_ai_conversations_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "newsletter_ai_conversations_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "newsletter_ai_conversations_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "newsletter_ai_conversations_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      newsletter_ai_messages: {
+        Row: {
+          attachments: Json
+          content: string
+          conversation_id: string
+          created_at: string
+          id: string
+          input_tokens: number | null
+          model_used: string | null
+          output_tokens: number | null
+          role: string
+          selection_range: Json | null
+        }
+        Insert: {
+          attachments?: Json
+          content: string
+          conversation_id: string
+          created_at?: string
+          id?: string
+          input_tokens?: number | null
+          model_used?: string | null
+          output_tokens?: number | null
+          role: string
+          selection_range?: Json | null
+        }
+        Update: {
+          attachments?: Json
+          content?: string
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          input_tokens?: number | null
+          model_used?: string | null
+          output_tokens?: number | null
+          role?: string
+          selection_range?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "newsletter_ai_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "newsletter_ai_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       newsletter_article_authors: {
         Row: {
           article_id: string
