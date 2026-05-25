@@ -23,6 +23,7 @@ import ImageReaderNodeView from "@/components/marketing/newsletter/reader-nodevi
 import EmbedReaderNodeView from "@/components/marketing/newsletter/reader-nodeviews/EmbedReaderNodeView";
 import SubscribeBlockReaderNodeView from "@/components/marketing/newsletter/reader-nodeviews/SubscribeBlockReaderNodeView";
 import RelatedArticlesReaderNodeView from "@/components/marketing/newsletter/reader-nodeviews/RelatedArticlesReaderNodeView";
+import FootnotesReaderNodeView from "@/components/marketing/newsletter/reader-nodeviews/FootnotesReaderNodeView";
 import type { NewsletterTipTapDoc } from "@/components/newsletter/tiptap/types";
 
 type AuthorLite = { user_id?: string; display_name: string | null; avatar_url?: string | null };
