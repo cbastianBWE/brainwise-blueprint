@@ -424,6 +424,11 @@ function GrantedView({
           addNodeView: () => ReactNodeViewRenderer(FootnotesReaderNodeView),
         });
       }
+      if (ext.name === "newsletterPoll") {
+        return ext.extend({
+          addNodeView: () => ReactNodeViewRenderer(PollReaderNodeView),
+        });
+      }
       return ext;
     });
   }, [article.id]);
