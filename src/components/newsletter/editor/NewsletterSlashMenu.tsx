@@ -467,6 +467,64 @@ export const SLASH_COMMANDS: SlashCommandItem[] = [
         .run(),
   },
 
+  // INTERACTIVE
+  {
+    id: "cta",
+    label: "Call to action",
+    description: "Button-styled link with variant + tracking ID.",
+    category: "INTERACTIVE",
+    icon: Megaphone,
+    keywords: ["cta", "button", "link", "action"],
+    run: (e, r) =>
+      deleteRange(e, r)
+        .insertContent({
+          type: "newsletterCta",
+          attrs: {
+            variant: "primary",
+            label: "",
+            url: "",
+            tracking_id: null,
+          },
+        })
+        .run(),
+  },
+  {
+    id: "subscribe-block",
+    label: "Subscribe block",
+    description: "Inline newsletter signup form.",
+    category: "INTERACTIVE",
+    icon: Mail,
+    keywords: ["subscribe", "newsletter", "signup", "email"],
+    run: (e, r) =>
+      deleteRange(e, r)
+        .insertContent({
+          type: "newsletterSubscribeBlock",
+        })
+        .run(),
+  },
+  {
+    id: "disclosure",
+    label: "Disclosure",
+    description: "Collapsible details block with a summary.",
+    category: "LAYOUT",
+    icon: ChevronDown,
+    keywords: ["details", "collapse", "expand", "accordion", "toggle"],
+    run: (e, r) =>
+      deleteRange(e, r)
+        .insertContent({
+          type: "newsletterDisclosure",
+          attrs: { default_open: false },
+          content: [
+            {
+              type: "newsletterDisclosureSummary",
+              content: [{ type: "text", text: "Summary" }],
+            },
+            { type: "paragraph" },
+          ],
+        })
+        .run(),
+  },
+
   // LAYOUT
   {
     id: "two-column",
