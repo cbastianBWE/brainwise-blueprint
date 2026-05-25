@@ -90,7 +90,9 @@ import { CTANodeView } from "@/components/newsletter/tiptap/nodeviews/CTANodeVie
 import { SubscribeBlockNodeView } from "@/components/newsletter/tiptap/nodeviews/SubscribeBlockNodeView";
 import { DisclosureNodeView } from "@/components/newsletter/tiptap/nodeviews/DisclosureNodeView";
 import { RelatedArticlesNodeView } from "@/components/newsletter/tiptap/nodeviews/RelatedArticlesNodeView";
+import { FootnotesNodeView } from "@/components/newsletter/tiptap/nodeviews/FootnotesNodeView";
 import { NewsletterRelatedArticles } from "@/components/newsletter/tiptap/nodes/RelatedArticles";
+import { NewsletterFootnotes } from "@/components/newsletter/tiptap/nodes/Footnotes";
 import { NewsletterToolbar } from "./NewsletterToolbar";
 import { NewsletterBubbleMenu } from "./NewsletterBubbleMenu";
 import { NewsletterFloatingPlus } from "./NewsletterFloatingPlus";
