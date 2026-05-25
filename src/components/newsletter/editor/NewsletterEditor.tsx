@@ -273,6 +273,11 @@ const NodeSubscribeBlockEdit = NewsletterSubscribeBlock.extend({
     return ReactNodeViewRenderer(SubscribeBlockNodeView);
   },
 });
+const NodePollEdit = NewsletterPoll.extend({
+  addNodeView() {
+    return ReactNodeViewRenderer(PollNodeView);
+  },
+});
 const NodeDisclosureEdit = NewsletterDisclosure.extend({
   addNodeView() {
     return ReactNodeViewRenderer(DisclosureNodeView);
