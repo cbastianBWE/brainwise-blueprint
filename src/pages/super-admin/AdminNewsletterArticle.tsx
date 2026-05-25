@@ -307,16 +307,15 @@ export default function AdminNewsletterArticle() {
         p_word_count: wordCount,
         p_read_time_minutes: readTime,
         p_reason: reason.length >= 10 ? reason : "Auto-save: editor pause",
-        // H2 columns — UI surfaces land in H3; pass nullish defaults so the
-        // RPC signature is satisfied without changing save behaviour.
-        p_default_layout_width: null as unknown as string,
-        p_eyebrow_text: null as unknown as string,
-        p_is_issue_based: null as unknown as boolean,
-        p_issue_label: null as unknown as string,
-        p_masthead_logo_glyph: null as unknown as string,
-        p_masthead_publication: null as unknown as string,
+        // H3-NV — article-level fields wired end-to-end.
+        p_default_layout_width: current.default_layout_width as unknown as string,
+        p_eyebrow_text: (current.eyebrow_text as unknown as string) ?? (null as unknown as string),
+        p_is_issue_based: current.is_issue_based as unknown as boolean,
+        p_issue_label: (current.issue_label as unknown as string) ?? (null as unknown as string),
+        p_masthead_logo_glyph: (current.masthead_logo_glyph as unknown as string) ?? (null as unknown as string),
+        p_masthead_publication: (current.masthead_publication as unknown as string) ?? (null as unknown as string),
         p_tags: (current.tags as unknown as string[]) ?? (null as unknown as string[]),
-        p_theme_variant: null as unknown as string,
+        p_theme_variant: current.theme_variant as unknown as string,
         // P7b — category_id (H2-MIG-10a-1/2). Required by upsert_article v26.
         p_category_id: (current.category_id as unknown as string) ?? (null as unknown as string),
       });
