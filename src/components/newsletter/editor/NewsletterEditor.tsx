@@ -24,7 +24,7 @@
  *   NewsletterEditorContext.
  */
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef } from "react";
-import { EditorContent, ReactNodeViewRenderer, useEditor } from "@tiptap/react";
+import { EditorContent, ReactNodeViewRenderer, useEditor, type Editor } from "@tiptap/react";
 import {
   buildExtensions,
   NewsletterCallout,
@@ -124,6 +124,7 @@ export interface NewsletterEditorProps {
 
 export interface NewsletterEditorHandle {
   setContent: (next: NewsletterTipTapDoc) => void;
+  getEditor: () => Editor | null;
 }
 
 // Each node + its corresponding React NodeView. Extending here (not in G4-0)
@@ -379,6 +380,7 @@ export const NewsletterEditor = forwardRef<NewsletterEditorHandle, NewsletterEdi
       if (!editor) return;
       editor.commands.setContent(next, { emitUpdate: true });
     },
+    getEditor: () => editor,
   }), [editor]);
 
   useEffect(() => {
