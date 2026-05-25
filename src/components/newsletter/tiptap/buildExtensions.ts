@@ -212,6 +212,7 @@ export function buildExtensions(opts: BuildExtensionsOptions): Extensions {
     NewsletterDisclosure,
     NewsletterDisclosureSummary,
     NewsletterRelatedArticles,
+    NewsletterFootnotes,
     Accent,
     SmallCaps,
     Superscript,
@@ -221,5 +222,6 @@ export function buildExtensions(opts: BuildExtensionsOptions): Extensions {
     Keyboard,
     Abbr,
     Definition,
+    FootnoteRef,
   ];
 }
