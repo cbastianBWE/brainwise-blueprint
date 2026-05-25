@@ -774,6 +774,19 @@ export function NewsletterBubbleMenu({ editor }: NewsletterBubbleMenuProps) {
               <BookMarked className="h-3.5 w-3.5" />
             </Btn>
             <Btn
+              label="Footnote"
+              active={editor.isActive("footnoteRef")}
+              onClick={() => {
+                const existing = editor.getAttributes("footnoteRef");
+                setMode({
+                  kind: "footnote_ref",
+                  footnote_text: (existing.footnote_text as string) ?? "",
+                });
+              }}
+            >
+              <sup className="text-[11px] font-semibold leading-none">¹</sup>
+            </Btn>
+            <Btn
               label="Inline code"
               shortcut="⌘E"
               active={editor.isActive("code")}
