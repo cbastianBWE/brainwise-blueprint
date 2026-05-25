@@ -238,6 +238,13 @@ export default function AdminNewsletterArticle() {
       source_type: existing.source_type,
       category_id: existing.category_id,
       tags: existing.tags,
+      eyebrow_text: existing.eyebrow_text,
+      is_issue_based: existing.is_issue_based,
+      issue_label: existing.issue_label,
+      masthead_publication: existing.masthead_publication,
+      masthead_logo_glyph: existing.masthead_logo_glyph,
+      default_layout_width: existing.default_layout_width,
+      theme_variant: existing.theme_variant,
     });
     setStatus(existing.status);
     setPublishAt(existing.publish_at);
