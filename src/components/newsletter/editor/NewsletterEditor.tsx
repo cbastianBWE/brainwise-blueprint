@@ -89,6 +89,7 @@ import { FurtherReadingNodeView } from "@/components/newsletter/tiptap/nodeviews
 import { AuthorBioNodeView } from "@/components/newsletter/tiptap/nodeviews/AuthorBioNodeView";
 import { CTANodeView } from "@/components/newsletter/tiptap/nodeviews/CTANodeView";
 import { SubscribeBlockNodeView } from "@/components/newsletter/tiptap/nodeviews/SubscribeBlockNodeView";
+import { PollNodeView } from "@/components/newsletter/tiptap/nodeviews/PollNodeView";
 import { DisclosureNodeView } from "@/components/newsletter/tiptap/nodeviews/DisclosureNodeView";
 import { RelatedArticlesNodeView } from "@/components/newsletter/tiptap/nodeviews/RelatedArticlesNodeView";
 import { FootnotesNodeView } from "@/components/newsletter/tiptap/nodeviews/FootnotesNodeView";
