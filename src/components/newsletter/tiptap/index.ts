@@ -59,6 +59,7 @@ export { NewsletterAuthorBio } from "./nodes/AuthorBio";
 export { NewsletterCta } from "./nodes/CTA";
 export type { CtaVariant } from "./nodes/CTA";
 export { NewsletterSubscribeBlock } from "./nodes/SubscribeBlock";
+export { NewsletterPoll } from "./nodes/Poll";
 export {
   NewsletterDisclosure,
   NewsletterDisclosureSummary,

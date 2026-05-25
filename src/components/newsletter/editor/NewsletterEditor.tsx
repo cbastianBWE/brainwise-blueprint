@@ -55,6 +55,7 @@ import {
   NewsletterAuthorBio,
   NewsletterCta,
   NewsletterSubscribeBlock,
+  NewsletterPoll,
   NewsletterDisclosure,
 } from "@/components/newsletter/tiptap";
 import { NewsletterCodeBlock } from "@/components/newsletter/tiptap/buildExtensions";
@@ -88,6 +89,7 @@ import { FurtherReadingNodeView } from "@/components/newsletter/tiptap/nodeviews
 import { AuthorBioNodeView } from "@/components/newsletter/tiptap/nodeviews/AuthorBioNodeView";
 import { CTANodeView } from "@/components/newsletter/tiptap/nodeviews/CTANodeView";
 import { SubscribeBlockNodeView } from "@/components/newsletter/tiptap/nodeviews/SubscribeBlockNodeView";
+import { PollNodeView } from "@/components/newsletter/tiptap/nodeviews/PollNodeView";
 import { DisclosureNodeView } from "@/components/newsletter/tiptap/nodeviews/DisclosureNodeView";
 import { RelatedArticlesNodeView } from "@/components/newsletter/tiptap/nodeviews/RelatedArticlesNodeView";
 import { FootnotesNodeView } from "@/components/newsletter/tiptap/nodeviews/FootnotesNodeView";
@@ -271,6 +273,11 @@ const NodeSubscribeBlockEdit = NewsletterSubscribeBlock.extend({
     return ReactNodeViewRenderer(SubscribeBlockNodeView);
   },
 });
+const NodePollEdit = NewsletterPoll.extend({
+  addNodeView() {
+    return ReactNodeViewRenderer(PollNodeView);
+  },
+});
 const NodeDisclosureEdit = NewsletterDisclosure.extend({
   addNodeView() {
     return ReactNodeViewRenderer(DisclosureNodeView);
@@ -317,6 +324,7 @@ const EDITABLE_NODE_OVERRIDES = [
   NodeAuthorBioEdit,
   NodeCtaEdit,
   NodeSubscribeBlockEdit,
+  NodePollEdit,
   NodeDisclosureEdit,
   NodeRelatedArticlesEdit,
   NodeFootnotesEdit,

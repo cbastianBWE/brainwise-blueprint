@@ -24,6 +24,7 @@ import EmbedReaderNodeView from "@/components/marketing/newsletter/reader-nodevi
 import SubscribeBlockReaderNodeView from "@/components/marketing/newsletter/reader-nodeviews/SubscribeBlockReaderNodeView";
 import RelatedArticlesReaderNodeView from "@/components/marketing/newsletter/reader-nodeviews/RelatedArticlesReaderNodeView";
 import FootnotesReaderNodeView from "@/components/marketing/newsletter/reader-nodeviews/FootnotesReaderNodeView";
+import PollReaderNodeView from "@/components/marketing/newsletter/reader-nodeviews/PollReaderNodeView";
 import type { NewsletterTipTapDoc } from "@/components/newsletter/tiptap/types";
 
 type AuthorLite = { user_id?: string; display_name: string | null; avatar_url?: string | null };
@@ -421,6 +422,11 @@ function GrantedView({
       if (ext.name === "newsletterFootnotes") {
         return ext.extend({
           addNodeView: () => ReactNodeViewRenderer(FootnotesReaderNodeView),
+        });
+      }
+      if (ext.name === "newsletterPoll") {
+        return ext.extend({
+          addNodeView: () => ReactNodeViewRenderer(PollReaderNodeView),
         });
       }
       return ext;

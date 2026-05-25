@@ -383,6 +383,10 @@ export interface FootnoteRefMarkAttrs {
   footnote_text: string;
 }
 
+export interface NewsletterPollAttrs {
+  poll_id: string | null;
+}
+
 // Custom newsletter nodes
 export type CustomNewsletterNode =
   | BaseNode<"newsletterImage", NewsletterImageAttrs>
@@ -427,6 +431,7 @@ export type CustomNewsletterNode =
   | BaseNode<"newsletterAuthorBio", NewsletterAuthorBioAttrs>
   | BaseNode<"newsletterCta", NewsletterCtaAttrs>
   | BaseNode<"newsletterSubscribeBlock">
+  | BaseNode<"newsletterPoll", NewsletterPollAttrs>
   | BaseNode<"newsletterDisclosure", NewsletterDisclosureAttrs>
   | BaseNode<"newsletterDisclosureSummary">
   | BaseNode<"newsletterRelatedArticles", NewsletterRelatedArticlesAttrs>

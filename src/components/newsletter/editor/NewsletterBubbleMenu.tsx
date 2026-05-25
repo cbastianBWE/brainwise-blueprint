@@ -103,6 +103,7 @@ export function NewsletterBubbleMenu({ editor }: NewsletterBubbleMenuProps) {
           "newsletterAuthorBio",
           "newsletterCta",
           "newsletterSubscribeBlock",
+          "newsletterPoll",
           "newsletterRelatedArticles",
           "newsletterFootnotes",
         ]);

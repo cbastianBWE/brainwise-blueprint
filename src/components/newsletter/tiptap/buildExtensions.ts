@@ -69,6 +69,7 @@ import { NewsletterFurtherReading } from "./nodes/FurtherReading";
 import { NewsletterAuthorBio } from "./nodes/AuthorBio";
 import { NewsletterCta } from "./nodes/CTA";
 import { NewsletterSubscribeBlock } from "./nodes/SubscribeBlock";
+import { NewsletterPoll } from "./nodes/Poll";
 import {
   NewsletterDisclosure,
   NewsletterDisclosureSummary,
@@ -209,6 +210,7 @@ export function buildExtensions(opts: BuildExtensionsOptions): Extensions {
     NewsletterAuthorBio,
     NewsletterCta,
     NewsletterSubscribeBlock,
+    NewsletterPoll,
     NewsletterDisclosure,
     NewsletterDisclosureSummary,
     NewsletterRelatedArticles,
