@@ -6,6 +6,23 @@ function clampStyle(v: string | null): CitationsStyle {
   return v === "bracketed" ? "bracketed" : "numbered";
 }
 
+// §151 (H5 Cycle 2): import-fallback helpers for external citation markup.
+function citationsParentFallbackAttrs(el: unknown) {
+  if (!(el instanceof HTMLElement)) return false;
+  return {
+    style: "numbered" as CitationsStyle,
+    title:
+      el.querySelector("h1, h2, h3, h4, h5, h6")?.textContent?.trim() ?? null,
+  };
+}
+
+function citationEntryFallbackAttrs(el: unknown) {
+  if (!(el instanceof HTMLElement)) return false;
+  return {
+    link: el.querySelector("a")?.getAttribute("href") ?? null,
+  };
+}
+
 /**
  * newsletterCitations — composite parent containing 1+ citation entries.
  * Numbering is driven by CSS counters on the inner <ol> — no JS reindex.
@@ -57,6 +74,42 @@ export const NewsletterCitations = Node.create({
             title: null,
           };
         },
+      },
+      // §151 (H5 Cycle 2): import-fallback rules. Two pairs — section
+      // wrapper with contentElement descent, and bare <ol> direct match (Q8).
+      {
+        tag: "section.citations",
+        priority: 51,
+        getAttrs: (el) => citationsParentFallbackAttrs(el),
+        contentElement: (el) => {
+          if (!(el instanceof HTMLElement)) return el as HTMLElement;
+          return (el.querySelector("ol, ul") as HTMLElement) || el;
+        },
+      },
+      {
+        tag: "section.references",
+        priority: 51,
+        getAttrs: (el) => citationsParentFallbackAttrs(el),
+        contentElement: (el) => {
+          if (!(el instanceof HTMLElement)) return el as HTMLElement;
+          return (el.querySelector("ol, ul") as HTMLElement) || el;
+        },
+      },
+      {
+        tag: "ol.citations",
+        priority: 51,
+        getAttrs: () => ({
+          style: "numbered" as CitationsStyle,
+          title: null,
+        }),
+      },
+      {
+        tag: "ol.references",
+        priority: 51,
+        getAttrs: () => ({
+          style: "numbered" as CitationsStyle,
+          title: null,
+        }),
       },
     ];
   },
@@ -118,6 +171,27 @@ export const NewsletterCitationEntry = Node.create({
           (el as HTMLElement).querySelector(
             "[data-newsletter-citation-entry-body]",
           ) || (el as HTMLElement),
+      },
+      // §151 (H5 Cycle 2): import-fallback rules for external citation list items.
+      {
+        tag: "section.citations li",
+        priority: 51,
+        getAttrs: (el) => citationEntryFallbackAttrs(el),
+      },
+      {
+        tag: "section.references li",
+        priority: 51,
+        getAttrs: (el) => citationEntryFallbackAttrs(el),
+      },
+      {
+        tag: "ol.citations > li",
+        priority: 51,
+        getAttrs: (el) => citationEntryFallbackAttrs(el),
+      },
+      {
+        tag: "ol.references > li",
+        priority: 51,
+        getAttrs: (el) => citationEntryFallbackAttrs(el),
       },
     ];
   },
