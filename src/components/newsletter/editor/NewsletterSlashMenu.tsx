@@ -61,6 +61,7 @@ import {
   Mail,
   ChevronDown,
   ListTree,
+  Vote,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
