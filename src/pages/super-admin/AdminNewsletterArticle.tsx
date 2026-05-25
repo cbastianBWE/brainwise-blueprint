@@ -93,6 +93,13 @@ interface Draft {
   source_type: "html_import" | "native";
   category_id: string | null;
   tags: string[];
+  eyebrow_text: string | null;
+  is_issue_based: boolean;
+  issue_label: string | null;
+  masthead_publication: string | null;
+  masthead_logo_glyph: string | null;
+  default_layout_width: "standard" | "wide" | "narrow";
+  theme_variant: "default" | "editorial" | "minimal" | "technical";
 }
 
 interface ArticleRecord extends Draft {
@@ -143,7 +150,7 @@ export default function AdminNewsletterArticle() {
       if (!articleId) return null;
       const { data, error } = await supabase
         .from("newsletter_articles")
-        .select("id, title, slug, excerpt, body_tiptap, gate, allowed_plan_tiers, cover_asset_id, og_image_asset_id, seo_title, seo_description, canonical_url, source_type, status, scheduled_for, category_id, tags")
+        .select("id, title, slug, excerpt, body_tiptap, gate, allowed_plan_tiers, cover_asset_id, og_image_asset_id, seo_title, seo_description, canonical_url, source_type, status, scheduled_for, category_id, tags, eyebrow_text, is_issue_based, issue_label, masthead_publication, masthead_logo_glyph, default_layout_width, theme_variant")
         .eq("id", articleId)
         .maybeSingle();
       if (error) throw error;
@@ -171,6 +178,13 @@ export default function AdminNewsletterArticle() {
         publish_at: data.scheduled_for ?? null,
         category_id: data.category_id ?? null,
         tags: (data.tags as string[]) ?? [],
+        eyebrow_text: data.eyebrow_text ?? null,
+        is_issue_based: data.is_issue_based ?? false,
+        issue_label: data.issue_label ?? null,
+        masthead_publication: data.masthead_publication ?? null,
+        masthead_logo_glyph: data.masthead_logo_glyph ?? null,
+        default_layout_width: (data.default_layout_width as "standard" | "wide" | "narrow") ?? "standard",
+        theme_variant: (data.theme_variant as "default" | "editorial" | "minimal" | "technical") ?? "default",
       };
     },
   });
@@ -191,6 +205,13 @@ export default function AdminNewsletterArticle() {
     source_type: "native",
     category_id: null,
     tags: [],
+    eyebrow_text: null,
+    is_issue_based: false,
+    issue_label: null,
+    masthead_publication: null,
+    masthead_logo_glyph: null,
+    default_layout_width: "standard",
+    theme_variant: "default",
   });
   const [status, setStatus] = useState<Status>("draft");
   const [publishAt, setPublishAt] = useState<string | null>(null);
@@ -217,6 +238,13 @@ export default function AdminNewsletterArticle() {
       source_type: existing.source_type,
       category_id: existing.category_id,
       tags: existing.tags,
+      eyebrow_text: existing.eyebrow_text,
+      is_issue_based: existing.is_issue_based,
+      issue_label: existing.issue_label,
+      masthead_publication: existing.masthead_publication,
+      masthead_logo_glyph: existing.masthead_logo_glyph,
+      default_layout_width: existing.default_layout_width,
+      theme_variant: existing.theme_variant,
     });
     setStatus(existing.status);
     setPublishAt(existing.publish_at);
@@ -279,16 +307,15 @@ export default function AdminNewsletterArticle() {
         p_word_count: wordCount,
         p_read_time_minutes: readTime,
         p_reason: reason.length >= 10 ? reason : "Auto-save: editor pause",
-        // H2 columns — UI surfaces land in H3; pass nullish defaults so the
-        // RPC signature is satisfied without changing save behaviour.
-        p_default_layout_width: null as unknown as string,
-        p_eyebrow_text: null as unknown as string,
-        p_is_issue_based: null as unknown as boolean,
-        p_issue_label: null as unknown as string,
-        p_masthead_logo_glyph: null as unknown as string,
-        p_masthead_publication: null as unknown as string,
+        // H3-NV — article-level fields wired end-to-end.
+        p_default_layout_width: current.default_layout_width as unknown as string,
+        p_eyebrow_text: (current.eyebrow_text as unknown as string) ?? (null as unknown as string),
+        p_is_issue_based: current.is_issue_based as unknown as boolean,
+        p_issue_label: (current.issue_label as unknown as string) ?? (null as unknown as string),
+        p_masthead_logo_glyph: (current.masthead_logo_glyph as unknown as string) ?? (null as unknown as string),
+        p_masthead_publication: (current.masthead_publication as unknown as string) ?? (null as unknown as string),
         p_tags: (current.tags as unknown as string[]) ?? (null as unknown as string[]),
-        p_theme_variant: null as unknown as string,
+        p_theme_variant: current.theme_variant as unknown as string,
         // P7b — category_id (H2-MIG-10a-1/2). Required by upsert_article v26.
         p_category_id: (current.category_id as unknown as string) ?? (null as unknown as string),
       });
@@ -750,6 +777,94 @@ export default function AdminNewsletterArticle() {
                     </div>
                   </CardContent>
                 </Card>
+
+                <Card>
+                  <CardHeader><CardTitle className="text-sm">Issue metadata</CardTitle></CardHeader>
+                  <CardContent className="space-y-3">
+                    <div>
+                      <Label htmlFor="eyebrow-text" className="text-xs">Eyebrow text</Label>
+                      <Input
+                        id="eyebrow-text"
+                        value={draft.eyebrow_text ?? ""}
+                        placeholder="Optional kicker above title (e.g. 'Field Notes')"
+                        onChange={(e) => setField("eyebrow_text", e.target.value || null)}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="masthead-pub" className="text-xs">Masthead publication</Label>
+                      <Input
+                        id="masthead-pub"
+                        value={draft.masthead_publication ?? ""}
+                        placeholder="Optional — auto-prepends masthead if set"
+                        onChange={(e) => setField("masthead_publication", e.target.value || null)}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="masthead-glyph" className="text-xs">Masthead logo glyph</Label>
+                      <Input
+                        id="masthead-glyph"
+                        value={draft.masthead_logo_glyph ?? ""}
+                        placeholder="Optional — single character or emoji"
+                        onChange={(e) => setField("masthead_logo_glyph", e.target.value || null)}
+                      />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <input
+                        id="is-issue-based"
+                        type="checkbox"
+                        checked={draft.is_issue_based}
+                        onChange={(e) => setField("is_issue_based", e.target.checked)}
+                      />
+                      <Label htmlFor="is-issue-based" className="text-xs">Issue-based article</Label>
+                    </div>
+                    {draft.is_issue_based && (
+                      <div>
+                        <Label htmlFor="issue-label" className="text-xs">Issue label</Label>
+                        <Input
+                          id="issue-label"
+                          value={draft.issue_label ?? ""}
+                          placeholder="e.g. 'Issue 14'"
+                          onChange={(e) => setField("issue_label", e.target.value || null)}
+                        />
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader><CardTitle className="text-sm">Layout & theme</CardTitle></CardHeader>
+                  <CardContent className="space-y-3">
+                    <div>
+                      <Label htmlFor="layout-width" className="text-xs">Default layout width</Label>
+                      <select
+                        id="layout-width"
+                        value={draft.default_layout_width}
+                        onChange={(e) => setField("default_layout_width", e.target.value as "standard" | "wide" | "narrow")}
+                        className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                      >
+                        <option value="standard">Standard</option>
+                        <option value="wide">Wide</option>
+                        <option value="narrow">Narrow</option>
+                      </select>
+                    </div>
+                    <div>
+                      <Label htmlFor="theme-variant" className="text-xs">Theme variant</Label>
+                      <select
+                        id="theme-variant"
+                        value={draft.theme_variant}
+                        onChange={(e) => setField("theme_variant", e.target.value as "default" | "editorial" | "minimal" | "technical")}
+                        className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                      >
+                        <option value="default">Default</option>
+                        <option value="editorial">Editorial</option>
+                        <option value="minimal">Minimal</option>
+                        <option value="technical">Technical</option>
+                      </select>
+                      <p className="mt-1 text-[10px] text-muted-foreground">CSS responses to theme/width are future work; the value persists today.</p>
+                    </div>
+                  </CardContent>
+                </Card>
+
 
                 <Card>
                   <CardHeader><CardTitle className="text-sm">Authors</CardTitle></CardHeader>

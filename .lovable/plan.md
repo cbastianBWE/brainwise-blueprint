@@ -1,50 +1,56 @@
-# H2-FE-Pass 8 — Poll Node
+# H3-NV-Final + H3-NV-Auto — Article-level fields wiring
 
-Spec is fully locked. Plan mirrors it exactly; no architectural deviations.
+Pure frontend wiring. No backend, no migrations, no new deps. Two files modified.
 
-## New files (3)
+## File 1: `src/pages/super-admin/AdminNewsletterArticle.tsx`
 
-1. **`src/components/newsletter/tiptap/nodes/Poll.ts`**
-   Atom block node `newsletterPoll`, single attr `poll_id: string | null`, scoped `div[data-newsletter-poll]` parse with priority 60, renders with `class="newsletter-poll"` + `data-poll-id` when set.
+**Draft state (Draft interface, ~L80):** add 7 fields:
+- `eyebrow_text: string | null`
+- `is_issue_based: boolean`
+- `issue_label: string | null`
+- `masthead_publication: string | null`
+- `masthead_logo_glyph: string | null`
+- `default_layout_width: "standard" | "wide" | "narrow"`
+- `theme_variant: "default" | "editorial" | "minimal" | "technical"`
 
-2. **`src/components/newsletter/tiptap/nodeviews/PollNodeView.tsx`** (named export)
-   - Read `articleId` from `useNewsletterEditorContext()`. Empty → "Save the article first…" placeholder (SubscribeBlock cream/dashed aesthetic), early return.
-   - Stable `nodeIdRef = useRef(crypto.randomUUID())`.
-   - **Path A** (`poll_id` null): local state seeded (empty question, 2 blank options w/ UUID ids, style=buttons, votesVisible=true, isLocked=false). "Create poll" button gated on `question.trim()` + ≥2 non-empty labels. Calls `create_poll` with `p_reason` ≥10 chars; on success `updateAttributes({ poll_id })`.
-   - **Path B** (`poll_id` set): on mount, direct table reads — `newsletter_polls` row (`.eq("id", poll_id).maybeSingle()`) + `newsletter_poll_votes` head-count by `poll_id`. Hydrate local state. If `voteCount>0` lock option label/+/− inputs and show "Options locked — N vote(s) cast" badge. Question stays editable. Debounced 600ms `update_poll` on edits. Handle 22023 ("Cannot modify poll options after votes exist") with toast + revert.
-   - Layout: pill bar (Poll badge, buttons/bars toggle, "Show vote counts" toggle, "Lock voting" toggle, delete), auto-resize question textarea, options list (drag indicator placeholder only, label input, × disabled when length===2; + Add disabled when length≥6), Path-A primary CTA / Path-B "Saving…" indicator. Use design tokens; chrome matches CTA/SubscribeBlock NodeViews.
-   - Cast PostgREST reads via `as unknown as T`.
+**Load `.select(...)` (~L146):** append the 7 columns.
 
-3. **`src/components/marketing/newsletter/reader-nodeviews/PollReaderNodeView.tsx`** (default export)
-   - `useQuery(["newsletter-poll-results", poll_id], get_poll_results)` gated by `!!poll_id`. Two-step cast result.
-   - Loading → 3-line skeleton. `found===false` or null `poll_id` → render nothing.
-   - Render `.newsletter-poll[data-style][data-locked]` with `.newsletter-poll__question`, `.newsletter-poll__options`, per-option `<button class="newsletter-poll__option">` (bars variant gets absolute `.newsletter-poll__bar-fill` underlay sized from `results[id]/total_votes`).
-   - Reveal counts only when `votes_visible && total_votes>0 && (user_vote || is_locked)`.
-   - Vote click: disabled if `user_vote || is_locked || !found`. Call `vote_on_poll`. 42501 → local `showSigninCta=true` rendering `.newsletter-poll__signin-cta` linking `/login?next=${pathname}`. 23505 → silent `refetch()`. Success → `refetch()`. Other → toast.
-   - Voted button gets `data-voted="true"`. Footer `.newsletter-poll__total` only when `votes_visible && total_votes>0`.
+**Load → state hydration (~L155, ~L204):** map all 7 fields from row, using DB defaults for NOT NULL columns (`?? "standard"`, `?? "default"`, `?? false`).
 
-## Modified files (8)
+**Empty-draft seed (~L178):** `eyebrow_text: null`, `is_issue_based: false`, `issue_label: null`, `masthead_publication: null`, `masthead_logo_glyph: null`, `default_layout_width: "standard"`, `theme_variant: "default"`.
 
-4. **`buildExtensions.ts`** — import `NewsletterPoll`; register in array after `NewsletterSubscribeBlock`, before `NewsletterDisclosure`.
-5. **`tiptap/index.ts`** — re-export `NewsletterPoll` after `NewsletterSubscribeBlock` export.
-6. **`tiptap/types.ts`** — add `NewsletterPollAttrs { poll_id: string | null }` near other attrs; add `| BaseNode<"newsletterPoll", NewsletterPollAttrs>` after the `newsletterSubscribeBlock` row in `CustomNewsletterNode`.
-7. **`editor/NewsletterEditor.tsx`** — import `PollNodeView`; verify/add `NewsletterPoll` named import; declare `NodePollEdit = NewsletterPoll.extend({ addNodeView: () => ReactNodeViewRenderer(PollNodeView) })`; append to `EDITABLE_NODE_OVERRIDES` after `NodeSubscribeBlockEdit` (→ 33 entries).
-8. **`editor/NewsletterSlashMenu.tsx`** — add `Vote` to lucide import (do NOT reuse `BarChart3`); add INTERACTIVE entry right after SubscribeBlock with keywords `["poll","vote","survey","question"]`, inserts `{ type: "newsletterPoll", attrs: { poll_id: null } }`.
-9. **`editor/NewsletterBubbleMenu.tsx`** — append `"newsletterPoll"` to `blockedParents`.
-10. **`pages/marketing/NewsletterArticle.tsx`** — default-import `PollReaderNodeView`; add render-switch case for `newsletterPoll` after the `newsletterFootnotes` case (→ 6 cases).
-11. **`styles/newsletter-prose.css`** — append Poll block per spec using `--bw-*` tokens:
-    - `.newsletter-poll` cream container, hairline border, `--radius-lg`, padding/margin `--s-6`.
-    - `.newsletter-poll__question` Poppins bold matching h3.
-    - `.newsletter-poll__options` flex column gap `--s-3`.
-    - `.newsletter-poll__option` button variant (white bg, hairline, hover tint, focus ring `--bw-orange`) and `[data-style="bars"]` row variant w/ `position:relative` and `.newsletter-poll__bar-fill` absolute underlay at low-opacity orange.
-    - `[data-voted="true"]` 2px orange border + `::before` ✓.
-    - `[disabled]` / `[data-locked="true"]` muted + `not-allowed`.
-    - `.newsletter-poll__total` small-caps mono-feel 12px `var(--fg-3)`.
-    - `.newsletter-poll__signin-cta` orange accent link style.
-    - Then scan file for selectors duplicated across P6a/P6b/P7a/P7b/P7c appends; consolidate only obvious duplicates in place; otherwise leave untouched.
+**upsert_article call (L284–291):** replace the 7 hardcoded `null as unknown as ...` lines with real draft values (per spec snippet). Keep the existing `p_tags` and `p_category_id` lines intact.
+
+**Sidebar Card "Issue metadata"** (insert after Category & tags card ~L712): Eyebrow text input, Masthead publication input, Masthead logo glyph input, `is_issue_based` checkbox, conditional issue label input. Exact JSX per spec §1f.
+
+**Sidebar Card "Layout & theme"** (immediately after): two native `<select>` controls for layout width + theme variant with helper text. Exact JSX per spec §1g.
+
+## File 2: `src/pages/marketing/NewsletterArticle.tsx`
+
+**GrantedArticle interface (~L33):** add the 7 fields as optional/nullable.
+
+**Add top-level helper `buildReaderDoc(body, article, authors, publishedLabel, tags)`** per spec §2b — clones body content, conditionally prepends `newsletterMasthead` + `newsletterEyebrow`, conditionally appends `newsletterFooterMeta` + `newsletterAuthorBio`. Bounded suppression: only inspect first 2 / last 2 node types to avoid duplicating author-inserted instances.
+
+**Wire into `useEditor`** (~L436): replace `content:` with `buildReaderDoc(article.body_tiptap, article, authors, null, null)`. Pass `null` for publishedLabel/tags (not in scope to fetch).
+
+**Reader wrapper div** (~L483): add `data-theme-variant={article.theme_variant ?? "default"}` and `data-layout-width={article.default_layout_width ?? "standard"}`. No CSS this cycle.
+
+**useEditor deps:** extend to `[article.id, extensions, article.eyebrow_text, article.is_issue_based, article.issue_label, article.masthead_publication, article.masthead_logo_glyph, authors.length, authors[0]?.user_id]`.
+
+## Out of scope
+- No CSS for theme/width data attrs
+- No editor-preview auto-render
+- No new node IDs for synthetic nodes
+- No fetching extra data for publishedLabel/tags
+- Don't touch Category & tags card
 
 ## Verification
+- `npx tsc -b --noEmit` exits 0
+- 7 fields appear/persist/rehydrate in admin sidebar
+- `is_issue_based` toggle reveals issue label input
+- Reader shows auto-rendered Masthead/Eyebrow at top + FooterMeta/AuthorBio at bottom when conditions met
+- Suppression: manually-inserted Masthead in first 2 nodes prevents auto-Masthead
+- Wrapper div carries both data-* attrs
 
-- `npx tsc -b --noEmit` exits 0.
-- No new npm packages, no SQL migrations, no edits to `integrations/supabase/types.ts`.
-- Editor never calls `get_poll_results`; reader never reads tables directly.
+## Expected delta
+2 files modified, 0 new files. ~120 LOC admin, ~80 LOC reader.

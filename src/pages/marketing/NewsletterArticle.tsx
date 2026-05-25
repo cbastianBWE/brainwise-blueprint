@@ -45,6 +45,13 @@ interface GrantedArticle {
   seo_title: string | null;
   seo_description: string | null;
   canonical_url: string | null;
+  eyebrow_text?: string | null;
+  is_issue_based?: boolean | null;
+  issue_label?: string | null;
+  masthead_publication?: string | null;
+  masthead_logo_glyph?: string | null;
+  default_layout_width?: "standard" | "wide" | "narrow" | null;
+  theme_variant?: "default" | "editorial" | "minimal" | "technical" | null;
 }
 
 interface PaywallArticle {
@@ -67,6 +74,75 @@ type ReaderResponse =
       authors_lite: AuthorLite[];
       paywall_reason: "subscriber_required" | "plan_tier_required";
     };
+
+type TipTapDoc = { type: "doc"; content: Array<{ type: string; attrs?: Record<string, unknown>; content?: unknown[] }> };
+
+function buildReaderDoc(
+  body: TipTapDoc | null | undefined,
+  article: {
+    eyebrow_text?: string | null;
+    is_issue_based?: boolean | null;
+    issue_label?: string | null;
+    masthead_publication?: string | null;
+    masthead_logo_glyph?: string | null;
+  },
+  authors: Array<{ user_id?: string }>,
+  publishedLabel: string | null,
+  tags: string[] | null,
+): TipTapDoc {
+  const safe: TipTapDoc = body ?? { type: "doc", content: [{ type: "paragraph" }] };
+  const content = [...(safe.content ?? [])];
+
+  const first2 = content.slice(0, 2).map((n) => n.type);
+  const last2 = content.slice(-2).map((n) => n.type);
+
+  const toPrepend: TipTapDoc["content"] = [];
+  const toAppend: TipTapDoc["content"] = [];
+
+  if (article.masthead_publication && !first2.includes("newsletterMasthead")) {
+    toPrepend.push({
+      type: "newsletterMasthead",
+      attrs: {
+        publication: article.masthead_publication,
+        issue_label: article.is_issue_based ? article.issue_label ?? null : null,
+        date_label: publishedLabel,
+        logo_glyph: article.masthead_logo_glyph ?? null,
+      },
+    });
+  }
+
+  if (article.eyebrow_text && !first2.includes("newsletterEyebrow")) {
+    toPrepend.push({
+      type: "newsletterEyebrow",
+      attrs: { variant: "default", with_rule: true },
+      content: [{ type: "text", text: article.eyebrow_text }],
+    });
+  }
+
+  if (article.is_issue_based && !last2.includes("newsletterFooterMeta")) {
+    toAppend.push({
+      type: "newsletterFooterMeta",
+      attrs: {
+        tags: tags ?? [],
+        issue_label: article.issue_label ?? null,
+        published_label: publishedLabel,
+      },
+    });
+  }
+
+  const firstAuthorId = authors[0]?.user_id;
+  if (firstAuthorId && !last2.includes("newsletterAuthorBio")) {
+    toAppend.push({
+      type: "newsletterAuthorBio",
+      attrs: { user_id: firstAuthorId },
+    });
+  }
+
+  return {
+    type: "doc",
+    content: [...toPrepend, ...content, ...toAppend],
+  };
+}
 
 function useIsBelow(w: number) {
   const [v, setV] = useState(typeof window !== "undefined" ? window.innerWidth < w : false);
@@ -436,10 +512,26 @@ function GrantedView({
   const editor = useEditor(
     {
       extensions,
-      content: article.body_tiptap ?? { type: "doc", content: [{ type: "paragraph" }] },
+      content: buildReaderDoc(
+        article.body_tiptap as TipTapDoc | null | undefined,
+        article,
+        authors,
+        null,
+        null,
+      ),
       editable: false,
     },
-    [article.id, extensions],
+    [
+      article.id,
+      extensions,
+      article.eyebrow_text,
+      article.is_issue_based,
+      article.issue_label,
+      article.masthead_publication,
+      article.masthead_logo_glyph,
+      authors.length,
+      authors[0]?.user_id,
+    ],
   );
 
   // Related articles
@@ -480,7 +572,11 @@ function GrantedView({
 
       <article style={articleStyle}>
         {article.body_tiptap ? (
-          <div className="newsletter-prose">
+          <div
+            className="newsletter-prose"
+            data-theme-variant={article.theme_variant ?? "default"}
+            data-layout-width={article.default_layout_width ?? "standard"}
+          >
             <EditorContent editor={editor} />
           </div>
         ) : (
