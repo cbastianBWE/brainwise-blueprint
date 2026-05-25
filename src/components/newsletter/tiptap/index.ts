@@ -74,3 +74,4 @@ export { Highlight } from "./marks/Highlight";
 export { Keyboard } from "./marks/Keyboard";
 export { Abbr } from "./marks/Abbr";
 export { Definition } from "./marks/Definition";
+export { FootnoteRef } from "./marks/FootnoteRef";
