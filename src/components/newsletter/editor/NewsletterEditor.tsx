@@ -89,6 +89,8 @@ import { AuthorBioNodeView } from "@/components/newsletter/tiptap/nodeviews/Auth
 import { CTANodeView } from "@/components/newsletter/tiptap/nodeviews/CTANodeView";
 import { SubscribeBlockNodeView } from "@/components/newsletter/tiptap/nodeviews/SubscribeBlockNodeView";
 import { DisclosureNodeView } from "@/components/newsletter/tiptap/nodeviews/DisclosureNodeView";
+import { RelatedArticlesNodeView } from "@/components/newsletter/tiptap/nodeviews/RelatedArticlesNodeView";
+import { NewsletterRelatedArticles } from "@/components/newsletter/tiptap/nodes/RelatedArticles";
 import { NewsletterToolbar } from "./NewsletterToolbar";
 import { NewsletterBubbleMenu } from "./NewsletterBubbleMenu";
 import { NewsletterFloatingPlus } from "./NewsletterFloatingPlus";
@@ -110,6 +112,10 @@ export interface NewsletterEditorProps {
   disabled?: boolean;
   placeholder?: string;
   onOpenImportHtml?: () => void;
+  /** Article tags — surfaced to NodeViews via context (P7b). */
+  tags?: string[] | null;
+  /** Article category_id — surfaced to NodeViews via context (P7b). */
+  categoryId?: string | null;
 }
 
 export interface NewsletterEditorHandle {
@@ -268,6 +274,11 @@ const NodeDisclosureEdit = NewsletterDisclosure.extend({
     return ReactNodeViewRenderer(DisclosureNodeView);
   },
 });
+const NodeRelatedArticlesEdit = NewsletterRelatedArticles.extend({
+  addNodeView() {
+    return ReactNodeViewRenderer(RelatedArticlesNodeView);
+  },
+});
 
 const EDITABLE_NODE_OVERRIDES = [
   NodeImageEdit,
@@ -300,12 +311,13 @@ const EDITABLE_NODE_OVERRIDES = [
   NodeCtaEdit,
   NodeSubscribeBlockEdit,
   NodeDisclosureEdit,
+  NodeRelatedArticlesEdit,
 ];
 
 const OVERRIDE_NAMES = new Set(EDITABLE_NODE_OVERRIDES.map((n) => n.name));
 
 export const NewsletterEditor = forwardRef<NewsletterEditorHandle, NewsletterEditorProps>(function NewsletterEditor(
-  { articleId, initialContent, onChange, disabled, placeholder, onOpenImportHtml },
+  { articleId, initialContent, onChange, disabled, placeholder, onOpenImportHtml, tags, categoryId },
   ref,
 ) {
   const onChangeRef = useRef(onChange);
@@ -314,8 +326,8 @@ export const NewsletterEditor = forwardRef<NewsletterEditorHandle, NewsletterEdi
   const toolbarFileRef = useRef<{ open: () => void } | null>(null);
 
   const ctxValue = useMemo<NewsletterEditorContextValue>(
-    () => ({ articleId }),
-    [articleId],
+    () => ({ articleId, tags: tags ?? null, categoryId: categoryId ?? null }),
+    [articleId, tags, categoryId],
   );
 
   const extensions = useMemo(() => {
