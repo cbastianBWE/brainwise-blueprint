@@ -100,6 +100,8 @@ export function NewsletterBubbleMenu({ editor }: NewsletterBubbleMenuProps) {
           "newsletterFooterMeta",
           "newsletterFurtherReading",
           "newsletterAuthorBio",
+          "newsletterCta",
+          "newsletterSubscribeBlock",
         ]);
         if (blockedParents.has($from.parent.type.name)) return false;
         // Allow collapsed caret inside a table cell so table action
