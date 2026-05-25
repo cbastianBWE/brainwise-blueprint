@@ -210,6 +210,7 @@ export function buildExtensions(opts: BuildExtensionsOptions): Extensions {
     NewsletterAuthorBio,
     NewsletterCta,
     NewsletterSubscribeBlock,
+    NewsletterPoll,
     NewsletterDisclosure,
     NewsletterDisclosureSummary,
     NewsletterRelatedArticles,
