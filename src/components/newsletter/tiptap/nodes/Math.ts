@@ -1,5 +1,22 @@
 import { Node, mergeAttributes } from "@tiptap/core";
 
+function mathFallbackAttrs(el: unknown, defaultDisplay: "block" | "inline") {
+  if (!(el instanceof HTMLElement)) return false;
+  const latex =
+    el.getAttribute("data-latex") ||
+    el.querySelector("annotation[encoding='application/x-tex']")?.textContent ||
+    el.querySelector("script[type='math/tex']")?.textContent ||
+    el.textContent?.trim() ||
+    "";
+  return {
+    latex,
+    display:
+      el.classList.contains("inline") || el.tagName === "SPAN"
+        ? "inline"
+        : defaultDisplay,
+  };
+}
+
 /**
  * newsletterMath — atom block holding raw LaTeX source.
  * Phase 1: emit a readable `<code>` fallback. Phase 2 will swap in KaTeX.
@@ -42,6 +59,9 @@ export const NewsletterMath = Node.create({
           };
         },
       },
+      { tag: "div.math", priority: 51, getAttrs: (el) => mathFallbackAttrs(el, "block") },
+      { tag: "span.math", priority: 51, getAttrs: (el) => mathFallbackAttrs(el, "inline") },
+      { tag: 'div[class*="katex"]', priority: 51, getAttrs: (el) => mathFallbackAttrs(el, "block") },
     ];
   },
 

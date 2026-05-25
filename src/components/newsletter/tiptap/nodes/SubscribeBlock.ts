@@ -13,7 +13,13 @@ export const NewsletterSubscribeBlock = Node.create({
   draggable: true,
 
   parseHTML() {
-    return [{ tag: "div[data-newsletter-subscribe-block]", priority: 60 }];
+    return [
+      { tag: "div[data-newsletter-subscribe-block]", priority: 60 },
+      { tag: "div.subscribe", priority: 51 },
+      { tag: "div.subscribe-form", priority: 51 },
+      { tag: "form.newsletter-signup", priority: 51 },
+      { tag: 'div[class~="signup"]', priority: 51 },
+    ];
   },
 
   renderHTML({ HTMLAttributes }) {

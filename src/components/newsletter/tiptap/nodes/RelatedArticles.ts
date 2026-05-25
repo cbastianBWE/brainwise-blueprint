@@ -1,5 +1,19 @@
 import { Node, mergeAttributes } from "@tiptap/core";
 
+function relatedArticlesFallbackAttrs(el: unknown) {
+  if (!(el instanceof HTMLElement)) return false;
+  return {
+    mode: "by_tags" as const,
+    manual_article_ids: null as string[] | null,
+    max_count: 3 as number,
+    tag_match_mode: "any" as "any" | "all" | null,
+    title:
+      el
+        .querySelector("h1, h2, h3, h4, h5, h6")
+        ?.textContent?.trim() ?? null,
+  };
+}
+
 /**
  * newsletterRelatedArticles — atom block. Editor NodeView resolves + previews
  * via the appropriate get_related_articles_by_* RPC. Reader-path NodeView
@@ -70,6 +84,10 @@ export const NewsletterRelatedArticles = Node.create({
           };
         },
       },
+      { tag: "aside.related", priority: 51, getAttrs: relatedArticlesFallbackAttrs },
+      { tag: "section.related-articles", priority: 51, getAttrs: relatedArticlesFallbackAttrs },
+      { tag: "div.related-articles", priority: 51, getAttrs: relatedArticlesFallbackAttrs },
+      { tag: "div.related-posts", priority: 51, getAttrs: relatedArticlesFallbackAttrs },
     ];
   },
 

@@ -1,5 +1,19 @@
 import { Node, mergeAttributes } from "@tiptap/core";
 
+// Pullquote content is `inline*`; external <blockquote><p>...</p></blockquote>
+// markup will have its <p> coerced/unwrapped by ProseMirror so the inner text
+// flows into the pullquote's inline content. Attribution is captured here.
+function pullquoteFallbackAttrs(el: unknown) {
+  if (!(el instanceof HTMLElement)) return false;
+  return {
+    attribution:
+      el
+        .querySelector("cite, .attribution, footer")
+        ?.textContent?.trim() ?? null,
+    alignment: "center" as const,
+  };
+}
+
 /**
  * newsletterPullquote — large decorative quotation.
  *
@@ -46,6 +60,10 @@ export const NewsletterPullquote = Node.create({
           };
         },
       },
+      { tag: "blockquote.pullquote", priority: 51, getAttrs: pullquoteFallbackAttrs },
+      { tag: "aside.pullquote", priority: 51, getAttrs: pullquoteFallbackAttrs },
+      { tag: "figure.pullquote", priority: 51, getAttrs: pullquoteFallbackAttrs },
+      { tag: 'blockquote[class~="pull-quote"]', priority: 51, getAttrs: pullquoteFallbackAttrs },
     ];
   },
 

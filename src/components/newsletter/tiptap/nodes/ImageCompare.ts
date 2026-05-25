@@ -1,5 +1,15 @@
 import { Node, mergeAttributes } from "@tiptap/core";
 
+function imageCompareFallbackAttrs() {
+  return {
+    before_asset_id: null as string | null,
+    after_asset_id: null as string | null,
+    before_label: "Before",
+    after_label: "After",
+    default_position: 50,
+  };
+}
+
 /**
  * newsletterImageCompare — atom block with two image asset_ids
  * (before + after), an author-stored default divider position, and
@@ -92,6 +102,9 @@ export const NewsletterImageCompare = Node.create({
           };
         },
       },
+      { tag: "figure.image-compare", priority: 51, getAttrs: () => imageCompareFallbackAttrs() },
+      { tag: "figure.before-after", priority: 51, getAttrs: () => imageCompareFallbackAttrs() },
+      { tag: "div.image-compare", priority: 51, getAttrs: () => imageCompareFallbackAttrs() },
     ];
   },
 

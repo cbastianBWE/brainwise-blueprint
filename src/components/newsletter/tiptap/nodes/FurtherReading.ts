@@ -13,6 +13,27 @@ function sanitizeEntries(raw: unknown): NewsletterFurtherReadingEntry[] {
     }));
 }
 
+function furtherReadingFallbackAttrs(el: unknown) {
+  if (!(el instanceof HTMLElement)) return false;
+  const entries: NewsletterFurtherReadingEntry[] = Array.from(
+    el.querySelectorAll("a"),
+  )
+    .map((a) => ({
+      title: (a.textContent ?? "").trim(),
+      url: a.getAttribute("href") ?? "",
+      source: null as string | null,
+      description: null as string | null,
+    }))
+    .filter((e) => e.title.length > 0 && e.url.length > 0);
+  return {
+    entries,
+    title:
+      el
+        .querySelector("h1, h2, h3, h4, h5, h6")
+        ?.textContent?.trim() ?? null,
+  };
+}
+
 /**
  * newsletterFurtherReading — atom block with an array of external links.
  */
@@ -54,6 +75,10 @@ export const NewsletterFurtherReading = Node.create({
           };
         },
       },
+      { tag: "section.further-reading", priority: 51, getAttrs: furtherReadingFallbackAttrs },
+      { tag: "section.related-reading", priority: 51, getAttrs: furtherReadingFallbackAttrs },
+      { tag: "aside.further-reading", priority: 51, getAttrs: furtherReadingFallbackAttrs },
+      { tag: "div.further-reading", priority: 51, getAttrs: furtherReadingFallbackAttrs },
     ];
   },
 

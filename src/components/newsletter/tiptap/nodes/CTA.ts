@@ -8,6 +8,23 @@ function clampVariant(v: string | null | undefined): CtaVariant {
   return VARIANTS.includes(v as CtaVariant) ? (v as CtaVariant) : "primary";
 }
 
+function inferCtaVariantFromClass(el: HTMLElement): CtaVariant {
+  const cls = el.className.toLowerCase();
+  if (cls.includes("secondary")) return "secondary";
+  if (cls.includes("ghost") || cls.includes("outline") || cls.includes("link"))
+    return "ghost";
+  return "primary";
+}
+
+function ctaFallbackAttrs(el: HTMLElement) {
+  return {
+    variant: inferCtaVariantFromClass(el),
+    label: (el.textContent ?? "").trim(),
+    url: el.getAttribute("href") ?? "",
+    tracking_id: null as string | null,
+  };
+}
+
 /**
  * newsletterCta — call-to-action atom (anchor block).
  *
@@ -56,7 +73,41 @@ export const NewsletterCta = Node.create({
   },
 
   parseHTML() {
-    return [{ tag: "a[data-newsletter-cta]", priority: 60 }];
+    return [
+      { tag: "a[data-newsletter-cta]", priority: 60 },
+      {
+        tag: "a.cta",
+        priority: 51,
+        getAttrs: (el) => {
+          if (!(el instanceof HTMLElement)) return false;
+          return ctaFallbackAttrs(el);
+        },
+      },
+      {
+        tag: "a.button",
+        priority: 51,
+        getAttrs: (el) => {
+          if (!(el instanceof HTMLElement)) return false;
+          return ctaFallbackAttrs(el);
+        },
+      },
+      {
+        tag: 'a[class~="newsletter-cta"]',
+        priority: 51,
+        getAttrs: (el) => {
+          if (!(el instanceof HTMLElement)) return false;
+          return ctaFallbackAttrs(el);
+        },
+      },
+      {
+        tag: 'a[role="button"]',
+        priority: 51,
+        getAttrs: (el) => {
+          if (!(el instanceof HTMLElement)) return false;
+          return ctaFallbackAttrs(el);
+        },
+      },
+    ];
   },
 
   renderHTML({ node, HTMLAttributes }) {

@@ -38,7 +38,23 @@ export const FootnoteRef = Mark.create({
   },
 
   parseHTML() {
-    return [{ tag: "span[data-newsletter-footnote-ref]", priority: 60 }];
+    return [
+      { tag: "span[data-newsletter-footnote-ref]", priority: 60 },
+      {
+        tag: 'sup > a[href^="#"]',
+        priority: 51,
+        getAttrs: (el) => {
+          if (!(el instanceof HTMLElement)) return false;
+          const href = el.getAttribute("href");
+          if (!href || !href.startsWith("#")) return false;
+          const id = href.slice(1);
+          const doc = el.ownerDocument;
+          const target = doc?.getElementById(id);
+          const footnote_text = target?.textContent?.trim() ?? "";
+          return { footnote_text };
+        },
+      },
+    ];
   },
 
   renderHTML({ HTMLAttributes }) {
