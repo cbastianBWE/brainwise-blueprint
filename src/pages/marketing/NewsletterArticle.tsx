@@ -572,7 +572,11 @@ function GrantedView({
 
       <article style={articleStyle}>
         {article.body_tiptap ? (
-          <div className="newsletter-prose">
+          <div
+            className="newsletter-prose"
+            data-theme-variant={article.theme_variant ?? "default"}
+            data-layout-width={article.default_layout_width ?? "standard"}
+          >
             <EditorContent editor={editor} />
           </div>
         ) : (
