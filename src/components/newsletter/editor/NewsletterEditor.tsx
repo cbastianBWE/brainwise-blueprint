@@ -319,6 +319,7 @@ const EDITABLE_NODE_OVERRIDES = [
   NodeSubscribeBlockEdit,
   NodeDisclosureEdit,
   NodeRelatedArticlesEdit,
+  NodeFootnotesEdit,
 ];
 
 const OVERRIDE_NAMES = new Set(EDITABLE_NODE_OVERRIDES.map((n) => n.name));
