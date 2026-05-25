@@ -1,8 +1,17 @@
 /**
- * G4-C — HTML import modal.
+ * H4 — HTML import modal (client-side conversion).
  *
- * Drop or paste an HTML article → POST to convert-html-to-tiptap →
- * preview the converted doc → user confirms → replaces the editor body.
+ * Pipeline:
+ *   1. Read file or paste -> raw HTML string.
+ *   2. Parse with browser DOMParser.
+ *   3. Collect <img> srcs, split data: URIs from network URIs.
+ *   4. Client-side preflight on network image count (MAX_IMAGES_PER_IMPORT).
+ *   5. POST network URLs to import-html-images Edge Function (fetch+upload only).
+ *   6. Merge data-URI synthetic failures into resolutions map.
+ *   7. Rewrite every <img> into a synthetic <figure data-newsletter-image> shell
+ *      so newsletterImage's parseHTML rule fires inside generateJSON.
+ *   8. generateJSON(body.innerHTML, buildExtensions({editable:false})).
+ *   9. Preview + confirm.
  *
  * AbortController note: supabase-js's functions.invoke does not accept
  * AbortSignal, so we issue a raw fetch against the function URL using the
@@ -10,6 +19,7 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { EditorContent, ReactNodeViewRenderer, useEditor } from "@tiptap/react";
+import { generateJSON } from "@tiptap/core";
 import {
   AlertTriangle,
   CheckCircle2,
@@ -42,22 +52,22 @@ import { tipTapDocToPlainText } from "@/components/newsletter/versions/tipTapDoc
 
 const SUPABASE_URL = "https://svprhtzawnbzmumxnhsq.supabase.co";
 const SUPABASE_ANON_KEY =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN2cHJodHphd25iem11bXhuaHNxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2Nzc2MDQsImV4cCI6MjA5MTI1MzYwNH0.R9WzFR4olqp1tdWa-pj-2WSL2L0Mjcf2tSA8LhOWclA";
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBiYXNlIiwicmVmIjoic3Zwcmh0emF3bmJ6bXVteG5oc3EiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc3NTY3NzYwNCwiZXhwIjoyMDkxMjUzNjA0fQ.R9WzFR4olqp1tdWa-pj-2WSL2L0Mjcf2tSA8LhOWclA";
 const MAX_BYTES = 5 * 1024 * 1024;
+const MAX_IMAGES_PER_IMPORT = 30;
 
 export type ConversionFailure = {
   kind:
     | "image_fetch"
     | "image_upload"
-    | "tag_dropped"
     | "size_exceeded"
     | "mime_rejected"
     | "ssrf_blocked"
     | "scheme_rejected"
-    | "image_limit_exceeded";
+    | "redirect_loop"
+    | "phase_deadline_exceeded";
   detail: string;
   original_src?: string;
-  tag_name?: string;
 };
 
 export interface ConversionResponse {
@@ -66,15 +76,28 @@ export interface ConversionResponse {
     total_images_attempted: number;
     images_succeeded: number;
     images_failed: number;
-    tags_dropped: number;
   };
   failures: ConversionFailure[];
+}
+
+interface ImageResolution {
+  asset_id: string | null;
+  failure?: { kind: ConversionFailure["kind"]; detail: string };
+}
+
+interface ImportImagesResponse {
+  resolutions: Record<string, ImageResolution>;
+  stats: {
+    total_attempted: number;
+    succeeded: number;
+    failed: number;
+  };
 }
 
 type ImportState =
   | { phase: "idle" }
   | { phase: "reading_file"; filename: string }
-  | { phase: "converting"; sizeBytes: number }
+  | { phase: "converting"; sizeBytes: number; subLabel?: string }
   | { phase: "success"; result: ConversionResponse; previewText: string }
   | { phase: "error"; error: { code: string; message?: string } };
 
@@ -99,6 +122,8 @@ const ERROR_MESSAGES: Record<string, string> = {
   invalid_response: "Got an unexpected response from the server.",
   cancelled: "Conversion cancelled.",
   internal_error: "Conversion failed. Try again or paste smaller HTML.",
+  too_many_images_client_preflight: "Too many images in this article. Maximum 30 per import.",
+  doc_generation_failed: "Couldn't convert the HTML into editor format. Try simplifying the source HTML.",
 };
 
 function friendlyError(code: string, message?: string): string {
@@ -126,6 +151,70 @@ function truncateDocByWords(doc: NewsletterTipTapDoc, maxWords: number): Newslet
     if (words >= maxWords) break;
   }
   return { type: "doc", content: kept } as unknown as NewsletterTipTapDoc;
+}
+
+/**
+ * Rewrites every <img> in the parsed source DOM into a synthetic
+ *   <figure data-newsletter-image="true" data-width="inline" data-asset-id=...>
+ *     <img alt=... />
+ *     <figcaption>…</figcaption>
+ *   </figure>
+ * shell so newsletterImage's parseHTML rule (`figure[data-newsletter-image]`)
+ * matches during generateJSON.
+ *
+ * Behavior:
+ * - Images already inside figure[data-newsletter-image] (round-trip) are left alone.
+ * - Images inside a non-newsletter <figure> get the whole figure replaced; figcaption
+ *   text content is preserved.
+ * - Bare/other-parent images get just the <img> replaced.
+ * - Successful images carry data-asset-id; failed images carry data-import-failed-src.
+ *
+ * Mutates parsedDoc in place.
+ */
+function rewriteImgsToSyntheticFigures(
+  parsedDoc: Document,
+  resolutions: Record<string, ImageResolution>,
+): void {
+  const allImgs = Array.from(parsedDoc.querySelectorAll("img"));
+  for (const img of allImgs) {
+    if (img.closest("figure[data-newsletter-image]")) continue;
+
+    const src = img.getAttribute("src") || "";
+    if (!src) continue;
+
+    const alt = img.getAttribute("alt") || "";
+    const resolution = resolutions[src];
+
+    const enclosingFigure = img.closest("figure");
+    let caption = "";
+    if (enclosingFigure) {
+      const figcaption = enclosingFigure.querySelector("figcaption");
+      caption = figcaption?.textContent?.trim() || "";
+    }
+
+    const newFigure = parsedDoc.createElement("figure");
+    newFigure.setAttribute("data-newsletter-image", "true");
+    newFigure.setAttribute("data-width", "inline");
+
+    if (resolution?.asset_id) {
+      newFigure.setAttribute("data-asset-id", resolution.asset_id);
+    } else {
+      newFigure.setAttribute("data-import-failed-src", src);
+    }
+
+    const newImg = parsedDoc.createElement("img");
+    if (alt) newImg.setAttribute("alt", alt);
+    newFigure.appendChild(newImg);
+
+    if (caption) {
+      const newCaption = parsedDoc.createElement("figcaption");
+      newCaption.textContent = caption;
+      newFigure.appendChild(newCaption);
+    }
+
+    const target = enclosingFigure ?? img;
+    target.parentNode?.replaceChild(newFigure, target);
+  }
 }
 
 export default function ImportHtmlModal({
@@ -157,7 +246,6 @@ export default function ImportHtmlModal({
   // Reset when modal closes
   useEffect(() => {
     if (!open) {
-      // Abort any in-flight conversion when closing
       if (abortRef.current) {
         abortRef.current.abort();
         abortRef.current = null;
@@ -168,7 +256,6 @@ export default function ImportHtmlModal({
 
   const handleClose = (next: boolean) => {
     if (!next && state.phase === "converting") {
-      // Allow close, but the abort cleanup happens in the effect above.
       closedDuringConvertRef.current = true;
     }
     onOpenChange(next);
@@ -206,76 +293,183 @@ export default function ImportHtmlModal({
     reader.readAsText(file, "UTF-8");
   };
 
-  // ---------- Conversion ----------
+  // ---------- Conversion (client-side) ----------
   const runConversion = async (html: string) => {
     if (html.length > MAX_BYTES) {
       setState({ phase: "error", error: { code: "html_too_large_5mb_max" } });
       return;
     }
-    const ctrl = new AbortController();
-    abortRef.current = ctrl;
+
     setState({ phase: "converting", sizeBytes: html.length });
 
-    let resp: Response;
+    // Step 1: parse HTML client-side
+    let parsedDoc: Document;
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const token = sessionData.session?.access_token;
-      if (!token) {
-        setState({ phase: "error", error: { code: "super_admin_required" } });
-        return;
-      }
-      resp = await fetch(`${SUPABASE_URL}/functions/v1/convert-html-to-tiptap`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-          apikey: SUPABASE_ANON_KEY,
-        },
-        body: JSON.stringify({ html, newsletter_article_id: articleId }),
-        signal: ctrl.signal,
-      });
-    } catch (e: unknown) {
-      if ((e as { name?: string })?.name === "AbortError") {
-        // User cancelled — return to idle silently.
-        if (!closedDuringConvertRef.current) reset();
-        return;
-      }
-      setState({ phase: "error", error: { code: "network_error" } });
-      return;
-    } finally {
-      // Only clear if this is still the active controller
-      if (abortRef.current === ctrl && !ctrl.signal.aborted) {
-        abortRef.current = null;
-      }
-    }
-
-    let body: unknown;
-    try {
-      body = await resp.json();
-    } catch {
-      setState({ phase: "error", error: { code: "invalid_response" } });
-      return;
-    }
-
-    if (!resp.ok) {
-      const errBody = body as { error?: string; message?: string };
+      parsedDoc = new DOMParser().parseFromString(html, "text/html");
+      if (!parsedDoc.body) throw new Error("no_body_element");
+    } catch (e) {
       setState({
         phase: "error",
-        error: { code: errBody?.error ?? "internal_error", message: errBody?.message },
+        error: { code: "html_parse_failed", message: (e as Error).message },
       });
       return;
     }
 
-    const result = body as ConversionResponse;
-    if (!result?.tiptap_doc?.type) {
-      setState({ phase: "error", error: { code: "invalid_response" } });
+    // Step 2: collect <img> srcs, split data: vs network
+    const imgEls = Array.from(parsedDoc.querySelectorAll("img"));
+    const uniqueSrcs = new Set<string>();
+    for (const img of imgEls) {
+      const src = img.getAttribute("src");
+      if (src) uniqueSrcs.add(src);
+    }
+
+    const networkSrcs: string[] = [];
+    const dataUriSrcs: string[] = [];
+    for (const src of uniqueSrcs) {
+      if (src.startsWith("data:")) dataUriSrcs.push(src);
+      else networkSrcs.push(src);
+    }
+
+    // Step 3: preflight (network only)
+    if (networkSrcs.length > MAX_IMAGES_PER_IMPORT) {
+      setState({
+        phase: "error",
+        error: {
+          code: "too_many_images_client_preflight",
+          message: `Article has ${networkSrcs.length} images; max ${MAX_IMAGES_PER_IMPORT} per import.`,
+        },
+      });
       return;
     }
+
+    // Step 4: call import-html-images (only if network URIs exist)
+    const resolutions: Record<string, ImageResolution> = {};
+    let serverStats = { total_attempted: 0, succeeded: 0, failed: 0 };
+
+    if (networkSrcs.length > 0) {
+      setState({
+        phase: "converting",
+        sizeBytes: html.length,
+        subLabel: `Fetching ${networkSrcs.length} image${networkSrcs.length === 1 ? "" : "s"}…`,
+      });
+
+      const ctrl = new AbortController();
+      abortRef.current = ctrl;
+
+      let resp: Response;
+      try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const token = sessionData.session?.access_token;
+        if (!token) {
+          setState({ phase: "error", error: { code: "super_admin_required" } });
+          return;
+        }
+        resp = await fetch(`${SUPABASE_URL}/functions/v1/import-html-images`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+            apikey: SUPABASE_ANON_KEY,
+          },
+          body: JSON.stringify({
+            image_urls: networkSrcs,
+            newsletter_article_id: articleId,
+          }),
+          signal: ctrl.signal,
+        });
+      } catch (e: unknown) {
+        if ((e as { name?: string })?.name === "AbortError") {
+          if (!closedDuringConvertRef.current) reset();
+          return;
+        }
+        setState({ phase: "error", error: { code: "network_error" } });
+        return;
+      } finally {
+        if (abortRef.current === ctrl && !ctrl.signal.aborted) {
+          abortRef.current = null;
+        }
+      }
+
+      let respBody: unknown;
+      try {
+        respBody = await resp.json();
+      } catch {
+        setState({ phase: "error", error: { code: "invalid_response" } });
+        return;
+      }
+
+      if (!resp.ok) {
+        const errBody = respBody as { error?: string; message?: string };
+        setState({
+          phase: "error",
+          error: { code: errBody?.error ?? "internal_error", message: errBody?.message },
+        });
+        return;
+      }
+
+      const imageResult = respBody as ImportImagesResponse;
+      if (!imageResult?.resolutions) {
+        setState({ phase: "error", error: { code: "invalid_response" } });
+        return;
+      }
+
+      for (const [url, r] of Object.entries(imageResult.resolutions)) {
+        resolutions[url] = r;
+      }
+      serverStats = imageResult.stats;
+    }
+
+    // Step 5: merge data-URI synthetic failures
+    for (const src of dataUriSrcs) {
+      resolutions[src] = {
+        asset_id: null,
+        failure: { kind: "scheme_rejected", detail: "data_uri" },
+      };
+    }
+
+    // Step 6: rewrite <img> into synthetic figure shells
+    rewriteImgsToSyntheticFigures(parsedDoc, resolutions);
+
+    // Step 7: generateJSON
+    let tiptapDoc: NewsletterTipTapDoc;
+    try {
+      const extensions = buildExtensions({ editable: false });
+      tiptapDoc = generateJSON(
+        parsedDoc.body.innerHTML,
+        extensions,
+      ) as unknown as NewsletterTipTapDoc;
+    } catch (e) {
+      setState({
+        phase: "error",
+        error: { code: "doc_generation_failed", message: (e as Error).message },
+      });
+      return;
+    }
+
+    // Step 8: build ConversionResponse
+    const failuresList: ConversionFailure[] = [];
+    for (const [url, r] of Object.entries(resolutions)) {
+      if (r.failure) {
+        failuresList.push({ ...r.failure, original_src: url });
+      }
+    }
+
+    const totalAttempted = serverStats.total_attempted + dataUriSrcs.length;
+    const totalFailed = serverStats.failed + dataUriSrcs.length;
+
+    const result: ConversionResponse = {
+      tiptap_doc: tiptapDoc,
+      stats: {
+        total_images_attempted: totalAttempted,
+        images_succeeded: serverStats.succeeded,
+        images_failed: totalFailed,
+      },
+      failures: failuresList,
+    };
 
     const fullText = tipTapDocToPlainText(result.tiptap_doc);
     const previewText = firstNWords(fullText, 200);
 
-    // If user closed mid-convert, swallow result.
     if (closedDuringConvertRef.current) return;
 
     setState({ phase: "success", result, previewText });
@@ -352,6 +546,9 @@ export default function ImportHtmlModal({
           <div className="flex flex-col items-center gap-4 py-10">
             <Loader2 className="h-8 w-8 animate-spin text-[var(--bw-orange,#F5741A)]" />
             <div className="text-base font-medium text-slate-800">Converting HTML…</div>
+            {state.subLabel && (
+              <div className="text-xs text-slate-500">{state.subLabel}</div>
+            )}
             <div className="w-full max-w-md">
               <Progress value={undefined as unknown as number} className="h-1.5" />
             </div>
@@ -545,7 +742,7 @@ function SuccessView({
         </div>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+      <div className="grid grid-cols-3 gap-2">
         <StatCard label="Images attempted" value={result.stats.total_images_attempted} />
         <StatCard label="Images succeeded" value={result.stats.images_succeeded} />
         <StatCard
@@ -553,7 +750,6 @@ function SuccessView({
           value={result.stats.images_failed}
           tone={result.stats.images_failed > 0 ? "warn" : "ok"}
         />
-        <StatCard label="Tags dropped" value={result.stats.tags_dropped} />
       </div>
 
       {result.failures.length > 0 && (
@@ -576,7 +772,6 @@ function SuccessView({
               {result.failures.map((f, i) => (
                 <div key={i} className="border-b border-slate-100 pb-1 last:border-0">
                   <span className="font-semibold text-amber-800">{f.kind}</span>
-                  {f.tag_name && <span className="text-slate-500"> &lt;{f.tag_name}&gt;</span>}
                   <span> — {f.detail}</span>
                   {f.original_src && (
                     <div className="text-slate-500 truncate">src: {f.original_src}</div>
