@@ -779,6 +779,94 @@ export default function AdminNewsletterArticle() {
                 </Card>
 
                 <Card>
+                  <CardHeader><CardTitle className="text-sm">Issue metadata</CardTitle></CardHeader>
+                  <CardContent className="space-y-3">
+                    <div>
+                      <Label htmlFor="eyebrow-text" className="text-xs">Eyebrow text</Label>
+                      <Input
+                        id="eyebrow-text"
+                        value={draft.eyebrow_text ?? ""}
+                        placeholder="Optional kicker above title (e.g. 'Field Notes')"
+                        onChange={(e) => setField("eyebrow_text", e.target.value || null)}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="masthead-pub" className="text-xs">Masthead publication</Label>
+                      <Input
+                        id="masthead-pub"
+                        value={draft.masthead_publication ?? ""}
+                        placeholder="Optional — auto-prepends masthead if set"
+                        onChange={(e) => setField("masthead_publication", e.target.value || null)}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="masthead-glyph" className="text-xs">Masthead logo glyph</Label>
+                      <Input
+                        id="masthead-glyph"
+                        value={draft.masthead_logo_glyph ?? ""}
+                        placeholder="Optional — single character or emoji"
+                        onChange={(e) => setField("masthead_logo_glyph", e.target.value || null)}
+                      />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <input
+                        id="is-issue-based"
+                        type="checkbox"
+                        checked={draft.is_issue_based}
+                        onChange={(e) => setField("is_issue_based", e.target.checked)}
+                      />
+                      <Label htmlFor="is-issue-based" className="text-xs">Issue-based article</Label>
+                    </div>
+                    {draft.is_issue_based && (
+                      <div>
+                        <Label htmlFor="issue-label" className="text-xs">Issue label</Label>
+                        <Input
+                          id="issue-label"
+                          value={draft.issue_label ?? ""}
+                          placeholder="e.g. 'Issue 14'"
+                          onChange={(e) => setField("issue_label", e.target.value || null)}
+                        />
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader><CardTitle className="text-sm">Layout & theme</CardTitle></CardHeader>
+                  <CardContent className="space-y-3">
+                    <div>
+                      <Label htmlFor="layout-width" className="text-xs">Default layout width</Label>
+                      <select
+                        id="layout-width"
+                        value={draft.default_layout_width}
+                        onChange={(e) => setField("default_layout_width", e.target.value as "standard" | "wide" | "narrow")}
+                        className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                      >
+                        <option value="standard">Standard</option>
+                        <option value="wide">Wide</option>
+                        <option value="narrow">Narrow</option>
+                      </select>
+                    </div>
+                    <div>
+                      <Label htmlFor="theme-variant" className="text-xs">Theme variant</Label>
+                      <select
+                        id="theme-variant"
+                        value={draft.theme_variant}
+                        onChange={(e) => setField("theme_variant", e.target.value as "default" | "editorial" | "minimal" | "technical")}
+                        className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                      >
+                        <option value="default">Default</option>
+                        <option value="editorial">Editorial</option>
+                        <option value="minimal">Minimal</option>
+                        <option value="technical">Technical</option>
+                      </select>
+                      <p className="mt-1 text-[10px] text-muted-foreground">CSS responses to theme/width are future work; the value persists today.</p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+
+                <Card>
                   <CardHeader><CardTitle className="text-sm">Authors</CardTitle></CardHeader>
                   <CardContent className="space-y-3">
                     <div className="flex flex-wrap gap-1.5">
