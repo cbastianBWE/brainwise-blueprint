@@ -8,6 +8,12 @@ export default function ImageReaderNodeView({ node }: NodeViewProps) {
   const alt = (node.attrs.alt as string) ?? "";
   const caption = (node.attrs.caption as string) ?? "";
   const width = ((node.attrs.width as NewsletterImageWidth) || "inline") as NewsletterImageWidth;
+  const attribution = (node.attrs.attribution as {
+    source: "pexels" | null;
+    photographer: string;
+    photographer_url: string;
+    source_url: string;
+  } | null) ?? null;
 
   const { url, loading } = useNewsletterImageUrl(assetId);
   const finalSrc = url || importFailedSrc;
@@ -46,6 +52,39 @@ export default function ImageReaderNodeView({ node }: NodeViewProps) {
         </div>
       )}
       {caption && <figcaption>{caption}</figcaption>}
+      {attribution && (
+        <figcaption
+          style={{
+            fontSize: 12,
+            fontStyle: "italic",
+            color: "rgba(0,0,0,0.55)",
+            marginTop: 4,
+          }}
+        >
+          Photo by{" "}
+          <a
+            href={attribution.photographer_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ textDecoration: "underline", color: "inherit" }}
+          >
+            {attribution.photographer}
+          </a>
+          {attribution.source === "pexels" && (
+            <>
+              {" "}on{" "}
+              <a
+                href={attribution.source_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ textDecoration: "underline", color: "inherit" }}
+              >
+                Pexels
+              </a>
+            </>
+          )}
+        </figcaption>
+      )}
     </NodeViewWrapper>
   );
 }

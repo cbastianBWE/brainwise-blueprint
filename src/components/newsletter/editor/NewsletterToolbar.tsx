@@ -9,6 +9,7 @@ import {
   ListOrdered,
   Link as LinkIcon,
   Image as ImageIcon,
+  ImagePlus,
   Minus,
   Loader2,
   FileCode,
@@ -39,6 +40,7 @@ interface NewsletterToolbarProps {
   disabled?: boolean;
   imageInputRef?: React.MutableRefObject<{ open: () => void } | null>;
   onOpenImportHtml?: () => void;
+  onOpenStockPicker?: () => void;
 }
 
 type BlockKey = "paragraph" | "h2" | "h3" | "h4";
@@ -49,6 +51,7 @@ export function NewsletterToolbar({
   disabled,
   imageInputRef,
   onOpenImportHtml,
+  onOpenStockPicker,
 }: NewsletterToolbarProps) {
 
   const fileRef = useRef<HTMLInputElement | null>(null);
@@ -307,6 +310,21 @@ export function NewsletterToolbar({
           e.target.value = "";
         }}
       />
+
+      {onOpenStockPicker && (
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          className="h-7 w-7 p-0"
+          onClick={onOpenStockPicker}
+          disabled={disabled}
+          aria-label="Insert stock image from Pexels"
+          title="Insert stock image from Pexels"
+        >
+          <ImagePlus className="h-3.5 w-3.5" />
+        </Button>
+      )}
 
       {onOpenImportHtml && (
         <Button
