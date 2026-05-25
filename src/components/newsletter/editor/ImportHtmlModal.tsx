@@ -106,6 +106,14 @@ interface ImportHtmlModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onImported: (newBodyTiptap: NewsletterTipTapDoc) => void;
+  /**
+   * Optional HTML to feed straight into the conversion pipeline when the
+   * modal opens (e.g. AI co-pilot generated HTML). When set, the idle
+   * drop/paste UI is skipped and runConversion(initialHtml) fires once.
+   * Parent should clear this prop when onOpenChange(false) fires so a
+   * subsequent reopen with the same html doesn't auto-retrigger.
+   */
+  initialHtml?: string;
 }
 
 const ERROR_MESSAGES: Record<string, string> = {
