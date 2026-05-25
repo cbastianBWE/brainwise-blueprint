@@ -74,6 +74,8 @@ import type { NewsletterTipTapDoc } from "@/components/newsletter/tiptap/types";
 import VersionHistorySheet from "@/components/newsletter/versions/VersionHistorySheet";
 import ImportHtmlModal from "@/components/newsletter/editor/ImportHtmlModal";
 import { NewsletterAiPane } from "@/components/super-admin/newsletter/ai-copilot/NewsletterAiPane";
+import type { SelectionRange } from "@/components/super-admin/newsletter/ai-copilot/types";
+import { DOMSerializer } from "prosemirror-model";
 
 type Status = "draft" | "scheduled" | "published" | "unpublished" | "archived";
 type Gate = "public" | "subscribers" | "plan_tier";
@@ -271,6 +273,43 @@ export default function AdminNewsletterArticle() {
   const articleIdRef = useRef<string | null>(articleId);
   articleIdRef.current = articleId;
   const editorHandleRef = useRef<NewsletterEditorHandle | null>(null);
+  const [editorSelection, setEditorSelection] = useState<SelectionRange | null>(null);
+
+  // Subscribe to TipTap selectionUpdate so the AI co-pilot can see the
+  // currently-selected range. The editor instance becomes available shortly
+  // after the editor mounts; we re-attach via the small flag below.
+  const [editorReadyTick, setEditorReadyTick] = useState(0);
+  useEffect(() => {
+    const editor = editorHandleRef.current?.getEditor();
+    if (!editor) {
+      // Editor not mounted yet — schedule a retry on next paint.
+      const t = setTimeout(() => setEditorReadyTick((n) => n + 1), 100);
+      return () => clearTimeout(t);
+    }
+
+    const handleUpdate = () => {
+      const { from, to } = editor.state.selection;
+      if (from === to) {
+        setEditorSelection(null);
+        return;
+      }
+      try {
+        const slice = editor.state.doc.slice(from, to);
+        const serializer = DOMSerializer.fromSchema(editor.schema);
+        const fragment = serializer.serializeFragment(slice.content);
+        const tempDiv = document.createElement("div");
+        tempDiv.appendChild(fragment);
+        setEditorSelection({ from, to, html_snippet: tempDiv.innerHTML });
+      } catch {
+        setEditorSelection({ from, to, html_snippet: "" });
+      }
+    };
+
+    editor.on("selectionUpdate", handleUpdate);
+    return () => {
+      editor.off("selectionUpdate", handleUpdate);
+    };
+  }, [editorReadyTick, articleId]);
   const saveTimerRef = useRef<NodeJS.Timeout | null>(null);
   const savingPromiseRef = useRef<Promise<void> | null>(null);
   // suppress auto-save during initial hydration of existing article
@@ -1111,6 +1150,25 @@ export default function AdminNewsletterArticle() {
           onImportHtml={(html) => {
             setAiImportHtml(html);
             setImportOpen(true);
+          }}
+          editorSelection={editorSelection}
+          onReplaceSelection={(from, to, html) => {
+            const editor = editorHandleRef.current?.getEditor();
+            if (!editor) return;
+            editor.chain().focus().insertContentAt({ from, to }, html).run();
+            setEditorSelection(null);
+          }}
+          onClearSelection={() => {
+            const editor = editorHandleRef.current?.getEditor();
+            if (!editor || !editorSelection) {
+              setEditorSelection(null);
+              return;
+            }
+            editor
+              .chain()
+              .focus()
+              .setTextSelection({ from: editorSelection.to, to: editorSelection.to })
+              .run();
           }}
         />
       </div>
