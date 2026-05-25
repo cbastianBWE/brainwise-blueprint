@@ -1,4 +1,3 @@
-import { useRef } from "react";
 import {
   NodeViewContent,
   NodeViewWrapper,
@@ -10,38 +9,35 @@ import { cn } from "@/lib/utils";
 /**
  * Disclosure NodeView.
  *
- * Native <details> click-collapse is suppressed in the editor (clicks inside
- * the <summary> editable area are preventDefault'd at the toggle event) so
- * authoring the summary text doesn't collapse the body the author is working
- * on. The "Toggle preview" affordance in the controls bar drives both the
- * `default_open` attr AND the live `open` HTML attribute (via React render),
- * giving authors an intentional way to preview state.
+ * Native <details> click-collapse is suppressed in the editor (clicks on the
+ * <summary> are preventDefault'd) so authoring the summary text doesn't
+ * collapse the body the author is working on. The "Toggle preview" control
+ * in the chrome drives both the `default_open` attr AND the live `open`
+ * HTML attribute (via React render), giving authors an intentional way to
+ * preview state.
  *
  * In the reader path no NodeView mounts, so native click-toggle works.
  */
 export function DisclosureNodeView({ node, updateAttributes }: NodeViewProps) {
   const open = !!node.attrs.default_open;
-  const detailsRef = useRef<HTMLDetailsElement | null>(null);
 
   // Suppress the browser's native <summary> click-toggle inside the editor.
-  // The `toggle` event fires AFTER state has changed, so the canonical way
-  // to keep it from changing is to preventDefault on the click that targets
-  // the summary element itself.
-  const handleSummaryClick = (e: React.MouseEvent<HTMLDivElement>) => {
+  // preventDefault on the click that targets a summary stops the toggle from
+  // firing while leaving caret placement / text editing intact.
+  const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
     const summary = (e.target as HTMLElement).closest("summary");
     if (summary) e.preventDefault();
   };
 
   return (
     <NodeViewWrapper
-      ref={detailsRef as unknown as React.Ref<HTMLDetailsElement>}
       as="details"
       data-newsletter-disclosure="true"
       data-default-open={open ? "true" : "false"}
       data-drag-handle
       open={open}
       className="newsletter-disclosure my-3"
-      onClick={handleSummaryClick}
+      onClick={handleClick}
     >
       <div
         contentEditable={false}
