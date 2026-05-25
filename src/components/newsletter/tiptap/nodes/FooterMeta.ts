@@ -68,8 +68,11 @@ export const NewsletterFooterMeta = Node.create({
       { tag: "footer.article-footer", priority: 51, getAttrs: footerMetaFallbackAttrs },
       { tag: "footer.post-footer", priority: 51, getAttrs: footerMetaFallbackAttrs },
       { tag: "footer.entry-footer", priority: 51, getAttrs: footerMetaFallbackAttrs },
+      { tag: "footer.footer-meta", priority: 51, getAttrs: footerMetaFallbackAttrs },
       { tag: "div.article-meta", priority: 51, getAttrs: footerMetaFallbackAttrs },
       { tag: "div.post-meta", priority: 51, getAttrs: footerMetaFallbackAttrs },
+      { tag: "div.footer-meta", priority: 51, getAttrs: footerMetaFallbackAttrs },
+      { tag: 'div[class~="footer-meta"]', priority: 51, getAttrs: footerMetaFallbackAttrs },
     ];
   },
 

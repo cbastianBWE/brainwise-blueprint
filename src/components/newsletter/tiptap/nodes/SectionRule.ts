@@ -67,13 +67,37 @@ export const NewsletterSectionRule = Node.create({
         tag: "div.section-rule",
         getAttrs: (el) => {
           if (!(el instanceof HTMLElement)) return false;
-          return {
-            number: el.getAttribute("data-number") || "",
-            style:
-              (el.getAttribute("data-style") as NewsletterSectionRuleStyle) ||
-              "plain",
-            title: el.getAttribute("data-title") || null,
-          };
+          // Prefer canonical data-* attrs (round-trip); fall back to visible
+          // .section-rule-num / .section-rule-title for external import per §151.
+          const dataNumber = el.getAttribute("data-number");
+          const visibleNumber = el
+            .querySelector(".section-rule-num")
+            ?.textContent?.trim();
+          const number =
+            dataNumber && dataNumber.length > 0
+              ? dataNumber
+              : visibleNumber || "";
+
+          const dataStyle = el.getAttribute(
+            "data-style",
+          ) as NewsletterSectionRuleStyle | null;
+          const style: NewsletterSectionRuleStyle =
+            dataStyle && STYLES.includes(dataStyle)
+              ? dataStyle
+              : visibleNumber
+                ? "numbered"
+                : "plain";
+
+          const dataTitle = el.getAttribute("data-title");
+          const visibleTitle = el
+            .querySelector(".section-rule-title, .section-rule-label")
+            ?.textContent?.trim();
+          const title =
+            dataTitle && dataTitle.length > 0
+              ? dataTitle
+              : visibleTitle || null;
+
+          return { number, style, title };
         },
       },
       {

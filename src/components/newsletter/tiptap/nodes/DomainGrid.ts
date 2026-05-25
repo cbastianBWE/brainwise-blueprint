@@ -35,9 +35,17 @@ export const NewsletterDomainGrid = Node.create({
     };
   },
 
-  // §151 (H5 Cycle 2): no import-fallback rule. content: "newsletterDomainRow+" is a BrainWise-specific pattern with no plausible external equivalent. External markup cannot satisfy the schema's content expression and ProseMirror's content coercion would drop the wrapper silently.
+  // §151 (H5 Follow-up): import-fallback rules below pair with NewsletterDomainRow's
+  // own class-based fallback. The child fallback fires on each .domain-row element,
+  // producing valid newsletterDomainRow atom nodes that satisfy this parent's
+  // "newsletterDomainRow+" content expression. ProseMirror content coercion
+  // succeeds in this paired-rule pattern.
   parseHTML() {
-    return [{ tag: "section[data-newsletter-domain-grid]" }];
+    return [
+      { tag: "section[data-newsletter-domain-grid]" },
+      { tag: "div.domain-grid", priority: 51 },
+      { tag: "section.domain-grid", priority: 51 },
+    ];
   },
 
   renderHTML({ HTMLAttributes }) {

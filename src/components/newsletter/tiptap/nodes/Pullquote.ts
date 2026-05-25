@@ -63,7 +63,9 @@ export const NewsletterPullquote = Node.create({
       { tag: "blockquote.pullquote", priority: 51, getAttrs: pullquoteFallbackAttrs },
       { tag: "aside.pullquote", priority: 51, getAttrs: pullquoteFallbackAttrs },
       { tag: "figure.pullquote", priority: 51, getAttrs: pullquoteFallbackAttrs },
+      { tag: "div.pullquote", priority: 51, getAttrs: pullquoteFallbackAttrs },
       { tag: 'blockquote[class~="pull-quote"]', priority: 51, getAttrs: pullquoteFallbackAttrs },
+      { tag: 'div[class~="pullquote"]', priority: 51, getAttrs: pullquoteFallbackAttrs },
     ];
   },
 
