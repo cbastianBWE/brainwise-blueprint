@@ -540,6 +540,21 @@ export const SLASH_COMMANDS: SlashCommandItem[] = [
         .run(),
   },
   {
+    id: "poll",
+    label: "Poll",
+    description: "Question with options. Authenticated readers can vote once.",
+    category: "INTERACTIVE",
+    icon: Vote,
+    keywords: ["poll", "vote", "survey", "question"],
+    run: (e, r) =>
+      deleteRange(e, r)
+        .insertContent({
+          type: "newsletterPoll",
+          attrs: { poll_id: null },
+        })
+        .run(),
+  },
+  {
     id: "disclosure",
     label: "Disclosure",
     description: "Collapsible details block with a summary.",
