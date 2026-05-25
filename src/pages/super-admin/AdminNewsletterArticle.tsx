@@ -91,6 +91,8 @@ interface Draft {
   seo_description: string;
   canonical_url: string;
   source_type: "html_import" | "native";
+  category_id: string | null;
+  tags: string[];
 }
 
 interface ArticleRecord extends Draft {
@@ -141,7 +143,7 @@ export default function AdminNewsletterArticle() {
       if (!articleId) return null;
       const { data, error } = await supabase
         .from("newsletter_articles")
-        .select("id, title, slug, excerpt, body_tiptap, gate, allowed_plan_tiers, cover_asset_id, og_image_asset_id, seo_title, seo_description, canonical_url, source_type, status, scheduled_for")
+        .select("id, title, slug, excerpt, body_tiptap, gate, allowed_plan_tiers, cover_asset_id, og_image_asset_id, seo_title, seo_description, canonical_url, source_type, status, scheduled_for, category_id, tags")
         .eq("id", articleId)
         .maybeSingle();
       if (error) throw error;
@@ -167,6 +169,8 @@ export default function AdminNewsletterArticle() {
         source_type: (data.source_type as "html_import" | "native") ?? "native",
         status: (data.status as Status) ?? "draft",
         publish_at: data.scheduled_for ?? null,
+        category_id: data.category_id ?? null,
+        tags: (data.tags as string[]) ?? [],
       };
     },
   });
@@ -185,6 +189,8 @@ export default function AdminNewsletterArticle() {
     seo_description: "",
     canonical_url: "",
     source_type: "native",
+    category_id: null,
+    tags: [],
   });
   const [status, setStatus] = useState<Status>("draft");
   const [publishAt, setPublishAt] = useState<string | null>(null);
@@ -209,6 +215,8 @@ export default function AdminNewsletterArticle() {
       seo_description: existing.seo_description,
       canonical_url: existing.canonical_url,
       source_type: existing.source_type,
+      category_id: existing.category_id,
+      tags: existing.tags,
     });
     setStatus(existing.status);
     setPublishAt(existing.publish_at);
@@ -279,8 +287,10 @@ export default function AdminNewsletterArticle() {
         p_issue_label: null as unknown as string,
         p_masthead_logo_glyph: null as unknown as string,
         p_masthead_publication: null as unknown as string,
-        p_tags: null as unknown as string[],
+        p_tags: (current.tags as unknown as string[]) ?? (null as unknown as string[]),
         p_theme_variant: null as unknown as string,
+        // P7b — category_id (H2-MIG-10a-1/2). Required by upsert_article v26.
+        p_category_id: (current.category_id as unknown as string) ?? (null as unknown as string),
       });
       if (error) throw error;
       const resp = (data ?? {}) as { article_id?: string; is_create?: boolean };
