@@ -5359,6 +5359,7 @@ export type Database = {
           body_html_rendered: string | null
           body_tiptap: Json
           canonical_url: string | null
+          category_id: string | null
           cover_asset_id: string | null
           created_at: string
           created_by_user_id: string
@@ -5392,6 +5393,7 @@ export type Database = {
           body_html_rendered?: string | null
           body_tiptap?: Json
           canonical_url?: string | null
+          category_id?: string | null
           cover_asset_id?: string | null
           created_at?: string
           created_by_user_id: string
@@ -5425,6 +5427,7 @@ export type Database = {
           body_html_rendered?: string | null
           body_tiptap?: Json
           canonical_url?: string | null
+          category_id?: string | null
           cover_asset_id?: string | null
           created_at?: string
           created_by_user_id?: string
@@ -5453,6 +5456,13 @@ export type Database = {
           word_count?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "newsletter_articles_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "newsletter_categories"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "newsletter_articles_cover_asset_id_fkey"
             columns: ["cover_asset_id"]
@@ -5496,6 +5506,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      newsletter_categories: {
+        Row: {
+          archived_at: string | null
+          created_at: string
+          display_name: string
+          id: string
+          slug: string
+          sort_order: number
+        }
+        Insert: {
+          archived_at?: string | null
+          created_at?: string
+          display_name: string
+          id?: string
+          slug: string
+          sort_order?: number
+        }
+        Update: {
+          archived_at?: string | null
+          created_at?: string
+          display_name?: string
+          id?: string
+          slug?: string
+          sort_order?: number
+        }
+        Relationships: []
       }
       newsletter_poll_votes: {
         Row: {
@@ -9719,6 +9756,10 @@ export type Database = {
         Args: { p_id: string; p_reason: string }
         Returns: Json
       }
+      archive_newsletter_category: {
+        Args: { p_id: string; p_reason: string }
+        Returns: Json
+      }
       archive_notification: { Args: { p_id: string }; Returns: Json }
       archive_poll: {
         Args: { p_poll_id: string; p_reason: string }
@@ -10057,6 +10098,15 @@ export type Database = {
           p_tracking_notes?: string
         }
         Returns: string
+      }
+      create_newsletter_category: {
+        Args: {
+          p_display_name: string
+          p_reason: string
+          p_slug: string
+          p_sort_order: number
+        }
+        Returns: Json
       }
       create_poll: {
         Args: {
@@ -10446,6 +10496,22 @@ export type Database = {
         Args: { p_content_item_id: string }
         Returns: Json
       }
+      get_related_articles_by_category: {
+        Args: { p_max_count?: number; p_source_article_id: string }
+        Returns: Json
+      }
+      get_related_articles_by_ids: {
+        Args: { p_article_ids: string[]; p_max_count?: number }
+        Returns: Json
+      }
+      get_related_articles_by_tags: {
+        Args: {
+          p_max_count?: number
+          p_source_article_id: string
+          p_tag_match_mode?: string
+        }
+        Returns: Json
+      }
       get_resource_content_asset: {
         Args: { p_resource_id: string }
         Returns: {
@@ -10549,8 +10615,10 @@ export type Database = {
       is_impersonating: { Args: never; Returns: boolean }
       is_impersonating_act: { Args: never; Returns: boolean }
       is_internal_user: { Args: { p_user_id: string }; Returns: boolean }
+      list_active_newsletter_categories: { Args: never; Returns: Json }
       list_admin_newsletter_articles: {
         Args: {
+          p_category_filter?: string
           p_gate_filter?: string
           p_limit?: number
           p_offset?: number
@@ -11275,6 +11343,16 @@ export type Database = {
         }
         Returns: undefined
       }
+      update_newsletter_category: {
+        Args: {
+          p_display_name: string
+          p_id: string
+          p_reason: string
+          p_slug: string
+          p_sort_order: number
+        }
+        Returns: Json
+      }
       update_org_intervention: {
         Args: {
           p_actual_completion_date?: string
@@ -11332,6 +11410,7 @@ export type Database = {
           p_author_user_ids: string[]
           p_body_tiptap: Json
           p_canonical_url: string
+          p_category_id: string
           p_cover_asset_id: string
           p_default_layout_width: string
           p_excerpt: string
