@@ -53,6 +53,9 @@ import {
   NewsletterCitationEntry,
   NewsletterFurtherReading,
   NewsletterAuthorBio,
+  NewsletterCta,
+  NewsletterSubscribeBlock,
+  NewsletterDisclosure,
 } from "@/components/newsletter/tiptap";
 import { NewsletterCodeBlock } from "@/components/newsletter/tiptap/buildExtensions";
 import type { NewsletterTipTapDoc } from "@/components/newsletter/tiptap/types";
@@ -83,6 +86,9 @@ import { CitationsNodeView } from "@/components/newsletter/tiptap/nodeviews/Cita
 import { CitationEntryNodeView } from "@/components/newsletter/tiptap/nodeviews/CitationEntryNodeView";
 import { FurtherReadingNodeView } from "@/components/newsletter/tiptap/nodeviews/FurtherReadingNodeView";
 import { AuthorBioNodeView } from "@/components/newsletter/tiptap/nodeviews/AuthorBioNodeView";
+import { CTANodeView } from "@/components/newsletter/tiptap/nodeviews/CTANodeView";
+import { SubscribeBlockNodeView } from "@/components/newsletter/tiptap/nodeviews/SubscribeBlockNodeView";
+import { DisclosureNodeView } from "@/components/newsletter/tiptap/nodeviews/DisclosureNodeView";
 import { NewsletterToolbar } from "./NewsletterToolbar";
 import { NewsletterBubbleMenu } from "./NewsletterBubbleMenu";
 import { NewsletterFloatingPlus } from "./NewsletterFloatingPlus";
@@ -247,6 +253,21 @@ const NodeAuthorBioEdit = NewsletterAuthorBio.extend({
     return ReactNodeViewRenderer(AuthorBioNodeView);
   },
 });
+const NodeCtaEdit = NewsletterCta.extend({
+  addNodeView() {
+    return ReactNodeViewRenderer(CTANodeView);
+  },
+});
+const NodeSubscribeBlockEdit = NewsletterSubscribeBlock.extend({
+  addNodeView() {
+    return ReactNodeViewRenderer(SubscribeBlockNodeView);
+  },
+});
+const NodeDisclosureEdit = NewsletterDisclosure.extend({
+  addNodeView() {
+    return ReactNodeViewRenderer(DisclosureNodeView);
+  },
+});
 
 const EDITABLE_NODE_OVERRIDES = [
   NodeImageEdit,
@@ -276,6 +297,9 @@ const EDITABLE_NODE_OVERRIDES = [
   NodeCitationEntryEdit,
   NodeFurtherReadingEdit,
   NodeAuthorBioEdit,
+  NodeCtaEdit,
+  NodeSubscribeBlockEdit,
+  NodeDisclosureEdit,
 ];
 
 const OVERRIDE_NAMES = new Set(EDITABLE_NODE_OVERRIDES.map((n) => n.name));

@@ -56,6 +56,13 @@ export {
 } from "./nodes/Citations";
 export { NewsletterFurtherReading } from "./nodes/FurtherReading";
 export { NewsletterAuthorBio } from "./nodes/AuthorBio";
+export { NewsletterCta } from "./nodes/CTA";
+export type { CtaVariant } from "./nodes/CTA";
+export { NewsletterSubscribeBlock } from "./nodes/SubscribeBlock";
+export {
+  NewsletterDisclosure,
+  NewsletterDisclosureSummary,
+} from "./nodes/Disclosure";
 export { Accent } from "./marks/Accent";
 export { SmallCaps } from "./marks/SmallCaps";
 export { Superscript } from "./marks/Superscript";
@@ -64,3 +71,4 @@ export { Underline } from "./marks/Underline";
 export { Highlight } from "./marks/Highlight";
 export { Keyboard } from "./marks/Keyboard";
 export { Abbr } from "./marks/Abbr";
+export { Definition } from "./marks/Definition";

@@ -349,6 +349,26 @@ export interface NewsletterAuthorBioAttrs {
   user_id: string | null;
 }
 
+// ---- Pass 7 (P7a): CTA / SubscribeBlock / Disclosure / Definition ----
+
+export type CtaVariant = "primary" | "secondary" | "ghost";
+
+export interface NewsletterCtaAttrs {
+  variant: CtaVariant;
+  label: string;
+  url: string;
+  tracking_id: string | null;
+}
+
+export interface NewsletterDisclosureAttrs {
+  default_open: boolean;
+}
+
+export interface DefinitionMarkAttrs {
+  definition_text: string;
+  source: string | null;
+}
+
 // Custom newsletter nodes
 export type CustomNewsletterNode =
   | BaseNode<"newsletterImage", NewsletterImageAttrs>
@@ -390,7 +410,11 @@ export type CustomNewsletterNode =
   | BaseNode<"newsletterCitations", NewsletterCitationsAttrs>
   | BaseNode<"newsletterCitationEntry", NewsletterCitationEntryAttrs>
   | BaseNode<"newsletterFurtherReading", NewsletterFurtherReadingAttrs>
-  | BaseNode<"newsletterAuthorBio", NewsletterAuthorBioAttrs>;
+  | BaseNode<"newsletterAuthorBio", NewsletterAuthorBioAttrs>
+  | BaseNode<"newsletterCta", NewsletterCtaAttrs>
+  | BaseNode<"newsletterSubscribeBlock">
+  | BaseNode<"newsletterDisclosure", NewsletterDisclosureAttrs>
+  | BaseNode<"newsletterDisclosureSummary">;
 
 export type NewsletterTipTapNode =
   | TipTapTextNode

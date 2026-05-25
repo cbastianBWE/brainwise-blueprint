@@ -27,6 +27,7 @@ import {
   CaseSensitive,
   Keyboard as KeyboardIcon,
   BookOpen,
+  BookMarked,
   Palette,
   ArrowUpToLine,
   ArrowDownToLine,
@@ -61,7 +62,8 @@ type Mode =
       style: AccentStyle;
       weight: AccentWeight;
     }
-  | { kind: "highlight"; color: HighlightColor };
+  | { kind: "highlight"; color: HighlightColor }
+  | { kind: "definition"; definition_text: string; source: string };
 
 interface NewsletterBubbleMenuProps {
   editor: Editor;
@@ -98,6 +100,8 @@ export function NewsletterBubbleMenu({ editor }: NewsletterBubbleMenuProps) {
           "newsletterFooterMeta",
           "newsletterFurtherReading",
           "newsletterAuthorBio",
+          "newsletterCta",
+          "newsletterSubscribeBlock",
         ]);
         if (blockedParents.has($from.parent.type.name)) return false;
         // Allow collapsed caret inside a table cell so table action
@@ -168,6 +172,25 @@ export function NewsletterBubbleMenu({ editor }: NewsletterBubbleMenuProps) {
         .run();
     } else {
       editor.chain().focus().unsetMark("abbr").run();
+    }
+    setMode({ kind: "default" });
+  };
+
+  const applyDefinition = (definition_text: string, source: string) => {
+    const dt = definition_text.trim();
+    const src = source.trim();
+    if (dt) {
+      editor
+        .chain()
+        .focus()
+        .extendMarkRange("definition")
+        .setMark("definition", {
+          definition_text: dt,
+          source: src.length > 0 && isSafeHttpUrl(src) ? src : null,
+        })
+        .run();
+    } else {
+      editor.chain().focus().unsetMark("definition").run();
     }
     setMode({ kind: "default" });
   };
@@ -268,6 +291,85 @@ export function NewsletterBubbleMenu({ editor }: NewsletterBubbleMenuProps) {
               Apply
             </button>
           </>
+        );
+      }
+      case "definition": {
+        const { definition_text, source } = mode;
+        const sourceInvalid = source.length > 0 && !isSafeHttpUrl(source);
+        return (
+          <div className="flex w-80 flex-col gap-2 p-1">
+            <div className="flex flex-col gap-1">
+              <span className="text-[10px] uppercase tracking-wider text-[var(--fg-3)]">
+                Definition
+              </span>
+              <input
+                type="text"
+                value={definition_text}
+                onChange={(e) =>
+                  setMode({ ...mode, definition_text: e.target.value })
+                }
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") applyDefinition(definition_text, source);
+                }}
+                placeholder="What does this term mean?"
+                autoFocus
+                className="h-7 rounded-md border border-[var(--border-1)] bg-white px-2 text-xs text-[var(--fg-1)] placeholder:text-[var(--fg-4)] focus:border-[#F5741A] focus:outline-none"
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <span className="text-[10px] uppercase tracking-wider text-[var(--fg-3)]">
+                Source URL (optional)
+              </span>
+              <input
+                type="text"
+                value={source}
+                onChange={(e) => setMode({ ...mode, source: e.target.value })}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") applyDefinition(definition_text, source);
+                }}
+                placeholder="https://…"
+                className={cn(
+                  "h-7 rounded-md border bg-white px-2 text-xs text-[var(--fg-1)] placeholder:text-[var(--fg-4)] focus:outline-none",
+                  sourceInvalid
+                    ? "border-red-500 focus:border-red-500"
+                    : "border-[var(--border-1)] focus:border-[#F5741A]",
+                )}
+              />
+            </div>
+            <div className="flex items-center gap-1 pt-1">
+              <button
+                type="button"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  applyDefinition(definition_text, source);
+                }}
+                className="rounded-full bg-[#F5741A] px-3 py-1 text-[11px] font-semibold text-white hover:bg-[#E06714]"
+              >
+                Apply
+              </button>
+              <button
+                type="button"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  editor.chain().focus().unsetMark("definition").run();
+                  setMode({ kind: "default" });
+                }}
+                className="rounded-full px-3 py-1 text-[11px] font-medium text-[var(--fg-2)] hover:bg-[var(--bw-cream-200)]"
+              >
+                Remove
+              </button>
+              <button
+                type="button"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  setMode({ kind: "default" });
+                }}
+                className="ml-auto rounded-full px-2 py-1 text-[11px] text-[var(--fg-3)] hover:bg-[var(--bw-cream-200)]"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
         );
       }
       case "accent": {
@@ -578,6 +680,20 @@ export function NewsletterBubbleMenu({ editor }: NewsletterBubbleMenuProps) {
               }}
             >
               <BookOpen className="h-3.5 w-3.5" />
+            </Btn>
+            <Btn
+              label="Definition"
+              active={editor.isActive("definition")}
+              onClick={() => {
+                const existing = editor.getAttributes("definition");
+                setMode({
+                  kind: "definition",
+                  definition_text: (existing.definition_text as string) ?? "",
+                  source: (existing.source as string | null) ?? "",
+                });
+              }}
+            >
+              <BookMarked className="h-3.5 w-3.5" />
             </Btn>
             <Btn
               label="Inline code"

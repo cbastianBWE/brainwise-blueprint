@@ -1944,3 +1944,102 @@
   color: var(--bw-text-secondary);
 }
 
+
+/* =========================================================================
+   Pass 7 P7a: CTA / Subscribe block / Disclosure / Definition
+   ========================================================================= */
+
+.newsletter-prose .newsletter-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 44px;
+  padding: 0 22px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  font-family: "Poppins", sans-serif;
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 140ms, color 140ms, border-color 140ms;
+}
+.newsletter-prose .newsletter-cta--primary {
+  background: var(--bw-orange, #F5741A);
+  color: #fff;
+}
+.newsletter-prose .newsletter-cta--primary:hover {
+  background: #E06714;
+}
+.newsletter-prose .newsletter-cta--secondary {
+  background: var(--bw-navy, #0c2340);
+  color: #fff;
+}
+.newsletter-prose .newsletter-cta--secondary:hover {
+  background: #1a4a6e;
+}
+.newsletter-prose .newsletter-cta--ghost {
+  background: transparent;
+  color: var(--bw-navy, #0c2340);
+  border-color: rgba(0, 0, 0, 0.15);
+}
+.newsletter-prose .newsletter-cta--ghost:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.newsletter-prose [data-newsletter-subscribe-block] {
+  margin: 28px 0;
+}
+
+.newsletter-prose [data-newsletter-disclosure] {
+  background: var(--bw-cream, #FBF7F1);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 12px;
+  padding: 14px 18px;
+  margin: 20px 0;
+}
+.newsletter-prose [data-newsletter-disclosure] > summary {
+  cursor: pointer;
+  font-family: "Poppins", sans-serif;
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--bw-navy, #0c2340);
+  list-style: none;
+  outline: none;
+  padding: 4px 0;
+  position: relative;
+  padding-left: 22px;
+}
+.newsletter-prose [data-newsletter-disclosure] > summary::-webkit-details-marker {
+  display: none;
+}
+.newsletter-prose [data-newsletter-disclosure] > summary::before {
+  content: "›";
+  position: absolute;
+  left: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 18px;
+  line-height: 1;
+  color: var(--fg-3, #6b7280);
+  transition: transform 160ms ease;
+}
+.newsletter-prose [data-newsletter-disclosure][open] > summary::before {
+  transform: translateY(-50%) rotate(90deg);
+}
+.newsletter-prose [data-newsletter-disclosure] > summary:focus-visible {
+  box-shadow: 0 0 0 2px rgba(245, 116, 26, 0.4);
+  border-radius: 4px;
+}
+.newsletter-prose [data-newsletter-disclosure] > *:not(summary) {
+  margin-top: 12px;
+}
+
+.newsletter-prose [data-newsletter-definition] {
+  text-decoration: underline dotted;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  cursor: help;
+}
