@@ -57,6 +57,9 @@ import {
   Tags,
   BookOpen,
   UserCircle,
+  Megaphone,
+  Mail,
+  ChevronDown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -74,7 +77,7 @@ export interface SlashCommandItem {
   id: string;
   label: string;
   description: string;
-  category: "BASIC" | "EDITORIAL" | "MEDIA" | "LAYOUT" | "TECHNICAL";
+  category: "BASIC" | "EDITORIAL" | "MEDIA" | "LAYOUT" | "INTERACTIVE" | "TECHNICAL";
   icon: ComponentType<{ className?: string }>;
   /** Aliases for filtering. */
   keywords?: string[];
