@@ -27,6 +27,7 @@ import {
   CaseSensitive,
   Keyboard as KeyboardIcon,
   BookOpen,
+  BookMarked,
   Palette,
   ArrowUpToLine,
   ArrowDownToLine,
@@ -677,6 +678,20 @@ export function NewsletterBubbleMenu({ editor }: NewsletterBubbleMenuProps) {
               }}
             >
               <BookOpen className="h-3.5 w-3.5" />
+            </Btn>
+            <Btn
+              label="Definition"
+              active={editor.isActive("definition")}
+              onClick={() => {
+                const existing = editor.getAttributes("definition");
+                setMode({
+                  kind: "definition",
+                  definition_text: (existing.definition_text as string) ?? "",
+                  source: (existing.source as string | null) ?? "",
+                });
+              }}
+            >
+              <BookMarked className="h-3.5 w-3.5" />
             </Btn>
             <Btn
               label="Inline code"
