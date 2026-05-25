@@ -55,6 +55,7 @@ import {
   NewsletterAuthorBio,
   NewsletterCta,
   NewsletterSubscribeBlock,
+  NewsletterPoll,
   NewsletterDisclosure,
 } from "@/components/newsletter/tiptap";
 import { NewsletterCodeBlock } from "@/components/newsletter/tiptap/buildExtensions";
