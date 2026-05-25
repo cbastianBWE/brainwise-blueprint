@@ -12,6 +12,43 @@ function sanitizeCommands(raw: unknown): TerminalCommand[] {
     }));
 }
 
+function terminalFallbackAttrs(el: unknown) {
+  if (!(el instanceof HTMLElement)) return false;
+  const text = (el.textContent ?? "").trim();
+  const lines = text.split("\n").filter((l) => l.trim().length > 0);
+  const commands: TerminalCommand[] = [];
+  let current: Partial<TerminalCommand> | null = null;
+  for (const line of lines) {
+    const promptMatch = line.match(/^([$>#])\s+(.+)$/);
+    if (promptMatch) {
+      if (current && current.command) {
+        commands.push({
+          prompt: current.prompt ?? "$",
+          command: current.command,
+          output: (current.output ?? "").trim(),
+        });
+      }
+      current = { prompt: promptMatch[1], command: promptMatch[2], output: "" };
+    } else if (current) {
+      current.output = (current.output ?? "") + line + "\n";
+    }
+  }
+  if (current && current.command) {
+    commands.push({
+      prompt: current.prompt ?? "$",
+      command: current.command,
+      output: (current.output ?? "").trim(),
+    });
+  }
+  if (commands.length === 0 && text.length > 0) {
+    commands.push({ prompt: "$", command: text, output: "" });
+  }
+  return {
+    commands,
+    theme: "dark" as const,
+  };
+}
+
 /**
  * newsletterTerminal — atom block with a structured commands[] attr
  * serialized via data-commands JSON. Same pattern as Byline.entries.
@@ -71,6 +108,10 @@ export const NewsletterTerminal = Node.create({
           };
         },
       },
+      { tag: "div.terminal", priority: 51, getAttrs: terminalFallbackAttrs },
+      { tag: "pre.terminal", priority: 51, getAttrs: terminalFallbackAttrs },
+      { tag: "pre.console", priority: 51, getAttrs: terminalFallbackAttrs },
+      { tag: "pre.shell", priority: 51, getAttrs: terminalFallbackAttrs },
     ];
   },
 

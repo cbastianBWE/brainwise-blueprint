@@ -31,7 +31,12 @@ export const NewsletterPoll = Node.create({
   },
 
   parseHTML() {
-    return [{ tag: "div[data-newsletter-poll]", priority: 60 }];
+    return [
+      { tag: "div[data-newsletter-poll]", priority: 60 },
+      { tag: "div.poll", priority: 51, getAttrs: () => ({ poll_id: null }) },
+      { tag: 'div[class~="poll"]', priority: 51, getAttrs: () => ({ poll_id: null }) },
+      { tag: 'div[role="form"][class*="poll"]', priority: 51, getAttrs: () => ({ poll_id: null }) },
+    ];
   },
 
   renderHTML({ HTMLAttributes }) {

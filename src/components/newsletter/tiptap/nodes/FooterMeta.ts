@@ -1,5 +1,21 @@
 import { Node, mergeAttributes } from "@tiptap/core";
 
+function footerMetaFallbackAttrs(el: unknown) {
+  if (!(el instanceof HTMLElement)) return false;
+  const tags = Array.from(
+    el.querySelectorAll(".tag, .tags li, [class*='tag']"),
+  )
+    .map((t) => (t.textContent ?? "").trim())
+    .filter((t) => t.length > 0 && t.length < 50);
+  const time = el.querySelector("time");
+  return {
+    tags,
+    issue_label: null as string | null,
+    published_label:
+      time?.getAttribute("datetime") ?? time?.textContent ?? null,
+  };
+}
+
 /**
  * newsletterFooterMeta — atom block rendered at article end with tags + labels.
  * P6a ships with manually-entered values; auto-sync from article fields is
@@ -49,6 +65,11 @@ export const NewsletterFooterMeta = Node.create({
           };
         },
       },
+      { tag: "footer.article-footer", priority: 51, getAttrs: footerMetaFallbackAttrs },
+      { tag: "footer.post-footer", priority: 51, getAttrs: footerMetaFallbackAttrs },
+      { tag: "footer.entry-footer", priority: 51, getAttrs: footerMetaFallbackAttrs },
+      { tag: "div.article-meta", priority: 51, getAttrs: footerMetaFallbackAttrs },
+      { tag: "div.post-meta", priority: 51, getAttrs: footerMetaFallbackAttrs },
     ];
   },
 

@@ -51,7 +51,45 @@ export const Definition = Mark.create({
   },
 
   parseHTML() {
-    return [{ tag: "span[data-newsletter-definition]", priority: 60 }];
+    return [
+      { tag: "span[data-newsletter-definition]", priority: 60 },
+      {
+        tag: "dfn",
+        priority: 51,
+        getAttrs: (el) => {
+          if (!(el instanceof HTMLElement)) return false;
+          return {
+            definition_text:
+              el.getAttribute("title") || el.textContent?.trim() || "",
+            source: null as string | null,
+          };
+        },
+      },
+      {
+        tag: "span.definition",
+        priority: 51,
+        getAttrs: (el) => {
+          if (!(el instanceof HTMLElement)) return false;
+          return {
+            definition_text:
+              el.getAttribute("title") || el.textContent?.trim() || "",
+            source: null as string | null,
+          };
+        },
+      },
+      {
+        tag: 'span[class~="definition"]',
+        priority: 51,
+        getAttrs: (el) => {
+          if (!(el instanceof HTMLElement)) return false;
+          return {
+            definition_text:
+              el.getAttribute("title") || el.textContent?.trim() || "",
+            source: null as string | null,
+          };
+        },
+      },
+    ];
   },
 
   renderHTML({ HTMLAttributes }) {

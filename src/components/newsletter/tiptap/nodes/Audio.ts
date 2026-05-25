@@ -43,6 +43,37 @@ export const NewsletterAudio = Node.create({
           };
         },
       },
+      {
+        tag: "figure > audio[src]",
+        priority: 51,
+        getAttrs: (el) => {
+          if (!(el instanceof HTMLElement)) return false;
+          const audio = el.querySelector("audio");
+          const figcaption = el.querySelector("figcaption");
+          return {
+            asset_id: null,
+            title:
+              figcaption?.textContent?.trim() ??
+              audio?.getAttribute("title") ??
+              "",
+            duration_seconds: 0,
+            transcript_url: null,
+          };
+        },
+      },
+      {
+        tag: "audio[controls]",
+        priority: 51,
+        getAttrs: (el) => {
+          if (!(el instanceof HTMLElement)) return false;
+          return {
+            asset_id: null,
+            title: el.getAttribute("title") ?? "",
+            duration_seconds: 0,
+            transcript_url: null,
+          };
+        },
+      },
     ];
   },
 

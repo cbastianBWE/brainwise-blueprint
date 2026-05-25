@@ -32,6 +32,11 @@ export const NewsletterAuthorBio = Node.create({
           };
         },
       },
+      { tag: "aside.author-bio", priority: 51, getAttrs: () => ({ user_id: null }) },
+      { tag: "aside.author-card", priority: 51, getAttrs: () => ({ user_id: null }) },
+      { tag: "div.author-bio", priority: 51, getAttrs: () => ({ user_id: null }) },
+      { tag: "div.author-card", priority: 51, getAttrs: () => ({ user_id: null }) },
+      { tag: "div.byline-detail", priority: 51, getAttrs: () => ({ user_id: null }) },
     ];
   },
 

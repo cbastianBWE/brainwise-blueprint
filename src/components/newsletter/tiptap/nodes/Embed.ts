@@ -69,6 +69,38 @@ export function buildEmbedSrc(
   }
 }
 
+// H5 fallback helpers: route unknown iframe sources to provider "generic" so
+// buildEmbedSrc applies the safe-URL allowlist. Twitter/Loom are not native
+// providers in the EmbedProvider union — they ride through "generic" too.
+function inferProviderAndId(
+  url: string,
+): { provider: EmbedProvider; embed_id: string } {
+  const m1 = url.match(/youtube\.com\/embed\/([^?&/]+)/);
+  if (m1) return { provider: "youtube", embed_id: m1[1] };
+  const m2 = url.match(/youtu\.be\/([^?&/]+)/);
+  if (m2) return { provider: "youtube", embed_id: m2[1] };
+  const m3 = url.match(/vimeo\.com\/(\d+)/);
+  if (m3) return { provider: "vimeo", embed_id: m3[1] };
+  return { provider: "generic", embed_id: "" };
+}
+
+function embedFallbackAttrs(
+  el: unknown,
+  providerHint: EmbedProvider | null,
+) {
+  if (!(el instanceof HTMLElement)) return false;
+  const src = el.getAttribute("src") ?? "";
+  const inferred = inferProviderAndId(src);
+  const provider: EmbedProvider = providerHint ?? inferred.provider;
+  return {
+    provider,
+    embed_id: inferred.embed_id,
+    url: src,
+    title: el.getAttribute("title") || null,
+    aspect_ratio: "16:9" as const,
+  };
+}
+
 /**
  * newsletterEmbed — third-party media embed.
  *
@@ -128,6 +160,47 @@ export const NewsletterEmbed = Node.create({
             aspect_ratio: ["16:9", "4:3", "1:1", "9:16"].includes(ar || "")
               ? ar
               : "16:9",
+          };
+        },
+      },
+      {
+        tag: 'iframe[src*="youtube.com/embed"]',
+        priority: 51,
+        getAttrs: (el) => embedFallbackAttrs(el, "youtube"),
+      },
+      {
+        tag: 'iframe[src*="youtu.be"]',
+        priority: 51,
+        getAttrs: (el) => embedFallbackAttrs(el, "youtube"),
+      },
+      {
+        tag: 'iframe[src*="vimeo.com"]',
+        priority: 51,
+        getAttrs: (el) => embedFallbackAttrs(el, "vimeo"),
+      },
+      {
+        tag: 'iframe[src*="twitter.com"]',
+        priority: 51,
+        getAttrs: (el) => embedFallbackAttrs(el, "generic"),
+      },
+      {
+        tag: 'iframe[src*="loom.com"]',
+        priority: 51,
+        getAttrs: (el) => embedFallbackAttrs(el, "generic"),
+      },
+      {
+        tag: "div.embed",
+        priority: 51,
+        getAttrs: (el) => {
+          if (!(el instanceof HTMLElement)) return false;
+          const iframe = el.querySelector("iframe");
+          if (iframe) return embedFallbackAttrs(iframe, null);
+          return {
+            provider: "generic" as EmbedProvider,
+            embed_id: "",
+            url: "",
+            title: null,
+            aspect_ratio: "16:9" as const,
           };
         },
       },

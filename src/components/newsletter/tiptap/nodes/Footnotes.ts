@@ -23,6 +23,10 @@ export const NewsletterFootnotes = Node.create({
         tag: "div[data-newsletter-footnotes]",
         priority: 60,
       },
+      { tag: "div.footnotes", priority: 51 },
+      { tag: "section.footnotes", priority: 51 },
+      { tag: "aside.footnotes", priority: 51 },
+      { tag: "ol.footnotes", priority: 51 },
     ];
   },
 

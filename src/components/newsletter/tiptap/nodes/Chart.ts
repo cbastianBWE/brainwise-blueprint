@@ -54,6 +54,39 @@ export const NewsletterChart = Node.create({
           };
         },
       },
+      {
+        tag: "figure.chart",
+        priority: 51,
+        getAttrs: (el) => {
+          if (!(el instanceof HTMLElement)) return false;
+          return {
+            chart_type: "line" as ChartTypeUnion,
+            data_json: "",
+            caption: el.querySelector("figcaption")?.textContent?.trim() ?? null,
+          };
+        },
+      },
+      {
+        tag: 'figure[class~="chart"]',
+        priority: 51,
+        getAttrs: (el) => {
+          if (!(el instanceof HTMLElement)) return false;
+          return {
+            chart_type: "line" as ChartTypeUnion,
+            data_json: "",
+            caption: el.querySelector("figcaption")?.textContent?.trim() ?? null,
+          };
+        },
+      },
+      {
+        tag: "div.chart",
+        priority: 51,
+        getAttrs: () => ({
+          chart_type: "line" as ChartTypeUnion,
+          data_json: "",
+          caption: null,
+        }),
+      },
     ];
   },
 

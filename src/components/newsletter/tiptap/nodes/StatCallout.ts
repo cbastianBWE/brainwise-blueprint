@@ -1,5 +1,31 @@
 import { Node, mergeAttributes } from "@tiptap/core";
 
+function statCalloutFallbackAttrs(el: unknown) {
+  if (!(el instanceof HTMLElement)) return false;
+  let trend: "up" | "down" | "flat" | null = null;
+  const cls = el.className.toLowerCase();
+  if (cls.includes("up") || el.dataset.trend === "up") trend = "up";
+  else if (cls.includes("down") || el.dataset.trend === "down") trend = "down";
+  else if (cls.includes("flat") || el.dataset.trend === "flat") trend = "flat";
+  return {
+    value:
+      el
+        .querySelector(
+          ".value, .stat-value, .number, .big-number, strong:first-child, h1, h2",
+        )
+        ?.textContent?.trim() ?? "",
+    label:
+      el
+        .querySelector(".label, .stat-label, .caption, figcaption")
+        ?.textContent?.trim() ?? "",
+    source:
+      el
+        .querySelector(".source, .citation, cite")
+        ?.textContent?.trim() ?? null,
+    trend,
+  };
+}
+
 /**
  * newsletterStatCallout — large numeric display.
  *
@@ -52,6 +78,10 @@ export const NewsletterStatCallout = Node.create({
           };
         },
       },
+      { tag: "figure.stat", priority: 51, getAttrs: statCalloutFallbackAttrs },
+      { tag: "figure.statistic", priority: 51, getAttrs: statCalloutFallbackAttrs },
+      { tag: "div.stat-callout", priority: 51, getAttrs: statCalloutFallbackAttrs },
+      { tag: "aside.stat", priority: 51, getAttrs: statCalloutFallbackAttrs },
     ];
   },
 

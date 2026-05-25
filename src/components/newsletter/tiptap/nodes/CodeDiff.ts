@@ -51,6 +51,44 @@ export const NewsletterCodeDiff = Node.create({
           };
         },
       },
+      {
+        tag: "div.code-diff",
+        priority: 51,
+        getAttrs: (el) => {
+          if (!(el instanceof HTMLElement)) return false;
+          const langClass = el
+            .querySelector("[class*='language-']")
+            ?.className.match(/language-(\w+)/)?.[1];
+          return {
+            before_text:
+              el.querySelector(".before, .diff-before, [data-side='before']")
+                ?.textContent ?? "",
+            after_text:
+              el.querySelector(".after, .diff-after, [data-side='after']")
+                ?.textContent ?? "",
+            language: el.getAttribute("data-language") || langClass || null,
+            filename:
+              el
+                .querySelector(".filename, .file-name, [data-filename]")
+                ?.textContent?.trim() ?? null,
+          };
+        },
+      },
+      {
+        tag: "div.diff",
+        priority: 51,
+        getAttrs: (el) => {
+          if (!(el instanceof HTMLElement)) return false;
+          return {
+            before_text:
+              el.querySelector(".before, .diff-before")?.textContent ?? "",
+            after_text:
+              el.querySelector(".after, .diff-after")?.textContent ?? "",
+            language: null,
+            filename: null,
+          };
+        },
+      },
     ];
   },
 
