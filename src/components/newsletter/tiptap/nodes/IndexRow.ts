@@ -28,9 +28,16 @@ export const NewsletterIndexRow = Node.create({
     };
   },
 
-  // §151 (H5 Cycle 2): no import-fallback rule. content: "newsletterIndexCard+" is a BrainWise-specific glossary pattern with no plausible external equivalent. External markup cannot satisfy the schema's content expression and ProseMirror's content coercion would drop the wrapper silently.
+  // §151 (H5 Follow-up): import-fallback rule below pairs with NewsletterIndexCard's
+  // own class-based fallback. The child fallback fires on each .index-card element,
+  // producing valid newsletterIndexCard atom nodes that satisfy this parent's
+  // "newsletterIndexCard+" content expression. ProseMirror content coercion
+  // succeeds in this paired-rule pattern.
   parseHTML() {
-    return [{ tag: "div[data-newsletter-index-row]" }];
+    return [
+      { tag: "div[data-newsletter-index-row]" },
+      { tag: "div.index-row", priority: 51 },
+    ];
   },
 
   renderHTML({ HTMLAttributes }) {
@@ -81,6 +88,33 @@ export const NewsletterIndexCard = Node.create({
             note: el.getAttribute("data-note") || "",
             accent_color: el.getAttribute("data-accent-color") || "orange",
           };
+        },
+      },
+      {
+        // §151 (H5 Follow-up): external import fallback for .index-card markup.
+        // accent_color inferred from .tri / .rsi modifier classes (matches the
+        // test-article CSS convention); defaults to orange.
+        tag: "div.index-card",
+        priority: 51,
+        getAttrs: (el) => {
+          if (!(el instanceof HTMLElement)) return false;
+          const tag =
+            el.querySelector(".index-tag")?.textContent?.trim() ?? "";
+          const name =
+            el.querySelector(".index-name")?.textContent?.trim() ?? "";
+          const formulaText = el
+            .querySelector(".index-formula")
+            ?.textContent?.trim();
+          const formula =
+            formulaText && formulaText.length > 0 ? formulaText : null;
+          const note =
+            el.querySelector(".index-note")?.textContent?.trim() ?? "";
+          const accent_color = el.classList.contains("tri")
+            ? "navy"
+            : el.classList.contains("rsi")
+              ? "orange"
+              : "orange";
+          return { tag, name, formula, note, accent_color };
         },
       },
     ];

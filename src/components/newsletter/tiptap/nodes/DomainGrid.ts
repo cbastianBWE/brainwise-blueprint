@@ -103,6 +103,49 @@ export const NewsletterDomainRow = Node.create({
           };
         },
       },
+      {
+        // §151 (H5 Follow-up): external import fallback for .domain-row markup.
+        // getAttrs reads visible text BEFORE atom-discard. tag_text/tag_variant
+        // intentionally left null on import (chip is opt-in via editor).
+        tag: "div.domain-row",
+        priority: 51,
+        getAttrs: (el) => {
+          if (!(el instanceof HTMLElement)) return false;
+
+          const labelEl = el.querySelector(".domain-label");
+          const label = labelEl
+            ? Array.from(labelEl.childNodes)
+                .filter((n) => n.nodeType === 3)
+                .map((n) => n.textContent ?? "")
+                .join("")
+                .trim()
+            : "";
+
+          const description =
+            el.querySelector(".domain-desc")?.textContent?.trim() ?? "";
+
+          const countEl = el.querySelector(".domain-count");
+          const count_label =
+            countEl?.querySelector("span")?.textContent?.trim() ?? "";
+          const count_value = countEl
+            ? Array.from(countEl.childNodes)
+                .filter((n) => n.nodeType === 3)
+                .map((n) => n.textContent ?? "")
+                .join("")
+                .trim()
+            : "";
+
+          return {
+            number: "",
+            label,
+            tag_text: null,
+            tag_variant: null,
+            description,
+            count_value,
+            count_label,
+          };
+        },
+      },
     ];
   },
 
