@@ -1,7 +1,7 @@
 import { NodeViewWrapper, type NodeViewProps } from "@tiptap/react";
 import { useFootnotesAggregator } from "@/components/newsletter/editor/useFootnotesAggregator";
 
-export function FootnotesReaderNodeView({ editor }: NodeViewProps) {
+export default function FootnotesReaderNodeView({ editor }: NodeViewProps) {
   const refs = useFootnotesAggregator(editor);
 
   if (refs.length === 0) return null;
