@@ -15,6 +15,12 @@ const FRIENDLY: Record<string, string> = {
   article_not_found: "This article no longer exists. Reload the page.",
   user_message_too_long: "Your message is too long. Keep it under 100,000 characters.",
   too_many_attachments: "Too many attachments.",
+  invalid_attachment_shape:
+    "An attachment couldn't be processed. Try removing it and re-attaching.",
+  attachment_text_total_too_long:
+    "The attached files contain too much text. Try removing one or shortening.",
+  invalid_selection_range:
+    "The selection couldn't be processed. Try reselecting and sending again.",
 };
 
 const FALLBACK = "Something went wrong. Try again.";
