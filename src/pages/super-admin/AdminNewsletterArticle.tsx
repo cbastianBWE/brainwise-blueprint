@@ -586,6 +586,25 @@ export default function AdminNewsletterArticle() {
                 {draft.slug ? "Opens public reader (G6)" : "Set a slug to preview"}
               </TooltipContent>
             </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span>
+                  <Button
+                    variant={aiPaneOpen ? "secondary" : "ghost"}
+                    size="sm"
+                    disabled={isCreate || !articleId}
+                    onClick={() => setAiPaneOpen((v) => !v)}
+                  >
+                    <Sparkles className="h-4 w-4" /> AI co-pilot
+                  </Button>
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                {isCreate || !articleId
+                  ? "Save the article first to enable the AI co-pilot."
+                  : aiPaneOpen ? "Hide co-pilot" : "Open AI co-pilot"}
+              </TooltipContent>
+            </Tooltip>
           </div>
         </div>
 
