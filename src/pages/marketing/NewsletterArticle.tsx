@@ -45,6 +45,13 @@ interface GrantedArticle {
   seo_title: string | null;
   seo_description: string | null;
   canonical_url: string | null;
+  eyebrow_text?: string | null;
+  is_issue_based?: boolean | null;
+  issue_label?: string | null;
+  masthead_publication?: string | null;
+  masthead_logo_glyph?: string | null;
+  default_layout_width?: "standard" | "wide" | "narrow" | null;
+  theme_variant?: "default" | "editorial" | "minimal" | "technical" | null;
 }
 
 interface PaywallArticle {
