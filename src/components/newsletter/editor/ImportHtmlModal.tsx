@@ -106,6 +106,14 @@ interface ImportHtmlModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onImported: (newBodyTiptap: NewsletterTipTapDoc) => void;
+  /**
+   * Optional HTML to feed straight into the conversion pipeline when the
+   * modal opens (e.g. AI co-pilot generated HTML). When set, the idle
+   * drop/paste UI is skipped and runConversion(initialHtml) fires once.
+   * Parent should clear this prop when onOpenChange(false) fires so a
+   * subsequent reopen with the same html doesn't auto-retrigger.
+   */
+  initialHtml?: string;
 }
 
 const ERROR_MESSAGES: Record<string, string> = {
@@ -222,6 +230,7 @@ export default function ImportHtmlModal({
   open,
   onOpenChange,
   onImported,
+  initialHtml,
 }: ImportHtmlModalProps) {
   const [state, setState] = useState<ImportState>({ phase: "idle" });
   const [pasteOpen, setPasteOpen] = useState(false);
@@ -232,6 +241,7 @@ export default function ImportHtmlModal({
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const closedDuringConvertRef = useRef(false);
+  const initialHtmlConsumedRef = useRef<string | null>(null);
 
   const reset = useCallback(() => {
     setState({ phase: "idle" });
@@ -251,8 +261,21 @@ export default function ImportHtmlModal({
         abortRef.current = null;
       }
       reset();
+      initialHtmlConsumedRef.current = null;
     }
   }, [open, reset]);
+
+  // Auto-feed initialHtml (e.g. from AI co-pilot) into the conversion pipeline
+  // once per open. Guarded so a stale prop value can't retrigger.
+  useEffect(() => {
+    if (!open) return;
+    if (!initialHtml || initialHtml.trim().length === 0) return;
+    if (initialHtmlConsumedRef.current === initialHtml) return;
+    if (state.phase !== "idle") return;
+    initialHtmlConsumedRef.current = initialHtml;
+    void runConversion(initialHtml);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, initialHtml, state.phase]);
 
   const handleClose = (next: boolean) => {
     if (!next && state.phase === "converting") {

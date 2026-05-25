@@ -14,6 +14,7 @@ import {
   CalendarClock,
   History,
   X,
+  Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -72,6 +73,7 @@ import { NewsletterEditor, type NewsletterEditorHandle } from "@/components/news
 import type { NewsletterTipTapDoc } from "@/components/newsletter/tiptap/types";
 import VersionHistorySheet from "@/components/newsletter/versions/VersionHistorySheet";
 import ImportHtmlModal from "@/components/newsletter/editor/ImportHtmlModal";
+import { NewsletterAiPane } from "@/components/super-admin/newsletter/ai-copilot/NewsletterAiPane";
 
 type Status = "draft" | "scheduled" | "published" | "unpublished" | "archived";
 type Gate = "public" | "subscribers" | "plan_tier";
@@ -428,6 +430,8 @@ export default function AdminNewsletterArticle() {
   const [versionHistoryOpen, setVersionHistoryOpen] = useState(false);
   const [openingVersionHistory, setOpeningVersionHistory] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
+  const [aiImportHtml, setAiImportHtml] = useState<string | undefined>(undefined);
+  const [aiPaneOpen, setAiPaneOpen] = useState(false);
 
   const handleOpenVersionHistory = async () => {
     if (!articleIdRef.current) return;
@@ -580,6 +584,25 @@ export default function AdminNewsletterArticle() {
               </TooltipTrigger>
               <TooltipContent>
                 {draft.slug ? "Opens public reader (G6)" : "Set a slug to preview"}
+              </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span>
+                  <Button
+                    variant={aiPaneOpen ? "secondary" : "ghost"}
+                    size="sm"
+                    disabled={isCreate || !articleId}
+                    onClick={() => setAiPaneOpen((v) => !v)}
+                  >
+                    <Sparkles className="h-4 w-4" /> AI co-pilot
+                  </Button>
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                {isCreate || !articleId
+                  ? "Save the article first to enable the AI co-pilot."
+                  : aiPaneOpen ? "Hide co-pilot" : "Open AI co-pilot"}
               </TooltipContent>
             </Tooltip>
           </div>
@@ -1064,7 +1087,11 @@ export default function AdminNewsletterArticle() {
           <ImportHtmlModal
             articleId={articleId}
             open={importOpen}
-            onOpenChange={setImportOpen}
+            onOpenChange={(next) => {
+              setImportOpen(next);
+              if (!next) setAiImportHtml(undefined);
+            }}
+            initialHtml={aiImportHtml}
             onImported={(newBody) => {
               markDirty();
               setDraft((d) => ({ ...d, body_tiptap: newBody, source_type: "html_import" }));
@@ -1076,6 +1103,16 @@ export default function AdminNewsletterArticle() {
             }}
           />
         )}
+
+        <NewsletterAiPane
+          open={aiPaneOpen && !!articleId}
+          onClose={() => setAiPaneOpen(false)}
+          articleId={articleId}
+          onImportHtml={(html) => {
+            setAiImportHtml(html);
+            setImportOpen(true);
+          }}
+        />
       </div>
     </TooltipProvider>
   );
