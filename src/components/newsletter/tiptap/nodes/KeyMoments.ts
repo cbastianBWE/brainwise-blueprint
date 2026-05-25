@@ -47,6 +47,7 @@ export const NewsletterKeyMoments = Node.create({
     };
   },
 
+  // §151 (H5 Cycle 2): no import-fallback rule. content: "newsletterKeyMoment+" is a BrainWise-specific timeline pattern with no reliable external structural equivalent. External markup cannot satisfy the schema's content expression and ProseMirror's content coercion would drop the wrapper silently.
   parseHTML() {
     return [
       {

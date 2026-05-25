@@ -28,6 +28,7 @@ export const NewsletterIndexRow = Node.create({
     };
   },
 
+  // §151 (H5 Cycle 2): no import-fallback rule. content: "newsletterIndexCard+" is a BrainWise-specific glossary pattern with no plausible external equivalent. External markup cannot satisfy the schema's content expression and ProseMirror's content coercion would drop the wrapper silently.
   parseHTML() {
     return [{ tag: "div[data-newsletter-index-row]" }];
   },
