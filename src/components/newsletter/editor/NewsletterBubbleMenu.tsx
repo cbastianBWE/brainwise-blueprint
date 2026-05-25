@@ -390,6 +390,66 @@ export function NewsletterBubbleMenu({ editor }: NewsletterBubbleMenuProps) {
           </div>
         );
       }
+      case "footnote_ref": {
+        const { footnote_text } = mode;
+        return (
+          <div className="flex w-80 flex-col gap-2 p-1">
+            <div className="flex flex-col gap-1">
+              <span className="text-[10px] uppercase tracking-wider text-[var(--fg-3)]">
+                Footnote text
+              </span>
+              <textarea
+                value={footnote_text}
+                onChange={(e) =>
+                  setMode({ kind: "footnote_ref", footnote_text: e.target.value })
+                }
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                    applyFootnoteRef(footnote_text);
+                  }
+                }}
+                rows={4}
+                placeholder="Footnote body (will appear in the Footnotes block)"
+                autoFocus
+                className="rounded-md border border-[var(--border-1)] bg-white px-2 py-1.5 text-xs text-[var(--fg-1)] placeholder:text-[var(--fg-4)] focus:border-[#F5741A] focus:outline-none"
+              />
+            </div>
+            <div className="flex items-center gap-1 pt-1">
+              <button
+                type="button"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  applyFootnoteRef(footnote_text);
+                }}
+                className="rounded-full bg-[#F5741A] px-3 py-1 text-[11px] font-semibold text-white hover:bg-[#E06714]"
+              >
+                Apply
+              </button>
+              <button
+                type="button"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  editor.chain().focus().unsetMark("footnoteRef").run();
+                  setMode({ kind: "default" });
+                }}
+                className="rounded-full px-3 py-1 text-[11px] font-medium text-[var(--fg-2)] hover:bg-[var(--bw-cream-200)]"
+              >
+                Remove
+              </button>
+              <button
+                type="button"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  setMode({ kind: "default" });
+                }}
+                className="ml-auto rounded-full px-2 py-1 text-[11px] text-[var(--fg-3)] hover:bg-[var(--bw-cream-200)]"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        );
+      }
       case "accent": {
         const m = mode;
         const ACCENT_COLORS: AccentColor[] = [
