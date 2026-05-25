@@ -85,6 +85,7 @@ import { Highlight } from "./marks/Highlight";
 import { Keyboard } from "./marks/Keyboard";
 import { Abbr } from "./marks/Abbr";
 import { Definition } from "./marks/Definition";
+import { FootnoteRef } from "./marks/FootnoteRef";
 
 export interface BuildExtensionsOptions {
   editable: boolean;
