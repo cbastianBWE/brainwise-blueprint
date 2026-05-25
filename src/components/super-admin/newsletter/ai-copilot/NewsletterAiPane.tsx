@@ -53,6 +53,20 @@ interface Props {
   editorSelection: SelectionRange | null;
   onReplaceSelection: (from: number, to: number, html: string) => void;
   onClearSelection: () => void;
+  onOpenStockPicker: (initialQuery: string) => void;
+}
+
+/**
+ * Parses a chat input as the `/image` slash command.
+ * Returns `{ query }` (possibly empty string) when matched, else null.
+ * Pure launcher — never produces a chat bubble or AI call.
+ */
+function parseStockImageCommand(input: string): { query: string } | null {
+  const trimmed = input.trim();
+  if (!trimmed.toLowerCase().startsWith("/image")) return null;
+  const match = trimmed.match(/^\/image\b\s*(.*)$/i);
+  if (!match) return null;
+  return { query: match[1].trim() };
 }
 
 export function NewsletterAiPane({
@@ -63,6 +77,7 @@ export function NewsletterAiPane({
   editorSelection,
   onReplaceSelection,
   onClearSelection,
+  onOpenStockPicker,
 }: Props) {
   const { user } = useAuth();
   const { isImpersonating } = useImpersonation();
@@ -132,6 +147,17 @@ export function NewsletterAiPane({
   const handleSend = useCallback(async () => {
     if (!articleId || !user?.id) return;
     const trimmed = input.trim();
+
+    // /image slash-command: pure launcher. Intercept BEFORE any state
+    // mutation, AI call, or audit row. Pending attachments and active
+    // selection are intentionally preserved.
+    const stockCmd = parseStockImageCommand(trimmed);
+    if (stockCmd) {
+      onOpenStockPicker(stockCmd.query);
+      setInput("");
+      return;
+    }
+
     if (
       !trimmed ||
       isGenerating ||
