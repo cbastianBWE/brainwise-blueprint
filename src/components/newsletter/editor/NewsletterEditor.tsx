@@ -281,6 +281,11 @@ const NodeRelatedArticlesEdit = NewsletterRelatedArticles.extend({
     return ReactNodeViewRenderer(RelatedArticlesNodeView);
   },
 });
+const NodeFootnotesEdit = NewsletterFootnotes.extend({
+  addNodeView() {
+    return ReactNodeViewRenderer(FootnotesNodeView);
+  },
+});
 
 const EDITABLE_NODE_OVERRIDES = [
   NodeImageEdit,
