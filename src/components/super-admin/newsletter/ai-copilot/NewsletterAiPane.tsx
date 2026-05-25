@@ -264,6 +264,7 @@ export function NewsletterAiPane({
     editorSelection,
     attachmentManager,
     toast,
+    onOpenStockPicker,
   ]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
