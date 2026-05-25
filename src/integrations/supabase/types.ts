@@ -2784,6 +2784,7 @@ export type Database = {
           newsletter_article_id: string | null
           ref_field: string
           resource_id: string | null
+          user_id: string | null
         }
         Insert: {
           archived_at?: string | null
@@ -2799,6 +2800,7 @@ export type Database = {
           newsletter_article_id?: string | null
           ref_field: string
           resource_id?: string | null
+          user_id?: string | null
         }
         Update: {
           archived_at?: string | null
@@ -2814,6 +2816,7 @@ export type Database = {
           newsletter_article_id?: string | null
           ref_field?: string
           resource_id?: string | null
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -2898,6 +2901,34 @@ export type Database = {
             columns: ["resource_id"]
             isOneToOne: false
             referencedRelation: "resources"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_asset_refs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_asset_refs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "content_asset_refs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_asset_refs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
@@ -8694,6 +8725,7 @@ export type Database = {
         Row: {
           account_status: string
           account_type: string | null
+          avatar_asset_id: string | null
           bio: string | null
           conversion_token: string | null
           conversion_token_expires_at: string | null
@@ -8735,6 +8767,7 @@ export type Database = {
         Insert: {
           account_status?: string
           account_type?: string | null
+          avatar_asset_id?: string | null
           bio?: string | null
           conversion_token?: string | null
           conversion_token_expires_at?: string | null
@@ -8776,6 +8809,7 @@ export type Database = {
         Update: {
           account_status?: string
           account_type?: string | null
+          avatar_asset_id?: string | null
           bio?: string | null
           conversion_token?: string | null
           conversion_token_expires_at?: string | null
@@ -8815,6 +8849,13 @@ export type Database = {
           ui_preferences?: Json
         }
         Relationships: [
+          {
+            foreignKeyName: "users_avatar_asset_id_fkey"
+            columns: ["avatar_asset_id"]
+            isOneToOne: false
+            referencedRelation: "content_assets"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "users_department_id_fkey"
             columns: ["department_id"]
@@ -10351,6 +10392,7 @@ export type Database = {
         }
         Returns: Json
       }
+      get_newsletter_author_bio: { Args: { p_user_id: string }; Returns: Json }
       get_notification_preferences: { Args: never; Returns: Json }
       get_org_intervention_history: {
         Args: { p_intervention_id: string }
@@ -10908,6 +10950,7 @@ export type Database = {
           p_ref_field?: string
           p_resource_id?: string
           p_size_bytes: number
+          p_user_id?: string
         }
         Returns: Json
       }
@@ -11097,6 +11140,10 @@ export type Database = {
           p_storage_path: string
           p_trainee_user_id?: string
         }
+        Returns: Json
+      }
+      set_user_avatar: {
+        Args: { p_asset_id: string; p_reason: string; p_user_id: string }
         Returns: Json
       }
       sharing_preferences_upsert: {
