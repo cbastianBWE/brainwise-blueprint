@@ -63,7 +63,8 @@ type Mode =
       weight: AccentWeight;
     }
   | { kind: "highlight"; color: HighlightColor }
-  | { kind: "definition"; definition_text: string; source: string };
+  | { kind: "definition"; definition_text: string; source: string }
+  | { kind: "footnote_ref"; footnote_text: string };
 
 interface NewsletterBubbleMenuProps {
   editor: Editor;
