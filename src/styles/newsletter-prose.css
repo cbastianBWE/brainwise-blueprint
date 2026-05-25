@@ -2087,3 +2087,43 @@
   letter-spacing: 0.06em;
   color: rgba(0, 0, 0, 0.45);
 }
+
+/* ============================================================ */
+/* Bundle P7c — FootnoteRef mark + Footnotes block               */
+/* Inline ref carries a CSS-counter-driven superscript number    */
+/* via ::after; Footnotes block uses <ol> implicit list numbering */
+/* — both walk document order so they stay in sync.              */
+/* ============================================================ */
+.newsletter-prose {
+  counter-reset: footnote-counter;
+}
+.newsletter-prose [data-newsletter-footnote-ref] {
+  counter-increment: footnote-counter;
+}
+.newsletter-prose [data-newsletter-footnote-ref]::after {
+  content: counter(footnote-counter);
+  vertical-align: super;
+  font-size: 0.75em;
+  color: var(--bw-teal, #2A6F7F);
+  font-weight: 600;
+  margin-left: 1px;
+}
+.newsletter-prose [data-newsletter-footnotes] {
+  margin-top: 3rem;
+  padding-top: 1.5rem;
+  border-top: 2px solid var(--bw-sand-dark, #e8e3d8);
+}
+.newsletter-prose [data-newsletter-footnotes] h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 1rem 0;
+}
+.newsletter-prose [data-newsletter-footnotes-list] {
+  list-style: decimal;
+  padding-left: 1.5rem;
+}
+.newsletter-prose [data-newsletter-footnote-entry] {
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
