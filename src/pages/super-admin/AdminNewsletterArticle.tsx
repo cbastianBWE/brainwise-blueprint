@@ -150,7 +150,7 @@ export default function AdminNewsletterArticle() {
       if (!articleId) return null;
       const { data, error } = await supabase
         .from("newsletter_articles")
-        .select("id, title, slug, excerpt, body_tiptap, gate, allowed_plan_tiers, cover_asset_id, og_image_asset_id, seo_title, seo_description, canonical_url, source_type, status, scheduled_for, category_id, tags")
+        .select("id, title, slug, excerpt, body_tiptap, gate, allowed_plan_tiers, cover_asset_id, og_image_asset_id, seo_title, seo_description, canonical_url, source_type, status, scheduled_for, category_id, tags, eyebrow_text, is_issue_based, issue_label, masthead_publication, masthead_logo_glyph, default_layout_width, theme_variant")
         .eq("id", articleId)
         .maybeSingle();
       if (error) throw error;
