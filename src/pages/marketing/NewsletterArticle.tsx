@@ -22,6 +22,7 @@ import { useNewsletterImageUrl } from "@/components/newsletter/editor/useNewslet
 import ImageReaderNodeView from "@/components/marketing/newsletter/reader-nodeviews/ImageReaderNodeView";
 import EmbedReaderNodeView from "@/components/marketing/newsletter/reader-nodeviews/EmbedReaderNodeView";
 import SubscribeBlockReaderNodeView from "@/components/marketing/newsletter/reader-nodeviews/SubscribeBlockReaderNodeView";
+import RelatedArticlesReaderNodeView from "@/components/marketing/newsletter/reader-nodeviews/RelatedArticlesReaderNodeView";
 import type { NewsletterTipTapDoc } from "@/components/newsletter/tiptap/types";
 
 type AuthorLite = { user_id?: string; display_name: string | null; avatar_url?: string | null };
@@ -408,9 +409,17 @@ function GrantedView({
           addNodeView: () => ReactNodeViewRenderer(SubscribeBlockReaderNodeView),
         });
       }
+      if (ext.name === "newsletterRelatedArticles") {
+        return ext.extend({
+          addOptions() {
+            return { sourceArticleId: article.id };
+          },
+          addNodeView: () => ReactNodeViewRenderer(RelatedArticlesReaderNodeView),
+        });
+      }
       return ext;
     });
-  }, []);
+  }, [article.id]);
 
   const editor = useEditor(
     {

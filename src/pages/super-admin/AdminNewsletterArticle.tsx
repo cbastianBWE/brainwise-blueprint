@@ -378,6 +378,17 @@ export default function AdminNewsletterArticle() {
     },
   });
 
+  // ----- Categories (P7b) -----
+  const { data: categories } = useQuery({
+    queryKey: ["newsletter-categories-active"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("list_active_newsletter_categories");
+      if (error) throw error;
+      const raw = (data ?? {}) as Record<string, unknown>;
+      return ((raw.items as Array<{ id: string; slug: string; display_name: string }>) ?? []);
+    },
+  });
+
   // ----- State transitions -----
   const [transitionDialog, setTransitionDialog] = useState<null | {
     kind: "publish" | "cancel_schedule" | "unpublish" | "archive";
@@ -641,6 +652,8 @@ export default function AdminNewsletterArticle() {
                   initialContent={draft.body_tiptap}
                   onChange={(next) => setField("body_tiptap", next)}
                   onOpenImportHtml={articleId ? () => setImportOpen(true) : undefined}
+                  tags={draft.tags}
+                  categoryId={draft.category_id}
                 />
               )}
             </section>
@@ -695,6 +708,46 @@ export default function AdminNewsletterArticle() {
                         ))}
                       </div>
                     )}
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader><CardTitle className="text-sm">Category & tags</CardTitle></CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="cat-select" className="text-xs">Category</Label>
+                      <select
+                        id="cat-select"
+                        value={draft.category_id ?? ""}
+                        onChange={(e) => setField("category_id", e.target.value || null)}
+                        className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                      >
+                        <option value="">— None —</option>
+                        {(categories ?? []).map((c) => (
+                          <option key={c.id} value={c.id}>{c.display_name}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="tags-input" className="text-xs">Tags (comma-separated)</Label>
+                      <Input
+                        id="tags-input"
+                        value={(draft.tags ?? []).join(", ")}
+                        onChange={(e) => {
+                          const parsed = e.target.value
+                            .split(",")
+                            .map((t) => t.trim())
+                            .filter(Boolean);
+                          setField("tags", parsed);
+                        }}
+                        placeholder="leadership, neuroscience"
+                      />
+                      {(!draft.tags || draft.tags.length === 0) && (
+                        <p className="text-xs text-amber-600 flex items-center gap-1">
+                          <AlertCircle className="h-3 w-3" /> No tags — by-tags related articles won't resolve.
+                        </p>
+                      )}
+                    </div>
                   </CardContent>
                 </Card>
 

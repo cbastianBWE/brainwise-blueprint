@@ -68,6 +68,7 @@ interface ArticleRow {
   gate: string;
   excerpt: string | null;
   updated_at: string;
+  category_display_name?: string | null;
   authors?: Array<{ id?: string; full_name?: string | null; email?: string | null }> | null;
 }
 
@@ -263,6 +264,7 @@ export default function AdminNewsletter() {
               <TableHead>Title</TableHead>
               <TableHead className="w-[120px]">Status</TableHead>
               <TableHead className="w-[120px]">Gate</TableHead>
+              <TableHead className="w-[140px]">Category</TableHead>
               <TableHead className="w-[200px]">Authors</TableHead>
               <TableHead className="w-[140px]">Updated</TableHead>
               <TableHead className="w-[60px]"></TableHead>
@@ -275,6 +277,7 @@ export default function AdminNewsletter() {
                   <TableCell><Skeleton className="h-5 w-2/3" /><Skeleton className="h-3 w-1/3 mt-2" /></TableCell>
                   <TableCell><Skeleton className="h-5 w-16" /></TableCell>
                   <TableCell><Skeleton className="h-5 w-16" /></TableCell>
+                  <TableCell><Skeleton className="h-5 w-20" /></TableCell>
                   <TableCell><Skeleton className="h-5 w-24" /></TableCell>
                   <TableCell><Skeleton className="h-4 w-20" /></TableCell>
                   <TableCell></TableCell>
@@ -282,7 +285,7 @@ export default function AdminNewsletter() {
               ))
             ) : items.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="py-16">
+                <TableCell colSpan={7} className="py-16">
                   <div className="flex flex-col items-center text-center gap-3">
                     <div className="h-14 w-14 rounded-full bg-slate-100 flex items-center justify-center">
                       <Newspaper className="h-7 w-7 text-slate-400" />
@@ -319,6 +322,15 @@ export default function AdminNewsletter() {
                   </TableCell>
                   <TableCell><StatusBadge status={item.status} /></TableCell>
                   <TableCell><GateBadge gate={item.gate} /></TableCell>
+                  <TableCell>
+                    {item.category_display_name ? (
+                      <Badge variant="outline" className="border-slate-200 bg-white text-slate-600 font-normal">
+                        {item.category_display_name}
+                      </Badge>
+                    ) : (
+                      <span className="text-xs text-slate-400">—</span>
+                    )}
+                  </TableCell>
                   <TableCell>
                     <AuthorStack authors={item.authors ?? []} />
                   </TableCell>
