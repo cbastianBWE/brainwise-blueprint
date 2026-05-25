@@ -14,6 +14,7 @@ import {
   CalendarClock,
   History,
   X,
+  Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -72,6 +73,7 @@ import { NewsletterEditor, type NewsletterEditorHandle } from "@/components/news
 import type { NewsletterTipTapDoc } from "@/components/newsletter/tiptap/types";
 import VersionHistorySheet from "@/components/newsletter/versions/VersionHistorySheet";
 import ImportHtmlModal from "@/components/newsletter/editor/ImportHtmlModal";
+import { NewsletterAiPane } from "@/components/super-admin/newsletter/ai-copilot/NewsletterAiPane";
 
 type Status = "draft" | "scheduled" | "published" | "unpublished" | "archived";
 type Gate = "public" | "subscribers" | "plan_tier";
