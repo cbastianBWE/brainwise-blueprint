@@ -418,6 +418,11 @@ function GrantedView({
           addNodeView: () => ReactNodeViewRenderer(RelatedArticlesReaderNodeView),
         });
       }
+      if (ext.name === "newsletterFootnotes") {
+        return ext.extend({
+          addNodeView: () => ReactNodeViewRenderer(FootnotesReaderNodeView),
+        });
+      }
       return ext;
     });
   }, [article.id]);
