@@ -430,6 +430,8 @@ export default function AdminNewsletterArticle() {
   const [versionHistoryOpen, setVersionHistoryOpen] = useState(false);
   const [openingVersionHistory, setOpeningVersionHistory] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
+  const [aiImportHtml, setAiImportHtml] = useState<string | undefined>(undefined);
+  const [aiPaneOpen, setAiPaneOpen] = useState(false);
 
   const handleOpenVersionHistory = async () => {
     if (!articleIdRef.current) return;
