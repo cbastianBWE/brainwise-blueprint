@@ -56,6 +56,7 @@ import {
   SplitSquareHorizontal,
   Tags,
   BookOpen,
+  UserCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -373,6 +374,21 @@ export const SLASH_COMMANDS: SlashCommandItem[] = [
         .insertContent({
           type: "newsletterFurtherReading",
           attrs: { entries: [], title: null },
+        })
+        .run(),
+  },
+  {
+    id: "author-bio",
+    label: "Author bio",
+    description: "About the author card with avatar + bio.",
+    category: "EDITORIAL",
+    icon: UserCircle,
+    keywords: ["author", "bio", "about", "profile"],
+    run: (e, r) =>
+      deleteRange(e, r)
+        .insertContent({
+          type: "newsletterAuthorBio",
+          attrs: { user_id: null },
         })
         .run(),
   },

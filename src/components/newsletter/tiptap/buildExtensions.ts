@@ -66,6 +66,7 @@ import {
   NewsletterCitationEntry,
 } from "./nodes/Citations";
 import { NewsletterFurtherReading } from "./nodes/FurtherReading";
+import { NewsletterAuthorBio } from "./nodes/AuthorBio";
 
 import { Accent } from "./marks/Accent";
 import { SmallCaps } from "./marks/SmallCaps";
@@ -195,6 +196,7 @@ export function buildExtensions(opts: BuildExtensionsOptions): Extensions {
     NewsletterCitations,
     NewsletterCitationEntry,
     NewsletterFurtherReading,
+    NewsletterAuthorBio,
     Accent,
     SmallCaps,
     Superscript,

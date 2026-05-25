@@ -52,6 +52,7 @@ import {
   NewsletterCitations,
   NewsletterCitationEntry,
   NewsletterFurtherReading,
+  NewsletterAuthorBio,
 } from "@/components/newsletter/tiptap";
 import { NewsletterCodeBlock } from "@/components/newsletter/tiptap/buildExtensions";
 import type { NewsletterTipTapDoc } from "@/components/newsletter/tiptap/types";
@@ -81,6 +82,7 @@ import { FooterMetaNodeView } from "@/components/newsletter/tiptap/nodeviews/Foo
 import { CitationsNodeView } from "@/components/newsletter/tiptap/nodeviews/CitationsNodeView";
 import { CitationEntryNodeView } from "@/components/newsletter/tiptap/nodeviews/CitationEntryNodeView";
 import { FurtherReadingNodeView } from "@/components/newsletter/tiptap/nodeviews/FurtherReadingNodeView";
+import { AuthorBioNodeView } from "@/components/newsletter/tiptap/nodeviews/AuthorBioNodeView";
 import { NewsletterToolbar } from "./NewsletterToolbar";
 import { NewsletterBubbleMenu } from "./NewsletterBubbleMenu";
 import { NewsletterFloatingPlus } from "./NewsletterFloatingPlus";
@@ -240,6 +242,11 @@ const NodeFurtherReadingEdit = NewsletterFurtherReading.extend({
     return ReactNodeViewRenderer(FurtherReadingNodeView);
   },
 });
+const NodeAuthorBioEdit = NewsletterAuthorBio.extend({
+  addNodeView() {
+    return ReactNodeViewRenderer(AuthorBioNodeView);
+  },
+});
 
 const EDITABLE_NODE_OVERRIDES = [
   NodeImageEdit,
@@ -268,6 +275,7 @@ const EDITABLE_NODE_OVERRIDES = [
   NodeCitationsEdit,
   NodeCitationEntryEdit,
   NodeFurtherReadingEdit,
+  NodeAuthorBioEdit,
 ];
 
 const OVERRIDE_NAMES = new Set(EDITABLE_NODE_OVERRIDES.map((n) => n.name));
