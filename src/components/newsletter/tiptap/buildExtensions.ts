@@ -74,6 +74,7 @@ import {
   NewsletterDisclosureSummary,
 } from "./nodes/Disclosure";
 import { NewsletterRelatedArticles } from "./nodes/RelatedArticles";
+import { NewsletterFootnotes } from "./nodes/Footnotes";
 
 import { Accent } from "./marks/Accent";
 import { SmallCaps } from "./marks/SmallCaps";
