@@ -74,6 +74,7 @@ import type { NewsletterTipTapDoc } from "@/components/newsletter/tiptap/types";
 import VersionHistorySheet from "@/components/newsletter/versions/VersionHistorySheet";
 import ImportHtmlModal from "@/components/newsletter/editor/ImportHtmlModal";
 import { NewsletterAiPane } from "@/components/super-admin/newsletter/ai-copilot/NewsletterAiPane";
+import PexelsPicker from "@/components/super-admin/newsletter/PexelsPicker";
 import type { SelectionRange } from "@/components/super-admin/newsletter/ai-copilot/types";
 import { DOMSerializer } from "prosemirror-model";
 
@@ -274,6 +275,12 @@ export default function AdminNewsletterArticle() {
   articleIdRef.current = articleId;
   const editorHandleRef = useRef<NewsletterEditorHandle | null>(null);
   const [editorSelection, setEditorSelection] = useState<SelectionRange | null>(null);
+  const [pexelsPickerOpen, setPexelsPickerOpen] = useState(false);
+  const [pexelsPickerInitialQuery, setPexelsPickerInitialQuery] = useState<string>("");
+  const openPexelsPicker = useCallback((initialQuery: string = "") => {
+    setPexelsPickerInitialQuery(initialQuery);
+    setPexelsPickerOpen(true);
+  }, []);
 
   // Subscribe to TipTap selectionUpdate so the AI co-pilot can see the
   // currently-selected range. The editor instance becomes available shortly
@@ -741,6 +748,7 @@ export default function AdminNewsletterArticle() {
                   initialContent={draft.body_tiptap}
                   onChange={(next) => setField("body_tiptap", next)}
                   onOpenImportHtml={articleId ? () => setImportOpen(true) : undefined}
+                  onOpenStockPicker={articleId ? () => openPexelsPicker("") : undefined}
                   tags={draft.tags}
                   categoryId={draft.category_id}
                 />
