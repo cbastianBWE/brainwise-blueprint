@@ -1,6 +1,19 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
-import { Download, Loader2, Send, Sparkles, X, AlertCircle } from "lucide-react";
+import {
+  AlertCircle,
+  Download,
+  File as FileIcon,
+  FileText,
+  FileType,
+  Highlighter,
+  Loader2,
+  Paperclip,
+  Replace,
+  Send,
+  Sparkles,
+  X,
+} from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -14,23 +27,43 @@ import { cn } from "@/lib/utils";
 
 import { useNewsletterAiConversation } from "./useNewsletterAiConversation";
 import { mapNewsletterAiError } from "./mapNewsletterAiError";
+import { useNewsletterAttachmentUpload, type PendingAttachment } from "./useNewsletterAttachmentUpload";
+import {
+  ACCEPTED_FILE_EXTENSIONS,
+  MAX_ATTACHMENTS_PER_MESSAGE,
+  stripHtmlToText,
+  type AttachmentKind,
+} from "./extractAttachmentText";
 import {
   extractHtmlBlock,
   type ChatMessage,
   type ModelKey,
   type NewsletterAiGenerateResponse,
+  type SelectionRange,
+  type MessageAttachment,
 } from "./types";
+
+const SONNET_FULL_ID = "claude-sonnet-4-6";
 
 interface Props {
   open: boolean;
   onClose: () => void;
   articleId: string | undefined;
   onImportHtml: (html: string) => void;
+  editorSelection: SelectionRange | null;
+  onReplaceSelection: (from: number, to: number, html: string) => void;
+  onClearSelection: () => void;
 }
 
-const SONNET_FULL_ID = "claude-sonnet-4-6";
-
-export function NewsletterAiPane({ open, onClose, articleId, onImportHtml }: Props) {
+export function NewsletterAiPane({
+  open,
+  onClose,
+  articleId,
+  onImportHtml,
+  editorSelection,
+  onReplaceSelection,
+  onClearSelection,
+}: Props) {
   const { user } = useAuth();
   const { isImpersonating } = useImpersonation();
   const { toast } = useToast();
@@ -51,11 +84,16 @@ export function NewsletterAiPane({ open, onClose, articleId, onImportHtml }: Pro
   const [generationError, setGenerationError] = useState<string | null>(null);
   const [hasHydrated, setHasHydrated] = useState(false);
 
+  const attachmentManager = useNewsletterAttachmentUpload({
+    articleId: articleId ?? "",
+    userId: user?.id ?? "",
+  });
+
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const hydrationKey = `${articleId ?? ""}|${user?.id ?? ""}`;
   const hydratedKeyRef = useRef<string | null>(null);
 
-  // Hydrate from loaded conversation (once per articleId/userId).
   useEffect(() => {
     if (!articleId || !user?.id) return;
     if (isLoadingHistory) return;
@@ -78,7 +116,6 @@ export function NewsletterAiPane({ open, onClose, articleId, onImportHtml }: Pro
     hydrationKey,
   ]);
 
-  // Auto-scroll to bottom on new messages / generation toggle.
   useEffect(() => {
     if (!scrollRef.current) return;
     scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -89,12 +126,33 @@ export function NewsletterAiPane({ open, onClose, articleId, onImportHtml }: Pro
     !!user?.id &&
     !isImpersonating &&
     !isGenerating &&
+    !attachmentManager.hasInFlightWork &&
     input.trim().length > 0;
 
   const handleSend = useCallback(async () => {
     if (!articleId || !user?.id) return;
     const trimmed = input.trim();
-    if (!trimmed || isGenerating || isImpersonating) return;
+    if (
+      !trimmed ||
+      isGenerating ||
+      isImpersonating ||
+      attachmentManager.hasInFlightWork
+    )
+      return;
+
+    const capturedSelection = editorSelection;
+    const capturedAttachments: MessageAttachment[] =
+      attachmentManager.readyAttachments.map((a) => ({
+        kind: a.kind,
+        name: a.file_name,
+        storage_path: a.storage_path!,
+      }));
+    const requestAttachments = attachmentManager.readyAttachments.map((a) => ({
+      kind: a.kind,
+      name: a.file_name,
+      storage_path: a.storage_path!,
+      extracted_text: a.extracted_text!,
+    }));
 
     const userMessage: ChatMessage = {
       id: `temp-${crypto.randomUUID()}`,
@@ -104,9 +162,12 @@ export function NewsletterAiPane({ open, onClose, articleId, onImportHtml }: Pro
       model_used: null,
       created_at: new Date().toISOString(),
       status: "pending",
+      selection_range: capturedSelection,
+      attachments: capturedAttachments,
     };
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
+    attachmentManager.clearAll();
     setIsGenerating(true);
     setGenerationError(null);
 
@@ -119,6 +180,8 @@ export function NewsletterAiPane({ open, onClose, articleId, onImportHtml }: Pro
             conversation_id: conversationId,
             user_message: trimmed,
             model,
+            selection_range: capturedSelection,
+            attachments: requestAttachments,
           },
         },
       );
@@ -143,6 +206,8 @@ export function NewsletterAiPane({ open, onClose, articleId, onImportHtml }: Pro
           model_used: data.model_used,
           created_at: new Date().toISOString(),
           status: "persisted",
+          selection_range: capturedSelection,
+          attachments: [],
         };
         return [...updated, assistantMessage];
       });
@@ -162,7 +227,18 @@ export function NewsletterAiPane({ open, onClose, articleId, onImportHtml }: Pro
     } finally {
       setIsGenerating(false);
     }
-  }, [articleId, user?.id, input, isGenerating, isImpersonating, conversationId, model, toast]);
+  }, [
+    articleId,
+    user?.id,
+    input,
+    isGenerating,
+    isImpersonating,
+    conversationId,
+    model,
+    editorSelection,
+    attachmentManager,
+    toast,
+  ]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
@@ -170,6 +246,32 @@ export function NewsletterAiPane({ open, onClose, articleId, onImportHtml }: Pro
       void handleSend();
     }
   };
+
+  const handleFilePick = () => fileInputRef.current?.click();
+
+  const handleFilesChosen = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    e.target.value = "";
+    if (files.length === 0) return;
+    const totalAfterAdd = attachmentManager.pending.length + files.length;
+    if (totalAfterAdd > MAX_ATTACHMENTS_PER_MESSAGE) {
+      toast({
+        title: "Too many attachments",
+        description: `Max ${MAX_ATTACHMENTS_PER_MESSAGE} per message.`,
+        variant: "destructive",
+      });
+      return;
+    }
+    void attachmentManager.addFiles(files);
+  };
+
+  const selectionPreview = editorSelection
+    ? stripHtmlToText(editorSelection.html_snippet)
+    : "";
+  const selectionPreviewTruncated =
+    selectionPreview.length > 80
+      ? `${selectionPreview.slice(0, 80)}…`
+      : selectionPreview;
 
   return (
     <aside
@@ -237,7 +339,10 @@ export function NewsletterAiPane({ open, onClose, articleId, onImportHtml }: Pro
             </div>
           ) : messages.length === 0 ? (
             <div className="px-4 py-12 text-center text-sm text-muted-foreground">
-              Ask the co-pilot to draft a section, suggest a structure, or help revise your article.
+              Ask the co-pilot to draft a section, suggest a structure, or help
+              revise your article. You can also select text in the editor to
+              ask for targeted edits, or attach research files (PDF, docx, txt,
+              md) as context.
             </div>
           ) : (
             messages.map((m) => (
@@ -245,6 +350,7 @@ export function NewsletterAiPane({ open, onClose, articleId, onImportHtml }: Pro
                 key={m.id}
                 message={m}
                 onImport={onImportHtml}
+                onReplaceSelection={onReplaceSelection}
               />
             ))
           )}
@@ -273,6 +379,42 @@ export function NewsletterAiPane({ open, onClose, articleId, onImportHtml }: Pro
         </div>
       )}
 
+      {/* Selection strip */}
+      {editorSelection && (
+        <div
+          className="flex items-center gap-2 border-t bg-amber-50/60 px-3 py-1.5 text-xs"
+          style={{ color: "var(--bw-navy, #021F36)" }}
+        >
+          <Highlighter className="h-3.5 w-3.5 shrink-0 text-amber-600" />
+          <span className="shrink-0 font-medium">Editing selection:</span>
+          <span className="min-w-0 flex-1 truncate italic text-muted-foreground">
+            "{selectionPreviewTruncated}"
+          </span>
+          <button
+            type="button"
+            onClick={onClearSelection}
+            disabled={isImpersonating}
+            aria-label="Clear selection"
+            className="text-muted-foreground hover:text-foreground disabled:opacity-40"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      )}
+
+      {/* Attachment chips */}
+      {attachmentManager.pending.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 border-t bg-background px-3 py-2">
+          {attachmentManager.pending.map((att) => (
+            <AttachmentChip
+              key={att.local_id}
+              attachment={att}
+              onRemove={() => attachmentManager.removeAttachment(att.local_id)}
+            />
+          ))}
+        </div>
+      )}
+
       {/* Input */}
       <div className="border-t bg-background p-3">
         <Textarea
@@ -287,34 +429,116 @@ export function NewsletterAiPane({ open, onClose, articleId, onImportHtml }: Pro
           <span className="text-[11px] text-muted-foreground">
             Cmd/Ctrl + Enter to send
           </span>
-          <Button
-            onClick={() => void handleSend()}
-            disabled={!canSend}
-            size="sm"
-            style={{
-              backgroundColor: canSend ? "var(--bw-orange, #F5741A)" : undefined,
-              color: canSend ? "white" : undefined,
-            }}
-          >
-            {isGenerating ? (
-              <Loader2 className="mr-1 h-4 w-4 animate-spin" />
-            ) : (
-              <Send className="mr-1 h-4 w-4" />
-            )}
-            Send
-          </Button>
+          <div className="flex items-center gap-1.5">
+            <Button
+              type="button"
+              size="icon"
+              variant="ghost"
+              className="h-8 w-8"
+              onClick={handleFilePick}
+              disabled={
+                isImpersonating ||
+                isGenerating ||
+                !articleId ||
+                attachmentManager.pending.length >= MAX_ATTACHMENTS_PER_MESSAGE
+              }
+              title="Attach file (PDF, docx, txt, md)"
+              aria-label="Attach file"
+            >
+              <Paperclip className="h-4 w-4" />
+            </Button>
+            <Button
+              onClick={() => void handleSend()}
+              disabled={!canSend}
+              size="sm"
+              style={{
+                backgroundColor: canSend ? "var(--bw-orange, #F5741A)" : undefined,
+                color: canSend ? "white" : undefined,
+              }}
+            >
+              {isGenerating ? (
+                <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+              ) : (
+                <Send className="mr-1 h-4 w-4" />
+              )}
+              Send
+            </Button>
+          </div>
         </div>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept={ACCEPTED_FILE_EXTENSIONS}
+          multiple
+          hidden
+          onChange={handleFilesChosen}
+        />
       </div>
     </aside>
+  );
+}
+
+function kindIcon(kind: AttachmentKind) {
+  if (kind === "docx") return FileType;
+  if (kind === "txt" || kind === "md") return FileText;
+  return FileIcon;
+}
+
+function AttachmentChip({
+  attachment,
+  onRemove,
+}: {
+  attachment: PendingAttachment;
+  onRemove: () => void;
+}) {
+  const Icon = kindIcon(attachment.kind);
+  const isFailed = attachment.status === "failed";
+  const isBusy =
+    attachment.status === "uploading" || attachment.status === "extracting";
+  const displayName =
+    attachment.file_name.length > 28
+      ? `${attachment.file_name.slice(0, 25)}…`
+      : attachment.file_name;
+
+  return (
+    <div
+      className={cn(
+        "flex items-center gap-1.5 rounded-md border px-2 py-1 text-[11px]",
+        isFailed
+          ? "border-destructive/40 bg-destructive/5 text-destructive"
+          : "border-border bg-muted/40 text-foreground",
+      )}
+      title={isFailed ? attachment.error ?? "Upload failed" : attachment.file_name}
+    >
+      {isBusy ? (
+        <Loader2 className="h-3 w-3 animate-spin" />
+      ) : (
+        <Icon className="h-3 w-3 shrink-0" />
+      )}
+      <span className="max-w-[160px] truncate">{displayName}</span>
+      {isFailed && attachment.error && (
+        <span className="truncate text-destructive">— {attachment.error}</span>
+      )}
+      <button
+        type="button"
+        onClick={onRemove}
+        className="ml-0.5 text-muted-foreground hover:text-foreground"
+        aria-label="Remove attachment"
+      >
+        <X className="h-3 w-3" />
+      </button>
+    </div>
   );
 }
 
 function MessageBubble({
   message,
   onImport,
+  onReplaceSelection,
 }: {
   message: ChatMessage;
   onImport: (html: string) => void;
+  onReplaceSelection: (from: number, to: number, html: string) => void;
 }) {
   const isUser = message.role === "user";
   const isPending = message.status === "pending";
@@ -345,16 +569,51 @@ function MessageBubble({
           </div>
         )}
 
+        {isUser && message.attachments.length > 0 && (
+          <div className="mt-2 flex flex-wrap gap-1">
+            {message.attachments.map((a, i) => {
+              const Icon = kindIcon(a.kind);
+              return (
+                <span
+                  key={`${a.storage_path}-${i}`}
+                  className="inline-flex items-center gap-1 rounded bg-white/15 px-1.5 py-0.5 text-[10px] text-white"
+                  title={a.name}
+                >
+                  <Icon className="h-2.5 w-2.5" />
+                  <span className="max-w-[140px] truncate">{a.name}</span>
+                </span>
+              );
+            })}
+          </div>
+        )}
+
         {!isUser && message.generated_html && (
           <div className="mt-2">
-            <Button
-              size="sm"
-              onClick={() => onImport(message.generated_html!)}
-              style={{ backgroundColor: "var(--bw-orange, #F5741A)", color: "white" }}
-            >
-              <Download className="mr-2 h-4 w-4" />
-              Import this HTML into the article
-            </Button>
+            {message.selection_range ? (
+              <Button
+                size="sm"
+                onClick={() =>
+                  onReplaceSelection(
+                    message.selection_range!.from,
+                    message.selection_range!.to,
+                    message.generated_html!,
+                  )
+                }
+                style={{ backgroundColor: "var(--bw-orange, #F5741A)", color: "white" }}
+              >
+                <Replace className="mr-2 h-4 w-4" />
+                Replace selection with this
+              </Button>
+            ) : (
+              <Button
+                size="sm"
+                onClick={() => onImport(message.generated_html!)}
+                style={{ backgroundColor: "var(--bw-orange, #F5741A)", color: "white" }}
+              >
+                <Download className="mr-2 h-4 w-4" />
+                Import this HTML into the article
+              </Button>
+            )}
           </div>
         )}
 
