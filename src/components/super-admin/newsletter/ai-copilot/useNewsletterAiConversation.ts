@@ -1,6 +1,11 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { extractHtmlBlock, type ChatMessage } from "./types";
+import {
+  extractHtmlBlock,
+  type ChatMessage,
+  type MessageAttachment,
+  type SelectionRange,
+} from "./types";
 
 interface LoadedConversation {
   conversationId: string | null;
@@ -31,22 +36,43 @@ async function loadConversation(
 
   const { data: rows, error: msgErr } = await supabase
     .from("newsletter_ai_messages")
-    .select("id, role, content, model_used, created_at")
+    .select(
+      "id, role, content, model_used, created_at, attachments, selection_range",
+    )
     .eq("conversation_id", conv.id)
     .order("created_at", { ascending: true });
 
   if (msgErr) throw msgErr;
 
   const messages: ChatMessage[] = (rows ?? []).map((r) => {
-    const role = r.role === "assistant" ? "assistant" : "user";
+    const role: "assistant" | "user" = r.role === "assistant" ? "assistant" : "user";
+    const rawAttachments = (r as { attachments?: unknown }).attachments;
+    const attachments: MessageAttachment[] = Array.isArray(rawAttachments)
+      ? (rawAttachments as Array<Record<string, unknown>>)
+          .filter((a) => a && typeof a === "object")
+          .map((a) => ({
+            kind: (a.kind as MessageAttachment["kind"]) ?? "txt",
+            name: typeof a.name === "string" ? a.name : "file",
+            storage_path:
+              typeof a.storage_path === "string" ? a.storage_path : "",
+          }))
+      : [];
+    const rawSel = (r as { selection_range?: unknown }).selection_range;
+    const selection_range: SelectionRange | null =
+      rawSel && typeof rawSel === "object"
+        ? (rawSel as SelectionRange)
+        : null;
     return {
       id: r.id,
       role,
       content: r.content ?? "",
-      generated_html: role === "assistant" ? extractHtmlBlock(r.content ?? "") : null,
+      generated_html:
+        role === "assistant" ? extractHtmlBlock(r.content ?? "") : null,
       model_used: r.model_used,
       created_at: r.created_at,
       status: "persisted" as const,
+      selection_range,
+      attachments,
     };
   });
 

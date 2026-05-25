@@ -1,5 +1,17 @@
 export type ModelKey = "opus" | "sonnet";
 
+export interface SelectionRange {
+  from: number;
+  to: number;
+  html_snippet: string;
+}
+
+export interface MessageAttachment {
+  kind: "pdf" | "docx" | "txt" | "md";
+  name: string;
+  storage_path: string;
+}
+
 export interface ChatMessage {
   id: string;
   role: "user" | "assistant";
@@ -8,6 +20,8 @@ export interface ChatMessage {
   model_used: string | null;
   created_at: string;
   status: "persisted" | "pending" | "failed";
+  selection_range: SelectionRange | null;
+  attachments: MessageAttachment[];
 }
 
 export interface NewsletterAiGenerateResponse {
