@@ -61,7 +61,8 @@ type Mode =
       style: AccentStyle;
       weight: AccentWeight;
     }
-  | { kind: "highlight"; color: HighlightColor };
+  | { kind: "highlight"; color: HighlightColor }
+  | { kind: "definition"; definition_text: string; source: string };
 
 interface NewsletterBubbleMenuProps {
   editor: Editor;
@@ -168,6 +169,25 @@ export function NewsletterBubbleMenu({ editor }: NewsletterBubbleMenuProps) {
         .run();
     } else {
       editor.chain().focus().unsetMark("abbr").run();
+    }
+    setMode({ kind: "default" });
+  };
+
+  const applyDefinition = (definition_text: string, source: string) => {
+    const dt = definition_text.trim();
+    const src = source.trim();
+    if (dt) {
+      editor
+        .chain()
+        .focus()
+        .extendMarkRange("definition")
+        .setMark("definition", {
+          definition_text: dt,
+          source: src.length > 0 && isSafeHttpUrl(src) ? src : null,
+        })
+        .run();
+    } else {
+      editor.chain().focus().unsetMark("definition").run();
     }
     setMode({ kind: "default" });
   };
