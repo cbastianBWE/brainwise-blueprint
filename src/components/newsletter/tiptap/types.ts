@@ -343,6 +343,12 @@ export interface NewsletterChartAttrs {
   caption: string | null;
 }
 
+// ---- Pass 6 (P6b): AuthorBio ----
+
+export interface NewsletterAuthorBioAttrs {
+  user_id: string | null;
+}
+
 // Custom newsletter nodes
 export type CustomNewsletterNode =
   | BaseNode<"newsletterImage", NewsletterImageAttrs>
@@ -383,7 +389,8 @@ export type CustomNewsletterNode =
   | BaseNode<"newsletterFooterMeta", NewsletterFooterMetaAttrs>
   | BaseNode<"newsletterCitations", NewsletterCitationsAttrs>
   | BaseNode<"newsletterCitationEntry", NewsletterCitationEntryAttrs>
-  | BaseNode<"newsletterFurtherReading", NewsletterFurtherReadingAttrs>;
+  | BaseNode<"newsletterFurtherReading", NewsletterFurtherReadingAttrs>
+  | BaseNode<"newsletterAuthorBio", NewsletterAuthorBioAttrs>;
 
 export type NewsletterTipTapNode =
   | TipTapTextNode
