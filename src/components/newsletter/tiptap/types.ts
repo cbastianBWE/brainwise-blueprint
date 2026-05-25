@@ -429,7 +429,8 @@ export type CustomNewsletterNode =
   | BaseNode<"newsletterSubscribeBlock">
   | BaseNode<"newsletterDisclosure", NewsletterDisclosureAttrs>
   | BaseNode<"newsletterDisclosureSummary">
-  | BaseNode<"newsletterRelatedArticles", NewsletterRelatedArticlesAttrs>;
+  | BaseNode<"newsletterRelatedArticles", NewsletterRelatedArticlesAttrs>
+  | BaseNode<"newsletterFootnotes">;
 
 export type NewsletterTipTapNode =
   | TipTapTextNode
