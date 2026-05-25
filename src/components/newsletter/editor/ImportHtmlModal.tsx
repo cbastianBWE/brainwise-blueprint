@@ -261,8 +261,21 @@ export default function ImportHtmlModal({
         abortRef.current = null;
       }
       reset();
+      initialHtmlConsumedRef.current = null;
     }
   }, [open, reset]);
+
+  // Auto-feed initialHtml (e.g. from AI co-pilot) into the conversion pipeline
+  // once per open. Guarded so a stale prop value can't retrigger.
+  useEffect(() => {
+    if (!open) return;
+    if (!initialHtml || initialHtml.trim().length === 0) return;
+    if (initialHtmlConsumedRef.current === initialHtml) return;
+    if (state.phase !== "idle") return;
+    initialHtmlConsumedRef.current = initialHtml;
+    void runConversion(initialHtml);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, initialHtml, state.phase]);
 
   const handleClose = (next: boolean) => {
     if (!next && state.phase === "converting") {
