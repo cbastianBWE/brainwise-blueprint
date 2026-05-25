@@ -230,6 +230,7 @@ export default function ImportHtmlModal({
   open,
   onOpenChange,
   onImported,
+  initialHtml,
 }: ImportHtmlModalProps) {
   const [state, setState] = useState<ImportState>({ phase: "idle" });
   const [pasteOpen, setPasteOpen] = useState(false);
@@ -240,6 +241,7 @@ export default function ImportHtmlModal({
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const closedDuringConvertRef = useRef(false);
+  const initialHtmlConsumedRef = useRef<string | null>(null);
 
   const reset = useCallback(() => {
     setState({ phase: "idle" });
