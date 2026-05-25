@@ -512,10 +512,26 @@ function GrantedView({
   const editor = useEditor(
     {
       extensions,
-      content: article.body_tiptap ?? { type: "doc", content: [{ type: "paragraph" }] },
+      content: buildReaderDoc(
+        article.body_tiptap as TipTapDoc | null | undefined,
+        article,
+        authors,
+        null,
+        null,
+      ),
       editable: false,
     },
-    [article.id, extensions],
+    [
+      article.id,
+      extensions,
+      article.eyebrow_text,
+      article.is_issue_based,
+      article.issue_label,
+      article.masthead_publication,
+      article.masthead_logo_glyph,
+      authors.length,
+      authors[0]?.user_id,
+    ],
   );
 
   // Related articles
