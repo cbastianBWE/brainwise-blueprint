@@ -1,6 +1,13 @@
 import { Node, mergeAttributes } from "@tiptap/core";
 import type { NewsletterImageWidth } from "../types";
 
+export interface NewsletterImageAttribution {
+  source: "pexels" | null;
+  photographer: string;
+  photographer_url: string;
+  source_url: string;
+}
+
 /**
  * newsletterImage — block-level image node.
  *
@@ -45,6 +52,22 @@ export const NewsletterImage = Node.create({
         renderHTML: (attrs) =>
           attrs.lazy_load ? {} : { "data-lazy-load": "false" },
       },
+      attribution: {
+        default: null as NewsletterImageAttribution | null,
+        parseHTML: (el) => {
+          const raw = (el as HTMLElement).getAttribute("data-attribution");
+          if (!raw) return null;
+          try {
+            return JSON.parse(raw) as NewsletterImageAttribution;
+          } catch {
+            return null;
+          }
+        },
+        renderHTML: (attrs) => {
+          if (!attrs.attribution) return {};
+          return { "data-attribution": JSON.stringify(attrs.attribution) };
+        },
+      },
     };
   },
 
@@ -56,6 +79,15 @@ export const NewsletterImage = Node.create({
           if (!(el instanceof HTMLElement)) return false;
           const img = el.querySelector("img");
           const figcaption = el.querySelector("figcaption");
+          let attribution: NewsletterImageAttribution | null = null;
+          const rawAttr = el.getAttribute("data-attribution");
+          if (rawAttr) {
+            try {
+              attribution = JSON.parse(rawAttr) as NewsletterImageAttribution;
+            } catch {
+              attribution = null;
+            }
+          }
           return {
             asset_id: el.getAttribute("data-asset-id"),
             alt: img?.getAttribute("alt") ?? "",
@@ -67,6 +99,7 @@ export const NewsletterImage = Node.create({
               el.getAttribute("data-import-failed-src") || null,
             lightbox: el.getAttribute("data-lightbox") === "true",
             lazy_load: el.getAttribute("data-lazy-load") !== "false",
+            attribution,
           };
         },
       },
@@ -81,6 +114,7 @@ export const NewsletterImage = Node.create({
     const importFailedSrc = (node.attrs.import_failed_src as string | null) || "";
     const lightbox = !!node.attrs.lightbox;
     const lazyLoad = node.attrs.lazy_load !== false;
+    const attribution = (node.attrs.attribution as NewsletterImageAttribution | null) || null;
 
     const wrapperAttrs: Record<string, string> = {
       "data-newsletter-image": "true",
@@ -90,6 +124,9 @@ export const NewsletterImage = Node.create({
     };
     if (importFailedSrc) {
       wrapperAttrs["data-import-failed-src"] = importFailedSrc;
+    }
+    if (attribution) {
+      wrapperAttrs["data-attribution"] = JSON.stringify(attribution);
     }
     if (lightbox) {
       wrapperAttrs["data-lightbox"] = "true";
