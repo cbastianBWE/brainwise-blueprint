@@ -21,6 +21,7 @@ import { buildExtensions } from "@/components/newsletter/tiptap";
 import { useNewsletterImageUrl } from "@/components/newsletter/editor/useNewsletterImageUrl";
 import ImageReaderNodeView from "@/components/marketing/newsletter/reader-nodeviews/ImageReaderNodeView";
 import EmbedReaderNodeView from "@/components/marketing/newsletter/reader-nodeviews/EmbedReaderNodeView";
+import SubscribeBlockReaderNodeView from "@/components/marketing/newsletter/reader-nodeviews/SubscribeBlockReaderNodeView";
 import type { NewsletterTipTapDoc } from "@/components/newsletter/tiptap/types";
 
 type AuthorLite = { user_id?: string; display_name: string | null; avatar_url?: string | null };
@@ -400,6 +401,11 @@ function GrantedView({
       if (ext.name === "newsletterEmbed") {
         return ext.extend({
           addNodeView: () => ReactNodeViewRenderer(EmbedReaderNodeView),
+        });
+      }
+      if (ext.name === "newsletterSubscribeBlock") {
+        return ext.extend({
+          addNodeView: () => ReactNodeViewRenderer(SubscribeBlockReaderNodeView),
         });
       }
       return ext;
