@@ -205,6 +205,13 @@ export default function AdminNewsletterArticle() {
     source_type: "native",
     category_id: null,
     tags: [],
+    eyebrow_text: null,
+    is_issue_based: false,
+    issue_label: null,
+    masthead_publication: null,
+    masthead_logo_glyph: null,
+    default_layout_width: "standard",
+    theme_variant: "default",
   });
   const [status, setStatus] = useState<Status>("draft");
   const [publishAt, setPublishAt] = useState<string | null>(null);
