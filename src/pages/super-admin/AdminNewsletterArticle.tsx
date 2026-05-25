@@ -93,6 +93,13 @@ interface Draft {
   source_type: "html_import" | "native";
   category_id: string | null;
   tags: string[];
+  eyebrow_text: string | null;
+  is_issue_based: boolean;
+  issue_label: string | null;
+  masthead_publication: string | null;
+  masthead_logo_glyph: string | null;
+  default_layout_width: "standard" | "wide" | "narrow";
+  theme_variant: "default" | "editorial" | "minimal" | "technical";
 }
 
 interface ArticleRecord extends Draft {
