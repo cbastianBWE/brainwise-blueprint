@@ -67,6 +67,12 @@ import {
 } from "./nodes/Citations";
 import { NewsletterFurtherReading } from "./nodes/FurtherReading";
 import { NewsletterAuthorBio } from "./nodes/AuthorBio";
+import { NewsletterCta } from "./nodes/CTA";
+import { NewsletterSubscribeBlock } from "./nodes/SubscribeBlock";
+import {
+  NewsletterDisclosure,
+  NewsletterDisclosureSummary,
+} from "./nodes/Disclosure";
 
 import { Accent } from "./marks/Accent";
 import { SmallCaps } from "./marks/SmallCaps";
@@ -76,6 +82,7 @@ import { Underline } from "./marks/Underline";
 import { Highlight } from "./marks/Highlight";
 import { Keyboard } from "./marks/Keyboard";
 import { Abbr } from "./marks/Abbr";
+import { Definition } from "./marks/Definition";
 
 export interface BuildExtensionsOptions {
   editable: boolean;
@@ -197,6 +204,10 @@ export function buildExtensions(opts: BuildExtensionsOptions): Extensions {
     NewsletterCitationEntry,
     NewsletterFurtherReading,
     NewsletterAuthorBio,
+    NewsletterCta,
+    NewsletterSubscribeBlock,
+    NewsletterDisclosure,
+    NewsletterDisclosureSummary,
     Accent,
     SmallCaps,
     Superscript,
@@ -205,5 +216,6 @@ export function buildExtensions(opts: BuildExtensionsOptions): Extensions {
     Highlight,
     Keyboard,
     Abbr,
+    Definition,
   ];
 }
