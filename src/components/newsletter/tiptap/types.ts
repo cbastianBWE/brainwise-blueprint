@@ -431,6 +431,7 @@ export type CustomNewsletterNode =
   | BaseNode<"newsletterAuthorBio", NewsletterAuthorBioAttrs>
   | BaseNode<"newsletterCta", NewsletterCtaAttrs>
   | BaseNode<"newsletterSubscribeBlock">
+  | BaseNode<"newsletterPoll", NewsletterPollAttrs>
   | BaseNode<"newsletterDisclosure", NewsletterDisclosureAttrs>
   | BaseNode<"newsletterDisclosureSummary">
   | BaseNode<"newsletterRelatedArticles", NewsletterRelatedArticlesAttrs>
