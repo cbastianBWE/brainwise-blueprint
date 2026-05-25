@@ -1,56 +1,57 @@
-# H3-NV-Final + H3-NV-Auto — Article-level fields wiring
+# H4 ImportHtmlModal client-side refactor
 
-Pure frontend wiring. No backend, no migrations, no new deps. Two files modified.
+Single-file edit of `src/components/newsletter/editor/ImportHtmlModal.tsx`. Moves HTML→TipTap tree-walking from the deprecated `convert-html-to-tiptap` Edge Function into the browser via `generateJSON`; new `import-html-images` Edge Function (already deployed) is called only to fetch/upload images.
 
-## File 1: `src/pages/super-admin/AdminNewsletterArticle.tsx`
+## Scope
 
-**Draft state (Draft interface, ~L80):** add 7 fields:
-- `eyebrow_text: string | null`
-- `is_issue_based: boolean`
-- `issue_label: string | null`
-- `masthead_publication: string | null`
-- `masthead_logo_glyph: string | null`
-- `default_layout_width: "standard" | "wide" | "narrow"`
-- `theme_variant: "default" | "editorial" | "minimal" | "technical"`
+- Edit only `src/components/newsletter/editor/ImportHtmlModal.tsx` (~150–180 LOC delta).
+- No other files touched. No package additions. No SQL.
+- `convert-html-to-tiptap` stays ACTIVE as fallback (untouched) for Session 101 soak.
 
-**Load `.select(...)` (~L146):** append the 7 columns.
+## Changes inside the file
 
-**Load → state hydration (~L155, ~L204):** map all 7 fields from row, using DB defaults for NOT NULL columns (`?? "standard"`, `?? "default"`, `?? false`).
+1. **Imports**: add `import { generateJSON } from "@tiptap/core";`. Keep all existing imports.
 
-**Empty-draft seed (~L178):** `eyebrow_text: null`, `is_issue_based: false`, `issue_label: null`, `masthead_publication: null`, `masthead_logo_glyph: null`, `default_layout_width: "standard"`, `theme_variant: "default"`.
+2. **Constants**: add `MAX_IMAGES_PER_IMPORT = 30` below `MAX_BYTES`.
 
-**upsert_article call (L284–291):** replace the 7 hardcoded `null as unknown as ...` lines with real draft values (per spec snippet). Keep the existing `p_tags` and `p_category_id` lines intact.
+3. **Types**:
+   - Replace `ConversionFailure` kinds: drop `tag_dropped` and `image_limit_exceeded`; add `redirect_loop`, `phase_deadline_exceeded`; drop `tag_name`; keep `original_src?`.
+   - Drop `tags_dropped` from `ConversionResponse.stats`.
+   - Add new `ImportImagesResponse` interface for the new Edge Function shape.
+   - Extend `ImportState.converting` with optional `subLabel?: string`.
 
-**Sidebar Card "Issue metadata"** (insert after Category & tags card ~L712): Eyebrow text input, Masthead publication input, Masthead logo glyph input, `is_issue_based` checkbox, conditional issue label input. Exact JSX per spec §1f.
+4. **ERROR_MESSAGES**: add `too_many_images_client_preflight` and `doc_generation_failed`.
 
-**Sidebar Card "Layout & theme"** (immediately after): two native `<select>` controls for layout width + theme variant with helper text. Exact JSX per spec §1g.
+5. **New helper `rewriteImgsToSyntheticFigures(parsedDoc, resolutions)`** placed before the component. Walks every `<img>` and replaces it (or its enclosing `<figure>`) with a synthetic `<figure data-newsletter-image="true" data-width="inline">` carrying either `data-asset-id` (success) or `data-import-failed-src` (failure), preserving `alt` and any `<figcaption>` text. Skips images already inside a `figure[data-newsletter-image]` (round-trip). This is required because the newsletterImage `parseHTML` rule matches `figure[data-newsletter-image]` only.
 
-## File 2: `src/pages/marketing/NewsletterArticle.tsx`
+6. **Rewrite `runConversion`** to the new pipeline:
+   1. Size guard → `setState converting`.
+   2. `DOMParser.parseFromString(html, "text/html")` with try/catch → `html_parse_failed` on error.
+   3. Collect unique `<img>` srcs, split `data:` URIs from network URIs.
+   4. Client-side preflight: if network URI count > 30 → error `too_many_images_client_preflight`.
+   5. If network URIs > 0: POST `{image_urls, newsletter_article_id}` to `/functions/v1/import-html-images` with session bearer + apikey, AbortController wired into `abortRef`. Show `subLabel: "Fetching N image(s)…"`. Handle abort, network_error, non-OK body, invalid_response identically to current code.
+   6. Merge data-URI srcs into resolutions as synthetic `scheme_rejected` failures.
+   7. Call `rewriteImgsToSyntheticFigures(parsedDoc, resolutions)`.
+   8. `generateJSON(parsedDoc.body.innerHTML, buildExtensions({editable: false}))` inside try/catch → `doc_generation_failed` on error.
+   9. Build `ConversionResponse`: stats sum server stats + data-URI count (added to attempted + failed); failures list flattens every `resolutions[url].failure` with `original_src: url`.
+   10. Preview text via existing `tipTapDocToPlainText` + `firstNWords(…, 200)`. Honor `closedDuringConvertRef`. `setState success`.
 
-**GrantedArticle interface (~L33):** add the 7 fields as optional/nullable.
+7. **SuccessView**:
+   - Stat grid `sm:grid-cols-4` → `sm:grid-cols-3`; remove the "Tags dropped" `<StatCard>`.
+   - Remove the `{f.tag_name && …}` line from the failure list (no longer in type).
 
-**Add top-level helper `buildReaderDoc(body, article, authors, publishedLabel, tags)`** per spec §2b — clones body content, conditionally prepends `newsletterMasthead` + `newsletterEyebrow`, conditionally appends `newsletterFooterMeta` + `newsletterAuthorBio`. Bounded suppression: only inspect first 2 / last 2 node types to avoid duplicating author-inserted instances.
+8. **Converting phase render**: if straightforward, render `state.subLabel` as a small muted line below the existing "Converting HTML…" label. Optional polish; skip if it complicates the diff.
 
-**Wire into `useEditor`** (~L436): replace `content:` with `buildReaderDoc(article.body_tiptap, article, authors, null, null)`. Pass `null` for publishedLabel/tags (not in scope to fetch).
+## What stays untouched
 
-**Reader wrapper div** (~L483): add `data-theme-variant={article.theme_variant ?? "default"}` and `data-layout-width={article.default_layout_width ?? "standard"}`. No CSS this cycle.
-
-**useEditor deps:** extend to `[article.id, extensions, article.eyebrow_text, article.is_issue_based, article.issue_label, article.masthead_publication, article.masthead_logo_glyph, authors.length, authors[0]?.user_id]`.
-
-## Out of scope
-- No CSS for theme/width data attrs
-- No editor-preview auto-render
-- No new node IDs for synthetic nodes
-- No fetching extra data for publishedLabel/tags
-- Don't touch Category & tags card
+- `nodes/Image.ts`, all of `tiptap/`, `buildExtensions.ts`.
+- `convert-html-to-tiptap` Edge Function.
+- File reader, drag-and-drop, paste textarea, `PreviewRenderer`, `onImported` callback shape, hardcoded `SUPABASE_URL` / `SUPABASE_ANON_KEY`.
+- `package.json` (fallback: only if `generateJSON` import fails type-check, add `@tiptap/html@^3.23.0` and re-import from there).
 
 ## Verification
-- `npx tsc -b --noEmit` exits 0
-- 7 fields appear/persist/rehydrate in admin sidebar
-- `is_issue_based` toggle reveals issue label input
-- Reader shows auto-rendered Masthead/Eyebrow at top + FooterMeta/AuthorBio at bottom when conditions met
-- Suppression: manually-inserted Masthead in first 2 nodes prevents auto-Masthead
-- Wrapper div carries both data-* attrs
 
-## Expected delta
-2 files modified, 0 new files. ~120 LOC admin, ~80 LOC reader.
+- `npx tsc -b --noEmit` returns 0.
+- Confirm `figure[data-newsletter-image]` parseHTML rule unchanged.
+- Confirm no new dependency unless the documented fallback was required.
+- Confirm `convert-html-to-tiptap/` directory untouched.
