@@ -73,6 +73,7 @@ import {
   NewsletterDisclosure,
   NewsletterDisclosureSummary,
 } from "./nodes/Disclosure";
+import { NewsletterRelatedArticles } from "./nodes/RelatedArticles";
 
 import { Accent } from "./marks/Accent";
 import { SmallCaps } from "./marks/SmallCaps";
@@ -208,6 +209,7 @@ export function buildExtensions(opts: BuildExtensionsOptions): Extensions {
     NewsletterSubscribeBlock,
     NewsletterDisclosure,
     NewsletterDisclosureSummary,
+    NewsletterRelatedArticles,
     Accent,
     SmallCaps,
     Superscript,

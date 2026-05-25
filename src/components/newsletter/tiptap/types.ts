@@ -364,6 +364,16 @@ export interface NewsletterDisclosureAttrs {
   default_open: boolean;
 }
 
+export type RelatedArticlesMode = "by_tags" | "by_category" | "manual";
+
+export interface NewsletterRelatedArticlesAttrs {
+  mode: RelatedArticlesMode;
+  manual_article_ids: string[] | null;
+  max_count: number;
+  tag_match_mode: "any" | "all" | null;
+  title: string | null;
+}
+
 export interface DefinitionMarkAttrs {
   definition_text: string;
   source: string | null;
@@ -414,7 +424,8 @@ export type CustomNewsletterNode =
   | BaseNode<"newsletterCta", NewsletterCtaAttrs>
   | BaseNode<"newsletterSubscribeBlock">
   | BaseNode<"newsletterDisclosure", NewsletterDisclosureAttrs>
-  | BaseNode<"newsletterDisclosureSummary">;
+  | BaseNode<"newsletterDisclosureSummary">
+  | BaseNode<"newsletterRelatedArticles", NewsletterRelatedArticlesAttrs>;
 
 export type NewsletterTipTapNode =
   | TipTapTextNode

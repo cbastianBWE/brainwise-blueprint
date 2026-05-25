@@ -63,6 +63,7 @@ export {
   NewsletterDisclosure,
   NewsletterDisclosureSummary,
 } from "./nodes/Disclosure";
+export { NewsletterRelatedArticles } from "./nodes/RelatedArticles";
 export { Accent } from "./marks/Accent";
 export { SmallCaps } from "./marks/SmallCaps";
 export { Superscript } from "./marks/Superscript";

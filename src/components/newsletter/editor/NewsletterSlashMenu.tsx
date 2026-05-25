@@ -60,6 +60,7 @@ import {
   Megaphone,
   Mail,
   ChevronDown,
+  ListTree,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -392,6 +393,28 @@ export const SLASH_COMMANDS: SlashCommandItem[] = [
         .insertContent({
           type: "newsletterAuthorBio",
           attrs: { user_id: null },
+        })
+        .run(),
+  },
+  {
+    id: "related-articles",
+    label: "Related articles",
+    description:
+      "Surface related articles by tags, category, or manual selection.",
+    category: "EDITORIAL",
+    icon: ListTree,
+    keywords: ["related", "more", "see also", "links"],
+    run: (e, r) =>
+      deleteRange(e, r)
+        .insertContent({
+          type: "newsletterRelatedArticles",
+          attrs: {
+            mode: "by_tags",
+            max_count: 3,
+            tag_match_mode: "any",
+            manual_article_ids: null,
+            title: null,
+          },
         })
         .run(),
   },
