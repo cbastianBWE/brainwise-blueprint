@@ -418,6 +418,19 @@ export const SLASH_COMMANDS: SlashCommandItem[] = [
         })
         .run(),
   },
+  {
+    id: "footnotes",
+    label: "Footnotes",
+    description:
+      "Auto-generated list of footnote references in document order.",
+    category: "EDITORIAL",
+    icon: BookMarked,
+    keywords: ["footnote", "footnotes", "notes", "references"],
+    run: (e, r) =>
+      deleteRange(e, r)
+        .insertContent({ type: "newsletterFootnotes" })
+        .run(),
+  },
 
   // MEDIA
   {

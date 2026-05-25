@@ -90,7 +90,9 @@ import { CTANodeView } from "@/components/newsletter/tiptap/nodeviews/CTANodeVie
 import { SubscribeBlockNodeView } from "@/components/newsletter/tiptap/nodeviews/SubscribeBlockNodeView";
 import { DisclosureNodeView } from "@/components/newsletter/tiptap/nodeviews/DisclosureNodeView";
 import { RelatedArticlesNodeView } from "@/components/newsletter/tiptap/nodeviews/RelatedArticlesNodeView";
+import { FootnotesNodeView } from "@/components/newsletter/tiptap/nodeviews/FootnotesNodeView";
 import { NewsletterRelatedArticles } from "@/components/newsletter/tiptap/nodes/RelatedArticles";
+import { NewsletterFootnotes } from "@/components/newsletter/tiptap/nodes/Footnotes";
 import { NewsletterToolbar } from "./NewsletterToolbar";
 import { NewsletterBubbleMenu } from "./NewsletterBubbleMenu";
 import { NewsletterFloatingPlus } from "./NewsletterFloatingPlus";
@@ -279,6 +281,11 @@ const NodeRelatedArticlesEdit = NewsletterRelatedArticles.extend({
     return ReactNodeViewRenderer(RelatedArticlesNodeView);
   },
 });
+const NodeFootnotesEdit = NewsletterFootnotes.extend({
+  addNodeView() {
+    return ReactNodeViewRenderer(FootnotesNodeView);
+  },
+});
 
 const EDITABLE_NODE_OVERRIDES = [
   NodeImageEdit,
@@ -312,6 +319,7 @@ const EDITABLE_NODE_OVERRIDES = [
   NodeSubscribeBlockEdit,
   NodeDisclosureEdit,
   NodeRelatedArticlesEdit,
+  NodeFootnotesEdit,
 ];
 
 const OVERRIDE_NAMES = new Set(EDITABLE_NODE_OVERRIDES.map((n) => n.name));

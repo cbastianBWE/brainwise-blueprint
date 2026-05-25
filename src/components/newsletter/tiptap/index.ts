@@ -64,6 +64,7 @@ export {
   NewsletterDisclosureSummary,
 } from "./nodes/Disclosure";
 export { NewsletterRelatedArticles } from "./nodes/RelatedArticles";
+export { NewsletterFootnotes } from "./nodes/Footnotes";
 export { Accent } from "./marks/Accent";
 export { SmallCaps } from "./marks/SmallCaps";
 export { Superscript } from "./marks/Superscript";
@@ -73,3 +74,4 @@ export { Highlight } from "./marks/Highlight";
 export { Keyboard } from "./marks/Keyboard";
 export { Abbr } from "./marks/Abbr";
 export { Definition } from "./marks/Definition";
+export { FootnoteRef } from "./marks/FootnoteRef";

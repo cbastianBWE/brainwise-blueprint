@@ -63,7 +63,8 @@ type Mode =
       weight: AccentWeight;
     }
   | { kind: "highlight"; color: HighlightColor }
-  | { kind: "definition"; definition_text: string; source: string };
+  | { kind: "definition"; definition_text: string; source: string }
+  | { kind: "footnote_ref"; footnote_text: string };
 
 interface NewsletterBubbleMenuProps {
   editor: Editor;
@@ -103,6 +104,7 @@ export function NewsletterBubbleMenu({ editor }: NewsletterBubbleMenuProps) {
           "newsletterCta",
           "newsletterSubscribeBlock",
           "newsletterRelatedArticles",
+          "newsletterFootnotes",
         ]);
         if (blockedParents.has($from.parent.type.name)) return false;
         // Allow collapsed caret inside a table cell so table action
@@ -192,6 +194,21 @@ export function NewsletterBubbleMenu({ editor }: NewsletterBubbleMenuProps) {
         .run();
     } else {
       editor.chain().focus().unsetMark("definition").run();
+    }
+    setMode({ kind: "default" });
+  };
+
+  const applyFootnoteRef = (footnote_text: string) => {
+    const ft = footnote_text.trim();
+    if (ft) {
+      editor
+        .chain()
+        .focus()
+        .extendMarkRange("footnoteRef")
+        .setMark("footnoteRef", { footnote_text: ft })
+        .run();
+    } else {
+      editor.chain().focus().unsetMark("footnoteRef").run();
     }
     setMode({ kind: "default" });
   };
@@ -353,6 +370,66 @@ export function NewsletterBubbleMenu({ editor }: NewsletterBubbleMenuProps) {
                 onMouseDown={(e) => {
                   e.preventDefault();
                   editor.chain().focus().unsetMark("definition").run();
+                  setMode({ kind: "default" });
+                }}
+                className="rounded-full px-3 py-1 text-[11px] font-medium text-[var(--fg-2)] hover:bg-[var(--bw-cream-200)]"
+              >
+                Remove
+              </button>
+              <button
+                type="button"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  setMode({ kind: "default" });
+                }}
+                className="ml-auto rounded-full px-2 py-1 text-[11px] text-[var(--fg-3)] hover:bg-[var(--bw-cream-200)]"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        );
+      }
+      case "footnote_ref": {
+        const { footnote_text } = mode;
+        return (
+          <div className="flex w-80 flex-col gap-2 p-1">
+            <div className="flex flex-col gap-1">
+              <span className="text-[10px] uppercase tracking-wider text-[var(--fg-3)]">
+                Footnote text
+              </span>
+              <textarea
+                value={footnote_text}
+                onChange={(e) =>
+                  setMode({ kind: "footnote_ref", footnote_text: e.target.value })
+                }
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                    applyFootnoteRef(footnote_text);
+                  }
+                }}
+                rows={4}
+                placeholder="Footnote body (will appear in the Footnotes block)"
+                autoFocus
+                className="rounded-md border border-[var(--border-1)] bg-white px-2 py-1.5 text-xs text-[var(--fg-1)] placeholder:text-[var(--fg-4)] focus:border-[#F5741A] focus:outline-none"
+              />
+            </div>
+            <div className="flex items-center gap-1 pt-1">
+              <button
+                type="button"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  applyFootnoteRef(footnote_text);
+                }}
+                className="rounded-full bg-[#F5741A] px-3 py-1 text-[11px] font-semibold text-white hover:bg-[#E06714]"
+              >
+                Apply
+              </button>
+              <button
+                type="button"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  editor.chain().focus().unsetMark("footnoteRef").run();
                   setMode({ kind: "default" });
                 }}
                 className="rounded-full px-3 py-1 text-[11px] font-medium text-[var(--fg-2)] hover:bg-[var(--bw-cream-200)]"
@@ -695,6 +772,19 @@ export function NewsletterBubbleMenu({ editor }: NewsletterBubbleMenuProps) {
               }}
             >
               <BookMarked className="h-3.5 w-3.5" />
+            </Btn>
+            <Btn
+              label="Footnote"
+              active={editor.isActive("footnoteRef")}
+              onClick={() => {
+                const existing = editor.getAttributes("footnoteRef");
+                setMode({
+                  kind: "footnote_ref",
+                  footnote_text: (existing.footnote_text as string) ?? "",
+                });
+              }}
+            >
+              <sup className="text-[11px] font-semibold leading-none">¹</sup>
             </Btn>
             <Btn
               label="Inline code"

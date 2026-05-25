@@ -74,6 +74,7 @@ import {
   NewsletterDisclosureSummary,
 } from "./nodes/Disclosure";
 import { NewsletterRelatedArticles } from "./nodes/RelatedArticles";
+import { NewsletterFootnotes } from "./nodes/Footnotes";
 
 import { Accent } from "./marks/Accent";
 import { SmallCaps } from "./marks/SmallCaps";
@@ -84,6 +85,7 @@ import { Highlight } from "./marks/Highlight";
 import { Keyboard } from "./marks/Keyboard";
 import { Abbr } from "./marks/Abbr";
 import { Definition } from "./marks/Definition";
+import { FootnoteRef } from "./marks/FootnoteRef";
 
 export interface BuildExtensionsOptions {
   editable: boolean;
@@ -210,6 +212,7 @@ export function buildExtensions(opts: BuildExtensionsOptions): Extensions {
     NewsletterDisclosure,
     NewsletterDisclosureSummary,
     NewsletterRelatedArticles,
+    NewsletterFootnotes,
     Accent,
     SmallCaps,
     Superscript,
@@ -219,5 +222,6 @@ export function buildExtensions(opts: BuildExtensionsOptions): Extensions {
     Keyboard,
     Abbr,
     Definition,
+    FootnoteRef,
   ];
 }

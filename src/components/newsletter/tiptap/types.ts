@@ -379,6 +379,10 @@ export interface DefinitionMarkAttrs {
   source: string | null;
 }
 
+export interface FootnoteRefMarkAttrs {
+  footnote_text: string;
+}
+
 // Custom newsletter nodes
 export type CustomNewsletterNode =
   | BaseNode<"newsletterImage", NewsletterImageAttrs>
@@ -425,7 +429,8 @@ export type CustomNewsletterNode =
   | BaseNode<"newsletterSubscribeBlock">
   | BaseNode<"newsletterDisclosure", NewsletterDisclosureAttrs>
   | BaseNode<"newsletterDisclosureSummary">
-  | BaseNode<"newsletterRelatedArticles", NewsletterRelatedArticlesAttrs>;
+  | BaseNode<"newsletterRelatedArticles", NewsletterRelatedArticlesAttrs>
+  | BaseNode<"newsletterFootnotes">;
 
 export type NewsletterTipTapNode =
   | TipTapTextNode
