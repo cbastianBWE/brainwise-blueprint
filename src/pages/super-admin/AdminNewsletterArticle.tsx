@@ -178,6 +178,13 @@ export default function AdminNewsletterArticle() {
         publish_at: data.scheduled_for ?? null,
         category_id: data.category_id ?? null,
         tags: (data.tags as string[]) ?? [],
+        eyebrow_text: data.eyebrow_text ?? null,
+        is_issue_based: data.is_issue_based ?? false,
+        issue_label: data.issue_label ?? null,
+        masthead_publication: data.masthead_publication ?? null,
+        masthead_logo_glyph: data.masthead_logo_glyph ?? null,
+        default_layout_width: (data.default_layout_width as "standard" | "wide" | "narrow") ?? "standard",
+        theme_variant: (data.theme_variant as "default" | "editorial" | "minimal" | "technical") ?? "default",
       };
     },
   });
