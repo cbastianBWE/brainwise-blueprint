@@ -59,6 +59,15 @@ export interface PdfData {
   recommendations: string[];
   isSliderInstrument: boolean;
   isPTP: boolean;
+  fullFacetData: Array<{
+    itemNumber: number;
+    facetName: string;
+    itemText: string;
+    score: number;
+    dimensionId: string;
+    contextType: string | null;
+  }>;
+  ptpBrainOverviewVariant: "combined" | "professional" | "personal";
 }
 
 const PAGE_W = 210;
