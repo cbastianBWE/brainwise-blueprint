@@ -349,6 +349,46 @@ export async function assemblePtpPdfData(params: {
   const instrumentName = instrument?.instrument_name ?? result.instrument_id ?? "Unknown";
   const instrumentShortName = instrument?.short_name ?? result.instrument_id ?? instrumentName.replace(/\s+/g, "");
 
+  // Full facet data — fetched the same way PTPFullFacetCharts.tsx does it.
+  // Used by the Full Facet Charts section of the PDF.
+  let fullFacetData: PdfData["fullFacetData"] = [];
+
+  if (isPTP) {
+    const { data: responsesRaw } = await supabase
+      .from("assessment_responses")
+      .select("response_value_numeric, is_reverse_scored, item_id")
+      .eq("assessment_id", result.assessment_id);
+
+    const allResponses = responsesRaw ?? [];
+
+    if (allResponses.length > 0) {
+      const itemIds = allResponses.map((r: any) => r.item_id);
+      const { data: items } = await supabase
+        .from("items")
+        .select("item_id, item_text, item_number, dimension_id, context_type")
+        .in("item_id", itemIds);
+
+      const itemMap = new Map((items ?? []).map((i: any) => [i.item_id, i]));
+
+      fullFacetData = allResponses.map((r: any) => {
+        const item = itemMap.get(r.item_id) as any;
+        const raw = Number(r.response_value_numeric);
+        const value = r.is_reverse_scored ? 100 - raw : raw;
+        return {
+          itemNumber: item?.item_number ?? 0,
+          facetName:
+            PTP_ITEM_FACET_NAMES[item?.item_number ?? 0] ??
+            item?.item_text?.slice(0, 40) ??
+            "",
+          itemText: item?.item_text ?? "",
+          score: Math.round(value),
+          dimensionId: item?.dimension_id ?? "",
+          contextType: item?.context_type ?? null,
+        };
+      });
+    }
+  }
+
   return {
     userName: displayName ?? "Participant",
     instrumentName,
@@ -379,6 +419,8 @@ export async function assemblePtpPdfData(params: {
     recommendations,
     isSliderInstrument: !!isSliderInstrument,
     isPTP: !!isPTP,
+    fullFacetData,
+    ptpBrainOverviewVariant: contextTab ?? "combined",
   };
 }
 
