@@ -315,7 +315,7 @@ export default function Departed() {
               displayName: profile.full_name ?? null,
               sections,
             });
-            blob = generateResultsPdf(pdfData, sections, { returnBlob: true }) as Blob;
+            blob = (await generateResultsPdf(pdfData, sections, { returnBlob: true })) as Blob;
             const ctxSuffix =
               contextTab && contextTab !== "combined"
                 ? `-${contextTab}`
