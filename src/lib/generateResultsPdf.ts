@@ -45,6 +45,13 @@ export interface PdfData {
     profile_overview?: string;
     dimension_highlights?: Record<string, string>;
     cross_assessment?: string;
+    personal_summary?: string[];
+    action_plan?: Array<{
+      title: string;
+      rationale: string;
+      steps: string[];
+      dimension_tags: string[];
+    }>;
   } | null;
   elevatedFacets: FacetWithInterpretation[];
   suppressedFacets: FacetWithInterpretation[];

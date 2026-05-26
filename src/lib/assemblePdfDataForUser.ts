@@ -220,15 +220,40 @@ export async function assemblePtpPdfData(params: {
   let narrativeSections: PdfData["narrativeSections"] = null;
 
   if (isPTP && contextTab) {
-    const { data: narrativeRow } = await supabase
+    // Fetch the four narrative section rows in parallel
+    const sectionTypes = [
+      `profile_overview_${contextTab}`,
+      `personal_summary_${contextTab}`,
+      `dimension_highlights_${contextTab}`,
+      `cross_and_action_${contextTab}`,
+    ];
+
+    const { data: narrativeRows } = await supabase
       .from("facet_interpretations")
-      .select("facet_data")
+      .select("section_type, facet_data")
       .eq("assessment_result_id", assessmentResultId)
-      .eq("section_type", `narrative_${contextTab}`)
-      .maybeSingle();
-    if (narrativeRow?.facet_data) {
-      narrativeSections = narrativeRow.facet_data as any;
-    }
+      .in("section_type", sectionTypes);
+
+    const rowMap = new Map(
+      (narrativeRows ?? []).map((r) => [r.section_type, r.facet_data as any])
+    );
+
+    const profileOverviewData = rowMap.get(`profile_overview_${contextTab}`);
+    const personalSummaryData = rowMap.get(`personal_summary_${contextTab}`);
+    const dimensionHighlightsData = rowMap.get(`dimension_highlights_${contextTab}`);
+    const crossAndActionData = rowMap.get(`cross_and_action_${contextTab}`);
+
+    narrativeSections = {
+      profile_overview: profileOverviewData?.text ?? undefined,
+      personal_summary: Array.isArray(personalSummaryData?.personal_summary)
+        ? personalSummaryData.personal_summary
+        : undefined,
+      dimension_highlights: dimensionHighlightsData ?? undefined,
+      cross_assessment: crossAndActionData?.cross_assessment ?? undefined,
+      action_plan: Array.isArray(crossAndActionData?.action_plan)
+        ? crossAndActionData.action_plan
+        : undefined,
+    };
   }
 
   if (isPTP) {
