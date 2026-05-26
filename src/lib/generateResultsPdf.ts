@@ -189,7 +189,7 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
   })();
 
   // Top half: navy block
-  const NAVY_BLOCK_H = 145;
+  const NAVY_BLOCK_H = 150;
   doc.setFillColor(...NAVY);
   doc.rect(0, 0, PAGE_W, NAVY_BLOCK_H, "F");
 
@@ -253,7 +253,7 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
   doc.rect(0, NAVY_BLOCK_H, PAGE_W, PAGE_H - NAVY_BLOCK_H, "F");
 
   // Field row 1: Participant + Date Completed
-  const fieldY = NAVY_BLOCK_H + 25;
+  const fieldY = NAVY_BLOCK_H + 14;
   const fieldColW = (CONTENT_W - 10) / 2;
 
   doc.setFont("Montserrat", "semibold");
