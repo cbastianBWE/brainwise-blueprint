@@ -304,7 +304,8 @@ export default function Departed() {
               profileOverviewNarrative: true,
               ptpBrainOverview: true,
               dimensionHighlights: true,
-              drivingFacetInsights: true,
+              drivingFacetInsightsElevated: true,
+              drivingFacetInsightsSuppressed: true,
               crossAssessmentConnections: true,
               assessmentResponses: true,
             };

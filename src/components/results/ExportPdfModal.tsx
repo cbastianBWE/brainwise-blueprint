@@ -19,7 +19,8 @@ export interface PdfSections {
   profileOverviewNarrative: boolean;
   ptpBrainOverview: boolean;
   dimensionHighlights: boolean;
-  drivingFacetInsights: boolean;
+  drivingFacetInsightsElevated: boolean;
+  drivingFacetInsightsSuppressed: boolean;
   crossAssessmentConnections: boolean;
   assessmentResponses: boolean;
 }
@@ -87,7 +88,8 @@ const PTP_GROUPS: SectionGroup<keyof PdfSections>[] = [
     options: [
       { key: "dimensionHighlights", name: "Dimension Highlights", description: "AI-generated dimension cards" },
       { key: "drivingFacetScores", name: "Driving Facet Scores", description: "Elevated and suppressed bar charts" },
-      { key: "drivingFacetInsights", name: "Driving Facet Insights", description: "Elevated and suppressed behavioral impacts" },
+      { key: "drivingFacetInsightsElevated", name: "Driving Facet Insights — Elevated", description: "Behavioral impacts of elevated facets" },
+      { key: "drivingFacetInsightsSuppressed", name: "Driving Facet Insights — Suppressed", description: "Behavioral impacts of suppressed facets" },
     ],
   },
   {
@@ -178,7 +180,8 @@ export default function ExportPdfModal({ open, onOpenChange, instrumentType, isC
     profileOverviewNarrative: true,
     ptpBrainOverview: true,
     dimensionHighlights: true,
-    drivingFacetInsights: true,
+    drivingFacetInsightsElevated: true,
+    drivingFacetInsightsSuppressed: true,
     crossAssessmentConnections: true,
     assessmentResponses: true,
   });
