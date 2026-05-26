@@ -72,6 +72,8 @@ const SAND_BG = [249, 247, 241] as const;
 const LIGHT_BG = [245, 247, 250] as const;
 const GREEN = [34, 139, 34] as const;
 const RED = [200, 50, 50] as const;
+const ORANGE = [245, 116, 26] as const;
+const DISCLAIMER_ICON_BG = [255, 230, 210] as const;
 
 // Minimum vertical space (mm) required at the bottom of a page before
 // starting a new paragraph or major heading block. If less than this is
@@ -102,8 +104,10 @@ function PTP_DIM_COLOR(dimId: string): string {
   return colors[dimId] ?? PRIMARY_TEXT_HEX;
 }
 
-export function generateResultsPdf(data: PdfData, sections: PdfSections, options?: { returnBlob?: boolean }): void | Blob {
+export async function generateResultsPdf(data: PdfData, sections: PdfSections, options?: { returnBlob?: boolean }): Promise<void | Blob> {
   const doc = new jsPDF({ unit: "mm", format: "a4" });
+  const { registerPdfFonts } = await import("./pdfFonts");
+  registerPdfFonts(doc);
   let y = MARGIN_T;
   const today = new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
 
@@ -167,63 +171,180 @@ export function generateResultsPdf(data: PdfData, sections: PdfSections, options
   };
 
   // ── COVER PAGE ──
+  // Fetch logo as base64 data URL so jsPDF can embed it
+  const logoDataUrl = await (async () => {
+    try {
+      const res = await fetch("/logo-orange-white.png");
+      if (!res.ok) return null;
+      const blob = await res.blob();
+      return await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+    } catch {
+      return null;
+    }
+  })();
+
+  // Top half: navy block
+  const NAVY_BLOCK_H = 145;
   doc.setFillColor(...NAVY);
-  doc.rect(0, 0, PAGE_W, 80, "F");
+  doc.rect(0, 0, PAGE_W, NAVY_BLOCK_H, "F");
 
-  doc.setFontSize(28);
-  doc.setTextColor(255, 255, 255);
-  doc.setFont("helvetica", "bold");
-  doc.text("BrainWise", MARGIN_L, 35);
-
-  doc.setFontSize(14);
-  doc.setFont("helvetica", "normal");
-  doc.text(data.instrumentName, MARGIN_L, 48);
-
-  if (data.contextLabel) {
-    doc.setFontSize(11);
-    doc.setTextColor(200, 220, 235);
-    doc.text(data.contextLabel + " Context", MARGIN_L, 58);
+  // Logo (raster, fetched at runtime). If the fetch failed, fall back to text wordmark.
+  if (logoDataUrl) {
+    doc.addImage(logoDataUrl, "PNG", MARGIN_L, 22, 60, 0, undefined, "FAST");
+  } else {
+    doc.setFont("Poppins", "extrabold");
+    doc.setFontSize(20);
+    doc.setTextColor(255, 255, 255);
+    doc.text("BrainWise Enterprises", MARGIN_L, 32);
   }
 
-  const coverY = 110;
+  // "ASSESSMENT REPORT" eyebrow
+  doc.setFont("Montserrat", "semibold");
+  doc.setFontSize(10);
+  doc.setTextColor(...ORANGE);
+  doc.setCharSpace(1.5);
+  doc.text("ASSESSMENT REPORT", MARGIN_L, 62);
+  doc.setCharSpace(0);
+
+  // Headline "Personal Threat Profile™" — Poppins ExtraBold, white, large
+  doc.setFont("Poppins", "extrabold");
+  doc.setFontSize(36);
+  doc.setTextColor(255, 255, 255);
+  doc.text("Personal Threat", MARGIN_L, 82);
+  doc.text("Profile", MARGIN_L, 99);
+  const profileWidth = doc.getTextWidth("Profile");
+  doc.setTextColor(...ORANGE);
+  doc.setFontSize(20);
+  doc.text("™", MARGIN_L + profileWidth + 1, 89);
+  doc.setTextColor(255, 255, 255);
+
+  // Description paragraph
+  doc.setFont("Montserrat", "normal");
+  doc.setFontSize(10);
+  doc.setTextColor(220, 230, 240);
+  const descText = "A neuroscience-based profile of how you respond to pressure, uncertainty, and change — mapped to the BrainWise 5P model.";
+  const descLines = doc.splitTextToSize(descText, CONTENT_W - 60);
+  doc.text(descLines, MARGIN_L, 112);
+
+  // Context pill
+  const contextLabel = (data.contextLabel || "Full").toUpperCase() + " CONTEXT";
+  doc.setFont("Montserrat", "semibold");
   doc.setFontSize(9);
-  doc.setTextColor(...MUTED);
-  doc.text("Participant", MARGIN_L, coverY);
-  doc.setFontSize(12);
-  doc.setTextColor(...BLACK);
-  doc.setFont("helvetica", "bold");
-  doc.text(data.userName, MARGIN_L, coverY + 7);
+  const pillTextWidth = doc.getTextWidth(contextLabel);
+  const pillW = pillTextWidth + 18;
+  const pillH = 9;
+  const pillY = 130;
+  doc.setDrawColor(...ORANGE);
+  doc.setLineWidth(0.5);
+  doc.setFillColor(...NAVY);
+  doc.roundedRect(MARGIN_L, pillY, pillW, pillH, pillH / 2, pillH / 2, "FD");
+  doc.setFillColor(...ORANGE);
+  doc.circle(MARGIN_L + 5, pillY + pillH / 2, 1.3, "F");
+  doc.setTextColor(...ORANGE);
+  doc.text(contextLabel, MARGIN_L + 10, pillY + pillH / 2 + 1.2);
 
-  doc.setFontSize(9);
-  doc.setTextColor(...MUTED);
-  doc.setFont("helvetica", "normal");
-  doc.text("Date Completed", MARGIN_L, coverY + 20);
-  doc.setFontSize(11);
-  doc.setTextColor(...BLACK);
-  doc.text(data.dateTaken, MARGIN_L, coverY + 27);
-
-  doc.setFontSize(9);
-  doc.setTextColor(...MUTED);
-  doc.text("Version", MARGIN_L, coverY + 40);
-  doc.setFontSize(11);
-  doc.setTextColor(...BLACK);
-  doc.text(data.instrumentVersion, MARGIN_L, coverY + 47);
-
-  doc.setFontSize(7);
-  doc.setTextColor(...MUTED);
-  doc.text("Cover page design pending final branding guidelines.", MARGIN_L, PAGE_H - 20);
-
-  const disclaimerTextCover = "This report is generated by an AI model and is intended for personal reflection only. It does not constitute clinical diagnosis or professional psychological advice. Results should be interpreted in conjunction with qualified professional guidance.";
-  const disclaimerLinesCover = doc.splitTextToSize(disclaimerTextCover, CONTENT_W - 8);
-  const disclaimerHCover = disclaimerLinesCover.length * 3.8 + 6;
-  const disclaimerYCover = PAGE_H - 50;
+  // Bottom half: sand background
   doc.setFillColor(...SAND_BG);
-  doc.roundedRect(MARGIN_L, disclaimerYCover, CONTENT_W, disclaimerHCover, 2, 2, "F");
-  doc.setFontSize(7.5);
-  doc.setTextColor(...MUTED);
-  doc.text(disclaimerLinesCover, MARGIN_L + 4, disclaimerYCover + 5);
+  doc.rect(0, NAVY_BLOCK_H, PAGE_W, PAGE_H - NAVY_BLOCK_H, "F");
 
-  addFooter();
+  // Field row 1: Participant + Date Completed
+  const fieldY = NAVY_BLOCK_H + 25;
+  const fieldColW = (CONTENT_W - 10) / 2;
+
+  doc.setFont("Montserrat", "semibold");
+  doc.setFontSize(8);
+  doc.setTextColor(...ORANGE);
+  doc.setCharSpace(1);
+  doc.text("PARTICIPANT", MARGIN_L, fieldY);
+  doc.text("DATE COMPLETED", MARGIN_L + fieldColW + 10, fieldY);
+  doc.setCharSpace(0);
+
+  doc.setFont("Poppins", "bold");
+  doc.setFontSize(16);
+  doc.setTextColor(...NAVY);
+  doc.text(data.userName, MARGIN_L, fieldY + 9);
+  doc.text(data.dateTaken, MARGIN_L + fieldColW + 10, fieldY + 9);
+
+  doc.setDrawColor(180, 180, 180);
+  doc.setLineWidth(0.3);
+  doc.line(MARGIN_L, fieldY + 13, MARGIN_L + fieldColW, fieldY + 13);
+  doc.line(MARGIN_L + fieldColW + 10, fieldY + 13, MARGIN_L + CONTENT_W, fieldY + 13);
+
+  // Field row 2: Instrument Version
+  const versionY = fieldY + 28;
+  doc.setFont("Montserrat", "semibold");
+  doc.setFontSize(8);
+  doc.setTextColor(...ORANGE);
+  doc.setCharSpace(1);
+  doc.text("INSTRUMENT VERSION", MARGIN_L, versionY);
+  doc.setCharSpace(0);
+
+  doc.setFont("Poppins", "normal");
+  doc.setFontSize(13);
+  doc.setTextColor(...NAVY);
+  doc.text(data.instrumentVersion, MARGIN_L, versionY + 9);
+  doc.line(MARGIN_L, versionY + 13, MARGIN_L + CONTENT_W, versionY + 13);
+
+  // Disclaimer card
+  const disclaimerY = versionY + 28;
+  const disclaimerText = "This report is generated by an AI model and is intended for personal reflection only. It does not constitute a clinical diagnosis or professional psychological advice. Results should be interpreted in conjunction with qualified professional guidance.";
+  doc.setFont("Montserrat", "normal");
+  doc.setFontSize(9);
+  doc.setTextColor(...BLACK);
+  const disclaimerLines = doc.splitTextToSize(disclaimerText, CONTENT_W - 20);
+  const disclaimerH = disclaimerLines.length * 4.5 + 18;
+
+  doc.setFillColor(255, 255, 255);
+  doc.setDrawColor(225, 220, 210);
+  doc.setLineWidth(0.3);
+  doc.roundedRect(MARGIN_L, disclaimerY, CONTENT_W, disclaimerH, 3, 3, "FD");
+
+  doc.setFillColor(...DISCLAIMER_ICON_BG);
+  doc.circle(MARGIN_L + 9, disclaimerY + 9, 4, "F");
+  doc.setFont("Poppins", "bold");
+  doc.setFontSize(10);
+  doc.setTextColor(...ORANGE);
+  doc.text("i", MARGIN_L + 9, disclaimerY + 10.5, { align: "center" });
+
+  doc.setFont("Montserrat", "semibold");
+  doc.setFontSize(9);
+  doc.setTextColor(...NAVY);
+  doc.setCharSpace(0.5);
+  doc.text("IMPORTANT — PLEASE READ", MARGIN_L + 16, disclaimerY + 10);
+  doc.setCharSpace(0);
+
+  doc.setFont("Montserrat", "normal");
+  doc.setFontSize(8.5);
+  doc.setTextColor(60, 60, 60);
+  doc.text(disclaimerLines, MARGIN_L + 6, disclaimerY + 18);
+
+  // Footer
+  const footerCoverY = PAGE_H - 22;
+  doc.setFont("Montserrat", "semibold");
+  doc.setFontSize(8);
+  doc.setTextColor(...NAVY);
+  doc.setCharSpace(0.8);
+  doc.text("GENERATED BY BRAINWISE ENTERPRISES, LLC", MARGIN_L, footerCoverY);
+  doc.setCharSpace(0);
+
+  doc.setFont("Montserrat", "normal");
+  doc.setFontSize(8);
+  doc.setTextColor(120, 120, 120);
+  const dateRight = new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }).toUpperCase();
+  doc.text(dateRight, PAGE_W - MARGIN_R, footerCoverY, { align: "right" });
+
+  doc.setFont("Montserrat", "normal");
+  doc.setFontSize(7);
+  doc.setTextColor(140, 140, 140);
+  const copyText = `© ${new Date().getFullYear()} BrainWise Enterprises. Confidential and proprietary. Shared with the named recipient for evaluation only; not to be reproduced or disclosed without written consent. The Personal Threat Profile™ and 5P model are the property of BrainWise Enterprises.`;
+  const copyLines = doc.splitTextToSize(copyText, CONTENT_W);
+  doc.text(copyLines, MARGIN_L, footerCoverY + 5);
+
   doc.addPage();
   y = MARGIN_T;
 
@@ -558,14 +679,15 @@ export function generateResultsPdf(data: PdfData, sections: PdfSections, options
 
   addFooter();
 
-  // Stamp "Page X of Y" on every page now that the total page count is known.
+  // Stamp "Page X of Y" on every content page (skip the cover at page 1).
   const totalPages = doc.getNumberOfPages();
-  for (let p = 1; p <= totalPages; p++) {
+  const contentTotalPages = totalPages - 1;
+  for (let p = 2; p <= totalPages; p++) {
     doc.setPage(p);
     doc.setFontSize(7);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(...MUTED);
-    doc.text(`Page ${p} of ${totalPages}`, PAGE_W - MARGIN_R, FOOTER_Y, { align: "right" });
+    doc.text(`Page ${p - 1} of ${contentTotalPages}`, PAGE_W - MARGIN_R, FOOTER_Y, { align: "right" });
   }
 
   const lastName = data.userName.split(" ").pop() || "User";

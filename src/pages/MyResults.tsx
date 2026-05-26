@@ -749,7 +749,7 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
       displayName: displayName ?? null,
       sections,
     });
-    generateResultsPdf(pdfData, sections);
+    await generateResultsPdf(pdfData, sections);
   }, [selected, effectiveSelected, ptpContextTab, displayName, effectiveUserId]);
 
   const handleNaiPdfExport = useCallback(async (sections: import("@/components/results/ExportPdfModal").NaiPdfSectionsUi) => {
