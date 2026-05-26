@@ -9,6 +9,7 @@
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import type { PdfData } from "./generateResultsPdf";
+import { PTP_ITEM_FACET_NAMES } from "./ptpFacetNames";
 import type { NaiPdfData } from "./generateNaiPdf";
 import type { AirsaPdfData } from "./generateAirsaPdf";
 import type { PdfSections } from "@/components/results/ExportPdfModal";
@@ -67,9 +68,6 @@ const NAI_DIMENSION_PASTEL: Record<string, string> = {
   "DIM-NAI-05": "#F0E6D2",
 };
 
-const PTP_ITEM_FACET_NAMES: Record<number, string> = {
-  1:"Physical safety orientation",2:"Emotional safety (work)",3:"Financial security orientation",4:"Short-term loss aversion",5:"Status and standing vigilance",6:"Personal fairness sensitivity",7:"Equality and reciprocity need",8:"Resilience and recovery capacity",9:"Physical health vigilance",10:"Need to be trusted",11:"Need to trust others",12:"Similarity-based affiliation",13:"Group belonging need",14:"Need for individual differentiation",15:"Contrarian opinion drive",16:"Team orientation",17:"Self-esteem and self-respect",18:"Social comparison drive",19:"Recognition need",20:"Approval and respect need",21:"Power and influence need (work)",22:"Status and prestige need (work)",23:"Embarrassment avoidance",24:"Impostor sensitivity",25:"Future certainty need (work)",26:"Expectation clarity need (work)",27:"Evaluation criteria need",28:"Reward predictability need",29:"Autonomy and control need (work)",30:"Action orientation (work)",31:"Information and situational awareness",32:"Correctness need",33:"Perfectionism",34:"Status quo and stability need (work)",35:"Sense-making need (work)",36:"Consistency need",37:"Ambiguity tolerance (work)",38:"Surprise aversion (work)",39:"Conformity need",40:"Doubt tolerance",41:"Authenticity need",42:"Risk tolerance (work)",43:"Curiosity",44:"Voice and influence need",45:"Flexibility and flow capacity (work)",46:"Commitment reliability need (work)",47:"Well-being vigilance for close others",48:"Emotional safety (social)",49:"Financial loss aversion",50:"Environmental safety scanning",51:"Other-directed fairness sensitivity",52:"Animal welfare sensitivity",53:"Social equality vigilance",54:"Mental health vigilance",55:"Emotional health vigilance",56:"Spiritual health vigilance",57:"Power and influence need (social)",58:"Status and prestige need (social)",59:"Benevolence drive",60:"Future certainty need (social)",61:"Expectation clarity need (social)",62:"Autonomy and control need (social)",63:"Action orientation (social)",64:"Status quo and stability need (social)",65:"Sense-making need (social)",66:"Ambiguity tolerance (social)",67:"Surprise aversion (social)",68:"Risk tolerance (social)",69:"Self-directed independence need",70:"Tradition and ritual orientation",71:"Harmony and stability need",72:"Flexibility and flow capacity (social)",73:"Commitment reliability need (social)",74:"Mastery and craft orientation",75:"Self-development drive",76:"Mission and meaning orientation",77:"Values alignment (personal)",78:"Values alignment (organisational)",79:"Artistic and creative expression",80:"Spiritual orientation",81:"Passionate pursuit orientation",82:"Challenge and growth orientation",83:"Truth-seeking orientation",84:"Happiness pursuit",85:"Sensory and sensual gratification",86:"Instant gratification orientation",87:"Stimulation and excitement need",88:"Play orientation",89:"Love and attachment need"
-};
 
 const NAI_DIMENSION_NAMES_LOCAL: Record<string, string> = {
   "DIM-NAI-01": "Certainty",
@@ -351,6 +349,46 @@ export async function assemblePtpPdfData(params: {
   const instrumentName = instrument?.instrument_name ?? result.instrument_id ?? "Unknown";
   const instrumentShortName = instrument?.short_name ?? result.instrument_id ?? instrumentName.replace(/\s+/g, "");
 
+  // Full facet data — fetched the same way PTPFullFacetCharts.tsx does it.
+  // Used by the Full Facet Charts section of the PDF.
+  let fullFacetData: PdfData["fullFacetData"] = [];
+
+  if (isPTP) {
+    const { data: responsesRaw } = await supabase
+      .from("assessment_responses")
+      .select("response_value_numeric, is_reverse_scored, item_id")
+      .eq("assessment_id", result.assessment_id);
+
+    const allResponses = responsesRaw ?? [];
+
+    if (allResponses.length > 0) {
+      const itemIds = allResponses.map((r: any) => r.item_id);
+      const { data: items } = await supabase
+        .from("items")
+        .select("item_id, item_text, item_number, dimension_id, context_type")
+        .in("item_id", itemIds);
+
+      const itemMap = new Map((items ?? []).map((i: any) => [i.item_id, i]));
+
+      fullFacetData = allResponses.map((r: any) => {
+        const item = itemMap.get(r.item_id) as any;
+        const raw = Number(r.response_value_numeric);
+        const value = r.is_reverse_scored ? 100 - raw : raw;
+        return {
+          itemNumber: item?.item_number ?? 0,
+          facetName:
+            PTP_ITEM_FACET_NAMES[item?.item_number ?? 0] ??
+            item?.item_text?.slice(0, 40) ??
+            "",
+          itemText: item?.item_text ?? "",
+          score: Math.round(value),
+          dimensionId: item?.dimension_id ?? "",
+          contextType: item?.context_type ?? null,
+        };
+      });
+    }
+  }
+
   return {
     userName: displayName ?? "Participant",
     instrumentName,
@@ -381,6 +419,8 @@ export async function assemblePtpPdfData(params: {
     recommendations,
     isSliderInstrument: !!isSliderInstrument,
     isPTP: !!isPTP,
+    fullFacetData,
+    ptpBrainOverviewVariant: contextTab ?? "combined",
   };
 }
 
