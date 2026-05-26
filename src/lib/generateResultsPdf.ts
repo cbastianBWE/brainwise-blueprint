@@ -394,6 +394,31 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
   doc.addPage();
   y = MARGIN_T;
 
+  // ── PTP AND BRAIN OVERVIEW ──
+  if (sections.ptpBrainOverview) {
+    sectionHeading("PTP and Brain Overview");
+
+    // Pick the right variant
+    const variant = data.ptpBrainOverviewVariant;
+    const overviewText =
+      variant === "professional"
+        ? PTP_BRAIN_OVERVIEW_PROFESSIONAL
+        : variant === "personal"
+        ? PTP_BRAIN_OVERVIEW_PERSONAL
+        : PTP_BRAIN_OVERVIEW_FULL;
+
+    // Render as multi-paragraph body text. Bold markers (**...**) are stripped
+    // by cleanMarkdown for now — inline bold rendering is deferred to a later pass.
+    const paragraphs = overviewText.split("\n\n").filter((p) => p.trim().length > 0);
+    for (let i = 0; i < paragraphs.length; i++) {
+      bodyText(paragraphs[i]);
+      if (i < paragraphs.length - 1) y += 2;
+    }
+    addFooter();
+    doc.addPage();
+    y = MARGIN_T;
+  }
+
   // ── PROFILE OVERVIEW ──
   if (sections.profileOverview) {
     sectionHeading("Profile Overview");
@@ -445,6 +470,41 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
     }
   }
 
+  // ── PROFILE OVERVIEW NARRATIVE ──
+  if (sections.profileOverviewNarrative && data.narrativeSections?.profile_overview) {
+    sectionHeading("Profile Overview Narrative");
+    bodyText(data.narrativeSections.profile_overview);
+    y += 4;
+  }
+
+  // ── DIMENSION HIGHLIGHTS ──
+  if (sections.dimensionHighlights && data.narrativeSections?.dimension_highlights) {
+    sectionHeading("Dimension Highlights");
+    for (const dim of data.dimensions) {
+      const text = data.narrativeSections.dimension_highlights[dim.dimensionId];
+      if (!text) continue;
+      const rgb = hexToRgb(dim.color);
+      const pastelRgb = hexToRgb(dim.pastelColor);
+      const textLines = doc.splitTextToSize(cleanMarkdown(text), CONTENT_W - 12);
+      const cardH = textLines.length * 4.5 + 14;
+      checkPageBreak(cardH + 4);
+      doc.setFillColor(pastelRgb[0], pastelRgb[1], pastelRgb[2]);
+      doc.roundedRect(MARGIN_L, y, CONTENT_W, cardH, 2, 2, "F");
+      doc.setFillColor(rgb[0], rgb[1], rgb[2]);
+      doc.rect(MARGIN_L, y, 1.5, cardH, "F");
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(...BLACK);
+      doc.text(`${dim.name} — ${dim.score}`, MARGIN_L + 6, y + 7);
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(...MUTED);
+      doc.text(textLines, MARGIN_L + 6, y + 13);
+      y += cardH + 4;
+    }
+    y += 2;
+  }
+
   // ── DRIVING FACET SCORES ──
   if (sections.drivingFacetScores && (data.elevatedFacets.length > 0 || data.suppressedFacets.length > 0)) {
     sectionHeading("Driving Facet Scores");
@@ -487,64 +547,6 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
 
     if (data.elevatedFacets.length > 0) renderFacetScoreTable("Elevated Facets", data.elevatedFacets);
     if (data.suppressedFacets.length > 0) renderFacetScoreTable("Suppressed Facets", data.suppressedFacets);
-    addFooter();
-    doc.addPage();
-    y = MARGIN_T;
-  }
-
-  // ── PROFILE OVERVIEW NARRATIVE ──
-  if (sections.profileOverviewNarrative && data.narrativeSections?.profile_overview) {
-    sectionHeading("Profile Overview Narrative");
-    bodyText(data.narrativeSections.profile_overview);
-    y += 4;
-  }
-
-  // ── PTP AND BRAIN OVERVIEW ──
-  if (sections.ptpBrainOverview) {
-    sectionHeading("PTP and Brain Overview");
-    const overviewText = "Content coming soon. This section will provide a brief introduction to the Personal Threat Profile framework and its neuroscientific basis, including links to supporting resources and a video overview.";
-    const overviewLines = doc.splitTextToSize(overviewText, CONTENT_W - 12);
-    const overviewH = overviewLines.length * 4.5 + 8;
-    checkPageBreak(overviewH + 4);
-    doc.setFillColor(...SAND_BG);
-    doc.rect(MARGIN_L + 1.5, y, CONTENT_W - 1.5, overviewH, "F");
-    doc.setFillColor(...NAVY);
-    doc.rect(MARGIN_L, y, 1.5, overviewH, "F");
-    doc.setFontSize(8.5);
-    doc.setTextColor(...BLACK);
-    doc.text(overviewLines, MARGIN_L + 6, y + 5);
-    y += overviewH + 6;
-    addFooter();
-    doc.addPage();
-    y = MARGIN_T;
-  }
-
-  // ── DIMENSION HIGHLIGHTS ──
-  if (sections.dimensionHighlights && data.narrativeSections?.dimension_highlights) {
-    sectionHeading("Dimension Highlights");
-    for (const dim of data.dimensions) {
-      const text = data.narrativeSections.dimension_highlights[dim.dimensionId];
-      if (!text) continue;
-      const rgb = hexToRgb(dim.color);
-      const pastelRgb = hexToRgb(dim.pastelColor);
-      const textLines = doc.splitTextToSize(cleanMarkdown(text), CONTENT_W - 12);
-      const cardH = textLines.length * 4.5 + 14;
-      checkPageBreak(cardH + 4);
-      doc.setFillColor(pastelRgb[0], pastelRgb[1], pastelRgb[2]);
-      doc.roundedRect(MARGIN_L, y, CONTENT_W, cardH, 2, 2, "F");
-      doc.setFillColor(rgb[0], rgb[1], rgb[2]);
-      doc.rect(MARGIN_L, y, 1.5, cardH, "F");
-      doc.setFontSize(9);
-      doc.setFont("helvetica", "bold");
-      doc.setTextColor(...BLACK);
-      doc.text(`${dim.name} — ${dim.score}`, MARGIN_L + 6, y + 7);
-      doc.setFontSize(8);
-      doc.setFont("helvetica", "normal");
-      doc.setTextColor(...MUTED);
-      doc.text(textLines, MARGIN_L + 6, y + 13);
-      y += cardH + 4;
-    }
-    y += 2;
   }
 
   // ── DRIVING FACET INSIGHTS ──
