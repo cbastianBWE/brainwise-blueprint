@@ -180,7 +180,8 @@ export default function ExportPdfModal({ open, onOpenChange, instrumentType, isC
     profileOverviewNarrative: true,
     ptpBrainOverview: true,
     dimensionHighlights: true,
-    drivingFacetInsights: true,
+    drivingFacetInsightsElevated: true,
+    drivingFacetInsightsSuppressed: true,
     crossAssessmentConnections: true,
     assessmentResponses: true,
   });
