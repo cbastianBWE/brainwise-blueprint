@@ -19,7 +19,8 @@ export interface PdfSections {
   profileOverviewNarrative: boolean;
   ptpBrainOverview: boolean;
   dimensionHighlights: boolean;
-  drivingFacetInsights: boolean;
+  drivingFacetInsightsElevated: boolean;
+  drivingFacetInsightsSuppressed: boolean;
   crossAssessmentConnections: boolean;
   assessmentResponses: boolean;
 }
