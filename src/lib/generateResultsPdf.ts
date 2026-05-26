@@ -96,6 +96,36 @@ const DISCLAIMER_ICON_BG = [255, 230, 210] as const;
 // available, force a page break first to avoid widows/orphans.
 const MIN_BLOCK_SPACE = 30;
 
+const PTP_BRAIN_OVERVIEW_FULL = `Your brain is constantly scanning for two things: what threatens you, and what rewards you. It does this whether you're aware of it or not, and the answers shape how you respond, what you notice, and what you avoid.
+
+The Personal Threat Profile maps that scanning across five dimensions. Three are about threat — **Protection** (the need to feel safe and secure), **Participation** (the need to belong and be welcomed), and **Prediction** (the need to understand what's happening and what comes next). Two are about reward — **Purpose** (a sense of meaning) and **Pleasure** (the experience of genuine enjoyment).
+
+One principle is worth holding in mind as you read: your brain only fully engages with reward when it feels sufficiently safe. Until the three threat dimensions are adequately met, Purpose and Pleasure stay largely out of reach.
+
+You took the full Personal Threat Profile, covering all five domains across 89 items. What follows shows you where your sensitivities are highest and lowest. The items where you scored very high or very low are the ones most likely to trigger a stress response, and the ones most likely to shape how you behave under pressure. Pay particular attention to those — they are your major drivers.
+
+This report is the starting point, not the conclusion. It doesn't interpret your results for you. That work is yours, ideally with a coach or someone who knows you well. The sections that follow give you a place to begin.`;
+
+const PTP_BRAIN_OVERVIEW_PERSONAL = `Your brain is constantly scanning for two things: what threatens you, and what rewards you. It does this whether you're aware of it or not, and the answers shape how you respond, what you notice, and what you avoid.
+
+The Personal Threat Profile maps that scanning across five dimensions. Three are about threat — **Protection** (the need to feel safe and secure), **Participation** (the need to belong and be welcomed), and **Prediction** (the need to understand what's happening and what comes next). Two are about reward — **Purpose** (a sense of meaning) and **Pleasure** (the experience of genuine enjoyment).
+
+One principle is worth holding in mind as you read: your brain only fully engages with reward when it feels sufficiently safe. Until the three threat dimensions are adequately met, Purpose and Pleasure stay largely out of reach.
+
+You took the personal context of the Personal Threat Profile, covering all five domains across 42 items focused on your life outside work — relationships, identity, meaning, and the experiences that bring you alive. What follows shows you where your sensitivities are highest and lowest. The items where you scored very high or very low are the ones most likely to trigger a stress response, and the ones most likely to shape how you show up in your personal world. Pay particular attention to those — they are your major drivers.
+
+This report is the starting point, not the conclusion. It doesn't interpret your results for you. That work is yours, ideally with a coach or someone who knows you well. The sections that follow give you a place to begin.`;
+
+const PTP_BRAIN_OVERVIEW_PROFESSIONAL = `Your brain is constantly scanning for two things at work: what threatens you, and what rewards you. It does this whether you're aware of it or not, and the answers shape how you respond to colleagues, how you handle pressure, and how you make decisions under stress.
+
+The full Personal Threat Profile maps that scanning across five dimensions — three threats and two rewards. The professional context you took focuses on the three threat dimensions, the ones most likely to surface in workplace settings: **Protection** (the need to feel safe and secure), **Participation** (the need to belong and be welcomed), and **Prediction** (the need to understand what's happening and what comes next).
+
+One principle is worth holding in mind: your brain can only fully engage at work when it feels sufficiently safe in these three areas. When Protection, Participation, or Prediction is activated, your capacity to do your best work narrows.
+
+You took the professional context of the Personal Threat Profile, covering the three threat domains across 47 items. What follows shows you where your sensitivities are highest and lowest. The items where you scored very high or very low are the ones most likely to trigger a stress response at work, and the ones most likely to shape how you behave under pressure. Pay particular attention to those — they are your major drivers.
+
+This report is the starting point, not the conclusion. It doesn't interpret your results for you. That work is yours, ideally with a coach or someone who knows you well. The sections that follow give you a place to begin.`;
+
 function hexToRgb(hex: string): [number, number, number] {
   const h = hex.replace("#", "");
   return [parseInt(h.substring(0, 2), 16), parseInt(h.substring(2, 4), 16), parseInt(h.substring(4, 6), 16)];
@@ -364,6 +394,31 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
   doc.addPage();
   y = MARGIN_T;
 
+  // ── PTP AND BRAIN OVERVIEW ──
+  if (sections.ptpBrainOverview) {
+    sectionHeading("PTP and Brain Overview");
+
+    // Pick the right variant
+    const variant = data.ptpBrainOverviewVariant;
+    const overviewText =
+      variant === "professional"
+        ? PTP_BRAIN_OVERVIEW_PROFESSIONAL
+        : variant === "personal"
+        ? PTP_BRAIN_OVERVIEW_PERSONAL
+        : PTP_BRAIN_OVERVIEW_FULL;
+
+    // Render as multi-paragraph body text. Bold markers (**...**) are stripped
+    // by cleanMarkdown for now — inline bold rendering is deferred to a later pass.
+    const paragraphs = overviewText.split("\n\n").filter((p) => p.trim().length > 0);
+    for (let i = 0; i < paragraphs.length; i++) {
+      bodyText(paragraphs[i]);
+      if (i < paragraphs.length - 1) y += 2;
+    }
+    addFooter();
+    doc.addPage();
+    y = MARGIN_T;
+  }
+
   // ── PROFILE OVERVIEW ──
   if (sections.profileOverview) {
     sectionHeading("Profile Overview");
@@ -415,6 +470,41 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
     }
   }
 
+  // ── PROFILE OVERVIEW NARRATIVE ──
+  if (sections.profileOverviewNarrative && data.narrativeSections?.profile_overview) {
+    sectionHeading("Profile Overview Narrative");
+    bodyText(data.narrativeSections.profile_overview);
+    y += 4;
+  }
+
+  // ── DIMENSION HIGHLIGHTS ──
+  if (sections.dimensionHighlights && data.narrativeSections?.dimension_highlights) {
+    sectionHeading("Dimension Highlights");
+    for (const dim of data.dimensions) {
+      const text = data.narrativeSections.dimension_highlights[dim.dimensionId];
+      if (!text) continue;
+      const rgb = hexToRgb(dim.color);
+      const pastelRgb = hexToRgb(dim.pastelColor);
+      const textLines = doc.splitTextToSize(cleanMarkdown(text), CONTENT_W - 12);
+      const cardH = textLines.length * 4.5 + 14;
+      checkPageBreak(cardH + 4);
+      doc.setFillColor(pastelRgb[0], pastelRgb[1], pastelRgb[2]);
+      doc.roundedRect(MARGIN_L, y, CONTENT_W, cardH, 2, 2, "F");
+      doc.setFillColor(rgb[0], rgb[1], rgb[2]);
+      doc.rect(MARGIN_L, y, 1.5, cardH, "F");
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(...BLACK);
+      doc.text(`${dim.name} — ${dim.score}`, MARGIN_L + 6, y + 7);
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(...MUTED);
+      doc.text(textLines, MARGIN_L + 6, y + 13);
+      y += cardH + 4;
+    }
+    y += 2;
+  }
+
   // ── DRIVING FACET SCORES ──
   if (sections.drivingFacetScores && (data.elevatedFacets.length > 0 || data.suppressedFacets.length > 0)) {
     sectionHeading("Driving Facet Scores");
@@ -457,64 +547,6 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
 
     if (data.elevatedFacets.length > 0) renderFacetScoreTable("Elevated Facets", data.elevatedFacets);
     if (data.suppressedFacets.length > 0) renderFacetScoreTable("Suppressed Facets", data.suppressedFacets);
-    addFooter();
-    doc.addPage();
-    y = MARGIN_T;
-  }
-
-  // ── PROFILE OVERVIEW NARRATIVE ──
-  if (sections.profileOverviewNarrative && data.narrativeSections?.profile_overview) {
-    sectionHeading("Profile Overview Narrative");
-    bodyText(data.narrativeSections.profile_overview);
-    y += 4;
-  }
-
-  // ── PTP AND BRAIN OVERVIEW ──
-  if (sections.ptpBrainOverview) {
-    sectionHeading("PTP and Brain Overview");
-    const overviewText = "Content coming soon. This section will provide a brief introduction to the Personal Threat Profile framework and its neuroscientific basis, including links to supporting resources and a video overview.";
-    const overviewLines = doc.splitTextToSize(overviewText, CONTENT_W - 12);
-    const overviewH = overviewLines.length * 4.5 + 8;
-    checkPageBreak(overviewH + 4);
-    doc.setFillColor(...SAND_BG);
-    doc.rect(MARGIN_L + 1.5, y, CONTENT_W - 1.5, overviewH, "F");
-    doc.setFillColor(...NAVY);
-    doc.rect(MARGIN_L, y, 1.5, overviewH, "F");
-    doc.setFontSize(8.5);
-    doc.setTextColor(...BLACK);
-    doc.text(overviewLines, MARGIN_L + 6, y + 5);
-    y += overviewH + 6;
-    addFooter();
-    doc.addPage();
-    y = MARGIN_T;
-  }
-
-  // ── DIMENSION HIGHLIGHTS ──
-  if (sections.dimensionHighlights && data.narrativeSections?.dimension_highlights) {
-    sectionHeading("Dimension Highlights");
-    for (const dim of data.dimensions) {
-      const text = data.narrativeSections.dimension_highlights[dim.dimensionId];
-      if (!text) continue;
-      const rgb = hexToRgb(dim.color);
-      const pastelRgb = hexToRgb(dim.pastelColor);
-      const textLines = doc.splitTextToSize(cleanMarkdown(text), CONTENT_W - 12);
-      const cardH = textLines.length * 4.5 + 14;
-      checkPageBreak(cardH + 4);
-      doc.setFillColor(pastelRgb[0], pastelRgb[1], pastelRgb[2]);
-      doc.roundedRect(MARGIN_L, y, CONTENT_W, cardH, 2, 2, "F");
-      doc.setFillColor(rgb[0], rgb[1], rgb[2]);
-      doc.rect(MARGIN_L, y, 1.5, cardH, "F");
-      doc.setFontSize(9);
-      doc.setFont("helvetica", "bold");
-      doc.setTextColor(...BLACK);
-      doc.text(`${dim.name} — ${dim.score}`, MARGIN_L + 6, y + 7);
-      doc.setFontSize(8);
-      doc.setFont("helvetica", "normal");
-      doc.setTextColor(...MUTED);
-      doc.text(textLines, MARGIN_L + 6, y + 13);
-      y += cardH + 4;
-    }
-    y += 2;
   }
 
   // ── DRIVING FACET INSIGHTS ──
