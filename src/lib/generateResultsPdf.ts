@@ -549,125 +549,133 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
     if (data.suppressedFacets.length > 0) renderFacetScoreTable("Suppressed Facets", data.suppressedFacets);
   }
 
-  // ── DRIVING FACET INSIGHTS ──
-  if (sections.drivingFacetInsights && (data.elevatedFacets.length > 0 || data.suppressedFacets.length > 0)) {
+  // ── DRIVING FACET INSIGHTS (shared renderer, used by Elevated + Suppressed blocks) ──
+  const renderFacetInsights = (title: string, facets: FacetWithInterpretation[]) => {
+    if (!facets.length) return;
+    checkPageBreak(40);
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...NAVY);
+    doc.text(title, MARGIN_L, y);
+    y += 7;
+
+    for (const f of facets) {
+      if (!f.interpretation) continue;
+      const rgb = hexToRgb(PTP_DIM_COLOR(f.dimensionId));
+
+      // Estimate total height of this facet block before rendering
+      const qLinesEst = doc.splitTextToSize(f.itemText, CONTENT_W - 20);
+      const selfItemsEst = [
+        ...(f.interpretation?.positive_self ?? []),
+        ...(f.interpretation?.negative_self ?? []),
+      ];
+      const othersItemsEst = [
+        ...(f.interpretation?.positive_others ?? []),
+        ...(f.interpretation?.negative_others ?? []),
+      ];
+      const impactRowsEst = Math.max(selfItemsEst.length, othersItemsEst.length);
+      const estimatedBlockH = 15 + 5 + impactRowsEst * 12 + 6;
+      ensureBlockSpace(Math.max(MIN_BLOCK_SPACE, Math.min(estimatedBlockH, 80)));
+      doc.setFillColor(rgb[0], rgb[1], rgb[2]);
+      doc.rect(MARGIN_L, y, 1.5, 12, "F");
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(...BLACK);
+      doc.text(f.facetName, MARGIN_L + 5, y + 5);
+      doc.setFontSize(7.5);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(...MUTED);
+      const qLines = doc.splitTextToSize(f.itemText, CONTENT_W - 20);
+      doc.text(qLines[0] ?? "", MARGIN_L + 5, y + 10);
+      doc.setFillColor(rgb[0], rgb[1], rgb[2]);
+      doc.roundedRect(MARGIN_L + CONTENT_W - 12, y + 2, 12, 8, 1, 1, "F");
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(255, 255, 255);
+      doc.text(String(f.score), MARGIN_L + CONTENT_W - 6, y + 7, { align: "center" });
+      y += 15;
+
+      const colW = (CONTENT_W - 4) / 2;
+
+      // Estimate total height of all impact rows for this facet
+      const selfItemsAll = [
+        ...f.interpretation.positive_self.map(t => t),
+        ...f.interpretation.negative_self.map(t => t),
+      ];
+      const othersItemsAll = [
+        ...f.interpretation.positive_others.map(t => t),
+        ...f.interpretation.negative_others.map(t => t),
+      ];
+      const maxRowsAll = Math.max(selfItemsAll.length, othersItemsAll.length);
+      const estimatedImpactH = 5 + maxRowsAll * 14;
+      checkPageBreak(estimatedImpactH);
+
+      doc.setFontSize(7.5);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(...NAVY);
+      doc.text("Impact on self", MARGIN_L, y);
+      doc.text("Impact on others", MARGIN_L + colW + 4, y);
+      y += 5;
+
+      const selfItems = [
+        ...f.interpretation.positive_self.map((t) => ({ text: t, positive: true })),
+        ...f.interpretation.negative_self.map((t) => ({ text: t, positive: false })),
+      ];
+      const othersItems = [
+        ...f.interpretation.positive_others.map((t) => ({ text: t, positive: true })),
+        ...f.interpretation.negative_others.map((t) => ({ text: t, positive: false })),
+      ];
+      const maxItems = Math.max(selfItems.length, othersItems.length);
+
+      for (let i = 0; i < maxItems; i++) {
+        const selfItem = selfItems[i];
+        const othersItem = othersItems[i];
+        const selfLines = selfItem ? doc.splitTextToSize(cleanMarkdown(selfItem.text), colW - 6) : [];
+        const othersLines = othersItem ? doc.splitTextToSize(cleanMarkdown(othersItem.text), colW - 6) : [];
+        const rowH = Math.max(selfLines.length, othersLines.length) * 4 + 3;
+        checkPageBreak(rowH + 2);
+
+        if (selfItem) {
+          doc.setFontSize(8);
+          doc.setFont("helvetica", "bold");
+          doc.setTextColor(selfItem.positive ? GREEN[0] : RED[0], selfItem.positive ? GREEN[1] : RED[1], selfItem.positive ? GREEN[2] : RED[2]);
+          doc.text(selfItem.positive ? "+" : "-", MARGIN_L, y + 3);
+          doc.setFont("helvetica", "normal");
+          doc.setTextColor(...BLACK);
+          doc.text(selfLines, MARGIN_L + 5, y + 3);
+        }
+
+        if (othersItem) {
+          doc.setFontSize(8);
+          doc.setFont("helvetica", "bold");
+          doc.setTextColor(othersItem.positive ? GREEN[0] : RED[0], othersItem.positive ? GREEN[1] : RED[1], othersItem.positive ? GREEN[2] : RED[2]);
+          doc.text(othersItem.positive ? "+" : "-", MARGIN_L + colW + 4, y + 3);
+          doc.setFont("helvetica", "normal");
+          doc.setTextColor(...BLACK);
+          doc.text(othersLines, MARGIN_L + colW + 9, y + 3);
+        }
+
+        y += rowH;
+      }
+      y += 6;
+    }
+  };
+
+  // ── DRIVING FACET INSIGHTS — ELEVATED ──
+  if (sections.drivingFacetInsightsElevated && data.elevatedFacets.length > 0) {
     addFooter();
     doc.addPage();
     y = MARGIN_T;
-    sectionHeading("Driving Facet Insights");
-
-    const renderFacetInsights = (title: string, facets: FacetWithInterpretation[]) => {
-      if (!facets.length) return;
-      checkPageBreak(40);
-      doc.setFontSize(10);
-      doc.setFont("helvetica", "bold");
-      doc.setTextColor(...NAVY);
-      doc.text(title, MARGIN_L, y);
-      y += 7;
-
-      for (const f of facets) {
-        if (!f.interpretation) continue;
-        const rgb = hexToRgb(PTP_DIM_COLOR(f.dimensionId));
-
-        // Estimate total height of this facet block before rendering
-        const qLinesEst = doc.splitTextToSize(f.itemText, CONTENT_W - 20);
-        const selfItemsEst = [
-          ...(f.interpretation?.positive_self ?? []),
-          ...(f.interpretation?.negative_self ?? []),
-        ];
-        const othersItemsEst = [
-          ...(f.interpretation?.positive_others ?? []),
-          ...(f.interpretation?.negative_others ?? []),
-        ];
-        const impactRowsEst = Math.max(selfItemsEst.length, othersItemsEst.length);
-        const estimatedBlockH = 15 + 5 + impactRowsEst * 12 + 6;
-        ensureBlockSpace(Math.max(MIN_BLOCK_SPACE, Math.min(estimatedBlockH, 80)));
-        doc.setFillColor(rgb[0], rgb[1], rgb[2]);
-        doc.rect(MARGIN_L, y, 1.5, 12, "F");
-        doc.setFontSize(9);
-        doc.setFont("helvetica", "bold");
-        doc.setTextColor(...BLACK);
-        doc.text(f.facetName, MARGIN_L + 5, y + 5);
-        doc.setFontSize(7.5);
-        doc.setFont("helvetica", "normal");
-        doc.setTextColor(...MUTED);
-        const qLines = doc.splitTextToSize(f.itemText, CONTENT_W - 20);
-        doc.text(qLines[0] ?? "", MARGIN_L + 5, y + 10);
-        doc.setFillColor(rgb[0], rgb[1], rgb[2]);
-        doc.roundedRect(MARGIN_L + CONTENT_W - 12, y + 2, 12, 8, 1, 1, "F");
-        doc.setFontSize(8);
-        doc.setFont("helvetica", "bold");
-        doc.setTextColor(255, 255, 255);
-        doc.text(String(f.score), MARGIN_L + CONTENT_W - 6, y + 7, { align: "center" });
-        y += 15;
-
-        const colW = (CONTENT_W - 4) / 2;
-
-        // Estimate total height of all impact rows for this facet
-        const selfItemsAll = [
-          ...f.interpretation.positive_self.map(t => t),
-          ...f.interpretation.negative_self.map(t => t),
-        ];
-        const othersItemsAll = [
-          ...f.interpretation.positive_others.map(t => t),
-          ...f.interpretation.negative_others.map(t => t),
-        ];
-        const maxRowsAll = Math.max(selfItemsAll.length, othersItemsAll.length);
-        const estimatedImpactH = 5 + maxRowsAll * 14;
-        checkPageBreak(estimatedImpactH);
-
-        doc.setFontSize(7.5);
-        doc.setFont("helvetica", "bold");
-        doc.setTextColor(...NAVY);
-        doc.text("Impact on self", MARGIN_L, y);
-        doc.text("Impact on others", MARGIN_L + colW + 4, y);
-        y += 5;
-
-        const selfItems = [
-          ...f.interpretation.positive_self.map((t) => ({ text: t, positive: true })),
-          ...f.interpretation.negative_self.map((t) => ({ text: t, positive: false })),
-        ];
-        const othersItems = [
-          ...f.interpretation.positive_others.map((t) => ({ text: t, positive: true })),
-          ...f.interpretation.negative_others.map((t) => ({ text: t, positive: false })),
-        ];
-        const maxItems = Math.max(selfItems.length, othersItems.length);
-
-        for (let i = 0; i < maxItems; i++) {
-          const selfItem = selfItems[i];
-          const othersItem = othersItems[i];
-          const selfLines = selfItem ? doc.splitTextToSize(cleanMarkdown(selfItem.text), colW - 6) : [];
-          const othersLines = othersItem ? doc.splitTextToSize(cleanMarkdown(othersItem.text), colW - 6) : [];
-          const rowH = Math.max(selfLines.length, othersLines.length) * 4 + 3;
-          checkPageBreak(rowH + 2);
-
-          if (selfItem) {
-            doc.setFontSize(8);
-            doc.setFont("helvetica", "bold");
-            doc.setTextColor(selfItem.positive ? GREEN[0] : RED[0], selfItem.positive ? GREEN[1] : RED[1], selfItem.positive ? GREEN[2] : RED[2]);
-            doc.text(selfItem.positive ? "+" : "-", MARGIN_L, y + 3);
-            doc.setFont("helvetica", "normal");
-            doc.setTextColor(...BLACK);
-            doc.text(selfLines, MARGIN_L + 5, y + 3);
-          }
-
-          if (othersItem) {
-            doc.setFontSize(8);
-            doc.setFont("helvetica", "bold");
-            doc.setTextColor(othersItem.positive ? GREEN[0] : RED[0], othersItem.positive ? GREEN[1] : RED[1], othersItem.positive ? GREEN[2] : RED[2]);
-            doc.text(othersItem.positive ? "+" : "-", MARGIN_L + colW + 4, y + 3);
-            doc.setFont("helvetica", "normal");
-            doc.setTextColor(...BLACK);
-            doc.text(othersLines, MARGIN_L + colW + 9, y + 3);
-          }
-
-          y += rowH;
-        }
-        y += 6;
-      }
-    };
-
+    sectionHeading("Driving Facet Insights — Elevated");
     renderFacetInsights("Elevated Facets", data.elevatedFacets);
+  }
+
+  // ── DRIVING FACET INSIGHTS — SUPPRESSED ──
+  if (sections.drivingFacetInsightsSuppressed && data.suppressedFacets.length > 0) {
+    addFooter();
+    doc.addPage();
+    y = MARGIN_T;
+    sectionHeading("Driving Facet Insights — Suppressed");
     renderFacetInsights("Suppressed Facets", data.suppressedFacets);
   }
 
