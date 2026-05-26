@@ -1,11 +1,24 @@
-## Plan: Add pdfFonts.ts to src/lib/
+## Plan: PTP PDF cover — coordinate adjustments (Option X2)
 
-1. Copy `user-uploads://pdfFonts.ts` → `src/lib/pdfFonts.ts` byte-identical (using code--copy, no edits, no reformatting).
-2. Verify file exists and report size in bytes (`wc -c`).
-3. Verify exports/imports by grepping the file for:
-   - `import type jsPDF from "jspdf"` (line 24)
-   - `export function registerPdfFonts` (or equivalent named export) with `jsPDF` param and `void` return
-4. Run TypeScript check scoped to this file: `npx tsc --noEmit -p tsconfig.app.json` and filter output for `pdfFonts.ts`.
-5. Report results of each step. If tsc reports errors in this file, stop and paste raw errors verbatim — no fixes.
+Apply Y-coordinate changes inside the cover block of `src/lib/generateResultsPdf.ts` only. Keep `NAVY_BLOCK_H = 145`. Keep `ASSESSMENT REPORT`. No other code touched.
 
-No other files will be modified. No imports of this file will be added.
+### Changes (cover block only)
+
+| Element | Current | New |
+|---|---|---|
+| Logo width | `addImage(..., 22, 60, 0, ...)` | `addImage(..., 18, 50, 0, ...)` (y=18, width=50) |
+| Fallback wordmark y | 32 | 35 |
+| ASSESSMENT REPORT y | 62 | 72 |
+| Headline line 1 ("Personal Threat") y | 82 | 88 |
+| Headline line 2 ("Profile") y | 99 | 105 |
+| ™ y | 89 | 98 |
+| Description y | 112 | 120 |
+| Context `pillY` | 130 | 138 |
+
+All other code in the cover block (colors, fonts, font sizes, x positions, pill geometry, sand block, fields, disclaimer, footer, copyright) stays byte-identical. No changes outside the cover block.
+
+### Verification
+
+1. Run `npx tsc --noEmit -p tsconfig.app.json` — confirm clean.
+2. Diff-check by re-reading the cover block: only the listed Y values + logo width changed; ASSESSMENT REPORT line still present; logo width = 50; ™ now at y=98 (sits on "Profile" line, not between lines).
+3. Do not export a PDF.
