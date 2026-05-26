@@ -195,12 +195,12 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
 
   // Logo (raster, fetched at runtime). If the fetch failed, fall back to text wordmark.
   if (logoDataUrl) {
-    doc.addImage(logoDataUrl, "PNG", MARGIN_L, 22, 60, 0, undefined, "FAST");
+    doc.addImage(logoDataUrl, "PNG", MARGIN_L, 18, 50, 0, undefined, "FAST");
   } else {
     doc.setFont("Poppins", "extrabold");
     doc.setFontSize(20);
     doc.setTextColor(255, 255, 255);
-    doc.text("BrainWise Enterprises", MARGIN_L, 32);
+    doc.text("BrainWise Enterprises", MARGIN_L, 35);
   }
 
   // "ASSESSMENT REPORT" eyebrow
@@ -208,19 +208,19 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
   doc.setFontSize(10);
   doc.setTextColor(...ORANGE);
   doc.setCharSpace(1.5);
-  doc.text("ASSESSMENT REPORT", MARGIN_L, 62);
+  doc.text("ASSESSMENT REPORT", MARGIN_L, 72);
   doc.setCharSpace(0);
 
   // Headline "Personal Threat Profile™" — Poppins ExtraBold, white, large
   doc.setFont("Poppins", "extrabold");
   doc.setFontSize(36);
   doc.setTextColor(255, 255, 255);
-  doc.text("Personal Threat", MARGIN_L, 82);
-  doc.text("Profile", MARGIN_L, 99);
+  doc.text("Personal Threat", MARGIN_L, 88);
+  doc.text("Profile", MARGIN_L, 105);
   const profileWidth = doc.getTextWidth("Profile");
   doc.setTextColor(...ORANGE);
   doc.setFontSize(20);
-  doc.text("™", MARGIN_L + profileWidth + 1, 89);
+  doc.text("™", MARGIN_L + profileWidth + 1, 98);
   doc.setTextColor(255, 255, 255);
 
   // Description paragraph
@@ -229,7 +229,7 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
   doc.setTextColor(220, 230, 240);
   const descText = "A neuroscience-based profile of how you respond to pressure, uncertainty, and change — mapped to the BrainWise 5P model.";
   const descLines = doc.splitTextToSize(descText, CONTENT_W - 60);
-  doc.text(descLines, MARGIN_L, 112);
+  doc.text(descLines, MARGIN_L, 120);
 
   // Context pill
   const contextLabel = (data.contextLabel || "Full").toUpperCase() + " CONTEXT";
@@ -238,7 +238,7 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
   const pillTextWidth = doc.getTextWidth(contextLabel);
   const pillW = pillTextWidth + 18;
   const pillH = 9;
-  const pillY = 130;
+  const pillY = 138;
   doc.setDrawColor(...ORANGE);
   doc.setLineWidth(0.5);
   doc.setFillColor(...NAVY);
