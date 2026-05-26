@@ -1,26 +1,27 @@
-## Plan: PTP PDF cover — tighten sand-area spacing
+## Plan: Rewrite PTP narrative fetch to four-row pattern
 
-Two single-line changes inside the cover block of `src/lib/generateResultsPdf.ts`.
+### File 1: `src/lib/assemblePdfDataForUser.ts` (lines 222–232)
 
-| Element | Current | New |
-|---|---|---|
-| `NAVY_BLOCK_H` | `145` | `150` |
-| `fieldY` | `NAVY_BLOCK_H + 25` | `NAVY_BLOCK_H + 14` |
+Replace the single-row `narrative_${contextTab}` fetch with a parallel four-row `.in()` fetch matching the live `PTPNarrativeSections.tsx` pattern.
 
-All downstream coordinates (`fieldY + 9`, `fieldY + 13`, `versionY = fieldY + 28`, etc.) are relative and shift automatically. No other edits.
+New block fetches these section types in one query:
+- `profile_overview_${contextTab}` → `.text` → `profile_overview`
+- `personal_summary_${contextTab}` → `.personal_summary` (array) → `personal_summary`
+- `dimension_highlights_${contextTab}` → whole `facet_data` object → `dimension_highlights`
+- `cross_and_action_${contextTab}` → `.cross_assessment` + `.action_plan` (array)
 
-### Resulting layout (verified by math)
+Uses `Map` for row lookup and `Array.isArray` guards on array fields. Exact code as specified in the prompt.
 
-- Navy block: 0 → 150
-- Pill: 138 → 147 (3 mm clearance to boundary)
-- Sand block: 150 → 297
-- Participant / Date fields: y = 164; underlines at 177
-- Instrument Version: y = 192; underline at 205
-- Disclaimer card: y = 220, ~40.5 mm tall, bottom ≈ 260.5
-- Footer block: y = 275 → ~14.5 mm clearance above
+### File 2: `src/lib/generateResultsPdf.ts` (lines 44–48)
+
+Extend `PdfData.narrativeSections` type to add two optional fields:
+- `personal_summary?: string[]`
+- `action_plan?: Array<{ title: string; rationale: string; steps: string[]; dimension_tags: string[] }>`
+
+Existing fields (`profile_overview`, `dimension_highlights`, `cross_assessment`) unchanged.
 
 ### Verification
 
-1. `npx tsc --noEmit -p tsconfig.app.json` — confirm clean.
-2. Re-read cover block: only `NAVY_BLOCK_H` and `fieldY` changed.
-3. No PDF export.
+- Run `npx tsc --noEmit -p tsconfig.app.json` (fallback to `tsconfig.json` if app config missing); confirm clean.
+- Re-read both modified ranges to confirm only the specified edits were made.
+- No PDF export. No other code touched. No rendering changes in the generator (new fields stay unreferenced for now).
