@@ -1,27 +1,45 @@
-## Plan: Rewrite PTP narrative fetch to four-row pattern
+# Prompt 2 — Full Facet Charts in PTP PDF
 
-### File 1: `src/lib/assemblePdfDataForUser.ts` (lines 222–232)
+## Files
 
-Replace the single-row `narrative_${contextTab}` fetch with a parallel four-row `.in()` fetch matching the live `PTPNarrativeSections.tsx` pattern.
+### 1. `src/components/results/ExportPdfModal.tsx`
+- `PdfSections` interface: add `fullFacetCharts: boolean;`
+- `ptpSections` `useState` initializer: add `fullFacetCharts: true,`
+- `PTP_GROUPS` → "Dimension detail sections" group: add option **after** the two Driving Facet Insights entries:
+  ```ts
+  { key: "fullFacetCharts", name: "Full Facet Charts", description: "Bar charts of every assessed facet, grouped by All/Threat/Reward" }
+  ```
 
-New block fetches these section types in one query:
-- `profile_overview_${contextTab}` → `.text` → `profile_overview`
-- `personal_summary_${contextTab}` → `.personal_summary` (array) → `personal_summary`
-- `dimension_highlights_${contextTab}` → whole `facet_data` object → `dimension_highlights`
-- `cross_and_action_${contextTab}` → `.cross_assessment` + `.action_plan` (array)
+### 2. `src/pages/Departed.tsx`
+- Hardcoded `PdfSections` literal: add `fullFacetCharts: true,`
 
-Uses `Map` for row lookup and `Array.isArray` guards on array fields. Exact code as specified in the prompt.
+### 3. `src/lib/generateResultsPdf.ts`
+- Insert new section block **between Cross-Assessment Connections (line 712) and Assessment Responses (line 717)**.
+- Source data: `data.fullFacetData` (already populated; no refetch).
+- Variant gating via `data.ptpBrainOverviewVariant === "professional"` → only "All Facets" renders; otherwise All + Threat + Reward.
+- Threat = `DIM-PTP-01/02/03`, Reward = `DIM-PTP-04/05`.
+- One sub-chart per PDF page (`addFooter(); doc.addPage(); y = MARGIN_T; sectionHeading(...)`).
+- Bar chart geometry per spec: facet-name column 75mm right-aligned, bar to remaining width, score 1mm right of bar end. Grid lines at 0/25/50/75/100 with scale labels above.
+- Adaptive `rowHeight = clamp(availHeight / rowCount, 3.2, 7)` and `fontSize = clamp(rowHeight - 1.5, 5.5, 8)` for 89/47/42-row cases.
+- Sort each sub-chart by `score` descending.
+- Pixel-width truncation via `doc.getTextWidth()` loop (no `.slice(N)`).
 
-### File 2: `src/lib/generateResultsPdf.ts` (lines 44–48)
+## Spec corrections found during audit
+- **`PTP_DIM_COLOR` is a function, not an object** (line 144: `function PTP_DIM_COLOR(dimId: string): string`). Use `PTP_DIM_COLOR(f.dimensionId)`, not `PTP_DIM_COLOR[f.dimensionId]`. Existing call sites (e.g. line 556, 583, 728) confirm.
+- **Score label position bug in spec, applying fix**: use `doc.text(String(f.score), barStartX + barWidth + 1, rowY + fontSize / 4)` (1mm right of actual bar end), not the arithmetic shown in the example code.
+- `hexToRgb` exists at line 131 — reuse, no local re-declaration.
+- Fonts `Montserrat`/`Poppins` are registered (used throughout cover and headings).
+- All other helpers/constants (`MARGIN_L`, `MARGIN_B`, `MARGIN_T`, `CONTENT_W`, `PAGE_H`, `NAVY`, `MUTED`, `sectionHeading`, `addFooter`) exist.
 
-Extend `PdfData.narrativeSections` type to add two optional fields:
-- `personal_summary?: string[]`
-- `action_plan?: Array<{ title: string; rationale: string; steps: string[]; dimension_tags: string[] }>`
+## Verification
+```text
+npx tsc --noEmit -p tsconfig.app.json                                  # clean
+rg "fullFacetCharts" src/components/results/ExportPdfModal.tsx \
+   src/lib/generateResultsPdf.ts src/pages/Departed.tsx                # hits in all three
+```
+- Section block sits between Cross-Assessment Connections and Assessment Responses
+- No other `PdfSections` keys added or removed
+- `data.fullFacetData` consumed, not refetched
+- Pixel-width truncation only
 
-Existing fields (`profile_overview`, `dimension_highlights`, `cross_assessment`) unchanged.
-
-### Verification
-
-- Run `npx tsc --noEmit -p tsconfig.app.json` (fallback to `tsconfig.json` if app config missing); confirm clean.
-- Re-read both modified ranges to confirm only the specified edits were made.
-- No PDF export. No other code touched. No rendering changes in the generator (new fields stay unreferenced for now).
+No PDF export from agent — user visual-tests combined/personal/professional contexts.

@@ -713,6 +713,100 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
     y += 4;
   }
 
+  // ── FULL FACET CHARTS ──
+  if (sections.fullFacetCharts && data.fullFacetData.length > 0) {
+    const isProfessional = data.ptpBrainOverviewVariant === "professional";
+
+    const renderFacetBarChart = (
+      chartTitle: string,
+      facets: typeof data.fullFacetData,
+    ) => {
+      if (facets.length === 0) return;
+
+      addFooter();
+      doc.addPage();
+      y = MARGIN_T;
+      sectionHeading(`Full Facet Charts — ${chartTitle}`);
+
+      const sorted = [...facets].sort((a, b) => b.score - a.score);
+
+      const chartStartY = y + 2;
+      const chartEndY = PAGE_H - MARGIN_B - 8;
+      const availableHeight = chartEndY - chartStartY;
+      const rowCount = sorted.length;
+      const rowHeight = Math.max(3.2, Math.min(7, availableHeight / rowCount));
+
+      const facetNameWidth = 75;
+      const barStartX = MARGIN_L + facetNameWidth + 2;
+      const scoreLabelWidth = 8;
+      const barMaxWidth = CONTENT_W - facetNameWidth - 2 - scoreLabelWidth - 2;
+
+      // Grid lines at 0/25/50/75/100
+      doc.setDrawColor(220, 220, 220);
+      doc.setLineWidth(0.2);
+      for (let pct = 0; pct <= 100; pct += 25) {
+        const x = barStartX + (pct / 100) * barMaxWidth;
+        doc.line(x, chartStartY, x, chartEndY);
+      }
+
+      // Scale labels
+      doc.setFont("Montserrat", "normal");
+      doc.setFontSize(6);
+      doc.setTextColor(...MUTED);
+      for (let pct = 0; pct <= 100; pct += 25) {
+        const x = barStartX + (pct / 100) * barMaxWidth;
+        doc.text(String(pct), x, chartStartY - 1, { align: "center" });
+      }
+
+      for (let i = 0; i < sorted.length; i++) {
+        const f = sorted[i];
+        const rowY = chartStartY + i * rowHeight + rowHeight / 2;
+        const fontSize = Math.min(8, Math.max(5.5, rowHeight - 1.5));
+
+        // Facet name — pixel-width truncation
+        doc.setFont("Montserrat", "normal");
+        doc.setFontSize(fontSize);
+        doc.setTextColor(...NAVY);
+        const fullName = f.facetName || f.itemText || "—";
+        let displayName = fullName;
+        while (
+          doc.getTextWidth(displayName) > facetNameWidth - 1 &&
+          displayName.length > 5
+        ) {
+          displayName = displayName.slice(0, -2);
+        }
+        if (displayName !== fullName) displayName += "…";
+        doc.text(displayName, barStartX - 2, rowY + fontSize / 4, { align: "right" });
+
+        // Bar
+        const [r, g, b] = hexToRgb(PTP_DIM_COLOR(f.dimensionId));
+        doc.setFillColor(r, g, b);
+        const barWidth = (f.score / 100) * barMaxWidth;
+        const barY = rowY - rowHeight / 2 + 0.5;
+        const barH = rowHeight - 1;
+        doc.rect(barStartX, barY, Math.max(0.5, barWidth), barH, "F");
+
+        // Score label — 1mm right of actual bar end
+        doc.setFont("Poppins", "bold");
+        doc.setFontSize(fontSize);
+        doc.setTextColor(...NAVY);
+        doc.text(String(f.score), barStartX + barWidth + 1, rowY + fontSize / 4);
+      }
+    };
+
+    renderFacetBarChart("All Facets", data.fullFacetData);
+
+    if (!isProfessional) {
+      const threatDims = new Set(["DIM-PTP-01", "DIM-PTP-02", "DIM-PTP-03"]);
+      const rewardDims = new Set(["DIM-PTP-04", "DIM-PTP-05"]);
+      const threatFacets = data.fullFacetData.filter((f) => threatDims.has(f.dimensionId));
+      const rewardFacets = data.fullFacetData.filter((f) => rewardDims.has(f.dimensionId));
+      renderFacetBarChart("Threat Facets", threatFacets);
+      renderFacetBarChart("Reward Facets", rewardFacets);
+    }
+  }
+
+
   // ── ASSESSMENT RESPONSES ──
   if (sections.assessmentResponses && data.assessmentResponses.length > 0) {
     sectionHeading("Assessment Responses");

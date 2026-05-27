@@ -21,6 +21,7 @@ export interface PdfSections {
   dimensionHighlights: boolean;
   drivingFacetInsightsElevated: boolean;
   drivingFacetInsightsSuppressed: boolean;
+  fullFacetCharts: boolean;
   crossAssessmentConnections: boolean;
   assessmentResponses: boolean;
 }
@@ -90,6 +91,7 @@ const PTP_GROUPS: SectionGroup<keyof PdfSections>[] = [
       { key: "drivingFacetScores", name: "Driving Facet Scores", description: "Elevated and suppressed bar charts" },
       { key: "drivingFacetInsightsElevated", name: "Driving Facet Insights — Elevated", description: "Behavioral impacts of elevated facets" },
       { key: "drivingFacetInsightsSuppressed", name: "Driving Facet Insights — Suppressed", description: "Behavioral impacts of suppressed facets" },
+      { key: "fullFacetCharts", name: "Full Facet Charts", description: "Bar charts of every assessed facet, grouped by All/Threat/Reward" },
     ],
   },
   {
@@ -182,6 +184,7 @@ export default function ExportPdfModal({ open, onOpenChange, instrumentType, isC
     dimensionHighlights: true,
     drivingFacetInsightsElevated: true,
     drivingFacetInsightsSuppressed: true,
+    fullFacetCharts: true,
     crossAssessmentConnections: true,
     assessmentResponses: true,
   });
