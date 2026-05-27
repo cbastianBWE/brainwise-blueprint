@@ -192,6 +192,9 @@ export default function ExportPdfModal({ open, onOpenChange, instrumentType, isC
     fullFacetCharts: true,
     crossAssessmentConnections: true,
     assessmentResponses: true,
+    whatThisMeans: true,
+    actionPlan: true,
+    assessmentResponsesIncludeInsights: false,
   });
 
   const [naiSections, setNaiSections] = useState<NaiPdfSectionsUi>({
