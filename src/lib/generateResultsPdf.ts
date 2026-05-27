@@ -485,10 +485,15 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
       doc.text(card.label, x + 3, y + 5);
       doc.setFontSize(9);
       doc.setTextColor(...BLACK);
-      doc.setFont("helvetica", "bold");
-      const truncVal = card.value.length > 22 ? card.value.slice(0, 20) + "…" : card.value;
+      doc.setFont("Montserrat", "semibold");
+      const maxValW = cardW - 6;
+      let truncVal = card.value;
+      while (doc.getTextWidth(truncVal) > maxValW && truncVal.length > 5) {
+        truncVal = truncVal.slice(0, -2);
+      }
+      if (truncVal !== card.value) truncVal += "…";
       doc.text(truncVal, x + 3, y + 11);
-      doc.setFont("helvetica", "normal");
+      doc.setFont("Montserrat", "normal");
     });
     y += 20;
 
