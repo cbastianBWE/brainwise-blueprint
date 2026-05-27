@@ -655,7 +655,7 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
       innerY += 5.5;
 
       // Rationale
-      doc.setFont("helvetica", "normal");
+      doc.setFont("Montserrat", "normal");
       doc.setFontSize(9);
       doc.setTextColor(BLACK[0], BLACK[1], BLACK[2]);
       doc.text(rationaleLines, innerX, innerY);
