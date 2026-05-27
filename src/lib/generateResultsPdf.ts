@@ -503,6 +503,135 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
     y += 4;
   }
 
+  // ── WHAT DOES THIS MEAN TO ME? ──
+  if (
+    sections.whatThisMeans &&
+    Array.isArray(data.narrativeSections?.personal_summary) &&
+    data.narrativeSections!.personal_summary!.length > 0
+  ) {
+    const items = data.narrativeSections!.personal_summary!;
+    sectionHeading("What does this mean to me?");
+
+    const badgeRadius = 4;
+    const badgeColumn = badgeRadius * 2 + 4;
+    const textX = MARGIN_L + badgeColumn;
+    const textW = CONTENT_W - badgeColumn;
+
+    for (let i = 0; i < items.length; i++) {
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      const lines = doc.splitTextToSize(cleanMarkdown(items[i]), textW);
+      const blockHeight = lines.length * 4.5 + 4;
+      checkPageBreak(blockHeight);
+
+      const badgeCenterY = y + badgeRadius;
+      doc.setFillColor(NAVY[0], NAVY[1], NAVY[2]);
+      doc.circle(MARGIN_L + badgeRadius, badgeCenterY, badgeRadius, "F");
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(8);
+      doc.setTextColor(255, 255, 255);
+      doc.text(String(i + 1), MARGIN_L + badgeRadius, badgeCenterY + 1.3, { align: "center" });
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      doc.setTextColor(BLACK[0], BLACK[1], BLACK[2]);
+      doc.text(lines, textX, y + badgeRadius + 1);
+
+      y += blockHeight;
+    }
+    y += 4;
+  }
+
+  // ── ACTION PLAN ──
+  if (
+    sections.actionPlan &&
+    Array.isArray(data.narrativeSections?.action_plan) &&
+    data.narrativeSections!.action_plan!.length > 0
+  ) {
+    const items = data.narrativeSections!.action_plan!;
+    sectionHeading("Action Plan");
+
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      const rationaleLines = doc.splitTextToSize(cleanMarkdown(item.rationale ?? ""), CONTENT_W - 8);
+      const rationaleHeight = rationaleLines.length * 4.2 + 2;
+      const stepsArr = Array.isArray(item.steps) ? item.steps : [];
+      const stepsHeight = stepsArr.reduce((acc, step) => {
+        const stepLines = doc.splitTextToSize(cleanMarkdown(step), CONTENT_W - 16);
+        return acc + stepLines.length * 4.2 + 1;
+      }, 4);
+      const pillsHeight = (Array.isArray(item.dimension_tags) && item.dimension_tags.length > 0) ? 7 : 0;
+      const titleHeight = 6;
+      const cardHeight = 8 + titleHeight + pillsHeight + rationaleHeight + stepsHeight + 6;
+
+      checkPageBreak(cardHeight + 4);
+
+      const cardTop = y;
+
+      doc.setFillColor(SAND_BG[0], SAND_BG[1], SAND_BG[2]);
+      doc.setDrawColor(225, 220, 210);
+      doc.setLineWidth(0.3);
+      doc.roundedRect(MARGIN_L, cardTop, CONTENT_W, cardHeight, 2, 2, "FD");
+
+      let innerY = cardTop + 6;
+      const innerX = MARGIN_L + 4;
+      const innerW = CONTENT_W - 8;
+
+      // Dimension pills
+      if (Array.isArray(item.dimension_tags) && item.dimension_tags.length > 0) {
+        let pillX = innerX;
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(7);
+        for (const tag of item.dimension_tags) {
+          const tagText = String(tag).toUpperCase();
+          const tagWidth = doc.getTextWidth(tagText) + 6;
+          const dimHex = PTP_DIM_COLOR(tag);
+          const [r, g, b] = hexToRgb(dimHex);
+          doc.setFillColor(r, g, b);
+          doc.roundedRect(pillX, innerY - 4, tagWidth, 5, 2.5, 2.5, "F");
+          doc.setTextColor(255, 255, 255);
+          doc.text(tagText, pillX + tagWidth / 2, innerY - 0.5, { align: "center" });
+          pillX += tagWidth + 3;
+        }
+        innerY += 5;
+      }
+
+      // Title
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(11);
+      doc.setTextColor(NAVY[0], NAVY[1], NAVY[2]);
+      doc.text(cleanMarkdown(item.title ?? ""), innerX, innerY);
+      innerY += 5.5;
+
+      // Rationale
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      doc.setTextColor(BLACK[0], BLACK[1], BLACK[2]);
+      doc.text(rationaleLines, innerX, innerY);
+      innerY += rationaleLines.length * 4.2 + 3;
+
+      // Steps
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      doc.setTextColor(BLACK[0], BLACK[1], BLACK[2]);
+      for (let s = 0; s < stepsArr.length; s++) {
+        const stepLines = doc.splitTextToSize(cleanMarkdown(stepsArr[s]), innerW - 8);
+        doc.setFont("helvetica", "bold");
+        doc.text(`${s + 1}.`, innerX, innerY);
+        doc.setFont("helvetica", "normal");
+        doc.text(stepLines, innerX + 6, innerY);
+        innerY += stepLines.length * 4.2 + 1;
+      }
+
+      y = cardTop + cardHeight + 4;
+    }
+  }
+
+
+
   // ── DIMENSION HIGHLIGHTS ──
   if (sections.dimensionHighlights && data.narrativeSections?.dimension_highlights) {
     sectionHeading("Dimension Highlights");
