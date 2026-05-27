@@ -1090,7 +1090,7 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
           // Headers — page-break together with first row so they don't orphan
           const firstRowMaxH = Math.max(leftRows[0]?.height ?? 0, rightRows[0]?.height ?? 0);
           checkPageBreak(4 + firstRowMaxH);
-          doc.setFont("helvetica", "bold");
+          doc.setFont("Montserrat", "semibold");
           doc.setFontSize(7.5);
           doc.setTextColor(NAVY[0], NAVY[1], NAVY[2]);
           doc.text("Impact on self", leftX, y);
@@ -1098,7 +1098,7 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
           y += 4;
 
           // Render rows in lockstep
-          doc.setFont("helvetica", "normal");
+          doc.setFont("Montserrat", "normal");
           doc.setFontSize(7.5);
           doc.setTextColor(BLACK[0], BLACK[1], BLACK[2]);
 
