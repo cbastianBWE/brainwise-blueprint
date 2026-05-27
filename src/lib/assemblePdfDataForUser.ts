@@ -396,8 +396,47 @@ export async function assemblePtpPdfData(params: {
 
         assessmentResponses = scored
           .sort((a, b) => a.itemNumber - b.itemNumber)
-          .map(({ contextType, ...rest }) => rest);
+          .map(({ contextType, ...rest }) => ({ ...rest, interpretation: null as
+            | { positive_self: string[]; negative_self: string[]; positive_others: string[]; negative_others: string[] }
+            | null }));
       }
+    }
+
+    // C2: Fetch full per-facet interpretations (facet_insights_all) and attach
+    // to each PTP assessmentResponses entry by facetName. Tolerate missing row;
+    // explicitly set interpretation to null when no match (PTP path always sets it).
+    if (assessmentResponses.length > 0) {
+      const { data: allFacetsRow } = await supabase
+        .from("facet_interpretations")
+        .select("facet_data")
+        .eq("assessment_result_id", assessmentResultId)
+        .eq("section_type", "facet_insights_all")
+        .maybeSingle();
+
+      const allFacetInterpretations = Array.isArray((allFacetsRow as any)?.facet_data)
+        ? ((allFacetsRow as any).facet_data as Array<any>)
+        : [];
+
+      const interpretationMap = new Map<string, {
+        positive_self: string[];
+        negative_self: string[];
+        positive_others: string[];
+        negative_others: string[];
+      }>(
+        allFacetInterpretations
+          .filter((fi) => fi && typeof fi.name === "string")
+          .map((fi) => [fi.name, {
+            positive_self: Array.isArray(fi.positive_self) ? fi.positive_self : [],
+            negative_self: Array.isArray(fi.negative_self) ? fi.negative_self : [],
+            positive_others: Array.isArray(fi.positive_others) ? fi.positive_others : [],
+            negative_others: Array.isArray(fi.negative_others) ? fi.negative_others : [],
+          }])
+      );
+
+      assessmentResponses = assessmentResponses.map((r) => ({
+        ...r,
+        interpretation: interpretationMap.get(r.facetName) ?? null,
+      }));
     }
   }
 
