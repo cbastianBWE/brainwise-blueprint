@@ -82,31 +82,33 @@ const PTP_GROUPS: SectionGroup<keyof PdfSections>[] = [
   {
     title: "Profile sections",
     options: [
-      { key: "profileOverview", name: "Profile Overview", description: "Stat cards and dimension score cards" },
-      { key: "profileOverviewNarrative", name: "Profile Overview Narrative", description: "AI-generated profile summary" },
-      { key: "ptpBrainOverview", name: "PTP and Brain Overview", description: "Framework introduction" },
+      { key: "ptpBrainOverview", name: "PTP and Brain Overview", description: "Introduction to the PTP framework and brain context" },
+      { key: "profileOverview", name: "Profile Overview", description: "Dimension scores summary and highlights" },
+      { key: "profileOverviewNarrative", name: "Profile Overview Narrative", description: "AI-generated narrative interpreting your pattern" },
+      { key: "whatThisMeans", name: "What does this mean to me?", description: "Personal implications drawn from your profile" },
+      { key: "actionPlan", name: "Action Plan", description: "Targeted steps based on your driving facets" },
     ],
   },
   {
     title: "Dimension detail sections",
     options: [
-      { key: "dimensionHighlights", name: "Dimension Highlights", description: "AI-generated dimension cards" },
-      { key: "drivingFacetScores", name: "Driving Facet Scores", description: "Elevated and suppressed bar charts" },
+      { key: "dimensionHighlights", name: "Dimension Highlights", description: "Per-dimension narrative and key facet contributors" },
+      { key: "drivingFacetScores", name: "Driving Facet Scores", description: "Most elevated and suppressed facet tables" },
       { key: "drivingFacetInsightsElevated", name: "Driving Facet Insights — Elevated", description: "Behavioral impacts of elevated facets" },
       { key: "drivingFacetInsightsSuppressed", name: "Driving Facet Insights — Suppressed", description: "Behavioral impacts of suppressed facets" },
       { key: "fullFacetCharts", name: "Full Facet Charts", description: "Bar charts of every assessed facet, grouped by All/Threat/Reward" },
     ],
   },
   {
-    title: "Cross-cutting sections",
+    title: "Cross-cutting",
     options: [
-      { key: "crossAssessmentConnections", name: "Cross-Assessment Connections", description: "AI-generated analysis" },
+      { key: "crossAssessmentConnections", name: "Cross-Assessment Connections", description: "How PTP patterns connect to NAI and HSS data" },
     ],
   },
   {
     title: "Raw data",
     options: [
-      { key: "assessmentResponses", name: "Assessment Responses", description: "All questions and scores" },
+      { key: "assessmentResponses", name: "Assessment Responses", description: "Your individual question scores" },
     ],
   },
 ];
