@@ -560,11 +560,9 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
     y += 7;
 
     for (const f of facets) {
-      if (!f.interpretation) continue;
       const rgb = hexToRgb(PTP_DIM_COLOR(f.dimensionId));
 
       // Estimate total height of this facet block before rendering
-      const qLinesEst = doc.splitTextToSize(f.itemText, CONTENT_W - 20);
       const selfItemsEst = [
         ...(f.interpretation?.positive_self ?? []),
         ...(f.interpretation?.negative_self ?? []),
@@ -594,6 +592,12 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
       doc.setTextColor(255, 255, 255);
       doc.text(String(f.score), MARGIN_L + CONTENT_W - 6, y + 7, { align: "center" });
       y += 15;
+
+      // Null-interpretation guard: render card only, skip impact lists silently.
+      if (!f.interpretation) {
+        y += 6;
+        continue;
+      }
 
       const colW = (CONTENT_W - 4) / 2;
 

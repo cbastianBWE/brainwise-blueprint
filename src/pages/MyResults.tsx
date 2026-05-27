@@ -742,15 +742,20 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
   // PDF export handler
   const handlePdfExport = useCallback(async (sections: PdfSections) => {
     if (!selected || !effectiveSelected) return;
+    const additionalAssessmentId =
+      ptpContextTab === 'combined' && !isBothAssessment && hasPtpTabs
+        ? ptpPersonalResults[0]?.result.assessment_id
+        : undefined;
     const pdfData = await assemblePtpPdfData({
       userId: effectiveUserId!,
       assessmentResultId: effectiveSelected.result.id,
       contextTab: ptpContextTab,
       displayName: displayName ?? null,
       sections,
+      additionalAssessmentId,
     });
     await generateResultsPdf(pdfData, sections);
-  }, [selected, effectiveSelected, ptpContextTab, displayName, effectiveUserId]);
+  }, [selected, effectiveSelected, ptpContextTab, displayName, effectiveUserId, isBothAssessment, hasPtpTabs, ptpPersonalResults]);
 
   const handleNaiPdfExport = useCallback(async (sections: import("@/components/results/ExportPdfModal").NaiPdfSectionsUi) => {
     if (!selected || !isNAI) return;
