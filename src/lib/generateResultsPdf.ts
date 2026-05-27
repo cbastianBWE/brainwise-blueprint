@@ -1110,14 +1110,24 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
             checkPageBreak(rowH);
 
             if (left) {
-              if (left.isPositive) drawCheck(leftX + 1.5, y + 1.5);
-              else drawCross(leftX + 1.5, y + 1.5);
+              doc.setFontSize(8);
+              doc.setFont("Montserrat", "bold");
+              doc.setTextColor(left.isPositive ? GREEN[0] : RED[0], left.isPositive ? GREEN[1] : RED[1], left.isPositive ? GREEN[2] : RED[2]);
+              doc.text(left.isPositive ? "+" : "-", leftX, y + 2);
+              doc.setFont("Montserrat", "normal");
+              doc.setFontSize(7.5);
+              doc.setTextColor(BLACK[0], BLACK[1], BLACK[2]);
               doc.text(left.lines, leftX + textIndent, y + 2);
             }
 
             if (right) {
-              if (right.isPositive) drawCheck(rightX + 1.5, y + 1.5);
-              else drawCross(rightX + 1.5, y + 1.5);
+              doc.setFontSize(8);
+              doc.setFont("Montserrat", "bold");
+              doc.setTextColor(right.isPositive ? GREEN[0] : RED[0], right.isPositive ? GREEN[1] : RED[1], right.isPositive ? GREEN[2] : RED[2]);
+              doc.text(right.isPositive ? "+" : "-", rightX, y + 2);
+              doc.setFont("Montserrat", "normal");
+              doc.setFontSize(7.5);
+              doc.setTextColor(BLACK[0], BLACK[1], BLACK[2]);
               doc.text(right.lines, rightX + textIndent, y + 2);
             }
 
