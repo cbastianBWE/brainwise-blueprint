@@ -707,11 +707,11 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
       doc.setFillColor(rgb[0], rgb[1], rgb[2]);
       doc.rect(MARGIN_L, y, 3, cardH, "F");
       doc.setFontSize(9);
-      doc.setFont("helvetica", "bold");
+      doc.setFont("Poppins", "semibold");
       doc.setTextColor(...BLACK);
       doc.text(`${dim.name} — ${dim.score}`, MARGIN_L + 7.5, y + 7);
       doc.setFontSize(8);
-      doc.setFont("helvetica", "normal");
+      doc.setFont("Montserrat", "normal");
       doc.setTextColor(...MUTED);
       doc.text(textLines, MARGIN_L + 7.5, y + 13);
       y += cardH + 4;
