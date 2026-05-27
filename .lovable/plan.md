@@ -1,63 +1,34 @@
-# Prompt 1.6 — Fix split-pair Combined context override
+# Fix split-pair Combined data merging (Bugs A & B)
 
-## Problem
+Single file: `src/lib/assemblePdfDataForUser.ts`. Both target blocks confirmed to match the prompt's "before" snippets exactly.
 
-In `src/lib/assemblePdfDataForUser.ts` (lines 147–150), the reconciliation block forces `contextTab` to match `assessmentCtx` whenever the underlying assessment row is single-context (`'professional'` or `'personal'`). For split-pair Combined exports, the caller correctly passes the professional `result_id` (anchor for combined narratives) plus `additionalAssessmentId` (personal assessment) and `contextTab='combined'`. The reconciliation then incorrectly downgrades `'combined'` to `'professional'`, causing all four narrative fetches, the facet insights fetch, the Brain Overview variant, and the driving-facets context filter to render professional content.
+## Bug A — Full Facet Charts undercount (lines 460–494)
 
-## Fix — single edit, single file
+In the `if (isPTP)` fullFacetData block:
+- Change `const allResponses` → `let allResponses`.
+- After the primary fetch, if `params.additionalAssessmentId` is set, fetch responses for that assessment_id and concat into `allResponses`.
+- Downstream item lookup and mapping unchanged (item_ids are merged automatically via the concat).
 
-**File:** `src/lib/assemblePdfDataForUser.ts` only.
+## Bug B — Per-response insights missing for personal half (lines 408–440)
 
-Replace the reconciliation block at lines 145–157 with:
+Rewrite the C2 attach block:
+- Build `resultIdsToQuery: string[] = [assessmentResultId]`.
+- If `params.additionalAssessmentId` is set, query `assessment_results` for `id` where `assessment_id = additionalAssessmentId` (`.maybeSingle()`) and push the id when present.
+- Replace the `.eq("assessment_result_id", …).maybeSingle()` fetch with `.in("assessment_result_id", resultIdsToQuery).eq("section_type", "facet_insights_all")` returning an array.
+- Flatten each row's `facet_data` array into one `mergedInterpretations` list.
+- Build `interpretationMap` with "first occurrence wins" guard (`!interpretationMap.has(fi.name)`); same shape as today (positive_self/negative_self/positive_others/negative_others, defaulting to []).
+- Final `.map` over `assessmentResponses` unchanged.
 
-```ts
-const assessmentCtx = (assessment?.context_type ?? null) as 'professional' | 'personal' | 'both' | null;
+The existing outer `if (isPTP && assessmentResponses.length > 0)` guard is preserved (current code uses just `assessmentResponses.length > 0` inside the `isPTP` branch — already correct).
 
-// Detect split-pair Combined export: the caller is exporting a Combined view
-// assembled from two separate single-context assessments. The professional
-// result_id is the canonical anchor (combined narratives are generated against
-// it), and additionalAssessmentId points to the personal assessment.
-const isSplitPairCombined = !!params.additionalAssessmentId && contextTab === 'combined';
+## Not touched
 
-// Reconcile contextTab with assessment context_type
-if (assessmentCtx === 'professional' || assessmentCtx === 'personal') {
-  if (!isSplitPairCombined) {
-    // single-context assessment — force tab to match
-    contextTab = assessmentCtx;
-  }
-  // Split-pair Combined: trust the caller's contextTab='combined' even though
-  // this individual result row is a single-context professional result. The
-  // combined narratives ARE stored on this row.
-} else if (assessmentCtx === 'both') {
-  if (contextTab !== 'professional' && contextTab !== 'personal' && contextTab !== 'combined') {
-    contextTab = 'combined';
-  }
-} else {
-  contextTab = contextTab ?? null;
-}
-```
-
-Only two structural additions: the `isSplitPairCombined` declaration and the `if (!isSplitPairCombined)` guard around the single-context override. Comments preserved as-written.
-
-## Files NOT touched
-
-`generateResultsPdf.ts`, `MyResults.tsx`, `ExportPdfModal.tsx`, `Departed.tsx`. Once `contextTab` flows through correctly, every downstream code path (narrative fetch, facet insights fetch, driving-facets filter, Brain Overview variant) does the right thing.
-
-## Downstream walkthrough (no code changes needed)
-
-- Narrative section types resolve to `*_combined` → rows live on professional `result_id` → fetched correctly.
-- Facet insights section type → `facet_insights_combined` on professional `result_id`.
-- Driving facets filter predicate `assessmentCtx === 'both' && (contextTab === 'professional' || 'personal')` is false → no filter → merged set from both assessments used.
-- Brain Overview variant `contextTab ?? "combined"` → `"combined"`.
-- Single-context exports (no `additionalAssessmentId`): `isSplitPairCombined` is false → override fires → unchanged behavior.
-- `'both'` single-row exports: unchanged.
+`generateResultsPdf.ts`, `ExportPdfModal.tsx`, `MyResults.tsx`, `Departed.tsx`. No type changes; `interpretation` shape unchanged.
 
 ## Verification
 
-```text
-npx tsc --noEmit -p tsconfig.app.json                                  # clean
-rg "isSplitPairCombined" src/lib/assemblePdfDataForUser.ts             # 2 hits
-rg "additionalAssessmentId" src/lib/assemblePdfDataForUser.ts          # ≥2 hits (untouched)
-```
+- `npx tsc --noEmit -p tsconfig.app.json` clean.
+- `rg "additionalAssessmentId" src/lib/assemblePdfDataForUser.ts` — expect new hits in both blocks.
+- User visual-tests Combined / Personal / Professional exports.
 
-No PDF exported by agent. User visual-tests Combined, Professional, and Personal exports.
+Cross-page two-column rendering (Bug C) explicitly out of scope.
