@@ -305,16 +305,45 @@ export async function assemblePtpPdfData(params: {
   }
 
   if (isPTP) {
-    const facetSectionType = contextTab ? `facet_insights_${contextTab}` : "facet_insights";
-    const { data: facetRow } = await supabase
+    // Build merged interpretation map from facet_insights_all across the primary
+    // result row plus (for split-pair Combined) the additional personal result row.
+    // Used by BOTH C1 (elevated/suppressed driving facets) and C2 (per-response insights).
+    const resultIdsForInterp: string[] = [assessmentResultId];
+    if (params.additionalAssessmentId) {
+      const { data: additionalResultRow } = await supabase
+        .from("assessment_results")
+        .select("id")
+        .eq("assessment_id", params.additionalAssessmentId)
+        .maybeSingle();
+      if (additionalResultRow?.id) resultIdsForInterp.push(additionalResultRow.id);
+    }
+
+    const { data: allFacetsRows } = await supabase
       .from("facet_interpretations")
       .select("facet_data")
-      .eq("assessment_result_id", assessmentResultId)
-      .eq("section_type", facetSectionType)
-      .maybeSingle();
+      .in("assessment_result_id", resultIdsForInterp)
+      .eq("section_type", "facet_insights_all");
 
-    const facetInterpretations: { name: string; positive_self: string[]; negative_self: string[]; positive_others: string[]; negative_others: string[] }[] =
-      (facetRow?.facet_data as any) ?? [];
+    const interpretationMap = new Map<string, {
+      positive_self: string[];
+      negative_self: string[];
+      positive_others: string[];
+      negative_others: string[];
+    }>();
+    for (const row of allFacetsRows ?? []) {
+      const arr = Array.isArray((row as any).facet_data) ? (row as any).facet_data as any[] : [];
+      for (const fi of arr) {
+        if (fi && typeof fi.name === "string" && !interpretationMap.has(fi.name)) {
+          interpretationMap.set(fi.name, {
+            positive_self: Array.isArray(fi.positive_self) ? fi.positive_self : [],
+            negative_self: Array.isArray(fi.negative_self) ? fi.negative_self : [],
+            positive_others: Array.isArray(fi.positive_others) ? fi.positive_others : [],
+            negative_others: Array.isArray(fi.negative_others) ? fi.negative_others : [],
+          });
+        }
+      }
+    }
+
 
     if (contextTab) {
       // Inline compute mirroring DrivingFacetScores.tsx — driving facets are
