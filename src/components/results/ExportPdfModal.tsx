@@ -413,7 +413,7 @@ export default function ExportPdfModal({ open, onOpenChange, instrumentType, isC
               ))
             : visiblePtpGroups.map((g, i) => (
                 <div key={g.title} className="space-y-6">
-                  {renderGroup(g, ptpSections as Record<keyof PdfSections, boolean>, togglePtp)}
+                  {renderGroup(g, ptpSections as Record<keyof PdfSections, boolean>, togglePtp, renderPtpChild)}
                   {i < visiblePtpGroups.length - 1 && <Separator />}
                 </div>
               ))}
