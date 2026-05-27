@@ -144,10 +144,21 @@ export async function assemblePtpPdfData(params: {
 
   const assessmentCtx = (assessment?.context_type ?? null) as 'professional' | 'personal' | 'both' | null;
 
+  // Detect split-pair Combined export: the caller is exporting a Combined view
+  // assembled from two separate single-context assessments. The professional
+  // result_id is the canonical anchor (combined narratives are generated against
+  // it), and additionalAssessmentId points to the personal assessment.
+  const isSplitPairCombined = !!params.additionalAssessmentId && contextTab === 'combined';
+
   // Reconcile contextTab with assessment context_type
   if (assessmentCtx === 'professional' || assessmentCtx === 'personal') {
-    // single-context assessment — force tab to match
-    contextTab = assessmentCtx;
+    if (!isSplitPairCombined) {
+      // single-context assessment — force tab to match
+      contextTab = assessmentCtx;
+    }
+    // Split-pair Combined: trust the caller's contextTab='combined' even though
+    // this individual result row is a single-context professional result. The
+    // combined narratives ARE stored on this row.
   } else if (assessmentCtx === 'both') {
     if (contextTab !== 'professional' && contextTab !== 'personal' && contextTab !== 'combined') {
       contextTab = 'combined';
