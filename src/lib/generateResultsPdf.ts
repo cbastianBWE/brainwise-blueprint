@@ -726,7 +726,7 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
     const renderFacetScoreTable = (title: string, facets: FacetWithInterpretation[]) => {
       checkPageBreak(12 + facets.length * 7);
       doc.setFontSize(9);
-      doc.setFont("helvetica", "bold");
+      doc.setFont("Poppins", "semibold");
       doc.setTextColor(...BLACK);
       doc.text(title, MARGIN_L, y);
       y += 5;
@@ -738,8 +738,9 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
       doc.setDrawColor(200, 200, 200);
       doc.line(MARGIN_L, y, MARGIN_L + CONTENT_W, y);
       y += 4;
-      doc.setFont("helvetica", "normal");
+      doc.setFont("Montserrat", "normal");
       doc.setFontSize(8);
+      const facetNameMaxW = CONTENT_W * 0.82 - 10;
       for (let i = 0; i < facets.length; i++) {
         checkPageBreak(7);
         const f = facets[i];
@@ -750,9 +751,14 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
         const rgb = hexToRgb(PTP_DIM_COLOR(f.dimensionId));
         doc.setFillColor(rgb[0], rgb[1], rgb[2]);
         doc.circle(MARGIN_L + 2, y - 1, 1.5, "F");
-        const truncText = f.itemText.length > 85 ? f.itemText.slice(0, 82) + "…" : f.itemText;
+        const fullName = f.facetName || f.itemText || "—";
+        let truncName = fullName;
+        while (doc.getTextWidth(truncName) > facetNameMaxW && truncName.length > 5) {
+          truncName = truncName.slice(0, -2);
+        }
+        if (truncName !== fullName) truncName += "…";
         doc.setTextColor(...BLACK);
-        doc.text(truncText, MARGIN_L + 6, y);
+        doc.text(truncName, MARGIN_L + 6, y);
         doc.text(String(f.score), MARGIN_L + CONTENT_W * 0.82, y);
         y += 6;
       }
