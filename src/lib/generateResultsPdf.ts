@@ -983,6 +983,87 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
       doc.setDrawColor(230, 230, 230);
       doc.line(MARGIN_L, y + rowH, MARGIN_L + CONTENT_W, y + rowH);
       y += rowH + 1;
+
+      // C2: Optional inline facet insights expansion (PTP only; gated by per-row interpretation)
+      if (sections.assessmentResponsesIncludeInsights && r.interpretation) {
+        const interp = r.interpretation;
+        const hasContent =
+          interp.positive_self.length > 0 ||
+          interp.negative_self.length > 0 ||
+          interp.positive_others.length > 0 ||
+          interp.negative_others.length > 0;
+
+        if (hasContent) {
+          y += 1;
+
+          const colGap = 4;
+          const colW = (CONTENT_W - colGap) / 2;
+          const leftX = MARGIN_L;
+          const rightX = MARGIN_L + colW + colGap;
+
+          checkPageBreak(8);
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(7.5);
+          doc.setTextColor(NAVY[0], NAVY[1], NAVY[2]);
+          doc.text("Impact on self", leftX, y);
+          doc.text("Impact on others", rightX, y);
+          y += 4;
+
+          const drawCheck = (cx: number, cy: number) => {
+            doc.setFillColor(GREEN[0], GREEN[1], GREEN[2]);
+            doc.circle(cx, cy, 1.6, "F");
+            doc.setDrawColor(255, 255, 255);
+            doc.setLineWidth(0.5);
+            doc.line(cx - 0.9, cy + 0.1, cx - 0.2, cy + 0.8);
+            doc.line(cx - 0.2, cy + 0.8, cx + 1.0, cy - 0.6);
+          };
+          const drawCross = (cx: number, cy: number) => {
+            doc.setFillColor(RED[0], RED[1], RED[2]);
+            doc.circle(cx, cy, 1.6, "F");
+            doc.setDrawColor(255, 255, 255);
+            doc.setLineWidth(0.5);
+            doc.line(cx - 0.8, cy - 0.8, cx + 0.8, cy + 0.8);
+            doc.line(cx - 0.8, cy + 0.8, cx + 0.8, cy - 0.8);
+          };
+
+          const renderColumn = (
+            x: number,
+            width: number,
+            positives: string[],
+            negatives: string[],
+          ): number => {
+            let colY = y;
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(7.5);
+            doc.setTextColor(BLACK[0], BLACK[1], BLACK[2]);
+            const textIndent = 5;
+
+            for (const item of positives) {
+              const lines = doc.splitTextToSize(cleanMarkdown(item), width - textIndent);
+              const itemH = lines.length * 3.5 + 1;
+              checkPageBreak(itemH);
+              drawCheck(x + 1.5, colY + 1.5);
+              doc.text(lines, x + textIndent, colY + 2);
+              colY += itemH;
+            }
+            for (const item of negatives) {
+              const lines = doc.splitTextToSize(cleanMarkdown(item), width - textIndent);
+              const itemH = lines.length * 3.5 + 1;
+              checkPageBreak(itemH);
+              drawCross(x + 1.5, colY + 1.5);
+              doc.text(lines, x + textIndent, colY + 2);
+              colY += itemH;
+            }
+            return colY;
+          };
+
+          const startY = y;
+          const leftEndY = renderColumn(leftX, colW, interp.positive_self, interp.negative_self);
+          y = startY;
+          const rightEndY = renderColumn(rightX, colW, interp.positive_others, interp.negative_others);
+          y = Math.max(leftEndY, rightEndY) + 2;
+        }
+      }
     }
   }
 
