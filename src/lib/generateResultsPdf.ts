@@ -1000,14 +1000,11 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
           const colW = (CONTENT_W - colGap) / 2;
           const leftX = MARGIN_L;
           const rightX = MARGIN_L + colW + colGap;
+          const textIndent = 5;
 
-          checkPageBreak(8);
-          doc.setFont("helvetica", "bold");
+          // Set the font once — used by splitTextToSize measurements below
+          doc.setFont("helvetica", "normal");
           doc.setFontSize(7.5);
-          doc.setTextColor(NAVY[0], NAVY[1], NAVY[2]);
-          doc.text("Impact on self", leftX, y);
-          doc.text("Impact on others", rightX, y);
-          y += 4;
 
           const drawCheck = (cx: number, cy: number) => {
             doc.setFillColor(GREEN[0], GREEN[1], GREEN[2]);
@@ -1026,42 +1023,64 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
             doc.line(cx - 0.8, cy + 0.8, cx + 0.8, cy - 0.8);
           };
 
-          const renderColumn = (
-            x: number,
-            width: number,
-            positives: string[],
-            negatives: string[],
-          ): number => {
-            let colY = y;
-            doc.setFont("helvetica", "normal");
-            doc.setFontSize(7.5);
-            doc.setTextColor(BLACK[0], BLACK[1], BLACK[2]);
-            const textIndent = 5;
+          type BulletRow = { isPositive: boolean; lines: string[]; height: number };
 
+          const buildColumn = (positives: string[], negatives: string[], width: number): BulletRow[] => {
+            const rows: BulletRow[] = [];
             for (const item of positives) {
-              const lines = doc.splitTextToSize(cleanMarkdown(item), width - textIndent);
-              const itemH = lines.length * 3.5 + 1;
-              checkPageBreak(itemH);
-              drawCheck(x + 1.5, colY + 1.5);
-              doc.text(lines, x + textIndent, colY + 2);
-              colY += itemH;
+              const lines = doc.splitTextToSize(cleanMarkdown(item), width - textIndent) as string[];
+              rows.push({ isPositive: true, lines, height: lines.length * 3.5 + 1 });
             }
             for (const item of negatives) {
-              const lines = doc.splitTextToSize(cleanMarkdown(item), width - textIndent);
-              const itemH = lines.length * 3.5 + 1;
-              checkPageBreak(itemH);
-              drawCross(x + 1.5, colY + 1.5);
-              doc.text(lines, x + textIndent, colY + 2);
-              colY += itemH;
+              const lines = doc.splitTextToSize(cleanMarkdown(item), width - textIndent) as string[];
+              rows.push({ isPositive: false, lines, height: lines.length * 3.5 + 1 });
             }
-            return colY;
+            return rows;
           };
 
-          const startY = y;
-          const leftEndY = renderColumn(leftX, colW, interp.positive_self, interp.negative_self);
-          y = startY;
-          const rightEndY = renderColumn(rightX, colW, interp.positive_others, interp.negative_others);
-          y = Math.max(leftEndY, rightEndY) + 2;
+          const leftRows = buildColumn(interp.positive_self, interp.negative_self, colW);
+          const rightRows = buildColumn(interp.positive_others, interp.negative_others, colW);
+
+          const totalRows = Math.max(leftRows.length, rightRows.length);
+
+          // Headers — page-break together with first row so they don't orphan
+          const firstRowMaxH = Math.max(leftRows[0]?.height ?? 0, rightRows[0]?.height ?? 0);
+          checkPageBreak(4 + firstRowMaxH);
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(7.5);
+          doc.setTextColor(NAVY[0], NAVY[1], NAVY[2]);
+          doc.text("Impact on self", leftX, y);
+          doc.text("Impact on others", rightX, y);
+          y += 4;
+
+          // Render rows in lockstep
+          doc.setFont("helvetica", "normal");
+          doc.setFontSize(7.5);
+          doc.setTextColor(BLACK[0], BLACK[1], BLACK[2]);
+
+          for (let i = 0; i < totalRows; i++) {
+            const left = leftRows[i];
+            const right = rightRows[i];
+            const rowH = Math.max(left?.height ?? 0, right?.height ?? 0);
+
+            checkPageBreak(rowH);
+
+            if (left) {
+              if (left.isPositive) drawCheck(leftX + 1.5, y + 1.5);
+              else drawCross(leftX + 1.5, y + 1.5);
+              doc.text(left.lines, leftX + textIndent, y + 2);
+            }
+
+            if (right) {
+              if (right.isPositive) drawCheck(rightX + 1.5, y + 1.5);
+              else drawCross(rightX + 1.5, y + 1.5);
+              doc.text(right.lines, rightX + textIndent, y + 2);
+            }
+
+            y += rowH;
+          }
+
+          y += 2;
         }
       }
     }

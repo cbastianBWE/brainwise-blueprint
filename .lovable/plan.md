@@ -1,34 +1,27 @@
-# Fix split-pair Combined data merging (Bugs A & B)
+# Fix cross-page two-column rendering for per-response insights (Bug C)
 
-Single file: `src/lib/assemblePdfDataForUser.ts`. Both target blocks confirmed to match the prompt's "before" snippets exactly.
+Single file: `src/lib/generateResultsPdf.ts`. Existing C2 block confirmed at lines 988–1066, matching the prompt's snapshot exactly.
 
-## Bug A — Full Facet Charts undercount (lines 460–494)
+## Replacement
 
-In the `if (isPTP)` fullFacetData block:
-- Change `const allResponses` → `let allResponses`.
-- After the primary fetch, if `params.additionalAssessmentId` is set, fetch responses for that assessment_id and concat into `allResponses`.
-- Downstream item lookup and mapping unchanged (item_ids are merged automatically via the concat).
+Replace lines 988–1066 (the entire `if (sections.assessmentResponsesIncludeInsights && r.interpretation)` block) with the lockstep version from the prompt:
 
-## Bug B — Per-response insights missing for personal half (lines 408–440)
+- Pre-compute both columns as `BulletRow[]` via `buildColumn(positives, negatives, width)`, where each row carries `{ isPositive, lines, height }` measured once via `splitTextToSize`.
+- `totalRows = max(leftRows.length, rightRows.length)`.
+- Single `checkPageBreak(4 + firstRowMaxH)` before drawing the two bold headers so the header sticks to its first row.
+- Loop `i = 0..totalRows-1`: page-break on `Math.max(left?.height ?? 0, right?.height ?? 0)`, then draw both bullets (check or cross) and text at the same `y`, advance `y` by the row max.
+- Drop the old `renderColumn` inner function, the `startY` snapshot, and the `y = startY` reset.
+- Font order: bold + 7.5 for headers, then normal + 7.5 for body rows. `setFont("helvetica","normal")` + `setFontSize(7.5)` is also set before `buildColumn` so measurements use the same metrics as rendering.
 
-Rewrite the C2 attach block:
-- Build `resultIdsToQuery: string[] = [assessmentResultId]`.
-- If `params.additionalAssessmentId` is set, query `assessment_results` for `id` where `assessment_id = additionalAssessmentId` (`.maybeSingle()`) and push the id when present.
-- Replace the `.eq("assessment_result_id", …).maybeSingle()` fetch with `.in("assessment_result_id", resultIdsToQuery).eq("section_type", "facet_insights_all")` returning an array.
-- Flatten each row's `facet_data` array into one `mergedInterpretations` list.
-- Build `interpretationMap` with "first occurrence wins" guard (`!interpretationMap.has(fi.name)`); same shape as today (positive_self/negative_self/positive_others/negative_others, defaulting to []).
-- Final `.map` over `assessmentResponses` unchanged.
-
-The existing outer `if (isPTP && assessmentResponses.length > 0)` guard is preserved (current code uses just `assessmentResponses.length > 0` inside the `isPTP` branch — already correct).
+Surrounding loop structure (the outer `for r of assessmentResponses` and the row footer at 983–985) is not touched.
 
 ## Not touched
 
-`generateResultsPdf.ts`, `ExportPdfModal.tsx`, `MyResults.tsx`, `Departed.tsx`. No type changes; `interpretation` shape unchanged.
+`assemblePdfDataForUser.ts`, `ExportPdfModal.tsx`, `MyResults.tsx`, `Departed.tsx`. No type or data-shape changes.
 
 ## Verification
 
 - `npx tsc --noEmit -p tsconfig.app.json` clean.
-- `rg "additionalAssessmentId" src/lib/assemblePdfDataForUser.ts` — expect new hits in both blocks.
-- User visual-tests Combined / Personal / Professional exports.
-
-Cross-page two-column rendering (Bug C) explicitly out of scope.
+- `rg "renderColumn|startY" src/lib/generateResultsPdf.ts` — expect zero hits inside the C2 block (no other usages exist in this file).
+- `rg "assessmentResponsesIncludeInsights" src/lib/generateResultsPdf.ts` — still exactly one hit.
+- User visual-tests Q81 expansion plus regression on other responses.
