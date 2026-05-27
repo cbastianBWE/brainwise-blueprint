@@ -1063,7 +1063,7 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
           const textIndent = 5;
 
           // Set the font once — used by splitTextToSize measurements below
-          doc.setFont("helvetica", "normal");
+          doc.setFont("Montserrat", "normal");
           doc.setFontSize(7.5);
 
           const drawCheck = (cx: number, cy: number) => {
