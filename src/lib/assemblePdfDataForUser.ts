@@ -170,6 +170,44 @@ export async function assemblePtpPdfData(params: {
   // Build dimension_scores for the chosen tab
   let dimensionScoresMap: Record<string, DimensionScore> = result.dimension_scores ?? {};
 
+  // Split-pair Combined: merge dimension scores from professional + personal result rows.
+  // Mirrors the combinedDimensionScores logic in MyResults.tsx (lines 562-580):
+  // when both results have a score for a dimension, average them; otherwise take whichever exists.
+  if (isSplitPairCombined) {
+    const { data: personalResult } = await supabase
+      .from("assessment_results")
+      .select("dimension_scores")
+      .eq("assessment_id", params.additionalAssessmentId!)
+      .maybeSingle();
+
+    const personalScoresMap = (personalResult?.dimension_scores ?? {}) as Record<string, DimensionScore>;
+    const professionalScoresMap = dimensionScoresMap;
+
+    const allDims = new Set([
+      ...Object.keys(professionalScoresMap),
+      ...Object.keys(personalScoresMap),
+    ]);
+
+    const merged: Record<string, DimensionScore> = {};
+    allDims.forEach((dim) => {
+      const profMean = professionalScoresMap[dim]?.mean ?? null;
+      const persMean = personalScoresMap[dim]?.mean ?? null;
+      if (profMean !== null && persMean !== null) {
+        merged[dim] = {
+          mean: (profMean + persMean) / 2,
+          band: professionalScoresMap[dim]?.band ?? personalScoresMap[dim]?.band,
+        };
+      } else if (profMean !== null) {
+        merged[dim] = professionalScoresMap[dim];
+      } else {
+        merged[dim] = personalScoresMap[dim];
+      }
+    });
+
+    dimensionScoresMap = merged;
+  }
+
+
   if (assessmentCtx === 'both' && (contextTab === 'professional' || contextTab === 'personal')) {
     // Replicate bothSplitScores logic
     const { data: responses } = await supabase
