@@ -309,6 +309,15 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
   doc.setFillColor(...SAND_BG);
   doc.rect(0, NAVY_BLOCK_H, PAGE_W, PAGE_H - NAVY_BLOCK_H, "F");
 
+  // Decorative background circles — sand block (drawn behind all foreground content)
+  doc.setFillColor(...SAND_CIRCLE);
+  doc.circle(-5, 175, 22, "F");
+  doc.circle(15, 235, 16, "F");
+  doc.circle(40, 200, 8, "F");
+  doc.circle(8, 270, 12, "F");
+  doc.circle(60, 250, 6, "F");
+
+
   // Field row 1: Participant + Date Completed
   const fieldY = NAVY_BLOCK_H + 14;
   const fieldColW = (CONTENT_W - 10) / 2;
