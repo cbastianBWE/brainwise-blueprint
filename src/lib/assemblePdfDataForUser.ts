@@ -170,6 +170,44 @@ export async function assemblePtpPdfData(params: {
   // Build dimension_scores for the chosen tab
   let dimensionScoresMap: Record<string, DimensionScore> = result.dimension_scores ?? {};
 
+  // Split-pair Combined: merge dimension scores from professional + personal result rows.
+  // Mirrors the combinedDimensionScores logic in MyResults.tsx (lines 562-580):
+  // when both results have a score for a dimension, average them; otherwise take whichever exists.
+  if (isSplitPairCombined) {
+    const { data: personalResult } = await supabase
+      .from("assessment_results")
+      .select("dimension_scores")
+      .eq("assessment_id", params.additionalAssessmentId!)
+      .maybeSingle();
+
+    const personalScoresMap = (personalResult?.dimension_scores ?? {}) as Record<string, DimensionScore>;
+    const professionalScoresMap = dimensionScoresMap;
+
+    const allDims = new Set([
+      ...Object.keys(professionalScoresMap),
+      ...Object.keys(personalScoresMap),
+    ]);
+
+    const merged: Record<string, DimensionScore> = {};
+    allDims.forEach((dim) => {
+      const profMean = professionalScoresMap[dim]?.mean ?? null;
+      const persMean = personalScoresMap[dim]?.mean ?? null;
+      if (profMean !== null && persMean !== null) {
+        merged[dim] = {
+          mean: (profMean + persMean) / 2,
+          band: professionalScoresMap[dim]?.band ?? personalScoresMap[dim]?.band,
+        };
+      } else if (profMean !== null) {
+        merged[dim] = professionalScoresMap[dim];
+      } else {
+        merged[dim] = personalScoresMap[dim];
+      }
+    });
+
+    dimensionScoresMap = merged;
+  }
+
+
   if (assessmentCtx === 'both' && (contextTab === 'professional' || contextTab === 'personal')) {
     // Replicate bothSplitScores logic
     const { data: responses } = await supabase
@@ -267,16 +305,45 @@ export async function assemblePtpPdfData(params: {
   }
 
   if (isPTP) {
-    const facetSectionType = contextTab ? `facet_insights_${contextTab}` : "facet_insights";
-    const { data: facetRow } = await supabase
+    // Build merged interpretation map from facet_insights_all across the primary
+    // result row plus (for split-pair Combined) the additional personal result row.
+    // Used by BOTH C1 (elevated/suppressed driving facets) and C2 (per-response insights).
+    const resultIdsForInterp: string[] = [assessmentResultId];
+    if (params.additionalAssessmentId) {
+      const { data: additionalResultRow } = await supabase
+        .from("assessment_results")
+        .select("id")
+        .eq("assessment_id", params.additionalAssessmentId)
+        .maybeSingle();
+      if (additionalResultRow?.id) resultIdsForInterp.push(additionalResultRow.id);
+    }
+
+    const { data: allFacetsRows } = await supabase
       .from("facet_interpretations")
       .select("facet_data")
-      .eq("assessment_result_id", assessmentResultId)
-      .eq("section_type", facetSectionType)
-      .maybeSingle();
+      .in("assessment_result_id", resultIdsForInterp)
+      .eq("section_type", "facet_insights_all");
 
-    const facetInterpretations: { name: string; positive_self: string[]; negative_self: string[]; positive_others: string[]; negative_others: string[] }[] =
-      (facetRow?.facet_data as any) ?? [];
+    const interpretationMap = new Map<string, {
+      positive_self: string[];
+      negative_self: string[];
+      positive_others: string[];
+      negative_others: string[];
+    }>();
+    for (const row of allFacetsRows ?? []) {
+      const arr = Array.isArray((row as any).facet_data) ? (row as any).facet_data as any[] : [];
+      for (const fi of arr) {
+        if (fi && typeof fi.name === "string" && !interpretationMap.has(fi.name)) {
+          interpretationMap.set(fi.name, {
+            positive_self: Array.isArray(fi.positive_self) ? fi.positive_self : [],
+            negative_self: Array.isArray(fi.negative_self) ? fi.negative_self : [],
+            positive_others: Array.isArray(fi.positive_others) ? fi.positive_others : [],
+            negative_others: Array.isArray(fi.negative_others) ? fi.negative_others : [],
+          });
+        }
+      }
+    }
+
 
     if (contextTab) {
       // Inline compute mirroring DrivingFacetScores.tsx — driving facets are
@@ -343,8 +410,8 @@ export async function assemblePtpPdfData(params: {
           itemText: s.itemText,
           score: Math.round(s.value),
           dimensionId: s.dimensionId,
-          interpretation:
-            facetInterpretations.find((fi) => fi.name === s.facetName) ?? null,
+          interpretation: interpretationMap.get(s.facetName) ?? null,
+
         });
 
         elevatedFacets = filteredItems
@@ -402,61 +469,15 @@ export async function assemblePtpPdfData(params: {
       }
     }
 
-    // C2: Fetch full per-facet interpretations (facet_insights_all) and attach
-    // to each PTP assessmentResponses entry by facetName. Tolerate missing row;
-    // explicitly set interpretation to null when no match (PTP path always sets it).
+    // C2: attach per-facet interpretation to each PTP assessmentResponses entry
+    // using the merged interpretationMap built at the top of this isPTP block.
     if (assessmentResponses.length > 0) {
-      // Determine which result_ids to query facet_insights_all from.
-      // Single-context: just the primary assessmentResultId.
-      // Split-pair Combined: primary + the personal result_id (looked up via additionalAssessmentId).
-      const resultIdsToQuery: string[] = [assessmentResultId];
-
-      if (params.additionalAssessmentId) {
-        const { data: additionalResultRow } = await supabase
-          .from("assessment_results")
-          .select("id")
-          .eq("assessment_id", params.additionalAssessmentId)
-          .maybeSingle();
-        if (additionalResultRow?.id) {
-          resultIdsToQuery.push(additionalResultRow.id);
-        }
-      }
-
-      const { data: allFacetsRows } = await supabase
-        .from("facet_interpretations")
-        .select("facet_data")
-        .in("assessment_result_id", resultIdsToQuery)
-        .eq("section_type", "facet_insights_all");
-
-      const mergedInterpretations: any[] = [];
-      for (const row of allFacetsRows ?? []) {
-        if (Array.isArray((row as any).facet_data)) {
-          mergedInterpretations.push(...((row as any).facet_data as any[]));
-        }
-      }
-
-      const interpretationMap = new Map<string, {
-        positive_self: string[];
-        negative_self: string[];
-        positive_others: string[];
-        negative_others: string[];
-      }>();
-      for (const fi of mergedInterpretations) {
-        if (fi && typeof fi.name === "string" && !interpretationMap.has(fi.name)) {
-          interpretationMap.set(fi.name, {
-            positive_self: Array.isArray(fi.positive_self) ? fi.positive_self : [],
-            negative_self: Array.isArray(fi.negative_self) ? fi.negative_self : [],
-            positive_others: Array.isArray(fi.positive_others) ? fi.positive_others : [],
-            negative_others: Array.isArray(fi.negative_others) ? fi.negative_others : [],
-          });
-        }
-      }
-
       assessmentResponses = assessmentResponses.map((r) => ({
         ...r,
         interpretation: interpretationMap.get(r.facetName) ?? null,
       }));
     }
+
   }
 
   const contextLabel =

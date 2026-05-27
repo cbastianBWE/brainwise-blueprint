@@ -549,7 +549,9 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
     data.narrativeSections!.action_plan!.length > 0
   ) {
     const items = data.narrativeSections!.action_plan!;
+    const dimNameById = new Map(data.dimensions.map((d) => [d.dimensionId, d.name]));
     sectionHeading("Action Plan");
+
 
     for (let i = 0; i < items.length; i++) {
       const item = items[i];
@@ -586,7 +588,7 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
         doc.setFont("helvetica", "bold");
         doc.setFontSize(7);
         for (const tag of item.dimension_tags) {
-          const tagText = String(tag).toUpperCase();
+          const tagText = (dimNameById.get(tag) ?? tag).toUpperCase();
           const tagWidth = doc.getTextWidth(tagText) + 6;
           const dimHex = PTP_DIM_COLOR(tag);
           const [r, g, b] = hexToRgb(dimHex);
