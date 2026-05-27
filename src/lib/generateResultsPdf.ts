@@ -662,14 +662,14 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
       innerY += rationaleLines.length * 4.2 + 3;
 
       // Steps
-      doc.setFont("helvetica", "normal");
+      doc.setFont("Montserrat", "normal");
       doc.setFontSize(9);
       doc.setTextColor(BLACK[0], BLACK[1], BLACK[2]);
       for (let s = 0; s < stepsArr.length; s++) {
         const stepLines = doc.splitTextToSize(cleanMarkdown(stepsArr[s]), innerW - 8);
-        doc.setFont("helvetica", "bold");
+        doc.setFont("Montserrat", "semibold");
         doc.text(`${s + 1}.`, innerX, innerY);
-        doc.setFont("helvetica", "normal");
+        doc.setFont("Montserrat", "normal");
         doc.text(stepLines, innerX + 6, innerY);
         innerY += stepLines.length * 4.2 + 1;
       }
