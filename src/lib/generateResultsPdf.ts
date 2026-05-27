@@ -446,9 +446,6 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
       bodyText(paragraphs[i]);
       if (i < paragraphs.length - 1) y += 2;
     }
-    addFooter();
-    doc.addPage();
-    y = MARGIN_T;
   }
 
   // ── PROFILE OVERVIEW ──
