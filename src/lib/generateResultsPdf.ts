@@ -833,7 +833,7 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
       checkPageBreak(estimatedImpactH);
 
       doc.setFontSize(7.5);
-      doc.setFont("helvetica", "bold");
+      doc.setFont("Montserrat", "semibold");
       doc.setTextColor(...NAVY);
       doc.text("Impact on self", MARGIN_L, y);
       doc.text("Impact on others", MARGIN_L + colW + 4, y);
