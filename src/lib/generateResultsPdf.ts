@@ -1066,22 +1066,6 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
           doc.setFont("Montserrat", "normal");
           doc.setFontSize(7.5);
 
-          const drawCheck = (cx: number, cy: number) => {
-            doc.setFillColor(GREEN[0], GREEN[1], GREEN[2]);
-            doc.circle(cx, cy, 1.6, "F");
-            doc.setDrawColor(255, 255, 255);
-            doc.setLineWidth(0.5);
-            doc.line(cx - 0.9, cy + 0.1, cx - 0.2, cy + 0.8);
-            doc.line(cx - 0.2, cy + 0.8, cx + 1.0, cy - 0.6);
-          };
-          const drawCross = (cx: number, cy: number) => {
-            doc.setFillColor(RED[0], RED[1], RED[2]);
-            doc.circle(cx, cy, 1.6, "F");
-            doc.setDrawColor(255, 255, 255);
-            doc.setLineWidth(0.5);
-            doc.line(cx - 0.8, cy - 0.8, cx + 0.8, cy + 0.8);
-            doc.line(cx - 0.8, cy + 0.8, cx + 0.8, cy - 0.8);
-          };
 
           type BulletRow = { isPositive: boolean; lines: string[]; height: number };
 
