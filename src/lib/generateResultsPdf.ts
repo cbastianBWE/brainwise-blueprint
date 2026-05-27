@@ -241,6 +241,15 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
   doc.setFillColor(...NAVY);
   doc.rect(0, 0, PAGE_W, NAVY_BLOCK_H, "F");
 
+  // Decorative background circles — navy block (drawn behind all foreground content)
+  doc.setFillColor(...NAVY_CIRCLE);
+  doc.circle(195, 25, 28, "F");
+  doc.circle(220, 80, 22, "F");
+  doc.circle(165, 45, 10, "F");
+  doc.circle(200, 130, 18, "F");
+  doc.circle(140, 15, 8, "F");
+  doc.circle(175, 105, 6, "F");
+
   // Logo (raster, fetched at runtime). If the fetch failed, fall back to text wordmark.
   if (logoDataUrl) {
     doc.addImage(logoDataUrl, "PNG", MARGIN_L, 18, 50, 0, undefined, "FAST");
