@@ -315,6 +315,7 @@ export default function Departed() {
               contextTab,
               displayName: profile.full_name ?? null,
               sections,
+              additionalAssessmentId: undefined,
             });
             blob = (await generateResultsPdf(pdfData, sections, { returnBlob: true })) as Blob;
             const ctxSuffix =
