@@ -229,7 +229,7 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
     if (!atTopOfPage()) y += 4;
     doc.setFontSize(13);
     doc.setTextColor(...NAVY);
-    doc.setFont("helvetica", "bold");
+    doc.setFont("Poppins", "bold");
     doc.text(title, MARGIN_L, y);
     y += 2;
     doc.setDrawColor(...NAVY);
