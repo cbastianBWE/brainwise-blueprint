@@ -85,6 +85,8 @@ const NAVY = [2, 31, 54] as const;
 const MUTED = [109, 104, 117] as const;
 const BLACK = [30, 30, 30] as const;
 const SAND_BG = [249, 247, 241] as const;
+const NAVY_CIRCLE = [16, 38, 58] as const;       // #10263A — subtle lighter navy
+const SAND_CIRCLE = [251, 224, 200] as const;    // #FBE0C8 — pale peach
 const LIGHT_BG = [245, 247, 250] as const;
 const GREEN = [34, 139, 34] as const;
 const RED = [200, 50, 50] as const;
@@ -239,6 +241,15 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
   doc.setFillColor(...NAVY);
   doc.rect(0, 0, PAGE_W, NAVY_BLOCK_H, "F");
 
+  // Decorative background circles — navy block (drawn behind all foreground content)
+  doc.setFillColor(...NAVY_CIRCLE);
+  doc.circle(195, 25, 28, "F");
+  doc.circle(220, 80, 22, "F");
+  doc.circle(165, 45, 10, "F");
+  doc.circle(200, 130, 18, "F");
+  doc.circle(140, 15, 8, "F");
+  doc.circle(175, 105, 6, "F");
+
   // Logo (raster, fetched at runtime). If the fetch failed, fall back to text wordmark.
   if (logoDataUrl) {
     doc.addImage(logoDataUrl, "PNG", MARGIN_L, 18, 50, 0, undefined, "FAST");
@@ -297,6 +308,15 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
   // Bottom half: sand background
   doc.setFillColor(...SAND_BG);
   doc.rect(0, NAVY_BLOCK_H, PAGE_W, PAGE_H - NAVY_BLOCK_H, "F");
+
+  // Decorative background circles — sand block (drawn behind all foreground content)
+  doc.setFillColor(...SAND_CIRCLE);
+  doc.circle(-5, 175, 22, "F");
+  doc.circle(15, 235, 16, "F");
+  doc.circle(40, 200, 8, "F");
+  doc.circle(8, 270, 12, "F");
+  doc.circle(60, 250, 6, "F");
+
 
   // Field row 1: Participant + Date Completed
   const fieldY = NAVY_BLOCK_H + 14;
