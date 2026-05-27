@@ -349,7 +349,6 @@ export async function assemblePtpPdfData(params: {
           .map(mapFacet);
       }
     }
-  }
 
     if (sections.assessmentResponses) {
       const { data: responses } = await supabase
