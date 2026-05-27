@@ -308,6 +308,7 @@ export default function Departed() {
               drivingFacetInsightsSuppressed: true,
               crossAssessmentConnections: true,
               assessmentResponses: true,
+              fullFacetCharts: true,
             };
             const pdfData = await assemblePtpPdfData({
               userId: user.id,
