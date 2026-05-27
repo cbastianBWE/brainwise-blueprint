@@ -648,7 +648,7 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
       }
 
       // Title
-      doc.setFont("helvetica", "bold");
+      doc.setFont("Poppins", "bold");
       doc.setFontSize(11);
       doc.setTextColor(NAVY[0], NAVY[1], NAVY[2]);
       doc.text(cleanMarkdown(item.title ?? ""), innerX, innerY);
