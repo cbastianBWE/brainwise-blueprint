@@ -469,61 +469,15 @@ export async function assemblePtpPdfData(params: {
       }
     }
 
-    // C2: Fetch full per-facet interpretations (facet_insights_all) and attach
-    // to each PTP assessmentResponses entry by facetName. Tolerate missing row;
-    // explicitly set interpretation to null when no match (PTP path always sets it).
+    // C2: attach per-facet interpretation to each PTP assessmentResponses entry
+    // using the merged interpretationMap built at the top of this isPTP block.
     if (assessmentResponses.length > 0) {
-      // Determine which result_ids to query facet_insights_all from.
-      // Single-context: just the primary assessmentResultId.
-      // Split-pair Combined: primary + the personal result_id (looked up via additionalAssessmentId).
-      const resultIdsToQuery: string[] = [assessmentResultId];
-
-      if (params.additionalAssessmentId) {
-        const { data: additionalResultRow } = await supabase
-          .from("assessment_results")
-          .select("id")
-          .eq("assessment_id", params.additionalAssessmentId)
-          .maybeSingle();
-        if (additionalResultRow?.id) {
-          resultIdsToQuery.push(additionalResultRow.id);
-        }
-      }
-
-      const { data: allFacetsRows } = await supabase
-        .from("facet_interpretations")
-        .select("facet_data")
-        .in("assessment_result_id", resultIdsToQuery)
-        .eq("section_type", "facet_insights_all");
-
-      const mergedInterpretations: any[] = [];
-      for (const row of allFacetsRows ?? []) {
-        if (Array.isArray((row as any).facet_data)) {
-          mergedInterpretations.push(...((row as any).facet_data as any[]));
-        }
-      }
-
-      const interpretationMap = new Map<string, {
-        positive_self: string[];
-        negative_self: string[];
-        positive_others: string[];
-        negative_others: string[];
-      }>();
-      for (const fi of mergedInterpretations) {
-        if (fi && typeof fi.name === "string" && !interpretationMap.has(fi.name)) {
-          interpretationMap.set(fi.name, {
-            positive_self: Array.isArray(fi.positive_self) ? fi.positive_self : [],
-            negative_self: Array.isArray(fi.negative_self) ? fi.negative_self : [],
-            positive_others: Array.isArray(fi.positive_others) ? fi.positive_others : [],
-            negative_others: Array.isArray(fi.negative_others) ? fi.negative_others : [],
-          });
-        }
-      }
-
       assessmentResponses = assessmentResponses.map((r) => ({
         ...r,
         interpretation: interpretationMap.get(r.facetName) ?? null,
       }));
     }
+
   }
 
   const contextLabel =
