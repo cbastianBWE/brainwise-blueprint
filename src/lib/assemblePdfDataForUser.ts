@@ -268,9 +268,8 @@ export async function assemblePtpPdfData(params: {
       (facetRow?.facet_data as any) ?? [];
 
     if (contextTab) {
-    // Inline compute mirroring DrivingFacetScores.tsx — driving facets are
-    // not persisted to facet_interpretations, so we recompute from raw responses.
-    {
+      // Inline compute mirroring DrivingFacetScores.tsx — driving facets are
+      // not persisted to facet_interpretations, so we recompute from raw responses.
       const { data: primaryResponses } = await supabase
         .from("assessment_responses")
         .select("response_value_numeric, is_reverse_scored, item_id")
