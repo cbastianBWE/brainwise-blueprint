@@ -583,7 +583,7 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
     const dimNameById = new Map(data.dimensions.map((d) => [d.dimensionId, d.name]));
 
     // Pre-compute first item's cardHeight for orphan-prevention.
-    doc.setFont("helvetica", "normal");
+    doc.setFont("Montserrat", "normal");
     doc.setFontSize(9);
     const firstItem = items[0];
     const firstRationaleLines = doc.splitTextToSize(cleanMarkdown(firstItem.rationale ?? ""), CONTENT_W - 8);
