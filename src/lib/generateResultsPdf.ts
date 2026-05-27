@@ -195,8 +195,14 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
 
   const atTopOfPage = () => y <= MARGIN_T + 5;
 
-  const sectionHeading = (title: string) => {
-    ensureBlockSpace(MIN_BLOCK_SPACE);
+  const sectionHeading = (title: string, firstContentHeight?: number) => {
+    // When firstContentHeight is provided, reserve heading + first content
+    // together so the heading doesn't orphan at the bottom of a page.
+    const headingBlockH = 10;
+    const reserveH = firstContentHeight != null
+      ? Math.max(MIN_BLOCK_SPACE, headingBlockH + firstContentHeight)
+      : MIN_BLOCK_SPACE;
+    ensureBlockSpace(reserveH);
     if (!atTopOfPage()) y += 4;
     doc.setFontSize(13);
     doc.setTextColor(...NAVY);
