@@ -181,7 +181,7 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
   const renderContinuationHeader = () => {
     if (currentSectionTitle === "") return;
     doc.setFontSize(7.5);
-    doc.setFont("helvetica", "normal");
+    doc.setFont("Montserrat", "normal");
     doc.setTextColor(...MUTED);
     doc.text(
       `${currentSectionTitle.toUpperCase()} · CONTINUED`,
