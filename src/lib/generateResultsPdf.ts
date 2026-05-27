@@ -163,6 +163,7 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
   const { registerPdfFonts } = await import("./pdfFonts");
   registerPdfFonts(doc);
   let y = MARGIN_T;
+  let currentSectionTitle: string = "";
   const today = new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
 
   const addFooter = () => {
@@ -174,11 +175,27 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
     doc.line(MARGIN_L, FOOTER_Y - 3, PAGE_W - MARGIN_R, FOOTER_Y - 3);
   };
 
+  // Renders a "<SECTION_TITLE> · CONTINUED" header at the top of any page
+  // that continues a section from the previous page. Sits in the top-margin
+  // gutter without consuming vertical space. No-op if no section is active.
+  const renderContinuationHeader = () => {
+    if (currentSectionTitle === "") return;
+    doc.setFontSize(7.5);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(...MUTED);
+    doc.text(
+      `${currentSectionTitle.toUpperCase()} · CONTINUED`,
+      MARGIN_L,
+      MARGIN_T - 5
+    );
+  };
+
   const checkPageBreak = (needed: number) => {
     if (y + needed > PAGE_H - MARGIN_B) {
       addFooter();
       doc.addPage();
       y = MARGIN_T;
+      renderContinuationHeader();
     }
   };
 
@@ -190,12 +207,17 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
       addFooter();
       doc.addPage();
       y = MARGIN_T;
+      renderContinuationHeader();
     }
   };
 
   const atTopOfPage = () => y <= MARGIN_T + 5;
 
   const sectionHeading = (title: string, firstContentHeight?: number) => {
+    // Suppress the continuation header during the heading's own page-break
+    // reservation: the new page is about to render a full section heading,
+    // not a continuation of the prior section.
+    currentSectionTitle = "";
     // When firstContentHeight is provided, reserve heading + first content
     // together so the heading doesn't orphan at the bottom of a page.
     const headingBlockH = 10;
@@ -203,6 +225,7 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
       ? Math.max(MIN_BLOCK_SPACE, headingBlockH + firstContentHeight)
       : MIN_BLOCK_SPACE;
     ensureBlockSpace(reserveH);
+    currentSectionTitle = title;
     if (!atTopOfPage()) y += 4;
     doc.setFontSize(13);
     doc.setTextColor(...NAVY);
