@@ -871,9 +871,6 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
 
   // ── CROSS-ASSESSMENT CONNECTIONS ──
   if (sections.crossAssessmentConnections && data.narrativeSections?.cross_assessment) {
-    addFooter();
-    doc.addPage();
-    y = MARGIN_T;
     sectionHeading("Cross-Assessment Connections");
     bodyText(data.narrativeSections.cross_assessment);
     y += 4;
