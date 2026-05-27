@@ -683,7 +683,7 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
   // ── DIMENSION HIGHLIGHTS ──
   if (sections.dimensionHighlights && data.narrativeSections?.dimension_highlights) {
     // Pre-compute first non-empty card's height for orphan-prevention.
-    doc.setFont("helvetica", "normal");
+    doc.setFont("Montserrat", "normal");
     doc.setFontSize(8);
     let firstCardH: number | undefined;
     for (const dim of data.dimensions) {
