@@ -30,6 +30,12 @@ interface AssessmentResponse {
   itemText: string;
   score: number;
   dimensionId: string;
+  interpretation?: {
+    positive_self: string[];
+    negative_self: string[];
+    positive_others: string[];
+    negative_others: string[];
+  } | null;
 }
 
 export interface PdfData {
