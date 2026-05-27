@@ -549,7 +549,9 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
     data.narrativeSections!.action_plan!.length > 0
   ) {
     const items = data.narrativeSections!.action_plan!;
+    const dimNameById = new Map(data.dimensions.map((d) => [d.dimensionId, d.name]));
     sectionHeading("Action Plan");
+
 
     for (let i = 0; i < items.length; i++) {
       const item = items[i];
