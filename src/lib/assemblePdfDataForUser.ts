@@ -268,34 +268,89 @@ export async function assemblePtpPdfData(params: {
       (facetRow?.facet_data as any) ?? [];
 
     if (contextTab) {
-      const { data: drivingRow } = await supabase
-        .from("facet_interpretations")
-        .select("facet_data")
-        .eq("assessment_result_id", assessmentResultId)
-        .eq("section_type", `driving_facets_${contextTab}`)
-        .maybeSingle();
+    // Inline compute mirroring DrivingFacetScores.tsx — driving facets are
+    // not persisted to facet_interpretations, so we recompute from raw responses.
+    {
+      const { data: primaryResponses } = await supabase
+        .from("assessment_responses")
+        .select("response_value_numeric, is_reverse_scored, item_id")
+        .eq("assessment_id", result.assessment_id);
 
-      const drivingData = drivingRow?.facet_data as
-        | {
-            elevated?: Array<{ value: number; facet_name: string; item_number: number; dimension_id: string }>;
-            suppressed?: Array<{ value: number; facet_name: string; item_number: number; dimension_id: string }>;
-          }
-        | undefined;
+      let allResponses: any[] = primaryResponses ?? [];
+      if (additionalAssessmentId) {
+        const { data: extra } = await supabase
+          .from("assessment_responses")
+          .select("response_value_numeric, is_reverse_scored, item_id")
+          .eq("assessment_id", additionalAssessmentId);
+        if (extra?.length) allResponses = [...allResponses, ...extra];
+      }
 
-      const mapDriving = (
-        f: { value: number; facet_name: string; item_number: number; dimension_id: string },
-      ) => ({
-        itemNumber: f.item_number,
-        facetName: f.facet_name,
-        itemText: "",
-        score: Math.round(f.value),
-        dimensionId: f.dimension_id,
-        interpretation: facetInterpretations.find((fi) => fi.name === f.facet_name) ?? null,
-      });
+      if (allResponses.length > 0) {
+        const itemIds = allResponses.map((r: any) => r.item_id);
+        const { data: items } = await supabase
+          .from("items")
+          .select("item_id, item_text, item_number, dimension_id, context_type, facet_name")
+          .in("item_id", itemIds);
+        const itemMap = new Map((items ?? []).map((i: any) => [i.item_id, i]));
 
-      elevatedFacets = (drivingData?.elevated ?? []).slice(0, 10).map(mapDriving);
-      suppressedFacets = (drivingData?.suppressed ?? []).slice(0, 10).map(mapDriving);
+        const scoredItems = allResponses.map((r: any) => {
+          const item = itemMap.get(r.item_id) as any;
+          const raw = Number(r.response_value_numeric);
+          const value = r.is_reverse_scored ? 100 - raw : raw;
+          return {
+            itemNumber: item?.item_number ?? 0,
+            facetName: item?.facet_name ?? "",
+            itemText: item?.item_text ?? "",
+            value,
+            dimensionId: item?.dimension_id ?? "",
+            contextType: item?.context_type ?? null,
+          };
+        });
+
+        // Context filter only for 'both' assessment viewed in pro/personal tab.
+        let filteredItems = scoredItems;
+        if (
+          assessmentCtx === 'both' &&
+          (contextTab === 'professional' || contextTab === 'personal')
+        ) {
+          const filtered = scoredItems.filter((s) => s.contextType === contextTab);
+          // Defensive fallback matches DrivingFacetScores.tsx line 109.
+          if (filtered.length > 0) filteredItems = filtered;
+        }
+
+        const values = filteredItems.map((s) => s.value);
+        const mean = values.reduce((a, b) => a + b, 0) / values.length;
+        const variance =
+          values.reduce((sum, v) => sum + (v - mean) ** 2, 0) / values.length;
+        const stdDev = Math.sqrt(variance);
+
+        const upper = mean + stdDev;
+        const lower = mean - stdDev;
+
+        const mapFacet = (s: typeof filteredItems[number]) => ({
+          itemNumber: s.itemNumber,
+          facetName: s.facetName,
+          itemText: s.itemText,
+          score: Math.round(s.value),
+          dimensionId: s.dimensionId,
+          interpretation:
+            facetInterpretations.find((fi) => fi.name === s.facetName) ?? null,
+        });
+
+        elevatedFacets = filteredItems
+          .filter((s) => s.value > upper)
+          .sort((a, b) => (b.value - mean) - (a.value - mean))
+          .slice(0, 10)
+          .map(mapFacet);
+
+        suppressedFacets = filteredItems
+          .filter((s) => s.value < lower)
+          .sort((a, b) => (a.value - mean) - (b.value - mean))
+          .slice(0, 10)
+          .map(mapFacet);
+      }
     }
+  }
 
     if (sections.assessmentResponses) {
       const { data: responses } = await supabase
