@@ -482,7 +482,17 @@ export async function assemblePtpPdfData(params: {
       .select("response_value_numeric, is_reverse_scored, item_id")
       .eq("assessment_id", result.assessment_id);
 
-    const allResponses = responsesRaw ?? [];
+    let allResponses = responsesRaw ?? [];
+
+    if (params.additionalAssessmentId) {
+      const { data: additionalResponses } = await supabase
+        .from("assessment_responses")
+        .select("response_value_numeric, is_reverse_scored, item_id")
+        .eq("assessment_id", params.additionalAssessmentId);
+      if (additionalResponses?.length) {
+        allResponses = [...allResponses, ...additionalResponses];
+      }
+    }
 
     if (allResponses.length > 0) {
       const itemIds = allResponses.map((r: any) => r.item_id);
