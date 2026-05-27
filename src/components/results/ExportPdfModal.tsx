@@ -313,7 +313,8 @@ export default function ExportPdfModal({ open, onOpenChange, instrumentType, isC
   const renderGroup = <K extends string>(
     group: SectionGroup<K>,
     state: Record<K, boolean>,
-    toggle: (key: K) => void
+    toggle: (key: K) => void,
+    renderChild?: (key: K) => React.ReactNode
   ) => (
     <div key={group.title} className="space-y-3">
       <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -321,22 +322,52 @@ export default function ExportPdfModal({ open, onOpenChange, instrumentType, isC
       </h4>
       <div className="space-y-3">
         {group.options.map((opt) => (
-          <div key={opt.key} className="flex items-start gap-3">
-            <Checkbox
-              id={opt.key}
-              checked={state[opt.key]}
-              onCheckedChange={() => toggle(opt.key)}
-              className="mt-0.5"
-            />
-            <Label htmlFor={opt.key} className="flex-1 cursor-pointer leading-tight">
-              <div className="text-sm font-semibold text-foreground">{opt.name}</div>
-              <div className="text-xs text-muted-foreground mt-0.5">{opt.description}</div>
-            </Label>
+          <div key={opt.key} className="space-y-2">
+            <div className="flex items-start gap-3">
+              <Checkbox
+                id={opt.key}
+                checked={state[opt.key]}
+                onCheckedChange={() => toggle(opt.key)}
+                className="mt-0.5"
+              />
+              <Label htmlFor={opt.key} className="flex-1 cursor-pointer leading-tight">
+                <div className="text-sm font-semibold text-foreground">{opt.name}</div>
+                <div className="text-xs text-muted-foreground mt-0.5">{opt.description}</div>
+              </Label>
+            </div>
+            {renderChild?.(opt.key)}
           </div>
         ))}
       </div>
     </div>
   );
+
+  const renderPtpChild = (key: keyof PdfSections): React.ReactNode => {
+    if (key !== "assessmentResponses") return null;
+    const parentOn = ptpSections.assessmentResponses;
+    return (
+      <div className="ml-7 flex items-start gap-3">
+        <Checkbox
+          id="assessmentResponsesIncludeInsights"
+          checked={ptpSections.assessmentResponsesIncludeInsights}
+          disabled={!parentOn}
+          onCheckedChange={(checked) =>
+            setPtpSections((prev) => ({ ...prev, assessmentResponsesIncludeInsights: !!checked }))
+          }
+          className="mt-0.5"
+        />
+        <Label
+          htmlFor="assessmentResponsesIncludeInsights"
+          className={`flex-1 cursor-pointer leading-tight ${!parentOn ? "opacity-50" : ""}`}
+        >
+          <div className="text-sm font-semibold text-foreground">Include facet insights per response</div>
+          <div className="text-xs text-muted-foreground mt-0.5">
+            Add positive and negative impact details under each question
+          </div>
+        </Label>
+      </div>
+    );
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
