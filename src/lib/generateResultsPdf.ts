@@ -195,8 +195,14 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
 
   const atTopOfPage = () => y <= MARGIN_T + 5;
 
-  const sectionHeading = (title: string) => {
-    ensureBlockSpace(MIN_BLOCK_SPACE);
+  const sectionHeading = (title: string, firstContentHeight?: number) => {
+    // When firstContentHeight is provided, reserve heading + first content
+    // together so the heading doesn't orphan at the bottom of a page.
+    const headingBlockH = 10;
+    const reserveH = firstContentHeight != null
+      ? Math.max(MIN_BLOCK_SPACE, headingBlockH + firstContentHeight)
+      : MIN_BLOCK_SPACE;
+    ensureBlockSpace(reserveH);
     if (!atTopOfPage()) y += 4;
     doc.setFontSize(13);
     doc.setTextColor(...NAVY);
@@ -440,9 +446,6 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
       bodyText(paragraphs[i]);
       if (i < paragraphs.length - 1) y += 2;
     }
-    addFooter();
-    doc.addPage();
-    y = MARGIN_T;
   }
 
   // ── PROFILE OVERVIEW ──
@@ -550,7 +553,22 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
   ) {
     const items = data.narrativeSections!.action_plan!;
     const dimNameById = new Map(data.dimensions.map((d) => [d.dimensionId, d.name]));
-    sectionHeading("Action Plan");
+
+    // Pre-compute first item's cardHeight for orphan-prevention.
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    const firstItem = items[0];
+    const firstRationaleLines = doc.splitTextToSize(cleanMarkdown(firstItem.rationale ?? ""), CONTENT_W - 8);
+    const firstRationaleHeight = firstRationaleLines.length * 4.2 + 2;
+    const firstStepsArr = Array.isArray(firstItem.steps) ? firstItem.steps : [];
+    const firstStepsHeight = firstStepsArr.reduce((acc, step) => {
+      const stepLines = doc.splitTextToSize(cleanMarkdown(step), CONTENT_W - 16);
+      return acc + stepLines.length * 4.2 + 1;
+    }, 4);
+    const firstPillsHeight = (Array.isArray(firstItem.dimension_tags) && firstItem.dimension_tags.length > 0) ? 7 : 0;
+    const firstCardHeight = 8 + 6 + firstPillsHeight + firstRationaleHeight + firstStepsHeight + 6;
+
+    sectionHeading("Action Plan", firstCardHeight);
 
 
     for (let i = 0; i < items.length; i++) {
@@ -598,7 +616,7 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
           doc.text(tagText, pillX + tagWidth / 2, innerY - 0.5, { align: "center" });
           pillX += tagWidth + 3;
         }
-        innerY += 5;
+        innerY += 3;
       }
 
       // Title
@@ -636,7 +654,18 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
 
   // ── DIMENSION HIGHLIGHTS ──
   if (sections.dimensionHighlights && data.narrativeSections?.dimension_highlights) {
-    sectionHeading("Dimension Highlights");
+    // Pre-compute first non-empty card's height for orphan-prevention.
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    let firstCardH: number | undefined;
+    for (const dim of data.dimensions) {
+      const text = data.narrativeSections.dimension_highlights[dim.dimensionId];
+      if (!text) continue;
+      const textLines = doc.splitTextToSize(cleanMarkdown(text), CONTENT_W - 12);
+      firstCardH = textLines.length * 4.5 + 14;
+      break;
+    }
+    sectionHeading("Dimension Highlights", firstCardH);
     for (const dim of data.dimensions) {
       const text = data.narrativeSections.dimension_highlights[dim.dimensionId];
       if (!text) continue;
@@ -648,15 +677,15 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
       doc.setFillColor(pastelRgb[0], pastelRgb[1], pastelRgb[2]);
       doc.roundedRect(MARGIN_L, y, CONTENT_W, cardH, 2, 2, "F");
       doc.setFillColor(rgb[0], rgb[1], rgb[2]);
-      doc.rect(MARGIN_L, y, 1.5, cardH, "F");
+      doc.rect(MARGIN_L, y, 3, cardH, "F");
       doc.setFontSize(9);
       doc.setFont("helvetica", "bold");
       doc.setTextColor(...BLACK);
-      doc.text(`${dim.name} — ${dim.score}`, MARGIN_L + 6, y + 7);
+      doc.text(`${dim.name} — ${dim.score}`, MARGIN_L + 7.5, y + 7);
       doc.setFontSize(8);
       doc.setFont("helvetica", "normal");
       doc.setTextColor(...MUTED);
-      doc.text(textLines, MARGIN_L + 6, y + 13);
+      doc.text(textLines, MARGIN_L + 7.5, y + 13);
       y += cardH + 4;
     }
     y += 2;
@@ -664,7 +693,7 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
 
   // ── DRIVING FACET SCORES ──
   if (sections.drivingFacetScores && (data.elevatedFacets.length > 0 || data.suppressedFacets.length > 0)) {
-    sectionHeading("Driving Facet Scores");
+    sectionHeading("Driving Facet Scores", 18);
 
     const renderFacetScoreTable = (title: string, facets: FacetWithInterpretation[]) => {
       checkPageBreak(12 + facets.length * 7);
@@ -688,7 +717,7 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
         const f = facets[i];
         if (i % 2 === 0) {
           doc.setFillColor(250, 250, 252);
-          doc.rect(MARGIN_L, y - 3, CONTENT_W, 6, "F");
+          doc.rect(MARGIN_L, y - 1, CONTENT_W, 6, "F");
         }
         const rgb = hexToRgb(PTP_DIM_COLOR(f.dimensionId));
         doc.setFillColor(rgb[0], rgb[1], rgb[2]);
@@ -842,9 +871,6 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
 
   // ── CROSS-ASSESSMENT CONNECTIONS ──
   if (sections.crossAssessmentConnections && data.narrativeSections?.cross_assessment) {
-    addFooter();
-    doc.addPage();
-    y = MARGIN_T;
     sectionHeading("Cross-Assessment Connections");
     bodyText(data.narrativeSections.cross_assessment);
     y += 4;

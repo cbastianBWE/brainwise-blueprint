@@ -1,132 +1,44 @@
-## Prompt 2.7 — implement three fixes
+## Prompt 4 — PTP PDF orphan prevention + cosmetic fixes
 
-### File 1: `src/lib/assemblePdfDataForUser.ts`
+Single-file change: `src/lib/generateResultsPdf.ts`. All other files untouched. Scope strictly per prompt.
 
-**Bug A — split-pair Combined dimension merge**
-Insert immediately after the existing `let dimensionScoresMap = result.dimension_scores ?? {};` (line 171) and before the `if (assessmentCtx === 'both' …)` block:
+### Pre-flight pushback review (all clear)
 
-```ts
-if (isSplitPairCombined) {
-  const { data: personalResult } = await supabase
-    .from("assessment_results")
-    .select("dimension_scores")
-    .eq("assessment_id", params.additionalAssessmentId!)
-    .maybeSingle();
+1. `sectionHeading(` call sites enumerated (lines 425, 450, 501, 513, 553, 639, 667, 830, 839, 848, 866, 949) — all pass only `title`. Adding optional `firstContentHeight?: number` is backward-compatible.
+2. `headingBlockH = 10` reasonable: pre-gap `+4` + text 13pt (~4.6mm) + `+2` + line + `+6` = ~12mm worst-case; reserving 10 + content via `Math.max(MIN_BLOCK_SPACE, …)` floors at 30mm, so under-reservation is impossible for small first-content cases.
+3. Pre-lifting `setFont("helvetica","normal") + setFontSize(8/9)` matches what the per-card loops already set, so no font-state side effect.
+4. 18mm estimate for Driving Facet Scores section heading is conservative; inner `renderFacetScoreTable` retains its own `checkPageBreak`.
+5. Dimension Highlights X-shift 6→7.5mm: score is right-aligned at `MARGIN_L + CONTENT_W - 2` (right side of card), so 1.5mm left-side shift cannot collide.
 
-  const personalScoresMap = (personalResult?.dimension_scores ?? {}) as Record<string, DimensionScore>;
-  const professionalScoresMap = dimensionScoresMap;
+No blockers — proceed.
 
-  const allDims = new Set([
-    ...Object.keys(professionalScoresMap),
-    ...Object.keys(personalScoresMap),
-  ]);
+### Edits
 
-  const merged: Record<string, DimensionScore> = {};
-  allDims.forEach((dim) => {
-    const profMean = professionalScoresMap[dim]?.mean ?? null;
-    const persMean = personalScoresMap[dim]?.mean ?? null;
-    if (profMean !== null && persMean !== null) {
-      merged[dim] = {
-        mean: (profMean + persMean) / 2,
-        band: professionalScoresMap[dim]?.band ?? personalScoresMap[dim]?.band,
-      };
-    } else if (profMean !== null) {
-      merged[dim] = professionalScoresMap[dim];
-    } else {
-      merged[dim] = personalScoresMap[dim];
-    }
-  });
+**4.1** `sectionHeading` (lines 198–210): add optional `firstContentHeight?: number` param; compute `reserveH = firstContentHeight != null ? Math.max(MIN_BLOCK_SPACE, 10 + firstContentHeight) : MIN_BLOCK_SPACE` and pass to `ensureBlockSpace`. Rest unchanged.
 
-  dimensionScoresMap = merged;
-}
-```
+**4.2.a** Dimension Highlights (line ~639): before `sectionHeading`, set `helvetica/normal/8`, loop dims to find first non-empty narrative, compute `firstCardH = splitTextToSize(...).length * 4.5 + 14`, then `sectionHeading("Dimension Highlights", firstCardH)`. Per-card loop body unchanged.
 
-**Bug B — unify facet interpretation lookup**
+**4.2.b** Action Plan (line ~553): mirror the in-loop cardHeight formula for `items[0]` (rationale lines, steps reduce, pills, titleHeight=6) → `firstCardHeight`. Pass as 2nd arg to `sectionHeading("Action Plan", firstCardHeight)`. Loop body untouched.
 
-1. Delete the old `facet_insights_${contextTab}` fetch (current lines 270–279):
-   `facetSectionType`, `facetRow` query, and `facetInterpretations` array.
+**4.2.c** Driving Facet Scores (line 667): `sectionHeading("Driving Facet Scores", 18)`.
 
-2. Replace with a single merged map built at the top of the `if (isPTP)` block (before the `if (contextTab)` driving-facet compute):
+**4.3** Delete the three forced break lines (`addFooter(); doc.addPage(); y = MARGIN_T;`) at lines 443–445 (after Brain Overview). Keep closing `}`.
 
-```ts
-// Build merged interpretation map from facet_insights_all across the primary
-// result row plus (for split-pair Combined) the additional personal result row.
-// Used by BOTH C1 (elevated/suppressed) and C2 (per-response insights).
-const resultIdsForInterp: string[] = [assessmentResultId];
-if (params.additionalAssessmentId) {
-  const { data: additionalResultRow } = await supabase
-    .from("assessment_results")
-    .select("id")
-    .eq("assessment_id", params.additionalAssessmentId)
-    .maybeSingle();
-  if (additionalResultRow?.id) resultIdsForInterp.push(additionalResultRow.id);
-}
+**4.4** Delete the three forced break lines at lines 845–847 (before Cross-Assessment Connections). Block now flows naturally.
 
-const { data: allFacetsRows } = await supabase
-  .from("facet_interpretations")
-  .select("facet_data")
-  .in("assessment_result_id", resultIdsForInterp)
-  .eq("section_type", "facet_insights_all");
+**4.5** Line 691: `y - 3` → `y - 1` (zebra stripe).
 
-const interpretationMap = new Map<string, {
-  positive_self: string[];
-  negative_self: string[];
-  positive_others: string[];
-  negative_others: string[];
-}>();
-for (const row of allFacetsRows ?? []) {
-  const arr = Array.isArray((row as any).facet_data) ? (row as any).facet_data as any[] : [];
-  for (const fi of arr) {
-    if (fi && typeof fi.name === "string" && !interpretationMap.has(fi.name)) {
-      interpretationMap.set(fi.name, {
-        positive_self: Array.isArray(fi.positive_self) ? fi.positive_self : [],
-        negative_self: Array.isArray(fi.negative_self) ? fi.negative_self : [],
-        positive_others: Array.isArray(fi.positive_others) ? fi.positive_others : [],
-        negative_others: Array.isArray(fi.negative_others) ? fi.negative_others : [],
-      });
-    }
-  }
-}
-```
+**4.6** Line 601: `innerY += 5` → `innerY += 3` (pill→title spacing).
 
-3. In `mapFacet` (current line 346–347), change
-   `interpretation: facetInterpretations.find((fi) => fi.name === s.facetName) ?? null,`
-   to
-   `interpretation: interpretationMap.get(s.facetName) ?? null,`
+**4.7** Line 651: accent bar width `1.5` → `3`. Lines 655 and 659: text X `MARGIN_L + 6` → `MARGIN_L + 7.5`.
 
-4. Replace the existing C2 attach block (current lines 408–459) with the simplified version that reuses the same `interpretationMap`:
+**4.8** Footer sanity: no addFooter() additions/removals — verified the removed forced breaks rely on downstream `checkPageBreak`/`ensureBlockSpace` which already call `addFooter()`.
 
-```ts
-if (assessmentResponses.length > 0) {
-  assessmentResponses = assessmentResponses.map((r) => ({
-    ...r,
-    interpretation: interpretationMap.get(r.facetName) ?? null,
-  }));
-}
-```
+### Verification after edit
 
-### File 2: `src/lib/generateResultsPdf.ts`
+- `npx tsc --noEmit -p tsconfig.app.json` clean
+- `rg "sectionHeading\\(.+, " src/lib/generateResultsPdf.ts` — 3 hits (Action Plan, Dimension Highlights, Driving Facet Scores)
+- `rg "addPage\\(\\)" src/lib/generateResultsPdf.ts` — confirm no addPage between Brain Overview end and Profile Overview, and no addPage immediately before Cross-Assessment heading; forced breaks at Elevated/Suppressed/Full Facet Charts/cover still present
+- Spot-check lines 651/655/659/691/601 reflect new values
 
-**Bug C — Action Plan dimension labels**
-
-Inside the Action Plan block (around line 551, right after `const items = data.narrativeSections!.action_plan!;` and `sectionHeading("Action Plan");`), add:
-
-```ts
-const dimNameById = new Map(data.dimensions.map((d) => [d.dimensionId, d.name]));
-```
-
-Update line 589 from:
-`const tagText = String(tag).toUpperCase();`
-to:
-`const tagText = (dimNameById.get(tag) ?? tag).toUpperCase();`
-
-### Verification after edits
-
-- `npx tsc --noEmit -p tsconfig.app.json` — clean
-- `rg "Split-pair Combined: merge dimension scores" src/lib/assemblePdfDataForUser.ts` — 1 hit
-- `rg "facet_insights_\\\${contextTab}" src/lib/assemblePdfDataForUser.ts` — 0 hits
-- `rg "dimNameById" src/lib/generateResultsPdf.ts` — 2 hits
-
-No other files touched. Mental walkthrough for all 5 scenarios (single personal, single professional, single-both Combined, single-both pro/personal tab, split-pair Combined) confirmed correct in the prompt; no edge cases require deviation.
-
-Approve to switch to build mode and I will apply the edits.
+Approve to switch to build mode and apply.
