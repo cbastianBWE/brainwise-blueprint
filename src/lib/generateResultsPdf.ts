@@ -772,12 +772,10 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
   // ── DRIVING FACET INSIGHTS (shared renderer, used by Elevated + Suppressed blocks) ──
   const renderFacetInsights = (title: string, facets: FacetWithInterpretation[]) => {
     if (!facets.length) return;
+    // title param retained for caller compatibility; the inner sub-heading is no
+    // longer rendered — the section heading already conveys this context.
+    void title;
     checkPageBreak(40);
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(...NAVY);
-    doc.text(title, MARGIN_L, y);
-    y += 7;
 
     for (const f of facets) {
       const rgb = hexToRgb(PTP_DIM_COLOR(f.dimensionId));
