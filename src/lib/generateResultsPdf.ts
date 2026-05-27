@@ -859,20 +859,20 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
 
         if (selfItem) {
           doc.setFontSize(8);
-          doc.setFont("helvetica", "bold");
+          doc.setFont("Montserrat", "bold");
           doc.setTextColor(selfItem.positive ? GREEN[0] : RED[0], selfItem.positive ? GREEN[1] : RED[1], selfItem.positive ? GREEN[2] : RED[2]);
           doc.text(selfItem.positive ? "+" : "-", MARGIN_L, y + 3);
-          doc.setFont("helvetica", "normal");
+          doc.setFont("Montserrat", "normal");
           doc.setTextColor(...BLACK);
           doc.text(selfLines, MARGIN_L + 5, y + 3);
         }
 
         if (othersItem) {
           doc.setFontSize(8);
-          doc.setFont("helvetica", "bold");
+          doc.setFont("Montserrat", "bold");
           doc.setTextColor(othersItem.positive ? GREEN[0] : RED[0], othersItem.positive ? GREEN[1] : RED[1], othersItem.positive ? GREEN[2] : RED[2]);
           doc.text(othersItem.positive ? "+" : "-", MARGIN_L + colW + 4, y + 3);
-          doc.setFont("helvetica", "normal");
+          doc.setFont("Montserrat", "normal");
           doc.setTextColor(...BLACK);
           doc.text(othersLines, MARGIN_L + colW + 9, y + 3);
         }
