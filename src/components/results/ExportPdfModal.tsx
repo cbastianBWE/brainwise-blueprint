@@ -24,6 +24,9 @@ export interface PdfSections {
   fullFacetCharts: boolean;
   crossAssessmentConnections: boolean;
   assessmentResponses: boolean;
+  whatThisMeans: boolean;
+  actionPlan: boolean;
+  assessmentResponsesIncludeInsights: boolean;
 }
 
 export interface NaiPdfSectionsUi {
