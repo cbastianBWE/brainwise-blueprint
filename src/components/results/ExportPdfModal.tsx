@@ -21,6 +21,7 @@ export interface PdfSections {
   dimensionHighlights: boolean;
   drivingFacetInsightsElevated: boolean;
   drivingFacetInsightsSuppressed: boolean;
+  fullFacetCharts: boolean;
   crossAssessmentConnections: boolean;
   assessmentResponses: boolean;
 }
