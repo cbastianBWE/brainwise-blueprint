@@ -240,7 +240,7 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
 
   const bodyText = (text: string, indent = 0) => {
     doc.setFontSize(8.5);
-    doc.setFont("helvetica", "normal");
+    doc.setFont("Montserrat", "normal");
     doc.setTextColor(...BLACK);
     const lines = doc.splitTextToSize(cleanMarkdown(text), CONTENT_W - indent);
     // Widow protection: if not enough room for at least 3 lines (~14mm),
