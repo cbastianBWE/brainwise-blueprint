@@ -184,6 +184,7 @@ export default function ExportPdfModal({ open, onOpenChange, instrumentType, isC
     dimensionHighlights: true,
     drivingFacetInsightsElevated: true,
     drivingFacetInsightsSuppressed: true,
+    fullFacetCharts: true,
     crossAssessmentConnections: true,
     assessmentResponses: true,
   });
