@@ -24,6 +24,9 @@ export interface PdfSections {
   fullFacetCharts: boolean;
   crossAssessmentConnections: boolean;
   assessmentResponses: boolean;
+  whatThisMeans: boolean;
+  actionPlan: boolean;
+  assessmentResponsesIncludeInsights: boolean;
 }
 
 export interface NaiPdfSectionsUi {
@@ -79,31 +82,33 @@ const PTP_GROUPS: SectionGroup<keyof PdfSections>[] = [
   {
     title: "Profile sections",
     options: [
-      { key: "profileOverview", name: "Profile Overview", description: "Stat cards and dimension score cards" },
-      { key: "profileOverviewNarrative", name: "Profile Overview Narrative", description: "AI-generated profile summary" },
-      { key: "ptpBrainOverview", name: "PTP and Brain Overview", description: "Framework introduction" },
+      { key: "ptpBrainOverview", name: "PTP and Brain Overview", description: "Introduction to the PTP framework and brain context" },
+      { key: "profileOverview", name: "Profile Overview", description: "Dimension scores summary and highlights" },
+      { key: "profileOverviewNarrative", name: "Profile Overview Narrative", description: "AI-generated narrative interpreting your pattern" },
+      { key: "whatThisMeans", name: "What does this mean to me?", description: "Personal implications drawn from your profile" },
+      { key: "actionPlan", name: "Action Plan", description: "Targeted steps based on your driving facets" },
     ],
   },
   {
     title: "Dimension detail sections",
     options: [
-      { key: "dimensionHighlights", name: "Dimension Highlights", description: "AI-generated dimension cards" },
-      { key: "drivingFacetScores", name: "Driving Facet Scores", description: "Elevated and suppressed bar charts" },
+      { key: "dimensionHighlights", name: "Dimension Highlights", description: "Per-dimension narrative and key facet contributors" },
+      { key: "drivingFacetScores", name: "Driving Facet Scores", description: "Most elevated and suppressed facet tables" },
       { key: "drivingFacetInsightsElevated", name: "Driving Facet Insights — Elevated", description: "Behavioral impacts of elevated facets" },
       { key: "drivingFacetInsightsSuppressed", name: "Driving Facet Insights — Suppressed", description: "Behavioral impacts of suppressed facets" },
       { key: "fullFacetCharts", name: "Full Facet Charts", description: "Bar charts of every assessed facet, grouped by All/Threat/Reward" },
     ],
   },
   {
-    title: "Cross-cutting sections",
+    title: "Cross-cutting",
     options: [
-      { key: "crossAssessmentConnections", name: "Cross-Assessment Connections", description: "AI-generated analysis" },
+      { key: "crossAssessmentConnections", name: "Cross-Assessment Connections", description: "How PTP patterns connect to NAI and HSS data" },
     ],
   },
   {
     title: "Raw data",
     options: [
-      { key: "assessmentResponses", name: "Assessment Responses", description: "All questions and scores" },
+      { key: "assessmentResponses", name: "Assessment Responses", description: "Your individual question scores" },
     ],
   },
 ];
@@ -187,6 +192,9 @@ export default function ExportPdfModal({ open, onOpenChange, instrumentType, isC
     fullFacetCharts: true,
     crossAssessmentConnections: true,
     assessmentResponses: true,
+    whatThisMeans: true,
+    actionPlan: true,
+    assessmentResponsesIncludeInsights: false,
   });
 
   const [naiSections, setNaiSections] = useState<NaiPdfSectionsUi>({
@@ -305,7 +313,8 @@ export default function ExportPdfModal({ open, onOpenChange, instrumentType, isC
   const renderGroup = <K extends string>(
     group: SectionGroup<K>,
     state: Record<K, boolean>,
-    toggle: (key: K) => void
+    toggle: (key: K) => void,
+    renderChild?: (key: K) => React.ReactNode
   ) => (
     <div key={group.title} className="space-y-3">
       <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -313,22 +322,52 @@ export default function ExportPdfModal({ open, onOpenChange, instrumentType, isC
       </h4>
       <div className="space-y-3">
         {group.options.map((opt) => (
-          <div key={opt.key} className="flex items-start gap-3">
-            <Checkbox
-              id={opt.key}
-              checked={state[opt.key]}
-              onCheckedChange={() => toggle(opt.key)}
-              className="mt-0.5"
-            />
-            <Label htmlFor={opt.key} className="flex-1 cursor-pointer leading-tight">
-              <div className="text-sm font-semibold text-foreground">{opt.name}</div>
-              <div className="text-xs text-muted-foreground mt-0.5">{opt.description}</div>
-            </Label>
+          <div key={opt.key} className="space-y-2">
+            <div className="flex items-start gap-3">
+              <Checkbox
+                id={opt.key}
+                checked={state[opt.key]}
+                onCheckedChange={() => toggle(opt.key)}
+                className="mt-0.5"
+              />
+              <Label htmlFor={opt.key} className="flex-1 cursor-pointer leading-tight">
+                <div className="text-sm font-semibold text-foreground">{opt.name}</div>
+                <div className="text-xs text-muted-foreground mt-0.5">{opt.description}</div>
+              </Label>
+            </div>
+            {renderChild?.(opt.key)}
           </div>
         ))}
       </div>
     </div>
   );
+
+  const renderPtpChild = (key: keyof PdfSections): React.ReactNode => {
+    if (key !== "assessmentResponses") return null;
+    const parentOn = ptpSections.assessmentResponses;
+    return (
+      <div className="ml-7 flex items-start gap-3">
+        <Checkbox
+          id="assessmentResponsesIncludeInsights"
+          checked={ptpSections.assessmentResponsesIncludeInsights}
+          disabled={!parentOn}
+          onCheckedChange={(checked) =>
+            setPtpSections((prev) => ({ ...prev, assessmentResponsesIncludeInsights: !!checked }))
+          }
+          className="mt-0.5"
+        />
+        <Label
+          htmlFor="assessmentResponsesIncludeInsights"
+          className={`flex-1 cursor-pointer leading-tight ${!parentOn ? "opacity-50" : ""}`}
+        >
+          <div className="text-sm font-semibold text-foreground">Include facet insights per response</div>
+          <div className="text-xs text-muted-foreground mt-0.5">
+            Add positive and negative impact details under each question
+          </div>
+        </Label>
+      </div>
+    );
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -374,7 +413,7 @@ export default function ExportPdfModal({ open, onOpenChange, instrumentType, isC
               ))
             : visiblePtpGroups.map((g, i) => (
                 <div key={g.title} className="space-y-6">
-                  {renderGroup(g, ptpSections as Record<keyof PdfSections, boolean>, togglePtp)}
+                  {renderGroup(g, ptpSections as Record<keyof PdfSections, boolean>, togglePtp, renderPtpChild)}
                   {i < visiblePtpGroups.length - 1 && <Separator />}
                 </div>
               ))}
