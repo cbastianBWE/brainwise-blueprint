@@ -553,7 +553,22 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
   ) {
     const items = data.narrativeSections!.action_plan!;
     const dimNameById = new Map(data.dimensions.map((d) => [d.dimensionId, d.name]));
-    sectionHeading("Action Plan");
+
+    // Pre-compute first item's cardHeight for orphan-prevention.
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    const firstItem = items[0];
+    const firstRationaleLines = doc.splitTextToSize(cleanMarkdown(firstItem.rationale ?? ""), CONTENT_W - 8);
+    const firstRationaleHeight = firstRationaleLines.length * 4.2 + 2;
+    const firstStepsArr = Array.isArray(firstItem.steps) ? firstItem.steps : [];
+    const firstStepsHeight = firstStepsArr.reduce((acc, step) => {
+      const stepLines = doc.splitTextToSize(cleanMarkdown(step), CONTENT_W - 16);
+      return acc + stepLines.length * 4.2 + 1;
+    }, 4);
+    const firstPillsHeight = (Array.isArray(firstItem.dimension_tags) && firstItem.dimension_tags.length > 0) ? 7 : 0;
+    const firstCardHeight = 8 + 6 + firstPillsHeight + firstRationaleHeight + firstStepsHeight + 6;
+
+    sectionHeading("Action Plan", firstCardHeight);
 
 
     for (let i = 0; i < items.length; i++) {
