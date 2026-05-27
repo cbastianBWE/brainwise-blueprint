@@ -602,7 +602,7 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
     for (let i = 0; i < items.length; i++) {
       const item = items[i];
 
-      doc.setFont("helvetica", "normal");
+      doc.setFont("Montserrat", "normal");
       doc.setFontSize(9);
       const rationaleLines = doc.splitTextToSize(cleanMarkdown(item.rationale ?? ""), CONTENT_W - 8);
       const rationaleHeight = rationaleLines.length * 4.2 + 2;
