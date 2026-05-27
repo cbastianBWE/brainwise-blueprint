@@ -1148,7 +1148,7 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
   for (let p = 2; p <= totalPages; p++) {
     doc.setPage(p);
     doc.setFontSize(7);
-    doc.setFont("helvetica", "normal");
+    doc.setFont("Montserrat", "normal");
     doc.setTextColor(...MUTED);
     doc.text(`Page ${p - 1} of ${contentTotalPages}`, PAGE_W - MARGIN_R, FOOTER_Y, { align: "right" });
   }
