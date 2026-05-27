@@ -309,6 +309,9 @@ export default function Departed() {
               crossAssessmentConnections: true,
               assessmentResponses: true,
               fullFacetCharts: true,
+              whatThisMeans: true,
+              actionPlan: true,
+              assessmentResponsesIncludeInsights: false,
             };
             const pdfData = await assemblePtpPdfData({
               userId: user.id,
