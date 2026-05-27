@@ -1024,19 +1024,19 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
       doc.rect(MARGIN_L, y, 1.5, rowH, "F");
 
       doc.setFontSize(8);
-      doc.setFont("helvetica", "bold");
+      doc.setFont("Montserrat", "semibold");
       doc.setTextColor(...BLACK);
       doc.text(labelText, MARGIN_L + 5, y + 5);
 
       doc.setFontSize(7.5);
-      doc.setFont("helvetica", "normal");
+      doc.setFont("Montserrat", "normal");
       doc.setTextColor(...MUTED);
       doc.text(questionLines, MARGIN_L + 5, y + 10);
 
       doc.setFillColor(rgb[0], rgb[1], rgb[2]);
       doc.roundedRect(MARGIN_L + CONTENT_W - 12, y + rowH / 2 - 4, 12, 8, 1, 1, "F");
       doc.setFontSize(8);
-      doc.setFont("helvetica", "bold");
+      doc.setFont("Montserrat", "bold");
       doc.setTextColor(255, 255, 255);
       doc.text(String(r.score), MARGIN_L + CONTENT_W - 6, y + rowH / 2 + 1, { align: "center" });
 
