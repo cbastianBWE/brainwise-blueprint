@@ -631,7 +631,7 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
       // Dimension pills
       if (Array.isArray(item.dimension_tags) && item.dimension_tags.length > 0) {
         let pillX = innerX;
-        doc.setFont("helvetica", "bold");
+        doc.setFont("Montserrat", "semibold");
         doc.setFontSize(7);
         for (const tag of item.dimension_tags) {
           const tagText = (dimNameById.get(tag) ?? tag).toUpperCase();
