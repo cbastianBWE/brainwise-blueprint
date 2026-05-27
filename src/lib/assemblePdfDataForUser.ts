@@ -410,8 +410,8 @@ export async function assemblePtpPdfData(params: {
           itemText: s.itemText,
           score: Math.round(s.value),
           dimensionId: s.dimensionId,
-          interpretation:
-            facetInterpretations.find((fi) => fi.name === s.facetName) ?? null,
+          interpretation: interpretationMap.get(s.facetName) ?? null,
+
         });
 
         elevatedFacets = filteredItems
