@@ -213,6 +213,21 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
 
   const atTopOfPage = () => y <= MARGIN_T + 5;
 
+  // Reserve a block atomically: if the block fits on a single page and the
+  // current page doesn't have room, page-break first so the block stays
+  // intact. If the block is taller than a full page, fall back to normal
+  // flow (inner checkPageBreaks will handle the split).
+  const PAGE_AVAIL = PAGE_H - MARGIN_T - MARGIN_B;
+  const reserveBlockOrAllow = (totalH: number) => {
+    if (totalH <= PAGE_AVAIL && y + totalH > PAGE_H - MARGIN_B) {
+      addFooter();
+      doc.addPage();
+      y = MARGIN_T;
+      renderContinuationHeader();
+    }
+  };
+
+
   const sectionHeading = (title: string, firstContentHeight?: number) => {
     // Suppress the continuation header during the heading's own page-break
     // reservation: the new page is about to render a full section heading,
