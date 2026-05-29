@@ -229,6 +229,7 @@ const NAI_DIMENSION_PASTEL: Record<string, string> = {
 
 interface MyResultsProps {
   isCoachView?: boolean;
+  adminView?: boolean;
   targetUserId?: string;
   preSelectedAssessmentId?: string;
   coachUserId?: string;
@@ -237,7 +238,7 @@ interface MyResultsProps {
   defaultInstrumentId?: string;
 }
 
-export default function MyResults({ isCoachView = false, targetUserId, preSelectedAssessmentId, coachUserId, permissionLevel = null, viewLabel, defaultInstrumentId }: MyResultsProps) {
+export default function MyResults({ isCoachView = false, adminView = false, targetUserId, preSelectedAssessmentId, coachUserId, permissionLevel = null, viewLabel, defaultInstrumentId }: MyResultsProps) {
   const { user } = useAuth();
   const { profile } = useUserProfile();
   const { isBypassAdmin, isCoach, canBypassAssessmentPaywall } = useAccountRole();
@@ -298,9 +299,9 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
       .single()
       .then(({ data }) => {
         setClientName(data?.full_name ?? null);
-        setShareWithCoach(data?.share_results_with_coach ?? false);
+        if (!adminView) setShareWithCoach(data?.share_results_with_coach ?? false);
       });
-  }, [isCoachView, targetUserId]);
+  }, [isCoachView, targetUserId, adminView]);
 
   useEffect(() => {
     setCoachViewActive(isCoachView);
@@ -466,7 +467,7 @@ export default function MyResults({ isCoachView = false, targetUserId, preSelect
 
       // Coach filtering: if share_results_with_coach is false, only show linked assessments
       let filtered = combined;
-      if (isCoachView && coachUserId && shareWithCoach === false) {
+      if (isCoachView && !adminView && coachUserId && shareWithCoach === false) {
         const { data: linkedRows } = await supabase
           .from("coach_clients")
           .select("assessment_id, paired_assessment_id")
