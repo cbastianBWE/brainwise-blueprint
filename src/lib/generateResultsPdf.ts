@@ -660,7 +660,7 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
           doc.text(tagText, pillX + tagWidth / 2, innerY - 0.5, { align: "center" });
           pillX += tagWidth + 3;
         }
-        innerY += 3;
+        innerY += 6;
       }
 
       // Title
