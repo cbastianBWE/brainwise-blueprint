@@ -41,6 +41,7 @@ export default function CoachReport() {
         </Button>
         <MyResults
           isCoachView
+          adminView
           targetUserId={coachUserId}
           preSelectedAssessmentId={assessmentId}
           coachUserId={user?.id ?? ""}
