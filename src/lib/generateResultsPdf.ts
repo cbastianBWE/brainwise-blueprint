@@ -959,10 +959,14 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
       const sorted = [...facets].sort((a, b) => b.score - a.score);
 
       const chartStartY = y + 2;
-      const chartEndY = PAGE_H - MARGIN_B - 8;
-      const availableHeight = chartEndY - chartStartY;
+      const chartBottomLimit = PAGE_H - MARGIN_B - 8;
+      const availableHeight = chartBottomLimit - chartStartY;
       const rowCount = sorted.length;
       const rowHeight = Math.max(3.2, Math.min(7, availableHeight / rowCount));
+      // True chart height — stop gridlines at the last bar instead of running
+      // them down to the page margin.
+      const actualChartH = rowCount * rowHeight;
+      const chartEndY = chartStartY + actualChartH;
 
       const facetNameWidth = 75;
       const barStartX = MARGIN_L + facetNameWidth + 2;
@@ -976,6 +980,7 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
         const x = barStartX + (pct / 100) * barMaxWidth;
         doc.line(x, chartStartY, x, chartEndY);
       }
+
 
       // Scale labels
       doc.setFont("Montserrat", "normal");
