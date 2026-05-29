@@ -754,7 +754,9 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
 
 
     const renderFacetScoreTable = (title: string, facets: FacetWithInterpretation[]) => {
-      checkPageBreak(12 + facets.length * 7);
+      // Reserve title + header + first 3 rows only; subsequent rows flow
+      // naturally and the continuation-header system handles mid-table breaks.
+      checkPageBreak(12 + Math.min(facets.length, 3) * 7);
       doc.setFontSize(9);
       doc.setFont("Poppins", "semibold");
       doc.setTextColor(...BLACK);
@@ -958,77 +960,110 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
 
       const sorted = [...facets].sort((a, b) => b.score - a.score);
 
-      const chartStartY = y + 2;
       const chartBottomLimit = PAGE_H - MARGIN_B - 8;
-      const availableHeight = chartBottomLimit - chartStartY;
+      const availableHeight = chartBottomLimit - (y + 2);
       const rowCount = sorted.length;
-      const rowHeight = Math.max(3.2, Math.min(7, availableHeight / rowCount));
-      // True chart height — stop gridlines at the last bar instead of running
-      // them down to the page margin.
-      const actualChartH = rowCount * rowHeight;
-      const chartEndY = chartStartY + actualChartH;
+
+      const LEGIBILITY_FLOOR = 3.0;
+      const MAX_ROW_H = 7.0;
+      const idealRow = availableHeight / rowCount;
+      const baseRow = Math.max(LEGIBILITY_FLOOR, Math.min(MAX_ROW_H, idealRow));
+      const rowsPerPage = Math.max(1, Math.floor(availableHeight / baseRow));
+
+      let barsPerPage: number;
+      let rowHeight: number;
+      if (rowsPerPage >= rowCount) {
+        barsPerPage = rowCount;
+        rowHeight = baseRow;
+      } else {
+        const nPages = Math.ceil(rowCount / rowsPerPage);
+        barsPerPage = Math.ceil(rowCount / nPages);
+        rowHeight = Math.min(MAX_ROW_H, availableHeight / barsPerPage);
+      }
 
       const facetNameWidth = 75;
       const barStartX = MARGIN_L + facetNameWidth + 2;
       const scoreLabelWidth = 8;
       const barMaxWidth = CONTENT_W - facetNameWidth - 2 - scoreLabelWidth - 2;
 
-      // Grid lines at 0/25/50/75/100
-      doc.setDrawColor(220, 220, 220);
-      doc.setLineWidth(0.2);
-      for (let pct = 0; pct <= 100; pct += 25) {
-        const x = barStartX + (pct / 100) * barMaxWidth;
-        doc.line(x, chartStartY, x, chartEndY);
-      }
+      const drawChunk = (
+        chunk: typeof sorted,
+        chartStartY: number,
+      ): number => {
+        const chunkH = chunk.length * rowHeight;
+        const chartEndY = chartStartY + chunkH;
 
-
-      // Scale labels
-      doc.setFont("Montserrat", "normal");
-      doc.setFontSize(6);
-      doc.setTextColor(...MUTED);
-      for (let pct = 0; pct <= 100; pct += 25) {
-        const x = barStartX + (pct / 100) * barMaxWidth;
-        doc.text(String(pct), x, chartStartY - 1, { align: "center" });
-      }
-
-      for (let i = 0; i < sorted.length; i++) {
-        const f = sorted[i];
-        const rowY = chartStartY + i * rowHeight + rowHeight / 2;
-        const fontSize = Math.min(8, Math.max(5.5, rowHeight - 1.5));
-
-        // Facet name — pixel-width truncation
-        doc.setFont("Montserrat", "normal");
-        doc.setFontSize(fontSize);
-        doc.setTextColor(...NAVY);
-        const fullName = f.facetName || f.itemText || "—";
-        let displayName = fullName;
-        while (
-          doc.getTextWidth(displayName) > facetNameWidth - 1 &&
-          displayName.length > 5
-        ) {
-          displayName = displayName.slice(0, -2);
+        // Grid lines at 0/25/50/75/100
+        doc.setDrawColor(220, 220, 220);
+        doc.setLineWidth(0.2);
+        for (let pct = 0; pct <= 100; pct += 25) {
+          const x = barStartX + (pct / 100) * barMaxWidth;
+          doc.line(x, chartStartY, x, chartEndY);
         }
-        if (displayName !== fullName) displayName += "…";
-        doc.text(displayName, barStartX - 2, rowY + fontSize / 4, { align: "right" });
 
-        // Bar
-        const [r, g, b] = hexToRgb(PTP_DIM_COLOR(f.dimensionId));
-        doc.setFillColor(r, g, b);
-        const barWidth = (f.score / 100) * barMaxWidth;
-        const barY = rowY - rowHeight / 2 + 0.5;
-        const barH = rowHeight - 1;
-        doc.rect(barStartX, barY, Math.max(0.5, barWidth), barH, "F");
+        // Scale labels
+        doc.setFont("Montserrat", "normal");
+        doc.setFontSize(6);
+        doc.setTextColor(...MUTED);
+        for (let pct = 0; pct <= 100; pct += 25) {
+          const x = barStartX + (pct / 100) * barMaxWidth;
+          doc.text(String(pct), x, chartStartY - 1, { align: "center" });
+        }
 
-        // Score label — 1mm right of actual bar end
-        doc.setFont("Poppins", "bold");
-        doc.setFontSize(fontSize);
-        doc.setTextColor(...NAVY);
-        doc.text(String(f.score), barStartX + barWidth + 1, rowY + fontSize / 4);
+        for (let i = 0; i < chunk.length; i++) {
+          const f = chunk[i];
+          const rowY = chartStartY + i * rowHeight + rowHeight / 2;
+          const fontSize = Math.min(8, Math.max(5.5, rowHeight - 1.5));
+
+          // Facet name — pixel-width truncation
+          doc.setFont("Montserrat", "normal");
+          doc.setFontSize(fontSize);
+          doc.setTextColor(...NAVY);
+          const fullName = f.facetName || f.itemText || "—";
+          let displayName = fullName;
+          while (
+            doc.getTextWidth(displayName) > facetNameWidth - 1 &&
+            displayName.length > 5
+          ) {
+            displayName = displayName.slice(0, -2);
+          }
+          if (displayName !== fullName) displayName += "…";
+          doc.text(displayName, barStartX - 2, rowY + fontSize / 4, { align: "right" });
+
+          // Bar
+          const [r, g, bl] = hexToRgb(PTP_DIM_COLOR(f.dimensionId));
+          doc.setFillColor(r, g, bl);
+          const barWidth = (f.score / 100) * barMaxWidth;
+          const barY = rowY - rowHeight / 2 + 0.5;
+          const barH = rowHeight - 1;
+          doc.rect(barStartX, barY, Math.max(0.5, barWidth), barH, "F");
+
+          // Score label — 1mm right of actual bar end
+          doc.setFont("Poppins", "bold");
+          doc.setFontSize(fontSize);
+          doc.setTextColor(...NAVY);
+          doc.text(String(f.score), barStartX + barWidth + 1, rowY + fontSize / 4);
+        }
+
+        return chartEndY;
+      };
+
+      let lastEndY = y;
+      for (let offset = 0; offset < rowCount; offset += barsPerPage) {
+        if (offset > 0) {
+          addFooter();
+          doc.addPage();
+          y = MARGIN_T;
+          renderContinuationHeader();
+        }
+        const chunk = sorted.slice(offset, offset + barsPerPage);
+        const chartStartY = y + 2;
+        lastEndY = drawChunk(chunk, chartStartY);
       }
 
       // Advance the layout cursor past the chart so any following section
       // never overlaps the bars.
-      y = chartEndY + 4;
+      y = lastEndY + 4;
     };
 
 
