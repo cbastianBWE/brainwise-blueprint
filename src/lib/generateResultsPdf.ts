@@ -809,19 +809,44 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
 
     for (const f of facets) {
       const rgb = hexToRgb(PTP_DIM_COLOR(f.dimensionId));
+      const colW = (CONTENT_W - 4) / 2;
 
-      // Estimate total height of this facet block before rendering
-      const selfItemsEst = [
-        ...(f.interpretation?.positive_self ?? []),
-        ...(f.interpretation?.negative_self ?? []),
-      ];
-      const othersItemsEst = [
-        ...(f.interpretation?.positive_others ?? []),
-        ...(f.interpretation?.negative_others ?? []),
-      ];
-      const impactRowsEst = Math.max(selfItemsEst.length, othersItemsEst.length);
-      const estimatedBlockH = 15 + 5 + impactRowsEst * 12 + 6;
-      ensureBlockSpace(Math.max(MIN_BLOCK_SPACE, Math.min(estimatedBlockH, 80)));
+      // Pre-measure the FULL block (header + impact labels + every impact row)
+      // so the whole facet stays intact on one page when possible.
+      const selfItemsPre = f.interpretation
+        ? [
+            ...f.interpretation.positive_self.map((t) => ({ text: t, positive: true })),
+            ...f.interpretation.negative_self.map((t) => ({ text: t, positive: false })),
+          ]
+        : [];
+      const othersItemsPre = f.interpretation
+        ? [
+            ...f.interpretation.positive_others.map((t) => ({ text: t, positive: true })),
+            ...f.interpretation.negative_others.map((t) => ({ text: t, positive: false })),
+          ]
+        : [];
+
+      // Measure row heights using the same font that will be active when rows render.
+      doc.setFont("Montserrat", "normal");
+      doc.setFontSize(8);
+      const maxItemsPre = Math.max(selfItemsPre.length, othersItemsPre.length);
+      let impactRowsH = 0;
+      for (let i = 0; i < maxItemsPre; i++) {
+        const sLines = selfItemsPre[i]
+          ? doc.splitTextToSize(cleanMarkdown(selfItemsPre[i].text), colW - 6)
+          : [];
+        const oLines = othersItemsPre[i]
+          ? doc.splitTextToSize(cleanMarkdown(othersItemsPre[i].text), colW - 6)
+          : [];
+        impactRowsH += Math.max(sLines.length, oLines.length) * 4 + 3;
+      }
+      const headerH = 15;
+      const impactLabelsH = f.interpretation && maxItemsPre > 0 ? 5 : 0;
+      const noInterpPad = f.interpretation ? 0 : 6;
+      const trailingPad = 6;
+      const totalBlockH = headerH + impactLabelsH + impactRowsH + noInterpPad + trailingPad;
+      reserveBlockOrAllow(totalBlockH);
+
       doc.setFillColor(rgb[0], rgb[1], rgb[2]);
       doc.rect(MARGIN_L, y, 1.5, 12, "F");
       doc.setFontSize(9);
@@ -841,26 +866,11 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
       doc.text(String(f.score), MARGIN_L + CONTENT_W - 6, y + 7, { align: "center" });
       y += 15;
 
-      // Null-interpretation guard: render card only, skip impact lists silently.
-      if (!f.interpretation) {
+      // Null-interpretation or empty-impact guard: render card only.
+      if (!f.interpretation || maxItemsPre === 0) {
         y += 6;
         continue;
       }
-
-      const colW = (CONTENT_W - 4) / 2;
-
-      // Estimate total height of all impact rows for this facet
-      const selfItemsAll = [
-        ...f.interpretation.positive_self.map(t => t),
-        ...f.interpretation.negative_self.map(t => t),
-      ];
-      const othersItemsAll = [
-        ...f.interpretation.positive_others.map(t => t),
-        ...f.interpretation.negative_others.map(t => t),
-      ];
-      const maxRowsAll = Math.max(selfItemsAll.length, othersItemsAll.length);
-      const estimatedImpactH = 5 + maxRowsAll * 14;
-      checkPageBreak(estimatedImpactH);
 
       doc.setFontSize(7.5);
       doc.setFont("Montserrat", "semibold");
@@ -869,23 +879,15 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
       doc.text("Impact on others", MARGIN_L + colW + 4, y);
       y += 5;
 
-      const selfItems = [
-        ...f.interpretation.positive_self.map((t) => ({ text: t, positive: true })),
-        ...f.interpretation.negative_self.map((t) => ({ text: t, positive: false })),
-      ];
-      const othersItems = [
-        ...f.interpretation.positive_others.map((t) => ({ text: t, positive: true })),
-        ...f.interpretation.negative_others.map((t) => ({ text: t, positive: false })),
-      ];
-      const maxItems = Math.max(selfItems.length, othersItems.length);
-
-      for (let i = 0; i < maxItems; i++) {
-        const selfItem = selfItems[i];
-        const othersItem = othersItems[i];
+      for (let i = 0; i < maxItemsPre; i++) {
+        const selfItem = selfItemsPre[i];
+        const othersItem = othersItemsPre[i];
         const selfLines = selfItem ? doc.splitTextToSize(cleanMarkdown(selfItem.text), colW - 6) : [];
         const othersLines = othersItem ? doc.splitTextToSize(cleanMarkdown(othersItem.text), colW - 6) : [];
         const rowH = Math.max(selfLines.length, othersLines.length) * 4 + 3;
-        checkPageBreak(rowH + 2);
+        // Safety net only for blocks taller than a page (reserveBlockOrAllow
+        // couldn't keep them intact); intact blocks have already paged-broken.
+        if (totalBlockH > PAGE_AVAIL) checkPageBreak(rowH + 2);
 
         if (selfItem) {
           doc.setFontSize(8);
@@ -912,6 +914,7 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
       y += 6;
     }
   };
+
 
   // ── DRIVING FACET INSIGHTS — ELEVATED ──
   if (sections.drivingFacetInsightsElevated && data.elevatedFacets.length > 0) {
