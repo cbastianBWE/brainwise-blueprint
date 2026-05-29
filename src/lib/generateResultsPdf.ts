@@ -710,14 +710,21 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
       break;
     }
     sectionHeading("Dimension Highlights", firstCardH);
+    // Reset font after sectionHeading (which leaves Poppins bold 13pt active)
+    // so splitTextToSize measures at the body font and wraps to full width.
+    doc.setFont("Montserrat", "normal");
+    doc.setFontSize(8);
     for (const dim of data.dimensions) {
       const text = data.narrativeSections.dimension_highlights[dim.dimensionId];
       if (!text) continue;
       const rgb = hexToRgb(dim.color);
       const pastelRgb = hexToRgb(dim.pastelColor);
+      doc.setFont("Montserrat", "normal");
+      doc.setFontSize(8);
       const textLines = doc.splitTextToSize(cleanMarkdown(text), CONTENT_W - 12);
-      const cardH = textLines.length * 4.5 + 14;
+      const cardH = 11 + textLines.length * 4.5 + 2.5;
       checkPageBreak(cardH + 4);
+
       doc.setFillColor(pastelRgb[0], pastelRgb[1], pastelRgb[2]);
       doc.roundedRect(MARGIN_L, y, CONTENT_W, cardH, 2, 2, "F");
       doc.setFillColor(rgb[0], rgb[1], rgb[2]);
