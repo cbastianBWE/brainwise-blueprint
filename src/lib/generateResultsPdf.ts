@@ -1025,7 +1025,12 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
         doc.setTextColor(...NAVY);
         doc.text(String(f.score), barStartX + barWidth + 1, rowY + fontSize / 4);
       }
+
+      // Advance the layout cursor past the chart so any following section
+      // never overlaps the bars.
+      y = chartEndY + 4;
     };
+
 
     renderFacetBarChart("All Facets", data.fullFacetData);
 
