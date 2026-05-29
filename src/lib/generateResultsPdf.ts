@@ -1067,7 +1067,59 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
       const labelText = `Q${r.itemNumber} — ${r.facetName}`;
       const questionLines = doc.splitTextToSize(r.itemText, CONTENT_W - 20);
       const rowH = questionLines.length * 4 + 8;
-      checkPageBreak(rowH + 2);
+
+      // Pre-build the optional impact-expansion so we can reserve the whole
+      // block (question + expansion) together and never split it.
+      const colGap = 4;
+      const colW = (CONTENT_W - colGap) / 2;
+      const leftX = MARGIN_L;
+      const rightX = MARGIN_L + colW + colGap;
+      const textIndent = 5;
+      const IMPACT_LABEL_GAP = 4;
+
+      type BulletRow = { isPositive: boolean; lines: string[]; height: number };
+      const buildColumn = (positives: string[], negatives: string[], width: number): BulletRow[] => {
+        const rows: BulletRow[] = [];
+        for (const item of positives) {
+          const lines = doc.splitTextToSize(cleanMarkdown(item), width - textIndent) as string[];
+          rows.push({ isPositive: true, lines, height: lines.length * 3.5 + 1 });
+        }
+        for (const item of negatives) {
+          const lines = doc.splitTextToSize(cleanMarkdown(item), width - textIndent) as string[];
+          rows.push({ isPositive: false, lines, height: lines.length * 3.5 + 1 });
+        }
+        return rows;
+      };
+
+      let leftRows: BulletRow[] = [];
+      let rightRows: BulletRow[] = [];
+      let expansionH = 0;
+      const hasExpansion = !!(
+        sections.assessmentResponsesIncludeInsights &&
+        r.interpretation &&
+        (r.interpretation.positive_self.length > 0 ||
+          r.interpretation.negative_self.length > 0 ||
+          r.interpretation.positive_others.length > 0 ||
+          r.interpretation.negative_others.length > 0)
+      );
+
+      if (hasExpansion && r.interpretation) {
+        doc.setFont("Montserrat", "normal");
+        doc.setFontSize(7.5);
+        leftRows = buildColumn(r.interpretation.positive_self, r.interpretation.negative_self, colW);
+        rightRows = buildColumn(r.interpretation.positive_others, r.interpretation.negative_others, colW);
+        const totalRows = Math.max(leftRows.length, rightRows.length);
+        let rowsH = 0;
+        for (let i = 0; i < totalRows; i++) {
+          rowsH += Math.max(leftRows[i]?.height ?? 0, rightRows[i]?.height ?? 0);
+        }
+        // IMPACT_LABEL_GAP (gap before labels) + 4mm label band + rows + 2mm trailing
+        expansionH = IMPACT_LABEL_GAP + 4 + rowsH + 2;
+      }
+
+      const totalBlockH = rowH + 2 + expansionH;
+      reserveBlockOrAllow(totalBlockH);
+      if (!hasExpansion) checkPageBreak(rowH + 2);
 
       doc.setFillColor(rgb[0], rgb[1], rgb[2]);
       doc.rect(MARGIN_L, y, 1.5, rowH, "F");
@@ -1093,101 +1145,59 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
       doc.line(MARGIN_L, y + rowH, MARGIN_L + CONTENT_W, y + rowH);
       y += rowH + 1;
 
-      // C2: Optional inline facet insights expansion (PTP only; gated by per-row interpretation)
-      if (sections.assessmentResponsesIncludeInsights && r.interpretation) {
-        const interp = r.interpretation;
-        const hasContent =
-          interp.positive_self.length > 0 ||
-          interp.negative_self.length > 0 ||
-          interp.positive_others.length > 0 ||
-          interp.negative_others.length > 0;
+      if (hasExpansion) {
+        // Vertical breathing room between the divider rule and the impact labels.
+        y += IMPACT_LABEL_GAP;
 
-        if (hasContent) {
-          y += 1;
+        doc.setFont("Montserrat", "semibold");
+        doc.setFontSize(7.5);
+        doc.setTextColor(NAVY[0], NAVY[1], NAVY[2]);
+        doc.text("Impact on self", leftX, y);
+        doc.text("Impact on others", rightX, y);
+        y += 4;
 
-          const colGap = 4;
-          const colW = (CONTENT_W - colGap) / 2;
-          const leftX = MARGIN_L;
-          const rightX = MARGIN_L + colW + colGap;
-          const textIndent = 5;
+        doc.setFont("Montserrat", "normal");
+        doc.setFontSize(7.5);
+        doc.setTextColor(BLACK[0], BLACK[1], BLACK[2]);
 
-          // Set the font once — used by splitTextToSize measurements below
-          doc.setFont("Montserrat", "normal");
-          doc.setFontSize(7.5);
+        const totalRows = Math.max(leftRows.length, rightRows.length);
+        for (let i = 0; i < totalRows; i++) {
+          const left = leftRows[i];
+          const right = rightRows[i];
+          const innerRowH = Math.max(left?.height ?? 0, right?.height ?? 0);
 
+          if (totalBlockH > PAGE_AVAIL) checkPageBreak(innerRowH);
 
-          type BulletRow = { isPositive: boolean; lines: string[]; height: number };
-
-          const buildColumn = (positives: string[], negatives: string[], width: number): BulletRow[] => {
-            const rows: BulletRow[] = [];
-            for (const item of positives) {
-              const lines = doc.splitTextToSize(cleanMarkdown(item), width - textIndent) as string[];
-              rows.push({ isPositive: true, lines, height: lines.length * 3.5 + 1 });
-            }
-            for (const item of negatives) {
-              const lines = doc.splitTextToSize(cleanMarkdown(item), width - textIndent) as string[];
-              rows.push({ isPositive: false, lines, height: lines.length * 3.5 + 1 });
-            }
-            return rows;
-          };
-
-          const leftRows = buildColumn(interp.positive_self, interp.negative_self, colW);
-          const rightRows = buildColumn(interp.positive_others, interp.negative_others, colW);
-
-          const totalRows = Math.max(leftRows.length, rightRows.length);
-
-          // Headers — page-break together with first row so they don't orphan
-          const firstRowMaxH = Math.max(leftRows[0]?.height ?? 0, rightRows[0]?.height ?? 0);
-          checkPageBreak(4 + firstRowMaxH);
-          doc.setFont("Montserrat", "semibold");
-          doc.setFontSize(7.5);
-          doc.setTextColor(NAVY[0], NAVY[1], NAVY[2]);
-          doc.text("Impact on self", leftX, y);
-          doc.text("Impact on others", rightX, y);
-          y += 4;
-
-          // Render rows in lockstep
-          doc.setFont("Montserrat", "normal");
-          doc.setFontSize(7.5);
-          doc.setTextColor(BLACK[0], BLACK[1], BLACK[2]);
-
-          for (let i = 0; i < totalRows; i++) {
-            const left = leftRows[i];
-            const right = rightRows[i];
-            const rowH = Math.max(left?.height ?? 0, right?.height ?? 0);
-
-            checkPageBreak(rowH);
-
-            if (left) {
-              doc.setFontSize(8);
-              doc.setFont("Montserrat", "bold");
-              doc.setTextColor(left.isPositive ? GREEN[0] : RED[0], left.isPositive ? GREEN[1] : RED[1], left.isPositive ? GREEN[2] : RED[2]);
-              doc.text(left.isPositive ? "+" : "-", leftX, y + 2);
-              doc.setFont("Montserrat", "normal");
-              doc.setFontSize(7.5);
-              doc.setTextColor(BLACK[0], BLACK[1], BLACK[2]);
-              doc.text(left.lines, leftX + textIndent, y + 2);
-            }
-
-            if (right) {
-              doc.setFontSize(8);
-              doc.setFont("Montserrat", "bold");
-              doc.setTextColor(right.isPositive ? GREEN[0] : RED[0], right.isPositive ? GREEN[1] : RED[1], right.isPositive ? GREEN[2] : RED[2]);
-              doc.text(right.isPositive ? "+" : "-", rightX, y + 2);
-              doc.setFont("Montserrat", "normal");
-              doc.setFontSize(7.5);
-              doc.setTextColor(BLACK[0], BLACK[1], BLACK[2]);
-              doc.text(right.lines, rightX + textIndent, y + 2);
-            }
-
-            y += rowH;
+          if (left) {
+            doc.setFontSize(8);
+            doc.setFont("Montserrat", "bold");
+            doc.setTextColor(left.isPositive ? GREEN[0] : RED[0], left.isPositive ? GREEN[1] : RED[1], left.isPositive ? GREEN[2] : RED[2]);
+            doc.text(left.isPositive ? "+" : "-", leftX, y + 2);
+            doc.setFont("Montserrat", "normal");
+            doc.setFontSize(7.5);
+            doc.setTextColor(BLACK[0], BLACK[1], BLACK[2]);
+            doc.text(left.lines, leftX + textIndent, y + 2);
           }
 
-          y += 2;
+          if (right) {
+            doc.setFontSize(8);
+            doc.setFont("Montserrat", "bold");
+            doc.setTextColor(right.isPositive ? GREEN[0] : RED[0], right.isPositive ? GREEN[1] : RED[1], right.isPositive ? GREEN[2] : RED[2]);
+            doc.text(right.isPositive ? "+" : "-", rightX, y + 2);
+            doc.setFont("Montserrat", "normal");
+            doc.setFontSize(7.5);
+            doc.setTextColor(BLACK[0], BLACK[1], BLACK[2]);
+            doc.text(right.lines, rightX + textIndent, y + 2);
+          }
+
+          y += innerRowH;
         }
+
+        y += 2;
       }
     }
   }
+
 
   addFooter();
 
