@@ -608,8 +608,9 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
       const stepLines = doc.splitTextToSize(cleanMarkdown(step), CONTENT_W - 16);
       return acc + stepLines.length * 4.2 + 1;
     }, 4);
-    const firstPillsHeight = (Array.isArray(firstItem.dimension_tags) && firstItem.dimension_tags.length > 0) ? 7 : 0;
+    const firstPillsHeight = (Array.isArray(firstItem.dimension_tags) && firstItem.dimension_tags.length > 0) ? 10 : 0;
     const firstCardHeight = 8 + 6 + firstPillsHeight + firstRationaleHeight + firstStepsHeight + 6;
+
 
     sectionHeading("Action Plan", firstCardHeight);
 
