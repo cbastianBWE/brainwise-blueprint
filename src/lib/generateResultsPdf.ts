@@ -744,7 +744,14 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
 
   // ── DRIVING FACET SCORES ──
   if (sections.drivingFacetScores && (data.elevatedFacets.length > 0 || data.suppressedFacets.length > 0)) {
-    sectionHeading("Driving Facet Scores", 18);
+    // Reserve heading + table title + header row + first ~4 rows together so
+    // the heading never orphans at the bottom of a page.
+    const firstTableLen = data.elevatedFacets.length > 0
+      ? data.elevatedFacets.length
+      : data.suppressedFacets.length;
+    const firstChunkH = 5 + 6 + Math.min(firstTableLen, 4) * 6 + 4;
+    sectionHeading("Driving Facet Scores", firstChunkH);
+
 
     const renderFacetScoreTable = (title: string, facets: FacetWithInterpretation[]) => {
       checkPageBreak(12 + facets.length * 7);
