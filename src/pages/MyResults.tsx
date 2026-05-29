@@ -299,9 +299,9 @@ export default function MyResults({ isCoachView = false, adminView = false, targ
       .single()
       .then(({ data }) => {
         setClientName(data?.full_name ?? null);
-        setShareWithCoach(data?.share_results_with_coach ?? false);
+        if (!adminView) setShareWithCoach(data?.share_results_with_coach ?? false);
       });
-  }, [isCoachView, targetUserId]);
+  }, [isCoachView, targetUserId, adminView]);
 
   useEffect(() => {
     setCoachViewActive(isCoachView);
