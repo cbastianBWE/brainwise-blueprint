@@ -100,21 +100,24 @@ function usePtpNarrativeStatus(assessmentResultId: string | undefined): {
       // Read-time reconciliation: a row whose rendered content is actually
       // present should display as ready, even if the server flag is 'failed'
       // due to an unrelated background fan-out rejection.
-      const { count: facetCount } = await supabase
+      const { data: facetRow } = await supabase
         .from("facet_interpretations")
-        .select("id", { count: "exact", head: true })
+        .select("facet_data")
         .eq("assessment_result_id", assessmentResultId)
-        .eq("section_type", "facet_insights_all");
+        .eq("section_type", "facet_insights_all")
+        .maybeSingle();
       if (cancelled) return;
+      const facetArrayLen = Array.isArray(facetRow?.facet_data)
+        ? (facetRow!.facet_data as unknown[]).length
+        : 0;
 
       const aiNarrative = row?.ai_narrative ?? null;
       const facetInsightsAllTotal = row?.facet_insights_all_total ?? null;
-      const fc = facetCount ?? 0;
       const contentReady =
         !!aiNarrative &&
         aiNarrative.trim().length > 0 &&
-        (facetInsightsAllTotal == null || fc >= facetInsightsAllTotal) &&
-        fc > 0;
+        facetArrayLen > 0 &&
+        (facetInsightsAllTotal == null || facetArrayLen >= facetInsightsAllTotal);
 
       let next: PtpNarrativeStatus = rawStatus;
       if (rawStatus === "failed" && contentReady) next = "ready";
