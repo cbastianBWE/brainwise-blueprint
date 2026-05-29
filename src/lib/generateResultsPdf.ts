@@ -213,6 +213,21 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
 
   const atTopOfPage = () => y <= MARGIN_T + 5;
 
+  // Reserve a block atomically: if the block fits on a single page and the
+  // current page doesn't have room, page-break first so the block stays
+  // intact. If the block is taller than a full page, fall back to normal
+  // flow (inner checkPageBreaks will handle the split).
+  const PAGE_AVAIL = PAGE_H - MARGIN_T - MARGIN_B;
+  const reserveBlockOrAllow = (totalH: number) => {
+    if (totalH <= PAGE_AVAIL && y + totalH > PAGE_H - MARGIN_B) {
+      addFooter();
+      doc.addPage();
+      y = MARGIN_T;
+      renderContinuationHeader();
+    }
+  };
+
+
   const sectionHeading = (title: string, firstContentHeight?: number) => {
     // Suppress the continuation header during the heading's own page-break
     // reservation: the new page is about to render a full section heading,
@@ -593,8 +608,9 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
       const stepLines = doc.splitTextToSize(cleanMarkdown(step), CONTENT_W - 16);
       return acc + stepLines.length * 4.2 + 1;
     }, 4);
-    const firstPillsHeight = (Array.isArray(firstItem.dimension_tags) && firstItem.dimension_tags.length > 0) ? 7 : 0;
+    const firstPillsHeight = (Array.isArray(firstItem.dimension_tags) && firstItem.dimension_tags.length > 0) ? 10 : 0;
     const firstCardHeight = 8 + 6 + firstPillsHeight + firstRationaleHeight + firstStepsHeight + 6;
+
 
     sectionHeading("Action Plan", firstCardHeight);
 
@@ -611,7 +627,7 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
         const stepLines = doc.splitTextToSize(cleanMarkdown(step), CONTENT_W - 16);
         return acc + stepLines.length * 4.2 + 1;
       }, 4);
-      const pillsHeight = (Array.isArray(item.dimension_tags) && item.dimension_tags.length > 0) ? 7 : 0;
+      const pillsHeight = (Array.isArray(item.dimension_tags) && item.dimension_tags.length > 0) ? 10 : 0;
       const titleHeight = 6;
       const cardHeight = 8 + titleHeight + pillsHeight + rationaleHeight + stepsHeight + 6;
 
@@ -644,7 +660,7 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
           doc.text(tagText, pillX + tagWidth / 2, innerY - 0.5, { align: "center" });
           pillX += tagWidth + 3;
         }
-        innerY += 3;
+        innerY += 6;
       }
 
       // Title
@@ -694,14 +710,21 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
       break;
     }
     sectionHeading("Dimension Highlights", firstCardH);
+    // Reset font after sectionHeading (which leaves Poppins bold 13pt active)
+    // so splitTextToSize measures at the body font and wraps to full width.
+    doc.setFont("Montserrat", "normal");
+    doc.setFontSize(8);
     for (const dim of data.dimensions) {
       const text = data.narrativeSections.dimension_highlights[dim.dimensionId];
       if (!text) continue;
       const rgb = hexToRgb(dim.color);
       const pastelRgb = hexToRgb(dim.pastelColor);
+      doc.setFont("Montserrat", "normal");
+      doc.setFontSize(8);
       const textLines = doc.splitTextToSize(cleanMarkdown(text), CONTENT_W - 12);
-      const cardH = textLines.length * 4.5 + 14;
+      const cardH = 11 + textLines.length * 4.5 + 2.5;
       checkPageBreak(cardH + 4);
+
       doc.setFillColor(pastelRgb[0], pastelRgb[1], pastelRgb[2]);
       doc.roundedRect(MARGIN_L, y, CONTENT_W, cardH, 2, 2, "F");
       doc.setFillColor(rgb[0], rgb[1], rgb[2]);
@@ -721,7 +744,14 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
 
   // ── DRIVING FACET SCORES ──
   if (sections.drivingFacetScores && (data.elevatedFacets.length > 0 || data.suppressedFacets.length > 0)) {
-    sectionHeading("Driving Facet Scores", 18);
+    // Reserve heading + table title + header row + first ~4 rows together so
+    // the heading never orphans at the bottom of a page.
+    const firstTableLen = data.elevatedFacets.length > 0
+      ? data.elevatedFacets.length
+      : data.suppressedFacets.length;
+    const firstChunkH = 5 + 6 + Math.min(firstTableLen, 4) * 6 + 4;
+    sectionHeading("Driving Facet Scores", firstChunkH);
+
 
     const renderFacetScoreTable = (title: string, facets: FacetWithInterpretation[]) => {
       checkPageBreak(12 + facets.length * 7);
@@ -779,19 +809,44 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
 
     for (const f of facets) {
       const rgb = hexToRgb(PTP_DIM_COLOR(f.dimensionId));
+      const colW = (CONTENT_W - 4) / 2;
 
-      // Estimate total height of this facet block before rendering
-      const selfItemsEst = [
-        ...(f.interpretation?.positive_self ?? []),
-        ...(f.interpretation?.negative_self ?? []),
-      ];
-      const othersItemsEst = [
-        ...(f.interpretation?.positive_others ?? []),
-        ...(f.interpretation?.negative_others ?? []),
-      ];
-      const impactRowsEst = Math.max(selfItemsEst.length, othersItemsEst.length);
-      const estimatedBlockH = 15 + 5 + impactRowsEst * 12 + 6;
-      ensureBlockSpace(Math.max(MIN_BLOCK_SPACE, Math.min(estimatedBlockH, 80)));
+      // Pre-measure the FULL block (header + impact labels + every impact row)
+      // so the whole facet stays intact on one page when possible.
+      const selfItemsPre = f.interpretation
+        ? [
+            ...f.interpretation.positive_self.map((t) => ({ text: t, positive: true })),
+            ...f.interpretation.negative_self.map((t) => ({ text: t, positive: false })),
+          ]
+        : [];
+      const othersItemsPre = f.interpretation
+        ? [
+            ...f.interpretation.positive_others.map((t) => ({ text: t, positive: true })),
+            ...f.interpretation.negative_others.map((t) => ({ text: t, positive: false })),
+          ]
+        : [];
+
+      // Measure row heights using the same font that will be active when rows render.
+      doc.setFont("Montserrat", "normal");
+      doc.setFontSize(8);
+      const maxItemsPre = Math.max(selfItemsPre.length, othersItemsPre.length);
+      let impactRowsH = 0;
+      for (let i = 0; i < maxItemsPre; i++) {
+        const sLines = selfItemsPre[i]
+          ? doc.splitTextToSize(cleanMarkdown(selfItemsPre[i].text), colW - 6)
+          : [];
+        const oLines = othersItemsPre[i]
+          ? doc.splitTextToSize(cleanMarkdown(othersItemsPre[i].text), colW - 6)
+          : [];
+        impactRowsH += Math.max(sLines.length, oLines.length) * 4 + 3;
+      }
+      const headerH = 15;
+      const impactLabelsH = f.interpretation && maxItemsPre > 0 ? 5 : 0;
+      const noInterpPad = f.interpretation ? 0 : 6;
+      const trailingPad = 6;
+      const totalBlockH = headerH + impactLabelsH + impactRowsH + noInterpPad + trailingPad;
+      reserveBlockOrAllow(totalBlockH);
+
       doc.setFillColor(rgb[0], rgb[1], rgb[2]);
       doc.rect(MARGIN_L, y, 1.5, 12, "F");
       doc.setFontSize(9);
@@ -811,26 +866,11 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
       doc.text(String(f.score), MARGIN_L + CONTENT_W - 6, y + 7, { align: "center" });
       y += 15;
 
-      // Null-interpretation guard: render card only, skip impact lists silently.
-      if (!f.interpretation) {
+      // Null-interpretation or empty-impact guard: render card only.
+      if (!f.interpretation || maxItemsPre === 0) {
         y += 6;
         continue;
       }
-
-      const colW = (CONTENT_W - 4) / 2;
-
-      // Estimate total height of all impact rows for this facet
-      const selfItemsAll = [
-        ...f.interpretation.positive_self.map(t => t),
-        ...f.interpretation.negative_self.map(t => t),
-      ];
-      const othersItemsAll = [
-        ...f.interpretation.positive_others.map(t => t),
-        ...f.interpretation.negative_others.map(t => t),
-      ];
-      const maxRowsAll = Math.max(selfItemsAll.length, othersItemsAll.length);
-      const estimatedImpactH = 5 + maxRowsAll * 14;
-      checkPageBreak(estimatedImpactH);
 
       doc.setFontSize(7.5);
       doc.setFont("Montserrat", "semibold");
@@ -839,23 +879,15 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
       doc.text("Impact on others", MARGIN_L + colW + 4, y);
       y += 5;
 
-      const selfItems = [
-        ...f.interpretation.positive_self.map((t) => ({ text: t, positive: true })),
-        ...f.interpretation.negative_self.map((t) => ({ text: t, positive: false })),
-      ];
-      const othersItems = [
-        ...f.interpretation.positive_others.map((t) => ({ text: t, positive: true })),
-        ...f.interpretation.negative_others.map((t) => ({ text: t, positive: false })),
-      ];
-      const maxItems = Math.max(selfItems.length, othersItems.length);
-
-      for (let i = 0; i < maxItems; i++) {
-        const selfItem = selfItems[i];
-        const othersItem = othersItems[i];
+      for (let i = 0; i < maxItemsPre; i++) {
+        const selfItem = selfItemsPre[i];
+        const othersItem = othersItemsPre[i];
         const selfLines = selfItem ? doc.splitTextToSize(cleanMarkdown(selfItem.text), colW - 6) : [];
         const othersLines = othersItem ? doc.splitTextToSize(cleanMarkdown(othersItem.text), colW - 6) : [];
         const rowH = Math.max(selfLines.length, othersLines.length) * 4 + 3;
-        checkPageBreak(rowH + 2);
+        // Safety net only for blocks taller than a page (reserveBlockOrAllow
+        // couldn't keep them intact); intact blocks have already paged-broken.
+        if (totalBlockH > PAGE_AVAIL) checkPageBreak(rowH + 2);
 
         if (selfItem) {
           doc.setFontSize(8);
@@ -882,6 +914,7 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
       y += 6;
     }
   };
+
 
   // ── DRIVING FACET INSIGHTS — ELEVATED ──
   if (sections.drivingFacetInsightsElevated && data.elevatedFacets.length > 0) {
@@ -926,10 +959,14 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
       const sorted = [...facets].sort((a, b) => b.score - a.score);
 
       const chartStartY = y + 2;
-      const chartEndY = PAGE_H - MARGIN_B - 8;
-      const availableHeight = chartEndY - chartStartY;
+      const chartBottomLimit = PAGE_H - MARGIN_B - 8;
+      const availableHeight = chartBottomLimit - chartStartY;
       const rowCount = sorted.length;
       const rowHeight = Math.max(3.2, Math.min(7, availableHeight / rowCount));
+      // True chart height — stop gridlines at the last bar instead of running
+      // them down to the page margin.
+      const actualChartH = rowCount * rowHeight;
+      const chartEndY = chartStartY + actualChartH;
 
       const facetNameWidth = 75;
       const barStartX = MARGIN_L + facetNameWidth + 2;
@@ -943,6 +980,7 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
         const x = barStartX + (pct / 100) * barMaxWidth;
         doc.line(x, chartStartY, x, chartEndY);
       }
+
 
       // Scale labels
       doc.setFont("Montserrat", "normal");
@@ -987,7 +1025,12 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
         doc.setTextColor(...NAVY);
         doc.text(String(f.score), barStartX + barWidth + 1, rowY + fontSize / 4);
       }
+
+      // Advance the layout cursor past the chart so any following section
+      // never overlaps the bars.
+      y = chartEndY + 4;
     };
+
 
     renderFacetBarChart("All Facets", data.fullFacetData);
 
@@ -1004,7 +1047,13 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
 
   // ── ASSESSMENT RESPONSES ──
   if (sections.assessmentResponses && data.assessmentResponses.length > 0) {
+    // Always start on a fresh page — prevents overlap with the preceding
+    // Full Facet Charts (which run to the bottom of their own pages).
+    addFooter();
+    doc.addPage();
+    y = MARGIN_T;
     sectionHeading("Assessment Responses");
+
     const contextNote = data.contextLabel
       ? `${data.assessmentResponses.length} responses — ${data.contextLabel} context`
       : `${data.assessmentResponses.length} responses`;
@@ -1018,7 +1067,59 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
       const labelText = `Q${r.itemNumber} — ${r.facetName}`;
       const questionLines = doc.splitTextToSize(r.itemText, CONTENT_W - 20);
       const rowH = questionLines.length * 4 + 8;
-      checkPageBreak(rowH + 2);
+
+      // Pre-build the optional impact-expansion so we can reserve the whole
+      // block (question + expansion) together and never split it.
+      const colGap = 4;
+      const colW = (CONTENT_W - colGap) / 2;
+      const leftX = MARGIN_L;
+      const rightX = MARGIN_L + colW + colGap;
+      const textIndent = 5;
+      const IMPACT_LABEL_GAP = 4;
+
+      type BulletRow = { isPositive: boolean; lines: string[]; height: number };
+      const buildColumn = (positives: string[], negatives: string[], width: number): BulletRow[] => {
+        const rows: BulletRow[] = [];
+        for (const item of positives) {
+          const lines = doc.splitTextToSize(cleanMarkdown(item), width - textIndent) as string[];
+          rows.push({ isPositive: true, lines, height: lines.length * 3.5 + 1 });
+        }
+        for (const item of negatives) {
+          const lines = doc.splitTextToSize(cleanMarkdown(item), width - textIndent) as string[];
+          rows.push({ isPositive: false, lines, height: lines.length * 3.5 + 1 });
+        }
+        return rows;
+      };
+
+      let leftRows: BulletRow[] = [];
+      let rightRows: BulletRow[] = [];
+      let expansionH = 0;
+      const hasExpansion = !!(
+        sections.assessmentResponsesIncludeInsights &&
+        r.interpretation &&
+        (r.interpretation.positive_self.length > 0 ||
+          r.interpretation.negative_self.length > 0 ||
+          r.interpretation.positive_others.length > 0 ||
+          r.interpretation.negative_others.length > 0)
+      );
+
+      if (hasExpansion && r.interpretation) {
+        doc.setFont("Montserrat", "normal");
+        doc.setFontSize(7.5);
+        leftRows = buildColumn(r.interpretation.positive_self, r.interpretation.negative_self, colW);
+        rightRows = buildColumn(r.interpretation.positive_others, r.interpretation.negative_others, colW);
+        const totalRows = Math.max(leftRows.length, rightRows.length);
+        let rowsH = 0;
+        for (let i = 0; i < totalRows; i++) {
+          rowsH += Math.max(leftRows[i]?.height ?? 0, rightRows[i]?.height ?? 0);
+        }
+        // IMPACT_LABEL_GAP (gap before labels) + 4mm label band + rows + 2mm trailing
+        expansionH = IMPACT_LABEL_GAP + 4 + rowsH + 2;
+      }
+
+      const totalBlockH = rowH + 2 + expansionH;
+      reserveBlockOrAllow(totalBlockH);
+      if (!hasExpansion) checkPageBreak(rowH + 2);
 
       doc.setFillColor(rgb[0], rgb[1], rgb[2]);
       doc.rect(MARGIN_L, y, 1.5, rowH, "F");
@@ -1044,101 +1145,59 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
       doc.line(MARGIN_L, y + rowH, MARGIN_L + CONTENT_W, y + rowH);
       y += rowH + 1;
 
-      // C2: Optional inline facet insights expansion (PTP only; gated by per-row interpretation)
-      if (sections.assessmentResponsesIncludeInsights && r.interpretation) {
-        const interp = r.interpretation;
-        const hasContent =
-          interp.positive_self.length > 0 ||
-          interp.negative_self.length > 0 ||
-          interp.positive_others.length > 0 ||
-          interp.negative_others.length > 0;
+      if (hasExpansion) {
+        // Vertical breathing room between the divider rule and the impact labels.
+        y += IMPACT_LABEL_GAP;
 
-        if (hasContent) {
-          y += 1;
+        doc.setFont("Montserrat", "semibold");
+        doc.setFontSize(7.5);
+        doc.setTextColor(NAVY[0], NAVY[1], NAVY[2]);
+        doc.text("Impact on self", leftX, y);
+        doc.text("Impact on others", rightX, y);
+        y += 4;
 
-          const colGap = 4;
-          const colW = (CONTENT_W - colGap) / 2;
-          const leftX = MARGIN_L;
-          const rightX = MARGIN_L + colW + colGap;
-          const textIndent = 5;
+        doc.setFont("Montserrat", "normal");
+        doc.setFontSize(7.5);
+        doc.setTextColor(BLACK[0], BLACK[1], BLACK[2]);
 
-          // Set the font once — used by splitTextToSize measurements below
-          doc.setFont("Montserrat", "normal");
-          doc.setFontSize(7.5);
+        const totalRows = Math.max(leftRows.length, rightRows.length);
+        for (let i = 0; i < totalRows; i++) {
+          const left = leftRows[i];
+          const right = rightRows[i];
+          const innerRowH = Math.max(left?.height ?? 0, right?.height ?? 0);
 
+          if (totalBlockH > PAGE_AVAIL) checkPageBreak(innerRowH);
 
-          type BulletRow = { isPositive: boolean; lines: string[]; height: number };
-
-          const buildColumn = (positives: string[], negatives: string[], width: number): BulletRow[] => {
-            const rows: BulletRow[] = [];
-            for (const item of positives) {
-              const lines = doc.splitTextToSize(cleanMarkdown(item), width - textIndent) as string[];
-              rows.push({ isPositive: true, lines, height: lines.length * 3.5 + 1 });
-            }
-            for (const item of negatives) {
-              const lines = doc.splitTextToSize(cleanMarkdown(item), width - textIndent) as string[];
-              rows.push({ isPositive: false, lines, height: lines.length * 3.5 + 1 });
-            }
-            return rows;
-          };
-
-          const leftRows = buildColumn(interp.positive_self, interp.negative_self, colW);
-          const rightRows = buildColumn(interp.positive_others, interp.negative_others, colW);
-
-          const totalRows = Math.max(leftRows.length, rightRows.length);
-
-          // Headers — page-break together with first row so they don't orphan
-          const firstRowMaxH = Math.max(leftRows[0]?.height ?? 0, rightRows[0]?.height ?? 0);
-          checkPageBreak(4 + firstRowMaxH);
-          doc.setFont("Montserrat", "semibold");
-          doc.setFontSize(7.5);
-          doc.setTextColor(NAVY[0], NAVY[1], NAVY[2]);
-          doc.text("Impact on self", leftX, y);
-          doc.text("Impact on others", rightX, y);
-          y += 4;
-
-          // Render rows in lockstep
-          doc.setFont("Montserrat", "normal");
-          doc.setFontSize(7.5);
-          doc.setTextColor(BLACK[0], BLACK[1], BLACK[2]);
-
-          for (let i = 0; i < totalRows; i++) {
-            const left = leftRows[i];
-            const right = rightRows[i];
-            const rowH = Math.max(left?.height ?? 0, right?.height ?? 0);
-
-            checkPageBreak(rowH);
-
-            if (left) {
-              doc.setFontSize(8);
-              doc.setFont("Montserrat", "bold");
-              doc.setTextColor(left.isPositive ? GREEN[0] : RED[0], left.isPositive ? GREEN[1] : RED[1], left.isPositive ? GREEN[2] : RED[2]);
-              doc.text(left.isPositive ? "+" : "-", leftX, y + 2);
-              doc.setFont("Montserrat", "normal");
-              doc.setFontSize(7.5);
-              doc.setTextColor(BLACK[0], BLACK[1], BLACK[2]);
-              doc.text(left.lines, leftX + textIndent, y + 2);
-            }
-
-            if (right) {
-              doc.setFontSize(8);
-              doc.setFont("Montserrat", "bold");
-              doc.setTextColor(right.isPositive ? GREEN[0] : RED[0], right.isPositive ? GREEN[1] : RED[1], right.isPositive ? GREEN[2] : RED[2]);
-              doc.text(right.isPositive ? "+" : "-", rightX, y + 2);
-              doc.setFont("Montserrat", "normal");
-              doc.setFontSize(7.5);
-              doc.setTextColor(BLACK[0], BLACK[1], BLACK[2]);
-              doc.text(right.lines, rightX + textIndent, y + 2);
-            }
-
-            y += rowH;
+          if (left) {
+            doc.setFontSize(8);
+            doc.setFont("Montserrat", "bold");
+            doc.setTextColor(left.isPositive ? GREEN[0] : RED[0], left.isPositive ? GREEN[1] : RED[1], left.isPositive ? GREEN[2] : RED[2]);
+            doc.text(left.isPositive ? "+" : "-", leftX, y + 2);
+            doc.setFont("Montserrat", "normal");
+            doc.setFontSize(7.5);
+            doc.setTextColor(BLACK[0], BLACK[1], BLACK[2]);
+            doc.text(left.lines, leftX + textIndent, y + 2);
           }
 
-          y += 2;
+          if (right) {
+            doc.setFontSize(8);
+            doc.setFont("Montserrat", "bold");
+            doc.setTextColor(right.isPositive ? GREEN[0] : RED[0], right.isPositive ? GREEN[1] : RED[1], right.isPositive ? GREEN[2] : RED[2]);
+            doc.text(right.isPositive ? "+" : "-", rightX, y + 2);
+            doc.setFont("Montserrat", "normal");
+            doc.setFontSize(7.5);
+            doc.setTextColor(BLACK[0], BLACK[1], BLACK[2]);
+            doc.text(right.lines, rightX + textIndent, y + 2);
+          }
+
+          y += innerRowH;
         }
+
+        y += 2;
       }
     }
   }
+
 
   addFooter();
 
