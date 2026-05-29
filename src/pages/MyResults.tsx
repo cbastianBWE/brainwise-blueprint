@@ -229,6 +229,7 @@ const NAI_DIMENSION_PASTEL: Record<string, string> = {
 
 interface MyResultsProps {
   isCoachView?: boolean;
+  adminView?: boolean;
   targetUserId?: string;
   preSelectedAssessmentId?: string;
   coachUserId?: string;
@@ -237,7 +238,7 @@ interface MyResultsProps {
   defaultInstrumentId?: string;
 }
 
-export default function MyResults({ isCoachView = false, targetUserId, preSelectedAssessmentId, coachUserId, permissionLevel = null, viewLabel, defaultInstrumentId }: MyResultsProps) {
+export default function MyResults({ isCoachView = false, adminView = false, targetUserId, preSelectedAssessmentId, coachUserId, permissionLevel = null, viewLabel, defaultInstrumentId }: MyResultsProps) {
   const { user } = useAuth();
   const { profile } = useUserProfile();
   const { isBypassAdmin, isCoach, canBypassAssessmentPaywall } = useAccountRole();
