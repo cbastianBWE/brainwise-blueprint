@@ -627,7 +627,7 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
         const stepLines = doc.splitTextToSize(cleanMarkdown(step), CONTENT_W - 16);
         return acc + stepLines.length * 4.2 + 1;
       }, 4);
-      const pillsHeight = (Array.isArray(item.dimension_tags) && item.dimension_tags.length > 0) ? 7 : 0;
+      const pillsHeight = (Array.isArray(item.dimension_tags) && item.dimension_tags.length > 0) ? 10 : 0;
       const titleHeight = 6;
       const cardHeight = 8 + titleHeight + pillsHeight + rationaleHeight + stepsHeight + 6;
 
