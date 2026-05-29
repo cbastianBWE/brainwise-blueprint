@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -351,6 +352,7 @@ function UploadExcelTab() {
 export default function CoachManagement() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [coaches, setCoaches] = useState<Coach[]>([]);
   const [loading, setLoading] = useState(true);
@@ -534,11 +536,18 @@ export default function CoachManagement() {
                       )}
                     </TableCell>
                     <TableCell>
-                      {coach.certifications.some((c) => c.status === "in_progress") && (
-                        <Button size="sm" variant="outline" onClick={() => { setCertifyCoach(coach); setCertifyType(coach.certifications.find((c) => c.status === "in_progress")?.certification_type || "ptp_coach"); }}>
-                          Mark Certified
-                        </Button>
-                      )}
+                      <div className="flex gap-2">
+                        {coach.certifications.some((c) => c.certification_type === 'ptp_coach' && (c.status === 'in_progress' || c.status === 'certified')) && (
+                          <Button size="sm" variant="outline" onClick={() => navigate(`/super-admin/coach-report/${coach.id}`)}>
+                            View PTP Report
+                          </Button>
+                        )}
+                        {coach.certifications.some((c) => c.status === "in_progress") && (
+                          <Button size="sm" variant="outline" onClick={() => { setCertifyCoach(coach); setCertifyType(coach.certifications.find((c) => c.status === "in_progress")?.certification_type || "ptp_coach"); }}>
+                            Mark Certified
+                          </Button>
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
