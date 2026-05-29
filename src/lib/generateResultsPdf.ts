@@ -754,7 +754,9 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
 
 
     const renderFacetScoreTable = (title: string, facets: FacetWithInterpretation[]) => {
-      checkPageBreak(12 + facets.length * 7);
+      // Reserve title + header + first 3 rows only; subsequent rows flow
+      // naturally and the continuation-header system handles mid-table breaks.
+      checkPageBreak(12 + Math.min(facets.length, 3) * 7);
       doc.setFontSize(9);
       doc.setFont("Poppins", "semibold");
       doc.setTextColor(...BLACK);
