@@ -1047,7 +1047,13 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
 
   // ── ASSESSMENT RESPONSES ──
   if (sections.assessmentResponses && data.assessmentResponses.length > 0) {
+    // Always start on a fresh page — prevents overlap with the preceding
+    // Full Facet Charts (which run to the bottom of their own pages).
+    addFooter();
+    doc.addPage();
+    y = MARGIN_T;
     sectionHeading("Assessment Responses");
+
     const contextNote = data.contextLabel
       ? `${data.assessmentResponses.length} responses — ${data.contextLabel} context`
       : `${data.assessmentResponses.length} responses`;
