@@ -299,7 +299,7 @@ export function AppSidebar() {
                   </Fragment>
                 );
               })}
-              {showDashboardsMenu && (
+              {showDashboardsMenu && hasAnyDashboard && (
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild>
                     <NavLink
