@@ -11353,6 +11353,10 @@ export type Database = {
         Args: { p_owner_user_id: string; p_viewer_user_id: string }
         Returns: boolean
       }
+      platform_feature_set: {
+        Args: { p_enabled: boolean; p_feature: string; p_reason: string }
+        Returns: Json
+      }
       preview_article_as_viewer_class: {
         Args: { p_article_id: string; p_viewer_class: string }
         Returns: Json
@@ -12032,6 +12036,13 @@ export type Database = {
       user_has_feature: {
         Args: { p_feature: string; p_user: string }
         Returns: boolean
+      }
+      user_has_features_bulk: {
+        Args: { p_features: string[]; p_user: string }
+        Returns: {
+          enabled: boolean
+          feature: string
+        }[]
       }
       user_reactivate: {
         Args: { p_target_user_id: string }
