@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { PLANS, ASSESSMENT_PURCHASE, type PlanTier, type BillingInterval } from "@/lib/stripe";
+import { useSubscriptionPlans } from "@/hooks/useSubscriptionPlans";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -14,6 +15,10 @@ import { toast } from "sonner";
 export default function Pricing() {
   const { user } = useAuth();
   const navigate = useNavigate();
+export default function Pricing() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { priceFor, oneTimePrice } = useSubscriptionPlans();
   const searchParams = new URLSearchParams(window.location.search);
   const [interval, setInterval] = useState<BillingInterval>(
     searchParams.get("billing") === "annual" ? "annual" : "monthly"
