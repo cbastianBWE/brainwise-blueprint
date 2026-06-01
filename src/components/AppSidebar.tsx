@@ -11,6 +11,7 @@ import { useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { useAccountRole } from "@/lib/accountRoles";
+import { useOrgInstrumentAccess, DASHBOARD_INSTRUMENT_UUIDS } from "@/hooks/useOrgInstrumentAccess";
 import { Button } from "@/components/ui/button";
 import {
   Sidebar,
