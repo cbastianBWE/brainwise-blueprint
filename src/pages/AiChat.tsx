@@ -763,7 +763,13 @@ export default function AiChat() {
             </CardContent>
           </Card>
         ) : limitReached ? (
-          <LimitReached limit={usage.limit} tier={usage.tier || tier} />
+          <LimitReached
+            limit={usage.limit}
+            tier={usage.tier || tier}
+            creditBalance={usage.credit_balance ?? 0}
+            subscriptionActive={usage.subscription_active !== false}
+            premiumLimit={PLANS.premium.ai_limit}
+          />
         ) : (
           <div className="space-y-2 shrink-0">
             {messages.length > 1 && (
