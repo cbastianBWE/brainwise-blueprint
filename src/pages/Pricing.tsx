@@ -175,7 +175,8 @@ export default function Pricing() {
                 </Button>
               </CardContent>
             </Card>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>
