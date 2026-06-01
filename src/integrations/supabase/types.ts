@@ -4122,13 +4122,16 @@ export type Database = {
       email_logs: {
         Row: {
           bounced_at: string | null
+          clicked_at: string | null
           complained_at: string | null
           delivered_at: string | null
+          dispatch_id: string | null
           email_type: string
           error_message: string | null
           id: string
           last_status_at: string | null
           last_status_event: string | null
+          opened_at: string | null
           recipient_email: string
           resend_message_id: string | null
           send_status: string
@@ -4138,13 +4141,16 @@ export type Database = {
         }
         Insert: {
           bounced_at?: string | null
+          clicked_at?: string | null
           complained_at?: string | null
           delivered_at?: string | null
+          dispatch_id?: string | null
           email_type: string
           error_message?: string | null
           id?: string
           last_status_at?: string | null
           last_status_event?: string | null
+          opened_at?: string | null
           recipient_email: string
           resend_message_id?: string | null
           send_status: string
@@ -4154,13 +4160,16 @@ export type Database = {
         }
         Update: {
           bounced_at?: string | null
+          clicked_at?: string | null
           complained_at?: string | null
           delivered_at?: string | null
+          dispatch_id?: string | null
           email_type?: string
           error_message?: string | null
           id?: string
           last_status_at?: string | null
           last_status_event?: string | null
+          opened_at?: string | null
           recipient_email?: string
           resend_message_id?: string | null
           send_status?: string
@@ -4168,7 +4177,15 @@ export type Database = {
           source?: string | null
           subject?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "email_logs_dispatch_id_fkey"
+            columns: ["dispatch_id"]
+            isOneToOne: false
+            referencedRelation: "newsletter_dispatches"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       executive_perspective_assignments: {
         Row: {
@@ -5647,6 +5664,87 @@ export type Database = {
         }
         Relationships: []
       }
+      newsletter_dispatches: {
+        Row: {
+          article_id: string
+          completed_at: string | null
+          created_at: string
+          error_message: string | null
+          failed_count: number
+          id: string
+          recipient_count: number
+          sent_count: number
+          started_at: string
+          status: string
+          trigger_type: string
+          triggered_by_user_id: string | null
+        }
+        Insert: {
+          article_id: string
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          failed_count?: number
+          id?: string
+          recipient_count?: number
+          sent_count?: number
+          started_at?: string
+          status?: string
+          trigger_type?: string
+          triggered_by_user_id?: string | null
+        }
+        Update: {
+          article_id?: string
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          failed_count?: number
+          id?: string
+          recipient_count?: number
+          sent_count?: number
+          started_at?: string
+          status?: string
+          trigger_type?: string
+          triggered_by_user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "newsletter_dispatches_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "newsletter_articles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "newsletter_dispatches_triggered_by_user_id_fkey"
+            columns: ["triggered_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "newsletter_dispatches_triggered_by_user_id_fkey"
+            columns: ["triggered_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "newsletter_dispatches_triggered_by_user_id_fkey"
+            columns: ["triggered_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "newsletter_dispatches_triggered_by_user_id_fkey"
+            columns: ["triggered_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       newsletter_poll_votes: {
         Row: {
           option_id: string
@@ -5779,6 +5877,59 @@ export type Database = {
           {
             foreignKeyName: "newsletter_polls_created_by_user_id_fkey"
             columns: ["created_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      newsletter_settings: {
+        Row: {
+          created_at: string
+          dispatch_trigger_mode: string
+          id: boolean
+          updated_at: string
+          updated_by_user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          dispatch_trigger_mode?: string
+          id?: boolean
+          updated_at?: string
+          updated_by_user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          dispatch_trigger_mode?: string
+          id?: boolean
+          updated_at?: string
+          updated_by_user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "newsletter_settings_updated_by_user_id_fkey"
+            columns: ["updated_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "newsletter_settings_updated_by_user_id_fkey"
+            columns: ["updated_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "newsletter_settings_updated_by_user_id_fkey"
+            columns: ["updated_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "newsletter_settings_updated_by_user_id_fkey"
+            columns: ["updated_by_user_id"]
             isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
