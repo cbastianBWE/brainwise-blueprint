@@ -10864,6 +10864,20 @@ export type Database = {
           out_tracking_notes: string
         }[]
       }
+      list_public_published_articles: {
+        Args: never
+        Returns: {
+          canonical_url: string
+          excerpt: string
+          published_at: string
+          seo_description: string
+          seo_title: string
+          slug: string
+          tags: string[]
+          title: string
+          updated_at: string
+        }[]
+      }
       list_scheduled_assignments: { Args: never; Returns: Json }
       list_user_audit_history: {
         Args: {
