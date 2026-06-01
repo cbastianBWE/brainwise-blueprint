@@ -33,6 +33,7 @@ type EntitlementSource =
 export default function Assessment() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
+  const { isCorp, canBypassAssessmentPaywall } = useAccountRole();
 
   const [selectedInstrument, setSelectedInstrument] = useState<SelectedInstrument | null>(null);
   const [contextType, setContextType] = useState<'professional' | 'personal' | 'both' | null>(null);
