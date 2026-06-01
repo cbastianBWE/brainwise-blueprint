@@ -596,6 +596,7 @@ export default function AdminNewsletterArticle() {
                 }
               }}
             />
+            <SendDispatchButton articleId={articleId} status={status} />
             <Tooltip>
               <TooltipTrigger asChild>
                 <span>
