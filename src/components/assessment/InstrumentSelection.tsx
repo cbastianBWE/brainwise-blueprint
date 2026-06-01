@@ -638,8 +638,38 @@ export default function InstrumentSelection({ onSelect }: Props) {
               );
             })}
           </div>
+          {hiddenForIndividual.length > 0 && (
+            <div className="mt-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">
+                    Interested in {hiddenForIndividual.map((i) => i.short_name).join(", ")}?
+                  </CardTitle>
+                  <CardDescription className="font-medium text-foreground">
+                    These assessments are available through our team and partner programs.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <p className="text-sm text-muted-foreground">
+                    Tell us about your situation and we'll be in touch within one business day to discuss access.
+                  </p>
+                  <Button className="w-full" onClick={() => setShowAccessBriefing(true)}>
+                    Request access
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+          </>
         );
       })()}
+
+      <BriefingModal
+        open={showAccessBriefing}
+        onClose={() => setShowAccessBriefing(false)}
+        source="individual_instrument_access_request"
+      />
+
 
       <Dialog open={showSelfPayDialog} onOpenChange={setShowSelfPayDialog}>
         <DialogContent className="max-w-lg">
