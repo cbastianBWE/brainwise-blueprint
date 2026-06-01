@@ -364,6 +364,15 @@ function activationLabel(score: number): { label: string; bg: string; color: str
 
 export default function PTPDashboard() {
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const { loading: orgAccessLoading, orgInstrumentIncluded } = useOrgInstrumentAccess();
+  const allowed = !orgAccessLoading && orgInstrumentIncluded(DASHBOARD_INSTRUMENT_UUIDS.PTP);
+
+  useEffect(() => {
+    if (!orgAccessLoading && !allowed) navigate("/dashboard", { replace: true });
+  }, [orgAccessLoading, allowed, navigate]);
+
+
 
   const [sliceType, setSliceType] = useState<string>("all");
   const [sliceValue, setSliceValue] = useState<string>("all");
