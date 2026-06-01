@@ -1,35 +1,51 @@
-# Plan confirmed — proceed as written
+# Super-admin Platform Features page
 
-I verified every load-bearing claim against the actual codebase and database. No adjustments needed.
+The instructions are accurate and consistent with the codebase. Verified:
 
-## Verification results
+- `src/pages/super-admin/PlatformFeatures.tsx` does not exist — safe to create.
+- `src/pages/company/Features.tsx` already owns the `Features` import name in `App.tsx` (line 79). Using the distinct component name `PlatformFeatures` avoids the collision.
+- `superAdminNav` lives in `src/components/AppSidebar.tsx` at lines 83–102 and uses the `{ title, url, icon }` shape — the proposed nav entry slots in cleanly. `SlidersHorizontal` is not yet imported from `lucide-react` (line 2–8), so it needs to be added to that import.
+- `Members.tsx` already calls `supabase.rpc("search_impersonation_targets", ...)` typed, confirming that RPC signature.
+- `platform_features` and the two new RPCs are not in `src/integrations/supabase/types.ts`, so the `(supabase.rpc as any)` / `from("platform_features" as any)` casts are required as specified.
 
-- `public.users.one_time_chat_credits` exists. Safe to add to the `useUserProfile` select.
-- `public.subscription_plans` active rows match the spec exactly: base 10/90, premium 15/130, individual one_time 29.99.
-- `src/pages/AiChat.tsx`: `UsageCounter` renders at line 628, `LimitReached` at line 752, `CorpUsageCounter` at line 623 (untouched). Line references in the plan are accurate.
-- `src/pages/BillingSettings.tsx`: line 204 (`plan.ai_limit` text) and line 223 (`PLANS.premium.monthly.price`/`annual.price`) match.
-- `SubscriptionGate.tsx` individual branch is exactly as the plan describes (redirect when `subscription_status !== "active"`); the proposed `feature === "ai_chat"` carve-out is the right surgical change.
-- `useAiUsage.ts` already declares `remaining`, `message`, `counts_by_type` as optional and never reads them — adding `credit_balance`, `subscription_active`, `used_credit` as optional is type-safe and consumer-compatible.
-- `stripe.ts` price drift confirmed: monthly base 10 (correct), annual base 100 (DB says 90), premium monthly 18 (DB 15), premium annual 180 (DB 130). The corrections in step 5 align statics to DB.
+One small adjustment: place the new nav entry directly under "Members" (after line 86) so platform-wide admin controls cluster together, rather than at the bottom. Pure ordering preference, no behavior change.
 
-## One small note (not a blocker)
+## Files
 
-Step 9's `LimitReached` prop signature is backward-compatible because all three new props have defaults — confirmed the only existing call site (`AiChat.tsx:752`) will keep compiling. Step 10 will then pass the new props at that same site.
+**NEW `src/pages/super-admin/PlatformFeatures.tsx`**
 
-## Confirmed scope (no backend, no corp, no checkout payload)
+- Page shell mirroring other super-admin pages (page title, two `Card`s).
+- **Card 1 — Platform-wide instrument flags**
+  - On mount: `supabase.from("platform_features" as any).select("feature, enabled, label, category, updated_at").like("feature", "instrument:%").order("label")`.
+  - Render each row: label, "updated {relative time}" if `updated_at`, shadcn `Switch`.
+  - Toggle opens a `Dialog` with a `Textarea` for reason; Confirm disabled until `reason.trim().length >= 10`. Warning copy: "This changes visibility for ALL individual users."
+  - On confirm: `(supabase.rpc as any)("platform_feature_set", { p_feature, p_enabled: next, p_reason: reason })`. On success update local row + `toast.success`; on error revert + `toast.error(err.message)`.
+- **Card 2 — Per-individual overrides**
+  - Debounced (~250ms) search `Input`. Query: `supabase.rpc("search_impersonation_targets", { p_query, p_limit: 25, p_offset: 0, p_account_types: ["individual"] })`. Render selectable list (full_name + email).
+  - On select: fetch `supabase.from("member_feature_overrides").select("feature, enabled").eq("user_id", selectedUser.user_id)` → `Map<feature, boolean>`.
+  - Render the 5 seeded instruments (use labels from Card 1's fetched rows so we don't duplicate the uuid list — fall back to the known uuid map if Card 1 data isn't ready). For each, a 3-way control (e.g. `ToggleGroup` with `Default | Allow | Block`) reflecting map state.
+  - On change: reason dialog (≥10 chars) → `(supabase.rpc as any)("individual_feature_override_set", { p_user, p_feature, p_enabled: Allow?true:Block?false:null, p_reason })`. Refetch overrides on success; surface RPC error message on failure (so corporate-target rejection is visible).
 
-1. `useUserProfile.tsx` — add `one_time_chat_credits` to interface + select.
-2. `SubscriptionGate.tsx` — individual branch: allow through when `feature === "ai_chat"` AND credits > 0, even without active sub. All other features unchanged.
-3. `useAiUsage.ts` — extend `UsageData` with three optional fields.
-4. `useSubscriptionPlans.ts` (new) — read active rows from `subscription_plans`, expose `priceFor(tier, interval)` + one-time lookup.
-5. `stripe.ts` — update `ai_limit` (30→200, 150→400), feature copy strings, and stale prices (base annual 90, premium 15/130). Keep all `price_id`s and base.monthly=10, ASSESSMENT_PURCHASE=29.99.
-6. `Pricing.tsx` — display price via `priceFor` with PLANS fallback; checkout still uses `price_id` from PLANS.
-7. `BillingSettings.tsx` — line 223 prices via `priceFor`; line 204 auto-corrects via step 5.
-8. `UsageCounter.tsx` — no change.
-9. `LimitReached.tsx` — add `creditBalance`, `subscriptionActive`, `premiumLimit` props with defaults; credit-only out-of-credit copy with no reset date and no upgrade button; subscriber copy uses dynamic `${premiumLimit}`.
-10. `AiChat.tsx` — individual counter area: subscriber renders `UsageCounter` + optional "+ {n} one-time messages" muted line; credit-only renders only "{n} one-time message(s) remaining". Pass new props to `LimitReached` at line 752.
-11. `PrivacySettings.tsx` (~527-545) — append credit line when `credit_balance > 0`; relabel as one-time when `subscription_active === false`.
+**EDIT `src/App.tsx`**
 
-Untouched: edge functions, `CorpUsageCounter`, corp branches, checkout `price_id` wiring, scheduled-publish or backend paths.
+- Add `import PlatformFeatures from "./pages/super-admin/PlatformFeatures";` with the other super-admin imports.
+- Add route inside the `AppLayout` block, alongside the other `/super-admin/*` routes:
+  ```tsx
+  <Route path="/super-admin/features" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><PlatformFeatures /></SuperAdminSessionProvider></RoleGuard>} />
+  ```
 
-Ready to build on approval.
+**EDIT `src/components/AppSidebar.tsx`**
+
+- Add `SlidersHorizontal` to the `lucide-react` import (line 2–8).
+- Insert into `superAdminNav` just after the "Members" entry (line 86):
+  ```ts
+  { title: "Features", url: "/super-admin/features", icon: SlidersHorizontal },
+  ```
+
+## Out of scope
+
+No backend changes, no edits to `types.ts`, no touching `company/Features.tsx`, MyResults, AiChat, or other super-admin pages.
+
+## Verification
+
+After build: report the three changed files and confirm `tsc` is clean.
