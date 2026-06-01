@@ -6,10 +6,44 @@ import { AlertTriangle } from "lucide-react";
 interface Props {
   limit: number;
   tier: string;
+  creditBalance?: number;
+  subscriptionActive?: boolean;
+  premiumLimit?: number;
 }
 
-export default function LimitReached({ limit, tier }: Props) {
+export default function LimitReached({
+  limit,
+  tier,
+  creditBalance = 0,
+  subscriptionActive = true,
+  premiumLimit = 400,
+}: Props) {
   const navigate = useNavigate();
+
+  if (!subscriptionActive) {
+    return (
+      <Card className="border-destructive/30 bg-destructive/5">
+        <CardContent className="flex flex-col items-center text-center py-8 space-y-4">
+          <AlertTriangle className="h-10 w-10 text-destructive" />
+          <div>
+            <h3 className="text-lg font-semibold text-foreground">
+              You're out of chat messages
+            </h3>
+            <p className="text-sm text-muted-foreground mt-1">
+              You've used all of your one-time AI chat messages. Purchase another
+              assessment to add more.
+            </p>
+          </div>
+          <button
+            onClick={() => navigate("/settings")}
+            className="text-xs text-muted-foreground underline hover:text-foreground transition-colors"
+          >
+            Questions? Contact Support
+          </button>
+        </CardContent>
+      </Card>
+    );
+  }
 
   // First day of next month
   const now = new Date();
@@ -35,7 +69,7 @@ export default function LimitReached({ limit, tier }: Props) {
         </div>
         {tier === "base" && (
           <Button onClick={() => navigate("/pricing")} className="gap-2">
-            Upgrade to Premium for 150 Messages/Month
+            Upgrade to Premium for {premiumLimit} Messages/Month
           </Button>
         )}
         <button

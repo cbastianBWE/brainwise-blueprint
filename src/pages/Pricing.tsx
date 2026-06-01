@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { PLANS, ASSESSMENT_PURCHASE, type PlanTier, type BillingInterval } from "@/lib/stripe";
+import { useSubscriptionPlans } from "@/hooks/useSubscriptionPlans";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -14,6 +15,7 @@ import { toast } from "sonner";
 export default function Pricing() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { priceFor, oneTimePrice } = useSubscriptionPlans();
   const searchParams = new URLSearchParams(window.location.search);
   const [interval, setInterval] = useState<BillingInterval>(
     searchParams.get("billing") === "annual" ? "annual" : "monthly"
@@ -99,7 +101,8 @@ export default function Pricing() {
       {/* Plan cards */}
       <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto">
         {planEntries.map(([tier, plan]) => {
-          const price = interval === "monthly" ? plan.monthly.price : plan.annual.price;
+          const staticPrice = interval === "monthly" ? plan.monthly.price : plan.annual.price;
+          const price = priceFor(tier, interval) ?? staticPrice;
           const isPremium = tier === "premium";
 
           return (
@@ -153,11 +156,13 @@ export default function Pricing() {
           </p>
         </div>
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-4xl mx-auto">
-          {ASSESSMENT_PURCHASE.instruments.map((inst) => (
+          {ASSESSMENT_PURCHASE.instruments.map((inst) => {
+            const assessmentPrice = oneTimePrice() ?? ASSESSMENT_PURCHASE.price;
+            return (
             <Card key={inst} className="text-center">
               <CardContent className="py-6 space-y-3">
                 <p className="font-semibold text-foreground">{inst}</p>
-                <p className="text-2xl font-bold text-foreground">${ASSESSMENT_PURCHASE.price}</p>
+                <p className="text-2xl font-bold text-foreground">${assessmentPrice}</p>
                 <p className="text-xs text-muted-foreground">One-time per attempt</p>
                 <Button
                   variant="outline"
@@ -170,7 +175,8 @@ export default function Pricing() {
                 </Button>
               </CardContent>
             </Card>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>

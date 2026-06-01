@@ -11,33 +11,33 @@ export const PLANS = {
     },
     annual: {
       price_id: "price_1TS3WU2FY7qIyIXAPG37X3eg",
-      price: 100,
+      price: 90,
     },
     features: [
       "PTP instrument unlimited",
       "NAI, AIRSA, HSS — pay per assessment ($29.99)",
-      "30 AI chat messages/month",
+      "200 AI chat messages/month",
       "Access to base resources",
     ],
-    ai_limit: 30,
+    ai_limit: 200,
   },
   premium: {
     name: "Premium",
     monthly: {
       price_id: "price_1TS3WY2FY7qIyIXA6aO8QZfO",
-      price: 18,
+      price: 15,
     },
     annual: {
       price_id: "price_1TS3WY2FY7qIyIXAUrBknGRQ",
-      price: 180,
+      price: 130,
     },
     features: [
       "All 4 instruments unlimited",
-      "150 AI chat messages/month",
+      "400 AI chat messages/month",
       "Access to premium resources",
       "Priority support",
     ],
-    ai_limit: 150,
+    ai_limit: 400,
   },
 } as const;
 

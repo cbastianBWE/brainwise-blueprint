@@ -59,11 +59,15 @@ export default function SubscriptionGate({ children, feature }: Props) {
     return <Navigate to="/dashboard" replace />;
   }
 
-  // Individual users: unchanged Stripe check
+  // Individual users: Stripe check, with credit-based bypass for ai_chat only
   if (isIndividual) {
-    if (profile?.subscription_status !== "active") {
+    const isActive = profile?.subscription_status === "active";
+    const credits = profile?.one_time_chat_credits ?? 0;
+    if (feature === "ai_chat") {
+      if (isActive || credits > 0) return <>{children}</>;
       return <Navigate to="/settings/plan" replace />;
     }
+    if (!isActive) return <Navigate to="/settings/plan" replace />;
     return <>{children}</>;
   }
 

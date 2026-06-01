@@ -26,6 +26,7 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import UsageCounter from "@/components/ai/UsageCounter";
 import LimitReached from "@/components/ai/LimitReached";
 import CorpUsageCounter from "@/components/ai/CorpUsageCounter";
+import { PLANS } from "@/lib/stripe";
 import { useAccountRole } from "@/lib/accountRoles";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -624,8 +625,21 @@ export default function AiChat() {
               </div>
             )}
             {!isCorp && usage && !limitReached && (
-              <div className="w-40">
-                <UsageCounter currentCount={usage.current_count} limit={usage.limit} />
+              <div className="w-40 space-y-1">
+                {usage.subscription_active !== false ? (
+                  <>
+                    <UsageCounter currentCount={usage.current_count} limit={usage.limit} />
+                    {(usage.credit_balance ?? 0) > 0 && (
+                      <p className="text-xs text-muted-foreground">
+                        + {usage.credit_balance} one-time messages
+                      </p>
+                    )}
+                  </>
+                ) : (
+                  <p className="text-xs text-muted-foreground">
+                    {usage.credit_balance ?? 0} one-time message{(usage.credit_balance ?? 0) === 1 ? "" : "s"} remaining
+                  </p>
+                )}
               </div>
             )}
             <Link
@@ -749,7 +763,13 @@ export default function AiChat() {
             </CardContent>
           </Card>
         ) : limitReached ? (
-          <LimitReached limit={usage.limit} tier={usage.tier || tier} />
+          <LimitReached
+            limit={usage.limit}
+            tier={usage.tier || tier}
+            creditBalance={usage.credit_balance ?? 0}
+            subscriptionActive={usage.subscription_active !== false}
+            premiumLimit={PLANS.premium.ai_limit}
+          />
         ) : (
           <div className="space-y-2 shrink-0">
             {messages.length > 1 && (

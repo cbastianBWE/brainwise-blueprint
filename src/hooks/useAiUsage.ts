@@ -9,6 +9,9 @@ export interface UsageData {
   tier?: string;
   message?: string;
   counts_by_type?: Record<string, number>;
+  credit_balance?: number;
+  subscription_active?: boolean;
+  used_credit?: boolean;
 }
 
 export function useAiUsage() {
