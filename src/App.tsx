@@ -214,6 +214,7 @@ const App = () => (
               <Route path="/super-admin/members/:userId" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><Members /></SuperAdminSessionProvider></RoleGuard>} />
               <Route path="/super-admin/users" element={<Navigate to="/super-admin/members" replace />} />
               <Route path="/super-admin/health" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><PlatformHealth /></SuperAdminSessionProvider></RoleGuard>} />
+              <Route path="/super-admin/features" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><PlatformFeatures /></SuperAdminSessionProvider></RoleGuard>} />
               <Route path="/super-admin/coaches" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><CoachManagement /></SuperAdminSessionProvider></RoleGuard>} />
               <Route path="/super-admin/coach-report/:coachUserId" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><CoachReport /></SuperAdminSessionProvider></RoleGuard>} />
               <Route path="/super-admin/companies" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><CompanyAccounts /></SuperAdminSessionProvider></RoleGuard>} />
