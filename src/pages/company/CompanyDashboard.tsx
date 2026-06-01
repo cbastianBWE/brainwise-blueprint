@@ -871,6 +871,11 @@ export default function CompanyDashboard() {
     "cross-instrument": "Cross-Instrument",
   };
 
+  if (orgAccessLoading) {
+    return <div style={{ padding: 24, textAlign: "center", color: "#6D6875" }}>Loading…</div>;
+  }
+  if (!allowed) return null;
+
   return (
     <div style={{ padding: 24, maxWidth: 1280, margin: "0 auto" }}>
       {/* ── Persistent header ───────────────────────────────────────────────── */}
