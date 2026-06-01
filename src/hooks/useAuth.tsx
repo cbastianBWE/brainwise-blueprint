@@ -8,20 +8,21 @@ import { consumePendingNewsletterOptIn } from "@/lib/newsletterOptInIntent";
 const flushPendingNewsletterOptIn = () => {
   if (!consumePendingNewsletterOptIn()) return;
   // Fire and forget — must not interfere with sign-in flow.
-  supabase
-    .rpc("opt_in_to_newsletter")
-    .then(({ data }: { data: any }) => {
-      if (data?.error === "delivery_problem") {
+  (async () => {
+    try {
+      const { data } = await supabase.rpc("opt_in_to_newsletter");
+      const result = data as { success?: boolean; error?: string } | null;
+      if (result?.error === "delivery_problem") {
         toast.error(
           "We couldn't subscribe you to the newsletter — there's a delivery issue with your email. Please contact support."
         );
-      } else if (data?.success) {
+      } else if (result?.success) {
         toast.success("Subscribed to the BrainWise newsletter.");
       }
-    })
-    .catch(() => {
+    } catch {
       // silent — user can retry from notification settings
-    });
+    }
+  })();
 };
 
 interface AuthContextType {
