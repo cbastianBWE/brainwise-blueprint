@@ -70,7 +70,7 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
   const [submitting, setSubmitting] = useState(false);
   const [responseScales, setResponseScales] = useState<ResponseScale[]>([]);
   const autoSaveTimer = useRef<ReturnType<typeof setInterval> | null>(null);
-  const advanceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  
 
   const [needsAck, setNeedsAck] = useState(false);
   const [confirmingAck, setConfirmingAck] = useState(false);
@@ -238,7 +238,6 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
 
     return () => {
       if (autoSaveTimer.current) clearInterval(autoSaveTimer.current);
-      if (advanceTimer.current) clearTimeout(advanceTimer.current);
     };
   }, [user, assessmentId, instrument.instrument_id, raterType, contextType, onExit, toast]);
 
@@ -296,12 +295,6 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
       }
 
       showSavedIndicator();
-
-      // Auto-advance after 0.5s
-      if (advanceTimer.current) clearTimeout(advanceTimer.current);
-      advanceTimer.current = setTimeout(() => {
-        setCurrentIndex((prev) => Math.min(prev + 1, items.length - 1));
-      }, 500);
     },
     [assessmentId, items]
   );
