@@ -1427,6 +1427,62 @@ export type Database = {
           },
         ]
       }
+      chat_credit_grants: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          source: string
+          source_ref: string | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          source: string
+          source_ref?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          source?: string
+          source_ref?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_credit_grants_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_credit_grants_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "chat_credit_grants_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_credit_grants_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chat_sessions: {
         Row: {
           assessment_result_ids: string[]
@@ -9105,6 +9161,7 @@ export type Database = {
           notifications: Json | null
           onboarding_completed_at: string | null
           onboarding_instrument_version: string | null
+          one_time_chat_credits: number
           org_level: string | null
           organization_id: string | null
           personal_email_pending: string | null
@@ -9147,6 +9204,7 @@ export type Database = {
           notifications?: Json | null
           onboarding_completed_at?: string | null
           onboarding_instrument_version?: string | null
+          one_time_chat_credits?: number
           org_level?: string | null
           organization_id?: string | null
           personal_email_pending?: string | null
@@ -9189,6 +9247,7 @@ export type Database = {
           notifications?: Json | null
           onboarding_completed_at?: string | null
           onboarding_instrument_version?: string | null
+          one_time_chat_credits?: number
           org_level?: string | null
           organization_id?: string | null
           personal_email_pending?: string | null
@@ -10354,6 +10413,10 @@ export type Database = {
         }
         Returns: string
       }
+      consume_one_time_chat_credit: {
+        Args: { p_user: string }
+        Returns: number
+      }
       contract_upsert: {
         Args: {
           p_ai_chat_enabled_override?: boolean
@@ -10886,6 +10949,15 @@ export type Database = {
       grant_certification: {
         Args: { p_certification_id: string; p_reason?: string }
         Returns: Json
+      }
+      grant_one_time_chat_credits: {
+        Args: {
+          p_amount: number
+          p_source: string
+          p_source_ref: string
+          p_user: string
+        }
+        Returns: number
       }
       has_lms_permission: {
         Args: {
