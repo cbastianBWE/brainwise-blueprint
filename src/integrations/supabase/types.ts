@@ -5505,6 +5505,7 @@ export type Database = {
           og_image_asset_id: string | null
           published_at: string | null
           read_time_minutes: number | null
+          scheduled_by_user_id: string | null
           scheduled_for: string | null
           seo_description: string | null
           seo_title: string | null
@@ -5539,6 +5540,7 @@ export type Database = {
           og_image_asset_id?: string | null
           published_at?: string | null
           read_time_minutes?: number | null
+          scheduled_by_user_id?: string | null
           scheduled_for?: string | null
           seo_description?: string | null
           seo_title?: string | null
@@ -5573,6 +5575,7 @@ export type Database = {
           og_image_asset_id?: string | null
           published_at?: string | null
           read_time_minutes?: number | null
+          scheduled_by_user_id?: string | null
           scheduled_for?: string | null
           seo_description?: string | null
           seo_title?: string | null
@@ -5633,6 +5636,34 @@ export type Database = {
             columns: ["og_image_asset_id"]
             isOneToOne: false
             referencedRelation: "content_assets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "newsletter_articles_scheduled_by_user_id_fkey"
+            columns: ["scheduled_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "newsletter_articles_scheduled_by_user_id_fkey"
+            columns: ["scheduled_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "newsletter_articles_scheduled_by_user_id_fkey"
+            columns: ["scheduled_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "newsletter_articles_scheduled_by_user_id_fkey"
+            columns: ["scheduled_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
@@ -10395,6 +10426,7 @@ export type Database = {
         }
         Returns: Json
       }
+      cron_publish_and_dispatch_due_articles: { Args: never; Returns: Json }
       current_user_account_type: { Args: never; Returns: string }
       current_user_active_plan_tier: { Args: never; Returns: string }
       current_user_department_id: { Args: never; Returns: string }
@@ -11217,6 +11249,7 @@ export type Database = {
         Args: { p_article_id: string; p_viewer_class: string }
         Returns: Json
       }
+      process_due_scheduled_articles: { Args: never; Returns: Json }
       process_due_scheduled_assignments: { Args: never; Returns: Json }
       promote_to_library: {
         Args: {
