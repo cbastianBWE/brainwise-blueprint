@@ -394,7 +394,45 @@ export default function InstrumentSelection({ onSelect }: Props) {
           }
         }
 
+        // Per-instrument entitlement signals (individual users). Mirrors the
+        // signals computed inside the .map() below. PTP is always visible;
+        // hidden non-PTP cards roll up into a single "request access" card.
+        const computeIndividualVisible = (inst: (typeof INSTRUMENTS)[0]) => {
+          const uuid = INSTRUMENT_UUID_MAP[inst.instrument_id] || "";
+          if (isPTP(uuid)) return true;
+          if (featureAllowed(uuid)) return true;
+          const subscriptionSignal = canAccessBySubscription(inst.tier);
+          const coachPaid = coachPaidInstrumentIds.has(uuid);
+          const hasPurchase =
+            purchasedInstrumentIds.has(uuid) ||
+            purchasedInstrumentIds.has(inst.instrument_id) ||
+            purchasedInstrumentIds.has(inst.short_name);
+          const selfPayCoachInvited = selfPayCoachInstrumentIds.has(uuid);
+          const actorDebrief = actorDebriefInstrumentIds.has(uuid);
+          const hasFreeCertPool = freeCertPoolInstrumentIds.has(inst.instrument_id);
+          const hasCompleted = completedInstrumentIds.has(inst.instrument_id);
+          const inProgress = inProgressInstrumentIds.has(inst.instrument_id);
+          const airsaAwaitingSignal = inst.instrument_id === "INST-003" && !!airsaAwaiting;
+          return (
+            subscriptionSignal ||
+            coachPaid ||
+            hasPurchase ||
+            selfPayCoachInvited ||
+            actorDebrief ||
+            hasFreeCertPool ||
+            hasCompleted ||
+            inProgress ||
+            airsaAwaitingSignal
+          );
+        };
+
+        const gateIndividual = !isCorp && !canBypassAssessmentPaywall;
+        const hiddenForIndividual = gateIndividual
+          ? INSTRUMENTS.filter((inst) => !computeIndividualVisible(inst))
+          : [];
+
         return (
+          <>
           <div className="grid gap-4 md:grid-cols-2">
             {INSTRUMENTS.map((inst) => {
               const isRecommended = recommendations.includes(inst.instrument_id);
@@ -406,6 +444,14 @@ export default function InstrumentSelection({ onSelect }: Props) {
                 const hasCorpAccess = corpInstrumentAccess.get(instrumentUuid);
                 if (hasCorpAccess !== true) return null;
               }
+
+              // Individuals (non-corp, non-super-admin): hide non-PTP cards
+              // unless feature-flag allows or any explicit entitlement signal
+              // is present. PTP always visible.
+              if (gateIndividual && !computeIndividualVisible(inst)) {
+                return null;
+              }
+
 
               // AIRSA awaiting supervisor: suppress restart, show status tile
               if (inst.instrument_id === "INST-003" && airsaAwaiting) {
