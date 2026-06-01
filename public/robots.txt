@@ -12,3 +12,6 @@ Allow: /
 
 User-agent: *
 Allow: /
+
+Sitemap: https://svprhtzawnbzmumxnhsq.supabase.co/functions/v1/newsletter-sitemap
+LLMs: https://svprhtzawnbzmumxnhsq.supabase.co/functions/v1/newsletter-llms
