@@ -312,6 +312,15 @@ interface Department {
 // ── Component ─────────────────────────────────────────────────────────────────
 export default function CompanyDashboard() {
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const { loading: orgAccessLoading, orgInstrumentIncluded } = useOrgInstrumentAccess();
+  const allowed = !orgAccessLoading && orgInstrumentIncluded(DASHBOARD_INSTRUMENT_UUIDS.NAI);
+
+  useEffect(() => {
+    if (!orgAccessLoading && !allowed) navigate("/dashboard", { replace: true });
+  }, [orgAccessLoading, allowed, navigate]);
+
+
 
   const [sliceType, setSliceType] = useState<string>("all");
   const [sliceValue, setSliceValue] = useState<string>("all");
