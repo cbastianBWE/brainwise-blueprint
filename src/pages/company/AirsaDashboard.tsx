@@ -187,6 +187,15 @@ type SkillSortKey = "skill_number" | "skill_name" | "domain_name" | "tci" | "bli
 
 export default function AirsaDashboard() {
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const { loading: orgAccessLoading, orgInstrumentIncluded } = useOrgInstrumentAccess();
+  const allowed = !orgAccessLoading && orgInstrumentIncluded(DASHBOARD_INSTRUMENT_UUIDS.AIRSA);
+
+  useEffect(() => {
+    if (!orgAccessLoading && !allowed) navigate("/dashboard", { replace: true });
+  }, [orgAccessLoading, allowed, navigate]);
+
+
 
   const [sliceType, setSliceType] = useState("all");
   const [sliceValue, setSliceValue] = useState("all");
