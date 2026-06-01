@@ -15,9 +15,6 @@ import { toast } from "sonner";
 export default function Pricing() {
   const { user } = useAuth();
   const navigate = useNavigate();
-export default function Pricing() {
-  const { user } = useAuth();
-  const navigate = useNavigate();
   const { priceFor, oneTimePrice } = useSubscriptionPlans();
   const searchParams = new URLSearchParams(window.location.search);
   const [interval, setInterval] = useState<BillingInterval>(
