@@ -559,6 +559,11 @@ export default function AirsaDashboard() {
 
   const sandBg: React.CSSProperties = { background: SAND, minHeight: "100vh" };
 
+  if (orgAccessLoading) {
+    return <div style={{ padding: 24, textAlign: "center", color: "#6D6875" }}>Loading…</div>;
+  }
+  if (!allowed) return null;
+
   return (
     <div style={sandBg}>
       <div style={{
