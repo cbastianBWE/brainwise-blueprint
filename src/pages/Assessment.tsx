@@ -9,7 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { INSTRUMENT_ID_TO_SHORT_NAME, INSTRUMENT_ID_TO_NAME } from "@/lib/instruments";
+import { useAccountRole } from "@/lib/accountRoles";
+import { INSTRUMENT_ID_TO_SHORT_NAME, INSTRUMENT_ID_TO_NAME, getInstrumentByInstrumentId } from "@/lib/instruments";
 
 interface SelectedInstrument {
   instrument_id: string;
