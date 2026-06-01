@@ -10686,6 +10686,7 @@ export type Database = {
           status: string
         }[]
       }
+      get_my_newsletter_subscription: { Args: never; Returns: Json }
       get_my_team: {
         Args: never
         Returns: {
@@ -11173,6 +11174,8 @@ export type Database = {
         }
         Returns: Json
       }
+      opt_in_to_newsletter: { Args: never; Returns: Json }
+      opt_out_of_newsletter: { Args: never; Returns: Json }
       org_has_feature: {
         Args: { p_feature: string; p_org: string }
         Returns: boolean
