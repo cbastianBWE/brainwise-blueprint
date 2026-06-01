@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/hooks/useSubscription";
 import { supabase } from "@/integrations/supabase/client";
 import { PLANS } from "@/lib/stripe";
+import { useSubscriptionPlans } from "@/hooks/useSubscriptionPlans";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -28,6 +29,7 @@ export default function BillingSettings() {
   const { user } = useAuth();
   const { subscription, loading, checkSubscription } = useSubscription();
   const navigate = useNavigate();
+  const { priceFor } = useSubscriptionPlans();
   const [portalLoading, setPortalLoading] = useState(false);
   const [purchases, setPurchases] = useState<PurchaseRow[]>([]);
   const [purchasesLoading, setPurchasesLoading] = useState(true);
@@ -220,7 +222,7 @@ export default function BillingSettings() {
           <CardHeader>
             <CardTitle className="text-lg">Upgrade to Premium</CardTitle>
             <CardDescription>
-              ${PLANS.premium.monthly.price}/mo or ${PLANS.premium.annual.price}/yr
+              ${priceFor("premium", "monthly") ?? PLANS.premium.monthly.price}/mo or ${priceFor("premium", "annual") ?? PLANS.premium.annual.price}/yr
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
