@@ -1061,6 +1061,7 @@ export default function AdminNewsletterArticle() {
                 </Card>
               </TabsContent>
             </Tabs>
+            <DispatchHistoryPanel articleId={articleId} />
           </aside>
         </div>
 
