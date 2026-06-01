@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback, Fragment } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useOrgInstrumentAccess, DASHBOARD_INSTRUMENT_UUIDS } from "@/hooks/useOrgInstrumentAccess";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { RefreshCw, Download } from "lucide-react";
