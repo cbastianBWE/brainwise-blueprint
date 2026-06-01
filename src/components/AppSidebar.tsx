@@ -11,6 +11,7 @@ import { useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { useAccountRole } from "@/lib/accountRoles";
+import { useOrgInstrumentAccess, DASHBOARD_INSTRUMENT_UUIDS } from "@/hooks/useOrgInstrumentAccess";
 import { Button } from "@/components/ui/button";
 import {
   Sidebar,
@@ -169,6 +170,11 @@ export function AppSidebar() {
     || location.pathname.startsWith('/company/ptp-dashboard')
     || location.pathname.startsWith('/company/airsa-dashboard');
   const showDashboardsMenu = profile?.account_type === 'company_admin' || profile?.account_type === 'org_admin' || profile?.account_type === 'brainwise_super_admin';
+  const { orgInstrumentIncluded } = useOrgInstrumentAccess();
+  const showNaiDashboard = orgInstrumentIncluded(DASHBOARD_INSTRUMENT_UUIDS.NAI);
+  const showPtpDashboard = orgInstrumentIncluded(DASHBOARD_INSTRUMENT_UUIDS.PTP);
+  const showAirsaDashboard = orgInstrumentIncluded(DASHBOARD_INSTRUMENT_UUIDS.AIRSA);
+  const hasAnyDashboard = showNaiDashboard || showPtpDashboard || showAirsaDashboard;
   const settingsSubItems: { title: string; url: string; icon: React.ElementType; disabled?: boolean; badge?: string }[] = [
     { title: 'General Settings', url: '/settings', icon: Settings },
     { title: 'Notifications', url: '/settings/notifications', icon: Bell },
@@ -293,7 +299,7 @@ export function AppSidebar() {
                   </Fragment>
                 );
               })}
-              {showDashboardsMenu && (
+              {showDashboardsMenu && hasAnyDashboard && (
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild>
                     <NavLink
@@ -315,6 +321,7 @@ export function AppSidebar() {
                   </SidebarMenuButton>
                   {isDashboardsOpen && !collapsed && (
                     <div className="ml-4 mt-1 space-y-1">
+                      {showNaiDashboard && (
                       <SidebarMenuItem key="/company/nai-dashboard">
                         <SidebarMenuButton asChild>
                           <NavLink
@@ -328,6 +335,8 @@ export function AppSidebar() {
                           </NavLink>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
+                      )}
+                      {showPtpDashboard && (
                       <SidebarMenuItem key="/company/ptp-dashboard">
                         <SidebarMenuButton asChild>
                           <NavLink
@@ -341,6 +350,8 @@ export function AppSidebar() {
                           </NavLink>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
+                      )}
+                      {showAirsaDashboard && (
                       <SidebarMenuItem key="/company/airsa-dashboard">
                         <SidebarMenuButton asChild>
                           <NavLink
@@ -354,6 +365,7 @@ export function AppSidebar() {
                           </NavLink>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
+                      )}
                     </div>
                   )}
                 </SidebarMenuItem>

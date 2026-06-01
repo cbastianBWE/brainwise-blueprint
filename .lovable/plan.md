@@ -1,51 +1,39 @@
-# Super-admin Platform Features page
+# Corporate dashboard contract gating — confirmed
 
-The instructions are accurate and consistent with the codebase. Verified:
+Verified against the codebase. The plan as written is correct. One small adjustment plus a typing note.
 
-- `src/pages/super-admin/PlatformFeatures.tsx` does not exist — safe to create.
-- `src/pages/company/Features.tsx` already owns the `Features` import name in `App.tsx` (line 79). Using the distinct component name `PlatformFeatures` avoids the collision.
-- `superAdminNav` lives in `src/components/AppSidebar.tsx` at lines 83–102 and uses the `{ title, url, icon }` shape — the proposed nav entry slots in cleanly. `SlidersHorizontal` is not yet imported from `lucide-react` (line 2–8), so it needs to be added to that import.
-- `Members.tsx` already calls `supabase.rpc("search_impersonation_targets", ...)` typed, confirming that RPC signature.
-- `platform_features` and the two new RPCs are not in `src/integrations/supabase/types.ts`, so the `(supabase.rpc as any)` / `from("platform_features" as any)` casts are required as specified.
+## What I verified
 
-One small adjustment: place the new nav entry directly under "Members" (after line 86) so platform-wide admin controls cluster together, rather than at the bottom. Pure ordering preference, no behavior change.
+- `organization_features_view` exists in `types.ts` (line 9744) with `instruments_included: Json | null` — RLS-scoped per the brief, single row via `.maybeSingle()` is fine. `src/pages/company/Features.tsx:112` already uses the same pattern.
+- `useAccountRole()` exposes `isSuperAdmin` (true only for `brainwise_super_admin`).
+- Routes confirmed in `src/App.tsx:204–207` — `RoleGuard` allows `company_admin | org_admin | brainwise_super_admin` for all three dashboards. Plan correctly keeps these untouched.
+- `AppSidebar.tsx` `showDashboardsMenu` block (lines ~317–375) contains exactly the three NAI/PTP/AIRSA `SidebarMenuItem`s as described.
+- The three pages (`CompanyDashboard`, `PTPDashboard`, `AirsaDashboard`) exist at the stated routes.
+- UUIDs map to: CompanyDashboard→NAI, PTPDashboard→PTP, AirsaDashboard→AIRSA — consistent with existing usage.
+
+## Adjustments
+
+1. **Type cast for `instruments_included`** — `types.ts` types it as `Json | null`, not `string[]`. Read as `Json`, then narrow:
+   ```ts
+   const arr = Array.isArray(row?.instruments_included) ? (row.instruments_included as string[]) : [];
+   const set = new Set(arr);
+   ```
+   No `as any` on the row needed; just guard the array. (`Features.tsx` gets away with `string[]` because of a hand-typed local interface; the hook should be safe.)
+
+2. **Sidebar parent visibility** — keep `showDashboardsMenu` (the existing role check) as the outer gate, AND require `isSuperAdmin || NAI.included || PTP.included || AIRSA.included` before rendering the parent. Brief already says this; just confirming it stays inside the existing block, not replacing it.
+
+3. **Loading behavior in pages** — while `orgAccessLoading`, render existing loading UI (each page already has one); after load, if `!allowed`, the effect fires `navigate("/dashboard", { replace: true })` and the component returns `null`. Do not redirect during loading (prevents flicker/false negatives on slow networks).
+
+4. **Super-admin bypass** — hook short-circuits before the query when `isSuperAdmin` is true, returning `loading=false` and `orgInstrumentIncluded` always true. Confirmed super admins have no org row, so without this they'd be wrongly blocked.
 
 ## Files
 
-**NEW `src/pages/super-admin/PlatformFeatures.tsx`**
+- NEW `src/hooks/useOrgInstrumentAccess.ts`
+- EDIT `src/components/AppSidebar.tsx` (Dashboards submenu only)
+- EDIT `src/pages/company/CompanyDashboard.tsx` (NAI guard)
+- EDIT `src/pages/company/PTPDashboard.tsx` (PTP guard)
+- EDIT `src/pages/company/AirsaDashboard.tsx` (AIRSA guard)
 
-- Page shell mirroring other super-admin pages (page title, two `Card`s).
-- **Card 1 — Platform-wide instrument flags**
-  - On mount: `supabase.from("platform_features" as any).select("feature, enabled, label, category, updated_at").like("feature", "instrument:%").order("label")`.
-  - Render each row: label, "updated {relative time}" if `updated_at`, shadcn `Switch`.
-  - Toggle opens a `Dialog` with a `Textarea` for reason; Confirm disabled until `reason.trim().length >= 10`. Warning copy: "This changes visibility for ALL individual users."
-  - On confirm: `(supabase.rpc as any)("platform_feature_set", { p_feature, p_enabled: next, p_reason: reason })`. On success update local row + `toast.success`; on error revert + `toast.error(err.message)`.
-- **Card 2 — Per-individual overrides**
-  - Debounced (~250ms) search `Input`. Query: `supabase.rpc("search_impersonation_targets", { p_query, p_limit: 25, p_offset: 0, p_account_types: ["individual"] })`. Render selectable list (full_name + email).
-  - On select: fetch `supabase.from("member_feature_overrides").select("feature, enabled").eq("user_id", selectedUser.user_id)` → `Map<feature, boolean>`.
-  - Render the 5 seeded instruments (use labels from Card 1's fetched rows so we don't duplicate the uuid list — fall back to the known uuid map if Card 1 data isn't ready). For each, a 3-way control (e.g. `ToggleGroup` with `Default | Allow | Block`) reflecting map state.
-  - On change: reason dialog (≥10 chars) → `(supabase.rpc as any)("individual_feature_override_set", { p_user, p_feature, p_enabled: Allow?true:Block?false:null, p_reason })`. Refetch overrides on success; surface RPC error message on failure (so corporate-target rejection is visible).
+No changes to `App.tsx`, `RoleGuard`, `types.ts`, individual gating, super-admin Features page, or any backend.
 
-**EDIT `src/App.tsx`**
-
-- Add `import PlatformFeatures from "./pages/super-admin/PlatformFeatures";` with the other super-admin imports.
-- Add route inside the `AppLayout` block, alongside the other `/super-admin/*` routes:
-  ```tsx
-  <Route path="/super-admin/features" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><PlatformFeatures /></SuperAdminSessionProvider></RoleGuard>} />
-  ```
-
-**EDIT `src/components/AppSidebar.tsx`**
-
-- Add `SlidersHorizontal` to the `lucide-react` import (line 2–8).
-- Insert into `superAdminNav` just after the "Members" entry (line 86):
-  ```ts
-  { title: "Features", url: "/super-admin/features", icon: SlidersHorizontal },
-  ```
-
-## Out of scope
-
-No backend changes, no edits to `types.ts`, no touching `company/Features.tsx`, MyResults, AiChat, or other super-admin pages.
-
-## Verification
-
-After build: report the three changed files and confirm `tsc` is clean.
+Type-check will be run after build.

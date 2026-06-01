@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useOrgInstrumentAccess, DASHBOARD_INSTRUMENT_UUIDS } from "@/hooks/useOrgInstrumentAccess";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { RefreshCw, AlertTriangle, Download } from "lucide-react";
@@ -310,6 +312,15 @@ interface Department {
 // ── Component ─────────────────────────────────────────────────────────────────
 export default function CompanyDashboard() {
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const { loading: orgAccessLoading, orgInstrumentIncluded } = useOrgInstrumentAccess();
+  const allowed = !orgAccessLoading && orgInstrumentIncluded(DASHBOARD_INSTRUMENT_UUIDS.NAI);
+
+  useEffect(() => {
+    if (!orgAccessLoading && !allowed) navigate("/dashboard", { replace: true });
+  }, [orgAccessLoading, allowed, navigate]);
+
+
 
   const [sliceType, setSliceType] = useState<string>("all");
   const [sliceValue, setSliceValue] = useState<string>("all");
@@ -859,6 +870,11 @@ export default function CompanyDashboard() {
     trends: "Trends",
     "cross-instrument": "Cross-Instrument",
   };
+
+  if (orgAccessLoading) {
+    return <div style={{ padding: 24, textAlign: "center", color: "#6D6875" }}>Loading…</div>;
+  }
+  if (!allowed) return null;
 
   return (
     <div style={{ padding: 24, maxWidth: 1280, margin: "0 auto" }}>

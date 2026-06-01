@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback, Fragment } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useOrgInstrumentAccess, DASHBOARD_INSTRUMENT_UUIDS } from "@/hooks/useOrgInstrumentAccess";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { RefreshCw, Download } from "lucide-react";
@@ -185,6 +187,15 @@ type SkillSortKey = "skill_number" | "skill_name" | "domain_name" | "tci" | "bli
 
 export default function AirsaDashboard() {
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const { loading: orgAccessLoading, orgInstrumentIncluded } = useOrgInstrumentAccess();
+  const allowed = !orgAccessLoading && orgInstrumentIncluded(DASHBOARD_INSTRUMENT_UUIDS.AIRSA);
+
+  useEffect(() => {
+    if (!orgAccessLoading && !allowed) navigate("/dashboard", { replace: true });
+  }, [orgAccessLoading, allowed, navigate]);
+
+
 
   const [sliceType, setSliceType] = useState("all");
   const [sliceValue, setSliceValue] = useState("all");
@@ -547,6 +558,11 @@ export default function AirsaDashboard() {
   };
 
   const sandBg: React.CSSProperties = { background: SAND, minHeight: "100vh" };
+
+  if (orgAccessLoading) {
+    return <div style={{ padding: 24, textAlign: "center", color: "#6D6875" }}>Loading…</div>;
+  }
+  if (!allowed) return null;
 
   return (
     <div style={sandBg}>
