@@ -4,6 +4,8 @@ import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useAccountRole } from "@/lib/accountRoles";
+import { useInstrumentFeatureAccess, isPTP } from "@/hooks/useInstrumentFeatureAccess";
+import BriefingModal from "@/components/marketing/BriefingModal";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
