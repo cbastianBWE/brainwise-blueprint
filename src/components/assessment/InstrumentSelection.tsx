@@ -77,6 +77,8 @@ export default function InstrumentSelection({ onSelect }: Props) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { isCorp, canBypassAssessmentPaywall, loading: roleLoading } = useAccountRole();
+  const { featureAllowed } = useInstrumentFeatureAccess();
+  const [showAccessBriefing, setShowAccessBriefing] = useState(false);
   const [corpInstrumentAccess, setCorpInstrumentAccess] = useState<Map<string, boolean>>(new Map());
   const [userTier, setUserTier] = useState<string>("base");
   const [userStatus, setUserStatus] = useState<string>("inactive");
