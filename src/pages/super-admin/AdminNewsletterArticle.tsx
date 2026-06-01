@@ -512,14 +512,16 @@ export default function AdminNewsletterArticle() {
     await flushSave("Pre-transition save: ensuring latest");
     const id = articleIdRef.current;
     const reason = transitionReason.trim();
+    const prevStatus = status;
+    const kind = transitionDialog.kind;
     let error: { message: string } | null = null;
-    if (transitionDialog.kind === "publish") {
+    if (kind === "publish") {
       ({ error } = await supabase.rpc("publish_article", { p_article_id: id, p_reason: reason }));
-    } else if (transitionDialog.kind === "cancel_schedule") {
+    } else if (kind === "cancel_schedule") {
       ({ error } = await supabase.rpc("cancel_scheduled_article", { p_article_id: id, p_reason: reason }));
-    } else if (transitionDialog.kind === "unpublish") {
+    } else if (kind === "unpublish") {
       ({ error } = await supabase.rpc("unpublish_article", { p_article_id: id, p_reason: reason }));
-    } else if (transitionDialog.kind === "archive") {
+    } else if (kind === "archive") {
       ({ error } = await supabase.rpc("archive_article", { p_article_id: id, p_reason: reason }));
     }
     setTransitioning(false);
@@ -528,6 +530,57 @@ export default function AdminNewsletterArticle() {
       return;
     }
     toast.success("Status updated");
+
+    // Auto-dispatch on genuine first publish when global mode is automatic.
+    // Skipped for re-publish (prevStatus === 'unpublished') — that path keeps
+    // the manual "Send to subscribers" button as the only way to re-blast.
+    if (kind === "publish" && (prevStatus === "draft" || prevStatus === "scheduled")) {
+      try {
+        const { data: settings, error: settingsError } = await supabase
+          .from("newsletter_settings")
+          .select("dispatch_trigger_mode")
+          .limit(1)
+          .maybeSingle();
+        const mode = settingsError ? "manual" : (settings?.dispatch_trigger_mode ?? "manual");
+        if (mode === "automatic") {
+          try {
+            const { data: dispatchData, error: dispatchError } = await supabase.functions.invoke(
+              "newsletter-dispatch",
+              { body: { article_id: id, trigger_type: "automatic" } },
+            );
+            if (dispatchError) {
+              const ctx = (dispatchError as { context?: Response }).context;
+              if (ctx && ctx.status === 409) {
+                toast.error("Auto-send skipped: article not in a sendable state.");
+              } else {
+                toast.error(
+                  `Auto-send failed: ${dispatchError.message}. You can retry from 'Send to subscribers'.`,
+                );
+              }
+            } else {
+              const sent = dispatchData?.sent_count ?? 0;
+              const failed = dispatchData?.failed_count ?? 0;
+              const recipients = dispatchData?.recipient_count ?? 0;
+              if (recipients === 0) {
+                toast.info("Auto-send: no eligible subscribers.");
+              } else {
+                toast.success(
+                  `Newsletter sent to ${sent}/${recipients} subscribers${failed ? ` (${failed} failed)` : ""}`,
+                );
+              }
+              queryClient.invalidateQueries({ queryKey: ["newsletter-dispatches", id] });
+            }
+          } catch (e) {
+            toast.error(
+              `Auto-send failed: ${(e as Error).message}. You can retry from 'Send to subscribers'.`,
+            );
+          }
+        }
+      } catch {
+        // Settings read failure: treat as manual, never block publish UX.
+      }
+    }
+
     setTransitionDialog(null);
     setTransitionReason("");
     setHydrated(false); // re-hydrate to pick up new status
