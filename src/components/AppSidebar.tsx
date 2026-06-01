@@ -4,7 +4,7 @@ import {
   Users, Users2, Building2, UsersRound, Activity, Heart, Award, UserCircle,
   ShieldCheck, Briefcase, GitBranch, FlaskConical, LogOut, History, Shield,
   CreditCard, Receipt, ChevronDown, ChevronRight, Plus, FileText, Library, Ticket,
-  GraduationCap, Bell, Newspaper,
+  GraduationCap, Bell, Newspaper, SlidersHorizontal,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -84,6 +84,7 @@ const superAdminNav: NavItem[] = [
   { title: "Assessment", url: "/assessment", icon: ClipboardList },
   { title: "My Results", url: "/my-results", icon: FileText },
   { title: "Members", url: "/super-admin/members", icon: Users },
+  { title: "Features", url: "/super-admin/features", icon: SlidersHorizontal },
   
   { title: "Platform Health", url: "/super-admin/health", icon: Heart },
   { title: "Coach Management", url: "/super-admin/coaches", icon: Users },
