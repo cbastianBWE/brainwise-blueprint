@@ -75,6 +75,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (_event === "SIGNED_IN" && session?.user) {
           // Fire and forget — don't block auth state
           syncSubscription();
+          flushPendingNewsletterOptIn();
         }
       }
     );
