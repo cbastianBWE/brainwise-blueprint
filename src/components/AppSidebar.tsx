@@ -84,6 +84,7 @@ const superAdminNav: NavItem[] = [
   { title: "Assessment", url: "/assessment", icon: ClipboardList },
   { title: "My Results", url: "/my-results", icon: FileText },
   { title: "Members", url: "/super-admin/members", icon: Users },
+  { title: "Features", url: "/super-admin/features", icon: SlidersHorizontal },
   
   { title: "Platform Health", url: "/super-admin/health", icon: Heart },
   { title: "Coach Management", url: "/super-admin/coaches", icon: Users },
