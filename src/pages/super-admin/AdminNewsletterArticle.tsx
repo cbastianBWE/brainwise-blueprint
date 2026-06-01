@@ -18,6 +18,9 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
+import { SendDispatchButton } from "@/components/super-admin/newsletter/SendDispatchButton";
+import { DispatchHistoryPanel } from "@/components/super-admin/newsletter/DispatchHistoryPanel";
+
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -593,6 +596,7 @@ export default function AdminNewsletterArticle() {
                 }
               }}
             />
+            <SendDispatchButton articleId={articleId} status={status} />
             <Tooltip>
               <TooltipTrigger asChild>
                 <span>
@@ -1057,6 +1061,7 @@ export default function AdminNewsletterArticle() {
                 </Card>
               </TabsContent>
             </Tabs>
+            <DispatchHistoryPanel articleId={articleId} />
           </aside>
         </div>
 

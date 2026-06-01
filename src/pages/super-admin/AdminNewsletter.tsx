@@ -53,6 +53,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { AutoSendToggle } from "@/components/super-admin/newsletter/AutoSendToggle";
 
 // TODO(nav): a "Newsletter" entry pointing to /super-admin/newsletter has
 // been added to AppSidebar.tsx under the super-admin nav block.
@@ -214,12 +215,15 @@ export default function AdminNewsletter() {
             Articles, drafts, and scheduled posts
           </p>
         </div>
-        <Button
-          onClick={() => navigate("/super-admin/newsletter/new")}
-          className="bg-[var(--bw-orange,#e85d3a)] hover:bg-[var(--bw-orange,#e85d3a)]/90 text-white"
-        >
-          <Plus className="h-4 w-4" /> New article
-        </Button>
+        <div className="flex items-center gap-3">
+          <AutoSendToggle />
+          <Button
+            onClick={() => navigate("/super-admin/newsletter/new")}
+            className="bg-[var(--bw-orange,#e85d3a)] hover:bg-[var(--bw-orange,#e85d3a)]/90 text-white"
+          >
+            <Plus className="h-4 w-4" /> New article
+          </Button>
+        </div>
       </header>
 
       <div className="sticky top-0 z-10 flex flex-wrap items-center gap-3 rounded-lg border border-slate-200 bg-white/95 backdrop-blur px-4 py-3 shadow-sm">
