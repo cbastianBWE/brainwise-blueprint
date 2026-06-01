@@ -53,6 +53,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { AutoSendToggle } from "@/components/super-admin/newsletter/AutoSendToggle";
 
 // TODO(nav): a "Newsletter" entry pointing to /super-admin/newsletter has
 // been added to AppSidebar.tsx under the super-admin nav block.
