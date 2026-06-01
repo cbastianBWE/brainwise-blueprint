@@ -86,6 +86,7 @@ export default function Assessment() {
     const instrumentId = searchParams.get("instrument");
     const autostart = searchParams.get("autostart");
     if (!instrumentId || autostart !== "true") return;
+    if (!user) return;
 
     // EPN is started via handleStartEpn(assignmentId), not via URL autostart. Guard against accidental autostart routing.
     if (instrumentId === "INST-002L") return;
@@ -95,6 +96,89 @@ export default function Assessment() {
     if (!shortName || !instrumentName) return;
 
     const init = async () => {
+      // Individual gating: hidden instruments must not be startable via the
+      // autostart/direct-URL path. Mirrors InstrumentSelection's predicate:
+      // isPTP || featureAllowed || any explicit entitlement signal.
+      // Corp users and super-admins bypass this check.
+      const gateIndividual = !isCorp && !canBypassAssessmentPaywall;
+      if (gateIndividual) {
+        const meta = getInstrumentByInstrumentId(instrumentId);
+        const uuid = meta?.uuid ?? "";
+        const PTP_UUID = "02618e9a-d411-44cf-b316-fe368edeac03";
+        let visible = uuid === PTP_UUID;
+
+        if (!visible && uuid) {
+          const { data: flagData } = await (supabase.rpc as any)("user_has_features_bulk", {
+            p_user: user.id,
+            p_features: [`instrument:${uuid}`],
+          });
+          if (Array.isArray(flagData)) {
+            const row = flagData.find((r: { feature: string }) => r.feature === `instrument:${uuid}`);
+            if (row?.enabled === true) visible = true;
+          }
+        }
+
+        if (!visible) {
+          // Check explicit entitlement signals for this instrument.
+          const [subRes, purchasesRes, coachRes, certsRes] = await Promise.all([
+            supabase.from("users").select("subscription_tier, subscription_status").eq("id", user.id).maybeSingle(),
+            supabase.from("assessment_purchases").select("instrument_id").eq("user_id", user.id).is("consumed_at", null).is("coach_client_id", null),
+            supabase.from("coach_clients_client_view")
+              .select("instrument_id")
+              .eq("client_user_id", user.id)
+              .in("invitation_status", ["sent", "opened", "partially_completed"]),
+            supabase.from("coach_certifications")
+              .select("certification_type, status, free_assessment_uses, free_uses_expire_at")
+              .eq("user_id", user.id)
+              .in("status", ["in_progress", "certified"]),
+          ]);
+
+          const subActive = subRes.data?.subscription_status === "active";
+          const tier = subRes.data?.subscription_tier || "base";
+          // Premium sub covers all instruments; base only covers PTP (already short-circuited above).
+          if (subActive && tier === "premium") visible = true;
+
+          if (!visible) {
+            const purchaseIds = new Set<string>();
+            (purchasesRes.data ?? []).forEach((row) => {
+              if (row.instrument_id) {
+                row.instrument_id.split(",").forEach((id: string) => purchaseIds.add(id.trim()));
+              }
+            });
+            if (purchaseIds.has(uuid) || purchaseIds.has(instrumentId) || purchaseIds.has(shortName)) {
+              visible = true;
+            }
+          }
+
+          if (!visible) {
+            const coachIds = new Set<string>();
+            (coachRes.data ?? []).forEach((row) => {
+              if (row.instrument_id) coachIds.add(row.instrument_id);
+            });
+            if (coachIds.has(uuid)) visible = true;
+          }
+
+          if (!visible) {
+            const nowMs = Date.now();
+            for (const cert of certsRes.data ?? []) {
+              if (cert.free_uses_expire_at && new Date(cert.free_uses_expire_at).getTime() <= nowMs) continue;
+              const uses = (cert.free_assessment_uses ?? {}) as Record<string, number>;
+              if ((uses[instrumentId] ?? 0) > 0) {
+                visible = true;
+                break;
+              }
+            }
+          }
+        }
+
+        if (!visible) {
+          // Hidden instrument — drop autostart params and let the picker render
+          // (which will surface the consolidated "request access" card).
+          setSearchParams({}, { replace: true });
+          return;
+        }
+      }
+
       const { data } = await supabase
         .from("platform_versions")
         .select("version_string")
@@ -114,7 +198,7 @@ export default function Assessment() {
       setSearchParams({}, { replace: true });
     };
     init();
-  }, [searchParams, setSearchParams]);
+  }, [searchParams, setSearchParams, user, isCorp, canBypassAssessmentPaywall]);
 
   const handleStartEpn = async (assignmentId: string) => {
     setEpnStarting(true);
