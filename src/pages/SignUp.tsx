@@ -120,6 +120,9 @@ const SignUp = () => {
     if (error) {
       toast({ title: "Sign Up Failed", description: error.message, variant: "destructive" });
     } else {
+      if (subscribeNewsletter) {
+        setPendingNewsletterOptIn();
+      }
       setSuccess(true);
       if (coachToken && coachInvitation) {
         await supabase.functions.invoke('accept-coach-invitation', {
