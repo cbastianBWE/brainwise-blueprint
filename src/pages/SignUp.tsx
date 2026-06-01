@@ -302,6 +302,16 @@ const SignUp = () => {
                 <a href="/privacy" className="text-primary underline">Privacy Policy</a>
               </Label>
             </div>
+            <div className="flex items-start space-x-2">
+              <Checkbox
+                id="newsletter-opt-in"
+                checked={subscribeNewsletter}
+                onCheckedChange={(c) => setSubscribeNewsletter(c === true)}
+              />
+              <Label htmlFor="newsletter-opt-in" className="text-sm leading-snug font-normal">
+                Send me the BrainWise newsletter (optional)
+              </Label>
+            </div>
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? "Creating Account..." : "Sign Up"}
             </Button>
