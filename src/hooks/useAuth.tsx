@@ -1,7 +1,29 @@
 import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from "react";
 import { Session, User } from "@supabase/supabase-js";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
+import { consumePendingNewsletterOptIn } from "@/lib/newsletterOptInIntent";
+
+const flushPendingNewsletterOptIn = () => {
+  if (!consumePendingNewsletterOptIn()) return;
+  // Fire and forget — must not interfere with sign-in flow.
+  (async () => {
+    try {
+      const { data } = await supabase.rpc("opt_in_to_newsletter");
+      const result = data as { success?: boolean; error?: string } | null;
+      if (result?.error === "delivery_problem") {
+        toast.error(
+          "We couldn't subscribe you to the newsletter — there's a delivery issue with your email. Please contact support."
+        );
+      } else if (result?.success) {
+        toast.success("Subscribed to the BrainWise newsletter.");
+      }
+    } catch {
+      // silent — user can retry from notification settings
+    }
+  })();
+};
 
 interface AuthContextType {
   session: Session | null;
@@ -53,6 +75,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (_event === "SIGNED_IN" && session?.user) {
           // Fire and forget — don't block auth state
           syncSubscription();
+          flushPendingNewsletterOptIn();
         }
       }
     );

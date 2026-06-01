@@ -1,10 +1,12 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import type { NotificationChannel, NotificationPreferenceRow, GetNotificationPreferencesResult } from "@/types/notifications";
 
@@ -158,6 +160,123 @@ export default function NotificationSettings() {
           )}
         </CardContent>
       </Card>
+
+      <NewsletterSubscriptionCard />
     </div>
+  );
+}
+
+const NEWSLETTER_KEY = ["newsletter", "subscription"] as const;
+
+type NewsletterSubResult = { subscribed: boolean; status: string | null };
+
+function NewsletterSubscriptionCard() {
+  const queryClient = useQueryClient();
+  const [pending, setPending] = useState(false);
+
+  const { data, isLoading, isError, refetch } = useQuery({
+    queryKey: NEWSLETTER_KEY,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("get_my_newsletter_subscription");
+      if (error) throw error;
+      const result = (data ?? { subscribed: false, status: null }) as unknown as NewsletterSubResult;
+      return result;
+    },
+  });
+
+  const handleToggle = async (next: boolean) => {
+    if (pending || !data) return;
+    const previous = data.subscribed;
+    setPending(true);
+    queryClient.setQueryData<NewsletterSubResult>(NEWSLETTER_KEY, (curr) =>
+      curr ? { ...curr, subscribed: next } : curr,
+    );
+
+    const revert = () => {
+      queryClient.setQueryData<NewsletterSubResult>(NEWSLETTER_KEY, (curr) =>
+        curr ? { ...curr, subscribed: previous } : curr,
+      );
+    };
+
+    try {
+      if (next) {
+        const { data: res, error } = await supabase.rpc("opt_in_to_newsletter");
+        if (error) throw error;
+        const r = res as { success?: boolean; status?: string; error?: string } | null;
+        if (r?.error === "delivery_problem") {
+          revert();
+          toast.error("There's a delivery issue with your email address. Please contact support.");
+        } else if (r?.success) {
+          queryClient.setQueryData<NewsletterSubResult>(NEWSLETTER_KEY, {
+            subscribed: true,
+            status: r.status ?? "confirmed",
+          });
+          toast.success("Subscribed to the newsletter");
+        } else {
+          revert();
+          toast.error("Couldn't update subscription");
+        }
+      } else {
+        const { data: res, error } = await supabase.rpc("opt_out_of_newsletter");
+        if (error) throw error;
+        const r = res as { success?: boolean; status?: string } | null;
+        if (r?.success) {
+          queryClient.setQueryData<NewsletterSubResult>(NEWSLETTER_KEY, {
+            subscribed: false,
+            status: r.status ?? null,
+          });
+          toast.success("Unsubscribed from the newsletter");
+        } else {
+          revert();
+          toast.error("Couldn't update subscription");
+        }
+      }
+    } catch {
+      revert();
+      toast.error("Couldn't update subscription");
+    } finally {
+      setPending(false);
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-lg">BrainWise Newsletter</CardTitle>
+        <CardDescription>Occasional updates from the BrainWise team.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        {isLoading && (
+          <div
+            role="status"
+            aria-label="Loading subscription"
+            className="flex items-center justify-center py-6"
+          >
+            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" aria-hidden="true" />
+          </div>
+        )}
+        {isError && (
+          <div className="py-4 text-center space-y-3">
+            <p className="text-sm text-muted-foreground">Couldn't load subscription.</p>
+            <Button size="sm" variant="outline" onClick={() => refetch()}>Retry</Button>
+          </div>
+        )}
+        {!isLoading && !isError && data && (
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex-1 min-w-0">
+              <Label htmlFor="newsletter-subscription" className="text-sm">
+                Receive the BrainWise newsletter by email.
+              </Label>
+            </div>
+            <Switch
+              id="newsletter-subscription"
+              checked={data.subscribed}
+              disabled={pending}
+              onCheckedChange={handleToggle}
+            />
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }

@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Loader2, Info, Eye, EyeOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { TOS_VERSION, PRIVACY_VERSION } from "@/lib/legalVersions";
+import { setPendingNewsletterOptIn } from "@/lib/newsletterOptInIntent";
 
 const CERT_LABELS: Record<string, string> = {
   ptp_coach: 'PTP Certified Coach',
@@ -24,6 +25,7 @@ const SignUp = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [subscribeNewsletter, setSubscribeNewsletter] = useState(false);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -118,6 +120,9 @@ const SignUp = () => {
     if (error) {
       toast({ title: "Sign Up Failed", description: error.message, variant: "destructive" });
     } else {
+      if (subscribeNewsletter) {
+        setPendingNewsletterOptIn();
+      }
       setSuccess(true);
       if (coachToken && coachInvitation) {
         await supabase.functions.invoke('accept-coach-invitation', {
@@ -295,6 +300,16 @@ const SignUp = () => {
                 I agree to the{" "}
                 <a href="/terms" className="text-primary underline">Terms of Service</a> and{" "}
                 <a href="/privacy" className="text-primary underline">Privacy Policy</a>
+              </Label>
+            </div>
+            <div className="flex items-start space-x-2">
+              <Checkbox
+                id="newsletter-opt-in"
+                checked={subscribeNewsletter}
+                onCheckedChange={(c) => setSubscribeNewsletter(c === true)}
+              />
+              <Label htmlFor="newsletter-opt-in" className="text-sm leading-snug font-normal">
+                Send me the BrainWise newsletter (optional)
               </Label>
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
