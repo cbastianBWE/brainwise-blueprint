@@ -321,6 +321,7 @@ export function AppSidebar() {
                   </SidebarMenuButton>
                   {isDashboardsOpen && !collapsed && (
                     <div className="ml-4 mt-1 space-y-1">
+                      {showNaiDashboard && (
                       <SidebarMenuItem key="/company/nai-dashboard">
                         <SidebarMenuButton asChild>
                           <NavLink
@@ -334,6 +335,8 @@ export function AppSidebar() {
                           </NavLink>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
+                      )}
+                      {showPtpDashboard && (
                       <SidebarMenuItem key="/company/ptp-dashboard">
                         <SidebarMenuButton asChild>
                           <NavLink
@@ -347,6 +350,8 @@ export function AppSidebar() {
                           </NavLink>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
+                      )}
+                      {showAirsaDashboard && (
                       <SidebarMenuItem key="/company/airsa-dashboard">
                         <SidebarMenuButton asChild>
                           <NavLink
@@ -360,6 +365,7 @@ export function AppSidebar() {
                           </NavLink>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
+                      )}
                     </div>
                   )}
                 </SidebarMenuItem>
