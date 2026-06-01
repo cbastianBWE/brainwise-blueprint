@@ -7137,6 +7137,33 @@ export type Database = {
           },
         ]
       }
+      platform_features: {
+        Row: {
+          category: string | null
+          enabled: boolean
+          feature: string
+          label: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          category?: string | null
+          enabled?: boolean
+          feature: string
+          label?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          category?: string | null
+          enabled?: boolean
+          feature?: string
+          label?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       platform_versions: {
         Row: {
           activated_at: string | null
@@ -10881,6 +10908,15 @@ export type Database = {
       }
       import_newsletter_subscribers_bulk: {
         Args: { p_reason: string; p_subscribers: Json }
+        Returns: Json
+      }
+      individual_feature_override_set: {
+        Args: {
+          p_enabled: boolean
+          p_feature: string
+          p_reason: string
+          p_user: string
+        }
         Returns: Json
       }
       invitation_create: {
