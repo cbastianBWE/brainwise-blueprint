@@ -15,7 +15,7 @@ import { toast } from "sonner";
 export default function Pricing() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { priceFor, oneTimePrice } = useSubscriptionPlans();
+  const { priceFor, oneTimePrice, featuresFor } = useSubscriptionPlans();
   const searchParams = new URLSearchParams(window.location.search);
   const [interval, setInterval] = useState<BillingInterval>(
     searchParams.get("billing") === "annual" ? "annual" : "monthly"
@@ -124,7 +124,7 @@ export default function Pricing() {
               </CardHeader>
               <CardContent className="flex-1 flex flex-col gap-6">
                 <ul className="space-y-2.5 flex-1">
-                  {plan.features.map((f) => (
+                  {(featuresFor(tier) ?? plan.features).map((f) => (
                     <li key={f} className="flex items-start gap-2 text-sm">
                       <Check className="h-4 w-4 text-accent shrink-0 mt-0.5" />
                       <span>{f}</span>

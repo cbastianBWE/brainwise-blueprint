@@ -15,9 +15,8 @@ export const PLANS = {
     },
     features: [
       "PTP instrument unlimited",
-      "NAI, AIRSA, HSS — pay per assessment ($29.99)",
-      "200 AI chat messages/month",
-      "Access to base resources",
+      "200 AI coaching messages/month",
+      "Core resource library",
     ],
     ai_limit: 200,
   },
@@ -32,9 +31,8 @@ export const PLANS = {
       price: 130,
     },
     features: [
-      "All 4 instruments unlimited",
-      "400 AI chat messages/month",
-      "Access to premium resources",
+      "Unlimited PTP, with 400 AI coaching messages/month. Your always-on guide for putting results into practice",
+      "Full premium resource library, including interactive coaching tools to design the life you want",
       "Priority support",
     ],
     ai_limit: 400,
@@ -44,7 +42,7 @@ export const PLANS = {
 export const ASSESSMENT_PURCHASE = {
   price_id: "price_1TS3WY2FY7qIyIXAalOKbxdZ",
   price: 29.99,
-  instruments: ["NAI", "AIRSA", "HSS", "PTP"],
+  instruments: ["PTP"],
 } as const;
 
 export type PlanTier = keyof typeof PLANS;

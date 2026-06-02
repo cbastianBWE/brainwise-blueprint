@@ -10,8 +10,17 @@ interface PlanRow {
   stripe_price_id: string | null;
 }
 
+interface TierRow {
+  tier: string;
+  display_name: string;
+  features: string[];
+  ai_coaching_limit: number;
+  one_time_credit_grant: number;
+}
+
 export function useSubscriptionPlans() {
   const [rows, setRows] = useState<PlanRow[]>([]);
+  const [tierRows, setTierRows] = useState<TierRow[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -32,6 +41,23 @@ export function useSubscriptionPlans() {
           })),
         );
       }
+
+      const { data: tData, error: tErr } = await supabase
+        .from("plan_tiers")
+        .select("tier, display_name, features, ai_coaching_limit, one_time_credit_grant")
+        .eq("is_active", true);
+      if (!cancelled && !tErr && tData) {
+        setTierRows(
+          tData.map((r) => ({
+            tier: r.tier as string,
+            display_name: r.display_name as string,
+            features: (r.features as string[]) ?? [],
+            ai_coaching_limit: Number(r.ai_coaching_limit ?? 0),
+            one_time_credit_grant: Number(r.one_time_credit_grant ?? 0),
+          })),
+        );
+      }
+
       setLoading(false);
     })();
     return () => {
@@ -55,5 +81,21 @@ export function useSubscriptionPlans() {
     [rows],
   );
 
-  return { priceFor, oneTimePrice, loading };
+  const featuresFor = useCallback(
+    (tier: string): string[] | null => {
+      const row = tierRows.find((r) => r.tier === tier);
+      return row ? row.features : null;
+    },
+    [tierRows],
+  );
+
+  const limitsFor = useCallback(
+    (tier: string): { aiCoachingLimit: number; oneTimeCreditGrant: number } | null => {
+      const row = tierRows.find((r) => r.tier === tier);
+      return row ? { aiCoachingLimit: row.ai_coaching_limit, oneTimeCreditGrant: row.one_time_credit_grant } : null;
+    },
+    [tierRows],
+  );
+
+  return { priceFor, oneTimePrice, featuresFor, limitsFor, loading };
 }

@@ -7,6 +7,7 @@ import MarketingButton from "@/components/marketing/MarketingButton";
 import Eyebrow from "@/components/marketing/Eyebrow";
 import BriefingModal from "@/components/marketing/BriefingModal";
 import { PLANS, ASSESSMENT_PURCHASE, type PlanTier } from "@/lib/stripe";
+import { useSubscriptionPlans } from "@/hooks/useSubscriptionPlans";
 import { coachPricing, type CoachPricingItem } from "@/content/marketing/coachPricingContent";
 
 type Segment = "individual" | "coach" | "enterprise";
@@ -56,6 +57,8 @@ const comingSoonBadge: React.CSSProperties = {
 
 function PricingIndividual({ isMobile, onSignup }: { isMobile: boolean; onSignup: () => void }) {
   const tiers = Object.entries(PLANS) as [PlanTier, (typeof PLANS)[PlanTier]][];
+  const { featuresFor } = useSubscriptionPlans();
+
 
   return (
     <div>
@@ -149,7 +152,7 @@ function PricingIndividual({ isMobile, onSignup }: { isMobile: boolean; onSignup
                   flex: 1,
                 }}
               >
-                {plan.features.map((f) => (
+                {(featuresFor(tier) ?? plan.features).map((f) => (
                   <li
                     key={f}
                     style={{
