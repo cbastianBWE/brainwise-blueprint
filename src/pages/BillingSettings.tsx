@@ -207,7 +207,7 @@ export default function BillingSettings() {
 
               <div className="flex items-center gap-2 text-sm">
                 <MessageSquare className="h-4 w-4 text-muted-foreground" />
-                <span className="text-muted-foreground">AI chat limit: {plan.ai_limit} messages/month</span>
+                <span className="text-muted-foreground">AI coaching limit: {plan.ai_limit} messages/month</span>
               </div>
 
               <div className="flex gap-3 pt-2">
