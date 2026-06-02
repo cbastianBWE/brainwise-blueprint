@@ -27,13 +27,15 @@ export default function LimitReached({
           <AlertTriangle className="h-10 w-10 text-destructive" />
           <div>
             <h3 className="text-lg font-semibold text-foreground">
-              You're out of chat messages
+              You're out of AI chat messages
             </h3>
             <p className="text-sm text-muted-foreground mt-1">
-              You've used all of your one-time AI chat messages. Purchase another
-              assessment to add more.
+              Subscribe to Premium for {premiumLimit} AI coaching messages every month.
             </p>
           </div>
+          <Button onClick={() => navigate("/pricing")} className="gap-2">
+            Upgrade to Premium
+          </Button>
           <button
             onClick={() => navigate("/settings")}
             className="text-xs text-muted-foreground underline hover:text-foreground transition-colors"
