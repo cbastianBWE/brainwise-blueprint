@@ -231,7 +231,7 @@ export default function BillingSettings() {
           </CardHeader>
           <CardContent className="space-y-4">
             <ul className="text-sm text-muted-foreground space-y-1 ml-4 list-disc">
-              {PLANS.premium.features.map((f) => (
+              {(featuresFor("premium") ?? PLANS.premium.features).map((f) => (
                 <li key={f}>{f}</li>
               ))}
             </ul>
