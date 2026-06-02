@@ -72,14 +72,18 @@ export default function MemberDrawerCoach({
   setHasUnsavedChanges,
 }: Props) {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const [selectedCertId, setSelectedCertId] = useState<string>("");
   const [selectedInstrument, setSelectedInstrument] = useState<string>("");
   const [count, setCount] = useState<string>("1");
   const [grantDialogOpen, setGrantDialogOpen] = useState(false);
+  const [markCertifyOpen, setMarkCertifyOpen] = useState(false);
+  const [selectedCertType, setSelectedCertType] = useState<string>("");
 
   useEffect(() => {
-    setHasUnsavedChanges(grantDialogOpen);
-  }, [grantDialogOpen, setHasUnsavedChanges]);
+    setHasUnsavedChanges(grantDialogOpen || markCertifyOpen);
+  }, [grantDialogOpen, markCertifyOpen, setHasUnsavedChanges]);
 
   const certsQuery = useQuery({
     queryKey: ["coach-certifications", userId],
@@ -104,6 +108,31 @@ export default function MemberDrawerCoach({
   const selectedCertLabel =
     certsQuery.data?.find((c) => c.id === selectedCertId)?.certification_type ??
     "this certification";
+
+  const inProgressCerts = useMemo(
+    () =>
+      (certsQuery.data ?? []).filter(
+        (c) => c.status === "in_progress" && c.certification_type,
+      ),
+    [certsQuery.data],
+  );
+  const hasPtpReport = useMemo(
+    () =>
+      (certsQuery.data ?? []).some(
+        (c) =>
+          c.certification_type === "ptp_coach" &&
+          (c.status === "in_progress" || c.status === "certified"),
+      ),
+    [certsQuery.data],
+  );
+  const showCertActions = hasPtpReport || inProgressCerts.length > 0;
+
+  const openMarkCertify = () => {
+    const first = inProgressCerts[0]?.certification_type ?? "";
+    setSelectedCertType(first);
+    setMarkCertifyOpen(true);
+  };
+
 
   return (
     <div className="p-4 space-y-6">
