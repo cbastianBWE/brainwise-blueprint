@@ -183,11 +183,14 @@ function PricingIndividual({ isMobile, onSignup, onContact }: { isMobile: boolea
       <div>
         <h3 style={{ ...headingStyle, fontSize: 20 }}>Or buy a single assessment</h3>
         <p style={subheadStyle}>
-          ${ASSESSMENT_PURCHASE.price} per assessment. Available for {ASSESSMENT_PURCHASE.instruments.join(", ")}.
+          ${ASSESSMENT_PURCHASE.price} per assessment for the PTP. NAI, AIRSA, and HSS are available through a consultation.
         </p>
-        <div style={{ marginTop: 20 }}>
+        <div style={{ marginTop: 20, display: "flex", flexWrap: "wrap", gap: 12 }}>
           <MarketingButton variant="secondary" size="md" onClick={onSignup}>
             Get Started
+          </MarketingButton>
+          <MarketingButton variant="secondary" size="md" onClick={onContact}>
+            Contact us
           </MarketingButton>
         </div>
       </div>
