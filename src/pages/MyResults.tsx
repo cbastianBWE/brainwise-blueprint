@@ -1633,7 +1633,7 @@ export default function MyResults({ isCoachView = false, adminView = false, targ
           {/* Bubble toggle button */}
           <button
             onClick={() => {
-              if (!hasActiveAccess) {
+              if (!canUseChat) {
                 setShowChatUpgradeDialog(true);
               } else {
                 setChatOpen(prev => !prev);
