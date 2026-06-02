@@ -55,7 +55,7 @@ const comingSoonBadge: React.CSSProperties = {
   borderRadius: "var(--r-pill)",
 };
 
-function PricingIndividual({ isMobile, onSignup }: { isMobile: boolean; onSignup: () => void }) {
+function PricingIndividual({ isMobile, onSignup, onContact }: { isMobile: boolean; onSignup: () => void; onContact: () => void }) {
   const tiers = Object.entries(PLANS) as [PlanTier, (typeof PLANS)[PlanTier]][];
   const { featuresFor } = useSubscriptionPlans();
 
