@@ -485,7 +485,7 @@ export default function MarketingPricing() {
       >
         <div style={{ maxWidth: 1200, margin: "0 auto" }}>
           {segment === "individual" && (
-            <PricingIndividual isMobile={isMobile} onSignup={() => navigate("/signup")} />
+            <PricingIndividual isMobile={isMobile} onSignup={() => navigate("/signup")} onContact={() => setBriefingOpen(true)} />
           )}
           {segment === "coach" && (
             <PricingCoach items={coachPricing} isMobile={isMobile} onContact={() => setBriefingOpen(true)} />
