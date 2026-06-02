@@ -7,6 +7,7 @@ import MarketingButton from "@/components/marketing/MarketingButton";
 import Eyebrow from "@/components/marketing/Eyebrow";
 import BriefingModal from "@/components/marketing/BriefingModal";
 import { PLANS, ASSESSMENT_PURCHASE, type PlanTier } from "@/lib/stripe";
+import { useSubscriptionPlans } from "@/hooks/useSubscriptionPlans";
 import { coachPricing, type CoachPricingItem } from "@/content/marketing/coachPricingContent";
 
 type Segment = "individual" | "coach" | "enterprise";
