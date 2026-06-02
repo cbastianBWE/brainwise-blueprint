@@ -199,7 +199,7 @@ export default function BillingSettings() {
               <div className="space-y-1">
                 <p className="text-sm font-medium text-foreground">Included features:</p>
                 <ul className="text-sm text-muted-foreground space-y-1 ml-4 list-disc">
-                  {plan.features.map((f) => (
+                  {(featuresFor(tier) ?? plan.features).map((f) => (
                     <li key={f}>{f}</li>
                   ))}
                 </ul>
