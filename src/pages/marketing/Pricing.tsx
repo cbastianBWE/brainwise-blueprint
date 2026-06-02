@@ -152,7 +152,7 @@ function PricingIndividual({ isMobile, onSignup }: { isMobile: boolean; onSignup
                   flex: 1,
                 }}
               >
-                {plan.features.map((f) => (
+                {(featuresFor(tier) ?? plan.features).map((f) => (
                   <li
                     key={f}
                     style={{
