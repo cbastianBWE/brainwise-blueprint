@@ -245,6 +245,14 @@ export default function MyResults({ isCoachView = false, adminView = false, targ
   const { isBypassAdmin, isCoach, canBypassAssessmentPaywall } = useAccountRole();
   const effectiveTier = isBypassAdmin ? "premium" : (profile?.subscription_tier ?? "base");
   const hasActiveAccess = isBypassAdmin || profile?.subscription_status === "active";
+  const { usage: aiUsage, fetchUsage: fetchAiUsage } = useAiUsage();
+  const chatCreditBalance = aiUsage?.credit_balance ?? 0;
+  const canUseChat = hasActiveAccess || chatCreditBalance > 0;
+  useEffect(() => {
+    if (!isCoachView) {
+      fetchAiUsage(effectiveTier);
+    }
+  }, [isCoachView, effectiveTier, fetchAiUsage]);
   // Coaches are gated on assessment-take; hide "Take/Retake" CTAs for them.
   // Super admins (canBypassAssessmentPaywall) keep full access.
   const canTakeAssessments = canBypassAssessmentPaywall || !isCoach;
