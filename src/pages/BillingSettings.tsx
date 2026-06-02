@@ -29,7 +29,7 @@ export default function BillingSettings() {
   const { user } = useAuth();
   const { subscription, loading, checkSubscription } = useSubscription();
   const navigate = useNavigate();
-  const { priceFor } = useSubscriptionPlans();
+  const { priceFor, featuresFor } = useSubscriptionPlans();
   const [portalLoading, setPortalLoading] = useState(false);
   const [purchases, setPurchases] = useState<PurchaseRow[]>([]);
   const [purchasesLoading, setPurchasesLoading] = useState(true);
