@@ -182,6 +182,14 @@ function MemberDrawerBody({
             setHasUnsavedChanges={setHasUnsavedChanges}
           />
         )}
+        {activeTab === "access" && showAccess && (
+          <MemberDrawerAccess
+            userId={member.user_id}
+            accountType={member.account_type}
+            organizationId={member.organization_id}
+            setHasUnsavedChanges={setHasUnsavedChanges}
+          />
+        )}
         {activeTab === "audit" && <MemberDrawerAudit userId={member.user_id} />}
       </div>
 
