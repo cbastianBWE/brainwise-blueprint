@@ -57,6 +57,8 @@ const comingSoonBadge: React.CSSProperties = {
 
 function PricingIndividual({ isMobile, onSignup }: { isMobile: boolean; onSignup: () => void }) {
   const tiers = Object.entries(PLANS) as [PlanTier, (typeof PLANS)[PlanTier]][];
+  const { featuresFor } = useSubscriptionPlans();
+
 
   return (
     <div>
