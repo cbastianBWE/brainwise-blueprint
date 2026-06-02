@@ -55,6 +55,14 @@ const renderPool = (uses: Record<string, number> | null) => {
 const instrumentLabel = (code: string) =>
   INSTRUMENTS.find((i) => i.code === code)?.label ?? code;
 
+const CERT_LABELS: Record<string, string> = {
+  ptp_coach: "PTP Certified Coach",
+  ai_transformation_coach: "AI Transformation Certified Coach",
+  ai_transformation_ptp_coach: "AI Transformation + PTP Certified Coach",
+  my_brainwise_coach: "My BrainWise Coach",
+};
+
+
 export default function MemberDrawerCoach({
   userId,
   fullName,
