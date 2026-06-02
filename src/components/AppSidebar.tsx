@@ -88,7 +88,7 @@ const superAdminNav: NavItem[] = [
   { title: "Global Features & Settings", url: "/super-admin/features", icon: SlidersHorizontal },
   
   { title: "Platform Health", url: "/super-admin/health", icon: Heart },
-  { title: "Coach Management", url: "/super-admin/coaches", icon: Users },
+  { title: "Coach Invitations", url: "/super-admin/coaches", icon: Users },
   { title: "Company Accounts", url: "/super-admin/companies", icon: Briefcase },
   { title: "Create Organization", url: "/super-admin/create-organization", icon: Plus },
   { title: "Version Management", url: "/super-admin/versions", icon: GitBranch },

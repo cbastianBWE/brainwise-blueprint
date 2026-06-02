@@ -1,7 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -53,6 +55,14 @@ const renderPool = (uses: Record<string, number> | null) => {
 const instrumentLabel = (code: string) =>
   INSTRUMENTS.find((i) => i.code === code)?.label ?? code;
 
+const CERT_LABELS: Record<string, string> = {
+  ptp_coach: "PTP Certified Coach",
+  ai_transformation_coach: "AI Transformation Certified Coach",
+  ai_transformation_ptp_coach: "AI Transformation + PTP Certified Coach",
+  my_brainwise_coach: "My BrainWise Coach",
+};
+
+
 export default function MemberDrawerCoach({
   userId,
   fullName,
@@ -62,14 +72,18 @@ export default function MemberDrawerCoach({
   setHasUnsavedChanges,
 }: Props) {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const [selectedCertId, setSelectedCertId] = useState<string>("");
   const [selectedInstrument, setSelectedInstrument] = useState<string>("");
   const [count, setCount] = useState<string>("1");
   const [grantDialogOpen, setGrantDialogOpen] = useState(false);
+  const [markCertifyOpen, setMarkCertifyOpen] = useState(false);
+  const [selectedCertType, setSelectedCertType] = useState<string>("");
 
   useEffect(() => {
-    setHasUnsavedChanges(grantDialogOpen);
-  }, [grantDialogOpen, setHasUnsavedChanges]);
+    setHasUnsavedChanges(grantDialogOpen || markCertifyOpen);
+  }, [grantDialogOpen, markCertifyOpen, setHasUnsavedChanges]);
 
   const certsQuery = useQuery({
     queryKey: ["coach-certifications", userId],
@@ -95,6 +109,31 @@ export default function MemberDrawerCoach({
     certsQuery.data?.find((c) => c.id === selectedCertId)?.certification_type ??
     "this certification";
 
+  const inProgressCerts = useMemo(
+    () =>
+      (certsQuery.data ?? []).filter(
+        (c) => c.status === "in_progress" && c.certification_type,
+      ),
+    [certsQuery.data],
+  );
+  const hasPtpReport = useMemo(
+    () =>
+      (certsQuery.data ?? []).some(
+        (c) =>
+          c.certification_type === "ptp_coach" &&
+          (c.status === "in_progress" || c.status === "certified"),
+      ),
+    [certsQuery.data],
+  );
+  const showCertActions = hasPtpReport || inProgressCerts.length > 0;
+
+  const openMarkCertify = () => {
+    const first = inProgressCerts[0]?.certification_type ?? "";
+    setSelectedCertType(first);
+    setMarkCertifyOpen(true);
+  };
+
+
   return (
     <div className="p-4 space-y-6">
       <section className="space-y-2">
@@ -118,6 +157,91 @@ export default function MemberDrawerCoach({
           </div>
         </div>
       </section>
+
+      {showCertActions && (
+        <section className="space-y-3">
+          <h3 className="text-sm font-semibold">Certification actions</h3>
+          <div className="rounded-md border p-3 space-y-3">
+            <div className="flex flex-wrap gap-2">
+              {hasPtpReport && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => navigate(`/super-admin/coach-report/${userId}`)}
+                >
+                  View PTP Report
+                </Button>
+              )}
+              {inProgressCerts.length > 0 && (
+                <Button size="sm" onClick={openMarkCertify}>
+                  Mark Certified
+                </Button>
+              )}
+            </div>
+            {markCertifyOpen && inProgressCerts.length > 1 && (
+              <div className="space-y-2">
+                <Label>Certification</Label>
+                <Select value={selectedCertType} onValueChange={setSelectedCertType}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select certification" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {inProgressCerts.map((c) => (
+                      <SelectItem
+                        key={c.id}
+                        value={c.certification_type as string}
+                      >
+                        {CERT_LABELS[c.certification_type as string] ??
+                          formatAccountType(c.certification_type)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
+
+          <JustifiedActionDialog
+            open={markCertifyOpen}
+            onOpenChange={setMarkCertifyOpen}
+            title="Mark coach as certified"
+            description={
+              <span>
+                You are about to mark{" "}
+                <strong>{fullName ?? email}</strong> as{" "}
+                <strong>
+                  {CERT_LABELS[selectedCertType] ??
+                    formatAccountType(selectedCertType)}
+                </strong>
+                .
+              </span>
+            }
+            successTitle="Coach certified"
+            onSubmit={async () => {
+              if (!user?.id || !selectedCertType) {
+                throw new Error("Missing context");
+              }
+              const { error } = await supabase
+                .from("coach_certifications")
+                .update({
+                  status: "certified",
+                  certified_at: new Date().toISOString(),
+                  certified_by: user.id,
+                })
+                .eq("user_id", userId)
+                .eq("certification_type", selectedCertType)
+                .eq("status", "in_progress");
+              if (error) throw error;
+              await queryClient.invalidateQueries({
+                queryKey: ["coach-certifications", userId],
+              });
+              return { changed: true };
+            }}
+          />
+        </section>
+      )}
+
+
 
       <section className="space-y-3">
         <h3 className="text-sm font-semibold">Free assessment attempts</h3>

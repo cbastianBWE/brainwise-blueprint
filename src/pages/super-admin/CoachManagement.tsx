@@ -1,7 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -24,14 +22,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Plus, Trash2, Download, Upload, Loader2 } from "lucide-react";
 import * as XLSX from "xlsx";
 
@@ -104,14 +94,8 @@ function inspectInviteCoachResponse(
   return { allSucceeded, summary, failures };
 }
 
-interface Coach {
-  id: string;
-  full_name: string | null;
-  email: string;
-  certifications: { id: string; certification_type: string; status: string }[];
-}
-
 interface BulkRow {
+
   first_name: string;
   last_name: string;
   email: string;
@@ -350,34 +334,18 @@ function UploadExcelTab() {
 
 // ─── Main Page ───
 export default function CoachManagement() {
-  const { user } = useAuth();
   const { toast } = useToast();
-  const navigate = useNavigate();
   const [invitations, setInvitations] = useState<Invitation[]>([]);
-  const [coaches, setCoaches] = useState<Coach[]>([]);
   const [loading, setLoading] = useState(true);
-  const [certifyCoach, setCertifyCoach] = useState<Coach | null>(null);
-  const [certifyType, setCertifyType] = useState("ptp_coach");
-  const [certifying, setCertifying] = useState(false);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
-    const [invRes, coachRes] = await Promise.all([
-      supabase.from("coach_invitations").select("id, first_name, last_name, email, certification_type, created_at, expires_at, email_send_status, email_send_error, email_last_attempt_at").eq("status", "pending").order("created_at", { ascending: false }),
-      supabase.from("users").select("id, full_name, email").eq("account_type", "coach").order("full_name"),
-    ]);
-    setInvitations((invRes.data as Invitation[]) || []);
-
-    const coachUsers = (coachRes.data || []) as { id: string; full_name: string | null; email: string }[];
-    if (coachUsers.length) {
-      const { data: certs } = await supabase.from("coach_certifications").select("id, user_id, certification_type, status").in("user_id", coachUsers.map((c) => c.id));
-      setCoaches(coachUsers.map((c) => ({
-        ...c,
-        certifications: (certs || []).filter((cert: any) => cert.user_id === c.id),
-      })));
-    } else {
-      setCoaches([]);
-    }
+    const { data } = await supabase
+      .from("coach_invitations")
+      .select("id, first_name, last_name, email, certification_type, created_at, expires_at, email_send_status, email_send_error, email_last_attempt_at")
+      .eq("status", "pending")
+      .order("created_at", { ascending: false });
+    setInvitations((data as Invitation[]) || []);
     setLoading(false);
   }, []);
 
@@ -403,27 +371,10 @@ export default function CoachManagement() {
     toast({ title: "Cancelled", description: `Invitation to ${inv.email} cancelled.` });
   };
 
-  const handleCertify = async () => {
-    if (!certifyCoach || !user) return;
-    setCertifying(true);
-    const { error } = await supabase.from("coach_certifications").update({
-      status: "certified",
-      certified_at: new Date().toISOString(),
-      certified_by: user.id,
-    }).eq("user_id", certifyCoach.id).eq("certification_type", certifyType).eq("status", "in_progress");
-    setCertifying(false);
-    if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
-    } else {
-      toast({ title: "Certified", description: `${certifyCoach.full_name || certifyCoach.email} marked as ${CERT_LABELS[certifyType]}.` });
-      setCertifyCoach(null);
-      fetchData();
-    }
-  };
-
   return (
     <div className="space-y-6 p-6">
-      <h1 className="text-2xl font-bold">Coach Management</h1>
+      <h1 className="text-2xl font-bold">Coach Invitations</h1>
+
 
       {/* Section 1 — Invite */}
       <Card>
@@ -499,95 +450,6 @@ export default function CoachManagement() {
           )}
         </CardContent>
       </Card>
-
-      {/* Section 3 — Active Coaches */}
-      <Card>
-        <CardHeader><CardTitle>Active Coaches</CardTitle></CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
-          ) : coaches.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-4">No coaches found.</p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Certifications</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {coaches.map((coach) => (
-                  <TableRow key={coach.id}>
-                    <TableCell>{coach.full_name || "—"}</TableCell>
-                    <TableCell>{coach.email}</TableCell>
-                    <TableCell className="flex flex-wrap gap-1">
-                      {coach.certifications.length === 0 ? (
-                        <span className="text-muted-foreground text-sm">None</span>
-                      ) : (
-                        coach.certifications.map((c) => (
-                          <Badge key={c.id} variant={c.status === "certified" ? "default" : "secondary"}>
-                            {CERT_LABELS[c.certification_type] || c.certification_type}
-                            {c.status === "certified" ? " ✓" : ` (${c.status})`}
-                          </Badge>
-                        ))
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        {coach.certifications.some((c) => c.certification_type === 'ptp_coach' && (c.status === 'in_progress' || c.status === 'certified')) && (
-                          <Button size="sm" variant="outline" onClick={() => navigate(`/super-admin/coach-report/${coach.id}`)}>
-                            View PTP Report
-                          </Button>
-                        )}
-                        {coach.certifications.some((c) => c.status === "in_progress") && (
-                          <Button size="sm" variant="outline" onClick={() => { setCertifyCoach(coach); setCertifyType(coach.certifications.find((c) => c.status === "in_progress")?.certification_type || "ptp_coach"); }}>
-                            Mark Certified
-                          </Button>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Certify Dialog */}
-      <Dialog open={!!certifyCoach} onOpenChange={(o) => !o && setCertifyCoach(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Mark Coach as Certified</DialogTitle>
-            <DialogDescription>
-              Certify {certifyCoach?.full_name || certifyCoach?.email} for the selected certification.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-2">
-            <Label>Certification</Label>
-            <Select value={certifyType} onValueChange={setCertifyType}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {(certifyCoach?.certifications || []).filter((c) => c.status === "in_progress").map((c) => (
-                  <SelectItem key={c.certification_type} value={c.certification_type}>
-                    {CERT_LABELS[c.certification_type] || c.certification_type}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setCertifyCoach(null)}>Cancel</Button>
-            <Button onClick={handleCertify} disabled={certifying}>
-              {certifying && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              Confirm Certification
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
