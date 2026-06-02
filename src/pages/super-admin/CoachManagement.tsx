@@ -94,14 +94,8 @@ function inspectInviteCoachResponse(
   return { allSucceeded, summary, failures };
 }
 
-interface Coach {
-  id: string;
-  full_name: string | null;
-  email: string;
-  certifications: { id: string; certification_type: string; status: string }[];
-}
-
 interface BulkRow {
+
   first_name: string;
   last_name: string;
   email: string;
