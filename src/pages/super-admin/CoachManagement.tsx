@@ -340,34 +340,18 @@ function UploadExcelTab() {
 
 // ─── Main Page ───
 export default function CoachManagement() {
-  const { user } = useAuth();
   const { toast } = useToast();
-  const navigate = useNavigate();
   const [invitations, setInvitations] = useState<Invitation[]>([]);
-  const [coaches, setCoaches] = useState<Coach[]>([]);
   const [loading, setLoading] = useState(true);
-  const [certifyCoach, setCertifyCoach] = useState<Coach | null>(null);
-  const [certifyType, setCertifyType] = useState("ptp_coach");
-  const [certifying, setCertifying] = useState(false);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
-    const [invRes, coachRes] = await Promise.all([
-      supabase.from("coach_invitations").select("id, first_name, last_name, email, certification_type, created_at, expires_at, email_send_status, email_send_error, email_last_attempt_at").eq("status", "pending").order("created_at", { ascending: false }),
-      supabase.from("users").select("id, full_name, email").eq("account_type", "coach").order("full_name"),
-    ]);
-    setInvitations((invRes.data as Invitation[]) || []);
-
-    const coachUsers = (coachRes.data || []) as { id: string; full_name: string | null; email: string }[];
-    if (coachUsers.length) {
-      const { data: certs } = await supabase.from("coach_certifications").select("id, user_id, certification_type, status").in("user_id", coachUsers.map((c) => c.id));
-      setCoaches(coachUsers.map((c) => ({
-        ...c,
-        certifications: (certs || []).filter((cert: any) => cert.user_id === c.id),
-      })));
-    } else {
-      setCoaches([]);
-    }
+    const { data } = await supabase
+      .from("coach_invitations")
+      .select("id, first_name, last_name, email, certification_type, created_at, expires_at, email_send_status, email_send_error, email_last_attempt_at")
+      .eq("status", "pending")
+      .order("created_at", { ascending: false });
+    setInvitations((data as Invitation[]) || []);
     setLoading(false);
   }, []);
 
@@ -393,27 +377,10 @@ export default function CoachManagement() {
     toast({ title: "Cancelled", description: `Invitation to ${inv.email} cancelled.` });
   };
 
-  const handleCertify = async () => {
-    if (!certifyCoach || !user) return;
-    setCertifying(true);
-    const { error } = await supabase.from("coach_certifications").update({
-      status: "certified",
-      certified_at: new Date().toISOString(),
-      certified_by: user.id,
-    }).eq("user_id", certifyCoach.id).eq("certification_type", certifyType).eq("status", "in_progress");
-    setCertifying(false);
-    if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
-    } else {
-      toast({ title: "Certified", description: `${certifyCoach.full_name || certifyCoach.email} marked as ${CERT_LABELS[certifyType]}.` });
-      setCertifyCoach(null);
-      fetchData();
-    }
-  };
-
   return (
     <div className="space-y-6 p-6">
-      <h1 className="text-2xl font-bold">Coach Management</h1>
+      <h1 className="text-2xl font-bold">Coach Invitations</h1>
+
 
       {/* Section 1 — Invite */}
       <Card>
