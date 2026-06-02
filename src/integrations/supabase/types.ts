@@ -7193,6 +7193,42 @@ export type Database = {
           },
         ]
       }
+      plan_tiers: {
+        Row: {
+          ai_coaching_limit: number
+          created_at: string
+          display_name: string
+          features: Json
+          is_active: boolean
+          one_time_credit_grant: number
+          sort_order: number
+          tier: string
+          updated_at: string
+        }
+        Insert: {
+          ai_coaching_limit?: number
+          created_at?: string
+          display_name: string
+          features?: Json
+          is_active?: boolean
+          one_time_credit_grant?: number
+          sort_order?: number
+          tier: string
+          updated_at?: string
+        }
+        Update: {
+          ai_coaching_limit?: number
+          created_at?: string
+          display_name?: string
+          features?: Json
+          is_active?: boolean
+          one_time_credit_grant?: number
+          sort_order?: number
+          tier?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       platform_features: {
         Row: {
           category: string | null
