@@ -170,9 +170,13 @@ export default function BillingSettings() {
               <div className="space-y-1">
                 <p className="text-sm font-medium text-foreground">What's included:</p>
                 <ul className="text-sm text-muted-foreground space-y-1 ml-4 list-disc">
-                  <li>Per-assessment purchases available ($29.99 each)</li>
-                  <li>No AI chat included</li>
-                  <li>No resources access</li>
+                  {(featuresFor("free") ?? [
+                    "Per-assessment purchases available ($29.99 each)",
+                    "10 AI coaching messages per assessment purchased",
+                    "Limited resource library access",
+                  ]).map((f) => (
+                    <li key={f}>{f}</li>
+                  ))}
                 </ul>
               </div>
             </>
