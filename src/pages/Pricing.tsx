@@ -152,10 +152,10 @@ export default function Pricing() {
             <Zap className="h-5 w-5 text-primary" /> Per-Assessment Purchase
           </h2>
           <p className="text-sm text-muted-foreground mt-1">
-            Buy individual instrument assessments — no subscription needed
+            Buy individual instrument assessments, no subscription needed
           </p>
         </div>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-4xl mx-auto">
+        <div className="grid sm:grid-cols-2 gap-4 max-w-2xl mx-auto">
           {ASSESSMENT_PURCHASE.instruments.map((inst) => {
             const assessmentPrice = oneTimePrice() ?? ASSESSMENT_PURCHASE.price;
             return (
@@ -177,6 +177,20 @@ export default function Pricing() {
             </Card>
             );
           })}
+          <Card className="text-center border-dashed">
+            <CardContent className="py-6 space-y-3 flex flex-col items-center justify-center h-full">
+              <p className="font-semibold text-foreground">NAI, AIRSA &amp; HSS</p>
+              <p className="text-sm text-muted-foreground">Available through a consultation with our team.</p>
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full"
+                onClick={() => navigate("/contact")}
+              >
+                Contact us
+              </Button>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
