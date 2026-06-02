@@ -6,6 +6,7 @@ import { useUserProfile } from "@/hooks/useUserProfile";
 import { useAccountRole } from "@/lib/accountRoles";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAiUsage } from "@/hooks/useAiUsage";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -244,6 +245,14 @@ export default function MyResults({ isCoachView = false, adminView = false, targ
   const { isBypassAdmin, isCoach, canBypassAssessmentPaywall } = useAccountRole();
   const effectiveTier = isBypassAdmin ? "premium" : (profile?.subscription_tier ?? "base");
   const hasActiveAccess = isBypassAdmin || profile?.subscription_status === "active";
+  const { usage: aiUsage, fetchUsage: fetchAiUsage } = useAiUsage();
+  const chatCreditBalance = aiUsage?.credit_balance ?? 0;
+  const canUseChat = hasActiveAccess || chatCreditBalance > 0;
+  useEffect(() => {
+    if (!isCoachView) {
+      fetchAiUsage(effectiveTier);
+    }
+  }, [isCoachView, effectiveTier, fetchAiUsage]);
   // Coaches are gated on assessment-take; hide "Take/Retake" CTAs for them.
   // Super admins (canBypassAssessmentPaywall) keep full access.
   const canTakeAssessments = canBypassAssessmentPaywall || !isCoach;
@@ -1533,7 +1542,7 @@ export default function MyResults({ isCoachView = false, adminView = false, targ
 
       {!isCoachView && selected && !selected.isAwaitingSupervisor && (
         <div className="fixed bottom-6 right-6 z-40 flex flex-col items-end gap-2">
-          {chatOpen && hasActiveAccess && (
+          {chatOpen && canUseChat && (
             <div className="w-80 sm:w-96 h-[480px] bg-background border border-border rounded-2xl shadow-2xl flex flex-col overflow-hidden">
               {/* Chat header */}
               <div className="bg-primary px-4 py-3 flex items-center justify-between">
@@ -1624,7 +1633,7 @@ export default function MyResults({ isCoachView = false, adminView = false, targ
           {/* Bubble toggle button */}
           <button
             onClick={() => {
-              if (!hasActiveAccess) {
+              if (!canUseChat) {
                 setShowChatUpgradeDialog(true);
               } else {
                 setChatOpen(prev => !prev);

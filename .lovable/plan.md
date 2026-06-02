@@ -1,26 +1,43 @@
-## Confirmation
+## MyResults Ask-AI credit awareness
 
-Both target files match the prompt's expectations:
-- `src/pages/Pricing.tsx` lines 148–181 contain the per-assessment section with the exact grid className, subhead text ("— no subscription needed"), and `.map` block described. `navigate` is already in scope (line 18).
-- `src/pages/marketing/Pricing.tsx` `PricingIndividual` signature (line 57), call site (line 482), and the "Or buy a single assessment" block (lines 180–190) match exactly. `setBriefingOpen` already exists for coach/enterprise.
+Frontend-only fix in `src/pages/MyResults.tsx`. Backend (`ai-chat` → `check-ai-usage`) already honors one-time chat credits; the UI just needs to stop forcing the upgrade dialog on non-subscribers who have a positive `credit_balance`.
 
-`/contact` is a real route (marketing Contact page).
+### Changes (single file: `src/pages/MyResults.tsx`)
 
-## Plan
+1. **Add import** alongside existing hook imports:
+   ```ts
+   import { useAiUsage } from "@/hooks/useAiUsage";
+   ```
 
-### File 1 — `src/pages/Pricing.tsx`
-1. Change subhead em dash: `"Buy individual instrument assessments — no subscription needed"` → `"Buy individual instrument assessments, no subscription needed"`.
-2. Change grid container from `grid sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-4xl mx-auto` → `grid sm:grid-cols-2 gap-4 max-w-2xl mx-auto`.
-3. Inside the grid `<div>`, immediately after the closing of the `ASSESSMENT_PURCHASE.instruments.map(...)`, add one dashed-border Contact card for "NAI, AIRSA & HSS" with a "Contact us" button routing to `/contact` via `navigate("/contact")`.
+2. **Inside the component** (near line 244, with other hooks):
+   ```ts
+   const { usage: aiUsage, fetchUsage: fetchAiUsage } = useAiUsage();
+   ```
 
-### File 2 — `src/pages/marketing/Pricing.tsx`
-1. Extend `PricingIndividual` props to also accept `onContact: () => void`.
-2. Update the call site to pass `onContact={() => setBriefingOpen(true)}`.
-3. In the "Or buy a single assessment" block, replace the paragraph text with: `${ASSESSMENT_PURCHASE.price} per assessment for the PTP. NAI, AIRSA, and HSS are available through a consultation.`
-4. Below the existing "Get Started" `MarketingButton`, add a second `MarketingButton variant="secondary"` labeled "Contact us" wired to `onContact`. Place both buttons together (side-by-side via the existing wrapper).
+3. **Preflight effect** (non-consuming; `fetchUsage` uses `check_only`):
+   ```ts
+   useEffect(() => {
+     if (!isCoachView) {
+       fetchAiUsage(effectiveTier);
+     }
+   }, [isCoachView, effectiveTier, fetchAiUsage]);
+   ```
 
-### Out of scope (untouched)
-Subscription plan cards, prices, checkout calls, coach/enterprise segments.
+4. **Derive credit-aware gate** right after line 246 (`hasActiveAccess`):
+   ```ts
+   const chatCreditBalance = aiUsage?.credit_balance ?? 0;
+   const canUseChat = hasActiveAccess || chatCreditBalance > 0;
+   ```
+
+5. **Swap two Ask-AI gate sites only**:
+   - Line ~1536: `chatOpen && hasActiveAccess` → `chatOpen && canUseChat`
+   - Line ~1627: `if (!hasActiveAccess)` → `if (!canUseChat)`
+
+### Out of scope (do not touch)
+- Other `hasActiveAccess` usages elsewhere in the file.
+- `sendChatMessage`, the `ai-chat` invoke, or any backend.
+- Upgrade-dialog copy (`showChatUpgradeDialog`) — it now only fires for users with neither subscription nor credits, which is correct.
+- Active-subscriber and bypass-admin behavior is unchanged (`hasActiveAccess` short-circuits `canUseChat`).
 
 ### Verification
-Type-check after edits.
+- Type-check clean after edits.
