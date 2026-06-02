@@ -33,7 +33,9 @@ import MemberDrawerAssignments from "./MemberDrawerAssignments";
 import MemberDrawerCoach from "./MemberDrawerCoach";
 import MemberDrawerAudit from "./MemberDrawerAudit";
 
-type TabId = "learning" | "assignments" | "coach" | "audit";
+import MemberDrawerAccess from "./MemberDrawerAccess";
+
+type TabId = "learning" | "assignments" | "coach" | "access" | "audit";
 
 interface Props {
   open: boolean;
@@ -68,6 +70,7 @@ function MemberDrawerBody({
   const [mentorDialogOpen, setMentorDialogOpen] = useState(false);
   const isSelf = member.user_id === currentUserId;
   const showCoach = member.show_coach_tab;
+  const showAccess = member.organization_id === null;
   const nextIsMentor = !member.is_mentor;
 
   useEffect(() => {
@@ -149,6 +152,7 @@ function MemberDrawerBody({
             <TabsTrigger value="learning">Learning</TabsTrigger>
             <TabsTrigger value="assignments">Assignments</TabsTrigger>
             {showCoach && <TabsTrigger value="coach">Coach</TabsTrigger>}
+            {showAccess && <TabsTrigger value="access">Access</TabsTrigger>}
             <TabsTrigger value="audit">Audit</TabsTrigger>
           </TabsList>
         </Tabs>
