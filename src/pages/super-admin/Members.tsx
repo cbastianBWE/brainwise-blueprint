@@ -28,8 +28,8 @@ import {
 } from "@/components/members/types";
 
 const PAGE_SIZE = 25;
-type TabId = "learning" | "assignments" | "coach" | "audit";
-const VALID_TABS: TabId[] = ["learning", "assignments", "coach", "audit"];
+type TabId = "learning" | "assignments" | "coach" | "access" | "audit";
+const VALID_TABS: TabId[] = ["learning", "assignments", "coach", "access", "audit"];
 
 // Inline by design — cycle 2a will extract to a hook.
 function membersQueryKey(
