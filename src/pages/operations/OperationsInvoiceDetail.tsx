@@ -127,11 +127,18 @@ export default function OperationsInvoiceDetail() {
                 Issued {formatDate(inv.issue_date)} · Due {formatDate(inv.due_date)}
               </p>
             </div>
-            {canPay && (
-              <Button onClick={handlePayNow} disabled={paying}>
-                {paying ? "Starting checkout…" : "Pay now"}
-              </Button>
-            )}
+            <div className="flex items-center gap-2">
+              {(inv.status === "draft" || inv.status === "sent") && (
+                <Button variant="outline" onClick={() => navigate(`/operations/invoices/${inv.id}/edit`)}>
+                  Edit
+                </Button>
+              )}
+              {canPay && (
+                <Button onClick={handlePayNow} disabled={paying}>
+                  {paying ? "Starting checkout…" : "Pay now"}
+                </Button>
+              )}
+            </div>
           </div>
         </CardHeader>
         <CardContent>

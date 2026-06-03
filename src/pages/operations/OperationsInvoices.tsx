@@ -4,6 +4,8 @@ import { useNavigate } from "react-router-dom";
 import { opsSupabase } from "@/integrations/supabase/operations-types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
 import { StatusBadge, formatMoney, formatDate } from "./_shared";
 
 export default function OperationsInvoices() {
@@ -40,9 +42,15 @@ export default function OperationsInvoices() {
 
   return (
     <div className="p-6 space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold">Invoices</h1>
-        <p className="text-muted-foreground text-sm">Operations · All invoices</p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold">Invoices</h1>
+          <p className="text-muted-foreground text-sm">Operations · All invoices</p>
+        </div>
+        <Button onClick={() => navigate("/operations/invoices/new")}>
+          <Plus className="h-4 w-4 mr-2" />
+          New invoice
+        </Button>
       </div>
       <Card>
         <CardHeader><CardTitle>All invoices</CardTitle></CardHeader>
