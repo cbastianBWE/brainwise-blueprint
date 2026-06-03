@@ -149,6 +149,37 @@ export default function OperationsInvoiceDetail() {
     navigate(`/operations/invoices/${data}`);
   }
 
+  async function handleSendInvoice() {
+    setSending(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("ops-invoice-send", { body: { invoice_id: inv.id } });
+      if (error || (data as any)?.error) {
+        const ctxMsg = error ? await readFunctionsErrorMessage(error) : null;
+        toast.error(ctxMsg ?? (data as any)?.error ?? error?.message ?? "Email failed");
+        return;
+      }
+      toast.success("Invoice emailed to the customer.");
+      invalidateInvoice();
+    } finally {
+      setSending(false);
+    }
+  }
+
+  async function handleSendReceipt() {
+    setSending(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("ops-payment-receipt", { body: { invoice_id: inv.id } });
+      if (error || (data as any)?.error) {
+        const ctxMsg = error ? await readFunctionsErrorMessage(error) : null;
+        toast.error(ctxMsg ?? (data as any)?.error ?? error?.message ?? "Email failed");
+        return;
+      }
+      toast.success("Receipt emailed to the customer.");
+    } finally {
+      setSending(false);
+    }
+  }
+
   async function runConfirmed() {
     if (!confirm) return;
     setActing(true);
