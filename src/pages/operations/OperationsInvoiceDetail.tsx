@@ -265,6 +265,17 @@ export default function OperationsInvoiceDetail() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
+                  {canSendInvoice && (
+                    <DropdownMenuItem disabled={sending} onClick={handleSendInvoice}>
+                      Send invoice to customer
+                    </DropdownMenuItem>
+                  )}
+                  {canSendReceipt && (
+                    <DropdownMenuItem disabled={sending} onClick={handleSendReceipt}>
+                      Send payment receipt
+                    </DropdownMenuItem>
+                  )}
+                  {hasSendItems && <DropdownMenuSeparator />}
                   {canMarkSent && (
                     <DropdownMenuItem onClick={handleMarkSent}>Mark as sent</DropdownMenuItem>
                   )}
