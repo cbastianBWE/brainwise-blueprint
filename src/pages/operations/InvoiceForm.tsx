@@ -150,6 +150,7 @@ export default function InvoiceForm() {
       terms_and_conditions: inv.terms_and_conditions ?? "",
     });
     const rows = (linesQ.data as any[]).map((l) => ({
+      item_id: l.item_id ?? "",
       description: l.description ?? "",
       quantity: l.quantity != null ? String(l.quantity) : "1",
       unit_price: l.unit_price != null ? String(l.unit_price) : "0",
