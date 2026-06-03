@@ -126,6 +126,63 @@ export default function OperationsInvoiceDetail() {
     }
   }
 
+  function invalidateInvoice() {
+    qc.invalidateQueries({ queryKey: ["ops", "invoice", inv.id] });
+    qc.invalidateQueries({ queryKey: ["ops", "invoices", "list"] });
+    if (inv?.customer_id) {
+      qc.invalidateQueries({ queryKey: ["ops", "customer-invoices", inv.customer_id] });
+    }
+  }
+
+  async function handleMarkSent() {
+    const { error } = await supabase.rpc("ops_set_invoice_status", { p_id: inv.id, p_action: "mark_sent" });
+    if (error) { toast.error(error.message ?? "Action failed"); return; }
+    toast.success("Invoice marked as sent.");
+    invalidateInvoice();
+  }
+
+  async function handleClone() {
+    const { data, error } = await supabase.rpc("ops_clone_invoice", { p_id: inv.id });
+    if (error) { toast.error(error.message ?? "Action failed"); return; }
+    toast.success("Invoice cloned.");
+    navigate(`/operations/invoices/${data}`);
+  }
+
+  async function runConfirmed() {
+    if (!confirm) return;
+    setActing(true);
+    try {
+      if (confirm === "void") {
+        const { error } = await supabase.rpc("ops_set_invoice_status", { p_id: inv.id, p_action: "void" });
+        if (error) { toast.error(error.message ?? "Action failed"); return; }
+        toast.success("Invoice voided.");
+        invalidateInvoice();
+      } else if (confirm === "write_off") {
+        const { error } = await supabase.rpc("ops_set_invoice_status", { p_id: inv.id, p_action: "write_off" });
+        if (error) { toast.error(error.message ?? "Action failed"); return; }
+        toast.success("Invoice written off.");
+        invalidateInvoice();
+      } else if (confirm === "delete") {
+        const { error } = await supabase.rpc("ops_delete_draft_invoice", { p_id: inv.id });
+        if (error) { toast.error(error.message ?? "Action failed"); return; }
+        toast.success("Draft deleted.");
+        qc.invalidateQueries({ queryKey: ["ops", "invoices", "list"] });
+        navigate("/operations/invoices");
+      }
+      setConfirm(null);
+    } finally {
+      setActing(false);
+    }
+  }
+
+  const status = (inv?.status ?? "").toLowerCase();
+  const amountPaid = Number(inv?.amount_paid ?? 0);
+  const canMarkSent = status === "draft";
+  const canVoid = amountPaid === 0 && !PAID_TERMINAL.has(status);
+  const canWriteOff = WRITE_OFF_STATUSES.has(status);
+  const canDeleteDraft = status === "draft";
+  const hasDestructive = canVoid || canWriteOff || canDeleteDraft;
+
   if (invoiceQ.isLoading) {
     return <div className="p-6 text-muted-foreground text-sm">Loading…</div>;
   }
