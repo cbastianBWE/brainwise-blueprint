@@ -45,10 +45,16 @@ export default function OperationsCustomerDetail() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-4 space-y-0">
           <CardTitle>{c?.display_name ?? (customerQ.isLoading ? "Loading…" : "Customer")}</CardTitle>
-          <Button variant="outline" size="sm" disabled={!c} onClick={() => setEditOpen(true)}>
-            <Pencil className="h-4 w-4 mr-2" />
-            Edit
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" disabled={!c} onClick={() => setEditOpen(true)}>
+              <Pencil className="h-4 w-4 mr-2" />
+              Edit
+            </Button>
+            <Button size="sm" disabled={!c} onClick={() => navigate(`/operations/invoices/new?customer=${id}`)}>
+              <Plus className="h-4 w-4 mr-2" />
+              New invoice
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           {customerQ.isLoading ? (
