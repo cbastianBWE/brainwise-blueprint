@@ -11355,6 +11355,10 @@ export type Database = {
         Args: { p_header: Json; p_lines: Json }
         Returns: string
       }
+      ops_create_invoice_from_project: {
+        Args: { p_date_from: string; p_date_to: string; p_project: string }
+        Returns: string
+      }
       ops_delete_draft_invoice: { Args: { p_id: string }; Returns: undefined }
       ops_due_payment_reminders: { Args: never; Returns: Json }
       ops_flag_overdue_invoices: { Args: never; Returns: number }
