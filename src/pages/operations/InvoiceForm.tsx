@@ -249,6 +249,7 @@ export default function InvoiceForm() {
     };
 
     const p_lines = lines.map((r) => ({
+      item_id: r.item_id || null,
       description: r.description,
       quantity: toNum(r.quantity, 1),
       unit_price: toNum(r.unit_price, 0),
