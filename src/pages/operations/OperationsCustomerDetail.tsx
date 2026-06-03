@@ -157,6 +157,18 @@ export default function OperationsCustomerDetail() {
         </CardContent>
       </Card>
 
+      <Card>
+        <CardHeader><CardTitle>Time</CardTitle></CardHeader>
+        <CardContent>
+          {timeRollupQ.isLoading ? (
+            <p className="text-muted-foreground text-sm">Loading…</p>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              Total {timeTotals.total} h · Billable {timeTotals.billable} h · Unbilled {timeTotals.unbilled} h
+            </p>
+          )}
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader><CardTitle>Invoices</CardTitle></CardHeader>
