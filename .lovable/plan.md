@@ -1,78 +1,112 @@
-# Operations Phase 2 — Time logging + rollups
+# Operations Phase 2 — Expenses
 
-Additive only. No existing query, type, or component behavior is altered. All work uses `opsSupabase` (operations schema) and follows the `TaskFormDialog.tsx` patterns (sonner toasts, `useQueryClient.invalidateQueries`, `useEffect` reset on open, error state).
+Additive only. No existing query, type, or component behavior is changed. Uses the typed `opsSupabase` client. Mirrors the patterns in `LogTimeDialog.tsx` and `TaskFormDialog.tsx` (sonner toasts, `useQuery` + `useQueryClient.invalidateQueries`, `useEffect` reset on open, local `error` state).
+
+Backend is already in place: `operations.expenses`, `operations.expense_categories` (DB defaults populate `org_id` + `created_by`), private storage bucket `operations-receipts` with org-path-scoped RLS, and 6 seeded active categories.
 
 ## 1. `src/integrations/supabase/operations-types.ts`
 
-Surgical edits to two regions, nothing else touched.
+Two surgical edits, nothing else touched:
 
-- **time_entries.Insert (lines 1642–1663)**: change `org_id: string` → `org_id?: string` and `user_id: string` → `user_id?: string`. `Row` (1620–1641) and `Update` (1664–1685) untouched. DB defaults populate these.
-- **Views block (line 1731)**: add a new view entry `project_time_rollup` with the exact Row shape from the request (org_id, customer_id, customer_name, project_id, project_name, entry_count, total_hours, billable_hours, nonbillable_hours, invoiced_hours, uninvoiced_hours, unbilled_billable_hours — all nullable) and `Relationships: []`. Inserted alongside existing views; existing views (`ar_aging_detail`, `ar_aging_summary`, `customer_balance_summary`, …) unchanged.
+- `expenses.Insert` → change `org_id: string` to `org_id?: string`.
+- `expense_categories.Insert` → change `org_id: string` to `org_id?: string`.
 
-## 2. `src/pages/operations/LogTimeDialog.tsx` (new)
+`Row` and `Update` left alone for both tables. DB defaults populate the field.
 
-Mirrors `TaskFormDialog.tsx` structure: same imports for Dialog/Button/Input/Label/Textarea/Checkbox, plus `Select` family from `@/components/ui/select`, `useQuery` + `useQueryClient` from TanStack, `toast` from sonner, `opsSupabase`.
+## 2. New file `src/pages/operations/LogExpenseDialog.tsx`
 
-Props: `{ open, onOpenChange, projectId }`.
+Props: `{ open, onOpenChange, projectId, customerId }`.
 
-State (controlled, reset on `open`):
-- `date` (default `new Date().toISOString().slice(0,10)`)
-- `taskId` (string, "" = No task)
-- `memberId` (string)
-- `hours` (string)
-- `is_billable` (boolean, default true)
-- `description` (string)
-- `submitting`, `error`
-
-Queries (enabled when `open`):
-- `["ops","project-tasks-select", projectId]` → `project_tasks` select `id, name` filtered by `project_id`, ordered by `sort_order`.
-- `["ops","ops-users"]` → `users` select `id, full_name, email` where `status = "active"`, ordered by `full_name`.
-
-Default member resolution effect: when dialog opens and `memberId` empty, call `opsSupabase.auth.getUser()`; if the returned `user.id` exists in the members list use it, otherwise use the first member id.
-
-Validation: `hours` parsed as Number, must be finite and > 0; `memberId` and `date` required. On failure: set `error`, no insert.
-
-Submit:
+**Org resolution (on open):**
+```ts
+const { data: auth } = await opsSupabase.auth.getUser();
+const { data: u } = await opsSupabase.from("users")
+  .select("org_id").eq("id", auth.user.id).maybeSingle();
+setOrgId(u?.org_id ?? null);
 ```
-await opsSupabase.from("time_entries").insert({
+
+**Queries (enabled when open):**
+- `["ops","expense-categories"]` → `expense_categories.select("id, name").eq("is_active", true).order("name")`.
+
+**State (reset on open):** `date` (today YYYY-MM-DD), `expense_category_id` (""), `is_mileage` (false), `amount`, `miles_driven`, `per_mile_rate`, `vendor_name`, `is_billable` (false), `markup_percentage`, `notes`, `receiptFile: File|null`, `submitting`, `error`.
+
+**Layout:**
+- Row 1 (2-col grid): Date input. Amount input — hidden when `is_mileage` is on; replaced by read-only computed Amount = `miles*rate` below the mileage inputs.
+- Mileage checkbox; when on, show Miles + Per-mile rate inputs (and the computed read-only Amount).
+- Category Select; first item "No category" maps to "".
+- Vendor input.
+- Billable checkbox; when on, show Markup % input.
+- Receipt file input (`accept="image/*,application/pdf"`).
+- Notes textarea.
+- `DialogFooter` Cancel / Submit.
+
+**Validation:**
+- `date` required.
+- If `is_mileage`: `miles_driven` and `per_mile_rate` finite > 0; amount = miles × rate.
+- Else: `amount` finite > 0.
+
+**Submit:**
+```ts
+let receipt_storage_path: string | null = null;
+if (receiptFile && orgId) {
+  const safe = receiptFile.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+  const path = `${orgId}/${crypto.randomUUID()}-${safe}`;
+  const up = await opsSupabase.storage
+    .from("operations-receipts").upload(path, receiptFile);
+  if (up.error) throw up.error;
+  receipt_storage_path = path;
+}
+const { error } = await opsSupabase.from("expenses").insert({
   project_id: projectId,
-  project_task_id: taskId || null,
-  user_id: memberId,
+  customer_id: customerId ?? null,
   date,
-  hours: Number(hours),
+  expense_category_id: expense_category_id || null,
+  vendor_name: vendor_name.trim() || null,
+  amount: Number(amount),
   is_billable,
-  description: description.trim() || null,
+  markup_percentage: is_billable && markup_percentage.trim()
+    ? Number(markup_percentage) : null,
+  is_mileage,
+  miles_driven: is_mileage ? Number(miles_driven) : null,
+  per_mile_rate: is_mileage ? Number(per_mile_rate) : null,
+  receipt_storage_path,
+  notes: notes.trim() || null,
 });
 ```
-No `org_id`, no `created_by`. On success: `toast.success("Time logged")`, close dialog, then invalidate the three keys exactly as specified (`["ops","project-time", projectId]`, `["ops","project-time-rollup", projectId]`, `["ops","customer-time-rollup"]`). On error: `toast.error(err?.message ?? "Failed to log time")` in the `catch`; `finally` clears `submitting`.
+No `org_id` or `created_by` passed.
 
-UI layout (matches TaskFormDialog spacing): Title "Log time", grid for Date/Hours, full-width Select for Task ("No task" first option → ""), full-width Select for Team member, Billable checkbox row, Description textarea, DialogFooter Cancel/Submit.
+- Success: `toast.success("Expense logged")`, close, invalidate `["ops","project-expenses", projectId]` and `["ops","project-expense-rollup", projectId]`.
+- Error: `toast.error(err?.message ?? "Failed to log expense")`.
+- `finally`: clear `submitting`.
 
-## 3. `src/pages/operations/OperationsProjectDetail.tsx` — additive
+## 3. `src/pages/operations/OperationsProjectDetail.tsx` — additive only
 
-No edits to existing imports/queries/JSX beyond additions:
-- Import `LogTimeDialog`, `useState` already imported.
-- Add `const [logTimeOpen, setLogTimeOpen] = useState(false)`.
-- Add two queries alongside existing ones:
-  - `["ops","project-time-rollup", id]` → `project_time_rollup` select `total_hours, billable_hours, unbilled_billable_hours` `.eq("project_id", id).maybeSingle()`.
-  - `["ops","project-time", id]` → `time_entries` select `id, date, hours, is_billable, is_invoiced, description, project_tasks(name), users!time_entries_user_id_fkey(full_name, email)` `.eq("project_id", id).order("date", { ascending: false })`.
-- New "Time" Card inserted **after** the Tasks Card and **before** the existing `ProjectFormDialog`/`TaskFormDialog` renders. Header has title "Time" with right-aligned "Log time" Button (`disabled={!p}`, sets `logTimeOpen`).
-- Card body: summary line `Total {…||0} h · Billable {…||0} h · Unbilled {…||0} h`. Then `Table` with columns Date, Task, Member, Hours (right), Billable, Status (Invoiced/Unbilled). Loading and empty ("No time logged yet.") states match the Tasks card style.
-- Render `<LogTimeDialog open={logTimeOpen} onOpenChange={setLogTimeOpen} projectId={id} />` next to existing `TaskFormDialog`.
+- Import `LogExpenseDialog`.
+- Add `const [logExpenseOpen, setLogExpenseOpen] = useState(false);`.
+- Add a new "Expenses" Card after the Time card with:
+  - **Rollup query** `["ops","project-expense-rollup", id]`:
+    ```ts
+    opsSupabase.from("unbilled_expenses")
+      .select("unbilled_amount, expense_count")
+      .eq("project_id", id).maybeSingle()
+    ```
+    Line: `Unbilled {formatMoney(unbilled_amount||0, p?.currency_code)} across {expense_count||0} expense(s).`
+  - **Header button** "Log expense" (`disabled={!p}`, opens dialog).
+  - **Entries query** `["ops","project-expenses", id]`:
+    ```ts
+    opsSupabase.from("expenses").select(
+      "id, date, amount, is_billable, is_invoiced, vendor_name, is_mileage, currency_code, expense_categories(name)"
+    ).eq("project_id", id).order("date", { ascending: false })
+    ```
+    Columns: Date, Category (`row.expense_categories?.name ?? "—"`), Vendor (`vendor_name ?? "—"`), Amount (right-aligned, `formatMoney(amount, currency_code)`), Billable (Yes/No), Status (`is_invoiced ? "Invoiced" : "Unbilled"`). Empty: "No expenses yet." Loading/empty styles match the Time card.
+- Render `<LogExpenseDialog open={logExpenseOpen} onOpenChange={setLogExpenseOpen} projectId={id} customerId={p?.customer_id} />` alongside the existing dialogs.
 
-## 4. `src/pages/operations/OperationsCustomerDetail.tsx` — additive
+## Untouched
 
-- Add query `["ops","customer-time-rollup", id]` → `project_time_rollup` select `total_hours, billable_hours, unbilled_billable_hours` `.eq("customer_id", id)` (returns array of rows, one per project).
-- Insert a new compact "Time" Card **after the Projects Card and before the Invoices Card**. No button.
-- Sum each field across rows in a small helper (treating nulls as 0); display three figures: Total, Billable, Unbilled (each suffixed with " h"). Loading shows "Loading…"; zero-row case shows zeros.
+Pay Now, Record payment, lifecycle dropdown, Send invoice/receipt, time logging, customer time rollup, customer detail page, invoice queries, line items, totals, and all `ops_*` RPCs. Only the two `Insert` types are loosened (additive — pre-existing inserts that already pass `org_id` continue to type-check).
 
-## Untouched (verified)
-- Existing time/queries: none exist yet, so nothing to regress.
-- Tasks card, Project/Task dialogs, Customer invoices/projects tables, all `ops_*` RPC flows in the invoice detail page — none modified.
-- `time_entries.Row` and `.Update` typings, all existing view typings, and every other table block in `operations-types.ts` remain byte-identical.
+## Files
 
-## Type-check expectations
-- The Insert relaxation makes `org_id`/`user_id` optional, matching the request; existing code does not insert into `time_entries` anywhere yet, so no callers break.
-- The new view typing only adds a key under `Views`, additive to `OperationsDatabase`.
-
-Awaiting approval to build.
+- edit `src/integrations/supabase/operations-types.ts`
+- create `src/pages/operations/LogExpenseDialog.tsx`
+- edit `src/pages/operations/OperationsProjectDetail.tsx`
