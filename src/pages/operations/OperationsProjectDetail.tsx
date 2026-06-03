@@ -1,0 +1,180 @@
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { Link, useParams } from "react-router-dom";
+import { opsSupabase } from "@/integrations/supabase/operations-types";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { Pencil, Plus } from "lucide-react";
+import { formatMoney } from "./_shared";
+import ProjectFormDialog, { ProjectRecord } from "./ProjectFormDialog";
+import TaskFormDialog, { TaskRecord } from "./TaskFormDialog";
+
+const BILLING_LABELS: Record<string, string> = {
+  fixed: "Fixed cost",
+  project_hours: "Project hourly",
+  task_hours: "Task hourly",
+  staff_hours: "Staff hourly",
+};
+
+export default function OperationsProjectDetail() {
+  const { id = "" } = useParams();
+  const [editOpen, setEditOpen] = useState(false);
+  const [taskOpen, setTaskOpen] = useState(false);
+  const [editingTask, setEditingTask] = useState<TaskRecord | null>(null);
+
+  const projectQ = useQuery({
+    queryKey: ["ops", "project", id],
+    enabled: !!id,
+    queryFn: async () => {
+      const { data, error } = await opsSupabase
+        .from("projects")
+        .select("*")
+        .eq("id", id)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const p = projectQ.data as any;
+
+  const customerQ = useQuery({
+    queryKey: ["ops", "project-customer", p?.customer_id],
+    enabled: !!p?.customer_id,
+    queryFn: async () => {
+      const { data, error } = await opsSupabase
+        .from("customers")
+        .select("display_name")
+        .eq("id", p.customer_id)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const tasksQ = useQuery({
+    queryKey: ["ops", "project-tasks", id],
+    enabled: !!id,
+    queryFn: async () => {
+      const { data, error } = await opsSupabase
+        .from("project_tasks")
+        .select("id, name, task_hourly_rate, budget_hours, is_billable, description, project_id")
+        .eq("project_id", id)
+        .order("sort_order");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const billingLabel = p?.billing_method ? BILLING_LABELS[p.billing_method] ?? p.billing_method : "—";
+
+  return (
+    <div className="p-6 space-y-6">
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between gap-4 space-y-0">
+          <div className="space-y-1">
+            <CardTitle>{p?.name ?? (projectQ.isLoading ? "Loading…" : "Project")}</CardTitle>
+            {p?.customer_id && (
+              <p className="text-sm text-muted-foreground">
+                Customer:{" "}
+                <Link to={`/operations/customers/${p.customer_id}`} className="underline">
+                  {customerQ.data?.display_name ?? "View customer"}
+                </Link>
+              </p>
+            )}
+          </div>
+          <Button variant="outline" size="sm" disabled={!p} onClick={() => setEditOpen(true)}>
+            <Pencil className="h-4 w-4 mr-2" />
+            Edit
+          </Button>
+        </CardHeader>
+        <CardContent>
+          {projectQ.isLoading ? (
+            <p className="text-muted-foreground text-sm">Loading…</p>
+          ) : !p ? (
+            <p className="text-destructive text-sm">Project not found.</p>
+          ) : (
+            <dl className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+              <div><dt className="text-muted-foreground">Status</dt><dd className="capitalize">{p.status ?? "—"}</dd></div>
+              <div><dt className="text-muted-foreground">Billing method</dt><dd>{billingLabel}</dd></div>
+              {p.billing_method === "fixed" && (
+                <div>
+                  <dt className="text-muted-foreground">Fixed cost</dt>
+                  <dd>{p.fixed_cost_amount == null ? "—" : formatMoney(p.fixed_cost_amount, p.currency_code)}</dd>
+                </div>
+              )}
+              {p.billing_method === "project_hours" && (
+                <div>
+                  <dt className="text-muted-foreground">Project hourly rate</dt>
+                  <dd>{p.project_hourly_rate == null ? "—" : formatMoney(p.project_hourly_rate, p.currency_code)}</dd>
+                </div>
+              )}
+            </dl>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between gap-4 space-y-0">
+          <CardTitle>Tasks</CardTitle>
+          <Button size="sm" disabled={!p} onClick={() => { setEditingTask(null); setTaskOpen(true); }}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add task
+          </Button>
+        </CardHeader>
+        <CardContent>
+          {tasksQ.isLoading ? (
+            <p className="text-muted-foreground text-sm">Loading…</p>
+          ) : !tasksQ.data || tasksQ.data.length === 0 ? (
+            <p className="text-muted-foreground text-sm">No tasks yet.</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead className="text-right">Rate</TableHead>
+                  <TableHead className="text-right">Budget hours</TableHead>
+                  <TableHead>Billable</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {tasksQ.data.map((t: any) => (
+                  <TableRow
+                    key={t.id}
+                    onClick={() => { setEditingTask(t as TaskRecord); setTaskOpen(true); }}
+                    className="cursor-pointer"
+                  >
+                    <TableCell className="font-medium">{t.name}</TableCell>
+                    <TableCell className="text-right">
+                      {t.task_hourly_rate == null ? "—" : formatMoney(t.task_hourly_rate, p?.currency_code)}
+                    </TableCell>
+                    <TableCell className="text-right">{t.budget_hours ?? "—"}</TableCell>
+                    <TableCell>{t.is_billable ? "Yes" : "No"}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+
+      {p && (
+        <ProjectFormDialog
+          open={editOpen}
+          onOpenChange={setEditOpen}
+          customerId={p.customer_id}
+          project={p as ProjectRecord}
+        />
+      )}
+      {id && (
+        <TaskFormDialog
+          open={taskOpen}
+          onOpenChange={(o) => { setTaskOpen(o); if (!o) setEditingTask(null); }}
+          projectId={id}
+          task={editingTask}
+        />
+      )}
+    </div>
+  );
+}
