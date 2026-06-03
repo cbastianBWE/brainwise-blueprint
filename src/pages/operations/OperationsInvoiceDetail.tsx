@@ -2,15 +2,34 @@ import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { toast } from "sonner";
+import { ChevronDown } from "lucide-react";
 import { opsSupabase } from "@/integrations/supabase/operations-types";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from "@/components/ui/alert-dialog";
 import { StatusBadge, formatMoney, formatDate } from "./_shared";
 import RecordPaymentDialog from "./RecordPaymentDialog";
 
 const PAID_TERMINAL = new Set(["paid", "void", "written_off"]);
+const WRITE_OFF_STATUSES = new Set(["sent", "viewed", "overdue", "partially_paid"]);
 
 export default function OperationsInvoiceDetail() {
   const { id = "" } = useParams();
@@ -19,6 +38,8 @@ export default function OperationsInvoiceDetail() {
   const qc = useQueryClient();
   const [paying, setPaying] = useState(false);
   const [recordOpen, setRecordOpen] = useState(false);
+  const [confirm, setConfirm] = useState<null | "void" | "write_off" | "delete">(null);
+  const [acting, setActing] = useState(false);
 
   const invoiceQ = useQuery({
     queryKey: ["ops", "invoice", id],
