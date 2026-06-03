@@ -20,6 +20,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Plus, Trash2 } from "lucide-react";
 
 type LineRow = {
+  item_id: string;
   description: string;
   quantity: string;
   unit_price: string;
@@ -43,6 +44,7 @@ type HeaderState = {
 const todayISO = () => new Date().toISOString().slice(0, 10);
 
 const emptyLine = (): LineRow => ({
+  item_id: "",
   description: "",
   quantity: "1",
   unit_price: "0",
@@ -99,6 +101,19 @@ export default function InvoiceForm() {
     },
   });
 
+  const itemsQ = useQuery({
+    queryKey: ["ops", "items", "select-list"],
+    queryFn: async () => {
+      const { data, error } = await opsSupabase
+        .from("items")
+        .select("id, name, default_selling_price")
+        .eq("status", "active")
+        .order("name");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
   const invoiceQ = useQuery({
     queryKey: ["ops", "invoice", id, "edit-prefill"],
     enabled: isEdit,
@@ -119,7 +134,7 @@ export default function InvoiceForm() {
     queryFn: async () => {
       const { data, error } = await opsSupabase
         .from("document_lines")
-        .select("description, quantity, unit_price, discount_amount, sort_order")
+        .select("item_id, description, quantity, unit_price, discount_amount, sort_order")
         .eq("document_type", "invoice")
         .eq("document_id", id!)
         .neq("line_type", "header")
@@ -148,6 +163,7 @@ export default function InvoiceForm() {
       terms_and_conditions: inv.terms_and_conditions ?? "",
     });
     const rows = (linesQ.data as any[]).map((l) => ({
+      item_id: l.item_id ?? "",
       description: l.description ?? "",
       quantity: l.quantity != null ? String(l.quantity) : "1",
       unit_price: l.unit_price != null ? String(l.unit_price) : "0",
@@ -233,6 +249,7 @@ export default function InvoiceForm() {
     };
 
     const p_lines = lines.map((r) => ({
+      item_id: r.item_id || null,
       description: r.description,
       quantity: toNum(r.quantity, 1),
       unit_price: toNum(r.unit_price, 0),
@@ -368,6 +385,7 @@ export default function InvoiceForm() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-56">Item</TableHead>
                   <TableHead>Description</TableHead>
                   <TableHead className="w-24 text-right">Qty</TableHead>
                   <TableHead className="w-32 text-right">Unit price</TableHead>
@@ -379,6 +397,34 @@ export default function InvoiceForm() {
               <TableBody>
                 {lines.map((r, i) => (
                   <TableRow key={i}>
+                    <TableCell>
+                      <Select
+                        value={r.item_id || "__custom__"}
+                        onValueChange={(v) => {
+                          if (v === "__custom__") {
+                            setLine(i, { item_id: "" });
+                          } else {
+                            const it = (itemsQ.data ?? []).find((x: any) => x.id === v) as any;
+                            setLine(i, {
+                              item_id: v,
+                              description: it?.name ?? r.description,
+                              unit_price:
+                                it?.default_selling_price != null
+                                  ? String(it.default_selling_price)
+                                  : r.unit_price,
+                            });
+                          }
+                        }}
+                      >
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="__custom__">Custom / free-form</SelectItem>
+                          {(itemsQ.data ?? []).map((it: any) => (
+                            <SelectItem key={it.id} value={it.id}>{it.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
                     <TableCell>
                       <Input
                         value={r.description}
