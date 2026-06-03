@@ -7,12 +7,21 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { Pencil, Plus } from "lucide-react";
 import CustomerFormDialog from "./CustomerFormDialog";
+import ProjectFormDialog from "./ProjectFormDialog";
 import { StatusBadge, formatMoney, formatDate } from "./_shared";
+
+const BILLING_LABELS: Record<string, string> = {
+  fixed: "Fixed cost",
+  project_hours: "Project hourly",
+  task_hours: "Task hourly",
+  staff_hours: "Staff hourly",
+};
 
 export default function OperationsCustomerDetail() {
   const { id = "" } = useParams();
   const navigate = useNavigate();
   const [editOpen, setEditOpen] = useState(false);
+  const [projectOpen, setProjectOpen] = useState(false);
 
   const customerQ = useQuery({
     queryKey: ["ops", "customer", id],
@@ -33,6 +42,20 @@ export default function OperationsCustomerDetail() {
         .select("id, invoice_number, status, issue_date, due_date, total_amount, balance_due, currency_code")
         .eq("customer_id", id)
         .order("issue_date", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const projectsQ = useQuery({
+    queryKey: ["ops", "customer-projects", id],
+    enabled: !!id,
+    queryFn: async () => {
+      const { data, error } = await opsSupabase
+        .from("projects")
+        .select("id, name, billing_method, status, budget_hours, budget_amount")
+        .eq("customer_id", id)
+        .order("name");
       if (error) throw error;
       return data ?? [];
     },
@@ -71,6 +94,47 @@ export default function OperationsCustomerDetail() {
           )}
         </CardContent>
       </Card>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between gap-4 space-y-0">
+          <CardTitle>Projects</CardTitle>
+          <Button size="sm" disabled={!c} onClick={() => setProjectOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            New project
+          </Button>
+        </CardHeader>
+        <CardContent>
+          {projectsQ.isLoading ? (
+            <p className="text-muted-foreground text-sm">Loading…</p>
+          ) : !projectsQ.data || projectsQ.data.length === 0 ? (
+            <p className="text-muted-foreground text-sm">No projects yet.</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Billing method</TableHead>
+                  <TableHead>Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {projectsQ.data.map((proj: any) => (
+                  <TableRow
+                    key={proj.id}
+                    onClick={() => navigate(`/operations/projects/${proj.id}`)}
+                    className="cursor-pointer"
+                  >
+                    <TableCell className="font-medium">{proj.name}</TableCell>
+                    <TableCell>{BILLING_LABELS[proj.billing_method] ?? proj.billing_method ?? "—"}</TableCell>
+                    <TableCell className="capitalize">{proj.status ?? "—"}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+
 
       <Card>
         <CardHeader><CardTitle>Invoices</CardTitle></CardHeader>
@@ -112,6 +176,13 @@ export default function OperationsCustomerDetail() {
         </CardContent>
       </Card>
       <CustomerFormDialog open={editOpen} onOpenChange={setEditOpen} customer={c ?? null} />
+      {id && (
+        <ProjectFormDialog
+          open={projectOpen}
+          onOpenChange={setProjectOpen}
+          customerId={id}
+        />
+      )}
     </div>
   );
 }

@@ -99,6 +99,7 @@ import OperationsCustomers from "./pages/operations/OperationsCustomers";
 import OperationsCustomerDetail from "./pages/operations/OperationsCustomerDetail";
 import OperationsInvoices from "./pages/operations/OperationsInvoices";
 import OperationsItems from "./pages/operations/OperationsItems";
+import OperationsProjectDetail from "./pages/operations/OperationsProjectDetail";
 import OperationsInvoiceDetail from "./pages/operations/OperationsInvoiceDetail";
 import InvoiceForm from "./pages/operations/InvoiceForm";
 import EpnComplete from "./pages/EpnComplete";
@@ -245,6 +246,7 @@ const App = () => (
               <Route path="/operations/invoices/new" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><InvoiceForm /></SuperAdminSessionProvider></RoleGuard>} />
               <Route path="/operations/invoices/:id/edit" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><InvoiceForm /></SuperAdminSessionProvider></RoleGuard>} />
               <Route path="/operations/invoices/:id" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsInvoiceDetail /></SuperAdminSessionProvider></RoleGuard>} />
+              <Route path="/operations/projects/:id" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsProjectDetail /></SuperAdminSessionProvider></RoleGuard>} />
             </Route>
 
             {/* Legacy redirects */}
