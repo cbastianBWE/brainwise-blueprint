@@ -10,6 +10,7 @@ import { formatMoney } from "./_shared";
 import ProjectFormDialog, { ProjectRecord } from "./ProjectFormDialog";
 import TaskFormDialog, { TaskRecord } from "./TaskFormDialog";
 import LogTimeDialog from "./LogTimeDialog";
+import LogExpenseDialog from "./LogExpenseDialog";
 
 const BILLING_LABELS: Record<string, string> = {
   fixed: "Fixed cost",
@@ -24,6 +25,7 @@ export default function OperationsProjectDetail() {
   const [taskOpen, setTaskOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<TaskRecord | null>(null);
   const [logTimeOpen, setLogTimeOpen] = useState(false);
+  const [logExpenseOpen, setLogExpenseOpen] = useState(false);
 
   const projectQ = useQuery({
     queryKey: ["ops", "project", id],
@@ -97,7 +99,36 @@ export default function OperationsProjectDetail() {
     },
   });
 
+  const expenseRollupQ = useQuery({
+    queryKey: ["ops", "project-expense-rollup", id],
+    enabled: !!id,
+    queryFn: async () => {
+      const { data, error } = await opsSupabase
+        .from("unbilled_expenses" as any)
+        .select("unbilled_amount, expense_count")
+        .eq("project_id", id)
+        .maybeSingle();
+      if (error) throw error;
+      return data as any;
+    },
+  });
+
+  const expensesQ = useQuery({
+    queryKey: ["ops", "project-expenses", id],
+    enabled: !!id,
+    queryFn: async () => {
+      const { data, error } = await opsSupabase
+        .from("expenses")
+        .select("id, date, amount, is_billable, is_invoiced, vendor_name, is_mileage, currency_code, expense_categories(name)")
+        .eq("project_id", id)
+        .order("date", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
   const billingLabel = p?.billing_method ? BILLING_LABELS[p.billing_method] ?? p.billing_method : "—";
+
 
   return (
     <div className="p-6 space-y-6">
@@ -234,6 +265,51 @@ export default function OperationsProjectDetail() {
         </CardContent>
       </Card>
 
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between gap-4 space-y-0">
+          <CardTitle>Expenses</CardTitle>
+          <Button size="sm" disabled={!p} onClick={() => setLogExpenseOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Log expense
+          </Button>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Unbilled {formatMoney(expenseRollupQ.data?.unbilled_amount ?? 0, p?.currency_code)} across {expenseRollupQ.data?.expense_count ?? 0} expense(s).
+          </p>
+          {expensesQ.isLoading ? (
+            <p className="text-muted-foreground text-sm">Loading…</p>
+          ) : !expensesQ.data || expensesQ.data.length === 0 ? (
+            <p className="text-muted-foreground text-sm">No expenses yet.</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Category</TableHead>
+                  <TableHead>Vendor</TableHead>
+                  <TableHead className="text-right">Amount</TableHead>
+                  <TableHead>Billable</TableHead>
+                  <TableHead>Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {expensesQ.data.map((row: any) => (
+                  <TableRow key={row.id}>
+                    <TableCell>{row.date}</TableCell>
+                    <TableCell>{row.expense_categories?.name ?? "—"}</TableCell>
+                    <TableCell>{row.vendor_name ?? "—"}</TableCell>
+                    <TableCell className="text-right">{formatMoney(row.amount, row.currency_code)}</TableCell>
+                    <TableCell>{row.is_billable ? "Yes" : "No"}</TableCell>
+                    <TableCell>{row.is_invoiced ? "Invoiced" : "Unbilled"}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+
       {p && (
         <ProjectFormDialog
           open={editOpen}
@@ -252,6 +328,14 @@ export default function OperationsProjectDetail() {
       )}
       {id && (
         <LogTimeDialog open={logTimeOpen} onOpenChange={setLogTimeOpen} projectId={id} />
+      )}
+      {id && (
+        <LogExpenseDialog
+          open={logExpenseOpen}
+          onOpenChange={setLogExpenseOpen}
+          projectId={id}
+          customerId={p?.customer_id}
+        />
       )}
     </div>
   );
