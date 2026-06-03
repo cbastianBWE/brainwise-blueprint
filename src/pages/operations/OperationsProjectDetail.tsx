@@ -69,6 +69,34 @@ export default function OperationsProjectDetail() {
     },
   });
 
+  const timeRollupQ = useQuery({
+    queryKey: ["ops", "project-time-rollup", id],
+    enabled: !!id,
+    queryFn: async () => {
+      const { data, error } = await opsSupabase
+        .from("project_time_rollup")
+        .select("total_hours, billable_hours, unbilled_billable_hours")
+        .eq("project_id", id)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const timeEntriesQ = useQuery({
+    queryKey: ["ops", "project-time", id],
+    enabled: !!id,
+    queryFn: async () => {
+      const { data, error } = await opsSupabase
+        .from("time_entries")
+        .select("id, date, hours, is_billable, is_invoiced, description, project_tasks(name), users!time_entries_user_id_fkey(full_name, email)")
+        .eq("project_id", id)
+        .order("date", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
   const billingLabel = p?.billing_method ? BILLING_LABELS[p.billing_method] ?? p.billing_method : "—";
 
   return (
