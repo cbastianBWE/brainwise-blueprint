@@ -9,6 +9,7 @@ import { Pencil, Plus } from "lucide-react";
 import { formatMoney } from "./_shared";
 import ProjectFormDialog, { ProjectRecord } from "./ProjectFormDialog";
 import TaskFormDialog, { TaskRecord } from "./TaskFormDialog";
+import LogTimeDialog from "./LogTimeDialog";
 
 const BILLING_LABELS: Record<string, string> = {
   fixed: "Fixed cost",
@@ -22,6 +23,7 @@ export default function OperationsProjectDetail() {
   const [editOpen, setEditOpen] = useState(false);
   const [taskOpen, setTaskOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<TaskRecord | null>(null);
+  const [logTimeOpen, setLogTimeOpen] = useState(false);
 
   const projectQ = useQuery({
     queryKey: ["ops", "project", id],
