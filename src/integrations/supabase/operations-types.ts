@@ -1729,6 +1729,23 @@ export type OperationsDatabase = {
       }
     }
     Views: {
+      project_time_rollup: {
+        Row: {
+          org_id: string | null
+          customer_id: string | null
+          customer_name: string | null
+          project_id: string | null
+          project_name: string | null
+          entry_count: number | null
+          total_hours: number | null
+          billable_hours: number | null
+          nonbillable_hours: number | null
+          invoiced_hours: number | null
+          uninvoiced_hours: number | null
+          unbilled_billable_hours: number | null
+        }
+        Relationships: []
+      }
       ar_aging_detail: {
         Row: {
           org_id: string | null
