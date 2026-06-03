@@ -1204,7 +1204,7 @@ export type OperationsDatabase = {
         }
         Insert: {
           id?: string
-          org_id: string
+          org_id?: string
           customer_id: string
           name: string
           description?: string | null
