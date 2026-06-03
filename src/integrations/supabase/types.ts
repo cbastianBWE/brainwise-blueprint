@@ -11350,6 +11350,10 @@ export type Database = {
         }
         Returns: Json
       }
+      ops_create_invoice: {
+        Args: { p_header: Json; p_lines: Json }
+        Returns: string
+      }
       ops_due_payment_reminders: { Args: never; Returns: Json }
       ops_flag_overdue_invoices: { Args: never; Returns: number }
       ops_get_invoice_checkout_bundle: {
@@ -11377,6 +11381,10 @@ export type Database = {
         Returns: undefined
       }
       ops_run_recurring_invoices: { Args: never; Returns: number }
+      ops_update_invoice: {
+        Args: { p_header: Json; p_id: string; p_lines: Json }
+        Returns: string
+      }
       ops_upsert_stripe_customer: {
         Args: {
           p_customer: string
