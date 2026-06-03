@@ -223,6 +223,44 @@ export default function OperationsInvoiceDetail() {
                   {paying ? "Starting checkout…" : "Pay now"}
                 </Button>
               )}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline">
+                    Actions <ChevronDown className="ml-1 h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {canMarkSent && (
+                    <DropdownMenuItem onClick={handleMarkSent}>Mark as sent</DropdownMenuItem>
+                  )}
+                  <DropdownMenuItem onClick={handleClone}>Clone</DropdownMenuItem>
+                  {hasDestructive && <DropdownMenuSeparator />}
+                  {canVoid && (
+                    <DropdownMenuItem
+                      className="text-destructive focus:text-destructive"
+                      onClick={() => setConfirm("void")}
+                    >
+                      Void
+                    </DropdownMenuItem>
+                  )}
+                  {canWriteOff && (
+                    <DropdownMenuItem
+                      className="text-destructive focus:text-destructive"
+                      onClick={() => setConfirm("write_off")}
+                    >
+                      Write off
+                    </DropdownMenuItem>
+                  )}
+                  {canDeleteDraft && (
+                    <DropdownMenuItem
+                      className="text-destructive focus:text-destructive"
+                      onClick={() => setConfirm("delete")}
+                    >
+                      Delete draft
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         </CardHeader>
