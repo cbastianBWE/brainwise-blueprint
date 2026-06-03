@@ -10,6 +10,7 @@ import { formatMoney } from "./_shared";
 import ProjectFormDialog, { ProjectRecord } from "./ProjectFormDialog";
 import TaskFormDialog, { TaskRecord } from "./TaskFormDialog";
 import LogTimeDialog from "./LogTimeDialog";
+import LogExpenseDialog from "./LogExpenseDialog";
 
 const BILLING_LABELS: Record<string, string> = {
   fixed: "Fixed cost",
