@@ -26,9 +26,15 @@ export default function OperationsCustomers() {
 
   return (
     <div className="p-6 space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold">Customers</h1>
-        <p className="text-muted-foreground text-sm">Operations · Customer accounts</p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold">Customers</h1>
+          <p className="text-muted-foreground text-sm">Operations · Customer accounts</p>
+        </div>
+        <Button onClick={() => setCreateOpen(true)}>
+          <Plus className="h-4 w-4 mr-2" />
+          New customer
+        </Button>
       </div>
       <Card>
         <CardHeader><CardTitle>All customers</CardTitle></CardHeader>
