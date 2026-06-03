@@ -327,6 +327,33 @@ export default function OperationsInvoiceDetail() {
         balanceDue={Number(inv.balance_due)}
         currency={inv.currency_code}
       />
+
+      <AlertDialog open={confirm !== null} onOpenChange={(o) => { if (!o) setConfirm(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {confirm === "void" && "Void this invoice?"}
+              {confirm === "write_off" && "Write off this invoice?"}
+              {confirm === "delete" && "Delete this draft?"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirm === "void" && "This marks the invoice as void. This cannot be undone."}
+              {confirm === "write_off" && "This marks the remaining balance as written off."}
+              {confirm === "delete" && "The draft invoice will be permanently deleted."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={acting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={acting}
+              onClick={(e) => { e.preventDefault(); runConfirmed(); }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {acting ? "Working…" : "Confirm"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
