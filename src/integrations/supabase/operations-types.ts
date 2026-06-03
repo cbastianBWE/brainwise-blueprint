@@ -286,7 +286,7 @@ export type OperationsDatabase = {
         }
         Insert: {
           id?: string
-          org_id: string
+          org_id?: string
           platform_organization_id?: string | null
           display_name: string
           legal_name?: string | null
