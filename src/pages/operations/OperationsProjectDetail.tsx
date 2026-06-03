@@ -377,6 +377,50 @@ export default function OperationsProjectDetail() {
         </CardContent>
       </Card>
 
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between gap-4 space-y-0">
+          <CardTitle>Charges</CardTitle>
+          <Button size="sm" disabled={!p} onClick={() => setChargeOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add charge
+          </Button>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Unbilled {formatMoney(chargesUnbilledTotal, p?.currency_code)} across {chargesCount} charge(s).
+          </p>
+          {chargesQ.isLoading ? (
+            <p className="text-muted-foreground text-sm">Loading…</p>
+          ) : !chargesQ.data || chargesQ.data.length === 0 ? (
+            <p className="text-muted-foreground text-sm">No charges yet.</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Description</TableHead>
+                  <TableHead className="text-right">Amount</TableHead>
+                  <TableHead>Billable</TableHead>
+                  <TableHead>Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {chargesQ.data.map((row: any) => (
+                  <TableRow key={row.id}>
+                    <TableCell>{row.date}</TableCell>
+                    <TableCell>{row.description}</TableCell>
+                    <TableCell className="text-right">{formatMoney(row.amount, row.currency_code)}</TableCell>
+                    <TableCell>{row.is_billable ? "Yes" : "No"}</TableCell>
+                    <TableCell>{row.is_invoiced ? "Invoiced" : "Unbilled"}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+
+
       {p && (
         <ProjectFormDialog
           open={editOpen}
@@ -404,6 +448,42 @@ export default function OperationsProjectDetail() {
           customerId={p?.customer_id}
         />
       )}
+      {id && (
+        <AddChargeDialog
+          open={chargeOpen}
+          onOpenChange={setChargeOpen}
+          projectId={id}
+          customerId={p?.customer_id}
+        />
+      )}
+      <Dialog open={genOpen} onOpenChange={setGenOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Generate invoice</DialogTitle>
+            <DialogDescription>
+              Create a draft invoice from this project's unbilled time, expenses, and charges. Optionally limit by date range.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="gen_from">From</Label>
+              <Input id="gen_from" type="date" value={genFrom} onChange={(e) => setGenFrom(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="gen_to">To</Label>
+              <Input id="gen_to" type="date" value={genTo} onChange={(e) => setGenTo(e.target.value)} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setGenOpen(false)} disabled={generating}>
+              Cancel
+            </Button>
+            <Button type="button" onClick={handleGenerate} disabled={generating || !id}>
+              {generating ? "Generating…" : "Generate"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
