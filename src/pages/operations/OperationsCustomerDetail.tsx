@@ -12,6 +12,7 @@ import { StatusBadge, formatMoney, formatDate } from "./_shared";
 export default function OperationsCustomerDetail() {
   const { id = "" } = useParams();
   const navigate = useNavigate();
+  const [editOpen, setEditOpen] = useState(false);
 
   const customerQ = useQuery({
     queryKey: ["ops", "customer", id],
