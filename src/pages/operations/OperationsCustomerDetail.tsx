@@ -105,6 +105,7 @@ export default function OperationsCustomerDetail() {
           )}
         </CardContent>
       </Card>
+      <CustomerFormDialog open={editOpen} onOpenChange={setEditOpen} customer={c ?? null} />
     </div>
   );
 }
