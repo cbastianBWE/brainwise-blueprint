@@ -214,6 +214,9 @@ export default function OperationsInvoiceDetail() {
   const canWriteOff = WRITE_OFF_STATUSES.has(status);
   const canDeleteDraft = status === "draft";
   const hasDestructive = canVoid || canWriteOff || canDeleteDraft;
+  const canSendInvoice = status !== "void" && status !== "written_off";
+  const canSendReceipt = amountPaid > 0;
+  const hasSendItems = canSendInvoice || canSendReceipt;
 
   if (invoiceQ.isLoading) {
     return <div className="p-6 text-muted-foreground text-sm">Loading…</div>;
