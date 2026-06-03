@@ -202,6 +202,15 @@ export default function OperationsInvoiceDetail() {
           </div>
         </CardContent>
       </Card>
+
+      <RecordPaymentDialog
+        open={recordOpen}
+        onOpenChange={setRecordOpen}
+        invoiceId={inv.id}
+        customerId={inv.customer_id}
+        balanceDue={Number(inv.balance_due)}
+        currency={inv.currency_code}
+      />
     </div>
   );
 }
