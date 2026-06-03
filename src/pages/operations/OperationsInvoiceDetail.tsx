@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { StatusBadge, formatMoney, formatDate } from "./_shared";
+import RecordPaymentDialog from "./RecordPaymentDialog";
 
 const PAID_TERMINAL = new Set(["paid", "void", "written_off"]);
 
@@ -17,6 +18,7 @@ export default function OperationsInvoiceDetail() {
   const location = useLocation();
   const qc = useQueryClient();
   const [paying, setPaying] = useState(false);
+  const [recordOpen, setRecordOpen] = useState(false);
 
   const invoiceQ = useQuery({
     queryKey: ["ops", "invoice", id],
@@ -134,6 +136,11 @@ export default function OperationsInvoiceDetail() {
                 </Button>
               )}
               {canPay && (
+                <Button variant="outline" onClick={() => setRecordOpen(true)}>
+                  Record payment
+                </Button>
+              )}
+              {canPay && (
                 <Button onClick={handlePayNow} disabled={paying}>
                   {paying ? "Starting checkout…" : "Pay now"}
                 </Button>
@@ -195,6 +202,15 @@ export default function OperationsInvoiceDetail() {
           </div>
         </CardContent>
       </Card>
+
+      <RecordPaymentDialog
+        open={recordOpen}
+        onOpenChange={setRecordOpen}
+        invoiceId={inv.id}
+        customerId={inv.customer_id}
+        balanceDue={Number(inv.balance_due)}
+        currency={inv.currency_code}
+      />
     </div>
   );
 }
