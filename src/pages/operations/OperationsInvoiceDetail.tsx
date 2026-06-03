@@ -40,6 +40,7 @@ export default function OperationsInvoiceDetail() {
   const [recordOpen, setRecordOpen] = useState(false);
   const [confirm, setConfirm] = useState<null | "void" | "write_off" | "delete">(null);
   const [acting, setActing] = useState(false);
+  const [sending, setSending] = useState(false);
 
   const invoiceQ = useQuery({
     queryKey: ["ops", "invoice", id],
@@ -148,6 +149,37 @@ export default function OperationsInvoiceDetail() {
     navigate(`/operations/invoices/${data}`);
   }
 
+  async function handleSendInvoice() {
+    setSending(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("ops-invoice-send", { body: { invoice_id: inv.id } });
+      if (error || (data as any)?.error) {
+        const ctxMsg = error ? await readFunctionsErrorMessage(error) : null;
+        toast.error(ctxMsg ?? (data as any)?.error ?? error?.message ?? "Email failed");
+        return;
+      }
+      toast.success("Invoice emailed to the customer.");
+      invalidateInvoice();
+    } finally {
+      setSending(false);
+    }
+  }
+
+  async function handleSendReceipt() {
+    setSending(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("ops-payment-receipt", { body: { invoice_id: inv.id } });
+      if (error || (data as any)?.error) {
+        const ctxMsg = error ? await readFunctionsErrorMessage(error) : null;
+        toast.error(ctxMsg ?? (data as any)?.error ?? error?.message ?? "Email failed");
+        return;
+      }
+      toast.success("Receipt emailed to the customer.");
+    } finally {
+      setSending(false);
+    }
+  }
+
   async function runConfirmed() {
     if (!confirm) return;
     setActing(true);
@@ -182,6 +214,9 @@ export default function OperationsInvoiceDetail() {
   const canWriteOff = WRITE_OFF_STATUSES.has(status);
   const canDeleteDraft = status === "draft";
   const hasDestructive = canVoid || canWriteOff || canDeleteDraft;
+  const canSendInvoice = status !== "void" && status !== "written_off";
+  const canSendReceipt = amountPaid > 0;
+  const hasSendItems = canSendInvoice || canSendReceipt;
 
   if (invoiceQ.isLoading) {
     return <div className="p-6 text-muted-foreground text-sm">Loading…</div>;
@@ -230,6 +265,17 @@ export default function OperationsInvoiceDetail() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
+                  {canSendInvoice && (
+                    <DropdownMenuItem disabled={sending} onClick={handleSendInvoice}>
+                      Send invoice to customer
+                    </DropdownMenuItem>
+                  )}
+                  {canSendReceipt && (
+                    <DropdownMenuItem disabled={sending} onClick={handleSendReceipt}>
+                      Send payment receipt
+                    </DropdownMenuItem>
+                  )}
+                  {hasSendItems && <DropdownMenuSeparator />}
                   {canMarkSent && (
                     <DropdownMenuItem onClick={handleMarkSent}>Mark as sent</DropdownMenuItem>
                   )}
