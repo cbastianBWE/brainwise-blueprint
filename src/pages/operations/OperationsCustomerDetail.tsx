@@ -47,6 +47,20 @@ export default function OperationsCustomerDetail() {
     },
   });
 
+  const projectsQ = useQuery({
+    queryKey: ["ops", "customer-projects", id],
+    enabled: !!id,
+    queryFn: async () => {
+      const { data, error } = await opsSupabase
+        .from("projects")
+        .select("id, name, billing_method, status, budget_hours, budget_amount")
+        .eq("customer_id", id)
+        .order("name");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
   const c = customerQ.data as any;
 
   return (
