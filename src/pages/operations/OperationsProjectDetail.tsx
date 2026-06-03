@@ -25,6 +25,7 @@ export default function OperationsProjectDetail() {
   const [taskOpen, setTaskOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<TaskRecord | null>(null);
   const [logTimeOpen, setLogTimeOpen] = useState(false);
+  const [logExpenseOpen, setLogExpenseOpen] = useState(false);
 
   const projectQ = useQuery({
     queryKey: ["ops", "project", id],
