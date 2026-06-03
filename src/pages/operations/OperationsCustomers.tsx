@@ -1,12 +1,17 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { opsSupabase } from "@/integrations/supabase/operations-types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
+import CustomerFormDialog from "./CustomerFormDialog";
 
 export default function OperationsCustomers() {
   const navigate = useNavigate();
+  const [createOpen, setCreateOpen] = useState(false);
   const { data, isLoading, error } = useQuery({
     queryKey: ["ops", "customers", "list"],
     queryFn: async () => {
