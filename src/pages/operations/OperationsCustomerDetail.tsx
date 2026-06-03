@@ -7,7 +7,15 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { Pencil, Plus } from "lucide-react";
 import CustomerFormDialog from "./CustomerFormDialog";
+import ProjectFormDialog from "./ProjectFormDialog";
 import { StatusBadge, formatMoney, formatDate } from "./_shared";
+
+const BILLING_LABELS: Record<string, string> = {
+  fixed: "Fixed cost",
+  project_hours: "Project hourly",
+  task_hours: "Task hourly",
+  staff_hours: "Staff hourly",
+};
 
 export default function OperationsCustomerDetail() {
   const { id = "" } = useParams();
