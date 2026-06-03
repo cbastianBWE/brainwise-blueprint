@@ -1,22 +1,36 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import { opsSupabase } from "@/integrations/supabase/operations-types";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Pencil, Plus } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Pencil, Plus, FileText } from "lucide-react";
 import { formatMoney } from "./_shared";
 import ProjectFormDialog, { ProjectRecord } from "./ProjectFormDialog";
 import TaskFormDialog, { TaskRecord } from "./TaskFormDialog";
 import LogTimeDialog from "./LogTimeDialog";
 import LogExpenseDialog from "./LogExpenseDialog";
+import AddChargeDialog from "./AddChargeDialog";
 
 const BILLING_LABELS: Record<string, string> = {
   fixed: "Fixed cost",
   project_hours: "Project hourly",
   task_hours: "Task hourly",
   staff_hours: "Staff hourly",
+  none: "No hourly billing",
 };
 
 export default function OperationsProjectDetail() {
