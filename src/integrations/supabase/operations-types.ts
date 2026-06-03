@@ -1108,7 +1108,7 @@ export type OperationsDatabase = {
         }
         Insert: {
           id?: string
-          org_id: string
+          org_id?: string
           project_id: string
           name: string
           description?: string | null
