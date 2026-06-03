@@ -61,6 +61,28 @@ export default function OperationsCustomerDetail() {
     },
   });
 
+  const timeRollupQ = useQuery({
+    queryKey: ["ops", "customer-time-rollup", id],
+    enabled: !!id,
+    queryFn: async () => {
+      const { data, error } = await opsSupabase
+        .from("project_time_rollup")
+        .select("total_hours, billable_hours, unbilled_billable_hours")
+        .eq("customer_id", id);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const timeTotals = (timeRollupQ.data ?? []).reduce(
+    (acc, r: any) => ({
+      total: acc.total + (Number(r.total_hours) || 0),
+      billable: acc.billable + (Number(r.billable_hours) || 0),
+      unbilled: acc.unbilled + (Number(r.unbilled_billable_hours) || 0),
+    }),
+    { total: 0, billable: 0, unbilled: 0 },
+  );
+
   const c = customerQ.data as any;
 
   return (
@@ -135,6 +157,18 @@ export default function OperationsCustomerDetail() {
         </CardContent>
       </Card>
 
+      <Card>
+        <CardHeader><CardTitle>Time</CardTitle></CardHeader>
+        <CardContent>
+          {timeRollupQ.isLoading ? (
+            <p className="text-muted-foreground text-sm">Loading…</p>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              Total {timeTotals.total} h · Billable {timeTotals.billable} h · Unbilled {timeTotals.unbilled} h
+            </p>
+          )}
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader><CardTitle>Invoices</CardTitle></CardHeader>

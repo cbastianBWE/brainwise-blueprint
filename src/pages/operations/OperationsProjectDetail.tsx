@@ -9,6 +9,7 @@ import { Pencil, Plus } from "lucide-react";
 import { formatMoney } from "./_shared";
 import ProjectFormDialog, { ProjectRecord } from "./ProjectFormDialog";
 import TaskFormDialog, { TaskRecord } from "./TaskFormDialog";
+import LogTimeDialog from "./LogTimeDialog";
 
 const BILLING_LABELS: Record<string, string> = {
   fixed: "Fixed cost",
@@ -22,6 +23,7 @@ export default function OperationsProjectDetail() {
   const [editOpen, setEditOpen] = useState(false);
   const [taskOpen, setTaskOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<TaskRecord | null>(null);
+  const [logTimeOpen, setLogTimeOpen] = useState(false);
 
   const projectQ = useQuery({
     queryKey: ["ops", "project", id],
@@ -62,6 +64,34 @@ export default function OperationsProjectDetail() {
         .select("id, name, task_hourly_rate, budget_hours, is_billable, description, project_id")
         .eq("project_id", id)
         .order("sort_order");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const timeRollupQ = useQuery({
+    queryKey: ["ops", "project-time-rollup", id],
+    enabled: !!id,
+    queryFn: async () => {
+      const { data, error } = await opsSupabase
+        .from("project_time_rollup")
+        .select("total_hours, billable_hours, unbilled_billable_hours")
+        .eq("project_id", id)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const timeEntriesQ = useQuery({
+    queryKey: ["ops", "project-time", id],
+    enabled: !!id,
+    queryFn: async () => {
+      const { data, error } = await opsSupabase
+        .from("time_entries")
+        .select("id, date, hours, is_billable, is_invoiced, description, project_tasks(name), users!time_entries_user_id_fkey(full_name, email)")
+        .eq("project_id", id)
+        .order("date", { ascending: false });
       if (error) throw error;
       return data ?? [];
     },
@@ -159,6 +189,51 @@ export default function OperationsProjectDetail() {
         </CardContent>
       </Card>
 
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between gap-4 space-y-0">
+          <CardTitle>Time</CardTitle>
+          <Button size="sm" disabled={!p} onClick={() => setLogTimeOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Log time
+          </Button>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Total {timeRollupQ.data?.total_hours ?? 0} h · Billable {timeRollupQ.data?.billable_hours ?? 0} h · Unbilled {timeRollupQ.data?.unbilled_billable_hours ?? 0} h
+          </p>
+          {timeEntriesQ.isLoading ? (
+            <p className="text-muted-foreground text-sm">Loading…</p>
+          ) : !timeEntriesQ.data || timeEntriesQ.data.length === 0 ? (
+            <p className="text-muted-foreground text-sm">No time logged yet.</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Task</TableHead>
+                  <TableHead>Member</TableHead>
+                  <TableHead className="text-right">Hours</TableHead>
+                  <TableHead>Billable</TableHead>
+                  <TableHead>Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {timeEntriesQ.data.map((row: any) => (
+                  <TableRow key={row.id}>
+                    <TableCell>{row.date}</TableCell>
+                    <TableCell>{row.project_tasks?.name ?? "—"}</TableCell>
+                    <TableCell>{row.users?.full_name ?? row.users?.email ?? "—"}</TableCell>
+                    <TableCell className="text-right">{row.hours}</TableCell>
+                    <TableCell>{row.is_billable ? "Yes" : "No"}</TableCell>
+                    <TableCell>{row.is_invoiced ? "Invoiced" : "Unbilled"}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+
       {p && (
         <ProjectFormDialog
           open={editOpen}
@@ -174,6 +249,9 @@ export default function OperationsProjectDetail() {
           projectId={id}
           task={editingTask}
         />
+      )}
+      {id && (
+        <LogTimeDialog open={logTimeOpen} onOpenChange={setLogTimeOpen} projectId={id} />
       )}
     </div>
   );
