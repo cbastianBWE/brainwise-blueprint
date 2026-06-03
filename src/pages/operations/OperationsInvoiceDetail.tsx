@@ -136,6 +136,11 @@ export default function OperationsInvoiceDetail() {
                 </Button>
               )}
               {canPay && (
+                <Button variant="outline" onClick={() => setRecordOpen(true)}>
+                  Record payment
+                </Button>
+              )}
+              {canPay && (
                 <Button onClick={handlePayNow} disabled={paying}>
                   {paying ? "Starting checkout…" : "Pay now"}
                 </Button>
