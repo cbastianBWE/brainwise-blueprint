@@ -96,6 +96,47 @@ export default function OperationsCustomerDetail() {
       </Card>
 
       <Card>
+        <CardHeader className="flex flex-row items-center justify-between gap-4 space-y-0">
+          <CardTitle>Projects</CardTitle>
+          <Button size="sm" disabled={!c} onClick={() => setProjectOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            New project
+          </Button>
+        </CardHeader>
+        <CardContent>
+          {projectsQ.isLoading ? (
+            <p className="text-muted-foreground text-sm">Loading…</p>
+          ) : !projectsQ.data || projectsQ.data.length === 0 ? (
+            <p className="text-muted-foreground text-sm">No projects yet.</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Billing method</TableHead>
+                  <TableHead>Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {projectsQ.data.map((proj: any) => (
+                  <TableRow
+                    key={proj.id}
+                    onClick={() => navigate(`/operations/projects/${proj.id}`)}
+                    className="cursor-pointer"
+                  >
+                    <TableCell className="font-medium">{proj.name}</TableCell>
+                    <TableCell>{BILLING_LABELS[proj.billing_method] ?? proj.billing_method ?? "—"}</TableCell>
+                    <TableCell className="capitalize">{proj.status ?? "—"}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+
+
+      <Card>
         <CardHeader><CardTitle>Invoices</CardTitle></CardHeader>
         <CardContent>
           {invoicesQ.isLoading ? (
