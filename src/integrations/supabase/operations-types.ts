@@ -356,6 +356,7 @@ export type OperationsDatabase = {
           sort_order: number
           source_time_entry_ids: string[] | null
           source_expense_ids: string[] | null
+          source_charge_ids: string[] | null
           created_at: string
           updated_at: string
           created_by: string | null
@@ -383,6 +384,7 @@ export type OperationsDatabase = {
           sort_order?: number
           source_time_entry_ids?: string[] | null
           source_expense_ids?: string[] | null
+          source_charge_ids?: string[] | null
           created_at?: string
           updated_at?: string
           created_by?: string | null
@@ -1173,6 +1175,63 @@ export type OperationsDatabase = {
           billing_rate?: number | null
           cost_rate?: number | null
           added_at?: string
+          created_at?: string
+          updated_at?: string
+          created_by?: string | null
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      project_charges: {
+        Row: {
+          id: string
+          org_id: string
+          project_id: string
+          customer_id: string | null
+          date: string
+          description: string
+          amount: number
+          currency_code: string
+          is_billable: boolean
+          is_invoiced: boolean
+          invoice_line_id: string | null
+          notes: string | null
+          created_at: string
+          updated_at: string
+          created_by: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          id?: string
+          org_id?: string
+          project_id: string
+          customer_id?: string | null
+          date?: string
+          description: string
+          amount?: number
+          currency_code?: string
+          is_billable?: boolean
+          is_invoiced?: boolean
+          invoice_line_id?: string | null
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+          created_by?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          id?: string
+          org_id?: string
+          project_id?: string
+          customer_id?: string | null
+          date?: string
+          description?: string
+          amount?: number
+          currency_code?: string
+          is_billable?: boolean
+          is_invoiced?: boolean
+          invoice_line_id?: string | null
+          notes?: string | null
           created_at?: string
           updated_at?: string
           created_by?: string | null

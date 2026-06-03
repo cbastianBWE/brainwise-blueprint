@@ -1,112 +1,57 @@
-# Operations Phase 2 — Expenses
+## Operations Phase 2 — Charges + composable billing + invoice generation
 
-Additive only. No existing query, type, or component behavior is changed. Uses the typed `opsSupabase` client. Mirrors the patterns in `LogTimeDialog.tsx` and `TaskFormDialog.tsx` (sonner toasts, `useQuery` + `useQueryClient.invalidateQueries`, `useEffect` reset on open, local `error` state).
+Additive everywhere except a small change to ProjectFormDialog (fixed-fee removed in favor of charges).
 
-Backend is already in place: `operations.expenses`, `operations.expense_categories` (DB defaults populate `org_id` + `created_by`), private storage bucket `operations-receipts` with org-path-scoped RLS, and 6 seeded active categories.
+### 1. `src/integrations/supabase/operations-types.ts`
+- Add `project_charges` table type (Row/Insert/Update as specified; Relationships: []). `org_id` and `created_by` optional on Insert (DB defaults).
+- Extend `document_lines` Row and Insert with `source_charge_ids: string[] | null` (Insert optional).
 
-## 1. `src/integrations/supabase/operations-types.ts`
+### 2. `src/integrations/supabase/types.ts` (main public types)
+- Add to public `Functions` block:
+  ```
+  ops_create_invoice_from_project: {
+    Args: { p_project: string; p_date_from: string | null; p_date_to: string | null };
+    Returns: string;
+  }
+  ```
+  Matches the existing `ops_set_invoice_status` shape.
 
-Two surgical edits, nothing else touched:
+### 3. `src/pages/operations/ProjectFormDialog.tsx` (modified — fixed fee removed)
+- `BillingMethod` becomes `"project_hours" | "task_hours" | "staff_hours" | "none"`.
+- `ProjectRecord.fixed_cost_amount` field removed; `FormState.fixed_cost_amount` removed; `emptyState.billing_method` → `"none"`.
+- `fromProject`: maps legacy `"fixed"` (or any unknown value) → `"none"`.
+- Select: replace `Fixed cost` item with `<SelectItem value="none">No hourly billing</SelectItem>` as the first item; keep `project_hours`, `task_hours`, `staff_hours`.
+- Remove the `fixed_cost_amount` Label+Input block. For `billing_method === "none"`, show muted hint: "Fixed fees are added as charges on the project page." Keep existing `project_hourly_rate` block and task/staff hints.
+- `handleSubmit` common: drop `fixed_cost_amount`; keep `project_hourly_rate` only for `project_hours`.
 
-- `expenses.Insert` → change `org_id: string` to `org_id?: string`.
-- `expense_categories.Insert` → change `org_id: string` to `org_id?: string`.
+### 4. New file `src/pages/operations/AddChargeDialog.tsx`
+- Mirror `LogExpenseDialog` structure (sonner, useQueryClient, useEffect open reset, error state).
+- Props: `{ open, onOpenChange, projectId, customerId }`.
+- Fields: Date (default today, required), Description (required), Amount (number > 0, required), Billable checkbox (default true), Notes textarea.
+- Submit: `opsSupabase.from("project_charges").insert({ project_id, customer_id: customerId ?? null, date, description: description.trim(), amount: Number(amount), is_billable, notes: notes.trim() || null })`. No `org_id`/`created_by`.
+- Success: `toast.success("Charge added")`, close, invalidate `["ops","project-charges", projectId]`. Error toast. Finally clear submitting.
 
-`Row` and `Update` left alone for both tables. DB defaults populate the field.
+### 5. `src/pages/operations/OperationsProjectDetail.tsx` (additive)
+- Imports: `AddChargeDialog`, `supabase` from `@/integrations/supabase/client` (same import the invoice page uses for `ops_set_invoice_status`), `useNavigate` from `react-router-dom`, `toast` from `sonner`, `Dialog*` primitives, `Input`, `Label`.
+- New state: `chargeOpen`, `genOpen`, `generating`, `genFrom`, `genTo`.
+- New `chargesQ` (key `["ops","project-charges", id]`): selects `id, date, description, amount, is_billable, is_invoiced, currency_code` ordered by date desc.
+- New "Charges" Card placed after the Expenses card. Header has an "Add charge" button (`disabled={!p}`). Rollup line: `Unbilled {formatMoney(sum of amount where is_billable && !is_invoiced, p?.currency_code)} across N charge(s)` computed in-component. Table columns: Date | Description | Amount (right, formatted with row currency) | Billable (Yes/No) | Status (`is_invoiced ? "Invoiced" : "Unbilled"`). Empty: "No charges yet." Loading/empty styles mirror the Time/Expenses cards.
+- Top project header card actions: add a "Generate invoice" Button (`disabled={!p}`) that opens a small Dialog with two optional date inputs (From/To) and a Generate button. On Generate:
+  ```
+  setGenerating(true);
+  const { data, error } = await supabase.rpc("ops_create_invoice_from_project", {
+    p_project: id, p_date_from: genFrom || null, p_date_to: genTo || null,
+  });
+  if (error) toast.error(error.message);
+  else { toast.success("Draft invoice created"); navigate(`/operations/invoices/${data}`); }
+  setGenerating(false); setGenOpen(false);
+  ```
+- Render `<AddChargeDialog ... />` and the generate Dialog alongside existing dialogs.
 
-## 2. New file `src/pages/operations/LogExpenseDialog.tsx`
+### Untouched
+Pay Now, Record payment, Send invoice/receipt, lifecycle dropdown, `?paid` handling, invoice line items/totals, Time card + log dialog, Expenses card + log dialog, customer detail, customer time rollup, all `ops_*` RPCs other than the new added one. Existing queries and components keep current behavior.
 
-Props: `{ open, onOpenChange, projectId, customerId }`.
+### Type-check
+- The only schema-shape changes are additive (new table type, new field on `document_lines`, new RPC entry, new `"none"` billing method enum value). The removal of `fixed_cost_amount` from `ProjectRecord`/`FormState` is internal to `ProjectFormDialog` — the DB column stays; nothing else in the codebase reads `fixed_cost_amount` from form types. Project detail page still reads `p.fixed_cost_amount` from the raw row (untouched).
 
-**Org resolution (on open):**
-```ts
-const { data: auth } = await opsSupabase.auth.getUser();
-const { data: u } = await opsSupabase.from("users")
-  .select("org_id").eq("id", auth.user.id).maybeSingle();
-setOrgId(u?.org_id ?? null);
-```
-
-**Queries (enabled when open):**
-- `["ops","expense-categories"]` → `expense_categories.select("id, name").eq("is_active", true).order("name")`.
-
-**State (reset on open):** `date` (today YYYY-MM-DD), `expense_category_id` (""), `is_mileage` (false), `amount`, `miles_driven`, `per_mile_rate`, `vendor_name`, `is_billable` (false), `markup_percentage`, `notes`, `receiptFile: File|null`, `submitting`, `error`.
-
-**Layout:**
-- Row 1 (2-col grid): Date input. Amount input — hidden when `is_mileage` is on; replaced by read-only computed Amount = `miles*rate` below the mileage inputs.
-- Mileage checkbox; when on, show Miles + Per-mile rate inputs (and the computed read-only Amount).
-- Category Select; first item "No category" maps to "".
-- Vendor input.
-- Billable checkbox; when on, show Markup % input.
-- Receipt file input (`accept="image/*,application/pdf"`).
-- Notes textarea.
-- `DialogFooter` Cancel / Submit.
-
-**Validation:**
-- `date` required.
-- If `is_mileage`: `miles_driven` and `per_mile_rate` finite > 0; amount = miles × rate.
-- Else: `amount` finite > 0.
-
-**Submit:**
-```ts
-let receipt_storage_path: string | null = null;
-if (receiptFile && orgId) {
-  const safe = receiptFile.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-  const path = `${orgId}/${crypto.randomUUID()}-${safe}`;
-  const up = await opsSupabase.storage
-    .from("operations-receipts").upload(path, receiptFile);
-  if (up.error) throw up.error;
-  receipt_storage_path = path;
-}
-const { error } = await opsSupabase.from("expenses").insert({
-  project_id: projectId,
-  customer_id: customerId ?? null,
-  date,
-  expense_category_id: expense_category_id || null,
-  vendor_name: vendor_name.trim() || null,
-  amount: Number(amount),
-  is_billable,
-  markup_percentage: is_billable && markup_percentage.trim()
-    ? Number(markup_percentage) : null,
-  is_mileage,
-  miles_driven: is_mileage ? Number(miles_driven) : null,
-  per_mile_rate: is_mileage ? Number(per_mile_rate) : null,
-  receipt_storage_path,
-  notes: notes.trim() || null,
-});
-```
-No `org_id` or `created_by` passed.
-
-- Success: `toast.success("Expense logged")`, close, invalidate `["ops","project-expenses", projectId]` and `["ops","project-expense-rollup", projectId]`.
-- Error: `toast.error(err?.message ?? "Failed to log expense")`.
-- `finally`: clear `submitting`.
-
-## 3. `src/pages/operations/OperationsProjectDetail.tsx` — additive only
-
-- Import `LogExpenseDialog`.
-- Add `const [logExpenseOpen, setLogExpenseOpen] = useState(false);`.
-- Add a new "Expenses" Card after the Time card with:
-  - **Rollup query** `["ops","project-expense-rollup", id]`:
-    ```ts
-    opsSupabase.from("unbilled_expenses")
-      .select("unbilled_amount, expense_count")
-      .eq("project_id", id).maybeSingle()
-    ```
-    Line: `Unbilled {formatMoney(unbilled_amount||0, p?.currency_code)} across {expense_count||0} expense(s).`
-  - **Header button** "Log expense" (`disabled={!p}`, opens dialog).
-  - **Entries query** `["ops","project-expenses", id]`:
-    ```ts
-    opsSupabase.from("expenses").select(
-      "id, date, amount, is_billable, is_invoiced, vendor_name, is_mileage, currency_code, expense_categories(name)"
-    ).eq("project_id", id).order("date", { ascending: false })
-    ```
-    Columns: Date, Category (`row.expense_categories?.name ?? "—"`), Vendor (`vendor_name ?? "—"`), Amount (right-aligned, `formatMoney(amount, currency_code)`), Billable (Yes/No), Status (`is_invoiced ? "Invoiced" : "Unbilled"`). Empty: "No expenses yet." Loading/empty styles match the Time card.
-- Render `<LogExpenseDialog open={logExpenseOpen} onOpenChange={setLogExpenseOpen} projectId={id} customerId={p?.customer_id} />` alongside the existing dialogs.
-
-## Untouched
-
-Pay Now, Record payment, lifecycle dropdown, Send invoice/receipt, time logging, customer time rollup, customer detail page, invoice queries, line items, totals, and all `ops_*` RPCs. Only the two `Insert` types are loosened (additive — pre-existing inserts that already pass `org_id` continue to type-check).
-
-## Files
-
-- edit `src/integrations/supabase/operations-types.ts`
-- create `src/pages/operations/LogExpenseDialog.tsx`
-- edit `src/pages/operations/OperationsProjectDetail.tsx`
+Awaiting approval to build.

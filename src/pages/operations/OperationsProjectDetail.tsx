@@ -1,31 +1,51 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import { opsSupabase } from "@/integrations/supabase/operations-types";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Pencil, Plus } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Pencil, Plus, FileText } from "lucide-react";
 import { formatMoney } from "./_shared";
 import ProjectFormDialog, { ProjectRecord } from "./ProjectFormDialog";
 import TaskFormDialog, { TaskRecord } from "./TaskFormDialog";
 import LogTimeDialog from "./LogTimeDialog";
 import LogExpenseDialog from "./LogExpenseDialog";
+import AddChargeDialog from "./AddChargeDialog";
 
 const BILLING_LABELS: Record<string, string> = {
   fixed: "Fixed cost",
   project_hours: "Project hourly",
   task_hours: "Task hourly",
   staff_hours: "Staff hourly",
+  none: "No hourly billing",
 };
 
 export default function OperationsProjectDetail() {
   const { id = "" } = useParams();
+  const navigate = useNavigate();
   const [editOpen, setEditOpen] = useState(false);
   const [taskOpen, setTaskOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<TaskRecord | null>(null);
   const [logTimeOpen, setLogTimeOpen] = useState(false);
   const [logExpenseOpen, setLogExpenseOpen] = useState(false);
+  const [chargeOpen, setChargeOpen] = useState(false);
+  const [genOpen, setGenOpen] = useState(false);
+  const [generating, setGenerating] = useState(false);
+  const [genFrom, setGenFrom] = useState("");
+  const [genTo, setGenTo] = useState("");
 
   const projectQ = useQuery({
     queryKey: ["ops", "project", id],
@@ -127,6 +147,47 @@ export default function OperationsProjectDetail() {
     },
   });
 
+  const chargesQ = useQuery({
+    queryKey: ["ops", "project-charges", id],
+    enabled: !!id,
+    queryFn: async () => {
+      const { data, error } = await opsSupabase
+        .from("project_charges")
+        .select("id, date, description, amount, is_billable, is_invoiced, currency_code")
+        .eq("project_id", id)
+        .order("date", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const chargesUnbilledTotal = (chargesQ.data ?? []).reduce(
+    (sum: number, r: any) => sum + (r.is_billable && !r.is_invoiced ? Number(r.amount) || 0 : 0),
+    0,
+  );
+  const chargesCount = chargesQ.data?.length ?? 0;
+
+  const handleGenerate = async () => {
+    if (!id) return;
+    setGenerating(true);
+    try {
+      const { data, error } = await supabase.rpc("ops_create_invoice_from_project", {
+        p_project: id,
+        p_date_from: genFrom || null,
+        p_date_to: genTo || null,
+      });
+      if (error) {
+        toast.error(error.message);
+      } else {
+        toast.success("Draft invoice created");
+        navigate(`/operations/invoices/${data}`);
+      }
+    } finally {
+      setGenerating(false);
+      setGenOpen(false);
+    }
+  };
+
   const billingLabel = p?.billing_method ? BILLING_LABELS[p.billing_method] ?? p.billing_method : "—";
 
 
@@ -145,10 +206,16 @@ export default function OperationsProjectDetail() {
               </p>
             )}
           </div>
-          <Button variant="outline" size="sm" disabled={!p} onClick={() => setEditOpen(true)}>
-            <Pencil className="h-4 w-4 mr-2" />
-            Edit
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" disabled={!p} onClick={() => setGenOpen(true)}>
+              <FileText className="h-4 w-4 mr-2" />
+              Generate invoice
+            </Button>
+            <Button variant="outline" size="sm" disabled={!p} onClick={() => setEditOpen(true)}>
+              <Pencil className="h-4 w-4 mr-2" />
+              Edit
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           {projectQ.isLoading ? (
@@ -310,6 +377,50 @@ export default function OperationsProjectDetail() {
         </CardContent>
       </Card>
 
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between gap-4 space-y-0">
+          <CardTitle>Charges</CardTitle>
+          <Button size="sm" disabled={!p} onClick={() => setChargeOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add charge
+          </Button>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Unbilled {formatMoney(chargesUnbilledTotal, p?.currency_code)} across {chargesCount} charge(s).
+          </p>
+          {chargesQ.isLoading ? (
+            <p className="text-muted-foreground text-sm">Loading…</p>
+          ) : !chargesQ.data || chargesQ.data.length === 0 ? (
+            <p className="text-muted-foreground text-sm">No charges yet.</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Description</TableHead>
+                  <TableHead className="text-right">Amount</TableHead>
+                  <TableHead>Billable</TableHead>
+                  <TableHead>Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {chargesQ.data.map((row: any) => (
+                  <TableRow key={row.id}>
+                    <TableCell>{row.date}</TableCell>
+                    <TableCell>{row.description}</TableCell>
+                    <TableCell className="text-right">{formatMoney(row.amount, row.currency_code)}</TableCell>
+                    <TableCell>{row.is_billable ? "Yes" : "No"}</TableCell>
+                    <TableCell>{row.is_invoiced ? "Invoiced" : "Unbilled"}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+
+
       {p && (
         <ProjectFormDialog
           open={editOpen}
@@ -337,6 +448,42 @@ export default function OperationsProjectDetail() {
           customerId={p?.customer_id}
         />
       )}
+      {id && (
+        <AddChargeDialog
+          open={chargeOpen}
+          onOpenChange={setChargeOpen}
+          projectId={id}
+          customerId={p?.customer_id}
+        />
+      )}
+      <Dialog open={genOpen} onOpenChange={setGenOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Generate invoice</DialogTitle>
+            <DialogDescription>
+              Create a draft invoice from this project's unbilled time, expenses, and charges. Optionally limit by date range.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="gen_from">From</Label>
+              <Input id="gen_from" type="date" value={genFrom} onChange={(e) => setGenFrom(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="gen_to">To</Label>
+              <Input id="gen_to" type="date" value={genTo} onChange={(e) => setGenTo(e.target.value)} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setGenOpen(false)} disabled={generating}>
+              Cancel
+            </Button>
+            <Button type="button" onClick={handleGenerate} disabled={generating || !id}>
+              {generating ? "Generating…" : "Generate"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

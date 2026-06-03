@@ -31,14 +31,13 @@ export type ProjectRecord = {
   start_date?: string | null;
   end_date?: string | null;
   billing_method: string;
-  fixed_cost_amount?: number | null;
   project_hourly_rate?: number | null;
   currency_code?: string | null;
   budget_hours?: number | null;
   budget_amount?: number | null;
 };
 
-type BillingMethod = "fixed" | "project_hours" | "task_hours" | "staff_hours";
+type BillingMethod = "project_hours" | "task_hours" | "staff_hours" | "none";
 type Status = "active" | "completed" | "inactive";
 
 type Props = {
@@ -51,7 +50,6 @@ type Props = {
 type FormState = {
   name: string;
   billing_method: BillingMethod;
-  fixed_cost_amount: string;
   project_hourly_rate: string;
   status: Status;
   description: string;
@@ -64,8 +62,7 @@ type FormState = {
 
 const emptyState = (): FormState => ({
   name: "",
-  billing_method: "fixed",
-  fixed_cost_amount: "",
+  billing_method: "none",
   project_hourly_rate: "",
   status: "active",
   description: "",
@@ -78,10 +75,9 @@ const emptyState = (): FormState => ({
 
 const fromProject = (p: ProjectRecord): FormState => ({
   name: p.name ?? "",
-  billing_method: (["fixed", "project_hours", "task_hours", "staff_hours"].includes(p.billing_method)
+  billing_method: (["project_hours", "task_hours", "staff_hours", "none"].includes(p.billing_method ?? "")
     ? p.billing_method
-    : "fixed") as BillingMethod,
-  fixed_cost_amount: p.fixed_cost_amount == null ? "" : String(p.fixed_cost_amount),
+    : "none") as BillingMethod,
   project_hourly_rate: p.project_hourly_rate == null ? "" : String(p.project_hourly_rate),
   status: (["active", "completed", "inactive"].includes(p.status ?? "") ? p.status : "active") as Status,
   description: p.description ?? "",
@@ -143,8 +139,7 @@ export default function ProjectFormDialog({ open, onOpenChange, customerId, proj
       budget_hours: numOrNull(form.budget_hours),
       budget_amount: numOrNull(form.budget_amount),
       currency_code: form.currency_code.trim() || "USD",
-      fixed_cost_amount:
-        form.billing_method === "fixed" ? numOrNull(form.fixed_cost_amount) : null,
+      fixed_cost_amount: null,
       project_hourly_rate:
         form.billing_method === "project_hours" ? numOrNull(form.project_hourly_rate) : null,
     };
@@ -206,7 +201,7 @@ export default function ProjectFormDialog({ open, onOpenChange, customerId, proj
               >
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="fixed">Fixed cost</SelectItem>
+                  <SelectItem value="none">No hourly billing</SelectItem>
                   <SelectItem value="project_hours">Project hourly</SelectItem>
                   <SelectItem value="task_hours">Task hourly</SelectItem>
                   <SelectItem value="staff_hours">Staff hourly</SelectItem>
@@ -215,16 +210,10 @@ export default function ProjectFormDialog({ open, onOpenChange, customerId, proj
             </div>
 
             <div className="space-y-2">
-              {form.billing_method === "fixed" && (
+              {form.billing_method === "none" && (
                 <>
-                  <Label htmlFor="fixed_cost_amount">Fixed cost amount</Label>
-                  <Input
-                    id="fixed_cost_amount"
-                    type="number"
-                    step="0.01"
-                    value={form.fixed_cost_amount}
-                    onChange={(e) => set("fixed_cost_amount", e.target.value)}
-                  />
+                  <Label>Rate</Label>
+                  <p className="text-sm text-muted-foreground">Fixed fees are added as charges on the project page.</p>
                 </>
               )}
               {form.billing_method === "project_hours" && (
