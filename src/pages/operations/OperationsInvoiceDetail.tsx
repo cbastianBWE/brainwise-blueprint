@@ -40,6 +40,7 @@ export default function OperationsInvoiceDetail() {
   const [recordOpen, setRecordOpen] = useState(false);
   const [confirm, setConfirm] = useState<null | "void" | "write_off" | "delete">(null);
   const [acting, setActing] = useState(false);
+  const [sending, setSending] = useState(false);
 
   const invoiceQ = useQuery({
     queryKey: ["ops", "invoice", id],
