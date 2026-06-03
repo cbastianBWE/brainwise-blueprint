@@ -20,6 +20,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Plus, Trash2 } from "lucide-react";
 
 type LineRow = {
+  item_id: string;
   description: string;
   quantity: string;
   unit_price: string;
