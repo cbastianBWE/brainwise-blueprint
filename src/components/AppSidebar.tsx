@@ -101,6 +101,8 @@ const superAdminNav: NavItem[] = [
   { title: "AI Chat", url: "/ai-chat", icon: MessageSquare },
   { title: "Chat History", url: "/ai-chat/history", icon: History },
   { title: "AI Research", url: "/super-admin/ai-research", icon: FlaskConical, disabled: true, badge: "Phase 2" },
+  { title: "Customers", url: "/operations/customers", icon: Users2, sectionHeader: "Operations" },
+  { title: "Invoices", url: "/operations/invoices", icon: Receipt },
 ];
 
 function getNavItems(profile: { account_type?: string | null; is_practitioner_coach?: boolean } | null | undefined): NavItem[] {
