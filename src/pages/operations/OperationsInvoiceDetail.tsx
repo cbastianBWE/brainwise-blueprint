@@ -18,6 +18,7 @@ export default function OperationsInvoiceDetail() {
   const location = useLocation();
   const qc = useQueryClient();
   const [paying, setPaying] = useState(false);
+  const [recordOpen, setRecordOpen] = useState(false);
 
   const invoiceQ = useQuery({
     queryKey: ["ops", "invoice", id],
