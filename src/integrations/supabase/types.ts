@@ -11378,6 +11378,16 @@ export type Database = {
         }
         Returns: string
       }
+      ops_handle_stripe_refund: {
+        Args: {
+          p_amount_refunded: number
+          p_event_id: string
+          p_event_type: string
+          p_payload: Json
+          p_payment_intent: string
+        }
+        Returns: string
+      }
       ops_mark_invoice_sent: {
         Args: { p_invoice: string; p_org: string }
         Returns: undefined
