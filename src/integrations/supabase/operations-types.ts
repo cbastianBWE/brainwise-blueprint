@@ -1641,8 +1641,8 @@ export type OperationsDatabase = {
         }
         Insert: {
           id?: string
-          org_id: string
-          user_id: string
+          org_id?: string
+          user_id?: string
           project_id: string
           project_task_id?: string | null
           date: string
