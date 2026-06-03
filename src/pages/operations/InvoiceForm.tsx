@@ -121,7 +121,7 @@ export default function InvoiceForm() {
     queryFn: async () => {
       const { data, error } = await opsSupabase
         .from("document_lines")
-        .select("description, quantity, unit_price, discount_amount, sort_order")
+        .select("item_id, description, quantity, unit_price, discount_amount, sort_order")
         .eq("document_type", "invoice")
         .eq("document_id", id!)
         .neq("line_type", "header")
