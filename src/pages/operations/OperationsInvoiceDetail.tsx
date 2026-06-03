@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { StatusBadge, formatMoney, formatDate } from "./_shared";
+import RecordPaymentDialog from "./RecordPaymentDialog";
 
 const PAID_TERMINAL = new Set(["paid", "void", "written_off"]);
 
