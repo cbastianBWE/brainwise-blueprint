@@ -2,15 +2,34 @@ import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { toast } from "sonner";
+import { ChevronDown } from "lucide-react";
 import { opsSupabase } from "@/integrations/supabase/operations-types";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from "@/components/ui/alert-dialog";
 import { StatusBadge, formatMoney, formatDate } from "./_shared";
 import RecordPaymentDialog from "./RecordPaymentDialog";
 
 const PAID_TERMINAL = new Set(["paid", "void", "written_off"]);
+const WRITE_OFF_STATUSES = new Set(["sent", "viewed", "overdue", "partially_paid"]);
 
 export default function OperationsInvoiceDetail() {
   const { id = "" } = useParams();
@@ -19,6 +38,8 @@ export default function OperationsInvoiceDetail() {
   const qc = useQueryClient();
   const [paying, setPaying] = useState(false);
   const [recordOpen, setRecordOpen] = useState(false);
+  const [confirm, setConfirm] = useState<null | "void" | "write_off" | "delete">(null);
+  const [acting, setActing] = useState(false);
 
   const invoiceQ = useQuery({
     queryKey: ["ops", "invoice", id],
@@ -105,6 +126,63 @@ export default function OperationsInvoiceDetail() {
     }
   }
 
+  function invalidateInvoice() {
+    qc.invalidateQueries({ queryKey: ["ops", "invoice", inv.id] });
+    qc.invalidateQueries({ queryKey: ["ops", "invoices", "list"] });
+    if (inv?.customer_id) {
+      qc.invalidateQueries({ queryKey: ["ops", "customer-invoices", inv.customer_id] });
+    }
+  }
+
+  async function handleMarkSent() {
+    const { error } = await supabase.rpc("ops_set_invoice_status", { p_id: inv.id, p_action: "mark_sent" });
+    if (error) { toast.error(error.message ?? "Action failed"); return; }
+    toast.success("Invoice marked as sent.");
+    invalidateInvoice();
+  }
+
+  async function handleClone() {
+    const { data, error } = await supabase.rpc("ops_clone_invoice", { p_id: inv.id });
+    if (error) { toast.error(error.message ?? "Action failed"); return; }
+    toast.success("Invoice cloned.");
+    navigate(`/operations/invoices/${data}`);
+  }
+
+  async function runConfirmed() {
+    if (!confirm) return;
+    setActing(true);
+    try {
+      if (confirm === "void") {
+        const { error } = await supabase.rpc("ops_set_invoice_status", { p_id: inv.id, p_action: "void" });
+        if (error) { toast.error(error.message ?? "Action failed"); return; }
+        toast.success("Invoice voided.");
+        invalidateInvoice();
+      } else if (confirm === "write_off") {
+        const { error } = await supabase.rpc("ops_set_invoice_status", { p_id: inv.id, p_action: "write_off" });
+        if (error) { toast.error(error.message ?? "Action failed"); return; }
+        toast.success("Invoice written off.");
+        invalidateInvoice();
+      } else if (confirm === "delete") {
+        const { error } = await supabase.rpc("ops_delete_draft_invoice", { p_id: inv.id });
+        if (error) { toast.error(error.message ?? "Action failed"); return; }
+        toast.success("Draft deleted.");
+        qc.invalidateQueries({ queryKey: ["ops", "invoices", "list"] });
+        navigate("/operations/invoices");
+      }
+      setConfirm(null);
+    } finally {
+      setActing(false);
+    }
+  }
+
+  const status = (inv?.status ?? "").toLowerCase();
+  const amountPaid = Number(inv?.amount_paid ?? 0);
+  const canMarkSent = status === "draft";
+  const canVoid = amountPaid === 0 && !PAID_TERMINAL.has(status);
+  const canWriteOff = WRITE_OFF_STATUSES.has(status);
+  const canDeleteDraft = status === "draft";
+  const hasDestructive = canVoid || canWriteOff || canDeleteDraft;
+
   if (invoiceQ.isLoading) {
     return <div className="p-6 text-muted-foreground text-sm">Loading…</div>;
   }
@@ -145,6 +223,44 @@ export default function OperationsInvoiceDetail() {
                   {paying ? "Starting checkout…" : "Pay now"}
                 </Button>
               )}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline">
+                    Actions <ChevronDown className="ml-1 h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {canMarkSent && (
+                    <DropdownMenuItem onClick={handleMarkSent}>Mark as sent</DropdownMenuItem>
+                  )}
+                  <DropdownMenuItem onClick={handleClone}>Clone</DropdownMenuItem>
+                  {hasDestructive && <DropdownMenuSeparator />}
+                  {canVoid && (
+                    <DropdownMenuItem
+                      className="text-destructive focus:text-destructive"
+                      onClick={() => setConfirm("void")}
+                    >
+                      Void
+                    </DropdownMenuItem>
+                  )}
+                  {canWriteOff && (
+                    <DropdownMenuItem
+                      className="text-destructive focus:text-destructive"
+                      onClick={() => setConfirm("write_off")}
+                    >
+                      Write off
+                    </DropdownMenuItem>
+                  )}
+                  {canDeleteDraft && (
+                    <DropdownMenuItem
+                      className="text-destructive focus:text-destructive"
+                      onClick={() => setConfirm("delete")}
+                    >
+                      Delete draft
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         </CardHeader>
@@ -211,6 +327,33 @@ export default function OperationsInvoiceDetail() {
         balanceDue={Number(inv.balance_due)}
         currency={inv.currency_code}
       />
+
+      <AlertDialog open={confirm !== null} onOpenChange={(o) => { if (!o) setConfirm(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {confirm === "void" && "Void this invoice?"}
+              {confirm === "write_off" && "Write off this invoice?"}
+              {confirm === "delete" && "Delete this draft?"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirm === "void" && "This marks the invoice as void. This cannot be undone."}
+              {confirm === "write_off" && "This marks the remaining balance as written off."}
+              {confirm === "delete" && "The draft invoice will be permanently deleted."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={acting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={acting}
+              onClick={(e) => { e.preventDefault(); runConfirmed(); }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {acting ? "Working…" : "Confirm"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
