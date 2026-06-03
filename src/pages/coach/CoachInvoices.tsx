@@ -53,7 +53,8 @@ export default function CoachInvoices() {
         .from("coach_clients")
         .select("id, created_at, client_email, instrument_id, invitation_status, stripe_payment_intent_id")
         .eq("coach_user_id", user.id)
-        .not("stripe_payment_intent_id", "is", null);
+        .not("stripe_payment_intent_id", "is", null)
+        .not("stripe_payment_intent_id", "ilike", "comp_%");
 
       if (rowsError) throw new Error(rowsError.message);
       if (!rows || rows.length === 0) {
