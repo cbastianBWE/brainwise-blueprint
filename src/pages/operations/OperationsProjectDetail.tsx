@@ -99,7 +99,36 @@ export default function OperationsProjectDetail() {
     },
   });
 
+  const expenseRollupQ = useQuery({
+    queryKey: ["ops", "project-expense-rollup", id],
+    enabled: !!id,
+    queryFn: async () => {
+      const { data, error } = await opsSupabase
+        .from("unbilled_expenses" as any)
+        .select("unbilled_amount, expense_count")
+        .eq("project_id", id)
+        .maybeSingle();
+      if (error) throw error;
+      return data as any;
+    },
+  });
+
+  const expensesQ = useQuery({
+    queryKey: ["ops", "project-expenses", id],
+    enabled: !!id,
+    queryFn: async () => {
+      const { data, error } = await opsSupabase
+        .from("expenses")
+        .select("id, date, amount, is_billable, is_invoiced, vendor_name, is_mileage, currency_code, expense_categories(name)")
+        .eq("project_id", id)
+        .order("date", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
   const billingLabel = p?.billing_method ? BILLING_LABELS[p.billing_method] ?? p.billing_method : "—";
+
 
   return (
     <div className="p-6 space-y-6">
