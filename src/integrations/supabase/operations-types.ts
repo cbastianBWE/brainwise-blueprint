@@ -579,7 +579,7 @@ export type OperationsDatabase = {
         }
         Insert: {
           id?: string
-          org_id: string
+          org_id?: string
           name: string
           parent_category_id?: string | null
           is_active?: boolean
