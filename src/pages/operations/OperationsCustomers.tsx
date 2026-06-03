@@ -77,6 +77,7 @@ export default function OperationsCustomers() {
           )}
         </CardContent>
       </Card>
+      <CustomerFormDialog open={createOpen} onOpenChange={setCreateOpen} />
     </div>
   );
 }
