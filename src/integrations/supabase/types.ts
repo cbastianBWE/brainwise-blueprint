@@ -11380,6 +11380,10 @@ export type Database = {
         Args: { p_invoice: string; p_org: string }
         Returns: undefined
       }
+      ops_record_payment: {
+        Args: { p_invoice: string; p_payment: Json }
+        Returns: string
+      }
       ops_run_recurring_invoices: { Args: never; Returns: number }
       ops_update_invoice: {
         Args: { p_header: Json; p_id: string; p_lines: Json }
