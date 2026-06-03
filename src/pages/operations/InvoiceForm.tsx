@@ -101,6 +101,19 @@ export default function InvoiceForm() {
     },
   });
 
+  const itemsQ = useQuery({
+    queryKey: ["ops", "items", "select-list"],
+    queryFn: async () => {
+      const { data, error } = await opsSupabase
+        .from("items")
+        .select("id, name, default_selling_price")
+        .eq("status", "active")
+        .order("name");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
   const invoiceQ = useQuery({
     queryKey: ["ops", "invoice", id, "edit-prefill"],
     enabled: isEdit,
