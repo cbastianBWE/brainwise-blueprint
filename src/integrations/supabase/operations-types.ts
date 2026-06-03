@@ -356,6 +356,7 @@ export type OperationsDatabase = {
           sort_order: number
           source_time_entry_ids: string[] | null
           source_expense_ids: string[] | null
+          source_charge_ids: string[] | null
           created_at: string
           updated_at: string
           created_by: string | null
