@@ -147,6 +147,47 @@ export default function OperationsProjectDetail() {
     },
   });
 
+  const chargesQ = useQuery({
+    queryKey: ["ops", "project-charges", id],
+    enabled: !!id,
+    queryFn: async () => {
+      const { data, error } = await opsSupabase
+        .from("project_charges")
+        .select("id, date, description, amount, is_billable, is_invoiced, currency_code")
+        .eq("project_id", id)
+        .order("date", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const chargesUnbilledTotal = (chargesQ.data ?? []).reduce(
+    (sum: number, r: any) => sum + (r.is_billable && !r.is_invoiced ? Number(r.amount) || 0 : 0),
+    0,
+  );
+  const chargesCount = chargesQ.data?.length ?? 0;
+
+  const handleGenerate = async () => {
+    if (!id) return;
+    setGenerating(true);
+    try {
+      const { data, error } = await supabase.rpc("ops_create_invoice_from_project", {
+        p_project: id,
+        p_date_from: genFrom || null,
+        p_date_to: genTo || null,
+      });
+      if (error) {
+        toast.error(error.message);
+      } else {
+        toast.success("Draft invoice created");
+        navigate(`/operations/invoices/${data}`);
+      }
+    } finally {
+      setGenerating(false);
+      setGenOpen(false);
+    }
+  };
+
   const billingLabel = p?.billing_method ? BILLING_LABELS[p.billing_method] ?? p.billing_method : "—";
 
 
@@ -165,10 +206,16 @@ export default function OperationsProjectDetail() {
               </p>
             )}
           </div>
-          <Button variant="outline" size="sm" disabled={!p} onClick={() => setEditOpen(true)}>
-            <Pencil className="h-4 w-4 mr-2" />
-            Edit
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" disabled={!p} onClick={() => setGenOpen(true)}>
+              <FileText className="h-4 w-4 mr-2" />
+              Generate invoice
+            </Button>
+            <Button variant="outline" size="sm" disabled={!p} onClick={() => setEditOpen(true)}>
+              <Pencil className="h-4 w-4 mr-2" />
+              Edit
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           {projectQ.isLoading ? (
