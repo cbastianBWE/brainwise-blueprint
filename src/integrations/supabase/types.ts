@@ -11350,6 +11350,41 @@ export type Database = {
         }
         Returns: Json
       }
+      ops_due_payment_reminders: { Args: never; Returns: Json }
+      ops_flag_overdue_invoices: { Args: never; Returns: number }
+      ops_get_invoice_checkout_bundle: {
+        Args: { p_invoice: string }
+        Returns: Json
+      }
+      ops_handle_stripe_checkout_payment: {
+        Args: {
+          p_amount: number
+          p_currency: string
+          p_customer: string
+          p_event_id: string
+          p_event_type: string
+          p_invoice: string
+          p_mode: string
+          p_org: string
+          p_payload: Json
+          p_payment_intent: string
+          p_session: string
+        }
+        Returns: string
+      }
+      ops_mark_invoice_sent: {
+        Args: { p_invoice: string; p_org: string }
+        Returns: undefined
+      }
+      ops_run_recurring_invoices: { Args: never; Returns: number }
+      ops_upsert_stripe_customer: {
+        Args: {
+          p_customer: string
+          p_org: string
+          p_stripe_customer_id: string
+        }
+        Returns: undefined
+      }
       opt_in_to_newsletter: { Args: never; Returns: Json }
       opt_out_of_newsletter: { Args: never; Returns: Json }
       org_has_feature: {
