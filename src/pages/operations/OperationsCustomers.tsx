@@ -1,12 +1,17 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { opsSupabase } from "@/integrations/supabase/operations-types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
+import CustomerFormDialog from "./CustomerFormDialog";
 
 export default function OperationsCustomers() {
   const navigate = useNavigate();
+  const [createOpen, setCreateOpen] = useState(false);
   const { data, isLoading, error } = useQuery({
     queryKey: ["ops", "customers", "list"],
     queryFn: async () => {
@@ -21,9 +26,15 @@ export default function OperationsCustomers() {
 
   return (
     <div className="p-6 space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold">Customers</h1>
-        <p className="text-muted-foreground text-sm">Operations · Customer accounts</p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold">Customers</h1>
+          <p className="text-muted-foreground text-sm">Operations · Customer accounts</p>
+        </div>
+        <Button onClick={() => setCreateOpen(true)}>
+          <Plus className="h-4 w-4 mr-2" />
+          New customer
+        </Button>
       </div>
       <Card>
         <CardHeader><CardTitle>All customers</CardTitle></CardHeader>
@@ -66,6 +77,7 @@ export default function OperationsCustomers() {
           )}
         </CardContent>
       </Card>
+      <CustomerFormDialog open={createOpen} onOpenChange={setCreateOpen} />
     </div>
   );
 }

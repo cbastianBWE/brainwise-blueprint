@@ -1,13 +1,18 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
 import { opsSupabase } from "@/integrations/supabase/operations-types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { Pencil } from "lucide-react";
+import CustomerFormDialog from "./CustomerFormDialog";
 import { StatusBadge, formatMoney, formatDate } from "./_shared";
 
 export default function OperationsCustomerDetail() {
   const { id = "" } = useParams();
   const navigate = useNavigate();
+  const [editOpen, setEditOpen] = useState(false);
 
   const customerQ = useQuery({
     queryKey: ["ops", "customer", id],
@@ -38,8 +43,12 @@ export default function OperationsCustomerDetail() {
   return (
     <div className="p-6 space-y-6">
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between gap-4 space-y-0">
           <CardTitle>{c?.display_name ?? (customerQ.isLoading ? "Loading…" : "Customer")}</CardTitle>
+          <Button variant="outline" size="sm" disabled={!c} onClick={() => setEditOpen(true)}>
+            <Pencil className="h-4 w-4 mr-2" />
+            Edit
+          </Button>
         </CardHeader>
         <CardContent>
           {customerQ.isLoading ? (
@@ -96,6 +105,7 @@ export default function OperationsCustomerDetail() {
           )}
         </CardContent>
       </Card>
+      <CustomerFormDialog open={editOpen} onOpenChange={setEditOpen} customer={c ?? null} />
     </div>
   );
 }
