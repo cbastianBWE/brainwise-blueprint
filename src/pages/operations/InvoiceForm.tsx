@@ -384,6 +384,7 @@ export default function InvoiceForm() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-56">Item</TableHead>
                   <TableHead>Description</TableHead>
                   <TableHead className="w-24 text-right">Qty</TableHead>
                   <TableHead className="w-32 text-right">Unit price</TableHead>
@@ -395,6 +396,34 @@ export default function InvoiceForm() {
               <TableBody>
                 {lines.map((r, i) => (
                   <TableRow key={i}>
+                    <TableCell>
+                      <Select
+                        value={r.item_id || "__custom__"}
+                        onValueChange={(v) => {
+                          if (v === "__custom__") {
+                            setLine(i, { item_id: "" });
+                          } else {
+                            const it = (itemsQ.data ?? []).find((x: any) => x.id === v) as any;
+                            setLine(i, {
+                              item_id: v,
+                              description: it?.name ?? r.description,
+                              unit_price:
+                                it?.default_selling_price != null
+                                  ? String(it.default_selling_price)
+                                  : r.unit_price,
+                            });
+                          }
+                        }}
+                      >
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="__custom__">Custom / free-form</SelectItem>
+                          {(itemsQ.data ?? []).map((it: any) => (
+                            <SelectItem key={it.id} value={it.id}>{it.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
                     <TableCell>
                       <Input
                         value={r.description}
