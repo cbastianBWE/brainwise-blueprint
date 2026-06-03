@@ -176,6 +176,13 @@ export default function OperationsCustomerDetail() {
         </CardContent>
       </Card>
       <CustomerFormDialog open={editOpen} onOpenChange={setEditOpen} customer={c ?? null} />
+      {id && (
+        <ProjectFormDialog
+          open={projectOpen}
+          onOpenChange={setProjectOpen}
+          customerId={id}
+        />
+      )}
     </div>
   );
 }
