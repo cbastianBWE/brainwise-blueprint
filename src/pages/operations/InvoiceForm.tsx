@@ -44,6 +44,7 @@ type HeaderState = {
 const todayISO = () => new Date().toISOString().slice(0, 10);
 
 const emptyLine = (): LineRow => ({
+  item_id: "",
   description: "",
   quantity: "1",
   unit_price: "0",
