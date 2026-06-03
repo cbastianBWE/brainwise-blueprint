@@ -1,0 +1,232 @@
+import { useEffect, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
+import { toast } from "sonner";
+import { opsSupabase } from "@/integrations/supabase/operations-types";
+import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { StatusBadge, formatMoney, formatDate } from "./_shared";
+
+const PAID_TERMINAL = new Set(["paid", "void", "written_off"]);
+
+export default function OperationsInvoiceDetail() {
+  const { id = "" } = useParams();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const qc = useQueryClient();
+  const [paying, setPaying] = useState(false);
+
+  const invoiceQ = useQuery({
+    queryKey: ["ops", "invoice", id],
+    enabled: !!id,
+    queryFn: async () => {
+      const { data, error } = await opsSupabase.from("invoices").select("*").eq("id", id).maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const inv = invoiceQ.data as any;
+
+  const customerQ = useQuery({
+    queryKey: ["ops", "invoice-customer", inv?.customer_id],
+    enabled: !!inv?.customer_id,
+    queryFn: async () => {
+      const { data, error } = await opsSupabase
+        .from("customers")
+        .select("display_name, email, billing_address")
+        .eq("id", inv.customer_id)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const linesQ = useQuery({
+    queryKey: ["ops", "invoice-lines", id],
+    enabled: !!id,
+    queryFn: async () => {
+      const { data, error } = await opsSupabase
+        .from("document_lines")
+        .select("description, quantity, unit_price, line_total, line_type, sort_order")
+        .eq("document_type", "invoice")
+        .eq("document_id", id)
+        .neq("line_type", "header")
+        .order("sort_order");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  // Handle ?paid=1 / ?canceled=1
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const paid = params.get("paid");
+    const canceled = params.get("canceled");
+    if (!paid && !canceled) return;
+    if (paid === "1") {
+      toast.success("Payment received. Updating invoice…");
+      qc.invalidateQueries({ queryKey: ["ops", "invoice", id] });
+    } else if (canceled === "1") {
+      toast.info("Payment canceled.");
+    }
+    navigate(location.pathname, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const balanceDue = Number(inv?.balance_due ?? 0);
+  const canPay = !!inv && balanceDue > 0 && !PAID_TERMINAL.has((inv.status ?? "").toLowerCase());
+
+  async function handlePayNow() {
+    if (!inv) return;
+    setPaying(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("ops-invoice-checkout", {
+        body: { invoice_id: inv.id },
+      });
+      if (error) {
+        const ctxMsg = await readFunctionsErrorMessage(error);
+        toast.error(ctxMsg ?? "Could not start checkout.");
+        return;
+      }
+      if (data?.url) {
+        window.location.href = data.url as string;
+        return;
+      }
+      toast.error("Checkout did not return a URL.");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Could not start checkout.");
+    } finally {
+      setPaying(false);
+    }
+  }
+
+  if (invoiceQ.isLoading) {
+    return <div className="p-6 text-muted-foreground text-sm">Loading…</div>;
+  }
+  if (!inv) {
+    return <div className="p-6 text-destructive text-sm">Invoice not found.</div>;
+  }
+
+  const currency = inv.currency_code;
+  const cust = customerQ.data as any;
+
+  return (
+    <div className="p-6 space-y-6">
+      <Card>
+        <CardHeader>
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <CardTitle className="flex items-center gap-3">
+                <span>Invoice {inv.invoice_number}</span>
+                <StatusBadge status={inv.status} />
+              </CardTitle>
+              <p className="text-muted-foreground text-sm mt-1">
+                Issued {formatDate(inv.issue_date)} · Due {formatDate(inv.due_date)}
+              </p>
+            </div>
+            {canPay && (
+              <Button onClick={handlePayNow} disabled={paying}>
+                {paying ? "Starting checkout…" : "Pay now"}
+              </Button>
+            )}
+          </div>
+        </CardHeader>
+        <CardContent>
+          <dl className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+            <div>
+              <dt className="text-muted-foreground">Customer</dt>
+              <dd className="font-medium">{cust?.display_name ?? "—"}</dd>
+              <dd className="text-muted-foreground">{cust?.email ?? ""}</dd>
+            </div>
+            <div>
+              <dt className="text-muted-foreground">Billing address</dt>
+              <dd className="whitespace-pre-line">{formatAddress(cust?.billing_address)}</dd>
+            </div>
+          </dl>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader><CardTitle>Line items</CardTitle></CardHeader>
+        <CardContent>
+          {linesQ.isLoading ? (
+            <p className="text-muted-foreground text-sm">Loading…</p>
+          ) : !linesQ.data || linesQ.data.length === 0 ? (
+            <p className="text-muted-foreground text-sm">No line items.</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Description</TableHead>
+                  <TableHead className="text-right">Qty</TableHead>
+                  <TableHead className="text-right">Unit price</TableHead>
+                  <TableHead className="text-right">Line total</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {linesQ.data.map((l, i) => (
+                  <TableRow key={i}>
+                    <TableCell>{l.description ?? "—"}</TableCell>
+                    <TableCell className="text-right">{l.quantity ?? "—"}</TableCell>
+                    <TableCell className="text-right">{formatMoney(l.unit_price, currency)}</TableCell>
+                    <TableCell className="text-right">{formatMoney(l.line_total, currency)}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+
+          <div className="mt-6 ml-auto max-w-sm space-y-1 text-sm">
+            <TotalRow label="Subtotal" value={formatMoney(inv.subtotal_amount, currency)} />
+            <TotalRow label="Tax" value={formatMoney(inv.tax_amount, currency)} />
+            <TotalRow label="Total" value={formatMoney(inv.total_amount, currency)} bold />
+            <TotalRow label="Amount paid" value={formatMoney(inv.amount_paid, currency)} />
+            <TotalRow label="Balance due" value={formatMoney(inv.balance_due, currency)} bold />
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function TotalRow({ label, value, bold }: { label: string; value: string; bold?: boolean }) {
+  return (
+    <div className={`flex justify-between ${bold ? "font-semibold" : ""}`}>
+      <span className="text-muted-foreground">{label}</span>
+      <span>{value}</span>
+    </div>
+  );
+}
+
+function formatAddress(addr: any): string {
+  if (!addr) return "—";
+  if (typeof addr === "string") return addr;
+  const parts = [addr.line1, addr.line2, [addr.city, addr.state, addr.postal_code].filter(Boolean).join(", "), addr.country];
+  return parts.filter(Boolean).join("\n") || "—";
+}
+
+async function readFunctionsErrorMessage(error: any): Promise<string | null> {
+  try {
+    const ctx = error?.context;
+    if (!ctx) return error?.message ?? null;
+    // ctx is usually a Response
+    if (typeof ctx.json === "function") {
+      const body = await ctx.clone().json().catch(() => null);
+      if (body?.error) return String(body.error);
+      if (body?.message) return String(body.message);
+    }
+    if (typeof ctx.text === "function") {
+      const txt = await ctx.clone().text().catch(() => "");
+      if (txt) return txt;
+    }
+    if (typeof ctx === "object" && (ctx.error || ctx.message)) {
+      return String(ctx.error ?? ctx.message);
+    }
+  } catch {
+    /* ignore */
+  }
+  return error?.message ?? null;
+}
