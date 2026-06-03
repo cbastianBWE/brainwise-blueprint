@@ -11350,10 +11350,12 @@ export type Database = {
         }
         Returns: Json
       }
+      ops_clone_invoice: { Args: { p_id: string }; Returns: string }
       ops_create_invoice: {
         Args: { p_header: Json; p_lines: Json }
         Returns: string
       }
+      ops_delete_draft_invoice: { Args: { p_id: string }; Returns: undefined }
       ops_due_payment_reminders: { Args: never; Returns: Json }
       ops_flag_overdue_invoices: { Args: never; Returns: number }
       ops_get_invoice_checkout_bundle: {
@@ -11385,6 +11387,10 @@ export type Database = {
         Returns: string
       }
       ops_run_recurring_invoices: { Args: never; Returns: number }
+      ops_set_invoice_status: {
+        Args: { p_action: string; p_id: string }
+        Returns: string
+      }
       ops_update_invoice: {
         Args: { p_header: Json; p_id: string; p_lines: Json }
         Returns: string
