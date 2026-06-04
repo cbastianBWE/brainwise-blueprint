@@ -361,7 +361,7 @@ export default function OperationsProjectDetail() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-4 space-y-0">
           <CardTitle>Time</CardTitle>
-          <Button size="sm" disabled={!p} onClick={() => setLogTimeOpen(true)}>
+          <Button size="sm" disabled={!p} onClick={() => { setEditingTime(null); setLogTimeOpen(true); }}>
             <Plus className="h-4 w-4 mr-2" />
             Log time
           </Button>
