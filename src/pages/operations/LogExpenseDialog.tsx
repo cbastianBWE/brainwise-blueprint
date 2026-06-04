@@ -398,7 +398,7 @@ export default function LogExpenseDialog({ open, onOpenChange, projectId, custom
               Cancel
             </Button>
             <Button type="submit" disabled={submitting}>
-              {submitting ? "Saving…" : "Log expense"}
+              {submitting ? "Saving…" : isEdit ? "Save changes" : "Log expense"}
             </Button>
           </DialogFooter>
         </form>
