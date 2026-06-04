@@ -11359,7 +11359,16 @@ export type Database = {
         }
         Returns: Json
       }
+      ops_accept_estimate_by_token: { Args: { p_token: string }; Returns: Json }
       ops_clone_invoice: { Args: { p_id: string }; Returns: string }
+      ops_convert_estimate_to_invoice: {
+        Args: { p_estimate: string }
+        Returns: string
+      }
+      ops_create_estimate: {
+        Args: { p_header: Json; p_lines: Json }
+        Returns: string
+      }
       ops_create_invoice: {
         Args: { p_header: Json; p_lines: Json }
         Returns: string
@@ -11377,11 +11386,27 @@ export type Database = {
         Args: { p_customer: string; p_detail?: string; p_selection: Json }
         Returns: string
       }
+      ops_decline_estimate_by_token: {
+        Args: { p_reason?: string; p_token: string }
+        Returns: Json
+      }
       ops_delete_draft_invoice: { Args: { p_id: string }; Returns: undefined }
       ops_due_payment_reminders: { Args: never; Returns: Json }
       ops_flag_overdue_invoices: { Args: never; Returns: number }
+      ops_get_estimate_send_bundle: {
+        Args: { p_estimate: string }
+        Returns: Json
+      }
       ops_get_invoice_checkout_bundle: {
         Args: { p_invoice: string }
+        Returns: Json
+      }
+      ops_get_invoice_checkout_bundle_by_token: {
+        Args: { p_token: string }
+        Returns: Json
+      }
+      ops_get_public_document_by_token: {
+        Args: { p_token: string }
         Returns: Json
       }
       ops_handle_stripe_checkout_payment: {
@@ -11414,13 +11439,30 @@ export type Database = {
         Args: { p_invoice: string; p_org: string }
         Returns: undefined
       }
+      ops_mint_public_token: {
+        Args: {
+          p_document_id: string
+          p_document_type: string
+          p_expires_in_days?: number
+          p_purpose: string
+        }
+        Returns: string
+      }
       ops_record_payment: {
         Args: { p_invoice: string; p_payment: Json }
         Returns: string
       }
       ops_run_recurring_invoices: { Args: never; Returns: number }
+      ops_set_estimate_status: {
+        Args: { p_action: string; p_id: string }
+        Returns: string
+      }
       ops_set_invoice_status: {
         Args: { p_action: string; p_id: string }
+        Returns: string
+      }
+      ops_update_estimate: {
+        Args: { p_header: Json; p_id: string; p_lines: Json }
         Returns: string
       }
       ops_update_invoice: {
