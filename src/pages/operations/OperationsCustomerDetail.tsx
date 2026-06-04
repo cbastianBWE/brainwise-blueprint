@@ -95,6 +95,10 @@ export default function OperationsCustomerDetail() {
               <Pencil className="h-4 w-4 mr-2" />
               Edit
             </Button>
+            <Button variant="outline" size="sm" disabled={!c} onClick={() => navigate(`/operations/invoices/from-work?customer=${id}`)}>
+              <Plus className="h-4 w-4 mr-2" />
+              New invoice from work
+            </Button>
             <Button size="sm" disabled={!c} onClick={() => navigate(`/operations/invoices/new?customer=${id}`)}>
               <Plus className="h-4 w-4 mr-2" />
               New invoice
