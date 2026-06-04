@@ -128,7 +128,7 @@ export default function OperationsProjectDetail() {
     queryFn: async () => {
       const { data, error } = await opsSupabase
         .from("time_entries")
-        .select("id, date, hours, is_billable, is_invoiced, description, user_id, project_task_id, project_tasks(name), users!time_entries_user_id_fkey(full_name, email)")
+        .select("id, date, hours, is_billable, is_invoiced, description, user_id, project_task_id, timer_running, timer_started_at, project_tasks(name), users!time_entries_user_id_fkey(full_name, email)")
         .eq("project_id", id)
         .order("date", { ascending: false });
       if (error) throw error;
