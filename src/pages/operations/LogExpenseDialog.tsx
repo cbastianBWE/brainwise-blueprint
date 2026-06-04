@@ -84,19 +84,33 @@ export default function LogExpenseDialog({ open, onOpenChange, projectId, custom
 
   useEffect(() => {
     if (!open) return;
-    setDate(todayISO());
-    setExpenseCategoryId("");
-    setIsMileage(false);
-    setAmount("");
-    setMilesDriven("");
-    setPerMileRate("");
-    setVendorName("");
-    setIsBillable(false);
-    setMarkupPercentage("");
-    setNotes("");
+    if (expense) {
+      setDate(expense.date ?? todayISO());
+      setExpenseCategoryId(expense.expense_category_id ?? "");
+      setIsMileage(!!expense.is_mileage);
+      setAmount(expense.amount != null ? expense.amount.toString() : "");
+      setMilesDriven(expense.miles_driven != null ? expense.miles_driven.toString() : "");
+      setPerMileRate(expense.per_mile_rate != null ? expense.per_mile_rate.toString() : "");
+      setVendorName(expense.vendor_name ?? "");
+      setIsBillable(!!expense.is_billable);
+      setMarkupPercentage(expense.markup_percentage != null ? expense.markup_percentage.toString() : "");
+      setNotes(expense.notes ?? "");
+    } else {
+      setDate(todayISO());
+      setExpenseCategoryId("");
+      setIsMileage(false);
+      setAmount("");
+      setMilesDriven("");
+      setPerMileRate("");
+      setVendorName("");
+      setIsBillable(false);
+      setMarkupPercentage("");
+      setNotes("");
+    }
     setReceiptFile(null);
     setError(null);
-  }, [open]);
+  }, [open, expense]);
+
 
   useEffect(() => {
     if (!open) return;
