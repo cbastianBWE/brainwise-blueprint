@@ -18,7 +18,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Pencil, Plus, FileText, Trash2 } from "lucide-react";
+import { Pencil, Plus, FileText, Trash2, Play, Square, X } from "lucide-react";
 import { formatMoney } from "./_shared";
 import ProjectFormDialog, { ProjectRecord } from "./ProjectFormDialog";
 import TaskFormDialog, { TaskRecord } from "./TaskFormDialog";
