@@ -9948,6 +9948,15 @@ export type Database = {
         Args: { p_module_id: string; p_user_id: string }
         Returns: string
       }
+      _ops_emit_from_sel: {
+        Args: {
+          p_detail: string
+          p_invoice: string
+          p_org: string
+          p_uid: string
+        }
+        Returns: number
+      }
       _rebind_newsletter_article_asset_refs: {
         Args: { p_article_id: string; p_caller_id: string }
         Returns: Json
@@ -11356,11 +11365,16 @@ export type Database = {
         Returns: string
       }
       ops_create_invoice_from_project: {
-        Args: { p_date_from: string; p_date_to: string; p_project: string }
+        Args: {
+          p_date_from: string
+          p_date_to: string
+          p_detail?: string
+          p_project: string
+        }
         Returns: string
       }
       ops_create_invoice_from_selection: {
-        Args: { p_customer: string; p_selection: Json }
+        Args: { p_customer: string; p_detail?: string; p_selection: Json }
         Returns: string
       }
       ops_delete_draft_invoice: { Args: { p_id: string }; Returns: undefined }
