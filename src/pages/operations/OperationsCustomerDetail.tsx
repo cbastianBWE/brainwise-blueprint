@@ -196,6 +196,56 @@ export default function OperationsCustomerDetail() {
       </Card>
 
       <Card>
+        <CardHeader><CardTitle>Account credits</CardTitle></CardHeader>
+        <CardContent>
+          {creditsQ.isLoading ? (
+            <p className="text-muted-foreground text-sm">Loading…</p>
+          ) : !creditsQ.data || creditsQ.data.length === 0 ? (
+            <p className="text-muted-foreground text-sm">No account credit.</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Source</TableHead>
+                  <TableHead className="text-right">Amount</TableHead>
+                  <TableHead className="text-right">Applied</TableHead>
+                  <TableHead className="text-right">Available</TableHead>
+                  <TableHead className="text-right">Action</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {creditsQ.data.map((row: any) => {
+                  const avail = Number(row.available_balance) || 0;
+                  const cur = c?.default_currency_code || "USD";
+                  return (
+                    <TableRow key={row.id}>
+                      <TableCell className="capitalize">{String(row.source_type ?? "").replace(/_/g, " ")}</TableCell>
+                      <TableCell className="text-right">{formatMoney(row.amount, cur)}</TableCell>
+                      <TableCell className="text-right">{formatMoney(row.applied_amount, cur)}</TableCell>
+                      <TableCell className="text-right">{formatMoney(row.available_balance, cur)}</TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={avail <= 0}
+                          onClick={() => {
+                            setApplyCreditCreditId(row.id);
+                            setApplyCreditMax(avail);
+                          }}
+                        >
+                          Apply to invoice
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
         <CardHeader><CardTitle>Invoices</CardTitle></CardHeader>
         <CardContent>
           {invoicesQ.isLoading ? (
