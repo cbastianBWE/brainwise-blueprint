@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -18,7 +18,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Pencil, Plus, FileText, Trash2 } from "lucide-react";
+import { Pencil, Plus, FileText, Trash2, Play, Square, X } from "lucide-react";
 import { formatMoney } from "./_shared";
 import ProjectFormDialog, { ProjectRecord } from "./ProjectFormDialog";
 import TaskFormDialog, { TaskRecord } from "./TaskFormDialog";
@@ -55,6 +55,14 @@ export default function OperationsProjectDetail() {
   const [teamOpen, setTeamOpen] = useState(false);
   const [teamMode, setTeamMode] = useState<"add" | "edit">("add");
   const [editingMember, setEditingMember] = useState<(TeamMemberDialogMember & { display_name: string }) | null>(null);
+  const [currentUid, setCurrentUid] = useState<string | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await opsSupabase.auth.getUser();
+      setCurrentUid(data.user?.id ?? null);
+    })();
+  }, []);
 
   const projectQ = useQuery({
     queryKey: ["ops", "project", id],
@@ -120,7 +128,7 @@ export default function OperationsProjectDetail() {
     queryFn: async () => {
       const { data, error } = await opsSupabase
         .from("time_entries")
-        .select("id, date, hours, is_billable, is_invoiced, description, user_id, project_task_id, project_tasks(name), users!time_entries_user_id_fkey(full_name, email)")
+        .select("id, date, hours, is_billable, is_invoiced, description, user_id, project_task_id, timer_running, timer_started_at, project_tasks(name), users!time_entries_user_id_fkey(full_name, email)")
         .eq("project_id", id)
         .order("date", { ascending: false });
       if (error) throw error;
@@ -219,6 +227,47 @@ export default function OperationsProjectDetail() {
     toast.success("Member removed");
     queryClient.invalidateQueries({ queryKey: ["ops", "project-members", id] });
     queryClient.invalidateQueries({ queryKey: ["ops", "project-financials", id] });
+  };
+
+  const visibleTimeEntries = (timeEntriesQ.data ?? []).filter((r: any) => !r.timer_running);
+  const runningEntry = (timeEntriesQ.data ?? []).find((r: any) => r.timer_running && r.user_id === currentUid) ?? null;
+
+  const startTimer = async () => {
+    const { error } = await supabase.rpc("ops_start_timer" as any, { p_project: id, p_project_task: null, p_description: null });
+    if (error) { toast.error(error.message); return; }
+    toast.success("Timer started");
+    queryClient.invalidateQueries({ queryKey: ["ops", "project-time", id] });
+  };
+
+  const stopTimer = async () => {
+    const r = runningEntry;
+    if (!r) return;
+    const { data, error } = await supabase.rpc("ops_stop_timer" as any, { p_id: r.id });
+    if (error) { toast.error(error.message); return; }
+    queryClient.invalidateQueries({ queryKey: ["ops", "project-time", id] });
+    queryClient.invalidateQueries({ queryKey: ["ops", "project-time-rollup", id] });
+    queryClient.invalidateQueries({ queryKey: ["ops", "customer-time-rollup"] });
+    queryClient.invalidateQueries({ queryKey: ["ops", "project-financials", id] });
+    toast.success(`Logged ${data} h — add details`);
+    setEditingTime({
+      id: r.id,
+      date: r.date,
+      project_task_id: r.project_task_id ?? null,
+      user_id: r.user_id,
+      hours: Number(data),
+      is_billable: r.is_billable,
+      description: r.description ?? null,
+    });
+    setLogTimeOpen(true);
+  };
+
+  const discardTimer = async () => {
+    if (!runningEntry) return;
+    if (!window.confirm("Discard running timer? Nothing will be logged.")) return;
+    const { error } = await opsSupabase.from("time_entries").delete().eq("id", runningEntry.id);
+    if (error) { toast.error(error.message); return; }
+    queryClient.invalidateQueries({ queryKey: ["ops", "project-time", id] });
+    toast.success("Timer discarded");
   };
 
 
@@ -501,10 +550,31 @@ export default function OperationsProjectDetail() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-4 space-y-0">
           <CardTitle>Time</CardTitle>
-          <Button size="sm" disabled={!p} onClick={() => { setEditingTime(null); setLogTimeOpen(true); }}>
-            <Plus className="h-4 w-4 mr-2" />
-            Log time
-          </Button>
+          <div className="flex items-center gap-2">
+            {runningEntry ? (
+              <div className="flex items-center gap-2">
+                <span className="inline-block h-2 w-2 rounded-full bg-destructive animate-pulse" aria-hidden />
+                <RunningTimerLabel startedAt={runningEntry.timer_started_at} />
+                <Button variant="outline" size="sm" onClick={stopTimer}>
+                  <Square className="h-4 w-4 mr-2" />
+                  Stop
+                </Button>
+                <Button variant="ghost" size="sm" onClick={discardTimer}>
+                  <X className="h-4 w-4 mr-2" />
+                  Discard
+                </Button>
+              </div>
+            ) : (
+              <Button variant="outline" size="sm" disabled={!p} onClick={startTimer}>
+                <Play className="h-4 w-4 mr-2" />
+                Start timer
+              </Button>
+            )}
+            <Button size="sm" disabled={!p} onClick={() => { setEditingTime(null); setLogTimeOpen(true); }}>
+              <Plus className="h-4 w-4 mr-2" />
+              Log time
+            </Button>
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-sm text-muted-foreground">
@@ -512,7 +582,7 @@ export default function OperationsProjectDetail() {
           </p>
           {timeEntriesQ.isLoading ? (
             <p className="text-muted-foreground text-sm">Loading…</p>
-          ) : !timeEntriesQ.data || timeEntriesQ.data.length === 0 ? (
+          ) : visibleTimeEntries.length === 0 ? (
             <p className="text-muted-foreground text-sm">No time logged yet.</p>
           ) : (
             <Table>
@@ -528,7 +598,7 @@ export default function OperationsProjectDetail() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {timeEntriesQ.data.map((row: any) => (
+                {visibleTimeEntries.map((row: any) => (
                   <TableRow key={row.id}>
                     <TableCell>{row.date}</TableCell>
                     <TableCell>{row.project_tasks?.name ?? "—"}</TableCell>
@@ -788,4 +858,17 @@ export default function OperationsProjectDetail() {
       </Dialog>
     </div>
   );
+}
+
+function RunningTimerLabel({ startedAt }: { startedAt: string }) {
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, []);
+  const secs = Math.max(0, Math.floor((now - new Date(startedAt).getTime()) / 1000));
+  const hh = String(Math.floor(secs / 3600)).padStart(2, "0");
+  const mm = String(Math.floor((secs % 3600) / 60)).padStart(2, "0");
+  const ss = String(secs % 60).padStart(2, "0");
+  return <span className="font-mono tabular-nums text-sm">{hh}:{mm}:{ss}</span>;
 }
