@@ -52,6 +52,9 @@ export default function OperationsProjectDetail() {
   const [genFrom, setGenFrom] = useState("");
   const [genTo, setGenTo] = useState("");
   const [genDetail, setGenDetail] = useState<"itemized" | "summary">("itemized");
+  const [teamOpen, setTeamOpen] = useState(false);
+  const [teamMode, setTeamMode] = useState<"add" | "edit">("add");
+  const [editingMember, setEditingMember] = useState<(TeamMemberDialogMember & { display_name: string }) | null>(null);
 
   const projectQ = useQuery({
     queryKey: ["ops", "project", id],
