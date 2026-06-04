@@ -729,6 +729,96 @@ export default function OperationsProjectDetail() {
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-4 space-y-0">
+          <CardTitle>Week</CardTitle>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => {
+                const d = new Date(weekStart);
+                d.setDate(d.getDate() - 7);
+                setWeekStart(d);
+              }}
+              aria-label="Previous week"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <span className="text-sm text-muted-foreground tabular-nums">
+              {days[0].toLocaleDateString()} – {days[6].toLocaleDateString()}
+            </span>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => {
+                const d = new Date(weekStart);
+                d.setDate(d.getDate() + 7);
+                setWeekStart(d);
+              }}
+              aria-label="Next week"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => setWeekStart(startOfWeekMon(new Date()))}>
+              This week
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {weekEntriesQ.isLoading ? (
+            <p className="text-muted-foreground text-sm">Loading…</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Task</TableHead>
+                  {days.map((d, i) => (
+                    <TableHead key={daysISO[i]} className="text-center">
+                      {d.toLocaleDateString(undefined, { weekday: "short" })} {d.getDate()}
+                    </TableHead>
+                  ))}
+                  <TableHead className="text-right">Total</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {weekRows.map((row) => {
+                  const cells = daysISO.map(
+                    (iso) => weekMap.get(`${row.taskId ?? "none"}|${iso}`) ?? 0,
+                  );
+                  const rowTotal = cells.reduce((s, n) => s + n, 0);
+                  return (
+                    <TableRow key={row.taskId ?? "__untasked"}>
+                      <TableCell className="font-medium">{row.name}</TableCell>
+                      {cells.map((sum, i) => (
+                        <TableCell key={daysISO[i]} className="p-1 text-center">
+                          <WeekCell
+                            display={fmtHM(sum)}
+                            onAdd={(h) => addTime(row.taskId, daysISO[i], h)}
+                          />
+                        </TableCell>
+                      ))}
+                      <TableCell className="text-right tabular-nums">{fmtHM(rowTotal)}</TableCell>
+                    </TableRow>
+                  );
+                })}
+                <TableRow>
+                  <TableCell className="font-semibold">Total</TableCell>
+                  {colTotals.map((n, i) => (
+                    <TableCell key={daysISO[i]} className="text-center font-semibold tabular-nums">
+                      {fmtHM(n)}
+                    </TableCell>
+                  ))}
+                  <TableCell className="text-right font-semibold tabular-nums">{fmtHM(grandTotal)}</TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+
+
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between gap-4 space-y-0">
           <CardTitle>Expenses</CardTitle>
           <Button size="sm" disabled={!p} onClick={() => { setEditingExpense(null); setLogExpenseOpen(true); }}>
             <Plus className="h-4 w-4 mr-2" />
