@@ -11491,6 +11491,15 @@ export type Database = {
         Args: { p_action: string; p_id: string }
         Returns: string
       }
+      ops_start_timer: {
+        Args: {
+          p_description?: string
+          p_project: string
+          p_project_task?: string
+        }
+        Returns: string
+      }
+      ops_stop_timer: { Args: { p_id?: string }; Returns: number }
       ops_update_estimate: {
         Args: { p_header: Json; p_id: string; p_lines: Json }
         Returns: string
