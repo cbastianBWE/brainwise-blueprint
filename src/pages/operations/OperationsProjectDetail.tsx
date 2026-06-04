@@ -176,6 +176,52 @@ export default function OperationsProjectDetail() {
   );
   const chargesCount = chargesQ.data?.length ?? 0;
 
+  const membersQ = useQuery({
+    queryKey: ["ops", "project-members", id],
+    enabled: !!id,
+    queryFn: async () => {
+      const { data, error } = await opsSupabase
+        .from("project_users" as any)
+        .select("*")
+        .eq("project_id", id);
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+  });
+
+  const orgUsersQ = useQuery({
+    queryKey: ["ops", "org-users"],
+    queryFn: async () => {
+      const { data, error } = await opsSupabase
+        .from("users" as any)
+        .select("id, full_name, email, status, default_billing_rate, default_cost_rate")
+        .eq("status", "active");
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+  });
+
+  const orgUsersById = new Map<string, any>((orgUsersQ.data ?? []).map((u: any) => [u.id, u]));
+  const membersWithNames = (membersQ.data ?? []).map((m: any) => {
+    const u = orgUsersById.get(m.user_id);
+    return { ...m, display_name: (u?.full_name || u?.email) ?? "Unknown" };
+  });
+  const memberUserIds = new Set<string>((membersQ.data ?? []).map((m: any) => m.user_id));
+  const availableUsersForAdd = (orgUsersQ.data ?? []).filter((u: any) => !memberUserIds.has(u.id));
+
+  const removeMember = async (memberId: string) => {
+    if (!window.confirm("Remove this team member?")) return;
+    const { error } = await opsSupabase.from("project_users" as any).delete().eq("id", memberId);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Member removed");
+    queryClient.invalidateQueries({ queryKey: ["ops", "project-members", id] });
+    queryClient.invalidateQueries({ queryKey: ["ops", "project-financials", id] });
+  };
+
+
   const handleGenerate = async () => {
     if (!id) return;
     setGenerating(true);
