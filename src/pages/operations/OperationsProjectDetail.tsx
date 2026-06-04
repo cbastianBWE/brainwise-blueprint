@@ -212,6 +212,34 @@ export default function OperationsProjectDetail() {
   );
   const chargesCount = chargesQ.data?.length ?? 0;
 
+  const financialsQ = useQuery({
+    queryKey: ["ops", "project-financials", id],
+    enabled: !!id,
+    queryFn: async () => {
+      const { data, error } = await (opsSupabase as any)
+        .from("project_financials_rollup")
+        .select("total_hours, billable_hours, time_cost, cost_untracked_hours, expense_cost, actual_cost, revenue_invoiced, margin, margin_pct, budget_hours, budget_amount")
+        .eq("project_id", id)
+        .maybeSingle();
+      if (error) throw error;
+      return data as {
+        total_hours: string | number | null;
+        billable_hours: string | number | null;
+        time_cost: string | number | null;
+        cost_untracked_hours: string | number | null;
+        expense_cost: string | number | null;
+        actual_cost: string | number | null;
+        revenue_invoiced: string | number | null;
+        margin: string | number | null;
+        margin_pct: string | number | null;
+        budget_hours: string | number | null;
+        budget_amount: string | number | null;
+      } | null;
+    },
+  });
+
+
+
   const membersQ = useQuery({
     queryKey: ["ops", "project-members", id],
     enabled: !!id,
