@@ -103,6 +103,11 @@ import OperationsProjectDetail from "./pages/operations/OperationsProjectDetail"
 import OperationsInvoiceDetail from "./pages/operations/OperationsInvoiceDetail";
 import InvoiceForm from "./pages/operations/InvoiceForm";
 import InvoiceFromWork from "./pages/operations/InvoiceFromWork";
+import OperationsEstimates from "./pages/operations/OperationsEstimates";
+import OperationsEstimateDetail from "./pages/operations/OperationsEstimateDetail";
+import EstimateForm from "./pages/operations/EstimateForm";
+import PublicInvoicePay from "./pages/public/PublicInvoicePay";
+import PublicEstimateRespond from "./pages/public/PublicEstimateRespond";
 import EpnComplete from "./pages/EpnComplete";
 import AirsaManagerComplete from "./pages/AirsaManagerComplete";
 import VerifyConversion from "./pages/VerifyConversion";
@@ -130,6 +135,8 @@ const App = () => (
             <Routes>
             {/* Public routes */}
             <Route path="/" element={<Home />} />
+            <Route path="/pay/:token" element={<PublicInvoicePay />} />
+            <Route path="/estimate/:token" element={<PublicEstimateRespond />} />
             <Route path="/coming-soon" element={<ComingSoon />} />
             <Route path="/signup" element={<SignUp />} />
             <Route path="/login" element={<Login />} />
@@ -248,6 +255,10 @@ const App = () => (
               <Route path="/operations/invoices/from-work" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><InvoiceFromWork /></SuperAdminSessionProvider></RoleGuard>} />
               <Route path="/operations/invoices/:id/edit" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><InvoiceForm /></SuperAdminSessionProvider></RoleGuard>} />
               <Route path="/operations/invoices/:id" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsInvoiceDetail /></SuperAdminSessionProvider></RoleGuard>} />
+              <Route path="/operations/estimates" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsEstimates /></SuperAdminSessionProvider></RoleGuard>} />
+              <Route path="/operations/estimates/new" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><EstimateForm /></SuperAdminSessionProvider></RoleGuard>} />
+              <Route path="/operations/estimates/:id/edit" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><EstimateForm /></SuperAdminSessionProvider></RoleGuard>} />
+              <Route path="/operations/estimates/:id" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsEstimateDetail /></SuperAdminSessionProvider></RoleGuard>} />
               <Route path="/operations/projects/:id" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsProjectDetail /></SuperAdminSessionProvider></RoleGuard>} />
             </Route>
 
