@@ -1,48 +1,61 @@
-## Add "Week" timesheet card to Operations project detail
+## Slice 5: My Time tabs + month calendar
 
-Single file edit: `src/pages/operations/OperationsProjectDetail.tsx`. Fully additive — no changes to Tasks/Time/Expenses/Charges/Team cards or their queries/handlers.
+Single-file additive edit to `src/pages/operations/OperationsMyTime.tsx`. Existing weekly grid behavior is preserved verbatim — it just moves inside the Entry tab.
 
-### Imports
-- Add `ChevronLeft, ChevronRight` to existing lucide-react import.
-- Add `Popover, PopoverTrigger, PopoverContent` from `@/components/ui/popover`.
-- (DurationPicker already imported via LogTimeDialog path; add `import DurationPicker from "./DurationPicker"`.)
+### Imports to add
+- `Tabs, TabsList, TabsTrigger, TabsContent` from `@/components/ui/tabs`
+- `Dialog, DialogContent, DialogHeader, DialogTitle` from `@/components/ui/dialog`
 
-### Date helpers (top of file, module scope)
-- `toISODate(d)` — local YYYY-MM-DD (not UTC).
-- `startOfWeekMon(d)` — clone, snap to Monday 00:00 local.
-- `fmtHM(dec)` — `H:MM` or `"·"` when zero.
+### Module-scope helpers (local time)
+- `startOfMonth(d)` → `new Date(d.getFullYear(), d.getMonth(), 1)`
+- `addDaysLocal(d, n)` → clones and `setDate(getDate()+n)`
 
-### State (inside component)
-- `weekStart` initialised to `startOfWeekMon(new Date())`.
-- Derive `days` (7 Date objects Mon..Sun) and `daysISO`.
+Reuses existing `toISODate`, `startOfWeekMon`, `fmtHM`.
 
-### Query (additive)
-- `weekEntriesQ` keyed `["ops","project-week", id, daysISO[0], currentUid]`, enabled on both ids.
-- Selects `id, date, hours, project_task_id, timer_running` filtered by project + user + date range.
-- In-memory: drop `timer_running` rows; build `Map<"taskId|date", sumHours>`.
+### Component state (additive)
+- `tab` (default `"entry"`)
+- `monthCursor` (default `startOfMonth(new Date())`)
+- `selectedDate: string | null`
+- `calProjectId`, `calTaskId`, `calHours`, `calSaving`
 
-### Rows / totals
-- `rows` = tasks from existing `tasksQ` + trailing `{ taskId: null, name: "Untasked" }`.
-- Compute per-cell sum, row totals, column totals, grand total.
+### Month grid + query
+- `monthGridStart = startOfWeekMon(startOfMonth(monthCursor))`
+- 42-day array via `addDaysLocal`
+- `monthEntriesQ` keyed `["ops","my-time","month", toISODate(monthGridStart), currentUid]`, selects `id, date, hours, project_id, project_task_id, timer_running, description` for the user across the 42-day range
+- `useMemo` builds `Map<dateISO, { total, entries[] }>`, skipping `timer_running` rows
+- Key sits under `["ops","my-time"]` prefix → existing `addTime` invalidations already refresh it; no new invalidations added
 
-### addTime handler
-- Insert minimal row `{ project_id, project_task_id, date, hours }` (user_id/org_id/is_billable DB-defaulted).
-- On success: toast + invalidate `project-week`, `project-time`, `project-time-rollup`, `customer-time-rollup`, `project-financials` keys.
+### Render structure
+- Keep the existing `<h1>My Time</h1>`
+- Wrap the rest in `<Tabs value={tab} onValueChange={setTab}>` with two triggers: Entry / Overview
+- **Entry tab**: existing week Card + add-row block moved unchanged
+- **Overview tab**: month calendar Card
 
-### Inline `WeekCell` component (same file)
-- Popover with full-width ghost Button trigger showing `display`.
-- PopoverContent (`w-56`): DurationPicker + Save button (disabled when hours ≤ 0 or saving).
-- On save: await `onAdd(hours)`, reset hours, close popover.
+### Calendar Card (Overview)
+- Header: prev-month (`ChevronLeft` → `startOfMonth(addDaysLocal(startOfMonth(monthCursor), -1))`), month/year label, next-month (`ChevronRight` → `startOfMonth(addDaysLocal(startOfMonth(monthCursor), 32))`), ghost "This month" button
+- 7-col CSS grid; weekday header row Mon..Sun
+- 42 day cells: clickable buttons (`text-left`, `min-h-[80px]`, border, rounded, p-2)
+  - Day number (small)
+  - Dimmed (`text-muted-foreground opacity-50`) when not in `monthCursor` month
+  - If `total > 0`: show `fmtHM(total)` and `(n)` count
+  - `onClick` → `setSelectedDate(toISODate(day))`
 
-### Card render (immediately after existing Time card)
-- Header: prev-week (ChevronLeft), date range label, next-week (ChevronRight), "This week" ghost button.
-- Body: Table with `Task` + 7 day columns (`Mon 3` style) + `Total`.
-- One row per task + Untasked; 7 WeekCells per row; row total.
-- Footer row with column totals + grand total.
-- Loading message while `weekEntriesQ.isLoading`.
+### Day Dialog
+- Open when `selectedDate != null`; onClose resets `selectedDate` and cal* form fields
+- Title: selectedDate parsed as `selectedDate + "T00:00:00"`, formatted `{weekday, month, day, year}`
+- Body:
+  - Entry list from month map for that date: `projectName — taskName · fmtHM(Number(hours))` + muted description; "No entries." when empty
+  - Add form: Project Select (resets `calTaskId` on change), Task Select scoped to `calProjectId` with "Untasked" option, `DurationPicker`, Add button
+  - Add button calls existing `addTime(calProjectId, calTaskId || null, selectedDate!, calHours)` wrapped in `setCalSaving`; clears fields after
+  - Disabled when `!calProjectId || Number(calHours) <= 0 || calSaving || !selectedDate`
+
+### Notes
+- `addTime` already validates `>0`, toasts, and invalidates `["ops","my-time"]` (covers the month query), `project-time`, `project-time-rollup`, `customer-time-rollup`, `project-financials` — reused as-is.
+- Cross-project task mismatch prevented identically to the entry add-row (`calTaskId` resets on project change; task list filtered to `calProjectId`).
+- No other files touched.
 
 ### Acceptance
-- Week grid for current user shows hours per task/day as `H:MM` or `·`, with row/col/grand totals.
-- Cell popover with DurationPicker appends a new `time_entries` row; existing Time card and rollups refresh.
-- Prev/Next/This-week navigation refetches correctly.
-- No existing cards modified; tsc clean.
+- Entry / Overview tabs; Entry is the existing weekly grid unchanged.
+- Overview month calendar with prev/next/this-month (local date math), totals + entry count on day cells, out-of-month cells dimmed.
+- Day click opens dialog with entries + add form; insert refreshes calendar, week grid, and rollups.
+- tsc clean.
