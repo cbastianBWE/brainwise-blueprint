@@ -18,7 +18,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Pencil, Plus, FileText, Trash2, Play, Square, X } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Pencil, Plus, FileText, Trash2, Play, Square, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { formatMoney } from "./_shared";
 import ProjectFormDialog, { ProjectRecord } from "./ProjectFormDialog";
 import TaskFormDialog, { TaskRecord } from "./TaskFormDialog";
@@ -26,6 +27,25 @@ import LogTimeDialog, { TimeEntryRecord } from "./LogTimeDialog";
 import LogExpenseDialog, { ExpenseRecord } from "./LogExpenseDialog";
 import AddChargeDialog from "./AddChargeDialog";
 import TeamMemberDialog, { TeamMemberDialogMember } from "./TeamMemberDialog";
+import DurationPicker from "./DurationPicker";
+
+const toISODate = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
+const startOfWeekMon = (d: Date) => {
+  const x = new Date(d);
+  const off = (x.getDay() + 6) % 7;
+  x.setDate(x.getDate() - off);
+  x.setHours(0, 0, 0, 0);
+  return x;
+};
+
+const fmtHM = (dec: number) => {
+  if (!(dec > 0)) return "·";
+  const h = Math.floor(dec);
+  const m = Math.round((dec - h) * 60);
+  return `${h}:${String(m).padStart(2, "0")}`;
+};
 
 const BILLING_LABELS: Record<string, string> = {
   fixed: "Fixed cost",
@@ -63,6 +83,14 @@ export default function OperationsProjectDetail() {
       setCurrentUid(data.user?.id ?? null);
     })();
   }, []);
+
+  const [weekStart, setWeekStart] = useState<Date>(() => startOfWeekMon(new Date()));
+  const days = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(weekStart);
+    d.setDate(d.getDate() + i);
+    return d;
+  });
+  const daysISO = days.map(toISODate);
 
   const projectQ = useQuery({
     queryKey: ["ops", "project", id],
@@ -226,6 +254,58 @@ export default function OperationsProjectDetail() {
     }
     toast.success("Member removed");
     queryClient.invalidateQueries({ queryKey: ["ops", "project-members", id] });
+    queryClient.invalidateQueries({ queryKey: ["ops", "project-financials", id] });
+  };
+
+  const weekEntriesQ = useQuery({
+    queryKey: ["ops", "project-week", id, daysISO[0], currentUid],
+    enabled: !!id && !!currentUid,
+    queryFn: async () => {
+      const { data, error } = await opsSupabase
+        .from("time_entries")
+        .select("id, date, hours, project_task_id, timer_running")
+        .eq("project_id", id)
+        .eq("user_id", currentUid!)
+        .gte("date", daysISO[0])
+        .lte("date", daysISO[6]);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const weekMap = new Map<string, number>();
+  for (const r of (weekEntriesQ.data ?? []) as any[]) {
+    if (r.timer_running) continue;
+    const k = `${r.project_task_id ?? "none"}|${r.date}`;
+    weekMap.set(k, (weekMap.get(k) ?? 0) + Number(r.hours || 0));
+  }
+  const weekRows: { taskId: string | null; name: string }[] = [
+    ...((tasksQ.data ?? []) as any[]).map((t: any) => ({ taskId: t.id as string, name: t.name as string })),
+    { taskId: null, name: "Untasked" },
+  ];
+  const colTotals = daysISO.map((iso) =>
+    weekRows.reduce((s, row) => s + (weekMap.get(`${row.taskId ?? "none"}|${iso}`) ?? 0), 0),
+  );
+  const grandTotal = colTotals.reduce((s, n) => s + n, 0);
+
+  const addTime = async (taskId: string | null, dateISO: string, hoursStr: string) => {
+    const n = Number(hoursStr);
+    if (!Number.isFinite(n) || n <= 0) {
+      toast.error("Pick a duration");
+      return;
+    }
+    const { error } = await opsSupabase
+      .from("time_entries")
+      .insert({ project_id: id, project_task_id: taskId, date: dateISO, hours: n } as any);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Time added");
+    queryClient.invalidateQueries({ queryKey: ["ops", "project-week", id] });
+    queryClient.invalidateQueries({ queryKey: ["ops", "project-time", id] });
+    queryClient.invalidateQueries({ queryKey: ["ops", "project-time-rollup", id] });
+    queryClient.invalidateQueries({ queryKey: ["ops", "customer-time-rollup"] });
     queryClient.invalidateQueries({ queryKey: ["ops", "project-financials", id] });
   };
 
@@ -649,6 +729,96 @@ export default function OperationsProjectDetail() {
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-4 space-y-0">
+          <CardTitle>Week</CardTitle>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => {
+                const d = new Date(weekStart);
+                d.setDate(d.getDate() - 7);
+                setWeekStart(d);
+              }}
+              aria-label="Previous week"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <span className="text-sm text-muted-foreground tabular-nums">
+              {days[0].toLocaleDateString()} – {days[6].toLocaleDateString()}
+            </span>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => {
+                const d = new Date(weekStart);
+                d.setDate(d.getDate() + 7);
+                setWeekStart(d);
+              }}
+              aria-label="Next week"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => setWeekStart(startOfWeekMon(new Date()))}>
+              This week
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {weekEntriesQ.isLoading ? (
+            <p className="text-muted-foreground text-sm">Loading…</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Task</TableHead>
+                  {days.map((d, i) => (
+                    <TableHead key={daysISO[i]} className="text-center">
+                      {d.toLocaleDateString(undefined, { weekday: "short" })} {d.getDate()}
+                    </TableHead>
+                  ))}
+                  <TableHead className="text-right">Total</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {weekRows.map((row) => {
+                  const cells = daysISO.map(
+                    (iso) => weekMap.get(`${row.taskId ?? "none"}|${iso}`) ?? 0,
+                  );
+                  const rowTotal = cells.reduce((s, n) => s + n, 0);
+                  return (
+                    <TableRow key={row.taskId ?? "__untasked"}>
+                      <TableCell className="font-medium">{row.name}</TableCell>
+                      {cells.map((sum, i) => (
+                        <TableCell key={daysISO[i]} className="p-1 text-center">
+                          <WeekCell
+                            display={fmtHM(sum)}
+                            onAdd={(h) => addTime(row.taskId, daysISO[i], h)}
+                          />
+                        </TableCell>
+                      ))}
+                      <TableCell className="text-right tabular-nums">{fmtHM(rowTotal)}</TableCell>
+                    </TableRow>
+                  );
+                })}
+                <TableRow>
+                  <TableCell className="font-semibold">Total</TableCell>
+                  {colTotals.map((n, i) => (
+                    <TableCell key={daysISO[i]} className="text-center font-semibold tabular-nums">
+                      {fmtHM(n)}
+                    </TableCell>
+                  ))}
+                  <TableCell className="text-right font-semibold tabular-nums">{fmtHM(grandTotal)}</TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+
+
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between gap-4 space-y-0">
           <CardTitle>Expenses</CardTitle>
           <Button size="sm" disabled={!p} onClick={() => { setEditingExpense(null); setLogExpenseOpen(true); }}>
             <Plus className="h-4 w-4 mr-2" />
@@ -871,4 +1041,39 @@ function RunningTimerLabel({ startedAt }: { startedAt: string }) {
   const mm = String(Math.floor((secs % 3600) / 60)).padStart(2, "0");
   const ss = String(secs % 60).padStart(2, "0");
   return <span className="font-mono tabular-nums text-sm">{hh}:{mm}:{ss}</span>;
+}
+
+function WeekCell({ display, onAdd }: { display: string; onAdd: (hoursStr: string) => Promise<void> }) {
+  const [open, setOpen] = useState(false);
+  const [hours, setHours] = useState("");
+  const [saving, setSaving] = useState(false);
+  return (
+    <Popover open={open} onOpenChange={(o) => { setOpen(o); if (!o) setHours(""); }}>
+      <PopoverTrigger asChild>
+        <Button variant="ghost" size="sm" className="w-full font-mono tabular-nums">
+          {display}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-56 space-y-3">
+        <DurationPicker valueHours={hours} onChange={setHours} />
+        <Button
+          size="sm"
+          className="w-full"
+          disabled={!(Number(hours) > 0) || saving}
+          onClick={async () => {
+            setSaving(true);
+            try {
+              await onAdd(hours);
+              setHours("");
+              setOpen(false);
+            } finally {
+              setSaving(false);
+            }
+          }}
+        >
+          {saving ? "Saving…" : "Save"}
+        </Button>
+      </PopoverContent>
+    </Popover>
+  );
 }
