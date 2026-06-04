@@ -104,6 +104,7 @@ const superAdminNav: NavItem[] = [
  { title: "Customers", url: "/operations/customers", icon: Users2, sectionHeader: "Operations" },
  { title: "Items", url: "/operations/items", icon: Library },
  { title: "Invoices", url: "/operations/invoices", icon: Receipt },
+ { title: "Estimates", url: "/operations/estimates", icon: FileText },
 ];
 
 function getNavItems(profile: { account_type?: string | null; is_practitioner_coach?: boolean } | null | undefined): NavItem[] {

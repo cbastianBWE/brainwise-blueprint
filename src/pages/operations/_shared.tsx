@@ -27,6 +27,10 @@ const STATUS_CLASSES: Record<string, string> = {
   overdue: "bg-destructive/15 text-destructive hover:bg-destructive/20",
   void: "bg-muted text-muted-foreground hover:bg-muted",
   written_off: "bg-muted text-muted-foreground hover:bg-muted",
+  accepted: "bg-green-500/15 text-green-700 dark:text-green-300 hover:bg-green-500/20",
+  declined: "bg-destructive/15 text-destructive hover:bg-destructive/20",
+  invoiced: "bg-blue-500/15 text-blue-700 dark:text-blue-300 hover:bg-blue-500/20",
+  expired: "bg-muted text-muted-foreground hover:bg-muted",
 };
 
 export function StatusBadge({ status }: { status: string | null | undefined }) {
