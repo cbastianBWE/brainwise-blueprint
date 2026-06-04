@@ -257,6 +257,58 @@ export default function OperationsProjectDetail() {
     queryClient.invalidateQueries({ queryKey: ["ops", "project-financials", id] });
   };
 
+  const weekEntriesQ = useQuery({
+    queryKey: ["ops", "project-week", id, daysISO[0], currentUid],
+    enabled: !!id && !!currentUid,
+    queryFn: async () => {
+      const { data, error } = await opsSupabase
+        .from("time_entries")
+        .select("id, date, hours, project_task_id, timer_running")
+        .eq("project_id", id)
+        .eq("user_id", currentUid!)
+        .gte("date", daysISO[0])
+        .lte("date", daysISO[6]);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const weekMap = new Map<string, number>();
+  for (const r of (weekEntriesQ.data ?? []) as any[]) {
+    if (r.timer_running) continue;
+    const k = `${r.project_task_id ?? "none"}|${r.date}`;
+    weekMap.set(k, (weekMap.get(k) ?? 0) + Number(r.hours || 0));
+  }
+  const weekRows: { taskId: string | null; name: string }[] = [
+    ...((tasksQ.data ?? []) as any[]).map((t: any) => ({ taskId: t.id as string, name: t.name as string })),
+    { taskId: null, name: "Untasked" },
+  ];
+  const colTotals = daysISO.map((iso) =>
+    weekRows.reduce((s, row) => s + (weekMap.get(`${row.taskId ?? "none"}|${iso}`) ?? 0), 0),
+  );
+  const grandTotal = colTotals.reduce((s, n) => s + n, 0);
+
+  const addTime = async (taskId: string | null, dateISO: string, hoursStr: string) => {
+    const n = Number(hoursStr);
+    if (!Number.isFinite(n) || n <= 0) {
+      toast.error("Pick a duration");
+      return;
+    }
+    const { error } = await opsSupabase
+      .from("time_entries")
+      .insert({ project_id: id, project_task_id: taskId, date: dateISO, hours: n } as any);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Time added");
+    queryClient.invalidateQueries({ queryKey: ["ops", "project-week", id] });
+    queryClient.invalidateQueries({ queryKey: ["ops", "project-time", id] });
+    queryClient.invalidateQueries({ queryKey: ["ops", "project-time-rollup", id] });
+    queryClient.invalidateQueries({ queryKey: ["ops", "customer-time-rollup"] });
+    queryClient.invalidateQueries({ queryKey: ["ops", "project-financials", id] });
+  };
+
   const visibleTimeEntries = (timeEntriesQ.data ?? []).filter((r: any) => !r.timer_running);
   const runningEntry = (timeEntriesQ.data ?? []).find((r: any) => r.timer_running && r.user_id === currentUid) ?? null;
 
