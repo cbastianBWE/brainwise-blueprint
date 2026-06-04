@@ -566,14 +566,20 @@ export default function OperationsProjectDetail() {
         />
       )}
       {id && (
-        <LogTimeDialog open={logTimeOpen} onOpenChange={setLogTimeOpen} projectId={id} />
+        <LogTimeDialog
+          open={logTimeOpen}
+          onOpenChange={(o) => { setLogTimeOpen(o); if (!o) setEditingTime(null); }}
+          projectId={id}
+          entry={editingTime}
+        />
       )}
       {id && (
         <LogExpenseDialog
           open={logExpenseOpen}
-          onOpenChange={setLogExpenseOpen}
+          onOpenChange={(o) => { setLogExpenseOpen(o); if (!o) setEditingExpense(null); }}
           projectId={id}
           customerId={p?.customer_id}
+          expense={editingExpense}
         />
       )}
       {id && (
