@@ -730,6 +730,22 @@ export default function OperationsProjectDetail() {
           customerId={p?.customer_id}
         />
       )}
+      {id && p?.org_id && (
+        <TeamMemberDialog
+          open={teamOpen}
+          onOpenChange={(o) => { setTeamOpen(o); if (!o) setEditingMember(null); }}
+          projectId={id}
+          orgId={p.org_id}
+          mode={teamMode}
+          member={editingMember}
+          memberName={editingMember?.display_name}
+          availableUsers={availableUsersForAdd}
+          onSaved={() => {
+            queryClient.invalidateQueries({ queryKey: ["ops", "project-members", id] });
+            queryClient.invalidateQueries({ queryKey: ["ops", "project-financials", id] });
+          }}
+        />
+      )}
       <Dialog open={genOpen} onOpenChange={setGenOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
