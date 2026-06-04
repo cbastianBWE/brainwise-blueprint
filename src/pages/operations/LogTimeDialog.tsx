@@ -22,6 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import DurationPicker from "./DurationPicker";
 
 export type TimeEntryRecord = {
   id: string;
@@ -198,16 +199,8 @@ export default function LogTimeDialog({ open, onOpenChange, projectId, entry }: 
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="hours">Hours *</Label>
-              <Input
-                id="hours"
-                type="number"
-                step="0.25"
-                min="0"
-                value={hours}
-                onChange={(e) => setHours(e.target.value)}
-                required
-              />
+              <Label>Hours *</Label>
+              <DurationPicker valueHours={hours} onChange={setHours} />
             </div>
           </div>
 
