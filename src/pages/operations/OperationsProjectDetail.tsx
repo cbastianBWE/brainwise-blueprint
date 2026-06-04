@@ -229,6 +229,47 @@ export default function OperationsProjectDetail() {
     queryClient.invalidateQueries({ queryKey: ["ops", "project-financials", id] });
   };
 
+  const visibleTimeEntries = (timeEntriesQ.data ?? []).filter((r: any) => !r.timer_running);
+  const runningEntry = (timeEntriesQ.data ?? []).find((r: any) => r.timer_running && r.user_id === currentUid) ?? null;
+
+  const startTimer = async () => {
+    const { error } = await supabase.rpc("ops_start_timer" as any, { p_project: id, p_project_task: null, p_description: null });
+    if (error) { toast.error(error.message); return; }
+    toast.success("Timer started");
+    queryClient.invalidateQueries({ queryKey: ["ops", "project-time", id] });
+  };
+
+  const stopTimer = async () => {
+    const r = runningEntry;
+    if (!r) return;
+    const { data, error } = await supabase.rpc("ops_stop_timer" as any, { p_id: r.id });
+    if (error) { toast.error(error.message); return; }
+    queryClient.invalidateQueries({ queryKey: ["ops", "project-time", id] });
+    queryClient.invalidateQueries({ queryKey: ["ops", "project-time-rollup", id] });
+    queryClient.invalidateQueries({ queryKey: ["ops", "customer-time-rollup"] });
+    queryClient.invalidateQueries({ queryKey: ["ops", "project-financials", id] });
+    toast.success(`Logged ${data} h — add details`);
+    setEditingTime({
+      id: r.id,
+      date: r.date,
+      project_task_id: r.project_task_id ?? null,
+      user_id: r.user_id,
+      hours: Number(data),
+      is_billable: r.is_billable,
+      description: r.description ?? null,
+    });
+    setLogTimeOpen(true);
+  };
+
+  const discardTimer = async () => {
+    if (!runningEntry) return;
+    if (!window.confirm("Discard running timer? Nothing will be logged.")) return;
+    const { error } = await opsSupabase.from("time_entries").delete().eq("id", runningEntry.id);
+    if (error) { toast.error(error.message); return; }
+    queryClient.invalidateQueries({ queryKey: ["ops", "project-time", id] });
+    toast.success("Timer discarded");
+  };
+
 
   const handleGenerate = async () => {
     if (!id) return;
