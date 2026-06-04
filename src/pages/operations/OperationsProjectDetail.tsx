@@ -406,7 +406,7 @@ export default function OperationsProjectDetail() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-4 space-y-0">
           <CardTitle>Expenses</CardTitle>
-          <Button size="sm" disabled={!p} onClick={() => setLogExpenseOpen(true)}>
+          <Button size="sm" disabled={!p} onClick={() => { setEditingExpense(null); setLogExpenseOpen(true); }}>
             <Plus className="h-4 w-4 mr-2" />
             Log expense
           </Button>
