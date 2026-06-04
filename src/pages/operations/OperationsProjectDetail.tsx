@@ -598,7 +598,7 @@ export default function OperationsProjectDetail() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {timeEntriesQ.data.map((row: any) => (
+                {visibleTimeEntries.map((row: any) => (
                   <TableRow key={row.id}>
                     <TableCell>{row.date}</TableCell>
                     <TableCell>{row.project_tasks?.name ?? "—"}</TableCell>
