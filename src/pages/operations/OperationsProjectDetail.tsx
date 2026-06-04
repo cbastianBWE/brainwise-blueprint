@@ -509,6 +509,66 @@ export default function OperationsProjectDetail() {
       </Card>
 
       <Card>
+        <CardHeader>
+          <CardTitle>Project financials</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {(() => {
+            const cur = p?.currency_code ?? "USD";
+            const hrs = (x: any) => Number(x ?? 0).toFixed(2) + " h";
+            if (financialsQ.isLoading) {
+              return <p className="text-muted-foreground text-sm">Loading…</p>;
+            }
+            const f = financialsQ.data;
+            if (!f) {
+              return <p className="text-muted-foreground text-sm">No financial data yet.</p>;
+            }
+            const margin = Number(f.margin ?? 0);
+            const marginColor = margin >= 0 ? "text-green-600" : "text-red-600";
+            const untracked = Number(f.cost_untracked_hours ?? 0);
+            return (
+              <dl className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                <div>
+                  <dt className="text-muted-foreground">Hours</dt>
+                  <dd>
+                    {hrs(f.total_hours)}
+                    {f.budget_hours != null && ` / ${hrs(f.budget_hours)} budget`}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-muted-foreground">Revenue (invoiced)</dt>
+                  <dd>
+                    {formatMoney(Number(f.revenue_invoiced ?? 0), cur)}
+                    {f.budget_amount != null && ` / ${formatMoney(Number(f.budget_amount), cur)} budget`}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-muted-foreground">Actual cost</dt>
+                  <dd>{formatMoney(Number(f.actual_cost ?? 0), cur)}</dd>
+                  <dd className="text-xs text-muted-foreground">
+                    time {formatMoney(Number(f.time_cost ?? 0), cur)} · expenses {formatMoney(Number(f.expense_cost ?? 0), cur)}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-muted-foreground">Margin</dt>
+                  <dd className={marginColor}>
+                    {formatMoney(margin, cur)} ({Number(f.margin_pct ?? 0).toFixed(1)}%)
+                  </dd>
+                </div>
+                {untracked > 0 && (
+                  <div className="md:col-span-2 text-xs text-muted-foreground">
+                    {hrs(f.cost_untracked_hours)} logged without a cost rate — set staff cost rates for accurate cost.
+                  </div>
+                )}
+              </dl>
+            );
+          })()}
+        </CardContent>
+      </Card>
+
+
+
+      <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-4 space-y-0">
           <div className="space-y-1">
             <CardTitle>Team</CardTitle>
