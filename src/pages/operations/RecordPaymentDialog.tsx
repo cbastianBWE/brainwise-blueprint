@@ -107,6 +107,7 @@ export default function RecordPaymentDialog({
       qc.invalidateQueries({ queryKey: ["ops", "invoice", invoiceId] });
       qc.invalidateQueries({ queryKey: ["ops", "invoices", "list"] });
       qc.invalidateQueries({ queryKey: ["ops", "customer-invoices", customerId] });
+      qc.invalidateQueries({ queryKey: ["ops", "customer-credits", customerId] });
       onOpenChange(false);
     } catch (err: any) {
       toast.error(err?.message ?? "Failed to record payment");
