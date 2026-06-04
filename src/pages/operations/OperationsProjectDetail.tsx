@@ -18,7 +18,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Pencil, Plus, FileText, Trash2, Play, Square, X } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Pencil, Plus, FileText, Trash2, Play, Square, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { formatMoney } from "./_shared";
 import ProjectFormDialog, { ProjectRecord } from "./ProjectFormDialog";
 import TaskFormDialog, { TaskRecord } from "./TaskFormDialog";
@@ -26,6 +27,25 @@ import LogTimeDialog, { TimeEntryRecord } from "./LogTimeDialog";
 import LogExpenseDialog, { ExpenseRecord } from "./LogExpenseDialog";
 import AddChargeDialog from "./AddChargeDialog";
 import TeamMemberDialog, { TeamMemberDialogMember } from "./TeamMemberDialog";
+import DurationPicker from "./DurationPicker";
+
+const toISODate = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
+const startOfWeekMon = (d: Date) => {
+  const x = new Date(d);
+  const off = (x.getDay() + 6) % 7;
+  x.setDate(x.getDate() - off);
+  x.setHours(0, 0, 0, 0);
+  return x;
+};
+
+const fmtHM = (dec: number) => {
+  if (!(dec > 0)) return "·";
+  const h = Math.floor(dec);
+  const m = Math.round((dec - h) * 60);
+  return `${h}:${String(m).padStart(2, "0")}`;
+};
 
 const BILLING_LABELS: Record<string, string> = {
   fixed: "Fixed cost",
