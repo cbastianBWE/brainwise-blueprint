@@ -142,7 +142,7 @@ export default function OperationsProjectDetail() {
     queryFn: async () => {
       const { data, error } = await opsSupabase
         .from("expenses")
-        .select("id, date, amount, is_billable, is_invoiced, vendor_name, is_mileage, currency_code, expense_categories(name)")
+        .select("id, date, amount, is_billable, is_invoiced, vendor_name, is_mileage, currency_code, expense_category_id, markup_percentage, miles_driven, per_mile_rate, receipt_storage_path, notes, expense_categories(name)")
         .eq("project_id", id)
         .order("date", { ascending: false });
       if (error) throw error;
