@@ -186,12 +186,23 @@ export default function InvoiceFromWork() {
               : "Operations · Select billable items to invoice"}
           </p>
         </div>
-        <Button
-          onClick={handleGenerate}
-          disabled={!customerId || selected.size === 0 || multiCurrency || submitting}
-        >
-          {submitting ? "Generating…" : "Generate invoice"}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Select value={detail} onValueChange={(v) => setDetail(v as "itemized" | "summary")}>
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Detail level" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="itemized">Itemized</SelectItem>
+              <SelectItem value="summary">Summary by project</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button
+            onClick={handleGenerate}
+            disabled={!customerId || selected.size === 0 || multiCurrency || submitting}
+          >
+            {submitting ? "Generating…" : "Generate invoice"}
+          </Button>
+        </div>
       </div>
 
       {!lockedCustomerId && (
