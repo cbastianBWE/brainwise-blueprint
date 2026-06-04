@@ -168,7 +168,8 @@ export default function LogExpenseDialog({ open, onOpenChange, projectId, custom
     setError(null);
     setSubmitting(true);
     try {
-      let receipt_storage_path: string | null = null;
+      let receipt_storage_path: string | null = isEdit ? (expense?.receipt_storage_path ?? null) : null;
+      let replacedOldPath: string | null = null;
       if (receiptFile && orgId) {
         const safe = receiptFile.name.replace(/[^a-zA-Z0-9._-]/g, "_");
         const path = `${orgId}/${crypto.randomUUID()}-${safe}`;
@@ -176,33 +177,65 @@ export default function LogExpenseDialog({ open, onOpenChange, projectId, custom
           .from("operations-receipts")
           .upload(path, receiptFile);
         if (up.error) throw up.error;
+        if (isEdit && expense?.receipt_storage_path) {
+          replacedOldPath = expense.receipt_storage_path;
+        }
         receipt_storage_path = path;
       }
 
-      const { error: insertError } = await opsSupabase.from("expenses").insert({
-        project_id: projectId,
-        customer_id: customerId ?? null,
-        date,
-        expense_category_id: expenseCategoryId || null,
-        vendor_name: vendorName.trim() || null,
-        amount: finalAmount,
-        is_billable: isBillable,
-        markup_percentage:
-          isBillable && markupPercentage.trim() ? Number(markupPercentage) : null,
-        is_mileage: isMileage,
-        miles_driven: isMileage ? Number(milesDriven) : null,
-        per_mile_rate: isMileage ? Number(perMileRate) : null,
-        receipt_storage_path,
-        notes: notes.trim() || null,
-      });
-      if (insertError) throw insertError;
+      if (isEdit && expense) {
+        const { error: updateError } = await opsSupabase
+          .from("expenses")
+          .update({
+            date,
+            expense_category_id: expenseCategoryId || null,
+            vendor_name: vendorName.trim() || null,
+            amount: finalAmount,
+            is_billable: isBillable,
+            markup_percentage:
+              isBillable && markupPercentage.trim() ? Number(markupPercentage) : null,
+            is_mileage: isMileage,
+            miles_driven: isMileage ? Number(milesDriven) : null,
+            per_mile_rate: isMileage ? Number(perMileRate) : null,
+            receipt_storage_path,
+            notes: notes.trim() || null,
+          })
+          .eq("id", expense.id);
+        if (updateError) throw updateError;
+        if (replacedOldPath) {
+          try {
+            await opsSupabase.storage.from("operations-receipts").remove([replacedOldPath]);
+          } catch {
+            /* best-effort */
+          }
+        }
+        toast.success("Expense updated");
+      } else {
+        const { error: insertError } = await opsSupabase.from("expenses").insert({
+          project_id: projectId,
+          customer_id: customerId ?? null,
+          date,
+          expense_category_id: expenseCategoryId || null,
+          vendor_name: vendorName.trim() || null,
+          amount: finalAmount,
+          is_billable: isBillable,
+          markup_percentage:
+            isBillable && markupPercentage.trim() ? Number(markupPercentage) : null,
+          is_mileage: isMileage,
+          miles_driven: isMileage ? Number(milesDriven) : null,
+          per_mile_rate: isMileage ? Number(perMileRate) : null,
+          receipt_storage_path,
+          notes: notes.trim() || null,
+        });
+        if (insertError) throw insertError;
+        toast.success("Expense logged");
+      }
 
-      toast.success("Expense logged");
       queryClient.invalidateQueries({ queryKey: ["ops", "project-expenses", projectId] });
       queryClient.invalidateQueries({ queryKey: ["ops", "project-expense-rollup", projectId] });
       onOpenChange(false);
     } catch (err: any) {
-      toast.error(err?.message ?? "Failed to log expense");
+      toast.error(err?.message ?? (isEdit ? "Failed to update expense" : "Failed to log expense"));
     } finally {
       setSubmitting(false);
     }
