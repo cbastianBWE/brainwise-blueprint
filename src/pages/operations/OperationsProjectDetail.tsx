@@ -550,10 +550,31 @@ export default function OperationsProjectDetail() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-4 space-y-0">
           <CardTitle>Time</CardTitle>
-          <Button size="sm" disabled={!p} onClick={() => { setEditingTime(null); setLogTimeOpen(true); }}>
-            <Plus className="h-4 w-4 mr-2" />
-            Log time
-          </Button>
+          <div className="flex items-center gap-2">
+            {runningEntry ? (
+              <div className="flex items-center gap-2">
+                <span className="inline-block h-2 w-2 rounded-full bg-destructive animate-pulse" aria-hidden />
+                <RunningTimerLabel startedAt={runningEntry.timer_started_at} />
+                <Button variant="outline" size="sm" onClick={stopTimer}>
+                  <Square className="h-4 w-4 mr-2" />
+                  Stop
+                </Button>
+                <Button variant="ghost" size="sm" onClick={discardTimer}>
+                  <X className="h-4 w-4 mr-2" />
+                  Discard
+                </Button>
+              </div>
+            ) : (
+              <Button variant="outline" size="sm" disabled={!p} onClick={startTimer}>
+                <Play className="h-4 w-4 mr-2" />
+                Start timer
+              </Button>
+            )}
+            <Button size="sm" disabled={!p} onClick={() => { setEditingTime(null); setLogTimeOpen(true); }}>
+              <Plus className="h-4 w-4 mr-2" />
+              Log time
+            </Button>
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-sm text-muted-foreground">
