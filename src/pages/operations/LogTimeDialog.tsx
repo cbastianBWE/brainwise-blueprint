@@ -270,7 +270,7 @@ export default function LogTimeDialog({ open, onOpenChange, projectId, entry }: 
               Cancel
             </Button>
             <Button type="submit" disabled={submitting}>
-              {submitting ? "Saving…" : "Log time"}
+              {submitting ? "Saving…" : isEdit ? "Save changes" : "Log time"}
             </Button>
           </DialogFooter>
         </form>
