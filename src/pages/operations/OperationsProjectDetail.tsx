@@ -1042,3 +1042,38 @@ function RunningTimerLabel({ startedAt }: { startedAt: string }) {
   const ss = String(secs % 60).padStart(2, "0");
   return <span className="font-mono tabular-nums text-sm">{hh}:{mm}:{ss}</span>;
 }
+
+function WeekCell({ display, onAdd }: { display: string; onAdd: (hoursStr: string) => Promise<void> }) {
+  const [open, setOpen] = useState(false);
+  const [hours, setHours] = useState("");
+  const [saving, setSaving] = useState(false);
+  return (
+    <Popover open={open} onOpenChange={(o) => { setOpen(o); if (!o) setHours(""); }}>
+      <PopoverTrigger asChild>
+        <Button variant="ghost" size="sm" className="w-full font-mono tabular-nums">
+          {display}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-56 space-y-3">
+        <DurationPicker valueHours={hours} onChange={setHours} />
+        <Button
+          size="sm"
+          className="w-full"
+          disabled={!(Number(hours) > 0) || saving}
+          onClick={async () => {
+            setSaving(true);
+            try {
+              await onAdd(hours);
+              setHours("");
+              setOpen(false);
+            } finally {
+              setSaving(false);
+            }
+          }}
+        >
+          {saving ? "Saving…" : "Save"}
+        </Button>
+      </PopoverContent>
+    </Popover>
+  );
+}
