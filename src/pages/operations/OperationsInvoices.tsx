@@ -47,10 +47,16 @@ export default function OperationsInvoices() {
           <h1 className="text-2xl font-semibold">Invoices</h1>
           <p className="text-muted-foreground text-sm">Operations · All invoices</p>
         </div>
-        <Button onClick={() => navigate("/operations/invoices/new")}>
-          <Plus className="h-4 w-4 mr-2" />
-          New invoice
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={() => navigate("/operations/invoices/from-work")}>
+            <Plus className="h-4 w-4 mr-2" />
+            From work
+          </Button>
+          <Button onClick={() => navigate("/operations/invoices/new")}>
+            <Plus className="h-4 w-4 mr-2" />
+            New invoice
+          </Button>
+        </div>
       </div>
       <Card>
         <CardHeader><CardTitle>All invoices</CardTitle></CardHeader>

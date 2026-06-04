@@ -102,6 +102,7 @@ import OperationsItems from "./pages/operations/OperationsItems";
 import OperationsProjectDetail from "./pages/operations/OperationsProjectDetail";
 import OperationsInvoiceDetail from "./pages/operations/OperationsInvoiceDetail";
 import InvoiceForm from "./pages/operations/InvoiceForm";
+import InvoiceFromWork from "./pages/operations/InvoiceFromWork";
 import EpnComplete from "./pages/EpnComplete";
 import AirsaManagerComplete from "./pages/AirsaManagerComplete";
 import VerifyConversion from "./pages/VerifyConversion";
@@ -244,6 +245,7 @@ const App = () => (
               <Route path="/operations/items" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsItems /></SuperAdminSessionProvider></RoleGuard>} />
               <Route path="/operations/invoices" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsInvoices /></SuperAdminSessionProvider></RoleGuard>} />
               <Route path="/operations/invoices/new" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><InvoiceForm /></SuperAdminSessionProvider></RoleGuard>} />
+              <Route path="/operations/invoices/from-work" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><InvoiceFromWork /></SuperAdminSessionProvider></RoleGuard>} />
               <Route path="/operations/invoices/:id/edit" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><InvoiceForm /></SuperAdminSessionProvider></RoleGuard>} />
               <Route path="/operations/invoices/:id" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsInvoiceDetail /></SuperAdminSessionProvider></RoleGuard>} />
               <Route path="/operations/projects/:id" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsProjectDetail /></SuperAdminSessionProvider></RoleGuard>} />

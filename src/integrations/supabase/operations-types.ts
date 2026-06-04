@@ -1865,6 +1865,25 @@ export type OperationsDatabase = {
         }
         Relationships: []
       }
+      invoiceable_candidates: {
+        Row: {
+          candidate_type: string | null
+          org_id: string | null
+          customer_id: string | null
+          project_id: string | null
+          project_name: string | null
+          ref_id: string | null
+          ref_user_id: string | null
+          label: string | null
+          quantity: number | null
+          unit: string | null
+          unit_price: number | null
+          amount: number | null
+          currency_code: string | null
+          candidate_key: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       [_ in never]: never
