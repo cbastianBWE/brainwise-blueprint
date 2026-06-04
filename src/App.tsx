@@ -260,6 +260,7 @@ const App = () => (
               {/* Operations (super-admin gated for now; refine later via operations.users membership) */}
               <Route path="/operations/customers" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsCustomers /></SuperAdminSessionProvider></RoleGuard>} />
               <Route path="/operations/customers/:id" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsCustomerDetail /></SuperAdminSessionProvider></RoleGuard>} />
+              <Route path="/operations/my-time" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsMyTime /></SuperAdminSessionProvider></RoleGuard>} />
               <Route path="/operations/items" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsItems /></SuperAdminSessionProvider></RoleGuard>} />
               <Route path="/operations/invoices" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsInvoices /></SuperAdminSessionProvider></RoleGuard>} />
               <Route path="/operations/invoices/new" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><InvoiceForm /></SuperAdminSessionProvider></RoleGuard>} />
