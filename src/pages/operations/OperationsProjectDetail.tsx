@@ -384,6 +384,7 @@ export default function OperationsProjectDetail() {
                   <TableHead className="text-right">Hours</TableHead>
                   <TableHead>Billable</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -395,6 +396,39 @@ export default function OperationsProjectDetail() {
                     <TableCell className="text-right">{row.hours}</TableCell>
                     <TableCell>{row.is_billable ? "Yes" : "No"}</TableCell>
                     <TableCell>{row.is_invoiced ? "Invoiced" : "Unbilled"}</TableCell>
+                    <TableCell className="text-right">
+                      {!row.is_invoiced && (
+                        <div className="flex justify-end gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => {
+                              setEditingTime({
+                                id: row.id,
+                                date: row.date,
+                                project_task_id: row.project_task_id ?? null,
+                                user_id: row.user_id,
+                                hours: row.hours,
+                                is_billable: row.is_billable,
+                                description: row.description ?? null,
+                              });
+                              setLogTimeOpen(true);
+                            }}
+                            aria-label="Edit time entry"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleDeleteTimeEntry(row.id)}
+                            aria-label="Delete time entry"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      )}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
