@@ -245,8 +245,8 @@ export default function LogExpenseDialog({ open, onOpenChange, projectId, custom
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Log expense</DialogTitle>
-          <DialogDescription>Record an expense against this project.</DialogDescription>
+          <DialogTitle>{isEdit ? "Edit expense" : "Log expense"}</DialogTitle>
+          <DialogDescription>{isEdit ? "Update this expense." : "Record an expense against this project."}</DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
