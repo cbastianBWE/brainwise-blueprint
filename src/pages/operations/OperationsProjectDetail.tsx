@@ -84,6 +84,14 @@ export default function OperationsProjectDetail() {
     })();
   }, []);
 
+  const [weekStart, setWeekStart] = useState<Date>(() => startOfWeekMon(new Date()));
+  const days = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(weekStart);
+    d.setDate(d.getDate() + i);
+    return d;
+  });
+  const daysISO = days.map(toISODate);
+
   const projectQ = useQuery({
     queryKey: ["ops", "project", id],
     enabled: !!id,
