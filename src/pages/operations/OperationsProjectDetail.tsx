@@ -36,11 +36,14 @@ const BILLING_LABELS: Record<string, string> = {
 export default function OperationsProjectDetail() {
   const { id = "" } = useParams();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [editOpen, setEditOpen] = useState(false);
   const [taskOpen, setTaskOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<TaskRecord | null>(null);
   const [logTimeOpen, setLogTimeOpen] = useState(false);
+  const [editingTime, setEditingTime] = useState<TimeEntryRecord | null>(null);
   const [logExpenseOpen, setLogExpenseOpen] = useState(false);
+  const [editingExpense, setEditingExpense] = useState<ExpenseRecord | null>(null);
   const [chargeOpen, setChargeOpen] = useState(false);
   const [genOpen, setGenOpen] = useState(false);
   const [generating, setGenerating] = useState(false);
