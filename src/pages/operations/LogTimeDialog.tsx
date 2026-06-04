@@ -85,16 +85,25 @@ export default function LogTimeDialog({ open, onOpenChange, projectId, entry }: 
   });
 
   useEffect(() => {
-    if (open) {
+    if (!open) return;
+    if (entry) {
+      setDate(entry.date);
+      setTaskId(entry.project_task_id ?? "");
+      setMemberId(entry.user_id);
+      setHours(String(entry.hours));
+      setIsBillable(entry.is_billable ?? true);
+      setDescription(entry.description ?? "");
+    } else {
       setDate(todayISO());
       setTaskId("");
       setMemberId("");
       setHours("");
       setIsBillable(true);
       setDescription("");
-      setError(null);
     }
-  }, [open]);
+    setError(null);
+  }, [open, entry]);
+
 
   // Resolve default member once members load
   useEffect(() => {
