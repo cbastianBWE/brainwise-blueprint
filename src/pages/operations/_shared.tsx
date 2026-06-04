@@ -31,7 +31,12 @@ const STATUS_CLASSES: Record<string, string> = {
   declined: "bg-destructive/15 text-destructive hover:bg-destructive/20",
   invoiced: "bg-blue-500/15 text-blue-700 dark:text-blue-300 hover:bg-blue-500/20",
   expired: "bg-muted text-muted-foreground hover:bg-muted",
+  applied: "bg-blue-500/15 text-blue-700 dark:text-blue-300 hover:bg-blue-500/20",
+  refunded: "bg-muted text-muted-foreground hover:bg-muted",
+  open: "bg-blue-500/15 text-blue-700 dark:text-blue-300 hover:bg-blue-500/20",
+  closed: "bg-green-500/15 text-green-700 dark:text-green-300 hover:bg-green-500/20",
 };
+
 
 export function StatusBadge({ status }: { status: string | null | undefined }) {
   const key = (status || "draft").toLowerCase();

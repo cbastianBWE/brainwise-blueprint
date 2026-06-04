@@ -106,6 +106,9 @@ import InvoiceFromWork from "./pages/operations/InvoiceFromWork";
 import OperationsEstimates from "./pages/operations/OperationsEstimates";
 import OperationsEstimateDetail from "./pages/operations/OperationsEstimateDetail";
 import EstimateForm from "./pages/operations/EstimateForm";
+import OperationsRetainers from "./pages/operations/OperationsRetainers";
+import OperationsRetainerDetail from "./pages/operations/OperationsRetainerDetail";
+import RetainerForm from "./pages/operations/RetainerForm";
 import PublicInvoicePay from "./pages/public/PublicInvoicePay";
 import PublicEstimateRespond from "./pages/public/PublicEstimateRespond";
 import EpnComplete from "./pages/EpnComplete";
@@ -259,6 +262,9 @@ const App = () => (
               <Route path="/operations/estimates/new" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><EstimateForm /></SuperAdminSessionProvider></RoleGuard>} />
               <Route path="/operations/estimates/:id/edit" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><EstimateForm /></SuperAdminSessionProvider></RoleGuard>} />
               <Route path="/operations/estimates/:id" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsEstimateDetail /></SuperAdminSessionProvider></RoleGuard>} />
+              <Route path="/operations/retainers" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsRetainers /></SuperAdminSessionProvider></RoleGuard>} />
+              <Route path="/operations/retainers/new" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><RetainerForm /></SuperAdminSessionProvider></RoleGuard>} />
+              <Route path="/operations/retainers/:id" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsRetainerDetail /></SuperAdminSessionProvider></RoleGuard>} />
               <Route path="/operations/projects/:id" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsProjectDetail /></SuperAdminSessionProvider></RoleGuard>} />
             </Route>
 
