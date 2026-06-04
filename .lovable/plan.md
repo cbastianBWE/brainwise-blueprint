@@ -1,34 +1,48 @@
-# Live timer on Operations project Time card
+## Add "Week" timesheet card to Operations project detail
 
-Single-file edit: `src/pages/operations/OperationsProjectDetail.tsx`. Reuse existing `LogTimeDialog` for the post-stop details step. No new files, no migrations, no changes to Tasks/Expenses/Charges/Team or to existing Log time / edit / delete flows.
+Single file edit: `src/pages/operations/OperationsProjectDetail.tsx`. Fully additive — no changes to Tasks/Time/Expenses/Charges/Team cards or their queries/handlers.
 
-## Changes to `OperationsProjectDetail.tsx`
+### Imports
+- Add `ChevronLeft, ChevronRight` to existing lucide-react import.
+- Add `Popover, PopoverTrigger, PopoverContent` from `@/components/ui/popover`.
+- (DurationPicker already imported via LogTimeDialog path; add `import DurationPicker from "./DurationPicker"`.)
 
-1. **Imports**: add `Play`, `Square`, `X` to the existing `lucide-react` import. Add `useEffect` to the `react` import.
+### Date helpers (top of file, module scope)
+- `toISODate(d)` — local YYYY-MM-DD (not UTC).
+- `startOfWeekMon(d)` — clone, snap to Monday 00:00 local.
+- `fmtHM(dec)` — `H:MM` or `"·"` when zero.
 
-2. **Current user state**: add `const [currentUid, setCurrentUid] = useState<string | null>(null);` and a `useEffect([])` that calls `opsSupabase.auth.getUser()` and stores the user id.
+### State (inside component)
+- `weekStart` initialised to `startOfWeekMon(new Date())`.
+- Derive `days` (7 Date objects Mon..Sun) and `daysISO`.
 
-3. **timeEntriesQ**: append `, timer_running, timer_started_at` to the existing select list. No other changes to the query.
+### Query (additive)
+- `weekEntriesQ` keyed `["ops","project-week", id, daysISO[0], currentUid]`, enabled on both ids.
+- Selects `id, date, hours, project_task_id, timer_running` filtered by project + user + date range.
+- In-memory: drop `timer_running` rows; build `Map<"taskId|date", sumHours>`.
 
-4. **Derived values** (after timeEntriesQ):
-   - `visibleTimeEntries` = entries where `!timer_running`
-   - `runningEntry` = entry where `timer_running && user_id === currentUid` (or null)
-   
-   Time table renders `visibleTimeEntries`; empty-state checks `visibleTimeEntries.length === 0`. Running timer never shows as a 0-hour row.
+### Rows / totals
+- `rows` = tasks from existing `tasksQ` + trailing `{ taskId: null, name: "Untasked" }`.
+- Compute per-cell sum, row totals, column totals, grand total.
 
-5. **Handlers**:
-   - `startTimer`: `supabase.rpc("ops_start_timer" as any, { p_project: id, p_project_task: null, p_description: null })` → toast + invalidate `["ops","project-time", id]`.
-   - `stopTimer`: `supabase.rpc("ops_stop_timer" as any, { p_id: runningEntry.id })`, on success invalidate project-time, project-time-rollup, customer-time-rollup, project-financials; toast `Logged {h} h — add details`; set `editingTime` from runningEntry with `hours: Number(data)`; open existing `LogTimeDialog` in edit mode.
-   - `discardTimer`: `opsSupabase.from("time_entries").delete().eq("id", runningEntry.id)` → invalidate project-time + toast.
+### addTime handler
+- Insert minimal row `{ project_id, project_task_id, date, hours }` (user_id/org_id/is_billable DB-defaulted).
+- On success: toast + invalidate `project-week`, `project-time`, `project-time-rollup`, `customer-time-rollup`, `project-financials` keys.
 
-6. **Time CardHeader**: keep existing "Log time" button; left of it add:
-   - If `runningEntry`: pulsing dot + `<RunningTimerLabel startedAt={runningEntry.timer_started_at} />` + Stop button (outline, sm, Square icon) + Discard button (ghost, sm, X icon).
-   - Else: "Start timer" button (outline, sm, Play icon), disabled when `!p`.
+### Inline `WeekCell` component (same file)
+- Popover with full-width ghost Button trigger showing `display`.
+- PopoverContent (`w-56`): DurationPicker + Save button (disabled when hours ≤ 0 or saving).
+- On save: await `onAdd(hours)`, reset hours, close popover.
 
-7. **Inline `RunningTimerLabel` component** in the same file: useState/useEffect 1s interval, renders `HH:MM:SS` from `Date.now() - new Date(startedAt).getTime()`, `font-mono tabular-nums text-sm`.
+### Card render (immediately after existing Time card)
+- Header: prev-week (ChevronLeft), date range label, next-week (ChevronRight), "This week" ghost button.
+- Body: Table with `Task` + 7 day columns (`Mon 3` style) + `Total`.
+- One row per task + Untasked; 7 WeekCells per row; row total.
+- Footer row with column totals + grand total.
+- Loading message while `weekEntriesQ.isLoading`.
 
-## Acceptance
-- Start creates a running entry (hours 0); header shows live ticker + Stop + Discard; entry not in table.
-- Stop persists elapsed hours server-side, opens LogTimeDialog prefilled; dismissing leaves entry saved.
-- Discard deletes the running entry.
-- Only one timer at a time (server-enforced). All other card behavior unchanged. tsc clean.
+### Acceptance
+- Week grid for current user shows hours per task/day as `H:MM` or `·`, with row/col/grand totals.
+- Cell popover with DurationPicker appends a new `time_entries` row; existing Time card and rollups refresh.
+- Prev/Next/This-week navigation refetches correctly.
+- No existing cards modified; tsc clean.
