@@ -23,8 +23,11 @@ const BILLING_LABELS: Record<string, string> = {
 export default function OperationsCustomerDetail() {
   const { id = "" } = useParams();
   const navigate = useNavigate();
+  const qc = useQueryClient();
   const [editOpen, setEditOpen] = useState(false);
   const [projectOpen, setProjectOpen] = useState(false);
+  const [applyCreditCreditId, setApplyCreditCreditId] = useState<string | null>(null);
+  const [applyCreditMax, setApplyCreditMax] = useState<number>(0);
 
   const customerQ = useQuery({
     queryKey: ["ops", "customer", id],
