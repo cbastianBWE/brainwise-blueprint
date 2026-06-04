@@ -25,6 +25,7 @@ import TaskFormDialog, { TaskRecord } from "./TaskFormDialog";
 import LogTimeDialog, { TimeEntryRecord } from "./LogTimeDialog";
 import LogExpenseDialog, { ExpenseRecord } from "./LogExpenseDialog";
 import AddChargeDialog from "./AddChargeDialog";
+import TeamMemberDialog, { TeamMemberDialogMember } from "./TeamMemberDialog";
 
 const BILLING_LABELS: Record<string, string> = {
   fixed: "Fixed cost",
