@@ -100,6 +100,7 @@ import OperationsCustomerDetail from "./pages/operations/OperationsCustomerDetai
 import OperationsInvoices from "./pages/operations/OperationsInvoices";
 import OperationsItems from "./pages/operations/OperationsItems";
 import OperationsProjectDetail from "./pages/operations/OperationsProjectDetail";
+import OperationsMyTime from "./pages/operations/OperationsMyTime";
 import OperationsInvoiceDetail from "./pages/operations/OperationsInvoiceDetail";
 import InvoiceForm from "./pages/operations/InvoiceForm";
 import InvoiceFromWork from "./pages/operations/InvoiceFromWork";
