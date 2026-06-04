@@ -1325,7 +1325,7 @@ export type OperationsDatabase = {
         }
         Insert: {
           id?: string
-          org_id: string
+          org_id?: string
           expense_category_id?: string | null
           vendor_name?: string | null
           amount?: number
