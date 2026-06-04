@@ -185,6 +185,14 @@ export default function RecordPaymentDialog({
 
           {error && <p className="text-sm text-destructive">{error}</p>}
 
+          {Number(amount) > balanceDue && (
+            <p className="text-sm text-muted-foreground">
+              Excess of {formatMoney(Number(amount) - balanceDue, currency)} will be added as account credit for this customer.
+            </p>
+          )}
+
+
+
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={submitting}>
               Cancel
