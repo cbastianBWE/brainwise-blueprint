@@ -23,16 +23,29 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+export type TimeEntryRecord = {
+  id: string;
+  date: string;
+  project_task_id: string | null;
+  user_id: string;
+  hours: number;
+  is_billable: boolean | null;
+  description: string | null;
+};
+
 type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   projectId: string;
+  entry?: TimeEntryRecord | null;
 };
 
 const todayISO = () => new Date().toISOString().slice(0, 10);
 
-export default function LogTimeDialog({ open, onOpenChange, projectId }: Props) {
+export default function LogTimeDialog({ open, onOpenChange, projectId, entry }: Props) {
   const queryClient = useQueryClient();
+  const isEdit = !!entry;
+
 
   const [date, setDate] = useState<string>(todayISO());
   const [taskId, setTaskId] = useState<string>("");
