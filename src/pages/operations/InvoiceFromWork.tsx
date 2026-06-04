@@ -36,6 +36,7 @@ export default function InvoiceFromWork() {
 
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [submitting, setSubmitting] = useState(false);
+  const [detail, setDetail] = useState<"itemized" | "summary">("itemized");
 
   const customersQ = useQuery({
     queryKey: ["ops", "customers", "name-map"],
@@ -160,6 +161,7 @@ export default function InvoiceFromWork() {
       const { data, error } = await supabase.rpc("ops_create_invoice_from_selection", {
         p_customer: customerId,
         p_selection: p_selection as never,
+        p_detail: detail,
       });
       if (error) throw error;
       toast.success("Draft invoice created");
@@ -184,12 +186,23 @@ export default function InvoiceFromWork() {
               : "Operations · Select billable items to invoice"}
           </p>
         </div>
-        <Button
-          onClick={handleGenerate}
-          disabled={!customerId || selected.size === 0 || multiCurrency || submitting}
-        >
-          {submitting ? "Generating…" : "Generate invoice"}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Select value={detail} onValueChange={(v) => setDetail(v as "itemized" | "summary")}>
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Detail level" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="itemized">Itemized</SelectItem>
+              <SelectItem value="summary">Summary by project</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button
+            onClick={handleGenerate}
+            disabled={!customerId || selected.size === 0 || multiCurrency || submitting}
+          >
+            {submitting ? "Generating…" : "Generate invoice"}
+          </Button>
+        </div>
       </div>
 
       {!lockedCustomerId && (

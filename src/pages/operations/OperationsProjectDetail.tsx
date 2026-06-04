@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Pencil, Plus, FileText, Trash2 } from "lucide-react";
 import { formatMoney } from "./_shared";
 import ProjectFormDialog, { ProjectRecord } from "./ProjectFormDialog";
@@ -49,6 +50,7 @@ export default function OperationsProjectDetail() {
   const [generating, setGenerating] = useState(false);
   const [genFrom, setGenFrom] = useState("");
   const [genTo, setGenTo] = useState("");
+  const [genDetail, setGenDetail] = useState<"itemized" | "summary">("itemized");
 
   const projectQ = useQuery({
     queryKey: ["ops", "project", id],
@@ -178,6 +180,7 @@ export default function OperationsProjectDetail() {
         p_project: id,
         p_date_from: genFrom || null,
         p_date_to: genTo || null,
+        p_detail: genDetail,
       });
       if (error) {
         toast.error(error.message);
@@ -607,6 +610,18 @@ export default function OperationsProjectDetail() {
               <Label htmlFor="gen_to">To</Label>
               <Input id="gen_to" type="date" value={genTo} onChange={(e) => setGenTo(e.target.value)} />
             </div>
+          </div>
+          <div className="space-y-2 py-2">
+            <Label htmlFor="gen_detail">Detail level</Label>
+            <Select value={genDetail} onValueChange={(v) => setGenDetail(v as "itemized" | "summary")}>
+              <SelectTrigger id="gen_detail">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="itemized">Itemized</SelectItem>
+                <SelectItem value="summary">Summary by project</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setGenOpen(false)} disabled={generating}>
