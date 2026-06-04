@@ -25,6 +25,7 @@ import TaskFormDialog, { TaskRecord } from "./TaskFormDialog";
 import LogTimeDialog, { TimeEntryRecord } from "./LogTimeDialog";
 import LogExpenseDialog, { ExpenseRecord } from "./LogExpenseDialog";
 import AddChargeDialog from "./AddChargeDialog";
+import TeamMemberDialog, { TeamMemberDialogMember } from "./TeamMemberDialog";
 
 const BILLING_LABELS: Record<string, string> = {
   fixed: "Fixed cost",
@@ -51,6 +52,9 @@ export default function OperationsProjectDetail() {
   const [genFrom, setGenFrom] = useState("");
   const [genTo, setGenTo] = useState("");
   const [genDetail, setGenDetail] = useState<"itemized" | "summary">("itemized");
+  const [teamOpen, setTeamOpen] = useState(false);
+  const [teamMode, setTeamMode] = useState<"add" | "edit">("add");
+  const [editingMember, setEditingMember] = useState<(TeamMemberDialogMember & { display_name: string }) | null>(null);
 
   const projectQ = useQuery({
     queryKey: ["ops", "project", id],
@@ -171,6 +175,52 @@ export default function OperationsProjectDetail() {
     0,
   );
   const chargesCount = chargesQ.data?.length ?? 0;
+
+  const membersQ = useQuery({
+    queryKey: ["ops", "project-members", id],
+    enabled: !!id,
+    queryFn: async () => {
+      const { data, error } = await opsSupabase
+        .from("project_users" as any)
+        .select("*")
+        .eq("project_id", id);
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+  });
+
+  const orgUsersQ = useQuery({
+    queryKey: ["ops", "org-users"],
+    queryFn: async () => {
+      const { data, error } = await opsSupabase
+        .from("users" as any)
+        .select("id, full_name, email, status, default_billing_rate, default_cost_rate")
+        .eq("status", "active");
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+  });
+
+  const orgUsersById = new Map<string, any>((orgUsersQ.data ?? []).map((u: any) => [u.id, u]));
+  const membersWithNames = (membersQ.data ?? []).map((m: any) => {
+    const u = orgUsersById.get(m.user_id);
+    return { ...m, display_name: (u?.full_name || u?.email) ?? "Unknown" };
+  });
+  const memberUserIds = new Set<string>((membersQ.data ?? []).map((m: any) => m.user_id));
+  const availableUsersForAdd = (orgUsersQ.data ?? []).filter((u: any) => !memberUserIds.has(u.id));
+
+  const removeMember = async (memberId: string) => {
+    if (!window.confirm("Remove this team member?")) return;
+    const { error } = await opsSupabase.from("project_users" as any).delete().eq("id", memberId);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Member removed");
+    queryClient.invalidateQueries({ queryKey: ["ops", "project-members", id] });
+    queryClient.invalidateQueries({ queryKey: ["ops", "project-financials", id] });
+  };
+
 
   const handleGenerate = async () => {
     if (!id) return;
@@ -299,6 +349,93 @@ export default function OperationsProjectDetail() {
           )}
         </CardContent>
       </Card>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between gap-4 space-y-0">
+          <div className="space-y-1">
+            <CardTitle>Team</CardTitle>
+            <p className="text-sm text-muted-foreground">
+              {p?.billing_method === "staff_hours"
+                ? "Billing rate drives staff-hours invoicing; cost rate drives project margin."
+                : "Rates are used for project cost and margin."}
+            </p>
+          </div>
+          <Button
+            size="sm"
+            disabled={!p}
+            onClick={() => {
+              setTeamMode("add");
+              setEditingMember(null);
+              setTeamOpen(true);
+            }}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add Member
+          </Button>
+        </CardHeader>
+        <CardContent>
+          {membersQ.isLoading ? (
+            <p className="text-muted-foreground text-sm">Loading…</p>
+          ) : membersWithNames.length === 0 ? (
+            <p className="text-muted-foreground text-sm">No team members yet.</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead className="text-right">Billing rate</TableHead>
+                  <TableHead className="text-right">Cost rate</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {membersWithNames.map((m: any) => (
+                  <TableRow key={m.id}>
+                    <TableCell className="font-medium">{m.display_name}</TableCell>
+                    <TableCell className="text-right">
+                      {m.billing_rate == null ? "—" : formatMoney(m.billing_rate, p?.currency_code)}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {m.cost_rate == null ? "—" : formatMoney(m.cost_rate, p?.currency_code)}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => {
+                            setTeamMode("edit");
+                            setEditingMember({
+                              id: m.id,
+                              user_id: m.user_id,
+                              billing_rate: m.billing_rate,
+                              cost_rate: m.cost_rate,
+                              display_name: m.display_name,
+                            });
+                            setTeamOpen(true);
+                          }}
+                          aria-label="Edit member"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => removeMember(m.id)}
+                          aria-label="Remove member"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-4 space-y-0">
@@ -591,6 +728,22 @@ export default function OperationsProjectDetail() {
           onOpenChange={setChargeOpen}
           projectId={id}
           customerId={p?.customer_id}
+        />
+      )}
+      {id && p?.org_id && (
+        <TeamMemberDialog
+          open={teamOpen}
+          onOpenChange={(o) => { setTeamOpen(o); if (!o) setEditingMember(null); }}
+          projectId={id}
+          orgId={p.org_id}
+          mode={teamMode}
+          member={editingMember}
+          memberName={editingMember?.display_name}
+          availableUsers={availableUsersForAdd}
+          onSaved={() => {
+            queryClient.invalidateQueries({ queryKey: ["ops", "project-members", id] });
+            queryClient.invalidateQueries({ queryKey: ["ops", "project-financials", id] });
+          }}
         />
       )}
       <Dialog open={genOpen} onOpenChange={setGenOpen}>
