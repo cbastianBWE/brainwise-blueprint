@@ -352,6 +352,93 @@ export default function OperationsProjectDetail() {
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-4 space-y-0">
+          <div className="space-y-1">
+            <CardTitle>Team</CardTitle>
+            <p className="text-sm text-muted-foreground">
+              {p?.billing_method === "staff_hours"
+                ? "Billing rate drives staff-hours invoicing; cost rate drives project margin."
+                : "Rates are used for project cost and margin."}
+            </p>
+          </div>
+          <Button
+            size="sm"
+            disabled={!p}
+            onClick={() => {
+              setTeamMode("add");
+              setEditingMember(null);
+              setTeamOpen(true);
+            }}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add Member
+          </Button>
+        </CardHeader>
+        <CardContent>
+          {membersQ.isLoading ? (
+            <p className="text-muted-foreground text-sm">Loading…</p>
+          ) : membersWithNames.length === 0 ? (
+            <p className="text-muted-foreground text-sm">No team members yet.</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead className="text-right">Billing rate</TableHead>
+                  <TableHead className="text-right">Cost rate</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {membersWithNames.map((m: any) => (
+                  <TableRow key={m.id}>
+                    <TableCell className="font-medium">{m.display_name}</TableCell>
+                    <TableCell className="text-right">
+                      {m.billing_rate == null ? "—" : formatMoney(m.billing_rate, p?.currency_code)}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {m.cost_rate == null ? "—" : formatMoney(m.cost_rate, p?.currency_code)}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => {
+                            setTeamMode("edit");
+                            setEditingMember({
+                              id: m.id,
+                              user_id: m.user_id,
+                              billing_rate: m.billing_rate,
+                              cost_rate: m.cost_rate,
+                              display_name: m.display_name,
+                            });
+                            setTeamOpen(true);
+                          }}
+                          aria-label="Edit member"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => removeMember(m.id)}
+                          aria-label="Remove member"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between gap-4 space-y-0">
           <CardTitle>Tasks</CardTitle>
           <Button size="sm" disabled={!p} onClick={() => { setEditingTask(null); setTaskOpen(true); }}>
             <Plus className="h-4 w-4 mr-2" />
