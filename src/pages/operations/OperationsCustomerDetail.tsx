@@ -1,6 +1,8 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import { opsSupabase } from "@/integrations/supabase/operations-types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -8,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Pencil, Plus } from "lucide-react";
 import CustomerFormDialog from "./CustomerFormDialog";
 import ProjectFormDialog from "./ProjectFormDialog";
+import ApplyToInvoiceDialog from "./ApplyToInvoiceDialog";
 import { StatusBadge, formatMoney, formatDate } from "./_shared";
 
 const BILLING_LABELS: Record<string, string> = {
@@ -20,8 +23,11 @@ const BILLING_LABELS: Record<string, string> = {
 export default function OperationsCustomerDetail() {
   const { id = "" } = useParams();
   const navigate = useNavigate();
+  const qc = useQueryClient();
   const [editOpen, setEditOpen] = useState(false);
   const [projectOpen, setProjectOpen] = useState(false);
+  const [applyCreditCreditId, setApplyCreditCreditId] = useState<string | null>(null);
+  const [applyCreditMax, setApplyCreditMax] = useState<number>(0);
 
   const customerQ = useQuery({
     queryKey: ["ops", "customer", id],
@@ -69,6 +75,21 @@ export default function OperationsCustomerDetail() {
         .from("project_time_rollup")
         .select("total_hours, billable_hours, unbilled_billable_hours")
         .eq("customer_id", id);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const creditsQ = useQuery({
+    queryKey: ["ops", "customer-credits", id],
+    enabled: !!id,
+    queryFn: async () => {
+      const { data, error } = await opsSupabase
+        .from("customer_credits")
+        .select("id, source_type, amount, applied_amount, available_balance, created_at")
+        .eq("customer_id", id)
+        .gt("available_balance", 0)
+        .order("created_at", { ascending: false });
       if (error) throw error;
       return data ?? [];
     },
@@ -175,6 +196,56 @@ export default function OperationsCustomerDetail() {
       </Card>
 
       <Card>
+        <CardHeader><CardTitle>Account credits</CardTitle></CardHeader>
+        <CardContent>
+          {creditsQ.isLoading ? (
+            <p className="text-muted-foreground text-sm">Loading…</p>
+          ) : !creditsQ.data || creditsQ.data.length === 0 ? (
+            <p className="text-muted-foreground text-sm">No account credit.</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Source</TableHead>
+                  <TableHead className="text-right">Amount</TableHead>
+                  <TableHead className="text-right">Applied</TableHead>
+                  <TableHead className="text-right">Available</TableHead>
+                  <TableHead className="text-right">Action</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {creditsQ.data.map((row: any) => {
+                  const avail = Number(row.available_balance) || 0;
+                  const cur = c?.default_currency_code || "USD";
+                  return (
+                    <TableRow key={row.id}>
+                      <TableCell className="capitalize">{String(row.source_type ?? "").replace(/_/g, " ")}</TableCell>
+                      <TableCell className="text-right">{formatMoney(row.amount, cur)}</TableCell>
+                      <TableCell className="text-right">{formatMoney(row.applied_amount, cur)}</TableCell>
+                      <TableCell className="text-right">{formatMoney(row.available_balance, cur)}</TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={avail <= 0}
+                          onClick={() => {
+                            setApplyCreditCreditId(row.id);
+                            setApplyCreditMax(avail);
+                          }}
+                        >
+                          Apply to invoice
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
         <CardHeader><CardTitle>Invoices</CardTitle></CardHeader>
         <CardContent>
           {invoicesQ.isLoading ? (
@@ -219,6 +290,29 @@ export default function OperationsCustomerDetail() {
           open={projectOpen}
           onOpenChange={setProjectOpen}
           customerId={id}
+        />
+      )}
+      {id && applyCreditCreditId && (
+        <ApplyToInvoiceDialog
+          open={!!applyCreditCreditId}
+          onOpenChange={(o) => { if (!o) setApplyCreditCreditId(null); }}
+          customerId={id}
+          currency={c?.default_currency_code || "USD"}
+          maxAmount={applyCreditMax}
+          title="Apply credit to invoice"
+          onApply={async (invId, amt) => {
+            const { error } = await supabase.rpc("ops_apply_customer_credit_to_invoice" as any, {
+              p_credit: applyCreditCreditId,
+              p_invoice: invId,
+              p_amount: amt,
+            });
+            if (error) throw error;
+          }}
+          onApplied={() => {
+            toast.success("Credit applied.");
+            qc.invalidateQueries({ queryKey: ["ops", "customer-credits", id] });
+            qc.invalidateQueries({ queryKey: ["ops", "customer-invoices", id] });
+          }}
         />
       )}
     </div>

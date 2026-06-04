@@ -21,6 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { formatMoney } from "./_shared";
 
 type PaymentMode = "ach" | "check" | "cash" | "wire" | "other";
 
@@ -88,10 +89,6 @@ export default function RecordPaymentDialog({
       setError("Amount must be greater than 0.");
       return;
     }
-    if (amt > balanceDue + 1e-9) {
-      setError(`Amount cannot exceed the outstanding balance (${balanceDue} ${currency}).`);
-      return;
-    }
     setError(null);
     setSubmitting(true);
     try {
@@ -110,6 +107,7 @@ export default function RecordPaymentDialog({
       qc.invalidateQueries({ queryKey: ["ops", "invoice", invoiceId] });
       qc.invalidateQueries({ queryKey: ["ops", "invoices", "list"] });
       qc.invalidateQueries({ queryKey: ["ops", "customer-invoices", customerId] });
+      qc.invalidateQueries({ queryKey: ["ops", "customer-credits", customerId] });
       onOpenChange(false);
     } catch (err: any) {
       toast.error(err?.message ?? "Failed to record payment");
@@ -186,6 +184,14 @@ export default function RecordPaymentDialog({
           </div>
 
           {error && <p className="text-sm text-destructive">{error}</p>}
+
+          {Number(amount) > balanceDue && (
+            <p className="text-sm text-muted-foreground">
+              Excess of {formatMoney(Number(amount) - balanceDue, currency)} will be added as account credit for this customer.
+            </p>
+          )}
+
+
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={submitting}>

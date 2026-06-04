@@ -112,6 +112,10 @@ import RetainerForm from "./pages/operations/RetainerForm";
 import OperationsCreditNotes from "./pages/operations/OperationsCreditNotes";
 import OperationsCreditNoteDetail from "./pages/operations/OperationsCreditNoteDetail";
 import CreditNoteForm from "./pages/operations/CreditNoteForm";
+import OperationsRecurringExpenses from "./pages/operations/OperationsRecurringExpenses";
+import OperationsRecurringInvoices from "./pages/operations/OperationsRecurringInvoices";
+import OperationsRecurringInvoiceDetail from "./pages/operations/OperationsRecurringInvoiceDetail";
+import RecurringInvoiceForm from "./pages/operations/RecurringInvoiceForm";
 import PublicInvoicePay from "./pages/public/PublicInvoicePay";
 import PublicEstimateRespond from "./pages/public/PublicEstimateRespond";
 import EpnComplete from "./pages/EpnComplete";
@@ -271,6 +275,11 @@ const App = () => (
               <Route path="/operations/credit-notes" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsCreditNotes /></SuperAdminSessionProvider></RoleGuard>} />
               <Route path="/operations/credit-notes/new" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><CreditNoteForm /></SuperAdminSessionProvider></RoleGuard>} />
               <Route path="/operations/credit-notes/:id" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsCreditNoteDetail /></SuperAdminSessionProvider></RoleGuard>} />
+              <Route path="/operations/recurring-expenses" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsRecurringExpenses /></SuperAdminSessionProvider></RoleGuard>} />
+              <Route path="/operations/recurring-invoices" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsRecurringInvoices /></SuperAdminSessionProvider></RoleGuard>} />
+              <Route path="/operations/recurring-invoices/new" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><RecurringInvoiceForm /></SuperAdminSessionProvider></RoleGuard>} />
+              <Route path="/operations/recurring-invoices/:id/edit" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><RecurringInvoiceForm /></SuperAdminSessionProvider></RoleGuard>} />
+              <Route path="/operations/recurring-invoices/:id" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsRecurringInvoiceDetail /></SuperAdminSessionProvider></RoleGuard>} />
               <Route path="/operations/projects/:id" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsProjectDetail /></SuperAdminSessionProvider></RoleGuard>} />
             </Route>
 

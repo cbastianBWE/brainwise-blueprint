@@ -4,7 +4,7 @@ import {
   Users, Users2, Building2, UsersRound, Activity, Heart, Award, UserCircle,
   ShieldCheck, Briefcase, GitBranch, FlaskConical, LogOut, History, Shield,
   CreditCard, Receipt, ChevronDown, ChevronRight, Plus, FileText, Library, Ticket,
-  GraduationCap, Bell, Newspaper, SlidersHorizontal, Wallet, FileMinus2,
+  GraduationCap, Bell, Newspaper, SlidersHorizontal, Wallet, FileMinus2, Repeat,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -106,7 +106,9 @@ const superAdminNav: NavItem[] = [
  { title: "Invoices", url: "/operations/invoices", icon: Receipt },
  { title: "Estimates", url: "/operations/estimates", icon: FileText },
  { title: "Retainers", url: "/operations/retainers", icon: Wallet },
- { title: "Credit notes", url: "/operations/credit-notes", icon: FileMinus2 },
+{ title: "Credit notes", url: "/operations/credit-notes", icon: FileMinus2 },
+{ title: "Recurring expenses", url: "/operations/recurring-expenses", icon: Repeat },
+{ title: "Recurring invoices", url: "/operations/recurring-invoices", icon: Repeat },
 ];
 
 function getNavItems(profile: { account_type?: string | null; is_practitioner_coach?: boolean } | null | undefined): NavItem[] {
