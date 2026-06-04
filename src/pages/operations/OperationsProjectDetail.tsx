@@ -55,6 +55,14 @@ export default function OperationsProjectDetail() {
   const [teamOpen, setTeamOpen] = useState(false);
   const [teamMode, setTeamMode] = useState<"add" | "edit">("add");
   const [editingMember, setEditingMember] = useState<(TeamMemberDialogMember & { display_name: string }) | null>(null);
+  const [currentUid, setCurrentUid] = useState<string | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await opsSupabase.auth.getUser();
+      setCurrentUid(data.user?.id ?? null);
+    })();
+  }, []);
 
   const projectQ = useQuery({
     queryKey: ["ops", "project", id],
