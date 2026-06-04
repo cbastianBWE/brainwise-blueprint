@@ -292,6 +292,29 @@ export default function OperationsCustomerDetail() {
           customerId={id}
         />
       )}
+      {id && applyCreditCreditId && (
+        <ApplyToInvoiceDialog
+          open={!!applyCreditCreditId}
+          onOpenChange={(o) => { if (!o) setApplyCreditCreditId(null); }}
+          customerId={id}
+          currency={c?.default_currency_code || "USD"}
+          maxAmount={applyCreditMax}
+          title="Apply credit to invoice"
+          onApply={async (invId, amt) => {
+            const { error } = await supabase.rpc("ops_apply_customer_credit_to_invoice" as any, {
+              p_credit: applyCreditCreditId,
+              p_invoice: invId,
+              p_amount: amt,
+            });
+            if (error) throw error;
+          }}
+          onApplied={() => {
+            toast.success("Credit applied.");
+            qc.invalidateQueries({ queryKey: ["ops", "customer-credits", id] });
+            qc.invalidateQueries({ queryKey: ["ops", "customer-invoices", id] });
+          }}
+        />
+      )}
     </div>
   );
 }
