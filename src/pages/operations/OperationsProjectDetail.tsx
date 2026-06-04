@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { opsSupabase } from "@/integrations/supabase/operations-types";
@@ -17,12 +17,12 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Pencil, Plus, FileText } from "lucide-react";
+import { Pencil, Plus, FileText, Trash2 } from "lucide-react";
 import { formatMoney } from "./_shared";
 import ProjectFormDialog, { ProjectRecord } from "./ProjectFormDialog";
 import TaskFormDialog, { TaskRecord } from "./TaskFormDialog";
-import LogTimeDialog from "./LogTimeDialog";
-import LogExpenseDialog from "./LogExpenseDialog";
+import LogTimeDialog, { TimeEntryRecord } from "./LogTimeDialog";
+import LogExpenseDialog, { ExpenseRecord } from "./LogExpenseDialog";
 import AddChargeDialog from "./AddChargeDialog";
 
 const BILLING_LABELS: Record<string, string> = {
