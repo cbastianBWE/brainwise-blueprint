@@ -275,6 +275,11 @@ const App = () => (
               <Route path="/operations/credit-notes" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsCreditNotes /></SuperAdminSessionProvider></RoleGuard>} />
               <Route path="/operations/credit-notes/new" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><CreditNoteForm /></SuperAdminSessionProvider></RoleGuard>} />
               <Route path="/operations/credit-notes/:id" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsCreditNoteDetail /></SuperAdminSessionProvider></RoleGuard>} />
+              <Route path="/operations/recurring-expenses" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsRecurringExpenses /></SuperAdminSessionProvider></RoleGuard>} />
+              <Route path="/operations/recurring-invoices" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsRecurringInvoices /></SuperAdminSessionProvider></RoleGuard>} />
+              <Route path="/operations/recurring-invoices/new" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><RecurringInvoiceForm /></SuperAdminSessionProvider></RoleGuard>} />
+              <Route path="/operations/recurring-invoices/:id/edit" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><RecurringInvoiceForm /></SuperAdminSessionProvider></RoleGuard>} />
+              <Route path="/operations/recurring-invoices/:id" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsRecurringInvoiceDetail /></SuperAdminSessionProvider></RoleGuard>} />
               <Route path="/operations/projects/:id" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsProjectDetail /></SuperAdminSessionProvider></RoleGuard>} />
             </Route>
 
