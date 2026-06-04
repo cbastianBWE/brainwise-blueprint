@@ -1,6 +1,8 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import { opsSupabase } from "@/integrations/supabase/operations-types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -8,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Pencil, Plus } from "lucide-react";
 import CustomerFormDialog from "./CustomerFormDialog";
 import ProjectFormDialog from "./ProjectFormDialog";
+import ApplyToInvoiceDialog from "./ApplyToInvoiceDialog";
 import { StatusBadge, formatMoney, formatDate } from "./_shared";
 
 const BILLING_LABELS: Record<string, string> = {
