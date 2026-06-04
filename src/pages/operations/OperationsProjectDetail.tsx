@@ -425,6 +425,7 @@ export default function OperationsProjectDetail() {
       if (error) throw error;
       toast.success("Time entry deleted");
       queryClient.invalidateQueries({ queryKey: ["ops", "project-time", id] });
+      queryClient.invalidateQueries({ queryKey: ["ops", "project-financials", id] });
       queryClient.invalidateQueries({ queryKey: ["ops", "project-time-rollup", id] });
       queryClient.invalidateQueries({ queryKey: ["ops", "customer-time-rollup"] });
     } catch (err: any) {
