@@ -21,6 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { formatMoney } from "./_shared";
 
 type PaymentMode = "ach" | "check" | "cash" | "wire" | "other";
 
