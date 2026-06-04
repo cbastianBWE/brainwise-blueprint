@@ -11360,9 +11360,25 @@ export type Database = {
         Returns: Json
       }
       ops_accept_estimate_by_token: { Args: { p_token: string }; Returns: Json }
+      ops_apply_credit_note_to_invoice: {
+        Args: { p_amount: number; p_credit_note: string; p_invoice: string }
+        Returns: string
+      }
+      ops_apply_customer_credit_to_invoice: {
+        Args: { p_amount: number; p_credit: string; p_invoice: string }
+        Returns: string
+      }
+      ops_apply_retainer_to_invoice: {
+        Args: { p_amount: number; p_invoice: string; p_retainer: string }
+        Returns: string
+      }
       ops_clone_invoice: { Args: { p_id: string }; Returns: string }
       ops_convert_estimate_to_invoice: {
         Args: { p_estimate: string }
+        Returns: string
+      }
+      ops_create_credit_note: {
+        Args: { p_header: Json; p_lines: Json }
         Returns: string
       }
       ops_create_estimate: {
@@ -11386,6 +11402,7 @@ export type Database = {
         Args: { p_customer: string; p_detail?: string; p_selection: Json }
         Returns: string
       }
+      ops_create_retainer: { Args: { p_header: Json }; Returns: string }
       ops_decline_estimate_by_token: {
         Args: { p_reason?: string; p_token: string }
         Returns: Json
@@ -11452,12 +11469,25 @@ export type Database = {
         Args: { p_invoice: string; p_payment: Json }
         Returns: string
       }
+      ops_refund_credit_note: {
+        Args: { p_amount: number; p_id: string }
+        Returns: string
+      }
+      ops_run_recurring_expenses: { Args: never; Returns: number }
       ops_run_recurring_invoices: { Args: never; Returns: number }
+      ops_set_credit_note_status: {
+        Args: { p_action: string; p_id: string }
+        Returns: string
+      }
       ops_set_estimate_status: {
         Args: { p_action: string; p_id: string }
         Returns: string
       }
       ops_set_invoice_status: {
+        Args: { p_action: string; p_id: string }
+        Returns: string
+      }
+      ops_set_retainer_status: {
         Args: { p_action: string; p_id: string }
         Returns: string
       }
