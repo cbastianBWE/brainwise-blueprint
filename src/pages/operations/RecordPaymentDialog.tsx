@@ -89,10 +89,6 @@ export default function RecordPaymentDialog({
       setError("Amount must be greater than 0.");
       return;
     }
-    if (amt > balanceDue + 1e-9) {
-      setError(`Amount cannot exceed the outstanding balance (${balanceDue} ${currency}).`);
-      return;
-    }
     setError(null);
     setSubmitting(true);
     try {
