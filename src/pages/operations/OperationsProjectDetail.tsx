@@ -212,6 +212,34 @@ export default function OperationsProjectDetail() {
   );
   const chargesCount = chargesQ.data?.length ?? 0;
 
+  const financialsQ = useQuery({
+    queryKey: ["ops", "project-financials", id],
+    enabled: !!id,
+    queryFn: async () => {
+      const { data, error } = await (opsSupabase as any)
+        .from("project_financials_rollup")
+        .select("total_hours, billable_hours, time_cost, cost_untracked_hours, expense_cost, actual_cost, revenue_invoiced, margin, margin_pct, budget_hours, budget_amount")
+        .eq("project_id", id)
+        .maybeSingle();
+      if (error) throw error;
+      return data as {
+        total_hours: string | number | null;
+        billable_hours: string | number | null;
+        time_cost: string | number | null;
+        cost_untracked_hours: string | number | null;
+        expense_cost: string | number | null;
+        actual_cost: string | number | null;
+        revenue_invoiced: string | number | null;
+        margin: string | number | null;
+        margin_pct: string | number | null;
+        budget_hours: string | number | null;
+        budget_amount: string | number | null;
+      } | null;
+    },
+  });
+
+
+
   const membersQ = useQuery({
     queryKey: ["ops", "project-members", id],
     enabled: !!id,
@@ -397,6 +425,7 @@ export default function OperationsProjectDetail() {
       if (error) throw error;
       toast.success("Time entry deleted");
       queryClient.invalidateQueries({ queryKey: ["ops", "project-time", id] });
+      queryClient.invalidateQueries({ queryKey: ["ops", "project-financials", id] });
       queryClient.invalidateQueries({ queryKey: ["ops", "project-time-rollup", id] });
       queryClient.invalidateQueries({ queryKey: ["ops", "customer-time-rollup"] });
     } catch (err: any) {
@@ -478,6 +507,66 @@ export default function OperationsProjectDetail() {
           )}
         </CardContent>
       </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Project financials</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {(() => {
+            const cur = p?.currency_code ?? "USD";
+            const hrs = (x: any) => Number(x ?? 0).toFixed(2) + " h";
+            if (financialsQ.isLoading) {
+              return <p className="text-muted-foreground text-sm">Loading…</p>;
+            }
+            const f = financialsQ.data;
+            if (!f) {
+              return <p className="text-muted-foreground text-sm">No financial data yet.</p>;
+            }
+            const margin = Number(f.margin ?? 0);
+            const marginColor = margin >= 0 ? "text-green-600" : "text-red-600";
+            const untracked = Number(f.cost_untracked_hours ?? 0);
+            return (
+              <dl className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                <div>
+                  <dt className="text-muted-foreground">Hours</dt>
+                  <dd>
+                    {hrs(f.total_hours)}
+                    {f.budget_hours != null && ` / ${hrs(f.budget_hours)} budget`}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-muted-foreground">Revenue (invoiced)</dt>
+                  <dd>
+                    {formatMoney(Number(f.revenue_invoiced ?? 0), cur)}
+                    {f.budget_amount != null && ` / ${formatMoney(Number(f.budget_amount), cur)} budget`}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-muted-foreground">Actual cost</dt>
+                  <dd>{formatMoney(Number(f.actual_cost ?? 0), cur)}</dd>
+                  <dd className="text-xs text-muted-foreground">
+                    time {formatMoney(Number(f.time_cost ?? 0), cur)} · expenses {formatMoney(Number(f.expense_cost ?? 0), cur)}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-muted-foreground">Margin</dt>
+                  <dd className={marginColor}>
+                    {formatMoney(margin, cur)} ({Number(f.margin_pct ?? 0).toFixed(1)}%)
+                  </dd>
+                </div>
+                {untracked > 0 && (
+                  <div className="md:col-span-2 text-xs text-muted-foreground">
+                    {hrs(f.cost_untracked_hours)} logged without a cost rate — set staff cost rates for accurate cost.
+                  </div>
+                )}
+              </dl>
+            );
+          })()}
+        </CardContent>
+      </Card>
+
+
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-4 space-y-0">
