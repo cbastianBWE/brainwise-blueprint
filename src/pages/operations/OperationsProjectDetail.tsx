@@ -582,7 +582,7 @@ export default function OperationsProjectDetail() {
           </p>
           {timeEntriesQ.isLoading ? (
             <p className="text-muted-foreground text-sm">Loading…</p>
-          ) : !timeEntriesQ.data || timeEntriesQ.data.length === 0 ? (
+          ) : visibleTimeEntries.length === 0 ? (
             <p className="text-muted-foreground text-sm">No time logged yet.</p>
           ) : (
             <Table>
