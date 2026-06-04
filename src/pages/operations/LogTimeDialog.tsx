@@ -139,23 +139,39 @@ export default function LogTimeDialog({ open, onOpenChange, projectId, entry }: 
     setError(null);
     setSubmitting(true);
     try {
-      const { error } = await opsSupabase.from("time_entries").insert({
-        project_id: projectId,
-        project_task_id: taskId || null,
-        user_id: memberId,
-        date,
-        hours: hoursNum,
-        is_billable: isBillable,
-        description: description.trim() || null,
-      });
-      if (error) throw error;
-      toast.success("Time logged");
+      if (isEdit && entry) {
+        const { error } = await opsSupabase
+          .from("time_entries")
+          .update({
+            project_task_id: taskId || null,
+            user_id: memberId,
+            date,
+            hours: hoursNum,
+            is_billable: isBillable,
+            description: description.trim() || null,
+          })
+          .eq("id", entry.id);
+        if (error) throw error;
+        toast.success("Time updated");
+      } else {
+        const { error } = await opsSupabase.from("time_entries").insert({
+          project_id: projectId,
+          project_task_id: taskId || null,
+          user_id: memberId,
+          date,
+          hours: hoursNum,
+          is_billable: isBillable,
+          description: description.trim() || null,
+        });
+        if (error) throw error;
+        toast.success("Time logged");
+      }
       queryClient.invalidateQueries({ queryKey: ["ops", "project-time", projectId] });
       queryClient.invalidateQueries({ queryKey: ["ops", "project-time-rollup", projectId] });
       queryClient.invalidateQueries({ queryKey: ["ops", "customer-time-rollup"] });
       onOpenChange(false);
     } catch (err: any) {
-      toast.error(err?.message ?? "Failed to log time");
+      toast.error(err?.message ?? (isEdit ? "Failed to update time" : "Failed to log time"));
     } finally {
       setSubmitting(false);
     }
