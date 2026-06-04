@@ -463,6 +463,7 @@ export default function OperationsProjectDetail() {
                   <TableHead className="text-right">Amount</TableHead>
                   <TableHead>Billable</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -474,6 +475,28 @@ export default function OperationsProjectDetail() {
                     <TableCell className="text-right">{formatMoney(row.amount, row.currency_code)}</TableCell>
                     <TableCell>{row.is_billable ? "Yes" : "No"}</TableCell>
                     <TableCell>{row.is_invoiced ? "Invoiced" : "Unbilled"}</TableCell>
+                    <TableCell className="text-right">
+                      {!row.is_invoiced && (
+                        <div className="flex justify-end gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => { setEditingExpense(row as ExpenseRecord); setLogExpenseOpen(true); }}
+                            aria-label="Edit expense"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleDeleteExpense(row.id, row.receipt_storage_path ?? null)}
+                            aria-label="Delete expense"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      )}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
