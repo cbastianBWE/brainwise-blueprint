@@ -191,6 +191,57 @@ export default function OperationsProjectDetail() {
     }
   };
 
+  const handleDeleteTask = async (taskId: string) => {
+    if (!window.confirm("Delete this task?")) return;
+    try {
+      const { error } = await opsSupabase.from("project_tasks").delete().eq("id", taskId);
+      if (error) throw error;
+      toast.success("Task deleted");
+      queryClient.invalidateQueries({ queryKey: ["ops", "project-tasks", id] });
+    } catch (err: any) {
+      const msg = err?.message ?? "Failed to delete task";
+      if (err?.code === "23503" || /foreign key/i.test(msg)) {
+        toast.error("Can't delete a task that has time logged against it. Remove or reassign its time entries first.");
+      } else {
+        toast.error(msg);
+      }
+    }
+  };
+
+  const handleDeleteTimeEntry = async (entryId: string) => {
+    if (!window.confirm("Delete this time entry?")) return;
+    try {
+      const { error } = await opsSupabase.from("time_entries").delete().eq("id", entryId);
+      if (error) throw error;
+      toast.success("Time entry deleted");
+      queryClient.invalidateQueries({ queryKey: ["ops", "project-time", id] });
+      queryClient.invalidateQueries({ queryKey: ["ops", "project-time-rollup", id] });
+      queryClient.invalidateQueries({ queryKey: ["ops", "customer-time-rollup"] });
+    } catch (err: any) {
+      toast.error(err?.message ?? "Failed to delete time entry");
+    }
+  };
+
+  const handleDeleteExpense = async (expenseId: string, receiptPath: string | null) => {
+    if (!window.confirm("Delete this expense?")) return;
+    try {
+      if (receiptPath) {
+        try {
+          await opsSupabase.storage.from("operations-receipts").remove([receiptPath]);
+        } catch {
+          /* best-effort */
+        }
+      }
+      const { error } = await opsSupabase.from("expenses").delete().eq("id", expenseId);
+      if (error) throw error;
+      toast.success("Expense deleted");
+      queryClient.invalidateQueries({ queryKey: ["ops", "project-expenses", id] });
+      queryClient.invalidateQueries({ queryKey: ["ops", "project-expense-rollup", id] });
+    } catch (err: any) {
+      toast.error(err?.message ?? "Failed to delete expense");
+    }
+  };
+
   const billingLabel = p?.billing_method ? BILLING_LABELS[p.billing_method] ?? p.billing_method : "—";
 
 
