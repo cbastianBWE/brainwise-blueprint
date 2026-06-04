@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { opsSupabase } from "@/integrations/supabase/operations-types";
@@ -17,12 +17,12 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Pencil, Plus, FileText } from "lucide-react";
+import { Pencil, Plus, FileText, Trash2 } from "lucide-react";
 import { formatMoney } from "./_shared";
 import ProjectFormDialog, { ProjectRecord } from "./ProjectFormDialog";
 import TaskFormDialog, { TaskRecord } from "./TaskFormDialog";
-import LogTimeDialog from "./LogTimeDialog";
-import LogExpenseDialog from "./LogExpenseDialog";
+import LogTimeDialog, { TimeEntryRecord } from "./LogTimeDialog";
+import LogExpenseDialog, { ExpenseRecord } from "./LogExpenseDialog";
 import AddChargeDialog from "./AddChargeDialog";
 
 const BILLING_LABELS: Record<string, string> = {
@@ -36,11 +36,14 @@ const BILLING_LABELS: Record<string, string> = {
 export default function OperationsProjectDetail() {
   const { id = "" } = useParams();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [editOpen, setEditOpen] = useState(false);
   const [taskOpen, setTaskOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<TaskRecord | null>(null);
   const [logTimeOpen, setLogTimeOpen] = useState(false);
+  const [editingTime, setEditingTime] = useState<TimeEntryRecord | null>(null);
   const [logExpenseOpen, setLogExpenseOpen] = useState(false);
+  const [editingExpense, setEditingExpense] = useState<ExpenseRecord | null>(null);
   const [chargeOpen, setChargeOpen] = useState(false);
   const [genOpen, setGenOpen] = useState(false);
   const [generating, setGenerating] = useState(false);
@@ -111,7 +114,7 @@ export default function OperationsProjectDetail() {
     queryFn: async () => {
       const { data, error } = await opsSupabase
         .from("time_entries")
-        .select("id, date, hours, is_billable, is_invoiced, description, project_tasks(name), users!time_entries_user_id_fkey(full_name, email)")
+        .select("id, date, hours, is_billable, is_invoiced, description, user_id, project_task_id, project_tasks(name), users!time_entries_user_id_fkey(full_name, email)")
         .eq("project_id", id)
         .order("date", { ascending: false });
       if (error) throw error;
@@ -139,7 +142,7 @@ export default function OperationsProjectDetail() {
     queryFn: async () => {
       const { data, error } = await opsSupabase
         .from("expenses")
-        .select("id, date, amount, is_billable, is_invoiced, vendor_name, is_mileage, currency_code, expense_categories(name)")
+        .select("id, date, amount, is_billable, is_invoiced, vendor_name, is_mileage, currency_code, expense_category_id, markup_percentage, miles_driven, per_mile_rate, receipt_storage_path, notes, expense_categories(name)")
         .eq("project_id", id)
         .order("date", { ascending: false });
       if (error) throw error;
@@ -185,6 +188,57 @@ export default function OperationsProjectDetail() {
     } finally {
       setGenerating(false);
       setGenOpen(false);
+    }
+  };
+
+  const handleDeleteTask = async (taskId: string) => {
+    if (!window.confirm("Delete this task?")) return;
+    try {
+      const { error } = await opsSupabase.from("project_tasks").delete().eq("id", taskId);
+      if (error) throw error;
+      toast.success("Task deleted");
+      queryClient.invalidateQueries({ queryKey: ["ops", "project-tasks", id] });
+    } catch (err: any) {
+      const msg = err?.message ?? "Failed to delete task";
+      if (err?.code === "23503" || /foreign key/i.test(msg)) {
+        toast.error("Can't delete a task that has time logged against it. Remove or reassign its time entries first.");
+      } else {
+        toast.error(msg);
+      }
+    }
+  };
+
+  const handleDeleteTimeEntry = async (entryId: string) => {
+    if (!window.confirm("Delete this time entry?")) return;
+    try {
+      const { error } = await opsSupabase.from("time_entries").delete().eq("id", entryId);
+      if (error) throw error;
+      toast.success("Time entry deleted");
+      queryClient.invalidateQueries({ queryKey: ["ops", "project-time", id] });
+      queryClient.invalidateQueries({ queryKey: ["ops", "project-time-rollup", id] });
+      queryClient.invalidateQueries({ queryKey: ["ops", "customer-time-rollup"] });
+    } catch (err: any) {
+      toast.error(err?.message ?? "Failed to delete time entry");
+    }
+  };
+
+  const handleDeleteExpense = async (expenseId: string, receiptPath: string | null) => {
+    if (!window.confirm("Delete this expense?")) return;
+    try {
+      if (receiptPath) {
+        try {
+          await opsSupabase.storage.from("operations-receipts").remove([receiptPath]);
+        } catch {
+          /* best-effort */
+        }
+      }
+      const { error } = await opsSupabase.from("expenses").delete().eq("id", expenseId);
+      if (error) throw error;
+      toast.success("Expense deleted");
+      queryClient.invalidateQueries({ queryKey: ["ops", "project-expenses", id] });
+      queryClient.invalidateQueries({ queryKey: ["ops", "project-expense-rollup", id] });
+    } catch (err: any) {
+      toast.error(err?.message ?? "Failed to delete expense");
     }
   };
 
@@ -264,21 +318,38 @@ export default function OperationsProjectDetail() {
                   <TableHead className="text-right">Rate</TableHead>
                   <TableHead className="text-right">Budget hours</TableHead>
                   <TableHead>Billable</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {tasksQ.data.map((t: any) => (
-                  <TableRow
-                    key={t.id}
-                    onClick={() => { setEditingTask(t as TaskRecord); setTaskOpen(true); }}
-                    className="cursor-pointer"
-                  >
+                  <TableRow key={t.id}>
                     <TableCell className="font-medium">{t.name}</TableCell>
                     <TableCell className="text-right">
                       {t.task_hourly_rate == null ? "—" : formatMoney(t.task_hourly_rate, p?.currency_code)}
                     </TableCell>
                     <TableCell className="text-right">{t.budget_hours ?? "—"}</TableCell>
                     <TableCell>{t.is_billable ? "Yes" : "No"}</TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => { setEditingTask(t as TaskRecord); setTaskOpen(true); }}
+                          aria-label="Edit task"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDeleteTask(t.id)}
+                          aria-label="Delete task"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -290,7 +361,7 @@ export default function OperationsProjectDetail() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-4 space-y-0">
           <CardTitle>Time</CardTitle>
-          <Button size="sm" disabled={!p} onClick={() => setLogTimeOpen(true)}>
+          <Button size="sm" disabled={!p} onClick={() => { setEditingTime(null); setLogTimeOpen(true); }}>
             <Plus className="h-4 w-4 mr-2" />
             Log time
           </Button>
@@ -313,6 +384,7 @@ export default function OperationsProjectDetail() {
                   <TableHead className="text-right">Hours</TableHead>
                   <TableHead>Billable</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -324,6 +396,39 @@ export default function OperationsProjectDetail() {
                     <TableCell className="text-right">{row.hours}</TableCell>
                     <TableCell>{row.is_billable ? "Yes" : "No"}</TableCell>
                     <TableCell>{row.is_invoiced ? "Invoiced" : "Unbilled"}</TableCell>
+                    <TableCell className="text-right">
+                      {!row.is_invoiced && (
+                        <div className="flex justify-end gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => {
+                              setEditingTime({
+                                id: row.id,
+                                date: row.date,
+                                project_task_id: row.project_task_id ?? null,
+                                user_id: row.user_id,
+                                hours: row.hours,
+                                is_billable: row.is_billable,
+                                description: row.description ?? null,
+                              });
+                              setLogTimeOpen(true);
+                            }}
+                            aria-label="Edit time entry"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleDeleteTimeEntry(row.id)}
+                            aria-label="Delete time entry"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      )}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -335,7 +440,7 @@ export default function OperationsProjectDetail() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-4 space-y-0">
           <CardTitle>Expenses</CardTitle>
-          <Button size="sm" disabled={!p} onClick={() => setLogExpenseOpen(true)}>
+          <Button size="sm" disabled={!p} onClick={() => { setEditingExpense(null); setLogExpenseOpen(true); }}>
             <Plus className="h-4 w-4 mr-2" />
             Log expense
           </Button>
@@ -358,6 +463,7 @@ export default function OperationsProjectDetail() {
                   <TableHead className="text-right">Amount</TableHead>
                   <TableHead>Billable</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -369,6 +475,28 @@ export default function OperationsProjectDetail() {
                     <TableCell className="text-right">{formatMoney(row.amount, row.currency_code)}</TableCell>
                     <TableCell>{row.is_billable ? "Yes" : "No"}</TableCell>
                     <TableCell>{row.is_invoiced ? "Invoiced" : "Unbilled"}</TableCell>
+                    <TableCell className="text-right">
+                      {!row.is_invoiced && (
+                        <div className="flex justify-end gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => { setEditingExpense(row as ExpenseRecord); setLogExpenseOpen(true); }}
+                            aria-label="Edit expense"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleDeleteExpense(row.id, row.receipt_storage_path ?? null)}
+                            aria-label="Delete expense"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      )}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -438,14 +566,20 @@ export default function OperationsProjectDetail() {
         />
       )}
       {id && (
-        <LogTimeDialog open={logTimeOpen} onOpenChange={setLogTimeOpen} projectId={id} />
+        <LogTimeDialog
+          open={logTimeOpen}
+          onOpenChange={(o) => { setLogTimeOpen(o); if (!o) setEditingTime(null); }}
+          projectId={id}
+          entry={editingTime}
+        />
       )}
       {id && (
         <LogExpenseDialog
           open={logExpenseOpen}
-          onOpenChange={setLogExpenseOpen}
+          onOpenChange={(o) => { setLogExpenseOpen(o); if (!o) setEditingExpense(null); }}
           projectId={id}
           customerId={p?.customer_id}
+          expense={editingExpense}
         />
       )}
       {id && (

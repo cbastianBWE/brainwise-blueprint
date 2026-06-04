@@ -23,16 +23,29 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+export type TimeEntryRecord = {
+  id: string;
+  date: string;
+  project_task_id: string | null;
+  user_id: string;
+  hours: number;
+  is_billable: boolean | null;
+  description: string | null;
+};
+
 type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   projectId: string;
+  entry?: TimeEntryRecord | null;
 };
 
 const todayISO = () => new Date().toISOString().slice(0, 10);
 
-export default function LogTimeDialog({ open, onOpenChange, projectId }: Props) {
+export default function LogTimeDialog({ open, onOpenChange, projectId, entry }: Props) {
   const queryClient = useQueryClient();
+  const isEdit = !!entry;
+
 
   const [date, setDate] = useState<string>(todayISO());
   const [taskId, setTaskId] = useState<string>("");
@@ -72,16 +85,25 @@ export default function LogTimeDialog({ open, onOpenChange, projectId }: Props) 
   });
 
   useEffect(() => {
-    if (open) {
+    if (!open) return;
+    if (entry) {
+      setDate(entry.date);
+      setTaskId(entry.project_task_id ?? "");
+      setMemberId(entry.user_id);
+      setHours(String(entry.hours));
+      setIsBillable(entry.is_billable ?? true);
+      setDescription(entry.description ?? "");
+    } else {
       setDate(todayISO());
       setTaskId("");
       setMemberId("");
       setHours("");
       setIsBillable(true);
       setDescription("");
-      setError(null);
     }
-  }, [open]);
+    setError(null);
+  }, [open, entry]);
+
 
   // Resolve default member once members load
   useEffect(() => {
@@ -117,23 +139,39 @@ export default function LogTimeDialog({ open, onOpenChange, projectId }: Props) 
     setError(null);
     setSubmitting(true);
     try {
-      const { error } = await opsSupabase.from("time_entries").insert({
-        project_id: projectId,
-        project_task_id: taskId || null,
-        user_id: memberId,
-        date,
-        hours: hoursNum,
-        is_billable: isBillable,
-        description: description.trim() || null,
-      });
-      if (error) throw error;
-      toast.success("Time logged");
+      if (isEdit && entry) {
+        const { error } = await opsSupabase
+          .from("time_entries")
+          .update({
+            project_task_id: taskId || null,
+            user_id: memberId,
+            date,
+            hours: hoursNum,
+            is_billable: isBillable,
+            description: description.trim() || null,
+          })
+          .eq("id", entry.id);
+        if (error) throw error;
+        toast.success("Time updated");
+      } else {
+        const { error } = await opsSupabase.from("time_entries").insert({
+          project_id: projectId,
+          project_task_id: taskId || null,
+          user_id: memberId,
+          date,
+          hours: hoursNum,
+          is_billable: isBillable,
+          description: description.trim() || null,
+        });
+        if (error) throw error;
+        toast.success("Time logged");
+      }
       queryClient.invalidateQueries({ queryKey: ["ops", "project-time", projectId] });
       queryClient.invalidateQueries({ queryKey: ["ops", "project-time-rollup", projectId] });
       queryClient.invalidateQueries({ queryKey: ["ops", "customer-time-rollup"] });
       onOpenChange(false);
     } catch (err: any) {
-      toast.error(err?.message ?? "Failed to log time");
+      toast.error(err?.message ?? (isEdit ? "Failed to update time" : "Failed to log time"));
     } finally {
       setSubmitting(false);
     }
@@ -143,8 +181,8 @@ export default function LogTimeDialog({ open, onOpenChange, projectId }: Props) 
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Log time</DialogTitle>
-          <DialogDescription>Record time spent on this project.</DialogDescription>
+          <DialogTitle>{isEdit ? "Edit time" : "Log time"}</DialogTitle>
+          <DialogDescription>{isEdit ? "Update this time entry." : "Record time spent on this project."}</DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -232,7 +270,7 @@ export default function LogTimeDialog({ open, onOpenChange, projectId }: Props) 
               Cancel
             </Button>
             <Button type="submit" disabled={submitting}>
-              {submitting ? "Saving…" : "Log time"}
+              {submitting ? "Saving…" : isEdit ? "Save changes" : "Log time"}
             </Button>
           </DialogFooter>
         </form>
