@@ -40,7 +40,9 @@ interface Props {
   onSaved: () => void;
 }
 
-function parseRate(s: string): { ok: true; value: number | null } | { ok: false; error: string } {
+type ParseResult = { ok: true; value: number | null; error?: undefined } | { ok: false; value?: undefined; error: string };
+
+function parseRate(s: string): ParseResult {
   const trimmed = s.trim();
   if (trimmed === "") return { ok: true, value: null };
   const n = Number(trimmed);
