@@ -170,6 +170,7 @@ export default function LogTimeDialog({ open, onOpenChange, projectId, entry }: 
       queryClient.invalidateQueries({ queryKey: ["ops", "project-time", projectId] });
       queryClient.invalidateQueries({ queryKey: ["ops", "project-time-rollup", projectId] });
       queryClient.invalidateQueries({ queryKey: ["ops", "customer-time-rollup"] });
+      queryClient.invalidateQueries({ queryKey: ["ops", "project-financials", projectId] });
       onOpenChange(false);
     } catch (err: any) {
       toast.error(err?.message ?? (isEdit ? "Failed to update time" : "Failed to log time"));
