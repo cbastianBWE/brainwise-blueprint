@@ -23,17 +23,35 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+export type ExpenseRecord = {
+  id: string;
+  date: string;
+  expense_category_id: string | null;
+  vendor_name: string | null;
+  amount: number;
+  is_billable: boolean | null;
+  markup_percentage: number | null;
+  is_mileage: boolean | null;
+  miles_driven: number | null;
+  per_mile_rate: number | null;
+  receipt_storage_path: string | null;
+  notes: string | null;
+};
+
 type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   projectId: string;
   customerId?: string | null;
+  expense?: ExpenseRecord | null;
 };
 
 const todayISO = () => new Date().toISOString().slice(0, 10);
 
-export default function LogExpenseDialog({ open, onOpenChange, projectId, customerId }: Props) {
+export default function LogExpenseDialog({ open, onOpenChange, projectId, customerId, expense }: Props) {
   const queryClient = useQueryClient();
+  const isEdit = !!expense;
+
 
   const [orgId, setOrgId] = useState<string | null>(null);
   const [date, setDate] = useState<string>(todayISO());
