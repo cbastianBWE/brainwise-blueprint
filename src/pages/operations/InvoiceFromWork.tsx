@@ -36,6 +36,7 @@ export default function InvoiceFromWork() {
 
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [submitting, setSubmitting] = useState(false);
+  const [detail, setDetail] = useState<"itemized" | "summary">("itemized");
 
   const customersQ = useQuery({
     queryKey: ["ops", "customers", "name-map"],
@@ -160,6 +161,7 @@ export default function InvoiceFromWork() {
       const { data, error } = await supabase.rpc("ops_create_invoice_from_selection", {
         p_customer: customerId,
         p_selection: p_selection as never,
+        p_detail: detail,
       });
       if (error) throw error;
       toast.success("Draft invoice created");
