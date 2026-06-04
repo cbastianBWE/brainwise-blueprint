@@ -318,21 +318,38 @@ export default function OperationsProjectDetail() {
                   <TableHead className="text-right">Rate</TableHead>
                   <TableHead className="text-right">Budget hours</TableHead>
                   <TableHead>Billable</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {tasksQ.data.map((t: any) => (
-                  <TableRow
-                    key={t.id}
-                    onClick={() => { setEditingTask(t as TaskRecord); setTaskOpen(true); }}
-                    className="cursor-pointer"
-                  >
+                  <TableRow key={t.id}>
                     <TableCell className="font-medium">{t.name}</TableCell>
                     <TableCell className="text-right">
                       {t.task_hourly_rate == null ? "—" : formatMoney(t.task_hourly_rate, p?.currency_code)}
                     </TableCell>
                     <TableCell className="text-right">{t.budget_hours ?? "—"}</TableCell>
                     <TableCell>{t.is_billable ? "Yes" : "No"}</TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => { setEditingTask(t as TaskRecord); setTaskOpen(true); }}
+                          aria-label="Edit task"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDeleteTask(t.id)}
+                          aria-label="Delete task"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
