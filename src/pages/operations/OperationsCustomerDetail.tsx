@@ -80,6 +80,21 @@ export default function OperationsCustomerDetail() {
     },
   });
 
+  const creditsQ = useQuery({
+    queryKey: ["ops", "customer-credits", id],
+    enabled: !!id,
+    queryFn: async () => {
+      const { data, error } = await opsSupabase
+        .from("customer_credits")
+        .select("id, source_type, amount, applied_amount, available_balance, created_at")
+        .eq("customer_id", id)
+        .gt("available_balance", 0)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
   const timeTotals = (timeRollupQ.data ?? []).reduce(
     (acc, r: any) => ({
       total: acc.total + (Number(r.total_hours) || 0),
