@@ -502,7 +502,7 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
             <AlertDialogTitle>Submit Assessment?</AlertDialogTitle>
             <AlertDialogDescription>
               {Object.keys(responses).length < items.length
-                ? `You have answered ${Object.keys(responses).length} of ${items.length} items. Unanswered items cannot be changed after submission.`
+                ? `You have answered ${Object.keys(responses).length} of ${items.length} items. You must answer all ${items.length} items before you can submit.`
                 : "All items have been answered. Once submitted, responses cannot be changed."}
             </AlertDialogDescription>
           </AlertDialogHeader>
