@@ -364,6 +364,43 @@ export default function OperationsEstimateDetail() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={projectDialogOpen} onOpenChange={setProjectDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Convert to project</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="proj-name">Project name</Label>
+              <Input id="proj-name" value={projName} onChange={(e) => setProjName(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label>Billing method</Label>
+              <Select value={projBilling} onValueChange={(v) => setProjBilling(v as any)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No hourly billing</SelectItem>
+                  <SelectItem value="project_hours">Project hourly</SelectItem>
+                  <SelectItem value="task_hours">Task hourly</SelectItem>
+                  <SelectItem value="staff_hours">Staff hourly</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-muted-foreground text-xs">
+                With “No hourly billing”, the estimate’s line items are copied to the project as billable charges. Hourly methods create the project with the estimate total as its budget only.
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setProjectDialogOpen(false)} disabled={converting}>Cancel</Button>
+            <Button onClick={handleConvertProject} disabled={converting}>
+              {converting ? "Converting…" : "Create project"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
