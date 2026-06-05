@@ -457,7 +457,7 @@ export default function OperationsReports() {
                   {displayRows.map((r, i) => (
                     <TableRow key={i}>
                       {visibleCols.map((c) => (
-                        <TableCell key={c.key}>{fmtCell(r, c)}</TableCell>
+                        <TableCell key={c.key} className={c.type === "money" || c.type === "number" ? "text-right" : ""}>{fmtCell(r, c)}</TableCell>
                       ))}
                     </TableRow>
                   ))}
