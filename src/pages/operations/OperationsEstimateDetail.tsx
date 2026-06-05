@@ -90,6 +90,39 @@ export default function OperationsEstimateDetail() {
     },
   });
 
+  const orgBrandingQ = useQuery({
+    queryKey: ["ops", "org-branding"],
+    queryFn: async () => {
+      const { data, error } = await opsSupabase.from("organizations" as any).select("*").maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  function handleDownload(template: "standard" | "corporate" | "detailed") {
+    const branding = (orgBrandingQ.data ?? {}) as any;
+    const data = {
+      number: est.estimate_number,
+      issue_date: est.issue_date,
+      expiration_date: est.expiration_date,
+      currency_code: est.currency_code,
+      subtotal_amount: est.subtotal_amount,
+      discount_amount: est.discount_amount,
+      tax_amount: est.tax_amount,
+      adjustment_amount: est.adjustment_amount,
+      total_amount: est.total_amount,
+      notes_to_customer: est.notes_to_customer,
+      terms_and_conditions: est.terms_and_conditions,
+      lines: (linesQ.data ?? []).filter((l: any) => l.line_type !== "header"),
+    };
+    const billTo = {
+      display_name: cust?.display_name,
+      email: cust?.email,
+      billing_address: cust?.billing_address,
+    };
+    downloadDocumentPdf({ kind: "estimate", template, data, branding, billTo }, `Estimate-${est.estimate_number}.pdf`);
+  }
+
   function invalidateEstimate() {
     qc.invalidateQueries({ queryKey: ["ops", "estimate", id] });
     qc.invalidateQueries({ queryKey: ["ops", "estimates", "list"] });
