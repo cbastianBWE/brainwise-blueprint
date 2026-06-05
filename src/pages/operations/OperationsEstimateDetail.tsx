@@ -284,6 +284,18 @@ export default function OperationsEstimateDetail() {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline">
+                    Download PDF <ChevronDown className="ml-1 h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => handleDownload("standard")}>Standard</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleDownload("corporate")}>Corporate</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleDownload("detailed")}>Detailed</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline">
                     Actions <ChevronDown className="ml-1 h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
