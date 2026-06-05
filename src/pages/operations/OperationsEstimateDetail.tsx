@@ -43,6 +43,9 @@ export default function OperationsEstimateDetail() {
   const [acting, setActing] = useState(false);
   const [sending, setSending] = useState(false);
   const [converting, setConverting] = useState(false);
+  const [projectDialogOpen, setProjectDialogOpen] = useState(false);
+  const [projName, setProjName] = useState("");
+  const [projBilling, setProjBilling] = useState<"none" | "project_hours" | "task_hours" | "staff_hours">("none");
 
   const estimateQ = useQuery({
     queryKey: ["ops", "estimate", id],
