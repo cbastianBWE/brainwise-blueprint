@@ -11377,6 +11377,14 @@ export type Database = {
         Args: { p_estimate: string }
         Returns: string
       }
+      ops_convert_estimate_to_project: {
+        Args: { p_billing_method?: string; p_estimate: string; p_name?: string }
+        Returns: string
+      }
+      ops_convert_estimate_to_retainer: {
+        Args: { p_estimate: string }
+        Returns: string
+      }
       ops_create_credit_note: {
         Args: { p_header: Json; p_lines: Json }
         Returns: string
