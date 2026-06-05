@@ -96,6 +96,16 @@ export default function OperationsInvoiceDetail() {
     },
   });
 
+  const paymentsQ = useQuery({
+    queryKey: ["ops", "invoice-payments", id],
+    enabled: !!id,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("ops_list_invoice_payments" as any, { p_invoice: id });
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+  });
+
   // Handle ?paid=1 / ?canceled=1
   useEffect(() => {
     const params = new URLSearchParams(location.search);
