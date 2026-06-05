@@ -107,6 +107,15 @@ export default function OperationsInvoiceDetail() {
     },
   });
 
+  const orgBrandingQ = useQuery({
+    queryKey: ["ops", "org-branding"],
+    queryFn: async () => {
+      const { data, error } = await opsSupabase.from("organizations" as any).select("*").maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+
   // Handle ?paid=1 / ?canceled=1
   useEffect(() => {
     const params = new URLSearchParams(location.search);
