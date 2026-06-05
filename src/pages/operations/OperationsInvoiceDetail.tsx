@@ -35,7 +35,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { StatusBadge, formatMoney, formatDate } from "./_shared";
-import { downloadDocumentPdf } from "@/lib/operations/documentPdf";
+import { downloadDocumentPdf, generateDocumentPdf } from "@/lib/operations/documentPdf";
 import RecordPaymentDialog from "./RecordPaymentDialog";
 
 const PAID_TERMINAL = new Set(["paid", "void", "written_off"]);
@@ -244,13 +244,49 @@ export default function OperationsInvoiceDetail() {
   async function handleSendInvoice() {
     setSending(true);
     try {
-      const { data, error } = await supabase.functions.invoke("ops-invoice-send", { body: { invoice_id: inv.id } });
+      let attachment_path: string | undefined;
+      try {
+        const branding = (orgBrandingQ.data ?? {}) as any;
+        const docData = {
+          number: inv.invoice_number,
+          issue_date: inv.issue_date,
+          due_date: inv.due_date,
+          currency_code: inv.currency_code,
+          subtotal_amount: inv.subtotal_amount,
+          discount_amount: inv.discount_amount,
+          tax_amount: inv.tax_amount,
+          adjustment_amount: inv.adjustment_amount,
+          total_amount: inv.total_amount,
+          amount_paid: inv.amount_paid,
+          balance_due: inv.balance_due,
+          notes_to_customer: inv.notes_to_customer,
+          terms_and_conditions: inv.terms_and_conditions,
+          lines: (linesQ.data ?? []).filter((l: any) => l.line_type !== "header"),
+        };
+        const billTo = {
+          display_name: cust?.display_name,
+          email: cust?.email,
+          billing_address: cust?.billing_address,
+        };
+        const blob = await generateDocumentPdf({ kind: "invoice", template: "standard", data: docData, branding, billTo });
+        const path = `${inv.org_id}/Invoice-${inv.id}.pdf`;
+        const up = await opsSupabase.storage
+          .from("operations-documents")
+          .upload(path, blob, { upsert: true, contentType: "application/pdf" });
+        if (!up.error) attachment_path = path;
+      } catch {
+        // If PDF generation/upload fails, send the email without an attachment.
+      }
+
+      const { data, error } = await supabase.functions.invoke("ops-invoice-send", {
+        body: { invoice_id: inv.id, attachment_path },
+      });
       if (error || (data as any)?.error) {
         const ctxMsg = error ? await readFunctionsErrorMessage(error) : null;
         toast.error(ctxMsg ?? (data as any)?.error ?? error?.message ?? "Email failed");
         return;
       }
-      toast.success("Invoice emailed to the customer.");
+      toast.success((data as any)?.attached ? "Invoice emailed with the PDF attached." : "Invoice emailed to the customer.");
       invalidateInvoice();
     } finally {
       setSending(false);
