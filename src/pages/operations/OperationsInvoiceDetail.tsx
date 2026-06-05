@@ -153,8 +153,38 @@ export default function OperationsInvoiceDetail() {
   function invalidateInvoice() {
     qc.invalidateQueries({ queryKey: ["ops", "invoice", inv.id] });
     qc.invalidateQueries({ queryKey: ["ops", "invoices", "list"] });
+    qc.invalidateQueries({ queryKey: ["ops", "invoice-payments", inv.id] });
     if (inv?.customer_id) {
       qc.invalidateQueries({ queryKey: ["ops", "customer-invoices", inv.customer_id] });
+    }
+  }
+
+  function openRefund(p: any) {
+    setRefundPayment(p);
+    setRefundAmount(String(p.refundable_amount ?? ""));
+  }
+
+  async function handleRefund() {
+    if (!refundPayment) return;
+    const amt = Number(refundAmount);
+    const max = Number(refundPayment.refundable_amount);
+    if (!(amt > 0)) { toast.error("Enter an amount greater than 0."); return; }
+    if (amt > max) { toast.error(`Amount exceeds the refundable balance (${max}).`); return; }
+    setRefunding(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("ops-issue-refund", {
+        body: { payment_id: refundPayment.payment_id, amount: amt },
+      });
+      if (error || (data as any)?.error) {
+        const ctxMsg = error ? await readFunctionsErrorMessage(error) : null;
+        toast.error(ctxMsg ?? (data as any)?.error ?? error?.message ?? "Refund failed");
+        return;
+      }
+      toast.success("Refund issued. The invoice updates once Stripe confirms (a few seconds).");
+      setRefundPayment(null);
+      invalidateInvoice();
+    } finally {
+      setRefunding(false);
     }
   }
 
