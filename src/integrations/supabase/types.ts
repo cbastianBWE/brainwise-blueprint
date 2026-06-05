@@ -11518,6 +11518,7 @@ export type Database = {
         Args: { p_header: Json; p_id: string; p_lines: Json }
         Returns: string
       }
+      ops_update_org_branding: { Args: { p_patch: Json }; Returns: undefined }
       ops_upsert_stripe_customer: {
         Args: {
           p_customer: string

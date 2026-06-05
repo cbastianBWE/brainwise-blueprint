@@ -35,6 +35,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { StatusBadge, formatMoney, formatDate } from "./_shared";
+import { downloadDocumentPdf } from "@/lib/operations/documentPdf";
 import RecordPaymentDialog from "./RecordPaymentDialog";
 
 const PAID_TERMINAL = new Set(["paid", "void", "written_off"]);
@@ -106,6 +107,15 @@ export default function OperationsInvoiceDetail() {
     },
   });
 
+  const orgBrandingQ = useQuery({
+    queryKey: ["ops", "org-branding"],
+    queryFn: async () => {
+      const { data, error } = await opsSupabase.from("organizations" as any).select("*").maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+
   // Handle ?paid=1 / ?canceled=1
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -149,6 +159,35 @@ export default function OperationsInvoiceDetail() {
       setPaying(false);
     }
   }
+
+  function handleDownload(kind: "invoice" | "receipt", template: "standard" | "corporate" | "detailed") {
+    const branding = (orgBrandingQ.data ?? {}) as any;
+    const data = {
+      number: inv.invoice_number,
+      issue_date: inv.issue_date,
+      due_date: inv.due_date,
+      currency_code: inv.currency_code,
+      subtotal_amount: inv.subtotal_amount,
+      discount_amount: inv.discount_amount,
+      tax_amount: inv.tax_amount,
+      adjustment_amount: inv.adjustment_amount,
+      total_amount: inv.total_amount,
+      amount_paid: inv.amount_paid,
+      balance_due: inv.balance_due,
+      notes_to_customer: inv.notes_to_customer,
+      terms_and_conditions: inv.terms_and_conditions,
+      lines: (linesQ.data ?? []).filter((l: any) => l.line_type !== "header"),
+    };
+    const billTo = {
+      display_name: cust?.display_name,
+      email: cust?.email,
+      billing_address: cust?.billing_address,
+    };
+    const label = kind === "receipt" ? "Receipt" : "Invoice";
+    downloadDocumentPdf({ kind, template, data, branding, billTo }, `${label}-${inv.invoice_number}.pdf`);
+  }
+
+
 
   function invalidateInvoice() {
     qc.invalidateQueries({ queryKey: ["ops", "invoice", inv.id] });
@@ -311,6 +350,22 @@ export default function OperationsInvoiceDetail() {
                   {paying ? "Starting checkout…" : "Pay now"}
                 </Button>
               )}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline">
+                    Download PDF <ChevronDown className="ml-1 h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => handleDownload("invoice", "standard")}>Invoice · Standard</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleDownload("invoice", "corporate")}>Invoice · Corporate</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleDownload("invoice", "detailed")}>Invoice · Detailed</DropdownMenuItem>
+                  {amountPaid > 0 && <DropdownMenuSeparator />}
+                  {amountPaid > 0 && (
+                    <DropdownMenuItem onClick={() => handleDownload("receipt", "standard")}>Receipt · Standard</DropdownMenuItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline">

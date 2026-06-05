@@ -30,6 +30,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { StatusBadge, formatMoney, formatDate } from "./_shared";
+import { downloadDocumentPdf } from "@/lib/operations/documentPdf";
 
 type ConfirmAction = "mark_accepted" | "mark_declined" | "mark_expired";
 
@@ -88,6 +89,39 @@ export default function OperationsEstimateDetail() {
       return data ?? [];
     },
   });
+
+  const orgBrandingQ = useQuery({
+    queryKey: ["ops", "org-branding"],
+    queryFn: async () => {
+      const { data, error } = await opsSupabase.from("organizations" as any).select("*").maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  function handleDownload(template: "standard" | "corporate" | "detailed") {
+    const branding = (orgBrandingQ.data ?? {}) as any;
+    const data = {
+      number: est.estimate_number,
+      issue_date: est.issue_date,
+      expiration_date: est.expiration_date,
+      currency_code: est.currency_code,
+      subtotal_amount: est.subtotal_amount,
+      discount_amount: est.discount_amount,
+      tax_amount: est.tax_amount,
+      adjustment_amount: est.adjustment_amount,
+      total_amount: est.total_amount,
+      notes_to_customer: est.notes_to_customer,
+      terms_and_conditions: est.terms_and_conditions,
+      lines: (linesQ.data ?? []).filter((l: any) => l.line_type !== "header"),
+    };
+    const billTo = {
+      display_name: cust?.display_name,
+      email: cust?.email,
+      billing_address: cust?.billing_address,
+    };
+    downloadDocumentPdf({ kind: "estimate", template, data, branding, billTo }, `Estimate-${est.estimate_number}.pdf`);
+  }
 
   function invalidateEstimate() {
     qc.invalidateQueries({ queryKey: ["ops", "estimate", id] });
@@ -247,6 +281,18 @@ export default function OperationsEstimateDetail() {
                   View {convertedInvoiceId ? "invoice" : convertedProjectId ? "project" : "retainer"}
                 </Button>
               )}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline">
+                    Download PDF <ChevronDown className="ml-1 h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => handleDownload("standard")}>Standard</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleDownload("corporate")}>Corporate</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleDownload("detailed")}>Detailed</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline">
