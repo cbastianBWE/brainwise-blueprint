@@ -222,8 +222,29 @@ export default function OperationsEstimateDetail() {
                 </Button>
               )}
               {canConvert && (
-                <Button onClick={handleConvert} disabled={converting}>
-                  {converting ? "Converting…" : "Convert to invoice"}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button disabled={converting}>
+                      {converting ? "Converting…" : "Convert"} <ChevronDown className="ml-1 h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={handleConvert}>To invoice</DropdownMenuItem>
+                    <DropdownMenuItem onClick={openProjectConvert}>To project</DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleConvertRetainer}>To retainer</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+              {alreadyConverted && (
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    if (convertedInvoiceId) navigate(`/operations/invoices/${convertedInvoiceId}`);
+                    else if (convertedProjectId) navigate(`/operations/projects/${convertedProjectId}`);
+                    else if (convertedRetainerId) navigate(`/operations/retainers/${convertedRetainerId}`);
+                  }}
+                >
+                  View {convertedInvoiceId ? "invoice" : convertedProjectId ? "project" : "retainer"}
                 </Button>
               )}
               <DropdownMenu>
