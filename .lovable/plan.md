@@ -1,28 +1,32 @@
-## Reverse-scored attention callout in AssessmentFlow
+# Plan: Extend estimate conversion options
 
-Single additive edit to `src/components/assessment/AssessmentFlow.tsx`.
+Scope: `src/pages/operations/OperationsEstimateDetail.tsx` only. Additive — no other files touched. Follows existing patterns (`supabase.rpc("..." as any, ...)`, `toast`, `invalidateEstimate()`, `navigate`).
 
-### Changes
+## Changes
 
-1. **Line 20** — add `AlertTriangle` to the lucide-react import:
-   ```ts
-   import { X, ChevronLeft, ChevronRight, Check, AlertTriangle } from "lucide-react";
-   ```
+1. **Imports** — add if missing: `Dialog`/`DialogContent`/`DialogHeader`/`DialogTitle`/`DialogFooter`, `Input`, `Label`, `Select`/`SelectContent`/`SelectItem`/`SelectTrigger`/`SelectValue`.
 
-2. **Inside line 423's `<div className="w-full max-w-2xl">`**, immediately before the `currentItem.scale_type === ...` ternary (line 424), insert the callout block exactly as specified:
-   ```tsx
-   {currentItem.reverse_scored && (
-     <div className="mb-6 flex gap-3 rounded-lg border border-[#FFB703] bg-[#FFB703]/10 px-4 py-3">
-       <AlertTriangle className="h-5 w-5 shrink-0 text-[#7a5800] mt-0.5" />
-       <div className="text-sm text-[#7a5800]">
-         <p className="font-semibold">Read this one carefully.</p>
-         <p className="mt-0.5">
-           The scale labels on this question may run in the opposite direction from the
-           previous ones. Check both endpoint labels before you respond.
-         </p>
-       </div>
-     </div>
-   )}
-   ```
+2. **State** (near existing `useState` calls):
+   - `projectDialogOpen`, `projName`, `projBilling` (`"none" | "project_hours" | "task_hours" | "staff_hours"`).
 
-No other behavior, scoring, saving, or navigation logic is touched.
+3. **Derived values** after `const status = ...`:
+   - `convertedInvoiceId`, `convertedProjectId`, `convertedRetainerId` from `est.converted_*_id`.
+   - `alreadyConverted` boolean.
+   - Update `canConvert` to require `!alreadyConverted` (instead of `status !== "invoiced"`).
+
+4. **Handlers** next to `handleConvert`:
+   - `handleConvertRetainer()` → calls `ops_convert_estimate_to_retainer`, navigates to `/operations/retainers/{id}`.
+   - `openProjectConvert()` → seeds dialog defaults (name `Project - {estimate_number}`, billing `none`) and opens it.
+   - `handleConvertProject()` → calls `ops_convert_estimate_to_project` with `p_name` and `p_billing_method`, navigates to `/operations/projects/{id}`.
+
+5. **Header action area** — replace the single "Convert to invoice" button with a `DropdownMenu` ("Convert" trigger) containing "To invoice" / "To project" / "To retainer". When `alreadyConverted`, render a "View invoice/project/retainer" button that navigates to whichever converted id exists.
+
+6. **Project conversion dialog** — added just before the component's final closing tag (alongside the existing AlertDialog). Contains:
+   - Project name `Input`.
+   - Billing method `Select` (No hourly billing / Project hourly / Task hourly / Staff hourly).
+   - Helper text explaining that "No hourly billing" copies line items as billable charges, while hourly methods use the estimate total as budget only.
+   - Footer: Cancel + Create project (disabled while `converting`).
+
+## Notes
+- No changes to scoring, saving, queries, RPCs, or other files.
+- RPC names (`ops_convert_estimate_to_project`, `ops_convert_estimate_to_retainer`) and the `converted_*_id` columns are referenced via `as any`, matching the existing style for ops RPCs in this file.
