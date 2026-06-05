@@ -240,6 +240,54 @@ function downloadCsv(name: string, cols: Col[], rows: any[]) {
   URL.revokeObjectURL(url);
 }
 
+async function downloadPdf(name: string, title: string, cols: Col[], rows: any[]) {
+  const { jsPDF } = await import("jspdf");
+  const doc = new jsPDF({ orientation: "landscape", unit: "pt", format: "letter" });
+  const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+  const margin = 36;
+  const usableW = pageW - margin * 2;
+  const colW = usableW / cols.length;
+  const rowH = 16;
+  const fit = (s: string) => {
+    const max = Math.max(3, Math.floor((colW - 6) / 4.4));
+    return s.length > max ? s.slice(0, max - 1) + "…" : s;
+  };
+  let y = margin;
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(14);
+  doc.text(title, margin, y);
+  y += 20;
+  doc.setFontSize(8);
+  const drawHeader = () => {
+    doc.setFont("helvetica", "bold");
+    cols.forEach((c, i) => {
+      const x = margin + i * colW;
+      const right = c.type === "money" || c.type === "number";
+      doc.text(fit(String(c.label)), right ? x + colW - 4 : x + 2, y, { align: right ? "right" : "left" });
+    });
+    y += 4;
+    doc.line(margin, y, margin + usableW, y);
+    y += rowH - 4;
+    doc.setFont("helvetica", "normal");
+  };
+  drawHeader();
+  for (const r of rows) {
+    if (y > pageH - margin) {
+      doc.addPage();
+      y = margin;
+      drawHeader();
+    }
+    cols.forEach((c, i) => {
+      const x = margin + i * colW;
+      const right = c.type === "money" || c.type === "number";
+      doc.text(fit(fmtCell(r, c)), right ? x + colW - 4 : x + 2, y, { align: right ? "right" : "left" });
+    });
+    y += rowH;
+  }
+  doc.save(`${name}.pdf`);
+}
+
 function aggregate(rows: any[], report: ReportDef): any[] {
   const gb = report.groupBy!;
   const exclude = new Set(report.statusExclude ?? []);
