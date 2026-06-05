@@ -30,6 +30,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { StatusBadge, formatMoney, formatDate } from "./_shared";
+import { downloadDocumentPdf } from "@/lib/operations/documentPdf";
 
 type ConfirmAction = "mark_accepted" | "mark_declined" | "mark_expired";
 
