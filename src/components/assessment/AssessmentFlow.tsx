@@ -520,7 +520,7 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
                 Go to First Unanswered
               </Button>
             )}
-            <AlertDialogAction onClick={handleSubmit} disabled={submitting}>
+            <AlertDialogAction onClick={handleSubmit} disabled={submitting || !allAnswered}>
               {submitting ? 'Submitting...' : 'Submit'}
             </AlertDialogAction>
           </AlertDialogFooter>
