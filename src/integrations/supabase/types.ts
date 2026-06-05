@@ -11434,6 +11434,7 @@ export type Database = {
         Args: { p_token: string }
         Returns: Json
       }
+      ops_get_refundable_payment: { Args: { p_payment: string }; Returns: Json }
       ops_handle_stripe_checkout_payment: {
         Args: {
           p_amount: number
@@ -11460,6 +11461,7 @@ export type Database = {
         }
         Returns: string
       }
+      ops_list_invoice_payments: { Args: { p_invoice: string }; Returns: Json }
       ops_mark_invoice_sent: {
         Args: { p_invoice: string; p_org: string }
         Returns: undefined
