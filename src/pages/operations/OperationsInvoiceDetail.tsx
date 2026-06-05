@@ -353,6 +353,22 @@ export default function OperationsInvoiceDetail() {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline">
+                    Download PDF <ChevronDown className="ml-1 h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => handleDownload("invoice", "standard")}>Invoice · Standard</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleDownload("invoice", "corporate")}>Invoice · Corporate</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleDownload("invoice", "detailed")}>Invoice · Detailed</DropdownMenuItem>
+                  {amountPaid > 0 && <DropdownMenuSeparator />}
+                  {amountPaid > 0 && (
+                    <DropdownMenuItem onClick={() => handleDownload("receipt", "standard")}>Receipt · Standard</DropdownMenuItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline">
                     Actions <ChevronDown className="ml-1 h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
