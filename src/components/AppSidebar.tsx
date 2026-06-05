@@ -111,6 +111,7 @@ const superAdminNav: NavItem[] = [
 { title: "Recurring expenses", url: "/operations/recurring-expenses", icon: Repeat },
 { title: "Recurring invoices", url: "/operations/recurring-invoices", icon: Repeat },
 { title: "Reports", url: "/operations/reports", icon: BarChart3 },
+{ title: "Settings", url: "/operations/settings", icon: Settings },
 ];
 
 function getNavItems(profile: { account_type?: string | null; is_practitioner_coach?: boolean } | null | undefined): NavItem[] {
