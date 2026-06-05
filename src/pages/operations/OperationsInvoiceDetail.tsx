@@ -418,6 +418,46 @@ export default function OperationsInvoiceDetail() {
         </CardContent>
       </Card>
 
+      <Card>
+        <CardHeader><CardTitle>Payments</CardTitle></CardHeader>
+        <CardContent>
+          {paymentsQ.isLoading ? (
+            <p className="text-muted-foreground text-sm">Loading…</p>
+          ) : !paymentsQ.data || paymentsQ.data.length === 0 ? (
+            <p className="text-muted-foreground text-sm">No payments recorded.</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Method</TableHead>
+                  <TableHead className="text-right">Amount</TableHead>
+                  <TableHead className="text-right">Refunded</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {paymentsQ.data.map((p: any) => (
+                  <TableRow key={p.payment_id}>
+                    <TableCell>{formatDate(p.payment_date)}</TableCell>
+                    <TableCell className="capitalize">{String(p.payment_mode).replace(/_/g, " ")}</TableCell>
+                    <TableCell className="text-right">{formatMoney(p.allocated_amount, currency)}</TableCell>
+                    <TableCell className="text-right">{Number(p.refunded_amount) > 0 ? formatMoney(p.refunded_amount, currency) : "—"}</TableCell>
+                    <TableCell className="text-right">
+                      {p.is_stripe && Number(p.refundable_amount) > 0 ? (
+                        <Button variant="outline" size="sm" onClick={() => openRefund(p)}>Refund</Button>
+                      ) : null}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+
+
+
       <RecordPaymentDialog
         open={recordOpen}
         onOpenChange={setRecordOpen}
