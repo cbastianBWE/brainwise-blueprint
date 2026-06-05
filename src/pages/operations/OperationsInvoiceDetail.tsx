@@ -35,7 +35,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { StatusBadge, formatMoney, formatDate } from "./_shared";
-import { downloadDocumentPdf } from "@/lib/operations/documentPdf";
+import { downloadDocumentPdf, generateDocumentPdf } from "@/lib/operations/documentPdf";
 import RecordPaymentDialog from "./RecordPaymentDialog";
 
 const PAID_TERMINAL = new Set(["paid", "void", "written_off"]);
