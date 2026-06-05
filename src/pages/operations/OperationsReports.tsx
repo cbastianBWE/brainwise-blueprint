@@ -418,6 +418,17 @@ export default function OperationsReports() {
                 <Download className="h-4 w-4 mr-2" />
                 CSV
               </Button>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  const range = report.dateField && (from || to) ? ` (${from || "…"} to ${to || "…"})` : "";
+                  downloadPdf(report.key, report.label + range, visibleCols, displayRows);
+                }}
+                disabled={displayRows.length === 0}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                PDF
+              </Button>
             </div>
           </div>
         </CardContent>
