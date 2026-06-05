@@ -187,8 +187,12 @@ export default function OperationsEstimateDetail() {
   }
 
   const status = (est.status ?? "").toLowerCase();
+  const convertedInvoiceId = (est.converted_invoice_id as string | null) ?? null;
+  const convertedProjectId = (est.converted_project_id as string | null) ?? null;
+  const convertedRetainerId = (est.converted_retainer_id as string | null) ?? null;
+  const alreadyConverted = !!(convertedInvoiceId || convertedProjectId || convertedRetainerId);
   const canEdit = status === "draft" || status === "sent";
-  const canConvert = (status === "accepted" || status === "sent" || status === "viewed") && status !== "invoiced";
+  const canConvert = (status === "accepted" || status === "sent" || status === "viewed") && !alreadyConverted;
   const canSend = !SENDABLE_BLOCKED.has(status);
   const canMarkSent = status === "draft";
   const canDecide = status === "sent" || status === "viewed";
