@@ -389,6 +389,7 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
   const isLast = currentIndex === items.length - 1;
   const progress = ((currentIndex + 1) / items.length) * 100;
   const currentResponse = responses[currentItem?.item_id];
+  const allAnswered = items.length > 0 && items.every((it) => responses[it.item_id] != null);
 
   return (
     <div className="fixed inset-0 bg-background flex flex-col z-50">
@@ -501,7 +502,7 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
             <AlertDialogTitle>Submit Assessment?</AlertDialogTitle>
             <AlertDialogDescription>
               {Object.keys(responses).length < items.length
-                ? `You have answered ${Object.keys(responses).length} of ${items.length} items. Unanswered items cannot be changed after submission.`
+                ? `You have answered ${Object.keys(responses).length} of ${items.length} items. You must answer all ${items.length} items before you can submit.`
                 : "All items have been answered. Once submitted, responses cannot be changed."}
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -519,7 +520,7 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
                 Go to First Unanswered
               </Button>
             )}
-            <AlertDialogAction onClick={handleSubmit} disabled={submitting}>
+            <AlertDialogAction onClick={handleSubmit} disabled={submitting || !allAnswered}>
               {submitting ? 'Submitting...' : 'Submit'}
             </AlertDialogAction>
           </AlertDialogFooter>
