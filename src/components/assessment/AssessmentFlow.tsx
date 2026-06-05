@@ -389,6 +389,7 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
   const isLast = currentIndex === items.length - 1;
   const progress = ((currentIndex + 1) / items.length) * 100;
   const currentResponse = responses[currentItem?.item_id];
+  const allAnswered = items.length > 0 && items.every((it) => responses[it.item_id] != null);
 
   return (
     <div className="fixed inset-0 bg-background flex flex-col z-50">
