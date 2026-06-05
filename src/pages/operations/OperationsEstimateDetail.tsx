@@ -25,6 +25,10 @@ import {
   AlertDialogAction,
   AlertDialogCancel,
 } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { StatusBadge, formatMoney, formatDate } from "./_shared";
 
 type ConfirmAction = "mark_accepted" | "mark_declined" | "mark_expired";
@@ -39,6 +43,9 @@ export default function OperationsEstimateDetail() {
   const [acting, setActing] = useState(false);
   const [sending, setSending] = useState(false);
   const [converting, setConverting] = useState(false);
+  const [projectDialogOpen, setProjectDialogOpen] = useState(false);
+  const [projName, setProjName] = useState("");
+  const [projBilling, setProjBilling] = useState<"none" | "project_hours" | "task_hours" | "staff_hours">("none");
 
   const estimateQ = useQuery({
     queryKey: ["ops", "estimate", id],
@@ -123,6 +130,39 @@ export default function OperationsEstimateDetail() {
     }
   }
 
+  async function handleConvertRetainer() {
+    setConverting(true);
+    try {
+      const { data, error } = await supabase.rpc("ops_convert_estimate_to_retainer" as any, { p_estimate: id });
+      if (error) { toast.error(error.message ?? "Conversion failed"); return; }
+      toast.success("Estimate converted to retainer.");
+      invalidateEstimate();
+      navigate(`/operations/retainers/${data as unknown as string}`);
+    } finally { setConverting(false); }
+  }
+
+  function openProjectConvert() {
+    setProjName(`Project - ${est.estimate_number}`);
+    setProjBilling("none");
+    setProjectDialogOpen(true);
+  }
+
+  async function handleConvertProject() {
+    setConverting(true);
+    try {
+      const { data, error } = await supabase.rpc("ops_convert_estimate_to_project" as any, {
+        p_estimate: id,
+        p_name: projName.trim() || null,
+        p_billing_method: projBilling,
+      });
+      if (error) { toast.error(error.message ?? "Conversion failed"); return; }
+      toast.success("Estimate converted to project.");
+      setProjectDialogOpen(false);
+      invalidateEstimate();
+      navigate(`/operations/projects/${data as unknown as string}`);
+    } finally { setConverting(false); }
+  }
+
   async function runConfirmed() {
     if (!confirm) return;
     setActing(true);
@@ -147,8 +187,12 @@ export default function OperationsEstimateDetail() {
   }
 
   const status = (est.status ?? "").toLowerCase();
+  const convertedInvoiceId = (est.converted_invoice_id as string | null) ?? null;
+  const convertedProjectId = (est.converted_project_id as string | null) ?? null;
+  const convertedRetainerId = (est.converted_retainer_id as string | null) ?? null;
+  const alreadyConverted = !!(convertedInvoiceId || convertedProjectId || convertedRetainerId);
   const canEdit = status === "draft" || status === "sent";
-  const canConvert = (status === "accepted" || status === "sent" || status === "viewed") && status !== "invoiced";
+  const canConvert = (status === "accepted" || status === "sent" || status === "viewed") && !alreadyConverted;
   const canSend = !SENDABLE_BLOCKED.has(status);
   const canMarkSent = status === "draft";
   const canDecide = status === "sent" || status === "viewed";
@@ -178,8 +222,29 @@ export default function OperationsEstimateDetail() {
                 </Button>
               )}
               {canConvert && (
-                <Button onClick={handleConvert} disabled={converting}>
-                  {converting ? "Converting…" : "Convert to invoice"}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button disabled={converting}>
+                      {converting ? "Converting…" : "Convert"} <ChevronDown className="ml-1 h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={handleConvert}>To invoice</DropdownMenuItem>
+                    <DropdownMenuItem onClick={openProjectConvert}>To project</DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleConvertRetainer}>To retainer</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+              {alreadyConverted && (
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    if (convertedInvoiceId) navigate(`/operations/invoices/${convertedInvoiceId}`);
+                    else if (convertedProjectId) navigate(`/operations/projects/${convertedProjectId}`);
+                    else if (convertedRetainerId) navigate(`/operations/retainers/${convertedRetainerId}`);
+                  }}
+                >
+                  View {convertedInvoiceId ? "invoice" : convertedProjectId ? "project" : "retainer"}
                 </Button>
               )}
               <DropdownMenu>
@@ -299,6 +364,43 @@ export default function OperationsEstimateDetail() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={projectDialogOpen} onOpenChange={setProjectDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Convert to project</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="proj-name">Project name</Label>
+              <Input id="proj-name" value={projName} onChange={(e) => setProjName(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label>Billing method</Label>
+              <Select value={projBilling} onValueChange={(v) => setProjBilling(v as any)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No hourly billing</SelectItem>
+                  <SelectItem value="project_hours">Project hourly</SelectItem>
+                  <SelectItem value="task_hours">Task hourly</SelectItem>
+                  <SelectItem value="staff_hours">Staff hourly</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-muted-foreground text-xs">
+                With “No hourly billing”, the estimate’s line items are copied to the project as billable charges. Hourly methods create the project with the estimate total as its budget only.
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setProjectDialogOpen(false)} disabled={converting}>Cancel</Button>
+            <Button onClick={handleConvertProject} disabled={converting}>
+              {converting ? "Converting…" : "Create project"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
