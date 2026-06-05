@@ -115,6 +115,7 @@ export default function OperationsInvoiceDetail() {
     if (paid === "1") {
       toast.success("Payment received. Updating invoice…");
       qc.invalidateQueries({ queryKey: ["ops", "invoice", id] });
+      qc.invalidateQueries({ queryKey: ["ops", "invoice-payments", id] });
     } else if (canceled === "1") {
       toast.info("Payment canceled.");
     }
