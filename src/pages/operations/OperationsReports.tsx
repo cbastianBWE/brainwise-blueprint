@@ -449,7 +449,7 @@ export default function OperationsReports() {
                 <TableHeader>
                   <TableRow>
                     {visibleCols.map((c) => (
-                      <TableHead key={c.key}>{c.label}</TableHead>
+                      <TableHead key={c.key} className={c.type === "money" || c.type === "number" ? "text-right" : ""}>{c.label}</TableHead>
                     ))}
                   </TableRow>
                 </TableHeader>
