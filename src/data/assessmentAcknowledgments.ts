@@ -24,6 +24,10 @@ A few things to know before you start:
 
 **There are no right or wrong answers.** The PTP describes patterns, not performance. Higher or lower scores are not better or worse — they're different ways of engaging with the world. Try to describe yourself as you actually are, not as you wish you were or think you should be.
 
+**Some questions are worded in different directions, and here is how we handle them.** A few items are phrased so the top of the scale means the opposite of what nearby questions mean. When we score your results, we automatically flip those items so every answer points in the same direction, which keeps your scores accurate and comparable. You do not need to account for any of this yourself. Always answer based on the two labels shown on each question, exactly as you read them, and our scoring takes care of the rest.
+
+
+
 **Go with your first instinct.** Read each statement, then choose the response that fits closest to your typical reaction. Don't overthink — your first instinct is usually the most accurate.
 
 **Find an uninterrupted block of time.** The PTP takes about 20–25 minutes to complete. You'll get the most accurate results if you take it in one sitting, in a quiet place, when you're not rushed or significantly stressed. Your responses are saved as you go, so if you do need to step away, you can resume where you left off.
