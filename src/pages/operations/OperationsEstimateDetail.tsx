@@ -130,6 +130,39 @@ export default function OperationsEstimateDetail() {
     }
   }
 
+  async function handleConvertRetainer() {
+    setConverting(true);
+    try {
+      const { data, error } = await supabase.rpc("ops_convert_estimate_to_retainer" as any, { p_estimate: id });
+      if (error) { toast.error(error.message ?? "Conversion failed"); return; }
+      toast.success("Estimate converted to retainer.");
+      invalidateEstimate();
+      navigate(`/operations/retainers/${data as unknown as string}`);
+    } finally { setConverting(false); }
+  }
+
+  function openProjectConvert() {
+    setProjName(`Project - ${est.estimate_number}`);
+    setProjBilling("none");
+    setProjectDialogOpen(true);
+  }
+
+  async function handleConvertProject() {
+    setConverting(true);
+    try {
+      const { data, error } = await supabase.rpc("ops_convert_estimate_to_project" as any, {
+        p_estimate: id,
+        p_name: projName.trim() || null,
+        p_billing_method: projBilling,
+      });
+      if (error) { toast.error(error.message ?? "Conversion failed"); return; }
+      toast.success("Estimate converted to project.");
+      setProjectDialogOpen(false);
+      invalidateEstimate();
+      navigate(`/operations/projects/${data as unknown as string}`);
+    } finally { setConverting(false); }
+  }
+
   async function runConfirmed() {
     if (!confirm) return;
     setActing(true);
