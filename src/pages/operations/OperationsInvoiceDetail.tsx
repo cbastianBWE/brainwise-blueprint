@@ -160,6 +160,32 @@ export default function OperationsInvoiceDetail() {
     }
   }
 
+  function handleDownload(kind: "invoice" | "receipt", template: "standard" | "corporate" | "detailed") {
+    const branding = (orgBrandingQ.data ?? {}) as any;
+    const data = {
+      number: inv.invoice_number,
+      issue_date: inv.issue_date,
+      due_date: inv.due_date,
+      currency_code: inv.currency_code,
+      subtotal_amount: inv.subtotal_amount,
+      discount_amount: inv.discount_amount,
+      tax_amount: inv.tax_amount,
+      adjustment_amount: inv.adjustment_amount,
+      total_amount: inv.total_amount,
+      amount_paid: inv.amount_paid,
+      balance_due: inv.balance_due,
+      notes_to_customer: inv.notes_to_customer,
+      terms_and_conditions: inv.terms_and_conditions,
+      lines: (linesQ.data ?? []).filter((l: any) => l.line_type !== "header"),
+    };
+    const billTo = {
+      display_name: cust?.display_name,
+      email: cust?.email,
+      billing_address: cust?.billing_address,
+    };
+    const label = kind === "receipt" ? "Receipt" : "Invoice";
+    downloadDocumentPdf({ kind, template, data, branding, billTo }, `${label}-${inv.invoice_number}.pdf`);
+
   function invalidateInvoice() {
     qc.invalidateQueries({ queryKey: ["ops", "invoice", inv.id] });
     qc.invalidateQueries({ queryKey: ["ops", "invoices", "list"] });
