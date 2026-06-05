@@ -1,24 +1,28 @@
-## Add hard completeness gate to AssessmentFlow submit
+## Reverse-scored attention callout in AssessmentFlow
 
-Single-file, additive change to `src/components/assessment/AssessmentFlow.tsx`. No changes to loading, saving, scoring, or navigation.
+Single additive edit to `src/components/assessment/AssessmentFlow.tsx`.
 
 ### Changes
 
-1. **Derive `allAnswered`** immediately after the existing `const currentResponse = responses[currentItem?.item_id];` line:
-
+1. **Line 20** — add `AlertTriangle` to the lucide-react import:
    ```ts
-   const allAnswered = items.length > 0 && items.every((it) => responses[it.item_id] != null);
+   import { X, ChevronLeft, ChevronRight, Check, AlertTriangle } from "lucide-react";
    ```
 
-   Uses `!= null` so a `0` answer counts as answered.
+2. **Inside line 423's `<div className="w-full max-w-2xl">`**, immediately before the `currentItem.scale_type === ...` ternary (line 424), insert the callout block exactly as specified:
+   ```tsx
+   {currentItem.reverse_scored && (
+     <div className="mb-6 flex gap-3 rounded-lg border border-[#FFB703] bg-[#FFB703]/10 px-4 py-3">
+       <AlertTriangle className="h-5 w-5 shrink-0 text-[#7a5800] mt-0.5" />
+       <div className="text-sm text-[#7a5800]">
+         <p className="font-semibold">Read this one carefully.</p>
+         <p className="mt-0.5">
+           The scale labels on this question may run in the opposite direction from the
+           previous ones. Check both endpoint labels before you respond.
+         </p>
+       </div>
+     </div>
+   )}
+   ```
 
-2. **Gate the Submit button** in the AlertDialog — change `disabled={submitting}` to `disabled={submitting || !allAnswered}`. Label text unchanged.
-
-3. **Update the incomplete-case dialog description** to state the requirement:
-
-   - From: `You have answered X of Y items. Unanswered items cannot be changed after submission.`
-   - To:   `You have answered X of Y items. You must answer all Y items before you can submit.`
-
-4. **Leave "Go to First Unanswered" intact** so users can jump to gaps.
-
-No other behavior is touched.
+No other behavior, scoring, saving, or navigation logic is touched.
