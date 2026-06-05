@@ -185,6 +185,9 @@ export default function OperationsInvoiceDetail() {
     };
     const label = kind === "receipt" ? "Receipt" : "Invoice";
     downloadDocumentPdf({ kind, template, data, branding, billTo }, `${label}-${inv.invoice_number}.pdf`);
+  }
+
+
 
   function invalidateInvoice() {
     qc.invalidateQueries({ queryKey: ["ops", "invoice", inv.id] });
