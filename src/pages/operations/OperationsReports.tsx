@@ -294,6 +294,7 @@ export default function OperationsReports() {
   });
 
   const rows = rowsQ.data ?? [];
+  const displayRows = useMemo(() => (report.groupBy ? aggregate(rows, report) : rows), [rows, report]);
 
   function toggleCol(key: string) {
     setHidden((prev) => {
@@ -363,8 +364,8 @@ export default function OperationsReports() {
               </DropdownMenu>
               <Button
                 variant="outline"
-                onClick={() => downloadCsv(report.key, visibleCols, rows)}
-                disabled={rows.length === 0}
+                onClick={() => downloadCsv(report.key, visibleCols, displayRows)}
+                disabled={displayRows.length === 0}
               >
                 <Download className="h-4 w-4 mr-2" />
                 CSV
@@ -381,7 +382,7 @@ export default function OperationsReports() {
         <CardContent>
           {rowsQ.isLoading ? (
             <p className="text-sm text-muted-foreground">Loading…</p>
-          ) : rows.length === 0 ? (
+          ) : displayRows.length === 0 ? (
             <p className="text-sm text-muted-foreground">No data for the selected filters.</p>
           ) : (
             <div className="overflow-x-auto">
@@ -394,7 +395,7 @@ export default function OperationsReports() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {rows.map((r, i) => (
+                  {displayRows.map((r, i) => (
                     <TableRow key={i}>
                       {visibleCols.map((c) => (
                         <TableCell key={c.key}>{fmtCell(r, c)}</TableCell>
