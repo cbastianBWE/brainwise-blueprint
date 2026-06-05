@@ -13,6 +13,7 @@ import { formatMoney, formatDate } from "./_shared";
 
 type ColType = "text" | "money" | "number" | "date" | "bool";
 type Col = { key: string; label: string; type: ColType };
+type Measure = { out: string; agg: "sum" | "count"; src?: string };
 type ReportDef = {
   key: string;
   label: string;
@@ -20,6 +21,10 @@ type ReportDef = {
   dateField?: string;
   columns: Col[];
   defaultSort?: { key: string; dir: "asc" | "desc" };
+  statusExclude?: string[];
+  groupBy?: { key: string; emptyLabel?: string };
+  measures?: Measure[];
+  defaultGroupSort?: { key: string; dir: "asc" | "desc" };
 };
 
 const REPORTS: ReportDef[] = [
@@ -90,6 +95,120 @@ const REPORTS: ReportDef[] = [
       { key: "margin_pct", label: "Margin %", type: "number" },
     ],
   },
+  {
+    key: "sales_by_customer",
+    label: "Sales by customer",
+    view: "report_invoices",
+    dateField: "issue_date",
+    statusExclude: ["draft", "void", "written_off"],
+    groupBy: { key: "customer_name", emptyLabel: "—" },
+    measures: [
+      { out: "invoice_count", agg: "count" },
+      { out: "total_sales", agg: "sum", src: "total_amount" },
+      { out: "paid", agg: "sum", src: "amount_paid" },
+    ],
+    defaultGroupSort: { key: "total_sales", dir: "desc" },
+    columns: [
+      { key: "customer_name", label: "Customer", type: "text" },
+      { key: "invoice_count", label: "Invoices", type: "number" },
+      { key: "total_sales", label: "Total sales", type: "money" },
+      { key: "paid", label: "Paid", type: "money" },
+    ],
+  },
+  {
+    key: "top_customers",
+    label: "Top customers",
+    view: "report_invoices",
+    dateField: "issue_date",
+    statusExclude: ["draft", "void", "written_off"],
+    groupBy: { key: "customer_name", emptyLabel: "—" },
+    measures: [
+      { out: "invoice_count", agg: "count" },
+      { out: "total_sales", agg: "sum", src: "total_amount" },
+    ],
+    defaultGroupSort: { key: "total_sales", dir: "desc" },
+    columns: [
+      { key: "customer_name", label: "Customer", type: "text" },
+      { key: "invoice_count", label: "Invoices", type: "number" },
+      { key: "total_sales", label: "Total sales", type: "money" },
+    ],
+  },
+  {
+    key: "sales_by_item",
+    label: "Sales by item",
+    view: "report_invoice_lines",
+    dateField: "issue_date",
+    statusExclude: ["draft", "void", "written_off"],
+    groupBy: { key: "item_name", emptyLabel: "Free-form / no item" },
+    measures: [
+      { out: "line_count", agg: "count" },
+      { out: "quantity", agg: "sum", src: "quantity" },
+      { out: "revenue", agg: "sum", src: "line_total" },
+    ],
+    defaultGroupSort: { key: "revenue", dir: "desc" },
+    columns: [
+      { key: "item_name", label: "Item", type: "text" },
+      { key: "line_count", label: "Lines", type: "number" },
+      { key: "quantity", label: "Qty", type: "number" },
+      { key: "revenue", label: "Revenue", type: "money" },
+    ],
+  },
+  {
+    key: "commission",
+    label: "Commission (sales by salesperson)",
+    view: "report_invoices",
+    dateField: "issue_date",
+    statusExclude: ["draft", "void", "written_off"],
+    groupBy: { key: "salesperson_name", emptyLabel: "Unassigned" },
+    measures: [
+      { out: "invoice_count", agg: "count" },
+      { out: "total_sales", agg: "sum", src: "total_amount" },
+    ],
+    defaultGroupSort: { key: "total_sales", dir: "desc" },
+    columns: [
+      { key: "salesperson_name", label: "Salesperson", type: "text" },
+      { key: "invoice_count", label: "Invoices", type: "number" },
+      { key: "total_sales", label: "Total sales", type: "money" },
+    ],
+  },
+  {
+    key: "expense_by_category",
+    label: "Expense by category",
+    view: "report_expenses",
+    dateField: "date",
+    groupBy: { key: "category_name", emptyLabel: "Uncategorized" },
+    measures: [
+      { out: "expense_count", agg: "count" },
+      { out: "amount", agg: "sum", src: "amount" },
+      { out: "billable", agg: "sum", src: "billable_amount" },
+    ],
+    defaultGroupSort: { key: "amount", dir: "desc" },
+    columns: [
+      { key: "category_name", label: "Category", type: "text" },
+      { key: "expense_count", label: "Expenses", type: "number" },
+      { key: "amount", label: "Amount", type: "money" },
+      { key: "billable", label: "Billable", type: "money" },
+    ],
+  },
+  {
+    key: "expense_by_customer",
+    label: "Expense by customer",
+    view: "report_expenses",
+    dateField: "date",
+    groupBy: { key: "customer_name", emptyLabel: "—" },
+    measures: [
+      { out: "expense_count", agg: "count" },
+      { out: "amount", agg: "sum", src: "amount" },
+      { out: "billable", agg: "sum", src: "billable_amount" },
+    ],
+    defaultGroupSort: { key: "amount", dir: "desc" },
+    columns: [
+      { key: "customer_name", label: "Customer", type: "text" },
+      { key: "expense_count", label: "Expenses", type: "number" },
+      { key: "amount", label: "Amount", type: "money" },
+      { key: "billable", label: "Billable", type: "money" },
+    ],
+  },
 ];
 
 function fmtCell(row: any, col: Col): string {
@@ -119,6 +238,36 @@ function downloadCsv(name: string, cols: Col[], rows: any[]) {
   a.download = `${name}.csv`;
   a.click();
   URL.revokeObjectURL(url);
+}
+
+function aggregate(rows: any[], report: ReportDef): any[] {
+  const gb = report.groupBy!;
+  const exclude = new Set(report.statusExclude ?? []);
+  const groups = new Map<string, any>();
+  for (const r of rows) {
+    if (exclude.size && exclude.has(String(r.status))) continue;
+    const raw = r[gb.key];
+    const label = raw === null || raw === undefined || raw === "" ? (gb.emptyLabel ?? "—") : String(raw);
+    let g = groups.get(label);
+    if (!g) {
+      g = { [gb.key]: label, currency_code: r.currency_code };
+      for (const m of report.measures ?? []) g[m.out] = 0;
+      groups.set(label, g);
+    }
+    for (const m of report.measures ?? []) {
+      if (m.agg === "count") g[m.out] += 1;
+      else g[m.out] += Number(r[m.src ?? m.out] ?? 0);
+    }
+  }
+  let out = Array.from(groups.values());
+  for (const g of out) for (const m of report.measures ?? []) if (m.agg === "sum") g[m.out] = Math.round(g[m.out] * 100) / 100;
+  const s = report.defaultGroupSort;
+  if (s) out.sort((a, b) => {
+    const av = a[s.key], bv = b[s.key];
+    const cmp = typeof av === "number" && typeof bv === "number" ? av - bv : String(av).localeCompare(String(bv));
+    return s.dir === "asc" ? cmp : -cmp;
+  });
+  return out;
 }
 
 export default function OperationsReports() {
