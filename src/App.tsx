@@ -118,6 +118,7 @@ import OperationsRecurringInvoices from "./pages/operations/OperationsRecurringI
 import OperationsRecurringInvoiceDetail from "./pages/operations/OperationsRecurringInvoiceDetail";
 import RecurringInvoiceForm from "./pages/operations/RecurringInvoiceForm";
 import OperationsReports from "./pages/operations/OperationsReports";
+import OperationsSettings from "./pages/operations/OperationsSettings";
 import PublicInvoicePay from "./pages/public/PublicInvoicePay";
 import PublicEstimateRespond from "./pages/public/PublicEstimateRespond";
 import EpnComplete from "./pages/EpnComplete";
