@@ -1,32 +1,41 @@
-# Plan: Extend estimate conversion options
+## Plan: Add Payments card with Stripe refund to OperationsInvoiceDetail
 
-Scope: `src/pages/operations/OperationsEstimateDetail.tsx` only. Additive — no other files touched. Follows existing patterns (`supabase.rpc("..." as any, ...)`, `toast`, `invalidateEstimate()`, `navigate`).
+Single-file additive edit to `src/pages/operations/OperationsInvoiceDetail.tsx`. No other files touched. Matches existing patterns (`supabase.rpc`, `supabase.functions.invoke`, `readFunctionsErrorMessage`, `toast`, `invalidateInvoice()`, query key shape).
 
-## Changes
+### Changes
 
-1. **Imports** — add if missing: `Dialog`/`DialogContent`/`DialogHeader`/`DialogTitle`/`DialogFooter`, `Input`, `Label`, `Select`/`SelectContent`/`SelectItem`/`SelectTrigger`/`SelectValue`.
+1. **Imports** — add the missing ones:
+   - `Input` from `@/components/ui/input`
+   - `Label` from `@/components/ui/label`
+   - `Dialog`, `DialogContent`, `DialogHeader`, `DialogTitle`, `DialogFooter` from `@/components/ui/dialog`
 
-2. **State** (near existing `useState` calls):
-   - `projectDialogOpen`, `projName`, `projBilling` (`"none" | "project_hours" | "task_hours" | "staff_hours"`).
+2. **New query** alongside `invoiceQ` / `customerQ` / `linesQ`:
+   - `paymentsQ` keyed `["ops", "invoice-payments", id]`, calls `supabase.rpc("ops_list_invoice_payments" as any, { p_invoice: id })`.
 
-3. **Derived values** after `const status = ...`:
-   - `convertedInvoiceId`, `convertedProjectId`, `convertedRetainerId` from `est.converted_*_id`.
-   - `alreadyConverted` boolean.
-   - Update `canConvert` to require `!alreadyConverted` (instead of `status !== "invoiced"`).
+3. **New state** alongside existing `useState` calls:
+   - `refundPayment` (selected payment row | null)
+   - `refundAmount` (string input)
+   - `refunding` (boolean)
 
-4. **Handlers** next to `handleConvert`:
-   - `handleConvertRetainer()` → calls `ops_convert_estimate_to_retainer`, navigates to `/operations/retainers/{id}`.
-   - `openProjectConvert()` → seeds dialog defaults (name `Project - {estimate_number}`, billing `none`) and opens it.
-   - `handleConvertProject()` → calls `ops_convert_estimate_to_project` with `p_name` and `p_billing_method`, navigates to `/operations/projects/{id}`.
+4. **Cache invalidation**:
+   - Inside `invalidateInvoice()` add `qc.invalidateQueries({ queryKey: ["ops", "invoice-payments", inv.id] })`.
+   - Inside the existing `?paid=1` effect, after the line that invalidates `["ops","invoice", id]`, also invalidate `["ops","invoice-payments", id]`.
 
-5. **Header action area** — replace the single "Convert to invoice" button with a `DropdownMenu` ("Convert" trigger) containing "To invoice" / "To project" / "To retainer". When `alreadyConverted`, render a "View invoice/project/retainer" button that navigates to whichever converted id exists.
+5. **New handlers** next to `handlePayNow` / `handleMarkSent`:
+   - `openRefund(p)` — seeds `refundPayment` and prefills `refundAmount` from `p.refundable_amount`.
+   - `handleRefund()` — validates `amt > 0` and `amt <= refundable_amount`, calls `supabase.functions.invoke("ops-issue-refund", { body: { payment_id, amount } })`, surfaces errors with `readFunctionsErrorMessage`, toasts success, closes dialog, calls `invalidateInvoice()`. Wrapped with `setRefunding(true/false)`.
 
-6. **Project conversion dialog** — added just before the component's final closing tag (alongside the existing AlertDialog). Contains:
-   - Project name `Input`.
-   - Billing method `Select` (No hourly billing / Project hourly / Task hourly / Staff hourly).
-   - Helper text explaining that "No hourly billing" copies line items as billable charges, while hourly methods use the estimate total as budget only.
-   - Footer: Cancel + Create project (disabled while `converting`).
+6. **Payments Card** rendered immediately after the "Line items" Card and before `<RecordPaymentDialog />`:
+   - Header "Payments".
+   - Loading / empty states mirroring the Line items card.
+   - `Table` with columns: Date, Method (underscores → spaces), Amount, Refunded (or "—"), Actions.
+   - Actions cell shows a `Refund` button only when `p.is_stripe && Number(p.refundable_amount) > 0`, calling `openRefund(p)`.
+   - Uses existing `formatDate`, `formatMoney`, and `currency`.
 
-## Notes
-- No changes to scoring, saving, queries, RPCs, or other files.
-- RPC names (`ops_convert_estimate_to_project`, `ops_convert_estimate_to_retainer`) and the `converted_*_id` columns are referenced via `as any`, matching the existing style for ops RPCs in this file.
+7. **Refund Dialog** added next to the existing `AlertDialog`:
+   - Controlled by `refundPayment !== null`; closing resets `refundPayment` to null.
+   - Shows refundable balance, a `Label` + numeric `Input` bound to `refundAmount`, helper text noting Stripe confirms asynchronously.
+   - Footer: Cancel (disabled while refunding) and "Issue refund" (disabled while refunding, shows "Refunding…").
+
+### Out of scope
+No changes to scoring, saving, navigation, other queries/RPCs, status logic, or any other file. `ops_list_invoice_payments` RPC and `ops-issue-refund` edge function are assumed to exist (referenced via `as any`, matching existing style).

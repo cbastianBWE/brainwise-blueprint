@@ -25,6 +25,15 @@ import {
   AlertDialogAction,
   AlertDialogCancel,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { StatusBadge, formatMoney, formatDate } from "./_shared";
 import RecordPaymentDialog from "./RecordPaymentDialog";
 
@@ -41,6 +50,9 @@ export default function OperationsInvoiceDetail() {
   const [confirm, setConfirm] = useState<null | "void" | "write_off" | "delete">(null);
   const [acting, setActing] = useState(false);
   const [sending, setSending] = useState(false);
+  const [refundPayment, setRefundPayment] = useState<any>(null);
+  const [refundAmount, setRefundAmount] = useState("");
+  const [refunding, setRefunding] = useState(false);
 
   const invoiceQ = useQuery({
     queryKey: ["ops", "invoice", id],
@@ -84,6 +96,16 @@ export default function OperationsInvoiceDetail() {
     },
   });
 
+  const paymentsQ = useQuery({
+    queryKey: ["ops", "invoice-payments", id],
+    enabled: !!id,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("ops_list_invoice_payments" as any, { p_invoice: id });
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+  });
+
   // Handle ?paid=1 / ?canceled=1
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -93,6 +115,7 @@ export default function OperationsInvoiceDetail() {
     if (paid === "1") {
       toast.success("Payment received. Updating invoice…");
       qc.invalidateQueries({ queryKey: ["ops", "invoice", id] });
+      qc.invalidateQueries({ queryKey: ["ops", "invoice-payments", id] });
     } else if (canceled === "1") {
       toast.info("Payment canceled.");
     }
@@ -130,8 +153,38 @@ export default function OperationsInvoiceDetail() {
   function invalidateInvoice() {
     qc.invalidateQueries({ queryKey: ["ops", "invoice", inv.id] });
     qc.invalidateQueries({ queryKey: ["ops", "invoices", "list"] });
+    qc.invalidateQueries({ queryKey: ["ops", "invoice-payments", inv.id] });
     if (inv?.customer_id) {
       qc.invalidateQueries({ queryKey: ["ops", "customer-invoices", inv.customer_id] });
+    }
+  }
+
+  function openRefund(p: any) {
+    setRefundPayment(p);
+    setRefundAmount(String(p.refundable_amount ?? ""));
+  }
+
+  async function handleRefund() {
+    if (!refundPayment) return;
+    const amt = Number(refundAmount);
+    const max = Number(refundPayment.refundable_amount);
+    if (!(amt > 0)) { toast.error("Enter an amount greater than 0."); return; }
+    if (amt > max) { toast.error(`Amount exceeds the refundable balance (${max}).`); return; }
+    setRefunding(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("ops-issue-refund", {
+        body: { payment_id: refundPayment.payment_id, amount: amt },
+      });
+      if (error || (data as any)?.error) {
+        const ctxMsg = error ? await readFunctionsErrorMessage(error) : null;
+        toast.error(ctxMsg ?? (data as any)?.error ?? error?.message ?? "Refund failed");
+        return;
+      }
+      toast.success("Refund issued. The invoice updates once Stripe confirms (a few seconds).");
+      setRefundPayment(null);
+      invalidateInvoice();
+    } finally {
+      setRefunding(false);
     }
   }
 
@@ -365,6 +418,46 @@ export default function OperationsInvoiceDetail() {
         </CardContent>
       </Card>
 
+      <Card>
+        <CardHeader><CardTitle>Payments</CardTitle></CardHeader>
+        <CardContent>
+          {paymentsQ.isLoading ? (
+            <p className="text-muted-foreground text-sm">Loading…</p>
+          ) : !paymentsQ.data || paymentsQ.data.length === 0 ? (
+            <p className="text-muted-foreground text-sm">No payments recorded.</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Method</TableHead>
+                  <TableHead className="text-right">Amount</TableHead>
+                  <TableHead className="text-right">Refunded</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {paymentsQ.data.map((p: any) => (
+                  <TableRow key={p.payment_id}>
+                    <TableCell>{formatDate(p.payment_date)}</TableCell>
+                    <TableCell className="capitalize">{String(p.payment_mode).replace(/_/g, " ")}</TableCell>
+                    <TableCell className="text-right">{formatMoney(p.allocated_amount, currency)}</TableCell>
+                    <TableCell className="text-right">{Number(p.refunded_amount) > 0 ? formatMoney(p.refunded_amount, currency) : "—"}</TableCell>
+                    <TableCell className="text-right">
+                      {p.is_stripe && Number(p.refundable_amount) > 0 ? (
+                        <Button variant="outline" size="sm" onClick={() => openRefund(p)}>Refund</Button>
+                      ) : null}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+
+
+
       <RecordPaymentDialog
         open={recordOpen}
         onOpenChange={setRecordOpen}
@@ -400,6 +493,39 @@ export default function OperationsInvoiceDetail() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={refundPayment !== null} onOpenChange={(o) => { if (!o) setRefundPayment(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Issue refund</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Refundable: {refundPayment ? formatMoney(refundPayment.refundable_amount, currency) : ""}
+            </p>
+            <div className="space-y-2">
+              <Label htmlFor="refund-amount">Refund amount</Label>
+              <Input
+                id="refund-amount"
+                type="number"
+                step="0.01"
+                min="0"
+                value={refundAmount}
+                onChange={(e) => setRefundAmount(e.target.value)}
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              The refund is sent to Stripe now; the invoice balance updates automatically once Stripe confirms.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRefundPayment(null)} disabled={refunding}>Cancel</Button>
+            <Button onClick={handleRefund} disabled={refunding}>
+              {refunding ? "Refunding…" : "Issue refund"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
