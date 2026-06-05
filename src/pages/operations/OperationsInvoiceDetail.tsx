@@ -493,6 +493,39 @@ export default function OperationsInvoiceDetail() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={refundPayment !== null} onOpenChange={(o) => { if (!o) setRefundPayment(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Issue refund</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Refundable: {refundPayment ? formatMoney(refundPayment.refundable_amount, currency) : ""}
+            </p>
+            <div className="space-y-2">
+              <Label htmlFor="refund-amount">Refund amount</Label>
+              <Input
+                id="refund-amount"
+                type="number"
+                step="0.01"
+                min="0"
+                value={refundAmount}
+                onChange={(e) => setRefundAmount(e.target.value)}
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              The refund is sent to Stripe now; the invoice balance updates automatically once Stripe confirms.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRefundPayment(null)} disabled={refunding}>Cancel</Button>
+            <Button onClick={handleRefund} disabled={refunding}>
+              {refunding ? "Refunding…" : "Issue refund"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
