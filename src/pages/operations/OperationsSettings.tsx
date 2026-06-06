@@ -12,6 +12,51 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@
 import { Switch } from "@/components/ui/switch";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+
+const TEMPLATE_TYPES = [
+  "invoice_send","estimate_send","payment_receipt",
+  "reminder_before_due","reminder_on_due","reminder_after_due",
+  "recurring_notice","retainer_send","statement_send","credit_note_send",
+] as const;
+
+function titleCase(s: string) {
+  return s.split("_").map(w => w ? w[0].toUpperCase() + w.slice(1) : w).join(" ");
+}
+function humanizeType(t: string) {
+  if (t === "reminder_before_due") return "Reminder — before due";
+  if (t === "reminder_on_due") return "Reminder — on due";
+  if (t === "reminder_after_due") return "Reminder — after due";
+  return titleCase(t);
+}
+function humanizeToken(token: string): string {
+  const map: Record<string, string> = {
+    customer_name: "Customer Name",
+    org_name: "BrainWise Enterprises",
+    invoice_number: "INV-2026-0008",
+    estimate_number: "EST-2026-0008",
+    credit_note_number: "CN-2026-0008",
+    statement_number: "STM-2026-0008",
+    balance_due: "1,500.00",
+    total_amount: "1,500.00",
+    amount: "1,500.00",
+    amount_due: "1,500.00",
+    subtotal: "1,500.00",
+    tax_total: "1,500.00",
+  };
+  if (map[token]) return map[token];
+  if (/_date$/.test(token)) return "2026-06-15";
+  if (/_(link|url)$/.test(token)) return "https://example.com/pay";
+  return titleCase(token);
+}
+function applyTokens(str: string, ctx: Record<string, string>) {
+  return (str ?? "").replace(/\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g, (_m, t) => ctx[t] ?? "");
+}
+function formatTiming(n: number) {
+  if (n < 0) return `${Math.abs(n)} days before due`;
+  if (n === 0) return "On due date";
+  return `${n} days after due`;
+}
 
 type Address = { line1?: string; line2?: string; city?: string; state?: string; postal_code?: string; country?: string };
 
