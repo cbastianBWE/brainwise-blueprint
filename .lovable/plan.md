@@ -1,91 +1,100 @@
 
-# Plan: Templates & Reminders tab
+# Plan: Late Fees + Sales & Commission + Custom Fields
 
-Touch only `src/pages/operations/OperationsSettings.tsx`. Replace the `templates` placeholder; leave `late_fees`, `sales`, `custom_fields` placeholders alone. No new deps.
-
-## Imports
-Add `Textarea` from `@/components/ui/textarea`. Add `useRef` to the existing React import.
-
-## Helpers (in-file)
-- `TEMPLATE_TYPES = ["invoice_send","estimate_send","payment_receipt","reminder_before_due","reminder_on_due","reminder_after_due","recurring_notice","retainer_send","statement_send","credit_note_send"]`.
-- `humanizeType(t)`:
-  - `reminder_before_due` → "Reminder — before due"
-  - `reminder_on_due` → "Reminder — on due"
-  - `reminder_after_due` → "Reminder — after due"
-  - Otherwise: split on `_`, title-case each word, join with space (e.g. `invoice_send` → "Invoice Send", `credit_note_send` → "Credit Note Send").
-- `humanizeToken(token)`: per-token map for common cases, fallback to title-cased token.
-  - `customer_name` → "Customer Name", `org_name` → "BrainWise Enterprises"
-  - `invoice_number` → "INV-2026-0008", `estimate_number` → "EST-2026-0008", `credit_note_number` → "CN-2026-0008", `statement_number` → "STM-2026-0008"
-  - any key ending in `_date` → "2026-06-15"
-  - any key ending in `_link` or `_url` → "https://example.com/pay"
-  - `balance_due`, `total_amount`, `amount`, `amount_due`, `subtotal`, `tax_total` → "1,500.00"
-  - fallback: title case of token
+Touch only `src/pages/operations/OperationsSettings.tsx`. Replace the three remaining placeholder `TabsContent`s. No new imports needed (Textarea already imported in prompt 2; everything else already present). No new deps.
 
 ## New queries
-- `templatesQ`: key `["ops","settings","email-templates"]`, calls `ops_list_email_templates`.
-- `catalogQ`: key `["ops","settings","merge-catalog"]`, calls `ops_get_merge_tag_catalog` (returns object — not array).
-- `schedulesQ`: key `["ops","settings","reminder-schedules"]`, calls `ops_list_reminder_schedules`.
 
-All use default `supabase` client cast `as any`, throw on error, return `data` directly.
+- `lateFeesQ`: key `["ops","settings","late-fee-rules"]` → `supabase.rpc("ops_list_late_fee_rules" as any)`.
+- `salespeopleQ`: key `["ops","settings","salespeople"]` → `supabase.rpc("ops_list_salespeople" as any)`.
+- `entityType` state (default `"invoice"`).
+- `customFieldsQ`: key `["ops","settings","custom-fields", entityType]` → `supabase.rpc("ops_list_custom_field_definitions" as any, { p_entity_type: entityType })`.
 
-## State
-- `templateType: string` (default `"invoice_send"`).
-- `editor: { id: string|null, subject: string, body_html: string, body_text: string, is_active: boolean, is_default: boolean }`.
-- `activeField: "subject" | "body"` (default `"body"`).
-- `subjectRef = useRef<HTMLInputElement>(null)`, `bodyRef = useRef<HTMLTextAreaElement>(null)`.
-- `serverPreview: { subject: string, body_html: string } | null` (null = show live buffer; populated by Verify).
-- `scheduleDraft: any | null` (dialog state).
+All cast `as any`, throw on error, return `data ?? []`.
 
-When `templateType` changes (or templatesQ data arrives): `useEffect` that finds row by `template_type`, seeds editor (blanks + `id=null` if missing), and clears `serverPreview`.
+## New helpers (in-file)
 
-## Card 1 — Email templates (2-col grid)
+- `ENTITY_TYPES = ["customer","item","project","task","time_entry","expense","estimate","invoice"]`.
+- `humanizeEntity(t)`: map (`time_entry` → "Time Entry", `credit_note` n/a), fallback titleCase (reuses existing `titleCase`).
+- `FIELD_TYPES = ["text","number","date","dropdown","checkbox","longtext"]`.
+- `formatLateAmount(row)`: `row.fee_type === "percentage" ? `${row.fee_amount}%` : `$${row.fee_amount}``.
 
-Left column (editor):
-- Type Select (10 items, humanized labels).
-- Merge chips row: `(catalogQ.data?.[templateType] ?? []).map(tok => <Button variant="outline" size="sm" onClick={insertToken(tok)}>{`{{${tok}}}`}</Button>)`.
-- `insertToken(token)`:
-  - `ref = activeField === "subject" ? subjectRef : bodyRef`
-  - `el = ref.current`; if no el, append to body.
-  - `start = el.selectionStart ?? el.value.length`, `end = el.selectionEnd ?? start`.
-  - `next = el.value.slice(0,start) + "{{"+token+"}}" + el.value.slice(end)`.
-  - Update corresponding state (`subject` or `body_html`).
-  - After state update, `requestAnimationFrame` to refocus and set caret to `start + token.length + 4`.
-- Subject Input with `ref={subjectRef}` and `onFocus={() => setActiveField("subject")}`.
-- Body Textarea `rows={16}`, monospace class `font-mono text-sm`, `ref={bodyRef}`, `onFocus={() => setActiveField("body")}`.
-- Plain-text fallback Textarea `rows={3}`.
-- Two switches: Active, Default.
-- Save button → `ops_upsert_email_template` with `{ template_type: templateType, subject, body_html, body_text: body_text || null, is_default, is_active }`; on success invalidate templates key and toast. Clear serverPreview.
+## Drafts/state
 
-Right column (preview):
-- Build `sampleContext` from `catalogQ.data?.[templateType] ?? []` mapping each tok → `humanizeToken(tok)`.
-- `applyTokens(str, ctx)`: `str.replace(/\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g, (_, t) => ctx[t] ?? "")`.
-- Mode label: `serverPreview ? "Server-rendered (saved template)" : "Live preview (current edits)"`.
-- Render rendered subject as a line, then `<iframe sandbox srcDoc={renderedBody} className="w-full h-[400px] border rounded" />`.
-- `serverPreview ? serverPreview.subject/body_html : applyTokens(...)`.
-- Two buttons: "Verify server render" (calls `ops_render_email_preview(p_template_type: templateType, p_context: sampleContext)`, stores result in serverPreview, toast on error) and "Back to live" (clears serverPreview), shown only when serverPreview is set.
+- `ruleDraft: any | null` — late fee dialog.
+- `rateDraft: any | null` — commission dialog.
+- `fieldDraft: any | null` — custom field dialog. Carries an extra `_optionsText: string` for the Textarea round-trip (split on newlines on save).
 
-## Card 2 — Reminder schedules
+## Late Fees tab
 
-Header with title + "Add schedule" button (opens dialog with `{ name:"", schedule_offset_days:0, template_id:"__auto__", is_active:true, applies_to_overdue_only:false }`).
+Card with header + "Add rule" button (opens `ruleDraft` seeded `{ name:"", fee_type:"percentage", fee_amount:0, grace_period_days:0, max_total_fee_amount:"", apply_to:"all", is_active:true }`).
 
-Table cols: Name, Timing, Template, Active, Overdue-only, Actions.
-- Timing formatter: `n<0` → `${Math.abs(n)} days before due`; `n===0` → `On due date`; `n>0` → `${n} days after due`.
-- Template cell: `row.template_id == null ? "Auto (by due state)" : humanizeType(row.template_type)`.
-- Edit: `setScheduleDraft({ ...row, template_id: row.template_id ?? "__auto__" })`.
-- Delete: confirm + `ops_delete_reminder_schedule`.
+Table cols: Name, Type, Amount (`formatLateAmount`), Grace (days), Max cap (`row.max_total_fee_amount ?? "—"`), Active (Yes/No), Actions (Edit/Delete).
 
-Dialog (same pattern as Numbering tab dialogs):
-- Name Input.
-- Offset days Input type="number" with helper paragraph.
-- Template Select sourced from `(templatesQ.data ?? []).filter(t => ["reminder_before_due","reminder_on_due","reminder_after_due"].includes(t.template_type))`, items use `t.id` as value and `humanizeType(t.template_type)` as label; plus first item `<SelectItem value="__auto__">Auto (by due state)</SelectItem>`.
-- Switches: Active, Overdue-only.
-- Save → `ops_upsert_reminder_schedule(p_id: draft.id ?? null, p_patch: { name, schedule_offset_days: Number(...), template_id: sel === "__auto__" ? null : sel, is_active, applies_to_overdue_only })`, invalidate `["ops","settings","reminder-schedules"]`, close.
+Edit opens dialog with `{ ...row, max_total_fee_amount: row.max_total_fee_amount ?? "" }`.
+
+Dialog fields per spec. Amount label adapts to `fee_type`. `apply_to` rendered as a disabled `Input value="All customers"` with helper "Targeted rules are not available yet." Always saved as `"all"`.
+
+Save: `ops_upsert_late_fee_rule(p_id: ruleDraft.id ?? null, p_patch: { name, fee_type, fee_amount: Number(...), grace_period_days: Number(...), max_total_fee_amount: max==="" ? null : Number(max), apply_to: "all", is_active })` → invalidate `["ops","settings","late-fee-rules"]`.
+
+Delete: `window.confirm` + `ops_delete_late_fee_rule`.
+
+## Sales & Commission tab
+
+Card with helper paragraph "Commission rates apply to invoices where the user is set as salesperson." then table.
+
+Cols: Name (`full_name`), Email, Role, Commission rate (`rate == null ? "—" : `${rate}%``), Actions (Edit rate).
+
+Edit opens `rateDraft = { user_id: row.id, full_name: row.full_name, commission_rate: row.commission_rate ?? "" }`.
+
+Dialog: single Input type="number" (label "Commission rate (%)"). Save → `ops_set_user_commission_rate(p_user_id: rateDraft.user_id, p_rate: rateDraft.commission_rate === "" ? null : Number(rateDraft.commission_rate))`. Invalidate `["ops","settings","salespeople"]`.
+
+No add/delete.
+
+## Custom Fields tab
+
+Card. At top: entity type Select (8 values, humanized). Below: header row with "Add field" button + table.
+
+"Add field" seeds `fieldDraft = { entity_type: entityType, field_name: "", field_label: "", field_type: "text", _optionsText: "", is_required: false, sort_order: 0, is_active: true }`.
+
+Table cols: Label, Field name, Type, Required, Active, Order, Actions.
+
+Edit seeds with `{ ...row, _optionsText: Array.isArray(row.dropdown_options) ? row.dropdown_options.join("\n") : "" }`.
+
+Dialog fields:
+- `entity_type` Select (8 types), disabled when editing.
+- `field_name` Input, disabled when editing.
+- `field_label` Input.
+- `field_type` Select (6 types).
+- `_optionsText` Textarea, rendered only when `field_type === "dropdown"`. Helper "One option per line."
+- `is_required` Switch.
+- `is_active` Switch.
+- `sort_order` Input type="number".
+
+Save:
+```
+const opts = fieldDraft.field_type === "dropdown"
+  ? fieldDraft._optionsText.split("\n").map(s => s.trim()).filter(Boolean)
+  : null;
+ops_upsert_custom_field_definition(p_id: fieldDraft.id ?? null, p_patch: {
+  entity_type, field_name, field_label, field_type,
+  dropdown_options: opts,
+  is_required, sort_order: Number(sort_order), is_active,
+})
+```
+Invalidate `["ops","settings","custom-fields", entityType]`.
+
+Delete: confirm + `ops_delete_custom_field_definition`.
+
+## Dialog placement
+
+Append three new `<Dialog>` blocks at the bottom of the component alongside the existing dialogs (after the reminder schedule dialog) — same pattern: `open={!!draft}` / `onOpenChange={(o) => !o && setDraft(null)}`.
 
 ## Untouched
-- All other tabs and dialogs from Numbering & Tax stay verbatim.
-- Branding stays verbatim.
-- No changes to imports beyond `Textarea` and adding `useRef`.
+
+Branding, Numbering & Tax, and Templates & Reminders tabs and all their dialogs/handlers stay verbatim. Only the three placeholder TabsContents are replaced.
 
 ## Acceptance
-- Type select swaps editor content; chips insert `{{token}}` at caret of last-focused field; iframe live-updates; Save persists; Verify shows server output and Back to live restores buffer.
-- Reminders list shows timing + template label; add/edit/delete refresh.
+- Late Fees: list+CRUD; Amount column reflects type; apply_to locked to "All customers"; max cap optional.
+- Sales: rate edit persists; clearing sets null/—.
+- Custom Fields: entity selector reloads list; CRUD works; dropdown options only shown for `dropdown` and round-trip as string array; `entity_type`/`field_name` locked on edit.

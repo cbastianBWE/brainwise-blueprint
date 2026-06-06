@@ -58,6 +58,16 @@ function formatTiming(n: number) {
   return `${n} days after due`;
 }
 
+const ENTITY_TYPES = ["customer","item","project","task","time_entry","expense","estimate","invoice"] as const;
+const FIELD_TYPES = ["text","number","date","dropdown","checkbox","longtext"] as const;
+function humanizeEntity(t: string) {
+  if (t === "time_entry") return "Time Entry";
+  return titleCase(t);
+}
+function formatLateAmount(row: any) {
+  return row?.fee_type === "percentage" ? `${row.fee_amount}%` : `$${row.fee_amount}`;
+}
+
 type Address = { line1?: string; line2?: string; city?: string; state?: string; postal_code?: string; country?: string };
 
 function PlaceholderCard({ title }: { title: string }) {
@@ -417,6 +427,113 @@ export default function OperationsSettings() {
     qc.invalidateQueries({ queryKey: ["ops", "settings", "reminder-schedules"] });
   }
 
+  // ---------- Late Fees / Sales / Custom Fields ----------
+  const lateFeesQ = useQuery({
+    queryKey: ["ops", "settings", "late-fee-rules"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("ops_list_late_fee_rules" as any);
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+  });
+  const salespeopleQ = useQuery({
+    queryKey: ["ops", "settings", "salespeople"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("ops_list_salespeople" as any);
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+  });
+  const [entityType, setEntityType] = useState<string>("invoice");
+  const customFieldsQ = useQuery({
+    queryKey: ["ops", "settings", "custom-fields", entityType],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("ops_list_custom_field_definitions" as any, { p_entity_type: entityType });
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+  });
+
+  const [ruleDraft, setRuleDraft] = useState<any | null>(null);
+  async function saveRule() {
+    if (!ruleDraft) return;
+    if (!ruleDraft.name) { toast.error("Name is required"); return; }
+    const max = ruleDraft.max_total_fee_amount;
+    const { error } = await supabase.rpc("ops_upsert_late_fee_rule" as any, {
+      p_id: ruleDraft.id ?? null,
+      p_patch: {
+        name: ruleDraft.name,
+        fee_type: ruleDraft.fee_type ?? "percentage",
+        fee_amount: Number(ruleDraft.fee_amount ?? 0),
+        grace_period_days: Number(ruleDraft.grace_period_days ?? 0),
+        max_total_fee_amount: max === "" || max == null ? null : Number(max),
+        apply_to: "all",
+        is_active: ruleDraft.is_active !== false,
+      },
+    });
+    if (error) { toast.error(error.message); return; }
+    toast.success("Saved.");
+    qc.invalidateQueries({ queryKey: ["ops", "settings", "late-fee-rules"] });
+    setRuleDraft(null);
+  }
+  async function deleteRule(id: string) {
+    if (!window.confirm("Delete this rule?")) return;
+    const { error } = await supabase.rpc("ops_delete_late_fee_rule" as any, { p_id: id });
+    if (error) { toast.error(error.message); return; }
+    toast.success("Deleted.");
+    qc.invalidateQueries({ queryKey: ["ops", "settings", "late-fee-rules"] });
+  }
+
+  const [commissionDraft, setCommissionDraft] = useState<any | null>(null);
+  async function saveCommission() {
+    if (!commissionDraft) return;
+    const r = commissionDraft.commission_rate;
+    const { error } = await supabase.rpc("ops_set_user_commission_rate" as any, {
+      p_user_id: commissionDraft.user_id,
+      p_rate: r === "" || r == null ? null : Number(r),
+    });
+    if (error) { toast.error(error.message); return; }
+    toast.success("Saved.");
+    qc.invalidateQueries({ queryKey: ["ops", "settings", "salespeople"] });
+    setCommissionDraft(null);
+  }
+
+  const [fieldDraft, setFieldDraft] = useState<any | null>(null);
+  async function saveField() {
+    if (!fieldDraft) return;
+    if (!fieldDraft.field_name) { toast.error("Field name is required"); return; }
+    if (!fieldDraft.field_label) { toast.error("Field label is required"); return; }
+    const opts = fieldDraft.field_type === "dropdown"
+      ? String(fieldDraft._optionsText ?? "").split("\n").map((s: string) => s.trim()).filter(Boolean)
+      : null;
+    const { error } = await supabase.rpc("ops_upsert_custom_field_definition" as any, {
+      p_id: fieldDraft.id ?? null,
+      p_patch: {
+        entity_type: fieldDraft.entity_type,
+        field_name: fieldDraft.field_name,
+        field_label: fieldDraft.field_label,
+        field_type: fieldDraft.field_type,
+        dropdown_options: opts,
+        is_required: !!fieldDraft.is_required,
+        sort_order: Number(fieldDraft.sort_order ?? 0),
+        is_active: fieldDraft.is_active !== false,
+      },
+    });
+    if (error) { toast.error(error.message); return; }
+    toast.success("Saved.");
+    qc.invalidateQueries({ queryKey: ["ops", "settings", "custom-fields", fieldDraft.entity_type] });
+    if (fieldDraft.entity_type !== entityType) {
+      qc.invalidateQueries({ queryKey: ["ops", "settings", "custom-fields", entityType] });
+    }
+    setFieldDraft(null);
+  }
+  async function deleteField(id: string) {
+    if (!window.confirm("Delete this field?")) return;
+    const { error } = await supabase.rpc("ops_delete_custom_field_definition" as any, { p_id: id });
+    if (error) { toast.error(error.message); return; }
+    toast.success("Deleted.");
+    qc.invalidateQueries({ queryKey: ["ops", "settings", "custom-fields", entityType] });
+  }
 
 
   if (orgQ.isLoading) return <div className="p-6 text-muted-foreground text-sm">Loading…</div>;
@@ -680,9 +797,148 @@ export default function OperationsSettings() {
             </CardContent>
           </Card>
         </TabsContent>
-        <TabsContent value="late_fees"><PlaceholderCard title="Late Fees" /></TabsContent>
-        <TabsContent value="sales"><PlaceholderCard title="Sales & Commission" /></TabsContent>
-        <TabsContent value="custom_fields"><PlaceholderCard title="Custom Fields" /></TabsContent>
+        <TabsContent value="late_fees" className="space-y-6">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle>Late fee rules</CardTitle>
+              <Button size="sm" onClick={() => setRuleDraft({ name: "", fee_type: "percentage", fee_amount: 0, grace_period_days: 0, max_total_fee_amount: "", apply_to: "all", is_active: true })}>Add rule</Button>
+            </CardHeader>
+            <CardContent>
+              {lateFeesQ.isLoading ? (
+                <p className="text-sm text-muted-foreground">Loading…</p>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Amount</TableHead>
+                      <TableHead>Grace (days)</TableHead>
+                      <TableHead>Max cap</TableHead>
+                      <TableHead>Active</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {(lateFeesQ.data ?? []).map((r: any) => (
+                      <TableRow key={r.id}>
+                        <TableCell>{r.name}</TableCell>
+                        <TableCell>{r.fee_type}</TableCell>
+                        <TableCell>{formatLateAmount(r)}</TableCell>
+                        <TableCell>{r.grace_period_days}</TableCell>
+                        <TableCell>{r.max_total_fee_amount ?? "—"}</TableCell>
+                        <TableCell>{r.is_active ? "Yes" : "No"}</TableCell>
+                        <TableCell className="text-right space-x-2">
+                          <Button variant="outline" size="sm" onClick={() => setRuleDraft({ ...r, max_total_fee_amount: r.max_total_fee_amount ?? "" })}>Edit</Button>
+                          <Button variant="destructive" size="sm" onClick={() => deleteRule(r.id)}>Delete</Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    {(lateFeesQ.data ?? []).length === 0 && (
+                      <TableRow><TableCell colSpan={7} className="text-sm text-muted-foreground">No rules.</TableCell></TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="sales" className="space-y-6">
+          <Card>
+            <CardHeader><CardTitle>Sales & commission</CardTitle></CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-muted-foreground">Commission rates apply to invoices where the user is set as salesperson.</p>
+              {salespeopleQ.isLoading ? (
+                <p className="text-sm text-muted-foreground">Loading…</p>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Email</TableHead>
+                      <TableHead>Role</TableHead>
+                      <TableHead>Commission rate</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {(salespeopleQ.data ?? []).map((p: any) => (
+                      <TableRow key={p.id}>
+                        <TableCell>{p.full_name}</TableCell>
+                        <TableCell>{p.email}</TableCell>
+                        <TableCell>{p.role}</TableCell>
+                        <TableCell>{p.commission_rate == null ? "—" : `${p.commission_rate}%`}</TableCell>
+                        <TableCell className="text-right">
+                          <Button variant="outline" size="sm" onClick={() => setCommissionDraft({ user_id: p.id, full_name: p.full_name, commission_rate: p.commission_rate ?? "" })}>Edit rate</Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    {(salespeopleQ.data ?? []).length === 0 && (
+                      <TableRow><TableCell colSpan={5} className="text-sm text-muted-foreground">No salespeople.</TableCell></TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="custom_fields" className="space-y-6">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle>Custom fields</CardTitle>
+              <Button size="sm" onClick={() => setFieldDraft({ entity_type: entityType, field_name: "", field_label: "", field_type: "text", _optionsText: "", is_required: false, sort_order: 0, is_active: true })}>Add field</Button>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2 max-w-xs">
+                <Label>Entity type</Label>
+                <Select value={entityType} onValueChange={setEntityType}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {ENTITY_TYPES.map(t => <SelectItem key={t} value={t}>{humanizeEntity(t)}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              {customFieldsQ.isLoading ? (
+                <p className="text-sm text-muted-foreground">Loading…</p>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Label</TableHead>
+                      <TableHead>Field name</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Required</TableHead>
+                      <TableHead>Active</TableHead>
+                      <TableHead>Order</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {(customFieldsQ.data ?? []).map((f: any) => (
+                      <TableRow key={f.id}>
+                        <TableCell>{f.field_label}</TableCell>
+                        <TableCell>{f.field_name}</TableCell>
+                        <TableCell>{f.field_type}</TableCell>
+                        <TableCell>{f.is_required ? "Yes" : "No"}</TableCell>
+                        <TableCell>{f.is_active ? "Yes" : "No"}</TableCell>
+                        <TableCell>{f.sort_order}</TableCell>
+                        <TableCell className="text-right space-x-2">
+                          <Button variant="outline" size="sm" onClick={() => setFieldDraft({ ...f, _optionsText: Array.isArray(f.dropdown_options) ? f.dropdown_options.join("\n") : "" })}>Edit</Button>
+                          <Button variant="destructive" size="sm" onClick={() => deleteField(f.id)}>Delete</Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    {(customFieldsQ.data ?? []).length === 0 && (
+                      <TableRow><TableCell colSpan={7} className="text-sm text-muted-foreground">No custom fields for this entity.</TableCell></TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
 
         <TabsContent value="numbering" className="space-y-6">
           {/* Card A: Document numbering */}
@@ -1031,6 +1287,137 @@ export default function OperationsSettings() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setScheduleDraft(null)}>Cancel</Button>
             <Button onClick={saveSchedule}>Save</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Late fee rule dialog */}
+      <Dialog open={!!ruleDraft} onOpenChange={(o) => !o && setRuleDraft(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>{ruleDraft?.id ? "Edit late fee rule" : "Add late fee rule"}</DialogTitle></DialogHeader>
+          {ruleDraft && (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Name</Label>
+                <Input value={ruleDraft.name ?? ""} onChange={(e) => setRuleDraft({ ...ruleDraft, name: e.target.value })} />
+              </div>
+              <div className="space-y-2">
+                <Label>Fee type</Label>
+                <Select value={ruleDraft.fee_type ?? "percentage"} onValueChange={(v) => setRuleDraft({ ...ruleDraft, fee_type: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="percentage">Percentage</SelectItem>
+                    <SelectItem value="flat">Flat</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>{ruleDraft.fee_type === "flat" ? "Amount" : "Percent"}</Label>
+                <Input type="number" value={ruleDraft.fee_amount ?? 0} onChange={(e) => setRuleDraft({ ...ruleDraft, fee_amount: e.target.value })} />
+              </div>
+              <div className="space-y-2">
+                <Label>Grace period (days)</Label>
+                <Input type="number" value={ruleDraft.grace_period_days ?? 0} onChange={(e) => setRuleDraft({ ...ruleDraft, grace_period_days: e.target.value })} />
+                <p className="text-xs text-muted-foreground">Days after due date before the fee applies.</p>
+              </div>
+              <div className="space-y-2">
+                <Label>Max total fee (optional)</Label>
+                <Input type="number" value={ruleDraft.max_total_fee_amount ?? ""} onChange={(e) => setRuleDraft({ ...ruleDraft, max_total_fee_amount: e.target.value })} />
+              </div>
+              <div className="space-y-2">
+                <Label>Apply to</Label>
+                <Input value="All customers" disabled />
+                <p className="text-xs text-muted-foreground">Targeted rules are not available yet.</p>
+              </div>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="rule-active">Active</Label>
+                <Switch id="rule-active" checked={ruleDraft.is_active !== false} onCheckedChange={(v) => setRuleDraft({ ...ruleDraft, is_active: v })} />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRuleDraft(null)}>Cancel</Button>
+            <Button onClick={saveRule}>Save</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Commission rate dialog */}
+      <Dialog open={!!commissionDraft} onOpenChange={(o) => !o && setCommissionDraft(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Edit commission rate{commissionDraft?.full_name ? ` — ${commissionDraft.full_name}` : ""}</DialogTitle></DialogHeader>
+          {commissionDraft && (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Commission rate (%)</Label>
+                <Input type="number" value={commissionDraft.commission_rate ?? ""} onChange={(e) => setCommissionDraft({ ...commissionDraft, commission_rate: e.target.value })} />
+                <p className="text-xs text-muted-foreground">Leave blank to clear.</p>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCommissionDraft(null)}>Cancel</Button>
+            <Button onClick={saveCommission}>Save</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Custom field dialog */}
+      <Dialog open={!!fieldDraft} onOpenChange={(o) => !o && setFieldDraft(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>{fieldDraft?.id ? "Edit custom field" : "Add custom field"}</DialogTitle></DialogHeader>
+          {fieldDraft && (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Entity type</Label>
+                <Select value={fieldDraft.entity_type} onValueChange={(v) => setFieldDraft({ ...fieldDraft, entity_type: v })} disabled={!!fieldDraft.id}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {ENTITY_TYPES.map(t => <SelectItem key={t} value={t}>{humanizeEntity(t)}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Field name</Label>
+                <Input value={fieldDraft.field_name ?? ""} disabled={!!fieldDraft.id} onChange={(e) => setFieldDraft({ ...fieldDraft, field_name: e.target.value })} placeholder="po_number" />
+              </div>
+              <div className="space-y-2">
+                <Label>Field label</Label>
+                <Input value={fieldDraft.field_label ?? ""} onChange={(e) => setFieldDraft({ ...fieldDraft, field_label: e.target.value })} />
+              </div>
+              <div className="space-y-2">
+                <Label>Field type</Label>
+                <Select value={fieldDraft.field_type ?? "text"} onValueChange={(v) => setFieldDraft({ ...fieldDraft, field_type: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {FIELD_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              {fieldDraft.field_type === "dropdown" && (
+                <div className="space-y-2">
+                  <Label>Dropdown options</Label>
+                  <Textarea rows={4} value={fieldDraft._optionsText ?? ""} onChange={(e) => setFieldDraft({ ...fieldDraft, _optionsText: e.target.value })} />
+                  <p className="text-xs text-muted-foreground">One option per line.</p>
+                </div>
+              )}
+              <div className="flex items-center justify-between">
+                <Label htmlFor="cf-required">Required</Label>
+                <Switch id="cf-required" checked={!!fieldDraft.is_required} onCheckedChange={(v) => setFieldDraft({ ...fieldDraft, is_required: v })} />
+              </div>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="cf-active">Active</Label>
+                <Switch id="cf-active" checked={fieldDraft.is_active !== false} onCheckedChange={(v) => setFieldDraft({ ...fieldDraft, is_active: v })} />
+              </div>
+              <div className="space-y-2">
+                <Label>Sort order</Label>
+                <Input type="number" value={fieldDraft.sort_order ?? 0} onChange={(e) => setFieldDraft({ ...fieldDraft, sort_order: e.target.value })} />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setFieldDraft(null)}>Cancel</Button>
+            <Button onClick={saveField}>Save</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
