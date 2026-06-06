@@ -3443,6 +3443,7 @@ export type Database = {
           created_by: string | null
           description: string | null
           display_order: number
+          duration_seconds: number | null
           event_external_id: string | null
           event_scheduled_at: string | null
           external_url: string | null
@@ -3453,6 +3454,8 @@ export type Database = {
           item_type: string
           lesson_completion_mode: string | null
           module_id: string
+          mux_asset_id: string | null
+          mux_status: string | null
           quiz_pass_threshold_pct: number | null
           quiz_show_correct_mode: string | null
           skills_actor_invitation_required: boolean
@@ -3479,6 +3482,7 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           display_order?: number
+          duration_seconds?: number | null
           event_external_id?: string | null
           event_scheduled_at?: string | null
           external_url?: string | null
@@ -3489,6 +3493,8 @@ export type Database = {
           item_type: string
           lesson_completion_mode?: string | null
           module_id: string
+          mux_asset_id?: string | null
+          mux_status?: string | null
           quiz_pass_threshold_pct?: number | null
           quiz_show_correct_mode?: string | null
           skills_actor_invitation_required?: boolean
@@ -3515,6 +3521,7 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           display_order?: number
+          duration_seconds?: number | null
           event_external_id?: string | null
           event_scheduled_at?: string | null
           external_url?: string | null
@@ -3525,6 +3532,8 @@ export type Database = {
           item_type?: string
           lesson_completion_mode?: string | null
           module_id?: string
+          mux_asset_id?: string | null
+          mux_status?: string | null
           quiz_pass_threshold_pct?: number | null
           quiz_show_correct_mode?: string | null
           skills_actor_invitation_required?: boolean
@@ -10779,6 +10788,14 @@ export type Database = {
           out_original_filename: string
           out_path: string
           out_size_bytes: number
+        }[]
+      }
+      get_content_item_video_playback: {
+        Args: { p_content_item_id: string }
+        Returns: {
+          out_mux_status: string
+          out_playback_id: string
+          out_video_source_type: string
         }[]
       }
       get_curriculum_detail: {
