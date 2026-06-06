@@ -120,6 +120,17 @@ export default function OperationsInvoiceDetail() {
     },
   });
 
+  const sendReceiptsQ = useQuery({
+    queryKey: ["ops", "invoice-expense-receipts", inv?.id],
+    enabled: sendOpen && !!inv?.id,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("ops_get_invoice_expense_receipts" as any, { p_invoice: inv.id });
+      if (error) throw error;
+      return (data ?? []) as Array<{ receipt_storage_path: string; suggested_filename: string }>;
+    },
+  });
+  const receiptCount = sendReceiptsQ.data?.length ?? 0;
+
   // Handle ?paid=1 / ?canceled=1
   useEffect(() => {
     const params = new URLSearchParams(location.search);
