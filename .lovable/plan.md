@@ -1,100 +1,79 @@
+# Statement of Account PDF + Statement tab wiring
 
-# Plan: Late Fees + Sales & Commission + Custom Fields
+Two files touched. No backend, RPC, dependency, or other-page changes.
 
-Touch only `src/pages/operations/OperationsSettings.tsx`. Replace the three remaining placeholder `TabsContent`s. No new imports needed (Textarea already imported in prompt 2; everything else already present). No new deps.
+## Part A — `src/lib/operations/documentPdf.ts` (append only)
 
-## New queries
+Keep all existing exports and the module-private helpers (`hexToRgb`, `fetchLogoDataUrl`, `addressLines`, `money`, `fmtDate`, `NAVY`, `ORANGE`) intact. Append:
 
-- `lateFeesQ`: key `["ops","settings","late-fee-rules"]` → `supabase.rpc("ops_list_late_fee_rules" as any)`.
-- `salespeopleQ`: key `["ops","settings","salespeople"]` → `supabase.rpc("ops_list_salespeople" as any)`.
-- `entityType` state (default `"invoice"`).
-- `customFieldsQ`: key `["ops","settings","custom-fields", entityType]` → `supabase.rpc("ops_list_custom_field_definitions" as any, { p_entity_type: entityType })`.
+### `StatementData` type
+Matches the shape returned by `ops_customer_statement`:
+- `customer`: `{ display_name, legal_name, email, billing_address, currency_code }`
+- `from: string|null`, `to: string|null`, `unpaid_only: boolean`
+- `opening_balance: number|null`, `closing_balance: number`, `total_outstanding: number`
+- `transactions[]`: `{ date, type, number|null, description|null, debit, credit, balance }`
+- `open_invoices[]`: `{ invoice_number, issue_date|null, due_date|null, total_amount, balance_due, status }`
 
-All cast `as any`, throw on error, return `data ?? []`.
+### `generateStatementPdf({ branding, statement }) → Blob`
+Lazy `import("jspdf")`, letter portrait, margin 48, currency from `statement.customer.currency_code`.
 
-## New helpers (in-file)
+Header (mirrors "standard" template branch):
+- `fetchLogoDataUrl(branding.logo_url)` drawn top-left.
+- Right side: brand-colored bold "Statement of Account" title via `hexToRgb(branding.brand_color)`.
+- Accent-colored 2pt rule under the header.
+- Company block (left) from `branding` via `addressLines(branding.address)` + email/phone/website/tax_id, identical to the standard template.
 
-- `ENTITY_TYPES = ["customer","item","project","task","time_entry","expense","estimate","invoice"]`.
-- `humanizeEntity(t)`: map (`time_entry` → "Time Entry", `credit_note` n/a), fallback titleCase (reuses existing `titleCase`).
-- `FIELD_TYPES = ["text","number","date","dropdown","checkbox","longtext"]`.
-- `formatLateAmount(row)`: `row.fee_type === "percentage" ? `${row.fee_amount}%` : `$${row.fee_amount}``.
+Sub-header:
+- Date range line: `"From {fmtDate(from)} to {fmtDate(to)}"`, or `"As of {fmtDate(to)}"` when `from` is null.
+- "BILL TO" block from `statement.customer` (display_name || legal_name, `addressLines(billing_address)`, email).
 
-## Drafts/state
+Body when `unpaid_only === false`:
+- "Opening balance" line right-aligned, `money(opening_balance, currency)`.
+- Ledger table — columns: Date / Type (capitalize first letter) / Reference (=`number`) / Debit / Credit / Balance. Blank when debit/credit is 0. Header band uses the standard template's `[241,241,241]` fill with navy text. Page-break loop identical to `generateDocumentPdf`'s line table (re-draw header on overflow).
+- "Closing balance" line.
 
-- `ruleDraft: any | null` — late fee dialog.
-- `rateDraft: any | null` — commission dialog.
-- `fieldDraft: any | null` — custom field dialog. Carries an extra `_optionsText: string` for the Textarea round-trip (split on newlines on save).
+Body always (and the only body when `unpaid_only === true`):
+- "Open Invoices" table — columns: Invoice # / Issue date / Due date / Total / Balance due / Status. Same header style and pagination as the ledger.
+- "Total outstanding" line, bold, brand-colored, right-aligned.
 
-## Late Fees tab
+Footer: same one-liner as `generateDocumentPdf` — gray 8pt `branding.legal_name || branding.name` at `H - 24`.
 
-Card with header + "Add rule" button (opens `ruleDraft` seeded `{ name:"", fee_type:"percentage", fee_amount:0, grace_period_days:0, max_total_fee_amount:"", apply_to:"all", is_active:true }`).
+### `downloadStatementPdf(args, filename) → Promise<void>`
+Identical blob → anchor → click → revoke pattern as `downloadDocumentPdf`.
 
-Table cols: Name, Type, Amount (`formatLateAmount`), Grace (days), Max cap (`row.max_total_fee_amount ?? "—"`), Active (Yes/No), Actions (Edit/Delete).
+## Part B — `src/pages/operations/OperationsCustomerDetail.tsx` (Statement tab only)
 
-Edit opens dialog with `{ ...row, max_total_fee_amount: row.max_total_fee_amount ?? "" }`.
+Leave every other tab, query, dialog, helper, and the v5 object-form `invalidateQueries` calls untouched.
 
-Dialog fields per spec. Amount label adapts to `fee_type`. `apply_to` rendered as a disabled `Input value="All customers"` with helper "Targeted rules are not available yet." Always saved as `"all"`.
+### Imports
+Add `downloadStatementPdf` from `@/lib/operations/documentPdf` and `Switch` from `@/components/ui/switch`.
 
-Save: `ops_upsert_late_fee_rule(p_id: ruleDraft.id ?? null, p_patch: { name, fee_type, fee_amount: Number(...), grace_period_days: Number(...), max_total_fee_amount: max==="" ? null : Number(max), apply_to: "all", is_active })` → invalidate `["ops","settings","late-fee-rules"]`.
+### New query
+`orgBrandingQ` with key `["ops","org-branding"]`:
+`opsSupabase.from("organizations" as any).select("*").maybeSingle()`.
 
-Delete: `window.confirm` + `ops_delete_late_fee_rule`.
+### New state (added with the other `useState` calls, above any early return)
+- `stmtFrom: string` (default `""`)
+- `stmtTo: string` (default today's local date `YYYY-MM-DD` built from `getFullYear()` / `getMonth()+1` / `getDate()` with zero-padding — never `toISOString`)
+- `stmtUnpaidOnly: boolean` (default `false`)
+- `stmtData: any` (default `null`)
+- `stmtLoading: boolean` (default `false`)
 
-## Sales & Commission tab
+### Statement tab content (replaces the placeholder)
+Controls row:
+- "From" date input bound to `stmtFrom`.
+- "To" date input bound to `stmtTo`.
+- `Switch` labeled "Unpaid invoices only" bound to `stmtUnpaidOnly`.
+- "Generate" button: sets `stmtLoading=true`, calls `supabase.rpc("ops_customer_statement" as any, { p_customer_id: id, p_from: stmtFrom || null, p_to: stmtTo || null, p_unpaid_only: stmtUnpaidOnly })`. On error `toast.error(error.message)`. On success `setStmtData(data)`. Finally clears loading.
+- "Download PDF" button, `disabled` until `stmtData` exists, calls `downloadStatementPdf({ branding: (orgBrandingQ.data ?? {}) as any, statement: stmtData }, \`Statement-${c?.display_name ?? "customer"}.pdf\`)`.
 
-Card with helper paragraph "Commission rates apply to invoices where the user is set as salesperson." then table.
+Inline render when `stmtData` is present (uses `formatMoney(..., stmtData.customer?.currency_code || cur)`):
+- If `!stmtData.unpaid_only`: "Opening balance" line, ledger Table (Date / Type / Reference / Debit / Credit / Balance from `stmtData.transactions`), "Closing balance" line. Empty debit/credit cells when value is 0.
+- Always: "Open Invoices" Table (Invoice # / Issue date / Due date / Total / Balance due / Status from `stmtData.open_invoices`, Status via `StatusBadge`), then "Total outstanding" line.
 
-Cols: Name (`full_name`), Email, Role, Commission rate (`rate == null ? "—" : `${rate}%``), Actions (Edit rate).
+All in one Card matching the visual style of other tabs.
 
-Edit opens `rateDraft = { user_id: row.id, full_name: row.full_name, commission_rate: row.commission_rate ?? "" }`.
-
-Dialog: single Input type="number" (label "Commission rate (%)"). Save → `ops_set_user_commission_rate(p_user_id: rateDraft.user_id, p_rate: rateDraft.commission_rate === "" ? null : Number(rateDraft.commission_rate))`. Invalidate `["ops","settings","salespeople"]`.
-
-No add/delete.
-
-## Custom Fields tab
-
-Card. At top: entity type Select (8 values, humanized). Below: header row with "Add field" button + table.
-
-"Add field" seeds `fieldDraft = { entity_type: entityType, field_name: "", field_label: "", field_type: "text", _optionsText: "", is_required: false, sort_order: 0, is_active: true }`.
-
-Table cols: Label, Field name, Type, Required, Active, Order, Actions.
-
-Edit seeds with `{ ...row, _optionsText: Array.isArray(row.dropdown_options) ? row.dropdown_options.join("\n") : "" }`.
-
-Dialog fields:
-- `entity_type` Select (8 types), disabled when editing.
-- `field_name` Input, disabled when editing.
-- `field_label` Input.
-- `field_type` Select (6 types).
-- `_optionsText` Textarea, rendered only when `field_type === "dropdown"`. Helper "One option per line."
-- `is_required` Switch.
-- `is_active` Switch.
-- `sort_order` Input type="number".
-
-Save:
-```
-const opts = fieldDraft.field_type === "dropdown"
-  ? fieldDraft._optionsText.split("\n").map(s => s.trim()).filter(Boolean)
-  : null;
-ops_upsert_custom_field_definition(p_id: fieldDraft.id ?? null, p_patch: {
-  entity_type, field_name, field_label, field_type,
-  dropdown_options: opts,
-  is_required, sort_order: Number(sort_order), is_active,
-})
-```
-Invalidate `["ops","settings","custom-fields", entityType]`.
-
-Delete: confirm + `ops_delete_custom_field_definition`.
-
-## Dialog placement
-
-Append three new `<Dialog>` blocks at the bottom of the component alongside the existing dialogs (after the reminder schedule dialog) — same pattern: `open={!!draft}` / `onOpenChange={(o) => !o && setDraft(null)}`.
-
-## Untouched
-
-Branding, Numbering & Tax, and Templates & Reminders tabs and all their dialogs/handlers stay verbatim. Only the three placeholder TabsContents are replaced.
-
-## Acceptance
-- Late Fees: list+CRUD; Amount column reflects type; apply_to locked to "All customers"; max cap optional.
-- Sales: rate edit persists; clearing sets null/—.
-- Custom Fields: entity selector reloads list; CRUD works; dropdown options only shown for `dropdown` and round-trip as string array; `entity_type`/`field_name` locked on edit.
+## Out of scope
+- No backend, RPC, or other operations pages.
+- No new dependencies (jsPDF is already used).
+- No changes to existing exports in `documentPdf.ts`.
