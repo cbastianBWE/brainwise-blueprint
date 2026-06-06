@@ -56,6 +56,8 @@ export default function OperationsInvoiceDetail() {
   const [refundPayment, setRefundPayment] = useState<any>(null);
   const [refundAmount, setRefundAmount] = useState("");
   const [refunding, setRefunding] = useState(false);
+  const [sendOpen, setSendOpen] = useState(false);
+  const [attachReceipts, setAttachReceipts] = useState(false);
 
   const invoiceQ = useQuery({
     queryKey: ["ops", "invoice", id],
