@@ -11377,6 +11377,16 @@ export type Database = {
         Returns: Json
       }
       ops_accept_estimate_by_token: { Args: { p_token: string }; Returns: Json }
+      ops_add_comment: {
+        Args: {
+          p_body: string
+          p_document_id: string
+          p_document_type: string
+          p_parent?: string
+          p_visible_to_customer?: boolean
+        }
+        Returns: string
+      }
       ops_apply_credit_note_to_invoice: {
         Args: { p_amount: number; p_credit_note: string; p_invoice: string }
         Returns: string
@@ -11385,6 +11395,7 @@ export type Database = {
         Args: { p_amount: number; p_credit: string; p_invoice: string }
         Returns: string
       }
+      ops_apply_late_fees: { Args: never; Returns: Json }
       ops_apply_retainer_to_invoice: {
         Args: { p_amount: number; p_invoice: string; p_retainer: string }
         Returns: string
@@ -11432,7 +11443,19 @@ export type Database = {
         Args: { p_reason?: string; p_token: string }
         Returns: Json
       }
+      ops_delete_custom_field_definition: {
+        Args: { p_id: string }
+        Returns: undefined
+      }
       ops_delete_draft_invoice: { Args: { p_id: string }; Returns: undefined }
+      ops_delete_email_template: { Args: { p_id: string }; Returns: undefined }
+      ops_delete_late_fee_rule: { Args: { p_id: string }; Returns: undefined }
+      ops_delete_reminder_schedule: {
+        Args: { p_id: string }
+        Returns: undefined
+      }
+      ops_delete_tax_authority: { Args: { p_id: string }; Returns: undefined }
+      ops_delete_tax_rate: { Args: { p_id: string }; Returns: undefined }
       ops_due_payment_reminders: { Args: never; Returns: Json }
       ops_flag_overdue_invoices: { Args: never; Returns: number }
       ops_get_estimate_send_bundle: {
@@ -11454,6 +11477,7 @@ export type Database = {
           suggested_filename: string
         }[]
       }
+      ops_get_merge_tag_catalog: { Args: never; Returns: Json }
       ops_get_public_document_by_token: {
         Args: { p_token: string }
         Returns: Json
@@ -11485,7 +11509,27 @@ export type Database = {
         }
         Returns: string
       }
+      ops_list_activity: {
+        Args: { p_entity_id: string; p_entity_type: string }
+        Returns: Json
+      }
+      ops_list_comments: {
+        Args: { p_document_id: string; p_document_type: string }
+        Returns: Json
+      }
+      ops_list_currencies: { Args: never; Returns: Json }
+      ops_list_custom_field_definitions: {
+        Args: { p_entity_type?: string }
+        Returns: Json
+      }
+      ops_list_email_templates: { Args: never; Returns: Json }
       ops_list_invoice_payments: { Args: { p_invoice: string }; Returns: Json }
+      ops_list_late_fee_rules: { Args: never; Returns: Json }
+      ops_list_numbering_schemes: { Args: never; Returns: Json }
+      ops_list_reminder_schedules: { Args: never; Returns: Json }
+      ops_list_salespeople: { Args: never; Returns: Json }
+      ops_list_tax_authorities: { Args: never; Returns: Json }
+      ops_list_tax_rates: { Args: never; Returns: Json }
       ops_mark_invoice_sent: {
         Args: { p_invoice: string; p_org: string }
         Returns: undefined
@@ -11503,15 +11547,44 @@ export type Database = {
         Args: { p_invoice: string; p_payment: Json }
         Returns: string
       }
+      ops_record_reminder_sent: {
+        Args: {
+          p_invoice: string
+          p_reminder: string
+          p_status?: string
+          p_to_email: string
+        }
+        Returns: string
+      }
       ops_refund_credit_note: {
         Args: { p_amount: number; p_id: string }
         Returns: string
+      }
+      ops_render_email_preview: {
+        Args: { p_context?: Json; p_template_type: string }
+        Returns: Json
+      }
+      ops_render_invoice_reminder: {
+        Args: { p_invoice: string; p_template_type?: string }
+        Returns: Json
       }
       ops_run_recurring_expenses: { Args: never; Returns: number }
       ops_run_recurring_invoices: { Args: never; Returns: number }
       ops_set_credit_note_status: {
         Args: { p_action: string; p_id: string }
         Returns: string
+      }
+      ops_set_custom_field_values: {
+        Args: { p_entity_id: string; p_entity_type: string; p_values: Json }
+        Returns: undefined
+      }
+      ops_set_document_salesperson: {
+        Args: {
+          p_document_id: string
+          p_document_type: string
+          p_salesperson: string
+        }
+        Returns: undefined
       }
       ops_set_estimate_status: {
         Args: { p_action: string; p_id: string }
@@ -11524,6 +11597,10 @@ export type Database = {
       ops_set_retainer_status: {
         Args: { p_action: string; p_id: string }
         Returns: string
+      }
+      ops_set_user_commission_rate: {
+        Args: { p_rate: number; p_user_id: string }
+        Returns: undefined
       }
       ops_start_timer: {
         Args: {
@@ -11542,7 +11619,31 @@ export type Database = {
         Args: { p_header: Json; p_id: string; p_lines: Json }
         Returns: string
       }
+      ops_update_numbering_scheme: {
+        Args: { p_id: string; p_patch: Json }
+        Returns: string
+      }
       ops_update_org_branding: { Args: { p_patch: Json }; Returns: undefined }
+      ops_upsert_currency: {
+        Args: { p_id: string; p_patch: Json }
+        Returns: string
+      }
+      ops_upsert_custom_field_definition: {
+        Args: { p_id: string; p_patch: Json }
+        Returns: string
+      }
+      ops_upsert_email_template: {
+        Args: { p_id: string; p_patch: Json }
+        Returns: string
+      }
+      ops_upsert_late_fee_rule: {
+        Args: { p_id: string; p_patch: Json }
+        Returns: string
+      }
+      ops_upsert_reminder_schedule: {
+        Args: { p_id: string; p_patch: Json }
+        Returns: string
+      }
       ops_upsert_stripe_customer: {
         Args: {
           p_customer: string
@@ -11550,6 +11651,14 @@ export type Database = {
           p_stripe_customer_id: string
         }
         Returns: undefined
+      }
+      ops_upsert_tax_authority: {
+        Args: { p_id: string; p_patch: Json }
+        Returns: string
+      }
+      ops_upsert_tax_rate: {
+        Args: { p_id: string; p_patch: Json }
+        Returns: string
       }
       opt_in_to_newsletter: { Args: never; Returns: Json }
       opt_out_of_newsletter: { Args: never; Returns: Json }
