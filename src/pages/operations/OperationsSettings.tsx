@@ -797,9 +797,148 @@ export default function OperationsSettings() {
             </CardContent>
           </Card>
         </TabsContent>
-        <TabsContent value="late_fees"><PlaceholderCard title="Late Fees" /></TabsContent>
-        <TabsContent value="sales"><PlaceholderCard title="Sales & Commission" /></TabsContent>
-        <TabsContent value="custom_fields"><PlaceholderCard title="Custom Fields" /></TabsContent>
+        <TabsContent value="late_fees" className="space-y-6">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle>Late fee rules</CardTitle>
+              <Button size="sm" onClick={() => setRuleDraft({ name: "", fee_type: "percentage", fee_amount: 0, grace_period_days: 0, max_total_fee_amount: "", apply_to: "all", is_active: true })}>Add rule</Button>
+            </CardHeader>
+            <CardContent>
+              {lateFeesQ.isLoading ? (
+                <p className="text-sm text-muted-foreground">Loading…</p>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Amount</TableHead>
+                      <TableHead>Grace (days)</TableHead>
+                      <TableHead>Max cap</TableHead>
+                      <TableHead>Active</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {(lateFeesQ.data ?? []).map((r: any) => (
+                      <TableRow key={r.id}>
+                        <TableCell>{r.name}</TableCell>
+                        <TableCell>{r.fee_type}</TableCell>
+                        <TableCell>{formatLateAmount(r)}</TableCell>
+                        <TableCell>{r.grace_period_days}</TableCell>
+                        <TableCell>{r.max_total_fee_amount ?? "—"}</TableCell>
+                        <TableCell>{r.is_active ? "Yes" : "No"}</TableCell>
+                        <TableCell className="text-right space-x-2">
+                          <Button variant="outline" size="sm" onClick={() => setRuleDraft({ ...r, max_total_fee_amount: r.max_total_fee_amount ?? "" })}>Edit</Button>
+                          <Button variant="destructive" size="sm" onClick={() => deleteRule(r.id)}>Delete</Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    {(lateFeesQ.data ?? []).length === 0 && (
+                      <TableRow><TableCell colSpan={7} className="text-sm text-muted-foreground">No rules.</TableCell></TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="sales" className="space-y-6">
+          <Card>
+            <CardHeader><CardTitle>Sales & commission</CardTitle></CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-muted-foreground">Commission rates apply to invoices where the user is set as salesperson.</p>
+              {salespeopleQ.isLoading ? (
+                <p className="text-sm text-muted-foreground">Loading…</p>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Email</TableHead>
+                      <TableHead>Role</TableHead>
+                      <TableHead>Commission rate</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {(salespeopleQ.data ?? []).map((p: any) => (
+                      <TableRow key={p.id}>
+                        <TableCell>{p.full_name}</TableCell>
+                        <TableCell>{p.email}</TableCell>
+                        <TableCell>{p.role}</TableCell>
+                        <TableCell>{p.commission_rate == null ? "—" : `${p.commission_rate}%`}</TableCell>
+                        <TableCell className="text-right">
+                          <Button variant="outline" size="sm" onClick={() => setCommissionDraft({ user_id: p.id, full_name: p.full_name, commission_rate: p.commission_rate ?? "" })}>Edit rate</Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    {(salespeopleQ.data ?? []).length === 0 && (
+                      <TableRow><TableCell colSpan={5} className="text-sm text-muted-foreground">No salespeople.</TableCell></TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="custom_fields" className="space-y-6">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle>Custom fields</CardTitle>
+              <Button size="sm" onClick={() => setFieldDraft({ entity_type: entityType, field_name: "", field_label: "", field_type: "text", _optionsText: "", is_required: false, sort_order: 0, is_active: true })}>Add field</Button>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2 max-w-xs">
+                <Label>Entity type</Label>
+                <Select value={entityType} onValueChange={setEntityType}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {ENTITY_TYPES.map(t => <SelectItem key={t} value={t}>{humanizeEntity(t)}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              {customFieldsQ.isLoading ? (
+                <p className="text-sm text-muted-foreground">Loading…</p>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Label</TableHead>
+                      <TableHead>Field name</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Required</TableHead>
+                      <TableHead>Active</TableHead>
+                      <TableHead>Order</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {(customFieldsQ.data ?? []).map((f: any) => (
+                      <TableRow key={f.id}>
+                        <TableCell>{f.field_label}</TableCell>
+                        <TableCell>{f.field_name}</TableCell>
+                        <TableCell>{f.field_type}</TableCell>
+                        <TableCell>{f.is_required ? "Yes" : "No"}</TableCell>
+                        <TableCell>{f.is_active ? "Yes" : "No"}</TableCell>
+                        <TableCell>{f.sort_order}</TableCell>
+                        <TableCell className="text-right space-x-2">
+                          <Button variant="outline" size="sm" onClick={() => setFieldDraft({ ...f, _optionsText: Array.isArray(f.dropdown_options) ? f.dropdown_options.join("\n") : "" })}>Edit</Button>
+                          <Button variant="destructive" size="sm" onClick={() => deleteField(f.id)}>Delete</Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    {(customFieldsQ.data ?? []).length === 0 && (
+                      <TableRow><TableCell colSpan={7} className="text-sm text-muted-foreground">No custom fields for this entity.</TableCell></TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
 
         <TabsContent value="numbering" className="space-y-6">
           {/* Card A: Document numbering */}
