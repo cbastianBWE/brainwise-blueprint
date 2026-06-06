@@ -484,18 +484,18 @@ export default function OperationsSettings() {
     qc.invalidateQueries({ queryKey: ["ops", "settings", "late-fee-rules"] });
   }
 
-  const [rateDraft, setRateDraft] = useState<any | null>(null);
-  async function saveRate() {
-    if (!rateDraft) return;
-    const r = rateDraft.commission_rate;
+  const [commissionDraft, setCommissionDraft] = useState<any | null>(null);
+  async function saveCommission() {
+    if (!commissionDraft) return;
+    const r = commissionDraft.commission_rate;
     const { error } = await supabase.rpc("ops_set_user_commission_rate" as any, {
-      p_user_id: rateDraft.user_id,
+      p_user_id: commissionDraft.user_id,
       p_rate: r === "" || r == null ? null : Number(r),
     });
     if (error) { toast.error(error.message); return; }
     toast.success("Saved.");
     qc.invalidateQueries({ queryKey: ["ops", "settings", "salespeople"] });
-    setRateDraft(null);
+    setCommissionDraft(null);
   }
 
   const [fieldDraft, setFieldDraft] = useState<any | null>(null);
