@@ -23,6 +23,7 @@ import { Loader2, Save, Archive, Sparkles, Video, ExternalLink } from "lucide-re
 import { useNavigate } from "react-router-dom";
 import { ITEM_TYPE_OPTIONS, ItemTypeIcon } from "./_shared";
 import { FileUploadField } from "@/components/super-admin/FileUploadField";
+import { MuxVideoUploadField } from "@/components/super-admin/MuxVideoUploadField";
 
 interface ContentItemEditorProps {
   mode: "create" | "edit";
@@ -55,7 +56,7 @@ function ContentItemEditor({
   const [archiving, setArchiving] = useState(false);
 
   // video
-  const [videoSourceType, setVideoSourceType] = useState<string>(initial?.video_source_type ?? "youtube_unlisted");
+  const [videoSourceType, setVideoSourceType] = useState<string>(initial?.video_source_type ?? "mux");
   const [videoSourceId, setVideoSourceId] = useState<string>(initial?.video_source_id ?? "");
   const [videoCompletionThreshold, setVideoCompletionThreshold] = useState<string>(
     initial?.video_completion_threshold_pct == null ? "95" : String(initial.video_completion_threshold_pct)
@@ -183,7 +184,7 @@ function ContentItemEditor({
         const t = Number(videoCompletionThreshold);
         // For supabase_storage, source_id is filled in AFTER create via FileUploadField (chicken-and-egg).
         // All other source types require the source_id at save time.
-        const sourceIdOk = videoSourceType === "supabase_storage" || videoSourceId.trim() !== "";
+        const sourceIdOk = videoSourceType === "supabase_storage" || videoSourceType === "mux" || videoSourceId.trim() !== "";
         return videoSourceType.trim() !== "" && sourceIdOk && Number.isFinite(t) && t >= 1 && t <= 100;
       }
       case "quiz": {
@@ -238,7 +239,7 @@ function ContentItemEditor({
       thumbnailAssetId !== (initial.thumbnail_asset_id ?? null) ||
       reason.trim().length > 0 ||
       // per-type quick check (any change triggers dirty in edit)
-      videoSourceType !== (initial.video_source_type ?? "youtube_unlisted") ||
+      videoSourceType !== (initial.video_source_type ?? "mux") ||
       videoSourceId !== (initial.video_source_id ?? "") ||
       videoCompletionThreshold !== (initial.video_completion_threshold_pct == null ? "95" : String(initial.video_completion_threshold_pct)) ||
       videoAiSummary !== (initial.video_ai_summary ?? "") ||
@@ -650,6 +651,22 @@ function ContentItemEditor({
                       refField="content_item_video_source"
                       value={videoSourceId || null}
                       onChange={(newAssetId) => setVideoSourceId(newAssetId ?? "")}
+                      disabled={saving}
+                    />
+                  ) : (
+                    <div className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">
+                      Save the content item first. After saving, you'll be able to upload the video file or pick one from the library.
+                    </div>
+                  )}
+                </div>
+              ) : videoSourceType === "mux" ? (
+                <div className="space-y-2">
+                  <Label>Video file</Label>
+                  {initial?.id ? (
+                    <MuxVideoUploadField
+                      contentItemId={initial.id}
+                      initialMuxStatus={initial.mux_status ?? null}
+                      initialPlaybackId={initial.video_source_id ?? null}
                       disabled={saving}
                     />
                   ) : (
