@@ -31,10 +31,15 @@ export default function OperationsCustomers() {
           <h1 className="text-2xl font-semibold">Customers</h1>
           <p className="text-muted-foreground text-sm">Operations · Customer accounts</p>
         </div>
-        <Button onClick={() => setCreateOpen(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          New customer
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => navigate("/operations/import?entity=customers")}>
+            Import CSV
+          </Button>
+          <Button onClick={() => setCreateOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            New customer
+          </Button>
+        </div>
       </div>
       <Card>
         <CardHeader><CardTitle>All customers</CardTitle></CardHeader>
