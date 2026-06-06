@@ -682,9 +682,174 @@ export default function OperationsCustomerDetail() {
 
         <TabsContent value="statement">
           <Card>
-            <CardHeader><CardTitle>Statement</CardTitle></CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground text-sm">Statement generation is coming in the next update.</p>
+            <CardHeader><CardTitle>Statement of account</CardTitle></CardHeader>
+            <CardContent className="space-y-6">
+              <div className="flex flex-wrap items-end gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="stmt-from">From</Label>
+                  <Input
+                    id="stmt-from"
+                    type="date"
+                    value={stmtFrom}
+                    onChange={(e) => setStmtFrom(e.target.value)}
+                    className="w-44"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="stmt-to">To</Label>
+                  <Input
+                    id="stmt-to"
+                    type="date"
+                    value={stmtTo}
+                    onChange={(e) => setStmtTo(e.target.value)}
+                    className="w-44"
+                  />
+                </div>
+                <div className="flex items-center gap-2 pb-2">
+                  <Switch
+                    id="stmt-unpaid"
+                    checked={stmtUnpaidOnly}
+                    onCheckedChange={setStmtUnpaidOnly}
+                  />
+                  <Label htmlFor="stmt-unpaid" className="cursor-pointer">Unpaid invoices only</Label>
+                </div>
+                <div className="flex items-center gap-2 pb-2 ml-auto">
+                  <Button
+                    size="sm"
+                    disabled={!c || stmtLoading}
+                    onClick={async () => {
+                      setStmtLoading(true);
+                      const { data, error } = await supabase.rpc("ops_customer_statement" as any, {
+                        p_customer_id: id,
+                        p_from: stmtFrom || null,
+                        p_to: stmtTo || null,
+                        p_unpaid_only: stmtUnpaidOnly,
+                      });
+                      setStmtLoading(false);
+                      if (error) {
+                        toast.error(error.message);
+                        return;
+                      }
+                      setStmtData(data);
+                    }}
+                  >
+                    {stmtLoading ? "Generating…" : "Generate"}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={!stmtData}
+                    onClick={async () => {
+                      try {
+                        await downloadStatementPdf(
+                          { branding: (orgBrandingQ.data ?? {}) as any, statement: stmtData },
+                          `Statement-${c?.display_name ?? "customer"}.pdf`,
+                        );
+                      } catch (err: any) {
+                        toast.error(err?.message ?? "Failed to download statement");
+                      }
+                    }}
+                  >
+                    Download PDF
+                  </Button>
+                </div>
+              </div>
+
+              {stmtData && (() => {
+                const stmtCur = stmtData.customer?.currency_code || cur;
+                return (
+                  <div className="space-y-6">
+                    {!stmtData.unpaid_only && (
+                      <>
+                        <div className="flex justify-end text-sm">
+                          <div className="w-72 flex justify-between border-b py-1">
+                            <span className="text-muted-foreground">Opening balance</span>
+                            <span>{formatMoney(stmtData.opening_balance ?? 0, stmtCur)}</span>
+                          </div>
+                        </div>
+
+                        <div>
+                          <h3 className="text-sm font-semibold mb-2">Ledger</h3>
+                          {!stmtData.transactions || stmtData.transactions.length === 0 ? (
+                            <p className="text-muted-foreground text-sm">No transactions in this period.</p>
+                          ) : (
+                            <Table>
+                              <TableHeader>
+                                <TableRow>
+                                  <TableHead>Date</TableHead>
+                                  <TableHead>Type</TableHead>
+                                  <TableHead>Reference</TableHead>
+                                  <TableHead className="text-right">Debit</TableHead>
+                                  <TableHead className="text-right">Credit</TableHead>
+                                  <TableHead className="text-right">Balance</TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {stmtData.transactions.map((t: any, i: number) => (
+                                  <TableRow key={i}>
+                                    <TableCell>{formatDate(t.date)}</TableCell>
+                                    <TableCell className="capitalize">{t.type ?? ""}</TableCell>
+                                    <TableCell>{t.number ?? ""}</TableCell>
+                                    <TableCell className="text-right">{Number(t.debit) ? formatMoney(t.debit, stmtCur) : ""}</TableCell>
+                                    <TableCell className="text-right">{Number(t.credit) ? formatMoney(t.credit, stmtCur) : ""}</TableCell>
+                                    <TableCell className="text-right">{formatMoney(t.balance, stmtCur)}</TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          )}
+                        </div>
+
+                        <div className="flex justify-end text-sm">
+                          <div className="w-72 flex justify-between border-b py-1 font-semibold">
+                            <span>Closing balance</span>
+                            <span>{formatMoney(stmtData.closing_balance, stmtCur)}</span>
+                          </div>
+                        </div>
+                      </>
+                    )}
+
+                    <div>
+                      <h3 className="text-sm font-semibold mb-2">Open invoices</h3>
+                      {!stmtData.open_invoices || stmtData.open_invoices.length === 0 ? (
+                        <p className="text-muted-foreground text-sm">No open invoices.</p>
+                      ) : (
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Invoice #</TableHead>
+                              <TableHead>Issue date</TableHead>
+                              <TableHead>Due date</TableHead>
+                              <TableHead className="text-right">Total</TableHead>
+                              <TableHead className="text-right">Balance due</TableHead>
+                              <TableHead>Status</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {stmtData.open_invoices.map((r: any, i: number) => (
+                              <TableRow key={i}>
+                                <TableCell className="font-medium">{r.invoice_number}</TableCell>
+                                <TableCell>{formatDate(r.issue_date)}</TableCell>
+                                <TableCell>{formatDate(r.due_date)}</TableCell>
+                                <TableCell className="text-right">{formatMoney(r.total_amount, stmtCur)}</TableCell>
+                                <TableCell className="text-right">{formatMoney(r.balance_due, stmtCur)}</TableCell>
+                                <TableCell><StatusBadge status={r.status} /></TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      )}
+                    </div>
+
+                    <div className="flex justify-end text-sm">
+                      <div className="w-72 flex justify-between border-b py-1 font-semibold">
+                        <span>Total outstanding</span>
+                        <span>{formatMoney(stmtData.total_outstanding, stmtCur)}</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
             </CardContent>
           </Card>
         </TabsContent>
