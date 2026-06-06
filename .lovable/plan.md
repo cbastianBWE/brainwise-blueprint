@@ -1,24 +1,13 @@
-## Operations Reports page
+Edit only `src/pages/operations/OperationsInvoiceDetail.tsx`:
 
-Three additive changes; no existing behavior touched.
+1. Imports: add `Checkbox` from `@/components/ui/checkbox`; add `DialogDescription` to existing dialog import.
+2. New state near other `useState`s: `sendOpen` (bool), `attachReceipts` (bool).
+3. New `useQuery` `["ops","invoice-expense-receipts", inv?.id]`, `enabled: sendOpen && !!inv?.id`, calling `supabase.rpc("ops_get_invoice_expense_receipts", { p_invoice: inv.id })`; derive `receiptCount`.
+4. "Send invoice to customer" `DropdownMenuItem` now opens dialog (resets `attachReceipts` to false) instead of calling send directly.
+5. In `handleSendInvoice`:
+   - Change `operations-documents` upload from `opsSupabase.storage` to `supabase.storage` (no other changes to upload).
+   - Add `include_expense_receipts: attachReceipts` to `ops-invoice-send` invoke body.
+   - On success also `setSendOpen(false)`.
+6. Add new `<Dialog>` at bottom of JSX (near other dialogs) with title, description (mentions customer email if present), conditional checkbox showing receipt count, Cancel + Send buttons. Send button calls `handleSendInvoice()`; dialog disables close while `sending`.
 
-### 1. New file: `src/pages/operations/OperationsReports.tsx`
-Create the page exactly as provided in the user message. It:
-- Defines 4 report configs (`invoice_details`, `payments_received`, `time_tracking`, `project_profitability`) pointing at operations-schema views/rollup (`report_invoices`, `report_payments`, `report_time`, `project_financials_rollup`).
-- Uses `opsSupabase` (cast `as any`) to select from the view, with optional `gte`/`lte` date filtering and default sort.
-- Renders Card-based Filters (Report select, From/To date inputs when applicable, Columns dropdown to toggle visibility, CSV export button) and a Card with a `Table` of results using `formatMoney`/`formatDate` from `./_shared`.
-- CSV export builds a quoted CSV client-side and triggers a Blob download for currently visible columns.
-
-### 2. Edit: `src/App.tsx`
-- Add `import OperationsReports from "./pages/operations/OperationsReports";` next to the other operations page imports.
-- Add a `<Route path="/operations/reports" element={<OperationsReports />} />` (wrapped in the same guards the sibling operations routes use) inside the Operations route block.
-
-### 3. Edit: `src/components/AppSidebar.tsx`
-- In `superAdminNav`, immediately after the `Recurring invoices` entry, insert:
-  `{ title: "Reports", url: "/operations/reports", icon: BarChart3 },`
-- `BarChart3` is already imported (confirmed).
-
-### Notes / assumptions
-- Backing views (`report_invoices`, `report_payments`, `report_time`, `project_financials_rollup`) are assumed to already exist in the operations schema; the page uses `as any` casts consistent with other operations pages, so no types regen is required.
-- No database migrations, edge functions, or other files are modified.
-- I will preserve the exact JSX structure from the provided snippet (the prompt's quoted code shows some characters stripped by the chat renderer; the implemented file will be valid TSX matching the described UI).
+No changes to `handleSendReceipt` or any other handler/file.
