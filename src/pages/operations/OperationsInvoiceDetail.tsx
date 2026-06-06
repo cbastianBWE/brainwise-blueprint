@@ -633,6 +633,29 @@ export default function OperationsInvoiceDetail() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={sendOpen} onOpenChange={(o) => { if (!sending) setSendOpen(o); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Send invoice {inv?.invoice_number}</DialogTitle>
+            <DialogDescription>
+              Emails the invoice{cust?.email ? ` to ${cust.email}` : ""} with the PDF attached.
+            </DialogDescription>
+          </DialogHeader>
+          {receiptCount > 0 && (
+            <label className="flex items-center gap-2 text-sm">
+              <Checkbox checked={attachReceipts} onCheckedChange={(v) => setAttachReceipts(v === true)} />
+              Attach {receiptCount} expense receipt{receiptCount === 1 ? "" : "s"}
+            </label>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSendOpen(false)} disabled={sending}>Cancel</Button>
+            <Button onClick={() => handleSendInvoice()} disabled={sending}>
+              {sending ? "Sending…" : "Send invoice"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
