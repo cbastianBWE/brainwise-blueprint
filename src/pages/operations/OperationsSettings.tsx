@@ -280,6 +280,145 @@ export default function OperationsSettings() {
     setCurrencyDraft(null);
   }
 
+  // ---------- Templates & Reminders ----------
+  const templatesQ = useQuery({
+    queryKey: ["ops", "settings", "email-templates"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("ops_list_email_templates" as any);
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+  });
+  const catalogQ = useQuery({
+    queryKey: ["ops", "settings", "merge-catalog"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("ops_get_merge_tag_catalog" as any);
+      if (error) throw error;
+      return (data ?? {}) as Record<string, string[]>;
+    },
+  });
+  const schedulesQ = useQuery({
+    queryKey: ["ops", "settings", "reminder-schedules"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("ops_list_reminder_schedules" as any);
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+  });
+
+  const [templateType, setTemplateType] = useState<string>("invoice_send");
+  const [editor, setEditor] = useState<{
+    id: string | null; subject: string; body_html: string; body_text: string;
+    is_active: boolean; is_default: boolean;
+  }>({ id: null, subject: "", body_html: "", body_text: "", is_active: true, is_default: false });
+  const [activeField, setActiveField] = useState<"subject" | "body">("body");
+  const subjectRef = useRef<HTMLInputElement>(null);
+  const bodyRef = useRef<HTMLTextAreaElement>(null);
+  const [serverPreview, setServerPreview] = useState<{ subject: string; body_html: string } | null>(null);
+  const [savingTemplate, setSavingTemplate] = useState(false);
+
+  useEffect(() => {
+    const row = (templatesQ.data ?? []).find((t: any) => t.template_type === templateType);
+    if (row) {
+      setEditor({
+        id: row.id, subject: row.subject ?? "", body_html: row.body_html ?? "",
+        body_text: row.body_text ?? "", is_active: row.is_active !== false, is_default: !!row.is_default,
+      });
+    } else {
+      setEditor({ id: null, subject: "", body_html: "", body_text: "", is_active: true, is_default: false });
+    }
+    setServerPreview(null);
+  }, [templateType, templatesQ.data]);
+
+  function insertToken(token: string) {
+    const literal = `{{${token}}}`;
+    if (activeField === "subject") {
+      const el = subjectRef.current;
+      const cur = editor.subject;
+      const start = el?.selectionStart ?? cur.length;
+      const end = el?.selectionEnd ?? start;
+      const next = cur.slice(0, start) + literal + cur.slice(end);
+      setEditor(e => ({ ...e, subject: next }));
+      requestAnimationFrame(() => {
+        const e2 = subjectRef.current;
+        if (e2) { e2.focus(); const p = start + literal.length; e2.setSelectionRange(p, p); }
+      });
+    } else {
+      const el = bodyRef.current;
+      const cur = editor.body_html;
+      const start = el?.selectionStart ?? cur.length;
+      const end = el?.selectionEnd ?? start;
+      const next = cur.slice(0, start) + literal + cur.slice(end);
+      setEditor(e => ({ ...e, body_html: next }));
+      requestAnimationFrame(() => {
+        const e2 = bodyRef.current;
+        if (e2) { e2.focus(); const p = start + literal.length; e2.setSelectionRange(p, p); }
+      });
+    }
+  }
+
+  async function saveTemplate() {
+    setSavingTemplate(true);
+    try {
+      const { error } = await supabase.rpc("ops_upsert_email_template" as any, {
+        p_id: editor.id,
+        p_patch: {
+          template_type: templateType,
+          subject: editor.subject,
+          body_html: editor.body_html,
+          body_text: editor.body_text || null,
+          is_default: editor.is_default,
+          is_active: editor.is_active,
+        },
+      });
+      if (error) { toast.error(error.message); return; }
+      toast.success("Template saved.");
+      setServerPreview(null);
+      qc.invalidateQueries({ queryKey: ["ops", "settings", "email-templates"] });
+    } finally { setSavingTemplate(false); }
+  }
+
+  async function verifyServerRender() {
+    const tokens = catalogQ.data?.[templateType] ?? [];
+    const ctx: Record<string, string> = {};
+    for (const t of tokens) ctx[t] = humanizeToken(t);
+    const { data, error } = await supabase.rpc("ops_render_email_preview" as any, {
+      p_template_type: templateType, p_context: ctx,
+    });
+    if (error) { toast.error(error.message); return; }
+    setServerPreview({ subject: (data as any)?.subject ?? "", body_html: (data as any)?.body_html ?? "" });
+  }
+
+  const [scheduleDraft, setScheduleDraft] = useState<any | null>(null);
+  async function saveSchedule() {
+    if (!scheduleDraft) return;
+    if (!scheduleDraft.name) { toast.error("Name is required"); return; }
+    const sel = scheduleDraft.template_id;
+    const { error } = await supabase.rpc("ops_upsert_reminder_schedule" as any, {
+      p_id: scheduleDraft.id ?? null,
+      p_patch: {
+        name: scheduleDraft.name,
+        schedule_offset_days: Number(scheduleDraft.schedule_offset_days ?? 0),
+        template_id: !sel || sel === "__auto__" ? null : sel,
+        is_active: scheduleDraft.is_active !== false,
+        applies_to_overdue_only: !!scheduleDraft.applies_to_overdue_only,
+      },
+    });
+    if (error) { toast.error(error.message); return; }
+    toast.success("Saved.");
+    qc.invalidateQueries({ queryKey: ["ops", "settings", "reminder-schedules"] });
+    setScheduleDraft(null);
+  }
+  async function deleteSchedule(id: string) {
+    if (!window.confirm("Delete this schedule?")) return;
+    const { error } = await supabase.rpc("ops_delete_reminder_schedule" as any, { p_id: id });
+    if (error) { toast.error(error.message); return; }
+    toast.success("Deleted.");
+    qc.invalidateQueries({ queryKey: ["ops", "settings", "reminder-schedules"] });
+  }
+
+
+
   if (orgQ.isLoading) return <div className="p-6 text-muted-foreground text-sm">Loading…</div>;
 
   const field = (label: string, key: string, type: string = "text") => (
