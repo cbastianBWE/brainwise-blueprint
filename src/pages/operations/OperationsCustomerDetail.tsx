@@ -9,12 +9,16 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import CustomerFormDialog from "./CustomerFormDialog";
 import ProjectFormDialog from "./ProjectFormDialog";
 import ApplyToInvoiceDialog from "./ApplyToInvoiceDialog";
 import ContactFormDialog from "./ContactFormDialog";
 import { StatusBadge, formatMoney, formatDate } from "./_shared";
+import { downloadStatementPdf } from "@/lib/operations/documentPdf";
 
 const BILLING_LABELS: Record<string, string> = {
   fixed: "Fixed cost",
