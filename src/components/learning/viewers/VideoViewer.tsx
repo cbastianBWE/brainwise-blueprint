@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2, CircleCheck, ExternalLink } from "lucide-react";
+import { Loader2, CircleCheck } from "lucide-react";
+import MuxPlayer from "@mux/mux-player-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import type { CascadeResult } from "@/hooks/useCompletionReporter";
@@ -65,36 +66,63 @@ export default function VideoViewer({
   const isCompleted = completion?.status === "completed";
   const isSelf = viewerRole === "self";
 
-  const videoRef = useRef<HTMLVideoElement | null>(null);
   const lastReportRef = useRef<number>(0);
   const completedFiredRef = useRef<boolean>(isCompleted);
 
-  // Signed URL for supabase_storage
-  const signedUrlQuery = useQuery({
+  useEffect(() => {
+    completedFiredRef.current = isCompleted;
+  }, [isCompleted]);
+
+  // Single call site for the brokered video URL. Covers supabase_storage and mux;
+  // the response `kind` selects the player. Embeds (youtube/vimeo/cloudflare) do
+  // not use the edge function.
+  const usesEdgeFn = sourceType === "supabase_storage" || sourceType === "mux";
+  const videoQuery = useQuery({
     queryKey: ["content-item-video-url", contentItem.id],
-    enabled: sourceType === "supabase_storage",
+    enabled: usesEdgeFn,
     queryFn: async () => {
       const { data, error } = await supabase.functions.invoke(
         "get-content-item-video-url",
         { body: { p_content_item_id: contentItem.id } },
       );
-      if (error || !data?.signed_url) {
-        throw new Error(data?.error || error?.message || "Video not available.");
+      if (error) {
+        throw new Error(error.message || "Video not available.");
       }
-      return data as { signed_url: string; mime_type?: string };
+      if ((data as any)?.error) {
+        throw new Error((data as any).error);
+      }
+      return data as
+        | { kind: "supabase_storage"; signed_url: string; mime_type?: string }
+        | {
+            kind: "mux";
+            processing?: boolean;
+            mux_status?: string;
+            playback_id?: string;
+            token?: string;
+          };
     },
-    staleTime: 5 * 60 * 1000,
+    // Mux tokens last 2h; refetch comfortably inside that window.
+    staleTime: 60 * 60 * 1000,
+    // While a Mux asset is still processing, poll so it appears when ready.
+    refetchInterval: (q) =>
+      (q.state.data as any)?.kind === "mux" && (q.state.data as any)?.processing
+        ? 8000
+        : false,
   });
 
-  const onTimeUpdate = async () => {
+  // Shared progress reporter for both native <video> and <MuxPlayer>.
+  const onTimeUpdate = async (e: {
+    currentTarget: { currentTime?: number; duration?: number };
+  }) => {
     if (!isSelf) return;
-    const v = videoRef.current;
-    if (!v || !v.duration || !isFinite(v.duration)) return;
-    const pct = Math.floor((v.currentTime / v.duration) * 100);
-    const pos = Math.floor(v.currentTime);
+    const el = e.currentTarget;
+    const duration = el?.duration;
+    const currentTime = el?.currentTime;
+    if (!duration || !isFinite(duration) || currentTime == null) return;
+    const pct = Math.floor((currentTime / duration) * 100);
+    const pos = Math.floor(currentTime);
     const now = Date.now();
 
-    // Threshold reached → complete
     if (!completedFiredRef.current && pct >= threshold) {
       completedFiredRef.current = true;
       await reportCompletion("record_video_progress", {
@@ -105,7 +133,6 @@ export default function VideoViewer({
       return;
     }
 
-    // Periodic progress (every 15s)
     if (now - lastReportRef.current >= 15000) {
       lastReportRef.current = now;
       await reportCompletion("record_video_progress", {
@@ -116,14 +143,8 @@ export default function VideoViewer({
     }
   };
 
-  useEffect(() => {
-    completedFiredRef.current = isCompleted;
-  }, [isCompleted]);
-
   const embedUrl = buildEmbedUrl(sourceType, sourceId);
-  const muxHls = sourceType === "mux" && sourceId
-    ? `https://stream.mux.com/${sourceId}.m3u8`
-    : null;
+  const data = videoQuery.data as any;
 
   const markAsWatched = async () => {
     await reportCompletion("record_video_progress", {
@@ -136,35 +157,71 @@ export default function VideoViewer({
   return (
     <div className="space-y-4">
       {/* Player */}
-      {sourceType === "supabase_storage" ? (
-        signedUrlQuery.isLoading ? (
+      {usesEdgeFn ? (
+        videoQuery.isLoading ? (
           <div className="aspect-video w-full flex items-center justify-center rounded-md bg-muted">
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
           </div>
-        ) : signedUrlQuery.isError || !signedUrlQuery.data?.signed_url ? (
+        ) : videoQuery.isError ? (
           <div className="rounded-md border border-destructive/30 bg-card p-6 text-sm text-destructive">
             Could not load video:{" "}
-            {signedUrlQuery.error instanceof Error
-              ? signedUrlQuery.error.message
+            {videoQuery.error instanceof Error
+              ? videoQuery.error.message
               : "Unknown error"}
           </div>
-        ) : (
+        ) : data?.kind === "mux" ? (
+          data.processing || !data.playback_id || !data.token ? (
+            <div className="aspect-video w-full flex flex-col items-center justify-center gap-2 rounded-md bg-muted text-sm text-muted-foreground">
+              <Loader2 className="h-6 w-6 animate-spin" />
+              <span>This video is still processing. It will appear here shortly.</span>
+            </div>
+          ) : (
+            <div className="mx-auto flex w-full max-w-4xl justify-center rounded-md bg-black overflow-hidden">
+              <MuxPlayer
+                playbackId={data.playback_id}
+                tokens={{ playback: data.token }}
+                streamType="on-demand"
+                autoPlay={false}
+                metadata={{ video_title: contentItem.title ?? undefined }}
+                style={{ maxHeight: "70vh", aspectRatio: "16 / 9", width: "100%" }}
+                onTimeUpdate={onTimeUpdate as any}
+                onEnded={(() => {
+                  if (isSelf && !completedFiredRef.current) {
+                    completedFiredRef.current = true;
+                    reportCompletion("record_video_progress", {
+                      p_content_item_id: contentItem.id,
+                      p_watch_pct: 100,
+                      p_last_position_seconds: 0,
+                    });
+                  }
+                }) as any}
+              />
+            </div>
+          )
+        ) : data?.kind === "supabase_storage" && data?.signed_url ? (
           <div className="mx-auto flex w-full max-w-4xl justify-center rounded-md bg-black">
             <video
-              ref={videoRef}
               controls
               className="rounded-md"
               style={{ maxHeight: "70vh", maxWidth: "100%", objectFit: "contain" }}
-              src={signedUrlQuery.data.signed_url}
-              onTimeUpdate={onTimeUpdate}
+              src={data.signed_url}
+              onTimeUpdate={onTimeUpdate as any}
             />
+          </div>
+        ) : (
+          <div className="rounded-md border border-destructive/30 bg-card p-6 text-sm text-destructive">
+            Could not load video.
           </div>
         )
       ) : embedUrl ? (
         <div className="mx-auto w-full max-w-4xl">
           <div
             className="mx-auto overflow-hidden rounded-md bg-muted"
-            style={{ maxHeight: "70vh", aspectRatio: "16 / 9", maxWidth: "min(100%, calc(70vh * 16 / 9))" }}
+            style={{
+              maxHeight: "70vh",
+              aspectRatio: "16 / 9",
+              maxWidth: "min(100%, calc(70vh * 16 / 9))",
+            }}
           >
             <iframe
               src={embedUrl}
@@ -175,38 +232,30 @@ export default function VideoViewer({
             />
           </div>
         </div>
-      ) : muxHls ? (
-        <div className="rounded-md border bg-card p-4 text-sm">
-          <a
-            href={muxHls}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-primary underline"
-          >
-            <ExternalLink className="h-4 w-4" /> Open video
-          </a>
-        </div>
       ) : (
         <div className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
           No video source configured.
         </div>
       )}
 
-      {/* Embed-source completion button (self only, not yet completed) */}
-      {isSelf && sourceType !== "supabase_storage" && !isCompleted && (
-        <div className="flex justify-end">
-          <Button
-            onClick={markAsWatched}
-            disabled={isReporting}
-            className="bg-[var(--bw-orange)] hover:bg-[var(--bw-orange-600)] text-white"
-          >
-            {isReporting ? (
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            ) : null}
-            Mark as watched
-          </Button>
-        </div>
-      )}
+      {/* Embed-source completion button (self only, embeds only, not yet completed).
+          Storage and Mux report progress automatically via onTimeUpdate. */}
+      {isSelf &&
+        sourceType !== "supabase_storage" &&
+        sourceType !== "mux" &&
+        embedUrl &&
+        !isCompleted && (
+          <div className="flex justify-end">
+            <Button
+              onClick={markAsWatched}
+              disabled={isReporting}
+              className="bg-[var(--bw-orange)] hover:bg-[var(--bw-orange-600)] text-white"
+            >
+              {isReporting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+              Mark as watched
+            </Button>
+          </div>
+        )}
 
       {isCompleted && (
         <div className="flex items-center gap-2 text-sm" style={{ color: "var(--bw-forest)" }}>
@@ -214,10 +263,11 @@ export default function VideoViewer({
         </div>
       )}
 
-      {/* AI summary card */}
-      {isCompleted && typeof contentItem.video_ai_summary === "string" && contentItem.video_ai_summary.trim().length > 0 && (
-        <SummaryCard summary={contentItem.video_ai_summary} />
-      )}
+      {isCompleted &&
+        typeof contentItem.video_ai_summary === "string" &&
+        contentItem.video_ai_summary.trim().length > 0 && (
+          <SummaryCard summary={contentItem.video_ai_summary} />
+        )}
     </div>
   );
 }
