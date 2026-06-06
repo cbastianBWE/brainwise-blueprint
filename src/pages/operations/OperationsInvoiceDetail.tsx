@@ -426,7 +426,7 @@ export default function OperationsInvoiceDetail() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   {canSendInvoice && (
-                    <DropdownMenuItem disabled={sending} onClick={handleSendInvoice}>
+                    <DropdownMenuItem disabled={sending} onClick={() => { setAttachReceipts(false); setSendOpen(true); }}>
                       Send invoice to customer
                     </DropdownMenuItem>
                   )}
