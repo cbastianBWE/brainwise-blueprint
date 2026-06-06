@@ -30,8 +30,10 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { StatusBadge, formatMoney, formatDate } from "./_shared";
@@ -54,6 +56,8 @@ export default function OperationsInvoiceDetail() {
   const [refundPayment, setRefundPayment] = useState<any>(null);
   const [refundAmount, setRefundAmount] = useState("");
   const [refunding, setRefunding] = useState(false);
+  const [sendOpen, setSendOpen] = useState(false);
+  const [attachReceipts, setAttachReceipts] = useState(false);
 
   const invoiceQ = useQuery({
     queryKey: ["ops", "invoice", id],
@@ -115,6 +119,17 @@ export default function OperationsInvoiceDetail() {
       return data;
     },
   });
+
+  const sendReceiptsQ = useQuery({
+    queryKey: ["ops", "invoice-expense-receipts", inv?.id],
+    enabled: sendOpen && !!inv?.id,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("ops_get_invoice_expense_receipts" as any, { p_invoice: inv.id });
+      if (error) throw error;
+      return (data ?? []) as Array<{ receipt_storage_path: string; suggested_filename: string }>;
+    },
+  });
+  const receiptCount = sendReceiptsQ.data?.length ?? 0;
 
   // Handle ?paid=1 / ?canceled=1
   useEffect(() => {
@@ -270,7 +285,7 @@ export default function OperationsInvoiceDetail() {
         };
         const blob = await generateDocumentPdf({ kind: "invoice", template: "standard", data: docData, branding, billTo });
         const path = `${inv.org_id}/Invoice-${inv.id}.pdf`;
-        const up = await opsSupabase.storage
+        const up = await supabase.storage
           .from("operations-documents")
           .upload(path, blob, { upsert: true, contentType: "application/pdf" });
         if (!up.error) attachment_path = path;
@@ -279,7 +294,7 @@ export default function OperationsInvoiceDetail() {
       }
 
       const { data, error } = await supabase.functions.invoke("ops-invoice-send", {
-        body: { invoice_id: inv.id, attachment_path },
+        body: { invoice_id: inv.id, attachment_path, include_expense_receipts: attachReceipts },
       });
       if (error || (data as any)?.error) {
         const ctxMsg = error ? await readFunctionsErrorMessage(error) : null;
@@ -288,6 +303,7 @@ export default function OperationsInvoiceDetail() {
       }
       toast.success((data as any)?.attached ? "Invoice emailed with the PDF attached." : "Invoice emailed to the customer.");
       invalidateInvoice();
+      setSendOpen(false);
     } finally {
       setSending(false);
     }
@@ -410,7 +426,7 @@ export default function OperationsInvoiceDetail() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   {canSendInvoice && (
-                    <DropdownMenuItem disabled={sending} onClick={handleSendInvoice}>
+                    <DropdownMenuItem disabled={sending} onClick={() => { setAttachReceipts(false); setSendOpen(true); }}>
                       Send invoice to customer
                     </DropdownMenuItem>
                   )}
@@ -613,6 +629,29 @@ export default function OperationsInvoiceDetail() {
             <Button variant="outline" onClick={() => setRefundPayment(null)} disabled={refunding}>Cancel</Button>
             <Button onClick={handleRefund} disabled={refunding}>
               {refunding ? "Refunding…" : "Issue refund"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={sendOpen} onOpenChange={(o) => { if (!sending) setSendOpen(o); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Send invoice {inv?.invoice_number}</DialogTitle>
+            <DialogDescription>
+              Emails the invoice{cust?.email ? ` to ${cust.email}` : ""} with the PDF attached.
+            </DialogDescription>
+          </DialogHeader>
+          {receiptCount > 0 && (
+            <label className="flex items-center gap-2 text-sm">
+              <Checkbox checked={attachReceipts} onCheckedChange={(v) => setAttachReceipts(v === true)} />
+              Attach {receiptCount} expense receipt{receiptCount === 1 ? "" : "s"}
+            </label>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSendOpen(false)} disabled={sending}>Cancel</Button>
+            <Button onClick={() => handleSendInvoice()} disabled={sending}>
+              {sending ? "Sending…" : "Send invoice"}
             </Button>
           </DialogFooter>
         </DialogContent>
