@@ -7,8 +7,24 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 
 type Address = { line1?: string; line2?: string; city?: string; state?: string; postal_code?: string; country?: string };
+
+function PlaceholderCard({ title }: { title: string }) {
+  return (
+    <Card>
+      <CardHeader><CardTitle>{title}</CardTitle></CardHeader>
+      <CardContent>
+        <p className="text-sm text-muted-foreground">Available in an upcoming update.</p>
+      </CardContent>
+    </Card>
+  );
+}
 
 export default function OperationsSettings() {
   const qc = useQueryClient();
@@ -90,6 +106,135 @@ export default function OperationsSettings() {
     }
   }
 
+  // ---------- Numbering & Tax queries ----------
+  const numberingQ = useQuery({
+    queryKey: ["ops", "settings", "numbering"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("ops_list_numbering_schemes" as any);
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+  });
+  const authoritiesQ = useQuery({
+    queryKey: ["ops", "settings", "tax-authorities"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("ops_list_tax_authorities" as any);
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+  });
+  const ratesQ = useQuery({
+    queryKey: ["ops", "settings", "tax-rates"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("ops_list_tax_rates" as any);
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+  });
+  const currenciesQ = useQuery({
+    queryKey: ["ops", "settings", "currencies"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("ops_list_currencies" as any);
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+  });
+
+  // ---------- Numbering edit ----------
+  const [schemeDraft, setSchemeDraft] = useState<any | null>(null);
+  async function saveScheme() {
+    if (!schemeDraft) return;
+    const { error } = await supabase.rpc("ops_update_numbering_scheme" as any, {
+      p_id: schemeDraft.id,
+      p_patch: {
+        prefix: schemeDraft.prefix ?? "",
+        padding_zeros: Number(schemeDraft.padding_zeros ?? 0),
+        reset_frequency: schemeDraft.reset_frequency ?? "never",
+      },
+    });
+    if (error) { toast.error(error.message); return; }
+    toast.success("Numbering scheme updated.");
+    qc.invalidateQueries({ queryKey: ["ops", "settings", "numbering"] });
+    setSchemeDraft(null);
+  }
+
+  // ---------- Tax authority dialog ----------
+  const [authorityDraft, setAuthorityDraft] = useState<any | null>(null);
+  async function saveAuthority() {
+    if (!authorityDraft) return;
+    if (!authorityDraft.name) { toast.error("Name is required"); return; }
+    const { error } = await supabase.rpc("ops_upsert_tax_authority" as any, {
+      p_id: authorityDraft.id ?? null,
+      p_patch: {
+        name: authorityDraft.name,
+        jurisdiction: authorityDraft.jurisdiction ?? null,
+        tax_id: authorityDraft.tax_id ?? null,
+      },
+    });
+    if (error) { toast.error(error.message); return; }
+    toast.success("Saved.");
+    qc.invalidateQueries({ queryKey: ["ops", "settings", "tax-authorities"] });
+    setAuthorityDraft(null);
+  }
+  async function deleteAuthority(id: string) {
+    if (!window.confirm("Delete this tax authority?")) return;
+    const { error } = await supabase.rpc("ops_delete_tax_authority" as any, { p_id: id });
+    if (error) { toast.error(error.message); return; }
+    toast.success("Deleted.");
+    qc.invalidateQueries({ queryKey: ["ops", "settings", "tax-authorities"] });
+  }
+
+  // ---------- Tax rate dialog ----------
+  const [rateDraft, setRateDraft] = useState<any | null>(null);
+  async function saveRate() {
+    if (!rateDraft) return;
+    if (!rateDraft.name) { toast.error("Name is required"); return; }
+    const { error } = await supabase.rpc("ops_upsert_tax_rate" as any, {
+      p_id: rateDraft.id ?? null,
+      p_patch: {
+        name: rateDraft.name,
+        rate_percentage: Number(rateDraft.rate_percentage ?? 0),
+        tax_authority_id:
+          rateDraft.tax_authority_id && rateDraft.tax_authority_id !== "__none__"
+            ? rateDraft.tax_authority_id
+            : null,
+        is_compound: !!rateDraft.is_compound,
+        is_active: rateDraft.is_active !== false,
+      },
+    });
+    if (error) { toast.error(error.message); return; }
+    toast.success("Saved.");
+    qc.invalidateQueries({ queryKey: ["ops", "settings", "tax-rates"] });
+    setRateDraft(null);
+  }
+  async function deleteRate(id: string) {
+    if (!window.confirm("Delete this tax rate?")) return;
+    const { error } = await supabase.rpc("ops_delete_tax_rate" as any, { p_id: id });
+    if (error) { toast.error(error.message); return; }
+    toast.success("Deleted.");
+    qc.invalidateQueries({ queryKey: ["ops", "settings", "tax-rates"] });
+  }
+
+  // ---------- Currency dialog ----------
+  const [currencyDraft, setCurrencyDraft] = useState<any | null>(null);
+  async function saveCurrency() {
+    if (!currencyDraft) return;
+    if (!currencyDraft.currency_code) { toast.error("Currency code is required"); return; }
+    const mer = currencyDraft.manual_exchange_rate;
+    const { error } = await supabase.rpc("ops_upsert_currency" as any, {
+      p_id: currencyDraft.id ?? null,
+      p_patch: {
+        currency_code: String(currencyDraft.currency_code).toUpperCase(),
+        is_base: !!currencyDraft.is_base,
+        manual_exchange_rate: mer === "" || mer == null ? null : Number(mer),
+      },
+    });
+    if (error) { toast.error(error.message); return; }
+    toast.success("Saved.");
+    qc.invalidateQueries({ queryKey: ["ops", "settings", "currencies"] });
+    setCurrencyDraft(null);
+  }
+
   if (orgQ.isLoading) return <div className="p-6 text-muted-foreground text-sm">Loading…</div>;
 
   const field = (label: string, key: string, type: string = "text") => (
@@ -105,70 +250,395 @@ export default function OperationsSettings() {
     </div>
   );
 
+  const authorityNameById = (id: string | null | undefined) =>
+    (authoritiesQ.data ?? []).find((a: any) => a.id === id)?.name ?? "";
+
   return (
     <div className="p-6 space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Company branding</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="space-y-2">
-            <Label>Logo</Label>
-            {form.logo_url ? (
-              <img src={form.logo_url} alt="Logo" className="h-16 w-auto object-contain rounded border" />
-            ) : (
-              <p className="text-muted-foreground text-sm">No logo uploaded.</p>
-            )}
-            <Input type="file" accept="image/png,image/jpeg" onChange={handleLogo} disabled={uploading} />
-            <p className="text-muted-foreground text-xs">
-              PNG or JPEG. Uploaded to public branding storage and embedded on documents.
-            </p>
-          </div>
+      <Tabs defaultValue="branding">
+        <TabsList>
+          <TabsTrigger value="branding">Branding</TabsTrigger>
+          <TabsTrigger value="templates">Templates & Reminders</TabsTrigger>
+          <TabsTrigger value="late_fees">Late Fees</TabsTrigger>
+          <TabsTrigger value="sales">Sales & Commission</TabsTrigger>
+          <TabsTrigger value="custom_fields">Custom Fields</TabsTrigger>
+          <TabsTrigger value="numbering">Numbering & Tax</TabsTrigger>
+        </TabsList>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {field("Legal name", "legal_name")}
-            {field("Tax ID", "tax_id")}
-            {field("Email", "email", "email")}
-            {field("Phone", "phone")}
-            {field("Website", "website")}
-          </div>
+        <TabsContent value="branding" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Company branding</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-2">
+                <Label>Logo</Label>
+                {form.logo_url ? (
+                  <img src={form.logo_url} alt="Logo" className="h-16 w-auto object-contain rounded border" />
+                ) : (
+                  <p className="text-muted-foreground text-sm">No logo uploaded.</p>
+                )}
+                <Input type="file" accept="image/png,image/jpeg" onChange={handleLogo} disabled={uploading} />
+                <p className="text-muted-foreground text-xs">
+                  PNG or JPEG. Uploaded to public branding storage and embedded on documents.
+                </p>
+              </div>
 
-          <div className="space-y-2">
-            <Label>Address</Label>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {addrField("Address line 1", "line1")}
-              {addrField("Address line 2", "line2")}
-              {addrField("City", "city")}
-              {addrField("State / Region", "state")}
-              {addrField("Postal code", "postal_code")}
-              {addrField("Country", "country")}
-            </div>
-          </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {field("Legal name", "legal_name")}
+                {field("Tax ID", "tax_id")}
+                {field("Email", "email", "email")}
+                {field("Phone", "phone")}
+                {field("Website", "website")}
+              </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="brand_color">Brand color (primary)</Label>
-              <div className="flex items-center gap-2">
-                <Input id="brand_color" type="color" value={form.brand_color} onChange={(e) => setField("brand_color", e.target.value)} className="h-10 w-16 p-1" />
-                <Input value={form.brand_color} onChange={(e) => setField("brand_color", e.target.value)} />
+              <div className="space-y-2">
+                <Label>Address</Label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {addrField("Address line 1", "line1")}
+                  {addrField("Address line 2", "line2")}
+                  {addrField("City", "city")}
+                  {addrField("State / Region", "state")}
+                  {addrField("Postal code", "postal_code")}
+                  {addrField("Country", "country")}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="brand_color">Brand color (primary)</Label>
+                  <div className="flex items-center gap-2">
+                    <Input id="brand_color" type="color" value={form.brand_color} onChange={(e) => setField("brand_color", e.target.value)} className="h-10 w-16 p-1" />
+                    <Input value={form.brand_color} onChange={(e) => setField("brand_color", e.target.value)} />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="accent_color">Accent color</Label>
+                  <div className="flex items-center gap-2">
+                    <Input id="accent_color" type="color" value={form.accent_color} onChange={(e) => setField("accent_color", e.target.value)} className="h-10 w-16 p-1" />
+                    <Input value={form.accent_color} onChange={(e) => setField("accent_color", e.target.value)} />
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end">
+                <Button onClick={handleSave} disabled={saving}>
+                  {saving ? "Saving…" : "Save branding"}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="templates"><PlaceholderCard title="Templates & Reminders" /></TabsContent>
+        <TabsContent value="late_fees"><PlaceholderCard title="Late Fees" /></TabsContent>
+        <TabsContent value="sales"><PlaceholderCard title="Sales & Commission" /></TabsContent>
+        <TabsContent value="custom_fields"><PlaceholderCard title="Custom Fields" /></TabsContent>
+
+        <TabsContent value="numbering" className="space-y-6">
+          {/* Card A: Document numbering */}
+          <Card>
+            <CardHeader><CardTitle>Document numbering</CardTitle></CardHeader>
+            <CardContent>
+              {numberingQ.isLoading ? (
+                <p className="text-sm text-muted-foreground">Loading…</p>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Document type</TableHead>
+                      <TableHead>Prefix</TableHead>
+                      <TableHead>Padding zeros</TableHead>
+                      <TableHead>Reset frequency</TableHead>
+                      <TableHead>Next number</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {(numberingQ.data ?? []).map((s: any) => (
+                      <TableRow key={s.id}>
+                        <TableCell>{s.document_type}</TableCell>
+                        <TableCell>{s.prefix}</TableCell>
+                        <TableCell>{s.padding_zeros}</TableCell>
+                        <TableCell>{s.reset_frequency}</TableCell>
+                        <TableCell>{s.next_number}</TableCell>
+                        <TableCell className="text-right">
+                          <Button variant="outline" size="sm" onClick={() => setSchemeDraft({ ...s })}>Edit</Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    {(numberingQ.data ?? []).length === 0 && (
+                      <TableRow><TableCell colSpan={6} className="text-sm text-muted-foreground">No numbering schemes.</TableCell></TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Card B: Tax authorities */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle>Tax authorities</CardTitle>
+              <Button size="sm" onClick={() => setAuthorityDraft({ name: "", jurisdiction: "", tax_id: "" })}>Add authority</Button>
+            </CardHeader>
+            <CardContent>
+              {authoritiesQ.isLoading ? (
+                <p className="text-sm text-muted-foreground">Loading…</p>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Jurisdiction</TableHead>
+                      <TableHead>Tax ID</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {(authoritiesQ.data ?? []).map((a: any) => (
+                      <TableRow key={a.id}>
+                        <TableCell>{a.name}</TableCell>
+                        <TableCell>{a.jurisdiction}</TableCell>
+                        <TableCell>{a.tax_id}</TableCell>
+                        <TableCell className="text-right space-x-2">
+                          <Button variant="outline" size="sm" onClick={() => setAuthorityDraft({ ...a })}>Edit</Button>
+                          <Button variant="destructive" size="sm" onClick={() => deleteAuthority(a.id)}>Delete</Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    {(authoritiesQ.data ?? []).length === 0 && (
+                      <TableRow><TableCell colSpan={4} className="text-sm text-muted-foreground">No tax authorities.</TableCell></TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Card C: Tax rates */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle>Tax rates</CardTitle>
+              <Button size="sm" onClick={() => setRateDraft({ name: "", rate_percentage: 0, tax_authority_id: "__none__", is_compound: false, is_active: true })}>Add rate</Button>
+            </CardHeader>
+            <CardContent>
+              {ratesQ.isLoading ? (
+                <p className="text-sm text-muted-foreground">Loading…</p>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Rate %</TableHead>
+                      <TableHead>Authority</TableHead>
+                      <TableHead>Compound</TableHead>
+                      <TableHead>Active</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {(ratesQ.data ?? []).map((r: any) => (
+                      <TableRow key={r.id}>
+                        <TableCell>{r.name}</TableCell>
+                        <TableCell>{r.rate_percentage}</TableCell>
+                        <TableCell>{authorityNameById(r.tax_authority_id)}</TableCell>
+                        <TableCell>{r.is_compound ? "Yes" : "No"}</TableCell>
+                        <TableCell>{r.is_active ? "Yes" : "No"}</TableCell>
+                        <TableCell className="text-right space-x-2">
+                          <Button variant="outline" size="sm" onClick={() => setRateDraft({ ...r, tax_authority_id: r.tax_authority_id ?? "__none__" })}>Edit</Button>
+                          <Button variant="destructive" size="sm" onClick={() => deleteRate(r.id)}>Delete</Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    {(ratesQ.data ?? []).length === 0 && (
+                      <TableRow><TableCell colSpan={6} className="text-sm text-muted-foreground">No tax rates.</TableCell></TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Card D: Currencies */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle>Currencies</CardTitle>
+              <Button size="sm" onClick={() => setCurrencyDraft({ currency_code: "", is_base: false, manual_exchange_rate: "" })}>Add currency</Button>
+            </CardHeader>
+            <CardContent>
+              {currenciesQ.isLoading ? (
+                <p className="text-sm text-muted-foreground">Loading…</p>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Currency code</TableHead>
+                      <TableHead>Base</TableHead>
+                      <TableHead>Manual exchange rate</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {(currenciesQ.data ?? []).map((c: any) => (
+                      <TableRow key={c.id}>
+                        <TableCell>{c.currency_code}</TableCell>
+                        <TableCell>{c.is_base ? "Yes" : "No"}</TableCell>
+                        <TableCell>{c.manual_exchange_rate ?? ""}</TableCell>
+                        <TableCell className="text-right">
+                          <Button variant="outline" size="sm" onClick={() => setCurrencyDraft({ ...c, manual_exchange_rate: c.manual_exchange_rate ?? "" })}>Edit</Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    {(currenciesQ.data ?? []).length === 0 && (
+                      <TableRow><TableCell colSpan={4} className="text-sm text-muted-foreground">No currencies.</TableCell></TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+
+      {/* Numbering scheme edit dialog */}
+      <Dialog open={!!schemeDraft} onOpenChange={(o) => !o && setSchemeDraft(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Edit numbering scheme</DialogTitle></DialogHeader>
+          {schemeDraft && (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Document type</Label>
+                <Input value={schemeDraft.document_type ?? ""} disabled />
+              </div>
+              <div className="space-y-2">
+                <Label>Prefix</Label>
+                <Input value={schemeDraft.prefix ?? ""} onChange={(e) => setSchemeDraft({ ...schemeDraft, prefix: e.target.value })} />
+              </div>
+              <div className="space-y-2">
+                <Label>Padding zeros</Label>
+                <Input type="number" value={schemeDraft.padding_zeros ?? 0} onChange={(e) => setSchemeDraft({ ...schemeDraft, padding_zeros: e.target.value })} />
+              </div>
+              <div className="space-y-2">
+                <Label>Reset frequency</Label>
+                <Select value={schemeDraft.reset_frequency ?? "never"} onValueChange={(v) => setSchemeDraft({ ...schemeDraft, reset_frequency: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="never">never</SelectItem>
+                    <SelectItem value="yearly">yearly</SelectItem>
+                    <SelectItem value="monthly">monthly</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Next number</Label>
+                <Input value={schemeDraft.next_number ?? ""} disabled />
               </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="accent_color">Accent color</Label>
-              <div className="flex items-center gap-2">
-                <Input id="accent_color" type="color" value={form.accent_color} onChange={(e) => setField("accent_color", e.target.value)} className="h-10 w-16 p-1" />
-                <Input value={form.accent_color} onChange={(e) => setField("accent_color", e.target.value)} />
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSchemeDraft(null)}>Cancel</Button>
+            <Button onClick={saveScheme}>Save</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Tax authority dialog */}
+      <Dialog open={!!authorityDraft} onOpenChange={(o) => !o && setAuthorityDraft(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>{authorityDraft?.id ? "Edit tax authority" : "Add tax authority"}</DialogTitle></DialogHeader>
+          {authorityDraft && (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Name</Label>
+                <Input value={authorityDraft.name ?? ""} onChange={(e) => setAuthorityDraft({ ...authorityDraft, name: e.target.value })} />
+              </div>
+              <div className="space-y-2">
+                <Label>Jurisdiction</Label>
+                <Input value={authorityDraft.jurisdiction ?? ""} onChange={(e) => setAuthorityDraft({ ...authorityDraft, jurisdiction: e.target.value })} />
+              </div>
+              <div className="space-y-2">
+                <Label>Tax ID</Label>
+                <Input value={authorityDraft.tax_id ?? ""} onChange={(e) => setAuthorityDraft({ ...authorityDraft, tax_id: e.target.value })} />
               </div>
             </div>
-          </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAuthorityDraft(null)}>Cancel</Button>
+            <Button onClick={saveAuthority}>Save</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
-          <div className="flex justify-end">
-            <Button onClick={handleSave} disabled={saving}>
-              {saving ? "Saving…" : "Save branding"}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Tax rate dialog */}
+      <Dialog open={!!rateDraft} onOpenChange={(o) => !o && setRateDraft(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>{rateDraft?.id ? "Edit tax rate" : "Add tax rate"}</DialogTitle></DialogHeader>
+          {rateDraft && (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Name</Label>
+                <Input value={rateDraft.name ?? ""} onChange={(e) => setRateDraft({ ...rateDraft, name: e.target.value })} />
+              </div>
+              <div className="space-y-2">
+                <Label>Rate %</Label>
+                <Input type="number" value={rateDraft.rate_percentage ?? 0} onChange={(e) => setRateDraft({ ...rateDraft, rate_percentage: e.target.value })} />
+              </div>
+              <div className="space-y-2">
+                <Label>Tax authority</Label>
+                <Select value={rateDraft.tax_authority_id ?? "__none__"} onValueChange={(v) => setRateDraft({ ...rateDraft, tax_authority_id: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">None</SelectItem>
+                    {(authoritiesQ.data ?? []).map((a: any) => (
+                      <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="r-compound">Compound</Label>
+                <Switch id="r-compound" checked={!!rateDraft.is_compound} onCheckedChange={(v) => setRateDraft({ ...rateDraft, is_compound: v })} />
+              </div>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="r-active">Active</Label>
+                <Switch id="r-active" checked={rateDraft.is_active !== false} onCheckedChange={(v) => setRateDraft({ ...rateDraft, is_active: v })} />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRateDraft(null)}>Cancel</Button>
+            <Button onClick={saveRate}>Save</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Currency dialog */}
+      <Dialog open={!!currencyDraft} onOpenChange={(o) => !o && setCurrencyDraft(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>{currencyDraft?.id ? "Edit currency" : "Add currency"}</DialogTitle></DialogHeader>
+          {currencyDraft && (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Currency code</Label>
+                <Input value={currencyDraft.currency_code ?? ""} onChange={(e) => setCurrencyDraft({ ...currencyDraft, currency_code: e.target.value })} placeholder="USD" />
+              </div>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="c-base">Base</Label>
+                <Switch id="c-base" checked={!!currencyDraft.is_base} onCheckedChange={(v) => setCurrencyDraft({ ...currencyDraft, is_base: v })} />
+              </div>
+              <div className="space-y-2">
+                <Label>Manual exchange rate</Label>
+                <Input type="number" value={currencyDraft.manual_exchange_rate ?? ""} onChange={(e) => setCurrencyDraft({ ...currencyDraft, manual_exchange_rate: e.target.value })} />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCurrencyDraft(null)}>Cancel</Button>
+            <Button onClick={saveCurrency}>Save</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
