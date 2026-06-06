@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { opsSupabase } from "@/integrations/supabase/operations-types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,6 +25,7 @@ const formatPrice = (v: number | null | undefined) => {
 };
 
 export default function OperationsItems() {
+  const navigate = useNavigate();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editItem, setEditItem] = useState<ItemRecord | null>(null);
   const [search, setSearch] = useState("");
@@ -69,10 +71,15 @@ export default function OperationsItems() {
           <h1 className="text-2xl font-semibold">Items</h1>
           <p className="text-muted-foreground text-sm">Operations · Product & service catalog</p>
         </div>
-        <Button onClick={openCreate}>
-          <Plus className="h-4 w-4 mr-2" />
-          New item
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => navigate("/operations/import?entity=items")}>
+            Import CSV
+          </Button>
+          <Button onClick={openCreate}>
+            <Plus className="h-4 w-4 mr-2" />
+            New item
+          </Button>
+        </div>
       </div>
       <Card>
         <CardHeader><CardTitle>All items</CardTitle></CardHeader>
