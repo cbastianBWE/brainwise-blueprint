@@ -514,7 +514,172 @@ export default function OperationsSettings() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="templates"><PlaceholderCard title="Templates & Reminders" /></TabsContent>
+        <TabsContent value="templates" className="space-y-6">
+          {/* Card 1: Email templates */}
+          <Card>
+            <CardHeader><CardTitle>Email templates</CardTitle></CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Editor */}
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Template type</Label>
+                    <Select value={templateType} onValueChange={setTemplateType}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {TEMPLATE_TYPES.map(t => (
+                          <SelectItem key={t} value={t}>{humanizeType(t)}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Merge tags</Label>
+                    <div className="flex flex-wrap gap-2">
+                      {(catalogQ.data?.[templateType] ?? []).map((tok) => (
+                        <Button key={tok} type="button" variant="outline" size="sm" onClick={() => insertToken(tok)}>
+                          {`{{${tok}}}`}
+                        </Button>
+                      ))}
+                      {(catalogQ.data?.[templateType] ?? []).length === 0 && (
+                        <p className="text-xs text-muted-foreground">No merge tags for this type.</p>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground">Click a tag to insert it at the cursor of the last-focused field (subject or body).</p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="tpl-subject">Subject</Label>
+                    <Input
+                      id="tpl-subject"
+                      ref={subjectRef}
+                      value={editor.subject}
+                      onFocus={() => setActiveField("subject")}
+                      onChange={(e) => setEditor(s => ({ ...s, subject: e.target.value }))}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="tpl-body">Body (HTML)</Label>
+                    <Textarea
+                      id="tpl-body"
+                      ref={bodyRef}
+                      rows={16}
+                      className="font-mono text-sm"
+                      value={editor.body_html}
+                      onFocus={() => setActiveField("body")}
+                      onChange={(e) => setEditor(s => ({ ...s, body_html: e.target.value }))}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="tpl-text">Plain-text fallback (optional)</Label>
+                    <Textarea
+                      id="tpl-text"
+                      rows={3}
+                      value={editor.body_text}
+                      onChange={(e) => setEditor(s => ({ ...s, body_text: e.target.value }))}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="tpl-active">Active</Label>
+                    <Switch id="tpl-active" checked={editor.is_active} onCheckedChange={(v) => setEditor(s => ({ ...s, is_active: v }))} />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="tpl-default">Default</Label>
+                    <Switch id="tpl-default" checked={editor.is_default} onCheckedChange={(v) => setEditor(s => ({ ...s, is_default: v }))} />
+                  </div>
+
+                  <div className="flex justify-end">
+                    <Button onClick={saveTemplate} disabled={savingTemplate}>
+                      {savingTemplate ? "Saving…" : "Save template"}
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Preview */}
+                {(() => {
+                  const tokens = catalogQ.data?.[templateType] ?? [];
+                  const ctx: Record<string, string> = {};
+                  for (const t of tokens) ctx[t] = humanizeToken(t);
+                  const renderedSubject = serverPreview ? serverPreview.subject : applyTokens(editor.subject, ctx);
+                  const renderedBody = serverPreview ? serverPreview.body_html : applyTokens(editor.body_html, ctx);
+                  return (
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-medium">
+                          {serverPreview ? "Server-rendered (saved template)" : "Live preview (current edits)"}
+                        </p>
+                        <div className="space-x-2">
+                          {serverPreview && (
+                            <Button type="button" variant="ghost" size="sm" onClick={() => setServerPreview(null)}>Back to live</Button>
+                          )}
+                          <Button type="button" variant="outline" size="sm" onClick={verifyServerRender}>Verify server render</Button>
+                        </div>
+                      </div>
+                      <div className="space-y-1 rounded border p-3 bg-muted/30">
+                        <p className="text-xs text-muted-foreground">Subject</p>
+                        <p className="text-sm break-words">{renderedSubject || <span className="text-muted-foreground italic">(empty)</span>}</p>
+                      </div>
+                      <iframe
+                        title="Email preview"
+                        sandbox=""
+                        srcDoc={renderedBody}
+                        className="w-full h-[400px] border rounded bg-background"
+                      />
+                    </div>
+                  );
+                })()}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Card 2: Reminder schedules */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle>Reminder schedules</CardTitle>
+              <Button size="sm" onClick={() => setScheduleDraft({ name: "", schedule_offset_days: 0, template_id: "__auto__", is_active: true, applies_to_overdue_only: false })}>Add schedule</Button>
+            </CardHeader>
+            <CardContent>
+              {schedulesQ.isLoading ? (
+                <p className="text-sm text-muted-foreground">Loading…</p>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Timing</TableHead>
+                      <TableHead>Template</TableHead>
+                      <TableHead>Active</TableHead>
+                      <TableHead>Overdue-only</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {(schedulesQ.data ?? []).map((s: any) => (
+                      <TableRow key={s.id}>
+                        <TableCell>{s.name}</TableCell>
+                        <TableCell>{formatTiming(Number(s.schedule_offset_days ?? 0))}</TableCell>
+                        <TableCell>{s.template_id == null ? "Auto (by due state)" : humanizeType(s.template_type)}</TableCell>
+                        <TableCell>{s.is_active ? "Yes" : "No"}</TableCell>
+                        <TableCell>{s.applies_to_overdue_only ? "Yes" : "No"}</TableCell>
+                        <TableCell className="text-right space-x-2">
+                          <Button variant="outline" size="sm" onClick={() => setScheduleDraft({ ...s, template_id: s.template_id ?? "__auto__" })}>Edit</Button>
+                          <Button variant="destructive" size="sm" onClick={() => deleteSchedule(s.id)}>Delete</Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    {(schedulesQ.data ?? []).length === 0 && (
+                      <TableRow><TableCell colSpan={6} className="text-sm text-muted-foreground">No schedules.</TableCell></TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
         <TabsContent value="late_fees"><PlaceholderCard title="Late Fees" /></TabsContent>
         <TabsContent value="sales"><PlaceholderCard title="Sales & Commission" /></TabsContent>
         <TabsContent value="custom_fields"><PlaceholderCard title="Custom Fields" /></TabsContent>
