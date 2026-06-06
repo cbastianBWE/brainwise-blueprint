@@ -427,6 +427,113 @@ export default function OperationsSettings() {
     qc.invalidateQueries({ queryKey: ["ops", "settings", "reminder-schedules"] });
   }
 
+  // ---------- Late Fees / Sales / Custom Fields ----------
+  const lateFeesQ = useQuery({
+    queryKey: ["ops", "settings", "late-fee-rules"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("ops_list_late_fee_rules" as any);
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+  });
+  const salespeopleQ = useQuery({
+    queryKey: ["ops", "settings", "salespeople"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("ops_list_salespeople" as any);
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+  });
+  const [entityType, setEntityType] = useState<string>("invoice");
+  const customFieldsQ = useQuery({
+    queryKey: ["ops", "settings", "custom-fields", entityType],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("ops_list_custom_field_definitions" as any, { p_entity_type: entityType });
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+  });
+
+  const [ruleDraft, setRuleDraft] = useState<any | null>(null);
+  async function saveRule() {
+    if (!ruleDraft) return;
+    if (!ruleDraft.name) { toast.error("Name is required"); return; }
+    const max = ruleDraft.max_total_fee_amount;
+    const { error } = await supabase.rpc("ops_upsert_late_fee_rule" as any, {
+      p_id: ruleDraft.id ?? null,
+      p_patch: {
+        name: ruleDraft.name,
+        fee_type: ruleDraft.fee_type ?? "percentage",
+        fee_amount: Number(ruleDraft.fee_amount ?? 0),
+        grace_period_days: Number(ruleDraft.grace_period_days ?? 0),
+        max_total_fee_amount: max === "" || max == null ? null : Number(max),
+        apply_to: "all",
+        is_active: ruleDraft.is_active !== false,
+      },
+    });
+    if (error) { toast.error(error.message); return; }
+    toast.success("Saved.");
+    qc.invalidateQueries({ queryKey: ["ops", "settings", "late-fee-rules"] });
+    setRuleDraft(null);
+  }
+  async function deleteRule(id: string) {
+    if (!window.confirm("Delete this rule?")) return;
+    const { error } = await supabase.rpc("ops_delete_late_fee_rule" as any, { p_id: id });
+    if (error) { toast.error(error.message); return; }
+    toast.success("Deleted.");
+    qc.invalidateQueries({ queryKey: ["ops", "settings", "late-fee-rules"] });
+  }
+
+  const [rateDraft, setRateDraft] = useState<any | null>(null);
+  async function saveRate() {
+    if (!rateDraft) return;
+    const r = rateDraft.commission_rate;
+    const { error } = await supabase.rpc("ops_set_user_commission_rate" as any, {
+      p_user_id: rateDraft.user_id,
+      p_rate: r === "" || r == null ? null : Number(r),
+    });
+    if (error) { toast.error(error.message); return; }
+    toast.success("Saved.");
+    qc.invalidateQueries({ queryKey: ["ops", "settings", "salespeople"] });
+    setRateDraft(null);
+  }
+
+  const [fieldDraft, setFieldDraft] = useState<any | null>(null);
+  async function saveField() {
+    if (!fieldDraft) return;
+    if (!fieldDraft.field_name) { toast.error("Field name is required"); return; }
+    if (!fieldDraft.field_label) { toast.error("Field label is required"); return; }
+    const opts = fieldDraft.field_type === "dropdown"
+      ? String(fieldDraft._optionsText ?? "").split("\n").map((s: string) => s.trim()).filter(Boolean)
+      : null;
+    const { error } = await supabase.rpc("ops_upsert_custom_field_definition" as any, {
+      p_id: fieldDraft.id ?? null,
+      p_patch: {
+        entity_type: fieldDraft.entity_type,
+        field_name: fieldDraft.field_name,
+        field_label: fieldDraft.field_label,
+        field_type: fieldDraft.field_type,
+        dropdown_options: opts,
+        is_required: !!fieldDraft.is_required,
+        sort_order: Number(fieldDraft.sort_order ?? 0),
+        is_active: fieldDraft.is_active !== false,
+      },
+    });
+    if (error) { toast.error(error.message); return; }
+    toast.success("Saved.");
+    qc.invalidateQueries({ queryKey: ["ops", "settings", "custom-fields", fieldDraft.entity_type] });
+    if (fieldDraft.entity_type !== entityType) {
+      qc.invalidateQueries({ queryKey: ["ops", "settings", "custom-fields", entityType] });
+    }
+    setFieldDraft(null);
+  }
+  async function deleteField(id: string) {
+    if (!window.confirm("Delete this field?")) return;
+    const { error } = await supabase.rpc("ops_delete_custom_field_definition" as any, { p_id: id });
+    if (error) { toast.error(error.message); return; }
+    toast.success("Deleted.");
+    qc.invalidateQueries({ queryKey: ["ops", "settings", "custom-fields", entityType] });
+  }
 
 
   if (orgQ.isLoading) return <div className="p-6 text-muted-foreground text-sm">Loading…</div>;
