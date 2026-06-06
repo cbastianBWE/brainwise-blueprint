@@ -285,7 +285,7 @@ export default function OperationsInvoiceDetail() {
         };
         const blob = await generateDocumentPdf({ kind: "invoice", template: "standard", data: docData, branding, billTo });
         const path = `${inv.org_id}/Invoice-${inv.id}.pdf`;
-        const up = await opsSupabase.storage
+        const up = await supabase.storage
           .from("operations-documents")
           .upload(path, blob, { upsert: true, contentType: "application/pdf" });
         if (!up.error) attachment_path = path;
