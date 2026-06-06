@@ -41,6 +41,31 @@ export default function OperationsCustomerDetail() {
   const [contactDialogOpen, setContactDialogOpen] = useState(false);
   const [editingContact, setEditingContact] = useState<any | null>(null);
 
+  const today = (() => {
+    const d = new Date();
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const dd = String(d.getDate()).padStart(2, "0");
+    return `${yyyy}-${mm}-${dd}`;
+  })();
+  const [stmtFrom, setStmtFrom] = useState<string>("");
+  const [stmtTo, setStmtTo] = useState<string>(today);
+  const [stmtUnpaidOnly, setStmtUnpaidOnly] = useState<boolean>(false);
+  const [stmtData, setStmtData] = useState<any>(null);
+  const [stmtLoading, setStmtLoading] = useState<boolean>(false);
+
+  const orgBrandingQ = useQuery({
+    queryKey: ["ops", "org-branding"],
+    queryFn: async () => {
+      const { data, error } = await opsSupabase
+        .from("organizations" as any)
+        .select("*")
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const customerQ = useQuery({
     queryKey: ["ops", "customer", id],
     enabled: !!id,
