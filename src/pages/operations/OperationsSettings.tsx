@@ -1290,6 +1290,137 @@ export default function OperationsSettings() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Late fee rule dialog */}
+      <Dialog open={!!ruleDraft} onOpenChange={(o) => !o && setRuleDraft(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>{ruleDraft?.id ? "Edit late fee rule" : "Add late fee rule"}</DialogTitle></DialogHeader>
+          {ruleDraft && (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Name</Label>
+                <Input value={ruleDraft.name ?? ""} onChange={(e) => setRuleDraft({ ...ruleDraft, name: e.target.value })} />
+              </div>
+              <div className="space-y-2">
+                <Label>Fee type</Label>
+                <Select value={ruleDraft.fee_type ?? "percentage"} onValueChange={(v) => setRuleDraft({ ...ruleDraft, fee_type: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="percentage">Percentage</SelectItem>
+                    <SelectItem value="flat">Flat</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>{ruleDraft.fee_type === "flat" ? "Amount" : "Percent"}</Label>
+                <Input type="number" value={ruleDraft.fee_amount ?? 0} onChange={(e) => setRuleDraft({ ...ruleDraft, fee_amount: e.target.value })} />
+              </div>
+              <div className="space-y-2">
+                <Label>Grace period (days)</Label>
+                <Input type="number" value={ruleDraft.grace_period_days ?? 0} onChange={(e) => setRuleDraft({ ...ruleDraft, grace_period_days: e.target.value })} />
+                <p className="text-xs text-muted-foreground">Days after due date before the fee applies.</p>
+              </div>
+              <div className="space-y-2">
+                <Label>Max total fee (optional)</Label>
+                <Input type="number" value={ruleDraft.max_total_fee_amount ?? ""} onChange={(e) => setRuleDraft({ ...ruleDraft, max_total_fee_amount: e.target.value })} />
+              </div>
+              <div className="space-y-2">
+                <Label>Apply to</Label>
+                <Input value="All customers" disabled />
+                <p className="text-xs text-muted-foreground">Targeted rules are not available yet.</p>
+              </div>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="rule-active">Active</Label>
+                <Switch id="rule-active" checked={ruleDraft.is_active !== false} onCheckedChange={(v) => setRuleDraft({ ...ruleDraft, is_active: v })} />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRuleDraft(null)}>Cancel</Button>
+            <Button onClick={saveRule}>Save</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Commission rate dialog */}
+      <Dialog open={!!commissionDraft} onOpenChange={(o) => !o && setCommissionDraft(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Edit commission rate{commissionDraft?.full_name ? ` — ${commissionDraft.full_name}` : ""}</DialogTitle></DialogHeader>
+          {commissionDraft && (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Commission rate (%)</Label>
+                <Input type="number" value={commissionDraft.commission_rate ?? ""} onChange={(e) => setCommissionDraft({ ...commissionDraft, commission_rate: e.target.value })} />
+                <p className="text-xs text-muted-foreground">Leave blank to clear.</p>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCommissionDraft(null)}>Cancel</Button>
+            <Button onClick={saveCommission}>Save</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Custom field dialog */}
+      <Dialog open={!!fieldDraft} onOpenChange={(o) => !o && setFieldDraft(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>{fieldDraft?.id ? "Edit custom field" : "Add custom field"}</DialogTitle></DialogHeader>
+          {fieldDraft && (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Entity type</Label>
+                <Select value={fieldDraft.entity_type} onValueChange={(v) => setFieldDraft({ ...fieldDraft, entity_type: v })} disabled={!!fieldDraft.id}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {ENTITY_TYPES.map(t => <SelectItem key={t} value={t}>{humanizeEntity(t)}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Field name</Label>
+                <Input value={fieldDraft.field_name ?? ""} disabled={!!fieldDraft.id} onChange={(e) => setFieldDraft({ ...fieldDraft, field_name: e.target.value })} placeholder="po_number" />
+              </div>
+              <div className="space-y-2">
+                <Label>Field label</Label>
+                <Input value={fieldDraft.field_label ?? ""} onChange={(e) => setFieldDraft({ ...fieldDraft, field_label: e.target.value })} />
+              </div>
+              <div className="space-y-2">
+                <Label>Field type</Label>
+                <Select value={fieldDraft.field_type ?? "text"} onValueChange={(v) => setFieldDraft({ ...fieldDraft, field_type: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {FIELD_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              {fieldDraft.field_type === "dropdown" && (
+                <div className="space-y-2">
+                  <Label>Dropdown options</Label>
+                  <Textarea rows={4} value={fieldDraft._optionsText ?? ""} onChange={(e) => setFieldDraft({ ...fieldDraft, _optionsText: e.target.value })} />
+                  <p className="text-xs text-muted-foreground">One option per line.</p>
+                </div>
+              )}
+              <div className="flex items-center justify-between">
+                <Label htmlFor="cf-required">Required</Label>
+                <Switch id="cf-required" checked={!!fieldDraft.is_required} onCheckedChange={(v) => setFieldDraft({ ...fieldDraft, is_required: v })} />
+              </div>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="cf-active">Active</Label>
+                <Switch id="cf-active" checked={fieldDraft.is_active !== false} onCheckedChange={(v) => setFieldDraft({ ...fieldDraft, is_active: v })} />
+              </div>
+              <div className="space-y-2">
+                <Label>Sort order</Label>
+                <Input type="number" value={fieldDraft.sort_order ?? 0} onChange={(e) => setFieldDraft({ ...fieldDraft, sort_order: e.target.value })} />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setFieldDraft(null)}>Cancel</Button>
+            <Button onClick={saveField}>Save</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
