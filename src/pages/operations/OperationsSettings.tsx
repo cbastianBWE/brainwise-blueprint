@@ -988,6 +988,52 @@ export default function OperationsSettings() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Reminder schedule dialog */}
+      <Dialog open={!!scheduleDraft} onOpenChange={(o) => !o && setScheduleDraft(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>{scheduleDraft?.id ? "Edit schedule" : "Add schedule"}</DialogTitle></DialogHeader>
+          {scheduleDraft && (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Name</Label>
+                <Input value={scheduleDraft.name ?? ""} onChange={(e) => setScheduleDraft({ ...scheduleDraft, name: e.target.value })} />
+              </div>
+              <div className="space-y-2">
+                <Label>Offset days</Label>
+                <Input type="number" value={scheduleDraft.schedule_offset_days ?? 0} onChange={(e) => setScheduleDraft({ ...scheduleDraft, schedule_offset_days: e.target.value })} />
+                <p className="text-xs text-muted-foreground">Negative = before due, 0 = on due date, positive = after due.</p>
+              </div>
+              <div className="space-y-2">
+                <Label>Template</Label>
+                <Select value={scheduleDraft.template_id ?? "__auto__"} onValueChange={(v) => setScheduleDraft({ ...scheduleDraft, template_id: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__auto__">Auto (by due state)</SelectItem>
+                    {(templatesQ.data ?? [])
+                      .filter((t: any) => ["reminder_before_due","reminder_on_due","reminder_after_due"].includes(t.template_type))
+                      .map((t: any) => (
+                        <SelectItem key={t.id} value={t.id}>{humanizeType(t.template_type)}</SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="sch-active">Active</Label>
+                <Switch id="sch-active" checked={scheduleDraft.is_active !== false} onCheckedChange={(v) => setScheduleDraft({ ...scheduleDraft, is_active: v })} />
+              </div>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="sch-overdue">Applies to overdue only</Label>
+                <Switch id="sch-overdue" checked={!!scheduleDraft.applies_to_overdue_only} onCheckedChange={(v) => setScheduleDraft({ ...scheduleDraft, applies_to_overdue_only: v })} />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setScheduleDraft(null)}>Cancel</Button>
+            <Button onClick={saveSchedule}>Save</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
