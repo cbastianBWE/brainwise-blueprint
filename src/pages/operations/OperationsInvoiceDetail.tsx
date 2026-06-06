@@ -294,7 +294,7 @@ export default function OperationsInvoiceDetail() {
       }
 
       const { data, error } = await supabase.functions.invoke("ops-invoice-send", {
-        body: { invoice_id: inv.id, attachment_path },
+        body: { invoice_id: inv.id, attachment_path, include_expense_receipts: attachReceipts },
       });
       if (error || (data as any)?.error) {
         const ctxMsg = error ? await readFunctionsErrorMessage(error) : null;
@@ -303,6 +303,7 @@ export default function OperationsInvoiceDetail() {
       }
       toast.success((data as any)?.attached ? "Invoice emailed with the PDF attached." : "Invoice emailed to the customer.");
       invalidateInvoice();
+      setSendOpen(false);
     } finally {
       setSending(false);
     }
