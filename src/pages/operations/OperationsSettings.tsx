@@ -56,7 +56,8 @@ export default function OperationsSettings() {
     try {
       const ext = (file.name.split(".").pop() || "png").toLowerCase();
       const path = `${org.id}/logo-${Date.now()}.${ext}`;
-      const up = await opsSupabase.storage.from("operations-branding").upload(path, file, { upsert: true, contentType: file.type });
+      const up = await supabase.storage.from("operations-branding").upload(path, file, { upsert: true, contentType: file.type });
+
       if (up.error) { toast.error(up.error.message ?? "Logo upload failed"); return; }
       const pub = opsSupabase.storage.from("operations-branding").getPublicUrl(path);
       setField("logo_url", pub.data.publicUrl);
