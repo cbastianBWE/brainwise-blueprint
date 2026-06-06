@@ -11387,6 +11387,10 @@ export type Database = {
         }
         Returns: string
       }
+      ops_add_contact: {
+        Args: { p_customer_id: string; p_payload: Json }
+        Returns: string
+      }
       ops_apply_credit_note_to_invoice: {
         Args: { p_amount: number; p_credit_note: string; p_invoice: string }
         Returns: string
@@ -11439,10 +11443,20 @@ export type Database = {
         Returns: string
       }
       ops_create_retainer: { Args: { p_header: Json }; Returns: string }
+      ops_customer_statement: {
+        Args: {
+          p_customer_id: string
+          p_from?: string
+          p_to?: string
+          p_unpaid_only?: boolean
+        }
+        Returns: Json
+      }
       ops_decline_estimate_by_token: {
         Args: { p_reason?: string; p_token: string }
         Returns: Json
       }
+      ops_delete_contact: { Args: { p_id: string }; Returns: undefined }
       ops_delete_custom_field_definition: {
         Args: { p_id: string }
         Returns: undefined
@@ -11509,6 +11523,14 @@ export type Database = {
         }
         Returns: string
       }
+      ops_import_customers: {
+        Args: { p_mode?: string; p_on_conflict?: string; p_rows: Json }
+        Returns: Json
+      }
+      ops_import_items: {
+        Args: { p_mode?: string; p_on_conflict?: string; p_rows: Json }
+        Returns: Json
+      }
       ops_list_activity: {
         Args: { p_entity_id: string; p_entity_type: string }
         Returns: Json
@@ -11516,6 +11538,23 @@ export type Database = {
       ops_list_comments: {
         Args: { p_document_id: string; p_document_type: string }
         Returns: Json
+      }
+      ops_list_contacts: {
+        Args: { p_customer_id: string }
+        Returns: {
+          created_at: string
+          customer_id: string
+          email: string
+          first_name: string
+          id: string
+          is_primary: boolean
+          last_name: string
+          phone: string
+          portal_access_enabled: boolean
+          role: string
+          salutation: string
+          updated_at: string
+        }[]
       }
       ops_list_currencies: { Args: never; Returns: Json }
       ops_list_custom_field_definitions: {
@@ -11611,6 +11650,10 @@ export type Database = {
         Returns: string
       }
       ops_stop_timer: { Args: { p_id?: string }; Returns: number }
+      ops_update_contact: {
+        Args: { p_id: string; p_payload: Json }
+        Returns: undefined
+      }
       ops_update_estimate: {
         Args: { p_header: Json; p_id: string; p_lines: Json }
         Returns: string
