@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { opsSupabase } from "@/integrations/supabase/operations-types";
@@ -12,6 +12,51 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@
 import { Switch } from "@/components/ui/switch";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+
+const TEMPLATE_TYPES = [
+  "invoice_send","estimate_send","payment_receipt",
+  "reminder_before_due","reminder_on_due","reminder_after_due",
+  "recurring_notice","retainer_send","statement_send","credit_note_send",
+] as const;
+
+function titleCase(s: string) {
+  return s.split("_").map(w => w ? w[0].toUpperCase() + w.slice(1) : w).join(" ");
+}
+function humanizeType(t: string) {
+  if (t === "reminder_before_due") return "Reminder — before due";
+  if (t === "reminder_on_due") return "Reminder — on due";
+  if (t === "reminder_after_due") return "Reminder — after due";
+  return titleCase(t);
+}
+function humanizeToken(token: string): string {
+  const map: Record<string, string> = {
+    customer_name: "Customer Name",
+    org_name: "BrainWise Enterprises",
+    invoice_number: "INV-2026-0008",
+    estimate_number: "EST-2026-0008",
+    credit_note_number: "CN-2026-0008",
+    statement_number: "STM-2026-0008",
+    balance_due: "1,500.00",
+    total_amount: "1,500.00",
+    amount: "1,500.00",
+    amount_due: "1,500.00",
+    subtotal: "1,500.00",
+    tax_total: "1,500.00",
+  };
+  if (map[token]) return map[token];
+  if (/_date$/.test(token)) return "2026-06-15";
+  if (/_(link|url)$/.test(token)) return "https://example.com/pay";
+  return titleCase(token);
+}
+function applyTokens(str: string, ctx: Record<string, string>) {
+  return (str ?? "").replace(/\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g, (_m, t) => ctx[t] ?? "");
+}
+function formatTiming(n: number) {
+  if (n < 0) return `${Math.abs(n)} days before due`;
+  if (n === 0) return "On due date";
+  return `${n} days after due`;
+}
 
 type Address = { line1?: string; line2?: string; city?: string; state?: string; postal_code?: string; country?: string };
 
@@ -235,6 +280,145 @@ export default function OperationsSettings() {
     setCurrencyDraft(null);
   }
 
+  // ---------- Templates & Reminders ----------
+  const templatesQ = useQuery({
+    queryKey: ["ops", "settings", "email-templates"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("ops_list_email_templates" as any);
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+  });
+  const catalogQ = useQuery({
+    queryKey: ["ops", "settings", "merge-catalog"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("ops_get_merge_tag_catalog" as any);
+      if (error) throw error;
+      return (data ?? {}) as Record<string, string[]>;
+    },
+  });
+  const schedulesQ = useQuery({
+    queryKey: ["ops", "settings", "reminder-schedules"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("ops_list_reminder_schedules" as any);
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+  });
+
+  const [templateType, setTemplateType] = useState<string>("invoice_send");
+  const [editor, setEditor] = useState<{
+    id: string | null; subject: string; body_html: string; body_text: string;
+    is_active: boolean; is_default: boolean;
+  }>({ id: null, subject: "", body_html: "", body_text: "", is_active: true, is_default: false });
+  const [activeField, setActiveField] = useState<"subject" | "body">("body");
+  const subjectRef = useRef<HTMLInputElement>(null);
+  const bodyRef = useRef<HTMLTextAreaElement>(null);
+  const [serverPreview, setServerPreview] = useState<{ subject: string; body_html: string } | null>(null);
+  const [savingTemplate, setSavingTemplate] = useState(false);
+
+  useEffect(() => {
+    const row = (templatesQ.data ?? []).find((t: any) => t.template_type === templateType);
+    if (row) {
+      setEditor({
+        id: row.id, subject: row.subject ?? "", body_html: row.body_html ?? "",
+        body_text: row.body_text ?? "", is_active: row.is_active !== false, is_default: !!row.is_default,
+      });
+    } else {
+      setEditor({ id: null, subject: "", body_html: "", body_text: "", is_active: true, is_default: false });
+    }
+    setServerPreview(null);
+  }, [templateType, templatesQ.data]);
+
+  function insertToken(token: string) {
+    const literal = `{{${token}}}`;
+    if (activeField === "subject") {
+      const el = subjectRef.current;
+      const cur = editor.subject;
+      const start = el?.selectionStart ?? cur.length;
+      const end = el?.selectionEnd ?? start;
+      const next = cur.slice(0, start) + literal + cur.slice(end);
+      setEditor(e => ({ ...e, subject: next }));
+      requestAnimationFrame(() => {
+        const e2 = subjectRef.current;
+        if (e2) { e2.focus(); const p = start + literal.length; e2.setSelectionRange(p, p); }
+      });
+    } else {
+      const el = bodyRef.current;
+      const cur = editor.body_html;
+      const start = el?.selectionStart ?? cur.length;
+      const end = el?.selectionEnd ?? start;
+      const next = cur.slice(0, start) + literal + cur.slice(end);
+      setEditor(e => ({ ...e, body_html: next }));
+      requestAnimationFrame(() => {
+        const e2 = bodyRef.current;
+        if (e2) { e2.focus(); const p = start + literal.length; e2.setSelectionRange(p, p); }
+      });
+    }
+  }
+
+  async function saveTemplate() {
+    setSavingTemplate(true);
+    try {
+      const { error } = await supabase.rpc("ops_upsert_email_template" as any, {
+        p_id: editor.id,
+        p_patch: {
+          template_type: templateType,
+          subject: editor.subject,
+          body_html: editor.body_html,
+          body_text: editor.body_text || null,
+          is_default: editor.is_default,
+          is_active: editor.is_active,
+        },
+      });
+      if (error) { toast.error(error.message); return; }
+      toast.success("Template saved.");
+      setServerPreview(null);
+      qc.invalidateQueries({ queryKey: ["ops", "settings", "email-templates"] });
+    } finally { setSavingTemplate(false); }
+  }
+
+  async function verifyServerRender() {
+    const tokens = catalogQ.data?.[templateType] ?? [];
+    const ctx: Record<string, string> = {};
+    for (const t of tokens) ctx[t] = humanizeToken(t);
+    const { data, error } = await supabase.rpc("ops_render_email_preview" as any, {
+      p_template_type: templateType, p_context: ctx,
+    });
+    if (error) { toast.error(error.message); return; }
+    setServerPreview({ subject: (data as any)?.subject ?? "", body_html: (data as any)?.body_html ?? "" });
+  }
+
+  const [scheduleDraft, setScheduleDraft] = useState<any | null>(null);
+  async function saveSchedule() {
+    if (!scheduleDraft) return;
+    if (!scheduleDraft.name) { toast.error("Name is required"); return; }
+    const sel = scheduleDraft.template_id;
+    const { error } = await supabase.rpc("ops_upsert_reminder_schedule" as any, {
+      p_id: scheduleDraft.id ?? null,
+      p_patch: {
+        name: scheduleDraft.name,
+        schedule_offset_days: Number(scheduleDraft.schedule_offset_days ?? 0),
+        template_id: !sel || sel === "__auto__" ? null : sel,
+        is_active: scheduleDraft.is_active !== false,
+        applies_to_overdue_only: !!scheduleDraft.applies_to_overdue_only,
+      },
+    });
+    if (error) { toast.error(error.message); return; }
+    toast.success("Saved.");
+    qc.invalidateQueries({ queryKey: ["ops", "settings", "reminder-schedules"] });
+    setScheduleDraft(null);
+  }
+  async function deleteSchedule(id: string) {
+    if (!window.confirm("Delete this schedule?")) return;
+    const { error } = await supabase.rpc("ops_delete_reminder_schedule" as any, { p_id: id });
+    if (error) { toast.error(error.message); return; }
+    toast.success("Deleted.");
+    qc.invalidateQueries({ queryKey: ["ops", "settings", "reminder-schedules"] });
+  }
+
+
+
   if (orgQ.isLoading) return <div className="p-6 text-muted-foreground text-sm">Loading…</div>;
 
   const field = (label: string, key: string, type: string = "text") => (
@@ -330,7 +514,172 @@ export default function OperationsSettings() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="templates"><PlaceholderCard title="Templates & Reminders" /></TabsContent>
+        <TabsContent value="templates" className="space-y-6">
+          {/* Card 1: Email templates */}
+          <Card>
+            <CardHeader><CardTitle>Email templates</CardTitle></CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Editor */}
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Template type</Label>
+                    <Select value={templateType} onValueChange={setTemplateType}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {TEMPLATE_TYPES.map(t => (
+                          <SelectItem key={t} value={t}>{humanizeType(t)}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Merge tags</Label>
+                    <div className="flex flex-wrap gap-2">
+                      {(catalogQ.data?.[templateType] ?? []).map((tok) => (
+                        <Button key={tok} type="button" variant="outline" size="sm" onClick={() => insertToken(tok)}>
+                          {`{{${tok}}}`}
+                        </Button>
+                      ))}
+                      {(catalogQ.data?.[templateType] ?? []).length === 0 && (
+                        <p className="text-xs text-muted-foreground">No merge tags for this type.</p>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground">Click a tag to insert it at the cursor of the last-focused field (subject or body).</p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="tpl-subject">Subject</Label>
+                    <Input
+                      id="tpl-subject"
+                      ref={subjectRef}
+                      value={editor.subject}
+                      onFocus={() => setActiveField("subject")}
+                      onChange={(e) => setEditor(s => ({ ...s, subject: e.target.value }))}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="tpl-body">Body (HTML)</Label>
+                    <Textarea
+                      id="tpl-body"
+                      ref={bodyRef}
+                      rows={16}
+                      className="font-mono text-sm"
+                      value={editor.body_html}
+                      onFocus={() => setActiveField("body")}
+                      onChange={(e) => setEditor(s => ({ ...s, body_html: e.target.value }))}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="tpl-text">Plain-text fallback (optional)</Label>
+                    <Textarea
+                      id="tpl-text"
+                      rows={3}
+                      value={editor.body_text}
+                      onChange={(e) => setEditor(s => ({ ...s, body_text: e.target.value }))}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="tpl-active">Active</Label>
+                    <Switch id="tpl-active" checked={editor.is_active} onCheckedChange={(v) => setEditor(s => ({ ...s, is_active: v }))} />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="tpl-default">Default</Label>
+                    <Switch id="tpl-default" checked={editor.is_default} onCheckedChange={(v) => setEditor(s => ({ ...s, is_default: v }))} />
+                  </div>
+
+                  <div className="flex justify-end">
+                    <Button onClick={saveTemplate} disabled={savingTemplate}>
+                      {savingTemplate ? "Saving…" : "Save template"}
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Preview */}
+                {(() => {
+                  const tokens = catalogQ.data?.[templateType] ?? [];
+                  const ctx: Record<string, string> = {};
+                  for (const t of tokens) ctx[t] = humanizeToken(t);
+                  const renderedSubject = serverPreview ? serverPreview.subject : applyTokens(editor.subject, ctx);
+                  const renderedBody = serverPreview ? serverPreview.body_html : applyTokens(editor.body_html, ctx);
+                  return (
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-medium">
+                          {serverPreview ? "Server-rendered (saved template)" : "Live preview (current edits)"}
+                        </p>
+                        <div className="space-x-2">
+                          {serverPreview && (
+                            <Button type="button" variant="ghost" size="sm" onClick={() => setServerPreview(null)}>Back to live</Button>
+                          )}
+                          <Button type="button" variant="outline" size="sm" onClick={verifyServerRender}>Verify server render</Button>
+                        </div>
+                      </div>
+                      <div className="space-y-1 rounded border p-3 bg-muted/30">
+                        <p className="text-xs text-muted-foreground">Subject</p>
+                        <p className="text-sm break-words">{renderedSubject || <span className="text-muted-foreground italic">(empty)</span>}</p>
+                      </div>
+                      <iframe
+                        title="Email preview"
+                        sandbox=""
+                        srcDoc={renderedBody}
+                        className="w-full h-[400px] border rounded bg-background"
+                      />
+                    </div>
+                  );
+                })()}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Card 2: Reminder schedules */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle>Reminder schedules</CardTitle>
+              <Button size="sm" onClick={() => setScheduleDraft({ name: "", schedule_offset_days: 0, template_id: "__auto__", is_active: true, applies_to_overdue_only: false })}>Add schedule</Button>
+            </CardHeader>
+            <CardContent>
+              {schedulesQ.isLoading ? (
+                <p className="text-sm text-muted-foreground">Loading…</p>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Timing</TableHead>
+                      <TableHead>Template</TableHead>
+                      <TableHead>Active</TableHead>
+                      <TableHead>Overdue-only</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {(schedulesQ.data ?? []).map((s: any) => (
+                      <TableRow key={s.id}>
+                        <TableCell>{s.name}</TableCell>
+                        <TableCell>{formatTiming(Number(s.schedule_offset_days ?? 0))}</TableCell>
+                        <TableCell>{s.template_id == null ? "Auto (by due state)" : humanizeType(s.template_type)}</TableCell>
+                        <TableCell>{s.is_active ? "Yes" : "No"}</TableCell>
+                        <TableCell>{s.applies_to_overdue_only ? "Yes" : "No"}</TableCell>
+                        <TableCell className="text-right space-x-2">
+                          <Button variant="outline" size="sm" onClick={() => setScheduleDraft({ ...s, template_id: s.template_id ?? "__auto__" })}>Edit</Button>
+                          <Button variant="destructive" size="sm" onClick={() => deleteSchedule(s.id)}>Delete</Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    {(schedulesQ.data ?? []).length === 0 && (
+                      <TableRow><TableCell colSpan={6} className="text-sm text-muted-foreground">No schedules.</TableCell></TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
         <TabsContent value="late_fees"><PlaceholderCard title="Late Fees" /></TabsContent>
         <TabsContent value="sales"><PlaceholderCard title="Sales & Commission" /></TabsContent>
         <TabsContent value="custom_fields"><PlaceholderCard title="Custom Fields" /></TabsContent>
@@ -636,6 +985,52 @@ export default function OperationsSettings() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setCurrencyDraft(null)}>Cancel</Button>
             <Button onClick={saveCurrency}>Save</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Reminder schedule dialog */}
+      <Dialog open={!!scheduleDraft} onOpenChange={(o) => !o && setScheduleDraft(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>{scheduleDraft?.id ? "Edit schedule" : "Add schedule"}</DialogTitle></DialogHeader>
+          {scheduleDraft && (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Name</Label>
+                <Input value={scheduleDraft.name ?? ""} onChange={(e) => setScheduleDraft({ ...scheduleDraft, name: e.target.value })} />
+              </div>
+              <div className="space-y-2">
+                <Label>Offset days</Label>
+                <Input type="number" value={scheduleDraft.schedule_offset_days ?? 0} onChange={(e) => setScheduleDraft({ ...scheduleDraft, schedule_offset_days: e.target.value })} />
+                <p className="text-xs text-muted-foreground">Negative = before due, 0 = on due date, positive = after due.</p>
+              </div>
+              <div className="space-y-2">
+                <Label>Template</Label>
+                <Select value={scheduleDraft.template_id ?? "__auto__"} onValueChange={(v) => setScheduleDraft({ ...scheduleDraft, template_id: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__auto__">Auto (by due state)</SelectItem>
+                    {(templatesQ.data ?? [])
+                      .filter((t: any) => ["reminder_before_due","reminder_on_due","reminder_after_due"].includes(t.template_type))
+                      .map((t: any) => (
+                        <SelectItem key={t.id} value={t.id}>{humanizeType(t.template_type)}</SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="sch-active">Active</Label>
+                <Switch id="sch-active" checked={scheduleDraft.is_active !== false} onCheckedChange={(v) => setScheduleDraft({ ...scheduleDraft, is_active: v })} />
+              </div>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="sch-overdue">Applies to overdue only</Label>
+                <Switch id="sch-overdue" checked={!!scheduleDraft.applies_to_overdue_only} onCheckedChange={(v) => setScheduleDraft({ ...scheduleDraft, applies_to_overdue_only: v })} />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setScheduleDraft(null)}>Cancel</Button>
+            <Button onClick={saveSchedule}>Save</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
