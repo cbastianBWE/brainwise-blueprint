@@ -11447,6 +11447,13 @@ export type Database = {
         Args: { p_token: string }
         Returns: Json
       }
+      ops_get_invoice_expense_receipts: {
+        Args: { p_invoice: string }
+        Returns: {
+          receipt_storage_path: string
+          suggested_filename: string
+        }[]
+      }
       ops_get_public_document_by_token: {
         Args: { p_token: string }
         Returns: Json
