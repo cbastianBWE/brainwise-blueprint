@@ -58,6 +58,16 @@ function formatTiming(n: number) {
   return `${n} days after due`;
 }
 
+const ENTITY_TYPES = ["customer","item","project","task","time_entry","expense","estimate","invoice"] as const;
+const FIELD_TYPES = ["text","number","date","dropdown","checkbox","longtext"] as const;
+function humanizeEntity(t: string) {
+  if (t === "time_entry") return "Time Entry";
+  return titleCase(t);
+}
+function formatLateAmount(row: any) {
+  return row?.fee_type === "percentage" ? `${row.fee_amount}%` : `$${row.fee_amount}`;
+}
+
 type Address = { line1?: string; line2?: string; city?: string; state?: string; postal_code?: string; country?: string };
 
 function PlaceholderCard({ title }: { title: string }) {
