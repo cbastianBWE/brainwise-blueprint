@@ -163,8 +163,8 @@ export default function OperationsDashboard() {
           <CardContent>
             <SimpleTable q={winRateQ} empty="No data." cols={[
               { k: "stage_name", h: "Stage" },
-              { k: "total_deals", h: "Deals", right: true },
-              { k: "won_deals", h: "Won", right: true },
+              { k: "deals_reached", h: "Reached", right: true },
+              { k: "deals_won", h: "Won", right: true },
               { k: "win_rate_pct", h: "Win rate", right: true, fmt: (v) => v == null ? "—" : `${v}%` },
             ]} />
           </CardContent>
@@ -174,7 +174,7 @@ export default function OperationsDashboard() {
           <CardHeader><CardTitle>Leads by source</CardTitle></CardHeader>
           <CardContent>
             <SimpleTable q={leadsBySourceQ} empty="No leads." cols={[
-              { k: "source", h: "Source" },
+              { k: "source_name", h: "Source" },
               { k: "lead_count", h: "Leads", right: true },
             ]} />
           </CardContent>
@@ -197,7 +197,7 @@ export default function OperationsDashboard() {
             <SimpleTable q={lostQ} empty="No lost deals." cols={[
               { k: "lost_reason", h: "Reason" },
               { k: "deal_count", h: "Deals", right: true },
-              { k: "lost_value", h: "Lost value", right: true, fmt: (v) => formatMoney(v, "USD") },
+              { k: "lost_amount", h: "Lost value", right: true, fmt: (v) => formatMoney(v, "USD") },
             ]} />
           </CardContent>
         </Card>
