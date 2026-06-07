@@ -27,7 +27,7 @@ type Row = {
   require_signature: boolean;
   auto_enrich: boolean;
   rate_limit_per_min: number;
-  received_count: number;
+  total_received: number;
   ingest_url: string;
   public_token: string;
 };
