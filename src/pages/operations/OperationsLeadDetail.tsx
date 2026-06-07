@@ -1,14 +1,20 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useParams } from "react-router-dom";
+import { toast } from "sonner";
 import { opsSupabase } from "@/integrations/supabase/operations-types";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Pencil, ArrowRightLeft } from "lucide-react";
+import {
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+} from "@/components/ui/table";
+import { Pencil, ArrowRightLeft, MailCheck, Building2 } from "lucide-react";
 import LeadFormDialog from "./LeadFormDialog";
 import ConvertLeadDialog from "./ConvertLeadDialog";
 import EntityTimeline from "./EntityTimeline";
+import { formatDate } from "./_shared";
 
 export default function OperationsLeadDetail() {
   const { id = "" } = useParams();
