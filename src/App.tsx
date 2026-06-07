@@ -310,6 +310,7 @@ const App = () => (
               <Route path="/operations/deals/:id" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsDealDetail /></SuperAdminSessionProvider></RoleGuard>} />
               <Route path="/operations/pipeline" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsPipeline /></SuperAdminSessionProvider></RoleGuard>} />
               <Route path="/operations/activities" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsActivities /></SuperAdminSessionProvider></RoleGuard>} />
+              <Route path="/operations/email-templates" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsEmailTemplates /></SuperAdminSessionProvider></RoleGuard>} />
             </Route>
 
             {/* Legacy redirects */}
