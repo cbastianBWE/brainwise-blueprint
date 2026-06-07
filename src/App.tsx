@@ -123,6 +123,7 @@ import OperationsImport from "./pages/operations/OperationsImport";
 import OperationsLeads from "./pages/operations/OperationsLeads";
 import OperationsLeadDetail from "./pages/operations/OperationsLeadDetail";
 import OperationsAccounts from "./pages/operations/OperationsAccounts";
+import OperationsCampaigns from "./pages/operations/OperationsCampaigns";
 import OperationsAccountDetail from "./pages/operations/OperationsAccountDetail";
 import OperationsContacts from "./pages/operations/OperationsContacts";
 import OperationsContactDetail from "./pages/operations/OperationsContactDetail";
