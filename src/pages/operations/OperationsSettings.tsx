@@ -841,7 +841,65 @@ export default function OperationsSettings() {
               )}
             </CardContent>
           </Card>
+
+          {/* Card 3: Calendar reminders */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Calendar reminders</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="reminders-enabled" className="flex-1">
+                  Send meeting reminders and daily digest
+                </Label>
+                <Switch
+                  id="reminders-enabled"
+                  checked={reminders.reminders_enabled}
+                  onCheckedChange={(v) => setReminders((r) => ({ ...r, reminders_enabled: v }))}
+                />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Timezone</Label>
+                  <Select
+                    value={reminders.timezone}
+                    onValueChange={(v) => setReminders((r) => ({ ...r, timezone: v }))}
+                  >
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {(TZ_OPTIONS.includes(reminders.timezone)
+                        ? TZ_OPTIONS
+                        : [reminders.timezone, ...TZ_OPTIONS]
+                      ).map((tz) => (
+                        <SelectItem key={tz} value={tz}>{tz}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Daily digest hour</Label>
+                  <Select
+                    value={reminders.day_of_digest_hour}
+                    onValueChange={(v) => setReminders((r) => ({ ...r, day_of_digest_hour: v }))}
+                  >
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {Array.from({ length: 24 }, (_, i) => (
+                        <SelectItem key={i} value={String(i)}>{`${i}:00`}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="flex justify-end">
+                <Button onClick={saveReminders} disabled={savingReminders}>
+                  {savingReminders ? "Saving…" : "Save"}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
+
         <TabsContent value="late_fees" className="space-y-6">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
