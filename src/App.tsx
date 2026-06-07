@@ -304,6 +304,7 @@ const App = () => (
               <Route path="/operations/import" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsImport /></SuperAdminSessionProvider></RoleGuard>} />
               <Route path="/operations/leads" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsLeads /></SuperAdminSessionProvider></RoleGuard>} />
               <Route path="/operations/leads/:id" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsLeadDetail /></SuperAdminSessionProvider></RoleGuard>} />
+              <Route path="/operations/lead-capture" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsLeadCapture /></SuperAdminSessionProvider></RoleGuard>} />
               <Route path="/operations/accounts" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsAccounts /></SuperAdminSessionProvider></RoleGuard>} />
               <Route path="/operations/accounts/:id" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsAccountDetail /></SuperAdminSessionProvider></RoleGuard>} />
               <Route path="/operations/contacts" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsContacts /></SuperAdminSessionProvider></RoleGuard>} />
