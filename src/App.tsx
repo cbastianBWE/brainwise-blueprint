@@ -301,7 +301,9 @@ const App = () => (
               <Route path="/operations/leads" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsLeads /></SuperAdminSessionProvider></RoleGuard>} />
               <Route path="/operations/leads/:id" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsLeadDetail /></SuperAdminSessionProvider></RoleGuard>} />
               <Route path="/operations/accounts" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsAccounts /></SuperAdminSessionProvider></RoleGuard>} />
+              <Route path="/operations/accounts/:id" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsAccountDetail /></SuperAdminSessionProvider></RoleGuard>} />
               <Route path="/operations/contacts" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsContacts /></SuperAdminSessionProvider></RoleGuard>} />
+              <Route path="/operations/contacts/:id" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsContactDetail /></SuperAdminSessionProvider></RoleGuard>} />
               <Route path="/operations/deals" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsDeals /></SuperAdminSessionProvider></RoleGuard>} />
               <Route path="/operations/deals/:id" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsDealDetail /></SuperAdminSessionProvider></RoleGuard>} />
               <Route path="/operations/pipeline" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsPipeline /></SuperAdminSessionProvider></RoleGuard>} />
