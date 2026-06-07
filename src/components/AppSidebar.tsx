@@ -107,6 +107,7 @@ const superAdminNav: NavItem[] = [
  { title: "Accounts", url: "/operations/accounts", icon: Building2 },
  { title: "Contacts", url: "/operations/contacts", icon: UsersRound },
  { title: "Deals", url: "/operations/deals", icon: Briefcase },
+ { title: "Campaigns", url: "/operations/campaigns", icon: Megaphone },
       { title: "Activity", url: "/operations/activities", icon: Activity },
       { title: "Email Templates", url: "/operations/email-templates", icon: Mail },
       { title: "Inbound", url: "/operations/inbound", icon: Inbox },
