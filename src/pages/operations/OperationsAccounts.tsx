@@ -31,7 +31,7 @@ export default function OperationsAccounts() {
           <h1 className="text-2xl font-semibold">Accounts</h1>
           <p className="text-muted-foreground text-sm">CRM · Accounts</p>
         </div>
-        <Button onClick={() => { setEditRow(null); setCreateOpen(true); }}>
+        <Button onClick={() => setCreateOpen(true)}>
           <Plus className="h-4 w-4 mr-2" />New account
         </Button>
       </div>
