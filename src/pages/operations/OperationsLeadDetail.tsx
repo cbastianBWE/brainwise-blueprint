@@ -59,6 +59,9 @@ export default function OperationsLeadDetail() {
                 {lead.title && <> · {lead.title}</>}
                 {lead.source?.label && <> · Source: {lead.source.label}</>}
                 {lead.score != null && <> · Score: {lead.score}</>}
+                {lead.source_webhook_id && (
+                  <Badge variant="outline" className="ml-2">Captured via web form</Badge>
+                )}
               </div>
               <div className="text-sm text-muted-foreground">
                 {lead.email ?? "—"}{lead.phone && <> · {lead.phone}</>}{lead.mobile && <> · {lead.mobile}</>}
