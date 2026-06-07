@@ -1,15 +1,21 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { opsSupabase } from "@/integrations/supabase/operations-types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Plus, ArrowRightLeft } from "lucide-react";
 import LeadFormDialog from "./LeadFormDialog";
+import ConvertLeadDialog from "./ConvertLeadDialog";
 
 export default function OperationsLeads() {
+  const navigate = useNavigate();
+  const qc = useQueryClient();
   const [createOpen, setCreateOpen] = useState(false);
-  const [editRow, setEditRow] = useState<any | null>(null);
+  const [convertOpen, setConvertOpen] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["ops", "leads", "list"],
@@ -24,6 +30,19 @@ export default function OperationsLeads() {
     },
   });
 
+  const allIds = useMemo(() => (data ?? []).map((l: any) => l.id), [data]);
+  const allSelected = allIds.length > 0 && selected.size === allIds.length;
+  const someSelected = selected.size > 0 && !allSelected;
+
+  const toggleAll = (checked: boolean) => {
+    setSelected(checked ? new Set(allIds) : new Set());
+  };
+  const toggleOne = (id: string, checked: boolean) => {
+    const next = new Set(selected);
+    if (checked) next.add(id); else next.delete(id);
+    setSelected(next);
+  };
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-start justify-between gap-4">
@@ -31,9 +50,16 @@ export default function OperationsLeads() {
           <h1 className="text-2xl font-semibold">Leads</h1>
           <p className="text-muted-foreground text-sm">CRM · Leads</p>
         </div>
-        <Button onClick={() => { setEditRow(null); setCreateOpen(true); }}>
-          <Plus className="h-4 w-4 mr-2" />New lead
-        </Button>
+        <div className="flex items-center gap-2">
+          {selected.size > 0 && (
+            <Button variant="outline" onClick={() => setConvertOpen(true)}>
+              <ArrowRightLeft className="h-4 w-4 mr-2" />Convert selected ({selected.size})
+            </Button>
+          )}
+          <Button onClick={() => setCreateOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />New lead
+          </Button>
+        </div>
       </div>
       <Card>
         <CardHeader><CardTitle>All leads</CardTitle></CardHeader>
@@ -48,6 +74,13 @@ export default function OperationsLeads() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-10">
+                    <Checkbox
+                      checked={allSelected || (someSelected ? "indeterminate" : false)}
+                      onCheckedChange={(v) => toggleAll(!!v)}
+                      aria-label="Select all"
+                    />
+                  </TableHead>
                   <TableHead>Name</TableHead>
                   <TableHead>Company</TableHead>
                   <TableHead>Email</TableHead>
@@ -60,8 +93,15 @@ export default function OperationsLeads() {
                   <TableRow
                     key={l.id}
                     className="cursor-pointer"
-                    onClick={() => { setEditRow(l); setCreateOpen(true); }}
+                    onClick={() => navigate(`/operations/leads/${l.id}`)}
                   >
+                    <TableCell onClick={(e) => e.stopPropagation()}>
+                      <Checkbox
+                        checked={selected.has(l.id)}
+                        onCheckedChange={(v) => toggleOne(l.id, !!v)}
+                        aria-label="Select row"
+                      />
+                    </TableCell>
                     <TableCell className="font-medium">{[l.first_name, l.last_name].filter(Boolean).join(" ") || "—"}</TableCell>
                     <TableCell>{l.company_name_text ?? "—"}</TableCell>
                     <TableCell>{l.email ?? "—"}</TableCell>
@@ -74,7 +114,16 @@ export default function OperationsLeads() {
           )}
         </CardContent>
       </Card>
-      <LeadFormDialog open={createOpen} onOpenChange={setCreateOpen} row={editRow} />
+      <LeadFormDialog open={createOpen} onOpenChange={setCreateOpen} row={null} />
+      <ConvertLeadDialog
+        open={convertOpen}
+        onOpenChange={setConvertOpen}
+        leadIds={Array.from(selected)}
+        onConverted={() => {
+          setSelected(new Set());
+          qc.invalidateQueries({ queryKey: ["ops", "leads", "list"] });
+        }}
+      />
     </div>
   );
 }
