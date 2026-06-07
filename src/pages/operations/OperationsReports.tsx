@@ -209,6 +209,210 @@ const REPORTS: ReportDef[] = [
       { key: "billable", label: "Billable", type: "money" },
     ],
   },
+  {
+    key: "crm_pipeline_by_stage", label: "CRM · Pipeline by stage",
+    view: "report_crm_pipeline_by_stage", defaultSort: { key: "sort_order", dir: "asc" },
+    columns: [
+      { key: "stage_name", label: "Stage", type: "text" },
+      { key: "deal_count", label: "Deals", type: "number" },
+      { key: "total_amount", label: "Total value", type: "money" },
+      { key: "weighted_amount", label: "Weighted", type: "money" },
+    ],
+  },
+  {
+    key: "crm_pipeline_by_source", label: "CRM · Pipeline by source",
+    view: "report_crm_pipeline_by_source", defaultSort: { key: "total_amount", dir: "desc" },
+    columns: [
+      { key: "source_name", label: "Source", type: "text" },
+      { key: "deal_count", label: "Deals", type: "number" },
+      { key: "total_amount", label: "Total value", type: "money" },
+      { key: "weighted_amount", label: "Weighted", type: "money" },
+    ],
+  },
+  {
+    key: "crm_pipeline_by_owner", label: "CRM · Pipeline by owner",
+    view: "report_crm_pipeline_by_owner", defaultSort: { key: "total_amount", dir: "desc" },
+    columns: [
+      { key: "owner_name", label: "Owner", type: "text" },
+      { key: "deal_count", label: "Deals", type: "number" },
+      { key: "total_amount", label: "Total value", type: "money" },
+      { key: "weighted_amount", label: "Weighted", type: "money" },
+    ],
+  },
+  {
+    key: "crm_forecast_by_month", label: "CRM · Forecast by month",
+    view: "report_crm_forecast_by_month", dateField: "period_month",
+    defaultSort: { key: "period_month", dir: "asc" },
+    columns: [
+      { key: "period_month", label: "Month", type: "date" },
+      { key: "deal_count", label: "Deals", type: "number" },
+      { key: "total_amount", label: "Total value", type: "money" },
+      { key: "weighted_amount", label: "Weighted", type: "money" },
+    ],
+  },
+  {
+    key: "crm_forecast_by_quarter", label: "CRM · Forecast by quarter",
+    view: "report_crm_forecast_by_quarter", dateField: "period_quarter",
+    defaultSort: { key: "period_quarter", dir: "asc" },
+    columns: [
+      { key: "period_quarter", label: "Quarter", type: "date" },
+      { key: "deal_count", label: "Deals", type: "number" },
+      { key: "total_amount", label: "Total value", type: "money" },
+      { key: "weighted_amount", label: "Weighted", type: "money" },
+    ],
+  },
+  {
+    key: "crm_win_rate_by_stage", label: "CRM · Win rate by stage",
+    view: "report_crm_win_rate_by_stage", defaultSort: { key: "sort_order", dir: "asc" },
+    columns: [
+      { key: "stage_name", label: "Stage", type: "text" },
+      { key: "deals_reached", label: "Reached", type: "number" },
+      { key: "deals_won", label: "Won", type: "number" },
+      { key: "win_rate_pct", label: "Win rate %", type: "number" },
+    ],
+  },
+  {
+    key: "crm_avg_deal_cycle", label: "CRM · Average deal cycle",
+    view: "report_crm_avg_deal_cycle",
+    columns: [
+      { key: "won_deals", label: "Won deals", type: "number" },
+      { key: "avg_cycle_days", label: "Avg cycle (days)", type: "number" },
+    ],
+  },
+  {
+    key: "crm_lost_reason_breakdown", label: "CRM · Lost reason breakdown",
+    view: "report_crm_lost_reason_breakdown", defaultSort: { key: "deal_count", dir: "desc" },
+    columns: [
+      { key: "lost_reason", label: "Lost reason", type: "text" },
+      { key: "deal_count", label: "Deals", type: "number" },
+      { key: "lost_amount", label: "Lost value", type: "money" },
+    ],
+  },
+  {
+    key: "crm_calls_by_user", label: "CRM · Calls by user",
+    view: "report_crm_calls_by_user", defaultSort: { key: "call_count", dir: "desc" },
+    columns: [
+      { key: "user_name", label: "User", type: "text" },
+      { key: "call_count", label: "Calls", type: "number" },
+      { key: "completed_calls", label: "Completed", type: "number" },
+    ],
+  },
+  {
+    key: "crm_meetings_held", label: "CRM · Meetings held",
+    view: "report_crm_meetings_held", dateField: "period_month",
+    defaultSort: { key: "period_month", dir: "asc" },
+    columns: [
+      { key: "period_month", label: "Month", type: "date" },
+      { key: "meetings_held", label: "Meetings", type: "number" },
+    ],
+  },
+  {
+    key: "crm_tasks_completed_vs_created", label: "CRM · Tasks created vs completed",
+    view: "report_crm_tasks_completed_vs_created", dateField: "period_month",
+    defaultSort: { key: "period_month", dir: "asc" },
+    columns: [
+      { key: "period_month", label: "Month", type: "date" },
+      { key: "tasks_created", label: "Created", type: "number" },
+      { key: "tasks_completed", label: "Completed", type: "number" },
+    ],
+  },
+  {
+    key: "crm_activity_to_deal_correlation", label: "CRM · Activity-to-deal correlation",
+    view: "report_crm_activity_to_deal_correlation",
+    columns: [
+      { key: "outcome", label: "Outcome", type: "text" },
+      { key: "deal_count", label: "Deals", type: "number" },
+      { key: "avg_activities_per_deal", label: "Avg activities", type: "number" },
+    ],
+  },
+  {
+    key: "crm_leads_by_source", label: "CRM · Leads by source",
+    view: "report_crm_leads_by_source", defaultSort: { key: "lead_count", dir: "desc" },
+    columns: [
+      { key: "source_name", label: "Source", type: "text" },
+      { key: "lead_count", label: "Leads", type: "number" },
+    ],
+  },
+  {
+    key: "crm_lead_conversion_by_source", label: "CRM · Lead conversion by source",
+    view: "report_crm_lead_conversion_by_source", defaultSort: { key: "total_leads", dir: "desc" },
+    columns: [
+      { key: "source_name", label: "Source", type: "text" },
+      { key: "total_leads", label: "Leads", type: "number" },
+      { key: "converted_leads", label: "Converted", type: "number" },
+      { key: "conversion_pct", label: "Conversion %", type: "number" },
+    ],
+  },
+  {
+    key: "crm_lead_score_distribution", label: "CRM · Lead score distribution",
+    view: "report_crm_lead_score_distribution", defaultSort: { key: "bucket_sort", dir: "asc" },
+    columns: [
+      { key: "score_bucket", label: "Score range", type: "text" },
+      { key: "lead_count", label: "Leads", type: "number" },
+    ],
+  },
+  {
+    key: "crm_time_to_qualify", label: "CRM · Time to qualify",
+    view: "report_crm_time_to_qualify",
+    columns: [
+      { key: "qualified_leads", label: "Qualified leads", type: "number" },
+      { key: "avg_days_to_qualify", label: "Avg days to qualify", type: "number" },
+    ],
+  },
+  {
+    key: "crm_top_accounts_by_revenue", label: "CRM · Top accounts by revenue",
+    view: "report_crm_top_accounts_by_revenue", defaultSort: { key: "total_collected", dir: "desc" },
+    columns: [
+      { key: "account_name", label: "Account", type: "text" },
+      { key: "total_invoiced", label: "Invoiced", type: "money" },
+      { key: "total_collected", label: "Collected", type: "money" },
+      { key: "invoice_count", label: "Invoices", type: "number" },
+    ],
+  },
+  {
+    key: "crm_account_engagement", label: "CRM · Account engagement",
+    view: "report_crm_account_engagement", defaultSort: { key: "activity_count", dir: "desc" },
+    columns: [
+      { key: "account_name", label: "Account", type: "text" },
+      { key: "activity_count", label: "Activities", type: "number" },
+      { key: "last_activity_at", label: "Last activity", type: "date" },
+    ],
+  },
+  {
+    key: "crm_campaign_roi", label: "CRM · Campaign ROI",
+    view: "report_crm_campaign_roi", defaultSort: { key: "won_revenue", dir: "desc" },
+    columns: [
+      { key: "campaign_name", label: "Campaign", type: "text" },
+      { key: "budget_amount", label: "Budget", type: "money" },
+      { key: "attributed_leads", label: "Leads", type: "number" },
+      { key: "attributed_deals", label: "Deals", type: "number" },
+      { key: "won_revenue", label: "Won revenue", type: "money" },
+      { key: "net", label: "Net", type: "money" },
+      { key: "roi_pct", label: "ROI %", type: "number" },
+    ],
+  },
+  {
+    key: "crm_source_attribution", label: "CRM · Source attribution",
+    view: "report_crm_source_attribution", defaultSort: { key: "lead_count", dir: "desc" },
+    columns: [
+      { key: "utm_source", label: "UTM source", type: "text" },
+      { key: "lead_count", label: "Leads", type: "number" },
+      { key: "converted_count", label: "Converted", type: "number" },
+    ],
+  },
+  {
+    key: "crm_salesperson_performance", label: "CRM · Salesperson performance",
+    view: "report_crm_salesperson_performance", defaultSort: { key: "won_revenue", dir: "desc" },
+    columns: [
+      { key: "salesperson_name", label: "Salesperson", type: "text" },
+      { key: "deals_won", label: "Won", type: "number" },
+      { key: "deals_lost", label: "Lost", type: "number" },
+      { key: "won_revenue", label: "Won revenue", type: "money" },
+      { key: "total_invoiced", label: "Invoiced", type: "money" },
+      { key: "total_paid", label: "Paid", type: "money" },
+      { key: "commission_on_paid", label: "Commission", type: "money" },
+    ],
+  },
 ];
 
 function fmtCell(row: any, col: Col): string {
