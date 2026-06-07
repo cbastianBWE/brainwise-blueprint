@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { opsSupabase } from "@/integrations/supabase/operations-types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -8,8 +9,8 @@ import { Plus } from "lucide-react";
 import AccountFormDialog from "./AccountFormDialog";
 
 export default function OperationsAccounts() {
+  const navigate = useNavigate();
   const [createOpen, setCreateOpen] = useState(false);
-  const [editRow, setEditRow] = useState<any | null>(null);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["ops", "accounts", "list"],
