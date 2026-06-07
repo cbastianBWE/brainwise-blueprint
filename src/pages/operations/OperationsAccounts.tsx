@@ -58,7 +58,7 @@ export default function OperationsAccounts() {
                   <TableRow
                     key={a.id}
                     className="cursor-pointer"
-                    onClick={() => { setEditRow(a); setCreateOpen(true); }}
+                    onClick={() => navigate(`/operations/accounts/${a.id}`)}
                   >
                     <TableCell className="font-medium">{a.name}</TableCell>
                     <TableCell className="capitalize">{a.type ?? "—"}</TableCell>
