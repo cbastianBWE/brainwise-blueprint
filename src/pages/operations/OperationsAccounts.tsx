@@ -70,7 +70,7 @@ export default function OperationsAccounts() {
           )}
         </CardContent>
       </Card>
-      <AccountFormDialog open={createOpen} onOpenChange={setCreateOpen} row={editRow} />
+      <AccountFormDialog open={createOpen} onOpenChange={setCreateOpen} row={null} />
     </div>
   );
 }
