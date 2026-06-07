@@ -11455,7 +11455,16 @@ export type Database = {
         Returns: string
       }
       ops_create_retainer: { Args: { p_header: Json }; Returns: string }
+      ops_crm_email_link_inbound: {
+        Args: {
+          p_entity_id: string
+          p_entity_type: string
+          p_ingestion_id: string
+        }
+        Returns: Json
+      }
       ops_crm_email_prepare: { Args: { p_payload: Json }; Returns: Json }
+      ops_crm_email_record_inbound: { Args: { p_payload: Json }; Returns: Json }
       ops_crm_email_record_sent: { Args: { p_payload: Json }; Returns: Json }
       ops_crm_email_record_tracking: {
         Args: {
@@ -11521,6 +11530,7 @@ export type Database = {
         }[]
       }
       ops_get_merge_tag_catalog: { Args: never; Returns: Json }
+      ops_get_my_inbox_address: { Args: never; Returns: Json }
       ops_get_public_document_by_token: {
         Args: { p_token: string }
         Returns: Json
