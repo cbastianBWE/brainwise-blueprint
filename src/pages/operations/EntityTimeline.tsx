@@ -12,6 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, Mail } from "lucide-react";
 import { formatDate } from "./_shared";
 import ComposeEmailDialog from "./ComposeEmailDialog";
+import AddToCalendarButton from "./AddToCalendarButton";
+
 
 const NONE = "__none__";
 
@@ -174,14 +176,24 @@ export default function EntityTimeline({
               const sec = details.status || details.priority
                 ? [details.status, details.priority].filter(Boolean).join(" · ")
                 : null;
+              const showCalendar =
+                it.source === "activity" &&
+                it.kind === "meeting" &&
+                it.details?.scheduled_start_at;
               return (
                 <li key={`${it.source}-${it.id}-${idx}`} className="border-l-2 border-muted pl-3">
-                  <div className="text-xs text-muted-foreground capitalize">{it.source} · {kind || "—"}</div>
-                  <div className="font-medium text-sm">{subjectText}</div>
-                  <div className="text-xs text-muted-foreground">{formatDate(it.at)}</div>
-                  {sec && <div className="text-xs text-muted-foreground capitalize">{sec.replace(/_/g, " ")}</div>}
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1 min-w-0">
+                      <div className="text-xs text-muted-foreground capitalize">{it.source} · {kind || "—"}</div>
+                      <div className="font-medium text-sm">{subjectText}</div>
+                      <div className="text-xs text-muted-foreground">{formatDate(it.at)}</div>
+                      {sec && <div className="text-xs text-muted-foreground capitalize">{sec.replace(/_/g, " ")}</div>}
+                    </div>
+                    {showCalendar && <AddToCalendarButton activityId={it.id} />}
+                  </div>
                 </li>
               );
+
             })}
           </ul>
         )}
