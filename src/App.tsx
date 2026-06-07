@@ -120,6 +120,10 @@ import RecurringInvoiceForm from "./pages/operations/RecurringInvoiceForm";
 import OperationsReports from "./pages/operations/OperationsReports";
 import OperationsSettings from "./pages/operations/OperationsSettings";
 import OperationsImport from "./pages/operations/OperationsImport";
+import OperationsLeads from "./pages/operations/OperationsLeads";
+import OperationsAccounts from "./pages/operations/OperationsAccounts";
+import OperationsContacts from "./pages/operations/OperationsContacts";
+import OperationsDeals from "./pages/operations/OperationsDeals";
 import PublicInvoicePay from "./pages/public/PublicInvoicePay";
 import PublicEstimateRespond from "./pages/public/PublicEstimateRespond";
 import EpnComplete from "./pages/EpnComplete";
@@ -289,6 +293,10 @@ const App = () => (
               <Route path="/operations/reports" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsReports /></SuperAdminSessionProvider></RoleGuard>} />
               <Route path="/operations/settings" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsSettings /></SuperAdminSessionProvider></RoleGuard>} />
               <Route path="/operations/import" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsImport /></SuperAdminSessionProvider></RoleGuard>} />
+              <Route path="/operations/leads" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsLeads /></SuperAdminSessionProvider></RoleGuard>} />
+              <Route path="/operations/accounts" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsAccounts /></SuperAdminSessionProvider></RoleGuard>} />
+              <Route path="/operations/contacts" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsContacts /></SuperAdminSessionProvider></RoleGuard>} />
+              <Route path="/operations/deals" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsDeals /></SuperAdminSessionProvider></RoleGuard>} />
             </Route>
 
             {/* Legacy redirects */}

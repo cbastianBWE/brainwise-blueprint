@@ -4,7 +4,7 @@ import {
   Users, Users2, Building2, UsersRound, Activity, Heart, Award, UserCircle,
   ShieldCheck, Briefcase, GitBranch, FlaskConical, LogOut, History, Shield,
   CreditCard, Receipt, ChevronDown, ChevronRight, Plus, FileText, Library, Ticket,
-  GraduationCap, Bell, Newspaper, SlidersHorizontal, Wallet, FileMinus2, Repeat, Clock,
+  GraduationCap, Bell, Newspaper, SlidersHorizontal, Wallet, FileMinus2, Repeat, Clock, UserPlus,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -101,6 +101,10 @@ const superAdminNav: NavItem[] = [
   { title: "AI Chat", url: "/ai-chat", icon: MessageSquare },
   { title: "Chat History", url: "/ai-chat/history", icon: History },
   { title: "AI Research", url: "/super-admin/ai-research", icon: FlaskConical, disabled: true, badge: "Phase 2" },
+ { title: "Leads", url: "/operations/leads", icon: UserPlus, sectionHeader: "CRM" },
+ { title: "Accounts", url: "/operations/accounts", icon: Building2 },
+ { title: "Contacts", url: "/operations/contacts", icon: UsersRound },
+ { title: "Deals", url: "/operations/deals", icon: Briefcase },
  { title: "Customers", url: "/operations/customers", icon: Users2, sectionHeader: "Operations" },
  { title: "My Time", url: "/operations/my-time", icon: Clock },
  { title: "Items", url: "/operations/items", icon: Library },
