@@ -130,6 +130,7 @@ import OperationsDeals from "./pages/operations/OperationsDeals";
 import OperationsDealDetail from "./pages/operations/OperationsDealDetail";
 import OperationsPipeline from "./pages/operations/OperationsPipeline";
 import OperationsActivities from "./pages/operations/OperationsActivities";
+import OperationsEmailTemplates from "./pages/operations/OperationsEmailTemplates";
 import PublicInvoicePay from "./pages/public/PublicInvoicePay";
 import PublicEstimateRespond from "./pages/public/PublicEstimateRespond";
 import EpnComplete from "./pages/EpnComplete";
