@@ -270,3 +270,83 @@ function EnrichmentCard({
     </Card>
   );
 }
+
+function ScoreCard({ leadId, score }: { leadId: string; score: number | null | undefined }) {
+  const qc = useQueryClient();
+  const eventsKey = ["ops", "lead-score-events", leadId] as const;
+  const [recomputing, setRecomputing] = useState(false);
+
+  const eventsQ = useQuery({
+    queryKey: eventsKey,
+    enabled: !!leadId,
+    queryFn: async () => {
+      const { data, error } = await opsSupabase
+        .from("lead_score_events" as any)
+        .select("id, score_before, score_after, score_delta, reason_text, event_at")
+        .eq("lead_id", leadId)
+        .order("event_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+  });
+
+  const recompute = async () => {
+    setRecomputing(true);
+    try {
+      const { error } = await supabase.rpc("ops_recompute_lead_score" as any, { p_lead_id: leadId });
+      if (error) { toast.error(error.message); return; }
+      toast.success("Score recomputed");
+      qc.invalidateQueries({ queryKey: ["ops", "lead", leadId] });
+      qc.invalidateQueries({ queryKey: eventsKey });
+    } finally {
+      setRecomputing(false);
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between gap-4 flex-wrap">
+          <CardTitle>Lead score</CardTitle>
+          <div className="flex items-center gap-3">
+            <span className="text-2xl font-semibold tabular-nums">{score ?? 0}</span>
+            <Button size="sm" variant="outline" disabled={recomputing} onClick={recompute}>
+              <RefreshCw className="h-4 w-4 mr-2" />{recomputing ? "Recomputing…" : "Recompute"}
+            </Button>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="text-sm font-medium mb-2">History</div>
+        {eventsQ.isLoading ? (
+          <p className="text-muted-foreground text-sm">Loading…</p>
+        ) : !eventsQ.data || eventsQ.data.length === 0 ? (
+          <p className="text-muted-foreground text-sm">No score changes recorded yet.</p>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>When</TableHead>
+                <TableHead>Change</TableHead>
+                <TableHead>Result</TableHead>
+                <TableHead>Reason</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {eventsQ.data.map((e) => (
+                <TableRow key={e.id}>
+                  <TableCell className="text-muted-foreground">{formatDate(e.event_at)}</TableCell>
+                  <TableCell className={e.score_delta >= 0 ? "text-emerald-600" : "text-destructive"}>
+                    {e.score_delta >= 0 ? `+${e.score_delta}` : e.score_delta}
+                  </TableCell>
+                  <TableCell className="tabular-nums">{e.score_before} → {e.score_after}</TableCell>
+                  <TableCell>{e.reason_text ?? "—"}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
