@@ -161,6 +161,51 @@ export default function OperationsSettings() {
     }
   }
 
+  // ---------- Calendar reminders ----------
+  const TZ_OPTIONS = [
+    "America/New_York",
+    "America/Chicago",
+    "America/Denver",
+    "America/Los_Angeles",
+    "America/Phoenix",
+    "UTC",
+  ];
+  const [reminders, setReminders] = useState({
+    timezone: "UTC",
+    day_of_digest_hour: "8",
+    reminders_enabled: true,
+  });
+  const [savingReminders, setSavingReminders] = useState(false);
+
+  useEffect(() => {
+    const o = orgQ.data as any;
+    if (!o) return;
+    setReminders({
+      timezone: o.timezone ?? "UTC",
+      day_of_digest_hour: String(o.day_of_digest_hour ?? 8),
+      reminders_enabled: o.reminders_enabled !== false,
+    });
+  }, [orgQ.data]);
+
+  async function saveReminders() {
+    setSavingReminders(true);
+    try {
+      const { error } = await supabase.rpc("ops_update_reminder_settings" as any, {
+        p_patch: {
+          timezone: reminders.timezone,
+          day_of_digest_hour: Number(reminders.day_of_digest_hour),
+          reminders_enabled: reminders.reminders_enabled,
+        },
+      });
+      if (error) { toast.error(error.message ?? "Save failed"); return; }
+      toast.success("Calendar reminder settings saved.");
+      qc.invalidateQueries({ queryKey: ["ops", "org-branding"] });
+    } finally {
+      setSavingReminders(false);
+    }
+  }
+
+
   // ---------- Numbering & Tax queries ----------
   const numberingQ = useQuery({
     queryKey: ["ops", "settings", "numbering"],
@@ -796,7 +841,65 @@ export default function OperationsSettings() {
               )}
             </CardContent>
           </Card>
+
+          {/* Card 3: Calendar reminders */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Calendar reminders</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="reminders-enabled" className="flex-1">
+                  Send meeting reminders and daily digest
+                </Label>
+                <Switch
+                  id="reminders-enabled"
+                  checked={reminders.reminders_enabled}
+                  onCheckedChange={(v) => setReminders((r) => ({ ...r, reminders_enabled: v }))}
+                />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Timezone</Label>
+                  <Select
+                    value={reminders.timezone}
+                    onValueChange={(v) => setReminders((r) => ({ ...r, timezone: v }))}
+                  >
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {(TZ_OPTIONS.includes(reminders.timezone)
+                        ? TZ_OPTIONS
+                        : [reminders.timezone, ...TZ_OPTIONS]
+                      ).map((tz) => (
+                        <SelectItem key={tz} value={tz}>{tz}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Daily digest hour</Label>
+                  <Select
+                    value={reminders.day_of_digest_hour}
+                    onValueChange={(v) => setReminders((r) => ({ ...r, day_of_digest_hour: v }))}
+                  >
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {Array.from({ length: 24 }, (_, i) => (
+                        <SelectItem key={i} value={String(i)}>{`${i}:00`}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="flex justify-end">
+                <Button onClick={saveReminders} disabled={savingReminders}>
+                  {savingReminders ? "Saving…" : "Save"}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
+
         <TabsContent value="late_fees" className="space-y-6">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">

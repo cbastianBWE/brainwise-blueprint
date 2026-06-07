@@ -11454,6 +11454,10 @@ export type Database = {
         Args: { p_customer: string; p_detail?: string; p_selection: Json }
         Returns: string
       }
+      ops_create_lead_capture_webhook: {
+        Args: { p_name: string; p_options?: Json; p_recipe?: string }
+        Returns: Json
+      }
       ops_create_retainer: { Args: { p_header: Json }; Returns: string }
       ops_crm_email_link_inbound: {
         Args: {
@@ -11498,6 +11502,10 @@ export type Database = {
       ops_delete_draft_invoice: { Args: { p_id: string }; Returns: undefined }
       ops_delete_email_template: { Args: { p_id: string }; Returns: undefined }
       ops_delete_late_fee_rule: { Args: { p_id: string }; Returns: undefined }
+      ops_delete_lead_capture_webhook: {
+        Args: { p_id: string }
+        Returns: boolean
+      }
       ops_delete_reminder_schedule: {
         Args: { p_id: string }
         Returns: undefined
@@ -11514,6 +11522,17 @@ export type Database = {
           user_id: string
         }[]
       }
+      ops_due_enrichments: {
+        Args: { p_limit?: number }
+        Returns: {
+          enrichment_kind: string
+          id: string
+          input: Json
+          lead_id: string
+          org_id: string
+          provider: string
+        }[]
+      }
       ops_due_meeting_reminders: {
         Args: never
         Returns: {
@@ -11526,6 +11545,10 @@ export type Database = {
         }[]
       }
       ops_due_payment_reminders: { Args: never; Returns: Json }
+      ops_enqueue_enrichment: {
+        Args: { p_kind: string; p_lead: string; p_provider: string }
+        Returns: string
+      }
       ops_entity_timeline: {
         Args: { p_entity_id: string; p_entity_type: string; p_limit?: number }
         Returns: Json
@@ -11557,6 +11580,7 @@ export type Database = {
         Returns: Json
       }
       ops_get_refundable_payment: { Args: { p_payment: string }; Returns: Json }
+      ops_get_webhook_signing_info: { Args: { p_id: string }; Returns: Json }
       ops_handle_stripe_checkout_payment: {
         Args: {
           p_amount: number
@@ -11589,6 +11613,10 @@ export type Database = {
       }
       ops_import_items: {
         Args: { p_mode?: string; p_on_conflict?: string; p_rows: Json }
+        Returns: Json
+      }
+      ops_ingest_captured_lead: {
+        Args: { p_ip: string; p_payload: Json; p_webhook: string }
         Returns: Json
       }
       ops_list_activity: {
@@ -11624,11 +11652,41 @@ export type Database = {
       ops_list_email_templates: { Args: never; Returns: Json }
       ops_list_invoice_payments: { Args: { p_invoice: string }; Returns: Json }
       ops_list_late_fee_rules: { Args: never; Returns: Json }
+      ops_list_lead_capture_webhooks: {
+        Args: never
+        Returns: {
+          auto_enrich: boolean
+          created_at: string
+          default_lead_source_id: string
+          id: string
+          ingest_url: string
+          is_active: boolean
+          last_received_at: string
+          name: string
+          public_token: string
+          rate_limit_per_min: number
+          recipe: string
+          require_signature: boolean
+          total_received: number
+        }[]
+      }
       ops_list_numbering_schemes: { Args: never; Returns: Json }
       ops_list_reminder_schedules: { Args: never; Returns: Json }
       ops_list_salespeople: { Args: never; Returns: Json }
       ops_list_tax_authorities: { Args: never; Returns: Json }
       ops_list_tax_rates: { Args: never; Returns: Json }
+      ops_log_webhook_ingestion: {
+        Args: {
+          p_detail?: string
+          p_excerpt?: Json
+          p_ip: string
+          p_lead?: string
+          p_org: string
+          p_outcome: string
+          p_webhook: string
+        }
+        Returns: undefined
+      }
       ops_mark_invoice_sent: {
         Args: { p_invoice: string; p_org: string }
         Returns: undefined
@@ -11648,6 +11706,15 @@ export type Database = {
       }
       ops_record_day_of_digest_sent: {
         Args: { p_user: string }
+        Returns: boolean
+      }
+      ops_record_enrichment_result: {
+        Args: {
+          p_error?: string
+          p_id: string
+          p_result?: Json
+          p_status: string
+        }
         Returns: boolean
       }
       ops_record_meeting_reminder_sent: {
@@ -11684,6 +11751,7 @@ export type Database = {
         Args: { p_invoice: string; p_template_type?: string }
         Returns: Json
       }
+      ops_rotate_webhook_secret: { Args: { p_id: string }; Returns: Json }
       ops_run_recurring_expenses: { Args: never; Returns: number }
       ops_run_recurring_invoices: { Args: never; Returns: number }
       ops_set_credit_note_status: {
@@ -11739,11 +11807,19 @@ export type Database = {
         Args: { p_header: Json; p_id: string; p_lines: Json }
         Returns: string
       }
+      ops_update_lead_capture_webhook: {
+        Args: { p_id: string; p_patch: Json }
+        Returns: boolean
+      }
       ops_update_numbering_scheme: {
         Args: { p_id: string; p_patch: Json }
         Returns: string
       }
       ops_update_org_branding: { Args: { p_patch: Json }; Returns: undefined }
+      ops_update_reminder_settings: {
+        Args: { p_patch: Json }
+        Returns: undefined
+      }
       ops_upsert_currency: {
         Args: { p_id: string; p_patch: Json }
         Returns: string
@@ -11780,6 +11856,7 @@ export type Database = {
         Args: { p_id: string; p_patch: Json }
         Returns: string
       }
+      ops_webhook_resolve: { Args: { p_token: string }; Returns: Json }
       opt_in_to_newsletter: { Args: never; Returns: Json }
       opt_out_of_newsletter: { Args: never; Returns: Json }
       org_has_feature: {
