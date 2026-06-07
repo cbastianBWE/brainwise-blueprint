@@ -94,6 +94,14 @@ export default function OperationsLeadDetail() {
 
       <EntityTimeline entityType="lead" entityId={id} />
 
+      <EnrichmentCard
+        leadId={id}
+        email={lead.email}
+        website={lead.website}
+        enrichmentData={lead.enrichment_data}
+        lastEnrichedAt={lead.last_enriched_at}
+      />
+
       <LeadFormDialog
         open={editOpen}
         onOpenChange={(o) => {
