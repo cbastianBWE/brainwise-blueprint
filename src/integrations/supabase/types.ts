@@ -11504,6 +11504,27 @@ export type Database = {
       }
       ops_delete_tax_authority: { Args: { p_id: string }; Returns: undefined }
       ops_delete_tax_rate: { Args: { p_id: string }; Returns: undefined }
+      ops_due_day_of_digest: {
+        Args: never
+        Returns: {
+          email_body_html: string
+          email_subject: string
+          org_id: string
+          to_email: string
+          user_id: string
+        }[]
+      }
+      ops_due_meeting_reminders: {
+        Args: never
+        Returns: {
+          activity_id: string
+          email_body_html: string
+          email_subject: string
+          org_id: string
+          owner_user_id: string
+          to_email: string
+        }[]
+      }
       ops_due_payment_reminders: { Args: never; Returns: Json }
       ops_entity_timeline: {
         Args: { p_entity_id: string; p_entity_type: string; p_limit?: number }
@@ -11620,6 +11641,23 @@ export type Database = {
           p_purpose: string
         }
         Returns: string
+      }
+      ops_record_calendar_link: {
+        Args: { p_activity: string; p_output_format: string }
+        Returns: string
+      }
+      ops_record_day_of_digest_sent: {
+        Args: { p_user: string }
+        Returns: boolean
+      }
+      ops_record_meeting_reminder_sent: {
+        Args: {
+          p_activity: string
+          p_reminder_type: string
+          p_status?: string
+          p_user: string
+        }
+        Returns: boolean
       }
       ops_record_payment: {
         Args: { p_invoice: string; p_payment: Json }
