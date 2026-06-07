@@ -103,6 +103,7 @@ const superAdminNav: NavItem[] = [
   { title: "AI Research", url: "/super-admin/ai-research", icon: FlaskConical, disabled: true, badge: "Phase 2" },
  { title: "Pipeline", url: "/operations/pipeline", icon: GitBranch, sectionHeader: "CRM" },
  { title: "Leads", url: "/operations/leads", icon: UserPlus },
+ { title: "Lead Capture", url: "/operations/lead-capture", icon: Webhook },
  { title: "Accounts", url: "/operations/accounts", icon: Building2 },
  { title: "Contacts", url: "/operations/contacts", icon: UsersRound },
  { title: "Deals", url: "/operations/deals", icon: Briefcase },
