@@ -122,3 +122,149 @@ export default function OperationsLeadDetail() {
     </div>
   );
 }
+
+type EnrichmentLogRow = {
+  id: string;
+  provider: string | null;
+  enrichment_kind: string | null;
+  status: string | null;
+  error_detail: string | null;
+  result: any;
+  enqueued_at: string | null;
+  processed_at: string | null;
+};
+
+function statusVariant(s: string | null): "default" | "secondary" | "destructive" | "outline" {
+  if (!s) return "secondary";
+  const v = s.toLowerCase();
+  if (v === "success" || v === "completed" || v === "ok") return "default";
+  if (v === "error" || v === "failed") return "destructive";
+  if (v === "queued" || v === "pending" || v === "processing") return "outline";
+  return "secondary";
+}
+
+function EnrichmentCard({
+  leadId,
+  email,
+  website,
+  enrichmentData,
+  lastEnrichedAt,
+}: {
+  leadId: string;
+  email: string | null | undefined;
+  website: string | null | undefined;
+  enrichmentData: any;
+  lastEnrichedAt: string | null | undefined;
+}) {
+  const qc = useQueryClient();
+  const queryKey = ["ops", "lead-enrichment", leadId] as const;
+
+  const logQ = useQuery({
+    queryKey,
+    enabled: !!leadId,
+    queryFn: async () => {
+      const { data, error } = await opsSupabase
+        .from("enrichment_log" as any)
+        .select("id, provider, enrichment_kind, status, error_detail, result, enqueued_at, processed_at")
+        .eq("lead_id", leadId)
+        .order("enqueued_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as unknown as EnrichmentLogRow[];
+    },
+  });
+
+  const enqueue = async (provider: string, kind: string) => {
+    const { error } = await supabase.rpc("ops_enqueue_enrichment" as any, {
+      p_lead: leadId,
+      p_provider: provider,
+      p_kind: kind,
+    });
+    if (error) { toast.error(error.message); return; }
+    toast.success("Queued — results appear within a few minutes");
+    qc.invalidateQueries({ queryKey });
+  };
+
+  const hasEnrichment = enrichmentData && typeof enrichmentData === "object" && Object.keys(enrichmentData).length > 0;
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between gap-4 flex-wrap">
+          <CardTitle>Enrichment</CardTitle>
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={!email}
+              onClick={() => enqueue("hunter", "email_verify")}
+            >
+              <MailCheck className="h-4 w-4 mr-2" />Verify email
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={!email && !website}
+              onClick={() => enqueue("apollo", "organization")}
+            >
+              <Building2 className="h-4 w-4 mr-2" />Enrich company
+            </Button>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {hasEnrichment && (
+          <div className="space-y-2">
+            <div className="text-sm font-medium">
+              Merged data
+              {lastEnrichedAt && (
+                <span className="ml-2 text-muted-foreground font-normal">
+                  · Last enriched {formatDate(lastEnrichedAt)}
+                </span>
+              )}
+            </div>
+            <pre className="text-xs bg-muted p-3 rounded max-h-64 overflow-auto">
+              {JSON.stringify(enrichmentData, null, 2)}
+            </pre>
+          </div>
+        )}
+
+        <div className="space-y-2">
+          <div className="text-sm font-medium">Activity</div>
+          {logQ.isLoading ? (
+            <p className="text-muted-foreground text-sm">Loading…</p>
+          ) : !logQ.data || logQ.data.length === 0 ? (
+            <p className="text-muted-foreground text-sm">No enrichment requests yet.</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Provider</TableHead>
+                  <TableHead>Kind</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>When</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {logQ.data.map((r) => (
+                  <TableRow key={r.id}>
+                    <TableCell>{r.provider ?? "—"}</TableCell>
+                    <TableCell>{r.enrichment_kind ?? "—"}</TableCell>
+                    <TableCell>
+                      <Badge variant={statusVariant(r.status)}>{r.status ?? "—"}</Badge>
+                      {r.error_detail && (
+                        <span className="ml-2 text-xs text-destructive">{r.error_detail}</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {formatDate(r.processed_at ?? r.enqueued_at)}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
