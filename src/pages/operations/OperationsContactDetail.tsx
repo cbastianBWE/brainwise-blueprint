@@ -121,7 +121,7 @@ export default function OperationsContactDetail() {
         </CardContent>
       </Card>
 
-      <EntityTimeline entityType="contact" entityId={id} />
+      <EntityTimeline entityType="contact" entityId={id} defaultEmail={c.email ?? undefined} />
 
       <ContactCrmFormDialog
         open={editOpen}
