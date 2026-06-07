@@ -49,6 +49,7 @@ export default function EntityTimeline({
   const [priority, setPriority] = useState<string>("");
   const [scheduled, setScheduled] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
+  const [composeOpen, setComposeOpen] = useState(false);
 
   const reset = () => {
     setType("note"); setSubject(""); setDescription("");
