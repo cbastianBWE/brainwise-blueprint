@@ -87,9 +87,14 @@ export default function EntityTimeline({
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Timeline</CardTitle>
-        <Button size="sm" onClick={() => setOpen((o) => !o)}>
-          <Plus className="h-4 w-4 mr-2" />Log activity
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button size="sm" variant="outline" onClick={() => setComposeOpen(true)}>
+            <Mail className="h-4 w-4 mr-2" />Compose email
+          </Button>
+          <Button size="sm" onClick={() => setOpen((o) => !o)}>
+            <Plus className="h-4 w-4 mr-2" />Log activity
+          </Button>
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
         {open && (
