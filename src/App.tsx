@@ -124,6 +124,7 @@ import OperationsLeads from "./pages/operations/OperationsLeads";
 import OperationsAccounts from "./pages/operations/OperationsAccounts";
 import OperationsContacts from "./pages/operations/OperationsContacts";
 import OperationsDeals from "./pages/operations/OperationsDeals";
+import OperationsDealDetail from "./pages/operations/OperationsDealDetail";
 import OperationsPipeline from "./pages/operations/OperationsPipeline";
 import PublicInvoicePay from "./pages/public/PublicInvoicePay";
 import PublicEstimateRespond from "./pages/public/PublicEstimateRespond";
