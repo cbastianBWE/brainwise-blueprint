@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { opsSupabase } from "@/integrations/supabase/operations-types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,6 +15,7 @@ import SavedViewsBar from "./SavedViewsBar";
 type Filters = { search?: string; stage_id?: string };
 
 export default function OperationsDeals() {
+  const navigate = useNavigate();
   const [createOpen, setCreateOpen] = useState(false);
   const [editRow, setEditRow] = useState<any | null>(null);
   const [filters, setFilters] = useState<Filters>({});
@@ -123,7 +125,7 @@ export default function OperationsDeals() {
                   <TableRow
                     key={d.id}
                     className="cursor-pointer"
-                    onClick={() => { setEditRow(d); setCreateOpen(true); }}
+                    onClick={() => navigate(`/operations/deals/${d.id}`)}
                   >
                     <TableCell className="font-medium">{d.name}</TableCell>
                     <TableCell>{d.account?.name ?? "—"}</TableCell>
