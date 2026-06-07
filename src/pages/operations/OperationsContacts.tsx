@@ -5,20 +5,41 @@ import { opsSupabase } from "@/integrations/supabase/operations-types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus } from "lucide-react";
 import ContactCrmFormDialog from "./ContactCrmFormDialog";
+import SavedViewsBar from "./SavedViewsBar";
+
+type Filters = { search?: string; account_id?: string };
 
 export default function OperationsContacts() {
   const navigate = useNavigate();
   const [createOpen, setCreateOpen] = useState(false);
+  const [filters, setFilters] = useState<Filters>({});
+
+  const { data: accounts = [] } = useQuery({
+    queryKey: ["ops", "accounts", "options"],
+    queryFn: async () => {
+      const { data, error } = await opsSupabase.from("accounts" as any).select("id, name").order("name");
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+  });
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ["ops", "contacts", "list"],
+    queryKey: ["ops", "contacts", "list", filters],
     queryFn: async () => {
-      const { data, error } = await opsSupabase
+      let q = opsSupabase
         .from("contact_persons" as any)
-        .select("id, first_name, last_name, email, title, account_id, account:accounts!contact_persons_account_id_fkey(name)")
-        .order("last_name");
+        .select("id, first_name, last_name, email, title, account_id, account:accounts!contact_persons_account_id_fkey(name)");
+      if (filters.search) {
+        const s = filters.search.replace(/[,()]/g, "");
+        q = q.or(`first_name.ilike.%${s}%,last_name.ilike.%${s}%,email.ilike.%${s}%`);
+      }
+      if (filters.account_id) q = q.eq("account_id", filters.account_id);
+      q = q.order("last_name");
+      const { data, error } = await q;
       if (error) throw error;
       return (data ?? []) as any[];
     },
@@ -35,6 +56,30 @@ export default function OperationsContacts() {
           <Plus className="h-4 w-4 mr-2" />New contact
         </Button>
       </div>
+
+      <SavedViewsBar entityType="contact" filters={filters} onApply={(f) => setFilters(f as Filters)} />
+
+      <div className="flex items-center gap-2 flex-wrap">
+        <Input
+          placeholder="Search name, email…"
+          className="w-[260px]"
+          value={filters.search ?? ""}
+          onChange={(e) => setFilters({ ...filters, search: e.target.value || undefined })}
+        />
+        <Select
+          value={filters.account_id ?? "all"}
+          onValueChange={(v) => setFilters({ ...filters, account_id: v === "all" ? undefined : v })}
+        >
+          <SelectTrigger className="w-[220px]"><SelectValue placeholder="Account" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All accounts</SelectItem>
+            {accounts.map((a: any) => (
+              <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
       <Card>
         <CardHeader><CardTitle>All contacts</CardTitle></CardHeader>
         <CardContent>

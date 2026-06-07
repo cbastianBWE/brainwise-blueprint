@@ -5,10 +5,15 @@ import { opsSupabase } from "@/integrations/supabase/operations-types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, ArrowRightLeft } from "lucide-react";
 import LeadFormDialog from "./LeadFormDialog";
 import ConvertLeadDialog from "./ConvertLeadDialog";
+import SavedViewsBar from "./SavedViewsBar";
+
+type Filters = { search?: string; status_id?: string };
 
 export default function OperationsLeads() {
   const navigate = useNavigate();
@@ -16,15 +21,31 @@ export default function OperationsLeads() {
   const [createOpen, setCreateOpen] = useState(false);
   const [convertOpen, setConvertOpen] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [filters, setFilters] = useState<Filters>({});
+
+  const { data: statuses = [] } = useQuery({
+    queryKey: ["ops", "lead_statuses"],
+    queryFn: async () => {
+      const { data, error } = await opsSupabase.from("lead_statuses" as any).select("id, name").order("position");
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+  });
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ["ops", "leads", "list"],
+    queryKey: ["ops", "leads", "list", filters],
     queryFn: async () => {
-      const { data, error } = await opsSupabase
+      let q = opsSupabase
         .from("leads" as any)
         .select("id, salutation, first_name, last_name, company_name_text, email, phone, score, created_at, status:lead_statuses(name,color), source:picklist_values!leads_source_id_fkey(label)")
-        .is("archived_at", null)
-        .order("created_at", { ascending: false });
+        .is("archived_at", null);
+      if (filters.search) {
+        const s = filters.search.replace(/[,()]/g, "");
+        q = q.or(`company_name_text.ilike.%${s}%,last_name.ilike.%${s}%,email.ilike.%${s}%`);
+      }
+      if (filters.status_id) q = q.eq("status_id", filters.status_id);
+      q = q.order("created_at", { ascending: false });
+      const { data, error } = await q;
       if (error) throw error;
       return (data ?? []) as any[];
     },
@@ -61,6 +82,30 @@ export default function OperationsLeads() {
           </Button>
         </div>
       </div>
+
+      <SavedViewsBar entityType="lead" filters={filters} onApply={(f) => setFilters(f as Filters)} />
+
+      <div className="flex items-center gap-2 flex-wrap">
+        <Input
+          placeholder="Search company, name, email…"
+          className="w-[260px]"
+          value={filters.search ?? ""}
+          onChange={(e) => setFilters({ ...filters, search: e.target.value || undefined })}
+        />
+        <Select
+          value={filters.status_id ?? "all"}
+          onValueChange={(v) => setFilters({ ...filters, status_id: v === "all" ? undefined : v })}
+        >
+          <SelectTrigger className="w-[200px]"><SelectValue placeholder="Status" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All statuses</SelectItem>
+            {statuses.map((s: any) => (
+              <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
       <Card>
         <CardHeader><CardTitle>All leads</CardTitle></CardHeader>
         <CardContent>
