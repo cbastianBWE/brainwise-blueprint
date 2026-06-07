@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
-import { Pencil, ArrowRightLeft, MailCheck, Building2 } from "lucide-react";
+import { Pencil, ArrowRightLeft, MailCheck, Building2, RefreshCw } from "lucide-react";
 import LeadFormDialog from "./LeadFormDialog";
 import ConvertLeadDialog from "./ConvertLeadDialog";
 import EntityTimeline from "./EntityTimeline";
