@@ -92,6 +92,8 @@ export default function OperationsLeadDetail() {
         <CardContent />
       </Card>
 
+      <ScoreCard leadId={id} score={lead.score} />
+
       <EntityTimeline entityType="lead" entityId={id} />
 
       <EnrichmentCard
