@@ -27,7 +27,7 @@ type Row = {
   require_signature: boolean;
   auto_enrich: boolean;
   rate_limit_per_min: number;
-  received_count: number;
+  total_received: number;
   ingest_url: string;
   public_token: string;
 };
@@ -248,7 +248,7 @@ export default function OperationsLeadCapture() {
                     </TableCell>
                     <TableCell>{r.auto_enrich ? "Yes" : "No"}</TableCell>
                     <TableCell>{r.rate_limit_per_min}</TableCell>
-                    <TableCell>{r.received_count ?? 0}</TableCell>
+                    <TableCell>{r.total_received ?? 0}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2 max-w-[280px]">
                         <code className="text-xs truncate">{r.ingest_url}</code>

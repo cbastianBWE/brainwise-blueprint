@@ -11404,6 +11404,14 @@ export type Database = {
         Args: { p_amount: number; p_invoice: string; p_retainer: string }
         Returns: string
       }
+      ops_assign_lead_round_robin: {
+        Args: { p_lead_id: string }
+        Returns: string
+      }
+      ops_auto_attribute_lead_utm: {
+        Args: { p_lead_id: string }
+        Returns: string
+      }
       ops_bulk_convert_leads: {
         Args: { p_lead_ids: string[]; p_options?: Json }
         Returns: Json
@@ -11700,6 +11708,7 @@ export type Database = {
         }
         Returns: string
       }
+      ops_recompute_lead_score: { Args: { p_lead_id: string }; Returns: number }
       ops_record_calendar_link: {
         Args: { p_activity: string; p_output_format: string }
         Returns: string
@@ -11754,6 +11763,7 @@ export type Database = {
       ops_rotate_webhook_secret: { Args: { p_id: string }; Returns: Json }
       ops_run_recurring_expenses: { Args: never; Returns: number }
       ops_run_recurring_invoices: { Args: never; Returns: number }
+      ops_score_decay_run: { Args: never; Returns: number }
       ops_set_credit_note_status: {
         Args: { p_action: string; p_id: string }
         Returns: string
@@ -11857,6 +11867,7 @@ export type Database = {
         Returns: string
       }
       ops_webhook_resolve: { Args: { p_token: string }; Returns: Json }
+      ops_workflow_engine_run: { Args: never; Returns: Json }
       opt_in_to_newsletter: { Args: never; Returns: Json }
       opt_out_of_newsletter: { Args: never; Returns: Json }
       org_has_feature: {
