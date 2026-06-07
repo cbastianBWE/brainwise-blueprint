@@ -28,7 +28,7 @@ export default function OperationsLeadDetail() {
     queryFn: async () => {
       const { data, error } = await opsSupabase
         .from("leads" as any)
-        .select("id, salutation, first_name, last_name, company_name_text, title, email, phone, mobile, score, status_id, archived_at, converted_at, converted_account_id, converted_contact_id, converted_deal_id, status:lead_statuses(name,color), source:picklist_values!leads_source_id_fkey(label), industry:picklist_values!leads_industry_id_fkey(label)")
+        .select("id, salutation, first_name, last_name, company_name_text, title, email, phone, mobile, score, status_id, archived_at, converted_at, converted_account_id, converted_contact_id, converted_deal_id, website, source_webhook_id, enrichment_data, last_enriched_at, status:lead_statuses(name,color), source:picklist_values!leads_source_id_fkey(label), industry:picklist_values!leads_industry_id_fkey(label)")
         .eq("id", id)
         .maybeSingle();
       if (error) throw error;
