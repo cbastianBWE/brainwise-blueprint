@@ -124,6 +124,7 @@ import OperationsLeads from "./pages/operations/OperationsLeads";
 import OperationsAccounts from "./pages/operations/OperationsAccounts";
 import OperationsContacts from "./pages/operations/OperationsContacts";
 import OperationsDeals from "./pages/operations/OperationsDeals";
+import OperationsDealDetail from "./pages/operations/OperationsDealDetail";
 import OperationsPipeline from "./pages/operations/OperationsPipeline";
 import PublicInvoicePay from "./pages/public/PublicInvoicePay";
 import PublicEstimateRespond from "./pages/public/PublicEstimateRespond";
@@ -298,6 +299,7 @@ const App = () => (
               <Route path="/operations/accounts" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsAccounts /></SuperAdminSessionProvider></RoleGuard>} />
               <Route path="/operations/contacts" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsContacts /></SuperAdminSessionProvider></RoleGuard>} />
               <Route path="/operations/deals" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsDeals /></SuperAdminSessionProvider></RoleGuard>} />
+              <Route path="/operations/deals/:id" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsDealDetail /></SuperAdminSessionProvider></RoleGuard>} />
               <Route path="/operations/pipeline" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsPipeline /></SuperAdminSessionProvider></RoleGuard>} />
             </Route>
 
