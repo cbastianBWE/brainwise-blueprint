@@ -11455,6 +11455,19 @@ export type Database = {
         Returns: string
       }
       ops_create_retainer: { Args: { p_header: Json }; Returns: string }
+      ops_crm_email_prepare: { Args: { p_payload: Json }; Returns: Json }
+      ops_crm_email_record_sent: { Args: { p_payload: Json }; Returns: Json }
+      ops_crm_email_record_tracking: {
+        Args: {
+          p_event_at: string
+          p_event_type: string
+          p_ip?: string
+          p_link_url?: string
+          p_resend_message_id: string
+          p_user_agent?: string
+        }
+        Returns: boolean
+      }
       ops_customer_statement: {
         Args: {
           p_customer_id: string
