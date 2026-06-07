@@ -187,5 +187,14 @@ export default function EntityTimeline({
         )}
       </CardContent>
     </Card>
+    <ComposeEmailDialog
+      open={composeOpen}
+      onOpenChange={setComposeOpen}
+      relatedToType={entityType}
+      relatedToId={entityId}
+      defaultTo={defaultEmail}
+      onSent={() => qc.invalidateQueries({ queryKey: ["ops", "timeline", entityType, entityId] })}
+    />
+    </>
   );
 }
