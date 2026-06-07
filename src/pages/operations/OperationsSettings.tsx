@@ -13,6 +13,8 @@ import { Switch } from "@/components/ui/switch";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import LeadScoringRulesCard from "./LeadScoringRulesCard";
+import WorkflowRulesCard from "./WorkflowRulesCard";
 
 const TEMPLATE_TYPES = [
   "invoice_send","estimate_send","payment_receipt",
@@ -609,6 +611,7 @@ export default function OperationsSettings() {
           <TabsTrigger value="sales">Sales & Commission</TabsTrigger>
           <TabsTrigger value="custom_fields">Custom Fields</TabsTrigger>
           <TabsTrigger value="numbering">Numbering & Tax</TabsTrigger>
+          <TabsTrigger value="automation">CRM Automation</TabsTrigger>
         </TabsList>
 
         <TabsContent value="branding" className="space-y-6">
@@ -1206,6 +1209,11 @@ export default function OperationsSettings() {
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="automation" className="space-y-6">
+          <LeadScoringRulesCard />
+          <WorkflowRulesCard />
         </TabsContent>
       </Tabs>
 
