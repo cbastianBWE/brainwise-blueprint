@@ -161,6 +161,51 @@ export default function OperationsSettings() {
     }
   }
 
+  // ---------- Calendar reminders ----------
+  const TZ_OPTIONS = [
+    "America/New_York",
+    "America/Chicago",
+    "America/Denver",
+    "America/Los_Angeles",
+    "America/Phoenix",
+    "UTC",
+  ];
+  const [reminders, setReminders] = useState({
+    timezone: "UTC",
+    day_of_digest_hour: "8",
+    reminders_enabled: true,
+  });
+  const [savingReminders, setSavingReminders] = useState(false);
+
+  useEffect(() => {
+    const o = orgQ.data as any;
+    if (!o) return;
+    setReminders({
+      timezone: o.timezone ?? "UTC",
+      day_of_digest_hour: String(o.day_of_digest_hour ?? 8),
+      reminders_enabled: o.reminders_enabled !== false,
+    });
+  }, [orgQ.data]);
+
+  async function saveReminders() {
+    setSavingReminders(true);
+    try {
+      const { error } = await supabase.rpc("ops_update_reminder_settings" as any, {
+        p_patch: {
+          timezone: reminders.timezone,
+          day_of_digest_hour: Number(reminders.day_of_digest_hour),
+          reminders_enabled: reminders.reminders_enabled,
+        },
+      });
+      if (error) { toast.error(error.message ?? "Save failed"); return; }
+      toast.success("Calendar reminder settings saved.");
+      qc.invalidateQueries({ queryKey: ["ops", "org-branding"] });
+    } finally {
+      setSavingReminders(false);
+    }
+  }
+
+
   // ---------- Numbering & Tax queries ----------
   const numberingQ = useQuery({
     queryKey: ["ops", "settings", "numbering"],
