@@ -12,6 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, Mail } from "lucide-react";
 import { formatDate } from "./_shared";
 import ComposeEmailDialog from "./ComposeEmailDialog";
+import AddToCalendarButton from "./AddToCalendarButton";
+
 
 const NONE = "__none__";
 
