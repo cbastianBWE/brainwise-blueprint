@@ -123,6 +123,7 @@ import OperationsImport from "./pages/operations/OperationsImport";
 import OperationsLeads from "./pages/operations/OperationsLeads";
 import OperationsLeadDetail from "./pages/operations/OperationsLeadDetail";
 import OperationsAccounts from "./pages/operations/OperationsAccounts";
+import OperationsCampaigns from "./pages/operations/OperationsCampaigns";
 import OperationsAccountDetail from "./pages/operations/OperationsAccountDetail";
 import OperationsContacts from "./pages/operations/OperationsContacts";
 import OperationsContactDetail from "./pages/operations/OperationsContactDetail";
@@ -307,6 +308,7 @@ const App = () => (
               <Route path="/operations/lead-capture" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsLeadCapture /></SuperAdminSessionProvider></RoleGuard>} />
               <Route path="/operations/accounts" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsAccounts /></SuperAdminSessionProvider></RoleGuard>} />
               <Route path="/operations/accounts/:id" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsAccountDetail /></SuperAdminSessionProvider></RoleGuard>} />
+              <Route path="/operations/campaigns" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsCampaigns /></SuperAdminSessionProvider></RoleGuard>} />
               <Route path="/operations/contacts" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsContacts /></SuperAdminSessionProvider></RoleGuard>} />
               <Route path="/operations/contacts/:id" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsContactDetail /></SuperAdminSessionProvider></RoleGuard>} />
               <Route path="/operations/deals" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsDeals /></SuperAdminSessionProvider></RoleGuard>} />
