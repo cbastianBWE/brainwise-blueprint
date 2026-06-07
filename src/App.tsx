@@ -118,6 +118,7 @@ import OperationsRecurringInvoices from "./pages/operations/OperationsRecurringI
 import OperationsRecurringInvoiceDetail from "./pages/operations/OperationsRecurringInvoiceDetail";
 import RecurringInvoiceForm from "./pages/operations/RecurringInvoiceForm";
 import OperationsReports from "./pages/operations/OperationsReports";
+import OperationsDashboard from "./pages/operations/OperationsDashboard";
 import OperationsSettings from "./pages/operations/OperationsSettings";
 import OperationsImport from "./pages/operations/OperationsImport";
 import OperationsLeads from "./pages/operations/OperationsLeads";
@@ -300,6 +301,7 @@ const App = () => (
               <Route path="/operations/recurring-invoices/:id/edit" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><RecurringInvoiceForm /></SuperAdminSessionProvider></RoleGuard>} />
               <Route path="/operations/recurring-invoices/:id" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsRecurringInvoiceDetail /></SuperAdminSessionProvider></RoleGuard>} />
               <Route path="/operations/projects/:id" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsProjectDetail /></SuperAdminSessionProvider></RoleGuard>} />
+              <Route path="/operations/dashboard" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsDashboard /></SuperAdminSessionProvider></RoleGuard>} />
               <Route path="/operations/reports" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsReports /></SuperAdminSessionProvider></RoleGuard>} />
               <Route path="/operations/settings" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsSettings /></SuperAdminSessionProvider></RoleGuard>} />
               <Route path="/operations/import" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsImport /></SuperAdminSessionProvider></RoleGuard>} />
