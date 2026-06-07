@@ -11404,6 +11404,10 @@ export type Database = {
         Args: { p_amount: number; p_invoice: string; p_retainer: string }
         Returns: string
       }
+      ops_bulk_convert_leads: {
+        Args: { p_lead_ids: string[]; p_options?: Json }
+        Returns: Json
+      }
       ops_clone_invoice: { Args: { p_id: string }; Returns: string }
       ops_convert_estimate_to_invoice: {
         Args: { p_estimate: string }
@@ -11417,8 +11421,16 @@ export type Database = {
         Args: { p_estimate: string }
         Returns: string
       }
+      ops_convert_lead: {
+        Args: { p_lead_id: string; p_options?: Json }
+        Returns: Json
+      }
       ops_create_credit_note: {
         Args: { p_header: Json; p_lines: Json }
+        Returns: string
+      }
+      ops_create_customer_from_deal: {
+        Args: { p_deal_id: string }
         Returns: string
       }
       ops_create_estimate: {
@@ -11471,6 +11483,10 @@ export type Database = {
       ops_delete_tax_authority: { Args: { p_id: string }; Returns: undefined }
       ops_delete_tax_rate: { Args: { p_id: string }; Returns: undefined }
       ops_due_payment_reminders: { Args: never; Returns: Json }
+      ops_entity_timeline: {
+        Args: { p_entity_id: string; p_entity_type: string; p_limit?: number }
+        Returns: Json
+      }
       ops_flag_overdue_invoices: { Args: never; Returns: number }
       ops_get_estimate_send_bundle: {
         Args: { p_estimate: string }
