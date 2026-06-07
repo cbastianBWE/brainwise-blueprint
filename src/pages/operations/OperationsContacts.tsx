@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { opsSupabase } from "@/integrations/supabase/operations-types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -8,8 +9,8 @@ import { Plus } from "lucide-react";
 import ContactCrmFormDialog from "./ContactCrmFormDialog";
 
 export default function OperationsContacts() {
+  const navigate = useNavigate();
   const [createOpen, setCreateOpen] = useState(false);
-  const [editRow, setEditRow] = useState<any | null>(null);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["ops", "contacts", "list"],
@@ -30,7 +31,7 @@ export default function OperationsContacts() {
           <h1 className="text-2xl font-semibold">Contacts</h1>
           <p className="text-muted-foreground text-sm">CRM · Contacts</p>
         </div>
-        <Button onClick={() => { setEditRow(null); setCreateOpen(true); }}>
+        <Button onClick={() => setCreateOpen(true)}>
           <Plus className="h-4 w-4 mr-2" />New contact
         </Button>
       </div>
@@ -58,7 +59,7 @@ export default function OperationsContacts() {
                   <TableRow
                     key={c.id}
                     className="cursor-pointer"
-                    onClick={() => { setEditRow(c); setCreateOpen(true); }}
+                    onClick={() => navigate(`/operations/contacts/${c.id}`)}
                   >
                     <TableCell className="font-medium">{[c.first_name, c.last_name].filter(Boolean).join(" ") || "—"}</TableCell>
                     <TableCell>{c.title ?? "—"}</TableCell>
@@ -71,7 +72,7 @@ export default function OperationsContacts() {
           )}
         </CardContent>
       </Card>
-      <ContactCrmFormDialog open={createOpen} onOpenChange={setCreateOpen} row={editRow} />
+      <ContactCrmFormDialog open={createOpen} onOpenChange={setCreateOpen} row={null} />
     </div>
   );
 }
