@@ -20,9 +20,11 @@ type EntityType = "lead" | "account" | "contact" | "deal";
 export default function EntityTimeline({
   entityType,
   entityId,
+  defaultEmail,
 }: {
   entityType: EntityType;
   entityId: string;
+  defaultEmail?: string;
 }) {
   const qc = useQueryClient();
   const timelineQ = useQuery({
