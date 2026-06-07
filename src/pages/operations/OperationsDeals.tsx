@@ -4,21 +4,60 @@ import { opsSupabase } from "@/integrations/supabase/operations-types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus } from "lucide-react";
 import { formatMoney, formatDate } from "./_shared";
 import DealFormDialog from "./DealFormDialog";
+import SavedViewsBar from "./SavedViewsBar";
+
+type Filters = { search?: string; stage_id?: string };
 
 export default function OperationsDeals() {
   const [createOpen, setCreateOpen] = useState(false);
   const [editRow, setEditRow] = useState<any | null>(null);
+  const [filters, setFilters] = useState<Filters>({});
 
-  const { data, isLoading, error } = useQuery({
-    queryKey: ["ops", "deals", "list"],
+  const { data: defaultPipeline } = useQuery({
+    queryKey: ["ops", "default_pipeline"],
     queryFn: async () => {
       const { data, error } = await opsSupabase
+        .from("pipelines" as any)
+        .select("id")
+        .eq("is_default", true)
+        .maybeSingle();
+      if (error) throw error;
+      return data as any;
+    },
+  });
+
+  const { data: stages = [] } = useQuery({
+    queryKey: ["ops", "deal_stages", defaultPipeline?.id],
+    enabled: !!defaultPipeline?.id,
+    queryFn: async () => {
+      const { data, error } = await opsSupabase
+        .from("deal_stages" as any)
+        .select("id, name")
+        .eq("pipeline_id", defaultPipeline.id)
+        .order("position");
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+  });
+
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["ops", "deals", "list", filters],
+    queryFn: async () => {
+      let q = opsSupabase
         .from("deals" as any)
-        .select("id, name, amount, currency_code, close_date, created_at, account_id, pipeline_id, stage_id, stage:deal_stages(name), account:accounts(name)")
-        .order("created_at", { ascending: false });
+        .select("id, name, amount, currency_code, close_date, created_at, account_id, pipeline_id, stage_id, stage:deal_stages(name), account:accounts(name)");
+      if (filters.search) {
+        const s = filters.search.replace(/[,()]/g, "");
+        q = q.or(`name.ilike.%${s}%`);
+      }
+      if (filters.stage_id) q = q.eq("stage_id", filters.stage_id);
+      q = q.order("created_at", { ascending: false });
+      const { data, error } = await q;
       if (error) throw error;
       return (data ?? []) as any[];
     },
@@ -35,6 +74,30 @@ export default function OperationsDeals() {
           <Plus className="h-4 w-4 mr-2" />New deal
         </Button>
       </div>
+
+      <SavedViewsBar entityType="deal" filters={filters} onApply={(f) => setFilters(f as Filters)} />
+
+      <div className="flex items-center gap-2 flex-wrap">
+        <Input
+          placeholder="Search name…"
+          className="w-[260px]"
+          value={filters.search ?? ""}
+          onChange={(e) => setFilters({ ...filters, search: e.target.value || undefined })}
+        />
+        <Select
+          value={filters.stage_id ?? "all"}
+          onValueChange={(v) => setFilters({ ...filters, stage_id: v === "all" ? undefined : v })}
+        >
+          <SelectTrigger className="w-[200px]"><SelectValue placeholder="Stage" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All stages</SelectItem>
+            {stages.map((s: any) => (
+              <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
       <Card>
         <CardHeader><CardTitle>All deals</CardTitle></CardHeader>
         <CardContent>
