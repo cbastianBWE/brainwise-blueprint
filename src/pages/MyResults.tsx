@@ -1847,9 +1847,11 @@ function renderInlineMarkdown(text: string): React.ReactNode {
 function PTPDomainCards({
   dimensions,
   dimensionNameMap,
+  ranges,
 }: {
   dimensions: [string, DimensionScore][];
   dimensionNameMap: Map<string, string>;
+  ranges: Record<string, { low: number; high: number }>;
 }) {
   const getBand = (score: number) => {
     if (score >= 70) return "High";
