@@ -1023,10 +1023,10 @@ function FacetList({
               <div style={{ padding: 16, borderTop: "1px solid var(--border-1)", background: "var(--bw-white)" }}>
                 <div style={{ marginBottom: 12 }}>
                   <p style={{ fontSize: 12, color: "var(--fg-3)", margin: 0 }}>
-                    <span style={{ fontWeight: 600, color: "var(--fg-2)" }}>Low end:</span> {facet.anchorLow}
+                    <span style={{ fontWeight: 600, color: "var(--fg-2)" }}>Low end:</span> {anchorLow}
                   </p>
                   <p style={{ fontSize: 12, color: "var(--fg-3)", margin: "2px 0 0" }}>
-                    <span style={{ fontWeight: 600, color: "var(--fg-2)" }}>High end:</span> {facet.anchorHigh}
+                    <span style={{ fontWeight: 600, color: "var(--fg-2)" }}>High end:</span> {anchorHigh}
                   </p>
                 </div>
                 {loadingInterpretations || !interpretation ? (
