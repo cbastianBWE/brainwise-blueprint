@@ -387,6 +387,7 @@ export function NewsletterAiPane({
                 message={m}
                 onImport={onImportHtml}
                 onReplaceSelection={onReplaceSelection}
+                onRequestReformat={() => void handleSend(REFORMAT_PROMPT)}
               />
             ))
           )}
