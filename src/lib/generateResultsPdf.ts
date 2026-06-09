@@ -1,5 +1,6 @@
 import jsPDF from "jspdf";
 import type { PdfSections } from "@/components/results/ExportPdfModal";
+import { PTP_DIMENSION_COLORS } from "@/lib/ptpDimensionColors";
 
 interface DimensionRow {
   name: string;
@@ -148,14 +149,7 @@ function formatBand(band: string): string {
 }
 
 function PTP_DIM_COLOR(dimId: string): string {
-  const colors: Record<string, string> = {
-    "DIM-PTP-01": PRIMARY_TEXT_HEX,
-    "DIM-PTP-02": "#006D77",
-    "DIM-PTP-03": "#6D6875",
-    "DIM-PTP-04": "#3C096C",
-    "DIM-PTP-05": "#2D6A4F",
-  };
-  return colors[dimId] ?? PRIMARY_TEXT_HEX;
+  return PTP_DIMENSION_COLORS[dimId] ?? PRIMARY_TEXT_HEX;
 }
 
 export async function generateResultsPdf(data: PdfData, sections: PdfSections, options?: { returnBlob?: boolean }): Promise<void | Blob> {

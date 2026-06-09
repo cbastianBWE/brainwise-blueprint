@@ -186,13 +186,7 @@ const PTP_DIM_NAMES: Record<string, string> = {
   "DIM-PTP-04": "Purpose",
   "DIM-PTP-05": "Pleasure",
 };
-const PTP_DIM_COLORS: Record<string, string> = {
-  "DIM-PTP-01": "#021F36",
-  "DIM-PTP-02": "#006D77",
-  "DIM-PTP-03": "#6D6875",
-  "DIM-PTP-04": "#3C096C",
-  "DIM-PTP-05": "#2D6A4F",
-};
+import { PTP_DIMENSION_COLORS as PTP_DIM_COLORS } from "@/lib/ptpDimensionColors";
 const PTP_TRI_W: Record<string, number> = {
   "DIM-PTP-01": 0.25,
   "DIM-PTP-02": 0.30,
