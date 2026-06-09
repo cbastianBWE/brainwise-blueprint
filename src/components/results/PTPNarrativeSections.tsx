@@ -312,14 +312,19 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
         facet_name: string;
         item_number: number;
         dimension_id: string;
-      }): FacetItem => ({
-        item_text: assessmentResponses.find(r => r.itemNumber === f.item_number)?.itemText ?? "",
-        item_number: f.item_number,
-        dimension_id: f.dimension_id,
-        context_type: ctx,
-        value: f.value,
-        facet_name: f.facet_name,
-      });
+      }): FacetItem => {
+        const resp = assessmentResponses.find(r => r.itemNumber === f.item_number);
+        return {
+          item_text: resp?.itemText ?? "",
+          item_number: f.item_number,
+          dimension_id: f.dimension_id,
+          context_type: ctx,
+          value: f.value,
+          facet_name: f.facet_name,
+          anchorLow: resp?.anchorLow ?? "",
+          anchorHigh: resp?.anchorHigh ?? "",
+        };
+      };
 
       let elevated: FacetItem[];
       let suppressed: FacetItem[];
