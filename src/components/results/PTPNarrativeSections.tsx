@@ -56,6 +56,8 @@ interface FacetItem {
   dimension_id: string;
   context_type?: string | null;
   facet_name: string;
+  anchorLow: string;
+  anchorHigh: string;
 }
 
 interface DimensionScore {
