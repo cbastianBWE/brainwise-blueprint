@@ -41,9 +41,9 @@ import { PTP_DIMENSION_COLORS } from "@/lib/ptpDimensionColors";
 const PTP_DIMENSION_PASTEL: Record<string, string> = {
   "DIM-PTP-01": "#E8EDF1",
   "DIM-PTP-02": "#E6F2F3",
-  "DIM-PTP-03": "#F4EAE2",
+  "DIM-PTP-03": "#ECEBEE",
   "DIM-PTP-04": "#EEE8F5",
-  "DIM-PTP-05": "#F1ECDC",
+  "DIM-PTP-05": "#FFF4D9",
 };
 
 const NAI_DIMENSION_COLORS: Record<string, string> = {
