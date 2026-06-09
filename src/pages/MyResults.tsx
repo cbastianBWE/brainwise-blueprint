@@ -650,6 +650,45 @@ export default function MyResults({ isCoachView = false, adminView = false, targ
     return effectiveSelected ? Object.entries(effectiveSelected.result.dimension_scores) : [];
   }, [ptpContextTab, combinedDimensionScores, effectiveSelected, isBothAssessment, bothSplitScores]);
 
+  useEffect(() => {
+    if (!effectiveSelected?.isPTP) { setDimensionFacetRanges({}); return; }
+    const run = async () => {
+      const ids: string[] = [];
+      if (effectiveSelected?.result?.assessment_id) ids.push(effectiveSelected.result.assessment_id);
+      if (ptpContextTab === 'combined' && !isBothAssessment && ptpPersonalResults[0]?.result?.assessment_id) {
+        ids.push(ptpPersonalResults[0].result.assessment_id);
+      }
+      if (!ids.length) { setDimensionFacetRanges({}); return; }
+      const { data: responses } = await supabase
+        .from('assessment_responses')
+        .select('response_value_numeric, is_reverse_scored, item_id')
+        .in('assessment_id', ids);
+      if (!responses?.length) { setDimensionFacetRanges({}); return; }
+      const itemIds = responses.map(r => r.item_id);
+      const { data: items } = await supabase
+        .from('items')
+        .select('item_id, dimension_id, context_type')
+        .in('item_id', itemIds);
+      const itemMap = new Map((items ?? []).map(i => [i.item_id, i]));
+      const byDim: Record<string, number[]> = {};
+      responses.forEach(r => {
+        const item = itemMap.get(r.item_id);
+        if (!item?.dimension_id) return;
+        if ((ptpContextTab === 'professional' || ptpContextTab === 'personal') && item.context_type !== ptpContextTab) return;
+        const raw = Number(r.response_value_numeric);
+        const value = r.is_reverse_scored ? 100 - raw : raw;
+        if (!byDim[item.dimension_id]) byDim[item.dimension_id] = [];
+        byDim[item.dimension_id].push(value);
+      });
+      const ranges: Record<string, { low: number; high: number }> = {};
+      Object.entries(byDim).forEach(([dim, vals]) => {
+        ranges[dim] = { low: Math.round(Math.min(...vals)), high: Math.round(Math.max(...vals)) };
+      });
+      setDimensionFacetRanges(ranges);
+    };
+    run();
+  }, [effectiveSelected, ptpContextTab, isBothAssessment, ptpPersonalResults]);
+
   // Poll for AI narrative
   useEffect(() => {
     if (!selected || selected.result.ai_narrative || selected.isAwaitingSupervisor) {
