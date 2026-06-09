@@ -656,6 +656,19 @@ function MessageBubble({
           </div>
         )}
 
+        {!isUser && !message.generated_html && message.status === "persisted" && (
+          <div className="mt-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={onRequestReformat}
+            >
+              <FileText className="mr-2 h-4 w-4" />
+              Reformat as importable HTML
+            </Button>
+          </div>
+        )}
+
         {isFailed && (
           <div className="mt-1 text-[11px] text-destructive">Failed to send.</div>
         )}
