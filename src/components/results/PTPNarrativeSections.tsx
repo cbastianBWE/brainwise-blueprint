@@ -962,6 +962,9 @@ function FacetList({
         const interpretation = getFacetInterpretation(facetName);
         const color = PTP_DIMENSION_COLORS[facet.dimension_id] ?? "#021F36";
         const score = Math.round(facet.value);
+        const anchorResp = data.assessmentResponses.find(r => r.itemNumber === facet.item_number);
+        const anchorLow = anchorResp?.anchorLow ?? facet.anchorLow ?? "";
+        const anchorHigh = anchorResp?.anchorHigh ?? facet.anchorHigh ?? "";
         return (
           <div
             key={key}
