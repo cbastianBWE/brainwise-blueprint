@@ -20,6 +20,7 @@ interface FacetItem {
   item_text: string;
   value: number;
   dimension_id: string;
+  facet_name: string;
 }
 
 interface Props {
@@ -65,7 +66,7 @@ export default function DrivingFacetScores({ assessmentId, additionalAssessmentI
       const itemIds = allResponses.map((r) => r.item_id);
       const { data: items } = await supabase
         .from("items")
-        .select("item_id, item_text, dimension_id")
+        .select("item_id, item_text, dimension_id, facet_name")
         .in("item_id", itemIds);
 
       const itemMap = new Map(
@@ -80,6 +81,7 @@ export default function DrivingFacetScores({ assessmentId, additionalAssessmentI
         return {
           item_text: item?.item_text ?? r.item_id,
           dimension_id: item?.dimension_id ?? "",
+          facet_name: item?.facet_name ?? "",
           value,
         };
       });
@@ -193,7 +195,7 @@ function FacetSection({
   total: number;
 }) {
   const chartData = items.map((item) => ({
-    name: truncate(item.item_text),
+    name: truncate(item.facet_name),
     fullText: item.item_text,
     value: Math.round(item.value),
     color: PTP_DIMENSION_COLORS[item.dimension_id] ?? "#8EA9C1",
