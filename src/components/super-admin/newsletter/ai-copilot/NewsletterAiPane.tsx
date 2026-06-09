@@ -45,6 +45,9 @@ import {
 
 const SONNET_FULL_ID = "claude-sonnet-4-6";
 
+const REFORMAT_PROMPT =
+  "Please reformat your previous response as complete, import-ready article HTML inside a single fenced ```html code block, following the BrainWise authoring spec. Put nothing outside the fenced block.";
+
 interface Props {
   open: boolean;
   onClose: () => void;
@@ -144,9 +147,10 @@ export function NewsletterAiPane({
     !attachmentManager.hasInFlightWork &&
     input.trim().length > 0;
 
-  const handleSend = useCallback(async () => {
+  const handleSend = useCallback(async (overrideMessage?: string) => {
     if (!articleId || !user?.id) return;
-    const trimmed = input.trim();
+    const trimmed = (overrideMessage ?? input).trim();
+    const isReformat = overrideMessage != null;
 
     // /image slash-command: pure launcher. Intercept BEFORE any state
     // mutation, AI call, or audit row. Pending attachments and active
@@ -166,19 +170,22 @@ export function NewsletterAiPane({
     )
       return;
 
-    const capturedSelection = editorSelection;
-    const capturedAttachments: MessageAttachment[] =
-      attachmentManager.readyAttachments.map((a) => ({
-        kind: a.kind,
-        name: a.file_name,
-        storage_path: a.storage_path!,
-      }));
-    const requestAttachments = attachmentManager.readyAttachments.map((a) => ({
-      kind: a.kind,
-      name: a.file_name,
-      storage_path: a.storage_path!,
-      extracted_text: a.extracted_text!,
-    }));
+    const capturedSelection = isReformat ? null : editorSelection;
+    const capturedAttachments: MessageAttachment[] = isReformat
+      ? []
+      : attachmentManager.readyAttachments.map((a) => ({
+          kind: a.kind,
+          name: a.file_name,
+          storage_path: a.storage_path!,
+        }));
+    const requestAttachments = isReformat
+      ? []
+      : attachmentManager.readyAttachments.map((a) => ({
+          kind: a.kind,
+          name: a.file_name,
+          storage_path: a.storage_path!,
+          extracted_text: a.extracted_text!,
+        }));
 
     const userMessage: ChatMessage = {
       id: `temp-${crypto.randomUUID()}`,
@@ -192,8 +199,10 @@ export function NewsletterAiPane({
       attachments: capturedAttachments,
     };
     setMessages((prev) => [...prev, userMessage]);
-    setInput("");
-    attachmentManager.clearAll();
+    if (!isReformat) {
+      setInput("");
+      attachmentManager.clearAll();
+    }
     setIsGenerating(true);
     setGenerationError(null);
 
@@ -378,6 +387,7 @@ export function NewsletterAiPane({
                 message={m}
                 onImport={onImportHtml}
                 onReplaceSelection={onReplaceSelection}
+                onRequestReformat={() => void handleSend(REFORMAT_PROMPT)}
               />
             ))
           )}
@@ -562,10 +572,12 @@ function MessageBubble({
   message,
   onImport,
   onReplaceSelection,
+  onRequestReformat,
 }: {
   message: ChatMessage;
   onImport: (html: string) => void;
   onReplaceSelection: (from: number, to: number, html: string) => void;
+  onRequestReformat: () => void;
 }) {
   const isUser = message.role === "user";
   const isPending = message.status === "pending";
@@ -641,6 +653,19 @@ function MessageBubble({
                 Import this HTML into the article
               </Button>
             )}
+          </div>
+        )}
+
+        {!isUser && !message.generated_html && message.status === "persisted" && (
+          <div className="mt-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={onRequestReformat}
+            >
+              <FileText className="mr-2 h-4 w-4" />
+              Reformat as importable HTML
+            </Button>
           </div>
         )}
 
