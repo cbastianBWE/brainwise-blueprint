@@ -147,9 +147,10 @@ export function NewsletterAiPane({
     !attachmentManager.hasInFlightWork &&
     input.trim().length > 0;
 
-  const handleSend = useCallback(async () => {
+  const handleSend = useCallback(async (overrideMessage?: string) => {
     if (!articleId || !user?.id) return;
-    const trimmed = input.trim();
+    const trimmed = (overrideMessage ?? input).trim();
+    const isReformat = overrideMessage != null;
 
     // /image slash-command: pure launcher. Intercept BEFORE any state
     // mutation, AI call, or audit row. Pending attachments and active
@@ -169,19 +170,22 @@ export function NewsletterAiPane({
     )
       return;
 
-    const capturedSelection = editorSelection;
-    const capturedAttachments: MessageAttachment[] =
-      attachmentManager.readyAttachments.map((a) => ({
-        kind: a.kind,
-        name: a.file_name,
-        storage_path: a.storage_path!,
-      }));
-    const requestAttachments = attachmentManager.readyAttachments.map((a) => ({
-      kind: a.kind,
-      name: a.file_name,
-      storage_path: a.storage_path!,
-      extracted_text: a.extracted_text!,
-    }));
+    const capturedSelection = isReformat ? null : editorSelection;
+    const capturedAttachments: MessageAttachment[] = isReformat
+      ? []
+      : attachmentManager.readyAttachments.map((a) => ({
+          kind: a.kind,
+          name: a.file_name,
+          storage_path: a.storage_path!,
+        }));
+    const requestAttachments = isReformat
+      ? []
+      : attachmentManager.readyAttachments.map((a) => ({
+          kind: a.kind,
+          name: a.file_name,
+          storage_path: a.storage_path!,
+          extracted_text: a.extracted_text!,
+        }));
 
     const userMessage: ChatMessage = {
       id: `temp-${crypto.randomUUID()}`,
@@ -195,8 +199,10 @@ export function NewsletterAiPane({
       attachments: capturedAttachments,
     };
     setMessages((prev) => [...prev, userMessage]);
-    setInput("");
-    attachmentManager.clearAll();
+    if (!isReformat) {
+      setInput("");
+      attachmentManager.clearAll();
+    }
     setIsGenerating(true);
     setGenerationError(null);
 
