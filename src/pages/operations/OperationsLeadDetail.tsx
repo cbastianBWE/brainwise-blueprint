@@ -139,9 +139,9 @@ type EnrichmentLogRow = {
 function statusVariant(s: string | null): "default" | "secondary" | "destructive" | "outline" {
   if (!s) return "secondary";
   const v = s.toLowerCase();
-  if (v === "success" || v === "completed" || v === "ok") return "default";
+  if (v === "success" || v === "completed" || v === "ok" || v === "done") return "default";
   if (v === "error" || v === "failed") return "destructive";
-  if (v === "queued" || v === "pending" || v === "processing") return "outline";
+  if (v === "queued" || v === "pending" || v === "processing" || v === "throttled") return "outline";
   return "secondary";
 }
 
