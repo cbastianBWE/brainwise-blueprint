@@ -962,6 +962,9 @@ function FacetList({
         const interpretation = getFacetInterpretation(facetName);
         const color = PTP_DIMENSION_COLORS[facet.dimension_id] ?? "#021F36";
         const score = Math.round(facet.value);
+        const anchorResp = data.assessmentResponses.find(r => r.itemNumber === facet.item_number);
+        const anchorLow = anchorResp?.anchorLow ?? facet.anchorLow ?? "";
+        const anchorHigh = anchorResp?.anchorHigh ?? facet.anchorHigh ?? "";
         return (
           <div
             key={key}
@@ -1020,10 +1023,10 @@ function FacetList({
               <div style={{ padding: 16, borderTop: "1px solid var(--border-1)", background: "var(--bw-white)" }}>
                 <div style={{ marginBottom: 12 }}>
                   <p style={{ fontSize: 12, color: "var(--fg-3)", margin: 0 }}>
-                    <span style={{ fontWeight: 600, color: "var(--fg-2)" }}>Low end:</span> {facet.anchorLow}
+                    <span style={{ fontWeight: 600, color: "var(--fg-2)" }}>Low end:</span> {anchorLow}
                   </p>
                   <p style={{ fontSize: 12, color: "var(--fg-3)", margin: "2px 0 0" }}>
-                    <span style={{ fontWeight: 600, color: "var(--fg-2)" }}>High end:</span> {facet.anchorHigh}
+                    <span style={{ fontWeight: 600, color: "var(--fg-2)" }}>High end:</span> {anchorHigh}
                   </p>
                 </div>
                 {loadingInterpretations || !interpretation ? (
