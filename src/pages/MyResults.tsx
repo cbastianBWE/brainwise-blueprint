@@ -1922,6 +1922,11 @@ function PTPDomainCards({
             >
               {band}
             </span>
+            {ranges[dimId] && (
+              <p style={{ fontSize: 11, color: "var(--fg-3)", margin: 0 }}>
+                Lowest {ranges[dimId].low} · Highest {ranges[dimId].high}
+              </p>
+            )}
           </div>
         );
       })}
