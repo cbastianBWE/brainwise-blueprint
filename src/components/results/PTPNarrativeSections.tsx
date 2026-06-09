@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { PTP_DIMENSION_COLORS } from "@/lib/ptpDimensionColors";
+import { PtpDimensionLegend } from "@/components/results/PtpDimensionLegend";
 import { PTP_ITEM_FACET_NAMES } from "@/lib/ptpFacetNames";
 
 const PTP_DIMENSION_NAMES: Record<string, string> = {
@@ -1085,6 +1086,7 @@ export function PTPFacetInsightsElevatedSection(props: PTPNarrativeSectionsProps
   return (
     <div>
       <h3 style={sectionHeadingStyle}>Driving facet insights — elevated</h3>
+      <PtpDimensionLegend dimensionIds={[...new Set(data.elevatedFacets.map((f) => f.dimension_id))]} />
       <FacetList facets={data.elevatedFacets} prefix="elevated" data={data} />
     </div>
   );
@@ -1097,6 +1099,7 @@ export function PTPFacetInsightsSuppressedSection(props: PTPNarrativeSectionsPro
   return (
     <div>
       <h3 style={sectionHeadingStyle}>Driving facet insights — suppressed</h3>
+      <PtpDimensionLegend dimensionIds={[...new Set(data.suppressedFacets.map((f) => f.dimension_id))]} />
       <FacetList facets={data.suppressedFacets} prefix="suppressed" data={data} />
     </div>
   );
@@ -1234,6 +1237,9 @@ export function PTPAssessmentResponsesSection(props: PTPNarrativeSectionsProps) 
                   ? "Personal context"
                   : "All contexts"}
             </p>
+          </div>
+          <div style={{ padding: "8px 16px", background: "var(--bw-white)", borderBottom: "1px solid var(--border-1)" }}>
+            <PtpDimensionLegend dimensionIds={[...new Set(assessmentResponses.map((r) => r.dimensionId))]} />
           </div>
           {assessmentResponses.map((r, idx) => {
             const color = PTP_DIMENSION_COLORS[r.dimensionId] ?? "#021F36";

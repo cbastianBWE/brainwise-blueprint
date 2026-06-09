@@ -14,6 +14,7 @@ import {
 } from "recharts";
 
 import { PTP_DIMENSION_COLORS } from "@/lib/ptpDimensionColors";
+import { PtpDimensionLegend } from "@/components/results/PtpDimensionLegend";
 
 const THREAT_DIMENSION_IDS = new Set(["DIM-PTP-01", "DIM-PTP-02", "DIM-PTP-03"]);
 const REWARD_DIMENSION_IDS = new Set(["DIM-PTP-04", "DIM-PTP-05"]);
@@ -259,6 +260,8 @@ function FacetSubChart({
         </h4>
         <p style={{ fontSize: 12, color: "var(--fg-3)", margin: 0, marginTop: 2 }}>{subtitle}</p>
       </div>
+
+      <PtpDimensionLegend dimensionIds={[...new Set(items.map((i) => i.dimensionId))]} />
 
       <div style={{ width: "100%", height: chartHeight }}>
         <ResponsiveContainer width="100%" height="100%">

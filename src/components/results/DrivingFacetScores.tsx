@@ -15,6 +15,7 @@ import {
 } from "recharts";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PTP_DIMENSION_COLORS } from "@/lib/ptpDimensionColors";
+import { PtpDimensionLegend } from "@/components/results/PtpDimensionLegend";
 
 interface FacetItem {
   item_text: string;
@@ -204,6 +205,8 @@ function FacetSection({
   return (
     <div>
       <h3 className="text-sm font-semibold text-foreground mb-2">{title}</h3>
+      <PtpDimensionLegend dimensionIds={[...new Set(items.map((i) => i.dimension_id))]} />
+
       <ScrollArea className="w-full">
         <div
           style={{
