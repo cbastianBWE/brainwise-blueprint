@@ -56,6 +56,8 @@ interface FacetItem {
   dimension_id: string;
   context_type?: string | null;
   facet_name: string;
+  anchorLow: string;
+  anchorHigh: string;
 }
 
 interface DimensionScore {
@@ -310,14 +312,19 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
         facet_name: string;
         item_number: number;
         dimension_id: string;
-      }): FacetItem => ({
-        item_text: assessmentResponses.find(r => r.itemNumber === f.item_number)?.itemText ?? "",
-        item_number: f.item_number,
-        dimension_id: f.dimension_id,
-        context_type: ctx,
-        value: f.value,
-        facet_name: f.facet_name,
-      });
+      }): FacetItem => {
+        const resp = assessmentResponses.find(r => r.itemNumber === f.item_number);
+        return {
+          item_text: resp?.itemText ?? "",
+          item_number: f.item_number,
+          dimension_id: f.dimension_id,
+          context_type: ctx,
+          value: f.value,
+          facet_name: f.facet_name,
+          anchorLow: resp?.anchorLow ?? "",
+          anchorHigh: resp?.anchorHigh ?? "",
+        };
+      };
 
       let elevated: FacetItem[];
       let suppressed: FacetItem[];
@@ -1011,6 +1018,14 @@ function FacetList({
             </button>
             {isExpanded && (
               <div style={{ padding: 16, borderTop: "1px solid var(--border-1)", background: "var(--bw-white)" }}>
+                <div style={{ marginBottom: 12 }}>
+                  <p style={{ fontSize: 12, color: "var(--fg-3)", margin: 0 }}>
+                    <span style={{ fontWeight: 600, color: "var(--fg-2)" }}>Low end:</span> {facet.anchorLow}
+                  </p>
+                  <p style={{ fontSize: 12, color: "var(--fg-3)", margin: "2px 0 0" }}>
+                    <span style={{ fontWeight: 600, color: "var(--fg-2)" }}>High end:</span> {facet.anchorHigh}
+                  </p>
+                </div>
                 {loadingInterpretations || !interpretation ? (
                   <p style={{ fontSize: 14, color: "var(--fg-3)", margin: 0 }}>Generating insights...</p>
                 ) : (
