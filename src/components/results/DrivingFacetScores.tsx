@@ -207,7 +207,7 @@ function FacetSection({
       <ScrollArea className="w-full">
         <div
           style={{
-            minWidth: 760,
+            minWidth: 800,
             height: Math.max(200, items.length * 40),
           }}
         >
@@ -215,14 +215,14 @@ function FacetSection({
             <BarChart
               data={chartData}
               layout="vertical"
-              margin={{ left: 340, right: 50, top: 4, bottom: 4 }}
+              margin={{ left: 12, right: 50, top: 4, bottom: 4 }}
             >
               <CartesianGrid strokeDasharray="3 3" horizontal={false} />
               <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 11 }} />
               <YAxis
                 dataKey="name"
                 type="category"
-                width={340}
+                width={400}
                 tick={{ fontSize: 11 }}
               />
               <Tooltip content={<CustomTooltip />} cursor={{ fill: "hsl(var(--muted))" }} />

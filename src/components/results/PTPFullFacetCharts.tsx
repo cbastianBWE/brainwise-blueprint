@@ -265,11 +265,11 @@ function FacetSubChart({
           <BarChart
             data={chartData}
             layout="vertical"
-            margin={{ left: 340, right: 50, top: 4, bottom: 4 }}
+            margin={{ left: 12, right: 50, top: 4, bottom: 4 }}
           >
             <CartesianGrid strokeDasharray="3 3" horizontal={false} />
             <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 11 }} />
-            <YAxis dataKey="name" type="category" width={340} tick={{ fontSize: 11 }} />
+            <YAxis dataKey="name" type="category" width={400} tick={{ fontSize: 11 }} />
             <Tooltip content={<CustomTooltip />} cursor={{ fill: "var(--bw-cream-200)" }} />
             <Bar dataKey="value" radius={[0, 4, 4, 0]}>
               {chartData.map((entry, idx) => (
