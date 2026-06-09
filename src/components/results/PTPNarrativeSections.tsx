@@ -127,6 +127,8 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
     itemText: string;
     score: number;
     dimensionId: string;
+    anchorLow: string;
+    anchorHigh: string;
   }[]>([]);
   const [allFacetInsights, setAllFacetInsights] = useState<FacetInterpretation[]>([]);
   const [loadingAllFacetInsights, setLoadingAllFacetInsights] = useState(false);
@@ -157,7 +159,7 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
       const itemIds = merged.map((r) => r.item_id);
       const { data: items } = await supabase
         .from("items")
-        .select("item_id, item_text, item_number, dimension_id, context_type")
+        .select("item_id, item_text, item_number, dimension_id, context_type, anchor_low, anchor_high")
         .in("item_id", itemIds);
 
       const itemMap = new Map((items ?? []).map((i) => [i.item_id, i]));
@@ -176,6 +178,8 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
           score: Math.round(value),
           dimensionId: item?.dimension_id ?? "",
           contextType: item?.context_type ?? null,
+          anchorLow: item?.anchor_low ?? "",
+          anchorHigh: item?.anchor_high ?? "",
         };
       });
 
@@ -1265,6 +1269,14 @@ export function PTPAssessmentResponsesSection(props: PTPNarrativeSectionsProps) 
                 </button>
                 {isExpanded && (
                   <div style={{ padding: 16, borderTop: "1px solid var(--border-1)", background: "var(--bw-white)" }}>
+                    <div style={{ marginBottom: 12 }}>
+                      <p style={{ fontSize: 12, color: "var(--fg-3)", margin: 0 }}>
+                        <span style={{ fontWeight: 600, color: "var(--fg-2)" }}>Low end:</span> {r.anchorLow}
+                      </p>
+                      <p style={{ fontSize: 12, color: "var(--fg-3)", margin: "2px 0 0" }}>
+                        <span style={{ fontWeight: 600, color: "var(--fg-2)" }}>High end:</span> {r.anchorHigh}
+                      </p>
+                    </div>
                     {loadingAllFacetInsights || !interpretation ? (
                       <p style={{ fontSize: 14, color: "var(--fg-3)", margin: 0 }}>Generating insights...</p>
                     ) : (
