@@ -168,7 +168,7 @@ export default function DrivingFacetScores({ assessmentId, additionalAssessmentI
   );
 }
 
-function truncate(text: string, max = 50) {
+function truncate(text: string, max = 60) {
   return text.length > max ? text.slice(0, max) + "…" : text;
 }
 
@@ -207,7 +207,7 @@ function FacetSection({
       <ScrollArea className="w-full">
         <div
           style={{
-            minWidth: 500,
+            minWidth: 760,
             height: Math.max(200, items.length * 40),
           }}
         >
@@ -215,14 +215,14 @@ function FacetSection({
             <BarChart
               data={chartData}
               layout="vertical"
-              margin={{ left: 200, right: 50, top: 4, bottom: 4 }}
+              margin={{ left: 340, right: 50, top: 4, bottom: 4 }}
             >
               <CartesianGrid strokeDasharray="3 3" horizontal={false} />
               <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 11 }} />
               <YAxis
                 dataKey="name"
                 type="category"
-                width={190}
+                width={340}
                 tick={{ fontSize: 11 }}
               />
               <Tooltip content={<CustomTooltip />} cursor={{ fill: "hsl(var(--muted))" }} />
