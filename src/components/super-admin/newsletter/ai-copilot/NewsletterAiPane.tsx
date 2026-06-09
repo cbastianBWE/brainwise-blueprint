@@ -45,6 +45,9 @@ import {
 
 const SONNET_FULL_ID = "claude-sonnet-4-6";
 
+const REFORMAT_PROMPT =
+  "Please reformat your previous response as complete, import-ready article HTML inside a single fenced ```html code block, following the BrainWise authoring spec. Put nothing outside the fenced block.";
+
 interface Props {
   open: boolean;
   onClose: () => void;
