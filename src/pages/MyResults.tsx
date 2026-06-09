@@ -1283,6 +1283,7 @@ export default function MyResults({ isCoachView = false, adminView = false, targ
                   <PTPDomainCards
                     dimensions={dimensionScores}
                     dimensionNameMap={dimensionNameMap}
+                    ranges={dimensionFacetRanges}
                   />
                 ) : isNAI ? (
                   <NAIDomainCards
