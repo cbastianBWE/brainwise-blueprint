@@ -572,10 +572,12 @@ function MessageBubble({
   message,
   onImport,
   onReplaceSelection,
+  onRequestReformat,
 }: {
   message: ChatMessage;
   onImport: (html: string) => void;
   onReplaceSelection: (from: number, to: number, html: string) => void;
+  onRequestReformat: () => void;
 }) {
   const isUser = message.role === "user";
   const isPending = message.status === "pending";
