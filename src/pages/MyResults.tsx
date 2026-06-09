@@ -1859,21 +1859,32 @@ function PTPDomainCards({
     return "Low";
   };
 
+  const textColorFor = (hex: string) => {
+    const c = hex.replace('#', '');
+    const r = parseInt(c.slice(0, 2), 16) / 255;
+    const g = parseInt(c.slice(2, 4), 16) / 255;
+    const b = parseInt(c.slice(4, 6), 16) / 255;
+    const lin = (v: number) => (v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4));
+    const L = 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
+    const ratio = (a: number, b2: number) => (Math.max(a, b2) + 0.05) / (Math.min(a, b2) + 0.05);
+    return ratio(L, 1) >= ratio(L, 0) ? '#FFFFFF' : '#021F36';
+  };
+
   return (
     <div>
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
       {dimensions.map(([dimId, score]) => {
         const mean = Math.round(score.mean ?? score.level_mean ?? 0);
         const color = PTP_DIMENSION_COLORS[dimId] ?? "#021F36";
+        const txt = textColorFor(color);
         const name = dimensionNameMap.get(dimId) ?? PTP_DIMENSION_NAMES[dimId] ?? formatDimensionName(dimId);
         const band = getBand(mean);
         return (
           <div
             key={dimId}
             style={{
-              background: "var(--bw-white)",
+              background: color,
               border: "1px solid var(--border-1)",
-              borderTop: `3px solid ${color}`,
               borderRadius: "var(--r-md)",
               padding: "var(--s-4)",
               display: "flex",
@@ -1884,13 +1895,12 @@ function PTPDomainCards({
               boxShadow: "var(--shadow-sm)",
             }}
           >
-            <div style={{ width: 12, height: 12, borderRadius: "var(--r-circle)", backgroundColor: color }} />
             <p
               style={{
                 fontFamily: "var(--font-display)",
                 fontSize: 13,
                 fontWeight: 600,
-                color: "var(--fg-1)",
+                color: txt,
                 lineHeight: 1.2,
                 margin: 0,
               }}
@@ -1902,7 +1912,7 @@ function PTPDomainCards({
                 fontFamily: "var(--font-display)",
                 fontSize: 30,
                 fontWeight: 700,
-                color,
+                color: txt,
                 margin: 0,
                 lineHeight: 1,
               }}
@@ -1916,14 +1926,14 @@ function PTPDomainCards({
                 fontWeight: 600,
                 padding: "2px 10px",
                 borderRadius: "var(--r-pill)",
-                backgroundColor: `${color}1A`,
+                backgroundColor: txt,
                 color,
               }}
             >
               {band}
             </span>
             {ranges[dimId] && (
-              <p style={{ fontSize: 11, color: "var(--fg-3)", margin: 0 }}>
+              <p style={{ fontSize: 11, color: txt, opacity: 0.85, margin: 0 }}>
                 Lowest {ranges[dimId].low} · Highest {ranges[dimId].high}
               </p>
             )}
