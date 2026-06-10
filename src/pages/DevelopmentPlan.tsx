@@ -2,9 +2,10 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import {
-  Target, Loader2, Plus, ChevronDown, ChevronUp, Trash2, Archive, ArchiveRestore,
+  Target, Loader2, Plus, ChevronDown, ChevronUp, Trash2, Archive, ArchiveRestore, Pencil, MessageSquare,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -31,6 +32,16 @@ interface PlanEntry {
   created_at: string;
 }
 
+interface PlanComment {
+  id: string;
+  author_role: "client" | "coach";
+  author_user_id: string;
+  author_name: string | null;
+  body: string;
+  edited_at: string | null;
+  created_at: string;
+}
+
 interface PlanItem {
   id: string;
   source: "ptp" | "custom";
@@ -46,6 +57,7 @@ interface PlanItem {
   created_at: string;
   updated_at: string;
   entries: PlanEntry[];
+  comments: PlanComment[];
 }
 
 const STATUS_META: Record<Status, { label: string; color: string }> = {
@@ -87,9 +99,12 @@ function formatDate(d: string): string {
 export default function DevelopmentPlan() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const [includeArchived, setIncludeArchived] = useState(false);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [entryDrafts, setEntryDrafts] = useState<Record<string, EntryDraft>>({});
+  const [commentDrafts, setCommentDrafts] = useState<Record<string, string>>({});
+  const [editingComment, setEditingComment] = useState<{ id: string; body: string } | null>(null);
   const [addOpen, setAddOpen] = useState(false);
   const [customText, setCustomText] = useState("");
   const [customDate, setCustomDate] = useState("");
@@ -158,6 +173,31 @@ export default function DevelopmentPlan() {
   const deleteEntry = async (entryId: string) => {
     const { error } = await supabase.rpc("dp_delete_entry" as never, { p_entry_id: entryId } as never);
     if (error) { toast.error("Could not delete entry."); return; }
+    refresh();
+  };
+
+  const addComment = async (itemId: string) => {
+    const body = (commentDrafts[itemId] ?? "").trim();
+    if (!body) { toast.error("Write a comment first."); return; }
+    const { error } = await supabase.rpc("dp_add_comment" as never, { p_item_id: itemId, p_body: body } as never);
+    if (error) { toast.error("Could not add comment."); return; }
+    setCommentDrafts((prev) => ({ ...prev, [itemId]: "" }));
+    refresh();
+  };
+
+  const saveEditComment = async () => {
+    if (!editingComment) return;
+    const body = editingComment.body.trim();
+    if (!body) { toast.error("Comment can't be empty."); return; }
+    const { error } = await supabase.rpc("dp_edit_comment" as never, { p_comment_id: editingComment.id, p_body: body } as never);
+    if (error) { toast.error("Could not save comment."); return; }
+    setEditingComment(null);
+    refresh();
+  };
+
+  const deleteComment = async (commentId: string) => {
+    const { error } = await supabase.rpc("dp_delete_comment" as never, { p_comment_id: commentId } as never);
+    if (error) { toast.error("Could not delete comment."); return; }
     refresh();
   };
 
@@ -323,6 +363,80 @@ export default function DevelopmentPlan() {
                   rows={2}
                 />
                 <Button size="sm" onClick={() => addEntry(item.id)}>Add entry</Button>
+              </div>
+
+              <div className="space-y-2 border-t pt-3">
+                <p className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                  <MessageSquare className="h-3.5 w-3.5" /> Comments
+                </p>
+                {item.comments && item.comments.length > 0 ? (
+                  <div className="space-y-2">
+                    {item.comments.map((c) => {
+                      const mine = c.author_user_id === user?.id;
+                      const isEditing = editingComment?.id === c.id;
+                      return (
+                        <div key={c.id} className="text-sm rounded-md border p-2.5">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium">
+                              {c.author_name ?? (c.author_role === "coach" ? "Coach" : "You")}
+                            </span>
+                            <span className="text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
+                              {c.author_role}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              {formatDate(c.created_at)}{c.edited_at ? " (edited)" : ""}
+                            </span>
+                            {mine && !isEditing && (
+                              <span className="ml-auto flex gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6 text-muted-foreground"
+                                  onClick={() => setEditingComment({ id: c.id, body: c.body })}
+                                >
+                                  <Pencil className="h-3.5 w-3.5" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6 text-muted-foreground"
+                                  onClick={() => deleteComment(c.id)}
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </Button>
+                              </span>
+                            )}
+                          </div>
+                          {isEditing ? (
+                            <div className="mt-1.5 space-y-1.5">
+                              <Textarea
+                                value={editingComment.body}
+                                onChange={(ev) => setEditingComment({ id: c.id, body: ev.target.value })}
+                                rows={2}
+                              />
+                              <div className="flex gap-2">
+                                <Button size="sm" onClick={saveEditComment}>Save</Button>
+                                <Button size="sm" variant="ghost" onClick={() => setEditingComment(null)}>Cancel</Button>
+                              </div>
+                            </div>
+                          ) : (
+                            <p className="mt-1">{c.body}</p>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">No comments yet.</p>
+                )}
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Add a comment"
+                    value={commentDrafts[item.id] ?? ""}
+                    onChange={(ev) => setCommentDrafts((prev) => ({ ...prev, [item.id]: ev.target.value }))}
+                  />
+                  <Button size="sm" onClick={() => addComment(item.id)}>Comment</Button>
+                </div>
               </div>
             </div>
           )}
