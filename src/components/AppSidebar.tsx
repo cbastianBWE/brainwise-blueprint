@@ -39,6 +39,7 @@ interface NavItem {
 const individualNav: NavItem[] = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { title: "My Results", url: "/my-results", icon: BarChart3 },
+  { title: "My Development Plan", url: "/development-plan", icon: Target },
   { title: "Assessment", url: "/assessment", icon: ClipboardList },
   { title: "AI Chat", url: "/ai-chat", icon: MessageSquare },
   { title: "Chat History", url: "/ai-chat/history", icon: History },
