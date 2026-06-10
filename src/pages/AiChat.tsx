@@ -139,6 +139,16 @@ export default function AiChat() {
     })();
   }, [user, isCompanyAdmin, isOrgAdmin, isSuperAdmin]);
 
+  // ── Load shared-with-me owner map ───────────────────────────────────────
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      const { data } = await (supabase as any).rpc("list_ptp_shared_with_me");
+      const rows = data?.shared_with_me ?? [];
+      setSharedWithMeMap(new Map(rows.map((r: any) => [r.owner_user_id, r.owner_name || "Shared user"])));
+    })();
+  }, [user]);
+
   // ── Load peers when instrument changes ──────────────────────────────────
   useEffect(() => {
     if (!user || !isCorp) return;
