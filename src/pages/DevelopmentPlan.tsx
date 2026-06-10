@@ -455,6 +455,8 @@ export default function DevelopmentPlan() {
             Track the actions you've chosen to work on, with progress, notes, and target dates.
           </p>
         </div>
+        <div className="flex items-center gap-2">
+        <ShareWithCoachDialog />
         <Dialog open={addOpen} onOpenChange={setAddOpen}>
           <DialogTrigger asChild>
             <Button size="sm"><Plus className="h-4 w-4 mr-1.5" /> Add action</Button>
