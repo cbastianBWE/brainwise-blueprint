@@ -728,6 +728,7 @@ function CoachLimitedNotice() {
 
 export function PTPProfileOverviewSection(props: PTPNarrativeSectionsProps) {
   const data = usePTPNarrativeContext();
+  const [addPlanOpen, setAddPlanOpen] = useState(false);
   if (isCoachLimited(props)) return <CoachLimitedNotice />;
 
   const { narrativeSections, loadingNarrativeSections } = data;
