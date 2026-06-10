@@ -112,6 +112,7 @@ export default function AiChat() {
   const [selectedPeerIds, setSelectedPeerIds] = useState<Set<string>>(new Set());
   const [peerAssessments, setPeerAssessments] = useState<AssessmentOption[]>([]);
   const [isAirsaEligible, setIsAirsaEligible] = useState<boolean>(false);
+  const [sharedWithMeMap, setSharedWithMeMap] = useState<Map<string, string>>(new Map());
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
