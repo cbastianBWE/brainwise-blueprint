@@ -200,13 +200,13 @@ export default function AiChat() {
         instrument_id: r.instrument_id,
         instrument_name: instrumentNames[r.instrument_id] || r.instrument_id,
         completed_at: r.created_at,
-        owner_label: peerMap.get(r.user_id) || "Peer",
+        owner_label: peerMap.get(r.user_id) || sharedWithMeMap.get(r.user_id) || "Peer",
         user_id: r.user_id,
         is_peer: true,
       }));
       setPeerAssessments(options);
     })();
-  }, [selectedPeerIds, peerInstrument, peers]);
+  }, [selectedPeerIds, peerInstrument, peers, sharedWithMeMap]);
 
   // ── Init: load own assessments, read URL params ──────────────────────────
   useEffect(() => {
