@@ -487,6 +487,7 @@ export default function DevelopmentPlan() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        </div>
       </header>
 
       {isLoading && (
