@@ -74,6 +74,7 @@ const coachNav: NavItem[] = [
 const adminNav: NavItem[] = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { title: "My Results", url: "/my-results", icon: BarChart3 },
+  { title: "My Development Plan", url: "/development-plan", icon: Target },
   { title: "Shared Results", url: "/shared-results", icon: Users2 },
   { title: "Assessment", url: "/assessment", icon: ClipboardList },
   { title: "Users", url: "/admin/users", icon: Users },
