@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import MyResults from "@/pages/MyResults";
-import { Inbox } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Inbox, MessageSquare } from "lucide-react";
 
 interface SharedWithMeEntry {
   share_id: string;
@@ -13,6 +15,7 @@ interface SharedWithMeEntry {
 
 export default function SharedWithMe() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [entries, setEntries] = useState<SharedWithMeEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedOwnerId, setSelectedOwnerId] = useState<string | null>(null);
@@ -73,7 +76,24 @@ export default function SharedWithMe() {
 
       <main className="flex-1 overflow-y-auto">
         {selectedOwnerId ? (
-          <MyResults key={selectedOwnerId} targetUserId={selectedOwnerId} isCoachView viewLabel={selectedEntry?.owner_name || "Shared user"} />
+          <div className="flex flex-col h-full">
+            <div className="flex items-center justify-between gap-4 border-b px-6 py-3 bg-background">
+              <h2 className="text-lg font-semibold">
+                {selectedEntry?.owner_name || "Shared user"}
+              </h2>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate(`/ai-chat?peers=${selectedOwnerId}&self=true`)}
+              >
+                <MessageSquare className="h-4 w-4 mr-2" />
+                Discuss with AI
+              </Button>
+            </div>
+            <div className="flex-1 overflow-y-auto">
+              <MyResults key={selectedOwnerId} targetUserId={selectedOwnerId} isCoachView viewLabel={selectedEntry?.owner_name || "Shared user"} />
+            </div>
+          </div>
         ) : (
           <div className="flex flex-col items-center justify-center h-full text-center p-8">
             <Inbox className="h-12 w-12 text-muted-foreground mb-4" />
