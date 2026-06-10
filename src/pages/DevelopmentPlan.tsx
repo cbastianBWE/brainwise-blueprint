@@ -19,6 +19,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { ShareWithCoachDialog } from "@/components/development-plan/ShareWithCoachDialog";
 
 type Status = "not_started" | "in_progress" | "done" | "paused";
 
@@ -454,6 +455,8 @@ export default function DevelopmentPlan() {
             Track the actions you've chosen to work on, with progress, notes, and target dates.
           </p>
         </div>
+        <div className="flex items-center gap-2">
+        <ShareWithCoachDialog />
         <Dialog open={addOpen} onOpenChange={setAddOpen}>
           <DialogTrigger asChild>
             <Button size="sm"><Plus className="h-4 w-4 mr-1.5" /> Add action</Button>
@@ -484,6 +487,7 @@ export default function DevelopmentPlan() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        </div>
       </header>
 
       {isLoading && (
