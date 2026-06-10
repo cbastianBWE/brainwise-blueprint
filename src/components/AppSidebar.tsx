@@ -142,7 +142,8 @@ function getNavItems(profile: { account_type?: string | null; is_practitioner_co
       if (profile?.is_practitioner_coach === true) {
         // Drop /coach/resources from appended coach nav since super admin
         // already has its own Resources entry above.
-        const filtered = coachNav.filter((i) => i.url !== "/coach/resources");
+        const superUrls = new Set(superAdminNav.map((i) => i.url));
+        const filtered = coachNav.filter((i) => i.url !== "/coach/resources" && !superUrls.has(i.url));
         const coachToolsWithHeader = filtered.map((item, idx) =>
           idx === 0 ? { ...item, sectionHeader: "Coach Tools" } : item
         );

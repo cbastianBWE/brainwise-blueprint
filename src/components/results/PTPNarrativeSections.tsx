@@ -1,9 +1,11 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronUp, Target } from "lucide-react";
 import { PTP_DIMENSION_COLORS } from "@/lib/ptpDimensionColors";
 import { PtpDimensionLegend } from "@/components/results/PtpDimensionLegend";
 import { PTP_ITEM_FACET_NAMES } from "@/lib/ptpFacetNames";
+import { Button } from "@/components/ui/button";
+import { AddToDevelopmentPlanModal } from "@/components/results/AddToDevelopmentPlanModal";
 
 const PTP_DIMENSION_NAMES: Record<string, string> = {
   "DIM-PTP-01": "Protection",
@@ -749,6 +751,7 @@ export function PTPProfileOverviewSection(props: PTPNarrativeSectionsProps) {
       : null;
 
   const actionPlan = narrativeSections?.action_plan ?? [];
+  const [addPlanOpen, setAddPlanOpen] = useState(false);
   const personalSummary = narrativeSections?.personal_summary ?? [];
 
   return (
@@ -810,6 +813,21 @@ export function PTPProfileOverviewSection(props: PTPNarrativeSectionsProps) {
         <div>
           <h3 style={sectionHeadingStyle}>Action Plan</h3>
           <p style={subtitleStyle}>Three concrete things to focus on next.</p>
+          {!props.isCoachView && actionPlan.length > 0 && (
+            <div className="mb-3">
+              <Button size="sm" onClick={() => setAddPlanOpen(true)}>
+                <Target className="h-4 w-4 mr-2" />
+                Add to my Development Plan
+              </Button>
+              <AddToDevelopmentPlanModal
+                open={addPlanOpen}
+                onOpenChange={setAddPlanOpen}
+                assessmentResultId={props.assessmentResultId}
+                sourceContext={props.ptpContextTab ?? null}
+                actionPlan={actionPlan}
+              />
+            </div>
+          )}
           {actionPlan.length === 0 && loadingNarrativeSections ? (
             <p style={{ fontSize: 13, color: "var(--fg-3)", margin: 0 }}>Generating action plan...</p>
           ) : (
