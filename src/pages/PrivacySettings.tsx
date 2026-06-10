@@ -139,6 +139,19 @@ export default function PrivacySettings() {
         setAccountType(userData.account_type);
       }
 
+      const { data: ptpRows } = await supabase
+        .from("assessment_results")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("instrument_id", "INST-001")
+        .limit(1);
+      setHasPtp(!!ptpRows && ptpRows.length > 0);
+
+      const { data: sharesData } = await (supabase as any).rpc("list_my_ptp_shares");
+      if (sharesData?.shares) setMyShares(sharesData.shares);
+
+
+
       // Existing coach permission row
       if (cc && cc.length > 0) {
         const { data: perms } = await supabase
