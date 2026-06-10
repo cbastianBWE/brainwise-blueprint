@@ -232,7 +232,8 @@ export default function DevelopmentPlan() {
               <span>{pct}%</span>
             </div>
             <Slider
-              value={[pct]}
+              key={`${item.id}-${pct}`}
+              defaultValue={[pct]}
               min={0}
               max={100}
               step={5}
