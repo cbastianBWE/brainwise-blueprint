@@ -98,6 +98,11 @@ export default function PrivacySettings() {
   });
   const [pendingReceivedCount, setPendingReceivedCount] = useState(0);
 
+  const [hasPtp, setHasPtp] = useState(false);
+  const [shareEmail, setShareEmail] = useState("");
+  const [sharingBusy, setSharingBusy] = useState(false);
+  const [myShares, setMyShares] = useState<{ share_id: string; viewer_user_id: string; viewer_name: string | null; viewer_email: string | null; created_at: string }[]>([]);
+
   const [demo, setDemo] = useState<DemoData | null>(null);
   const [editingField, setEditingField] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
