@@ -41,6 +41,7 @@ import Dashboard from "./pages/Dashboard";
 import MyResults from "./pages/MyResults";
 import DevelopmentPlan from "./pages/DevelopmentPlan";
 import SharedResults from "./pages/SharedResults";
+import SharedWithMe from "@/pages/SharedWithMe";
 import Assessment from "./pages/Assessment";
 import AiChat from "./pages/AiChat";
 import AiChatHistory from "./pages/AiChatHistory";
@@ -214,6 +215,7 @@ const App = () => (
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/my-results" element={<MyResults />} />
               <Route path="/shared-results" element={<SharedResults />} />
+              <Route path="/shared-with-me" element={<SharedWithMe />} />
               <Route path="/development-plan" element={<DevelopmentPlan />} />
               <Route path="/ai-chat" element={<SubscriptionGate feature="ai_chat"><AiChat /></SubscriptionGate>} />
               <Route path="/ai-chat/history" element={<SubscriptionGate feature="ai_chat"><AiChatHistory /></SubscriptionGate>} />
