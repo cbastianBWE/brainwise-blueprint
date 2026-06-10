@@ -3,6 +3,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import MyResults from "@/pages/MyResults";
+import { CoachClientPlan } from "@/components/development-plan/CoachClientPlan";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
