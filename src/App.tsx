@@ -39,6 +39,7 @@ import DemographicConsent from "./pages/DemographicConsent";
 import DemographicForm from "./pages/DemographicForm";
 import Dashboard from "./pages/Dashboard";
 import MyResults from "./pages/MyResults";
+import DevelopmentPlan from "./pages/DevelopmentPlan";
 import SharedResults from "./pages/SharedResults";
 import Assessment from "./pages/Assessment";
 import AiChat from "./pages/AiChat";
