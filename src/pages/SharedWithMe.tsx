@@ -15,6 +15,7 @@ interface SharedWithMeEntry {
 
 export default function SharedWithMe() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [entries, setEntries] = useState<SharedWithMeEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedOwnerId, setSelectedOwnerId] = useState<string | null>(null);
