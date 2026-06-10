@@ -4128,6 +4128,349 @@ export type Database = {
           },
         ]
       }
+      development_plan_coach_shares: {
+        Row: {
+          client_user_id: string
+          coach_user_id: string
+          granted_at: string
+          id: string
+          revoked_at: string | null
+        }
+        Insert: {
+          client_user_id: string
+          coach_user_id: string
+          granted_at?: string
+          id?: string
+          revoked_at?: string | null
+        }
+        Update: {
+          client_user_id?: string
+          coach_user_id?: string
+          granted_at?: string
+          id?: string
+          revoked_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "development_plan_coach_shares_client_user_id_fkey"
+            columns: ["client_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "development_plan_coach_shares_client_user_id_fkey"
+            columns: ["client_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "development_plan_coach_shares_client_user_id_fkey"
+            columns: ["client_user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "development_plan_coach_shares_client_user_id_fkey"
+            columns: ["client_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "development_plan_coach_shares_coach_user_id_fkey"
+            columns: ["coach_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "development_plan_coach_shares_coach_user_id_fkey"
+            columns: ["coach_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "development_plan_coach_shares_coach_user_id_fkey"
+            columns: ["coach_user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "development_plan_coach_shares_coach_user_id_fkey"
+            columns: ["coach_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      development_plan_comments: {
+        Row: {
+          author_role: string
+          author_user_id: string
+          body: string
+          created_at: string
+          deleted_at: string | null
+          edited_at: string | null
+          id: string
+          item_id: string
+          plan_owner_user_id: string
+        }
+        Insert: {
+          author_role: string
+          author_user_id: string
+          body: string
+          created_at?: string
+          deleted_at?: string | null
+          edited_at?: string | null
+          id?: string
+          item_id: string
+          plan_owner_user_id: string
+        }
+        Update: {
+          author_role?: string
+          author_user_id?: string
+          body?: string
+          created_at?: string
+          deleted_at?: string | null
+          edited_at?: string | null
+          id?: string
+          item_id?: string
+          plan_owner_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "development_plan_comments_author_user_id_fkey"
+            columns: ["author_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "development_plan_comments_author_user_id_fkey"
+            columns: ["author_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "development_plan_comments_author_user_id_fkey"
+            columns: ["author_user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "development_plan_comments_author_user_id_fkey"
+            columns: ["author_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "development_plan_comments_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "development_plan_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "development_plan_comments_plan_owner_user_id_fkey"
+            columns: ["plan_owner_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "development_plan_comments_plan_owner_user_id_fkey"
+            columns: ["plan_owner_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "development_plan_comments_plan_owner_user_id_fkey"
+            columns: ["plan_owner_user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "development_plan_comments_plan_owner_user_id_fkey"
+            columns: ["plan_owner_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      development_plan_entries: {
+        Row: {
+          created_at: string
+          entry_date: string
+          id: string
+          item_id: string
+          metric_label: string | null
+          metric_value: number | null
+          note: string | null
+          progress_pct: number | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          entry_date?: string
+          id?: string
+          item_id: string
+          metric_label?: string | null
+          metric_value?: number | null
+          note?: string | null
+          progress_pct?: number | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          entry_date?: string
+          id?: string
+          item_id?: string
+          metric_label?: string | null
+          metric_value?: number | null
+          note?: string | null
+          progress_pct?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "development_plan_entries_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "development_plan_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "development_plan_entries_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "development_plan_entries_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "development_plan_entries_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "development_plan_entries_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      development_plan_items: {
+        Row: {
+          action_text: string
+          archived_at: string | null
+          card_title: string | null
+          created_at: string
+          dimension_tags: string[]
+          id: string
+          progress_pct: number | null
+          sort_order: number
+          source: string
+          source_context: string | null
+          source_result_id: string | null
+          status: string
+          target_date: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          action_text: string
+          archived_at?: string | null
+          card_title?: string | null
+          created_at?: string
+          dimension_tags?: string[]
+          id?: string
+          progress_pct?: number | null
+          sort_order?: number
+          source?: string
+          source_context?: string | null
+          source_result_id?: string | null
+          status?: string
+          target_date?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          action_text?: string
+          archived_at?: string | null
+          card_title?: string | null
+          created_at?: string
+          dimension_tags?: string[]
+          id?: string
+          progress_pct?: number | null
+          sort_order?: number
+          source?: string
+          source_context?: string | null
+          source_result_id?: string | null
+          status?: string
+          target_date?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "development_plan_items_source_result_id_fkey"
+            columns: ["source_result_id"]
+            isOneToOne: false
+            referencedRelation: "assessment_results"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "development_plan_items_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "development_plan_items_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "development_plan_items_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "development_plan_items_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dimensions: {
         Row: {
           created_at: string
@@ -10638,6 +10981,73 @@ export type Database = {
       }
       discard_lesson_block_draft: {
         Args: { p_content_item_id: string }
+        Returns: Json
+      }
+      dp_add_comment: {
+        Args: { p_body: string; p_item_id: string }
+        Returns: string
+      }
+      dp_add_entry: {
+        Args: {
+          p_entry_date?: string
+          p_item_id: string
+          p_metric_label?: string
+          p_metric_value?: number
+          p_note?: string
+          p_progress_pct?: number
+        }
+        Returns: string
+      }
+      dp_add_items_from_ptp: { Args: { p_items: Json }; Returns: Json }
+      dp_archive_item: {
+        Args: { p_archived?: boolean; p_item_id: string }
+        Returns: Json
+      }
+      dp_coach_can_view: {
+        Args: { p_client: string; p_coach: string }
+        Returns: boolean
+      }
+      dp_create_custom_item: {
+        Args: {
+          p_action_text: string
+          p_dimension_tags?: string[]
+          p_target_date?: string
+        }
+        Returns: string
+      }
+      dp_delete_comment: { Args: { p_comment_id: string }; Returns: Json }
+      dp_delete_entry: { Args: { p_entry_id: string }; Returns: Json }
+      dp_edit_comment: {
+        Args: { p_body: string; p_comment_id: string }
+        Returns: Json
+      }
+      dp_get_client_plan: { Args: { p_client_user_id: string }; Returns: Json }
+      dp_is_active_coach_of: {
+        Args: { p_client: string; p_coach: string }
+        Returns: boolean
+      }
+      dp_list_my_coaches: { Args: never; Returns: Json }
+      dp_list_my_plan: { Args: { p_include_archived?: boolean }; Returns: Json }
+      dp_notify_shared_coaches: {
+        Args: {
+          p_client: string
+          p_dedup_key?: string
+          p_payload: Json
+          p_type: string
+        }
+        Returns: undefined
+      }
+      dp_run_due_date_scan: { Args: never; Returns: Json }
+      dp_set_coach_share: {
+        Args: { p_coach_user_id: string; p_enabled: boolean }
+        Returns: Json
+      }
+      dp_update_entry: {
+        Args: { p_entry_id: string; p_payload: Json }
+        Returns: Json
+      }
+      dp_update_item: {
+        Args: { p_item_id: string; p_payload: Json }
         Returns: Json
       }
       duplicate_certification_path: {

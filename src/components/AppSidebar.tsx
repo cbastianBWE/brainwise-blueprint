@@ -4,7 +4,7 @@ import {
   Users, Users2, Building2, UsersRound, Activity, Heart, Award, UserCircle,
   ShieldCheck, Briefcase, GitBranch, FlaskConical, LogOut, History, Shield,
   CreditCard, Receipt, ChevronDown, ChevronRight, Plus, FileText, Library, Ticket,
-  GraduationCap, Bell, Newspaper, SlidersHorizontal, Wallet, FileMinus2, Repeat, Clock, UserPlus, Mail, Inbox, Webhook, Megaphone,
+  GraduationCap, Bell, Newspaper, SlidersHorizontal, Wallet, FileMinus2, Repeat, Clock, UserPlus, Mail, Inbox, Webhook, Megaphone, Target,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -39,6 +39,7 @@ interface NavItem {
 const individualNav: NavItem[] = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { title: "My Results", url: "/my-results", icon: BarChart3 },
+  { title: "My Development Plan", url: "/development-plan", icon: Target },
   { title: "Assessment", url: "/assessment", icon: ClipboardList },
   { title: "AI Chat", url: "/ai-chat", icon: MessageSquare },
   { title: "Chat History", url: "/ai-chat/history", icon: History },
@@ -48,6 +49,7 @@ const individualNav: NavItem[] = [
 const corporateNav: NavItem[] = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { title: "My Results", url: "/my-results", icon: BarChart3 },
+  { title: "My Development Plan", url: "/development-plan", icon: Target },
   { title: "Shared Results", url: "/shared-results", icon: Users2 },
   { title: "Assessment", url: "/assessment", icon: ClipboardList },
   { title: "AI Chat", url: "/ai-chat", icon: MessageSquare },
@@ -58,6 +60,7 @@ const corporateNav: NavItem[] = [
 const coachNav: NavItem[] = [
   { title: "My Assessments", url: "/assessment", icon: ClipboardList },
   { title: "My Results", url: "/my-results", icon: BarChart3 },
+  { title: "My Development Plan", url: "/development-plan", icon: Target },
   { title: "My Clients", url: "/coach/clients", icon: Users },
   
   { title: "Orders & Invoices", url: "/coach/invoices", icon: Receipt },
@@ -71,6 +74,7 @@ const coachNav: NavItem[] = [
 const adminNav: NavItem[] = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { title: "My Results", url: "/my-results", icon: BarChart3 },
+  { title: "My Development Plan", url: "/development-plan", icon: Target },
   { title: "Shared Results", url: "/shared-results", icon: Users2 },
   { title: "Assessment", url: "/assessment", icon: ClipboardList },
   { title: "Users", url: "/admin/users", icon: Users },
@@ -84,6 +88,7 @@ const adminNav: NavItem[] = [
 const superAdminNav: NavItem[] = [
   { title: "Assessment", url: "/assessment", icon: ClipboardList },
   { title: "My Results", url: "/my-results", icon: FileText },
+  { title: "My Development Plan", url: "/development-plan", icon: Target },
   { title: "Members", url: "/super-admin/members", icon: Users },
   { title: "Global Features & Settings", url: "/super-admin/features", icon: SlidersHorizontal },
   
