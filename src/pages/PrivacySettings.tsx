@@ -451,7 +451,58 @@ export default function PrivacySettings() {
         </CardContent>
       </Card>
 
+      {hasPtp && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Share2 className="h-4 w-4" /> Share My PTP Results
+            </CardTitle>
+            <CardDescription>
+              Share your full PTP results with another BrainWise account holder by email. They'll be notified and can view your report when they sign in. You can revoke access at any time.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-end gap-2">
+              <div className="flex-1">
+                <Label htmlFor="ptp-share-email" className="text-sm">Recipient email</Label>
+                <Input
+                  id="ptp-share-email"
+                  type="email"
+                  placeholder="name@example.com"
+                  value={shareEmail}
+                  onChange={(e) => setShareEmail(e.target.value)}
+                  className="mt-1"
+                />
+              </div>
+              <Button onClick={handleShare} disabled={sharingBusy || !shareEmail.trim()}>
+                {sharingBusy ? "Sharing..." : "Share"}
+              </Button>
+            </div>
+
+            {myShares.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-foreground">Currently shared with</p>
+                {myShares.map((s) => (
+                  <div key={s.share_id} className="flex items-center justify-between p-3 rounded-lg border">
+                    <div>
+                      <p className="text-sm font-medium text-foreground">{s.viewer_name || s.viewer_email}</p>
+                      {s.viewer_email && s.viewer_name && (
+                        <p className="text-xs text-muted-foreground">{s.viewer_email}</p>
+                      )}
+                    </div>
+                    <Button variant="outline" size="sm" onClick={() => handleRevokeShare(s.viewer_user_id, s.viewer_name)}>
+                      Revoke
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
       {/* Corporate Peer Sharing */}
+
       {isCorporate && (
         <Card>
           <CardHeader>
