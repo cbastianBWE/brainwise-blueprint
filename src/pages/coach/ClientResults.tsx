@@ -474,6 +474,10 @@ function AssessmentList({
           ))}
         </div>
       )}
+
+      <div className="mt-8">
+        <CoachClientPlan clientUserId={clientUserId} />
+      </div>
     </div>
   );
 }
