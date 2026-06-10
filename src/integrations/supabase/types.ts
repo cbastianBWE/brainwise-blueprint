@@ -7676,6 +7676,134 @@ export type Database = {
           },
         ]
       }
+      ptp_result_shares: {
+        Row: {
+          created_at: string
+          id: string
+          owner_user_id: string
+          revoked_at: string | null
+          viewer_user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          owner_user_id: string
+          revoked_at?: string | null
+          viewer_user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          owner_user_id?: string
+          revoked_at?: string | null
+          viewer_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ptp_result_shares_owner_user_id_fkey"
+            columns: ["owner_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ptp_result_shares_owner_user_id_fkey"
+            columns: ["owner_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "ptp_result_shares_owner_user_id_fkey"
+            columns: ["owner_user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ptp_result_shares_owner_user_id_fkey"
+            columns: ["owner_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ptp_result_shares_viewer_user_id_fkey"
+            columns: ["viewer_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ptp_result_shares_viewer_user_id_fkey"
+            columns: ["viewer_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "ptp_result_shares_viewer_user_id_fkey"
+            columns: ["viewer_user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ptp_result_shares_viewer_user_id_fkey"
+            columns: ["viewer_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ptp_share_attempts: {
+        Row: {
+          actor_user_id: string
+          created_at: string
+          id: string
+        }
+        Insert: {
+          actor_user_id: string
+          created_at?: string
+          id?: string
+        }
+        Update: {
+          actor_user_id?: string
+          created_at?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ptp_share_attempts_actor_user_id_fkey"
+            columns: ["actor_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ptp_share_attempts_actor_user_id_fkey"
+            columns: ["actor_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "ptp_share_attempts_actor_user_id_fkey"
+            columns: ["actor_user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ptp_share_attempts_actor_user_id_fkey"
+            columns: ["actor_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       quiz_answer_options: {
         Row: {
           archived_at: string | null
@@ -10979,6 +11107,10 @@ export type Database = {
         Args: { p_curriculum_id: string; p_module_id: string; p_reason: string }
         Returns: Json
       }
+      direct_ptp_share_visible: {
+        Args: { p_owner_user_id: string; p_viewer_user_id: string }
+        Returns: boolean
+      }
       discard_lesson_block_draft: {
         Args: { p_content_item_id: string }
         Returns: Json
@@ -11585,6 +11717,7 @@ export type Database = {
       }
       list_mentor_trainees: { Args: never; Returns: Json }
       list_my_certifications: { Args: never; Returns: Json }
+      list_my_ptp_shares: { Args: never; Returns: Json }
       list_newsletter_subscribers: {
         Args: { p_limit?: number; p_offset?: number; p_status_filter?: string }
         Returns: Json
@@ -11628,6 +11761,7 @@ export type Database = {
           out_tracking_notes: string
         }[]
       }
+      list_ptp_shared_with_me: { Args: never; Returns: Json }
       list_public_published_articles: {
         Args: never
         Returns: {
@@ -12438,6 +12572,7 @@ export type Database = {
         Args: { p_certification_id: string; p_reason: string }
         Returns: Json
       }
+      revoke_ptp_share: { Args: { p_viewer_user_id: string }; Returns: Json }
       run_asset_hard_delete: { Args: never; Returns: Json }
       save_lesson_block_draft: {
         Args: { p_content_item_id: string; p_draft_json: Json }
@@ -12604,6 +12739,7 @@ export type Database = {
         Args: { p_asset_id: string; p_reason: string; p_user_id: string }
         Returns: Json
       }
+      share_ptp_results: { Args: { p_target_email: string }; Returns: Json }
       sharing_preferences_upsert: {
         Args: {
           p_share_ptp_with_company_admin?: boolean

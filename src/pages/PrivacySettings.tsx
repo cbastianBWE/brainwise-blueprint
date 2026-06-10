@@ -16,7 +16,8 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Shield, Lock, UserCircle, Pencil, MessageSquare, Users2, Inbox } from "lucide-react";
+import { Shield, Lock, UserCircle, Pencil, MessageSquare, Users2, Inbox, Share2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
 
 type PermissionLevel = "score_summary" | "full_results" | "full_results_with_history" | "participation_only";
 
