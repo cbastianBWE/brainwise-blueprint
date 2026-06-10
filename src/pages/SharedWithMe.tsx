@@ -73,7 +73,7 @@ export default function SharedWithMe() {
 
       <main className="flex-1 overflow-y-auto">
         {selectedOwnerId ? (
-          <MyResults key={selectedOwnerId} viewUserId={selectedOwnerId} readOnly />
+          <MyResults key={selectedOwnerId} targetUserId={selectedOwnerId} isCoachView viewLabel={selectedEntry?.owner_name || "Shared user"} />
         ) : (
           <div className="flex flex-col items-center justify-center h-full text-center p-8">
             <Inbox className="h-12 w-12 text-muted-foreground mb-4" />
