@@ -60,6 +60,7 @@ const corporateNav: NavItem[] = [
 const coachNav: NavItem[] = [
   { title: "My Assessments", url: "/assessment", icon: ClipboardList },
   { title: "My Results", url: "/my-results", icon: BarChart3 },
+  { title: "My Development Plan", url: "/development-plan", icon: Target },
   { title: "My Clients", url: "/coach/clients", icon: Users },
   
   { title: "Orders & Invoices", url: "/coach/invoices", icon: Receipt },
