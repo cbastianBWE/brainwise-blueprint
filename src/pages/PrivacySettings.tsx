@@ -299,6 +299,47 @@ export default function PrivacySettings() {
     showSaved(`peer_${key}`);
   };
 
+  const loadMyShares = useCallback(async () => {
+    const { data } = await (supabase as any).rpc("list_my_ptp_shares");
+    if (data?.shares) setMyShares(data.shares);
+  }, []);
+
+  const handleShare = async () => {
+    const email = shareEmail.trim();
+    if (!email) return;
+    setSharingBusy(true);
+    const { data, error } = await (supabase as any).rpc("share_ptp_results", { p_target_email: email });
+    setSharingBusy(false);
+    if (error) {
+      if ((error.message || "").includes("rate_limited")) {
+        toast.error("Too many attempts. Please wait a minute and try again.");
+      } else {
+        toast.error("Could not share results. Please try again.");
+      }
+      return;
+    }
+    if (!data?.found) { toast.error("No account exists with that email address."); return; }
+    if (data.status === "self") { toast.error("You can't share results with yourself."); return; }
+    if (data.status === "already_shared") {
+      toast.info(`You're already sharing your results with ${data.viewer_name || "that person"}.`);
+      return;
+    }
+    if (data.status === "shared") {
+      toast.success(`Now sharing your PTP results with ${data.viewer_name || "that person"}.`);
+      setShareEmail("");
+      loadMyShares();
+    }
+  };
+
+  const handleRevokeShare = async (viewerUserId: string, viewerName: string | null) => {
+    const { data, error } = await (supabase as any).rpc("revoke_ptp_share", { p_viewer_user_id: viewerUserId });
+    if (error || !data?.revoked) { toast.error("Could not revoke access. Please try again."); return; }
+    toast.success(`Stopped sharing with ${viewerName || "that person"}.`);
+    setMyShares((prev) => prev.filter((s) => s.viewer_user_id !== viewerUserId));
+  };
+
+
+
   const handleWithdrawConsent = async () => {
     if (!user || !demo) return;
     setSaving(true);
