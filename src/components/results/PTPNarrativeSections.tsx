@@ -751,6 +751,7 @@ export function PTPProfileOverviewSection(props: PTPNarrativeSectionsProps) {
       : null;
 
   const actionPlan = narrativeSections?.action_plan ?? [];
+  const [addPlanOpen, setAddPlanOpen] = useState(false);
   const personalSummary = narrativeSections?.personal_summary ?? [];
 
   return (
