@@ -16,7 +16,8 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Shield, Lock, UserCircle, Pencil, MessageSquare, Users2, Inbox } from "lucide-react";
+import { Shield, Lock, UserCircle, Pencil, MessageSquare, Users2, Inbox, Share2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
 
 type PermissionLevel = "score_summary" | "full_results" | "full_results_with_history" | "participation_only";
 
@@ -97,6 +98,11 @@ export default function PrivacySettings() {
   });
   const [pendingReceivedCount, setPendingReceivedCount] = useState(0);
 
+  const [hasPtp, setHasPtp] = useState(false);
+  const [shareEmail, setShareEmail] = useState("");
+  const [sharingBusy, setSharingBusy] = useState(false);
+  const [myShares, setMyShares] = useState<{ share_id: string; viewer_user_id: string; viewer_name: string | null; viewer_email: string | null; created_at: string }[]>([]);
+
   const [demo, setDemo] = useState<DemoData | null>(null);
   const [editingField, setEditingField] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
@@ -132,6 +138,19 @@ export default function PrivacySettings() {
         setCoach(prev => ({ ...prev, enabled: userData.share_results_with_coach ?? false }));
         setAccountType(userData.account_type);
       }
+
+      const { data: ptpRows } = await supabase
+        .from("assessment_results")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("instrument_id", "INST-001")
+        .limit(1);
+      setHasPtp(!!ptpRows && ptpRows.length > 0);
+
+      const { data: sharesData } = await (supabase as any).rpc("list_my_ptp_shares");
+      if (sharesData?.shares) setMyShares(sharesData.shares);
+
+
 
       // Existing coach permission row
       if (cc && cc.length > 0) {
@@ -280,6 +299,47 @@ export default function PrivacySettings() {
     showSaved(`peer_${key}`);
   };
 
+  const loadMyShares = useCallback(async () => {
+    const { data } = await (supabase as any).rpc("list_my_ptp_shares");
+    if (data?.shares) setMyShares(data.shares);
+  }, []);
+
+  const handleShare = async () => {
+    const email = shareEmail.trim();
+    if (!email) return;
+    setSharingBusy(true);
+    const { data, error } = await (supabase as any).rpc("share_ptp_results", { p_target_email: email });
+    setSharingBusy(false);
+    if (error) {
+      if ((error.message || "").includes("rate_limited")) {
+        toast.error("Too many attempts. Please wait a minute and try again.");
+      } else {
+        toast.error("Could not share results. Please try again.");
+      }
+      return;
+    }
+    if (!data?.found) { toast.error("No account exists with that email address."); return; }
+    if (data.status === "self") { toast.error("You can't share results with yourself."); return; }
+    if (data.status === "already_shared") {
+      toast.info(`You're already sharing your results with ${data.viewer_name || "that person"}.`);
+      return;
+    }
+    if (data.status === "shared") {
+      toast.success(`Now sharing your PTP results with ${data.viewer_name || "that person"}.`);
+      setShareEmail("");
+      loadMyShares();
+    }
+  };
+
+  const handleRevokeShare = async (viewerUserId: string, viewerName: string | null) => {
+    const { data, error } = await (supabase as any).rpc("revoke_ptp_share", { p_viewer_user_id: viewerUserId });
+    if (error || !data?.revoked) { toast.error("Could not revoke access. Please try again."); return; }
+    toast.success(`Stopped sharing with ${viewerName || "that person"}.`);
+    setMyShares((prev) => prev.filter((s) => s.viewer_user_id !== viewerUserId));
+  };
+
+
+
   const handleWithdrawConsent = async () => {
     if (!user || !demo) return;
     setSaving(true);
@@ -391,7 +451,58 @@ export default function PrivacySettings() {
         </CardContent>
       </Card>
 
+      {hasPtp && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Share2 className="h-4 w-4" /> Share My PTP Results
+            </CardTitle>
+            <CardDescription>
+              Share your full PTP results with another BrainWise account holder by email. They'll be notified and can view your report when they sign in. You can revoke access at any time.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-end gap-2">
+              <div className="flex-1">
+                <Label htmlFor="ptp-share-email" className="text-sm">Recipient email</Label>
+                <Input
+                  id="ptp-share-email"
+                  type="email"
+                  placeholder="name@example.com"
+                  value={shareEmail}
+                  onChange={(e) => setShareEmail(e.target.value)}
+                  className="mt-1"
+                />
+              </div>
+              <Button onClick={handleShare} disabled={sharingBusy || !shareEmail.trim()}>
+                {sharingBusy ? "Sharing..." : "Share"}
+              </Button>
+            </div>
+
+            {myShares.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-foreground">Currently shared with</p>
+                {myShares.map((s) => (
+                  <div key={s.share_id} className="flex items-center justify-between p-3 rounded-lg border">
+                    <div>
+                      <p className="text-sm font-medium text-foreground">{s.viewer_name || s.viewer_email}</p>
+                      {s.viewer_email && s.viewer_name && (
+                        <p className="text-xs text-muted-foreground">{s.viewer_email}</p>
+                      )}
+                    </div>
+                    <Button variant="outline" size="sm" onClick={() => handleRevokeShare(s.viewer_user_id, s.viewer_name)}>
+                      Revoke
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
       {/* Corporate Peer Sharing */}
+
       {isCorporate && (
         <Card>
           <CardHeader>
