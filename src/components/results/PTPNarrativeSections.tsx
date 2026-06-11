@@ -1312,7 +1312,7 @@ export function PTPAssessmentResponsesSection(props: PTPNarrativeSectionsProps) 
                   ) : (
                     <ChevronDown className="w-4 h-4 shrink-0 mt-1" style={{ color: "var(--fg-3)" }} />
                   )}
-                </button>
+                </div>
                 {isExpanded && (
                   <div style={{ padding: 16, borderTop: "1px solid var(--border-1)", background: "var(--bw-white)" }}>
                     <div style={{ marginBottom: 12 }}>
