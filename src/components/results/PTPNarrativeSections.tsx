@@ -850,7 +850,7 @@ export function PTPProfileOverviewSection(props: PTPNarrativeSectionsProps) {
                       marginBottom: 6,
                     }}
                   >
-                    {item.title}
+                    <HighlightableText blockKey={`action_plan:${i}:title`} text={item.title} />
                   </h4>
                   {item.rationale && (
                     <p style={{ fontSize: 13, color: "var(--fg-2)", lineHeight: 1.55, margin: 0, marginBottom: 10 }}>
