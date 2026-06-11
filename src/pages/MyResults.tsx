@@ -55,6 +55,7 @@ import {
   PTPAssessmentResponsesSection,
   PTPNarrativeProvider,
 } from "@/components/results/PTPNarrativeSections";
+import { ReportHighlightProvider } from "@/components/results/ReportHighlight";
 import PTPBrainOverview from "@/components/results/PTPBrainOverview";
 import PTPFullFacetCharts from "@/components/results/PTPFullFacetCharts";
 import NAINarrativeSections from "@/components/results/NAINarrativeSections";
@@ -1439,6 +1440,11 @@ export default function MyResults({ isCoachView = false, adminView = false, targ
               );
             }
             return (
+              <ReportHighlightProvider
+                assessmentResultId={effectiveSelected.result.id}
+                contextTab={ptpContextTab ?? 'single'}
+                enabled={!isCoachView}
+              >
               <PTPNarrativeProvider {...ptpNarrativeProps}>
                 <section>
                   <PTPProfileOverviewSection {...ptpNarrativeProps} />
@@ -1500,6 +1506,7 @@ export default function MyResults({ isCoachView = false, adminView = false, targ
                   <PTPAssessmentResponsesSection {...ptpNarrativeProps} />
                 </section>
               </PTPNarrativeProvider>
+              </ReportHighlightProvider>
             );
           })()}
 
