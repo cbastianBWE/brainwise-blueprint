@@ -1333,13 +1333,13 @@ export function PTPAssessmentResponsesSection(props: PTPNarrativeSectionsProps) 
                             {interpretation.positive_self.map((item, i) => (
                               <li key={`ps-${i}`} className="flex gap-2" style={{ fontSize: 14, color: "var(--fg-2)" }}>
                                 <span style={{ color: "var(--bw-forest)", flexShrink: 0 }}>✓</span>
-                                <span>{item}</span>
+                                <span><HighlightableText blockKey={`response:${r.itemNumber}:positive_self:${i}`} text={item} /></span>
                               </li>
                             ))}
                             {interpretation.negative_self.map((item, i) => (
                               <li key={`ns-${i}`} className="flex gap-2" style={{ fontSize: 14, color: "var(--fg-2)" }}>
                                 <span className="text-destructive shrink-0">✗</span>
-                                <span>{item}</span>
+                                <span><HighlightableText blockKey={`response:${r.itemNumber}:negative_self:${i}`} text={item} /></span>
                               </li>
                             ))}
                           </ul>
@@ -1350,13 +1350,13 @@ export function PTPAssessmentResponsesSection(props: PTPNarrativeSectionsProps) 
                             {interpretation.positive_others.map((item, i) => (
                               <li key={`po-${i}`} className="flex gap-2" style={{ fontSize: 14, color: "var(--fg-2)" }}>
                                 <span style={{ color: "var(--bw-forest)", flexShrink: 0 }}>✓</span>
-                                <span>{item}</span>
+                                <span><HighlightableText blockKey={`response:${r.itemNumber}:positive_others:${i}`} text={item} /></span>
                               </li>
                             ))}
                             {interpretation.negative_others.map((item, i) => (
                               <li key={`no-${i}`} className="flex gap-2" style={{ fontSize: 14, color: "var(--fg-2)" }}>
                                 <span className="text-destructive shrink-0">✗</span>
-                                <span>{item}</span>
+                                <span><HighlightableText blockKey={`response:${r.itemNumber}:negative_others:${i}`} text={item} /></span>
                               </li>
                             ))}
                           </ul>
