@@ -800,7 +800,7 @@ export function PTPProfileOverviewSection(props: PTPNarrativeSectionsProps) {
                     >
                       {i + 1}
                     </div>
-                    <p style={{ fontSize: 14, color: "var(--fg-1)", lineHeight: 1.55, margin: 0 }}>{bullet}</p>
+                    <p style={{ fontSize: 14, color: "var(--fg-1)", lineHeight: 1.55, margin: 0 }}><HighlightableText blockKey={`personal_summary:${i}`} text={bullet} /></p>
                   </div>
                 ))}
               </div>
