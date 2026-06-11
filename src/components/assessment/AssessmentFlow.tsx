@@ -615,7 +615,7 @@ function SliderControl({
         </div>
         <div className="flex items-center gap-4">
           <span className="text-sm font-medium text-muted-foreground w-6 text-center flex-shrink-0">0</span>
-          <div className="flex-1 assessment-slider">
+          <div className="flex-1 assessment-slider" data-untouched={!touched ? "true" : "false"}>
             <Slider
               min={0}
               max={100}
