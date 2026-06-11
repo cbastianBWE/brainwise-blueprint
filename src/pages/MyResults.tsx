@@ -1444,7 +1444,7 @@ export default function MyResults({ isCoachView = false, adminView = false, targ
               <ReportHighlightProvider
                 assessmentResultId={effectiveSelected.result.id}
                 contextTab={ptpContextTab ?? 'single'}
-                enabled={!isCoachView}
+                enabled={allowHighlighting}
               >
               <PTPNarrativeProvider {...ptpNarrativeProps}>
                 <section>
