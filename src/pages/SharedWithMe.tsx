@@ -91,7 +91,7 @@ export default function SharedWithMe() {
               </Button>
             </div>
             <div className="flex-1 overflow-y-auto">
-              <MyResults key={selectedOwnerId} targetUserId={selectedOwnerId} isCoachView viewLabel={selectedEntry?.owner_name || "Shared user"} />
+              <MyResults key={selectedOwnerId} targetUserId={selectedOwnerId} isCoachView viewLabel={selectedEntry?.owner_name || "Shared user"} allowHighlighting={false} />
             </div>
           </div>
         ) : (

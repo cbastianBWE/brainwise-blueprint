@@ -46,6 +46,7 @@ export default function CoachReport() {
           preSelectedAssessmentId={assessmentId}
           coachUserId={user?.id ?? ""}
           permissionLevel="full_results"
+          allowHighlighting={false}
         />
       </div>
     );

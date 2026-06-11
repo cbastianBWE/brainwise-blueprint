@@ -800,7 +800,7 @@ export function PTPProfileOverviewSection(props: PTPNarrativeSectionsProps) {
                     >
                       {i + 1}
                     </div>
-                    <p style={{ fontSize: 14, color: "var(--fg-1)", lineHeight: 1.55, margin: 0 }}>{bullet}</p>
+                    <p style={{ fontSize: 14, color: "var(--fg-1)", lineHeight: 1.55, margin: 0 }}><HighlightableText blockKey={`personal_summary:${i}`} text={bullet} /></p>
                   </div>
                 ))}
               </div>
@@ -850,11 +850,11 @@ export function PTPProfileOverviewSection(props: PTPNarrativeSectionsProps) {
                       marginBottom: 6,
                     }}
                   >
-                    {item.title}
+                    <HighlightableText blockKey={`action_plan:${i}:title`} text={item.title} />
                   </h4>
                   {item.rationale && (
                     <p style={{ fontSize: 13, color: "var(--fg-2)", lineHeight: 1.55, margin: 0, marginBottom: 10 }}>
-                      {item.rationale}
+                      <HighlightableText blockKey={`action_plan:${i}:rationale`} text={item.rationale} />
                     </p>
                   )}
                   {item.steps?.length > 0 && (
@@ -868,7 +868,7 @@ export function PTPProfileOverviewSection(props: PTPNarrativeSectionsProps) {
                       }}
                     >
                       {item.steps.map((step, j) => (
-                        <li key={j} style={{ marginBottom: 4 }}>{step}</li>
+                        <li key={j} style={{ marginBottom: 4 }}><HighlightableText blockKey={`action_plan:${i}:step:${j}`} text={step} /></li>
                       ))}
                     </ol>
                   )}
@@ -1059,13 +1059,13 @@ function FacetList({
                         {interpretation.positive_self.map((item, i) => (
                           <li key={`ps-${i}`} className="flex gap-2" style={{ fontSize: 14, color: "var(--fg-2)" }}>
                             <span style={{ color: "var(--bw-forest)", flexShrink: 0 }}>✓</span>
-                            <span>{item}</span>
+                            <span><HighlightableText blockKey={`facet_${prefix}:${facetName}:positive_self:${i}`} text={item} /></span>
                           </li>
                         ))}
                         {interpretation.negative_self.map((item, i) => (
                           <li key={`ns-${i}`} className="flex gap-2" style={{ fontSize: 14, color: "var(--fg-2)" }}>
                             <span className="text-destructive shrink-0">✗</span>
-                            <span>{item}</span>
+                            <span><HighlightableText blockKey={`facet_${prefix}:${facetName}:negative_self:${i}`} text={item} /></span>
                           </li>
                         ))}
                       </ul>
@@ -1076,13 +1076,13 @@ function FacetList({
                         {interpretation.positive_others.map((item, i) => (
                           <li key={`po-${i}`} className="flex gap-2" style={{ fontSize: 14, color: "var(--fg-2)" }}>
                             <span style={{ color: "var(--bw-forest)", flexShrink: 0 }}>✓</span>
-                            <span>{item}</span>
+                            <span><HighlightableText blockKey={`facet_${prefix}:${facetName}:positive_others:${i}`} text={item} /></span>
                           </li>
                         ))}
                         {interpretation.negative_others.map((item, i) => (
                           <li key={`no-${i}`} className="flex gap-2" style={{ fontSize: 14, color: "var(--fg-2)" }}>
                             <span className="text-destructive shrink-0">✗</span>
-                            <span>{item}</span>
+                            <span><HighlightableText blockKey={`facet_${prefix}:${facetName}:negative_others:${i}`} text={item} /></span>
                           </li>
                         ))}
                       </ul>
@@ -1287,7 +1287,7 @@ export function PTPAssessmentResponsesSection(props: PTPNarrativeSectionsProps) 
                       Q{r.itemNumber} — {r.facetName}
                     </p>
                     <p style={{ fontSize: 12, color: "var(--fg-3)", marginTop: 2, lineHeight: 1.5 }}>
-                      {r.itemText}
+                      <HighlightableText blockKey={`response:${r.itemNumber}`} text={r.itemText} />
                     </p>
                   </div>
                   <span

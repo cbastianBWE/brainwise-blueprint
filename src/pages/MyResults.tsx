@@ -232,9 +232,10 @@ interface MyResultsProps {
   permissionLevel?: 'full_results' | 'score_summary' | null;
   viewLabel?: string; // optional override for the page heading
   defaultInstrumentId?: string;
+  allowHighlighting?: boolean;
 }
 
-export default function MyResults({ isCoachView = false, adminView = false, targetUserId, preSelectedAssessmentId, coachUserId, permissionLevel = null, viewLabel, defaultInstrumentId }: MyResultsProps) {
+export default function MyResults({ isCoachView = false, adminView = false, targetUserId, preSelectedAssessmentId, coachUserId, permissionLevel = null, viewLabel, defaultInstrumentId, allowHighlighting = true }: MyResultsProps) {
   const { user } = useAuth();
   const { profile } = useUserProfile();
   const { isBypassAdmin, isCoach, canBypassAssessmentPaywall } = useAccountRole();
@@ -1443,7 +1444,7 @@ export default function MyResults({ isCoachView = false, adminView = false, targ
               <ReportHighlightProvider
                 assessmentResultId={effectiveSelected.result.id}
                 contextTab={ptpContextTab ?? 'single'}
-                enabled={!isCoachView}
+                enabled={allowHighlighting}
               >
               <PTPNarrativeProvider {...ptpNarrativeProps}>
                 <section>
