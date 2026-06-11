@@ -487,9 +487,9 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
         ) : (
           <Button
             variant="outline"
-            onClick={() => setCurrentIndex((p) => Math.min(items.length - 1, p + 1))}
+            onClick={() => reviewingUnanswered ? goToNextUnanswered() : setCurrentIndex((p) => Math.min(items.length - 1, p + 1))}
           >
-            Next <ChevronRight className="h-4 w-4 ml-1" />
+            {reviewingUnanswered ? "Next Unanswered" : "Next"} <ChevronRight className="h-4 w-4 ml-1" />
           </Button>
         )}
       </div>
