@@ -1287,7 +1287,7 @@ export function PTPAssessmentResponsesSection(props: PTPNarrativeSectionsProps) 
                       Q{r.itemNumber} — {r.facetName}
                     </p>
                     <p style={{ fontSize: 12, color: "var(--fg-3)", marginTop: 2, lineHeight: 1.5 }}>
-                      {r.itemText}
+                      <HighlightableText blockKey={`response:${r.itemNumber}`} text={r.itemText} />
                     </p>
                   </div>
                   <span
