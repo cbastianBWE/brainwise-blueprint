@@ -1273,10 +1273,13 @@ export function PTPAssessmentResponsesSection(props: PTPNarrativeSectionsProps) 
                   borderBottom: isLast ? "none" : "1px solid var(--border-1)",
                 }}
               >
-                <button
+                <div
+                  role="button"
+                  tabIndex={0}
                   onClick={() => toggleRow(key)}
+                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggleRow(key); } }}
                   className="w-full text-left flex items-start gap-3 transition-colors hover:bg-muted/30"
-                  style={{ padding: "12px 16px" }}
+                  style={{ padding: "12px 16px", cursor: "pointer" }}
                 >
                   <div
                     className="shrink-0 self-stretch"
