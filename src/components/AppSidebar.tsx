@@ -62,6 +62,7 @@ const corporateNav: NavItem[] = [
 ];
 
 const coachNav: NavItem[] = [
+  { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { title: "My Assessments", url: "/assessment", icon: ClipboardList },
   { title: "My Results", url: "/my-results", icon: BarChart3 },
   { title: "My Development Plan", url: "/development-plan", icon: Target },
