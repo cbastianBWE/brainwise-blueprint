@@ -1,0 +1,1 @@
+REVOKE SELECT ON public.newsletter_article_authors FROM anon;
