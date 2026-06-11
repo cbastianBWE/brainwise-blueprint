@@ -44,6 +44,7 @@ const individualNav: NavItem[] = [
   { title: "Assessment", url: "/assessment", icon: ClipboardList },
   { title: "AI Chat", url: "/ai-chat", icon: MessageSquare },
   { title: "Chat History", url: "/ai-chat/history", icon: History },
+  { title: "My Learning", url: "/my-learning", icon: GraduationCap },
   { title: "Resources", url: "/resources", icon: BookOpen },
 ];
 
@@ -56,6 +57,7 @@ const corporateNav: NavItem[] = [
   { title: "Assessment", url: "/assessment", icon: ClipboardList },
   { title: "AI Chat", url: "/ai-chat", icon: MessageSquare },
   { title: "Chat History", url: "/ai-chat/history", icon: History },
+  { title: "My Learning", url: "/my-learning", icon: GraduationCap },
   { title: "Resources", url: "/resources", icon: BookOpen },
 ];
 
@@ -69,6 +71,7 @@ const coachNav: NavItem[] = [
   { title: "Orders & Invoices", url: "/coach/invoices", icon: Receipt },
   { title: "AI Chat", url: "/ai-chat", icon: MessageSquare },
   { title: "Chat History", url: "/ai-chat/history", icon: History },
+  { title: "My Learning", url: "/my-learning", icon: GraduationCap },
   { title: "Resources", url: "/coach/resources", icon: BookOpen },
   { title: "Certification", url: "/coach/certification", icon: Award },
   { title: "My Profile", url: "/coach/profile", icon: UserCircle, disabled: true, badge: "Coming Soon" },
@@ -84,6 +87,7 @@ const adminNav: NavItem[] = [
   { title: "Users", url: "/admin/users", icon: Users },
   { title: "Features", url: "/company/features", icon: ShieldCheck },
   { title: "Teams", url: "/admin/teams", icon: UsersRound },
+  { title: "My Learning", url: "/my-learning", icon: GraduationCap },
   { title: "Resources", url: "/admin/resources", icon: BookOpen },
   { title: "AI Chat", url: "/ai-chat", icon: MessageSquare },
   { title: "Chat History", url: "/ai-chat/history", icon: History },
@@ -105,6 +109,7 @@ const superAdminNav: NavItem[] = [
   { title: "Content Authoring", url: "/super-admin/content-authoring", icon: Library },
   { title: "Newsletter", url: "/super-admin/newsletter", icon: Newspaper },
   
+  { title: "My Learning", url: "/my-learning", icon: GraduationCap },
   { title: "Resources", url: "/resources", icon: BookOpen },
   { title: "Resource Authoring", url: "/super-admin/resources", icon: Library },
   { title: "Comp Coupons", url: "/super-admin/coupons", icon: Ticket },
