@@ -1,4 +1,4 @@
-import { createContext, useContext, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { useReportHighlights, type ReportHighlight } from "@/hooks/useReportHighlights";
 import { HIGHLIGHT_COLORS, highlightCss, blockTextSha } from "@/lib/reportHighlightColors";
 
@@ -20,10 +20,33 @@ export function ReportHighlightProvider({ assessmentResultId, contextTab, enable
 export function HighlightableText({ blockKey, text }: { blockKey: string; text: string }) {
   const ctx = useContext(Ctx);
   const ref = useRef<HTMLSpanElement>(null);
+  const popRef = useRef<HTMLSpanElement>(null);
+  const editRef = useRef<HTMLSpanElement>(null);
   const [pop, setPop] = useState<{ x: number; y: number; start: number; end: number } | null>(null);
   const [createNote, setCreateNote] = useState("");
   const [editPop, setEditPop] = useState<{ id: string; x: number; y: number } | null>(null);
   const [editNote, setEditNote] = useState("");
+
+  useEffect(() => {
+    if (!pop && !editPop) return;
+    const onPointerDown = (e: PointerEvent) => {
+      const t = e.target as Node | null;
+      if (t && popRef.current?.contains(t)) return;
+      if (t && editRef.current?.contains(t)) return;
+      setPop(null);
+      setCreateNote("");
+      setEditPop(null);
+    };
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") { setPop(null); setCreateNote(""); setEditPop(null); }
+    };
+    document.addEventListener("pointerdown", onPointerDown, true);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown, true);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [pop, editPop]);
 
   if (!ctx || !ctx.enabled) return <>{text}</>;
 
@@ -76,7 +99,7 @@ export function HighlightableText({ blockKey, text }: { blockKey: string; text: 
     <span ref={ref} onMouseUp={onMouseUp} style={{ position: "relative" }}>
       {segs.length ? segs : text}
       {pop && (
-        <span style={{ ...popStyle, left: pop.x, top: pop.y - 120, display: "flex", flexDirection: "column", gap: 6 }}>
+        <span ref={popRef} style={{ ...popStyle, left: pop.x, top: pop.y - 120, display: "flex", flexDirection: "column", gap: 6 }}>
           <span style={{ display: "flex", gap: 6, justifyContent: "center" }}>
             {HIGHLIGHT_COLORS.map((c) => (
               <button key={c.key} aria-label={`Highlight ${c.label}`} onMouseDown={(e) => e.preventDefault()}
@@ -86,11 +109,11 @@ export function HighlightableText({ blockKey, text }: { blockKey: string; text: 
           </span>
           <textarea value={createNote} onChange={(e) => setCreateNote(e.target.value)} onMouseDown={(e) => e.stopPropagation()} onMouseUp={(e) => e.stopPropagation()}
             placeholder="Add a comment (optional)" aria-label="Highlight comment" style={taStyle} />
-          <span style={{ fontSize: 10, color: "var(--fg-1)", opacity: 0.6, textAlign: "center" }}>Pick a color to save</span>
+          <span style={{ fontSize: 10, color: "var(--fg-1)", opacity: 0.6, textAlign: "center" }}>Pick a color to save, or click away to cancel</span>
         </span>
       )}
       {editPop && (
-        <span style={{ ...popStyle, left: editPop.x, top: editPop.y - 132, display: "flex", flexDirection: "column", gap: 6 }}>
+        <span ref={editRef} style={{ ...popStyle, left: editPop.x, top: editPop.y - 132, display: "flex", flexDirection: "column", gap: 6 }}>
           <textarea value={editNote} onChange={(e) => setEditNote(e.target.value)} onMouseDown={(e) => e.stopPropagation()} onMouseUp={(e) => e.stopPropagation()}
             placeholder="Add a comment" aria-label="Edit highlight comment" style={taStyle} />
           <span style={{ display: "flex", gap: 8, justifyContent: "space-between", alignItems: "center" }}>
