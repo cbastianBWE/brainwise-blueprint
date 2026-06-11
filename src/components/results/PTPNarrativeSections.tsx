@@ -854,7 +854,7 @@ export function PTPProfileOverviewSection(props: PTPNarrativeSectionsProps) {
                   </h4>
                   {item.rationale && (
                     <p style={{ fontSize: 13, color: "var(--fg-2)", lineHeight: 1.55, margin: 0, marginBottom: 10 }}>
-                      {item.rationale}
+                      <HighlightableText blockKey={`action_plan:${i}:rationale`} text={item.rationale} />
                     </p>
                   )}
                   {item.steps?.length > 0 && (
