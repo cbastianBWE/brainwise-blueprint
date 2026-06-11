@@ -868,7 +868,7 @@ export function PTPProfileOverviewSection(props: PTPNarrativeSectionsProps) {
                       }}
                     >
                       {item.steps.map((step, j) => (
-                        <li key={j} style={{ marginBottom: 4 }}>{step}</li>
+                        <li key={j} style={{ marginBottom: 4 }}><HighlightableText blockKey={`action_plan:${i}:step:${j}`} text={step} /></li>
                       ))}
                     </ol>
                   )}
