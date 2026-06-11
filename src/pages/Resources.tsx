@@ -5,7 +5,6 @@ import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import AllResourcesTab from "@/components/resources/AllResourcesTab";
 import CoachResourcesTab from "@/components/resources/CoachResourcesTab";
-import MyLearningTab from "@/components/resources/MyLearningTab";
 import type { GetUserResourcesResult } from "@/components/resources/types";
 
 export default function Resources() {
@@ -41,7 +40,11 @@ export default function Resources() {
     );
   }
 
-  if (!data || !data.tabs || data.tabs.length === 0) {
+  const tabs = [...(data?.tabs ?? [])]
+    .filter((t) => !t.is_learning_tree)
+    .sort((a, b) => a.display_order - b.display_order);
+
+  if (tabs.length === 0) {
     return (
       <div className="container mx-auto p-6">
         <h1 className="mb-4 text-2xl font-semibold">Resources</h1>
@@ -54,7 +57,6 @@ export default function Resources() {
     );
   }
 
-  const tabs = [...data.tabs].sort((a, b) => a.display_order - b.display_order);
   const defaultTabSlug = tabs[0]?.slug ?? "";
 
   return (
@@ -72,9 +74,7 @@ export default function Resources() {
 
         {tabs.map((tab) => (
           <TabsContent key={tab.slug} value={tab.slug} className="mt-6">
-            {tab.slug === "my_learning" ? (
-              <MyLearningTab />
-            ) : tab.slug === "coach_resources" ? (
+            {tab.slug === "coach_resources" ? (
               <CoachResourcesTab tab={tab} />
             ) : (
               <AllResourcesTab tab={tab} />

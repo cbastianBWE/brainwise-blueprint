@@ -46,6 +46,7 @@ import Assessment from "./pages/Assessment";
 import AiChat from "./pages/AiChat";
 import AiChatHistory from "./pages/AiChatHistory";
 import Resources from "./pages/Resources";
+import MyLearning from "./pages/MyLearning";
 import ResourceReader from "./pages/ResourceReader";
 import CertPathDetail from "./pages/learning/CertPathDetail";
 import CurriculumDetail from "./pages/learning/CurriculumDetail";
@@ -220,6 +221,7 @@ const App = () => (
               <Route path="/ai-chat" element={<SubscriptionGate feature="ai_chat"><AiChat /></SubscriptionGate>} />
               <Route path="/ai-chat/history" element={<SubscriptionGate feature="ai_chat"><AiChatHistory /></SubscriptionGate>} />
               <Route path="/resources" element={<Resources />} />
+              <Route path="/my-learning" element={<MyLearning />} />
               <Route path="/resources/:resourceId" element={<ResourceReader />} />
               <Route path="/learning/cert-path/:certPathId" element={<CertPathDetail />} />
               <Route path="/learning/curriculum/:curriculumId" element={<CurriculumDetail />} />
