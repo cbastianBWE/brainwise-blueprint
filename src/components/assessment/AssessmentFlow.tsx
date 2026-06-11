@@ -391,6 +391,13 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
   const progress = ((currentIndex + 1) / items.length) * 100;
   const currentResponse = responses[currentItem?.item_id];
   const allAnswered = items.length > 0 && items.every((it) => responses[it.item_id] != null);
+  const goToNextUnanswered = () => {
+    let next = items.findIndex((it, i) => i > currentIndex && responses[it.item_id] == null);
+    if (next === -1) next = items.findIndex((it) => responses[it.item_id] == null);
+    if (next === -1) { setReviewingUnanswered(false); setCurrentIndex(items.length - 1); }
+    else setCurrentIndex(next);
+  };
+  useEffect(() => { if (allAnswered) setReviewingUnanswered(false); }, [allAnswered]);
 
   return (
     <div className="fixed inset-0 bg-background flex flex-col z-50">
