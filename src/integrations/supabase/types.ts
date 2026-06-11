@@ -7676,6 +7676,90 @@ export type Database = {
           },
         ]
       }
+      ptp_report_highlights: {
+        Row: {
+          assessment_result_id: string
+          block_key: string
+          block_text_sha: string
+          color: string | null
+          context_tab: string
+          created_at: string
+          end_offset: number
+          id: string
+          note: string | null
+          quoted_text: string
+          start_offset: number
+          updated_at: string
+          viewer_user_id: string
+        }
+        Insert: {
+          assessment_result_id: string
+          block_key: string
+          block_text_sha: string
+          color?: string | null
+          context_tab: string
+          created_at?: string
+          end_offset: number
+          id?: string
+          note?: string | null
+          quoted_text: string
+          start_offset: number
+          updated_at?: string
+          viewer_user_id: string
+        }
+        Update: {
+          assessment_result_id?: string
+          block_key?: string
+          block_text_sha?: string
+          color?: string | null
+          context_tab?: string
+          created_at?: string
+          end_offset?: number
+          id?: string
+          note?: string | null
+          quoted_text?: string
+          start_offset?: number
+          updated_at?: string
+          viewer_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ptp_report_highlights_assessment_result_id_fkey"
+            columns: ["assessment_result_id"]
+            isOneToOne: false
+            referencedRelation: "assessment_results"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ptp_report_highlights_viewer_user_id_fkey"
+            columns: ["viewer_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ptp_report_highlights_viewer_user_id_fkey"
+            columns: ["viewer_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "ptp_report_highlights_viewer_user_id_fkey"
+            columns: ["viewer_user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ptp_report_highlights_viewer_user_id_fkey"
+            columns: ["viewer_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ptp_result_shares: {
         Row: {
           created_at: string
