@@ -9,6 +9,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
+import { escHtml } from "@/lib/escHtml";
 
 interface UserMini {
   id: string;
@@ -167,9 +168,9 @@ export default function SharingRequests() {
         </td></tr>
         <tr><td style="padding:32px;">
           <h2 style="font-size:20px;color:#021F36;margin:0 0 16px;font-family:'Poppins','Helvetica Neue',Arial,sans-serif;font-weight:700;letter-spacing:-0.01em;">Peer access request</h2>
-          <p style="font-size:15px;color:#021F36;line-height:1.6;margin:0 0 16px;font-family:'Montserrat','Helvetica Neue',Arial,sans-serif;font-weight:600;">Hi ${targetName},</p>
+          <p style="font-size:15px;color:#021F36;line-height:1.6;margin:0 0 16px;font-family:'Montserrat','Helvetica Neue',Arial,sans-serif;font-weight:600;">Hi ${escHtml(targetName)},</p>
           <p style="font-size:15px;color:#4B4751;line-height:1.6;margin:0 0 16px;font-family:'Montserrat','Helvetica Neue',Arial,sans-serif;">
-            ${requesterName} is requesting access to view your PTP assessment results.
+            ${escHtml(requesterName)} is requesting access to view your PTP assessment results.
           </p>
           <p style="font-size:15px;color:#4B4751;line-height:1.6;margin:0 0 8px;font-family:'Montserrat','Helvetica Neue',Arial,sans-serif;">
             You can accept or decline this request below. If you prefer to review your sharing settings instead, you can do that from inside BrainWise at any time.

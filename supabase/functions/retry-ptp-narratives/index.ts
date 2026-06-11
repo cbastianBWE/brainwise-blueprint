@@ -58,7 +58,10 @@ Deno.serve(async (req: Request) => {
     .eq("id", assessment_result_id)
     .maybeSingle();
 
-  if (rowErr) return json(500, { error: rowErr.message });
+  if (rowErr) {
+    console.error("[retry-ptp-narratives] assessment_results lookup failed:", rowErr);
+    return json(500, { error: "Internal server error" });
+  }
   if (!row) return json(404, { error: "Not found" });
   if (row.user_id !== callerUserId) return json(403, { error: "Forbidden" });
 
@@ -74,7 +77,10 @@ Deno.serve(async (req: Request) => {
     })
     .eq("id", assessment_result_id);
 
-  if (updErr) return json(500, { error: updErr.message });
+  if (updErr) {
+    console.error("[retry-ptp-narratives] narrative_status reset failed:", updErr);
+    return json(500, { error: "Internal server error" });
+  }
 
   // Kick generate-all-facets — it self-short-circuits if already complete
   fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/generate-all-facets`, {
