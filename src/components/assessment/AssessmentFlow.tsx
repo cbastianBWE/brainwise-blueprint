@@ -534,7 +534,7 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
                 onClick={() => {
                   setShowSubmitDialog(false);
                   const firstUnanswered = items.findIndex((it) => !responses[it.item_id]);
-                  if (firstUnanswered >= 0) setCurrentIndex(firstUnanswered);
+                  if (firstUnanswered >= 0) { setReviewingUnanswered(true); setCurrentIndex(firstUnanswered); }
                 }}
               >
                 Go to First Unanswered
