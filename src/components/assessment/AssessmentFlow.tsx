@@ -62,6 +62,7 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
   const [assessmentId, setAssessmentId] = useState<string | null>(null);
   const [items, setItems] = useState<Item[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [reviewingUnanswered, setReviewingUnanswered] = useState(false);
   const [responses, setResponses] = useState<Record<string, { numeric: number; text: string | null; readiness: string | null }>>({});
   const [loading, setLoading] = useState(true);
   const [showExitDialog, setShowExitDialog] = useState(false);
