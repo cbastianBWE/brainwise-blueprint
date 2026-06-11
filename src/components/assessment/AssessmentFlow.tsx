@@ -62,6 +62,7 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
   const [assessmentId, setAssessmentId] = useState<string | null>(null);
   const [items, setItems] = useState<Item[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [reviewingUnanswered, setReviewingUnanswered] = useState(false);
   const [responses, setResponses] = useState<Record<string, { numeric: number; text: string | null; readiness: string | null }>>({});
   const [loading, setLoading] = useState(true);
   const [showExitDialog, setShowExitDialog] = useState(false);
@@ -390,6 +391,13 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
   const progress = ((currentIndex + 1) / items.length) * 100;
   const currentResponse = responses[currentItem?.item_id];
   const allAnswered = items.length > 0 && items.every((it) => responses[it.item_id] != null);
+  const goToNextUnanswered = () => {
+    let next = items.findIndex((it, i) => i > currentIndex && responses[it.item_id] == null);
+    if (next === -1) next = items.findIndex((it) => responses[it.item_id] == null);
+    if (next === -1) { setReviewingUnanswered(false); setCurrentIndex(items.length - 1); }
+    else setCurrentIndex(next);
+  };
+  useEffect(() => { if (allAnswered) setReviewingUnanswered(false); }, [allAnswered]);
 
   return (
     <div className="fixed inset-0 bg-background flex flex-col z-50">
@@ -479,9 +487,9 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
         ) : (
           <Button
             variant="outline"
-            onClick={() => setCurrentIndex((p) => Math.min(items.length - 1, p + 1))}
+            onClick={() => reviewingUnanswered ? goToNextUnanswered() : setCurrentIndex((p) => Math.min(items.length - 1, p + 1))}
           >
-            Next <ChevronRight className="h-4 w-4 ml-1" />
+            {reviewingUnanswered ? "Next Unanswered" : "Next"} <ChevronRight className="h-4 w-4 ml-1" />
           </Button>
         )}
       </div>
@@ -526,7 +534,7 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
                 onClick={() => {
                   setShowSubmitDialog(false);
                   const firstUnanswered = items.findIndex((it) => !responses[it.item_id]);
-                  if (firstUnanswered >= 0) setCurrentIndex(firstUnanswered);
+                  if (firstUnanswered >= 0) { setReviewingUnanswered(true); setCurrentIndex(firstUnanswered); }
                 }}
               >
                 Go to First Unanswered
@@ -596,6 +604,9 @@ function SliderControl({
         .assessment-slider [data-orientation="horizontal"] {
           height: 8px;
         }
+        .assessment-slider[data-untouched="true"] .bg-primary {
+          background-color: transparent;
+        }
       `}</style>
       <ManagerContextLine raterType={raterType} targetUserName={targetUserName} />
       <p className="text-xl font-medium text-foreground leading-relaxed">{item.item_text}</p>
@@ -607,7 +618,7 @@ function SliderControl({
         </div>
         <div className="flex items-center gap-4">
           <span className="text-sm font-medium text-muted-foreground w-6 text-center flex-shrink-0">0</span>
-          <div className="flex-1 assessment-slider">
+          <div className="flex-1 assessment-slider" data-untouched={!touched ? "true" : "false"}>
             <Slider
               min={0}
               max={100}
