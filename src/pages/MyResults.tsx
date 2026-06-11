@@ -1440,6 +1440,11 @@ export default function MyResults({ isCoachView = false, adminView = false, targ
               );
             }
             return (
+              <ReportHighlightProvider
+                assessmentResultId={effectiveSelected.result.id}
+                contextTab={ptpContextTab ?? 'single'}
+                enabled={!isCoachView}
+              >
               <PTPNarrativeProvider {...ptpNarrativeProps}>
                 <section>
                   <PTPProfileOverviewSection {...ptpNarrativeProps} />
@@ -1501,6 +1506,7 @@ export default function MyResults({ isCoachView = false, adminView = false, targ
                   <PTPAssessmentResponsesSection {...ptpNarrativeProps} />
                 </section>
               </PTPNarrativeProvider>
+              </ReportHighlightProvider>
             );
           })()}
 
