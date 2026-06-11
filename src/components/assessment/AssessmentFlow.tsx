@@ -604,6 +604,9 @@ function SliderControl({
         .assessment-slider [data-orientation="horizontal"] {
           height: 8px;
         }
+        .assessment-slider[data-untouched="true"] .bg-primary {
+          background-color: transparent;
+        }
       `}</style>
       <ManagerContextLine raterType={raterType} targetUserName={targetUserName} />
       <p className="text-xl font-medium text-foreground leading-relaxed">{item.item_text}</p>
