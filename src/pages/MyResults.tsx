@@ -55,6 +55,7 @@ import {
   PTPAssessmentResponsesSection,
   PTPNarrativeProvider,
 } from "@/components/results/PTPNarrativeSections";
+import { ReportHighlightProvider } from "@/components/results/ReportHighlight";
 import PTPBrainOverview from "@/components/results/PTPBrainOverview";
 import PTPFullFacetCharts from "@/components/results/PTPFullFacetCharts";
 import NAINarrativeSections from "@/components/results/NAINarrativeSections";

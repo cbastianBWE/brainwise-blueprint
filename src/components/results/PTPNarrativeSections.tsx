@@ -6,6 +6,7 @@ import { PtpDimensionLegend } from "@/components/results/PtpDimensionLegend";
 import { PTP_ITEM_FACET_NAMES } from "@/lib/ptpFacetNames";
 import { Button } from "@/components/ui/button";
 import { AddToDevelopmentPlanModal } from "@/components/results/AddToDevelopmentPlanModal";
+import { HighlightableText } from "@/components/results/ReportHighlight";
 
 const PTP_DIMENSION_NAMES: Record<string, string> = {
   "DIM-PTP-01": "Protection",
@@ -763,7 +764,7 @@ export function PTPProfileOverviewSection(props: PTPNarrativeSectionsProps) {
           <p style={{ fontSize: 14, color: "var(--fg-3)", margin: 0 }}>Generating profile overview...</p>
         ) : narrativeSections?.profile_overview ? (
           <p style={{ fontSize: 14, color: "var(--fg-2)", lineHeight: 1.6, margin: 0 }}>
-            {narrativeSections.profile_overview}
+            <HighlightableText blockKey="profile_overview" text={narrativeSections.profile_overview} />
           </p>
         ) : profileOverviewText ? (
           <p style={{ fontSize: 14, color: "var(--fg-2)", lineHeight: 1.6, margin: 0 }}>{profileOverviewText}</p>
@@ -937,7 +938,7 @@ export function PTPDimensionHighlightsSection(props: PTPNarrativeSectionsProps) 
                 </h4>
                 {(aiDescription || fallbackDescription) && (
                   <p style={{ fontSize: 14, color: "var(--fg-2)", lineHeight: 1.55, margin: 0 }}>
-                    {aiDescription || fallbackDescription}
+                    <HighlightableText blockKey={`dimension_highlights:${dimId}`} text={(aiDescription || fallbackDescription) as string} />
                   </p>
                 )}
               </div>
@@ -1148,7 +1149,7 @@ export function PTPCrossAssessmentSection(props: PTPNarrativeSectionsProps) {
           </p>
         ) : narrativeSections?.cross_assessment ? (
           <p style={{ fontSize: 14, color: "var(--fg-2)", lineHeight: 1.55, margin: 0, marginBottom: 12 }}>
-            {narrativeSections.cross_assessment}
+            <HighlightableText blockKey="cross_assessment" text={narrativeSections.cross_assessment} />
           </p>
         ) : (
           <p style={{ fontSize: 14, color: "var(--fg-2)", lineHeight: 1.55, margin: 0, marginBottom: 12 }}>
