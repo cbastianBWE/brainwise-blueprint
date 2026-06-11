@@ -28,6 +28,7 @@ import BulkInviteModal from "@/components/coach/BulkInviteModal";
 import ShareableLinkModal from "@/components/coach/ShareableLinkModal";
 import PendingInvitations from "@/components/coach/PendingInvitations";
 import { INSTRUMENTS as CANONICAL_INSTRUMENTS } from "@/lib/instruments";
+import { escHtml } from "@/lib/escHtml";
 
 // Adapter: canonical instruments → CoachClients-internal shape used in 7+ callsites
 // throughout this file (form rendering, getSelectedUuids, toggleInstrument, etc.).
@@ -464,11 +465,11 @@ export default function CoachClients() {
         .filter(Boolean) as string[];
 
       const instrumentListHtml = selectedNames
-        .map(n => `<li style="margin-bottom:6px;">${n}</li>`)
+        .map(n => `<li style="margin-bottom:6px;">${escHtml(n)}</li>`)
         .join("");
 
       const coachNoteHtml = note
-        ? `<blockquote style="border-left:4px solid #F5741A;margin:20px 0;padding:12px 16px;background:#ffffff;border-radius:4px;font-style:italic;color:#4B4751;font-family:'Montserrat','Helvetica Neue',Arial,sans-serif;">"${note}"</blockquote>`
+        ? `<blockquote style="border-left:4px solid #F5741A;margin:20px 0;padding:12px 16px;background:#ffffff;border-radius:4px;font-style:italic;color:#4B4751;font-family:'Montserrat','Helvetica Neue',Arial,sans-serif;">"${escHtml(note).replace(/\n/g, "<br/>")}"</blockquote>`
         : "";
 
       const signupUrl = `${window.location.origin}/signup?email=${encodeURIComponent(email)}`;
@@ -485,7 +486,7 @@ export default function CoachClients() {
           <h1 style="margin:0;color:#ffffff;font-size:22px;font-family:'Poppins','Helvetica Neue',Arial,sans-serif;font-weight:800;letter-spacing:-0.01em;">BrainWise Enterprises</h1>
         </td></tr>
         <tr><td style="padding:32px;">
-          <h2 style="font-size:20px;color:#021F36;margin:0 0 16px;font-family:'Poppins','Helvetica Neue',Arial,sans-serif;font-weight:700;letter-spacing:-0.01em;">Hi ${firstName || "there"},</h2>
+          <h2 style="font-size:20px;color:#021F36;margin:0 0 16px;font-family:'Poppins','Helvetica Neue',Arial,sans-serif;font-weight:700;letter-spacing:-0.01em;">Hi ${escHtml(firstName) || "there"},</h2>
           <p style="font-size:15px;color:#4B4751;line-height:1.6;margin:0 0 16px;font-family:'Montserrat','Helvetica Neue',Arial,sans-serif;font-weight:400;">
             You've been invited to complete a BrainWise assessment${selectedNames.length > 1 ? "s" : ""}. When you register, you'll be able to choose your preferred payment method.
           </p>
@@ -547,9 +548,9 @@ export default function CoachClients() {
 
     // Build the invitation email HTML (same style as handleOrderClientPays)
     const ptpName = "Personal Threat Profile";
-    const instrumentListHtml = `<li style="margin-bottom:6px;">${ptpName}</li>`;
+    const instrumentListHtml = `<li style="margin-bottom:6px;">${escHtml(ptpName)}</li>`;
     const coachNoteHtml = note
-      ? `<blockquote style="border-left:4px solid #F5741A;margin:20px 0;padding:12px 16px;background:#ffffff;border-radius:4px;font-style:italic;color:#4B4751;font-family:'Montserrat','Helvetica Neue',Arial,sans-serif;">"${note}"</blockquote>`
+      ? `<blockquote style="border-left:4px solid #F5741A;margin:20px 0;padding:12px 16px;background:#ffffff;border-radius:4px;font-style:italic;color:#4B4751;font-family:'Montserrat','Helvetica Neue',Arial,sans-serif;">"${escHtml(note).replace(/\n/g, "<br/>")}"</blockquote>`
       : "";
     const signupUrl = `${window.location.origin}/signup?email=${encodeURIComponent(email)}`;
     const html = `
@@ -564,7 +565,7 @@ export default function CoachClients() {
           <h1 style="margin:0;color:#ffffff;font-size:22px;font-family:'Poppins','Helvetica Neue',Arial,sans-serif;font-weight:800;letter-spacing:-0.01em;">BrainWise Enterprises</h1>
         </td></tr>
         <tr><td style="padding:32px;">
-          <h2 style="font-size:20px;color:#021F36;margin:0 0 16px;font-family:'Poppins','Helvetica Neue',Arial,sans-serif;font-weight:700;letter-spacing:-0.01em;">Hi ${firstName || "there"},</h2>
+          <h2 style="font-size:20px;color:#021F36;margin:0 0 16px;font-family:'Poppins','Helvetica Neue',Arial,sans-serif;font-weight:700;letter-spacing:-0.01em;">Hi ${escHtml(firstName) || "there"},</h2>
           <p style="font-size:15px;color:#4B4751;line-height:1.6;margin:0 0 16px;font-family:'Montserrat','Helvetica Neue',Arial,sans-serif;font-weight:400;">
             You've been invited to complete a BrainWise assessment.
           </p>
