@@ -11454,6 +11454,50 @@ export type Database = {
         Returns: Json
       }
       get_learning_import_reference: { Args: never; Returns: Json }
+      get_learning_report_detail: {
+        Args: {
+          p_limit?: number
+          p_offset?: number
+          p_status?: string
+          p_target_id?: string
+          p_target_name?: string
+          p_tier?: string
+          p_user_ids?: string[]
+        }
+        Returns: {
+          assigned_at: string
+          completed_at: string
+          parent_path: string
+          started_at: string
+          status: string
+          target_id: string
+          target_name: string
+          tier: string
+          user_email: string
+          user_full_name: string
+          user_id: string
+        }[]
+      }
+      get_learning_report_summary: {
+        Args: {
+          p_target_id?: string
+          p_target_name?: string
+          p_tier?: string
+          p_user_ids?: string[]
+        }
+        Returns: {
+          completion_rate: number
+          done: number
+          in_progress: number
+          not_started: number
+          parent_path: string
+          revoked: number
+          target_id: string
+          target_name: string
+          tier: string
+          total: number
+        }[]
+      }
       get_lesson_block_assets: {
         Args: { p_content_item_id: string; p_extra_asset_ids?: string[] }
         Returns: {
@@ -12756,6 +12800,24 @@ export type Database = {
           reminders_logged: number
           run_at: string
         }[]
+      }
+      set_certification_completion: {
+        Args: {
+          p_certification_type: string
+          p_complete: boolean
+          p_reason: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
+      set_certification_completion_bulk: {
+        Args: {
+          p_certification_type: string
+          p_complete: boolean
+          p_reason: string
+          p_user_ids: string[]
+        }
+        Returns: Json
       }
       set_content_item_completion: {
         Args: {
