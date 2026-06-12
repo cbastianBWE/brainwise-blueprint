@@ -8,8 +8,9 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Library, Search, Plus } from "lucide-react";
+import { Library, Search, Plus, FolderTree } from "lucide-react";
 import ResourceEditor from "./resource-editors/ResourceEditor";
+import ResourceFolderManager from "./resource-editors/ResourceFolderManager";
 
 export default function AdminResourceAuthoring() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -22,22 +23,25 @@ export default function AdminResourceAuthoring() {
   }, [search]);
 
   const [selectedKey, setSelectedKey] = useState<string | null>(searchParams.get("selected"));
+  const [folderManagerOpen, setFolderManagerOpen] = useState(false);
 
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["resource-authoring-data"],
     queryFn: async () => {
-      const [tabsRes, resourcesRes, orgsRes] = await Promise.all([
+      const [tabsRes, resourcesRes, orgsRes, foldersRes] = await Promise.all([
         supabase.from("resource_tabs").select("*").order("display_order"),
         supabase.from("resources").select("*").is("archived_at", null),
         supabase.from("organizations").select("id, name"),
+        supabase.from("resource_folders").select("*").is("archived_at", null).order("display_order"),
       ]);
-      for (const r of [tabsRes, resourcesRes, orgsRes]) {
+      for (const r of [tabsRes, resourcesRes, orgsRes, foldersRes]) {
         if (r.error) throw r.error;
       }
       return {
         tabs: (tabsRes.data ?? []) as any[],
         resources: (resourcesRes.data ?? []) as any[],
         organizations: (orgsRes.data ?? []) as any[],
+        folders: (foldersRes.data ?? []) as any[],
       };
     },
     staleTime: 30_000,
@@ -106,6 +110,9 @@ export default function AdminResourceAuthoring() {
             <div className="flex flex-wrap gap-2">
               <Button size="sm" variant="outline" onClick={() => setSelectedKey("resource:new")}>
                 <Plus className="h-3.5 w-3.5" /> Add Resource
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => setFolderManagerOpen(true)}>
+                <FolderTree className="h-3.5 w-3.5" /> Manage Folders
               </Button>
             </div>
           </CardHeader>
@@ -201,6 +208,7 @@ export default function AdminResourceAuthoring() {
                   initial={null}
                   resourceTabs={tabsForPicker}
                   organizations={data?.organizations ?? []}
+                  resourceFolders={data?.folders ?? []}
                   onSaved={async (newId) => {
                     await refetch();
                     if (newId) setSelectedKey(`resource:${newId}`);
@@ -215,6 +223,7 @@ export default function AdminResourceAuthoring() {
                   initial={selectedResource}
                   resourceTabs={tabsForPicker}
                   organizations={data?.organizations ?? []}
+                  resourceFolders={data?.folders ?? []}
                   onSaved={async () => { await refetch(); }}
                   onArchived={async () => {
                     await refetch();
@@ -226,6 +235,14 @@ export default function AdminResourceAuthoring() {
           )}
         </div>
       </div>
+
+      <ResourceFolderManager
+        open={folderManagerOpen}
+        onOpenChange={setFolderManagerOpen}
+        tabs={tabsForPicker}
+        organizations={data?.organizations ?? []}
+        onChanged={() => refetch()}
+      />
     </div>
   );
 }

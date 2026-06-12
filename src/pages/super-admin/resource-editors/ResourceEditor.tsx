@@ -30,6 +30,7 @@ interface ResourceEditorProps {
   initial: any | null;
   resourceTabs: any[];
   organizations: any[];
+  resourceFolders: any[];
   onSaved: (newId?: string) => void;
   onArchived?: () => void;
   onCancelCreate?: () => void;
@@ -65,7 +66,7 @@ function rowToPayload(r: GrantRow): any {
 }
 
 export default function ResourceEditor({
-  mode, initial, resourceTabs, organizations,
+  mode, initial, resourceTabs, organizations, resourceFolders,
   onSaved, onArchived, onCancelCreate,
 }: ResourceEditorProps) {
   const { toast } = useToast();
@@ -114,6 +115,12 @@ export default function ResourceEditor({
   const [grantRows, setGrantRows] = useState<GrantRow[]>([]);
   const [grantReason, setGrantReason] = useState<string>("");
   const [savingGrants, setSavingGrants] = useState(false);
+
+  // Folder state — driven by the resource's PERSISTED tab (initial.resource_tab_id),
+  // not the live editor tab state, since set_resource_folder validates against the stored tab.
+  const [folderId, setFolderId] = useState<string>(initial?.folder_id ?? "");
+  const [folderReason, setFolderReason] = useState<string>("");
+  const [savingFolder, setSavingFolder] = useState(false);
 
   useEffect(() => {
     if (grantsQuery.data) {
@@ -347,6 +354,29 @@ export default function ResourceEditor({
   };
   const addGrantRow = () => setGrantRows((rows) => [...rows, newGrantRow()]);
 
+  const handleSaveFolder = async () => {
+    if (!initial?.id) return;
+    if (folderReason.trim().length < 10) return;
+    setSavingFolder(true);
+    const { error } = await supabase.rpc("set_resource_folder" as any, {
+      p_resource_id: initial.id,
+      p_folder_id: folderId === "" ? null : folderId,
+      p_reason: folderReason.trim(),
+    });
+    setSavingFolder(false);
+    if (error) {
+      const msg: string = error?.message ?? "";
+      let friendly = msg || "Could not save folder.";
+      if (msg.includes("resource_folder_tab_mismatch")) friendly = "That folder belongs to a different tab.";
+      else if (msg.includes("reason_required_min_chars")) friendly = "Reason must be at least 10 characters.";
+      toast({ title: "Could not save folder", description: friendly, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Folder saved" });
+    setFolderReason("");
+    onSaved();
+  };
+
   const requestModeSwitch = (target: "url" | "file") => {
     if (target === contentMode) return;
     const currentHasContent =
@@ -374,6 +404,30 @@ export default function ResourceEditor({
   const reasonLen = reason.trim().length;
   const archiveReasonLen = archiveReason.trim().length;
   const grantReasonLen = grantReason.trim().length;
+  const folderReasonLen = folderReason.trim().length;
+
+  // Folders for this resource's PERSISTED tab (initial.resource_tab_id), not the live editor state.
+  const persistedTabId: string | null = initial?.resource_tab_id ?? null;
+  const folderOptions = useMemo(() => {
+    if (!persistedTabId) return [] as { id: string; label: string; display_order: number }[];
+    const inTab = (resourceFolders ?? []).filter(
+      (f: any) => f.tab_id === persistedTabId && !f.archived_at
+    );
+    const byId = new Map<string, any>(inTab.map((f: any) => [f.id, f]));
+    const opts = inTab.map((f: any) => {
+      const parent = f.parent_folder_id ? byId.get(f.parent_folder_id) : null;
+      const label = parent ? `${parent.name} / ${f.name}` : f.name;
+      const order = parent
+        ? (parent.display_order ?? 0) * 1000 + (f.display_order ?? 0) + 1
+        : (f.display_order ?? 0) * 1000;
+      return { id: f.id as string, label: label as string, display_order: order };
+    });
+    opts.sort((a, b) => a.display_order - b.display_order || a.label.localeCompare(b.label));
+    return opts;
+  }, [resourceFolders, persistedTabId]);
+
+  // If the currently-selected folder is no longer valid for the persisted tab, drop it.
+  const currentFolderValid = folderId === "" || folderOptions.some((o) => o.id === folderId);
 
   return (
     <Card>
@@ -611,6 +665,69 @@ export default function ResourceEditor({
               </SelectContent>
             </Select>
           </div>
+        </div>
+
+        {/* Folder */}
+        <div className="space-y-4">
+          <h3 className="text-sm font-semibold text-foreground">Folder</h3>
+          {mode === "create" ? (
+            <div className="rounded-md border border-dashed p-4 text-sm italic text-muted-foreground">
+              Save the resource first to file it in a folder.
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <p className="text-xs text-muted-foreground">
+                File this resource into a folder within its tab. Saved as a separate audited action.
+                Folder choices reflect the resource's saved tab — change the tab first and save to move
+                this resource between tabs.
+              </p>
+              <div className="space-y-2">
+                <Label htmlFor="r-folder">Folder</Label>
+                <Select
+                  value={currentFolderValid ? folderId : ""}
+                  onValueChange={(v) => setFolderId(v === "__none__" ? "" : v)}
+                  disabled={savingFolder}
+                >
+                  <SelectTrigger id="r-folder">
+                    <SelectValue placeholder="— None (tab root) —" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">— None (tab root) —</SelectItem>
+                    {folderOptions.map((o) => (
+                      <SelectItem key={o.id} value={o.id}>{o.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {folderOptions.length === 0 && (
+                  <p className="text-xs italic text-muted-foreground">
+                    No folders exist in this tab yet. Use "Manage Folders" to create one.
+                  </p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="r-folder-reason">Reason for folder change *</Label>
+                <Textarea
+                  id="r-folder-reason"
+                  value={folderReason}
+                  onChange={(e) => setFolderReason(e.target.value)}
+                  rows={2}
+                  placeholder="Explain why. Recorded in the audit log."
+                  disabled={savingFolder}
+                />
+                <p className={cn("text-xs", folderReasonLen >= 10 ? "text-muted-foreground" : "text-destructive")}>
+                  {folderReasonLen}/10 characters minimum.
+                </p>
+              </div>
+              <Button
+                type="button"
+                onClick={handleSaveFolder}
+                disabled={savingFolder || folderReasonLen < 10}
+              >
+                {savingFolder ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
+                Save folder
+              </Button>
+            </div>
+          )}
         </div>
 
         {/* Publishing */}
