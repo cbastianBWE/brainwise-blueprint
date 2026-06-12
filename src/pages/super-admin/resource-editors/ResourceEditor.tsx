@@ -354,6 +354,29 @@ export default function ResourceEditor({
   };
   const addGrantRow = () => setGrantRows((rows) => [...rows, newGrantRow()]);
 
+  const handleSaveFolder = async () => {
+    if (!initial?.id) return;
+    if (folderReason.trim().length < 10) return;
+    setSavingFolder(true);
+    const { error } = await supabase.rpc("set_resource_folder" as any, {
+      p_resource_id: initial.id,
+      p_folder_id: folderId === "" ? null : folderId,
+      p_reason: folderReason.trim(),
+    });
+    setSavingFolder(false);
+    if (error) {
+      const msg: string = error?.message ?? "";
+      let friendly = msg || "Could not save folder.";
+      if (msg.includes("resource_folder_tab_mismatch")) friendly = "That folder belongs to a different tab.";
+      else if (msg.includes("reason_required_min_chars")) friendly = "Reason must be at least 10 characters.";
+      toast({ title: "Could not save folder", description: friendly, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Folder saved" });
+    setFolderReason("");
+    onSaved();
+  };
+
   const requestModeSwitch = (target: "url" | "file") => {
     if (target === contentMode) return;
     const currentHasContent =
@@ -381,6 +404,30 @@ export default function ResourceEditor({
   const reasonLen = reason.trim().length;
   const archiveReasonLen = archiveReason.trim().length;
   const grantReasonLen = grantReason.trim().length;
+  const folderReasonLen = folderReason.trim().length;
+
+  // Folders for this resource's PERSISTED tab (initial.resource_tab_id), not the live editor state.
+  const persistedTabId: string | null = initial?.resource_tab_id ?? null;
+  const folderOptions = useMemo(() => {
+    if (!persistedTabId) return [] as { id: string; label: string; display_order: number }[];
+    const inTab = (resourceFolders ?? []).filter(
+      (f: any) => f.tab_id === persistedTabId && !f.archived_at
+    );
+    const byId = new Map<string, any>(inTab.map((f: any) => [f.id, f]));
+    const opts = inTab.map((f: any) => {
+      const parent = f.parent_folder_id ? byId.get(f.parent_folder_id) : null;
+      const label = parent ? `${parent.name} / ${f.name}` : f.name;
+      const order = parent
+        ? (parent.display_order ?? 0) * 1000 + (f.display_order ?? 0) + 1
+        : (f.display_order ?? 0) * 1000;
+      return { id: f.id as string, label: label as string, display_order: order };
+    });
+    opts.sort((a, b) => a.display_order - b.display_order || a.label.localeCompare(b.label));
+    return opts;
+  }, [resourceFolders, persistedTabId]);
+
+  // If the currently-selected folder is no longer valid for the persisted tab, drop it.
+  const currentFolderValid = folderId === "" || folderOptions.some((o) => o.id === folderId);
 
   return (
     <Card>
