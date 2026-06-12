@@ -8337,6 +8337,98 @@ export type Database = {
           },
         ]
       }
+      resource_folder_access_grants: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          folder_id: string
+          grant_org_id: string | null
+          grant_type: string
+          grant_value: string | null
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          folder_id: string
+          grant_org_id?: string | null
+          grant_type: string
+          grant_value?: string | null
+          id?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          folder_id?: string
+          grant_org_id?: string | null
+          grant_type?: string
+          grant_value?: string | null
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "resource_folder_access_grants_folder_id_fkey"
+            columns: ["folder_id"]
+            isOneToOne: false
+            referencedRelation: "resource_folders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      resource_folders: {
+        Row: {
+          archived_at: string | null
+          created_at: string
+          created_by: string | null
+          display_order: number
+          id: string
+          name: string
+          parent_folder_id: string | null
+          slug: string
+          tab_id: string
+          updated_at: string
+        }
+        Insert: {
+          archived_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          display_order?: number
+          id?: string
+          name: string
+          parent_folder_id?: string | null
+          slug: string
+          tab_id: string
+          updated_at?: string
+        }
+        Update: {
+          archived_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          display_order?: number
+          id?: string
+          name?: string
+          parent_folder_id?: string | null
+          slug?: string
+          tab_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "resource_folders_parent_folder_id_fkey"
+            columns: ["parent_folder_id"]
+            isOneToOne: false
+            referencedRelation: "resource_folders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "resource_folders_tab_id_fkey"
+            columns: ["tab_id"]
+            isOneToOne: false
+            referencedRelation: "resource_tabs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       resource_tabs: {
         Row: {
           created_at: string
@@ -8376,6 +8468,7 @@ export type Database = {
           content_type: string | null
           created_at: string
           created_by: string | null
+          folder_id: string | null
           id: string
           is_published: boolean
           published_at: string
@@ -8396,6 +8489,7 @@ export type Database = {
           content_type?: string | null
           created_at?: string
           created_by?: string | null
+          folder_id?: string | null
           id?: string
           is_published?: boolean
           published_at?: string
@@ -8416,6 +8510,7 @@ export type Database = {
           content_type?: string | null
           created_at?: string
           created_by?: string | null
+          folder_id?: string | null
           id?: string
           is_published?: boolean
           published_at?: string
@@ -8462,6 +8557,13 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "resources_folder_id_fkey"
+            columns: ["folder_id"]
+            isOneToOne: false
+            referencedRelation: "resource_folders"
             referencedColumns: ["id"]
           },
           {
@@ -10785,6 +10887,10 @@ export type Database = {
         Args: { p_id: string; p_reason: string }
         Returns: Json
       }
+      archive_resource_folder: {
+        Args: { p_folder_id: string; p_reason: string }
+        Returns: Json
+      }
       assert_impersonation_allows: {
         Args: { p_action_category: string }
         Returns: {
@@ -12890,6 +12996,14 @@ export type Database = {
         Args: { p_grants: Json; p_reason: string; p_resource_id: string }
         Returns: Json
       }
+      set_resource_folder: {
+        Args: { p_folder_id: string; p_reason: string; p_resource_id: string }
+        Returns: Json
+      }
+      set_resource_folder_access_grants: {
+        Args: { p_folder_id: string; p_grants: Json; p_reason: string }
+        Returns: Json
+      }
       set_skills_practice_attachment: {
         Args: {
           p_content_item_id: string
@@ -13269,6 +13383,18 @@ export type Database = {
           p_title: string
           p_url_kind?: string
           p_url_or_content: string
+        }
+        Returns: Json
+      }
+      upsert_resource_folder: {
+        Args: {
+          p_display_order: number
+          p_id: string
+          p_name: string
+          p_parent_folder_id: string
+          p_reason: string
+          p_slug: string
+          p_tab_id: string
         }
         Returns: Json
       }
