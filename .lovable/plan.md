@@ -1,80 +1,86 @@
-# Learning Report — Super Admin Dashboard
+## Plan: Learning Folder Manager (Content Authoring)
 
-Three files. All backend RPCs already exist; no DB changes.
+Add a super-admin dialog to create/organize learning folders and file cert paths, curricula, and modules into them. Mirrors `ResourceFolderManager.tsx` patterns; only two files change.
 
-## 1. New page — `src/pages/super-admin/LearningReport.tsx`
+### File 1 (NEW): `src/pages/super-admin/editors/LearningFolderManager.tsx`
 
-Match the layout/styling of other `src/pages/super-admin` and `src/pages/company` dashboards (shadcn Card/Button/Input/Select/Checkbox/Badge/Table, `sonner` toast, `@tanstack/react-query`, `recharts`, lucide icons). Brand colors: Navy `#021F36`, Teal `#006D77`, Green `#2D6A4F`, Gray `#6D6875`, Orange `#F5741A`, Red `#b91c1c`.
+Dialog component with this signature:
 
-### Filter state
-- `tier`: `'all' | 'cert_path' | 'curriculum' | 'module' | 'content_item'`
-- `targetId` (uuid|null) + `targetName` (string|null)
-- `userId` (uuid|null)
-- `status`: `'all' | 'completed' | 'in_progress' | 'not_started' | 'certified' | 'revoked'`
-- `page` (server pagination, 50/page)
+```ts
+interface LearningFolderManagerProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onChanged: () => void;
+}
+```
 
-RPC param translation: `'all' → null`. Cert-tier targets may have a null `target_id`, so pass `p_target_id` when uuid present, else `p_target_name`.
+Self-fetches everything via `useQuery`:
 
-### Data
-- `usersList`: `(supabase as any).from('users').select('id,email,full_name').is('deleted_at', null).order('full_name')`
-- `certTypeMap`: from `certification_paths(id, certification_type)` once → `path_id → certification_type`
-- `summaryQuery`: `rpc('get_learning_report_summary', { p_tier, p_target_id, p_target_name, p_user_ids })`
-- `detailQuery`: `rpc('get_learning_report_detail', { ...filters, p_status, p_limit: 50, p_offset: page*50 })`
-- `countQuery`: same as detail but `p_limit: null`, select only `user_id` length for pagination total
+- `learning_folders` (archived_at is null, ordered by display_order)
+- `learning_folder_items` (all rows, used for direct-filing counts and "currently in: X" lookups)
+- `organizations` (for the org grant select)
+- `certification_paths`, `curricula`, `modules` (for the Items add picker)
+- `learning_folder_access_grants` filtered by folder_id (inside `GrantsDialog`, just like the resource version)
 
-All queries use `react-query` keys including all relevant filters. Errors → `toast.error`.
+Shared helpers, copied/adapted from `ResourceFolderManager.tsx`:
 
-### Layout (top → bottom)
-1. **Header**: title "Learning Report", subtitle, `Refresh` (`RefreshCw`) refetches both queries, `Export CSV` (`Download`).
-2. **Filter bar**: responsive row of Selects — Tier, Target (options from `summaryQuery` rows of selected tier; value = `target_id ?? target_name`; disabled when tier='all'), User (searchable; "All users" + usersList), Status. Ghost "Clear filters".
-3. **KPI cards**: one Card per tier present in summary (aggregate sum of total/done/in_progress/not_started/revoked across that tier's rows). Big "done / total" + rounded completion rate %.
-4. **Breakdown chart**: horizontal stacked recharts `BarChart` (one bar per target, cap ~30 bars — if more, omit chart and keep table only). Segments: done (Green), in_progress (Orange), not_started (Gray), revoked (Red). `ResponsiveContainer`, `Tooltip`, `Legend`. Y=target_name, X=count.
-5. **Breakdown table**: Target / Parent / Total / Done / In progress / Not started / Revoked / Rate %. Row click → drill in (sets tier + target filters).
-6. **Detail table**: `[checkbox]`, User (full_name over muted email), Tier, Target, Parent, Status (colored Badge — done/certified green, in_progress orange, not_started gray, revoked red), Completed, Started. Prev/Next + "Page X" pagination. Header checkbox = select all on page.
+- `slugify`, `slugOk = slugify(name).length > 0`
+- `GrantRow`, `newGrantRow`, `rowComplete`, `rowToPayload`
+- `mapFolderError` adjusted: drop `resource_folder_tab_mismatch`; add `learning_entity_not_found → "That item no longer exists."`; keep duplicate (23505), reason_required_min_chars, folder_has_children, max_folder_depth, fallback.
+- Imports `GRANT_TYPE_OPTIONS, ACCOUNT_TYPE_OPTIONS, PLAN_TIER_OPTIONS, CORPORATE_LEVEL_OPTIONS, CERTIFICATION_TYPES` from `../resource-editors/_resourceShared`.
 
-### CSV export
-Call `get_learning_report_detail` with current filters and `p_limit: null`. Build CSV (header + rows: `user_email, user_full_name, tier, target_name, parent_path, status, started_at, completed_at, assigned_at`) and trigger Blob/anchor download as `learning-report.csv`. Toast while exporting (use existing `src/lib/csvUtils.ts` helpers `rowsToCsv` + `downloadCsv`).
+Main dialog structure (no tab selector; learning folders have no tab):
 
-### Bulk actions
-Enabled only when Tier and Target are both set to a single value (every visible row shares the target). Otherwise show hint: "Select rows within a single target to use bulk actions."
+- Header: "Manage Learning Folders" + "New folder" button (creates a top-level folder).
+- Tree: top-level folders sorted by `(display_order, name)`, each followed by its subfolders (same `FolderRow` two-level pattern). Each row shows a small count badge: number of `learning_folder_items` rows directly filed in that folder.
+- Top-level row actions: Add subfolder, Rename, Items, Grants, Archive.
+- Subfolder row actions: Rename, Move, Items, Grants, Archive.
 
-When selection non-empty → action bar with "Mark complete" / "Mark incomplete". Click opens Dialog with required reason `Textarea` (≥10 chars; confirm disabled until met). On confirm, dispatch by selected target's tier:
-- `content_item` → `set_content_item_completion_bulk(userIds, target_id, complete, reason)`
-- `module` → `set_module_completion_bulk(userIds, target_id, complete, reason)`
-- `curriculum` → `set_curriculum_completion_bulk(userIds, target_id, complete, reason)`
-- `cert_path` → `set_certification_completion_bulk(userIds, certTypeMap[target_id] ?? target_name, complete, reason)`
+Sub-dialogs (each has the standard reason `Textarea` with `{n}/10` helper; primary action disabled while saving or `reason < 10`):
 
-`userIds` = distinct `user_id` of selected rows. On success: toast `"{succeeded} updated, {failed} failed"`, clear selection, refetch both queries.
+- **Create / Rename** (`NameDialog`): name `Input` + reason. Calls `supabase.rpc("upsert_learning_folder", { p_id, p_parent_folder_id, p_name, p_slug, p_display_order, p_reason })`. Create → `p_id: null`, parent is null (top) or the parent id; `p_display_order = sibling count`. Rename → preserve `p_id`, `p_parent_folder_id`, `p_display_order`. Confirm disabled unless `slugOk`.
+- **Move** (subfolder only): parent `Select` with "(top level)" + every other top-level folder; reason. Calls `upsert_learning_folder` with the new `p_parent_folder_id` and existing name/slug/display_order. Guards a subfolder that has children (would never happen at two levels, but the same hasChildren check is preserved for safety).
+- **Archive**: `AlertDialog` warning: "Subfolders will also be archived; any cert paths, curricula, or modules filed inside will fall back to unfiled. Recorded in the audit log." Calls `archive_learning_folder({ p_folder_id, p_reason })`.
+- **Grants**: identical to the resource version, importing the option lists from `_resourceShared`. Preloads from `learning_folder_access_grants` for the folder, saves with `set_learning_folder_access_grants({ p_folder_id, p_grants, p_reason })`. Includes the note: "Learning folder grants scope this folder's contents to matching users. Anything assigned to a user stays visible regardless."
+- **Items** (the new part): a dialog for one folder.
+  - Top section: list of entities currently filed in this folder, built by joining `learning_folder_items` rows where `folder_id === folder.id` against the three entity catalogs to resolve names. Each item shows entity name + a small badge ("Cert Path" / "Curriculum" / "Module") + a Remove button. Remove uses a small inline reason field (or a shared reason at the top of the dialog — see below) and calls `set_learning_folder_item({ p_entity_type, p_entity_id, p_folder_id: null, p_reason })`.
+  - Add section: entity-type `Select` (Cert Path / Curriculum / Module). Once chosen, a searchable entity `Select` of that type from the catalog (using shadcn `Command` inside a `Popover` for search; falls back to native Select if simpler). For the chosen entity, look up its current `learning_folder_items` row: if present and not equal to this folder, render "Currently in: <folder name> — filing here will move it." On confirm → `set_learning_folder_item({ p_entity_type, p_entity_id, p_folder_id: folder.id, p_reason })`.
+  - Single shared `reason` `Textarea` at the bottom of the dialog used by both Remove and Add actions, with the standard `{n}/10` helper; each action button disabled while saving or `reason < 10`.
 
-### Other
-Loading skeletons/spinner, empty state "No records match these filters.", no `localStorage`/`sessionStorage`.
+After every successful mutation: `toast`, refetch the relevant queries (folders, items, grants), and call `onChanged()`. Explicit buttons only — no drag-and-drop.
 
-## 2. Route — `src/App.tsx`
+### File 2 (EDIT): `src/pages/super-admin/ContentAuthoring.tsx`
 
-Import `LearningReport` like sibling super-admin pages. Add near the other `/super-admin` routes:
+- Add imports: `LearningFolderManager` from `./editors/LearningFolderManager` and `FolderTree` from `lucide-react`.
+- Add state: `const [folderManagerOpen, setFolderManagerOpen] = useState(false);`
+- In the navigator `CardHeader` button row (lines 423-433, next to the Cert Path / Curriculum / Module add buttons), add a "Manage Folders" button:
 
 ```tsx
-<Route
-  path="/super-admin/learning-report"
-  element={
-    <RoleGuard allowedRoles={["brainwise_super_admin"]}>
-      <SuperAdminSessionProvider>
-        <LearningReport />
-      </SuperAdminSessionProvider>
-    </RoleGuard>
-  }
+<Button size="sm" variant="outline" onClick={() => setFolderManagerOpen(true)}>
+  <FolderTree className="h-3.5 w-3.5" /> Manage Folders
+</Button>
+```
+
+- At the bottom of the page (just before the outer closing element), render:
+
+```tsx
+<LearningFolderManager
+  open={folderManagerOpen}
+  onOpenChange={setFolderManagerOpen}
+  onChanged={() => refetch()}
 />
 ```
 
-## 3. Sidebar — `src/components/AppSidebar.tsx`
+- Do not touch the tree navigator, the editors, or the existing data `useQuery`.
 
-Add `ClipboardList` to the `lucide-react` import. In `superAdminNav`, insert directly after the "Content Authoring" entry:
+### Out of scope
 
-```ts
-{ title: "Learning Report", url: "/super-admin/learning-report", icon: ClipboardList },
-```
+No SQL, no edits to `src/integrations/supabase/types.ts`, no changes to `CertPathEditor` / `CurriculumEditor` / `ModuleEditor` or their `handleSave` paths, no other files.
 
-Renders as a normal top-level item — no special-casing.
+### Acceptance
 
-## Out of scope
-No DB migrations, no RPC changes, no edits to other pages or sidebar entries.
+- Two-level folder hierarchy enforced (no "Add subfolder" on a subfolder; subfolder Move only lists top-level parents).
+- Every mutation requires ≥10-char reason; duplicate-name → friendly message; missing entity → "That item no longer exists."
+- Filing an already-filed entity moves it and surfaces the "Currently in: …" note before confirmation.
+- Folder grants use the same grant types and UI as resource folders.
+- Manage Folders button visible in Content Authoring header; closing the dialog refetches the existing data query.

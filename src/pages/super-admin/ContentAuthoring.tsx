@@ -10,12 +10,13 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  Library, ChevronRight, ChevronDown, Search, Plus,
+  Library, ChevronRight, ChevronDown, Search, Plus, FolderTree,
 } from "lucide-react";
 import CertPathEditor from "./editors/CertPathEditor";
 import CurriculumEditor from "./editors/CurriculumEditor";
 import ModuleEditor from "./editors/ModuleEditor";
 import ContentItemEditor from "./editors/ContentItemEditor";
+import LearningFolderManager from "./editors/LearningFolderManager";
 import { NodeTypeIcon, TYPE_LABELS } from "./editors/_shared";
 import type { TreeNode } from "./editors/_shared";
 
@@ -134,6 +135,7 @@ export default function ContentAuthoring() {
 
   const [expanded, setExpanded] = useState<Set<string>>(initialExpanded);
   const [selectedKey, setSelectedKey] = useState<string | null>(searchParams.get("selected"));
+  const [folderManagerOpen, setFolderManagerOpen] = useState(false);
 
   const queryClient = useQueryClient();
 
@@ -429,6 +431,9 @@ export default function ContentAuthoring() {
               </Button>
               <Button size="sm" variant="outline" onClick={() => setSelectedKey("mo:new")}>
                 <Plus className="h-3.5 w-3.5" /> Module
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => setFolderManagerOpen(true)}>
+                <FolderTree className="h-3.5 w-3.5" /> Manage Folders
               </Button>
             </div>
           </CardHeader>
@@ -797,6 +802,11 @@ export default function ContentAuthoring() {
           )}
         </div>
       </div>
+      <LearningFolderManager
+        open={folderManagerOpen}
+        onOpenChange={setFolderManagerOpen}
+        onChanged={() => refetch()}
+      />
     </div>
   );
 }
