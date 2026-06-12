@@ -93,6 +93,7 @@ import ContentAuthoring from "./pages/super-admin/ContentAuthoring";
 
 import AssetLibrary from "./pages/super-admin/AssetLibrary";
 import LessonBlocksEditor from "./pages/super-admin/LessonBlocksEditor";
+import LessonBuilderList from "./pages/super-admin/LessonBuilderList";
 import QuizQuestionsEditor from "./pages/super-admin/QuizQuestionsEditor";
 import AdminResourceAuthoring from "./pages/super-admin/AdminResourceAuthoring";
 import AdminNewsletter from "./pages/super-admin/AdminNewsletter";
@@ -278,6 +279,7 @@ const App = () => (
               <Route path="/super-admin/newsletter/:articleId" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><AdminNewsletterArticle /></SuperAdminSessionProvider></RoleGuard>} />
               <Route path="/super-admin/coupons" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><CompCouponsManagement /></SuperAdminSessionProvider></RoleGuard>} />
               <Route path="/super-admin/asset-library" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><AssetLibrary /></SuperAdminSessionProvider></RoleGuard>} />
+              <Route path="/super-admin/content-authoring/lessons" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><LessonBuilderList /></SuperAdminSessionProvider></RoleGuard>} />
               <Route path="/super-admin/content-authoring/lessons/:contentItemId" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><LessonBlocksEditor /></SuperAdminSessionProvider></RoleGuard>} />
               <Route path="/super-admin/content-authoring/quizzes/:contentItemId" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><QuizQuestionsEditor /></SuperAdminSessionProvider></RoleGuard>} />
 
