@@ -30,6 +30,7 @@ interface ResourceEditorProps {
   initial: any | null;
   resourceTabs: any[];
   organizations: any[];
+  resourceFolders: any[];
   onSaved: (newId?: string) => void;
   onArchived?: () => void;
   onCancelCreate?: () => void;
@@ -65,7 +66,7 @@ function rowToPayload(r: GrantRow): any {
 }
 
 export default function ResourceEditor({
-  mode, initial, resourceTabs, organizations,
+  mode, initial, resourceTabs, organizations, resourceFolders,
   onSaved, onArchived, onCancelCreate,
 }: ResourceEditorProps) {
   const { toast } = useToast();
@@ -114,6 +115,12 @@ export default function ResourceEditor({
   const [grantRows, setGrantRows] = useState<GrantRow[]>([]);
   const [grantReason, setGrantReason] = useState<string>("");
   const [savingGrants, setSavingGrants] = useState(false);
+
+  // Folder state — driven by the resource's PERSISTED tab (initial.resource_tab_id),
+  // not the live editor tab state, since set_resource_folder validates against the stored tab.
+  const [folderId, setFolderId] = useState<string>(initial?.folder_id ?? "");
+  const [folderReason, setFolderReason] = useState<string>("");
+  const [savingFolder, setSavingFolder] = useState(false);
 
   useEffect(() => {
     if (grantsQuery.data) {
