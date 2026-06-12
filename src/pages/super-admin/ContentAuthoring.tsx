@@ -437,8 +437,6 @@ export default function ContentAuthoring() {
               </Button>
             </div>
           </CardHeader>
-            </div>
-          </CardHeader>
           <CardContent className="flex-1 overflow-y-auto pt-0">
             {isLoading ? (
               <div className="space-y-2">
