@@ -121,7 +121,7 @@ export default function CompanyDetail() {
   return (
     <div className="py-8 px-4 max-w-6xl mx-auto space-y-6">
       <Button variant="ghost" className="gap-2" onClick={() => navigate("/super-admin/companies")}>
-        <ArrowLeft className="h-4 w-4" /> Back to Company Accounts
+        <ArrowLeft className="h-4 w-4" /> Back to Organizations
       </Button>
 
       <Tabs defaultValue="overview" className="w-full">

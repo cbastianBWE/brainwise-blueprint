@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Building2, Eye } from "lucide-react";
+import { Building2, Eye, Plus } from "lucide-react";
 
 interface OrgRow {
   id: string;
@@ -37,9 +37,14 @@ export default function CompanyAccounts() {
 
   return (
     <div className="py-8 px-4 max-w-6xl mx-auto space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Company Accounts</h1>
-        <p className="text-sm text-muted-foreground mt-1">Manage all organization accounts</p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Organizations</h1>
+          <p className="text-sm text-muted-foreground mt-1">Manage all organization accounts</p>
+        </div>
+        <Button className="gap-1" onClick={() => navigate("/super-admin/create-organization")}>
+          <Plus className="h-4 w-4" /> Create Organization
+        </Button>
       </div>
 
       {orgs.length === 0 ? (

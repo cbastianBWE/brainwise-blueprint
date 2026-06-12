@@ -104,8 +104,7 @@ const superAdminNav: NavItem[] = [
   
   { title: "Platform Health", url: "/super-admin/health", icon: Heart },
   { title: "Coach Invitations", url: "/super-admin/coaches", icon: Users },
-  { title: "Company Accounts", url: "/super-admin/companies", icon: Briefcase },
-  { title: "Create Organization", url: "/super-admin/create-organization", icon: Plus },
+  { title: "Organizations", url: "/super-admin/companies", icon: Briefcase },
   { title: "Version Management", url: "/super-admin/versions", icon: GitBranch },
   { title: "Content Authoring", url: "/super-admin/content-authoring", icon: Library },
   { title: "Newsletter", url: "/super-admin/newsletter", icon: Newspaper },
