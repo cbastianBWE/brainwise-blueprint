@@ -1655,6 +1655,7 @@ export type Database = {
       }
       coach_certifications: {
         Row: {
+          certification_path_id: string | null
           certification_type: string
           certified_at: string | null
           certified_by: string | null
@@ -1669,6 +1670,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          certification_path_id?: string | null
           certification_type: string
           certified_at?: string | null
           certified_by?: string | null
@@ -1683,6 +1685,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          certification_path_id?: string | null
           certification_type?: string
           certified_at?: string | null
           certified_by?: string | null
@@ -1697,6 +1700,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "coach_certifications_certification_path_id_fkey"
+            columns: ["certification_path_id"]
+            isOneToOne: false
+            referencedRelation: "certification_paths"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "coach_certifications_certified_by_fkey"
             columns: ["certified_by"]
