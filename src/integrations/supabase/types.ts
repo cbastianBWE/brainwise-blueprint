@@ -5044,6 +5044,217 @@ export type Database = {
           },
         ]
       }
+      learning_folder_access_grants: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          folder_id: string
+          grant_org_id: string | null
+          grant_type: string
+          grant_value: string | null
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          folder_id: string
+          grant_org_id?: string | null
+          grant_type: string
+          grant_value?: string | null
+          id?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          folder_id?: string
+          grant_org_id?: string | null
+          grant_type?: string
+          grant_value?: string | null
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "learning_folder_access_grants_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "learning_folder_access_grants_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "learning_folder_access_grants_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "learning_folder_access_grants_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "learning_folder_access_grants_folder_id_fkey"
+            columns: ["folder_id"]
+            isOneToOne: false
+            referencedRelation: "learning_folders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "learning_folder_access_grants_grant_org_id_fkey"
+            columns: ["grant_org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      learning_folder_items: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          display_order: number
+          entity_id: string
+          entity_type: string
+          folder_id: string
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          display_order?: number
+          entity_id: string
+          entity_type: string
+          folder_id: string
+          id?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          display_order?: number
+          entity_id?: string
+          entity_type?: string
+          folder_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "learning_folder_items_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "learning_folder_items_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "learning_folder_items_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "learning_folder_items_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "learning_folder_items_folder_id_fkey"
+            columns: ["folder_id"]
+            isOneToOne: false
+            referencedRelation: "learning_folders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      learning_folders: {
+        Row: {
+          archived_at: string | null
+          created_at: string
+          created_by: string | null
+          display_order: number
+          id: string
+          name: string
+          parent_folder_id: string | null
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          archived_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          display_order?: number
+          id?: string
+          name: string
+          parent_folder_id?: string | null
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          archived_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          display_order?: number
+          id?: string
+          name?: string
+          parent_folder_id?: string | null
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "learning_folders_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "learning_folders_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "learning_folders_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "learning_folders_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "learning_folders_parent_folder_id_fkey"
+            columns: ["parent_folder_id"]
+            isOneToOne: false
+            referencedRelation: "learning_folders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lesson_block_drafts: {
         Row: {
           author_id: string
@@ -10862,6 +11073,10 @@ export type Database = {
         Args: { p_id: string; p_reason: string }
         Returns: Json
       }
+      archive_learning_folder: {
+        Args: { p_folder_id: string; p_reason: string }
+        Returns: Json
+      }
       archive_module: {
         Args: { p_id: string; p_reason: string }
         Returns: Json
@@ -12966,6 +13181,19 @@ export type Database = {
         }
         Returns: Json
       }
+      set_learning_folder_access_grants: {
+        Args: { p_folder_id: string; p_grants: Json; p_reason: string }
+        Returns: Json
+      }
+      set_learning_folder_item: {
+        Args: {
+          p_entity_id: string
+          p_entity_type: string
+          p_folder_id: string
+          p_reason: string
+        }
+        Returns: Json
+      }
       set_mentor_role: {
         Args: { p_is_mentor: boolean; p_reason: string; p_user_id: string }
         Returns: Json
@@ -13303,6 +13531,17 @@ export type Database = {
           p_name: string
           p_panel_type: string
           p_text: string
+        }
+        Returns: Json
+      }
+      upsert_learning_folder: {
+        Args: {
+          p_display_order: number
+          p_id: string
+          p_name: string
+          p_parent_folder_id: string
+          p_reason: string
+          p_slug: string
         }
         Returns: Json
       }
