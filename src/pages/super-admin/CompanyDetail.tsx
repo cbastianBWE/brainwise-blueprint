@@ -13,13 +13,14 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
-import { ArrowLeft, Building2, UserCog, UserPlus, Loader2 } from "lucide-react";
+import { ArrowLeft, Building2, Loader2 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { FileText, Save, RotateCcw } from "lucide-react";
+import CompanyMembersSection from "@/components/super-admin/CompanyMembersSection";
 
 interface OrgUser {
   id: string;
@@ -40,9 +41,6 @@ export default function CompanyDetail() {
   const [loading, setLoading] = useState(true);
   const auditLoggedRef = useRef(false);
 
-  const [assignDialogOpen, setAssignDialogOpen] = useState(false);
-  const [assignEmail, setAssignEmail] = useState("");
-  const [assigning, setAssigning] = useState(false);
 
   const load = useCallback(async () => {
     if (!orgId || !user) return;
@@ -109,41 +107,6 @@ export default function CompanyDetail() {
     load();
   }, [load]);
 
-  const currentOrgAdmin = useMemo(
-    () => users.find((u) => u.account_type === "org_admin") || null,
-    [users]
-  );
-
-  const handleAssignOrgAdmin = async () => {
-    if (!assignEmail.trim() || !orgId) return;
-    setAssigning(true);
-
-    const { error } = await supabase.rpc("admin_assign_org_admin", {
-      p_target_email: assignEmail.trim(),
-      p_organization_id: orgId,
-      p_is_transfer: !!currentOrgAdmin,
-    });
-
-    setAssigning(false);
-
-    if (error) {
-      toast({
-        title: currentOrgAdmin ? "Transfer failed" : "Assignment failed",
-        description: error.message,
-        variant: "destructive",
-      });
-      return;
-    }
-
-    toast({
-      title: currentOrgAdmin ? "Org admin transferred" : "Org admin assigned",
-      description: `${assignEmail.trim()} is now the org admin.`,
-    });
-
-    setAssignDialogOpen(false);
-    setAssignEmail("");
-    await load();
-  };
 
   if (loading) {
     return (
@@ -162,6 +125,7 @@ export default function CompanyDetail() {
       <Tabs defaultValue="overview" className="w-full">
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="members">Members</TabsTrigger>
           <TabsTrigger value="contract">Contract & Features</TabsTrigger>
         </TabsList>
 
@@ -175,91 +139,10 @@ export default function CompanyDetail() {
               </p>
             </CardContent>
           </Card>
+        </TabsContent>
 
-          {/* Org Admin */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <UserCog className="h-5 w-5 text-primary" />
-                Org Admin
-              </CardTitle>
-              <CardDescription>
-                The contract-owning administrator for this organization. Exactly one per org.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {currentOrgAdmin ? (
-                <div className="flex items-center justify-between gap-4 flex-wrap">
-                  <div className="space-y-0.5">
-                    <p className="font-medium text-foreground">
-                      {currentOrgAdmin.full_name || currentOrgAdmin.email}
-                    </p>
-                    <p className="text-sm text-muted-foreground">{currentOrgAdmin.email}</p>
-                  </div>
-                  <Button
-                    variant="outline"
-                    className="gap-2"
-                    onClick={() => { setAssignEmail(""); setAssignDialogOpen(true); }}
-                  >
-                    <UserCog className="h-4 w-4" />
-                    Transfer to Another User
-                  </Button>
-                </div>
-              ) : (
-                <div className="flex items-center justify-between gap-4 flex-wrap">
-                  <p className="text-sm text-muted-foreground">No org admin assigned.</p>
-                  <Button
-                    className="gap-2"
-                    onClick={() => { setAssignEmail(""); setAssignDialogOpen(true); }}
-                  >
-                    <UserPlus className="h-4 w-4" />
-                    Assign Org Admin
-                  </Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">{orgName} — Users</CardTitle>
-              <CardDescription>{users.length} member{users.length !== 1 ? "s" : ""}</CardDescription>
-            </CardHeader>
-            <CardContent className="p-0">
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Account Type</TableHead>
-                      <TableHead>Assessment</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {users.map(u => (
-                      <TableRow key={u.id}>
-                        <TableCell className="font-medium">
-                          {u.full_name || <span className="text-muted-foreground italic">No name</span>}
-                        </TableCell>
-                        <TableCell className="text-sm">{u.email}</TableCell>
-                        <TableCell>
-                          <Badge variant="secondary" className="capitalize">{u.account_type || "—"}</Badge>
-                        </TableCell>
-                        <TableCell>
-                          {u.has_completed ? (
-                            <Badge className="bg-accent text-accent-foreground">Completed</Badge>
-                          ) : (
-                            <Badge variant="outline">Pending</Badge>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            </CardContent>
-          </Card>
+        <TabsContent value="members" className="mt-6">
+          <CompanyMembersSection orgId={orgId!} />
         </TabsContent>
 
         <TabsContent value="contract" className="mt-6">
@@ -270,44 +153,6 @@ export default function CompanyDetail() {
           />
         </TabsContent>
       </Tabs>
-
-      <Dialog
-        open={assignDialogOpen}
-        onOpenChange={(open) => !assigning && setAssignDialogOpen(open)}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              {currentOrgAdmin ? "Transfer Org Admin" : "Assign Org Admin"}
-            </DialogTitle>
-            <DialogDescription>
-              {currentOrgAdmin
-                ? `${currentOrgAdmin.full_name || currentOrgAdmin.email} will be demoted to Company Admin. The new Org Admin must already be a member of this organization.`
-                : "The user must already be a member of this organization (account type corporate_employee or company_admin)."}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-2">
-            <Label htmlFor="assign-email">User Email</Label>
-            <Input
-              id="assign-email"
-              type="email"
-              placeholder="user@company.com"
-              value={assignEmail}
-              onChange={(e) => setAssignEmail(e.target.value)}
-              disabled={assigning}
-            />
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setAssignDialogOpen(false)} disabled={assigning}>
-              Cancel
-            </Button>
-            <Button onClick={handleAssignOrgAdmin} disabled={assigning || !assignEmail.trim()}>
-              {assigning && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              {currentOrgAdmin ? "Transfer" : "Assign"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
