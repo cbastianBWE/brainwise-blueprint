@@ -135,6 +135,7 @@ export default function ContentAuthoring() {
 
   const [expanded, setExpanded] = useState<Set<string>>(initialExpanded);
   const [selectedKey, setSelectedKey] = useState<string | null>(searchParams.get("selected"));
+  const [folderManagerOpen, setFolderManagerOpen] = useState(false);
 
   const queryClient = useQueryClient();
 
@@ -431,6 +432,11 @@ export default function ContentAuthoring() {
               <Button size="sm" variant="outline" onClick={() => setSelectedKey("mo:new")}>
                 <Plus className="h-3.5 w-3.5" /> Module
               </Button>
+              <Button size="sm" variant="outline" onClick={() => setFolderManagerOpen(true)}>
+                <FolderTree className="h-3.5 w-3.5" /> Manage Folders
+              </Button>
+            </div>
+          </CardHeader>
             </div>
           </CardHeader>
           <CardContent className="flex-1 overflow-y-auto pt-0">
