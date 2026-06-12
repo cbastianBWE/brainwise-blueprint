@@ -10,12 +10,13 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  Library, ChevronRight, ChevronDown, Search, Plus,
+  Library, ChevronRight, ChevronDown, Search, Plus, FolderTree,
 } from "lucide-react";
 import CertPathEditor from "./editors/CertPathEditor";
 import CurriculumEditor from "./editors/CurriculumEditor";
 import ModuleEditor from "./editors/ModuleEditor";
 import ContentItemEditor from "./editors/ContentItemEditor";
+import LearningFolderManager from "./editors/LearningFolderManager";
 import { NodeTypeIcon, TYPE_LABELS } from "./editors/_shared";
 import type { TreeNode } from "./editors/_shared";
 
