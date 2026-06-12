@@ -18,6 +18,15 @@ export interface Resource {
   content_asset_id: string | null;
   published_at: string;
   is_accessible: boolean;
+  folder_id: string | null;
+}
+
+export interface ResourceFolder {
+  folder_id: string;
+  parent_folder_id: string | null;
+  name: string;
+  slug: string;
+  display_order: number;
 }
 
 export interface ResourceTab {
@@ -28,6 +37,7 @@ export interface ResourceTab {
   is_coach_only: boolean;
   is_learning_tree: boolean;
   resources: Resource[] | null;
+  folders: ResourceFolder[] | null;
 }
 
 export interface GetUserResourcesResult {

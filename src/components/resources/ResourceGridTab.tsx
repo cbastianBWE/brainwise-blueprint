@@ -1,7 +1,7 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Search } from "lucide-react";
+import { Search, Folder, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
@@ -9,7 +9,7 @@ import { Tile } from "@/components/tile/Tile";
 import { useResourceAccessLog } from "@/hooks/useResourceAccessLog";
 import { resolveTierThumbnailUrls } from "@/lib/assetUrls";
 import UpgradeNudgeModal from "./UpgradeNudgeModal";
-import type { Resource, ResourceTab, UpgradeEntityType } from "./types";
+import type { Resource, ResourceFolder, ResourceTab, UpgradeEntityType } from "./types";
 
 interface ResourceGridTabProps {
   tab: ResourceTab;
@@ -32,11 +32,22 @@ const CONTENT_TYPE_GROUP_LABELS: Record<Resource["content_type"], string> = {
   template: "Templates",
 };
 
+function groupByContentType(items: Resource[]): Map<Resource["content_type"], Resource[]> {
+  const map = new Map<Resource["content_type"], Resource[]>();
+  for (const r of items) {
+    const arr = map.get(r.content_type) ?? [];
+    arr.push(r);
+    map.set(r.content_type, arr);
+  }
+  return map;
+}
+
 export default function ResourceGridTab({ tab, emptyStateText }: ResourceGridTabProps) {
   const navigate = useNavigate();
   const { toast } = useToast();
   const logAccess = useResourceAccessLog();
   const [search, setSearch] = useState("");
+  const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
   const [upgradeState, setUpgradeState] = useState<{
     open: boolean;
     entityType: UpgradeEntityType | null;
@@ -44,6 +55,11 @@ export default function ResourceGridTab({ tab, emptyStateText }: ResourceGridTab
   }>({ open: false, entityType: null, entityName: null });
 
   const resources = tab.resources ?? [];
+  const folders = tab.folders ?? [];
+
+  useEffect(() => {
+    setCurrentFolderId(null);
+  }, [tab.tab_id]);
 
   // Resource thumbnails route through the SECURITY DEFINER tier RPC keyed
   // by resource_id, not asset_id, so trainees can read thumbnails on
@@ -66,6 +82,7 @@ export default function ResourceGridTab({ tab, emptyStateText }: ResourceGridTab
     enabled: resourceIds.length > 0,
   });
 
+  // -------- Search path (flattened across the whole tab) --------
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return resources;
@@ -75,15 +92,59 @@ export default function ResourceGridTab({ tab, emptyStateText }: ResourceGridTab
     });
   }, [resources, search]);
 
-  const grouped = useMemo(() => {
-    const map = new Map<Resource["content_type"], Resource[]>();
-    for (const r of filtered) {
-      const arr = map.get(r.content_type) ?? [];
-      arr.push(r);
-      map.set(r.content_type, arr);
+  const grouped = useMemo(() => groupByContentType(filtered), [filtered]);
+
+  // -------- Folder path (only used when search is empty) --------
+  const folderById = useMemo(
+    () => new Map<string, ResourceFolder>(folders.map((f) => [f.folder_id, f])),
+    [folders],
+  );
+
+  const effectiveFolderId = (r: Resource): string | null =>
+    r.folder_id != null && folderById.has(r.folder_id) ? r.folder_id : null;
+
+  const childrenOf = (parentId: string | null): ResourceFolder[] =>
+    folders
+      .filter((f) => f.parent_folder_id === parentId)
+      .sort(
+        (a, b) =>
+          a.display_order - b.display_order || a.name.localeCompare(b.name),
+      );
+
+  const subtreeResourceCount = (folderId: string): number => {
+    let count = 0;
+    for (const r of resources) {
+      if (effectiveFolderId(r) === folderId) count += 1;
     }
-    return map;
-  }, [filtered]);
+    for (const child of folders.filter((f) => f.parent_folder_id === folderId)) {
+      count += subtreeResourceCount(child.folder_id);
+    }
+    return count;
+  };
+
+  const breadcrumbs = useMemo<ResourceFolder[]>(() => {
+    if (!currentFolderId) return [];
+    const chain: ResourceFolder[] = [];
+    let cursor: string | null = currentFolderId;
+    const guard = new Set<string>();
+    while (cursor) {
+      if (guard.has(cursor)) break;
+      guard.add(cursor);
+      const node = folderById.get(cursor);
+      if (!node) break;
+      chain.push(node);
+      cursor = node.parent_folder_id;
+    }
+    return chain.reverse();
+  }, [currentFolderId, folderById]);
+
+  const levelResources = useMemo(
+    () => resources.filter((r) => effectiveFolderId(r) === currentFolderId),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [resources, currentFolderId, folderById],
+  );
+  const levelGrouped = useMemo(() => groupByContentType(levelResources), [levelResources]);
+  const levelSubfolders = childrenOf(currentFolderId);
 
   const handleFileDownload = async (resource: Resource) => {
     try {
@@ -145,7 +206,44 @@ export default function ResourceGridTab({ tab, emptyStateText }: ResourceGridTab
     );
   }
 
+  const isSearching = search.trim().length > 0;
   const anyMatches = filtered.length > 0;
+
+  const renderResourceGrid = (items: Resource[]) => (
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      {items.map((r) => (
+        <Tile
+          key={r.resource_id}
+          variant="resource"
+          name={r.title}
+          summary={r.summary}
+          thumbnailUrl={thumbnailMap?.get(r.resource_id) ?? null}
+          contentType={r.content_type}
+          locked={!r.is_accessible}
+          externalLink={
+            r.url_kind === "external_link" &&
+            r.content_asset_id == null &&
+            !!r.url_or_content
+          }
+          onClick={() => handleResourceClick(r)}
+        />
+      ))}
+    </div>
+  );
+
+  const renderGroupedSections = (map: Map<Resource["content_type"], Resource[]>) =>
+    GROUP_ORDER.map((ct) => {
+      const items = map.get(ct);
+      if (!items || items.length === 0) return null;
+      return (
+        <section key={ct} className="space-y-3">
+          <h2 className="text-sm font-semibold text-foreground">
+            {CONTENT_TYPE_GROUP_LABELS[ct]}
+          </h2>
+          {renderResourceGrid(items)}
+        </section>
+      );
+    });
 
   return (
     <div className="space-y-6">
@@ -160,41 +258,89 @@ export default function ResourceGridTab({ tab, emptyStateText }: ResourceGridTab
         />
       </div>
 
-      {!anyMatches ? (
-        <div className="rounded-md border border-dashed p-8 text-center text-sm text-muted-foreground">
-          No resources match your search.
-        </div>
+      {isSearching ? (
+        <>
+          <p className="text-xs text-muted-foreground">
+            Showing all matches in {tab.name}.
+          </p>
+          {!anyMatches ? (
+            <div className="rounded-md border border-dashed p-8 text-center text-sm text-muted-foreground">
+              No resources match your search.
+            </div>
+          ) : (
+            renderGroupedSections(grouped)
+          )}
+        </>
       ) : (
-        GROUP_ORDER.map((ct) => {
-          const items = grouped.get(ct);
-          if (!items || items.length === 0) return null;
-          return (
-            <section key={ct} className="space-y-3">
-              <h2 className="text-sm font-semibold text-foreground">
-                {CONTENT_TYPE_GROUP_LABELS[ct]}
-              </h2>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {items.map((r) => (
-                  <Tile
-                    key={r.resource_id}
-                    variant="resource"
-                    name={r.title}
-                    summary={r.summary}
-                    thumbnailUrl={thumbnailMap?.get(r.resource_id) ?? null}
-                    contentType={r.content_type}
-                    locked={!r.is_accessible}
-                    externalLink={
-                      r.url_kind === "external_link" &&
-                      r.content_asset_id == null &&
-                      !!r.url_or_content
-                    }
-                    onClick={() => handleResourceClick(r)}
-                  />
-                ))}
-              </div>
-            </section>
-          );
-        })
+        <>
+          {breadcrumbs.length > 0 && (
+            <nav
+              aria-label="Folder breadcrumb"
+              className="flex flex-wrap items-center gap-1 text-sm text-muted-foreground"
+            >
+              <button
+                type="button"
+                onClick={() => setCurrentFolderId(null)}
+                className="hover:text-foreground hover:underline"
+              >
+                All
+              </button>
+              {breadcrumbs.map((f, idx) => {
+                const isLast = idx === breadcrumbs.length - 1;
+                return (
+                  <span key={f.folder_id} className="flex items-center gap-1">
+                    <ChevronRight className="h-3.5 w-3.5" />
+                    {isLast ? (
+                      <span className="text-foreground font-medium">{f.name}</span>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setCurrentFolderId(f.folder_id)}
+                        className="hover:text-foreground hover:underline"
+                      >
+                        {f.name}
+                      </button>
+                    )}
+                  </span>
+                );
+              })}
+            </nav>
+          )}
+
+          {levelSubfolders.length > 0 && (
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {levelSubfolders.map((f) => {
+                const count = subtreeResourceCount(f.folder_id);
+                return (
+                  <button
+                    key={f.folder_id}
+                    type="button"
+                    onClick={() => setCurrentFolderId(f.folder_id)}
+                    className="flex items-center gap-3 rounded-lg border bg-card p-4 text-left transition-colors hover:bg-accent hover:border-accent-foreground/20"
+                  >
+                    <Folder className="h-5 w-5 shrink-0 text-primary" />
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-sm font-medium text-foreground">
+                        {f.name}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {count} {count === 1 ? "item" : "items"}
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {levelResources.length > 0 ? (
+            renderGroupedSections(levelGrouped)
+          ) : currentFolderId !== null && levelSubfolders.length === 0 ? (
+            <div className="rounded-md border border-dashed p-8 text-center text-sm text-muted-foreground">
+              This folder is empty.
+            </div>
+          ) : null}
+        </>
       )}
 
       <UpgradeNudgeModal
