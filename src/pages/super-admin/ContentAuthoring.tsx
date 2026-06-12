@@ -802,6 +802,11 @@ export default function ContentAuthoring() {
           )}
         </div>
       </div>
+      <LearningFolderManager
+        open={folderManagerOpen}
+        onOpenChange={setFolderManagerOpen}
+        onChanged={() => refetch()}
+      />
     </div>
   );
 }
