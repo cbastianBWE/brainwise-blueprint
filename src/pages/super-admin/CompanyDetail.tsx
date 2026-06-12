@@ -107,41 +107,6 @@ export default function CompanyDetail() {
     load();
   }, [load]);
 
-  const currentOrgAdmin = useMemo(
-    () => users.find((u) => u.account_type === "org_admin") || null,
-    [users]
-  );
-
-  const handleAssignOrgAdmin = async () => {
-    if (!assignEmail.trim() || !orgId) return;
-    setAssigning(true);
-
-    const { error } = await supabase.rpc("admin_assign_org_admin", {
-      p_target_email: assignEmail.trim(),
-      p_organization_id: orgId,
-      p_is_transfer: !!currentOrgAdmin,
-    });
-
-    setAssigning(false);
-
-    if (error) {
-      toast({
-        title: currentOrgAdmin ? "Transfer failed" : "Assignment failed",
-        description: error.message,
-        variant: "destructive",
-      });
-      return;
-    }
-
-    toast({
-      title: currentOrgAdmin ? "Org admin transferred" : "Org admin assigned",
-      description: `${assignEmail.trim()} is now the org admin.`,
-    });
-
-    setAssignDialogOpen(false);
-    setAssignEmail("");
-    await load();
-  };
 
   if (loading) {
     return (
