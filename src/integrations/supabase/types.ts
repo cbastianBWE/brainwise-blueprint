@@ -10616,6 +10616,10 @@ export type Database = {
           invitation_id: string
         }[]
       }
+      admin_invitation_revoke: {
+        Args: { p_invitation_id: string }
+        Returns: Json
+      }
       admin_log_password_reset: {
         Args: { p_target_user_id: string }
         Returns: undefined
