@@ -302,6 +302,43 @@ export function AppSidebar() {
                     </Fragment>
                   );
                 }
+                if (item.title === "Content Authoring") {
+                  return (
+                    <Fragment key={`f-${item.title}${item.url}`}>
+                      {sectionHeaderEl}
+                      <SidebarMenuItem key={item.title + item.url}>
+                        <SidebarMenuButton asChild>
+                          <NavLink
+                            to={item.url}
+                            end
+                            className="hover:bg-sidebar-accent"
+                            activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                          >
+                            <item.icon className="h-4 w-4 shrink-0" />
+                            {!collapsed && <span>{item.title}</span>}
+                          </NavLink>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                      {!collapsed && (
+                        <div className="ml-4 mt-1 space-y-1">
+                          <SidebarMenuItem key="/super-admin/content-authoring/lessons">
+                            <SidebarMenuButton asChild>
+                              <NavLink
+                                to="/super-admin/content-authoring/lessons"
+                                end
+                                className="hover:bg-sidebar-accent text-sm"
+                                activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                              >
+                                <Blocks className="h-3.5 w-3.5 shrink-0" />
+                                <span>Lesson Builder</span>
+                              </NavLink>
+                            </SidebarMenuButton>
+                          </SidebarMenuItem>
+                        </div>
+                      )}
+                    </Fragment>
+                  );
+                }
                 return (
                   <Fragment key={`f-${item.title}${item.url}`}>
                     {sectionHeaderEl}
