@@ -667,6 +667,69 @@ export default function ResourceEditor({
           </div>
         </div>
 
+        {/* Folder */}
+        <div className="space-y-4">
+          <h3 className="text-sm font-semibold text-foreground">Folder</h3>
+          {mode === "create" ? (
+            <div className="rounded-md border border-dashed p-4 text-sm italic text-muted-foreground">
+              Save the resource first to file it in a folder.
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <p className="text-xs text-muted-foreground">
+                File this resource into a folder within its tab. Saved as a separate audited action.
+                Folder choices reflect the resource's saved tab — change the tab first and save to move
+                this resource between tabs.
+              </p>
+              <div className="space-y-2">
+                <Label htmlFor="r-folder">Folder</Label>
+                <Select
+                  value={currentFolderValid ? folderId : ""}
+                  onValueChange={(v) => setFolderId(v === "__none__" ? "" : v)}
+                  disabled={savingFolder}
+                >
+                  <SelectTrigger id="r-folder">
+                    <SelectValue placeholder="— None (tab root) —" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">— None (tab root) —</SelectItem>
+                    {folderOptions.map((o) => (
+                      <SelectItem key={o.id} value={o.id}>{o.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {folderOptions.length === 0 && (
+                  <p className="text-xs italic text-muted-foreground">
+                    No folders exist in this tab yet. Use "Manage Folders" to create one.
+                  </p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="r-folder-reason">Reason for folder change *</Label>
+                <Textarea
+                  id="r-folder-reason"
+                  value={folderReason}
+                  onChange={(e) => setFolderReason(e.target.value)}
+                  rows={2}
+                  placeholder="Explain why. Recorded in the audit log."
+                  disabled={savingFolder}
+                />
+                <p className={cn("text-xs", folderReasonLen >= 10 ? "text-muted-foreground" : "text-destructive")}>
+                  {folderReasonLen}/10 characters minimum.
+                </p>
+              </div>
+              <Button
+                type="button"
+                onClick={handleSaveFolder}
+                disabled={savingFolder || folderReasonLen < 10}
+              >
+                {savingFolder ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
+                Save folder
+              </Button>
+            </div>
+          )}
+        </div>
+
         {/* Publishing */}
         <div className="space-y-4">
           <h3 className="text-sm font-semibold text-foreground">Publishing</h3>
