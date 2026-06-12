@@ -3,7 +3,7 @@ import {
   LayoutDashboard, BarChart3, ClipboardList, ClipboardCheck, MessageSquare, BookOpen, Settings,
   Users, Users2, Building2, UsersRound, Activity, Heart, Award, UserCircle,
   ShieldCheck, Briefcase, GitBranch, FlaskConical, LogOut, History, Shield,
-  CreditCard, Receipt, ChevronDown, ChevronRight, Plus, FileText, Library, Ticket,
+  CreditCard, Receipt, ChevronDown, ChevronRight, FileText, Library, Ticket,
   GraduationCap, Bell, Newspaper, SlidersHorizontal, Wallet, FileMinus2, Repeat, Clock, UserPlus, Mail, Inbox, Webhook, Megaphone, Target,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
@@ -104,8 +104,7 @@ const superAdminNav: NavItem[] = [
   
   { title: "Platform Health", url: "/super-admin/health", icon: Heart },
   { title: "Coach Invitations", url: "/super-admin/coaches", icon: Users },
-  { title: "Company Accounts", url: "/super-admin/companies", icon: Briefcase },
-  { title: "Create Organization", url: "/super-admin/create-organization", icon: Plus },
+  { title: "Organizations", url: "/super-admin/companies", icon: Briefcase },
   { title: "Version Management", url: "/super-admin/versions", icon: GitBranch },
   { title: "Content Authoring", url: "/super-admin/content-authoring", icon: Library },
   { title: "Newsletter", url: "/super-admin/newsletter", icon: Newspaper },
