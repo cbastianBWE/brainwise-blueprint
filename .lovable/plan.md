@@ -1,24 +1,37 @@
-## CRM Dashboard – Plan
+## Departments tab for super-admin company detail
 
-### 1. New file: `src/pages/operations/OperationsDashboard.tsx`
-Create the page exactly as specified. Since the pasted source had JSX/text content stripped by the chat formatter, I'll reconstruct the JSX faithfully while preserving:
-- All imports (`useMemo`, `useQuery`, `opsSupabase`, shadcn `Card`/`Table`, `recharts` primitives, `formatMoney`/`formatDate` from `./_shared`).
-- Constants `NAVY="#021F36"`, `ORANGE="#F5741A"`, `TEAL="#006D77"`.
-- `useView` hook with query key `["ops","dashboard",key]` and optional `.order(col, { ascending: asc })`.
-- `SimpleTable` with loading / error / empty states and right-aligned cells when `c.right`.
-- `Kpi` card component.
-- All eight queries against the exact view names: `report_crm_pipeline_by_stage`, `report_crm_forecast_by_month`, `report_crm_win_rate_by_stage`, `report_crm_leads_by_source`, `report_crm_top_accounts_by_revenue`, `report_crm_lost_reason_breakdown`, `report_crm_avg_deal_cycle`, `report_crm_time_to_qualify` — with the exact order columns given.
-- KPI tiles: Open weighted pipeline (sum `weighted_amount`), Open deals (sum `deal_count`), Avg deal cycle (`avg_cycle_days`), Avg time to qualify (`avg_days_to_qualify`).
-- Two recharts `BarChart`s (pipeline-by-stage and forecast-by-month) using NAVY for Total and ORANGE for Weighted, wrapped in `ResponsiveContainer`, with tooltip USD formatting.
-- Four tables: win rate by stage, leads by source, top accounts by revenue (collected + invoiced money), lost reason breakdown (deal count + lost value money).
+### 1. New file: `src/components/super-admin/CompanyDepartmentsSection.tsx`
 
-### 2. Edit `src/App.tsx`
-- Add `import OperationsDashboard from "./pages/operations/OperationsDashboard";` directly after the existing `OperationsReports` import.
-- Add `<Route path="/operations/dashboard" element={<OperationsDashboard />} />` immediately before the existing `/operations/reports` route, matching the surrounding route wrapping (guards/layout) exactly.
+Self-contained section, `export default function CompanyDepartmentsSection({ orgId }: { orgId: string })`. Same house style as `CompanyMembersSection.tsx`: `(supabase.rpc as any)(...)`, `(supabase as any).from(...)`, `useToast`, shadcn components, `Loader2` + lucide icons (`FolderPlus`, `Pencil`, `Trash2`, `Users`).
 
-### 3. Edit `src/components/AppSidebar.tsx`
-- In `superAdminNav`, insert `{ title: "Dashboard", url: "/operations/dashboard", icon: LayoutDashboard },` immediately after the Pipeline entry (which carries the "CRM" sectionHeader). `LayoutDashboard` is already imported — no new imports.
+**State**
+- `loading`, `departments: { id, name }[]`, `memberCounts: Record<string, number>`
+- Create form: `newName`, `creating`
+- Rename dialog: `renameRow`, `renameValue`, `renamePending`
+- Delete dialog: `deleteRow`, `deleteMode` (`"unassign" | "reassign"`), `reassignTo`, `deletePending`
 
-### Notes
-- No other files, routes, or nav entries change.
-- Will verify `./_shared` exports `formatMoney` and `formatDate` and that the route block in `App.tsx` follows the same guard/layout pattern as `/operations/reports` before writing the route.
+**`load()`** — runs on mount and after every mutation. Parallel:
+- `(supabase as any).from("departments").select("id, name").eq("organization_id", orgId)` → sort by name
+- `(supabase as any).from("admin_org_users_view").select("department_id").eq("organization_id", orgId)` → reduce into a `Record<string, number>`; departments not in the map render as `0`.
+
+**Card — Departments**
+- Header: title (Users icon) + inline create form: `Input` (placeholder "New department name") + `Button` (FolderPlus) → `(supabase.rpc as any)("department_create", { p_organization_id: orgId, p_name: name.trim() })`. Button disabled when trimmed input is empty or while `creating`. On success: clear input, toast, reload. On error: toast error.message.
+- Table columns: **Name**, **Members** (count as `<Badge variant="secondary">`), **Actions** (right-aligned).
+- Per-row actions:
+  - **Rename** (ghost icon Pencil) → opens rename dialog with Input prefilled to current name → `(supabase.rpc as any)("department_rename", { p_dept_id, p_new_name: newName.trim() })`. Surface `error.message` on failure (covers 23505 duplicate). Toast + reload + close on success. Save disabled when name unchanged or blank or pending.
+  - **Delete** (ghost icon Trash2, destructive color) → opens delete dialog whose body depends on `memberCounts[row.id]`:
+    - **0 members** — plain confirm copy. On confirm: `department_delete({ p_dept_id: row.id, p_action: "unassign", p_reassign_to_dept_id: null })`.
+    - **N ≥ 1 members** — copy explaining N members are assigned; require choosing before delete is enabled:
+      - Radio/toggle "Move members to another department" → `Select` of other departments (exclude current; disabled option when none exist). Confirm calls `department_delete({ p_action: "reassign", p_reassign_to_dept_id: selectedId })`. Requires a selection.
+      - "Remove members from any department" → confirms with `p_action: "unassign", p_reassign_to_dept_id: null`.
+    - Toast + reload + close on success; surface `error.message` on failure.
+
+**Loading / pending**
+- Single centered `Loader2` during initial load.
+- Per-action pending flags (`creating`, `renamePending`, `deletePending`) disable the relevant buttons and prevent dialog dismissal mid-flight.
+
+### 2. Edit `src/pages/super-admin/CompanyDetail.tsx`
+- Add `import CompanyDepartmentsSection from "@/components/super-admin/CompanyDepartmentsSection";`.
+- Add `<TabsTrigger value="departments">Departments</TabsTrigger>` between the Members and Invitations triggers.
+- Add `<TabsContent value="departments" className="mt-6"><CompanyDepartmentsSection orgId={orgId!} /></TabsContent>` in the matching spot.
+- No other changes.
