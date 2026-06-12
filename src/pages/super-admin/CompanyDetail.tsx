@@ -41,9 +41,6 @@ export default function CompanyDetail() {
   const [loading, setLoading] = useState(true);
   const auditLoggedRef = useRef(false);
 
-  const [assignDialogOpen, setAssignDialogOpen] = useState(false);
-  const [assignEmail, setAssignEmail] = useState("");
-  const [assigning, setAssigning] = useState(false);
 
   const load = useCallback(async () => {
     if (!orgId || !user) return;
