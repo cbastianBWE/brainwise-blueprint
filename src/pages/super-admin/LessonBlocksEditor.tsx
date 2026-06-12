@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
 import { ChevronLeft, Edit2, Layers, Loader2, Plus, Save, Sparkles } from "lucide-react";
@@ -57,6 +57,10 @@ function stripIdsForRpc(blocks: EditorBlock[]) {
 export default function LessonBlocksEditor() {
   const { contentItemId } = useParams<{ contentItemId: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const backTarget = searchParams.get("from") === "lesson-builder"
+    ? "/super-admin/content-authoring/lessons"
+    : "/super-admin/content-authoring";
   const { toast } = useToast();
 
   const [blocks, setBlocks] = useState<EditorBlock[]>([]);
@@ -122,7 +126,7 @@ export default function LessonBlocksEditor() {
         description: "That content item is not editable as lesson blocks.",
         variant: "destructive",
       });
-      navigate("/super-admin/content-authoring", { replace: true });
+      navigate(backTarget, { replace: true });
     }
   }, [itemQuery.isLoading, itemQuery.data, contentItemId, navigate, toast]);
 
@@ -644,7 +648,7 @@ export default function LessonBlocksEditor() {
           variant="ghost"
           size="sm"
           className="-ml-2 h-auto px-2 py-1 text-muted-foreground hover:text-foreground"
-          onClick={() => guardedNavigate("/super-admin/content-authoring")}
+          onClick={() => guardedNavigate(backTarget)}
         >
           <ChevronLeft className="mr-1 h-4 w-4" />
           Back to content authoring
