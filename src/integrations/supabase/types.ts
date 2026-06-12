@@ -10573,6 +10573,10 @@ export type Database = {
         Args: { p_version_hash: string; p_version_id: string }
         Returns: Json
       }
+      admin_assign_or_invite_org_admin: {
+        Args: { p_email: string; p_organization_id: string }
+        Returns: Json
+      }
       admin_assign_org_admin: {
         Args: {
           p_is_transfer: boolean
