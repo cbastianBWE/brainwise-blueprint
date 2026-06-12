@@ -21,6 +21,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { FileText, Save, RotateCcw } from "lucide-react";
 import CompanyMembersSection from "@/components/super-admin/CompanyMembersSection";
+import CompanyDepartmentsSection from "@/components/super-admin/CompanyDepartmentsSection";
 import CompanyInvitationsSection from "@/components/super-admin/CompanyInvitationsSection";
 
 interface OrgUser {
@@ -127,6 +128,7 @@ export default function CompanyDetail() {
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="members">Members</TabsTrigger>
+          <TabsTrigger value="departments">Departments</TabsTrigger>
           <TabsTrigger value="invitations">Invitations</TabsTrigger>
           <TabsTrigger value="contract">Contract & Features</TabsTrigger>
         </TabsList>
@@ -145,6 +147,10 @@ export default function CompanyDetail() {
 
         <TabsContent value="members" className="mt-6">
           <CompanyMembersSection orgId={orgId!} />
+        </TabsContent>
+
+        <TabsContent value="departments" className="mt-6">
+          <CompanyDepartmentsSection orgId={orgId!} />
         </TabsContent>
 
         <TabsContent value="invitations" className="mt-6">
