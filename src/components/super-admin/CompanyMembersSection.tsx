@@ -84,6 +84,12 @@ export default function CompanyMembersSection({ orgId }: { orgId: string }) {
   // Supervisor dashboard toggle
   const [dashPending, setDashPending] = useState(false);
 
+  // Operations access drawer
+  const [opsRoles, setOpsRoles] = useState<Record<string, { role: string; status: string }>>({});
+  const [accessRow, setAccessRow] = useState<MemberRow | null>(null);
+  const [accessRole, setAccessRole] = useState<string>("read_only");
+  const [accessBusy, setAccessBusy] = useState(false);
+
   const load = useCallback(async () => {
     const [membersRes, contractRes] = await Promise.all([
       (supabase as any).from("admin_org_users_view").select("*").eq("organization_id", orgId),
