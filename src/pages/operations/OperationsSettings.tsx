@@ -116,6 +116,9 @@ export default function OperationsSettings() {
       accent_color: o.accent_color ?? "#F5741A",
       logo_url: o.logo_url ?? "",
       address: (o.address ?? {}) as Address,
+      sender_display_name: o.sender_display_name ?? "",
+      reply_to_email: o.reply_to_email ?? "",
+      email_logo_enabled: o.email_logo_enabled === true,
     });
   }, [orgQ.data]);
 
