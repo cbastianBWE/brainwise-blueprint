@@ -16,11 +16,14 @@ import {
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import ModuleEntitlementsPanel from "@/components/super-admin/ModuleEntitlementsPanel";
+import OperationsWorkspaceSection from "@/components/super-admin/OperationsWorkspaceSection";
 
 interface Props {
   userId: string;
   accountType: string | null;
   organizationId: string | null;
+  email: string | null;
+  fullName: string | null;
   setHasUnsavedChanges: (v: boolean) => void;
 }
 
@@ -36,6 +39,8 @@ const FALLBACK_INSTRUMENTS: { feature: string; label: string }[] = [
 
 export default function MemberDrawerAccess({
   userId,
+  email,
+  fullName,
   setHasUnsavedChanges,
 }: Props) {
   const [instruments, setInstruments] = useState<{ feature: string; label: string }[]>([]);
@@ -140,6 +145,12 @@ export default function MemberDrawerAccess({
         principalType="user"
         userId={userId}
         setHasUnsavedChanges={setHasUnsavedChanges}
+      />
+      <OperationsWorkspaceSection
+        mode="user"
+        adminUserId={userId}
+        adminEmail={email}
+        defaultWorkspaceName={`${(fullName ?? email ?? "User")} Workspace`}
       />
       <div className="p-4 space-y-4">
       <div>

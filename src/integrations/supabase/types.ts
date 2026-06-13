@@ -12715,6 +12715,7 @@ export type Database = {
         Args: { p_customer_id: string; p_payload: Json }
         Returns: string
       }
+      ops_admin_get_membership: { Args: { p_user_id: string }; Returns: Json }
       ops_apply_credit_note_to_invoice: {
         Args: { p_amount: number; p_credit_note: string; p_invoice: string }
         Returns: string

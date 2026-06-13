@@ -187,6 +187,8 @@ function MemberDrawerBody({
             userId={member.user_id}
             accountType={member.account_type}
             organizationId={member.organization_id}
+            email={member.email}
+            fullName={member.full_name}
             setHasUnsavedChanges={setHasUnsavedChanges}
           />
         )}

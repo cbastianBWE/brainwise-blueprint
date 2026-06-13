@@ -26,6 +26,7 @@ import CompanyInvitationsSection from "@/components/super-admin/CompanyInvitatio
 import CompanyBrandingSection from "@/components/super-admin/CompanyBrandingSection";
 import CompanyDomainsSection from "@/components/super-admin/CompanyDomainsSection";
 import ModuleEntitlementsPanel from "@/components/super-admin/ModuleEntitlementsPanel";
+import OperationsWorkspaceSection from "@/components/super-admin/OperationsWorkspaceSection";
 
 interface OrgUser {
   id: string;
@@ -173,6 +174,20 @@ export default function CompanyDetail() {
 
         <TabsContent value="modules" className="mt-6">
           <ModuleEntitlementsPanel principalType="org" orgId={orgId!} />
+          <div className="mt-6">
+            <OperationsWorkspaceSection
+              mode="org"
+              adminUserId={
+                (users.find((u) => u.account_type === "org_admin")
+                  ?? users.find((u) => u.account_type === "company_admin"))?.id ?? null
+              }
+              adminEmail={
+                (users.find((u) => u.account_type === "org_admin")
+                  ?? users.find((u) => u.account_type === "company_admin"))?.email ?? null
+              }
+              defaultWorkspaceName={orgName}
+            />
+          </div>
         </TabsContent>
 
 
