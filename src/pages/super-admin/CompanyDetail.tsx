@@ -25,6 +25,7 @@ import CompanyDepartmentsSection from "@/components/super-admin/CompanyDepartmen
 import CompanyInvitationsSection from "@/components/super-admin/CompanyInvitationsSection";
 import CompanyBrandingSection from "@/components/super-admin/CompanyBrandingSection";
 import CompanyDomainsSection from "@/components/super-admin/CompanyDomainsSection";
+import ModuleEntitlementsPanel from "@/components/super-admin/ModuleEntitlementsPanel";
 
 interface OrgUser {
   id: string;
@@ -133,6 +134,7 @@ export default function CompanyDetail() {
           <TabsTrigger value="departments">Departments</TabsTrigger>
           <TabsTrigger value="invitations">Invitations</TabsTrigger>
           <TabsTrigger value="contract">Contract & Features</TabsTrigger>
+          <TabsTrigger value="modules">Modules</TabsTrigger>
           <TabsTrigger value="branding">Branding</TabsTrigger>
           <TabsTrigger value="domains">Domains</TabsTrigger>
         </TabsList>
@@ -168,6 +170,12 @@ export default function CompanyDetail() {
             onSuccess={(msg) => toast({ title: "Saved", description: msg })}
           />
         </TabsContent>
+
+        <TabsContent value="modules" className="mt-6">
+          <ModuleEntitlementsPanel principalType="org" orgId={orgId!} />
+        </TabsContent>
+
+
 
         <TabsContent value="branding" className="mt-6">
           <CompanyBrandingSection orgId={orgId!} />
