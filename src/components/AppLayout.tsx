@@ -110,26 +110,31 @@ export default function AppLayout() {
                   BrainWise Enterprises
                 </span>
               </>
-            ) : branding.logoUrl ? (
-              <img
-                src={branding.logoUrl}
-                alt={branding.orgName ?? "Organization"}
-                style={{ height: 32, width: "auto", maxWidth: 180, objectFit: "contain" }}
-              />
             ) : (
-              <span
-                style={{
-                  fontFamily: "'Poppins', sans-serif",
-                  fontWeight: 800,
-                  fontSize: 16,
-                  color: "hsl(var(--primary-foreground))",
-                  letterSpacing: "-0.01em",
-                  lineHeight: 1.1,
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {branding.orgName}
-              </span>
+              <>
+                {branding.logoUrl && (
+                  <img
+                    src={branding.logoUrl}
+                    alt={branding.orgName ?? "Organization"}
+                    style={{ height: 32, width: "auto", maxWidth: 180, objectFit: "contain" }}
+                  />
+                )}
+                {branding.orgName && (
+                  <span
+                    style={{
+                      fontFamily: "'Poppins', sans-serif",
+                      fontWeight: 800,
+                      fontSize: 16,
+                      color: "hsl(var(--primary-foreground))",
+                      letterSpacing: "-0.01em",
+                      lineHeight: 1.1,
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {branding.orgName}
+                  </span>
+                )}
+              </>
             )}
             <div className="ml-auto flex items-center">
               <NotificationBell />
