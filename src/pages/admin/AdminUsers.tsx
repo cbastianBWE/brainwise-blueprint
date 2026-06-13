@@ -2039,6 +2039,8 @@ export default function AdminUsers() {
             );
           })()}
         </TabsContent>
+        )}
+
       </Tabs>
 
       <Dialog open={deptDialogOpen} onOpenChange={(open) => !creatingDept && setDeptDialogOpen(open)}>
