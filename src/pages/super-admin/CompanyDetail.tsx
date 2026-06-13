@@ -172,6 +172,10 @@ export default function CompanyDetail() {
         <TabsContent value="branding" className="mt-6">
           <CompanyBrandingSection orgId={orgId!} />
         </TabsContent>
+
+        <TabsContent value="domains" className="mt-6">
+          <CompanyDomainsSection organizationId={orgId!} />
+        </TabsContent>
       </Tabs>
     </div>
   );
