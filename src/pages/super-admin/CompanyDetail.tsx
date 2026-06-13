@@ -132,6 +132,7 @@ export default function CompanyDetail() {
           <TabsTrigger value="departments">Departments</TabsTrigger>
           <TabsTrigger value="invitations">Invitations</TabsTrigger>
           <TabsTrigger value="contract">Contract & Features</TabsTrigger>
+          <TabsTrigger value="branding">Branding</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6 mt-6">
