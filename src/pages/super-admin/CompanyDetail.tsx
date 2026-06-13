@@ -171,6 +171,12 @@ export default function CompanyDetail() {
           />
         </TabsContent>
 
+        <TabsContent value="modules" className="mt-6">
+          <ModuleEntitlementsPanel principalType="org" orgId={orgId!} />
+        </TabsContent>
+
+
+
         <TabsContent value="branding" className="mt-6">
           <CompanyBrandingSection orgId={orgId!} />
         </TabsContent>
