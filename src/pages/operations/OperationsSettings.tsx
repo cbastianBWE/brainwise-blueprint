@@ -157,6 +157,9 @@ export default function OperationsSettings() {
         accent_color: form.accent_color || null,
         logo_url: form.logo_url || null,
         address: form.address ?? {},
+        sender_display_name: form.sender_display_name || null,
+        reply_to_email: form.reply_to_email || null,
+        email_logo_enabled: form.email_logo_enabled,
       };
       const { error } = await supabase.rpc("ops_update_org_branding" as any, { p_patch });
       if (error) { toast.error(error.message ?? "Save failed"); return; }
