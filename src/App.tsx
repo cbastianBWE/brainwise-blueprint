@@ -152,6 +152,7 @@ import CookieConsentBanner from "@/components/CookieConsentBanner";
 import ImpersonationProvider from "@/contexts/ImpersonationProvider";
 import ImpersonationBanner from "@/components/impersonation/ImpersonationBanner";
 import ImpersonationChrome from "@/components/impersonation/ImpersonationChrome";
+import OrgBrandingInjector from "@/components/OrgBrandingInjector";
 
 const queryClient = new QueryClient();
 
@@ -163,6 +164,7 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <ImpersonationProvider>
+            <OrgBrandingInjector />
             <CookieConsentBanner />
             <ImpersonationBanner />
             <ImpersonationChrome />
