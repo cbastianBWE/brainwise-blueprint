@@ -199,18 +199,47 @@ export function AppSidebar() {
   const { profile } = useUserProfile();
   const { isCorp, isMentor, isSuperAdmin } = useAccountRole();
 
+  const { user } = useAuth();
+  const { membership: opsMembership } = useOpsMembership();
+  const [opsModuleAccess, setOpsModuleAccess] = useState<{ crm: boolean; ops: boolean }>({ crm: false, ops: false });
+
+  useEffect(() => {
+    if (!user || !opsMembership) {
+      setOpsModuleAccess({ crm: false, ops: false });
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const [{ data: crm }, { data: ops }] = await Promise.all([
+        supabase.rpc("user_has_feature", { p_user: user.id, p_feature: "module:CRM" }),
+        supabase.rpc("user_has_feature", { p_user: user.id, p_feature: "module:OPERATIONS" }),
+      ]);
+      if (cancelled) return;
+      setOpsModuleAccess({ crm: !!crm, ops: !!ops });
+    })();
+    return () => { cancelled = true; };
+  }, [user, opsMembership]);
+
   const baseNavItems = getNavItems(profile);
   const navItems = (() => {
-    if (!(isMentor || isSuperAdmin)) return baseNavItems;
-    const clientsIdx = baseNavItems.findIndex((i) => i.url === "/coach/clients");
-    if (clientsIdx === -1) return baseNavItems;
-    const mentorItems: NavItem[] = [
-      { title: "Mentor Portal", url: "/mentor", icon: GraduationCap },
-      { title: "Feedback Templates", url: "/mentor/feedback-templates", icon: MessageSquare },
-    ];
-    const copy = [...baseNavItems];
-    copy.splice(clientsIdx + 1, 0, ...mentorItems);
-    return copy;
+    let items = baseNavItems;
+    if (isMentor || isSuperAdmin) {
+      const clientsIdx = items.findIndex((i) => i.url === "/coach/clients");
+      if (clientsIdx !== -1) {
+        const mentorItems: NavItem[] = [
+          { title: "Mentor Portal", url: "/mentor", icon: GraduationCap },
+          { title: "Feedback Templates", url: "/mentor/feedback-templates", icon: MessageSquare },
+        ];
+        const copy = [...items];
+        copy.splice(clientsIdx + 1, 0, ...mentorItems);
+        items = copy;
+      }
+    }
+    if (opsMembership) {
+      if (opsModuleAccess.crm) items = [...items, ...crmNav];
+      if (opsModuleAccess.ops) items = [...items, ...operationsNav];
+    }
+    return items;
   })();
   const isSettingsOpen = location.pathname.startsWith('/settings');
   const isClientsOpen = location.pathname.startsWith('/coach/clients') || location.pathname.startsWith('/coach/client-results');
