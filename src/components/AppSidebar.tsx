@@ -200,7 +200,6 @@ export function AppSidebar() {
   const { isCorp, isMentor, isSuperAdmin } = useAccountRole();
 
   const { membership: opsMembership } = useOpsMembership();
-  const { membership: opsMembership } = useOpsMembership();
   const [opsModuleAccess, setOpsModuleAccess] = useState<{ crm: boolean; ops: boolean }>({ crm: false, ops: false });
 
   useEffect(() => {
