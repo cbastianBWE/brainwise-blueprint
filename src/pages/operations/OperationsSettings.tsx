@@ -91,6 +91,7 @@ export default function OperationsSettings() {
     legal_name: "", email: "", phone: "", website: "", tax_id: "",
     brand_color: "#021F36", accent_color: "#F5741A", logo_url: "",
     address: {} as Address,
+    sender_display_name: "", reply_to_email: "", email_logo_enabled: false,
   });
 
   const orgQ = useQuery({
@@ -115,6 +116,9 @@ export default function OperationsSettings() {
       accent_color: o.accent_color ?? "#F5741A",
       logo_url: o.logo_url ?? "",
       address: (o.address ?? {}) as Address,
+      sender_display_name: o.sender_display_name ?? "",
+      reply_to_email: o.reply_to_email ?? "",
+      email_logo_enabled: o.email_logo_enabled === true,
     });
   }, [orgQ.data]);
 
@@ -153,6 +157,9 @@ export default function OperationsSettings() {
         accent_color: form.accent_color || null,
         logo_url: form.logo_url || null,
         address: form.address ?? {},
+        sender_display_name: form.sender_display_name || null,
+        reply_to_email: form.reply_to_email || null,
+        email_logo_enabled: form.email_logo_enabled,
       };
       const { error } = await supabase.rpc("ops_update_org_branding" as any, { p_patch });
       if (error) { toast.error(error.message ?? "Save failed"); return; }
@@ -667,6 +674,32 @@ export default function OperationsSettings() {
                     <Input id="accent_color" type="color" value={form.accent_color} onChange={(e) => setField("accent_color", e.target.value)} className="h-10 w-16 p-1" />
                     <Input value={form.accent_color} onChange={(e) => setField("accent_color", e.target.value)} />
                   </div>
+                </div>
+              </div>
+
+              <div className="space-y-4 border-t pt-6">
+                <div>
+                  <h3 className="text-sm font-medium">Invoice email</h3>
+                  <p className="text-muted-foreground text-xs">Controls how invoice emails appear to customers. The brand and accent colors above are applied to the email automatically.</p>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="f-sender_display_name">Email sender name</Label>
+                    <Input id="f-sender_display_name" value={form.sender_display_name ?? ""} onChange={(e) => setField("sender_display_name", e.target.value)} />
+                    <p className="text-muted-foreground text-xs">Shown as the sender and in the subject line of invoice emails. Defaults to your company name if left blank.</p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="f-reply_to_email">Reply-to email</Label>
+                    <Input id="f-reply_to_email" type="email" value={form.reply_to_email ?? ""} onChange={(e) => setField("reply_to_email", e.target.value)} />
+                    <p className="text-muted-foreground text-xs">Customer replies go to this address. Leave blank for no reply-to. Emails are always sent from the shared mail domain.</p>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="pr-4">
+                    <Label htmlFor="email-logo">Show logo in invoice emails</Label>
+                    <p className="text-muted-foreground text-xs">When on, your uploaded logo appears at the top of invoice emails. The PDF always includes the logo regardless of this setting.</p>
+                  </div>
+                  <Switch id="email-logo" checked={!!form.email_logo_enabled} onCheckedChange={(v) => setField("email_logo_enabled", v)} />
                 </div>
               </div>
 

@@ -12908,6 +12908,7 @@ export type Database = {
       }
       ops_get_merge_tag_catalog: { Args: never; Returns: Json }
       ops_get_my_inbox_address: { Args: never; Returns: Json }
+      ops_get_org_email_branding: { Args: { p_org: string }; Returns: Json }
       ops_get_public_document_by_token: {
         Args: { p_token: string }
         Returns: Json
