@@ -24,6 +24,7 @@ import CompanyMembersSection from "@/components/super-admin/CompanyMembersSectio
 import CompanyDepartmentsSection from "@/components/super-admin/CompanyDepartmentsSection";
 import CompanyInvitationsSection from "@/components/super-admin/CompanyInvitationsSection";
 import CompanyBrandingSection from "@/components/super-admin/CompanyBrandingSection";
+import CompanyDomainsSection from "@/components/super-admin/CompanyDomainsSection";
 
 interface OrgUser {
   id: string;
@@ -133,6 +134,7 @@ export default function CompanyDetail() {
           <TabsTrigger value="invitations">Invitations</TabsTrigger>
           <TabsTrigger value="contract">Contract & Features</TabsTrigger>
           <TabsTrigger value="branding">Branding</TabsTrigger>
+          <TabsTrigger value="domains">Domains</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6 mt-6">
@@ -169,6 +171,10 @@ export default function CompanyDetail() {
 
         <TabsContent value="branding" className="mt-6">
           <CompanyBrandingSection orgId={orgId!} />
+        </TabsContent>
+
+        <TabsContent value="domains" className="mt-6">
+          <CompanyDomainsSection organizationId={orgId!} />
         </TabsContent>
       </Tabs>
     </div>
