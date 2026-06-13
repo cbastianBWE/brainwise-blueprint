@@ -1804,7 +1804,9 @@ export default function AdminUsers() {
       })()}
         </TabsContent>
 
+        {showEpn && (
         <TabsContent value="epn" className="space-y-6 max-w-5xl">
+
           {(() => {
             const allOrgUsers = orgUsersQuery.data || [];
             const eligible = allOrgUsers
