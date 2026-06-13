@@ -25,6 +25,7 @@ import CompanyDepartmentsSection from "@/components/super-admin/CompanyDepartmen
 import CompanyInvitationsSection from "@/components/super-admin/CompanyInvitationsSection";
 import CompanyBrandingSection from "@/components/super-admin/CompanyBrandingSection";
 import CompanyDomainsSection from "@/components/super-admin/CompanyDomainsSection";
+import ModuleEntitlementsPanel from "@/components/super-admin/ModuleEntitlementsPanel";
 
 interface OrgUser {
   id: string;
