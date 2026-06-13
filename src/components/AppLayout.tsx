@@ -34,6 +34,36 @@ export default function AppLayout() {
     fetchCoupon();
   }, [user]);
 
+  const [branding, setBranding] = useState<{ logoUrl: string | null; orgName: string | null; isDefault: boolean }>({
+    logoUrl: null,
+    orgName: null,
+    isDefault: true,
+  });
+
+  useEffect(() => {
+    if (!user) {
+      setBranding({ logoUrl: null, orgName: null, isDefault: true });
+      return;
+    }
+    let active = true;
+    (async () => {
+      const { data, error } = await (supabase.rpc as any)("get_org_branding_for_current_user");
+      if (!active) return;
+      if (error || !data || data.is_default) {
+        setBranding({ logoUrl: null, orgName: null, isDefault: true });
+        return;
+      }
+      const path = data.brand_logo_path as string | null;
+      const logoUrl = path
+        ? supabase.storage.from("org-branding").getPublicUrl(path).data.publicUrl
+        : null;
+      setBranding({ logoUrl, orgName: (data.organization_name as string) ?? null, isDefault: false });
+    })();
+    return () => {
+      active = false;
+    };
+  }, [user]);
+
   const showBanner =
     !dismissed &&
     couponData?.stripe_coupon_id &&
@@ -56,30 +86,51 @@ export default function AppLayout() {
           <header
             className="flex items-center px-4 gap-3"
             style={{
-              background: "var(--bw-navy)",
+              background: "hsl(var(--primary))",
               height: 56,
-              borderBottom: "1px solid var(--bw-navy-700)",
+              borderBottom: "1px solid hsl(var(--primary-foreground) / 0.15)",
+              color: "hsl(var(--primary-foreground))",
             }}
           >
-            <SidebarTrigger className="text-white hover:text-white/80" />
-            <img
-              src="/brain-icon.png"
-              alt="BrainWise Enterprises"
-              style={{ height: 28, width: 28 }}
-            />
-            <span
-              style={{
-                fontFamily: "'Poppins', sans-serif",
-                fontWeight: 800,
-                fontSize: 16,
-                color: "#ffffff",
-                letterSpacing: "-0.01em",
-                lineHeight: 1.1,
-                whiteSpace: "nowrap",
-              }}
-            >
-              BrainWise Enterprises
-            </span>
+            <SidebarTrigger className="hover:opacity-80" style={{ color: "hsl(var(--primary-foreground))" }} />
+            {branding.isDefault ? (
+              <>
+                <img src="/brain-icon.png" alt="BrainWise Enterprises" style={{ height: 28, width: 28 }} />
+                <span
+                  style={{
+                    fontFamily: "'Poppins', sans-serif",
+                    fontWeight: 800,
+                    fontSize: 16,
+                    color: "hsl(var(--primary-foreground))",
+                    letterSpacing: "-0.01em",
+                    lineHeight: 1.1,
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  BrainWise Enterprises
+                </span>
+              </>
+            ) : branding.logoUrl ? (
+              <img
+                src={branding.logoUrl}
+                alt={branding.orgName ?? "Organization"}
+                style={{ height: 32, width: "auto", maxWidth: 180, objectFit: "contain" }}
+              />
+            ) : (
+              <span
+                style={{
+                  fontFamily: "'Poppins', sans-serif",
+                  fontWeight: 800,
+                  fontSize: 16,
+                  color: "hsl(var(--primary-foreground))",
+                  letterSpacing: "-0.01em",
+                  lineHeight: 1.1,
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {branding.orgName}
+              </span>
+            )}
             <div className="ml-auto flex items-center">
               <NotificationBell />
             </div>
