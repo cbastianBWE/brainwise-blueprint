@@ -114,6 +114,44 @@ export default function CompanyMembersSection({ orgId }: { orgId: string }) {
     load();
   }, [load]);
 
+  const loadOpsRoles = useCallback(async () => {
+    const { data, error } = await (supabase.rpc as any)("ops_org_user_admin_list", { p_platform_org_id: orgId });
+    if (error) { setOpsRoles({}); return; }
+    const map: Record<string, { role: string; status: string }> = {};
+    for (const r of (data || []) as any[]) map[r.user_id] = { role: r.role, status: r.status };
+    setOpsRoles(map);
+  }, [orgId]);
+  useEffect(() => { loadOpsRoles(); }, [loadOpsRoles]);
+
+  const openAccessDrawer = (m: MemberRow) => {
+    setAccessRow(m);
+    setAccessRole(opsRoles[m.id]?.role ?? "read_only");
+  };
+  const handleGrantAccess = async () => {
+    if (!accessRow) return;
+    setAccessBusy(true);
+    const { error } = await (supabase.rpc as any)("ops_grant_operations_access", {
+      p_user_id: accessRow.id, p_role: accessRole, p_platform_org_id: orgId,
+    });
+    setAccessBusy(false);
+    if (error) { toast({ title: "Grant failed", description: error.message, variant: "destructive" }); return; }
+    toast({ title: "Operations access granted" });
+    setAccessRow(null);
+    await loadOpsRoles();
+  };
+  const handleRevokeAccess = async () => {
+    if (!accessRow) return;
+    setAccessBusy(true);
+    const { error } = await (supabase.rpc as any)("ops_revoke_operations_access", {
+      p_user_id: accessRow.id, p_platform_org_id: orgId,
+    });
+    setAccessBusy(false);
+    if (error) { toast({ title: "Revoke failed", description: error.message, variant: "destructive" }); return; }
+    toast({ title: "Operations access revoked" });
+    setAccessRow(null);
+    await loadOpsRoles();
+  };
+
   const currentOrgAdmin = useMemo(
     () => members.find((m) => m.account_type === "org_admin") || null,
     [members],
