@@ -39,6 +39,8 @@ const FALLBACK_INSTRUMENTS: { feature: string; label: string }[] = [
 
 export default function MemberDrawerAccess({
   userId,
+  email,
+  fullName,
   setHasUnsavedChanges,
 }: Props) {
   const [instruments, setInstruments] = useState<{ feature: string; label: string }[]>([]);
