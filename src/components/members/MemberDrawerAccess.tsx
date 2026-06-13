@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import ModuleEntitlementsPanel from "@/components/super-admin/ModuleEntitlementsPanel";
 
 interface Props {
   userId: string;
