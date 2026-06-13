@@ -23,6 +23,7 @@ import { FileText, Save, RotateCcw } from "lucide-react";
 import CompanyMembersSection from "@/components/super-admin/CompanyMembersSection";
 import CompanyDepartmentsSection from "@/components/super-admin/CompanyDepartmentsSection";
 import CompanyInvitationsSection from "@/components/super-admin/CompanyInvitationsSection";
+import CompanyBrandingSection from "@/components/super-admin/CompanyBrandingSection";
 
 interface OrgUser {
   id: string;
