@@ -1755,37 +1755,35 @@ export default function AdminUsers() {
                                 </Button>
                               </div>
                             ) : (
-                              <div className="flex justify-end gap-2">
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => openResetDialog(u)}
-                                >
-                                  <KeyRound className="h-3.5 w-3.5 mr-1.5" />
-                                  Reset password
-                                </Button>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => openSupervisorDialog(u)}
-                                >
-                                  <Users2 className="h-3.5 w-3.5 mr-1.5" />
-                                  Change supervisor
-                                </Button>
-                                {opsRoles !== null && (
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => openAccessDrawer({ id: u.id, email: u.email, full_name: u.full_name })}
-                                  >
-                                    <Briefcase className="h-3.5 w-3.5 mr-1.5" />
-                                    CRM & Ops
-                                  </Button>
-                                )}
-                                <Button variant="destructive" size="sm" onClick={() => openDeactivateDialog(u)}>
-                                  <UserX className="h-3.5 w-3.5 mr-1.5" />
-                                  Deactivate
-                                </Button>
+                              <div className="flex justify-end">
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="icon">
+                                      <MoreHorizontal className="h-4 w-4" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end">
+                                    <DropdownMenuItem onClick={() => openResetDialog(u)}>
+                                      <KeyRound className="h-3.5 w-3.5 mr-2" />
+                                      Reset password
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => openSupervisorDialog(u)}>
+                                      <Users2 className="h-3.5 w-3.5 mr-2" />
+                                      Change supervisor
+                                    </DropdownMenuItem>
+                                    {opsRoles !== null && (
+                                      <DropdownMenuItem onClick={() => openAccessDrawer({ id: u.id, email: u.email, full_name: u.full_name })}>
+                                        <Briefcase className="h-3.5 w-3.5 mr-2" />
+                                        CRM & Operations access
+                                      </DropdownMenuItem>
+                                    )}
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem onClick={() => openDeactivateDialog(u)} className="text-destructive focus:text-destructive">
+                                      <UserX className="h-3.5 w-3.5 mr-2" />
+                                      Deactivate
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
                               </div>
                             )}
                           </TableCell>
