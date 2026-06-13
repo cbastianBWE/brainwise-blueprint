@@ -16,7 +16,7 @@ interface CouponData {
 }
 
 export default function AppLayout() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [couponData, setCouponData] = useState<CouponData | null>(null);
   const [dismissed, setDismissed] = useState(false);
