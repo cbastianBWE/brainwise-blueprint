@@ -95,7 +95,9 @@ export default function AppLayout() {
             }}
           >
             <SidebarTrigger className="hover:opacity-80" style={{ color: "hsl(var(--primary-foreground))" }} />
-            {branding.isDefault ? (
+            {!branding.loaded ? (
+              <div style={{ height: 32 }} aria-hidden />
+            ) : branding.isDefault ? (
               <>
                 <img src="/brain-icon.png" alt="BrainWise Enterprises" style={{ height: 28, width: 28 }} />
                 <span
