@@ -34,6 +34,36 @@ export default function AppLayout() {
     fetchCoupon();
   }, [user]);
 
+  const [branding, setBranding] = useState<{ logoUrl: string | null; orgName: string | null; isDefault: boolean }>({
+    logoUrl: null,
+    orgName: null,
+    isDefault: true,
+  });
+
+  useEffect(() => {
+    if (!user) {
+      setBranding({ logoUrl: null, orgName: null, isDefault: true });
+      return;
+    }
+    let active = true;
+    (async () => {
+      const { data, error } = await (supabase.rpc as any)("get_org_branding_for_current_user");
+      if (!active) return;
+      if (error || !data || data.is_default) {
+        setBranding({ logoUrl: null, orgName: null, isDefault: true });
+        return;
+      }
+      const path = data.brand_logo_path as string | null;
+      const logoUrl = path
+        ? supabase.storage.from("org-branding").getPublicUrl(path).data.publicUrl
+        : null;
+      setBranding({ logoUrl, orgName: (data.organization_name as string) ?? null, isDefault: false });
+    })();
+    return () => {
+      active = false;
+    };
+  }, [user]);
+
   const showBanner =
     !dismissed &&
     couponData?.stripe_coupon_id &&
