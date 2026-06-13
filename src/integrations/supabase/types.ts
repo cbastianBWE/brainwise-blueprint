@@ -6815,6 +6815,50 @@ export type Database = {
           },
         ]
       }
+      org_custom_domains: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          hostname: string
+          id: string
+          is_primary: boolean
+          is_verified: boolean
+          kind: string
+          organization_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          hostname: string
+          id?: string
+          is_primary?: boolean
+          is_verified?: boolean
+          kind?: string
+          organization_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          hostname?: string
+          id?: string
+          is_primary?: boolean
+          is_verified?: boolean
+          kind?: string
+          organization_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_custom_domains_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       org_dashboard_narratives: {
         Row: {
           dimension_scores: Json
@@ -10964,6 +11008,10 @@ export type Database = {
         Args: { p_target_user_id: string }
         Returns: undefined
       }
+      admin_remove_org_custom_domain: {
+        Args: { p_hostname: string; p_reason?: string }
+        Returns: Json
+      }
       admin_reset_user_mfa: {
         Args: { p_reason: string; p_target_user_id: string }
         Returns: Json
@@ -10979,6 +11027,17 @@ export type Database = {
           p_organization_id: string
           p_primary_color: string
           p_reason: string
+        }
+        Returns: Json
+      }
+      admin_set_org_custom_domain: {
+        Args: {
+          p_hostname: string
+          p_is_primary?: boolean
+          p_is_verified?: boolean
+          p_kind?: string
+          p_organization_id: string
+          p_reason?: string
         }
         Returns: Json
       }
@@ -11922,6 +11981,10 @@ export type Database = {
       get_newsletter_author_bio: { Args: { p_user_id: string }; Returns: Json }
       get_notification_preferences: { Args: never; Returns: Json }
       get_org_branding_for_current_user: { Args: never; Returns: Json }
+      get_org_branding_for_hostname: {
+        Args: { p_hostname: string }
+        Returns: Json
+      }
       get_org_intervention_history: {
         Args: { p_intervention_id: string }
         Returns: {
