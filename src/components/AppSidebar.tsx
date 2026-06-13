@@ -195,11 +195,11 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const location = useLocation();
-  const { signOut } = useAuth();
+  const { signOut, user } = useAuth();
   const { profile } = useUserProfile();
   const { isCorp, isMentor, isSuperAdmin } = useAccountRole();
 
-  const { user } = useAuth();
+  const { membership: opsMembership } = useOpsMembership();
   const { membership: opsMembership } = useOpsMembership();
   const [opsModuleAccess, setOpsModuleAccess] = useState<{ crm: boolean; ops: boolean }>({ crm: false, ops: false });
 
