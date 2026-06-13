@@ -23,6 +23,7 @@ import { FileText, Save, RotateCcw } from "lucide-react";
 import CompanyMembersSection from "@/components/super-admin/CompanyMembersSection";
 import CompanyDepartmentsSection from "@/components/super-admin/CompanyDepartmentsSection";
 import CompanyInvitationsSection from "@/components/super-admin/CompanyInvitationsSection";
+import CompanyBrandingSection from "@/components/super-admin/CompanyBrandingSection";
 
 interface OrgUser {
   id: string;
@@ -131,6 +132,7 @@ export default function CompanyDetail() {
           <TabsTrigger value="departments">Departments</TabsTrigger>
           <TabsTrigger value="invitations">Invitations</TabsTrigger>
           <TabsTrigger value="contract">Contract & Features</TabsTrigger>
+          <TabsTrigger value="branding">Branding</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6 mt-6">
@@ -163,6 +165,10 @@ export default function CompanyDetail() {
             onError={(msg) => toast({ title: "Error", description: msg, variant: "destructive" })}
             onSuccess={(msg) => toast({ title: "Saved", description: msg })}
           />
+        </TabsContent>
+
+        <TabsContent value="branding" className="mt-6">
+          <CompanyBrandingSection orgId={orgId!} />
         </TabsContent>
       </Tabs>
     </div>
