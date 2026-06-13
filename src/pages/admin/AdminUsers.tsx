@@ -518,6 +518,10 @@ export default function AdminUsers() {
 
   const [reconciling, setReconciling] = useState(false);
 
+  const [accessRow, setAccessRow] = useState<{ id: string; email: string; full_name: string | null } | null>(null);
+  const [accessRole, setAccessRole] = useState<string>("read_only");
+  const [accessBusy, setAccessBusy] = useState(false);
+
   const [selectedUserIds, setSelectedUserIds] = useState<Set<string>>(new Set());
   const [bulkDeactivateDialog, setBulkDeactivateDialog] = useState<{
     open: boolean;
