@@ -23,6 +23,9 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2, AlertTriangle, X, Upload, Download, KeyRound, Search, UserX, UserCheck, Users2, RefreshCw, Briefcase, CheckCircle2 } from "lucide-react";
+import {
+  Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter,
+} from "@/components/ui/sheet";
 
 const ADD_DEPT_VALUE = "__add_department__";
 
@@ -515,6 +518,10 @@ export default function AdminUsers() {
 
   const [reconciling, setReconciling] = useState(false);
 
+  const [accessRow, setAccessRow] = useState<{ id: string; email: string; full_name: string | null } | null>(null);
+  const [accessRole, setAccessRole] = useState<string>("read_only");
+  const [accessBusy, setAccessBusy] = useState(false);
+
   const [selectedUserIds, setSelectedUserIds] = useState<Set<string>>(new Set());
   const [bulkDeactivateDialog, setBulkDeactivateDialog] = useState<{
     open: boolean;
@@ -638,6 +645,48 @@ export default function AdminUsers() {
       }>;
     },
   });
+
+  const opsUsersQuery = useQuery({
+    queryKey: ["admin-ops-users", orgId],
+    enabled: !!orgId,
+    queryFn: async () => {
+      const { data, error } = await (supabase.rpc as any)("ops_org_user_list");
+      if (error) return null;
+      const map: Record<string, { role: string; status: string }> = {};
+      for (const r of (data || []) as any[]) map[r.user_id] = { role: r.role, status: r.status };
+      return map;
+    },
+  });
+  const opsRoles = opsUsersQuery.data ?? null;
+
+  const openAccessDrawer = (u: { id: string; email: string; full_name: string | null }) => {
+    setAccessRow(u);
+    setAccessRole(opsRoles?.[u.id]?.role ?? "read_only");
+  };
+  const handleGrantAccess = async () => {
+    if (!accessRow) return;
+    setAccessBusy(true);
+    const { error } = await (supabase.rpc as any)("ops_grant_operations_access", {
+      p_user_id: accessRow.id, p_role: accessRole, p_platform_org_id: null,
+    });
+    setAccessBusy(false);
+    if (error) { toast({ title: "Grant failed", description: error.message, variant: "destructive" }); return; }
+    toast({ title: "Operations access granted" });
+    setAccessRow(null);
+    await qc.invalidateQueries({ queryKey: ["admin-ops-users", orgId] });
+  };
+  const handleRevokeAccess = async () => {
+    if (!accessRow) return;
+    setAccessBusy(true);
+    const { error } = await (supabase.rpc as any)("ops_revoke_operations_access", {
+      p_user_id: accessRow.id, p_platform_org_id: null,
+    });
+    setAccessBusy(false);
+    if (error) { toast({ title: "Revoke failed", description: error.message, variant: "destructive" }); return; }
+    toast({ title: "Operations access revoked" });
+    setAccessRow(null);
+    await qc.invalidateQueries({ queryKey: ["admin-ops-users", orgId] });
+  };
 
   const epnAssignmentsQuery = useQuery({
     queryKey: ["epn-assignments", orgId],
@@ -1716,6 +1765,16 @@ export default function AdminUsers() {
                                   <Users2 className="h-3.5 w-3.5 mr-1.5" />
                                   Change supervisor
                                 </Button>
+                                {opsRoles !== null && (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => openAccessDrawer({ id: u.id, email: u.email, full_name: u.full_name })}
+                                  >
+                                    <Briefcase className="h-3.5 w-3.5 mr-1.5" />
+                                    CRM & Ops
+                                  </Button>
+                                )}
                                 <Button variant="destructive" size="sm" onClick={() => openDeactivateDialog(u)}>
                                   <UserX className="h-3.5 w-3.5 mr-1.5" />
                                   Deactivate
@@ -2288,6 +2347,57 @@ export default function AdminUsers() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* ---- CRM & Operations access drawer ---- */}
+      <Sheet
+        open={!!accessRow}
+        onOpenChange={(o) => !accessBusy && !o && setAccessRow(null)}
+      >
+        <SheetContent className="flex flex-col gap-6">
+          <SheetHeader>
+            <SheetTitle>CRM & Operations access</SheetTitle>
+            <SheetDescription>
+              {accessRow ? (accessRow.full_name || accessRow.email) : ""}
+            </SheetDescription>
+          </SheetHeader>
+
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Current access:{" "}
+              {accessRow && opsRoles?.[accessRow.id]
+                ? `${opsRoles[accessRow.id].role} (${opsRoles[accessRow.id].status})`
+                : "none"}
+            </p>
+            <div className="space-y-2">
+              <Label>Role</Label>
+              <Select value={accessRole} onValueChange={setAccessRole}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="admin">Admin</SelectItem>
+                  <SelectItem value="sales_manager">Sales Manager</SelectItem>
+                  <SelectItem value="sales_user">Sales User</SelectItem>
+                  <SelectItem value="read_only">Read-only</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <SheetFooter className="mt-auto gap-2">
+            {accessRow && opsRoles?.[accessRow.id]?.status === "active" && (
+              <Button variant="destructive" onClick={handleRevokeAccess} disabled={accessBusy}>
+                {accessBusy && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                Revoke access
+              </Button>
+            )}
+            <Button onClick={handleGrantAccess} disabled={accessBusy}>
+              {accessBusy && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              {accessRow && opsRoles?.[accessRow.id] ? "Update role" : "Grant access"}
+            </Button>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
