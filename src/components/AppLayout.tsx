@@ -86,30 +86,51 @@ export default function AppLayout() {
           <header
             className="flex items-center px-4 gap-3"
             style={{
-              background: "var(--bw-navy)",
+              background: "hsl(var(--primary))",
               height: 56,
-              borderBottom: "1px solid var(--bw-navy-700)",
+              borderBottom: "1px solid hsl(var(--primary-foreground) / 0.15)",
+              color: "hsl(var(--primary-foreground))",
             }}
           >
-            <SidebarTrigger className="text-white hover:text-white/80" />
-            <img
-              src="/brain-icon.png"
-              alt="BrainWise Enterprises"
-              style={{ height: 28, width: 28 }}
-            />
-            <span
-              style={{
-                fontFamily: "'Poppins', sans-serif",
-                fontWeight: 800,
-                fontSize: 16,
-                color: "#ffffff",
-                letterSpacing: "-0.01em",
-                lineHeight: 1.1,
-                whiteSpace: "nowrap",
-              }}
-            >
-              BrainWise Enterprises
-            </span>
+            <SidebarTrigger className="hover:opacity-80" style={{ color: "hsl(var(--primary-foreground))" }} />
+            {branding.isDefault ? (
+              <>
+                <img src="/brain-icon.png" alt="BrainWise Enterprises" style={{ height: 28, width: 28 }} />
+                <span
+                  style={{
+                    fontFamily: "'Poppins', sans-serif",
+                    fontWeight: 800,
+                    fontSize: 16,
+                    color: "hsl(var(--primary-foreground))",
+                    letterSpacing: "-0.01em",
+                    lineHeight: 1.1,
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  BrainWise Enterprises
+                </span>
+              </>
+            ) : branding.logoUrl ? (
+              <img
+                src={branding.logoUrl}
+                alt={branding.orgName ?? "Organization"}
+                style={{ height: 32, width: "auto", maxWidth: 180, objectFit: "contain" }}
+              />
+            ) : (
+              <span
+                style={{
+                  fontFamily: "'Poppins', sans-serif",
+                  fontWeight: 800,
+                  fontSize: 16,
+                  color: "hsl(var(--primary-foreground))",
+                  letterSpacing: "-0.01em",
+                  lineHeight: 1.1,
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {branding.orgName}
+              </span>
+            )}
             <div className="ml-auto flex items-center">
               <NotificationBell />
             </div>
