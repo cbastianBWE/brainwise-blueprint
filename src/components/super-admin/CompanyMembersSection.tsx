@@ -24,8 +24,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
-  UserCog, UserPlus, Loader2, MoreHorizontal, UserMinus, UserCheck, Users, RefreshCw,
+  UserCog, UserPlus, Loader2, MoreHorizontal, UserMinus, UserCheck, Users, RefreshCw, Briefcase,
 } from "lucide-react";
+import {
+  Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter,
+} from "@/components/ui/sheet";
 
 const NONE_SUPERVISOR = "__none__";
 
