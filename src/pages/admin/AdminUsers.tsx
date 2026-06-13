@@ -1765,6 +1765,16 @@ export default function AdminUsers() {
                                   <Users2 className="h-3.5 w-3.5 mr-1.5" />
                                   Change supervisor
                                 </Button>
+                                {opsRoles !== null && (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => openAccessDrawer({ id: u.id, email: u.email, full_name: u.full_name })}
+                                  >
+                                    <Briefcase className="h-3.5 w-3.5 mr-1.5" />
+                                    CRM & Ops
+                                  </Button>
+                                )}
                                 <Button variant="destructive" size="sm" onClick={() => openDeactivateDialog(u)}>
                                   <UserX className="h-3.5 w-3.5 mr-1.5" />
                                   Deactivate
