@@ -22,7 +22,9 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, AlertTriangle, X, Upload, Download, KeyRound, Search, UserX, UserCheck, Users2, RefreshCw, Briefcase, CheckCircle2 } from "lucide-react";
+import { Loader2, AlertTriangle, X, Upload, Download, KeyRound, Search, UserX, UserCheck, Users2, RefreshCw, Briefcase, CheckCircle2, MoreHorizontal } from "lucide-react";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+import { useOrgInstrumentAccess, DASHBOARD_INSTRUMENT_UUIDS } from "@/hooks/useOrgInstrumentAccess";
 import {
   Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter,
 } from "@/components/ui/sheet";
@@ -465,6 +467,8 @@ export default function AdminUsers() {
   const { user } = useAuth();
   const { toast } = useToast();
   const qc = useQueryClient();
+  const { orgInstrumentIncluded } = useOrgInstrumentAccess();
+  const showEpn = orgInstrumentIncluded(DASHBOARD_INSTRUMENT_UUIDS.NAI);
 
   const [orgId, setOrgId] = useState<string | null | undefined>(undefined);
   const [email, setEmail] = useState("");
@@ -1321,11 +1325,14 @@ export default function AdminUsers() {
         <TabsList>
           <TabsTrigger value="invite">Invite</TabsTrigger>
           <TabsTrigger value="users">Users</TabsTrigger>
-          <TabsTrigger value="epn">
-            <Briefcase className="h-4 w-4 mr-1.5" />
-            Executive Perspective NAI
-          </TabsTrigger>
+          {showEpn && (
+            <TabsTrigger value="epn">
+              <Briefcase className="h-4 w-4 mr-1.5" />
+              Executive Perspective NAI
+            </TabsTrigger>
+          )}
         </TabsList>
+
 
         <TabsContent value="invite" className="space-y-6 max-w-5xl">
       <Card>
@@ -1748,37 +1755,35 @@ export default function AdminUsers() {
                                 </Button>
                               </div>
                             ) : (
-                              <div className="flex justify-end gap-2">
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => openResetDialog(u)}
-                                >
-                                  <KeyRound className="h-3.5 w-3.5 mr-1.5" />
-                                  Reset password
-                                </Button>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => openSupervisorDialog(u)}
-                                >
-                                  <Users2 className="h-3.5 w-3.5 mr-1.5" />
-                                  Change supervisor
-                                </Button>
-                                {opsRoles !== null && (
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => openAccessDrawer({ id: u.id, email: u.email, full_name: u.full_name })}
-                                  >
-                                    <Briefcase className="h-3.5 w-3.5 mr-1.5" />
-                                    CRM & Ops
-                                  </Button>
-                                )}
-                                <Button variant="destructive" size="sm" onClick={() => openDeactivateDialog(u)}>
-                                  <UserX className="h-3.5 w-3.5 mr-1.5" />
-                                  Deactivate
-                                </Button>
+                              <div className="flex justify-end">
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="icon">
+                                      <MoreHorizontal className="h-4 w-4" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end">
+                                    <DropdownMenuItem onClick={() => openResetDialog(u)}>
+                                      <KeyRound className="h-3.5 w-3.5 mr-2" />
+                                      Reset password
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => openSupervisorDialog(u)}>
+                                      <Users2 className="h-3.5 w-3.5 mr-2" />
+                                      Change supervisor
+                                    </DropdownMenuItem>
+                                    {opsRoles !== null && (
+                                      <DropdownMenuItem onClick={() => openAccessDrawer({ id: u.id, email: u.email, full_name: u.full_name })}>
+                                        <Briefcase className="h-3.5 w-3.5 mr-2" />
+                                        CRM & Operations access
+                                      </DropdownMenuItem>
+                                    )}
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem onClick={() => openDeactivateDialog(u)} className="text-destructive focus:text-destructive">
+                                      <UserX className="h-3.5 w-3.5 mr-2" />
+                                      Deactivate
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
                               </div>
                             )}
                           </TableCell>
@@ -1797,7 +1802,9 @@ export default function AdminUsers() {
       })()}
         </TabsContent>
 
+        {showEpn && (
         <TabsContent value="epn" className="space-y-6 max-w-5xl">
+
           {(() => {
             const allOrgUsers = orgUsersQuery.data || [];
             const eligible = allOrgUsers
@@ -2030,6 +2037,8 @@ export default function AdminUsers() {
             );
           })()}
         </TabsContent>
+        )}
+
       </Tabs>
 
       <Dialog open={deptDialogOpen} onOpenChange={(open) => !creatingDept && setDeptDialogOpen(open)}>
