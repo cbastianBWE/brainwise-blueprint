@@ -1,20 +1,68 @@
-## Create ModuleEntitlementsPanel
+# Open /operations to operations members (gated by membership + module entitlement)
 
-Create one new file: `src/components/super-admin/ModuleEntitlementsPanel.tsx`.
+Today every `/operations/*` route and the CRM + Operations sidebar sections are locked to super admins via `RoleGuard`. Backend already exposes `ops_my_membership()` and `user_has_feature(p_user, 'module:CRM' | 'module:OPERATIONS')`. This change moves frontend gating to: **must be an operations member AND have the corresponding module entitlement** (super admins keep access since they satisfy both checks).
 
-It's a self-contained super-admin panel that lets an admin turn platform modules on/off for a single principal (user or org). It mirrors the visual/structural pattern of `MemberDrawerAccess.tsx`: a list of rows with a Default/Allow/Block ToggleGroup and a confirmation Dialog requiring a reason (≥10 chars).
+## 1. New hook: `src/hooks/useOpsMembership.ts`
 
-### Behavior
-- Loads rows via `(supabase.rpc as any)("module_entitlement_admin_list", { p_principal_type, p_user_id, p_org_id })`.
-- For each module row shows: label, effective on/off badge, "Not enforced yet" badge when `!is_enforced`, and a sub-line describing current state (follows default / forced on / forced off).
-- Toggling opens a Dialog. On confirm:
-  - `allow` → `module_entitlement_grant` with `p_source: "manual_invoice"`, `p_ends_at: null`
-  - `block` → `module_entitlement_deny` with `p_ends_at: null`
-  - `default` → `module_entitlement_revoke`
-- All RPCs called via `(supabase.rpc as any)` cast (RPCs not yet in generated types), matching `MemberDrawerAccess.tsx`.
-- Calls `setHasUnsavedChanges?.(!!pending)` while a dialog is open.
+- Calls `supabase.rpc("ops_my_membership")` once per signed-in user.
+- Returns `{ membership, loading }` where `membership` is `{ org_id, role, org_name, stripe_collection_enabled } | null`.
+- Module-level cache keyed by `user.id` so the RPC fires once across all consumers; resets on user change/sign-out. No refetch per render.
 
-### Notes
-The pasted source had its JSX stripped by the chat renderer (empty `<div>` markup, missing tags around the rows/dialog body). I'll reconstruct the JSX faithfully from the intact logic + the visual pattern in `MemberDrawerAccess.tsx` — same shadcn components (Button, Label, Textarea, Skeleton, Badge, ToggleGroup/Item, Dialog*), same spacing, same toast usage, same Loader2 spinner. Logic, prop names, RPC names/arguments, and types are kept exactly as specified.
+## 2. New component: `src/components/OperationsGuard.tsx`
 
-No other files change.
+- Props: `{ module: "CRM" | "OPERATIONS"; children }`.
+- Renders `<SubscriptionGate feature={`module:${module}`}>` wrapping an inner membership check:
+  - `useOpsMembership()` loading → render `null`.
+  - `membership === null` → `toast.error("You don't have access to this workspace.")` + `<Navigate to="/dashboard" replace />`.
+  - Otherwise → render `children`.
+- Module entitlement enforcement + super-admin bypass are delegated entirely to `SubscriptionGate`.
+
+## 3. `src/App.tsx`
+
+- Add imports: `OperationsGuard`, and `Outlet` from `react-router-dom`.
+- Replace the ~43 individually-wrapped `/operations/*` routes (lines ~290–334, each `<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider>…`) with two pathless layout-route groups inside the existing `<ProtectedRoute><AppLayout/>` block:
+
+```text
+<Route element={<OperationsGuard module="CRM"><SuperAdminSessionProvider><Outlet/></SuperAdminSessionProvider></OperationsGuard>}>
+  pipeline, dashboard, leads, leads/:id, lead-capture,
+  accounts, accounts/:id, contacts, contacts/:id,
+  deals, deals/:id, campaigns, activities, email-templates, inbound
+</Route>
+
+<Route element={<OperationsGuard module="OPERATIONS"><SuperAdminSessionProvider><Outlet/></SuperAdminSessionProvider></OperationsGuard>}>
+  customers, customers/:id, my-time, items,
+  invoices(+new, /from-work, /:id/edit, /:id),
+  estimates(+new, /:id/edit, /:id),
+  retainers(+new, /:id),
+  credit-notes(+new, /:id),
+  recurring-expenses,
+  recurring-invoices(+new, /:id/edit, /:id),
+  projects/:id, reports, settings, import
+</Route>
+```
+
+- Every child route keeps its exact path and element component — only the wrapper changes.
+
+## 4. `src/components/AppSidebar.tsx`
+
+- Extract the CRM block (Pipeline → Inbound, currently starting at line 120) into `const crmNav`, with the `sectionHeader: "CRM"` preserved on its first item.
+- Extract the Operations block (Customers → Settings, currently starting at line 131) into `const operationsNav`, with `sectionHeader: "Operations"` on its first item.
+- Remove both blocks from `superAdminNav`.
+- In `AppSidebar()`:
+  - Call `useOpsMembership()`.
+  - When `membership` is non-null, run two `supabase.rpc("user_has_feature", { p_user, p_feature: "module:CRM" | "module:OPERATIONS" })` calls (stored in local state, fired once per user) to decide each section independently.
+  - Append `crmNav` to `navItems` when CRM is entitled; append `operationsNav` when OPERATIONS is entitled.
+  - When `membership` is null, neither section is shown.
+- All other nav sections (assessments, LMS, coach, admin, super admin) are untouched.
+
+## Out of scope (intentionally untouched)
+
+- Operations page components, their RPC calls.
+- Assessments / LMS / coach / admin nav and routes.
+- `/super-admin/*` routes.
+
+## Technical notes
+
+- `SubscriptionGate` already short-circuits to `<Navigate to="/dashboard" replace />` on denied module keys and resolves true for super admins via the `user_has_feature` RPC, so `OperationsGuard` only needs to add the membership-existence check.
+- Caching strategy for `useOpsMembership` and the sidebar `user_has_feature` results: module-level `Map<userId, Promise<…>>` to dedupe concurrent callers; invalidate on `user.id` change.
+- The two pathless layout groups must live inside the existing `<Route element={<ProtectedRoute><AppLayout/></ProtectedRoute>}>` parent so layout + auth wrapping is preserved.
