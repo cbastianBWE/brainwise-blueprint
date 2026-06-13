@@ -5739,6 +5739,7 @@ export type Database = {
         Row: {
           created_at: string
           default_enabled: boolean
+          is_enforced: boolean
           is_sellable: boolean
           label: string
           module: string
@@ -5746,6 +5747,7 @@ export type Database = {
         Insert: {
           created_at?: string
           default_enabled?: boolean
+          is_enforced?: boolean
           is_sellable?: boolean
           label: string
           module: string
@@ -5753,6 +5755,7 @@ export type Database = {
         Update: {
           created_at?: string
           default_enabled?: boolean
+          is_enforced?: boolean
           is_sellable?: boolean
           label?: string
           module?: string
@@ -12589,6 +12592,10 @@ export type Database = {
           p_decision: string
           p_submission_id: string
         }
+        Returns: Json
+      }
+      module_entitlement_admin_list: {
+        Args: { p_org_id: string; p_principal_type: string; p_user_id: string }
         Returns: Json
       }
       module_entitlement_deny: {
