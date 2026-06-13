@@ -677,6 +677,32 @@ export default function OperationsSettings() {
                 </div>
               </div>
 
+              <div className="space-y-4 border-t pt-6">
+                <div>
+                  <h3 className="text-sm font-medium">Invoice email</h3>
+                  <p className="text-muted-foreground text-xs">Controls how invoice emails appear to customers. The brand and accent colors above are applied to the email automatically.</p>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="f-sender_display_name">Email sender name</Label>
+                    <Input id="f-sender_display_name" value={form.sender_display_name ?? ""} onChange={(e) => setField("sender_display_name", e.target.value)} />
+                    <p className="text-muted-foreground text-xs">Shown as the sender and in the subject line of invoice emails. Defaults to your company name if left blank.</p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="f-reply_to_email">Reply-to email</Label>
+                    <Input id="f-reply_to_email" type="email" value={form.reply_to_email ?? ""} onChange={(e) => setField("reply_to_email", e.target.value)} />
+                    <p className="text-muted-foreground text-xs">Customer replies go to this address. Leave blank for no reply-to. Emails are always sent from the shared mail domain.</p>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="pr-4">
+                    <Label htmlFor="email-logo">Show logo in invoice emails</Label>
+                    <p className="text-muted-foreground text-xs">When on, your uploaded logo appears at the top of invoice emails. The PDF always includes the logo regardless of this setting.</p>
+                  </div>
+                  <Switch id="email-logo" checked={!!form.email_logo_enabled} onCheckedChange={(v) => setField("email_logo_enabled", v)} />
+                </div>
+              </div>
+
               <div className="flex justify-end">
                 <Button onClick={handleSave} disabled={saving}>
                   {saving ? "Saving…" : "Save branding"}
