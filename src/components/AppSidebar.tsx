@@ -12,6 +12,9 @@ import { useAuth } from "@/hooks/useAuth";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { useAccountRole } from "@/lib/accountRoles";
 import { useOrgInstrumentAccess, DASHBOARD_INSTRUMENT_UUIDS } from "@/hooks/useOrgInstrumentAccess";
+import { useOpsMembership } from "@/hooks/useOpsMembership";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
   Sidebar,
@@ -117,28 +120,34 @@ const superAdminNav: NavItem[] = [
   { title: "AI Chat", url: "/ai-chat", icon: MessageSquare },
   { title: "Chat History", url: "/ai-chat/history", icon: History },
   { title: "AI Research", url: "/super-admin/ai-research", icon: FlaskConical, disabled: true, badge: "Phase 2" },
- { title: "Pipeline", url: "/operations/pipeline", icon: GitBranch, sectionHeader: "CRM" },
- { title: "Dashboard", url: "/operations/dashboard", icon: LayoutDashboard },
- { title: "Leads", url: "/operations/leads", icon: UserPlus },
- { title: "Lead Capture", url: "/operations/lead-capture", icon: Webhook },
- { title: "Accounts", url: "/operations/accounts", icon: Building2 },
- { title: "Contacts", url: "/operations/contacts", icon: UsersRound },
- { title: "Deals", url: "/operations/deals", icon: Briefcase },
- { title: "Campaigns", url: "/operations/campaigns", icon: Megaphone },
-      { title: "Activity", url: "/operations/activities", icon: Activity },
-      { title: "Email Templates", url: "/operations/email-templates", icon: Mail },
-      { title: "Inbound", url: "/operations/inbound", icon: Inbox },
- { title: "Customers", url: "/operations/customers", icon: Users2, sectionHeader: "Operations" },
- { title: "My Time", url: "/operations/my-time", icon: Clock },
- { title: "Items", url: "/operations/items", icon: Library },
- { title: "Invoices", url: "/operations/invoices", icon: Receipt },
- { title: "Estimates", url: "/operations/estimates", icon: FileText },
- { title: "Retainers", url: "/operations/retainers", icon: Wallet },
-{ title: "Credit notes", url: "/operations/credit-notes", icon: FileMinus2 },
-{ title: "Recurring expenses", url: "/operations/recurring-expenses", icon: Repeat },
-{ title: "Recurring invoices", url: "/operations/recurring-invoices", icon: Repeat },
-{ title: "Reports", url: "/operations/reports", icon: BarChart3 },
-{ title: "Settings", url: "/operations/settings", icon: Settings },
+];
+
+const crmNav: NavItem[] = [
+  { title: "Pipeline", url: "/operations/pipeline", icon: GitBranch, sectionHeader: "CRM" },
+  { title: "Dashboard", url: "/operations/dashboard", icon: LayoutDashboard },
+  { title: "Leads", url: "/operations/leads", icon: UserPlus },
+  { title: "Lead Capture", url: "/operations/lead-capture", icon: Webhook },
+  { title: "Accounts", url: "/operations/accounts", icon: Building2 },
+  { title: "Contacts", url: "/operations/contacts", icon: UsersRound },
+  { title: "Deals", url: "/operations/deals", icon: Briefcase },
+  { title: "Campaigns", url: "/operations/campaigns", icon: Megaphone },
+  { title: "Activity", url: "/operations/activities", icon: Activity },
+  { title: "Email Templates", url: "/operations/email-templates", icon: Mail },
+  { title: "Inbound", url: "/operations/inbound", icon: Inbox },
+];
+
+const operationsNav: NavItem[] = [
+  { title: "Customers", url: "/operations/customers", icon: Users2, sectionHeader: "Operations" },
+  { title: "My Time", url: "/operations/my-time", icon: Clock },
+  { title: "Items", url: "/operations/items", icon: Library },
+  { title: "Invoices", url: "/operations/invoices", icon: Receipt },
+  { title: "Estimates", url: "/operations/estimates", icon: FileText },
+  { title: "Retainers", url: "/operations/retainers", icon: Wallet },
+  { title: "Credit notes", url: "/operations/credit-notes", icon: FileMinus2 },
+  { title: "Recurring expenses", url: "/operations/recurring-expenses", icon: Repeat },
+  { title: "Recurring invoices", url: "/operations/recurring-invoices", icon: Repeat },
+  { title: "Reports", url: "/operations/reports", icon: BarChart3 },
+  { title: "Settings", url: "/operations/settings", icon: Settings },
 ];
 
 function getNavItems(profile: { account_type?: string | null; is_practitioner_coach?: boolean } | null | undefined): NavItem[] {
@@ -186,22 +195,50 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const location = useLocation();
-  const { signOut } = useAuth();
+  const { signOut, user } = useAuth();
   const { profile } = useUserProfile();
   const { isCorp, isMentor, isSuperAdmin } = useAccountRole();
 
+  const { membership: opsMembership } = useOpsMembership();
+  const [opsModuleAccess, setOpsModuleAccess] = useState<{ crm: boolean; ops: boolean }>({ crm: false, ops: false });
+
+  useEffect(() => {
+    if (!user || !opsMembership) {
+      setOpsModuleAccess({ crm: false, ops: false });
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const [{ data: crm }, { data: ops }] = await Promise.all([
+        supabase.rpc("user_has_feature", { p_user: user.id, p_feature: "module:CRM" }),
+        supabase.rpc("user_has_feature", { p_user: user.id, p_feature: "module:OPERATIONS" }),
+      ]);
+      if (cancelled) return;
+      setOpsModuleAccess({ crm: !!crm, ops: !!ops });
+    })();
+    return () => { cancelled = true; };
+  }, [user, opsMembership]);
+
   const baseNavItems = getNavItems(profile);
   const navItems = (() => {
-    if (!(isMentor || isSuperAdmin)) return baseNavItems;
-    const clientsIdx = baseNavItems.findIndex((i) => i.url === "/coach/clients");
-    if (clientsIdx === -1) return baseNavItems;
-    const mentorItems: NavItem[] = [
-      { title: "Mentor Portal", url: "/mentor", icon: GraduationCap },
-      { title: "Feedback Templates", url: "/mentor/feedback-templates", icon: MessageSquare },
-    ];
-    const copy = [...baseNavItems];
-    copy.splice(clientsIdx + 1, 0, ...mentorItems);
-    return copy;
+    let items = baseNavItems;
+    if (isMentor || isSuperAdmin) {
+      const clientsIdx = items.findIndex((i) => i.url === "/coach/clients");
+      if (clientsIdx !== -1) {
+        const mentorItems: NavItem[] = [
+          { title: "Mentor Portal", url: "/mentor", icon: GraduationCap },
+          { title: "Feedback Templates", url: "/mentor/feedback-templates", icon: MessageSquare },
+        ];
+        const copy = [...items];
+        copy.splice(clientsIdx + 1, 0, ...mentorItems);
+        items = copy;
+      }
+    }
+    if (opsMembership) {
+      if (opsModuleAccess.crm) items = [...items, ...crmNav];
+      if (opsModuleAccess.ops) items = [...items, ...operationsNav];
+    }
+    return items;
   })();
   const isSettingsOpen = location.pathname.startsWith('/settings');
   const isClientsOpen = location.pathname.startsWith('/coach/clients') || location.pathname.startsWith('/coach/client-results');

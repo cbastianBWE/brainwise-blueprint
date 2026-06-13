@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Outlet, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -12,6 +12,7 @@ import SubscriptionGate from "@/components/SubscriptionGate";
 import CorpRedirect from "@/components/CorpRedirect";
 import { SuperAdminSessionProvider } from "@/hooks/useSuperAdminSession";
 import AppLayout from "@/components/AppLayout";
+import OperationsGuard from "@/components/OperationsGuard";
 import Home from "./pages/marketing/Home";
 import ComingSoon from "./pages/marketing/ComingSoon";
 import Privacy from "./pages/marketing/Privacy";
@@ -287,50 +288,56 @@ const App = () => (
               <Route path="/super-admin/content-authoring/lessons/:contentItemId" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><LessonBlocksEditor /></SuperAdminSessionProvider></RoleGuard>} />
               <Route path="/super-admin/content-authoring/quizzes/:contentItemId" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><QuizQuestionsEditor /></SuperAdminSessionProvider></RoleGuard>} />
 
-              {/* Operations (super-admin gated for now; refine later via operations.users membership) */}
-              <Route path="/operations/customers" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsCustomers /></SuperAdminSessionProvider></RoleGuard>} />
-              <Route path="/operations/customers/:id" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsCustomerDetail /></SuperAdminSessionProvider></RoleGuard>} />
-              <Route path="/operations/my-time" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsMyTime /></SuperAdminSessionProvider></RoleGuard>} />
-              <Route path="/operations/items" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsItems /></SuperAdminSessionProvider></RoleGuard>} />
-              <Route path="/operations/invoices" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsInvoices /></SuperAdminSessionProvider></RoleGuard>} />
-              <Route path="/operations/invoices/new" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><InvoiceForm /></SuperAdminSessionProvider></RoleGuard>} />
-              <Route path="/operations/invoices/from-work" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><InvoiceFromWork /></SuperAdminSessionProvider></RoleGuard>} />
-              <Route path="/operations/invoices/:id/edit" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><InvoiceForm /></SuperAdminSessionProvider></RoleGuard>} />
-              <Route path="/operations/invoices/:id" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsInvoiceDetail /></SuperAdminSessionProvider></RoleGuard>} />
-              <Route path="/operations/estimates" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsEstimates /></SuperAdminSessionProvider></RoleGuard>} />
-              <Route path="/operations/estimates/new" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><EstimateForm /></SuperAdminSessionProvider></RoleGuard>} />
-              <Route path="/operations/estimates/:id/edit" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><EstimateForm /></SuperAdminSessionProvider></RoleGuard>} />
-              <Route path="/operations/estimates/:id" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsEstimateDetail /></SuperAdminSessionProvider></RoleGuard>} />
-              <Route path="/operations/retainers" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsRetainers /></SuperAdminSessionProvider></RoleGuard>} />
-              <Route path="/operations/retainers/new" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><RetainerForm /></SuperAdminSessionProvider></RoleGuard>} />
-              <Route path="/operations/retainers/:id" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsRetainerDetail /></SuperAdminSessionProvider></RoleGuard>} />
-              <Route path="/operations/credit-notes" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsCreditNotes /></SuperAdminSessionProvider></RoleGuard>} />
-              <Route path="/operations/credit-notes/new" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><CreditNoteForm /></SuperAdminSessionProvider></RoleGuard>} />
-              <Route path="/operations/credit-notes/:id" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsCreditNoteDetail /></SuperAdminSessionProvider></RoleGuard>} />
-              <Route path="/operations/recurring-expenses" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsRecurringExpenses /></SuperAdminSessionProvider></RoleGuard>} />
-              <Route path="/operations/recurring-invoices" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsRecurringInvoices /></SuperAdminSessionProvider></RoleGuard>} />
-              <Route path="/operations/recurring-invoices/new" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><RecurringInvoiceForm /></SuperAdminSessionProvider></RoleGuard>} />
-              <Route path="/operations/recurring-invoices/:id/edit" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><RecurringInvoiceForm /></SuperAdminSessionProvider></RoleGuard>} />
-              <Route path="/operations/recurring-invoices/:id" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsRecurringInvoiceDetail /></SuperAdminSessionProvider></RoleGuard>} />
-              <Route path="/operations/projects/:id" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsProjectDetail /></SuperAdminSessionProvider></RoleGuard>} />
-              <Route path="/operations/dashboard" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsDashboard /></SuperAdminSessionProvider></RoleGuard>} />
-              <Route path="/operations/reports" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsReports /></SuperAdminSessionProvider></RoleGuard>} />
-              <Route path="/operations/settings" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsSettings /></SuperAdminSessionProvider></RoleGuard>} />
-              <Route path="/operations/import" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsImport /></SuperAdminSessionProvider></RoleGuard>} />
-              <Route path="/operations/leads" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsLeads /></SuperAdminSessionProvider></RoleGuard>} />
-              <Route path="/operations/leads/:id" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsLeadDetail /></SuperAdminSessionProvider></RoleGuard>} />
-              <Route path="/operations/lead-capture" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsLeadCapture /></SuperAdminSessionProvider></RoleGuard>} />
-              <Route path="/operations/accounts" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsAccounts /></SuperAdminSessionProvider></RoleGuard>} />
-              <Route path="/operations/accounts/:id" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsAccountDetail /></SuperAdminSessionProvider></RoleGuard>} />
-              <Route path="/operations/campaigns" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsCampaigns /></SuperAdminSessionProvider></RoleGuard>} />
-              <Route path="/operations/contacts" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsContacts /></SuperAdminSessionProvider></RoleGuard>} />
-              <Route path="/operations/contacts/:id" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsContactDetail /></SuperAdminSessionProvider></RoleGuard>} />
-              <Route path="/operations/deals" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsDeals /></SuperAdminSessionProvider></RoleGuard>} />
-              <Route path="/operations/deals/:id" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsDealDetail /></SuperAdminSessionProvider></RoleGuard>} />
-              <Route path="/operations/pipeline" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsPipeline /></SuperAdminSessionProvider></RoleGuard>} />
-              <Route path="/operations/activities" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsActivities /></SuperAdminSessionProvider></RoleGuard>} />
-              <Route path="/operations/email-templates" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsEmailTemplates /></SuperAdminSessionProvider></RoleGuard>} />
-              <Route path="/operations/inbound" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><OperationsInbound /></SuperAdminSessionProvider></RoleGuard>} />
+              {/* Operations - CRM module */}
+              <Route element={<OperationsGuard module="CRM"><SuperAdminSessionProvider><Outlet /></SuperAdminSessionProvider></OperationsGuard>}>
+                <Route path="/operations/pipeline" element={<OperationsPipeline />} />
+                <Route path="/operations/dashboard" element={<OperationsDashboard />} />
+                <Route path="/operations/leads" element={<OperationsLeads />} />
+                <Route path="/operations/leads/:id" element={<OperationsLeadDetail />} />
+                <Route path="/operations/lead-capture" element={<OperationsLeadCapture />} />
+                <Route path="/operations/accounts" element={<OperationsAccounts />} />
+                <Route path="/operations/accounts/:id" element={<OperationsAccountDetail />} />
+                <Route path="/operations/contacts" element={<OperationsContacts />} />
+                <Route path="/operations/contacts/:id" element={<OperationsContactDetail />} />
+                <Route path="/operations/deals" element={<OperationsDeals />} />
+                <Route path="/operations/deals/:id" element={<OperationsDealDetail />} />
+                <Route path="/operations/campaigns" element={<OperationsCampaigns />} />
+                <Route path="/operations/activities" element={<OperationsActivities />} />
+                <Route path="/operations/email-templates" element={<OperationsEmailTemplates />} />
+                <Route path="/operations/inbound" element={<OperationsInbound />} />
+              </Route>
+
+              {/* Operations - OPERATIONS module */}
+              <Route element={<OperationsGuard module="OPERATIONS"><SuperAdminSessionProvider><Outlet /></SuperAdminSessionProvider></OperationsGuard>}>
+                <Route path="/operations/customers" element={<OperationsCustomers />} />
+                <Route path="/operations/customers/:id" element={<OperationsCustomerDetail />} />
+                <Route path="/operations/my-time" element={<OperationsMyTime />} />
+                <Route path="/operations/items" element={<OperationsItems />} />
+                <Route path="/operations/invoices" element={<OperationsInvoices />} />
+                <Route path="/operations/invoices/new" element={<InvoiceForm />} />
+                <Route path="/operations/invoices/from-work" element={<InvoiceFromWork />} />
+                <Route path="/operations/invoices/:id/edit" element={<InvoiceForm />} />
+                <Route path="/operations/invoices/:id" element={<OperationsInvoiceDetail />} />
+                <Route path="/operations/estimates" element={<OperationsEstimates />} />
+                <Route path="/operations/estimates/new" element={<EstimateForm />} />
+                <Route path="/operations/estimates/:id/edit" element={<EstimateForm />} />
+                <Route path="/operations/estimates/:id" element={<OperationsEstimateDetail />} />
+                <Route path="/operations/retainers" element={<OperationsRetainers />} />
+                <Route path="/operations/retainers/new" element={<RetainerForm />} />
+                <Route path="/operations/retainers/:id" element={<OperationsRetainerDetail />} />
+                <Route path="/operations/credit-notes" element={<OperationsCreditNotes />} />
+                <Route path="/operations/credit-notes/new" element={<CreditNoteForm />} />
+                <Route path="/operations/credit-notes/:id" element={<OperationsCreditNoteDetail />} />
+                <Route path="/operations/recurring-expenses" element={<OperationsRecurringExpenses />} />
+                <Route path="/operations/recurring-invoices" element={<OperationsRecurringInvoices />} />
+                <Route path="/operations/recurring-invoices/new" element={<RecurringInvoiceForm />} />
+                <Route path="/operations/recurring-invoices/:id/edit" element={<RecurringInvoiceForm />} />
+                <Route path="/operations/recurring-invoices/:id" element={<OperationsRecurringInvoiceDetail />} />
+                <Route path="/operations/projects/:id" element={<OperationsProjectDetail />} />
+                <Route path="/operations/reports" element={<OperationsReports />} />
+                <Route path="/operations/settings" element={<OperationsSettings />} />
+                <Route path="/operations/import" element={<OperationsImport />} />
+              </Route>
             </Route>
 
             {/* Legacy redirects */}
