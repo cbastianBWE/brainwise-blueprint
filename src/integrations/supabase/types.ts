@@ -7489,6 +7489,9 @@ export type Database = {
       organizations: {
         Row: {
           admin_user_id: string | null
+          brand_accent_color: string | null
+          brand_logo_path: string | null
+          brand_primary_color: string | null
           created_at: string
           created_by_user_id: string | null
           id: string
@@ -7501,6 +7504,9 @@ export type Database = {
         }
         Insert: {
           admin_user_id?: string | null
+          brand_accent_color?: string | null
+          brand_logo_path?: string | null
+          brand_primary_color?: string | null
           created_at?: string
           created_by_user_id?: string | null
           id?: string
@@ -7513,6 +7519,9 @@ export type Database = {
         }
         Update: {
           admin_user_id?: string | null
+          brand_accent_color?: string | null
+          brand_logo_path?: string | null
+          brand_primary_color?: string | null
           created_at?: string
           created_by_user_id?: string | null
           id?: string
@@ -10963,6 +10972,16 @@ export type Database = {
         Args: { p_target_user_id: string }
         Returns: undefined
       }
+      admin_set_org_branding: {
+        Args: {
+          p_accent_color: string
+          p_logo_path: string
+          p_organization_id: string
+          p_primary_color: string
+          p_reason: string
+        }
+        Returns: Json
+      }
       ai_counter_check: {
         Args: { p_pool: string; p_user_id?: string }
         Returns: {
@@ -11902,6 +11921,7 @@ export type Database = {
       }
       get_newsletter_author_bio: { Args: { p_user_id: string }; Returns: Json }
       get_notification_preferences: { Args: never; Returns: Json }
+      get_org_branding_for_current_user: { Args: never; Returns: Json }
       get_org_intervention_history: {
         Args: { p_intervention_id: string }
         Returns: {
