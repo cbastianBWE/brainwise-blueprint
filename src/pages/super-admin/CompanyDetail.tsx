@@ -166,6 +166,10 @@ export default function CompanyDetail() {
             onSuccess={(msg) => toast({ title: "Saved", description: msg })}
           />
         </TabsContent>
+
+        <TabsContent value="branding" className="mt-6">
+          <CompanyBrandingSection orgId={orgId!} />
+        </TabsContent>
       </Tabs>
     </div>
   );
