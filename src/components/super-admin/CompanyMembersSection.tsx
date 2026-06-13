@@ -659,6 +659,68 @@ export default function CompanyMembersSection({ orgId }: { orgId: string }) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* ---- CRM & Operations access drawer ---- */}
+      <Sheet
+        open={!!accessRow}
+        onOpenChange={(o) => !accessBusy && !o && setAccessRow(null)}
+      >
+        <SheetContent className="flex flex-col gap-6">
+          <SheetHeader>
+            <SheetTitle>CRM & Operations access</SheetTitle>
+            <SheetDescription>
+              {accessRow ? displayName(accessRow) : ""}
+            </SheetDescription>
+          </SheetHeader>
+
+          {Object.keys(opsRoles).length === 0 ? (
+            <Alert>
+              <AlertDescription>
+                No operations workspace is provisioned for this organization yet. Provision it from the Modules tab first.
+              </AlertDescription>
+            </Alert>
+          ) : (
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Current access:{" "}
+                {accessRow && opsRoles[accessRow.id]
+                  ? `${opsRoles[accessRow.id].role} (${opsRoles[accessRow.id].status})`
+                  : "none"}
+              </p>
+              <div className="space-y-2">
+                <Label>Role</Label>
+                <Select value={accessRole} onValueChange={setAccessRole}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="admin">Admin</SelectItem>
+                    <SelectItem value="sales_manager">Sales Manager</SelectItem>
+                    <SelectItem value="sales_user">Sales User</SelectItem>
+                    <SelectItem value="read_only">Read-only</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
+
+          <SheetFooter className="mt-auto gap-2">
+            {accessRow && opsRoles[accessRow.id]?.status === "active" && (
+              <Button variant="destructive" onClick={handleRevokeAccess} disabled={accessBusy}>
+                {accessBusy && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                Revoke access
+              </Button>
+            )}
+            <Button
+              onClick={handleGrantAccess}
+              disabled={accessBusy || Object.keys(opsRoles).length === 0}
+            >
+              {accessBusy && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              {accessRow && opsRoles[accessRow.id] ? "Update role" : "Grant access"}
+            </Button>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
