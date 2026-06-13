@@ -13032,6 +13032,17 @@ export type Database = {
         }
         Returns: string
       }
+      ops_my_membership: { Args: never; Returns: Json }
+      ops_provision_customer_org: {
+        Args: {
+          p_admin_email: string
+          p_admin_full_name?: string
+          p_legal_name?: string
+          p_org_email?: string
+          p_org_name: string
+        }
+        Returns: Json
+      }
       ops_recompute_lead_score: { Args: { p_lead_id: string }; Returns: number }
       ops_record_calendar_link: {
         Args: { p_activity: string; p_output_format: string }
@@ -13129,6 +13140,10 @@ export type Database = {
         Returns: string
       }
       ops_stop_timer: { Args: { p_id?: string }; Returns: number }
+      ops_stripe_collection_enabled: {
+        Args: { p_org: string }
+        Returns: boolean
+      }
       ops_update_contact: {
         Args: { p_id: string; p_payload: Json }
         Returns: undefined
