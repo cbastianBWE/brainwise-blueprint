@@ -224,13 +224,13 @@ const App = () => (
               <Route path="/development-plan" element={<DevelopmentPlan />} />
               <Route path="/ai-chat" element={<SubscriptionGate feature="ai_chat"><AiChat /></SubscriptionGate>} />
               <Route path="/ai-chat/history" element={<SubscriptionGate feature="ai_chat"><AiChatHistory /></SubscriptionGate>} />
-              <Route path="/resources" element={<Resources />} />
-              <Route path="/my-learning" element={<MyLearning />} />
-              <Route path="/resources/:resourceId" element={<ResourceReader />} />
-              <Route path="/learning/cert-path/:certPathId" element={<CertPathDetail />} />
-              <Route path="/learning/curriculum/:curriculumId" element={<CurriculumDetail />} />
-              <Route path="/learning/module/:moduleId" element={<ModuleDetail />} />
-              <Route path="/learning/content-item/:contentItemId" element={<ContentItemViewer />} />
+              <Route path="/resources" element={<SubscriptionGate feature="module:LMS"><Resources /></SubscriptionGate>} />
+              <Route path="/my-learning" element={<SubscriptionGate feature="module:LMS"><MyLearning /></SubscriptionGate>} />
+              <Route path="/resources/:resourceId" element={<SubscriptionGate feature="module:LMS"><ResourceReader /></SubscriptionGate>} />
+              <Route path="/learning/cert-path/:certPathId" element={<SubscriptionGate feature="module:LMS"><CertPathDetail /></SubscriptionGate>} />
+              <Route path="/learning/curriculum/:curriculumId" element={<SubscriptionGate feature="module:LMS"><CurriculumDetail /></SubscriptionGate>} />
+              <Route path="/learning/module/:moduleId" element={<SubscriptionGate feature="module:LMS"><ModuleDetail /></SubscriptionGate>} />
+              <Route path="/learning/content-item/:contentItemId" element={<SubscriptionGate feature="module:LMS"><ContentItemViewer /></SubscriptionGate>} />
               
               <Route path="/settings" element={<SettingsPage />} />
               <Route path="/settings/privacy" element={<PrivacySettings />} />
