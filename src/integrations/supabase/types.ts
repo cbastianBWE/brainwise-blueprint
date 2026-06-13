@@ -5762,6 +5762,7 @@ export type Database = {
       module_entitlements: {
         Row: {
           created_at: string
+          effect: string
           ends_at: string | null
           granted_by: string | null
           id: string
@@ -5777,6 +5778,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          effect?: string
           ends_at?: string | null
           granted_by?: string | null
           id?: string
@@ -5792,6 +5794,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          effect?: string
           ends_at?: string | null
           granted_by?: string | null
           id?: string
@@ -11062,6 +11065,7 @@ export type Database = {
       }
       _module_entitlement_upsert: {
         Args: {
+          p_effect?: string
           p_ends_at: string
           p_granted_by: string
           p_module: string
@@ -12584,6 +12588,17 @@ export type Database = {
           p_comments?: string
           p_decision: string
           p_submission_id: string
+        }
+        Returns: Json
+      }
+      module_entitlement_deny: {
+        Args: {
+          p_ends_at: string
+          p_module: string
+          p_org_id: string
+          p_principal_type: string
+          p_reason: string
+          p_user_id: string
         }
         Returns: Json
       }
