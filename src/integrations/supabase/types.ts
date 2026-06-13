@@ -12915,6 +12915,14 @@ export type Database = {
       }
       ops_get_refundable_payment: { Args: { p_payment: string }; Returns: Json }
       ops_get_webhook_signing_info: { Args: { p_id: string }; Returns: Json }
+      ops_grant_operations_access: {
+        Args: {
+          p_platform_org_id?: string
+          p_role: "admin" | "sales_user" | "sales_manager" | "read_only"
+          p_user_id: string
+        }
+        Returns: Json
+      }
       ops_handle_stripe_checkout_payment: {
         Args: {
           p_amount: number
@@ -13035,6 +13043,11 @@ export type Database = {
         Returns: string
       }
       ops_my_membership: { Args: never; Returns: Json }
+      ops_org_user_admin_list: {
+        Args: { p_platform_org_id: string }
+        Returns: Json
+      }
+      ops_org_user_list: { Args: never; Returns: Json }
       ops_provision_customer_org: {
         Args: {
           p_admin_email: string
@@ -13042,6 +13055,7 @@ export type Database = {
           p_legal_name?: string
           p_org_email?: string
           p_org_name: string
+          p_platform_org_id?: string
         }
         Returns: Json
       }
@@ -13095,6 +13109,10 @@ export type Database = {
       }
       ops_render_invoice_reminder: {
         Args: { p_invoice: string; p_template_type?: string }
+        Returns: Json
+      }
+      ops_revoke_operations_access: {
+        Args: { p_platform_org_id?: string; p_user_id: string }
         Returns: Json
       }
       ops_rotate_webhook_secret: { Args: { p_id: string }; Returns: Json }
