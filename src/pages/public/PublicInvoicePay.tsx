@@ -122,7 +122,7 @@ function PaidContent({ doc, starting, errorMsg, onPay }: { doc: PublicDoc; start
   const currency = invoice.currency_code;
   const status = (invoice.status ?? "").toLowerCase();
   const balanceDue = Number(invoice.balance_due ?? 0);
-  const canPay = balanceDue > 0 && !PAID_TERMINAL.has(status);
+  const canPay = invoice.collects_payment === true && balanceDue > 0 && !PAID_TERMINAL.has(status);
   const fullyPaid = balanceDue <= 0 || status === "paid";
 
   return (
