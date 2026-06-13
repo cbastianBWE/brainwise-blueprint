@@ -1,13 +1,7 @@
-Cause: on first paint, `branding.isDefault` is `true` (initial state) before the RPC resolves, so the BrainWise wordmark renders for one frame and then swaps to the org branding.
+Replace `src/components/SubscriptionGate.tsx` with the provided version.
 
-Fix (scoped to `src/components/AppLayout.tsx` only):
+Change: module entitlement keys (`module:<MODULE>`) now resolve through the `user_has_feature` RPC for every principal (corporate, individual, coach), and this check runs **before** the bypass-role shortcut so coaches can be gated. Super admins still pass because the RPC always returns true for them.
 
-1. Add a `brandingLoaded` boolean to the `branding` state (initial `false`). Set it to `true` in every terminal path of the branding effect: no user, RPC error, `is_default`, and the success path. This way we know when it's safe to render either branch.
+All non-module behavior is unchanged: corporate contract checks via RPC, individual Stripe `subscription_status` gating, `ai_chat` credit bypass, and bypass roles for non-module keys.
 
-2. Also pull `loading` from `useAuth()` so we don't decide "no user → default" while auth is still restoring the session.
-
-3. In the header, gate the branding conditional:
-   - While `authLoading || !brandingLoaded`: render an invisible spacer (`<div style={{ height: 28 }} />`) in place of the logo/wordmark so layout height stays stable and nothing flashes.
-   - Once ready: render the existing default-vs-org conditional unchanged.
-
-`SidebarTrigger` and `NotificationBell` keep rendering immediately — only the branding slot is gated. No other file is touched.
+No other files modified.

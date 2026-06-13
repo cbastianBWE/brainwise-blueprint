@@ -9,12 +9,17 @@ import { toast } from "sonner";
 interface Props {
   children: ReactNode;
   /**
-   * Feature key to check for corporate users via user_has_feature RPC.
-   * Namespace matches user_has_feature: "ai_chat", "dashboard_access",
-   * or "instrument:<uuid>". If omitted, corp users pass through without
-   * a feature check (used on routes like /resources where corp access is
-   * unconditional but individuals still need an active Stripe sub).
-   * Has no effect on individuals (Stripe check) or bypass roles (always pass).
+   * Feature key checked via the user_has_feature RPC.
+   *
+   * Module entitlement keys ("module:<MODULE>") resolve through user_has_feature
+   * for EVERY principal (corporate, individual, coach), so a module can be turned
+   * on or off per principal. Super admins always resolve true in the RPC, so they
+   * keep full access. This is intentionally checked before the bypass-role
+   * shortcut so coaches can be gated too.
+   *
+   * Non-module keys keep prior behavior: corporate resolves via user_has_feature,
+   * individuals gate on Stripe subscription status (ai_chat allows a credit
+   * bypass), and bypass roles (super admin, coach) pass.
    */
   feature?: string;
 }
@@ -25,33 +30,42 @@ export default function SubscriptionGate({ children, feature }: Props) {
   const { user } = useAuth();
   const [featureCheck, setFeatureCheck] = useState<"pending" | "allowed" | "denied">("pending");
 
+  const isModuleFeature = !!feature && feature.startsWith("module:");
+  // Module keys always resolve via the RPC (every principal). Non-module keys
+  // use the RPC only for corporate users, as before.
+  const needsFeatureRpc = !!feature && (isModuleFeature || isCorp);
+
   useEffect(() => {
-    if (!isCorp || !feature || !user) return;
+    if (!needsFeatureRpc || !user) return;
 
     let cancelled = false;
+    setFeatureCheck("pending");
     (async () => {
       const { data, error } = await supabase.rpc("user_has_feature", {
         p_user: user.id,
         p_feature: feature,
       });
       if (cancelled) return;
-      if (error || !data) {
-        setFeatureCheck("denied");
-      } else {
-        setFeatureCheck("allowed");
-      }
+      setFeatureCheck(error || !data ? "denied" : "allowed");
     })();
 
     return () => { cancelled = true; };
-  }, [isCorp, feature, user]);
+  }, [needsFeatureRpc, feature, user]);
 
   if (roleLoading || profileLoading) return null;
-  if (isCorp && feature && featureCheck === "pending") return null;
+  if (needsFeatureRpc && featureCheck === "pending") return null;
 
-  // Bypass roles always pass
+  // Module entitlement keys: one rule for everyone. Checked before the bypass
+  // shortcut so coaches can be turned off too; super admins still pass via the RPC.
+  if (isModuleFeature) {
+    if (featureCheck === "allowed") return <>{children}</>;
+    toast.error("This module is not part of your plan.");
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  // Non-module behavior below is unchanged.
   if (isBypassAdmin) return <>{children}</>;
 
-  // Corp users
   if (isCorp) {
     if (!feature) return <>{children}</>;
     if (featureCheck === "allowed") return <>{children}</>;
@@ -59,7 +73,6 @@ export default function SubscriptionGate({ children, feature }: Props) {
     return <Navigate to="/dashboard" replace />;
   }
 
-  // Individual users: Stripe check, with credit-based bypass for ai_chat only
   if (isIndividual) {
     const isActive = profile?.subscription_status === "active";
     const credits = profile?.one_time_chat_credits ?? 0;
@@ -71,6 +84,5 @@ export default function SubscriptionGate({ children, feature }: Props) {
     return <>{children}</>;
   }
 
-  // Unknown role: deny
   return <Navigate to="/dashboard" replace />;
 }
