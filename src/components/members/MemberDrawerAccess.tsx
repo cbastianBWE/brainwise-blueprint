@@ -135,7 +135,13 @@ export default function MemberDrawerAccess({
   };
 
   return (
-    <div className="p-4 space-y-4">
+    <>
+      <ModuleEntitlementsPanel
+        principalType="user"
+        userId={userId}
+        setHasUnsavedChanges={setHasUnsavedChanges}
+      />
+      <div className="p-4 space-y-4">
       <div>
         <h3 className="text-sm font-semibold">Per-instrument access overrides</h3>
         <p className="text-xs text-muted-foreground">
