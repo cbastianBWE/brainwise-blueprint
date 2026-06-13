@@ -646,6 +646,48 @@ export default function AdminUsers() {
     },
   });
 
+  const opsUsersQuery = useQuery({
+    queryKey: ["admin-ops-users", orgId],
+    enabled: !!orgId,
+    queryFn: async () => {
+      const { data, error } = await (supabase.rpc as any)("ops_org_user_list");
+      if (error) return null;
+      const map: Record<string, { role: string; status: string }> = {};
+      for (const r of (data || []) as any[]) map[r.user_id] = { role: r.role, status: r.status };
+      return map;
+    },
+  });
+  const opsRoles = opsUsersQuery.data ?? null;
+
+  const openAccessDrawer = (u: { id: string; email: string; full_name: string | null }) => {
+    setAccessRow(u);
+    setAccessRole(opsRoles?.[u.id]?.role ?? "read_only");
+  };
+  const handleGrantAccess = async () => {
+    if (!accessRow) return;
+    setAccessBusy(true);
+    const { error } = await (supabase.rpc as any)("ops_grant_operations_access", {
+      p_user_id: accessRow.id, p_role: accessRole, p_platform_org_id: null,
+    });
+    setAccessBusy(false);
+    if (error) { toast({ title: "Grant failed", description: error.message, variant: "destructive" }); return; }
+    toast({ title: "Operations access granted" });
+    setAccessRow(null);
+    await qc.invalidateQueries({ queryKey: ["admin-ops-users", orgId] });
+  };
+  const handleRevokeAccess = async () => {
+    if (!accessRow) return;
+    setAccessBusy(true);
+    const { error } = await (supabase.rpc as any)("ops_revoke_operations_access", {
+      p_user_id: accessRow.id, p_platform_org_id: null,
+    });
+    setAccessBusy(false);
+    if (error) { toast({ title: "Revoke failed", description: error.message, variant: "destructive" }); return; }
+    toast({ title: "Operations access revoked" });
+    setAccessRow(null);
+    await qc.invalidateQueries({ queryKey: ["admin-ops-users", orgId] });
+  };
+
   const epnAssignmentsQuery = useQuery({
     queryKey: ["epn-assignments", orgId],
     enabled: !!orgId,
