@@ -24,8 +24,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
-  UserCog, UserPlus, Loader2, MoreHorizontal, UserMinus, UserCheck, Users, RefreshCw,
+  UserCog, UserPlus, Loader2, MoreHorizontal, UserMinus, UserCheck, Users, RefreshCw, Briefcase,
 } from "lucide-react";
+import {
+  Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter,
+} from "@/components/ui/sheet";
 
 const NONE_SUPERVISOR = "__none__";
 
@@ -81,6 +84,12 @@ export default function CompanyMembersSection({ orgId }: { orgId: string }) {
   // Supervisor dashboard toggle
   const [dashPending, setDashPending] = useState(false);
 
+  // Operations access drawer
+  const [opsRoles, setOpsRoles] = useState<Record<string, { role: string; status: string }>>({});
+  const [accessRow, setAccessRow] = useState<MemberRow | null>(null);
+  const [accessRole, setAccessRole] = useState<string>("read_only");
+  const [accessBusy, setAccessBusy] = useState(false);
+
   const load = useCallback(async () => {
     const [membersRes, contractRes] = await Promise.all([
       (supabase as any).from("admin_org_users_view").select("*").eq("organization_id", orgId),
@@ -104,6 +113,44 @@ export default function CompanyMembersSection({ orgId }: { orgId: string }) {
     setLoading(true);
     load();
   }, [load]);
+
+  const loadOpsRoles = useCallback(async () => {
+    const { data, error } = await (supabase.rpc as any)("ops_org_user_admin_list", { p_platform_org_id: orgId });
+    if (error) { setOpsRoles({}); return; }
+    const map: Record<string, { role: string; status: string }> = {};
+    for (const r of (data || []) as any[]) map[r.user_id] = { role: r.role, status: r.status };
+    setOpsRoles(map);
+  }, [orgId]);
+  useEffect(() => { loadOpsRoles(); }, [loadOpsRoles]);
+
+  const openAccessDrawer = (m: MemberRow) => {
+    setAccessRow(m);
+    setAccessRole(opsRoles[m.id]?.role ?? "read_only");
+  };
+  const handleGrantAccess = async () => {
+    if (!accessRow) return;
+    setAccessBusy(true);
+    const { error } = await (supabase.rpc as any)("ops_grant_operations_access", {
+      p_user_id: accessRow.id, p_role: accessRole, p_platform_org_id: orgId,
+    });
+    setAccessBusy(false);
+    if (error) { toast({ title: "Grant failed", description: error.message, variant: "destructive" }); return; }
+    toast({ title: "Operations access granted" });
+    setAccessRow(null);
+    await loadOpsRoles();
+  };
+  const handleRevokeAccess = async () => {
+    if (!accessRow) return;
+    setAccessBusy(true);
+    const { error } = await (supabase.rpc as any)("ops_revoke_operations_access", {
+      p_user_id: accessRow.id, p_platform_org_id: orgId,
+    });
+    setAccessBusy(false);
+    if (error) { toast({ title: "Revoke failed", description: error.message, variant: "destructive" }); return; }
+    toast({ title: "Operations access revoked" });
+    setAccessRow(null);
+    await loadOpsRoles();
+  };
 
   const currentOrgAdmin = useMemo(
     () => members.find((m) => m.account_type === "org_admin") || null,
@@ -416,6 +463,10 @@ export default function CompanyMembersSection({ orgId }: { orgId: string }) {
                               <UserCog className="h-4 w-4 mr-2" />
                               Assign / change supervisor
                             </DropdownMenuItem>
+                            <DropdownMenuItem onSelect={() => openAccessDrawer(m)}>
+                              <Briefcase className="h-4 w-4 mr-2" />
+                              CRM & Operations access
+                            </DropdownMenuItem>
                             {isActive ? (
                               <DropdownMenuItem
                                 onSelect={() => openDeactivateDialog(m)}
@@ -608,6 +659,68 @@ export default function CompanyMembersSection({ orgId }: { orgId: string }) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* ---- CRM & Operations access drawer ---- */}
+      <Sheet
+        open={!!accessRow}
+        onOpenChange={(o) => !accessBusy && !o && setAccessRow(null)}
+      >
+        <SheetContent className="flex flex-col gap-6">
+          <SheetHeader>
+            <SheetTitle>CRM & Operations access</SheetTitle>
+            <SheetDescription>
+              {accessRow ? displayName(accessRow) : ""}
+            </SheetDescription>
+          </SheetHeader>
+
+          {Object.keys(opsRoles).length === 0 ? (
+            <Alert>
+              <AlertDescription>
+                No operations workspace is provisioned for this organization yet. Provision it from the Modules tab first.
+              </AlertDescription>
+            </Alert>
+          ) : (
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Current access:{" "}
+                {accessRow && opsRoles[accessRow.id]
+                  ? `${opsRoles[accessRow.id].role} (${opsRoles[accessRow.id].status})`
+                  : "none"}
+              </p>
+              <div className="space-y-2">
+                <Label>Role</Label>
+                <Select value={accessRole} onValueChange={setAccessRole}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="admin">Admin</SelectItem>
+                    <SelectItem value="sales_manager">Sales Manager</SelectItem>
+                    <SelectItem value="sales_user">Sales User</SelectItem>
+                    <SelectItem value="read_only">Read-only</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
+
+          <SheetFooter className="mt-auto gap-2">
+            {accessRow && opsRoles[accessRow.id]?.status === "active" && (
+              <Button variant="destructive" onClick={handleRevokeAccess} disabled={accessBusy}>
+                {accessBusy && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                Revoke access
+              </Button>
+            )}
+            <Button
+              onClick={handleGrantAccess}
+              disabled={accessBusy || Object.keys(opsRoles).length === 0}
+            >
+              {accessBusy && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              {accessRow && opsRoles[accessRow.id] ? "Update role" : "Grant access"}
+            </Button>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
