@@ -467,6 +467,8 @@ export default function AdminUsers() {
   const { user } = useAuth();
   const { toast } = useToast();
   const qc = useQueryClient();
+  const { orgInstrumentIncluded } = useOrgInstrumentAccess();
+  const showEpn = orgInstrumentIncluded(DASHBOARD_INSTRUMENT_UUIDS.NAI);
 
   const [orgId, setOrgId] = useState<string | null | undefined>(undefined);
   const [email, setEmail] = useState("");
