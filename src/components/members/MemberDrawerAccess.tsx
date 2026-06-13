@@ -16,11 +16,14 @@ import {
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import ModuleEntitlementsPanel from "@/components/super-admin/ModuleEntitlementsPanel";
+import OperationsWorkspaceSection from "@/components/super-admin/OperationsWorkspaceSection";
 
 interface Props {
   userId: string;
   accountType: string | null;
   organizationId: string | null;
+  email: string | null;
+  fullName: string | null;
   setHasUnsavedChanges: (v: boolean) => void;
 }
 
