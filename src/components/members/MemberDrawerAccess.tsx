@@ -146,6 +146,12 @@ export default function MemberDrawerAccess({
         userId={userId}
         setHasUnsavedChanges={setHasUnsavedChanges}
       />
+      <OperationsWorkspaceSection
+        mode="user"
+        adminUserId={userId}
+        adminEmail={email}
+        defaultWorkspaceName={`${(fullName ?? email ?? "User")} Workspace`}
+      />
       <div className="p-4 space-y-4">
       <div>
         <h3 className="text-sm font-semibold">Per-instrument access overrides</h3>
