@@ -463,6 +463,10 @@ export default function CompanyMembersSection({ orgId }: { orgId: string }) {
                               <UserCog className="h-4 w-4 mr-2" />
                               Assign / change supervisor
                             </DropdownMenuItem>
+                            <DropdownMenuItem onSelect={() => openAccessDrawer(m)}>
+                              <Briefcase className="h-4 w-4 mr-2" />
+                              CRM & Operations access
+                            </DropdownMenuItem>
                             {isActive ? (
                               <DropdownMenuItem
                                 onSelect={() => openDeactivateDialog(m)}
