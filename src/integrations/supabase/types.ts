@@ -5735,6 +5735,178 @@ export type Database = {
           },
         ]
       }
+      module_definitions: {
+        Row: {
+          created_at: string
+          default_enabled: boolean
+          is_sellable: boolean
+          label: string
+          module: string
+        }
+        Insert: {
+          created_at?: string
+          default_enabled?: boolean
+          is_sellable?: boolean
+          label: string
+          module: string
+        }
+        Update: {
+          created_at?: string
+          default_enabled?: boolean
+          is_sellable?: boolean
+          label?: string
+          module?: string
+        }
+        Relationships: []
+      }
+      module_entitlements: {
+        Row: {
+          created_at: string
+          ends_at: string | null
+          granted_by: string | null
+          id: string
+          module: string
+          org_id: string | null
+          principal_type: string
+          revoked_at: string | null
+          source: string
+          source_ref: string | null
+          starts_at: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          ends_at?: string | null
+          granted_by?: string | null
+          id?: string
+          module: string
+          org_id?: string | null
+          principal_type: string
+          revoked_at?: string | null
+          source: string
+          source_ref?: string | null
+          starts_at?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          ends_at?: string | null
+          granted_by?: string | null
+          id?: string
+          module?: string
+          org_id?: string | null
+          principal_type?: string
+          revoked_at?: string | null
+          source?: string
+          source_ref?: string | null
+          starts_at?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "module_entitlements_granted_by_fkey"
+            columns: ["granted_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "module_entitlements_granted_by_fkey"
+            columns: ["granted_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "module_entitlements_granted_by_fkey"
+            columns: ["granted_by"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "module_entitlements_granted_by_fkey"
+            columns: ["granted_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "module_entitlements_module_fkey"
+            columns: ["module"]
+            isOneToOne: false
+            referencedRelation: "module_definitions"
+            referencedColumns: ["module"]
+          },
+          {
+            foreignKeyName: "module_entitlements_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "module_entitlements_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "module_entitlements_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "module_entitlements_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "module_entitlements_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      module_subscription_prices: {
+        Row: {
+          created_at: string
+          grant_kind: string
+          module: string
+          stripe_price_id: string
+        }
+        Insert: {
+          created_at?: string
+          grant_kind?: string
+          module: string
+          stripe_price_id: string
+        }
+        Update: {
+          created_at?: string
+          grant_kind?: string
+          module?: string
+          stripe_price_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "module_subscription_prices_module_fkey"
+            columns: ["module"]
+            isOneToOne: false
+            referencedRelation: "module_definitions"
+            referencedColumns: ["module"]
+          },
+        ]
+      }
       modules: {
         Row: {
           archived_at: string | null
@@ -10888,6 +11060,19 @@ export type Database = {
         Args: { p_module_id: string; p_user_id: string }
         Returns: string
       }
+      _module_entitlement_upsert: {
+        Args: {
+          p_ends_at: string
+          p_granted_by: string
+          p_module: string
+          p_org_id: string
+          p_principal_type: string
+          p_source: string
+          p_source_ref: string
+          p_user_id: string
+        }
+        Returns: string
+      }
       _ops_emit_from_sel: {
         Args: {
           p_detail: string
@@ -11194,6 +11379,7 @@ export type Database = {
           status: string
         }[]
       }
+      assert_module_entitled: { Args: { p_module: string }; Returns: undefined }
       assert_super_admin: { Args: never; Returns: undefined }
       assign_curriculum_bulk: {
         Args: {
@@ -12401,6 +12587,28 @@ export type Database = {
         }
         Returns: Json
       }
+      module_entitlement_grant: {
+        Args: {
+          p_ends_at: string
+          p_module: string
+          p_org_id: string
+          p_principal_type: string
+          p_reason: string
+          p_source: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
+      module_entitlement_revoke: {
+        Args: {
+          p_module: string
+          p_org_id: string
+          p_principal_type: string
+          p_reason: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
       my_access_history: {
         Args: { p_limit?: number; p_offset?: number }
         Returns: {
@@ -13008,6 +13216,10 @@ export type Database = {
       preview_article_as_viewer_class: {
         Args: { p_article_id: string; p_viewer_class: string }
         Returns: Json
+      }
+      principal_has_module: {
+        Args: { p_module: string; p_user: string }
+        Returns: boolean
       }
       process_due_scheduled_articles: { Args: never; Returns: Json }
       process_due_scheduled_assignments: { Args: never; Returns: Json }
