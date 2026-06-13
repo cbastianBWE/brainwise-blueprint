@@ -1325,11 +1325,14 @@ export default function AdminUsers() {
         <TabsList>
           <TabsTrigger value="invite">Invite</TabsTrigger>
           <TabsTrigger value="users">Users</TabsTrigger>
-          <TabsTrigger value="epn">
-            <Briefcase className="h-4 w-4 mr-1.5" />
-            Executive Perspective NAI
-          </TabsTrigger>
+          {showEpn && (
+            <TabsTrigger value="epn">
+              <Briefcase className="h-4 w-4 mr-1.5" />
+              Executive Perspective NAI
+            </TabsTrigger>
+          )}
         </TabsList>
+
 
         <TabsContent value="invite" className="space-y-6 max-w-5xl">
       <Card>
