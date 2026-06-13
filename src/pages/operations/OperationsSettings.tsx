@@ -91,6 +91,7 @@ export default function OperationsSettings() {
     legal_name: "", email: "", phone: "", website: "", tax_id: "",
     brand_color: "#021F36", accent_color: "#F5741A", logo_url: "",
     address: {} as Address,
+    sender_display_name: "", reply_to_email: "", email_logo_enabled: false,
   });
 
   const orgQ = useQuery({
