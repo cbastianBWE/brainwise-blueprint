@@ -147,6 +147,7 @@ export function Stage2Outline(props: Props) {
                   <div key={item.id}>
                     <OutlineCard
                       item={item}
+                      contentItemId={contentItemId}
                       onUpdate={(p) => updateItem(item.id, p)}
                       onDelete={() => deleteItem(item.id)}
                       onIterate={() => openIterate(item)}
