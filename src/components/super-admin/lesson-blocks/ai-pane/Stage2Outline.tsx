@@ -342,6 +342,13 @@ function OutlineCard(props: {
               {item.learning_objective_fragment || <span className="italic">(no objective)</span>}
             </p>
           )}
+          {item.block_type === "image" && (
+            <ImageResolutionSection
+              item={item}
+              contentItemId={contentItemId}
+              onUpdate={onUpdate}
+            />
+          )}
         </div>
         <div className="flex flex-col gap-1">
           <Button size="sm" variant="ghost" onClick={onIterate} className="h-7 px-2 text-xs">
