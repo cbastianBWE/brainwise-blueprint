@@ -17,6 +17,7 @@ interface ImageBlockValue {
   alt: string;
   caption: string | null;
   attribution: string | null;
+  [key: string]: unknown;
 }
 
 interface PexelsCandidate {
