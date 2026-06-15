@@ -22,20 +22,10 @@ const Onboarding = () => {
   const [loading, setLoading] = useState(false);
   const [checking, setChecking] = useState(true);
 
-  // Re-onboarding guard: already-onboarded users should never see the picker.
-  if (user && accountTypeLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-      </div>
-    );
-  }
-  if (existingAccountType && existingAccountType.length > 0) {
-    return <Navigate to="/" replace />;
-  }
+  const alreadyOnboarded = !!(existingAccountType && existingAccountType.length > 0);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || accountTypeLoading || alreadyOnboarded) return;
     (async () => {
       // Coach client auto-link takes precedence
       const { data } = await supabase
@@ -58,7 +48,7 @@ const Onboarding = () => {
       setChecking(false);
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
+  }, [user, accountTypeLoading, alreadyOnboarded]);
 
   const callSetAccountType = async (body: Record<string, unknown>) => {
     const { data: sessionData } = await supabase.auth.getSession();
@@ -148,6 +138,19 @@ const Onboarding = () => {
       setInviteCode("");
     }
   };
+
+  // Re-onboarding guard: already-onboarded users should never see the picker.
+  // Placed AFTER all hooks so hook order is stable on every render (fixes React #310).
+  if (user && accountTypeLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+      </div>
+    );
+  }
+  if (alreadyOnboarded) {
+    return <Navigate to="/" replace />;
+  }
 
   if (checking) {
     return (
