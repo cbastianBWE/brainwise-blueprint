@@ -24,6 +24,11 @@ interface Props {
   assetUrlMap: Map<string, string>;
   lengthPreference: LengthLevel;
   onLengthChange: (next: LengthLevel) => void;
+  outlineItemCount: number;
+  builtCount: number;
+  nextBatchCount: number;
+  onBuildNext: () => void;
+  buildingBatch: boolean;
 }
 
 export function Stage3FullContent(props: Props) {
@@ -45,6 +50,11 @@ export function Stage3FullContent(props: Props) {
     assetUrlMap,
     lengthPreference,
     onLengthChange,
+    outlineItemCount,
+    builtCount,
+    nextBatchCount,
+    onBuildNext,
+    buildingBatch,
   } = props;
 
   const [iterationOpen, setIterationOpen] = useState(false);
@@ -65,7 +75,7 @@ export function Stage3FullContent(props: Props) {
   return (
     <div className="flex flex-1 min-h-0 flex-col">
       <div className="border-b p-3 text-sm text-muted-foreground">
-        Review each block. Click any block to iterate it. When done, build the lesson.
+        Sections {builtCount} of {outlineItemCount} built. Review or iterate below.
       </div>
 
       <div className="flex-1 overflow-y-auto p-3">
@@ -112,21 +122,46 @@ export function Stage3FullContent(props: Props) {
       </div>
 
       <div className="space-y-2 border-t p-3">
+        {builtCount < outlineItemCount && (
+          <Button
+            variant="outline"
+            className="w-full"
+            onClick={onBuildNext}
+            disabled={buildingBatch}
+          >
+            {buildingBatch ? (
+              <>
+                <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+                Building…
+              </>
+            ) : (
+              <>Build next {nextBatchCount} section{nextBatchCount === 1 ? "" : "s"}</>
+            )}
+          </Button>
+        )}
         <div className="flex flex-wrap items-center gap-2">
-          <Button variant="ghost" onClick={onBack} disabled={building}>
+          <Button variant="ghost" onClick={onBack} disabled={building || buildingBatch}>
             <ArrowLeft className="mr-1 h-4 w-4" />
             Back to outline
           </Button>
           <Button
             className="flex-1 shadow-cta"
             onClick={onBuild}
-            disabled={building || blocks.length === 0}
+            disabled={
+              building ||
+              buildingBatch ||
+              blocks.length === 0 ||
+              builtCount < outlineItemCount
+            }
             style={{ backgroundColor: "#F5741A", color: "white" }}
           >
             {building ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Sparkles className="mr-1 h-4 w-4" />}
             Build lesson
           </Button>
         </div>
+        {builtCount < outlineItemCount && (
+          <p className="text-xs text-muted-foreground">Build all sections first.</p>
+        )}
         <Button
           variant="ghost"
           size="sm"

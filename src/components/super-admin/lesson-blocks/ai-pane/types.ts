@@ -9,6 +9,14 @@ export type OutlineItem = {
   block_type: string;
   summary_one_line: string;
   learning_objective_fragment: string;
+  // Image resolution — only meaningful when block_type === "image". Persists in outline state JSON.
+  image_query?: string | null;
+  image_resolved?: {
+    asset_id: string;
+    attribution: string;
+    thumb_url: string;
+  } | null;
+  image_skipped?: boolean;
 };
 
 export type OutlineState = { items: OutlineItem[] };
