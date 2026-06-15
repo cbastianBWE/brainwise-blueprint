@@ -1105,3 +1105,11 @@
     max-width: 7.5rem;
   }
 }
+
+.bw-image-attribution {
+  text-align: center;
+  font-size: 0.6875rem;
+  font-style: italic;
+  color: var(--muted-foreground, #6D6875);
+  margin-top: 0.25rem;
+}

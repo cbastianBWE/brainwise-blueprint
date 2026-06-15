@@ -138,11 +138,13 @@ function ImageRender({
   assetId,
   alt,
   caption,
+  attribution,
   urlMap,
 }: {
   assetId: string | null;
   alt: string;
   caption: string | null;
+  attribution?: string | null;
   urlMap: Map<string, string>;
 }) {
   const url = assetId ? urlMap.get(assetId) : null;
@@ -165,6 +167,9 @@ function ImageRender({
         <figcaption className="text-center text-xs text-muted-foreground">
           {caption}
         </figcaption>
+      )}
+      {attribution && (
+        <div className="bw-image-attribution">{attribution}</div>
       )}
     </figure>
   );
@@ -374,6 +379,7 @@ export function BlockRenderer({ block, assetUrlMap, mode, onBlockComplete, saved
             assetId={cfg.asset_id ?? null}
             alt={cfg.alt ?? ""}
             caption={cfg.caption ?? null}
+            attribution={cfg.attribution ?? null}
             urlMap={assetUrlMap}
           />
         );
