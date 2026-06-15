@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   DndContext,
   PointerSensor,
@@ -7,6 +7,9 @@ import {
   useSensors,
   type DragEndEvent,
 } from "@dnd-kit/core";
+import { supabase } from "@/integrations/supabase/client";
+import { Input } from "@/components/ui/input";
+import { mapAiError } from "./mapAiError";
 import {
   SortableContext,
   arrayMove,
