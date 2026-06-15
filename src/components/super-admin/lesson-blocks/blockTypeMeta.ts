@@ -84,7 +84,7 @@ export const BLOCK_TYPE_META: Record<
     label: "Image",
     description: "Upload an image",
     icon: ImageIcon,
-    defaultConfig: () => ({ asset_id: null, alt: "", caption: null, background_color: null, padding: "none" }),
+    defaultConfig: () => ({ asset_id: null, alt: "", caption: null, attribution: null, background_color: null, padding: "none" }),
   },
   video_embed: {
     label: "Video",
