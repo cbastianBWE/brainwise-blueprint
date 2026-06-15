@@ -285,54 +285,104 @@ export function AiPane(props: Props) {
     }
   };
 
+  const batchSize =
+    lengthPreference === "detailed" ? 5 : lengthPreference === "concise" ? 10 : 7;
+
+  const buildNextBatch = useCallback(
+    async (startIndexArg?: number) => {
+      if (!outlineState) return;
+      const total = outlineState.items.length;
+      const startIndex =
+        startIndexArg ??
+        (((): number => {
+          // Read latest from state via functional update is preferable, but blocks length is fine here.
+          return fullContentState?.blocks.length ?? 0;
+        })());
+      if (startIndex >= total) return;
+      const count = Math.min(batchSize, total - startIndex);
+      setBuildingBatch(true);
+      try {
+        const driftNote = driftNoteRef.current;
+        driftNoteRef.current = null;
+        const messagesForCall = driftNote
+          ? [
+              ...messages,
+              { role: "user" as const, content: `Note: ${driftNote}` },
+            ]
+          : messages;
+        const { data, error } = await supabase.functions.invoke("expand-lesson-from-outline", {
+          body: {
+            content_item_id: contentItemId,
+            messages: messagesForCall.map((m) => ({ role: m.role, content: m.content })),
+            attached_document_ids: attachedDocuments.map((d) => d.out_id),
+            voice_preset_key: voicePresetKey ?? undefined,
+            custom_voice_guidance: customVoiceGuidance || undefined,
+            custom_voice_example: customVoiceExample || undefined,
+            mode,
+            length: lengthPreference,
+            outline: outlineState.items.map((i) => ({
+              block_type: i.block_type,
+              summary_one_line: i.summary_one_line,
+              learning_objective_fragment: i.learning_objective_fragment,
+            })),
+            generate_start_index: startIndex,
+            generate_count: count,
+            canvas_block_summary: canvasBlockSummary,
+          },
+        });
+        if (error) throw error;
+        const blocksOut = ((data as any)?.blocks ?? []) as Array<{
+          block_type: string;
+          config: Record<string, unknown>;
+        }>;
+        const newItems: FullContentItem[] = blocksOut.map((b, j) => {
+          const outlineItem = outlineState.items[startIndex + j];
+          let config = b.config;
+          if (outlineItem?.block_type === "image" && outlineItem.image_resolved) {
+            config = {
+              ...config,
+              asset_id: outlineItem.image_resolved.asset_id,
+              attribution: outlineItem.image_resolved.attribution,
+            };
+          }
+          return {
+            id: outlineItem?.id ?? crypto.randomUUID(),
+            block_type: b.block_type,
+            config,
+          };
+        });
+        setFullContentState((prev) => ({ blocks: [...(prev?.blocks ?? []), ...newItems] }));
+      } catch (e) {
+        const info = mapAiError(e);
+        toast({ title: info.title, description: info.message, variant: "destructive" });
+      } finally {
+        setBuildingBatch(false);
+      }
+    },
+    [
+      outlineState,
+      fullContentState,
+      batchSize,
+      messages,
+      attachedDocuments,
+      voicePresetKey,
+      customVoiceGuidance,
+      customVoiceExample,
+      mode,
+      lengthPreference,
+      canvasBlockSummary,
+      contentItemId,
+      toast,
+    ],
+  );
+
   const handleApproveOutline = async () => {
     if (!outlineState) return;
     setLoadingExpand(true);
     try {
-      const driftNote = driftNoteRef.current;
-      driftNoteRef.current = null;
-      const messagesForCall = driftNote
-        ? [
-            ...messages,
-            {
-              role: "user" as const,
-              content: `Note: ${driftNote}`,
-            },
-          ]
-        : messages;
-      const { data, error } = await supabase.functions.invoke("expand-lesson-from-outline", {
-        body: {
-          content_item_id: contentItemId,
-          messages: messagesForCall.map((m) => ({ role: m.role, content: m.content })),
-          attached_document_ids: attachedDocuments.map((d) => d.out_id),
-          voice_preset_key: voicePresetKey ?? undefined,
-          custom_voice_guidance: customVoiceGuidance || undefined,
-          custom_voice_example: customVoiceExample || undefined,
-          mode,
-          length: lengthPreference,
-          outline: outlineState.items.map((i) => ({
-            block_type: i.block_type,
-            summary_one_line: i.summary_one_line,
-            learning_objective_fragment: i.learning_objective_fragment,
-          })),
-          canvas_block_summary: canvasBlockSummary,
-        },
-      });
-      if (error) throw error;
-      const blocksOut = ((data as any)?.blocks ?? []) as Array<{
-        block_type: string;
-        config: Record<string, unknown>;
-      }>;
-      const items: FullContentItem[] = blocksOut.map((b, idx) => ({
-        id: outlineState.items[idx]?.id ?? crypto.randomUUID(),
-        block_type: b.block_type,
-        config: b.config,
-      }));
-      setFullContentState({ blocks: items });
+      setFullContentState({ blocks: [] });
       setStage("full_content");
-    } catch (e) {
-      const info = mapAiError(e);
-      toast({ title: info.title, description: info.message, variant: "destructive" });
+      await buildNextBatch(0);
     } finally {
       setLoadingExpand(false);
     }
