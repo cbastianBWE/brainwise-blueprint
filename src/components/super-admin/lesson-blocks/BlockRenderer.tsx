@@ -379,6 +379,7 @@ export function BlockRenderer({ block, assetUrlMap, mode, onBlockComplete, saved
             assetId={cfg.asset_id ?? null}
             alt={cfg.alt ?? ""}
             caption={cfg.caption ?? null}
+            attribution={cfg.attribution ?? null}
             urlMap={assetUrlMap}
           />
         );
