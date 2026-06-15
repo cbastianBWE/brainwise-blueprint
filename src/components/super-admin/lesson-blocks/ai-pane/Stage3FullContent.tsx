@@ -122,21 +122,46 @@ export function Stage3FullContent(props: Props) {
       </div>
 
       <div className="space-y-2 border-t p-3">
+        {builtCount < outlineItemCount && (
+          <Button
+            variant="outline"
+            className="w-full"
+            onClick={onBuildNext}
+            disabled={buildingBatch}
+          >
+            {buildingBatch ? (
+              <>
+                <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+                Building…
+              </>
+            ) : (
+              <>Build next {nextBatchCount} section{nextBatchCount === 1 ? "" : "s"}</>
+            )}
+          </Button>
+        )}
         <div className="flex flex-wrap items-center gap-2">
-          <Button variant="ghost" onClick={onBack} disabled={building}>
+          <Button variant="ghost" onClick={onBack} disabled={building || buildingBatch}>
             <ArrowLeft className="mr-1 h-4 w-4" />
             Back to outline
           </Button>
           <Button
             className="flex-1 shadow-cta"
             onClick={onBuild}
-            disabled={building || blocks.length === 0}
+            disabled={
+              building ||
+              buildingBatch ||
+              blocks.length === 0 ||
+              builtCount < outlineItemCount
+            }
             style={{ backgroundColor: "#F5741A", color: "white" }}
           >
             {building ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Sparkles className="mr-1 h-4 w-4" />}
             Build lesson
           </Button>
         </div>
+        {builtCount < outlineItemCount && (
+          <p className="text-xs text-muted-foreground">Build all sections first.</p>
+        )}
         <Button
           variant="ghost"
           size="sm"
