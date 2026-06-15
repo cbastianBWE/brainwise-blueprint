@@ -51,6 +51,20 @@ type ModuleOption = {
   curriculumLabel: string;
 };
 
+type CurriculumOption = { id: string; name: string };
+
+function slugify(name: string) {
+  const base =
+    name
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 60) || "module";
+  const suffix = Math.random().toString(16).slice(2, 8);
+  return `${base}-${suffix}`;
+}
+
 export default function LessonBuilderList() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -64,6 +78,11 @@ export default function LessonBuilderList() {
     "explicit_continue" | "scroll_and_checks"
   >("explicit_continue");
   const [modulePickerOpen, setModulePickerOpen] = useState(false);
+  const [moduleMode, setModuleMode] = useState<"existing" | "new">("existing");
+  const [newModuleName, setNewModuleName] = useState("");
+  const [newModuleCurriculumId, setNewModuleCurriculumId] = useState<
+    string | null
+  >(null);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["lesson-builder-list"],
@@ -152,6 +171,19 @@ export default function LessonBuilderList() {
     },
   });
 
+  const { data: curriculaOptions } = useQuery({
+    queryKey: ["lesson-builder-curricula"],
+    queryFn: async (): Promise<CurriculumOption[]> => {
+      const res = await (supabase as any)
+        .from("curricula")
+        .select("id, name")
+        .is("archived_at", null)
+        .order("name");
+      if (res.error) throw res.error;
+      return (res.data ?? []) as CurriculumOption[];
+    },
+  });
+
   const selectedModule = useMemo(
     () => (moduleOptions ?? []).find((m) => m.id === newModuleId) ?? null,
     [moduleOptions, newModuleId],
@@ -161,15 +193,45 @@ export default function LessonBuilderList() {
     setNewTitle("");
     setNewModuleId(null);
     setCompletionMode("explicit_continue");
+    setModuleMode("existing");
+    setNewModuleName("");
+    setNewModuleCurriculumId(null);
   };
 
   const createMutation = useMutation({
     mutationFn: async () => {
+      let targetModuleId: string | null;
+      if (moduleMode === "new") {
+        const { data: modResult, error: modErr } = await (supabase as any).rpc(
+          "upsert_module",
+          {
+            p_id: null,
+            p_slug: slugify(newModuleName),
+            p_name: newModuleName.trim(),
+            p_description: null,
+            p_audience_tags: [],
+            p_estimated_minutes: null,
+            p_is_published: false,
+            p_curriculum_id: newModuleCurriculumId,
+            p_attachment_display_order: 0,
+            p_attachment_is_required: false,
+            p_prerequisite_module_id: null,
+            p_reason: "Created via Lesson Builder",
+          },
+        );
+        if (modErr) throw modErr;
+        targetModuleId = (modResult as any)?.module?.id ?? null;
+        if (!targetModuleId) throw new Error("Module was not created");
+      } else {
+        if (!newModuleId) throw new Error("Please select a module");
+        targetModuleId = newModuleId;
+      }
+
       const { data: created, error: rpcError } = await (supabase as any).rpc(
         "upsert_content_item",
         {
           p_id: null,
-          p_module_id: newModuleId,
+          p_module_id: targetModuleId,
           p_item_type: "lesson_blocks",
           p_title: newTitle.trim(),
           p_description: "",
@@ -186,6 +248,8 @@ export default function LessonBuilderList() {
     onSuccess: (created) => {
       const newId = (created as any)?.id;
       queryClient.invalidateQueries({ queryKey: ["lesson-builder-list"] });
+      queryClient.invalidateQueries({ queryKey: ["lesson-builder-modules"] });
+      queryClient.invalidateQueries({ queryKey: ["lesson-builder-curricula"] });
       setCreateOpen(false);
       resetDialog();
       if (newId) {
@@ -211,7 +275,10 @@ export default function LessonBuilderList() {
   }, [data, search]);
 
   const canCreate =
-    newTitle.trim().length > 0 && !!newModuleId && !createMutation.isPending;
+    newTitle.trim().length > 0 &&
+    !createMutation.isPending &&
+    ((moduleMode === "existing" && !!newModuleId) ||
+      (moduleMode === "new" && newModuleName.trim().length > 0));
 
   return (
     <div className="space-y-6 p-6">
@@ -339,62 +406,120 @@ export default function LessonBuilderList() {
 
             <div className="space-y-2">
               <Label>Module</Label>
-              <Popover open={modulePickerOpen} onOpenChange={setModulePickerOpen}>
-                <PopoverTrigger asChild>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    role="combobox"
-                    aria-expanded={modulePickerOpen}
-                    className="w-full justify-between font-normal"
-                  >
-                    {selectedModule ? (
-                      <span className="flex min-w-0 flex-col items-start text-left">
-                        <span className="truncate">{selectedModule.name}</span>
-                        <span className="truncate text-xs text-muted-foreground">
-                          {selectedModule.curriculumLabel}
+              <div className="inline-flex rounded-md border bg-muted/40 p-0.5">
+                <Button
+                  type="button"
+                  variant={moduleMode === "existing" ? "secondary" : "ghost"}
+                  size="sm"
+                  className="h-7 px-3"
+                  onClick={() => setModuleMode("existing")}
+                >
+                  Pick existing
+                </Button>
+                <Button
+                  type="button"
+                  variant={moduleMode === "new" ? "secondary" : "ghost"}
+                  size="sm"
+                  className="h-7 px-3"
+                  onClick={() => setModuleMode("new")}
+                >
+                  Create new
+                </Button>
+              </div>
+
+              {moduleMode === "existing" ? (
+                <Popover open={modulePickerOpen} onOpenChange={setModulePickerOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={modulePickerOpen}
+                      className="w-full justify-between font-normal"
+                    >
+                      {selectedModule ? (
+                        <span className="flex min-w-0 flex-col items-start text-left">
+                          <span className="truncate">{selectedModule.name}</span>
+                          <span className="truncate text-xs text-muted-foreground">
+                            {selectedModule.curriculumLabel}
+                          </span>
                         </span>
-                      </span>
-                    ) : (
-                      <span className="text-muted-foreground">Select a module</span>
-                    )}
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-                  <Command>
-                    <CommandInput placeholder="Search modules..." />
-                    <CommandList>
-                      <CommandEmpty>No modules found.</CommandEmpty>
-                      <CommandGroup>
-                        {(moduleOptions ?? []).map((m) => (
-                          <CommandItem
-                            key={m.id}
-                            value={`${m.name} ${m.curriculumLabel}`}
-                            onSelect={() => {
-                              setNewModuleId(m.id);
-                              setModulePickerOpen(false);
-                            }}
-                          >
-                            <Check
-                              className={cn(
-                                "mr-2 h-4 w-4",
-                                newModuleId === m.id ? "opacity-100" : "opacity-0",
-                              )}
-                            />
-                            <div className="min-w-0 flex-1">
-                              <p className="truncate">{m.name}</p>
-                              <p className="truncate text-xs text-muted-foreground">
-                                {m.curriculumLabel}
-                              </p>
-                            </div>
-                          </CommandItem>
+                      ) : (
+                        <span className="text-muted-foreground">Select a module</span>
+                      )}
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                    <Command>
+                      <CommandInput placeholder="Search modules..." />
+                      <CommandList>
+                        <CommandEmpty>No modules found.</CommandEmpty>
+                        <CommandGroup>
+                          {(moduleOptions ?? []).map((m) => (
+                            <CommandItem
+                              key={m.id}
+                              value={`${m.name} ${m.curriculumLabel}`}
+                              onSelect={() => {
+                                setNewModuleId(m.id);
+                                setModulePickerOpen(false);
+                              }}
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  newModuleId === m.id ? "opacity-100" : "opacity-0",
+                                )}
+                              />
+                              <div className="min-w-0 flex-1">
+                                <p className="truncate">{m.name}</p>
+                                <p className="truncate text-xs text-muted-foreground">
+                                  {m.curriculumLabel}
+                                </p>
+                              </div>
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+              ) : (
+                <div className="space-y-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="new-module-name">New module name</Label>
+                    <Input
+                      id="new-module-name"
+                      value={newModuleName}
+                      onChange={(e) => setNewModuleName(e.target.value)}
+                      placeholder="e.g. Active Listening Fundamentals"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Curriculum (optional)</Label>
+                    <Select
+                      value={newModuleCurriculumId ?? "none"}
+                      onValueChange={(v) =>
+                        setNewModuleCurriculumId(v === "none" ? null : v)
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">
+                          No curriculum (attach later)
+                        </SelectItem>
+                        {(curriculaOptions ?? []).map((c) => (
+                          <SelectItem key={c.id} value={c.id}>
+                            {c.name}
+                          </SelectItem>
                         ))}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="space-y-2">
