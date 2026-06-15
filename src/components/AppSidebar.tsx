@@ -88,7 +88,7 @@ const adminNav: NavItem[] = [
   { title: "Assessment", url: "/assessment", icon: ClipboardList },
   { title: "Users", url: "/admin/users", icon: Users },
   { title: "Features", url: "/company/features", icon: ShieldCheck },
-  { title: "Teams", url: "/admin/teams", icon: UsersRound },
+  
   { title: "My Learning", url: "/my-learning", icon: GraduationCap },
   { title: "Resources", url: "/admin/resources", icon: BookOpen },
   { title: "AI Chat", url: "/ai-chat", icon: MessageSquare },
