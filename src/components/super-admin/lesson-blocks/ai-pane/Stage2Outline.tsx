@@ -175,31 +175,44 @@ export function Stage2Outline(props: Props) {
             </SelectContent>
           </Select>
         </div>
-        <p className="text-xs text-muted-foreground">{COST_ESTIMATES.expandFullContent(items.length)}</p>
-        <div className="flex gap-2">
-          <Button variant="ghost" onClick={onBack} disabled={approving}>
-            <ArrowLeft className="mr-1 h-4 w-4" />
-            Back to chat
-          </Button>
-          <Button
-            className="flex-1 shadow-cta"
-            onClick={onApprove}
-            disabled={approving || items.length === 0}
-            style={{ backgroundColor: "#F5741A", color: "white" }}
-          >
-            {approving ? (
-              <Loader2 className="mr-1 h-4 w-4 animate-spin" />
-            ) : (
-              <Sparkles className="mr-1 h-4 w-4" />
-            )}
-            Approve outline & generate full content
-          </Button>
-        </div>
-        {approving && (
-          <p className="text-xs text-muted-foreground">
-            Building {items.length} block{items.length === 1 ? "" : "s"} — this usually takes ~30 seconds.
-          </p>
-        )}
+        {(() => {
+          const unresolvedImages = items.filter(
+            (i) => i.block_type === "image" && !i.image_resolved && !i.image_skipped,
+          );
+          const blocked = unresolvedImages.length > 0;
+          return (
+            <>
+              <div className="flex gap-2">
+                <Button variant="ghost" onClick={onBack} disabled={approving}>
+                  <ArrowLeft className="mr-1 h-4 w-4" />
+                  Back to chat
+                </Button>
+                <Button
+                  className="flex-1 shadow-cta"
+                  onClick={onApprove}
+                  disabled={approving || items.length === 0 || blocked}
+                  style={{ backgroundColor: "#F5741A", color: "white" }}
+                >
+                  {approving ? (
+                    <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Sparkles className="mr-1 h-4 w-4" />
+                  )}
+                  Approve outline & start building
+                </Button>
+              </div>
+              {blocked && (
+                <p className="text-xs text-amber-700">
+                  Resolve {unresolvedImages.length} image
+                  {unresolvedImages.length === 1 ? "" : "s"} above (pick one or leave empty) to continue.
+                </p>
+              )}
+              {approving && (
+                <p className="text-xs text-muted-foreground">Starting the build…</p>
+              )}
+            </>
+          );
+        })()}
       </div>
 
       <IterationModal
