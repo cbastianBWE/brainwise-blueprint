@@ -1,17 +1,15 @@
-Gate company dashboards + interventions on `dashboard_access` feature.
+Combine corp shared pages into one toggle page; hide Teams.
 
-## File 1: `src/App.tsx`
-Wrap four route elements with `<SubscriptionGate feature="dashboard_access">` inside the existing `RoleGuard`:
-- `/company/nai-dashboard` → CompanyDashboard
-- `/company/ptp-dashboard` → PTPDashboard
-- `/company/airsa-dashboard` → AirsaDashboard
-- `/dashboard/interventions` → InterventionsPage
+## File 1 (new): `src/pages/SharedHub.tsx`
+Create per spec — local `view` state ("corp" | "general") with two toggle buttons rendering `<SharedResults />` or `<SharedWithMe />`.
 
-`/company/dashboard` redirect and all other routes untouched. `/dashboard` (personal) untouched.
+## File 2: `src/App.tsx`
+- Add `import SharedHub from "@/pages/SharedHub";`
+- Add `<Route path="/shared" element={<SharedHub />} />` next to existing `/shared-results` and `/shared-with-me` (both kept).
+- Change `/admin/teams` route to `<Navigate to="/dashboard" replace />`.
+- Remove `import AdminTeams from "./pages/admin/AdminTeams";`.
 
-## File 2: `src/components/AppSidebar.tsx`
-1. Add `hasDashboardAccess` state + `useEffect` calling `supabase.rpc("user_has_feature", { p_user: user.id, p_feature: "dashboard_access" })`, mirroring the existing opsModuleAccess pattern.
-2. Update Dashboards submenu render condition to `showDashboardsMenu && hasAnyDashboard && hasDashboardAccess`.
-3. Update Interventions nav item render condition to also require `&& hasDashboardAccess`.
-
-Super admins keep access since the RPC returns true for them. No other changes.
+## File 3: `src/components/AppSidebar.tsx`
+- In `corporateNav` and `adminNav`: replace the two entries "Shared With Me" + "Shared Results" with a single `{ title: "Shared", url: "/shared", icon: Inbox }`.
+- In `adminNav` only: remove the "Teams" entry.
+- `individualNav`, `coachNav`, `superAdminNav` unchanged.
