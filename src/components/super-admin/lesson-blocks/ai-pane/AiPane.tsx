@@ -76,6 +76,7 @@ export function AiPane(props: Props) {
   const [showStartOverConfirm, setShowStartOverConfirm] = useState(false);
   const [loadingOutline, setLoadingOutline] = useState(false);
   const [loadingExpand, setLoadingExpand] = useState(false);
+  const [buildingBatch, setBuildingBatch] = useState(false);
 
   // One-shot drift flag; if true, prepend canvas summary to next outgoing AI call.
   const driftNoteRef = useRef<string | null>(null);
