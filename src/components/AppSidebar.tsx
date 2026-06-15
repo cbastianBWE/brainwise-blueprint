@@ -219,6 +219,17 @@ export function AppSidebar() {
     return () => { cancelled = true; };
   }, [user, opsMembership]);
 
+  const [hasDashboardAccess, setHasDashboardAccess] = useState(false);
+  useEffect(() => {
+    if (!user) { setHasDashboardAccess(false); return; }
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase.rpc("user_has_feature", { p_user: user.id, p_feature: "dashboard_access" });
+      if (!cancelled) setHasDashboardAccess(!!data);
+    })();
+    return () => { cancelled = true; };
+  }, [user]);
+
   const baseNavItems = getNavItems(profile);
   const navItems = (() => {
     let items = baseNavItems;
@@ -412,7 +423,7 @@ export function AppSidebar() {
                   </Fragment>
                 );
               })}
-              {showDashboardsMenu && hasAnyDashboard && (
+              {showDashboardsMenu && hasAnyDashboard && hasDashboardAccess && (
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild>
                     <NavLink
@@ -483,7 +494,7 @@ export function AppSidebar() {
                   )}
                 </SidebarMenuItem>
               )}
-              {(profile?.account_type === 'company_admin' || profile?.account_type === 'org_admin') && (
+              {(profile?.account_type === 'company_admin' || profile?.account_type === 'org_admin') && hasDashboardAccess && (
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild>
                     <NavLink
