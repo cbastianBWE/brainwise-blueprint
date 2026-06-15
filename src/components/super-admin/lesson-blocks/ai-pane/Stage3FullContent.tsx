@@ -75,7 +75,7 @@ export function Stage3FullContent(props: Props) {
   return (
     <div className="flex flex-1 min-h-0 flex-col">
       <div className="border-b p-3 text-sm text-muted-foreground">
-        Review each block. Click any block to iterate it. When done, build the lesson.
+        Sections {builtCount} of {outlineItemCount} built. Review or iterate below.
       </div>
 
       <div className="flex-1 overflow-y-auto p-3">
