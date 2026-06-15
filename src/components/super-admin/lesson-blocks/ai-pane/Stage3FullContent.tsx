@@ -50,6 +50,11 @@ export function Stage3FullContent(props: Props) {
     assetUrlMap,
     lengthPreference,
     onLengthChange,
+    outlineItemCount,
+    builtCount,
+    nextBatchCount,
+    onBuildNext,
+    buildingBatch,
   } = props;
 
   const [iterationOpen, setIterationOpen] = useState(false);
