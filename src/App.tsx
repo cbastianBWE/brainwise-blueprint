@@ -73,7 +73,7 @@ import MentorPortal from "./pages/mentor/MentorPortal";
 import MentorTraineeDetail from "./pages/mentor/MentorTraineeDetail";
 import FeedbackTemplates from "./pages/mentor/FeedbackTemplates";
 import AdminUsers from "./pages/admin/AdminUsers";
-import AdminTeams from "./pages/admin/AdminTeams";
+import SharedHub from "@/pages/SharedHub";
 import AdminResources from "./pages/admin/AdminResources";
 import Features from "./pages/company/Features";
 import CompanyDashboard from "./pages/company/CompanyDashboard";
@@ -222,6 +222,7 @@ const App = () => (
               <Route path="/my-results" element={<MyResults />} />
               <Route path="/shared-results" element={<SharedResults />} />
               <Route path="/shared-with-me" element={<SharedWithMe />} />
+              <Route path="/shared" element={<SharedHub />} />
               <Route path="/development-plan" element={<DevelopmentPlan />} />
               <Route path="/ai-chat" element={<SubscriptionGate feature="ai_chat"><AiChat /></SubscriptionGate>} />
               <Route path="/ai-chat/history" element={<SubscriptionGate feature="ai_chat"><AiChatHistory /></SubscriptionGate>} />
@@ -261,7 +262,7 @@ const App = () => (
               <Route path="/company/ptp-dashboard" element={<RoleGuard allowedRoles={["company_admin", "org_admin", "brainwise_super_admin"]}><SubscriptionGate feature="dashboard_access"><PTPDashboard /></SubscriptionGate></RoleGuard>} />
               <Route path="/company/airsa-dashboard" element={<RoleGuard allowedRoles={["company_admin", "org_admin", "brainwise_super_admin"]}><SubscriptionGate feature="dashboard_access"><AirsaDashboard /></SubscriptionGate></RoleGuard>} />
               <Route path="/dashboard/interventions" element={<RoleGuard allowedRoles={["company_admin", "org_admin"]}><SubscriptionGate feature="dashboard_access"><InterventionsPage /></SubscriptionGate></RoleGuard>} />
-              <Route path="/admin/teams" element={<RoleGuard allowedRoles={["company_admin", "org_admin"]}><AdminTeams /></RoleGuard>} />
+              <Route path="/admin/teams" element={<Navigate to="/dashboard" replace />} />
               <Route path="/admin/resources" element={<RoleGuard allowedRoles={["company_admin", "org_admin"]}><AdminResources /></RoleGuard>} />
 
               {/* Super Admin */}
