@@ -256,11 +256,12 @@ function AddDivider({ onClick }: { onClick: () => void }) {
 
 function OutlineCard(props: {
   item: OutlineItem;
+  contentItemId: string;
   onUpdate: (patch: Partial<OutlineItem>) => void;
   onDelete: () => void;
   onIterate: () => void;
 }) {
-  const { item, onUpdate, onDelete, onIterate } = props;
+  const { item, contentItemId, onUpdate, onDelete, onIterate } = props;
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: item.id,
   });
