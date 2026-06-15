@@ -557,27 +557,37 @@ export function AiPane(props: Props) {
                 onLengthChange={setLengthPreference}
               />
             )}
-            {stage === "full_content" && (
-              <Stage3FullContent
-                contentItemId={contentItemId}
-                blocks={fullContentState?.blocks ?? []}
-                onBlocksChange={(blocks) => setFullContentState({ blocks })}
-                onBack={() => setStage("outline")}
-                onBuild={handleBuild}
-                onDiscard={() => setShowStartOverConfirm(true)}
-                building={false}
-                voicePresetKey={voicePresetKey}
-                customVoiceGuidance={customVoiceGuidance}
-                customVoiceExample={customVoiceExample}
-                voiceDisplayName={voiceDisplayName}
-                attachedDocumentIds={attachedDocuments.map((d) => d.out_id)}
-                mode={mode}
-                conversationMessages={messages}
-                assetUrlMap={assetUrlMap}
-                lengthPreference={lengthPreference}
-                onLengthChange={setLengthPreference}
-              />
-            )}
+            {stage === "full_content" && (() => {
+              const builtCount = fullContentState?.blocks.length ?? 0;
+              const outlineItemCount = outlineState?.items.length ?? 0;
+              const nextBatchCount = Math.min(batchSize, Math.max(0, outlineItemCount - builtCount));
+              return (
+                <Stage3FullContent
+                  contentItemId={contentItemId}
+                  blocks={fullContentState?.blocks ?? []}
+                  onBlocksChange={(blocks) => setFullContentState({ blocks })}
+                  onBack={() => setStage("outline")}
+                  onBuild={handleBuild}
+                  onDiscard={() => setShowStartOverConfirm(true)}
+                  building={false}
+                  voicePresetKey={voicePresetKey}
+                  customVoiceGuidance={customVoiceGuidance}
+                  customVoiceExample={customVoiceExample}
+                  voiceDisplayName={voiceDisplayName}
+                  attachedDocumentIds={attachedDocuments.map((d) => d.out_id)}
+                  mode={mode}
+                  conversationMessages={messages}
+                  assetUrlMap={assetUrlMap}
+                  lengthPreference={lengthPreference}
+                  onLengthChange={setLengthPreference}
+                  outlineItemCount={outlineItemCount}
+                  builtCount={builtCount}
+                  nextBatchCount={nextBatchCount}
+                  onBuildNext={() => void buildNextBatch()}
+                  buildingBatch={buildingBatch}
+                />
+              );
+            })()}
             {stage === "built" && (
               <Stage4Built messages={messages} onStartOver={() => setShowStartOverConfirm(true)} />
             )}
