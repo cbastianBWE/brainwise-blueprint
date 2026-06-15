@@ -24,6 +24,11 @@ interface Props {
   assetUrlMap: Map<string, string>;
   lengthPreference: LengthLevel;
   onLengthChange: (next: LengthLevel) => void;
+  outlineItemCount: number;
+  builtCount: number;
+  nextBatchCount: number;
+  onBuildNext: () => void;
+  buildingBatch: boolean;
 }
 
 export function Stage3FullContent(props: Props) {
