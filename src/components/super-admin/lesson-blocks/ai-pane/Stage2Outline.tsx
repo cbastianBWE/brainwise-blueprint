@@ -369,3 +369,235 @@ function OutlineCard(props: {
     </div>
   );
 }
+
+type PexelsCandidate = {
+  pexels_id: number | string;
+  src_large: string;
+  src_thumb: string;
+  photographer_name: string;
+  photographer_url: string;
+  photo_page_url: string;
+  alt: string;
+};
+
+function ImageResolutionSection(props: {
+  item: OutlineItem;
+  contentItemId: string;
+  onUpdate: (patch: Partial<OutlineItem>) => void;
+}) {
+  const { item, contentItemId, onUpdate } = props;
+  const [candidates, setCandidates] = useState<PexelsCandidate[]>([]);
+  const [candidateIdx, setCandidateIdx] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [ingesting, setIngesting] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const autoSearchedRef = useRef(false);
+
+  const effectiveQuery =
+    typeof item.image_query === "string" ? item.image_query : item.summary_one_line ?? "";
+
+  async function runSearch(q: string) {
+    if (!contentItemId || !q.trim()) return;
+    setLoading(true);
+    setErr(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("newsletter-image-search", {
+        body: { query: q.trim(), count: 4 },
+      });
+      if (error) throw error;
+      const list = ((data as any)?.candidates ?? []) as PexelsCandidate[];
+      setCandidates(list);
+      setCandidateIdx(0);
+      if (!list.length) setErr("No results found.");
+    } catch (e) {
+      const info = mapAiError(e);
+      setErr(info.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    if (autoSearchedRef.current) return;
+    if (item.image_resolved || item.image_skipped) return;
+    if (!contentItemId) return;
+    autoSearchedRef.current = true;
+    void runSearch(effectiveQuery);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  async function useCurrent() {
+    const candidate = candidates[candidateIdx];
+    if (!candidate || !contentItemId) return;
+    setIngesting(true);
+    setErr(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("lesson-ingest-pexels-asset", {
+        body: {
+          content_item_id: contentItemId,
+          pexels_id: candidate.pexels_id,
+          src_large_url: candidate.src_large,
+          photo_page_url: candidate.photo_page_url,
+          photographer_name: candidate.photographer_name,
+          photographer_url: candidate.photographer_url,
+          alt: candidate.alt,
+        },
+      });
+      if (error) throw error;
+      const assetId = (data as any)?.asset_id;
+      if (!assetId) throw new Error("No asset returned");
+      onUpdate({
+        image_resolved: {
+          asset_id: assetId,
+          attribution: `Photo by ${candidate.photographer_name} on Pexels`,
+          thumb_url: candidate.src_thumb,
+        },
+        image_query: effectiveQuery,
+      });
+    } catch (e) {
+      const info = mapAiError(e);
+      setErr(info.message);
+    } finally {
+      setIngesting(false);
+    }
+  }
+
+  async function showAnother() {
+    if (candidates.length === 0) {
+      await runSearch(effectiveQuery);
+      return;
+    }
+    const next = candidateIdx + 1;
+    if (next >= candidates.length) {
+      await runSearch(effectiveQuery);
+    } else {
+      setCandidateIdx(next);
+    }
+  }
+
+  if (item.image_resolved) {
+    return (
+      <div className="mt-2 rounded border bg-muted/30 p-2">
+        <div className="flex items-start gap-2">
+          <img
+            src={item.image_resolved.thumb_url}
+            alt=""
+            className="h-14 w-20 flex-shrink-0 rounded object-cover"
+          />
+          <div className="flex-1 min-w-0">
+            <p className="truncate text-[10px] italic text-muted-foreground">
+              {item.image_resolved.attribution}
+            </p>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="mt-1 h-6 px-2 text-[11px]"
+              onClick={() => onUpdate({ image_resolved: null })}
+            >
+              Change image
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (item.image_skipped) {
+    return (
+      <div className="mt-2 flex items-center justify-between rounded border border-dashed bg-muted/20 px-2 py-1.5">
+        <p className="text-[11px] text-muted-foreground italic">
+          Image left empty — you'll add one later
+        </p>
+        <Button
+          size="sm"
+          variant="ghost"
+          className="h-6 px-2 text-[11px]"
+          onClick={() => onUpdate({ image_skipped: false })}
+        >
+          Add an image
+        </Button>
+      </div>
+    );
+  }
+
+  const current = candidates[candidateIdx];
+
+  return (
+    <div className="mt-2 space-y-2 rounded border bg-muted/20 p-2">
+      <div className="flex gap-1">
+        <Input
+          value={effectiveQuery}
+          onChange={(e) => onUpdate({ image_query: e.target.value })}
+          placeholder="Image search query"
+          className="h-7 text-xs"
+        />
+        <Button
+          size="sm"
+          variant="outline"
+          className="h-7 px-2 text-xs"
+          onClick={() => void runSearch(effectiveQuery)}
+          disabled={loading || !contentItemId}
+        >
+          {loading ? <Loader2 className="h-3 w-3 animate-spin" /> : "Search"}
+        </Button>
+      </div>
+      {current && (
+        <div className="flex items-start gap-2">
+          <img
+            src={current.src_thumb}
+            alt=""
+            className="h-14 w-20 flex-shrink-0 rounded object-cover"
+          />
+          <div className="flex-1 min-w-0">
+            <p className="truncate text-[10px] text-muted-foreground">
+              Photo by {current.photographer_name}
+            </p>
+            <div className="mt-1 flex flex-wrap gap-1">
+              <Button
+                size="sm"
+                className="h-6 px-2 text-[11px]"
+                style={{ backgroundColor: "#F5741A", color: "white" }}
+                onClick={() => void useCurrent()}
+                disabled={ingesting}
+              >
+                {ingesting ? <Loader2 className="mr-1 h-3 w-3 animate-spin" /> : null}
+                Use this image
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-6 px-2 text-[11px]"
+                onClick={() => void showAnother()}
+                disabled={loading || ingesting}
+              >
+                Show another
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-6 px-2 text-[11px] text-muted-foreground"
+                onClick={() => onUpdate({ image_skipped: true })}
+              >
+                Leave empty
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+      {!current && !loading && (
+        <div className="flex items-center justify-between">
+          <p className="text-[11px] text-muted-foreground italic">No candidate yet.</p>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-6 px-2 text-[11px] text-muted-foreground"
+            onClick={() => onUpdate({ image_skipped: true })}
+          >
+            Leave empty
+          </Button>
+        </div>
+      )}
+      {err && <p className="text-[11px] text-destructive">{err}</p>}
+    </div>
+  );
+}
