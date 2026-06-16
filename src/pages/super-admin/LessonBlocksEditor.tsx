@@ -791,6 +791,7 @@ export default function LessonBlocksEditor() {
           canvasBlocks={blocks}
           assetUrlMap={assetUrlMap}
           onBuildLesson={handleAiBuildLesson}
+          onRegisterAsset={registerNewAssetId}
         />
 
         <div
