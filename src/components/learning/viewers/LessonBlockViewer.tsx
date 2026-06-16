@@ -173,6 +173,7 @@ export default function LessonBlockViewer({
   const [showMoreHint, setShowMoreHint] = useState(false);
   const [activeBlockId, setActiveBlockId] = useState<string | null>(null);
   const [tocOpenMobile, setTocOpenMobile] = useState(false);
+  const [started, setStarted] = useState(false);
 
   const furthestSectionRef = useRef(0);
   const scrollAreaRef = useRef<HTMLDivElement | null>(null);
@@ -424,6 +425,13 @@ export default function LessonBlockViewer({
     }
   };
 
+  const enterLesson = (blockId?: string) => {
+    setStarted(true);
+    if (blockId) {
+      requestAnimationFrame(() => requestAnimationFrame(() => scrollToBlock(blockId)));
+    }
+  };
+
   /* ---- render ---- */
 
   if (blocksQuery.isLoading || assetsLoading) {
@@ -476,6 +484,25 @@ export default function LessonBlockViewer({
     return current;
   }, [activeBlockId, tocEntries, blocks]);
 
+  const hasResume = isSelf && !!completion?.lesson_last_block_id;
+  const resumeHint = hasResume ? "Pick up where you left off" : null;
+  const ctaLabel = hasResume ? "Resume lesson" : "Start lesson";
+  if (!started) {
+    return (
+      <div className="relative">
+        <LessonTitleCard
+          contentItem={contentItem}
+          blocks={blocks}
+          onStart={(blockId) => enterLesson(blockId)}
+          ctaLabel={ctaLabel}
+          resumeHint={resumeHint}
+        />
+      </div>
+    );
+  }
+
+
+
   const Toc = (
     <nav className="space-y-1 p-2 text-sm" aria-label="Lesson contents">
       <div className="px-2 pb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -505,11 +532,7 @@ export default function LessonBlockViewer({
 
   return (
     <div className="relative">
-      <LessonTitleCard
-        contentItem={contentItem}
-        blocks={blocks}
-        onStart={(blockId) => scrollToBlock(blockId)}
-      />
+
       {/* Mobile TOC trigger */}
       <div className="mb-3 flex items-center justify-between lg:hidden">
         <Sheet open={tocOpenMobile} onOpenChange={setTocOpenMobile}>
