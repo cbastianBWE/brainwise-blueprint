@@ -51,10 +51,11 @@ interface Props {
   canvasBlocks: EditorBlock[];
   assetUrlMap: Map<string, string>;
   onBuildLesson: (blocks: FullContentItem[], mode: AiMode) => void;
+  onRegisterAsset?: (assetId: string) => void;
 }
 
 export function AiPane(props: Props) {
-  const { open, onClose, contentItemId, canvasBlocks, assetUrlMap, onBuildLesson } = props;
+  const { open, onClose, contentItemId, canvasBlocks, assetUrlMap, onBuildLesson, onRegisterAsset } = props;
   const { toast } = useToast();
   const { isImpersonating } = useImpersonation();
 
@@ -344,6 +345,7 @@ export function AiPane(props: Props) {
               asset_id: outlineItem.image_resolved.asset_id,
               attribution: outlineItem.image_resolved.attribution,
             };
+            onRegisterAsset?.(outlineItem.image_resolved.asset_id);
           }
           return {
             id: outlineItem?.id ?? crypto.randomUUID(),
