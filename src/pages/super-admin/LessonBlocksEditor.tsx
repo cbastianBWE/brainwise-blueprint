@@ -804,6 +804,21 @@ export default function LessonBlocksEditor() {
           onRegisterAsset={registerNewAssetId}
         />
 
+        {contentItemId && (
+          <LessonBrandPanel
+            open={brandPanelOpen}
+            onOpenChange={setBrandPanelOpen}
+            contentItemId={contentItemId}
+          />
+        )}
+          onClose={() => setAiPaneOpen(false)}
+          contentItemId={contentItemId!}
+          canvasBlocks={blocks}
+          assetUrlMap={assetUrlMap}
+          onBuildLesson={handleAiBuildLesson}
+          onRegisterAsset={registerNewAssetId}
+        />
+
         <div
           className={cn(
             "flex-1 transition-all duration-300 ease-out",
