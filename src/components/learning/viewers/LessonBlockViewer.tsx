@@ -20,10 +20,11 @@ import {
   type SavedBlockProgress,
 } from "@/components/super-admin/lesson-blocks/BlockRenderer";
 import {
-  BLOCK_TYPE_META,
   type BlockType,
   type EditorBlock,
 } from "@/components/super-admin/lesson-blocks/blockTypeMeta";
+import { buildLessonToc } from "@/components/super-admin/lesson-blocks/lessonToc";
+import { LessonTitleCard } from "@/components/super-admin/lesson-blocks/LessonTitleCard";
 import "@/components/super-admin/lesson-blocks/lesson-blocks.css";
 import type { CascadeResult } from "@/hooks/useCompletionReporter";
 
