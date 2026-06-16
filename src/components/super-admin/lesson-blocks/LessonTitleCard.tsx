@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { buildLessonToc } from "./lessonToc";
@@ -42,23 +42,22 @@ function resolveFont(key: string | null | undefined): string | null {
   return FONT_MAP[key.toLowerCase()] ?? null;
 }
 
-export function LessonTitleCard({ contentItem, blocks, onStart }: Props) {
-  const [brand, setBrand] = useState<BrandRow | null>(null);
+export const lessonBrandQueryKey = (contentItemId: string) =>
+  ["lesson-brand", contentItemId] as const;
 
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
+export function LessonTitleCard({ contentItem, blocks, onStart }: Props) {
+  const { data: brand } = useQuery({
+    queryKey: lessonBrandQueryKey(contentItem.id),
+    enabled: !!contentItem.id,
+    queryFn: async () => {
       const { data } = await supabase
         .from("lesson_brands")
         .select("*")
         .eq("content_item_id", contentItem.id)
         .maybeSingle();
-      if (!cancelled) setBrand((data as BrandRow) ?? null);
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [contentItem.id]);
+      return (data as BrandRow) ?? null;
+    },
+  });
 
   const toc = buildLessonToc(blocks);
 
