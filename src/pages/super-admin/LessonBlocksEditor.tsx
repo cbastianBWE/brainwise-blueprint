@@ -29,6 +29,7 @@ import { cn } from "@/lib/utils";
 import { StackedLessonEditor, type EditorMode } from "@/components/super-admin/lesson-blocks/StackedLessonEditor";
 import { LessonTitleCard } from "@/components/super-admin/lesson-blocks/LessonTitleCard";
 import { LessonBrandPanel } from "@/components/super-admin/lesson-blocks/LessonBrandPanel";
+import { LessonOutcomesPanel } from "@/components/super-admin/lesson-blocks/LessonOutcomesPanel";
 import { EditorSlidePane } from "@/components/super-admin/lesson-blocks/EditorSlidePane";
 import { ManageBlocksSidebar, type BlockPadding } from "@/components/super-admin/lesson-blocks/ManageBlocksSidebar";
 import { UndoDeleteToast } from "@/components/super-admin/lesson-blocks/UndoDeleteToast";
