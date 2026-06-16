@@ -221,7 +221,7 @@ export default function ContentItemViewer() {
   }
 
   const data = viewerQuery.data;
-  const contentItem = data.content_item;
+  const contentItem = { ...data.content_item, outcomes: outcomesQuery.data ?? null };
   const completion = data.completion ?? null;
   const breadcrumb = data.breadcrumb ?? {};
   const nextItem = data.next_item ?? null;
