@@ -710,6 +710,13 @@ export default function LessonBlocksEditor() {
             <Badge variant={isDirty ? "secondary" : "outline"}>{statusLabel}</Badge>
             <Button
               variant="outline"
+              onClick={() => setOutcomesPanelOpen(true)}
+            >
+              <ListChecks className="mr-1 h-4 w-4" style={{ color: "#006D77" }} />
+              Outcomes
+            </Button>
+            <Button
+              variant="outline"
               onClick={() => setBrandPanelOpen(true)}
             >
               <Palette className="mr-1 h-4 w-4" style={{ color: "#006D77" }} />
