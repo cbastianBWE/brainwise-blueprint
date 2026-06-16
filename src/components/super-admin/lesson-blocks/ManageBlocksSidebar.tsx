@@ -180,6 +180,7 @@ export function ManageBlocksSidebar({
             <BrandColorSwatch
               palette="tints"
               allowDefault
+              allowCustomHex
               value={pendingBg}
               onChange={(hex) => setPendingBg(hex)}
               onDefaultSelected={() => setPendingBg(null)}
