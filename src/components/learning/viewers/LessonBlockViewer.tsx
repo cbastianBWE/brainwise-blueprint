@@ -173,6 +173,7 @@ export default function LessonBlockViewer({
   const [showMoreHint, setShowMoreHint] = useState(false);
   const [activeBlockId, setActiveBlockId] = useState<string | null>(null);
   const [tocOpenMobile, setTocOpenMobile] = useState(false);
+  const [started, setStarted] = useState(false);
 
   const furthestSectionRef = useRef(0);
   const scrollAreaRef = useRef<HTMLDivElement | null>(null);
