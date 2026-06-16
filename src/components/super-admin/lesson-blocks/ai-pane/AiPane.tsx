@@ -51,10 +51,11 @@ interface Props {
   canvasBlocks: EditorBlock[];
   assetUrlMap: Map<string, string>;
   onBuildLesson: (blocks: FullContentItem[], mode: AiMode) => void;
+  onRegisterAsset?: (assetId: string) => void;
 }
 
 export function AiPane(props: Props) {
-  const { open, onClose, contentItemId, canvasBlocks, assetUrlMap, onBuildLesson } = props;
+  const { open, onClose, contentItemId, canvasBlocks, assetUrlMap, onBuildLesson, onRegisterAsset } = props;
   const { toast } = useToast();
   const { isImpersonating } = useImpersonation();
 
