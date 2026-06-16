@@ -157,6 +157,7 @@ function SortableBucket({
               palette="full"
               allowedHexes={BUCKET_OUTLINE_COLORS}
               allowDefault
+              allowCustomHex
               defaultLabel="Default"
             />
           </div>
@@ -276,6 +277,7 @@ function SortableCard({
               onChange={(hex) => onChange({ ...card, background_color: hex })}
               palette="full"
               allowDefault
+              allowCustomHex
               defaultLabel="Default"
             />
           </div>

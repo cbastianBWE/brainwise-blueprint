@@ -14,6 +14,7 @@ export function DividerBlockForm({ value, onConfigChange }: Props) {
         <BrandColorSwatch
           value={value?.color ?? "#021F36"}
           onChange={(hex) => onConfigChange({ ...value, color: hex })}
+          allowCustomHex
         />
         <p className="text-xs text-muted-foreground">
           Choose a brand color for this divider. Defaults to Navy.

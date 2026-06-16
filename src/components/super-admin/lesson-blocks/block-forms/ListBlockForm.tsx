@@ -167,6 +167,7 @@ export function ListBlockForm({ value, onConfigChange }: Props) {
           value={value?.marker_color ?? null}
           onChange={(hex) => onConfigChange({ ...value, marker_color: hex })}
           allowDefault
+          allowCustomHex
           defaultLabel="Default"
           onDefaultSelected={() =>
             onConfigChange({ ...value, marker_color: null })

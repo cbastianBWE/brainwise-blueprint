@@ -41,6 +41,7 @@ export function BlockStyleSection({ value, onConfigChange }: Props) {
           value={bg}
           palette="tints"
           allowDefault
+          allowCustomHex
           onChange={(hex) =>
             onConfigChange({ ...value, background_color: hex })
           }
