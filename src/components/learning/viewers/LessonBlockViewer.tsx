@@ -532,11 +532,7 @@ export default function LessonBlockViewer({
 
   return (
     <div className="relative">
-      <LessonTitleCard
-        contentItem={contentItem}
-        blocks={blocks}
-        onStart={(blockId) => scrollToBlock(blockId)}
-      />
+
       {/* Mobile TOC trigger */}
       <div className="mb-3 flex items-center justify-between lg:hidden">
         <Sheet open={tocOpenMobile} onOpenChange={setTocOpenMobile}>
