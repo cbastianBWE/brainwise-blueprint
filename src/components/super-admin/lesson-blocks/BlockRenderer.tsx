@@ -58,6 +58,23 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import type { EditorBlock, TipTapDocJSON } from "./blockTypeMeta";
 
+function readableTextColorForBg(bg: string | null | undefined): string {
+  if (!bg || !/^#[0-9A-Fa-f]{6}$/.test(bg)) return "#021F36";
+  const n = parseInt(bg.slice(1), 16);
+  const toLin = (c: number) => {
+    const s = c / 255;
+    return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+  };
+  const L =
+    0.2126 * toLin((n >> 16) & 0xff) +
+    0.7152 * toLin((n >> 8) & 0xff) +
+    0.0722 * toLin(n & 0xff);
+  // Higher contrast wins: white text on dark backgrounds, navy on light.
+  const contrastWhite = 1.05 / (L + 0.05);
+  const contrastNavy = (L + 0.05) / (0.0163 + 0.05); // 0.0163 = luminance of navy #021F36
+  return contrastWhite >= contrastNavy ? "#FFFFFF" : "#021F36";
+}
+
 export type OnBlockComplete = (
   blockClientId: string,
   completionData?: unknown,
