@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 import { StackedLessonEditor, type EditorMode } from "@/components/super-admin/lesson-blocks/StackedLessonEditor";
+import { LessonTitleCard } from "@/components/super-admin/lesson-blocks/LessonTitleCard";
 import { EditorSlidePane } from "@/components/super-admin/lesson-blocks/EditorSlidePane";
 import { ManageBlocksSidebar, type BlockPadding } from "@/components/super-admin/lesson-blocks/ManageBlocksSidebar";
 import { UndoDeleteToast } from "@/components/super-admin/lesson-blocks/UndoDeleteToast";
@@ -117,7 +118,7 @@ export default function LessonBlocksEditor() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("content_items")
-        .select("id, title, item_type, archived_at")
+        .select("id, title, description, item_type, archived_at")
         .eq("id", contentItemId!)
         .maybeSingle();
       if (error) throw error;
@@ -823,6 +824,13 @@ export default function LessonBlocksEditor() {
             </div>
           ) : (
             <div className="mx-auto max-w-3xl">
+              {itemQuery.data && (
+                <LessonTitleCard
+                  contentItem={itemQuery.data as any}
+                  blocks={blocks}
+                  onStart={() => {}}
+                />
+              )}
               <StackedLessonEditor
                 blocks={blocks}
                 selectedClientId={selectedClientId}

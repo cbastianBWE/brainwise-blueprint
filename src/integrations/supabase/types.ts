@@ -5547,6 +5547,65 @@ export type Database = {
           },
         ]
       }
+      lesson_brands: {
+        Row: {
+          color_accent: string | null
+          color_cta: string | null
+          color_free1: string | null
+          color_free2: string | null
+          color_primary: string | null
+          color_surface: string | null
+          content_item_id: string
+          created_at: string
+          created_by: string | null
+          font_body_key: string | null
+          font_display_key: string | null
+          logo_path: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          color_accent?: string | null
+          color_cta?: string | null
+          color_free1?: string | null
+          color_free2?: string | null
+          color_primary?: string | null
+          color_surface?: string | null
+          content_item_id: string
+          created_at?: string
+          created_by?: string | null
+          font_body_key?: string | null
+          font_display_key?: string | null
+          logo_path?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          color_accent?: string | null
+          color_cta?: string | null
+          color_free1?: string | null
+          color_free2?: string | null
+          color_primary?: string | null
+          color_surface?: string | null
+          content_item_id?: string
+          created_at?: string
+          created_by?: string | null
+          font_body_key?: string | null
+          font_display_key?: string | null
+          logo_path?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lesson_brands_content_item_id_fkey"
+            columns: ["content_item_id"]
+            isOneToOne: true
+            referencedRelation: "content_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       member_feature_overrides: {
         Row: {
           created_at: string
@@ -13900,6 +13959,42 @@ export type Database = {
       upsert_lesson_block_progress: {
         Args: { p_block_id: string; p_completion_data?: Json; p_status: string }
         Returns: Json
+      }
+      upsert_lesson_brand: {
+        Args: {
+          p_color_accent?: string
+          p_color_cta?: string
+          p_color_free1?: string
+          p_color_free2?: string
+          p_color_primary?: string
+          p_color_surface?: string
+          p_content_item_id: string
+          p_font_body_key?: string
+          p_font_display_key?: string
+          p_logo_path?: string
+        }
+        Returns: {
+          color_accent: string | null
+          color_cta: string | null
+          color_free1: string | null
+          color_free2: string | null
+          color_primary: string | null
+          color_surface: string | null
+          content_item_id: string
+          created_at: string
+          created_by: string | null
+          font_body_key: string | null
+          font_display_key: string | null
+          logo_path: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "lesson_brands"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       upsert_lesson_progress: {
         Args: {
