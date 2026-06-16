@@ -58,6 +58,23 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import type { EditorBlock, TipTapDocJSON } from "./blockTypeMeta";
 
+function readableTextColorForBg(bg: string | null | undefined): string {
+  if (!bg || !/^#[0-9A-Fa-f]{6}$/.test(bg)) return "#021F36";
+  const n = parseInt(bg.slice(1), 16);
+  const toLin = (c: number) => {
+    const s = c / 255;
+    return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+  };
+  const L =
+    0.2126 * toLin((n >> 16) & 0xff) +
+    0.7152 * toLin((n >> 8) & 0xff) +
+    0.0722 * toLin(n & 0xff);
+  // Higher contrast wins: white text on dark backgrounds, navy on light.
+  const contrastWhite = 1.05 / (L + 0.05);
+  const contrastNavy = (L + 0.05) / (0.0163 + 0.05); // 0.0163 = luminance of navy #021F36
+  return contrastWhite >= contrastNavy ? "#FFFFFF" : "#021F36";
+}
+
 export type OnBlockComplete = (
   blockClientId: string,
   completionData?: unknown,
@@ -774,23 +791,8 @@ type FlashcardConfig = {
   background_color: string | null;
 };
 
-// Locked auto-pair: brand background color → text color. Author picks bg;
-// renderer derives text color. Sand and null get Navy text; everything else White.
-const FLASHCARD_TEXT_COLOR_FOR_BG: Record<string, string> = {
-  "#021F36": "#FFFFFF",
-  "#F5741A": "#FFFFFF",
-  "#F9F7F1": "#021F36",
-  "#006D77": "#FFFFFF",
-  "#7a5800": "#FFFFFF",
-  "#6D6875": "#FFFFFF",
-  "#3C096C": "#FFFFFF",
-  "#2D6A4F": "#FFFFFF",
-};
 
-function getFlashcardTextColorForBg(bg: string | null | undefined): string {
-  if (!bg) return "#021F36";
-  return FLASHCARD_TEXT_COLOR_FOR_BG[bg] ?? "#021F36";
-}
+
 
 function FlashcardsRender({
   cards,
@@ -934,7 +936,7 @@ function FlashcardsRender({
   const cardBg = current?.background_color ?? null;
   const faceStyle: CSSProperties = {
     backgroundColor: cardBg ?? "#FFFFFF",
-    color: getFlashcardTextColorForBg(cardBg),
+    color: readableTextColorForBg(cardBg),
   };
 
   return (
@@ -1083,21 +1085,8 @@ type CardSortCardConfig = {
   background_color: string | null;
 };
 
-const CARDSORT_TEXT_COLOR_FOR_BG: Record<string, string> = {
-  "#021F36": "#FFFFFF",
-  "#F5741A": "#FFFFFF",
-  "#F9F7F1": "#021F36",
-  "#006D77": "#FFFFFF",
-  "#7a5800": "#FFFFFF",
-  "#6D6875": "#FFFFFF",
-  "#3C096C": "#FFFFFF",
-  "#2D6A4F": "#FFFFFF",
-};
 
-function getCardSortTextColorForBg(bg: string | null | undefined): string {
-  if (!bg) return "#021F36";
-  return CARDSORT_TEXT_COLOR_FOR_BG[bg] ?? "#021F36";
-}
+
 
 const HOLDING_AREA_ID = "card-sort-holding";
 const MIN_BUCKETS_FOR_RENDER = 2;
@@ -1138,7 +1127,7 @@ function CardSortDraggableCard({
   const cardBg = card.background_color ?? null;
   const cardStyle: CSSProperties = {
     backgroundColor: cardBg ?? "#FFFFFF",
-    color: getCardSortTextColorForBg(cardBg),
+    color: readableTextColorForBg(cardBg),
   };
 
   const classes = [
