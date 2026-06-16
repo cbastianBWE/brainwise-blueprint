@@ -81,6 +81,8 @@ export default function LessonBlocksEditor() {
   >(null);
   const [aiPaneOpen, setAiPaneOpen] = useState(false);
 
+  const { urlMap: assetUrlMap, registerNewAssetId } = useLessonBlockAssetUrls(contentItemId);
+
   const handleAiBuildLesson = useCallback(
     (aiBlocks: FullContentItem[], aiMode: AiMode) => {
       const mapped: EditorBlock[] = aiBlocks.map((b) => ({
@@ -93,6 +95,12 @@ export default function LessonBlocksEditor() {
       } else {
         setBlocks((prev) => [...prev, ...mapped]);
       }
+      for (const b of mapped) {
+        const cfg: any = b.config ?? {};
+        if (cfg.asset_id && typeof cfg.asset_id === "string") {
+          registerNewAssetId(cfg.asset_id);
+        }
+      }
       setSelectedClientId(null);
       setPaneOpen(false);
       toast({
@@ -100,7 +108,7 @@ export default function LessonBlocksEditor() {
         description: "Review the new blocks, then Save to commit.",
       });
     },
-    [toast],
+    [toast, registerNewAssetId],
   );
 
   const itemQuery = useQuery({
