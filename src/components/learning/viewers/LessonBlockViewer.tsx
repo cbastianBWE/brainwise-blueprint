@@ -484,6 +484,25 @@ export default function LessonBlockViewer({
     return current;
   }, [activeBlockId, tocEntries, blocks]);
 
+  const hasResume = isSelf && !!completion?.lesson_last_block_id;
+  const resumeHint = hasResume ? "Pick up where you left off" : null;
+  const ctaLabel = hasResume ? "Resume lesson" : "Start lesson";
+  if (!started) {
+    return (
+      <div className="relative">
+        <LessonTitleCard
+          contentItem={contentItem}
+          blocks={blocks}
+          onStart={(blockId) => enterLesson(blockId)}
+          ctaLabel={ctaLabel}
+          resumeHint={resumeHint}
+        />
+      </div>
+    );
+  }
+
+
+
   const Toc = (
     <nav className="space-y-1 p-2 text-sm" aria-label="Lesson contents">
       <div className="px-2 pb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
