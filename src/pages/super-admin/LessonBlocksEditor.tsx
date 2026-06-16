@@ -120,7 +120,7 @@ export default function LessonBlocksEditor() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("content_items")
-        .select("id, title, description, item_type, archived_at")
+        .select("id, title, description, item_type, archived_at, outcomes")
         .eq("id", contentItemId!)
         .maybeSingle();
       if (error) throw error;
