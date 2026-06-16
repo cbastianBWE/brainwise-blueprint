@@ -824,6 +824,13 @@ export default function LessonBlocksEditor() {
             </div>
           ) : (
             <div className="mx-auto max-w-3xl">
+              {itemQuery.data && (
+                <LessonTitleCard
+                  contentItem={itemQuery.data as any}
+                  blocks={blocks}
+                  onStart={() => {}}
+                />
+              )}
               <StackedLessonEditor
                 blocks={blocks}
                 selectedClientId={selectedClientId}
