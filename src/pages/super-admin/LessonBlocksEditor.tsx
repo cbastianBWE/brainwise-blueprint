@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
-import { ChevronLeft, Edit2, Layers, Loader2, Palette, Plus, Save, Sparkles } from "lucide-react";
+import { ChevronLeft, Edit2, Layers, ListChecks, Loader2, Palette, Plus, Save, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -29,6 +29,7 @@ import { cn } from "@/lib/utils";
 import { StackedLessonEditor, type EditorMode } from "@/components/super-admin/lesson-blocks/StackedLessonEditor";
 import { LessonTitleCard } from "@/components/super-admin/lesson-blocks/LessonTitleCard";
 import { LessonBrandPanel } from "@/components/super-admin/lesson-blocks/LessonBrandPanel";
+import { LessonOutcomesPanel } from "@/components/super-admin/lesson-blocks/LessonOutcomesPanel";
 import { EditorSlidePane } from "@/components/super-admin/lesson-blocks/EditorSlidePane";
 import { ManageBlocksSidebar, type BlockPadding } from "@/components/super-admin/lesson-blocks/ManageBlocksSidebar";
 import { UndoDeleteToast } from "@/components/super-admin/lesson-blocks/UndoDeleteToast";
@@ -83,6 +84,7 @@ export default function LessonBlocksEditor() {
   >(null);
   const [aiPaneOpen, setAiPaneOpen] = useState(false);
   const [brandPanelOpen, setBrandPanelOpen] = useState(false);
+  const [outcomesPanelOpen, setOutcomesPanelOpen] = useState(false);
 
   const { urlMap: assetUrlMap, registerNewAssetId } = useLessonBlockAssetUrls(contentItemId);
 
@@ -120,7 +122,7 @@ export default function LessonBlocksEditor() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("content_items")
-        .select("id, title, description, item_type, archived_at")
+        .select("id, title, description, item_type, archived_at, outcomes")
         .eq("id", contentItemId!)
         .maybeSingle();
       if (error) throw error;
@@ -708,6 +710,13 @@ export default function LessonBlocksEditor() {
             <Badge variant={isDirty ? "secondary" : "outline"}>{statusLabel}</Badge>
             <Button
               variant="outline"
+              onClick={() => setOutcomesPanelOpen(true)}
+            >
+              <ListChecks className="mr-1 h-4 w-4" style={{ color: "#006D77" }} />
+              Outcomes
+            </Button>
+            <Button
+              variant="outline"
               onClick={() => setBrandPanelOpen(true)}
             >
               <Palette className="mr-1 h-4 w-4" style={{ color: "#006D77" }} />
@@ -809,6 +818,15 @@ export default function LessonBlocksEditor() {
             open={brandPanelOpen}
             onOpenChange={setBrandPanelOpen}
             contentItemId={contentItemId}
+          />
+        )}
+
+        {contentItemId && (
+          <LessonOutcomesPanel
+            open={outcomesPanelOpen}
+            onOpenChange={setOutcomesPanelOpen}
+            contentItemId={contentItemId}
+            initialOutcomes={(itemQuery.data as any)?.outcomes ?? null}
           />
         )}
 

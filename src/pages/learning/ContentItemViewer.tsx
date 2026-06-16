@@ -117,6 +117,22 @@ export default function ContentItemViewer() {
     },
   });
 
+  // Outcomes aren't included in the RPC payload; fetch them directly so the
+  // lesson title card can render the learning outcomes list.
+  const outcomesQuery = useQuery({
+    queryKey: ["content-item-outcomes", contentItemId],
+    enabled: !!contentItemId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("content_items")
+        .select("outcomes")
+        .eq("id", contentItemId!)
+        .maybeSingle();
+      if (error) throw error;
+      return (data?.outcomes as string[] | null) ?? null;
+    },
+  });
+
   const { reportCompletion, reportProgress, isReporting } = useCompletionReporter({
     userId: userId ?? "",
     contentItemId: contentItemId ?? "",
@@ -205,7 +221,7 @@ export default function ContentItemViewer() {
   }
 
   const data = viewerQuery.data;
-  const contentItem = data.content_item;
+  const contentItem = { ...data.content_item, outcomes: outcomesQuery.data ?? null };
   const completion = data.completion ?? null;
   const breadcrumb = data.breadcrumb ?? {};
   const nextItem = data.next_item ?? null;

@@ -3466,6 +3466,7 @@ export type Database = {
           module_id: string
           mux_asset_id: string | null
           mux_status: string | null
+          outcomes: string[] | null
           quiz_pass_threshold_pct: number | null
           quiz_show_correct_mode: string | null
           skills_actor_invitation_required: boolean
@@ -3505,6 +3506,7 @@ export type Database = {
           module_id: string
           mux_asset_id?: string | null
           mux_status?: string | null
+          outcomes?: string[] | null
           quiz_pass_threshold_pct?: number | null
           quiz_show_correct_mode?: string | null
           skills_actor_invitation_required?: boolean
@@ -3544,6 +3546,7 @@ export type Database = {
           module_id?: string
           mux_asset_id?: string | null
           mux_status?: string | null
+          outcomes?: string[] | null
           quiz_pass_threshold_pct?: number | null
           quiz_show_correct_mode?: string | null
           skills_actor_invitation_required?: boolean
