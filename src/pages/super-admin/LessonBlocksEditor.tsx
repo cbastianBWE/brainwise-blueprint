@@ -82,6 +82,7 @@ export default function LessonBlocksEditor() {
     { block: EditorBlock; index: number }[] | null
   >(null);
   const [aiPaneOpen, setAiPaneOpen] = useState(false);
+  const [brandPanelOpen, setBrandPanelOpen] = useState(false);
 
   const { urlMap: assetUrlMap, registerNewAssetId } = useLessonBlockAssetUrls(contentItemId);
 
