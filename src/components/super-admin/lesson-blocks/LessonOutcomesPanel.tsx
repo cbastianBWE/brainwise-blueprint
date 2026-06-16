@@ -1,12 +1,10 @@
 import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { GripVertical, Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { EditorSlidePane } from "./EditorSlidePane";
 
 interface Props {
   open: boolean;
@@ -31,6 +29,8 @@ export function LessonOutcomesPanel({
       setItems(Array.isArray(initialOutcomes) ? [...initialOutcomes] : []);
     }
   }, [open, initialOutcomes]);
+
+  if (!open) return null;
 
   const setAt = (i: number, v: string) =>
     setItems((prev) => prev.map((x, idx) => (idx === i ? v : x)));
@@ -69,87 +69,91 @@ export function LessonOutcomesPanel({
   };
 
   return (
-    <EditorSlidePane
-      open={open}
-      block={null as any}
-      contentItemId={contentItemId}
-      mode="edit"
-      onChange={() => {}}
-      onClose={() => onOpenChange(false)}
-      isDirty={false}
-      saving={false}
-      onRequestSave={() => {}}
-      siblingBlocks={[]}
-      customContent={
-        <div className="flex h-full flex-col">
-          <div className="border-b p-4">
+    <>
+      <div
+        className="fixed inset-0 z-40 bg-black/30"
+        onClick={() => onOpenChange(false)}
+        aria-hidden="true"
+      />
+      <aside className="fixed right-0 top-0 z-50 flex h-full w-full max-w-md flex-col bg-background shadow-xl">
+        <div className="flex items-start justify-between border-b p-4">
+          <div>
             <div className="text-base font-semibold">Learning outcomes</div>
             <div className="mt-1 text-xs text-muted-foreground">
               Short statements completing "By the end you'll be able to…". Shown on the
               lesson cover. Empty is allowed.
             </div>
           </div>
-          <div className="flex-1 space-y-2 overflow-auto p-4">
-            {items.length === 0 && (
-              <div className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">
-                No outcomes yet. Add one to get started.
-              </div>
-            )}
-            {items.map((value, i) => (
-              <div key={i} className="flex items-center gap-2">
+          <Button
+            size="icon"
+            variant="ghost"
+            onClick={() => onOpenChange(false)}
+            aria-label="Close"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+
+        <div className="flex-1 space-y-2 overflow-auto p-4">
+          {items.length === 0 && (
+            <div className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">
+              No outcomes yet. Add one to get started.
+            </div>
+          )}
+          {items.map((value, i) => (
+            <div key={i} className="flex items-center gap-2">
+              <div className="flex flex-col text-xs text-muted-foreground">
                 <button
                   type="button"
-                  className="flex flex-col text-muted-foreground hover:text-foreground"
-                  aria-label="Reorder"
+                  onClick={() => move(i, -1)}
+                  disabled={i === 0}
+                  className="px-1 leading-none disabled:opacity-30"
+                  aria-label="Move up"
                 >
-                  <span
-                    role="button"
-                    onClick={() => move(i, -1)}
-                    className="text-xs leading-none"
-                  >
-                    ▲
-                  </span>
-                  <GripVertical className="h-3 w-3" />
-                  <span
-                    role="button"
-                    onClick={() => move(i, 1)}
-                    className="text-xs leading-none"
-                  >
-                    ▼
-                  </span>
+                  ▲
                 </button>
-                <Input
-                  value={value}
-                  onChange={(e) => setAt(i, e.target.value)}
-                  placeholder={`Outcome ${i + 1}`}
-                  className="flex-1"
-                />
-                <Button
+                <button
                   type="button"
-                  size="icon"
-                  variant="ghost"
-                  onClick={() => removeAt(i)}
-                  aria-label="Remove outcome"
+                  onClick={() => move(i, 1)}
+                  disabled={i === items.length - 1}
+                  className="px-1 leading-none disabled:opacity-30"
+                  aria-label="Move down"
                 >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+                  ▼
+                </button>
               </div>
-            ))}
-            <Button type="button" variant="outline" size="sm" onClick={add}>
-              <Plus className="mr-1 h-4 w-4" /> Add outcome
-            </Button>
-          </div>
-          <div className="flex justify-end gap-2 border-t p-3">
-            <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={saving}>
-              Cancel
-            </Button>
-            <Button onClick={handleSave} disabled={saving}>
-              {saving ? "Saving…" : "Save outcomes"}
-            </Button>
-          </div>
+              <Input
+                value={value}
+                onChange={(e) => setAt(i, e.target.value)}
+                placeholder={`Outcome ${i + 1}`}
+                className="flex-1"
+              />
+              <Button
+                type="button"
+                size="icon"
+                variant="ghost"
+                onClick={() => removeAt(i)}
+                aria-label="Remove outcome"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          ))}
+          <Button type="button" variant="outline" size="sm" onClick={add}>
+            <Plus className="mr-1 h-4 w-4" /> Add outcome
+          </Button>
         </div>
-      }
-    />
+
+        <div className="flex justify-end gap-2 border-t p-3">
+          <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={saving}>
+            Cancel
+          </Button>
+          <Button onClick={handleSave} disabled={saving}>
+            {saving ? "Saving…" : "Save outcomes"}
+          </Button>
+        </div>
+      </aside>
+    </>
   );
 }
 
