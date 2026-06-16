@@ -425,6 +425,13 @@ export default function LessonBlockViewer({
     }
   };
 
+  const enterLesson = (blockId?: string) => {
+    setStarted(true);
+    if (blockId) {
+      requestAnimationFrame(() => requestAnimationFrame(() => scrollToBlock(blockId)));
+    }
+  };
+
   /* ---- render ---- */
 
   if (blocksQuery.isLoading || assetsLoading) {
