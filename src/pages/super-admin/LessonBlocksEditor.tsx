@@ -821,6 +821,15 @@ export default function LessonBlocksEditor() {
           />
         )}
 
+        {contentItemId && (
+          <LessonOutcomesPanel
+            open={outcomesPanelOpen}
+            onOpenChange={setOutcomesPanelOpen}
+            contentItemId={contentItemId}
+            initialOutcomes={(itemQuery.data as any)?.outcomes ?? null}
+          />
+        )}
+
         <div
           className={cn(
             "flex-1 transition-all duration-300 ease-out",
