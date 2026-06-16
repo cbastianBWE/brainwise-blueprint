@@ -811,13 +811,6 @@ export default function LessonBlocksEditor() {
             contentItemId={contentItemId}
           />
         )}
-          onClose={() => setAiPaneOpen(false)}
-          contentItemId={contentItemId!}
-          canvasBlocks={blocks}
-          assetUrlMap={assetUrlMap}
-          onBuildLesson={handleAiBuildLesson}
-          onRegisterAsset={registerNewAssetId}
-        />
 
         <div
           className={cn(
