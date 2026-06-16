@@ -152,6 +152,7 @@ function SortableCard({
               onChange={(hex) => onChange({ ...card, background_color: hex })}
               palette="full"
               allowDefault
+              allowCustomHex
               defaultLabel="Default"
             />
           </div>
