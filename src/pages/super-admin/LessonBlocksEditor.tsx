@@ -243,7 +243,7 @@ export default function LessonBlocksEditor() {
     enabled: !!contentItemId && draftEnabled,
   });
 
-  const { urlMap: assetUrlMap, registerNewAssetId } = useLessonBlockAssetUrls(contentItemId);
+
 
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [saveReason, setSaveReason] = useState("");
