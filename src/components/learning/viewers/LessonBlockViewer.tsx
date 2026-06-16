@@ -459,42 +459,47 @@ export default function LessonBlockViewer({
     config: b.config ?? {},
   }));
 
-  /* ---- TOC ---- */
+  /* ---- TOC (heading topics) ---- */
+
+  const tocEntries = useMemo(() => buildLessonToc(blocks as any), [blocks]);
+
+  const activeTopicId = useMemo(() => {
+    if (!activeBlockId || tocEntries.length === 0) return null;
+    const activeOrder = blocks.find((b) => b.id === activeBlockId)?.display_order;
+    if (activeOrder == null) return tocEntries[0].blockId;
+    let current = tocEntries[0].blockId;
+    for (const t of tocEntries) {
+      const tOrder = blocks.find((b) => b.id === t.blockId)?.display_order ?? -1;
+      if (tOrder <= activeOrder) current = t.blockId;
+      else break;
+    }
+    return current;
+  }, [activeBlockId, tocEntries, blocks]);
 
   const Toc = (
     <nav className="space-y-1 p-2 text-sm" aria-label="Lesson contents">
       <div className="px-2 pb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
         Contents
       </div>
-      {blocks
-        .filter((b) => !isContinueDelimiter(b))
-        .map((b) => {
-          const meta = BLOCK_TYPE_META[b.block_type];
-          const Icon = meta?.icon;
-          const required = gatingRequiredBlockIds.has(b.id);
-          const done = completedIds.has(b.id);
-          const active = activeBlockId === b.id;
+      {tocEntries.length === 0 ? (
+        <div className="px-2 py-1 text-xs text-muted-foreground">No topics yet.</div>
+      ) : (
+        tocEntries.map((t) => {
+          const active = activeTopicId === t.blockId;
           return (
             <button
-              key={b.id}
-              onClick={() => scrollToBlock(b.id)}
-              className={`group flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left transition-colors ${
+              key={t.blockId}
+              onClick={() => scrollToBlock(t.blockId)}
+              style={{ paddingLeft: `${8 + Math.max(0, t.level - 2) * 12}px` }}
+              className={`group flex w-full items-center gap-2 rounded-md py-1.5 pr-2 text-left transition-colors ${
                 active ? "bg-muted text-foreground" : "text-muted-foreground hover:bg-muted/70"
               }`}
             >
-              {Icon && <Icon className="h-3.5 w-3.5 shrink-0" />}
-              <span className="flex-1 truncate text-xs">{meta?.label ?? b.block_type}</span>
-              {required && (
-                <span className="rounded-full bg-[var(--bw-orange)]/10 px-1.5 py-0.5 text-[10px] font-semibold text-[var(--bw-orange)]">
-                  Req
-                </span>
-              )}
-              {done && (
-                <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-[var(--bw-forest)]" />
-              )}
+              <span className="flex-1 truncate text-xs">{t.text}</span>
             </button>
           );
-        })}
+        })
+      )}
     </nav>
   );
 
