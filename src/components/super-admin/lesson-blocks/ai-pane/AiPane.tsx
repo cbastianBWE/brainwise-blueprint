@@ -345,6 +345,7 @@ export function AiPane(props: Props) {
               asset_id: outlineItem.image_resolved.asset_id,
               attribution: outlineItem.image_resolved.attribution,
             };
+            onRegisterAsset?.(outlineItem.image_resolved.asset_id);
           }
           return {
             id: outlineItem?.id ?? crypto.randomUUID(),
