@@ -936,7 +936,7 @@ function FlashcardsRender({
   const cardBg = current?.background_color ?? null;
   const faceStyle: CSSProperties = {
     backgroundColor: cardBg ?? "#FFFFFF",
-    color: getFlashcardTextColorForBg(cardBg),
+    color: readableTextColorForBg(cardBg),
   };
 
   return (
@@ -1085,21 +1085,8 @@ type CardSortCardConfig = {
   background_color: string | null;
 };
 
-const CARDSORT_TEXT_COLOR_FOR_BG: Record<string, string> = {
-  "#021F36": "#FFFFFF",
-  "#F5741A": "#FFFFFF",
-  "#F9F7F1": "#021F36",
-  "#006D77": "#FFFFFF",
-  "#7a5800": "#FFFFFF",
-  "#6D6875": "#FFFFFF",
-  "#3C096C": "#FFFFFF",
-  "#2D6A4F": "#FFFFFF",
-};
 
-function getCardSortTextColorForBg(bg: string | null | undefined): string {
-  if (!bg) return "#021F36";
-  return CARDSORT_TEXT_COLOR_FOR_BG[bg] ?? "#021F36";
-}
+
 
 const HOLDING_AREA_ID = "card-sort-holding";
 const MIN_BUCKETS_FOR_RENDER = 2;
@@ -1140,7 +1127,7 @@ function CardSortDraggableCard({
   const cardBg = card.background_color ?? null;
   const cardStyle: CSSProperties = {
     backgroundColor: cardBg ?? "#FFFFFF",
-    color: getCardSortTextColorForBg(cardBg),
+    color: readableTextColorForBg(cardBg),
   };
 
   const classes = [
