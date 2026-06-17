@@ -79,6 +79,7 @@ export function HotspotBlockForm({ value, onConfigChange, contentItemId }: Props
   const [candidates, setCandidates] = useState<PexelsCandidate[]>([]);
   const [ingestingId, setIngestingId] = useState<string | number | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [autoPlacing, setAutoPlacing] = useState(false);
   const canvasRef = useRef<HTMLDivElement | null>(null);
 
   const canSearchPexels = !!contentItemId;
