@@ -604,7 +604,7 @@ export default function LessonBlockViewer({
   );
 
   return (
-    <div className="relative">
+    <div className="relative" style={lessonBrandVars}>
 
       {/* Mobile TOC trigger */}
       <div className="mb-3 flex items-center justify-between lg:hidden">
