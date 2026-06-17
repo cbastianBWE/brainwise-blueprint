@@ -342,7 +342,7 @@ function OutlineCard(props: {
               {item.learning_objective_fragment || <span className="italic">(no objective)</span>}
             </p>
           )}
-          {item.block_type === "image" && (
+          {(item.block_type === "image" || item.block_type === "hotspot") && (
             <ImageResolutionSection
               item={item}
               contentItemId={contentItemId}
