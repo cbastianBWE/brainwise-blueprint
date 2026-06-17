@@ -18,6 +18,7 @@ import {
   GitBranch,
   HelpCircle,
   MessageSquareText,
+  Target,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
