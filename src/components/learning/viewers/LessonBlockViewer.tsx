@@ -364,6 +364,17 @@ export default function LessonBlockViewer({
   const allSectionsVisited = visitedSections.size === sections.length;
   const finalContinueEnabled = allGatedComplete && allSectionsVisited;
 
+  const completedSections = useMemo(() => {
+    const done = new Set<number>();
+    sections.forEach((sec, idx) => {
+      if (!visitedSections.has(idx)) return;
+      const gated = sec.blocks.filter((b) => gatingRequiredBlockIds.has(b.id));
+      const allDone = gated.every((b) => completedIds.has(b.id));
+      if (allDone) done.add(idx);
+    });
+    return done;
+  }, [sections, visitedSections, gatingRequiredBlockIds, completedIds]);
+
   /* ---- navigation ---- */
 
   const scrollBodyToTop = () => {
