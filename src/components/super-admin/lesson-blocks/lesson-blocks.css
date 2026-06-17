@@ -62,7 +62,7 @@
 
 /* Links — orange, underlined */
 .tiptap-prose a {
-  color: #F5741A;
+  color: var(--lesson-cta, #F5741A);
   text-decoration: underline;
   text-underline-offset: 2px;
 }
@@ -93,14 +93,14 @@
   background-color: hsl(var(--muted) / 0.30);
 }
 .stacked-block.is-selected {
-  border-left: 4px solid #F5741A;
+  border-left: 4px solid var(--lesson-cta, #F5741A);
   padding-left: 12px;
 }
 
 /* Manage mode — multi-selected block visual */
 .stacked-block.is-manage-selected {
   background-color: #FDEFE3;
-  border-left: 4px solid #F5741A;
+  border-left: 4px solid var(--lesson-cta, #F5741A);
   padding-left: 12px;
 }
 .stacked-block.is-manage-selected:hover {
@@ -123,7 +123,7 @@
   font-family: var(--font-display, "Poppins", sans-serif);
   font-size: clamp(2.5rem, 7vw, 4rem);
   font-weight: 700;
-  color: #021F36;
+  color: var(--lesson-primary, #021F36);
   line-height: 1.05;
   letter-spacing: -0.02em;
   margin: 0;
@@ -156,15 +156,15 @@
   }
 }
 .bw-statement-card {
-  border-left: 4px solid #021F36;
+  border-left: 4px solid var(--lesson-primary, #021F36);
   background-color: hsl(var(--muted) / 0.30);
   border-radius: 0.5rem;
   padding: 1rem 1.25rem;
 }
-.bw-statement-card-a.is-contrast { border-left-color: #F5741A; }
-.bw-statement-card-b.is-contrast { border-left-color: #006D77; }
+.bw-statement-card-a.is-contrast { border-left-color: var(--lesson-cta, #F5741A); }
+.bw-statement-card-b.is-contrast { border-left-color: var(--lesson-accent, #006D77); }
 .bw-statement-card-a.is-neutral,
-.bw-statement-card-b.is-neutral { border-left-color: #021F36; }
+.bw-statement-card-b.is-neutral { border-left-color: var(--lesson-primary, #021F36); }
 .bw-statement-card-label {
   font-size: 0.75rem;
   font-weight: 600;
@@ -181,7 +181,7 @@
 .bw-accordion-trigger {
   font-family: var(--font-display, "Poppins", sans-serif);
   font-weight: 600;
-  color: #021F36;
+  color: var(--lesson-primary, #021F36);
 }
 .bw-accordion-content {
   padding-bottom: 1rem;
@@ -221,7 +221,7 @@
   outline: none;
 }
 .bw-flashcards-shell:focus-visible {
-  outline: 2px solid #F5741A;
+  outline: 2px solid var(--lesson-cta, #F5741A);
   outline-offset: 4px;
   border-radius: 8px;
 }
@@ -332,11 +332,11 @@
 .bw-flashcards-done {
   text-align: center;
   padding: 1.25rem;
-  background: #F9F7F1;
+  background: var(--lesson-surface, #F9F7F1);
   border-radius: 0.5rem;
   border: 1px solid hsl(var(--border));
   font-family: var(--font-display, "Poppins", sans-serif);
-  color: #021F36;
+  color: var(--lesson-primary, #021F36);
   font-weight: 500;
 }
 .bw-flashcards-done-reset {
@@ -373,7 +373,7 @@
   flex-direction: column;
   gap: 0.5rem;
   padding: 0.75rem;
-  background: #F9F7F1;
+  background: var(--lesson-surface, #F9F7F1);
   border: 3px solid #6D6875;
   border-radius: 0.625rem;
   min-height: 12rem;
@@ -392,7 +392,7 @@
 .bw-cardsort-bucket-title {
   font-family: var(--font-display, "Poppins", sans-serif);
   font-weight: 600;
-  color: #021F36;
+  color: var(--lesson-primary, #021F36);
   font-size: 1.0625rem;
   line-height: 1.25;
 }
@@ -423,7 +423,7 @@
   transition: border-color 120ms ease, background 120ms ease;
 }
 .bw-cardsort-holding.is-over {
-  border-color: #F5741A;
+  border-color: var(--lesson-cta, #F5741A);
   background: rgba(245, 116, 26, 0.04);
 }
 .bw-cardsort-holding-label {
@@ -450,7 +450,7 @@
   min-width: 10rem;
   max-width: 16rem;
   font-size: 0.9375rem;
-  color: #021F36;
+  color: var(--lesson-primary, #021F36);
   user-select: none;
   transition: border-color 120ms ease, transform 120ms ease, box-shadow 120ms ease;
 }
@@ -543,11 +543,11 @@
 .bw-cardsort-done {
   text-align: center;
   padding: 1rem 1.25rem;
-  background: #F9F7F1;
+  background: var(--lesson-surface, #F9F7F1);
   border-radius: 0.5rem;
   border: 1px solid hsl(var(--border));
   font-family: var(--font-display, "Poppins", sans-serif);
-  color: #021F36;
+  color: var(--lesson-primary, #021F36);
   font-weight: 500;
 }
 .bw-cardsort-done-reset {
@@ -573,7 +573,7 @@
   font-family: var(--font-display, "Poppins", sans-serif);
   font-size: 1.5rem;
   font-weight: 600;
-  color: #021F36;
+  color: var(--lesson-primary, #021F36);
   margin: 0;
   line-height: 1.25;
 }
@@ -581,7 +581,7 @@
 .bw-scenario-intro {
   font-size: 1rem;
   line-height: 1.55;
-  color: #021F36;
+  color: var(--lesson-primary, #021F36);
 }
 .bw-scenario-intro p { margin: 0 0 0.5rem 0; }
 .bw-scenario-intro p:last-child { margin-bottom: 0; }
@@ -624,7 +624,7 @@
 .bw-scenario-setup {
   font-size: 1rem;
   line-height: 1.55;
-  color: #021F36;
+  color: var(--lesson-primary, #021F36);
 }
 .bw-scenario-setup p { margin: 0 0 0.5rem 0; }
 .bw-scenario-setup p:last-child { margin-bottom: 0; }
@@ -643,17 +643,17 @@
   border-radius: 0.5rem;
   cursor: pointer;
   font-size: 0.9375rem;
-  color: #021F36;
+  color: var(--lesson-primary, #021F36);
   line-height: 1.4;
   transition: border-color 120ms ease, background 120ms ease, transform 80ms ease;
 }
 .bw-scenario-choice:hover {
-  border-color: #F5741A;
+  border-color: var(--lesson-cta, #F5741A);
   background: rgba(245, 116, 26, 0.04);
 }
 .bw-scenario-choice:active { transform: translateY(1px); }
 .bw-scenario-choice:focus-visible {
-  outline: 2px solid #F5741A;
+  outline: 2px solid var(--lesson-cta, #F5741A);
   outline-offset: 2px;
 }
 
@@ -671,11 +671,11 @@
 .bw-scenario-reflection-prompt {
   font-size: 0.9375rem;
   font-weight: 500;
-  color: #021F36;
+  color: var(--lesson-primary, #021F36);
   line-height: 1.4;
   padding: 0.5rem 0.75rem;
-  background: #F9F7F1;
-  border-left: 3px solid #F5741A;
+  background: var(--lesson-surface, #F9F7F1);
+  border-left: 3px solid var(--lesson-cta, #F5741A);
   border-radius: 0 0.375rem 0.375rem 0;
   margin: 0;
 }
@@ -696,11 +696,11 @@
 .bw-scenario-done {
   text-align: center;
   padding: 1.25rem;
-  background: #F9F7F1;
+  background: var(--lesson-surface, #F9F7F1);
   border-radius: 0.5rem;
   border: 1px solid hsl(var(--border));
   font-family: var(--font-display, "Poppins", sans-serif);
-  color: #021F36;
+  color: var(--lesson-primary, #021F36);
   font-weight: 500;
 }
 .bw-scenario-done-reset {
@@ -711,7 +711,7 @@
 .bw-scenario-modal-body {
   font-size: 0.9375rem;
   line-height: 1.5;
-  color: #021F36;
+  color: var(--lesson-primary, #021F36);
   padding: 0.25rem 0 0.5rem 0;
 }
 .bw-scenario-modal-body p { margin: 0 0 0.5rem 0; }
@@ -751,7 +751,7 @@
   letter-spacing: 0.04em;
 }
 
-.bw-kc-prompt { font-size: 1rem; line-height: 1.55; color: #021F36; }
+.bw-kc-prompt { font-size: 1rem; line-height: 1.55; color: var(--lesson-primary, #021F36); }
 .bw-kc-prompt p { margin: 0 0 0.5rem 0; }
 .bw-kc-prompt p:last-child { margin-bottom: 0; }
 
@@ -759,7 +759,7 @@
   padding: 0.625rem 0.875rem;
   font-size: 0.8125rem;
   color: #6D6875;
-  background: #F9F7F1;
+  background: var(--lesson-surface, #F9F7F1);
   border: 1px dashed rgba(2, 31, 54, 0.18);
   border-radius: 0.5rem;
 }
@@ -774,13 +774,13 @@
   border-radius: 0.5rem;
   cursor: pointer;
   font-size: 0.9375rem;
-  color: #021F36;
+  color: var(--lesson-primary, #021F36);
   line-height: 1.4;
   transition: border-color 120ms ease, background 120ms ease;
 }
-.bw-kc-choice:hover:not(:disabled) { border-color: #F5741A; background: rgba(245, 116, 26, 0.04); }
-.bw-kc-choice:focus-visible { outline: 2px solid #F5741A; outline-offset: 2px; }
-.bw-kc-choice.is-selected { border-color: #F5741A; background: rgba(245, 116, 26, 0.08); }
+.bw-kc-choice:hover:not(:disabled) { border-color: var(--lesson-cta, #F5741A); background: rgba(245, 116, 26, 0.04); }
+.bw-kc-choice:focus-visible { outline: 2px solid var(--lesson-cta, #F5741A); outline-offset: 2px; }
+.bw-kc-choice.is-selected { border-color: var(--lesson-cta, #F5741A); background: rgba(245, 116, 26, 0.08); }
 .bw-kc-choice.is-correct { border-color: #2D6A4F; background: rgba(45, 106, 79, 0.08); }
 .bw-kc-choice.is-wrong { border-color: #D62828; background: rgba(214, 40, 40, 0.06); }
 .bw-kc-choice.is-missed { border-color: #2D6A4F; background: rgba(45, 106, 79, 0.05); border-style: dashed; }
@@ -813,12 +813,12 @@
 
 .bw-kc-explanation {
   padding: 0.75rem 1rem;
-  background: #F9F7F1;
+  background: var(--lesson-surface, #F9F7F1);
   border-left: 3px solid #2D6A4F;
   border-radius: 0 0.375rem 0.375rem 0;
   font-size: 0.9375rem;
   line-height: 1.5;
-  color: #021F36;
+  color: var(--lesson-primary, #021F36);
 }
 .bw-kc-explanation p { margin: 0 0 0.5rem 0; }
 .bw-kc-explanation p:last-child { margin-bottom: 0; }
@@ -911,22 +911,22 @@
   border-radius: 0.5rem;
   cursor: pointer;
   font-size: 0.875rem;
-  color: #021F36;
+  color: var(--lesson-primary, #021F36);
   line-height: 1.35;
   transition: border-color 120ms ease, background 120ms ease;
 }
 .bw-kc-match-left:hover:not(:disabled),
 .bw-kc-match-right:hover:not(:disabled) {
-  border-color: #F5741A;
+  border-color: var(--lesson-cta, #F5741A);
   background: rgba(245, 116, 26, 0.04);
 }
 .bw-kc-match-left.is-active {
-  border-color: #F5741A;
+  border-color: var(--lesson-cta, #F5741A);
   background: rgba(245, 116, 26, 0.1);
 }
 .bw-kc-match-right.is-target {
   border-style: dashed;
-  border-color: #F5741A;
+  border-color: var(--lesson-cta, #F5741A);
 }
 .bw-kc-match-left.is-correct,
 .bw-kc-match-right.is-linked {
@@ -993,12 +993,12 @@
   border-radius: 0.5rem;
   cursor: grab;
   font-size: 0.9375rem;
-  color: #021F36;
+  color: var(--lesson-primary, #021F36);
   user-select: none;
   transition: border-color 120ms ease, background 120ms ease;
 }
 .bw-kc-rank-item:hover {
-  border-color: #F5741A;
+  border-color: var(--lesson-cta, #F5741A);
 }
 .bw-kc-rank-item.is-correct {
   border-color: #2D6A4F;
@@ -1036,7 +1036,7 @@
   gap: 0.5rem;
   padding: 0.875rem 0.5rem;
   overflow-x: auto;
-  background: #F9F7F1;
+  background: var(--lesson-surface, #F9F7F1);
   border-radius: 0.5rem;
   position: relative;
 }
@@ -1064,7 +1064,7 @@
   border-radius: 0.5rem;
   cursor: grab;
   font-size: 0.8125rem;
-  color: #021F36;
+  color: var(--lesson-primary, #021F36);
   min-width: 7rem;
   max-width: 9rem;
   user-select: none;
@@ -1072,7 +1072,7 @@
   transition: border-color 120ms ease, background 120ms ease;
 }
 .bw-kc-timeline-event:hover {
-  border-color: #F5741A;
+  border-color: var(--lesson-cta, #F5741A);
 }
 .bw-kc-timeline-event.is-correct {
   border-color: #2D6A4F;
