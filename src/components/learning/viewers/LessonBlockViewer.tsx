@@ -570,7 +570,7 @@ export default function LessonBlockViewer({
             className="h-full rounded-full transition-all"
             style={{
               width: `${sections.length ? Math.round((completedSections.size / sections.length) * 100) : 0}%`,
-              backgroundColor: "var(--bw-orange)",
+              backgroundColor: "var(--lesson-cta, #F5741A)",
             }}
           />
         </div>
@@ -595,7 +595,7 @@ export default function LessonBlockViewer({
                 <CheckCircle2 className="h-3.5 w-3.5 shrink-0" style={{ color: "var(--bw-forest)" }} />
               ) : active ? (
                 <span className="flex h-3.5 w-3.5 shrink-0 items-center justify-center">
-                  <span className="h-2 w-2 rounded-full" style={{ backgroundColor: "var(--bw-orange)" }} />
+                  <span className="h-2 w-2 rounded-full" style={{ backgroundColor: "var(--lesson-cta, #F5741A)" }} />
                 </span>
               ) : (
                 <span className="h-3.5 w-3.5 shrink-0 rounded-full border border-muted-foreground/40" />
@@ -620,7 +620,7 @@ export default function LessonBlockViewer({
               Contents
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="w-72 overflow-y-auto p-0">
+          <SheetContent side="left" className="w-72 overflow-y-auto p-0" style={lessonBrandVars}>
             <div className="flex items-center justify-between border-b px-3 py-2">
               <div className="text-sm font-semibold">Lesson contents</div>
               <button
@@ -741,7 +741,8 @@ export default function LessonBlockViewer({
                         size="lg"
                         disabled={!finalContinueEnabled || isCompleting || isReporting}
                         onClick={handleFinalContinue}
-                        className="bg-[var(--bw-orange)] text-white hover:bg-[var(--bw-orange-600)]"
+                        className="text-white hover:opacity-90"
+                        style={{ backgroundColor: "var(--lesson-cta, #F5741A)" }}
                       >
                         {isCompleting ? (
                           <>
@@ -788,7 +789,8 @@ export default function LessonBlockViewer({
                 <Button
                   size="lg"
                   onClick={goNext}
-                  className="bg-[var(--bw-orange)] text-white hover:bg-[var(--bw-orange-600)]"
+                  className="text-white hover:opacity-90"
+                  style={{ backgroundColor: "var(--lesson-cta, #F5741A)" }}
                 >
                   Continue
                   <ChevronRight className="ml-1.5 h-4 w-4" />
