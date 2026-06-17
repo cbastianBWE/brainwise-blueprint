@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/collapsible";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Search, ChevronDown, X, Plus, Trash2 } from "lucide-react";
+import { Loader2, Search, ChevronDown, X, Plus, Trash2, Wand2 } from "lucide-react";
 import { RichTextEditor } from "../RichTextEditor";
 import { useLessonBlockAssetUrls } from "../useLessonBlockAssetUrls";
 import type { TipTapDocJSON } from "../blockTypeMeta";
@@ -20,6 +20,19 @@ const emptyDoc = (): TipTapDocJSON => ({
   type: "doc",
   content: [{ type: "paragraph" }],
 });
+
+function tiptapToPlainText(doc: any): string {
+  if (!doc || typeof doc !== "object") return "";
+  const parts: string[] = [];
+  const walk = (node: any) => {
+    if (!node) return;
+    if (typeof node.text === "string") parts.push(node.text);
+    if (Array.isArray(node.content)) node.content.forEach(walk);
+  };
+  walk(doc);
+  return parts.join(" ").replace(/\s+/g, " ").trim();
+}
+
 
 interface Hotspot {
   client_id: string;
@@ -66,6 +79,7 @@ export function HotspotBlockForm({ value, onConfigChange, contentItemId }: Props
   const [candidates, setCandidates] = useState<PexelsCandidate[]>([]);
   const [ingestingId, setIngestingId] = useState<string | number | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [autoPlacing, setAutoPlacing] = useState(false);
   const canvasRef = useRef<HTMLDivElement | null>(null);
 
   const canSearchPexels = !!contentItemId;
@@ -95,6 +109,48 @@ export function HotspotBlockForm({ value, onConfigChange, contentItemId }: Props
       setSearching(false);
     }
   }
+
+  async function runAutoPlace() {
+    if (!contentItemId || !value.asset_id || hotspots.length === 0) return;
+    setAutoPlacing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("lesson-hotspot-autoplace", {
+        body: {
+          content_item_id: contentItemId,
+          asset_id: value.asset_id,
+          hotspots: hotspots.map((h) => ({
+            client_id: h.client_id,
+            label: h.label,
+            content_text: tiptapToPlainText(h.content),
+          })),
+        },
+      });
+      if (error) throw error;
+      const placements = ((data?.placements ?? []) as Array<{ client_id: string; x: number; y: number }>);
+      if (placements.length === 0) {
+        toast({ title: "No placements returned", description: "The AI could not place markers. Position them manually." });
+        return;
+      }
+      const byId = new Map(placements.map((p) => [p.client_id, p]));
+      updateHotspots(
+        hotspots.map((h) => {
+          const p = byId.get(h.client_id);
+          return p
+            ? { ...h, x: Math.max(0, Math.min(100, p.x)), y: Math.max(0, Math.min(100, p.y)) }
+            : h;
+        }),
+      );
+      toast({
+        title: `Placed ${placements.length} marker${placements.length === 1 ? "" : "s"}`,
+        description: "Review and nudge any that need adjusting.",
+      });
+    } catch (e: any) {
+      toast({ title: "Auto-place failed", description: e?.message ?? "Try again.", variant: "destructive" });
+    } finally {
+      setAutoPlacing(false);
+    }
+  }
+
 
   async function pickCandidate(candidate: PexelsCandidate) {
     if (!contentItemId) return;
@@ -280,7 +336,19 @@ export function HotspotBlockForm({ value, onConfigChange, contentItemId }: Props
 
       {imgUrl ? (
         <div className="space-y-2">
-          <Label>Placement ({hotspots.length} / {MAX_HOTSPOTS})</Label>
+          <div className="flex items-center justify-between">
+            <Label>Placement ({hotspots.length} / {MAX_HOTSPOTS})</Label>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={autoPlacing || !value.asset_id || hotspots.length === 0 || !contentItemId}
+              onClick={runAutoPlace}
+            >
+              {autoPlacing ? <Loader2 className="mr-1 h-3 w-3 animate-spin" /> : <Wand2 className="mr-1 h-3 w-3" />}
+              Auto-place with AI
+            </Button>
+          </div>
           <p className="text-xs text-muted-foreground">
             Click anywhere on the image to add a hotspot.
           </p>
