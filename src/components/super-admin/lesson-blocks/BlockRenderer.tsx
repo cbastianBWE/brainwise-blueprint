@@ -140,7 +140,7 @@ function HeadingRender({ text, level }: { text: string; level: number }) {
   return (
     <Tag
       className={`font-display tracking-tight ${sizeClass} ${weightClass}`}
-      style={{ color: "#021F36" }}
+      style={{ color: "var(--lesson-primary, #021F36)" }}
     >
       {text || (
         <span className="font-sans text-sm font-normal italic text-muted-foreground">
@@ -279,10 +279,10 @@ const CALLOUT_VARIANT_STYLES: Record<
   string,
   { bg: string; stripe: string; Icon: any }
 > = {
-  info: { bg: "#F0F8F9", stripe: "#006D77", Icon: Info },
+  info: { bg: "color-mix(in srgb, var(--lesson-accent) 10%, #ffffff)", stripe: "var(--lesson-accent)", Icon: Info },
   warning: { bg: "#FFF8E5", stripe: "#FFB703", Icon: AlertTriangle },
   success: { bg: "#EAF5F0", stripe: "#2D6A4F", Icon: CheckCircle2 },
-  important: { bg: "#FDF1E8", stripe: "#F5741A", Icon: Star },
+  important: { bg: "color-mix(in srgb, var(--lesson-cta) 10%, #ffffff)", stripe: "var(--lesson-cta)", Icon: Star },
 };
 
 function CalloutRender({
@@ -359,7 +359,7 @@ export function BlockRenderer({ block, assetUrlMap, mode, onBlockComplete, saved
   const padPx = paddingPxFor(cfg.padding);
 
   if (block.block_type === "divider") {
-    const dividerColor = (cfg.color as string | undefined) || "#021F36";
+    const dividerColor = (cfg.color as string | undefined) || "var(--lesson-primary, #021F36)";
     return (
       <div className="my-4" data-block-client-id={block.client_id}>
         <div
@@ -632,8 +632,8 @@ function TabsRender({
               value={t.client_id}
               className={
                 style === "pills"
-                  ? "rounded-full bg-muted text-muted-foreground hover:bg-muted/70 hover:text-[#021F36] data-[state=active]:bg-[#F5741A] data-[state=active]:text-white data-[state=active]:shadow-none font-medium px-4 py-2 transition-colors"
-                  : "rounded-none bg-transparent border-b-2 border-border text-muted-foreground hover:text-[#021F36] hover:border-muted-foreground data-[state=active]:text-[#021F36] data-[state=active]:border-[#F5741A] data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:font-semibold font-medium px-4 py-2 transition-colors"
+                  ? "rounded-full bg-muted text-muted-foreground hover:bg-muted/70 hover:text-[var(--lesson-primary)] data-[state=active]:bg-[var(--lesson-cta)] data-[state=active]:text-white data-[state=active]:shadow-none font-medium px-4 py-2 transition-colors"
+                  : "rounded-none bg-transparent border-b-2 border-border text-muted-foreground hover:text-[var(--lesson-primary)] hover:border-muted-foreground data-[state=active]:text-[var(--lesson-primary)] data-[state=active]:border-[var(--lesson-cta)] data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:font-semibold font-medium px-4 py-2 transition-colors"
               }
             >
               {t.label || "(untitled)"}
@@ -689,7 +689,7 @@ function ButtonStackRender({
             variant: b.variant === "secondary" ? ("outline" as const) : ("default" as const),
             style:
               b.variant === "primary"
-                ? ({ backgroundColor: "#F5741A", color: "white" } as CSSProperties)
+                ? ({ backgroundColor: "var(--lesson-cta, #F5741A)", color: "white" } as CSSProperties)
                 : undefined,
           };
           const label = b.label || "(untitled)";
@@ -715,7 +715,7 @@ function ButtonStackRender({
               >
                 <div
                   className="h-0.5 w-full"
-                  style={{ backgroundColor: "#F5741A", opacity: 0.6 }}
+                  style={{ backgroundColor: "var(--lesson-cta, #F5741A)", opacity: 0.6 }}
                 />
                 <Button
                   {...buttonProps}
@@ -930,7 +930,7 @@ function FlashcardsRender({
     : null;
   const cardBg = current?.background_color ?? null;
   const faceStyle: CSSProperties = {
-    backgroundColor: cardBg ?? "#FFFFFF",
+    backgroundColor: cardBg ?? "var(--lesson-surface, #FFFFFF)",
     color: readableTextColorForBg(cardBg),
   };
 
@@ -1026,7 +1026,7 @@ function FlashcardsRender({
                   e.stopPropagation();
                   handleGotIt();
                 }}
-                style={{ backgroundColor: "#F5741A", color: "white" }}
+                style={{ backgroundColor: "var(--lesson-cta, #F5741A)", color: "white" }}
               >
                 Got it
               </Button>
@@ -1036,7 +1036,7 @@ function FlashcardsRender({
                   e.stopPropagation();
                   handleReviewAgain();
                 }}
-                style={{ borderColor: "#021F36", color: "#021F36" }}
+                style={{ borderColor: "var(--lesson-primary, #021F36)", color: "var(--lesson-primary, #021F36)" }}
               >
                 Review again
               </Button>
@@ -1052,7 +1052,7 @@ function FlashcardsRender({
             type="button"
             onClick={handleReset}
             className="bw-flashcards-done-reset underline"
-            style={{ color: "#F5741A" }}
+            style={{ color: "var(--lesson-cta, #F5741A)" }}
           >
             Review again
           </button>
@@ -1121,7 +1121,7 @@ function CardSortDraggableCard({
 
   const cardBg = card.background_color ?? null;
   const cardStyle: CSSProperties = {
-    backgroundColor: cardBg ?? "#FFFFFF",
+    backgroundColor: cardBg ?? "var(--lesson-surface, #FFFFFF)",
     color: readableTextColorForBg(cardBg),
   };
 
@@ -1425,7 +1425,7 @@ function CardSortRender({
               disabled={!allCardsPlaced}
               style={
                 allCardsPlaced
-                  ? { backgroundColor: "#F5741A", color: "#FFFFFF" }
+                  ? { backgroundColor: "var(--lesson-cta, #F5741A)", color: "#FFFFFF" }
                   : undefined
               }
             >
@@ -1438,7 +1438,7 @@ function CardSortRender({
                 type="button"
                 onClick={handleReset}
                 className="bw-cardsort-done-reset underline"
-                style={{ color: "#F5741A" }}
+                style={{ color: "var(--lesson-cta, #F5741A)" }}
               >
                 Try again
               </button>
@@ -1699,7 +1699,7 @@ function ScenarioRender({
                   disabled={
                     (reflectionResponses[current.client_id] ?? "").trim().length === 0
                   }
-                  style={{ backgroundColor: "#F5741A", color: "white" }}
+                  style={{ backgroundColor: "var(--lesson-cta, #F5741A)", color: "white" }}
                 >
                   Submit reflection
                 </Button>
@@ -1716,7 +1716,7 @@ function ScenarioRender({
             type="button"
             onClick={handleReplay}
             className="bw-scenario-done-reset underline"
-            style={{ color: "#F5741A" }}
+            style={{ color: "var(--lesson-cta, #F5741A)" }}
           >
             Replay scenario
           </button>
@@ -1745,7 +1745,7 @@ function ScenarioRender({
               ref={continueBtnRef}
               type="button"
               onClick={handleContinue}
-              style={{ backgroundColor: "#F5741A", color: "white" }}
+              style={{ backgroundColor: "var(--lesson-cta, #F5741A)", color: "white" }}
             >
               Continue
             </Button>
@@ -2264,7 +2264,7 @@ function KnowledgeCheckRender({
                     size="sm"
                     onClick={() => handleCheck(q)}
                     disabled={!canCheck}
-                    style={{ backgroundColor: "#F5741A", color: "white" }}
+                    style={{ backgroundColor: "var(--lesson-cta, #F5741A)", color: "white" }}
                   >
                     Check answer
                   </Button>
