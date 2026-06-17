@@ -110,6 +110,48 @@ export function HotspotBlockForm({ value, onConfigChange, contentItemId }: Props
     }
   }
 
+  async function runAutoPlace() {
+    if (!contentItemId || !value.asset_id || hotspots.length === 0) return;
+    setAutoPlacing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("lesson-hotspot-autoplace", {
+        body: {
+          content_item_id: contentItemId,
+          asset_id: value.asset_id,
+          hotspots: hotspots.map((h) => ({
+            client_id: h.client_id,
+            label: h.label,
+            content_text: tiptapToPlainText(h.content),
+          })),
+        },
+      });
+      if (error) throw error;
+      const placements = ((data?.placements ?? []) as Array<{ client_id: string; x: number; y: number }>);
+      if (placements.length === 0) {
+        toast({ title: "No placements returned", description: "The AI could not place markers. Position them manually." });
+        return;
+      }
+      const byId = new Map(placements.map((p) => [p.client_id, p]));
+      updateHotspots(
+        hotspots.map((h) => {
+          const p = byId.get(h.client_id);
+          return p
+            ? { ...h, x: Math.max(0, Math.min(100, p.x)), y: Math.max(0, Math.min(100, p.y)) }
+            : h;
+        }),
+      );
+      toast({
+        title: `Placed ${placements.length} marker${placements.length === 1 ? "" : "s"}`,
+        description: "Review and nudge any that need adjusting.",
+      });
+    } catch (e: any) {
+      toast({ title: "Auto-place failed", description: e?.message ?? "Try again.", variant: "destructive" });
+    } finally {
+      setAutoPlacing(false);
+    }
+  }
+
+
   async function pickCandidate(candidate: PexelsCandidate) {
     if (!contentItemId) return;
     setIngestingId(candidate.pexels_id);
