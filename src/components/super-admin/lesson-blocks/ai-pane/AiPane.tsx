@@ -339,7 +339,7 @@ export function AiPane(props: Props) {
         const newItems: FullContentItem[] = blocksOut.map((b, j) => {
           const outlineItem = outlineState.items[startIndex + j];
           let config = b.config;
-          if (outlineItem?.block_type === "image" && outlineItem.image_resolved) {
+          if ((outlineItem?.block_type === "image" || outlineItem?.block_type === "hotspot") && outlineItem.image_resolved) {
             config = {
               ...config,
               asset_id: outlineItem.image_resolved.asset_id,
