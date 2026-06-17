@@ -21,6 +21,19 @@ const emptyDoc = (): TipTapDocJSON => ({
   content: [{ type: "paragraph" }],
 });
 
+function tiptapToPlainText(doc: any): string {
+  if (!doc || typeof doc !== "object") return "";
+  const parts: string[] = [];
+  const walk = (node: any) => {
+    if (!node) return;
+    if (typeof node.text === "string") parts.push(node.text);
+    if (Array.isArray(node.content)) node.content.forEach(walk);
+  };
+  walk(doc);
+  return parts.join(" ").replace(/\s+/g, " ").trim();
+}
+
+
 interface Hotspot {
   client_id: string;
   x: number;
