@@ -879,7 +879,7 @@ export default function LessonBlocksEditor() {
               </Card>
             </div>
           ) : (
-            <div className="mx-auto max-w-3xl">
+            <div className="mx-auto max-w-3xl" style={lessonBrandVars}>
               {itemQuery.data && (
                 <LessonTitleCard
                   contentItem={itemQuery.data as any}
