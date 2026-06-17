@@ -39,7 +39,8 @@ export type BlockType =
   | "flashcards"
   | "card_sort"
   | "scenario"
-  | "knowledge_check";
+  | "knowledge_check"
+  | "open_response";
 
 export type TipTapDocJSON = Record<string, unknown>;
 
