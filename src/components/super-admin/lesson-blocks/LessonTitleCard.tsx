@@ -125,44 +125,55 @@ export function LessonTitleCard({
       className="mb-8 overflow-hidden rounded-2xl border shadow-sm"
       style={styleVars}
     >
-      {/* HERO BAND — brand primary (navy) */}
+      {/* HERO BAND — brand-textured */}
       <div
-        className="px-8 py-10 md:px-12 md:py-14 lg:px-16 lg:py-16"
-        style={{ backgroundColor: "var(--cover-primary)", color: "#FFFFFF" }}
+        className="relative overflow-hidden px-8 py-10 md:px-12 md:py-14 lg:px-16 lg:py-16"
+        style={{
+          background:
+            "radial-gradient(circle at 80% 15%, color-mix(in srgb, var(--cover-accent) 32%, transparent), transparent 50%), linear-gradient(135deg, var(--cover-primary) 0%, color-mix(in srgb, var(--cover-primary) 80%, #000000) 100%)",
+          color: "#FFFFFF",
+        }}
       >
-        <div className="mb-6">
-          {logoUrl ? (
-            <img src={logoUrl} alt="" className="h-12 w-auto object-contain" />
-          ) : (
-            <BrainWiseMark className="h-12 w-12" style={{ color: "var(--cover-cta)" }} />
-          )}
-        </div>
-
-        <h1
-          className="max-w-4xl text-4xl font-semibold leading-[1.1] tracking-tight text-white md:text-5xl lg:text-6xl"
-          style={{ fontFamily: displayFont ?? undefined }}
-        >
-          {contentItem.title ?? "Untitled lesson"}
-        </h1>
-
-        {contentItem.description && (
-          <p className="mt-5 max-w-2xl text-lg leading-relaxed text-white/85">
-            {contentItem.description}
-          </p>
-        )}
-
-        <div className="mt-6 flex flex-wrap gap-2">
-          {chip(<>{minutes} min to complete</>, "min")}
-          {sectionCount > 0 && chip(<>{sectionCount} sections</>, "sec")}
-          {checkCount > 0 &&
-            chip(
-              <>
-                {checkCount} quick {checkCount === 1 ? "check" : "checks"}
-              </>,
-              "chk",
+        <BrainWiseMark
+          className="pointer-events-none absolute -bottom-12 -right-10 h-72 w-72"
+          style={{ color: "#FFFFFF", opacity: 0.06 }}
+        />
+        <div className="relative z-10">
+          <div className="mb-6">
+            {logoUrl ? (
+              <img src={logoUrl} alt="" className="h-12 w-auto object-contain" />
+            ) : (
+              <BrainWiseMark className="h-12 w-12" style={{ color: "var(--cover-cta)" }} />
             )}
+          </div>
+
+          <h1
+            className="max-w-4xl text-4xl font-semibold leading-[1.1] tracking-tight text-white md:text-5xl lg:text-6xl"
+            style={{ fontFamily: displayFont ?? undefined }}
+          >
+            {contentItem.title ?? "Untitled lesson"}
+          </h1>
+
+          {contentItem.description && (
+            <p className="mt-5 max-w-2xl text-lg leading-relaxed text-white/85">
+              {contentItem.description}
+            </p>
+          )}
+
+          <div className="mt-6 flex flex-wrap gap-2">
+            {chip(<>{minutes} min to complete</>, "min")}
+            {sectionCount > 0 && chip(<>{sectionCount} sections</>, "sec")}
+            {checkCount > 0 &&
+              chip(
+                <>
+                  {checkCount} quick {checkCount === 1 ? "check" : "checks"}
+                </>,
+                "chk",
+              )}
+          </div>
         </div>
       </div>
+
 
       {/* BODY — brand surface */}
       <div
