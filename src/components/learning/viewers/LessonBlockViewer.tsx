@@ -537,6 +537,16 @@ export default function LessonBlockViewer({
     : "";
   const sectionMinutes = estimateMinutes(currentSection?.blocks ?? []);
 
+  const lessonOutcomes = Array.isArray(contentItem.outcomes)
+    ? (contentItem.outcomes as string[]).filter(Boolean)
+    : [];
+  const recapTopics = tocEntries.map((t) => t.text).filter(Boolean);
+  const totalChecks = blocks.filter((b) => b.block_type === "knowledge_check").length;
+  const passedChecks = blocks.filter(
+    (b) => b.block_type === "knowledge_check" && completedIds.has(b.id),
+  ).length;
+  const totalMinutes = estimateMinutes(blocks);
+
 
 
   const hasResume = isSelf && !!completion?.lesson_last_block_id;
