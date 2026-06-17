@@ -433,6 +433,23 @@ export default function LessonBlockViewer({
     }
   };
 
+  /* ---- TOC (heading topics) ---- */
+
+  const tocEntries = useMemo(() => buildLessonToc(blocks as any), [blocks]);
+
+  const activeTopicId = useMemo(() => {
+    if (!activeBlockId || tocEntries.length === 0) return null;
+    const activeOrder = blocks.find((b) => b.id === activeBlockId)?.display_order;
+    if (activeOrder == null) return tocEntries[0].blockId;
+    let current = tocEntries[0].blockId;
+    for (const t of tocEntries) {
+      const tOrder = blocks.find((b) => b.id === t.blockId)?.display_order ?? -1;
+      if (tOrder <= activeOrder) current = t.blockId;
+      else break;
+    }
+    return current;
+  }, [activeBlockId, tocEntries, blocks]);
+
   /* ---- render ---- */
 
   if (blocksQuery.isLoading || assetsLoading) {
@@ -478,22 +495,7 @@ export default function LessonBlockViewer({
     : "";
   const sectionMinutes = estimateMinutes(currentSection?.blocks ?? []);
 
-  /* ---- TOC (heading topics) ---- */
 
-  const tocEntries = useMemo(() => buildLessonToc(blocks as any), [blocks]);
-
-  const activeTopicId = useMemo(() => {
-    if (!activeBlockId || tocEntries.length === 0) return null;
-    const activeOrder = blocks.find((b) => b.id === activeBlockId)?.display_order;
-    if (activeOrder == null) return tocEntries[0].blockId;
-    let current = tocEntries[0].blockId;
-    for (const t of tocEntries) {
-      const tOrder = blocks.find((b) => b.id === t.blockId)?.display_order ?? -1;
-      if (tOrder <= activeOrder) current = t.blockId;
-      else break;
-    }
-    return current;
-  }, [activeBlockId, tocEntries, blocks]);
 
   const hasResume = isSelf && !!completion?.lesson_last_block_id;
   const resumeHint = hasResume ? "Pick up where you left off" : null;
