@@ -296,6 +296,9 @@ export function BlockEditorPane({ block, onChange, contentItemId, siblingBlocks 
       {block.block_type === "open_response" && (
         <OpenResponseBlockForm value={cfg} onConfigChange={handleConfig} />
       )}
+      {block.block_type === "hotspot" && (
+        <HotspotBlockForm value={cfg} onConfigChange={handleConfig} contentItemId={contentItemId} />
+      )}
 
       <BlockStyleSection value={cfg} onConfigChange={handleConfig} />
     </div>
