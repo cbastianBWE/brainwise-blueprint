@@ -5609,6 +5609,85 @@ export type Database = {
           },
         ]
       }
+      lesson_open_responses: {
+        Row: {
+          ai_feedback: string
+          attempt_number: number
+          block_id: string
+          content_item_id: string
+          created_at: string
+          id: string
+          model: string | null
+          response_text: string
+          user_id: string
+        }
+        Insert: {
+          ai_feedback: string
+          attempt_number: number
+          block_id: string
+          content_item_id: string
+          created_at?: string
+          id?: string
+          model?: string | null
+          response_text: string
+          user_id: string
+        }
+        Update: {
+          ai_feedback?: string
+          attempt_number?: number
+          block_id?: string
+          content_item_id?: string
+          created_at?: string
+          id?: string
+          model?: string | null
+          response_text?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lesson_open_responses_block_id_fkey"
+            columns: ["block_id"]
+            isOneToOne: false
+            referencedRelation: "lesson_blocks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lesson_open_responses_content_item_id_fkey"
+            columns: ["content_item_id"]
+            isOneToOne: false
+            referencedRelation: "content_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lesson_open_responses_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lesson_open_responses_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "lesson_open_responses_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lesson_open_responses_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       member_feature_overrides: {
         Row: {
           created_at: string
@@ -11021,6 +11100,10 @@ export type Database = {
         Args: { p_asset_kind: string }
         Returns: number
       }
+      _authorize_lesson_block_for_trainee: {
+        Args: { p_block_id: string; p_user_id?: string }
+        Returns: string
+      }
       _cascade_archive_asset_refs_for_certification_path: {
         Args: {
           p_archive_reason: string
@@ -13332,6 +13415,10 @@ export type Database = {
         Args: { p_enabled: boolean; p_feature: string; p_reason: string }
         Returns: Json
       }
+      prepare_lesson_open_response: {
+        Args: { p_block_id: string }
+        Returns: Json
+      }
       preview_article_as_viewer_class: {
         Args: { p_article_id: string; p_viewer_class: string }
         Returns: Json
@@ -13372,6 +13459,15 @@ export type Database = {
       reconcile_supervisors_for_user: {
         Args: { p_new_user_id: string }
         Returns: number
+      }
+      record_lesson_open_response: {
+        Args: {
+          p_ai_feedback: string
+          p_block_id: string
+          p_model?: string
+          p_response_text: string
+        }
+        Returns: Json
       }
       record_video_progress: {
         Args: {
