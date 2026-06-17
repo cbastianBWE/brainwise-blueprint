@@ -534,14 +534,28 @@ export default function LessonBlockViewer({
 
   const Toc = (
     <nav className="space-y-1 p-2 text-sm" aria-label="Lesson contents">
-      <div className="px-2 pb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-        Contents
+      <div className="px-2 pb-2">
+        <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          <span>Contents</span>
+          <span className="tabular-nums">{completedSections.size}/{sections.length}</span>
+        </div>
+        <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+          <div
+            className="h-full rounded-full transition-all"
+            style={{
+              width: `${sections.length ? Math.round((completedSections.size / sections.length) * 100) : 0}%`,
+              backgroundColor: "var(--bw-orange)",
+            }}
+          />
+        </div>
       </div>
       {tocEntries.length === 0 ? (
         <div className="px-2 py-1 text-xs text-muted-foreground">No topics yet.</div>
       ) : (
         tocEntries.map((t) => {
           const active = activeTopicId === t.blockId;
+          const secIdx = blockIdToSectionIdx.get(t.blockId) ?? -1;
+          const done = completedSections.has(secIdx);
           return (
             <button
               key={t.blockId}
@@ -551,6 +565,15 @@ export default function LessonBlockViewer({
                 active ? "bg-muted text-foreground" : "text-muted-foreground hover:bg-muted/70"
               }`}
             >
+              {done ? (
+                <CheckCircle2 className="h-3.5 w-3.5 shrink-0" style={{ color: "var(--bw-forest)" }} />
+              ) : active ? (
+                <span className="flex h-3.5 w-3.5 shrink-0 items-center justify-center">
+                  <span className="h-2 w-2 rounded-full" style={{ backgroundColor: "var(--bw-orange)" }} />
+                </span>
+              ) : (
+                <span className="h-3.5 w-3.5 shrink-0 rounded-full border border-muted-foreground/40" />
+              )}
               <span className="flex-1 truncate text-xs">{t.text}</span>
             </button>
           );
