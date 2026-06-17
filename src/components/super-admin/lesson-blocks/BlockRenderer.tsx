@@ -240,15 +240,10 @@ function QuoteRender({
   attribution: string | null;
 }) {
   return (
-    <blockquote
-      className="space-y-2 border-l-4 pl-4 italic"
-      style={{ borderColor: "#F5741A" }}
-    >
+    <blockquote className="bw-pullquote">
       <ReadOnlyTipTap json={body} />
       {attribution && (
-        <footer className="text-sm not-italic text-muted-foreground">
-          — {attribution}
-        </footer>
+        <footer className="bw-pullquote-attribution">{attribution}</footer>
       )}
     </blockquote>
   );
