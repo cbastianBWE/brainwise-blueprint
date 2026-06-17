@@ -131,6 +131,26 @@ export default function LessonBlockViewer({
     },
   });
 
+  const { data: lessonBrand } = useQuery({
+    queryKey: lessonBrandQueryKey(contentItemId),
+    enabled: !!contentItemId,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("lesson_brands")
+        .select("*")
+        .eq("content_item_id", contentItemId)
+        .maybeSingle();
+      return data ?? null;
+    },
+  });
+
+  const lessonBrandVars: CSSProperties = {
+    ["--lesson-primary" as any]: (lessonBrand as any)?.color_primary ?? "#021F36",
+    ["--lesson-cta" as any]: (lessonBrand as any)?.color_cta ?? "#F5741A",
+    ["--lesson-accent" as any]: (lessonBrand as any)?.color_accent ?? "#006D77",
+    ["--lesson-surface" as any]: (lessonBrand as any)?.color_surface ?? "#F9F7F1",
+  };
+
   const savedProgressByBlockId = useMemo(() => {
     const m = new Map<string, SavedBlockProgress>();
     for (const row of blockProgressQuery.data ?? []) {
