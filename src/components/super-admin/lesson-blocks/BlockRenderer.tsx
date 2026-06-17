@@ -57,6 +57,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import type { EditorBlock, TipTapDocJSON } from "./blockTypeMeta";
+import { supabase } from "@/integrations/supabase/client";
 
 function readableTextColorForBg(bg: string | null | undefined): string {
   if (!bg || !/^#[0-9A-Fa-f]{6}$/.test(bg)) return "#021F36";
