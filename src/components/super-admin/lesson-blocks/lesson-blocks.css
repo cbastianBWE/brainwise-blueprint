@@ -1139,7 +1139,7 @@
   font-family: Georgia, "Times New Roman", serif;
   font-size: 3.5rem;
   line-height: 1;
-  color: var(--bw-orange, #F5741A);
+  color: var(--lesson-cta, #F5741A);
   opacity: 0.32;
   pointer-events: none;
 }
