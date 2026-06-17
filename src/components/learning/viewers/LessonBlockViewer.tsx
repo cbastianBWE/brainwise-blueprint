@@ -640,6 +640,7 @@ export default function LessonBlockViewer({
 
         {/* Lesson body */}
         <div ref={scrollAreaRef} className="relative min-w-0 space-y-6">
+          <div key={currentSectionIdx} className="bw-section-enter space-y-6">
           <div
             ref={promotedHeadingId ? (el) => setBlockRef(promotedHeadingId, el) : undefined}
             data-block-id={promotedHeadingId ?? undefined}
@@ -683,6 +684,8 @@ export default function LessonBlockViewer({
               </div>
             );
           })}
+          </div>
+
 
           {/* Section footer */}
           <div className="border-t pt-6">

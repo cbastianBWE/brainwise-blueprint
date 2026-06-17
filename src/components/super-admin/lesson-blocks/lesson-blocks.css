@@ -1113,3 +1113,14 @@
   color: var(--muted-foreground, #6D6875);
   margin-top: 0.25rem;
 }
+
+@keyframes bw-section-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.bw-section-enter {
+  animation: bw-section-in 280ms ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .bw-section-enter { animation: none; }
+}
