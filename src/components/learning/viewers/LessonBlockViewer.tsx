@@ -330,6 +330,11 @@ export default function LessonBlockViewer({
     resumedRef.current = true;
     setCurrentSectionIdx(idx);
     furthestSectionRef.current = idx;
+    setVisitedSections((prev) => {
+      const next = new Set(prev);
+      for (let i = 0; i <= idx; i++) next.add(i);
+      return next;
+    });
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         const el = blockRefs.current.get(targetId);
