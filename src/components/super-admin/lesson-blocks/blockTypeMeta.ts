@@ -18,6 +18,7 @@ import {
   GitBranch,
   HelpCircle,
   MessageSquareText,
+  Target,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -40,7 +41,8 @@ export type BlockType =
   | "card_sort"
   | "scenario"
   | "knowledge_check"
-  | "open_response";
+  | "open_response"
+  | "hotspot";
 
 export type TipTapDocJSON = Record<string, unknown>;
 
@@ -317,6 +319,21 @@ export const BLOCK_TYPE_META: Record<
       padding: "none",
     }),
   },
+  hotspot: {
+    label: "Hotspot image",
+    description: "Clickable image with labeled regions",
+    icon: Target,
+    defaultConfig: () => ({
+      asset_id: null,
+      alt: "",
+      attribution: null,
+      instructions: null,
+      hotspots: [],
+      gating_required: false,
+      background_color: null,
+      padding: "none",
+    }),
+  },
 };
 
 export const IN_SCOPE_BLOCK_TYPES: BlockType[] = [
@@ -339,6 +356,7 @@ export const IN_SCOPE_BLOCK_TYPES: BlockType[] = [
   "scenario",
   "knowledge_check",
   "open_response",
+  "hotspot",
 ];
 
 export const CALLOUT_COLORS: Record<string, string> = {
