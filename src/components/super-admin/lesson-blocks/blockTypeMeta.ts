@@ -41,7 +41,8 @@ export type BlockType =
   | "card_sort"
   | "scenario"
   | "knowledge_check"
-  | "open_response";
+  | "open_response"
+  | "hotspot";
 
 export type TipTapDocJSON = Record<string, unknown>;
 
