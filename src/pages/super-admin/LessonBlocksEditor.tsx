@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 import { StackedLessonEditor, type EditorMode } from "@/components/super-admin/lesson-blocks/StackedLessonEditor";
-import { LessonTitleCard } from "@/components/super-admin/lesson-blocks/LessonTitleCard";
+import { LessonTitleCard, lessonBrandQueryKey } from "@/components/super-admin/lesson-blocks/LessonTitleCard";
 import { LessonBrandPanel } from "@/components/super-admin/lesson-blocks/LessonBrandPanel";
 import { LessonOutcomesPanel } from "@/components/super-admin/lesson-blocks/LessonOutcomesPanel";
 import { EditorSlidePane } from "@/components/super-admin/lesson-blocks/EditorSlidePane";
