@@ -1139,14 +1139,14 @@
   font-family: Georgia, "Times New Roman", serif;
   font-size: 3.5rem;
   line-height: 1;
-  color: var(--bw-orange, #F5741A);
+  color: var(--lesson-cta, #F5741A);
   opacity: 0.32;
   pointer-events: none;
 }
 .bw-pullquote p {
   font-size: 1.25rem;
   line-height: 1.6;
-  color: #021F36;
+  color: var(--lesson-primary, #021F36);
   font-style: normal;
   margin: 0 0 0.5rem;
 }

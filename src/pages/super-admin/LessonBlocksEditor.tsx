@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import type { CSSProperties } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
@@ -27,7 +28,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 import { StackedLessonEditor, type EditorMode } from "@/components/super-admin/lesson-blocks/StackedLessonEditor";
-import { LessonTitleCard } from "@/components/super-admin/lesson-blocks/LessonTitleCard";
+import { LessonTitleCard, lessonBrandQueryKey } from "@/components/super-admin/lesson-blocks/LessonTitleCard";
 import { LessonBrandPanel } from "@/components/super-admin/lesson-blocks/LessonBrandPanel";
 import { LessonOutcomesPanel } from "@/components/super-admin/lesson-blocks/LessonOutcomesPanel";
 import { EditorSlidePane } from "@/components/super-admin/lesson-blocks/EditorSlidePane";
@@ -129,6 +130,26 @@ export default function LessonBlocksEditor() {
       return data;
     },
   });
+
+  const { data: lessonBrand } = useQuery({
+    queryKey: lessonBrandQueryKey(contentItemId ?? ""),
+    enabled: !!contentItemId,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("lesson_brands")
+        .select("*")
+        .eq("content_item_id", contentItemId!)
+        .maybeSingle();
+      return data ?? null;
+    },
+  });
+
+  const lessonBrandVars: CSSProperties = {
+    ["--lesson-primary" as any]: (lessonBrand as any)?.color_primary ?? "#021F36",
+    ["--lesson-cta" as any]: (lessonBrand as any)?.color_cta ?? "#F5741A",
+    ["--lesson-accent" as any]: (lessonBrand as any)?.color_accent ?? "#006D77",
+    ["--lesson-surface" as any]: (lessonBrand as any)?.color_surface ?? "#F9F7F1",
+  };
 
   useEffect(() => {
     if (itemQuery.isLoading || !contentItemId) return;
@@ -858,7 +879,7 @@ export default function LessonBlocksEditor() {
               </Card>
             </div>
           ) : (
-            <div className="mx-auto max-w-3xl">
+            <div className="mx-auto max-w-3xl" style={lessonBrandVars}>
               {itemQuery.data && (
                 <LessonTitleCard
                   contentItem={itemQuery.data as any}

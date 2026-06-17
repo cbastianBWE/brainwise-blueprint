@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { CSSProperties } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   CheckCircle2,
@@ -24,7 +25,7 @@ import {
   type EditorBlock,
 } from "@/components/super-admin/lesson-blocks/blockTypeMeta";
 import { buildLessonToc } from "@/components/super-admin/lesson-blocks/lessonToc";
-import { LessonTitleCard } from "@/components/super-admin/lesson-blocks/LessonTitleCard";
+import { LessonTitleCard, lessonBrandQueryKey } from "@/components/super-admin/lesson-blocks/LessonTitleCard";
 import { estimateMinutes } from "@/components/super-admin/lesson-blocks/lessonEstimate";
 import "@/components/super-admin/lesson-blocks/lesson-blocks.css";
 import type { CascadeResult } from "@/hooks/useCompletionReporter";
@@ -129,6 +130,26 @@ export default function LessonBlockViewer({
       return (data ?? []) as Array<{ block_id: string; status: string; completion_data: unknown }>;
     },
   });
+
+  const { data: lessonBrand } = useQuery({
+    queryKey: lessonBrandQueryKey(contentItemId),
+    enabled: !!contentItemId,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("lesson_brands")
+        .select("*")
+        .eq("content_item_id", contentItemId)
+        .maybeSingle();
+      return data ?? null;
+    },
+  });
+
+  const lessonBrandVars: CSSProperties = {
+    ["--lesson-primary" as any]: (lessonBrand as any)?.color_primary ?? "#021F36",
+    ["--lesson-cta" as any]: (lessonBrand as any)?.color_cta ?? "#F5741A",
+    ["--lesson-accent" as any]: (lessonBrand as any)?.color_accent ?? "#006D77",
+    ["--lesson-surface" as any]: (lessonBrand as any)?.color_surface ?? "#F9F7F1",
+  };
 
   const savedProgressByBlockId = useMemo(() => {
     const m = new Map<string, SavedBlockProgress>();
@@ -583,7 +604,7 @@ export default function LessonBlockViewer({
   );
 
   return (
-    <div className="relative">
+    <div className="relative" style={lessonBrandVars}>
 
       {/* Mobile TOC trigger */}
       <div className="mb-3 flex items-center justify-between lg:hidden">
