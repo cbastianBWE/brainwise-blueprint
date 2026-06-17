@@ -5609,6 +5609,27 @@ export type Database = {
           },
         ]
       }
+      lesson_hotspot_autoplace_log: {
+        Row: {
+          content_item_id: string | null
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          content_item_id?: string | null
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          content_item_id?: string | null
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       lesson_open_responses: {
         Row: {
           ai_feedback: string
