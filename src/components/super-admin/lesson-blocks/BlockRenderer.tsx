@@ -510,6 +510,17 @@ export function BlockRenderer({ block, assetUrlMap, mode, onBlockComplete, saved
             savedProgress={savedProgress}
           />
         );
+      case "open_response":
+        return (
+          <OpenResponseRender
+            config={cfg}
+            blockClientId={block.client_id}
+            mode={mode}
+            onBlockComplete={onBlockComplete}
+            savedProgress={savedProgress}
+            gatingRequired={cfg.gating_required === true}
+          />
+        );
       default:
         return null;
     }
