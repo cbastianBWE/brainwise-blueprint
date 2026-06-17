@@ -31,6 +31,7 @@ import { CardSortBlockForm } from "./block-forms/CardSortBlockForm";
 import { ScenarioBlockForm } from "./block-forms/ScenarioBlockForm";
 import { KnowledgeCheckBlockForm } from "./block-forms/KnowledgeCheckBlockForm";
 import { OpenResponseBlockForm } from "./block-forms/OpenResponseBlockForm";
+import { HotspotBlockForm } from "./block-forms/HotspotBlockForm";
 import { BlockStyleSection } from "./BlockStyleSection";
 import { mapAiError } from "./ai-pane/mapAiError";
 import { COST_ESTIMATES } from "./ai-pane/costEstimates";
