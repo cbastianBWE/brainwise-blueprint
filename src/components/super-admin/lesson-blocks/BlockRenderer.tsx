@@ -2803,3 +2803,122 @@ function OpenResponseRender({
   );
 }
 
+
+// === Hotspot: clickable labeled image with popovers ===
+
+function HotspotRender({
+  config,
+  blockClientId,
+  mode,
+  onBlockComplete,
+  savedProgress,
+  urlMap,
+}: {
+  config: any;
+  blockClientId: string;
+  mode?: "editor" | "trainee";
+  onBlockComplete?: OnBlockComplete;
+  savedProgress?: SavedBlockProgress | null;
+  urlMap: Map<string, string>;
+  gatingRequired: boolean;
+}) {
+  const hotspots: Array<{ client_id: string; x: number; y: number; label: string; content: TipTapDocJSON }> =
+    config?.hotspots ?? [];
+  const assetId: string | null = config?.asset_id ?? null;
+  const alt: string = config?.alt ?? "";
+  const attribution: string | null = config?.attribution ?? null;
+  const instructions: string | null = config?.instructions ?? null;
+
+  const seed = (() => {
+    if (mode === "trainee" && savedProgress?.status === "completed") {
+      return new Set<string>(hotspots.map((h) => h.client_id));
+    }
+    return new Set<string>();
+  })();
+
+  const [opened, setOpened] = useState<Set<string>>(() => seed);
+  const [, setActiveId] = useState<string | null>(null);
+  const completionFiredRef = useRef(savedProgress?.status === "completed");
+
+  useEffect(() => {
+    if (mode !== "trainee") return;
+    const allOpened =
+      hotspots.length === 0 ? true : hotspots.every((h) => opened.has(h.client_id));
+    if (allOpened && !completionFiredRef.current) {
+      completionFiredRef.current = true;
+      onBlockComplete?.(blockClientId, { opened: Array.from(opened) });
+    }
+    if (!allOpened) completionFiredRef.current = false;
+  }, [opened, hotspots, mode, blockClientId, onBlockComplete]);
+
+  const url = assetId ? urlMap.get(assetId) : null;
+  if (!assetId || !url) {
+    return (
+      <div className="flex h-48 items-center justify-center rounded-md border border-dashed bg-muted/30 text-sm text-muted-foreground">
+        <ImageIcon className="mr-2 h-4 w-4" />
+        No image uploaded
+      </div>
+    );
+  }
+
+  return (
+    <figure className="space-y-2">
+      {instructions && (
+        <p className="text-sm text-muted-foreground">{instructions}</p>
+      )}
+      <div className="bw-hotspot-canvas">
+        <img
+          src={url}
+          alt={alt || ""}
+          className="max-h-[480px] w-full rounded-md object-contain"
+        />
+        {hotspots.map((h, idx) => (
+          <Popover
+            key={h.client_id}
+            onOpenChange={(open) => {
+              if (open) {
+                setOpened((prev) => {
+                  if (prev.has(h.client_id)) return prev;
+                  const next = new Set(prev);
+                  next.add(h.client_id);
+                  return next;
+                });
+                setActiveId(h.client_id);
+              }
+            }}
+          >
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                className="bw-hotspot-marker"
+                style={{
+                  left: `${h.x}%`,
+                  top: `${h.y}%`,
+                  transform: "translate(-50%, -50%)",
+                }}
+                aria-label={h.label || `Hotspot ${idx + 1}`}
+              >
+                {idx + 1}
+              </button>
+            </PopoverTrigger>
+            <PopoverContent
+              style={{ background: "var(--lesson-surface, #FFFFFF)" }}
+              className="w-72"
+            >
+              {h.label && (
+                <div
+                  className="mb-2 font-semibold"
+                  style={{ color: "var(--lesson-primary, #021F36)" }}
+                >
+                  {h.label}
+                </div>
+              )}
+              <ReadOnlyTipTap json={h.content} />
+            </PopoverContent>
+          </Popover>
+        ))}
+      </div>
+      {attribution && <div className="bw-image-attribution">{attribution}</div>}
+    </figure>
+  );
+}
