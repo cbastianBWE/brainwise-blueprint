@@ -338,6 +338,7 @@ export const IN_SCOPE_BLOCK_TYPES: BlockType[] = [
   "card_sort",
   "scenario",
   "knowledge_check",
+  "open_response",
 ];
 
 export const CALLOUT_COLORS: Record<string, string> = {
