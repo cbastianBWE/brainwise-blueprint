@@ -537,6 +537,16 @@ export default function LessonBlockViewer({
     : "";
   const sectionMinutes = estimateMinutes(currentSection?.blocks ?? []);
 
+  const lessonOutcomes = Array.isArray(contentItem.outcomes)
+    ? (contentItem.outcomes as string[]).filter(Boolean)
+    : [];
+  const recapTopics = tocEntries.map((t) => t.text).filter(Boolean);
+  const totalChecks = blocks.filter((b) => b.block_type === "knowledge_check").length;
+  const passedChecks = blocks.filter(
+    (b) => b.block_type === "knowledge_check" && completedIds.has(b.id),
+  ).length;
+  const totalMinutes = estimateMinutes(blocks);
+
 
 
   const hasResume = isSelf && !!completion?.lesson_last_block_id;
@@ -719,6 +729,12 @@ export default function LessonBlockViewer({
 
           {/* Section footer */}
           <div className="border-t pt-6">
+            {completedSections.has(currentSectionIdx) && !(isFinalSection && isCompleted) && (
+              <div className="bw-section-enter mb-4 inline-flex items-center gap-1.5 rounded-full border border-[var(--bw-forest)]/30 bg-[var(--bw-forest)]/5 px-3 py-1 text-xs font-medium text-[var(--bw-forest)]">
+                <CheckCircle2 className="h-3.5 w-3.5" />
+                Section complete
+              </div>
+            )}
             {isFinalSection ? (
               <>
                 {!isCompleted && isSelf && (
@@ -757,12 +773,54 @@ export default function LessonBlockViewer({
                   </div>
                 )}
                 {isCompleted && (
-                  <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="flex items-center gap-2 rounded-md border border-[var(--bw-forest)]/30 bg-[var(--bw-forest)]/5 px-3 py-2 text-sm text-[var(--bw-forest)]">
-                      <CheckCircle2 className="h-4 w-4" />
-                      Lesson complete.
+                  <div className="bw-section-enter rounded-xl border border-[var(--bw-forest)]/30 bg-[var(--bw-forest)]/5 p-6">
+                    <div className="flex items-center gap-2 text-[var(--bw-forest)]">
+                      <CheckCircle2 className="h-5 w-5" />
+                      <span
+                        className="text-lg font-semibold"
+                        style={{ fontFamily: "var(--font-display, 'Poppins','Montserrat',system-ui,sans-serif)" }}
+                      >
+                        Lesson complete
+                      </span>
                     </div>
-                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      You finished {contentItem.title ?? "this lesson"}.
+                    </p>
+
+                    {(lessonOutcomes.length > 0 || recapTopics.length > 0) && (
+                      <div className="mt-5">
+                        <div
+                          className="mb-2 text-xs font-semibold uppercase tracking-wide"
+                          style={{ color: "var(--lesson-accent, #006D77)" }}
+                        >
+                          {lessonOutcomes.length > 0 ? "What you can now do" : "What you covered"}
+                        </div>
+                        <ul className="space-y-1.5">
+                          {(lessonOutcomes.length > 0 ? lessonOutcomes : recapTopics).map((item, i) => (
+                            <li key={i} className="flex gap-2 text-[15px] leading-relaxed text-foreground">
+                              <span aria-hidden="true" style={{ color: "var(--lesson-cta, #F5741A)" }}>
+                                ✓
+                              </span>
+                              <span>{item}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    <div className="mt-5 flex flex-wrap gap-2 text-xs text-muted-foreground">
+                      <span className="rounded-full bg-muted px-2.5 py-1">
+                        {sections.length} {sections.length === 1 ? "section" : "sections"}
+                      </span>
+                      {totalChecks > 0 && (
+                        <span className="rounded-full bg-muted px-2.5 py-1">
+                          {passedChecks}/{totalChecks} checks passed
+                        </span>
+                      )}
+                      <span className="rounded-full bg-muted px-2.5 py-1">~{totalMinutes} min</span>
+                    </div>
+
+                    <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:items-center">
                       {hasPrev && (
                         <Button variant="outline" size="lg" onClick={goPrev}>
                           <ChevronLeft className="mr-1.5 h-4 w-4" />
