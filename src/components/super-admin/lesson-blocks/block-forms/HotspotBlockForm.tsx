@@ -336,7 +336,19 @@ export function HotspotBlockForm({ value, onConfigChange, contentItemId }: Props
 
       {imgUrl ? (
         <div className="space-y-2">
-          <Label>Placement ({hotspots.length} / {MAX_HOTSPOTS})</Label>
+          <div className="flex items-center justify-between">
+            <Label>Placement ({hotspots.length} / {MAX_HOTSPOTS})</Label>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={autoPlacing || !value.asset_id || hotspots.length === 0 || !contentItemId}
+              onClick={runAutoPlace}
+            >
+              {autoPlacing ? <Loader2 className="mr-1 h-3 w-3 animate-spin" /> : <Wand2 className="mr-1 h-3 w-3" />}
+              Auto-place with AI
+            </Button>
+          </div>
           <p className="text-xs text-muted-foreground">
             Click anywhere on the image to add a hotspot.
           </p>
