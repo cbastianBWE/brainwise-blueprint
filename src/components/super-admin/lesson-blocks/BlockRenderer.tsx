@@ -523,6 +523,18 @@ export function BlockRenderer({ block, assetUrlMap, mode, onBlockComplete, saved
             gatingRequired={cfg.gating_required === true}
           />
         );
+      case "hotspot":
+        return (
+          <HotspotRender
+            config={cfg}
+            blockClientId={block.client_id}
+            mode={mode}
+            onBlockComplete={onBlockComplete}
+            savedProgress={savedProgress}
+            urlMap={assetUrlMap}
+            gatingRequired={cfg.gating_required === true}
+          />
+        );
       default:
         return null;
     }
