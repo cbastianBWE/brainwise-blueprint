@@ -17,6 +17,7 @@ import {
   LayoutGrid,
   GitBranch,
   HelpCircle,
+  MessageSquareText,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
