@@ -1124,3 +1124,40 @@
 @media (prefers-reduced-motion: reduce) {
   .bw-section-enter { animation: none; }
 }
+
+/* Pull-quote (VIS-7) */
+.bw-pullquote {
+  position: relative;
+  margin: 0;
+  padding: 0.25rem 0 0.25rem 2.75rem;
+}
+.bw-pullquote::before {
+  content: "\201C";
+  position: absolute;
+  left: 0;
+  top: -0.35rem;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 3.5rem;
+  line-height: 1;
+  color: var(--bw-orange, #F5741A);
+  opacity: 0.32;
+  pointer-events: none;
+}
+.bw-pullquote p {
+  font-size: 1.25rem;
+  line-height: 1.6;
+  color: #021F36;
+  font-style: normal;
+  margin: 0 0 0.5rem;
+}
+.bw-pullquote p:last-child {
+  margin-bottom: 0;
+}
+.bw-pullquote-attribution {
+  margin-top: 0.75rem;
+  font-size: 0.8125rem;
+  font-style: normal;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #6B7280;
+}
