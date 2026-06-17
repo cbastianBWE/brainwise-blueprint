@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/collapsible";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Search, ChevronDown, X, Plus, Trash2 } from "lucide-react";
+import { Loader2, Search, ChevronDown, X, Plus, Trash2, Wand2 } from "lucide-react";
 import { RichTextEditor } from "../RichTextEditor";
 import { useLessonBlockAssetUrls } from "../useLessonBlockAssetUrls";
 import type { TipTapDocJSON } from "../blockTypeMeta";
