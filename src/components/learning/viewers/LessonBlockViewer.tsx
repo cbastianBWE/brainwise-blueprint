@@ -729,6 +729,12 @@ export default function LessonBlockViewer({
 
           {/* Section footer */}
           <div className="border-t pt-6">
+            {completedSections.has(currentSectionIdx) && !(isFinalSection && isCompleted) && (
+              <div className="bw-section-enter mb-4 inline-flex items-center gap-1.5 rounded-full border border-[var(--bw-forest)]/30 bg-[var(--bw-forest)]/5 px-3 py-1 text-xs font-medium text-[var(--bw-forest)]">
+                <CheckCircle2 className="h-3.5 w-3.5" />
+                Section complete
+              </div>
+            )}
             {isFinalSection ? (
               <>
                 {!isCompleted && isSelf && (
