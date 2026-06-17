@@ -640,49 +640,16 @@ export default function LessonBlockViewer({
 
         {/* Lesson body */}
         <div ref={scrollAreaRef} className="relative min-w-0 space-y-6">
+          <div key={currentSectionIdx} className="bw-section-enter space-y-6">
           <div
             ref={promotedHeadingId ? (el) => setBlockRef(promotedHeadingId, el) : undefined}
             data-block-id={promotedHeadingId ?? undefined}
             className="scroll-mt-20 mb-2 flex items-center gap-3 rounded-lg border-l-4 px-4 py-3"
             style={{ backgroundColor: "rgba(2,31,54,0.06)", borderLeftColor: "var(--bw-orange)" }}
           >
-            <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--bw-orange)] text-xs font-semibold text-white">
-              {currentSectionIdx + 1}
-            </span>
-            {sectionTitle ? (
-              <h2 className="flex-1 truncate text-base font-semibold text-foreground">
-                {sectionTitle}
-              </h2>
-            ) : (
-              <span className="flex-1 text-sm text-muted-foreground">
-                Section {currentSectionIdx + 1} of {sections.length}
-              </span>
-            )}
-            <span className="shrink-0 text-xs font-medium text-muted-foreground">
-              ~{sectionMinutes} min
-            </span>
-          </div>
-
-          {currentEditorBlocks.map((eb, idx) => {
-            const row = currentSection.blocks[idx];
-            if (row.id === promotedHeadingId) return null;
-            return (
-              <div
-                key={row.id}
-                ref={(el) => setBlockRef(row.id, el)}
-                data-block-id={row.id}
-                className="scroll-mt-20"
-              >
-                <BlockRenderer
-                  block={eb}
-                  assetUrlMap={urlMap}
-                  mode="trainee"
-                  onBlockComplete={handleBlockComplete}
-                  savedProgress={savedProgressByBlockId.get(row.id) ?? null}
-                />
-              </div>
-            );
+...
           })}
+          </div>
 
           {/* Section footer */}
           <div className="border-t pt-6">
