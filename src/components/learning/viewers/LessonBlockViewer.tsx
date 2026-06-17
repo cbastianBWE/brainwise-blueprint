@@ -671,9 +671,13 @@ export default function LessonBlockViewer({
             ref={promotedHeadingId ? (el) => setBlockRef(promotedHeadingId, el) : undefined}
             data-block-id={promotedHeadingId ?? undefined}
             className="scroll-mt-20 mb-2 flex items-center gap-3 rounded-lg border-l-4 px-4 py-3"
-            style={{ backgroundColor: "rgba(2,31,54,0.06)", borderLeftColor: "var(--bw-orange)" }}
+            style={{
+              background:
+                "linear-gradient(135deg, color-mix(in srgb, var(--lesson-primary, #021F36) 9%, var(--lesson-surface, #F9F7F1)) 0%, color-mix(in srgb, var(--lesson-primary, #021F36) 4%, var(--lesson-surface, #F9F7F1)) 100%)",
+              borderLeftColor: "var(--lesson-cta, #F5741A)",
+            }}
           >
-            <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--bw-orange)] text-xs font-semibold text-white">
+            <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--lesson-cta,#F5741A)] text-xs font-semibold text-white">
               {currentSectionIdx + 1}
             </span>
             {sectionTitle ? (
