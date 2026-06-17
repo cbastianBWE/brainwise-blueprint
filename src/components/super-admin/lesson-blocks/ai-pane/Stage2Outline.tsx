@@ -177,7 +177,7 @@ export function Stage2Outline(props: Props) {
         </div>
         {(() => {
           const unresolvedImages = items.filter(
-            (i) => i.block_type === "image" && !i.image_resolved && !i.image_skipped,
+            (i) => (i.block_type === "image" || i.block_type === "hotspot") && !i.image_resolved && !i.image_skipped,
           );
           const blocked = unresolvedImages.length > 0;
           return (
