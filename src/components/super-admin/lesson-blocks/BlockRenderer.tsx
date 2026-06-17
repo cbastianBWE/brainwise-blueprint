@@ -36,6 +36,7 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   DndContext,
   DragOverlay,
@@ -57,6 +58,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import type { EditorBlock, TipTapDocJSON } from "./blockTypeMeta";
+import { supabase } from "@/integrations/supabase/client";
 
 function readableTextColorForBg(bg: string | null | undefined): string {
   if (!bg || !/^#[0-9A-Fa-f]{6}$/.test(bg)) return "#021F36";
@@ -507,6 +509,17 @@ export function BlockRenderer({ block, assetUrlMap, mode, onBlockComplete, saved
             blockClientId={block.client_id}
             onBlockComplete={onBlockComplete}
             savedProgress={savedProgress}
+          />
+        );
+      case "open_response":
+        return (
+          <OpenResponseRender
+            config={cfg}
+            blockClientId={block.client_id}
+            mode={mode}
+            onBlockComplete={onBlockComplete}
+            savedProgress={savedProgress}
+            gatingRequired={cfg.gating_required === true}
           />
         );
       default:
@@ -2616,3 +2629,164 @@ function TimelineTrainee({
     </div>
   );
 }
+
+// === Open response: free-text reflection with AI coaching feedback ===
+
+function OpenResponseRender({
+  config,
+  blockClientId,
+  mode,
+  onBlockComplete,
+  savedProgress,
+}: {
+  config: any;
+  blockClientId: string;
+  mode?: "editor" | "trainee";
+  onBlockComplete?: OnBlockComplete;
+  savedProgress?: SavedBlockProgress | null;
+  gatingRequired: boolean;
+}) {
+  const prompt = (config?.prompt as string) ?? "";
+  const placeholder = (config?.placeholder as string | null) ?? "Type your response here";
+  const minLength = Number.isFinite(config?.min_length) ? Number(config.min_length) : 0;
+
+  const [responseText, setResponseText] = useState("");
+  const [feedback, setFeedback] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [loadedPrior, setLoadedPrior] = useState(false);
+
+  useEffect(() => {
+    if (mode !== "trainee") return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("lesson_open_responses")
+        .select("response_text, ai_feedback, attempt_number")
+        .eq("block_id", blockClientId)
+        .order("attempt_number", { ascending: false })
+        .limit(1);
+      if (cancelled) return;
+      const row = (data ?? [])[0] as { response_text?: string; ai_feedback?: string | null } | undefined;
+      if (row) {
+        setResponseText(row.response_text ?? "");
+        if (row.ai_feedback) setFeedback(row.ai_feedback);
+      }
+      setLoadedPrior(true);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [mode, blockClientId]);
+
+  if (mode === "editor") {
+    return (
+      <div className="space-y-2">
+        <Label className="text-sm font-medium" style={{ color: "var(--lesson-primary, #021F36)" }}>
+          {prompt || "Prompt will appear here"}
+        </Label>
+        <Textarea disabled rows={4} placeholder={placeholder} />
+        <p className="text-xs text-muted-foreground">
+          AI coaching feedback appears here after the learner submits.
+        </p>
+      </div>
+    );
+  }
+
+  const trimmed = responseText.trim();
+  const tooShort = minLength > 0 && trimmed.length < minLength;
+  const disabled = submitting || trimmed.length === 0 || tooShort;
+
+  const handleSubmit = async () => {
+    setSubmitting(true);
+    setErrorMsg(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("lesson-open-response-feedback", {
+        body: { block_id: blockClientId, response_text: trimmed },
+      });
+      if (error) {
+        const status = (error as any)?.context?.status;
+        if (status === 429) {
+          setErrorMsg("You have submitted several times recently. Take a moment, then try again.");
+        } else {
+          setErrorMsg("Could not get feedback right now. Please try again.");
+        }
+        setSubmitting(false);
+        return;
+      }
+      const payload = data as { feedback?: string; attempt_id?: string; attempt_number?: number };
+      setFeedback(payload?.feedback ?? null);
+      onBlockComplete?.(blockClientId, {
+        submitted: true,
+        last_attempt_id: payload?.attempt_id,
+        last_attempt_number: payload?.attempt_number,
+      });
+      setSubmitting(false);
+    } catch {
+      setErrorMsg("Could not get feedback right now. Please try again.");
+      setSubmitting(false);
+    }
+  };
+
+  const feedbackParagraphs = (feedback ?? "")
+    .split(/\n\s*\n/)
+    .map((p) => p.trim())
+    .filter((p) => p.length > 0);
+
+  return (
+    <div className="space-y-3" data-loaded-prior={loadedPrior ? "true" : "false"}>
+      {prompt && (
+        <div
+          className="text-base font-medium"
+          style={{ color: "var(--lesson-primary, #021F36)" }}
+        >
+          {prompt}
+        </div>
+      )}
+      <Textarea
+        rows={5}
+        value={responseText}
+        onChange={(e) => setResponseText(e.target.value)}
+        placeholder={placeholder}
+        disabled={submitting}
+      />
+      {minLength > 0 && (
+        <div className="text-xs text-muted-foreground">
+          {trimmed.length} / {minLength} characters
+        </div>
+      )}
+      {errorMsg && (
+        <div className="rounded-md border border-destructive/40 bg-destructive/5 p-2 text-xs text-destructive">
+          {errorMsg}
+        </div>
+      )}
+      <div>
+        <Button onClick={handleSubmit} disabled={disabled}>
+          {submitting ? "Submitting..." : feedback ? "Submit again" : "Get feedback"}
+        </Button>
+      </div>
+      {feedback && (
+        <div
+          className="rounded-md border-l-4 p-4"
+          style={{
+            borderLeftColor: "var(--lesson-accent)",
+            background: "color-mix(in srgb, var(--lesson-accent) 8%, #ffffff)",
+          }}
+        >
+          <div
+            className="mb-2 text-sm font-semibold"
+            style={{ color: "var(--lesson-primary, #021F36)" }}
+          >
+            Coaching feedback
+          </div>
+          <div className="space-y-2 text-sm">
+            {feedbackParagraphs.map((p, i) => (
+              <p key={i} className="whitespace-pre-wrap">{p}</p>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+

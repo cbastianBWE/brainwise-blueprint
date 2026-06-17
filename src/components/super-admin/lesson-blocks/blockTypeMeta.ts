@@ -17,6 +17,7 @@ import {
   LayoutGrid,
   GitBranch,
   HelpCircle,
+  MessageSquareText,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -38,7 +39,8 @@ export type BlockType =
   | "flashcards"
   | "card_sort"
   | "scenario"
-  | "knowledge_check";
+  | "knowledge_check"
+  | "open_response";
 
 export type TipTapDocJSON = Record<string, unknown>;
 
@@ -301,6 +303,20 @@ export const BLOCK_TYPE_META: Record<
       padding: "none",
     }),
   },
+  open_response: {
+    label: "Open response",
+    description: "Reflection with AI coaching feedback",
+    icon: MessageSquareText,
+    defaultConfig: () => ({
+      prompt: "",
+      guidance: null,
+      placeholder: null,
+      min_length: 0,
+      gating_required: false,
+      background_color: null,
+      padding: "none",
+    }),
+  },
 };
 
 export const IN_SCOPE_BLOCK_TYPES: BlockType[] = [
@@ -322,6 +338,7 @@ export const IN_SCOPE_BLOCK_TYPES: BlockType[] = [
   "card_sort",
   "scenario",
   "knowledge_check",
+  "open_response",
 ];
 
 export const CALLOUT_COLORS: Record<string, string> = {
