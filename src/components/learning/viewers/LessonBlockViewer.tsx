@@ -25,7 +25,7 @@ import {
   type EditorBlock,
 } from "@/components/super-admin/lesson-blocks/blockTypeMeta";
 import { buildLessonToc } from "@/components/super-admin/lesson-blocks/lessonToc";
-import { LessonTitleCard } from "@/components/super-admin/lesson-blocks/LessonTitleCard";
+import { LessonTitleCard, lessonBrandQueryKey } from "@/components/super-admin/lesson-blocks/LessonTitleCard";
 import { estimateMinutes } from "@/components/super-admin/lesson-blocks/lessonEstimate";
 import "@/components/super-admin/lesson-blocks/lesson-blocks.css";
 import type { CascadeResult } from "@/hooks/useCompletionReporter";
