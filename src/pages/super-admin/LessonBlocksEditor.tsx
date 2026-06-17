@@ -29,6 +29,7 @@ import {
 import { cn } from "@/lib/utils";
 import { StackedLessonEditor, type EditorMode } from "@/components/super-admin/lesson-blocks/StackedLessonEditor";
 import { LessonTitleCard, lessonBrandQueryKey } from "@/components/super-admin/lesson-blocks/LessonTitleCard";
+import { resolveFont } from "@/components/super-admin/lesson-blocks/lessonFonts";
 import { LessonBrandPanel } from "@/components/super-admin/lesson-blocks/LessonBrandPanel";
 import { LessonOutcomesPanel } from "@/components/super-admin/lesson-blocks/LessonOutcomesPanel";
 import { EditorSlidePane } from "@/components/super-admin/lesson-blocks/EditorSlidePane";
@@ -144,11 +145,15 @@ export default function LessonBlocksEditor() {
     },
   });
 
+  const lessonDisplayFont = resolveFont((lessonBrand as any)?.font_display_key);
+  const lessonBodyFont = resolveFont((lessonBrand as any)?.font_body_key);
   const lessonBrandVars: CSSProperties = {
     ["--lesson-primary" as any]: (lessonBrand as any)?.color_primary ?? "#021F36",
     ["--lesson-cta" as any]: (lessonBrand as any)?.color_cta ?? "#F5741A",
     ["--lesson-accent" as any]: (lessonBrand as any)?.color_accent ?? "#006D77",
     ["--lesson-surface" as any]: (lessonBrand as any)?.color_surface ?? "#F9F7F1",
+    ["--font-display" as any]: lessonDisplayFont ?? "'Poppins', 'Montserrat', system-ui, sans-serif",
+    fontFamily: lessonBodyFont ?? undefined,
   };
 
   useEffect(() => {

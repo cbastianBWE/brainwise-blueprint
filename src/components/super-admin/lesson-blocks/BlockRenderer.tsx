@@ -139,8 +139,11 @@ function HeadingRender({ text, level }: { text: string; level: number }) {
   const Tag = `h${safeLevel}` as "h2" | "h3" | "h4";
   return (
     <Tag
-      className={`font-display tracking-tight ${sizeClass} ${weightClass}`}
-      style={{ color: "var(--lesson-primary, #021F36)" }}
+      className={`tracking-tight ${sizeClass} ${weightClass}`}
+      style={{
+        color: "var(--lesson-primary, #021F36)",
+        fontFamily: "var(--font-display, 'Poppins', 'Montserrat', system-ui, sans-serif)",
+      }}
     >
       {text || (
         <span className="font-sans text-sm font-normal italic text-muted-foreground">
