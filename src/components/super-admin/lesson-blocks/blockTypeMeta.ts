@@ -19,6 +19,7 @@ import {
   HelpCircle,
   MessageSquareText,
   Target,
+  Eye,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
