@@ -2934,3 +2934,126 @@ function HotspotRender({
     </figure>
   );
 }
+
+
+// === Reveal cards: click-to-flip card grid ===
+
+function RevealCardsRender({
+  config,
+  blockClientId,
+  mode,
+  onBlockComplete,
+  savedProgress,
+  urlMap,
+}: {
+  config: any;
+  blockClientId: string;
+  mode?: "editor" | "trainee";
+  onBlockComplete?: OnBlockComplete;
+  savedProgress?: SavedBlockProgress | null;
+  urlMap: Map<string, string>;
+  gatingRequired: boolean;
+}) {
+  const items: Array<{
+    client_id: string;
+    front: TipTapDocJSON;
+    back: TipTapDocJSON;
+    front_image_asset_id: string | null;
+    front_caption: string | null;
+    front_color: string | null;
+    back_color: string | null;
+  }> = config?.items ?? [];
+  const instructions: string | null = config?.instructions ?? null;
+
+  const seed = (() => {
+    if (mode === "trainee" && savedProgress?.status === "completed") {
+      return new Set<string>(items.map((i) => i.client_id));
+    }
+    return new Set<string>();
+  })();
+
+  const [revealed, setRevealed] = useState<Set<string>>(() => seed);
+  const completionFiredRef = useRef(savedProgress?.status === "completed");
+
+  useEffect(() => {
+    if (mode !== "trainee") return;
+    const allRevealed =
+      items.length === 0 ? true : items.every((i) => revealed.has(i.client_id));
+    if (allRevealed && !completionFiredRef.current) {
+      completionFiredRef.current = true;
+      onBlockComplete?.(blockClientId, { revealed: Array.from(revealed) });
+    }
+    if (!allRevealed) completionFiredRef.current = false;
+  }, [revealed, items, mode, blockClientId, onBlockComplete]);
+
+  const reveal = (id: string) =>
+    setRevealed((prev) => {
+      if (prev.has(id)) return prev;
+      const next = new Set(prev);
+      next.add(id);
+      return next;
+    });
+
+  if (items.length === 0) {
+    return (
+      <div className="flex h-32 items-center justify-center rounded-md border border-dashed bg-muted/30 text-sm text-muted-foreground">
+        No cards yet
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      {instructions && (
+        <p className="text-sm text-muted-foreground">{instructions}</p>
+      )}
+      <div className="bw-reveal-cards-grid">
+        {items.map((item) => {
+          const isRevealed = revealed.has(item.client_id);
+          const imgUrl = item.front_image_asset_id
+            ? urlMap.get(item.front_image_asset_id)
+            : null;
+          const frontStyle = item.front_color
+            ? { background: item.front_color, color: readableTextColorForBg(item.front_color) }
+            : undefined;
+          const backStyle = item.back_color
+            ? { background: item.back_color, color: readableTextColorForBg(item.back_color) }
+            : undefined;
+          return (
+            <div key={item.client_id} className="bw-reveal-card-perspective">
+              <button
+                type="button"
+                className={`bw-reveal-card ${isRevealed ? "is-revealed" : ""}`}
+                onClick={() => reveal(item.client_id)}
+                aria-pressed={isRevealed}
+                aria-label={isRevealed ? "Card revealed" : "Reveal card"}
+              >
+                <div className="bw-reveal-card-face bw-reveal-card-front" style={frontStyle}>
+                  {imgUrl && (
+                    <img
+                      src={imgUrl}
+                      alt=""
+                      className="bw-reveal-card-image"
+                    />
+                  )}
+                  {item.front_caption && (
+                    <div className="bw-reveal-card-caption">{item.front_caption}</div>
+                  )}
+                  <div className="bw-reveal-card-body">
+                    <ReadOnlyTipTap json={item.front} />
+                  </div>
+                  <div className="bw-reveal-card-hint">Click to reveal</div>
+                </div>
+                <div className="bw-reveal-card-face bw-reveal-card-back" style={backStyle}>
+                  <div className="bw-reveal-card-body">
+                    <ReadOnlyTipTap json={item.back} />
+                  </div>
+                </div>
+              </button>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
