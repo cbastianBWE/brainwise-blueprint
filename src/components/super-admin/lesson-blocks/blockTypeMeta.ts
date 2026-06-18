@@ -20,6 +20,7 @@ import {
   MessageSquareText,
   Target,
   Eye,
+  ArrowUpDown,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -44,7 +45,8 @@ export type BlockType =
   | "knowledge_check"
   | "open_response"
   | "hotspot"
-  | "reveal_cards";
+  | "reveal_cards"
+  | "sequence";
 
 export type TipTapDocJSON = Record<string, unknown>;
 
@@ -367,6 +369,33 @@ export const BLOCK_TYPE_META: Record<
       padding: "none",
     }),
   },
+  sequence: {
+    label: "Sequence",
+    description: "Drag-to-order list (optional per-item image), checks against the correct order",
+    icon: ArrowUpDown,
+    defaultConfig: () => ({
+      instructions: null,
+      items: [
+        {
+          client_id: crypto.randomUUID(),
+          text: emptyDoc(),
+          image_asset_id: null,
+          image_query: null,
+          caption: null,
+        },
+        {
+          client_id: crypto.randomUUID(),
+          text: emptyDoc(),
+          image_asset_id: null,
+          image_query: null,
+          caption: null,
+        },
+      ],
+      gating_required: false,
+      background_color: null,
+      padding: "none",
+    }),
+  },
 };
 
 export const IN_SCOPE_BLOCK_TYPES: BlockType[] = [
@@ -391,6 +420,7 @@ export const IN_SCOPE_BLOCK_TYPES: BlockType[] = [
   "open_response",
   "hotspot",
   "reveal_cards",
+  "sequence",
 ];
 
 export const CALLOUT_COLORS: Record<string, string> = {

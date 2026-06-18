@@ -53,6 +53,7 @@ import {
 } from "@dnd-kit/core";
 import {
   SortableContext,
+  arrayMove,
   useSortable,
   verticalListSortingStrategy,
   horizontalListSortingStrategy,
@@ -538,6 +539,18 @@ export function BlockRenderer({ block, assetUrlMap, mode, onBlockComplete, saved
       case "reveal_cards":
         return (
           <RevealCardsRender
+            config={cfg}
+            blockClientId={block.client_id}
+            mode={mode}
+            onBlockComplete={onBlockComplete}
+            savedProgress={savedProgress}
+            urlMap={assetUrlMap}
+            gatingRequired={cfg.gating_required === true}
+          />
+        );
+      case "sequence":
+        return (
+          <SequenceRender
             config={cfg}
             blockClientId={block.client_id}
             mode={mode}
@@ -3054,6 +3067,208 @@ function RevealCardsRender({
           );
         })}
       </div>
+    </div>
+  );
+}
+
+function SequenceSortableRow({
+  item,
+  position,
+  status,
+  urlMap,
+  disabled,
+}: {
+  item: { client_id: string; text: TipTapDocJSON; image_asset_id: string | null; caption: string | null };
+  position: number;
+  status: "neutral" | "correct" | "wrong";
+  urlMap: Map<string, string>;
+  disabled: boolean;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
+    useSortable({ id: item.client_id, disabled });
+  const style: CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+  const imgUrl = item.image_asset_id ? urlMap.get(item.image_asset_id) ?? null : null;
+  const statusClass =
+    status === "correct" ? "is-correct" : status === "wrong" ? "is-wrong" : "";
+  return (
+    <div ref={setNodeRef} style={style} className={`bw-sequence-item ${statusClass}`}>
+      <button
+        type="button"
+        className="bw-sequence-grip"
+        {...attributes}
+        {...listeners}
+        disabled={disabled}
+        aria-label="Drag to reorder"
+      >
+        <ChevronRight className="h-4 w-4 rotate-90" />
+      </button>
+      <span className="bw-sequence-number">{position}</span>
+      {imgUrl && <img src={imgUrl} alt="" className="bw-sequence-thumb" />}
+      <div className="bw-sequence-body">
+        <ReadOnlyTipTap json={item.text} />
+        {item.caption && <div className="bw-sequence-caption">{item.caption}</div>}
+      </div>
+    </div>
+  );
+}
+
+function SequenceRender({
+  config,
+  blockClientId,
+  mode,
+  onBlockComplete,
+  savedProgress,
+  urlMap,
+}: {
+  config: any;
+  blockClientId: string;
+  mode?: "editor" | "trainee";
+  onBlockComplete?: OnBlockComplete;
+  savedProgress?: SavedBlockProgress | null;
+  urlMap: Map<string, string>;
+  gatingRequired: boolean;
+}) {
+  const items: Array<{
+    client_id: string;
+    text: TipTapDocJSON;
+    image_asset_id: string | null;
+    caption: string | null;
+  }> = config?.items ?? [];
+  const instructions: string | null = config?.instructions ?? null;
+
+  const correctIds = items.map((i) => i.client_id);
+
+  const seedOrder = (): string[] => {
+    if (mode === "trainee" && savedProgress?.status === "completed") return [...correctIds];
+    if (mode === "editor") return [...correctIds];
+    if (correctIds.length <= 1) return [...correctIds];
+    const a = [...correctIds];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    if (a.every((id, k) => id === correctIds[k])) {
+      [a[0], a[1]] = [a[1], a[0]];
+    }
+    return a;
+  };
+
+  const [order, setOrder] = useState<string[]>(seedOrder);
+  const [checked, setChecked] = useState(savedProgress?.status === "completed");
+  const completionFiredRef = useRef(savedProgress?.status === "completed");
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 100, tolerance: 5 } }),
+  );
+
+  useEffect(() => {
+    if (mode !== "editor") return;
+    setOrder([...correctIds]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [correctIds.join("|"), mode]);
+
+  const isCorrect =
+    correctIds.length > 0 &&
+    order.length === correctIds.length &&
+    order.every((id, k) => id === correctIds[k]);
+
+  const isComplete = completionFiredRef.current || (mode === "trainee" && isCorrect);
+
+  useEffect(() => {
+    if (mode !== "trainee") return;
+    if (isCorrect && !completionFiredRef.current) {
+      completionFiredRef.current = true;
+      setChecked(true);
+      onBlockComplete?.(blockClientId, { order });
+    }
+  }, [isCorrect, mode, blockClientId, onBlockComplete, order]);
+
+  const handleDragEnd = (e: DragEndEvent) => {
+    if (mode !== "trainee" || isComplete) return;
+    const { active, over } = e;
+    if (!over || active.id === over.id) return;
+    setChecked(false);
+    setOrder((prev) => {
+      const from = prev.indexOf(active.id as string);
+      const to = prev.indexOf(over.id as string);
+      if (from < 0 || to < 0) return prev;
+      return arrayMove(prev, from, to);
+    });
+  };
+
+  if (items.length === 0) {
+    return (
+      <div className="rounded-md border border-dashed p-4 text-center text-sm text-muted-foreground">
+        No items yet
+      </div>
+    );
+  }
+
+  const byId = new Map(items.map((i) => [i.client_id, i]));
+  const rowStatus = (id: string, k: number): "neutral" | "correct" | "wrong" => {
+    if (!checked) return "neutral";
+    return id === correctIds[k] ? "correct" : "wrong";
+  };
+
+  const dragDisabled = mode !== "trainee" || isComplete;
+
+  return (
+    <div className="space-y-3">
+      {instructions && <p className="text-sm text-muted-foreground">{instructions}</p>}
+
+      <DndContext sensors={sensors} collisionDetection={pointerWithin} onDragEnd={handleDragEnd}>
+        <SortableContext items={order} strategy={verticalListSortingStrategy}>
+          <div className="bw-sequence-list">
+            {order.map((id, k) => {
+              const item = byId.get(id);
+              if (!item) return null;
+              return (
+                <SequenceSortableRow
+                  key={id}
+                  item={item}
+                  position={k + 1}
+                  status={rowStatus(id, k)}
+                  urlMap={urlMap}
+                  disabled={dragDisabled}
+                />
+              );
+            })}
+          </div>
+        </SortableContext>
+      </DndContext>
+
+      {mode === "trainee" && !isComplete && (
+        <div className="flex items-center gap-3">
+          <Button
+            type="button"
+            size="sm"
+            onClick={() => setChecked(true)}
+            style={{ backgroundColor: "#F5741A", color: "white" }}
+          >
+            Check my answers
+          </Button>
+          {checked && !isCorrect && (
+            <span className="text-xs text-muted-foreground">Not quite — keep dragging.</span>
+          )}
+        </div>
+      )}
+
+      {mode === "trainee" && isComplete && (
+        <div className="text-sm font-medium" style={{ color: "#2D6A4F" }}>
+          Correct order!
+        </div>
+      )}
+
+      {mode === "editor" && (
+        <p className="text-xs italic text-muted-foreground">
+          Preview shows the authored (correct) order. Trainees see a shuffled set and drag to match.
+        </p>
+      )}
     </div>
   );
 }
