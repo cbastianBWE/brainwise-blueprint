@@ -289,6 +289,72 @@ export function AiPane(props: Props) {
   const batchSize =
     lengthPreference === "detailed" ? 5 : lengthPreference === "concise" ? 10 : 7;
 
+  const resolveSequenceImages = useCallback(
+    async (built: FullContentItem[]) => {
+      const seqBlocks = built.filter((b) => b.block_type === "sequence");
+      for (const block of seqBlocks) {
+        const cfg = block.config as any;
+        const items: any[] = Array.isArray(cfg?.items) ? cfg.items : [];
+        for (const item of items) {
+          const query =
+            typeof item?.image_query === "string" ? item.image_query.trim() : "";
+          if (!query || item?.image_asset_id) continue;
+          try {
+            const { data: searchData, error: searchErr } = await supabase.functions.invoke(
+              "newsletter-image-search",
+              { body: { query, count: 1 } },
+            );
+            if (searchErr) continue;
+            const candidate = ((searchData as any)?.candidates ?? [])[0];
+            if (!candidate) continue;
+            const { data: ingestData, error: ingestErr } = await supabase.functions.invoke(
+              "lesson-ingest-pexels-asset",
+              {
+                body: {
+                  content_item_id: contentItemId,
+                  pexels_id: candidate.pexels_id,
+                  src_large_url: candidate.src_large,
+                  photo_page_url: candidate.photo_page_url,
+                  photographer_name: candidate.photographer_name,
+                  photographer_url: candidate.photographer_url,
+                  alt: candidate.alt,
+                },
+              },
+            );
+            if (ingestErr) continue;
+            const assetId = (ingestData as any)?.asset_id;
+            if (!assetId) continue;
+            onRegisterAsset?.(assetId);
+            setFullContentState((prev) => {
+              if (!prev) return prev;
+              return {
+                blocks: prev.blocks.map((b) => {
+                  if (b.id !== block.id) return b;
+                  const bc = b.config as any;
+                  const bItems: any[] = Array.isArray(bc?.items) ? bc.items : [];
+                  return {
+                    ...b,
+                    config: {
+                      ...bc,
+                      items: bItems.map((it) =>
+                        it.client_id === item.client_id
+                          ? { ...it, image_asset_id: assetId }
+                          : it,
+                      ),
+                    },
+                  };
+                }),
+              };
+            });
+          } catch {
+            // swallow per-item failures; author can add the image later
+          }
+        }
+      }
+    },
+    [contentItemId, onRegisterAsset],
+  );
+
   const buildNextBatch = useCallback(
     async (startIndexArg?: number) => {
       if (!outlineState) return;
