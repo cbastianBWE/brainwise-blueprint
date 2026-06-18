@@ -390,6 +390,7 @@ export const IN_SCOPE_BLOCK_TYPES: BlockType[] = [
   "knowledge_check",
   "open_response",
   "hotspot",
+  "reveal_cards",
 ];
 
 export const CALLOUT_COLORS: Record<string, string> = {
