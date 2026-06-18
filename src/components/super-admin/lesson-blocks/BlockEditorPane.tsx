@@ -304,6 +304,9 @@ export function BlockEditorPane({ block, onChange, contentItemId, siblingBlocks 
       {block.block_type === "reveal_cards" && (
         <RevealCardsBlockForm value={cfg} onConfigChange={handleConfig} contentItemId={contentItemId} />
       )}
+      {block.block_type === "sequence" && (
+        <SequenceBlockForm value={cfg} onConfigChange={handleConfig} contentItemId={contentItemId} />
+      )}
 
       <BlockStyleSection value={cfg} onConfigChange={handleConfig} />
     </div>
