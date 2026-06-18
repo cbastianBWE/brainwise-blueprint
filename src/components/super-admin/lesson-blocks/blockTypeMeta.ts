@@ -19,6 +19,7 @@ import {
   HelpCircle,
   MessageSquareText,
   Target,
+  Eye,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -42,7 +43,8 @@ export type BlockType =
   | "scenario"
   | "knowledge_check"
   | "open_response"
-  | "hotspot";
+  | "hotspot"
+  | "reveal_cards";
 
 export type TipTapDocJSON = Record<string, unknown>;
 
@@ -334,6 +336,37 @@ export const BLOCK_TYPE_META: Record<
       padding: "none",
     }),
   },
+  reveal_cards: {
+    label: "Reveal cards",
+    description: "Click-to-reveal card grid (front, optional image, flips to back)",
+    icon: Eye,
+    defaultConfig: () => ({
+      instructions: null,
+      items: [
+        {
+          client_id: crypto.randomUUID(),
+          front: emptyDoc(),
+          back: emptyDoc(),
+          front_image_asset_id: null,
+          front_caption: null,
+          front_color: null,
+          back_color: null,
+        },
+        {
+          client_id: crypto.randomUUID(),
+          front: emptyDoc(),
+          back: emptyDoc(),
+          front_image_asset_id: null,
+          front_caption: null,
+          front_color: null,
+          back_color: null,
+        },
+      ],
+      gating_required: false,
+      background_color: null,
+      padding: "none",
+    }),
+  },
 };
 
 export const IN_SCOPE_BLOCK_TYPES: BlockType[] = [
@@ -357,6 +390,7 @@ export const IN_SCOPE_BLOCK_TYPES: BlockType[] = [
   "knowledge_check",
   "open_response",
   "hotspot",
+  "reveal_cards",
 ];
 
 export const CALLOUT_COLORS: Record<string, string> = {

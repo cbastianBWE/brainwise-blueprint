@@ -1192,3 +1192,108 @@
     50%      { box-shadow: 0 1px 4px rgba(0,0,0,0.35), 0 0 0 8px color-mix(in srgb, var(--lesson-cta, #F5741A) 0%, transparent); }
   }
 }
+
+/* === Session 143: reveal_cards === */
+
+.bw-reveal-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+.bw-reveal-card-perspective {
+  perspective: 1200px;
+  perspective-origin: 50% 50%;
+}
+
+.bw-reveal-card {
+  position: relative;
+  width: 100%;
+  min-height: 200px;
+  transform-style: preserve-3d;
+  transition: transform 400ms cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  padding: 0;
+  text-align: left;
+  display: block;
+}
+.bw-reveal-card:focus-visible {
+  outline: 2px solid var(--lesson-cta, #F5741A);
+  outline-offset: 4px;
+  border-radius: 12px;
+}
+.bw-reveal-card.is-revealed {
+  transform: rotateY(180deg);
+}
+
+.bw-reveal-card-face {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 1.25rem;
+  border: 1px solid hsl(var(--border));
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(2, 31, 54, 0.06);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  overflow-y: auto;
+  text-align: center;
+}
+.bw-reveal-card-front {
+  background: var(--lesson-surface, #FFFFFF);
+  color: var(--lesson-primary, #021F36);
+}
+.bw-reveal-card-back {
+  transform: rotateY(180deg);
+  background: var(--lesson-primary, #021F36);
+  color: #FFFFFF;
+}
+
+.bw-reveal-card-image {
+  display: block;
+  max-height: 9rem;
+  width: 100%;
+  object-fit: contain;
+  border-radius: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+.bw-reveal-card-caption {
+  font-size: 0.8125rem;
+  color: inherit;
+  opacity: 0.75;
+  margin-bottom: 0.5rem;
+  line-height: 1.4;
+}
+
+.bw-reveal-card-body {
+  width: 100%;
+  font-size: 1.0625rem;
+  line-height: 1.45;
+  color: inherit;
+}
+.bw-reveal-card-body p,
+.bw-reveal-card-body li,
+.bw-reveal-card-body strong,
+.bw-reveal-card-body em {
+  font-size: inherit;
+  color: inherit;
+}
+
+.bw-reveal-card-hint {
+  margin-top: 0.75rem;
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.6;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bw-reveal-card {
+    transition: none;
+  }
+}

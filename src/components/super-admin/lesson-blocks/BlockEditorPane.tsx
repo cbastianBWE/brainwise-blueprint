@@ -32,6 +32,7 @@ import { ScenarioBlockForm } from "./block-forms/ScenarioBlockForm";
 import { KnowledgeCheckBlockForm } from "./block-forms/KnowledgeCheckBlockForm";
 import { OpenResponseBlockForm } from "./block-forms/OpenResponseBlockForm";
 import { HotspotBlockForm } from "./block-forms/HotspotBlockForm";
+import { RevealCardsBlockForm } from "./block-forms/RevealCardsBlockForm";
 import { BlockStyleSection } from "./BlockStyleSection";
 import { mapAiError } from "./ai-pane/mapAiError";
 import { COST_ESTIMATES } from "./ai-pane/costEstimates";
@@ -298,6 +299,9 @@ export function BlockEditorPane({ block, onChange, contentItemId, siblingBlocks 
       )}
       {block.block_type === "hotspot" && (
         <HotspotBlockForm value={cfg} onConfigChange={handleConfig} contentItemId={contentItemId} />
+      )}
+      {block.block_type === "reveal_cards" && (
+        <RevealCardsBlockForm value={cfg} onConfigChange={handleConfig} contentItemId={contentItemId} />
       )}
 
       <BlockStyleSection value={cfg} onConfigChange={handleConfig} />
