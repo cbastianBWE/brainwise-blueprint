@@ -535,6 +535,18 @@ export function BlockRenderer({ block, assetUrlMap, mode, onBlockComplete, saved
             gatingRequired={cfg.gating_required === true}
           />
         );
+      case "reveal_cards":
+        return (
+          <RevealCardsRender
+            config={cfg}
+            blockClientId={block.client_id}
+            mode={mode}
+            onBlockComplete={onBlockComplete}
+            savedProgress={savedProgress}
+            urlMap={assetUrlMap}
+            gatingRequired={cfg.gating_required === true}
+          />
+        );
       default:
         return null;
     }
