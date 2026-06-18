@@ -442,6 +442,7 @@ export function AiPane(props: Props) {
       canvasBlockSummary,
       contentItemId,
       toast,
+      resolveSequenceImages,
     ],
   );
 
