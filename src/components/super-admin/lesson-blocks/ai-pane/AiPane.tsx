@@ -420,6 +420,7 @@ export function AiPane(props: Props) {
           };
         });
         setFullContentState((prev) => ({ blocks: [...(prev?.blocks ?? []), ...newItems] }));
+        void resolveSequenceImages(newItems);
       } catch (e) {
         const info = mapAiError(e);
         toast({ title: info.title, description: info.message, variant: "destructive" });
