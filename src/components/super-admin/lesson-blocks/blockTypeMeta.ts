@@ -22,6 +22,7 @@ import {
   Eye,
   ArrowUpDown,
   PanelLeft,
+  Waypoints,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
