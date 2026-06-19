@@ -2143,11 +2143,19 @@ function KnowledgeCheckRender({
       ...prev,
       [q.client_id]: {
         ...s,
-        revealed: correct ? true : s.revealed,
+        revealed: confidenceWeighted ? true : correct ? true : s.revealed,
         lastWrong: !correct,
         attempted: true,
       },
     }));
+  };
+
+  const setConfidence = (qId: string, value: "confident" | "unsure") => {
+    setStateById((prev) => {
+      const s = prev[qId];
+      if (!s || s.revealed) return prev;
+      return { ...prev, [qId]: { ...s, confidence: value } };
+    });
   };
 
   const allCorrect = questions.every((q) => stateById[q.client_id]?.revealed === true);
