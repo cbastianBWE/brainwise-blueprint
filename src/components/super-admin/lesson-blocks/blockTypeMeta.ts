@@ -21,6 +21,7 @@ import {
   Target,
   Eye,
   ArrowUpDown,
+  PanelLeft,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
