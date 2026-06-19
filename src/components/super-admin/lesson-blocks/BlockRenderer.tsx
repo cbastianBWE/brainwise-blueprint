@@ -64,7 +64,7 @@ import type { EditorBlock, TipTapDocJSON } from "./blockTypeMeta";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import MuxPlayer from "@mux/mux-player-react";
-import { Loader2 } from "lucide-react";
+
 
 function ContentItemVideoEmbed({ contentItemId }: { contentItemId: string }) {
   const q = useQuery({
