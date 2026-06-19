@@ -78,6 +78,7 @@ interface Props {
     source_type: SourceType;
     source_id: string | null;
     title: string | null;
+    script?: string | null;
     background_color?: string | null;
     padding?: string | null;
   };
