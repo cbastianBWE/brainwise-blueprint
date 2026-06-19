@@ -507,6 +507,7 @@ export function BlockRenderer({ block, assetUrlMap, mode, onBlockComplete, saved
           <KnowledgeCheckRender
             questions={cfg.questions ?? []}
             gatingRequired={cfg.gating_required === true}
+            confidenceWeighted={cfg.confidence_weighted === true}
             mode={mode}
             blockClientId={block.client_id}
             onBlockComplete={onBlockComplete}
