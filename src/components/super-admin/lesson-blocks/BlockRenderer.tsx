@@ -560,6 +560,20 @@ export function BlockRenderer({ block, assetUrlMap, mode, onBlockComplete, saved
             gatingRequired={cfg.gating_required === true}
           />
         );
+      case "media_text":
+        return (
+          <MediaTextRender
+            assetId={cfg.asset_id ?? null}
+            alt={cfg.alt ?? ""}
+            caption={cfg.caption ?? null}
+            attribution={cfg.attribution ?? null}
+            body={cfg.body ?? null}
+            mediaPosition={cfg.media_position === "right" ? "right" : "left"}
+            mediaRatio={cfg.media_ratio === "third" ? "third" : "half"}
+            verticalAlign={cfg.vertical_align === "center" ? "center" : "top"}
+            urlMap={assetUrlMap}
+          />
+        );
       default:
         return null;
     }
