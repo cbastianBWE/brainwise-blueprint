@@ -296,6 +296,14 @@ function VideoRender({
       </div>
     );
   }
+  if (config.source_type === "content_item" && config.source_id) {
+    return (
+      <div className="space-y-2">
+        <ContentItemVideoEmbed contentItemId={config.source_id} />
+        {config.title && <p className="text-sm font-medium">{config.title}</p>}
+      </div>
+    );
+  }
   return (
     <div className="space-y-2">
       <div className="flex h-48 flex-col items-center justify-center gap-2 rounded-md border border-dashed bg-muted/30 text-sm text-muted-foreground">
