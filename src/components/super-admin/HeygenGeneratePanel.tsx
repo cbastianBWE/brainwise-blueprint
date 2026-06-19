@@ -294,10 +294,36 @@ export function HeygenGeneratePanel({
       ) : (
         <>
           <div className="space-y-1">
+            <label className="text-xs font-medium">Draft a script with AI (optional)</label>
+            <div className="flex gap-2">
+              <Input
+                value={draftPrompt}
+                onChange={(e) => setDraftPrompt(e.target.value)}
+                placeholder="What should this video cover?"
+                disabled={disabled || submitting || drafting}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleDraftScript}
+                disabled={disabled || submitting || drafting || draftPrompt.trim().length === 0}
+              >
+                {drafting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Draft script
+              </Button>
+            </div>
+            {draftError && <p className="text-xs text-destructive">{draftError}</p>}
+          </div>
+
+          <div className="space-y-1">
             <label className="text-xs font-medium">Script</label>
             <Textarea
               value={script}
-              onChange={(e) => setScript(e.target.value.slice(0, SCRIPT_MAX))}
+              onChange={(e) => {
+                const next = e.target.value.slice(0, SCRIPT_MAX);
+                setScript(next);
+                onScriptChange?.(next);
+              }}
               rows={5}
               placeholder="Write the script the avatar will speak…"
               disabled={disabled || submitting}
