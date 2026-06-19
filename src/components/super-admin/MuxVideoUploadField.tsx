@@ -42,12 +42,14 @@ interface HeygenAvatar {
   name: string;
   gender?: string | null;
   preview_image_url?: string | null;
+  preview_video_url?: string | null;
 }
 interface HeygenVoice {
   voice_id: string;
   name: string;
   language?: string | null;
   gender?: string | null;
+  preview_audio_url?: string | null;
 }
 
 function deriveInitial(status: string | null, playbackId: string | null): State {
@@ -401,6 +403,32 @@ export function MuxVideoUploadField({
                       ))}
                     </SelectContent>
                   </Select>
+                  {avatarId && (() => {
+                    const a = catalogQuery.data?.avatars.find((x) => x.avatar_id === avatarId);
+                    if (!a) return null;
+                    return (
+                      <div className="space-y-2">
+                        {a.preview_image_url && (
+                          <img
+                            src={a.preview_image_url}
+                            alt={a.name}
+                            className="mt-2 rounded-md"
+                            style={{ maxHeight: 120 }}
+                          />
+                        )}
+                        {a.preview_video_url && (
+                          <video
+                            src={a.preview_video_url}
+                            controls
+                            muted
+                            playsInline
+                            className="mt-2 w-full max-w-xs rounded-md bg-black"
+                            preload="metadata"
+                          />
+                        )}
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 <div className="space-y-1">
@@ -421,8 +449,24 @@ export function MuxVideoUploadField({
                       })}
                     </SelectContent>
                   </Select>
+                  {voiceId && (() => {
+                    const v = catalogQuery.data?.voices.find((x) => x.voice_id === voiceId);
+                    if (!v?.preview_audio_url) return null;
+                    return (
+                      <div className="mt-2 space-y-1">
+                        <p className="text-xs text-muted-foreground">Voice sample</p>
+                        <audio
+                          src={v.preview_audio_url}
+                          controls
+                          preload="none"
+                          className="mt-2 w-full"
+                        />
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
+
 
               {genError && (
                 <div className="flex items-start gap-2 rounded-md border border-destructive/50 bg-destructive/5 p-2 text-xs text-destructive">

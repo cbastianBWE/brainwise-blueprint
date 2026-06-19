@@ -1,4 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
+import MuxPlayer from "@mux/mux-player-react";
+import { Loader2 } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import {
@@ -10,6 +12,54 @@ import {
 } from "@/components/ui/select";
 import { FileUploadField } from "@/components/super-admin/FileUploadField";
 import { supabase } from "@/integrations/supabase/client";
+
+function SelectedVideoPreview({ contentItemId }: { contentItemId: string }) {
+  const q = useQuery({
+    queryKey: ["video-embed-preview", contentItemId],
+    staleTime: 60 * 60 * 1000,
+    refetchInterval: (query) => {
+      const d = query.state.data as any;
+      return d && d.kind === "mux" && d.processing ? 8000 : false;
+    },
+    queryFn: async () => {
+      const { data, error } = await supabase.functions.invoke("get-content-item-video-url", {
+        body: { p_content_item_id: contentItemId },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      return data as any;
+    },
+  });
+
+  return (
+    <div className="max-w-sm">
+      {q.isLoading ? (
+        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+      ) : q.isError ? (
+        <p className="text-xs text-muted-foreground">Preview unavailable.</p>
+      ) : q.data?.kind === "mux" ? (
+        q.data.processing || !q.data.playback_id || !q.data.token ? (
+          <p className="text-xs text-muted-foreground">Still processing.</p>
+        ) : (
+          <MuxPlayer
+            playbackId={q.data.playback_id}
+            tokens={{ playback: q.data.token }}
+            streamType="on-demand"
+            className="w-full rounded-md overflow-hidden"
+          />
+        )
+      ) : q.data?.kind === "supabase_storage" ? (
+        <video
+          src={q.data.signed_url}
+          controls
+          className="w-full rounded-md bg-black"
+          preload="metadata"
+        />
+      ) : null}
+    </div>
+  );
+}
+
 
 type SourceType =
   | "supabase_storage"
@@ -157,6 +207,7 @@ export function VideoEmbedBlockForm({
               Status: {selectedVideo.mux_status === "ready" ? "ready" : "still processing"}
             </p>
           )}
+          {value.source_id && <SelectedVideoPreview contentItemId={value.source_id} />}
           <p className="text-xs text-muted-foreground">
             Only videos in this lesson's module are listed, so every enrolled learner can play
             them. Generate a video from a video content item first if the list is empty.
