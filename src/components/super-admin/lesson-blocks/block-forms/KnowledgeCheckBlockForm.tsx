@@ -57,8 +57,8 @@ type Question = {
 };
 
 interface Props {
-  value: { questions: Question[]; gating_required: boolean };
-  onConfigChange: (next: { questions: Question[]; gating_required: boolean }) => void;
+  value: { questions: Question[]; gating_required: boolean; confidence_weighted?: boolean };
+  onConfigChange: (next: { questions: Question[]; gating_required: boolean; confidence_weighted?: boolean }) => void;
 }
 
 const emptyDoc = (): TipTapDocJSON => ({
