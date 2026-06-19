@@ -47,7 +47,8 @@ export type BlockType =
   | "open_response"
   | "hotspot"
   | "reveal_cards"
-  | "sequence";
+  | "sequence"
+  | "media_text";
 
 export type TipTapDocJSON = Record<string, unknown>;
 
