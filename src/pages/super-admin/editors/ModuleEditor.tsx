@@ -38,6 +38,7 @@ function AttachedContentItemsSection({
         .from("content_items")
         .select("id, title, item_type, display_order, is_required, archived_at")
         .eq("module_id", moduleId)
+        .eq("is_embed_only", false)
         .is("archived_at", null)
         .order("display_order");
       if (error) throw error;
