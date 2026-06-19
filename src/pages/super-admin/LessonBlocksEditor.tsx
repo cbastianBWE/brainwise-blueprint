@@ -3,7 +3,7 @@ import type { CSSProperties } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
-import { ChevronLeft, Edit2, Layers, ListChecks, Loader2, Palette, Plus, Save, Sparkles } from "lucide-react";
+import { AudioLines, ChevronLeft, Edit2, Layers, ListChecks, Loader2, Palette, Plus, Save, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
