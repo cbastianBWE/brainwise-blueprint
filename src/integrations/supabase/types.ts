@@ -5709,6 +5709,72 @@ export type Database = {
           },
         ]
       }
+      lesson_video_generations: {
+        Row: {
+          avatar_id: string
+          content_item_id: string | null
+          created_at: string
+          error_reason: string | null
+          heygen_video_id: string | null
+          id: string
+          requested_by: string
+          script: string
+          status: string
+          target_block_client_id: string | null
+          target_kind: string
+          target_lesson_content_item_id: string | null
+          updated_at: string
+          voice_id: string
+        }
+        Insert: {
+          avatar_id: string
+          content_item_id?: string | null
+          created_at?: string
+          error_reason?: string | null
+          heygen_video_id?: string | null
+          id?: string
+          requested_by: string
+          script: string
+          status?: string
+          target_block_client_id?: string | null
+          target_kind: string
+          target_lesson_content_item_id?: string | null
+          updated_at?: string
+          voice_id: string
+        }
+        Update: {
+          avatar_id?: string
+          content_item_id?: string | null
+          created_at?: string
+          error_reason?: string | null
+          heygen_video_id?: string | null
+          id?: string
+          requested_by?: string
+          script?: string
+          status?: string
+          target_block_client_id?: string | null
+          target_kind?: string
+          target_lesson_content_item_id?: string | null
+          updated_at?: string
+          voice_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lesson_video_generations_content_item_id_fkey"
+            columns: ["content_item_id"]
+            isOneToOne: false
+            referencedRelation: "content_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lesson_video_generations_target_lesson_content_item_id_fkey"
+            columns: ["target_lesson_content_item_id"]
+            isOneToOne: false
+            referencedRelation: "content_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       member_feature_overrides: {
         Row: {
           created_at: string
