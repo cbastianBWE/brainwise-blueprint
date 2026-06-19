@@ -398,6 +398,24 @@ export const BLOCK_TYPE_META: Record<
       padding: "none",
     }),
   },
+  media_text: {
+    label: "Media + Text",
+    description: "An image beside a rich-text column",
+    icon: PanelLeft,
+    defaultConfig: () => ({
+      asset_id: null,
+      alt: "",
+      caption: null,
+      attribution: null,
+      image_query: null,
+      body: emptyDoc(),
+      media_position: "left",
+      media_ratio: "half",
+      vertical_align: "top",
+      background_color: null,
+      padding: "none",
+    }),
+  },
 };
 
 export const IN_SCOPE_BLOCK_TYPES: BlockType[] = [
