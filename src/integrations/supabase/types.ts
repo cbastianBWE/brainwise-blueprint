@@ -5279,6 +5279,60 @@ export type Database = {
           },
         ]
       }
+      lesson_audio_generations: {
+        Row: {
+          asset_id: string | null
+          char_count: number
+          content_item_id: string | null
+          created_at: string
+          error_reason: string | null
+          id: string
+          model_id: string
+          requested_by: string
+          status: string
+          voice_id: string
+        }
+        Insert: {
+          asset_id?: string | null
+          char_count?: number
+          content_item_id?: string | null
+          created_at?: string
+          error_reason?: string | null
+          id?: string
+          model_id: string
+          requested_by: string
+          status?: string
+          voice_id: string
+        }
+        Update: {
+          asset_id?: string | null
+          char_count?: number
+          content_item_id?: string | null
+          created_at?: string
+          error_reason?: string | null
+          id?: string
+          model_id?: string
+          requested_by?: string
+          status?: string
+          voice_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lesson_audio_generations_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "content_assets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lesson_audio_generations_content_item_id_fkey"
+            columns: ["content_item_id"]
+            isOneToOne: false
+            referencedRelation: "content_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lesson_block_drafts: {
         Row: {
           author_id: string
