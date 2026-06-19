@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import MuxPlayer from "@mux/mux-player-react";
 import { Loader2 } from "lucide-react";
@@ -10,13 +11,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 import { FileUploadField } from "@/components/super-admin/FileUploadField";
+import { HeygenGeneratePanel } from "@/components/super-admin/HeygenGeneratePanel";
 import { supabase } from "@/integrations/supabase/client";
 
 function SelectedVideoPreview({ contentItemId }: { contentItemId: string }) {
   const q = useQuery({
     queryKey: ["video-embed-preview", contentItemId],
     staleTime: 60 * 60 * 1000,
+    retry: false,
     refetchInterval: (query) => {
       const d = query.state.data as any;
       return d && d.kind === "mux" && d.processing ? 8000 : false;
@@ -79,6 +83,7 @@ interface Props {
   };
   onConfigChange: (next: Props["value"]) => void;
   contentItemId?: string;
+  blockClientId?: string;
 }
 
 const SOURCE_LABELS: Record<SourceType, string> = {
@@ -95,13 +100,20 @@ const ID_LABELS: Record<Exclude<SourceType, "supabase_storage" | "content_item">
   youtube_unlisted: "YouTube ID",
 };
 
+type ContentItemMode = "generate" | "existing";
+
 export function VideoEmbedBlockForm({
   value,
   onConfigChange,
   contentItemId,
+  blockClientId,
 }: Props) {
   const isStorage = value.source_type === "supabase_storage";
   const isContentItem = value.source_type === "content_item";
+
+  const canGenerate = !!contentItemId && !!blockClientId;
+  // If the saved value already has a source_id, default to "existing" so we don't surprise authors.
+  const [ciMode, setCiMode] = useState<ContentItemMode>(value.source_id ? "existing" : "generate");
 
   const moduleIdQuery = useQuery({
     queryKey: ["video-embed-module-id", contentItemId],
@@ -121,12 +133,13 @@ export function VideoEmbedBlockForm({
 
   const videosQuery = useQuery({
     queryKey: ["video-embed-options", moduleId, contentItemId ?? null],
-    enabled: isContentItem && (!contentItemId || moduleIdQuery.isSuccess),
+    enabled: isContentItem && ciMode === "existing" && (!contentItemId || moduleIdQuery.isSuccess),
     queryFn: async () => {
       let q = supabase
         .from("content_items")
         .select("id, title, mux_status")
         .eq("item_type", "video")
+        .eq("is_embed_only", false)
         .is("archived_at", null)
         .order("title", { ascending: true });
       if (moduleId) q = q.eq("module_id", moduleId);
@@ -140,6 +153,22 @@ export function VideoEmbedBlockForm({
     ? videosQuery.data?.find((v) => v.id === value.source_id) ?? null
     : null;
 
+  const resolveEmbedContentItemId = async (): Promise<string> => {
+    if (value.source_type === "content_item" && value.source_id) return value.source_id;
+    if (!contentItemId) throw new Error("Lesson must be saved before generating.");
+    const titleArg = (value.title && value.title.trim()) || "Lesson video";
+    const { data, error } = await supabase.rpc("create_lesson_embed_video_content_item", {
+      p_lesson_content_item_id: contentItemId,
+      p_title: titleArg,
+      p_reason: "In-lesson AI video generation (video_embed block)",
+    });
+    if (error) throw error;
+    const newId = (data as any)?.content_item_id as string | undefined;
+    if (!newId) throw new Error("Could not create embed content item.");
+    onConfigChange({ ...value, source_type: "content_item", source_id: newId, asset_id: null });
+    return newId;
+  };
+
   return (
     <div className="space-y-3">
       <div className="space-y-2">
@@ -151,8 +180,8 @@ export function VideoEmbedBlockForm({
             onConfigChange({
               ...value,
               source_type: next,
-              asset_id: next === "supabase_storage" ? value.asset_id : null,
-              source_id: next === "supabase_storage" ? null : value.source_id,
+              asset_id: null,
+              source_id: null,
             });
           }}
         >
@@ -183,35 +212,86 @@ export function VideoEmbedBlockForm({
           />
         </div>
       ) : isContentItem ? (
-        <div className="space-y-2">
-          <Label>Video content item</Label>
-          <Select
-            value={value.source_id ?? ""}
-            onValueChange={(v) =>
-              onConfigChange({ ...value, source_id: v || null, asset_id: null })
-            }
-          >
-            <SelectTrigger>
-              <SelectValue placeholder={videosQuery.isLoading ? "Loading…" : "Choose a video"} />
-            </SelectTrigger>
-            <SelectContent>
-              {(videosQuery.data ?? []).map((v) => (
-                <SelectItem key={v.id} value={v.id}>
-                  {v.title || "(untitled video)"}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {selectedVideo && (
-            <p className="text-xs text-muted-foreground">
-              Status: {selectedVideo.mux_status === "ready" ? "ready" : "still processing"}
-            </p>
+        <div className="space-y-3">
+          <div className="inline-flex rounded-md border p-0.5">
+            <button
+              type="button"
+              onClick={() => setCiMode("generate")}
+              className={cn(
+                "px-3 py-1 text-xs font-medium rounded",
+                ciMode === "generate" ? "bg-accent text-foreground" : "text-muted-foreground",
+              )}
+            >
+              Generate new
+            </button>
+            <button
+              type="button"
+              onClick={() => setCiMode("existing")}
+              className={cn(
+                "px-3 py-1 text-xs font-medium rounded",
+                ciMode === "existing" ? "bg-accent text-foreground" : "text-muted-foreground",
+              )}
+            >
+              Use existing in this module
+            </button>
+          </div>
+
+          {ciMode === "generate" ? (
+            canGenerate ? (
+              <HeygenGeneratePanel
+                generateTarget={{
+                  kind: "lesson_block",
+                  lessonContentItemId: contentItemId!,
+                  blockClientId: blockClientId!,
+                }}
+                resolveContentItemId={resolveEmbedContentItemId}
+                initialContentItemId={value.source_id}
+                onReady={(id) =>
+                  onConfigChange({
+                    ...value,
+                    source_type: "content_item",
+                    source_id: id,
+                    asset_id: null,
+                  })
+                }
+              />
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                Save the lesson first to generate an in-lesson video.
+              </p>
+            )
+          ) : (
+            <div className="space-y-2">
+              <Label>Video content item</Label>
+              <Select
+                value={value.source_id ?? ""}
+                onValueChange={(v) =>
+                  onConfigChange({ ...value, source_id: v || null, asset_id: null })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={videosQuery.isLoading ? "Loading…" : "Choose a video"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {(videosQuery.data ?? []).map((v) => (
+                    <SelectItem key={v.id} value={v.id}>
+                      {v.title || "(untitled video)"}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {selectedVideo && (
+                <p className="text-xs text-muted-foreground">
+                  Status: {selectedVideo.mux_status === "ready" ? "ready" : "still processing"}
+                </p>
+              )}
+              {value.source_id && <SelectedVideoPreview contentItemId={value.source_id} />}
+              <p className="text-xs text-muted-foreground">
+                Only videos in this lesson's module are listed, so every enrolled learner can play
+                them.
+              </p>
+            </div>
           )}
-          {value.source_id && <SelectedVideoPreview contentItemId={value.source_id} />}
-          <p className="text-xs text-muted-foreground">
-            Only videos in this lesson's module are listed, so every enrolled learner can play
-            them. Generate a video from a video content item first if the list is empty.
-          </p>
         </div>
       ) : (
         <div className="space-y-2">
