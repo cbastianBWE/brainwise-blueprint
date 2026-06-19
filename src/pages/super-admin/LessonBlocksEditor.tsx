@@ -862,6 +862,17 @@ export default function LessonBlocksEditor() {
           />
         )}
 
+        {contentItemId && (
+          <LessonVoiceoverPanel
+            open={voiceoverPanelOpen}
+            onOpenChange={setVoiceoverPanelOpen}
+            contentItemId={contentItemId}
+            blocks={blocks}
+            onApplyBlocks={setBlocks}
+            onRegisterAsset={registerNewAssetId}
+          />
+        )}
+
         <div
           className={cn(
             "flex-1 transition-all duration-300 ease-out",
