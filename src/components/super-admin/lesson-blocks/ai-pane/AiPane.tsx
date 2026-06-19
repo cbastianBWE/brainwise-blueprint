@@ -355,6 +355,58 @@ export function AiPane(props: Props) {
     [contentItemId, onRegisterAsset],
   );
 
+  const resolveMediaTextImages = useCallback(
+    async (built: FullContentItem[]) => {
+      const mtBlocks = built.filter((b) => b.block_type === "media_text");
+      for (const block of mtBlocks) {
+        const cfg = block.config as any;
+        const query =
+          typeof cfg?.image_query === "string" ? cfg.image_query.trim() : "";
+        if (!query || cfg?.asset_id) continue;
+        try {
+          const { data: searchData, error: searchErr } = await supabase.functions.invoke(
+            "newsletter-image-search",
+            { body: { query, count: 1 } },
+          );
+          if (searchErr) continue;
+          const candidate = ((searchData as any)?.candidates ?? [])[0];
+          if (!candidate) continue;
+          const { data: ingestData, error: ingestErr } = await supabase.functions.invoke(
+            "lesson-ingest-pexels-asset",
+            {
+              body: {
+                content_item_id: contentItemId,
+                pexels_id: candidate.pexels_id,
+                src_large_url: candidate.src_large,
+                photo_page_url: candidate.photo_page_url,
+                photographer_name: candidate.photographer_name,
+                photographer_url: candidate.photographer_url,
+                alt: candidate.alt,
+              },
+            },
+          );
+          if (ingestErr) continue;
+          const assetId = (ingestData as any)?.asset_id;
+          if (!assetId) continue;
+          onRegisterAsset?.(assetId);
+          setFullContentState((prev) => {
+            if (!prev) return prev;
+            return {
+              blocks: prev.blocks.map((b) => {
+                if (b.id !== block.id) return b;
+                const bc = b.config as any;
+                return { ...b, config: { ...bc, asset_id: assetId } };
+              }),
+            };
+          });
+        } catch {
+          // swallow per-block failures; author can add the image later
+        }
+      }
+    },
+    [contentItemId, onRegisterAsset],
+  );
+
   const buildNextBatch = useCallback(
     async (startIndexArg?: number) => {
       if (!outlineState) return;
@@ -421,6 +473,7 @@ export function AiPane(props: Props) {
         });
         setFullContentState((prev) => ({ blocks: [...(prev?.blocks ?? []), ...newItems] }));
         void resolveSequenceImages(newItems);
+        void resolveMediaTextImages(newItems);
       } catch (e) {
         const info = mapAiError(e);
         toast({ title: info.title, description: info.message, variant: "destructive" });
@@ -443,6 +496,7 @@ export function AiPane(props: Props) {
       contentItemId,
       toast,
       resolveSequenceImages,
+      resolveMediaTextImages,
     ],
   );
 
