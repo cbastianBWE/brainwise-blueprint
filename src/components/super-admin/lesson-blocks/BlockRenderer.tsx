@@ -1904,6 +1904,7 @@ function stableShuffle<T extends { client_id: string }>(items: T[], seed: string
 
 function KnowledgeCheckRender({
   questions,
+  confidenceWeighted,
   mode,
   blockClientId,
   onBlockComplete,
@@ -1911,6 +1912,7 @@ function KnowledgeCheckRender({
 }: {
   questions: KnowledgeCheckQuestionConfig[];
   gatingRequired: boolean;
+  confidenceWeighted: boolean;
   mode?: "editor" | "trainee";
   blockClientId: string;
   onBlockComplete?: OnBlockComplete;
