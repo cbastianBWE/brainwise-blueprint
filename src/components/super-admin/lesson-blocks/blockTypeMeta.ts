@@ -441,6 +441,7 @@ export const IN_SCOPE_BLOCK_TYPES: BlockType[] = [
   "hotspot",
   "reveal_cards",
   "sequence",
+  "media_text",
 ];
 
 export const CALLOUT_COLORS: Record<string, string> = {
