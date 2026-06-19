@@ -1038,11 +1038,14 @@ export function KnowledgeCheckBlockForm({ value, onConfigChange }: Props) {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
   const questions = value.questions ?? [];
   const gatingRequired = value.gating_required === true;
+  const confidenceWeighted = value.confidence_weighted === true;
 
-  const emit = (next: Partial<{ questions: Question[]; gating_required: boolean }>) => {
+  const emit = (next: Partial<{ questions: Question[]; gating_required: boolean; confidence_weighted: boolean }>) => {
     onConfigChange({
+      ...value,
       questions: next.questions ?? questions,
       gating_required: next.gating_required ?? gatingRequired,
+      confidence_weighted: next.confidence_weighted ?? confidenceWeighted,
     });
   };
 
