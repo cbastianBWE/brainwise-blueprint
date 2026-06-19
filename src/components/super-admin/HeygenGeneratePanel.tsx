@@ -207,6 +207,32 @@ export function HeygenGeneratePanel({
     }
   };
 
+  const handleDraftScript = async () => {
+    setDraftError(null);
+    setDrafting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("draft-lesson-block", {
+        body: { block_type: "video_embed", author_prompt: draftPrompt },
+      });
+      if (error) {
+        setDraftError(error.message || "Could not draft a script.");
+        return;
+      }
+      const s = (data as { config?: { script?: string } } | null)?.config?.script;
+      if (typeof s !== "string" || s.trim().length === 0) {
+        setDraftError((data as { error?: string } | null)?.error || "The AI did not return a script. Try rephrasing.");
+        return;
+      }
+      const next = s.slice(0, SCRIPT_MAX);
+      setScript(next);
+      onScriptChange?.(next);
+    } catch (e) {
+      setDraftError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setDrafting(false);
+    }
+  };
+
   if (state.kind === "generating") {
     return (
       <div className="flex items-start gap-3 rounded-md border border-dashed p-4 text-sm text-muted-foreground">
