@@ -197,10 +197,8 @@ export function LessonVoiceoverPanel({
 
   const sections = useMemo(() => groupSections(blocks), [blocks]);
 
-  const generateOne = async (
-    text: string,
-    voiceId: string,
-  ): Promise<{ ok: true; asset_id: string } | { ok: false; tooLong: boolean; message: string }> => {
+  type GenResult = { ok: boolean; asset_id?: string; tooLong?: boolean; message?: string };
+  const generateOne = async (text: string, voiceId: string): Promise<GenResult> => {
     const { data, error } = await supabase.functions.invoke("lesson-elevenlabs-generate", {
       body: { content_item_id: contentItemId, text, voice_id: voiceId },
     });
@@ -213,7 +211,7 @@ export function LessonVoiceoverPanel({
         // ignore
       }
       const code = body?.error || body?.code;
-      const tooLong = code === "text_too_long_max_5000" || (ctx?.status === 413);
+      const tooLong = code === "text_too_long_max_5000" || ctx?.status === 413;
       return { ok: false, tooLong, message: body?.message || error.message || "Generation failed" };
     }
     const asset_id = (data as any)?.asset_id;
