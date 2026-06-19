@@ -4815,6 +4815,24 @@ export type Database = {
           },
         ]
       }
+      heygen_catalog_cache: {
+        Row: {
+          fetched_at: string
+          id: string
+          payload: Json
+        }
+        Insert: {
+          fetched_at?: string
+          id?: string
+          payload: Json
+        }
+        Update: {
+          fetched_at?: string
+          id?: string
+          payload?: Json
+        }
+        Relationships: []
+      }
       impersonation_sessions: {
         Row: {
           audit_log_id: string | null
