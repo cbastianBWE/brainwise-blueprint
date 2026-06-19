@@ -42,8 +42,6 @@ interface HeygenAvatar {
   name: string;
   gender?: string | null;
   preview_image_url?: string | null;
-}
-interface HeygenAvatarExt extends HeygenAvatar {
   preview_video_url?: string | null;
 }
 interface HeygenVoice {
