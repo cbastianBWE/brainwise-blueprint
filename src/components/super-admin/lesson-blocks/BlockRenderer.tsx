@@ -2342,6 +2342,28 @@ function KnowledgeCheckRender({
               />
             )}
 
+            {isImplemented && confidenceWeighted && !s.revealed && (
+              <div className="bw-kc-confidence">
+                <span className="bw-kc-confidence-label">How confident are you?</span>
+                <div className="bw-kc-confidence-options">
+                  <button
+                    type="button"
+                    className={`bw-kc-confidence-btn${s.confidence === "confident" ? " is-selected" : ""}`}
+                    onClick={() => setConfidence(q.client_id, "confident")}
+                  >
+                    I&apos;m confident
+                  </button>
+                  <button
+                    type="button"
+                    className={`bw-kc-confidence-btn${s.confidence === "unsure" ? " is-selected" : ""}`}
+                    onClick={() => setConfidence(q.client_id, "unsure")}
+                  >
+                    Not sure
+                  </button>
+                </div>
+              </div>
+            )}
+
             {isImplemented && (
               <div className="bw-kc-controls">
                 {!s.revealed ? (
@@ -2354,10 +2376,52 @@ function KnowledgeCheckRender({
                   >
                     Check answer
                   </Button>
+                ) : confidenceWeighted ? (
+                  (() => {
+                    const correct = !s.lastWrong;
+                    const resultLabel = correct ? "Correct" : "Incorrect";
+                    const resultColor = correct ? "#2D6A4F" : "#021F36";
+                    let tagText = "";
+                    let tagColor = "#6D6875";
+                    if (s.confidence === "confident" && correct) {
+                      tagText = "Confident and correct";
+                      tagColor = "#2D6A4F";
+                    } else if (s.confidence === "confident" && !correct) {
+                      tagText = "Confident but incorrect — review this";
+                      tagColor = "#FFB703";
+                    } else if (s.confidence === "unsure" && correct) {
+                      tagText = "Unsure but correct";
+                      tagColor = "#006D77";
+                    } else if (s.confidence === "unsure" && !correct) {
+                      tagText = "Unsure and incorrect";
+                      tagColor = "#6D6875";
+                    }
+                    return (
+                      <>
+                        <span
+                          className="bw-kc-result-pill"
+                          style={{
+                            color: resultColor,
+                            borderColor: resultColor,
+                          }}
+                        >
+                          {resultLabel}
+                        </span>
+                        {tagText && (
+                          <span
+                            className="bw-kc-confidence-tag"
+                            style={{ color: tagColor, borderColor: tagColor }}
+                          >
+                            {tagText}
+                          </span>
+                        )}
+                      </>
+                    );
+                  })()
                 ) : (
                   <span className="bw-kc-correct-pill">✓ Correct</span>
                 )}
-                {s.lastWrong && !s.revealed && (
+                {!confidenceWeighted && s.lastWrong && !s.revealed && (
                   <span className="bw-kc-wrong-pill">Not quite — try again</span>
                 )}
               </div>
@@ -2372,9 +2436,38 @@ function KnowledgeCheckRender({
         );
       })}
 
-      {allCorrect && questions.length > 0 && (
+      {!confidenceWeighted && allCorrect && questions.length > 0 && (
         <div className="bw-kc-done">All questions answered correctly.</div>
       )}
+      {confidenceWeighted && allAttempted && questions.length > 0 && (() => {
+        let confCorrect = 0;
+        let confWrong = 0;
+        let unsureCorrect = 0;
+        let unsureWrong = 0;
+        for (const q of questions) {
+          const s = stateById[q.client_id];
+          if (!s || !s.revealed) continue;
+          const correct = !s.lastWrong;
+          if (s.confidence === "confident" && correct) confCorrect++;
+          else if (s.confidence === "confident" && !correct) confWrong++;
+          else if (s.confidence === "unsure" && correct) unsureCorrect++;
+          else if (s.confidence === "unsure" && !correct) unsureWrong++;
+        }
+        return (
+          <div className="bw-kc-confidence-summary">
+            <div className="bw-kc-confidence-summary-title">Confidence recap</div>
+            <ul className="bw-kc-confidence-summary-list">
+              <li>
+                <strong style={{ color: "#FFB703" }}>{confWrong}</strong> confident but incorrect
+                {confWrong > 0 ? " — revisit these first." : "."}
+              </li>
+              <li><strong style={{ color: "#2D6A4F" }}>{confCorrect}</strong> confident and correct.</li>
+              <li><strong style={{ color: "#006D77" }}>{unsureCorrect}</strong> unsure but correct.</li>
+              <li><strong style={{ color: "#6D6875" }}>{unsureWrong}</strong> unsure and incorrect.</li>
+            </ul>
+          </div>
+        );
+      })()}
     </div>
   );
 }
