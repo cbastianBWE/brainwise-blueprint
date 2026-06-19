@@ -307,6 +307,7 @@ export const BLOCK_TYPE_META: Record<
         },
       ],
       gating_required: true,
+      confidence_weighted: false,
       background_color: null,
       padding: "none",
     }),

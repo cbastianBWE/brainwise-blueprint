@@ -57,8 +57,8 @@ type Question = {
 };
 
 interface Props {
-  value: { questions: Question[]; gating_required: boolean };
-  onConfigChange: (next: { questions: Question[]; gating_required: boolean }) => void;
+  value: { questions: Question[]; gating_required: boolean; confidence_weighted?: boolean };
+  onConfigChange: (next: { questions: Question[]; gating_required: boolean; confidence_weighted?: boolean }) => void;
 }
 
 const emptyDoc = (): TipTapDocJSON => ({
@@ -1038,11 +1038,14 @@ export function KnowledgeCheckBlockForm({ value, onConfigChange }: Props) {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
   const questions = value.questions ?? [];
   const gatingRequired = value.gating_required === true;
+  const confidenceWeighted = value.confidence_weighted === true;
 
-  const emit = (next: Partial<{ questions: Question[]; gating_required: boolean }>) => {
+  const emit = (next: Partial<{ questions: Question[]; gating_required: boolean; confidence_weighted: boolean }>) => {
     onConfigChange({
+      ...value,
       questions: next.questions ?? questions,
       gating_required: next.gating_required ?? gatingRequired,
+      confidence_weighted: next.confidence_weighted ?? confidenceWeighted,
     });
   };
 
@@ -1133,8 +1136,23 @@ export function KnowledgeCheckBlockForm({ value, onConfigChange }: Props) {
         <div className="space-y-1">
           <Label className="text-sm font-medium">Require completion before continuing</Label>
           <p className="text-xs text-muted-foreground">
-            Default ON for knowledge checks — the trainee must answer every question correctly before
+            Default ON for knowledge checks — the trainee must answer every question before
             the next Continue button is enabled.
+          </p>
+        </div>
+      </div>
+
+      <div className="flex items-start gap-2 rounded-md border bg-muted/20 p-3">
+        <Checkbox
+          checked={confidenceWeighted}
+          onCheckedChange={(checked) => emit({ confidence_weighted: checked === true })}
+        />
+        <div className="space-y-1">
+          <Label className="text-sm font-medium">Confidence-weighted (single attempt)</Label>
+          <p className="text-xs text-muted-foreground">
+            Trainees rate their confidence, then get one locked attempt per question with the
+            explanation shown either way. Use to surface confident-but-wrong misconceptions. Off
+            by default.
           </p>
         </div>
       </div>
