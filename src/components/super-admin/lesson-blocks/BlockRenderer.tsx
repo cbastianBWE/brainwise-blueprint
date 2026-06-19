@@ -2183,7 +2183,7 @@ function KnowledgeCheckRender({
         const s = stateById[q.client_id] ?? emptyKCState();
         const isImplemented = KC_IMPLEMENTED_TYPES.has(q.question_type);
         const choices = q.choices ?? [];
-        const canCheck =
+        const baseCanCheck =
           isImplemented &&
           (q.question_type === "multi_select"
             ? s.selectedMulti.length > 0
@@ -2198,6 +2198,7 @@ function KnowledgeCheckRender({
                   : q.question_type === "timeline"
                     ? s.timelineOrder.length === (q.events ?? []).length
                     : s.selectedSingle !== null);
+        const canCheck = confidenceWeighted ? baseCanCheck && s.confidence != null : baseCanCheck;
 
         return (
           <div key={q.client_id} className="bw-kc-question">
