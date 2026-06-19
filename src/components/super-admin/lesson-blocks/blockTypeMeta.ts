@@ -468,6 +468,7 @@ export const IN_SCOPE_BLOCK_TYPES: BlockType[] = [
   "reveal_cards",
   "sequence",
   "media_text",
+  "branching_scenario",
 ];
 
 export const CALLOUT_COLORS: Record<string, string> = {
