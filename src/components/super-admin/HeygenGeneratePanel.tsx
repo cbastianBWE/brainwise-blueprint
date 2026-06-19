@@ -4,6 +4,7 @@ import { Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -47,6 +48,8 @@ interface Props {
   initialContentItemId?: string | null;
   initialMuxStatus?: string | null;
   onReady?: (contentItemId: string) => void;
+  initialScript?: string;
+  onScriptChange?: (script: string) => void;
 }
 
 function deriveInitial(status: string | null | undefined, cid: string | null | undefined): State {
@@ -64,15 +67,24 @@ export function HeygenGeneratePanel({
   initialContentItemId,
   initialMuxStatus,
   onReady,
+  initialScript,
+  onScriptChange,
 }: Props) {
   const [state, setState] = useState<State>(() =>
     deriveInitial(initialMuxStatus, initialContentItemId),
   );
-  const [script, setScript] = useState("");
+  const [script, setScript] = useState(initialScript ?? "");
   const [avatarId, setAvatarId] = useState("");
   const [voiceId, setVoiceId] = useState("");
   const [genError, setGenError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [draftPrompt, setDraftPrompt] = useState("");
+  const [drafting, setDrafting] = useState(false);
+  const [draftError, setDraftError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setScript(initialScript ?? "");
+  }, [initialScript]);
 
   const catalogQuery = useQuery({
     queryKey: ["heygen-catalog"],
@@ -195,6 +207,32 @@ export function HeygenGeneratePanel({
     }
   };
 
+  const handleDraftScript = async () => {
+    setDraftError(null);
+    setDrafting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("draft-lesson-block", {
+        body: { block_type: "video_embed", author_prompt: draftPrompt },
+      });
+      if (error) {
+        setDraftError(error.message || "Could not draft a script.");
+        return;
+      }
+      const s = (data as { config?: { script?: string } } | null)?.config?.script;
+      if (typeof s !== "string" || s.trim().length === 0) {
+        setDraftError((data as { error?: string } | null)?.error || "The AI did not return a script. Try rephrasing.");
+        return;
+      }
+      const next = s.slice(0, SCRIPT_MAX);
+      setScript(next);
+      onScriptChange?.(next);
+    } catch (e) {
+      setDraftError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setDrafting(false);
+    }
+  };
+
   if (state.kind === "generating") {
     return (
       <div className="flex items-start gap-3 rounded-md border border-dashed p-4 text-sm text-muted-foreground">
@@ -215,9 +253,20 @@ export function HeygenGeneratePanel({
 
   if (state.kind === "ready") {
     return (
-      <div className="flex items-center gap-2 rounded-md border p-4 text-sm">
-        <CheckCircle2 className="h-4 w-4 text-primary" />
-        <span>Video is ready.</span>
+      <div className="space-y-3 rounded-md border p-4">
+        <div className="flex items-center gap-2 text-sm">
+          <CheckCircle2 className="h-4 w-4 text-primary" />
+          <span>Video is ready.</span>
+        </div>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => setState({ kind: "idle" })}
+          disabled={disabled}
+        >
+          Regenerate
+        </Button>
       </div>
     );
   }
@@ -245,10 +294,36 @@ export function HeygenGeneratePanel({
       ) : (
         <>
           <div className="space-y-1">
+            <label className="text-xs font-medium">Draft a script with AI (optional)</label>
+            <div className="flex gap-2">
+              <Input
+                value={draftPrompt}
+                onChange={(e) => setDraftPrompt(e.target.value)}
+                placeholder="What should this video cover?"
+                disabled={disabled || submitting || drafting}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleDraftScript}
+                disabled={disabled || submitting || drafting || draftPrompt.trim().length === 0}
+              >
+                {drafting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Draft script
+              </Button>
+            </div>
+            {draftError && <p className="text-xs text-destructive">{draftError}</p>}
+          </div>
+
+          <div className="space-y-1">
             <label className="text-xs font-medium">Script</label>
             <Textarea
               value={script}
-              onChange={(e) => setScript(e.target.value.slice(0, SCRIPT_MAX))}
+              onChange={(e) => {
+                const next = e.target.value.slice(0, SCRIPT_MAX);
+                setScript(next);
+                onScriptChange?.(next);
+              }}
               rows={5}
               placeholder="Write the script the avatar will speak…"
               disabled={disabled || submitting}

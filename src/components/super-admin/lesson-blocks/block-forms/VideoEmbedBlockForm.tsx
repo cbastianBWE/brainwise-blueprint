@@ -78,6 +78,7 @@ interface Props {
     source_type: SourceType;
     source_id: string | null;
     title: string | null;
+    script?: string | null;
     background_color?: string | null;
     padding?: string | null;
   };
@@ -246,6 +247,8 @@ export function VideoEmbedBlockForm({
                 }}
                 resolveContentItemId={resolveEmbedContentItemId}
                 initialContentItemId={value.source_id}
+                initialScript={value.script ?? ""}
+                onScriptChange={(s) => onConfigChange({ ...value, script: s.length > 0 ? s : null })}
                 onReady={(id) =>
                   onConfigChange({
                     ...value,
