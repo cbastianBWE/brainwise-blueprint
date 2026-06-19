@@ -253,9 +253,20 @@ export function HeygenGeneratePanel({
 
   if (state.kind === "ready") {
     return (
-      <div className="flex items-center gap-2 rounded-md border p-4 text-sm">
-        <CheckCircle2 className="h-4 w-4 text-primary" />
-        <span>Video is ready.</span>
+      <div className="space-y-3 rounded-md border p-4">
+        <div className="flex items-center gap-2 text-sm">
+          <CheckCircle2 className="h-4 w-4 text-primary" />
+          <span>Video is ready.</span>
+        </div>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => setState({ kind: "idle" })}
+          disabled={disabled}
+        >
+          Regenerate
+        </Button>
       </div>
     );
   }
