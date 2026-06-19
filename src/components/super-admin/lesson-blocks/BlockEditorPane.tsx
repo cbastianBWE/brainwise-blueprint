@@ -35,6 +35,7 @@ import { HotspotBlockForm } from "./block-forms/HotspotBlockForm";
 import { RevealCardsBlockForm } from "./block-forms/RevealCardsBlockForm";
 import { SequenceBlockForm } from "./block-forms/SequenceBlockForm";
 import { MediaTextBlockForm } from "./block-forms/MediaTextBlockForm";
+import { BranchingScenarioBlockForm } from "./block-forms/BranchingScenarioBlockForm";
 import { BlockStyleSection } from "./BlockStyleSection";
 import { mapAiError } from "./ai-pane/mapAiError";
 import { COST_ESTIMATES } from "./ai-pane/costEstimates";
