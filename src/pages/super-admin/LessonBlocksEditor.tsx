@@ -750,6 +750,10 @@ export default function LessonBlocksEditor() {
               <Palette className="mr-1 h-4 w-4" style={{ color: "#006D77" }} />
               Brand
             </Button>
+            <Button variant="outline" onClick={() => setVoiceoverPanelOpen(true)}>
+              <AudioLines className="mr-1 h-4 w-4" style={{ color: "#006D77" }} />
+              Voiceover
+            </Button>
             <Button
               variant="outline"
               onClick={() => setAiPaneOpen((v) => !v)}
