@@ -308,6 +308,10 @@ export function BlockEditorPane({ block, onChange, contentItemId, siblingBlocks 
       {block.block_type === "sequence" && (
         <SequenceBlockForm value={cfg} onConfigChange={handleConfig} contentItemId={contentItemId} />
       )}
+      {block.block_type === "media_text" && (
+        <MediaTextBlockForm value={cfg} onConfigChange={handleConfig} contentItemId={contentItemId} />
+      )}
+
 
       <BlockStyleSection value={cfg} onConfigChange={handleConfig} />
     </div>
