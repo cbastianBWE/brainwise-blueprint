@@ -48,6 +48,8 @@ interface Props {
   initialContentItemId?: string | null;
   initialMuxStatus?: string | null;
   onReady?: (contentItemId: string) => void;
+  initialScript?: string;
+  onScriptChange?: (script: string) => void;
 }
 
 function deriveInitial(status: string | null | undefined, cid: string | null | undefined): State {
@@ -65,15 +67,24 @@ export function HeygenGeneratePanel({
   initialContentItemId,
   initialMuxStatus,
   onReady,
+  initialScript,
+  onScriptChange,
 }: Props) {
   const [state, setState] = useState<State>(() =>
     deriveInitial(initialMuxStatus, initialContentItemId),
   );
-  const [script, setScript] = useState("");
+  const [script, setScript] = useState(initialScript ?? "");
   const [avatarId, setAvatarId] = useState("");
   const [voiceId, setVoiceId] = useState("");
   const [genError, setGenError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [draftPrompt, setDraftPrompt] = useState("");
+  const [drafting, setDrafting] = useState(false);
+  const [draftError, setDraftError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setScript(initialScript ?? "");
+  }, [initialScript]);
 
   const catalogQuery = useQuery({
     queryKey: ["heygen-catalog"],
