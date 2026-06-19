@@ -898,6 +898,8 @@
   gap: 0.25rem;
   font-size: 0.875rem;
   color: var(--lesson-primary, #021F36);
+}
+
 
 @media (max-width: 640px) {
   .bw-kc-question { padding: 0.875rem; }
