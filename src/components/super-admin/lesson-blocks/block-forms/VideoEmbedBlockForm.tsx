@@ -207,6 +207,7 @@ export function VideoEmbedBlockForm({
               Status: {selectedVideo.mux_status === "ready" ? "ready" : "still processing"}
             </p>
           )}
+          {value.source_id && <SelectedVideoPreview contentItemId={value.source_id} />}
           <p className="text-xs text-muted-foreground">
             Only videos in this lesson's module are listed, so every enrolled learner can play
             them. Generate a video from a video content item first if the list is empty.
