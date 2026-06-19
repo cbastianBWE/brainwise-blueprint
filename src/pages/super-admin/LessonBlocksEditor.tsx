@@ -32,6 +32,7 @@ import { LessonTitleCard, lessonBrandQueryKey } from "@/components/super-admin/l
 import { resolveFont } from "@/components/super-admin/lesson-blocks/lessonFonts";
 import { LessonBrandPanel } from "@/components/super-admin/lesson-blocks/LessonBrandPanel";
 import { LessonOutcomesPanel } from "@/components/super-admin/lesson-blocks/LessonOutcomesPanel";
+import { LessonVoiceoverPanel } from "@/components/super-admin/lesson-blocks/LessonVoiceoverPanel";
 import { EditorSlidePane } from "@/components/super-admin/lesson-blocks/EditorSlidePane";
 import { ManageBlocksSidebar, type BlockPadding } from "@/components/super-admin/lesson-blocks/ManageBlocksSidebar";
 import { UndoDeleteToast } from "@/components/super-admin/lesson-blocks/UndoDeleteToast";
