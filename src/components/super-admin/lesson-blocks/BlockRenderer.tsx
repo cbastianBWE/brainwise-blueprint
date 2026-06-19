@@ -3286,3 +3286,69 @@ function SequenceRender({
     </div>
   );
 }
+
+function MediaTextRender({
+  assetId,
+  alt,
+  caption,
+  attribution,
+  body,
+  mediaPosition,
+  mediaRatio,
+  verticalAlign,
+  urlMap,
+}: {
+  assetId: string | null;
+  alt: string;
+  caption: string | null;
+  attribution: string | null;
+  body: TipTapDocJSON | null;
+  mediaPosition: "left" | "right";
+  mediaRatio: "half" | "third";
+  verticalAlign: "top" | "center";
+  urlMap: Map<string, string>;
+}) {
+  const url = assetId ? urlMap.get(assetId) : null;
+  const classes = [
+    "bw-media-text",
+    mediaPosition === "right" ? "is-media-right" : "",
+    mediaRatio === "third" ? "is-ratio-third" : "",
+    verticalAlign === "center" ? "is-valign-center" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  const mediaCol = (
+    <div className="bw-media-text-media" key="media">
+      {url ? (
+        <img src={url} alt={alt || ""} className="bw-media-text-image" />
+      ) : (
+        <div className="bw-media-text-empty">{alt || "Image"}</div>
+      )}
+      {caption && <div className="bw-media-text-caption">{caption}</div>}
+      {attribution && <div className="bw-media-text-attribution">{attribution}</div>}
+    </div>
+  );
+  const bodyCol = (
+    <div className="bw-media-text-body" key="body">
+      <ReadOnlyTipTap json={body} />
+    </div>
+  );
+
+  return (
+    <div className={classes}>
+      {mediaPosition === "right" ? (
+        <>
+          {bodyCol}
+          {mediaCol}
+        </>
+      ) : (
+        <>
+          {mediaCol}
+          {bodyCol}
+        </>
+      )}
+    </div>
+  );
+}
+
