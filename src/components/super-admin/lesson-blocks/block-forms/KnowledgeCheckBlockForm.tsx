@@ -1136,8 +1136,23 @@ export function KnowledgeCheckBlockForm({ value, onConfigChange }: Props) {
         <div className="space-y-1">
           <Label className="text-sm font-medium">Require completion before continuing</Label>
           <p className="text-xs text-muted-foreground">
-            Default ON for knowledge checks — the trainee must answer every question correctly before
+            Default ON for knowledge checks — the trainee must answer every question before
             the next Continue button is enabled.
+          </p>
+        </div>
+      </div>
+
+      <div className="flex items-start gap-2 rounded-md border bg-muted/20 p-3">
+        <Checkbox
+          checked={confidenceWeighted}
+          onCheckedChange={(checked) => emit({ confidence_weighted: checked === true })}
+        />
+        <div className="space-y-1">
+          <Label className="text-sm font-medium">Confidence-weighted (single attempt)</Label>
+          <p className="text-xs text-muted-foreground">
+            Trainees rate their confidence, then get one locked attempt per question with the
+            explanation shown either way. Use to surface confident-but-wrong misconceptions. Off
+            by default.
           </p>
         </div>
       </div>
