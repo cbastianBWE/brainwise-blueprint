@@ -496,6 +496,7 @@ export function AiPane(props: Props) {
       contentItemId,
       toast,
       resolveSequenceImages,
+      resolveMediaTextImages,
     ],
   );
 
