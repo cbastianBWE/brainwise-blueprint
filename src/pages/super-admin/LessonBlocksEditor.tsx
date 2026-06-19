@@ -3,7 +3,7 @@ import type { CSSProperties } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
-import { ChevronLeft, Edit2, Layers, ListChecks, Loader2, Palette, Plus, Save, Sparkles } from "lucide-react";
+import { AudioLines, ChevronLeft, Edit2, Layers, ListChecks, Loader2, Palette, Plus, Save, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -32,6 +32,7 @@ import { LessonTitleCard, lessonBrandQueryKey } from "@/components/super-admin/l
 import { resolveFont } from "@/components/super-admin/lesson-blocks/lessonFonts";
 import { LessonBrandPanel } from "@/components/super-admin/lesson-blocks/LessonBrandPanel";
 import { LessonOutcomesPanel } from "@/components/super-admin/lesson-blocks/LessonOutcomesPanel";
+import { LessonVoiceoverPanel } from "@/components/super-admin/lesson-blocks/LessonVoiceoverPanel";
 import { EditorSlidePane } from "@/components/super-admin/lesson-blocks/EditorSlidePane";
 import { ManageBlocksSidebar, type BlockPadding } from "@/components/super-admin/lesson-blocks/ManageBlocksSidebar";
 import { UndoDeleteToast } from "@/components/super-admin/lesson-blocks/UndoDeleteToast";
@@ -87,6 +88,7 @@ export default function LessonBlocksEditor() {
   const [aiPaneOpen, setAiPaneOpen] = useState(false);
   const [brandPanelOpen, setBrandPanelOpen] = useState(false);
   const [outcomesPanelOpen, setOutcomesPanelOpen] = useState(false);
+  const [voiceoverPanelOpen, setVoiceoverPanelOpen] = useState(false);
 
   const { urlMap: assetUrlMap, registerNewAssetId } = useLessonBlockAssetUrls(contentItemId);
 
@@ -748,6 +750,10 @@ export default function LessonBlocksEditor() {
               <Palette className="mr-1 h-4 w-4" style={{ color: "#006D77" }} />
               Brand
             </Button>
+            <Button variant="outline" onClick={() => setVoiceoverPanelOpen(true)}>
+              <AudioLines className="mr-1 h-4 w-4" style={{ color: "#006D77" }} />
+              Voiceover
+            </Button>
             <Button
               variant="outline"
               onClick={() => setAiPaneOpen((v) => !v)}
@@ -853,6 +859,17 @@ export default function LessonBlocksEditor() {
             onOpenChange={setOutcomesPanelOpen}
             contentItemId={contentItemId}
             initialOutcomes={(itemQuery.data as any)?.outcomes ?? null}
+          />
+        )}
+
+        {contentItemId && (
+          <LessonVoiceoverPanel
+            open={voiceoverPanelOpen}
+            onOpenChange={setVoiceoverPanelOpen}
+            contentItemId={contentItemId}
+            blocks={blocks}
+            onApplyBlocks={setBlocks}
+            onRegisterAsset={registerNewAssetId}
           />
         )}
 
