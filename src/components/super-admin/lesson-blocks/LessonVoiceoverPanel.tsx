@@ -248,12 +248,12 @@ export function LessonVoiceoverPanel({
         );
         continue;
       }
-      onRegisterAsset(res.asset_id);
+      onRegisterAsset(res.asset_id!);
       const newBlock: EditorBlock = {
         client_id: crypto.randomUUID(),
         block_type: "embed_audio",
         config: {
-          asset_id: res.asset_id,
+          asset_id: res.asset_id!,
           transcript: s.text,
           background_color: null,
           padding: "none",
@@ -302,12 +302,12 @@ export function LessonVoiceoverPanel({
       });
       return;
     }
-    onRegisterAsset(res.asset_id);
+    onRegisterAsset(res.asset_id!);
     const newBlock: EditorBlock = {
       client_id: crypto.randomUUID(),
       block_type: "embed_audio",
       config: {
-        asset_id: res.asset_id,
+        asset_id: res.asset_id!,
         transcript: text,
         background_color: null,
         padding: "none",
