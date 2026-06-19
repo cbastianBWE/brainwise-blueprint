@@ -3475,3 +3475,151 @@ function MediaTextRender({
   );
 }
 
+function BranchingScenarioRender({
+  config,
+  blockClientId,
+  mode,
+  onBlockComplete,
+  savedProgress,
+  urlMap,
+}: {
+  config: any;
+  blockClientId: string;
+  mode?: "editor" | "trainee";
+  onBlockComplete?: OnBlockComplete;
+  savedProgress?: SavedBlockProgress | null;
+  urlMap: Map<string, string>;
+  gatingRequired: boolean;
+}) {
+  const nodes: any[] = Array.isArray(config?.nodes) ? config.nodes : [];
+  const edges: any[] = Array.isArray(config?.edges) ? config.edges : [];
+  const instructions: string | null =
+    typeof config?.instructions === "string" && config.instructions.trim() ? config.instructions : null;
+
+  const nodeById = new Map<string, any>(nodes.map((n) => [n.client_id, n]));
+  const startNodeId: string | null =
+    typeof config?.start_node_id === "string" && nodeById.has(config.start_node_id)
+      ? config.start_node_id
+      : nodes[0]?.client_id ?? null;
+
+  const seedPath = (() => {
+    if (mode !== "trainee" || !savedProgress) return null;
+    const d = savedProgress.completion_data as any;
+    if (!d || typeof d !== "object" || !Array.isArray(d.path)) return null;
+    const p = d.path.filter((id: any) => typeof id === "string" && nodeById.has(id));
+    if (p.length === 0 || p[0] !== startNodeId) return null;
+    return p as string[];
+  })();
+
+  const [path, setPath] = useState<string[]>(
+    seedPath ?? (startNodeId ? [startNodeId] : []),
+  );
+
+  const graphKey = `${startNodeId}|${nodes.map((n) => n.client_id).join(",")}|${edges
+    .map((e) => `${e.from_node_id}>${e.to_node_id}`)
+    .join(",")}`;
+  useEffect(() => {
+    if (mode === "trainee") return;
+    setPath(startNodeId ? [startNodeId] : []);
+  }, [graphKey, mode, startNodeId]);
+
+  const currentNodeId = path.length > 0 ? path[path.length - 1] : startNodeId;
+  const currentNode = currentNodeId ? nodeById.get(currentNodeId) ?? null : null;
+  const outgoing = currentNode
+    ? edges.filter((e) => e.from_node_id === currentNode.client_id && nodeById.has(e.to_node_id))
+    : [];
+  const isTerminal = !currentNode || currentNode.is_terminal === true || outgoing.length === 0;
+  const done = nodes.length === 0 || isTerminal;
+
+  const completionFiredRef = useRef(savedProgress?.status === "completed");
+  useEffect(() => {
+    if (mode !== "trainee") return;
+    if (done && !completionFiredRef.current) {
+      completionFiredRef.current = true;
+      onBlockComplete?.(blockClientId, { path, reached_terminal: true });
+    }
+    if (!done) completionFiredRef.current = false;
+  }, [done, mode, blockClientId, onBlockComplete, path]);
+
+  if (nodes.length === 0) {
+    return (
+      <div className="bw-branching-shell">
+        <p className="text-sm text-muted-foreground">Add at least one node to see the scenario.</p>
+      </div>
+    );
+  }
+
+  const handleChoice = (edge: any) => {
+    setPath((prev) => [...prev, edge.to_node_id]);
+  };
+
+  const handleReplay = () => {
+    setPath(startNodeId ? [startNodeId] : []);
+    completionFiredRef.current = false;
+  };
+
+  const currentImageUrl =
+    currentNode?.node_image_asset_id ? urlMap.get(currentNode.node_image_asset_id) ?? null : null;
+
+  return (
+    <div className="bw-branching-shell">
+      {instructions && (
+        <div className="bw-branching-intro">
+          <p>{instructions}</p>
+        </div>
+      )}
+
+      <div className="bw-branching-progress">
+        {done ? "Outcome reached" : `Decision ${path.length}`}
+      </div>
+
+      {currentNode && (
+        <div className="bw-branching-node">
+          {currentImageUrl && (
+            <img src={currentImageUrl} alt="" className="bw-branching-node-image" />
+          )}
+          <div className="bw-branching-body">
+            <ReadOnlyTipTap json={currentNode.body} />
+          </div>
+
+          {!isTerminal && (
+            <div className="bw-branching-choices">
+              {outgoing.map((edge) => (
+                <button
+                  key={edge.client_id}
+                  type="button"
+                  className="bw-branching-choice"
+                  onClick={() => handleChoice(edge)}
+                >
+                  {edge.choice_text || (
+                    <span className="bw-branching-choice-untitled">(Untitled choice)</span>
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {isTerminal && (
+            <div className="bw-branching-done">
+              {currentNode.outcome_label && (
+                <div className="bw-branching-outcome-label">{currentNode.outcome_label}</div>
+              )}
+              <div>Scenario complete</div>
+              <button type="button" className="bw-branching-restart bw-branching-done-reset" onClick={handleReplay}>
+                Start over
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {!done && path.length > 1 && (
+        <button type="button" className="bw-branching-restart" onClick={handleReplay}>
+          Start over
+        </button>
+      )}
+    </div>
+  );
+}
+
+
