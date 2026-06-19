@@ -247,6 +247,8 @@ export function VideoEmbedBlockForm({
                 }}
                 resolveContentItemId={resolveEmbedContentItemId}
                 initialContentItemId={value.source_id}
+                initialScript={value.script ?? ""}
+                onScriptChange={(s) => onConfigChange({ ...value, script: s.length > 0 ? s : null })}
                 onReady={(id) =>
                   onConfigChange({
                     ...value,
