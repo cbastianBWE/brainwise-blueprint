@@ -13,6 +13,7 @@ import {
   Music as MusicIcon,
   Video as VideoIcon,
   ChevronRight,
+  Loader2,
 } from "lucide-react";
 import {
   Tabs,
