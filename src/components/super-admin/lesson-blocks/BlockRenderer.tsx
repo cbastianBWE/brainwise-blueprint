@@ -61,6 +61,77 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import type { EditorBlock, TipTapDocJSON } from "./blockTypeMeta";
 import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
+import MuxPlayer from "@mux/mux-player-react";
+import { Loader2 } from "lucide-react";
+
+function ContentItemVideoEmbed({ contentItemId }: { contentItemId: string }) {
+  const q = useQuery({
+    queryKey: ["block-video-embed", contentItemId],
+    staleTime: 60 * 60 * 1000,
+    refetchInterval: (query) => {
+      const d = query.state.data as any;
+      return d && d.kind === "mux" && d.processing ? 8000 : false;
+    },
+    queryFn: async () => {
+      const { data, error } = await supabase.functions.invoke("get-content-item-video-url", {
+        body: { p_content_item_id: contentItemId },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      return data as
+        | { kind: "mux"; processing?: boolean; mux_status?: string; playback_id?: string; token?: string }
+        | { kind: "supabase_storage"; signed_url: string };
+    },
+  });
+
+  if (q.isLoading) {
+    return (
+      <div className="flex aspect-video items-center justify-center rounded-md bg-muted">
+        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+  if (q.isError || !q.data) {
+    return (
+      <div className="flex aspect-video items-center justify-center rounded-md border bg-muted/30 text-sm text-muted-foreground">
+        This video isn't available.
+      </div>
+    );
+  }
+  const d = q.data as any;
+  if (d.kind === "mux") {
+    if (d.processing || !d.playback_id || !d.token) {
+      return (
+        <div className="flex aspect-video items-center justify-center gap-2 rounded-md bg-muted text-sm text-muted-foreground">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          This video is still processing.
+        </div>
+      );
+    }
+    return (
+      <MuxPlayer
+        playbackId={d.playback_id}
+        tokens={{ playback: d.token }}
+        streamType="on-demand"
+        className="w-full rounded-md overflow-hidden"
+      />
+    );
+  }
+  if (d.kind === "supabase_storage") {
+    return (
+      <video
+        src={d.signed_url}
+        controls
+        className="w-full rounded-md bg-black"
+        preload="metadata"
+      >
+        Your browser does not support video.
+      </video>
+    );
+  }
+  return null;
+}
 
 function readableTextColorForBg(bg: string | null | undefined): string {
   if (!bg || !/^#[0-9A-Fa-f]{6}$/.test(bg)) return "#021F36";
@@ -221,6 +292,14 @@ function VideoRender({
         >
           Your browser does not support video.
         </video>
+        {config.title && <p className="text-sm font-medium">{config.title}</p>}
+      </div>
+    );
+  }
+  if (config.source_type === "content_item" && config.source_id) {
+    return (
+      <div className="space-y-2">
+        <ContentItemVideoEmbed contentItemId={config.source_id} />
         {config.title && <p className="text-sm font-medium">{config.title}</p>}
       </div>
     );
