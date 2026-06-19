@@ -146,7 +146,7 @@ export default function ContentAuthoring() {
         supabase.from("certification_paths").select("*").is("archived_at", null).order("display_order").order("name"),
         supabase.from("curricula").select("*").is("archived_at", null).order("name"),
         supabase.from("modules").select("*").is("archived_at", null).order("name"),
-        supabase.from("content_items").select("*").is("archived_at", null).order("display_order"),
+        supabase.from("content_items").select("*").eq("is_embed_only", false).is("archived_at", null).order("display_order"),
         supabase.from("certification_path_curricula").select("*").order("display_order"),
         supabase.from("curriculum_modules").select("*").order("display_order"),
       ]);
