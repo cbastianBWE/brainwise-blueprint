@@ -116,9 +116,15 @@ export function BlockEditorPane({ block, onChange, contentItemId, siblingBlocks 
         },
       });
       if (error) throw error;
+      const prevCfg = (block.config ?? {}) as Record<string, unknown>;
       const newCfg = (data as any)?.config as Record<string, unknown> | undefined;
       if (!newCfg) throw { error: "ai_output_unparseable" };
-      onChange({ ...block, config: newCfg });
+      const mergedCfg = {
+        ...newCfg,
+        background_color: newCfg.background_color ?? prevCfg.background_color ?? null,
+        padding: newCfg.padding ?? prevCfg.padding ?? "none",
+      };
+      onChange({ ...block, config: mergedCfg });
       setRefineOpen(false);
       setRefineText("");
     } catch (e) {
