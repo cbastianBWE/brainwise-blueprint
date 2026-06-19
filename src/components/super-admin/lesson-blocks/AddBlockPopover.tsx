@@ -10,7 +10,7 @@ export function AddBlockPopover({ onSelect }: AddBlockPopoverProps) {
       <div className="px-2 pt-1 pb-2 text-xs font-medium text-muted-foreground">
         Insert block
       </div>
-      <div className="grid gap-0.5">
+      <div className="grid gap-0.5 max-h-[60vh] overflow-y-auto pr-1">
         {IN_SCOPE_BLOCK_TYPES.map((bt) => {
           const meta = BLOCK_TYPE_META[bt];
           const Icon = meta.icon;
