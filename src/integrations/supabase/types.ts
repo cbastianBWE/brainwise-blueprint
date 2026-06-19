@@ -3460,6 +3460,7 @@ export type Database = {
           file_upload_allowed_extensions: string[] | null
           file_upload_max_bytes: number | null
           id: string
+          is_embed_only: boolean
           is_required: boolean
           item_type: string
           lesson_completion_mode: string | null
@@ -3500,6 +3501,7 @@ export type Database = {
           file_upload_allowed_extensions?: string[] | null
           file_upload_max_bytes?: number | null
           id?: string
+          is_embed_only?: boolean
           is_required?: boolean
           item_type: string
           lesson_completion_mode?: string | null
@@ -3540,6 +3542,7 @@ export type Database = {
           file_upload_allowed_extensions?: string[] | null
           file_upload_max_bytes?: number | null
           id?: string
+          is_embed_only?: boolean
           is_required?: boolean
           item_type?: string
           lesson_completion_mode?: string | null
@@ -11934,6 +11937,14 @@ export type Database = {
           p_reason: string
           p_ref_field: string
           p_resource_id?: string
+        }
+        Returns: Json
+      }
+      create_lesson_embed_video_content_item: {
+        Args: {
+          p_lesson_content_item_id: string
+          p_reason: string
+          p_title: string
         }
         Returns: Json
       }
