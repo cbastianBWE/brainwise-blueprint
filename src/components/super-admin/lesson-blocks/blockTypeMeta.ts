@@ -22,6 +22,7 @@ import {
   Eye,
   ArrowUpDown,
   PanelLeft,
+  Waypoints,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -48,7 +49,8 @@ export type BlockType =
   | "hotspot"
   | "reveal_cards"
   | "sequence"
-  | "media_text";
+  | "media_text"
+  | "branching_scenario";
 
 export type TipTapDocJSON = Record<string, unknown>;
 
@@ -417,6 +419,29 @@ export const BLOCK_TYPE_META: Record<
       padding: "none",
     }),
   },
+  branching_scenario: {
+    label: "Branching scenario",
+    description: "Decision tree: choices lead to different paths and endings",
+    icon: Waypoints,
+    defaultConfig: () => {
+      const startId = crypto.randomUUID();
+      const endId = crypto.randomUUID();
+      return {
+        instructions: null,
+        start_node_id: startId,
+        nodes: [
+          { client_id: startId, body: emptyDoc(), node_image_asset_id: null, is_terminal: false, outcome_label: null },
+          { client_id: endId, body: emptyDoc(), node_image_asset_id: null, is_terminal: true, outcome_label: null },
+        ],
+        edges: [
+          { client_id: crypto.randomUUID(), from_node_id: startId, to_node_id: endId, choice_text: "" },
+        ],
+        gating_required: false,
+        background_color: null,
+        padding: "none",
+      };
+    },
+  },
 };
 
 export const IN_SCOPE_BLOCK_TYPES: BlockType[] = [
@@ -443,6 +468,7 @@ export const IN_SCOPE_BLOCK_TYPES: BlockType[] = [
   "reveal_cards",
   "sequence",
   "media_text",
+  "branching_scenario",
 ];
 
 export const CALLOUT_COLORS: Record<string, string> = {

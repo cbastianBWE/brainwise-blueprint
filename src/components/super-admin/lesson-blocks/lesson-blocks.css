@@ -1480,3 +1480,116 @@
   line-height: 1.65;
   color: var(--lesson-primary, #021F36);
 }
+
+.bw-branching-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.bw-branching-intro {
+  font-size: 1rem;
+  line-height: 1.55;
+  color: var(--lesson-primary, #021F36);
+}
+.bw-branching-intro p { margin: 0; }
+
+.bw-branching-progress {
+  text-align: center;
+  font-size: 0.875rem;
+  color: #6D6875;
+  font-family: var(--font-display, "Poppins", sans-serif);
+}
+
+.bw-branching-node {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+  padding: 1rem 1.125rem;
+  background: #FFFFFF;
+  border: 1px solid hsl(var(--border));
+  border-radius: 0.625rem;
+  box-shadow: 0 1px 3px rgba(2, 31, 54, 0.06);
+}
+
+.bw-branching-node-image {
+  display: block;
+  width: 100%;
+  max-height: 18rem;
+  object-fit: cover;
+  border-radius: 0.5rem;
+}
+
+.bw-branching-body {
+  font-size: 1rem;
+  line-height: 1.55;
+  color: var(--lesson-primary, #021F36);
+}
+.bw-branching-body p { margin: 0 0 0.5rem 0; }
+.bw-branching-body p:last-child { margin-bottom: 0; }
+
+.bw-branching-choices {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.bw-branching-choice {
+  text-align: left;
+  padding: 0.75rem 1rem;
+  background: #FFFFFF;
+  border: 2px solid rgba(2, 31, 54, 0.16);
+  border-radius: 0.5rem;
+  cursor: pointer;
+  font-size: 0.9375rem;
+  color: var(--lesson-primary, #021F36);
+  line-height: 1.4;
+  transition: border-color 120ms ease, background 120ms ease, transform 80ms ease;
+}
+.bw-branching-choice:hover {
+  border-color: var(--lesson-cta, #F5741A);
+  background: rgba(245, 116, 26, 0.04);
+}
+.bw-branching-choice:active { transform: translateY(1px); }
+.bw-branching-choice:focus-visible {
+  outline: 2px solid var(--lesson-cta, #F5741A);
+  outline-offset: 2px;
+}
+
+.bw-branching-choice-untitled {
+  color: #6D6875;
+  font-style: italic;
+}
+
+.bw-branching-done {
+  text-align: center;
+  padding: 1.25rem;
+  background: var(--lesson-surface, #F9F7F1);
+  border-radius: 0.5rem;
+  border: 1px solid hsl(var(--border));
+  font-family: var(--font-display, "Poppins", sans-serif);
+  color: var(--lesson-primary, #021F36);
+  font-weight: 500;
+}
+.bw-branching-outcome-label {
+  font-size: 1.0625rem;
+  font-weight: 600;
+  color: var(--lesson-primary, #021F36);
+  margin-bottom: 0.25rem;
+}
+.bw-branching-done-reset { margin-top: 0.5rem; font-size: 0.875rem; }
+
+.bw-branching-restart {
+  align-self: center;
+  background: none;
+  border: none;
+  color: #6D6875;
+  font-size: 0.8125rem;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+@media (max-width: 640px) {
+  .bw-branching-node { padding: 0.875rem; }
+  .bw-branching-node-image { max-height: 12rem; }
+}
