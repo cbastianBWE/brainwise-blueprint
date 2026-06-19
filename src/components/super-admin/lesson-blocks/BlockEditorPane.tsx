@@ -252,7 +252,7 @@ export function BlockEditorPane({ block, onChange, contentItemId, siblingBlocks 
         <ImageBlockForm value={cfg} onConfigChange={handleConfig} contentItemId={contentItemId} />
       )}
       {block.block_type === "video_embed" && (
-        <VideoEmbedBlockForm value={cfg} onConfigChange={handleConfig} contentItemId={contentItemId} />
+        <VideoEmbedBlockForm value={cfg} onConfigChange={handleConfig} contentItemId={contentItemId} blockClientId={block.client_id} />
       )}
       {block.block_type === "quote" && <QuoteBlockForm value={cfg} onConfigChange={handleConfig} />}
       {block.block_type === "list" && <ListBlockForm value={cfg} onConfigChange={handleConfig} />}
