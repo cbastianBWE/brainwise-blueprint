@@ -1968,6 +1968,10 @@ function KnowledgeCheckRender({
           revealed: prior.revealed === true,
           lastWrong: false,
           attempted: prior.attempted === true || prior.revealed === true,
+          confidence:
+            prior.confidence === "confident" || prior.confidence === "unsure"
+              ? prior.confidence
+              : null,
         };
       } else {
         next[q.client_id] = base[q.client_id] ?? emptyKCState();
