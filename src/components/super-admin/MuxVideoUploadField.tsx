@@ -43,11 +43,15 @@ interface HeygenAvatar {
   gender?: string | null;
   preview_image_url?: string | null;
 }
+interface HeygenAvatarExt extends HeygenAvatar {
+  preview_video_url?: string | null;
+}
 interface HeygenVoice {
   voice_id: string;
   name: string;
   language?: string | null;
   gender?: string | null;
+  preview_audio_url?: string | null;
 }
 
 function deriveInitial(status: string | null, playbackId: string | null): State {
