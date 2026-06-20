@@ -565,7 +565,7 @@ export function LessonVoiceoverPanel({
         </div>
 
         <div className="flex justify-end gap-2 border-t p-3">
-          <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={narrating || standaloneBusy}>
+          <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={narrating || standaloneBusy || scripting}>
             Close
           </Button>
         </div>
