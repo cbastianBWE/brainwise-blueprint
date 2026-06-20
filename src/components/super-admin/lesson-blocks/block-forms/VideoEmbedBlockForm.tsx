@@ -14,6 +14,9 @@ import {
 import { cn } from "@/lib/utils";
 import { FileUploadField } from "@/components/super-admin/FileUploadField";
 import { HeygenGeneratePanel } from "@/components/super-admin/HeygenGeneratePanel";
+import { Button } from "@/components/ui/button";
+import { MuxVideoUploadField } from "@/components/super-admin/MuxVideoUploadField";
+import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
 function SelectedVideoPreview({ contentItemId }: { contentItemId: string }) {
@@ -101,7 +104,7 @@ const ID_LABELS: Record<Exclude<SourceType, "supabase_storage" | "content_item">
   youtube_unlisted: "YouTube ID",
 };
 
-type ContentItemMode = "generate" | "existing";
+type ContentItemMode = "generate" | "upload" | "existing";
 
 export function VideoEmbedBlockForm({
   value,
@@ -109,12 +112,51 @@ export function VideoEmbedBlockForm({
   contentItemId,
   blockClientId,
 }: Props) {
+  const { toast } = useToast();
   const isStorage = value.source_type === "supabase_storage";
   const isContentItem = value.source_type === "content_item";
 
   const canGenerate = !!contentItemId && !!blockClientId;
   // If the saved value already has a source_id, default to "existing" so we don't surprise authors.
   const [ciMode, setCiMode] = useState<ContentItemMode>(value.source_id ? "existing" : "generate");
+  const [preparing, setPreparing] = useState(false);
+
+  const uploadSlotQuery = useQuery({
+    queryKey: ["video-embed-upload-slot", value.source_id],
+    enabled: isContentItem && ciMode === "upload" && !!value.source_id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("content_items")
+        .select("is_embed_only, mux_status, video_source_id")
+        .eq("id", value.source_id!)
+        .single();
+      if (error) throw error;
+      return data as { is_embed_only: boolean; mux_status: string | null; video_source_id: string | null };
+    },
+  });
+  const slot = uploadSlotQuery.data ?? null;
+  const hasEmbedSlot = !!value.source_id && slot?.is_embed_only === true;
+
+  const prepareUploadSlot = async () => {
+    if (!contentItemId) return;
+    setPreparing(true);
+    try {
+      const titleArg = (value.title && value.title.trim()) || "Lesson video";
+      const { data, error } = await supabase.rpc("create_lesson_embed_video_content_item", {
+        p_lesson_content_item_id: contentItemId,
+        p_title: titleArg,
+        p_reason: "In-lesson uploaded video (video_embed block)",
+      });
+      if (error) throw error;
+      const newId = (data as any)?.content_item_id as string | undefined;
+      if (!newId) throw new Error("Could not create the video slot.");
+      onConfigChange({ ...value, source_type: "content_item", source_id: newId, asset_id: null });
+    } catch (e: any) {
+      toast({ title: "Could not prepare upload", description: e?.message, variant: "destructive" });
+    } finally {
+      setPreparing(false);
+    }
+  };
 
   const moduleIdQuery = useQuery({
     queryKey: ["video-embed-module-id", contentItemId],
@@ -227,6 +269,16 @@ export function VideoEmbedBlockForm({
             </button>
             <button
               type="button"
+              onClick={() => setCiMode("upload")}
+              className={cn(
+                "px-3 py-1 text-xs font-medium rounded",
+                ciMode === "upload" ? "bg-accent text-foreground" : "text-muted-foreground",
+              )}
+            >
+              Upload a video file
+            </button>
+            <button
+              type="button"
               onClick={() => setCiMode("existing")}
               className={cn(
                 "px-3 py-1 text-xs font-medium rounded",
@@ -262,6 +314,33 @@ export function VideoEmbedBlockForm({
               <p className="text-xs text-muted-foreground">
                 Save the lesson first to generate an in-lesson video.
               </p>
+            )
+          ) : ciMode === "upload" ? (
+            !canGenerate ? (
+              <p className="text-xs text-muted-foreground">
+                Save the lesson first to upload an in-lesson video.
+              </p>
+            ) : hasEmbedSlot ? (
+              <MuxVideoUploadField
+                contentItemId={value.source_id!}
+                initialMuxStatus={slot?.mux_status ?? null}
+                initialPlaybackId={slot?.video_source_id ?? null}
+                hideAiMode
+              />
+            ) : (
+              <div className="space-y-2">
+                <p className="text-xs text-muted-foreground">
+                  Create a video slot, then upload your file. It will stream adaptively via Mux.
+                </p>
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={() => void prepareUploadSlot()}
+                  disabled={preparing}
+                >
+                  {preparing ? "Preparing…" : "Prepare upload"}
+                </Button>
+              </div>
             )
           ) : (
             <div className="space-y-2">

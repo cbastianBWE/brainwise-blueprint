@@ -17,6 +17,7 @@ interface Props {
   initialMuxStatus: string | null;
   initialPlaybackId: string | null;
   disabled?: boolean;
+  hideAiMode?: boolean;
 }
 
 type State =
@@ -41,6 +42,7 @@ export function MuxVideoUploadField({
   initialMuxStatus,
   initialPlaybackId,
   disabled,
+  hideAiMode,
 }: Props) {
   const [state, setState] = useState<State>(() => deriveInitial(initialMuxStatus, initialPlaybackId));
   const [mode, setMode] = useState<Mode>("upload");
@@ -194,31 +196,33 @@ export function MuxVideoUploadField({
         </div>
       )}
 
-      <div className="inline-flex rounded-md border p-0.5">
-        <button
-          type="button"
-          onClick={() => setMode("upload")}
-          className={cn(
-            "px-3 py-1 text-xs font-medium rounded",
-            mode === "upload" ? "bg-accent text-foreground" : "text-muted-foreground",
-          )}
-        >
-          Upload a file
-        </button>
-        <button
-          type="button"
-          onClick={() => setMode("ai")}
-          className={cn(
-            "px-3 py-1 text-xs font-medium rounded inline-flex items-center gap-1",
-            mode === "ai" ? "bg-accent text-foreground" : "text-muted-foreground",
-          )}
-        >
-          <Sparkles className="h-3 w-3" />
-          Generate with AI
-        </button>
-      </div>
+      {!hideAiMode && (
+        <div className="inline-flex rounded-md border p-0.5">
+          <button
+            type="button"
+            onClick={() => setMode("upload")}
+            className={cn(
+              "px-3 py-1 text-xs font-medium rounded",
+              mode === "upload" ? "bg-accent text-foreground" : "text-muted-foreground",
+            )}
+          >
+            Upload a file
+          </button>
+          <button
+            type="button"
+            onClick={() => setMode("ai")}
+            className={cn(
+              "px-3 py-1 text-xs font-medium rounded inline-flex items-center gap-1",
+              mode === "ai" ? "bg-accent text-foreground" : "text-muted-foreground",
+            )}
+          >
+            <Sparkles className="h-3 w-3" />
+            Generate with AI
+          </button>
+        </div>
+      )}
 
-      {mode === "upload" ? (
+      {hideAiMode || mode === "upload" ? (
         <div
           className={cn(
             "flex flex-col items-center justify-center gap-2 rounded-md border border-dashed p-6 text-center",
