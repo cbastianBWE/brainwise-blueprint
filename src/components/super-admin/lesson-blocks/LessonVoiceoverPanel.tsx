@@ -200,6 +200,18 @@ export function LessonVoiceoverPanel({
 
   const sections = useMemo(() => groupSections(blocks), [blocks]);
 
+  const scriptedPending = useMemo(
+    () =>
+      blocks.filter(
+        (b) =>
+          b.block_type === "embed_audio" &&
+          typeof (b.config as any)?.script === "string" &&
+          ((b.config as any).script as string).trim().length > 0 &&
+          !(b.config as any)?.asset_id,
+      ),
+    [blocks],
+  );
+
   type GenResult = { ok: boolean; asset_id?: string; tooLong?: boolean; message?: string };
   const generateOne = async (text: string, voiceId: string): Promise<GenResult> => {
     const { data, error } = await supabase.functions.invoke("lesson-elevenlabs-generate", {
