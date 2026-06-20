@@ -85,11 +85,17 @@ export default function PexelsPicker({
       setSearchError(null);
       setIngestingPexelsId(null);
       setIngestError(null);
+      setAiPrompt("");
+      setAiAspect("landscape");
+      setAiGenerating(false);
+      setAiError(null);
       return;
     }
     const seed = (initialQuery ?? "").trim();
     setQuery(initialQuery ?? "");
     setDebouncedQuery(seed.length >= 2 ? seed : "");
+    setAiPrompt(initialQuery ?? "");
+    setAiError(null);
   }, [open, initialQuery]);
 
   // Debounce typed queries (skipped on initial open since debouncedQuery is
