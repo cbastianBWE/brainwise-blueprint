@@ -215,92 +215,206 @@ export default function PexelsPicker({
     }
   }
 
+  async function handleGenerate() {
+    const prompt = aiPrompt.trim();
+    if (prompt.length < 3 || aiGenerating) return;
+    setAiGenerating(true);
+    setAiError(null);
+    const size = aiAspect === "square" ? "1024x1024" : aiAspect === "portrait" ? "1024x1536" : "1536x1024";
+    try {
+      const { data, error } = await supabase.functions.invoke("openai-image-generate", {
+        body: { prompt, parent_kind: "newsletter_article", parent_id: articleId, ref_field: "inline_image", size },
+      });
+      if (error) {
+        let msg = "Generation failed. Try again.";
+        try {
+          const ctx = (error as { context?: Response }).context;
+          const j = ctx ? await ctx.json() : null;
+          const code = j?.error ?? "";
+          if (code === "rate_limited_max_per_hour") msg = "Hourly AI image limit reached. Try again later.";
+          else if (code === "IMPERSONATION_DENIED") msg = "AI image generation is not allowed during impersonation.";
+          else if (code === "prompt_too_long_max_4000") msg = "Prompt is too long (max 4000 characters).";
+          else if (code === "openai_timeout") msg = "The image took too long to generate. Try again.";
+          else if (j?.message) msg = j.message;
+        } catch { /* keep default */ }
+        setAiError(msg);
+        return;
+      }
+      const payload = data as { asset_id?: string } | null;
+      if (!payload?.asset_id) { setAiError("Generation returned no image."); return; }
+      onPicked({ asset_id: payload.asset_id, attribution: null, alt: prompt.slice(0, 120) });
+      onOpenChange(false);
+    } catch (e) {
+      setAiError((e as Error).message || "Generation failed. Try again.");
+    } finally {
+      setAiGenerating(false);
+    }
+  }
+
   const showEmptyHint = !isSearching && !searchError && candidates.length === 0;
+
+  const aspects: Array<{ value: "square" | "landscape" | "portrait"; label: string }> = [
+    { value: "square", label: "Square" },
+    { value: "landscape", label: "Landscape" },
+    { value: "portrait", label: "Portrait" },
+  ];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[85vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle>Insert a stock image from Pexels</DialogTitle>
+          <DialogTitle>Insert an image</DialogTitle>
           <DialogDescription>
-            Search Pexels and pick an image. Photographer attribution will be
-            added automatically and is required by the Pexels license.
+            Search Pexels for a stock photo, or generate an original image with AI.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="border-b pb-3">
-          <Input
-            placeholder="Search Pexels (e.g. leadership, mountain sunset)…"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            autoFocus
-          />
-        </div>
+        <Tabs defaultValue="stock" className="flex-1 flex flex-col min-h-0">
+          <TabsList>
+            <TabsTrigger value="stock">Stock photos</TabsTrigger>
+            <TabsTrigger value="ai">
+              <Sparkles className="h-3.5 w-3.5 mr-1" />
+              Generate with AI
+            </TabsTrigger>
+          </TabsList>
 
-        {(searchError || ingestError) && (
-          <div className="rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-xs text-destructive">
-            {ingestError ?? searchError}
-          </div>
-        )}
+          <TabsContent value="stock" className="flex-1 flex flex-col min-h-0 mt-3">
+            <div className="border-b pb-3">
+              <Input
+                placeholder="Search Pexels (e.g. leadership, mountain sunset)…"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                autoFocus
+              />
+            </div>
 
-        <div className="flex-1 overflow-y-auto py-3">
-          {isSearching ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-            </div>
-          ) : showEmptyHint && !debouncedQuery ? (
-            <div className="py-12 text-center text-sm text-muted-foreground">
-              Type at least 2 characters to search Pexels.
-            </div>
-          ) : showEmptyHint ? (
-            <div className="py-12 text-center text-sm text-muted-foreground">
-              No results for "{debouncedQuery}". Try different keywords.
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-              {candidates.map((c) => {
-                const isThisIngesting = ingestingPexelsId === c.pexels_id;
-                const otherIngesting =
-                  ingestingPexelsId != null && !isThisIngesting;
-                return (
-                  <button
-                    key={c.pexels_id}
-                    type="button"
-                    onClick={() => handlePick(c)}
-                    disabled={otherIngesting || isThisIngesting}
-                    className={cn(
-                      "group relative text-left rounded-md border p-2 transition-all hover:ring-1 hover:ring-[#006D77]/40 disabled:cursor-not-allowed",
-                      otherIngesting && "opacity-50",
-                    )}
-                  >
-                    <div className="relative aspect-video rounded-md overflow-hidden bg-muted">
-                      <img
-                        src={c.src_thumb}
-                        alt={c.alt}
-                        loading="lazy"
-                        className="w-full h-full object-cover"
-                      />
-                      {isThisIngesting && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-white/70">
-                          <Loader2 className="h-6 w-6 animate-spin text-[#006D77]" />
+            {(searchError || ingestError) && (
+              <div className="mt-3 rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-xs text-destructive">
+                {ingestError ?? searchError}
+              </div>
+            )}
+
+            <div className="flex-1 overflow-y-auto py-3">
+              {isSearching ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : showEmptyHint && !debouncedQuery ? (
+                <div className="py-12 text-center text-sm text-muted-foreground">
+                  Type at least 2 characters to search Pexels.
+                </div>
+              ) : showEmptyHint ? (
+                <div className="py-12 text-center text-sm text-muted-foreground">
+                  No results for "{debouncedQuery}". Try different keywords.
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {candidates.map((c) => {
+                    const isThisIngesting = ingestingPexelsId === c.pexels_id;
+                    const otherIngesting =
+                      ingestingPexelsId != null && !isThisIngesting;
+                    return (
+                      <button
+                        key={c.pexels_id}
+                        type="button"
+                        onClick={() => handlePick(c)}
+                        disabled={otherIngesting || isThisIngesting}
+                        className={cn(
+                          "group relative text-left rounded-md border p-2 transition-all hover:ring-1 hover:ring-[#006D77]/40 disabled:cursor-not-allowed",
+                          otherIngesting && "opacity-50",
+                        )}
+                      >
+                        <div className="relative aspect-video rounded-md overflow-hidden bg-muted">
+                          <img
+                            src={c.src_thumb}
+                            alt={c.alt}
+                            loading="lazy"
+                            className="w-full h-full object-cover"
+                          />
+                          {isThisIngesting && (
+                            <div className="absolute inset-0 flex items-center justify-center bg-white/70">
+                              <Loader2 className="h-6 w-6 animate-spin text-[#006D77]" />
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </div>
-                    <div className="mt-2 text-xs text-muted-foreground truncate">
-                      Photo by {c.photographer_name}
-                    </div>
-                  </button>
-                );
-              })}
+                        <div className="mt-2 text-xs text-muted-foreground truncate">
+                          Photo by {c.photographer_name}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
-          )}
-        </div>
+          </TabsContent>
+
+          <TabsContent value="ai" className="flex-1 flex flex-col min-h-0 mt-3 space-y-3">
+            <Textarea
+              placeholder="Describe the image you want, e.g. 'a calm minimalist desk with a single plant, soft morning light'"
+              rows={4}
+              value={aiPrompt}
+              onChange={(e) => setAiPrompt(e.target.value)}
+              disabled={aiGenerating}
+            />
+
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground mr-1">Aspect:</span>
+              <div className="inline-flex rounded-md border overflow-hidden">
+                {aspects.map((a) => {
+                  const active = aiAspect === a.value;
+                  return (
+                    <button
+                      key={a.value}
+                      type="button"
+                      onClick={() => setAiAspect(a.value)}
+                      disabled={aiGenerating}
+                      className={cn(
+                        "px-3 py-1.5 text-xs transition-colors disabled:cursor-not-allowed",
+                        active ? "text-white" : "bg-background hover:bg-muted",
+                      )}
+                      style={active ? { backgroundColor: "#006D77" } : undefined}
+                    >
+                      {a.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {aiError && (
+              <div className="rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-xs text-destructive">
+                {aiError}
+              </div>
+            )}
+
+            <div className="flex justify-end">
+              <Button
+                onClick={handleGenerate}
+                disabled={aiPrompt.trim().length < 3 || aiGenerating}
+                style={{ backgroundColor: "#006D77" }}
+                className="text-white hover:opacity-90"
+              >
+                {aiGenerating ? (
+                  <span className="flex items-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Generating… this can take up to a minute
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-2">
+                    <Sparkles className="h-4 w-4" />
+                    Generate
+                  </span>
+                )}
+              </Button>
+            </div>
+          </TabsContent>
+        </Tabs>
 
         <DialogFooter>
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}
-            disabled={ingestingPexelsId != null}
+            disabled={ingestingPexelsId != null || aiGenerating}
           >
             Cancel
           </Button>
