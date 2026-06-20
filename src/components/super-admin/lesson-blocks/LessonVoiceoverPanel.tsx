@@ -481,6 +481,32 @@ export function LessonVoiceoverPanel({
             </div>
           </section>
 
+          {/* Generate AI-scripted clips */}
+          <section className="space-y-2">
+            <div className="text-sm font-semibold">Generate scripted clips</div>
+            <div className="text-xs text-muted-foreground">
+              Generates narration for audio blocks the AI wrote a script for (added by the lesson
+              builder) and fills in their audio in place. Already-generated clips are skipped.
+            </div>
+            <div className="text-xs text-muted-foreground">
+              {scriptedPending.length === 0
+                ? "No scripted audio blocks awaiting generation."
+                : `${scriptedPending.length} scripted clip${scriptedPending.length === 1 ? "" : "s"} ready to generate.`}
+            </div>
+            {scriptProgress && (
+              <div className="flex items-center gap-2 text-sm">
+                <Loader2 className="h-4 w-4 animate-spin" /> {scriptProgress}
+              </div>
+            )}
+            <Button
+              type="button"
+              onClick={handleGenerateScripted}
+              disabled={!selectedVoice || scriptedPending.length === 0 || scripting || narrating || standaloneBusy}
+            >
+              {scripting ? "Generating…" : "Generate scripted clips"}
+            </Button>
+          </section>
+
           {/* Narrate each section */}
           <section className="space-y-2">
             <div className="text-sm font-semibold">Narrate each section</div>
