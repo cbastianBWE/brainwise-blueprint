@@ -228,6 +228,43 @@ export function ImageBlockForm({ value, onConfigChange, contentItemId }: Props) 
         </CollapsibleContent>
       </Collapsible>
 
+      <Collapsible open={aiOpen} onOpenChange={setAiOpen}>
+        <CollapsibleTrigger asChild>
+          <Button type="button" variant="outline" size="sm" className="w-full justify-between">
+            <span className="flex items-center gap-2">
+              <Wand2 className="h-4 w-4" /> Generate with AI
+            </span>
+            <ChevronDown className={`h-4 w-4 transition-transform ${aiOpen ? "rotate-180" : ""}`} />
+          </Button>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="space-y-3 pt-3">
+          {!contentItemId && (
+            <p className="text-xs text-muted-foreground">
+              Save the lesson first to generate.
+            </p>
+          )}
+          <Textarea
+            value={value.image_prompt ?? ""}
+            onChange={(e) => onConfigChange({ ...value, image_prompt: e.target.value || null })}
+            placeholder="Describe the image to generate"
+            rows={3}
+            disabled={!contentItemId || generating}
+          />
+          <Button
+            type="button"
+            onClick={generateWithAi}
+            disabled={!contentItemId || generating || !value.image_prompt?.trim()}
+            className="w-full"
+          >
+            {generating ? (
+              <span className="flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" /> Generating (this can take ~15s)…
+              </span>
+            ) : "Generate image"}
+          </Button>
+        </CollapsibleContent>
+      </Collapsible>
+
       <div className="space-y-2">
         <Label>Alt text *</Label>
         <Input
