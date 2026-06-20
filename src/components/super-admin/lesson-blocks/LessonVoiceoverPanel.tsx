@@ -337,6 +337,63 @@ export function LessonVoiceoverPanel({
     });
   };
 
+  const handleGenerateScripted = async () => {
+    if (!selectedVoice) return;
+    setScripting(true);
+    setScriptProgress(null);
+    let next = [...blocks];
+    let success = 0;
+    const failures: string[] = [];
+    const pending = blocks.filter(
+      (b) =>
+        b.block_type === "embed_audio" &&
+        typeof (b.config as any)?.script === "string" &&
+        ((b.config as any).script as string).trim().length > 0 &&
+        !(b.config as any)?.asset_id,
+    );
+    for (let i = 0; i < pending.length; i++) {
+      const blk = pending[i];
+      const script = ((blk.config as any).script as string).trim();
+      setScriptProgress(`Generating clip ${i + 1} of ${pending.length}…`);
+      const res = await generateOne(script, selectedVoice);
+      if (!res.ok) {
+        failures.push(
+          res.tooLong
+            ? `Clip ${i + 1} script too long (max 5000 chars) — shorten it`
+            : `Clip ${i + 1}: ${res.message}`,
+        );
+        continue;
+      }
+      onRegisterAsset(res.asset_id!);
+      const idx = next.findIndex((b) => b.client_id === blk.client_id);
+      if (idx >= 0) {
+        const cfg = next[idx].config as any;
+        const existingTranscript =
+          typeof cfg.transcript === "string" && cfg.transcript.trim().length > 0
+            ? cfg.transcript
+            : script;
+        next = [
+          ...next.slice(0, idx),
+          { ...next[idx], config: { ...cfg, asset_id: res.asset_id!, transcript: existingTranscript } },
+          ...next.slice(idx + 1),
+        ];
+      }
+      success++;
+    }
+    onApplyBlocks(next);
+    setScripting(false);
+    setScriptProgress(null);
+    if (failures.length === 0) {
+      toast({ title: `Generated ${success} scripted clip${success === 1 ? "" : "s"}` });
+    } else {
+      toast({
+        title: `Generated ${success} of ${pending.length}; ${failures.length} failed`,
+        description: failures.join("\n"),
+        variant: "destructive",
+      });
+    }
+  };
+
   if (!open) return null;
 
   return (
