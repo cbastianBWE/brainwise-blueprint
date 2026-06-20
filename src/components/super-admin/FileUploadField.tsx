@@ -15,7 +15,9 @@ import {
   LibraryBig,
   BookmarkCheck,
   ExternalLink,
+  Wand2,
 } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 import * as tus from "tus-js-client";
 import { supabase } from "@/integrations/supabase/client";
 
