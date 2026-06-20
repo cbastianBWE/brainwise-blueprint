@@ -112,12 +112,51 @@ export function VideoEmbedBlockForm({
   contentItemId,
   blockClientId,
 }: Props) {
+  const { toast } = useToast();
   const isStorage = value.source_type === "supabase_storage";
   const isContentItem = value.source_type === "content_item";
 
   const canGenerate = !!contentItemId && !!blockClientId;
   // If the saved value already has a source_id, default to "existing" so we don't surprise authors.
   const [ciMode, setCiMode] = useState<ContentItemMode>(value.source_id ? "existing" : "generate");
+  const [preparing, setPreparing] = useState(false);
+
+  const uploadSlotQuery = useQuery({
+    queryKey: ["video-embed-upload-slot", value.source_id],
+    enabled: isContentItem && ciMode === "upload" && !!value.source_id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("content_items")
+        .select("is_embed_only, mux_status, video_source_id")
+        .eq("id", value.source_id!)
+        .single();
+      if (error) throw error;
+      return data as { is_embed_only: boolean; mux_status: string | null; video_source_id: string | null };
+    },
+  });
+  const slot = uploadSlotQuery.data ?? null;
+  const hasEmbedSlot = !!value.source_id && slot?.is_embed_only === true;
+
+  const prepareUploadSlot = async () => {
+    if (!contentItemId) return;
+    setPreparing(true);
+    try {
+      const titleArg = (value.title && value.title.trim()) || "Lesson video";
+      const { data, error } = await supabase.rpc("create_lesson_embed_video_content_item", {
+        p_lesson_content_item_id: contentItemId,
+        p_title: titleArg,
+        p_reason: "In-lesson uploaded video (video_embed block)",
+      });
+      if (error) throw error;
+      const newId = (data as any)?.content_item_id as string | undefined;
+      if (!newId) throw new Error("Could not create the video slot.");
+      onConfigChange({ ...value, source_type: "content_item", source_id: newId, asset_id: null });
+    } catch (e: any) {
+      toast({ title: "Could not prepare upload", description: e?.message, variant: "destructive" });
+    } finally {
+      setPreparing(false);
+    }
+  };
 
   const moduleIdQuery = useQuery({
     queryKey: ["video-embed-module-id", contentItemId],
