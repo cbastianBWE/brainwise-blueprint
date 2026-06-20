@@ -269,6 +269,16 @@ export function VideoEmbedBlockForm({
             </button>
             <button
               type="button"
+              onClick={() => setCiMode("upload")}
+              className={cn(
+                "px-3 py-1 text-xs font-medium rounded",
+                ciMode === "upload" ? "bg-accent text-foreground" : "text-muted-foreground",
+              )}
+            >
+              Upload a video file
+            </button>
+            <button
+              type="button"
               onClick={() => setCiMode("existing")}
               className={cn(
                 "px-3 py-1 text-xs font-medium rounded",
@@ -304,6 +314,33 @@ export function VideoEmbedBlockForm({
               <p className="text-xs text-muted-foreground">
                 Save the lesson first to generate an in-lesson video.
               </p>
+            )
+          ) : ciMode === "upload" ? (
+            !canGenerate ? (
+              <p className="text-xs text-muted-foreground">
+                Save the lesson first to upload an in-lesson video.
+              </p>
+            ) : hasEmbedSlot ? (
+              <MuxVideoUploadField
+                contentItemId={value.source_id!}
+                initialMuxStatus={slot?.mux_status ?? null}
+                initialPlaybackId={slot?.video_source_id ?? null}
+                hideAiMode
+              />
+            ) : (
+              <div className="space-y-2">
+                <p className="text-xs text-muted-foreground">
+                  Create a video slot, then upload your file. It will stream adaptively via Mux.
+                </p>
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={() => void prepareUploadSlot()}
+                  disabled={preparing}
+                >
+                  {preparing ? "Preparing…" : "Prepare upload"}
+                </Button>
+              </div>
             )
           ) : (
             <div className="space-y-2">
