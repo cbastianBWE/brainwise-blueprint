@@ -835,6 +835,35 @@ export function FileUploadField({
         />
       </div>
 
+      {showAiGenerate && (
+        <div className="space-y-2 rounded-md border bg-muted/20 p-3">
+          <div className="flex items-center gap-2 text-sm font-medium">
+            <Wand2 className="h-4 w-4" /> Generate with AI
+          </div>
+          <Textarea
+            value={aiPrompt}
+            onChange={(e) => setAiPrompt(e.target.value)}
+            placeholder="Describe the thumbnail to generate"
+            rows={3}
+            disabled={generating}
+          />
+          <Button
+            type="button"
+            className="w-full"
+            onClick={generateWithAi}
+            disabled={generating || !aiPrompt.trim()}
+          >
+            {generating ? (
+              <span className="flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" /> Generating (~15s)…
+              </span>
+            ) : "Generate thumbnail"}
+          </Button>
+        </div>
+      )}
+
+
+
       {!isLibraryAsset && (
         <AssetLibraryPicker
           open={libraryPickerOpen}
