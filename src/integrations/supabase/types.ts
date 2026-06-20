@@ -338,6 +338,62 @@ export type Database = {
           },
         ]
       }
+      ai_image_generations: {
+        Row: {
+          asset_id: string | null
+          created_at: string
+          error_reason: string | null
+          id: string
+          model_id: string
+          parent_id: string
+          parent_kind: string
+          prompt: string
+          quality: string | null
+          ref_field: string
+          requested_by: string
+          size: string | null
+          status: string
+        }
+        Insert: {
+          asset_id?: string | null
+          created_at?: string
+          error_reason?: string | null
+          id?: string
+          model_id: string
+          parent_id: string
+          parent_kind: string
+          prompt: string
+          quality?: string | null
+          ref_field: string
+          requested_by: string
+          size?: string | null
+          status?: string
+        }
+        Update: {
+          asset_id?: string | null
+          created_at?: string
+          error_reason?: string | null
+          id?: string
+          model_id?: string
+          parent_id?: string
+          parent_kind?: string
+          prompt?: string
+          quality?: string | null
+          ref_field?: string
+          requested_by?: string
+          size?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_image_generations_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "content_assets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_usage: {
         Row: {
           id: string
