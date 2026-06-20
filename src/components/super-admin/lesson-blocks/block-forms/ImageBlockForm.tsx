@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { FileUploadField } from "@/components/super-admin/FileUploadField";
 import {
   Collapsible,
@@ -10,7 +11,7 @@ import {
 } from "@/components/ui/collapsible";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Search, ChevronDown, X } from "lucide-react";
+import { Loader2, Search, ChevronDown, X, Wand2 } from "lucide-react";
 
 interface ImageBlockValue {
   asset_id: string | null;
