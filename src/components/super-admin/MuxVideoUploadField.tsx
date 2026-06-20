@@ -42,6 +42,7 @@ export function MuxVideoUploadField({
   initialMuxStatus,
   initialPlaybackId,
   disabled,
+  hideAiMode,
 }: Props) {
   const [state, setState] = useState<State>(() => deriveInitial(initialMuxStatus, initialPlaybackId));
   const [mode, setMode] = useState<Mode>("upload");
