@@ -17,6 +17,7 @@ interface Props {
   initialMuxStatus: string | null;
   initialPlaybackId: string | null;
   disabled?: boolean;
+  hideAiMode?: boolean;
 }
 
 type State =
