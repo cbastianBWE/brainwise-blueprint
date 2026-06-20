@@ -126,6 +126,9 @@ export function LessonVoiceoverPanel({
   const [standaloneText, setStandaloneText] = useState("");
   const [standaloneBusy, setStandaloneBusy] = useState(false);
 
+  const [scripting, setScripting] = useState(false);
+  const [scriptProgress, setScriptProgress] = useState<string | null>(null);
+
   useEffect(() => {
     if (!open) return;
     const stored = typeof window !== "undefined" ? localStorage.getItem(VOICE_STORAGE_KEY) : null;
