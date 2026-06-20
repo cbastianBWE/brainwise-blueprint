@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { FileUploadField } from "@/components/super-admin/FileUploadField";
 import {
   Collapsible,
@@ -10,13 +11,14 @@ import {
 } from "@/components/ui/collapsible";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Search, ChevronDown, X } from "lucide-react";
+import { Loader2, Search, ChevronDown, X, Wand2 } from "lucide-react";
 
 interface ImageBlockValue {
   asset_id: string | null;
   alt: string;
   caption: string | null;
   attribution: string | null;
+  image_prompt?: string | null;
   [key: string]: unknown;
 }
 
@@ -44,6 +46,8 @@ export function ImageBlockForm({ value, onConfigChange, contentItemId }: Props) 
   const [candidates, setCandidates] = useState<PexelsCandidate[]>([]);
   const [ingestingId, setIngestingId] = useState<string | number | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [aiOpen, setAiOpen] = useState(false);
+  const [generating, setGenerating] = useState(false);
 
   const canSearchPexels = !!contentItemId;
 
@@ -103,6 +107,37 @@ export function ImageBlockForm({ value, onConfigChange, contentItemId }: Props) 
       toast({ title: "Import failed", description: e?.message, variant: "destructive" });
     } finally {
       setIngestingId(null);
+    }
+  }
+
+  async function generateWithAi() {
+    if (!contentItemId || !value.image_prompt?.trim()) return;
+    setGenerating(true);
+    setErrorMsg(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("openai-image-generate", {
+        body: {
+          prompt: value.image_prompt.trim(),
+          parent_kind: "content_item",
+          parent_id: contentItemId,
+          ref_field: "image_asset",
+        },
+      });
+      if (error) throw error;
+      if (!data?.asset_id) throw new Error(data?.message || "No image returned");
+      onConfigChange({ ...value, asset_id: data.asset_id, attribution: null });
+      toast({ title: "Image generated" });
+    } catch (e: any) {
+      let msg = e?.message ?? "Generation failed";
+      try {
+        const body = await e?.context?.json?.();
+        if (body?.message) msg = body.message;
+        else if (body?.error) msg = body.error;
+      } catch { /* keep msg */ }
+      setErrorMsg(msg);
+      toast({ title: "Generation failed", description: msg, variant: "destructive" });
+    } finally {
+      setGenerating(false);
     }
   }
 
@@ -190,6 +225,43 @@ export function ImageBlockForm({ value, onConfigChange, contentItemId }: Props) 
               })}
             </div>
           )}
+        </CollapsibleContent>
+      </Collapsible>
+
+      <Collapsible open={aiOpen} onOpenChange={setAiOpen}>
+        <CollapsibleTrigger asChild>
+          <Button type="button" variant="outline" size="sm" className="w-full justify-between">
+            <span className="flex items-center gap-2">
+              <Wand2 className="h-4 w-4" /> Generate with AI
+            </span>
+            <ChevronDown className={`h-4 w-4 transition-transform ${aiOpen ? "rotate-180" : ""}`} />
+          </Button>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="space-y-3 pt-3">
+          {!contentItemId && (
+            <p className="text-xs text-muted-foreground">
+              Save the lesson first to generate.
+            </p>
+          )}
+          <Textarea
+            value={value.image_prompt ?? ""}
+            onChange={(e) => onConfigChange({ ...value, image_prompt: e.target.value || null })}
+            placeholder="Describe the image to generate"
+            rows={3}
+            disabled={!contentItemId || generating}
+          />
+          <Button
+            type="button"
+            onClick={generateWithAi}
+            disabled={!contentItemId || generating || !value.image_prompt?.trim()}
+            className="w-full"
+          >
+            {generating ? (
+              <span className="flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" /> Generating (this can take ~15s)…
+              </span>
+            ) : "Generate image"}
+          </Button>
         </CollapsibleContent>
       </Collapsible>
 
