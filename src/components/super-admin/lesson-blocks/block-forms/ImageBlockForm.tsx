@@ -18,6 +18,7 @@ interface ImageBlockValue {
   alt: string;
   caption: string | null;
   attribution: string | null;
+  image_prompt?: string | null;
   [key: string]: unknown;
 }
 
