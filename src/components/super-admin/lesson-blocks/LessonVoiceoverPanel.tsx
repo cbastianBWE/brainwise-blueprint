@@ -527,7 +527,7 @@ export function LessonVoiceoverPanel({
             <Button
               type="button"
               onClick={handleNarrateSections}
-              disabled={!selectedVoice || sections.length === 0 || narrating || standaloneBusy}
+              disabled={!selectedVoice || sections.length === 0 || narrating || standaloneBusy || scripting}
             >
               {narrating ? "Narrating…" : "Narrate each section"}
             </Button>
