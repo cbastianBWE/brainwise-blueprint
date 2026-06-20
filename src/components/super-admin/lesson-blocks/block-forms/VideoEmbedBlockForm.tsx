@@ -104,7 +104,7 @@ const ID_LABELS: Record<Exclude<SourceType, "supabase_storage" | "content_item">
   youtube_unlisted: "YouTube ID",
 };
 
-type ContentItemMode = "generate" | "existing";
+type ContentItemMode = "generate" | "upload" | "existing";
 
 export function VideoEmbedBlockForm({
   value,
