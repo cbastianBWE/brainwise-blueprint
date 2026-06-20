@@ -578,6 +578,16 @@ function ImageResolutionSection(props: {
         >
           {loading ? <Loader2 className="h-3 w-3 animate-spin" /> : "Search"}
         </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          className="h-7 px-2 text-xs"
+          onClick={() => void generateWithAi()}
+          disabled={generating || loading || ingesting || !contentItemId || !effectiveQuery.trim()}
+          title="Generate an image with AI from this prompt"
+        >
+          {generating ? <Loader2 className="h-3 w-3 animate-spin" /> : <><Wand2 className="mr-1 h-3 w-3" />AI</>}
+        </Button>
       </div>
       {current && (
         <div className="flex items-start gap-2">
