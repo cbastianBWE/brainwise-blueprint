@@ -110,6 +110,37 @@ export function ImageBlockForm({ value, onConfigChange, contentItemId }: Props) 
     }
   }
 
+  async function generateWithAi() {
+    if (!contentItemId || !value.image_prompt?.trim()) return;
+    setGenerating(true);
+    setErrorMsg(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("openai-image-generate", {
+        body: {
+          prompt: value.image_prompt.trim(),
+          parent_kind: "content_item",
+          parent_id: contentItemId,
+          ref_field: "image_asset",
+        },
+      });
+      if (error) throw error;
+      if (!data?.asset_id) throw new Error(data?.message || "No image returned");
+      onConfigChange({ ...value, asset_id: data.asset_id, attribution: null });
+      toast({ title: "Image generated" });
+    } catch (e: any) {
+      let msg = e?.message ?? "Generation failed";
+      try {
+        const body = await e?.context?.json?.();
+        if (body?.message) msg = body.message;
+        else if (body?.error) msg = body.error;
+      } catch { /* keep msg */ }
+      setErrorMsg(msg);
+      toast({ title: "Generation failed", description: msg, variant: "destructive" });
+    } finally {
+      setGenerating(false);
+    }
+  }
+
   return (
     <div className="space-y-3">
       <div className="space-y-2">
