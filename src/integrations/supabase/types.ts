@@ -9533,6 +9533,65 @@ export type Database = {
           },
         ]
       }
+      scorm_exports: {
+        Row: {
+          bucket: string | null
+          completion_pct: number
+          content_item_id: string | null
+          created_at: string
+          error_reason: string | null
+          exit_link: boolean
+          id: string
+          path: string | null
+          reporting_pair: string
+          requested_by: string
+          scorm_version: string
+          status: string
+          tracking_mode: string
+          updated_at: string
+        }
+        Insert: {
+          bucket?: string | null
+          completion_pct?: number
+          content_item_id?: string | null
+          created_at?: string
+          error_reason?: string | null
+          exit_link?: boolean
+          id?: string
+          path?: string | null
+          reporting_pair?: string
+          requested_by: string
+          scorm_version: string
+          status?: string
+          tracking_mode?: string
+          updated_at?: string
+        }
+        Update: {
+          bucket?: string | null
+          completion_pct?: number
+          content_item_id?: string | null
+          created_at?: string
+          error_reason?: string | null
+          exit_link?: boolean
+          id?: string
+          path?: string | null
+          reporting_pair?: string
+          requested_by?: string
+          scorm_version?: string
+          status?: string
+          tracking_mode?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scorm_exports_content_item_id_fkey"
+            columns: ["content_item_id"]
+            isOneToOne: false
+            referencedRelation: "content_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sharing_preferences: {
         Row: {
           created_at: string
