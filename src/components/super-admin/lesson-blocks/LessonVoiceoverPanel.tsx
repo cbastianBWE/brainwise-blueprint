@@ -126,6 +126,9 @@ export function LessonVoiceoverPanel({
   const [standaloneText, setStandaloneText] = useState("");
   const [standaloneBusy, setStandaloneBusy] = useState(false);
 
+  const [scripting, setScripting] = useState(false);
+  const [scriptProgress, setScriptProgress] = useState<string | null>(null);
+
   useEffect(() => {
     if (!open) return;
     const stored = typeof window !== "undefined" ? localStorage.getItem(VOICE_STORAGE_KEY) : null;
@@ -196,6 +199,18 @@ export function LessonVoiceoverPanel({
   };
 
   const sections = useMemo(() => groupSections(blocks), [blocks]);
+
+  const scriptedPending = useMemo(
+    () =>
+      blocks.filter(
+        (b) =>
+          b.block_type === "embed_audio" &&
+          typeof (b.config as any)?.script === "string" &&
+          ((b.config as any).script as string).trim().length > 0 &&
+          !(b.config as any)?.asset_id,
+      ),
+    [blocks],
+  );
 
   type GenResult = { ok: boolean; asset_id?: string; tooLong?: boolean; message?: string };
   const generateOne = async (text: string, voiceId: string): Promise<GenResult> => {
@@ -322,6 +337,63 @@ export function LessonVoiceoverPanel({
     });
   };
 
+  const handleGenerateScripted = async () => {
+    if (!selectedVoice) return;
+    setScripting(true);
+    setScriptProgress(null);
+    let next = [...blocks];
+    let success = 0;
+    const failures: string[] = [];
+    const pending = blocks.filter(
+      (b) =>
+        b.block_type === "embed_audio" &&
+        typeof (b.config as any)?.script === "string" &&
+        ((b.config as any).script as string).trim().length > 0 &&
+        !(b.config as any)?.asset_id,
+    );
+    for (let i = 0; i < pending.length; i++) {
+      const blk = pending[i];
+      const script = ((blk.config as any).script as string).trim();
+      setScriptProgress(`Generating clip ${i + 1} of ${pending.length}…`);
+      const res = await generateOne(script, selectedVoice);
+      if (!res.ok) {
+        failures.push(
+          res.tooLong
+            ? `Clip ${i + 1} script too long (max 5000 chars) — shorten it`
+            : `Clip ${i + 1}: ${res.message}`,
+        );
+        continue;
+      }
+      onRegisterAsset(res.asset_id!);
+      const idx = next.findIndex((b) => b.client_id === blk.client_id);
+      if (idx >= 0) {
+        const cfg = next[idx].config as any;
+        const existingTranscript =
+          typeof cfg.transcript === "string" && cfg.transcript.trim().length > 0
+            ? cfg.transcript
+            : script;
+        next = [
+          ...next.slice(0, idx),
+          { ...next[idx], config: { ...cfg, asset_id: res.asset_id!, transcript: existingTranscript } },
+          ...next.slice(idx + 1),
+        ];
+      }
+      success++;
+    }
+    onApplyBlocks(next);
+    setScripting(false);
+    setScriptProgress(null);
+    if (failures.length === 0) {
+      toast({ title: `Generated ${success} scripted clip${success === 1 ? "" : "s"}` });
+    } else {
+      toast({
+        title: `Generated ${success} of ${pending.length}; ${failures.length} failed`,
+        description: failures.join("\n"),
+        variant: "destructive",
+      });
+    }
+  };
+
   if (!open) return null;
 
   return (
@@ -409,6 +481,32 @@ export function LessonVoiceoverPanel({
             </div>
           </section>
 
+          {/* Generate AI-scripted clips */}
+          <section className="space-y-2">
+            <div className="text-sm font-semibold">Generate scripted clips</div>
+            <div className="text-xs text-muted-foreground">
+              Generates narration for audio blocks the AI wrote a script for (added by the lesson
+              builder) and fills in their audio in place. Already-generated clips are skipped.
+            </div>
+            <div className="text-xs text-muted-foreground">
+              {scriptedPending.length === 0
+                ? "No scripted audio blocks awaiting generation."
+                : `${scriptedPending.length} scripted clip${scriptedPending.length === 1 ? "" : "s"} ready to generate.`}
+            </div>
+            {scriptProgress && (
+              <div className="flex items-center gap-2 text-sm">
+                <Loader2 className="h-4 w-4 animate-spin" /> {scriptProgress}
+              </div>
+            )}
+            <Button
+              type="button"
+              onClick={handleGenerateScripted}
+              disabled={!selectedVoice || scriptedPending.length === 0 || scripting || narrating || standaloneBusy}
+            >
+              {scripting ? "Generating…" : "Generate scripted clips"}
+            </Button>
+          </section>
+
           {/* Narrate each section */}
           <section className="space-y-2">
             <div className="text-sm font-semibold">Narrate each section</div>
@@ -429,7 +527,7 @@ export function LessonVoiceoverPanel({
             <Button
               type="button"
               onClick={handleNarrateSections}
-              disabled={!selectedVoice || sections.length === 0 || narrating || standaloneBusy}
+              disabled={!selectedVoice || sections.length === 0 || narrating || standaloneBusy || scripting}
             >
               {narrating ? "Narrating…" : "Narrate each section"}
             </Button>
@@ -457,7 +555,7 @@ export function LessonVoiceoverPanel({
                 type="button"
                 onClick={handleStandalone}
                 disabled={
-                  !selectedVoice || standaloneText.trim().length === 0 || standaloneBusy || narrating
+                  !selectedVoice || standaloneText.trim().length === 0 || standaloneBusy || narrating || scripting
                 }
               >
                 {standaloneBusy ? "Generating…" : "Generate clip"}
@@ -467,7 +565,7 @@ export function LessonVoiceoverPanel({
         </div>
 
         <div className="flex justify-end gap-2 border-t p-3">
-          <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={narrating || standaloneBusy}>
+          <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={narrating || standaloneBusy || scripting}>
             Close
           </Button>
         </div>
