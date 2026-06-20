@@ -17,7 +17,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { ArrowLeft, GripVertical, Loader2, Plus, Sparkles, Trash2 } from "lucide-react";
+import { ArrowLeft, GripVertical, Loader2, Plus, Sparkles, Trash2, Wand2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { BLOCK_TYPE_META, type BlockType } from "../blockTypeMeta";
