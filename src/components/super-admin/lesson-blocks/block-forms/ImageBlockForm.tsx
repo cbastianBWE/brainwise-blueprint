@@ -46,6 +46,8 @@ export function ImageBlockForm({ value, onConfigChange, contentItemId }: Props) 
   const [candidates, setCandidates] = useState<PexelsCandidate[]>([]);
   const [ingestingId, setIngestingId] = useState<string | number | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [aiOpen, setAiOpen] = useState(false);
+  const [generating, setGenerating] = useState(false);
 
   const canSearchPexels = !!contentItemId;
 
