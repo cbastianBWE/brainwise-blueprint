@@ -3,7 +3,7 @@ import type { CSSProperties } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
-import { AudioLines, ChevronLeft, Edit2, Layers, ListChecks, Loader2, Palette, Plus, Save, Sparkles } from "lucide-react";
+import { AudioLines, ChevronLeft, Download, Edit2, Layers, ListChecks, Loader2, Palette, Plus, Save, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -34,6 +34,7 @@ import { LessonBrandPanel } from "@/components/super-admin/lesson-blocks/LessonB
 import { LessonOutcomesPanel } from "@/components/super-admin/lesson-blocks/LessonOutcomesPanel";
 import { LessonVoiceoverPanel } from "@/components/super-admin/lesson-blocks/LessonVoiceoverPanel";
 import { EditorSlidePane } from "@/components/super-admin/lesson-blocks/EditorSlidePane";
+import { ScormExportPanel } from "@/components/super-admin/lesson-blocks/ScormExportPanel";
 import { ManageBlocksSidebar, type BlockPadding } from "@/components/super-admin/lesson-blocks/ManageBlocksSidebar";
 import { UndoDeleteToast } from "@/components/super-admin/lesson-blocks/UndoDeleteToast";
 import { AddBlockPopover } from "@/components/super-admin/lesson-blocks/AddBlockPopover";
@@ -89,6 +90,7 @@ export default function LessonBlocksEditor() {
   const [brandPanelOpen, setBrandPanelOpen] = useState(false);
   const [outcomesPanelOpen, setOutcomesPanelOpen] = useState(false);
   const [voiceoverPanelOpen, setVoiceoverPanelOpen] = useState(false);
+  const [exportPanelOpen, setExportPanelOpen] = useState(false);
 
   const { urlMap: assetUrlMap, registerNewAssetId } = useLessonBlockAssetUrls(contentItemId);
 
@@ -754,6 +756,10 @@ export default function LessonBlocksEditor() {
               <AudioLines className="mr-1 h-4 w-4" style={{ color: "#006D77" }} />
               Voiceover
             </Button>
+            <Button variant="outline" onClick={() => setExportPanelOpen(true)}>
+              <Download className="mr-1 h-4 w-4" style={{ color: "#006D77" }} />
+              Export
+            </Button>
             <Button
               variant="outline"
               onClick={() => setAiPaneOpen((v) => !v)}
@@ -870,6 +876,16 @@ export default function LessonBlocksEditor() {
             blocks={blocks}
             onApplyBlocks={setBlocks}
             onRegisterAsset={registerNewAssetId}
+          />
+        )}
+
+        {contentItemId && (
+          <ScormExportPanel
+            open={exportPanelOpen}
+            onOpenChange={setExportPanelOpen}
+            contentItemId={contentItemId}
+            lessonTitle={item?.title ?? "Lesson"}
+            isDirty={isDirty}
           />
         )}
 
