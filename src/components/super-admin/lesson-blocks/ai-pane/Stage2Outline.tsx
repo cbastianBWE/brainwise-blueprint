@@ -463,6 +463,43 @@ function ImageResolutionSection(props: {
     }
   }
 
+  async function generateWithAi() {
+    if (!contentItemId || !effectiveQuery.trim()) return;
+    setGenerating(true);
+    setErr(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("openai-image-generate", {
+        body: {
+          prompt: effectiveQuery.trim(),
+          parent_kind: "content_item",
+          parent_id: contentItemId,
+          ref_field: "image_asset",
+        },
+      });
+      if (error) throw error;
+      const assetId = (data as any)?.asset_id;
+      if (!assetId) throw new Error((data as any)?.message || "No image returned");
+      let thumb = "";
+      try {
+        const bucket = (data as any)?.bucket;
+        const path = (data as any)?.path;
+        if (bucket && path) {
+          const { data: signed } = await supabase.storage.from(bucket).createSignedUrl(path, 3600);
+          thumb = signed?.signedUrl ?? "";
+        }
+      } catch { /* preview only */ }
+      onUpdate({
+        image_resolved: { asset_id: assetId, attribution: "", thumb_url: thumb },
+        image_query: effectiveQuery,
+      });
+    } catch (e) {
+      const info = mapAiError(e);
+      setErr(info.message);
+    } finally {
+      setGenerating(false);
+    }
+  }
+
   async function showAnother() {
     if (candidates.length === 0) {
       await runSearch(effectiveQuery);
