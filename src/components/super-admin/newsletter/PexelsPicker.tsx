@@ -69,6 +69,10 @@ export default function PexelsPicker({
   const [searchError, setSearchError] = useState<string | null>(null);
   const [ingestingPexelsId, setIngestingPexelsId] = useState<number | null>(null);
   const [ingestError, setIngestError] = useState<string | null>(null);
+  const [aiPrompt, setAiPrompt] = useState("");
+  const [aiAspect, setAiAspect] = useState<"square" | "landscape" | "portrait">("landscape");
+  const [aiGenerating, setAiGenerating] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
   // Reset internal state when the modal closes; seed query when it opens.
