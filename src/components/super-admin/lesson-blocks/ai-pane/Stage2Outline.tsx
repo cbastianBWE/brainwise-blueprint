@@ -391,6 +391,7 @@ function ImageResolutionSection(props: {
   const [loading, setLoading] = useState(false);
   const [ingesting, setIngesting] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [generating, setGenerating] = useState(false);
   const autoSearchedRef = useRef(false);
 
   const effectiveQuery =
