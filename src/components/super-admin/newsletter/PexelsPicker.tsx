@@ -48,7 +48,7 @@ interface PexelsPickerProps {
   initialQuery?: string;
   onPicked: (result: {
     asset_id: string;
-    attribution: NewsletterImageAttribution;
+    attribution: NewsletterImageAttribution | null;
     alt: string;
   }) => void;
 }
