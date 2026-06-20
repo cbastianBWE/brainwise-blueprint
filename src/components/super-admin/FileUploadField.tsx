@@ -15,7 +15,9 @@ import {
   LibraryBig,
   BookmarkCheck,
   ExternalLink,
+  Wand2,
 } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 import * as tus from "tus-js-client";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -198,6 +200,44 @@ export function FileUploadField({
   const tusUploadRef = useRef<tus.Upload | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  const [aiPrompt, setAiPrompt] = useState("");
+  const [generating, setGenerating] = useState(false);
+
+  const aiParent = contentItemId ? { kind: "content_item" as const, id: contentItemId }
+    : moduleId ? { kind: "module" as const, id: moduleId }
+    : curriculumId ? { kind: "curriculum" as const, id: curriculumId }
+    : certificationPathId ? { kind: "certification_path" as const, id: certificationPathId }
+    : resourceId ? { kind: "resource" as const, id: resourceId }
+    : newsletterArticleId ? { kind: "newsletter_article" as const, id: newsletterArticleId }
+    : null;
+  const showAiGenerate = assetKind === "image" && refField === "thumbnail" && !!aiParent;
+
+  async function generateWithAi() {
+    if (!aiParent || !aiPrompt.trim()) return;
+    setGenerating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("openai-image-generate", {
+        body: { prompt: aiPrompt.trim(), parent_kind: aiParent.kind, parent_id: aiParent.id, ref_field: refField },
+      });
+      if (error) throw error;
+      if (!data?.asset_id) throw new Error(data?.message || "No image returned");
+      setAiPrompt("");
+      setState({ kind: "uploaded", assetId: data.asset_id });
+      onChange(data.asset_id);
+      toast({ title: "Thumbnail generated" });
+    } catch (e: any) {
+      let msg = e?.message ?? "Generation failed";
+      try {
+        const body = await e?.context?.json?.();
+        if (body?.message) msg = body.message;
+        else if (body?.error) msg = body.error;
+      } catch { /* keep msg */ }
+      toast({ title: "Generation failed", description: msg, variant: "destructive" });
+    } finally {
+      setGenerating(false);
+    }
+  }
 
   // Sync external value changes
   useEffect(() => {
@@ -794,6 +834,35 @@ export function FileUploadField({
           onChange={(e) => handleFileSelected(e.target.files?.[0])}
         />
       </div>
+
+      {showAiGenerate && (
+        <div className="space-y-2 rounded-md border bg-muted/20 p-3">
+          <div className="flex items-center gap-2 text-sm font-medium">
+            <Wand2 className="h-4 w-4" /> Generate with AI
+          </div>
+          <Textarea
+            value={aiPrompt}
+            onChange={(e) => setAiPrompt(e.target.value)}
+            placeholder="Describe the thumbnail to generate"
+            rows={3}
+            disabled={generating}
+          />
+          <Button
+            type="button"
+            className="w-full"
+            onClick={generateWithAi}
+            disabled={generating || !aiPrompt.trim()}
+          >
+            {generating ? (
+              <span className="flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" /> Generating (~15s)…
+              </span>
+            ) : "Generate thumbnail"}
+          </Button>
+        </div>
+      )}
+
+
 
       {!isLibraryAsset && (
         <AssetLibraryPicker
