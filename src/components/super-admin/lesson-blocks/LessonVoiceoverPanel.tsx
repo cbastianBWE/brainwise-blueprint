@@ -555,7 +555,7 @@ export function LessonVoiceoverPanel({
                 type="button"
                 onClick={handleStandalone}
                 disabled={
-                  !selectedVoice || standaloneText.trim().length === 0 || standaloneBusy || narrating
+                  !selectedVoice || standaloneText.trim().length === 0 || standaloneBusy || narrating || scripting
                 }
               >
                 {standaloneBusy ? "Generating…" : "Generate clip"}
