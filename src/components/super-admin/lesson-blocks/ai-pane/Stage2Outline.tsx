@@ -17,7 +17,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { ArrowLeft, GripVertical, Loader2, Plus, Sparkles, Trash2 } from "lucide-react";
+import { ArrowLeft, GripVertical, Loader2, Plus, Sparkles, Trash2, Wand2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { BLOCK_TYPE_META, type BlockType } from "../blockTypeMeta";
@@ -391,6 +391,7 @@ function ImageResolutionSection(props: {
   const [loading, setLoading] = useState(false);
   const [ingesting, setIngesting] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [generating, setGenerating] = useState(false);
   const autoSearchedRef = useRef(false);
 
   const effectiveQuery =
@@ -459,6 +460,43 @@ function ImageResolutionSection(props: {
       setErr(info.message);
     } finally {
       setIngesting(false);
+    }
+  }
+
+  async function generateWithAi() {
+    if (!contentItemId || !effectiveQuery.trim()) return;
+    setGenerating(true);
+    setErr(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("openai-image-generate", {
+        body: {
+          prompt: effectiveQuery.trim(),
+          parent_kind: "content_item",
+          parent_id: contentItemId,
+          ref_field: "image_asset",
+        },
+      });
+      if (error) throw error;
+      const assetId = (data as any)?.asset_id;
+      if (!assetId) throw new Error((data as any)?.message || "No image returned");
+      let thumb = "";
+      try {
+        const bucket = (data as any)?.bucket;
+        const path = (data as any)?.path;
+        if (bucket && path) {
+          const { data: signed } = await supabase.storage.from(bucket).createSignedUrl(path, 3600);
+          thumb = signed?.signedUrl ?? "";
+        }
+      } catch { /* preview only */ }
+      onUpdate({
+        image_resolved: { asset_id: assetId, attribution: "", thumb_url: thumb },
+        image_query: effectiveQuery,
+      });
+    } catch (e) {
+      const info = mapAiError(e);
+      setErr(info.message);
+    } finally {
+      setGenerating(false);
     }
   }
 
@@ -539,6 +577,16 @@ function ImageResolutionSection(props: {
           disabled={loading || !contentItemId}
         >
           {loading ? <Loader2 className="h-3 w-3 animate-spin" /> : "Search"}
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          className="h-7 px-2 text-xs"
+          onClick={() => void generateWithAi()}
+          disabled={generating || loading || ingesting || !contentItemId || !effectiveQuery.trim()}
+          title="Generate an image with AI from this prompt"
+        >
+          {generating ? <Loader2 className="h-3 w-3 animate-spin" /> : <><Wand2 className="mr-1 h-3 w-3" />AI</>}
         </Button>
       </div>
       {current && (
