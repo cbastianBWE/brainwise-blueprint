@@ -88,6 +88,7 @@ interface NarrativeSectionsShape {
   cross_assessment?: string;
   action_plan?: ActionPlanItem[];
   personal_summary?: string[];
+  coach_questions?: string[];
 }
 
 export interface PTPNarrativeSectionsProps {
@@ -116,6 +117,7 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
     dimensionScores,
     ptpContextTab,
     otherAssessments = [],
+    isCoachView,
   } = props;
 
   const [elevatedFacets, setElevatedFacets] = useState<FacetItem[]>([]);
@@ -214,6 +216,7 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
         `personal_summary_${ctx}`,
         `dimension_highlights_${ctx}`,
         `cross_and_action_${ctx}`,
+        ...(isCoachView ? [`coach_questions_${ctx}`] : []),
       ];
       const { data: cachedRows } = await supabase
         .from("facet_interpretations")
@@ -233,6 +236,7 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
           { generate_context_narrative: true, narrative_context: ctx },
           { generate_dimension_highlights: true, narrative_context: ctx },
           { generate_cross_and_action: true, narrative_context: ctx },
+          ...(isCoachView ? [{ generate_coach_questions: true, narrative_context: ctx }] : []),
         ];
 
         for (const extra of calls) {
@@ -253,6 +257,7 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
         `personal_summary_${ctx}`,
         `dimension_highlights_${ctx}`,
         `cross_and_action_${ctx}`,
+        ...(isCoachView ? [`coach_questions_${ctx}`] : []),
       ];
 
       const { data: rows } = await supabase
@@ -269,6 +274,7 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
       const personalSummary = byType.get(`personal_summary_${ctx}`);
       const dimensionHighlights = byType.get(`dimension_highlights_${ctx}`);
       const crossAndAction = byType.get(`cross_and_action_${ctx}`);
+      const coachQuestions = byType.get(`coach_questions_${ctx}`);
 
       const assembled: NarrativeSectionsShape = {
         profile_overview: profileOverview?.text,
@@ -276,6 +282,7 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
         dimension_highlights: dimensionHighlights as Record<string, string> | undefined,
         cross_assessment: crossAndAction?.cross_assessment,
         action_plan: crossAndAction?.action_plan,
+        coach_questions: coachQuestions?.questions,
       };
 
       setNarrativeSections(assembled);
@@ -283,7 +290,7 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
     };
 
     fetchNarrativeSections();
-  }, [assessmentResultId, ptpContextTab]);
+  }, [assessmentResultId, ptpContextTab, isCoachView]);
 
   useEffect(() => {
     const fetchFacets = async () => {
@@ -754,6 +761,7 @@ export function PTPProfileOverviewSection(props: PTPNarrativeSectionsProps) {
 
   const actionPlan = narrativeSections?.action_plan ?? [];
   const personalSummary = narrativeSections?.personal_summary ?? [];
+  const coachQuestions = narrativeSections?.coach_questions ?? [];
 
   return (
     <div className="space-y-8">
@@ -810,7 +818,7 @@ export function PTPProfileOverviewSection(props: PTPNarrativeSectionsProps) {
       )}
 
       {/* Action Plan */}
-      {(actionPlan.length > 0 || loadingNarrativeSections) && (
+      {!props.isCoachView && (actionPlan.length > 0 || loadingNarrativeSections) && (
         <div>
           <h3 style={sectionHeadingStyle}>Suggested Next Steps</h3>
           <p style={subtitleStyle}>Three concrete things to focus on next.</p>
@@ -876,6 +884,45 @@ export function PTPProfileOverviewSection(props: PTPNarrativeSectionsProps) {
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      {/* Suggested Coaching Questions (coach view only) */}
+      {props.isCoachView && (
+        <div>
+          <h3 style={sectionHeadingStyle}>Suggested Coaching Questions</h3>
+          <p style={subtitleStyle}>Private to you as the coach. Open questions grounded in this profile's tensions.</p>
+          {coachQuestions.length === 0 && loadingNarrativeSections ? (
+            <p style={{ fontSize: 13, color: "var(--fg-3)", margin: 0 }}>Generating coaching questions...</p>
+          ) : coachQuestions.length > 0 ? (
+            <div style={cardSurface}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "var(--s-3)" }}>
+                {coachQuestions.map((q, i) => (
+                  <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+                    <div
+                      style={{
+                        flexShrink: 0,
+                        width: 24,
+                        height: 24,
+                        borderRadius: "var(--r-circle)",
+                        background: "var(--bw-navy)",
+                        color: "var(--bw-white)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontSize: 12,
+                        fontWeight: 600,
+                        fontFamily: "var(--font-display)",
+                      }}
+                    >
+                      {i + 1}
+                    </div>
+                    <p style={{ fontSize: 14, color: "var(--fg-1)", lineHeight: 1.55, margin: 0 }}>{q}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
         </div>
       )}
     </div>

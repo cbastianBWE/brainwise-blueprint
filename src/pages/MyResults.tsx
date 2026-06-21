@@ -832,9 +832,10 @@ export default function MyResults({ isCoachView = false, adminView = false, targ
       displayName: displayName ?? null,
       sections,
       additionalAssessmentId,
+      isCoachView: coachViewActive,
     });
     await generateResultsPdf(pdfData, sections);
-  }, [selected, effectiveSelected, ptpContextTab, displayName, effectiveUserId, isBothAssessment, hasPtpTabs, ptpPersonalResults]);
+  }, [selected, effectiveSelected, ptpContextTab, displayName, effectiveUserId, isBothAssessment, hasPtpTabs, ptpPersonalResults, coachViewActive]);
 
   const handleNaiPdfExport = useCallback(async (sections: import("@/components/results/ExportPdfModal").NaiPdfSectionsUi) => {
     if (!selected || !isNAI) return;
