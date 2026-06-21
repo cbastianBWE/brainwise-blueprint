@@ -530,7 +530,8 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
         doc.setFontSize(6.5);
         doc.setTextColor(...MUTED);
         doc.setFont("Montserrat", "normal");
-        doc.text(formatBand(dim.band), x + dimCardW / 2, y + 28, { align: "center" });
+        const ptpBand = dim.score >= 70 ? "High" : dim.score >= 40 ? "Moderate" : "Low";
+        doc.text(ptpBand, x + dimCardW / 2, y + 28, { align: "center" });
       });
       y += 36;
     }
