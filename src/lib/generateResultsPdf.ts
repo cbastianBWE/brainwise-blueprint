@@ -792,8 +792,8 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
       y += 6;
     };
 
-    if (data.elevatedFacets.length > 0) renderFacetScoreTable("Elevated Facets", data.elevatedFacets);
-    if (data.suppressedFacets.length > 0) renderFacetScoreTable("Suppressed Facets", data.suppressedFacets);
+    if (data.elevatedFacets.length > 0) renderFacetScoreTable("High Scoring Drivers", data.elevatedFacets);
+    if (data.suppressedFacets.length > 0) renderFacetScoreTable("Low Scoring Drivers", data.suppressedFacets);
   }
 
   // ── DRIVING FACET INSIGHTS (shared renderer, used by Elevated + Suppressed blocks) ──
