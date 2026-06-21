@@ -761,6 +761,7 @@ export function PTPProfileOverviewSection(props: PTPNarrativeSectionsProps) {
 
   const actionPlan = narrativeSections?.action_plan ?? [];
   const personalSummary = narrativeSections?.personal_summary ?? [];
+  const coachQuestions = narrativeSections?.coach_questions ?? [];
 
   return (
     <div className="space-y-8">
