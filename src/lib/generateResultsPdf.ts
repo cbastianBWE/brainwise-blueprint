@@ -59,6 +59,7 @@ export interface PdfData {
       steps: string[];
       dimension_tags: string[];
     }>;
+    coach_questions?: string[];
   } | null;
   elevatedFacets: FacetWithInterpretation[];
   suppressedFacets: FacetWithInterpretation[];
