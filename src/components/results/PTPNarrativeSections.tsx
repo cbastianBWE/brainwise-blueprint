@@ -117,6 +117,7 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
     dimensionScores,
     ptpContextTab,
     otherAssessments = [],
+    isCoachView,
   } = props;
 
   const [elevatedFacets, setElevatedFacets] = useState<FacetItem[]>([]);
