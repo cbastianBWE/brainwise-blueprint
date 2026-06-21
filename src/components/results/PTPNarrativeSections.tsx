@@ -216,6 +216,7 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
         `personal_summary_${ctx}`,
         `dimension_highlights_${ctx}`,
         `cross_and_action_${ctx}`,
+        ...(isCoachView ? [`coach_questions_${ctx}`] : []),
       ];
       const { data: cachedRows } = await supabase
         .from("facet_interpretations")
@@ -235,6 +236,7 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
           { generate_context_narrative: true, narrative_context: ctx },
           { generate_dimension_highlights: true, narrative_context: ctx },
           { generate_cross_and_action: true, narrative_context: ctx },
+          ...(isCoachView ? [{ generate_coach_questions: true, narrative_context: ctx }] : []),
         ];
 
         for (const extra of calls) {
@@ -255,6 +257,7 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
         `personal_summary_${ctx}`,
         `dimension_highlights_${ctx}`,
         `cross_and_action_${ctx}`,
+        ...(isCoachView ? [`coach_questions_${ctx}`] : []),
       ];
 
       const { data: rows } = await supabase
@@ -271,6 +274,7 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
       const personalSummary = byType.get(`personal_summary_${ctx}`);
       const dimensionHighlights = byType.get(`dimension_highlights_${ctx}`);
       const crossAndAction = byType.get(`cross_and_action_${ctx}`);
+      const coachQuestions = byType.get(`coach_questions_${ctx}`);
 
       const assembled: NarrativeSectionsShape = {
         profile_overview: profileOverview?.text,
@@ -278,6 +282,7 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
         dimension_highlights: dimensionHighlights as Record<string, string> | undefined,
         cross_assessment: crossAndAction?.cross_assessment,
         action_plan: crossAndAction?.action_plan,
+        coach_questions: coachQuestions?.questions,
       };
 
       setNarrativeSections(assembled);
@@ -285,7 +290,7 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
     };
 
     fetchNarrativeSections();
-  }, [assessmentResultId, ptpContextTab]);
+  }, [assessmentResultId, ptpContextTab, isCoachView]);
 
   useEffect(() => {
     const fetchFacets = async () => {
