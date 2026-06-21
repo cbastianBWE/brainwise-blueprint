@@ -886,6 +886,45 @@ export function PTPProfileOverviewSection(props: PTPNarrativeSectionsProps) {
           )}
         </div>
       )}
+
+      {/* Suggested Coaching Questions (coach view only) */}
+      {props.isCoachView && (
+        <div>
+          <h3 style={sectionHeadingStyle}>Suggested Coaching Questions</h3>
+          <p style={subtitleStyle}>Private to you as the coach. Open questions grounded in this profile's tensions.</p>
+          {coachQuestions.length === 0 && loadingNarrativeSections ? (
+            <p style={{ fontSize: 13, color: "var(--fg-3)", margin: 0 }}>Generating coaching questions...</p>
+          ) : coachQuestions.length > 0 ? (
+            <div style={cardSurface}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "var(--s-3)" }}>
+                {coachQuestions.map((q, i) => (
+                  <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+                    <div
+                      style={{
+                        flexShrink: 0,
+                        width: 24,
+                        height: 24,
+                        borderRadius: "var(--r-circle)",
+                        background: "var(--bw-navy)",
+                        color: "var(--bw-white)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontSize: 12,
+                        fontWeight: 600,
+                        fontFamily: "var(--font-display)",
+                      }}
+                    >
+                      {i + 1}
+                    </div>
+                    <p style={{ fontSize: 14, color: "var(--fg-1)", lineHeight: 1.55, margin: 0 }}>{q}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
+        </div>
+      )}
     </div>
   );
 }
