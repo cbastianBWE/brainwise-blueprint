@@ -927,8 +927,8 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
     addFooter();
     doc.addPage();
     y = MARGIN_T;
-    sectionHeading("Driving Facet Insights — Suppressed");
-    renderFacetInsights("Suppressed Facets", data.suppressedFacets);
+    sectionHeading("Driving Facet Insights — Low Scoring Drivers");
+    renderFacetInsights("Low Scoring Drivers", data.suppressedFacets);
   }
 
   // ── CROSS-ASSESSMENT CONNECTIONS ──
