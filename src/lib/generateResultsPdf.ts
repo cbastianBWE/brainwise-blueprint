@@ -607,7 +607,7 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
     const firstCardHeight = 8 + 6 + firstPillsHeight + firstRationaleHeight + firstStepsHeight + 6;
 
 
-    sectionHeading("Action Plan", firstCardHeight);
+    sectionHeading("Suggested Next Steps", firstCardHeight);
 
 
     for (let i = 0; i < items.length; i++) {
