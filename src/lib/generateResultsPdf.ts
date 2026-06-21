@@ -690,6 +690,47 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
     }
   }
 
+  // ── SUGGESTED COACHING QUESTIONS (coach exports only) ──
+  if (
+    sections.actionPlan &&
+    Array.isArray(data.narrativeSections?.coach_questions) &&
+    data.narrativeSections!.coach_questions!.length > 0
+  ) {
+    const items = data.narrativeSections!.coach_questions!;
+    sectionHeading("Suggested Coaching Questions");
+
+    const badgeRadius = 4;
+    const badgeColumn = badgeRadius * 2 + 4;
+    const textX = MARGIN_L + badgeColumn;
+    const textW = CONTENT_W - badgeColumn;
+
+    for (let i = 0; i < items.length; i++) {
+      doc.setFont("Montserrat", "normal");
+      doc.setFontSize(10);
+      const lines = doc.splitTextToSize(cleanMarkdown(items[i]), textW);
+      const blockHeight = lines.length * 4.5 + 4;
+      checkPageBreak(blockHeight);
+
+      const badgeCenterY = y + badgeRadius;
+      doc.setFillColor(NAVY[0], NAVY[1], NAVY[2]);
+      doc.circle(MARGIN_L + badgeRadius, badgeCenterY, badgeRadius, "F");
+      doc.setFont("Montserrat", "bold");
+      doc.setFontSize(8);
+      doc.setTextColor(255, 255, 255);
+      doc.text(String(i + 1), MARGIN_L + badgeRadius, badgeCenterY + 1.3, { align: "center" });
+
+      doc.setFont("Montserrat", "normal");
+      doc.setFontSize(10);
+      doc.setTextColor(BLACK[0], BLACK[1], BLACK[2]);
+      doc.text(lines, textX, y + badgeRadius + 1);
+
+      y += blockHeight;
+    }
+    y += 4;
+  }
+
+
+
 
 
   // ── DIMENSION HIGHLIGHTS ──
