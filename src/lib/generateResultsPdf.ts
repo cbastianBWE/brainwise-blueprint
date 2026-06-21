@@ -918,8 +918,8 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
     addFooter();
     doc.addPage();
     y = MARGIN_T;
-    sectionHeading("Driving Facet Insights — Elevated");
-    renderFacetInsights("Elevated Facets", data.elevatedFacets);
+    sectionHeading("Driving Facet Insights — High Scoring Drivers");
+    renderFacetInsights("High Scoring Drivers", data.elevatedFacets);
   }
 
   // ── DRIVING FACET INSIGHTS — SUPPRESSED ──
