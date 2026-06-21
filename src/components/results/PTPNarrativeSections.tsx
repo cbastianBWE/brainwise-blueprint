@@ -812,7 +812,7 @@ export function PTPProfileOverviewSection(props: PTPNarrativeSectionsProps) {
       {/* Action Plan */}
       {(actionPlan.length > 0 || loadingNarrativeSections) && (
         <div>
-          <h3 style={sectionHeadingStyle}>Action Plan</h3>
+          <h3 style={sectionHeadingStyle}>Suggested Next Steps</h3>
           <p style={subtitleStyle}>Three concrete things to focus on next.</p>
           {!props.isCoachView && actionPlan.length > 0 && (
             <div className="mb-3">
@@ -1104,7 +1104,7 @@ export function PTPFacetInsightsElevatedSection(props: PTPNarrativeSectionsProps
   if (data.loadingFacets || data.elevatedFacets.length === 0) return null;
   return (
     <div>
-      <h3 style={sectionHeadingStyle}>Driving facet insights — elevated</h3>
+      <h3 style={sectionHeadingStyle}>Driving facet insights — high scoring drivers</h3>
       <PtpDimensionLegend dimensionIds={[...new Set(data.elevatedFacets.map((f) => f.dimension_id))]} />
       <FacetList facets={data.elevatedFacets} prefix="elevated" data={data} />
     </div>
@@ -1117,7 +1117,7 @@ export function PTPFacetInsightsSuppressedSection(props: PTPNarrativeSectionsPro
   if (data.loadingFacets || data.suppressedFacets.length === 0) return null;
   return (
     <div>
-      <h3 style={sectionHeadingStyle}>Driving facet insights — suppressed</h3>
+      <h3 style={sectionHeadingStyle}>Driving facet insights — low scoring drivers</h3>
       <PtpDimensionLegend dimensionIds={[...new Set(data.suppressedFacets.map((f) => f.dimension_id))]} />
       <FacetList facets={data.suppressedFacets} prefix="suppressed" data={data} />
     </div>

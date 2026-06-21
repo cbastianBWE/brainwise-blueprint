@@ -530,7 +530,8 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
         doc.setFontSize(6.5);
         doc.setTextColor(...MUTED);
         doc.setFont("Montserrat", "normal");
-        doc.text(formatBand(dim.band), x + dimCardW / 2, y + 28, { align: "center" });
+        const ptpBand = dim.score >= 70 ? "High" : dim.score >= 40 ? "Moderate" : "Low";
+        doc.text(ptpBand, x + dimCardW / 2, y + 28, { align: "center" });
       });
       y += 36;
     }
@@ -606,7 +607,7 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
     const firstCardHeight = 8 + 6 + firstPillsHeight + firstRationaleHeight + firstStepsHeight + 6;
 
 
-    sectionHeading("Action Plan", firstCardHeight);
+    sectionHeading("Suggested Next Steps", firstCardHeight);
 
 
     for (let i = 0; i < items.length; i++) {
@@ -791,8 +792,8 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
       y += 6;
     };
 
-    if (data.elevatedFacets.length > 0) renderFacetScoreTable("Elevated Facets", data.elevatedFacets);
-    if (data.suppressedFacets.length > 0) renderFacetScoreTable("Suppressed Facets", data.suppressedFacets);
+    if (data.elevatedFacets.length > 0) renderFacetScoreTable("High Scoring Drivers", data.elevatedFacets);
+    if (data.suppressedFacets.length > 0) renderFacetScoreTable("Low Scoring Drivers", data.suppressedFacets);
   }
 
   // ── DRIVING FACET INSIGHTS (shared renderer, used by Elevated + Suppressed blocks) ──
@@ -917,8 +918,8 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
     addFooter();
     doc.addPage();
     y = MARGIN_T;
-    sectionHeading("Driving Facet Insights — Elevated");
-    renderFacetInsights("Elevated Facets", data.elevatedFacets);
+    sectionHeading("Driving Facet Insights — High Scoring Drivers");
+    renderFacetInsights("High Scoring Drivers", data.elevatedFacets);
   }
 
   // ── DRIVING FACET INSIGHTS — SUPPRESSED ──
@@ -926,8 +927,8 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
     addFooter();
     doc.addPage();
     y = MARGIN_T;
-    sectionHeading("Driving Facet Insights — Suppressed");
-    renderFacetInsights("Suppressed Facets", data.suppressedFacets);
+    sectionHeading("Driving Facet Insights — Low Scoring Drivers");
+    renderFacetInsights("Low Scoring Drivers", data.suppressedFacets);
   }
 
   // ── CROSS-ASSESSMENT CONNECTIONS ──
