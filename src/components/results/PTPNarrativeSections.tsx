@@ -1117,7 +1117,7 @@ export function PTPFacetInsightsSuppressedSection(props: PTPNarrativeSectionsPro
   if (data.loadingFacets || data.suppressedFacets.length === 0) return null;
   return (
     <div>
-      <h3 style={sectionHeadingStyle}>Driving facet insights — suppressed</h3>
+      <h3 style={sectionHeadingStyle}>Driving facet insights — low scoring drivers</h3>
       <PtpDimensionLegend dimensionIds={[...new Set(data.suppressedFacets.map((f) => f.dimension_id))]} />
       <FacetList facets={data.suppressedFacets} prefix="suppressed" data={data} />
     </div>
