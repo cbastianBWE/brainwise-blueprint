@@ -131,8 +131,9 @@ export async function assemblePtpPdfData(params: {
   displayName: string | null;
   sections: PdfSections;
   additionalAssessmentId?: string;
+  isCoachView?: boolean;
 }): Promise<PdfData> {
-  const { assessmentResultId, displayName, sections, additionalAssessmentId } = params;
+  const { assessmentResultId, displayName, sections, additionalAssessmentId, isCoachView = false } = params;
   let { contextTab } = params;
   const { result, assessment, instrument, dimensionNameMap } = await fetchCommon(assessmentResultId);
 
