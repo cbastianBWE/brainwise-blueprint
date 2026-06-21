@@ -269,6 +269,7 @@ export async function assemblePtpPdfData(params: {
       `personal_summary_${contextTab}`,
       `dimension_highlights_${contextTab}`,
       `cross_and_action_${contextTab}`,
+      ...(isCoachView ? [`coach_questions_${contextTab}`] : []),
     ];
 
     const { data: narrativeRows } = await supabase
@@ -285,6 +286,7 @@ export async function assemblePtpPdfData(params: {
     const personalSummaryData = rowMap.get(`personal_summary_${contextTab}`);
     const dimensionHighlightsData = rowMap.get(`dimension_highlights_${contextTab}`);
     const crossAndActionData = rowMap.get(`cross_and_action_${contextTab}`);
+    const coachQuestionsData = rowMap.get(`coach_questions_${contextTab}`);
 
     narrativeSections = {
       profile_overview: profileOverviewData?.text ?? undefined,
@@ -293,9 +295,8 @@ export async function assemblePtpPdfData(params: {
         : undefined,
       dimension_highlights: dimensionHighlightsData ?? undefined,
       cross_assessment: crossAndActionData?.cross_assessment ?? undefined,
-      action_plan: Array.isArray(crossAndActionData?.action_plan)
-        ? crossAndActionData.action_plan
-        : undefined,
+      action_plan: isCoachView ? undefined : (Array.isArray(crossAndActionData?.action_plan) ? crossAndActionData.action_plan : undefined),
+      coach_questions: isCoachView ? coachQuestionsData?.questions : undefined,
     };
   }
 
