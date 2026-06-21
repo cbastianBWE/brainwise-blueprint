@@ -88,6 +88,7 @@ interface NarrativeSectionsShape {
   cross_assessment?: string;
   action_plan?: ActionPlanItem[];
   personal_summary?: string[];
+  coach_questions?: string[];
 }
 
 export interface PTPNarrativeSectionsProps {
