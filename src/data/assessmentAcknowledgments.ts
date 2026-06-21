@@ -26,7 +26,7 @@ A few things to know before you start:
 
 **Some questions are worded in different directions, and here is how we handle them.** A few items are phrased so the top of the scale means the opposite of what nearby questions mean. When we score your results, we automatically flip those items so every answer points in the same direction, which keeps your scores accurate and comparable. You do not need to account for any of this yourself. Always answer based on the two labels shown on each question, exactly as you read them, and our scoring takes care of the rest.
 
-
+**Answer for how you generally are.** Some questions describe work settings and others describe personal or social ones. Answer each for the setting it names, based on how you generally are there, rather than how you are in one specific role or on one particular day.
 
 **Go with your first instinct.** Read each statement, then choose the response that fits closest to your typical reaction. Don't overthink — your first instinct is usually the most accurate.
 
