@@ -861,6 +861,29 @@ export default function MyResults({ isCoachView = false, adminView = false, targ
 
   const chatMessagesRef = useRef<Array<{role: 'user' | 'assistant'; content: string; timestamp: Date}>>([]);
   const chatSessionIdRef = useRef<string | null>(null);
+  const sharingPromptCheckedRef = useRef(false);
+
+  // After a corporate user's first PTP, show the peer-sharing consent once.
+  useEffect(() => {
+    if (isCoachView || adminView || loading || sharingPromptCheckedRef.current) return;
+    if (!user?.id) return;
+    const hasPtp = assessments.some((a) => a.isPTP && !a.isAwaitingSupervisor);
+    if (!hasPtp) return;
+    sharingPromptCheckedRef.current = true;
+    (async () => {
+      const CORPORATE = ["corporate_employee", "company_admin", "org_admin", "brainwise_super_admin"];
+      const { data: u } = await supabase.from("users").select("account_type").eq("id", user.id).maybeSingle();
+      if (!u || !CORPORATE.includes(u.account_type ?? "")) return;
+      const { data: sp } = await supabase
+        .from("sharing_preferences")
+        .select("ptp_sharing_prompt_answered_at")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (sp && sp.ptp_sharing_prompt_answered_at == null) {
+        navigate("/peer-sharing-optin");
+      }
+    })();
+  }, [isCoachView, adminView, loading, assessments, user?.id, navigate]);
 
   const sendChatMessage = useCallback(async () => {
     if (!chatInput.trim() || !selected || chatLoading) return;
