@@ -190,6 +190,24 @@ export default function PrivacySettings() {
             share_ptp_with_organization: !!prefs.share_ptp_with_organization,
             share_ptp_with_direct_reports: !!prefs.share_ptp_with_direct_reports,
           });
+          setPtpMaster(prefs.share_ptp_full ?? true);
+        }
+
+        // PTP per-audience content matrix
+        const { data: contentRows } = await (supabase as any)
+          .from("ptp_sharing_content")
+          .select("*")
+          .eq("user_id", user.id);
+        if (contentRows && contentRows.length > 0) {
+          const next: Partial<Record<PtpAudienceKey, PtpAudienceContent>> = {};
+          contentRows.forEach((r: any) => {
+            next[r.audience as PtpAudienceKey] = {
+              scores: !!r.share_scores,
+              interpretation: !!r.share_interpretation,
+              impact: !!r.share_impact,
+            };
+          });
+          setPtpContent(next);
         }
 
         // Direct reports check
