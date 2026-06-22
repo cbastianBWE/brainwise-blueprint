@@ -8723,6 +8723,65 @@ export type Database = {
           },
         ]
       }
+      ptp_sharing_content: {
+        Row: {
+          audience: string
+          created_at: string
+          share_impact: boolean
+          share_interpretation: boolean
+          share_scores: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          audience: string
+          created_at?: string
+          share_impact?: boolean
+          share_interpretation?: boolean
+          share_scores?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          audience?: string
+          created_at?: string
+          share_impact?: boolean
+          share_interpretation?: boolean
+          share_scores?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ptp_sharing_content_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ptp_sharing_content_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "ptp_sharing_content_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ptp_sharing_content_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       quiz_answer_options: {
         Row: {
           archived_at: string | null
@@ -9620,6 +9679,7 @@ export type Database = {
         Row: {
           created_at: string
           ptp_sharing_prompt_answered_at: string | null
+          share_ptp_full: boolean
           share_ptp_with_company_admin: boolean
           share_ptp_with_direct_reports: boolean
           share_ptp_with_organization: boolean
@@ -9631,6 +9691,7 @@ export type Database = {
         Insert: {
           created_at?: string
           ptp_sharing_prompt_answered_at?: string | null
+          share_ptp_full?: boolean
           share_ptp_with_company_admin?: boolean
           share_ptp_with_direct_reports?: boolean
           share_ptp_with_organization?: boolean
@@ -9642,6 +9703,7 @@ export type Database = {
         Update: {
           created_at?: string
           ptp_sharing_prompt_answered_at?: string | null
+          share_ptp_full?: boolean
           share_ptp_with_company_admin?: boolean
           share_ptp_with_direct_reports?: boolean
           share_ptp_with_organization?: boolean
@@ -12670,6 +12732,7 @@ export type Database = {
           subscription_tier: string
         }[]
       }
+      get_peer_ptp_report: { Args: { p_owner: string }; Returns: Json }
       get_poll_results: { Args: { p_poll_id: string }; Returns: Json }
       get_ptp_leader_workforce_delta: {
         Args: {
@@ -13715,6 +13778,14 @@ export type Database = {
           out_status: string
         }[]
       }
+      peer_ptp_effective_groups: {
+        Args: { p_owner: string; p_viewer: string }
+        Returns: {
+          impact: boolean
+          interpretation: boolean
+          scores: boolean
+        }[]
+      }
       peer_ptp_request_granted: {
         Args: { p_owner_user_id: string; p_viewer_user_id: string }
         Returns: boolean
@@ -13755,6 +13826,10 @@ export type Database = {
       pseudonymize_user: {
         Args: { p_reason?: string; p_user_id: string }
         Returns: number
+      }
+      ptp_sharing_content_upsert: {
+        Args: { p_rows?: Json; p_share_ptp_full?: boolean }
+        Returns: undefined
       }
       publish_article: {
         Args: { p_article_id: string; p_reason: string }
