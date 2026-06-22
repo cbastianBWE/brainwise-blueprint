@@ -3,39 +3,31 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-
 import { toast } from "sonner";
+import PtpSharingControls, {
+  PtpAudienceKey,
+  PtpAudienceContent,
+  PtpContentGroup,
+} from "@/components/sharing/PtpSharingControls";
 
-interface PeerPrefs {
-  share_ptp_with_company_admin: boolean;
-  share_ptp_with_supervisor: boolean;
-  share_ptp_with_team: boolean;
-  share_ptp_with_organization: boolean;
-  share_ptp_with_direct_reports: boolean;
-}
-
-const TOGGLES: { field: keyof PeerPrefs; title: string; description: string; directReportsOnly?: boolean }[] = [
-  { field: "share_ptp_with_company_admin", title: "Share with my Company Admin", description: "HR and admin roles in your organization can view your PTP results." },
-  { field: "share_ptp_with_supervisor", title: "Share with my Supervisor", description: "Your direct supervisor can view your PTP results." },
-  { field: "share_ptp_with_team", title: "Share with my Team", description: "Peers who share your supervisor can view your PTP results." },
-  { field: "share_ptp_with_organization", title: "Share with my Organization", description: "Everyone in your organization can view your PTP results." },
-  { field: "share_ptp_with_direct_reports", title: "Share with my Direct Reports", description: "People who report to you can view your PTP results.", directReportsOnly: true },
-];
+const DEFAULT_CONTENT: PtpAudienceContent = { scores: true, interpretation: true, impact: true };
 
 const PeerSharingOptIn = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [hasDirectReports, setHasDirectReports] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [prefs, setPrefs] = useState<PeerPrefs>({
-    share_ptp_with_company_admin: false,
-    share_ptp_with_supervisor: false,
-    share_ptp_with_team: false,
-    share_ptp_with_organization: false,
-    share_ptp_with_direct_reports: false,
+
+  const [master, setMaster] = useState(true);
+  const [audiences, setAudiences] = useState<Record<PtpAudienceKey, boolean>>({
+    company_admin: false,
+    supervisor: false,
+    team: false,
+    organization: false,
+    direct_reports: false,
   });
+  const [content, setContent] = useState<Partial<Record<PtpAudienceKey, PtpAudienceContent>>>({});
 
   useEffect(() => {
     if (!user) return;
@@ -49,17 +41,48 @@ const PeerSharingOptIn = () => {
     })();
   }, [user]);
 
+  const handleContentChange = (audience: PtpAudienceKey, group: PtpContentGroup, v: boolean) => {
+    setContent((prev) => {
+      const current = prev[audience] ?? DEFAULT_CONTENT;
+      return { ...prev, [audience]: { ...current, [group]: v } };
+    });
+  };
+
   const handleSave = async () => {
     setSaving(true);
     const params: Record<string, boolean> = {};
-    (Object.keys(prefs) as (keyof PeerPrefs)[]).forEach((k) => {
-      if (k === "share_ptp_with_direct_reports" && !hasDirectReports) return;
-      params[`p_${k}`] = prefs[k];
+    (Object.keys(audiences) as PtpAudienceKey[]).forEach((k) => {
+      if (k === "direct_reports" && !hasDirectReports) return;
+      params[`p_share_ptp_with_${k}`] = audiences[k];
     });
-    const { error } = await (supabase as any).rpc("sharing_preferences_upsert", params);
-    setSaving(false);
-    if (error) {
+    const { error: prefsErr } = await (supabase as any).rpc("sharing_preferences_upsert", params);
+    if (prefsErr) {
+      setSaving(false);
       toast.error("Failed to save preferences");
+      return;
+    }
+
+    const rows = master
+      ? []
+      : (Object.keys(audiences) as PtpAudienceKey[])
+          .filter((k) => audiences[k] && (k !== "direct_reports" || hasDirectReports))
+          .map((k) => {
+            const t = content[k] ?? DEFAULT_CONTENT;
+            return {
+              audience: k,
+              share_scores: t.scores,
+              share_interpretation: t.interpretation,
+              share_impact: t.impact,
+            };
+          });
+
+    const { error: contentErr } = await (supabase as any).rpc("ptp_sharing_content_upsert", {
+      p_share_ptp_full: master,
+      p_rows: rows,
+    });
+    setSaving(false);
+    if (contentErr) {
+      toast.error("Failed to save content preferences");
       return;
     }
     navigate("/dashboard");
@@ -69,8 +92,6 @@ const PeerSharingOptIn = () => {
     await (supabase as any).rpc("sharing_preferences_upsert", {});
     navigate("/dashboard");
   };
-
-  const visibleToggles = TOGGLES.filter(t => !t.directReportsOnly || hasDirectReports);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
@@ -83,18 +104,15 @@ const PeerSharingOptIn = () => {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
-          {visibleToggles.map(({ field, title, description }) => (
-            <div key={field} className="p-3 rounded-lg border flex items-center justify-between gap-3">
-              <div className="flex-1 min-w-0">
-                <p className="font-medium text-foreground text-sm">{title}</p>
-                <p className="text-xs text-muted-foreground">{description}</p>
-              </div>
-              <Switch
-                checked={prefs[field]}
-                onCheckedChange={(v) => setPrefs((p) => ({ ...p, [field]: v }))}
-              />
-            </div>
-          ))}
+          <PtpSharingControls
+            master={master}
+            onMasterChange={setMaster}
+            audiences={audiences}
+            onAudienceChange={(key, v) => setAudiences((p) => ({ ...p, [key]: v }))}
+            content={content}
+            onContentChange={handleContentChange}
+            hasDirectReports={hasDirectReports}
+          />
 
           <div className="flex flex-col gap-3 pt-4">
             <Button onClick={handleSave} disabled={saving} className="w-full">
@@ -111,3 +129,4 @@ const PeerSharingOptIn = () => {
 };
 
 export default PeerSharingOptIn;
+
