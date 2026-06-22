@@ -142,9 +142,28 @@ export default function NotificationSettings() {
               {grouped.map(({ category, rows }, idx) => (
                 <div key={category} className="space-y-3">
                   {idx > 0 && <div className="border-t" />}
-                  <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground pt-2">
-                    {category}
-                  </h3>
+                  <div className="flex items-center justify-between gap-4 pt-2">
+                    <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      {category}
+                    </h3>
+                    <div className="w-[170px] shrink-0">
+                      <Select
+                        value=""
+                        onValueChange={(v) => handleSetAll(category, v as NotificationChannel)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Set all to…" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {CHANNEL_OPTIONS.map((opt) => (
+                            <SelectItem key={opt.value} value={opt.value}>
+                              {opt.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
                   <div className="space-y-3">
                     {rows.map((row) => {
                       const disabled = !row.user_configurable;
