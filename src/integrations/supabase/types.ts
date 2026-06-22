@@ -394,6 +394,30 @@ export type Database = {
           },
         ]
       }
+      ai_model_registry: {
+        Row: {
+          model_id: string
+          notes: string | null
+          role: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          model_id: string
+          notes?: string | null
+          role: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          model_id?: string
+          notes?: string | null
+          role?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       ai_usage: {
         Row: {
           id: string
