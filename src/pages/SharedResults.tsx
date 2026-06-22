@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useAccountRole } from "@/lib/accountRoles";
 import MyResults from "@/pages/MyResults";
+import PeerPtpReport from "@/components/results/PeerPtpReport";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
@@ -269,14 +270,21 @@ export default function SharedResults() {
       {/* Right pane: results */}
       <div className="flex-1 overflow-y-auto">
         {selectedPeerId ? (
-          <MyResults
-            isCoachView={true}
-            targetUserId={selectedPeerId}
-            permissionLevel="full_results"
-            viewLabel={peers.find(p => p.user_id === selectedPeerId)?.full_name ?? "Peer Results"}
-            defaultInstrumentId={instrument}
-            allowHighlighting={false}
-          />
+          instrument === "INST-001" ? (
+            <PeerPtpReport
+              targetUserId={selectedPeerId}
+              ownerName={peers.find(p => p.user_id === selectedPeerId)?.full_name ?? null}
+            />
+          ) : (
+            <MyResults
+              isCoachView={true}
+              targetUserId={selectedPeerId}
+              permissionLevel="full_results"
+              viewLabel={peers.find(p => p.user_id === selectedPeerId)?.full_name ?? "Peer Results"}
+              defaultInstrumentId={instrument}
+              allowHighlighting={false}
+            />
+          )
         ) : (
           <div className="flex flex-col items-center justify-center h-full text-center p-8">
             <Users className="h-12 w-12 text-muted-foreground mb-4" />
