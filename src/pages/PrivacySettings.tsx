@@ -326,6 +326,67 @@ export default function PrivacySettings() {
     showSaved(`peer_${key}`);
   };
 
+  const FIELD_BY_KEY: Record<PtpAudienceKey, keyof PeerPrefs> = {
+    company_admin: "share_ptp_with_company_admin",
+    supervisor: "share_ptp_with_supervisor",
+    team: "share_ptp_with_team",
+    organization: "share_ptp_with_organization",
+    direct_reports: "share_ptp_with_direct_reports",
+  };
+
+  const handlePtpMasterChange = async (v: boolean) => {
+    const previous = ptpMaster;
+    setPtpMaster(v);
+    const { error } = await (supabase as any).rpc("ptp_sharing_content_upsert", {
+      p_share_ptp_full: v,
+    });
+    if (error) {
+      toast.error("Failed to save");
+      setPtpMaster(previous);
+      return;
+    }
+    showSaved("ptp_master");
+  };
+
+  const handlePtpAudienceChange = async (key: PtpAudienceKey, v: boolean) => {
+    const field = FIELD_BY_KEY[key];
+    const previous = peerPrefs[field];
+    setPeerPrefs((p) => ({ ...p, [field]: v }));
+    const param: Record<string, boolean> = {};
+    param[`p_${field}`] = v;
+    const { error } = await (supabase as any).rpc("sharing_preferences_upsert", param);
+    if (error) {
+      toast.error("Failed to save");
+      setPeerPrefs((p) => ({ ...p, [field]: previous }));
+      return;
+    }
+    showSaved(`peer_${key}`);
+  };
+
+  const handlePtpContentChange = async (
+    audience: PtpAudienceKey,
+    group: PtpContentGroup,
+    v: boolean,
+  ) => {
+    const current = ptpContent[audience] ?? DEFAULT_PTP_CONTENT;
+    const next = { ...current, [group]: v };
+    setPtpContent((prev) => ({ ...prev, [audience]: next }));
+    const { error } = await (supabase as any).rpc("ptp_sharing_content_upsert", {
+      p_rows: [{
+        audience,
+        share_scores: next.scores,
+        share_interpretation: next.interpretation,
+        share_impact: next.impact,
+      }],
+    });
+    if (error) {
+      toast.error("Failed to save");
+      setPtpContent((prev) => ({ ...prev, [audience]: current }));
+      return;
+    }
+    showSaved(`ptp_content_${audience}`);
+  };
+
   const loadMyShares = useCallback(async () => {
     const { data } = await (supabase as any).rpc("list_my_ptp_shares");
     if (data?.shares) setMyShares(data.shares);
@@ -541,25 +602,21 @@ export default function PrivacySettings() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            {visiblePeerToggles.map(({ key, field, title, description }) => (
-              <div key={key} className="p-4 rounded-lg border">
-                <div className="flex items-center justify-between gap-4">
-                  <div className="flex-1">
-                    <p className="font-medium text-foreground">{title}</p>
-                    <p className="text-sm text-muted-foreground">{description}</p>
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    {savedKey === `peer_${key}` && (
-                      <Badge variant="secondary" className="text-xs animate-in fade-in">Saved</Badge>
-                    )}
-                    <Switch
-                      checked={peerPrefs[field]}
-                      onCheckedChange={() => handlePeerToggle(key, field)}
-                    />
-                  </div>
-                </div>
-              </div>
-            ))}
+            <PtpSharingControls
+              master={ptpMaster}
+              onMasterChange={handlePtpMasterChange}
+              audiences={{
+                company_admin: peerPrefs.share_ptp_with_company_admin,
+                supervisor: peerPrefs.share_ptp_with_supervisor,
+                team: peerPrefs.share_ptp_with_team,
+                organization: peerPrefs.share_ptp_with_organization,
+                direct_reports: peerPrefs.share_ptp_with_direct_reports,
+              }}
+              onAudienceChange={handlePtpAudienceChange}
+              content={ptpContent}
+              onContentChange={handlePtpContentChange}
+              hasDirectReports={hasDirectReports}
+            />
           </CardContent>
         </Card>
       )}
