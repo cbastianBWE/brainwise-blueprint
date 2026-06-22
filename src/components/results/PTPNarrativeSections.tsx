@@ -817,8 +817,8 @@ export function PTPProfileOverviewSection(props: PTPNarrativeSectionsProps) {
         </div>
       )}
 
-      {/* Action Plan */}
-      {!props.isCoachView && (actionPlan.length > 0 || loadingNarrativeSections) && (
+      {/* Suggested Next Steps — shown in both client and coach views */}
+      {(actionPlan.length > 0 || loadingNarrativeSections) && (
         <div>
           <h3 style={sectionHeadingStyle}>Suggested Next Steps</h3>
           <p style={subtitleStyle}>Three concrete things to focus on next.</p>
