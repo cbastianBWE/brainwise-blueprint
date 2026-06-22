@@ -72,6 +72,34 @@ export default function NotificationSettings() {
     }
   };
 
+  const handleSetAll = async (category: string, channel: NotificationChannel) => {
+    const rows = (data ?? []).filter((r) => (r.category ?? "Other") === category && r.user_configurable);
+    if (rows.length === 0) return;
+    queryClient.setQueryData<NotificationPreferenceRow[]>(PREFS_KEY, (curr) =>
+      curr
+        ? curr.map((r) =>
+            (r.category ?? "Other") === category && r.user_configurable
+              ? { ...r, effective_channel: channel }
+              : r,
+          )
+        : curr,
+    );
+    const results = await Promise.all(
+      rows.map((r) =>
+        supabase.rpc("set_notification_preference", {
+          p_notification_type: r.notification_type,
+          p_channel: channel,
+        }),
+      ),
+    );
+    if (results.some((res) => res.error)) {
+      refetch();
+      toast.error("Couldn't update some preferences");
+    } else {
+      toast.success("Preferences updated");
+    }
+  };
+
   return (
     <div className="max-w-2xl mx-auto p-4 md:p-6 space-y-4">
       <div>
