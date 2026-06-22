@@ -65,7 +65,10 @@ const PeerSharingOptIn = () => {
     navigate("/dashboard");
   };
 
-  const handleSkip = () => navigate("/dashboard");
+  const handleSkip = async () => {
+    await (supabase as any).rpc("sharing_preferences_upsert", {});
+    navigate("/dashboard");
+  };
 
   const visibleToggles = TOGGLES.filter(t => !t.directReportsOnly || hasDirectReports);
 

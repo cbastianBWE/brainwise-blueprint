@@ -85,13 +85,7 @@ const DemographicConsent = () => {
   };
 
   const routeNext = async () => {
-    if (!user) {
-      navigate("/dashboard");
-      return;
-    }
-    const { data: u } = await supabase.from("users").select("account_type").eq("id", user.id).single();
-    const isCorporate = ["corporate_employee", "company_admin", "org_admin", "brainwise_super_admin"].includes(u?.account_type ?? "");
-    navigate(isCorporate ? "/peer-sharing-optin" : "/dashboard");
+    navigate("/dashboard");
   };
 
   return (
