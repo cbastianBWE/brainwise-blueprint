@@ -9619,6 +9619,7 @@ export type Database = {
       sharing_preferences: {
         Row: {
           created_at: string
+          ptp_sharing_prompt_answered_at: string | null
           share_ptp_with_company_admin: boolean
           share_ptp_with_direct_reports: boolean
           share_ptp_with_organization: boolean
@@ -9629,6 +9630,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          ptp_sharing_prompt_answered_at?: string | null
           share_ptp_with_company_admin?: boolean
           share_ptp_with_direct_reports?: boolean
           share_ptp_with_organization?: boolean
@@ -9639,6 +9641,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          ptp_sharing_prompt_answered_at?: string | null
           share_ptp_with_company_admin?: boolean
           share_ptp_with_direct_reports?: boolean
           share_ptp_with_organization?: boolean
