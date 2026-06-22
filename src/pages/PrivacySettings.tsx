@@ -18,6 +18,13 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Shield, Lock, UserCircle, Pencil, MessageSquare, Users2, Inbox, Share2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import PtpSharingControls, {
+  PtpAudienceKey,
+  PtpAudienceContent,
+  PtpContentGroup,
+} from "@/components/sharing/PtpSharingControls";
+
+const DEFAULT_PTP_CONTENT: PtpAudienceContent = { scores: true, interpretation: true, impact: true };
 
 type PermissionLevel = "score_summary" | "full_results" | "full_results_with_history" | "participation_only";
 
@@ -97,6 +104,8 @@ export default function PrivacySettings() {
     share_ptp_with_direct_reports: false,
   });
   const [pendingReceivedCount, setPendingReceivedCount] = useState(0);
+  const [ptpMaster, setPtpMaster] = useState(true);
+  const [ptpContent, setPtpContent] = useState<Partial<Record<PtpAudienceKey, PtpAudienceContent>>>({});
 
   const [hasPtp, setHasPtp] = useState(false);
   const [shareEmail, setShareEmail] = useState("");
