@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { ShareWithCoachDialog } from "@/components/development-plan/ShareWithCoachDialog";
+import { PTP_DIMENSION_NAMES } from "@/lib/ptpDimensionColors";
 
 type Status = "not_started" | "in_progress" | "done" | "paused";
 
