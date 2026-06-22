@@ -287,7 +287,7 @@ export default function DevelopmentPlan() {
           {item.dimension_tags && item.dimension_tags.length > 0 && (
             <div className="flex flex-wrap gap-1.5">
               {item.dimension_tags.map((tag) => (
-                <span key={tag} className="text-xs px-2 py-0.5 rounded bg-muted text-muted-foreground">{tag}</span>
+                <span key={tag} className="text-xs px-2 py-0.5 rounded bg-muted text-muted-foreground">{PTP_DIMENSION_NAMES[tag] ?? tag}</span>
               ))}
             </div>
           )}
