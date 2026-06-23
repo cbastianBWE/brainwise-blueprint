@@ -554,7 +554,7 @@ function GenerationBanner({
       <Card>
         <CardContent className="p-4 text-sm">
           Generating section {total > 0 ? `${idx} of ${total}` : ""}
-          {current ? `: ${current.replaceAll("_", " ")}` : ""}…
+          {current ? `: ${current.replace(/_/g, " ")}` : ""}…
         </CardContent>
       </Card>
     );
