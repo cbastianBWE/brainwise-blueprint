@@ -231,6 +231,27 @@ export function AppSidebar() {
     return () => { cancelled = true; };
   }, [user]);
 
+  const PRIVILEGED_ROLES = new Set(["coach", "org_admin", "company_admin", "brainwise_super_admin"]);
+  const isPrivilegedForReports = PRIVILEGED_ROLES.has(profile?.account_type ?? "");
+  const [sharedReports, setSharedReports] = useState<{ team: boolean; paired: boolean }>({ team: false, paired: false });
+  useEffect(() => {
+    if (!user || isPrivilegedForReports) {
+      setSharedReports({ team: false, paired: false });
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await supabase.rpc("bw_list_my_reports");
+      if (cancelled || error) return;
+      const rows = (data as Array<{ kind: string }>) ?? [];
+      setSharedReports({
+        team: rows.some((r) => r.kind === "team"),
+        paired: rows.some((r) => r.kind === "paired"),
+      });
+    })();
+    return () => { cancelled = true; };
+  }, [user, isPrivilegedForReports]);
+
   const baseNavItems = getNavItems(profile);
   const navItems = (() => {
     let items = baseNavItems;
