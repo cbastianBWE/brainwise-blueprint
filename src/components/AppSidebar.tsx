@@ -267,6 +267,16 @@ export function AppSidebar() {
         items = copy;
       }
     }
+    if (!isPrivilegedForReports && (sharedReports.team || sharedReports.paired)) {
+      const sharedIdx = items.findIndex((i) => i.url === "/shared-with-me" || i.url === "/shared");
+      const insertAt = sharedIdx === -1 ? items.length : sharedIdx + 1;
+      const extras: NavItem[] = [];
+      if (sharedReports.team) extras.push({ title: "Team Reports Shared With Me", url: "/shared/team-reports", icon: UsersRound });
+      if (sharedReports.paired) extras.push({ title: "Paired Reports Shared With Me", url: "/shared/paired-reports", icon: UsersRound });
+      const copy = [...items];
+      copy.splice(insertAt, 0, ...extras);
+      items = copy;
+    }
     if (opsMembership) {
       if (opsModuleAccess.crm) items = [...items, ...crmNav];
       if (opsModuleAccess.ops) items = [...items, ...operationsNav];
