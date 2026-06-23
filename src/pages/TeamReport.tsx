@@ -109,7 +109,15 @@ function findFacet(items: TeamFacetResult[] | undefined, itemNumber: number) {
 
 export default function TeamReport() {
   const { teamProfileId } = useParams<{ teamProfileId: string }>();
-  const { loading, noAccess, profile, sections, status } = useTeamProfile(teamProfileId);
+  const {
+    loading,
+    noAccess,
+    profile,
+    sections,
+    status,
+    refetchSections,
+    refetchProfile,
+  } = useTeamProfile(teamProfileId);
   const { profile: userProfile } = useUserProfile();
 
   const canSeePrivileged =
