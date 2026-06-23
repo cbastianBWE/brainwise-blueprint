@@ -223,6 +223,7 @@ const App = () => (
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/my-results" element={<MyResults />} />
               <Route path="/team-report/:teamProfileId" element={<TeamReport />} />
+              <Route path="/paired-report/:pairedProfileId" element={<PairedReport />} />
               <Route path="/shared-results" element={<SharedResults />} />
               <Route path="/shared-with-me" element={<SharedWithMe />} />
               <Route path="/shared" element={<SharedHub />} />
