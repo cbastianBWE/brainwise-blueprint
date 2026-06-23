@@ -41,6 +41,7 @@ import DemographicForm from "./pages/DemographicForm";
 import Dashboard from "./pages/Dashboard";
 import MyResults from "./pages/MyResults";
 import TeamReport from "./pages/TeamReport";
+import PairedReport from "./pages/PairedReport";
 import DevelopmentPlan from "./pages/DevelopmentPlan";
 import SharedResults from "./pages/SharedResults";
 import SharedWithMe from "@/pages/SharedWithMe";
