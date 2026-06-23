@@ -43,6 +43,8 @@ import MyResults from "./pages/MyResults";
 import TeamReport from "./pages/TeamReport";
 import PairedReport from "./pages/PairedReport";
 import TeamPairedReports from "./pages/TeamPairedReports";
+import TeamReportsSharedWithMe from "./pages/TeamReportsSharedWithMe";
+import PairedReportsSharedWithMe from "./pages/PairedReportsSharedWithMe";
 import DevelopmentPlan from "./pages/DevelopmentPlan";
 import SharedResults from "./pages/SharedResults";
 import SharedWithMe from "@/pages/SharedWithMe";
@@ -226,6 +228,8 @@ const App = () => (
               <Route path="/team-report/:teamProfileId" element={<TeamReport />} />
               <Route path="/paired-report/:pairedProfileId" element={<PairedReport />} />
               <Route path="/team-paired-reports" element={<RoleGuard allowedRoles={["coach","org_admin","company_admin","brainwise_super_admin"]}><TeamPairedReports /></RoleGuard>} />
+              <Route path="/shared/team-reports" element={<TeamReportsSharedWithMe />} />
+              <Route path="/shared/paired-reports" element={<PairedReportsSharedWithMe />} />
               <Route path="/shared-results" element={<SharedResults />} />
               <Route path="/shared-with-me" element={<SharedWithMe />} />
               <Route path="/shared" element={<SharedHub />} />
