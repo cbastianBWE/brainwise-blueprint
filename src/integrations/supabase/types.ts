@@ -8196,6 +8196,131 @@ export type Database = {
           },
         ]
       }
+      paired_profile_sections: {
+        Row: {
+          content: string | null
+          id: string
+          narrative_status: string
+          paired_profile_id: string
+          section_type: string
+        }
+        Insert: {
+          content?: string | null
+          id?: string
+          narrative_status?: string
+          paired_profile_id: string
+          section_type: string
+        }
+        Update: {
+          content?: string | null
+          id?: string
+          narrative_status?: string
+          paired_profile_id?: string
+          section_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "paired_profile_sections_paired_profile_id_fkey"
+            columns: ["paired_profile_id"]
+            isOneToOne: false
+            referencedRelation: "paired_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      paired_profile_subjects: {
+        Row: {
+          pair_role: string
+          paired_profile_id: string
+          source_assessment_id: string
+          user_id: string
+        }
+        Insert: {
+          pair_role: string
+          paired_profile_id: string
+          source_assessment_id: string
+          user_id: string
+        }
+        Update: {
+          pair_role?: string
+          paired_profile_id?: string
+          source_assessment_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "paired_profile_subjects_paired_profile_id_fkey"
+            columns: ["paired_profile_id"]
+            isOneToOne: false
+            referencedRelation: "paired_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "paired_profile_subjects_source_assessment_id_fkey"
+            columns: ["source_assessment_id"]
+            isOneToOne: false
+            referencedRelation: "assessments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      paired_profiles: {
+        Row: {
+          computed_at: string
+          generated_by: string
+          generated_by_role: string
+          id: string
+          instrument_id: string
+          item_set: string
+          narrative_status: string
+          organization_id: string | null
+          paired_assessment_id: string | null
+          relationship_mode: string
+          structured: Json
+        }
+        Insert: {
+          computed_at?: string
+          generated_by: string
+          generated_by_role: string
+          id?: string
+          instrument_id?: string
+          item_set: string
+          narrative_status?: string
+          organization_id?: string | null
+          paired_assessment_id?: string | null
+          relationship_mode: string
+          structured: Json
+        }
+        Update: {
+          computed_at?: string
+          generated_by?: string
+          generated_by_role?: string
+          id?: string
+          instrument_id?: string
+          item_set?: string
+          narrative_status?: string
+          organization_id?: string | null
+          paired_assessment_id?: string | null
+          relationship_mode?: string
+          structured?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "paired_profiles_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "paired_profiles_paired_assessment_id_fkey"
+            columns: ["paired_assessment_id"]
+            isOneToOne: false
+            referencedRelation: "assessments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       peer_access_requests: {
         Row: {
           action_token: string | null
@@ -8508,6 +8633,44 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      ptp_facet_types: {
+        Row: {
+          floor_risk: string
+          item_id: string
+          item_number: number
+          resource_logic: string
+          routes: boolean
+          salience: string
+          salience_weight: number
+        }
+        Insert: {
+          floor_risk: string
+          item_id: string
+          item_number: number
+          resource_logic: string
+          routes: boolean
+          salience: string
+          salience_weight: number
+        }
+        Update: {
+          floor_risk?: string
+          item_id?: string
+          item_number?: number
+          resource_logic?: string
+          routes?: boolean
+          salience?: string
+          salience_weight?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ptp_facet_types_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["item_id"]
           },
         ]
       }
@@ -10206,6 +10369,128 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      team_profile_sections: {
+        Row: {
+          content: string | null
+          id: string
+          narrative_status: string
+          section_type: string
+          team_profile_id: string
+        }
+        Insert: {
+          content?: string | null
+          id?: string
+          narrative_status?: string
+          section_type: string
+          team_profile_id: string
+        }
+        Update: {
+          content?: string | null
+          id?: string
+          narrative_status?: string
+          section_type?: string
+          team_profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_profile_sections_team_profile_id_fkey"
+            columns: ["team_profile_id"]
+            isOneToOne: false
+            referencedRelation: "team_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      team_profile_subjects: {
+        Row: {
+          source_assessment_id: string
+          team_profile_id: string
+          user_id: string
+        }
+        Insert: {
+          source_assessment_id: string
+          team_profile_id: string
+          user_id: string
+        }
+        Update: {
+          source_assessment_id?: string
+          team_profile_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_profile_subjects_source_assessment_id_fkey"
+            columns: ["source_assessment_id"]
+            isOneToOne: false
+            referencedRelation: "assessments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_profile_subjects_team_profile_id_fkey"
+            columns: ["team_profile_id"]
+            isOneToOne: false
+            referencedRelation: "team_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      team_profiles: {
+        Row: {
+          computed_at: string
+          generated_by: string
+          generated_by_role: string
+          id: string
+          instrument_id: string
+          item_set: string
+          member_count: number
+          narrative_status: string
+          organization_id: string | null
+          structured: Json
+          team_id: string | null
+        }
+        Insert: {
+          computed_at?: string
+          generated_by: string
+          generated_by_role: string
+          id?: string
+          instrument_id?: string
+          item_set?: string
+          member_count: number
+          narrative_status?: string
+          organization_id?: string | null
+          structured: Json
+          team_id?: string | null
+        }
+        Update: {
+          computed_at?: string
+          generated_by?: string
+          generated_by_role?: string
+          id?: string
+          instrument_id?: string
+          item_set?: string
+          member_count?: number
+          narrative_status?: string
+          organization_id?: string | null
+          structured?: Json
+          team_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_profiles_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_profiles_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
             referencedColumns: ["id"]
           },
         ]
@@ -12048,6 +12333,26 @@ export type Database = {
           success: boolean
         }[]
       }
+      bw_can_generate_paired: {
+        Args: { p_a: string; p_b: string; p_caller: string; p_mode: string }
+        Returns: boolean
+      }
+      bw_can_generate_profile_for: {
+        Args: { p_caller: string; p_subject: string }
+        Returns: boolean
+      }
+      bw_can_generate_team: {
+        Args: { p_caller: string; p_subjects: string[] }
+        Returns: boolean
+      }
+      bw_can_read_paired_profile: {
+        Args: { p_profile: string }
+        Returns: boolean
+      }
+      bw_can_read_team_profile: {
+        Args: { p_profile: string }
+        Returns: boolean
+      }
       calculate_nai_readiness_index: {
         Args: { p_dimension_scores: Json }
         Returns: number
@@ -13826,6 +14131,23 @@ export type Database = {
       pseudonymize_user: {
         Args: { p_reason?: string; p_user_id: string }
         Returns: number
+      }
+      ptp_profile_facet_rows: {
+        Args: { p_item_set: string; p_user_ids: string[] }
+        Returns: {
+          context_type: string
+          corrected: number
+          domain: string
+          facet_name: string
+          floor_risk: string
+          item_number: number
+          resource_logic: string
+          routes: boolean
+          salience: string
+          salience_weight: number
+          source_assessment_id: string
+          user_id: string
+        }[]
       }
       ptp_sharing_content_upsert: {
         Args: { p_rows?: Json; p_share_ptp_full?: boolean }
