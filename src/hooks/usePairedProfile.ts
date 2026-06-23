@@ -45,6 +45,8 @@ interface UsePairedProfileResult {
   sections: PairedSectionsMap;
   subjects: PairedSubject[];
   status: PairedNarrativeStatus | null;
+  refetchSections: () => Promise<void>;
+  refetchProfile: () => Promise<void>;
 }
 
 export function usePairedProfile(pairedProfileId: string | undefined): UsePairedProfileResult {
@@ -54,47 +56,46 @@ export function usePairedProfile(pairedProfileId: string | undefined): UsePaired
   const [sections, setSections] = useState<PairedSectionsMap>({});
   const [subjects, setSubjects] = useState<PairedSubject[]>([]);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const cancelledRef = useRef(false);
 
-  useEffect(() => {
-    if (!pairedProfileId) {
-      setLoading(false);
-      return;
-    }
-    let cancelled = false;
-
-    const fetchSections = async () => {
-      const { data } = await supabase
-        .from("paired_profile_sections" as never)
-        .select("section_type, content")
-        .eq("paired_profile_id", pairedProfileId);
-      if (cancelled) return;
-      const map: PairedSectionsMap = {};
-      for (const row of (data ?? []) as Array<{ section_type: string; content: string }>) {
-        try {
-          map[row.section_type] = typeof row.content === "string" ? JSON.parse(row.content) : row.content;
-        } catch {
-          // skip unparseable
-        }
+  const fetchSections = useCallback(async () => {
+    if (!pairedProfileId) return;
+    const { data } = await supabase
+      .from("paired_profile_sections" as never)
+      .select("section_type, content")
+      .eq("paired_profile_id", pairedProfileId);
+    if (cancelledRef.current) return;
+    const map: PairedSectionsMap = {};
+    for (const row of (data ?? []) as Array<{ section_type: string; content: string }>) {
+      try {
+        map[row.section_type] =
+          typeof row.content === "string" ? JSON.parse(row.content) : row.content;
+      } catch {
+        // skip unparseable
       }
-      setSections(map);
-    };
+    }
+    setSections(map);
+  }, [pairedProfileId]);
 
-    const fetchSubjects = async () => {
-      const { data } = await supabase
-        .from("paired_profile_subjects" as never)
-        .select("pair_role, user_id")
-        .eq("paired_profile_id", pairedProfileId);
-      if (cancelled) return;
-      setSubjects(((data ?? []) as PairedSubject[]));
-    };
+  const fetchSubjects = useCallback(async () => {
+    if (!pairedProfileId) return;
+    const { data } = await supabase
+      .from("paired_profile_subjects" as never)
+      .select("pair_role, user_id")
+      .eq("paired_profile_id", pairedProfileId);
+    if (cancelledRef.current) return;
+    setSubjects(((data ?? []) as PairedSubject[]));
+  }, [pairedProfileId]);
 
-    const fetchProfile = async (initial: boolean) => {
+  const fetchProfile = useCallback(
+    async (initial: boolean) => {
+      if (!pairedProfileId) return;
       const { data, error } = await supabase
         .from("paired_profiles" as never)
         .select("id, structured, relationship_mode, narrative_status, item_set")
         .eq("id", pairedProfileId)
         .maybeSingle();
-      if (cancelled) return;
+      if (cancelledRef.current) return;
       if (error || !data) {
         if (initial) setNoAccess(true);
         setLoading(false);
@@ -105,23 +106,25 @@ export function usePairedProfile(pairedProfileId: string | undefined): UsePaired
       setNoAccess(false);
       if (initial) {
         await fetchSubjects();
-      }
-      if (initial || row.narrative_status === "complete") {
         await fetchSections();
       }
       setLoading(false);
-      if (row.narrative_status === "generating" || row.narrative_status === "pending") {
-        timerRef.current = setTimeout(() => fetchProfile(false), 4000);
-      }
-    };
+    },
+    [pairedProfileId, fetchSections, fetchSubjects],
+  );
 
-    fetchProfile(true);
-
+  useEffect(() => {
+    if (!pairedProfileId) {
+      setLoading(false);
+      return;
+    }
+    cancelledRef.current = false;
+    void fetchProfile(true);
     return () => {
-      cancelled = true;
+      cancelledRef.current = true;
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [pairedProfileId]);
+  }, [pairedProfileId, fetchProfile]);
 
   return {
     loading,
@@ -131,5 +134,7 @@ export function usePairedProfile(pairedProfileId: string | undefined): UsePaired
     sections,
     subjects,
     status: profile?.narrative_status ?? null,
+    refetchSections: fetchSections,
+    refetchProfile: () => fetchProfile(false),
   };
 }
