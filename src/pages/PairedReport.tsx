@@ -27,6 +27,8 @@ import { PTP_DIMENSION_COLORS } from "@/lib/ptpDimensionColors";
 import { PtpDimensionLegend } from "@/components/results/PtpDimensionLegend";
 import { usePairedProfile, type PairedFacetResult } from "@/hooks/usePairedProfile";
 import { useUserProfile } from "@/hooks/useUserProfile";
+import { useNarrativeGenerator } from "@/hooks/useNarrativeGenerator";
+import { Button } from "@/components/ui/button";
 
 const DOMAIN_TO_DIM: Record<string, string> = {
   Protection: "DIM-PTP-01",
