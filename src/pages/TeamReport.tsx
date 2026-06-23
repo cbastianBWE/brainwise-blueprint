@@ -518,8 +518,60 @@ export default function TeamReport() {
               </CardContent>
             </Card>
           )}
-        </>
-      )}
     </div>
   );
+}
+
+function GenerationBanner({
+  status,
+  running,
+  expected,
+  done,
+  current,
+  failed,
+  onRetry,
+  canDrive,
+}: {
+  status: string | null;
+  running: boolean;
+  expected: string[];
+  done: string[];
+  current: string | null;
+  failed: string[];
+  onRetry: () => void;
+  canDrive: boolean;
+}) {
+  if (status === "complete") return null;
+  if (!canDrive) {
+    return (
+      <StatusCard title="This report is still generating. Please check back shortly." />
+    );
+  }
+  if (running) {
+    const total = expected.length || 0;
+    const idx = Math.min(done.length + 1, total);
+    return (
+      <Card>
+        <CardContent className="p-4 text-sm">
+          Generating section {total > 0 ? `${idx} of ${total}` : ""}
+          {current ? `: ${current.replaceAll("_", " ")}` : ""}…
+        </CardContent>
+      </Card>
+    );
+  }
+  if (failed.length > 0) {
+    return (
+      <Card>
+        <CardContent className="p-4 text-sm flex items-center justify-between gap-4">
+          <span>
+            Some sections didn't finish ({failed.join(", ")}). You can retry the missing ones.
+          </span>
+          <Button size="sm" variant="outline" onClick={onRetry}>
+            Retry
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
+  return null;
 }
