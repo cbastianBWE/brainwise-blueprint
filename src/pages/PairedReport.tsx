@@ -268,19 +268,18 @@ export default function PairedReport() {
         <p className="text-muted-foreground">Person A and Person B</p>
       </div>
 
-      {status === "pending" && (
-        <StatusCard title="This paired report has not been generated yet." />
-      )}
-      {status === "generating" && (
-        <StatusCard title="Generating this paired report. This usually takes 30 to 90 seconds." />
-      )}
-      {status === "error" && (
-        <StatusCard title="Something went wrong generating this report." />
-      )}
+      <GenerationBanner
+        status={status}
+        running={generator.running}
+        expected={generator.expected}
+        done={generator.done}
+        current={generator.current}
+        failed={generator.failed}
+        onRetry={generator.retry}
+        canDrive={canSeePrivileged}
+      />
 
-      {status === "complete" && (
-        <>
-          {/* pair_in_three */}
+      {/* pair_in_three */}
           {Array.isArray(pairInThree) && pairInThree.length > 0 && (
             <Card>
               <CardHeader>
