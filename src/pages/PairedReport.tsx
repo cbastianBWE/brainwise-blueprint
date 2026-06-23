@@ -183,13 +183,33 @@ function modeTitle(mode: string | null): string {
 
 export default function PairedReport() {
   const { pairedProfileId } = useParams<{ pairedProfileId: string }>();
-  const { loading, noAccess, profile, mode, sections, status } = usePairedProfile(pairedProfileId);
+  const {
+    loading,
+    noAccess,
+    profile,
+    mode,
+    sections,
+    status,
+    refetchSections,
+    refetchProfile,
+  } = usePairedProfile(pairedProfileId);
   const { profile: userProfile } = useUserProfile();
 
   const canSeePrivileged =
     !!userProfile &&
     (userProfile.is_practitioner_coach ||
       PRIVILEGED_ACCOUNT_TYPES.has(userProfile.account_type ?? ""));
+
+  const generator = useNarrativeGenerator({
+    kind: "paired",
+    id: pairedProfileId,
+    status,
+    enabled: canSeePrivileged,
+    onSectionDone: async () => {
+      await refetchSections();
+      await refetchProfile();
+    },
+  });
 
   const { radarData, dimensionIds } = useMemo(() => {
     const dims = profile?.structured?.dimensions ?? {};
