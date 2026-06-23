@@ -42,6 +42,8 @@ interface UseTeamProfileResult {
   profile: TeamProfileRow | null;
   sections: TeamSectionsMap;
   status: TeamNarrativeStatus | null;
+  refetchSections: () => Promise<void>;
+  refetchProfile: () => Promise<void>;
 }
 
 export function useTeamProfile(teamProfileId: string | undefined): UseTeamProfileResult {
