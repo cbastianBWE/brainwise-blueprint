@@ -12353,6 +12353,27 @@ export type Database = {
         Args: { p_profile: string }
         Returns: boolean
       }
+      bw_list_my_reports: {
+        Args: never
+        Returns: {
+          computed_at: string
+          kind: string
+          member_count: number
+          narrative_status: string
+          relationship_mode: string
+          report_id: string
+          subjects: string
+        }[]
+      }
+      bw_list_report_subjects: {
+        Args: { p_search?: string }
+        Returns: {
+          full_name: string
+          last_completed_at: string
+          organization_id: string
+          user_id: string
+        }[]
+      }
       calculate_nai_readiness_index: {
         Args: { p_dimension_scores: Json }
         Returns: number
