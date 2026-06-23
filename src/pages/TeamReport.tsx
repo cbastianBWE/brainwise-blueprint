@@ -189,19 +189,18 @@ export default function TeamReport() {
         </p>
       </div>
 
-      {status === "pending" && (
-        <StatusCard title="This team report has not been generated yet." />
-      )}
-      {status === "generating" && (
-        <StatusCard title="Generating this team report. This usually takes 30 to 90 seconds." />
-      )}
-      {status === "error" && (
-        <StatusCard title="Something went wrong generating this report." />
-      )}
+      <GenerationBanner
+        status={status}
+        running={generator.running}
+        expected={generator.expected}
+        done={generator.done}
+        current={generator.current}
+        failed={generator.failed}
+        onRetry={generator.retry}
+        canDrive={canSeePrivileged}
+      />
 
-      {status === "complete" && (
-        <>
-          {/* team_in_three */}
+      {/* team_in_three */}
           {Array.isArray(teamInThree) && teamInThree.length > 0 && (
             <Card>
               <CardHeader>
