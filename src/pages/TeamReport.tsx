@@ -127,6 +127,17 @@ export default function TeamReport() {
     (userProfile.is_practitioner_coach ||
       PRIVILEGED_ACCOUNT_TYPES.has(userProfile.account_type ?? ""));
 
+  const generator = useNarrativeGenerator({
+    kind: "team",
+    id: teamProfileId,
+    status,
+    enabled: canSeePrivileged,
+    onSectionDone: async () => {
+      await refetchSections();
+      await refetchProfile();
+    },
+  });
+
   const radarData = useMemo(() => {
     const dims = profile?.structured?.dimensions ?? {};
     return ["Protection", "Participation", "Prediction"].map((d) => ({
