@@ -70,6 +70,7 @@ const coachNav: NavItem[] = [
   { title: "My Development Plan", url: "/development-plan", icon: Target },
   { title: "Shared With Me", url: "/shared-with-me", icon: Inbox },
   { title: "My Clients", url: "/coach/clients", icon: Users },
+  { title: "Team & Paired Reports", url: "/team-paired-reports", icon: UsersRound },
   
   { title: "Orders & Invoices", url: "/coach/invoices", icon: Receipt },
   { title: "AI Chat", url: "/ai-chat", icon: MessageSquare },
@@ -87,6 +88,7 @@ const adminNav: NavItem[] = [
   { title: "Shared", url: "/shared", icon: Inbox },
   { title: "Assessment", url: "/assessment", icon: ClipboardList },
   { title: "Users", url: "/admin/users", icon: Users },
+  { title: "Team & Paired Reports", url: "/team-paired-reports", icon: UsersRound },
   { title: "Features", url: "/company/features", icon: ShieldCheck },
   
   { title: "My Learning", url: "/my-learning", icon: GraduationCap },
@@ -101,6 +103,7 @@ const superAdminNav: NavItem[] = [
   { title: "My Development Plan", url: "/development-plan", icon: Target },
   { title: "Shared With Me", url: "/shared-with-me", icon: Inbox },
   { title: "Members", url: "/super-admin/members", icon: Users },
+  { title: "Team & Paired Reports", url: "/team-paired-reports", icon: UsersRound },
   { title: "Global Features & Settings", url: "/super-admin/features", icon: SlidersHorizontal },
   
   { title: "Platform Health", url: "/super-admin/health", icon: Heart },
