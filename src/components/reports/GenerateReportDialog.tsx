@@ -149,7 +149,6 @@ export default function GenerateReportDialog({ open, onOpenChange, allowedModes,
           return;
         }
         const id = (data as { team_profile_id: string }).team_profile_id;
-        supabase.functions.invoke("generate-team-narrative", { body: { team_profile_id: id } });
         onGenerated();
         onOpenChange(false);
         navigate(`/team-report/${id}`);
@@ -164,7 +163,6 @@ export default function GenerateReportDialog({ open, onOpenChange, allowedModes,
           return;
         }
         const id = (data as { paired_profile_id: string }).paired_profile_id;
-        supabase.functions.invoke("generate-paired-narrative", { body: { paired_profile_id: id } });
         onGenerated();
         onOpenChange(false);
         navigate(`/paired-report/${id}`);

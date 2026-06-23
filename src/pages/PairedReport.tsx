@@ -27,6 +27,8 @@ import { PTP_DIMENSION_COLORS } from "@/lib/ptpDimensionColors";
 import { PtpDimensionLegend } from "@/components/results/PtpDimensionLegend";
 import { usePairedProfile, type PairedFacetResult } from "@/hooks/usePairedProfile";
 import { useUserProfile } from "@/hooks/useUserProfile";
+import { useNarrativeGenerator } from "@/hooks/useNarrativeGenerator";
+import { Button } from "@/components/ui/button";
 
 const DOMAIN_TO_DIM: Record<string, string> = {
   Protection: "DIM-PTP-01",
@@ -181,13 +183,33 @@ function modeTitle(mode: string | null): string {
 
 export default function PairedReport() {
   const { pairedProfileId } = useParams<{ pairedProfileId: string }>();
-  const { loading, noAccess, profile, mode, sections, status } = usePairedProfile(pairedProfileId);
+  const {
+    loading,
+    noAccess,
+    profile,
+    mode,
+    sections,
+    status,
+    refetchSections,
+    refetchProfile,
+  } = usePairedProfile(pairedProfileId);
   const { profile: userProfile } = useUserProfile();
 
   const canSeePrivileged =
     !!userProfile &&
     (userProfile.is_practitioner_coach ||
       PRIVILEGED_ACCOUNT_TYPES.has(userProfile.account_type ?? ""));
+
+  const generator = useNarrativeGenerator({
+    kind: "paired",
+    id: pairedProfileId,
+    status,
+    enabled: canSeePrivileged,
+    onSectionDone: async () => {
+      await refetchSections();
+      await refetchProfile();
+    },
+  });
 
   const { radarData, dimensionIds } = useMemo(() => {
     const dims = profile?.structured?.dimensions ?? {};
@@ -246,19 +268,18 @@ export default function PairedReport() {
         <p className="text-muted-foreground">Person A and Person B</p>
       </div>
 
-      {status === "pending" && (
-        <StatusCard title="This paired report has not been generated yet." />
-      )}
-      {status === "generating" && (
-        <StatusCard title="Generating this paired report. This usually takes 30 to 90 seconds." />
-      )}
-      {status === "error" && (
-        <StatusCard title="Something went wrong generating this report." />
-      )}
+      <GenerationBanner
+        status={status}
+        running={generator.running}
+        expected={generator.expected}
+        done={generator.done}
+        current={generator.current}
+        failed={generator.failed}
+        onRetry={generator.retry}
+        canDrive={canSeePrivileged}
+      />
 
-      {status === "complete" && (
-        <>
-          {/* pair_in_three */}
+      {/* pair_in_three */}
           {Array.isArray(pairInThree) && pairInThree.length > 0 && (
             <Card>
               <CardHeader>
@@ -652,8 +673,60 @@ export default function PairedReport() {
               </CardContent>
             </Card>
           )}
-        </>
-      )}
     </div>
   );
+}
+
+function GenerationBanner({
+  status,
+  running,
+  expected,
+  done,
+  current,
+  failed,
+  onRetry,
+  canDrive,
+}: {
+  status: string | null;
+  running: boolean;
+  expected: string[];
+  done: string[];
+  current: string | null;
+  failed: string[];
+  onRetry: () => void;
+  canDrive: boolean;
+}) {
+  if (status === "complete") return null;
+  if (!canDrive) {
+    return (
+      <StatusCard title="This report is still generating. Please check back shortly." />
+    );
+  }
+  if (running) {
+    const total = expected.length || 0;
+    const idx = Math.min(done.length + 1, total);
+    return (
+      <Card>
+        <CardContent className="p-4 text-sm">
+          Generating section {total > 0 ? `${idx} of ${total}` : ""}
+          {current ? `: ${current.replace(/_/g, " ")}` : ""}…
+        </CardContent>
+      </Card>
+    );
+  }
+  if (failed.length > 0) {
+    return (
+      <Card>
+        <CardContent className="p-4 text-sm flex items-center justify-between gap-4">
+          <span>
+            Some sections didn't finish ({failed.join(", ")}). You can retry the missing ones.
+          </span>
+          <Button size="sm" variant="outline" onClick={onRetry}>
+            Retry
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
+  return null;
 }

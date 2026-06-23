@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 export type TeamNarrativeStatus = "pending" | "generating" | "complete" | "error";
@@ -42,6 +42,8 @@ interface UseTeamProfileResult {
   profile: TeamProfileRow | null;
   sections: TeamSectionsMap;
   status: TeamNarrativeStatus | null;
+  refetchSections: () => Promise<void>;
+  refetchProfile: () => Promise<void>;
 }
 
 export function useTeamProfile(teamProfileId: string | undefined): UseTeamProfileResult {
@@ -50,38 +52,36 @@ export function useTeamProfile(teamProfileId: string | undefined): UseTeamProfil
   const [profile, setProfile] = useState<TeamProfileRow | null>(null);
   const [sections, setSections] = useState<TeamSectionsMap>({});
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const cancelledRef = useRef(false);
 
-  useEffect(() => {
-    if (!teamProfileId) {
-      setLoading(false);
-      return;
-    }
-    let cancelled = false;
-
-    const fetchSections = async () => {
-      const { data } = await supabase
-        .from("team_profile_sections" as never)
-        .select("section_type, content")
-        .eq("team_profile_id", teamProfileId);
-      if (cancelled) return;
-      const map: TeamSectionsMap = {};
-      for (const row of (data ?? []) as Array<{ section_type: string; content: string }>) {
-        try {
-          map[row.section_type] = typeof row.content === "string" ? JSON.parse(row.content) : row.content;
-        } catch {
-          // skip unparseable
-        }
+  const fetchSections = useCallback(async () => {
+    if (!teamProfileId) return;
+    const { data } = await supabase
+      .from("team_profile_sections" as never)
+      .select("section_type, content")
+      .eq("team_profile_id", teamProfileId);
+    if (cancelledRef.current) return;
+    const map: TeamSectionsMap = {};
+    for (const row of (data ?? []) as Array<{ section_type: string; content: string }>) {
+      try {
+        map[row.section_type] =
+          typeof row.content === "string" ? JSON.parse(row.content) : row.content;
+      } catch {
+        // skip unparseable
       }
-      setSections(map);
-    };
+    }
+    setSections(map);
+  }, [teamProfileId]);
 
-    const fetchProfile = async (initial: boolean) => {
+  const fetchProfile = useCallback(
+    async (initial: boolean) => {
+      if (!teamProfileId) return;
       const { data, error } = await supabase
         .from("team_profiles" as never)
         .select("id, structured, narrative_status, member_count, item_set, team_id, generated_by_role")
         .eq("id", teamProfileId)
         .maybeSingle();
-      if (cancelled) return;
+      if (cancelledRef.current) return;
       if (error || !data) {
         if (initial) setNoAccess(true);
         setLoading(false);
@@ -90,22 +90,26 @@ export function useTeamProfile(teamProfileId: string | undefined): UseTeamProfil
       const row = data as unknown as TeamProfileRow;
       setProfile(row);
       setNoAccess(false);
-      if (initial || row.narrative_status === "complete") {
+      if (initial) {
         await fetchSections();
       }
       setLoading(false);
-      if (row.narrative_status === "generating" || row.narrative_status === "pending") {
-        timerRef.current = setTimeout(() => fetchProfile(false), 4000);
-      }
-    };
+    },
+    [teamProfileId, fetchSections],
+  );
 
-    fetchProfile(true);
-
+  useEffect(() => {
+    if (!teamProfileId) {
+      setLoading(false);
+      return;
+    }
+    cancelledRef.current = false;
+    void fetchProfile(true);
     return () => {
-      cancelled = true;
+      cancelledRef.current = true;
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [teamProfileId]);
+  }, [teamProfileId, fetchProfile]);
 
   return {
     loading,
@@ -113,5 +117,7 @@ export function useTeamProfile(teamProfileId: string | undefined): UseTeamProfil
     profile,
     sections,
     status: profile?.narrative_status ?? null,
+    refetchSections: fetchSections,
+    refetchProfile: () => fetchProfile(false),
   };
 }
