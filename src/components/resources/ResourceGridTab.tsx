@@ -14,6 +14,7 @@ import type { Resource, ResourceFolder, ResourceTab, UpgradeEntityType } from ".
 interface ResourceGridTabProps {
   tab: ResourceTab;
   emptyStateText: string;
+  showAllAtRoot?: boolean;
 }
 
 const GROUP_ORDER: Resource["content_type"][] = [
@@ -42,7 +43,7 @@ function groupByContentType(items: Resource[]): Map<Resource["content_type"], Re
   return map;
 }
 
-export default function ResourceGridTab({ tab, emptyStateText }: ResourceGridTabProps) {
+export default function ResourceGridTab({ tab, emptyStateText, showAllAtRoot = false }: ResourceGridTabProps) {
   const navigate = useNavigate();
   const { toast } = useToast();
   const logAccess = useResourceAccessLog();
@@ -139,9 +140,12 @@ export default function ResourceGridTab({ tab, emptyStateText }: ResourceGridTab
   }, [currentFolderId, folderById]);
 
   const levelResources = useMemo(
-    () => resources.filter((r) => effectiveFolderId(r) === currentFolderId),
+    () =>
+      showAllAtRoot && currentFolderId === null
+        ? resources
+        : resources.filter((r) => effectiveFolderId(r) === currentFolderId),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [resources, currentFolderId, folderById],
+    [resources, currentFolderId, folderById, showAllAtRoot],
   );
   const levelGrouped = useMemo(() => groupByContentType(levelResources), [levelResources]);
   const levelSubfolders = childrenOf(currentFolderId);
