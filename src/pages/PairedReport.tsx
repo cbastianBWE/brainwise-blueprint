@@ -137,8 +137,8 @@ function PairGlyph({ a, b, onOpen }: { a: number; b: number; onOpen: () => void 
 
 /* ---------- enlarge modal (labelled A and B) ---------- */
 function PairDistModal({
-  open, onClose, a, b, title,
-}: { open: boolean; onClose: () => void; a: number; b: number; title: string }) {
+  open, onClose, a, b, title, labA, labB,
+}: { open: boolean; onClose: () => void; a: number; b: number; title: string; labA: string; labB: string }) {
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
@@ -148,8 +148,8 @@ function PairDistModal({
   if (!open) return null;
   const W = 600, H = 200, L = 60, Rr = W - 30, span = Rr - L, base = H - 48;
   const pts: { lab: string; v: number; c: string }[] = [
-    { lab: "Person A", v: a, c: COLOR_A },
-    { lab: "Person B", v: b, c: COLOR_B },
+    { lab: labA, v: a, c: COLOR_A },
+    { lab: labB, v: b, c: COLOR_B },
   ];
   return (
     <div
@@ -167,9 +167,9 @@ function PairDistModal({
           position: "absolute", top: 12, right: 16, border: 0, background: "none",
           fontSize: 24, lineHeight: 1, color: GRAY, cursor: "pointer",
         }}>×</button>
-        <h3 style={{ margin: "0 0 2px", fontSize: 17, color: NAVY }}>{title}</h3>
+        <h3 style={{ margin: "0 0 2px", fontSize: 18, color: NAVY }}>{title}</h3>
         <div style={{ fontSize: 13, color: GRAY, marginBottom: 14 }}>
-          Person A and Person B. Hover a dot to see its score.
+          {labA} and {labB}. Hover a dot to see its score.
         </div>
         <svg viewBox={`0 0 ${W} ${H}`} width="100%" height={H}>
           <line x1={L} y1={base} x2={Rr} y2={base} stroke={LINE_STRONG} />
