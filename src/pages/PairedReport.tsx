@@ -203,7 +203,7 @@ function PairDistModal({
 }
 
 /* ---------- Radial (polygon, 3 or 5 dims) ---------- */
-function Radial({ dims }: { dims: { name: string; a: number; b: number; color: string }[] }) {
+function Radial({ dims, labA, labB }: { dims: { name: string; a: number; b: number; color: string }[]; labA: string; labB: string }) {
   const W = 380, H = 360, cx = 190, cy = 180, R = 122, N = dims.length;
   if (N < 3) return null;
   const ang = (i: number) => (-90 + i * (360 / N)) * Math.PI / 180;
