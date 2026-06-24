@@ -716,16 +716,16 @@ export default function TeamReport() {
       {Array.isArray(teamInThree) && teamInThree.length > 0 && (
         <div style={{ maxWidth: 1040, margin: "-78px auto 0", padding: "0 20px" }}>
           <div style={{ background: CARD_BG, border: `1px solid ${LINE}`, borderRadius: 16, boxShadow: "0 1px 2px rgba(2,31,54,.06),0 8px 24px rgba(2,31,54,.06)" }}>
-            <div style={{ padding: "16px 18px", borderBottom: `1px solid ${LINE}`, fontSize: 12, letterSpacing: ".1em", textTransform: "uppercase", color: MUTED, fontWeight: 700 }}>
+            <div style={{ padding: "16px 18px", borderBottom: `1px solid ${LINE}`, fontSize: 13, letterSpacing: ".1em", textTransform: "uppercase", color: GRAY, fontWeight: 700 }}>
               Your team in three · the whole report in 30 seconds
             </div>
             {teamInThree.map((it, i) => (
               <div key={i} style={{ display: "grid", gridTemplateColumns: "54px 1fr", gap: 8, padding: 18, borderBottom: i === teamInThree.length - 1 ? "none" : `1px solid ${LINE}` }}>
                 <div style={{ fontSize: 34, fontWeight: 800, color: ORANGE, lineHeight: 1 }}>{i + 1}</div>
                 <div>
-                  <div style={{ fontWeight: 800, color: NAVY, marginBottom: 4 }}>{it.headline}</div>
-                  <div style={{ color: "#6D6875" }}>{it.detail}</div>
-                  <div style={{ color: TEAL, fontWeight: 700, marginTop: 8 }}>{it.action}</div>
+                  <div style={{ fontWeight: 800, color: NAVY, marginBottom: 6, fontSize: 18 }}>{it.headline}</div>
+                  <Paras text={it.detail} />
+                  <div style={{ color: TEAL, fontWeight: 700, marginTop: 10, fontSize: 16 }}>{it.action}</div>
                 </div>
               </div>
             ))}
