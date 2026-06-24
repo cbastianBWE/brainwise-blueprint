@@ -99,7 +99,7 @@ export function MuxVideoUploadField({
     setState({ kind: "uploading", filename: file.name, progress: 0 });
 
     const { data, error } = await supabase.functions.invoke("mux-create-upload", {
-      body: { content_item_id: contentItemId },
+      body: resourceId ? { resource_id: resourceId } : { content_item_id: contentItemId },
     });
     if (error || !(data as any)?.upload_url) {
       setState({
