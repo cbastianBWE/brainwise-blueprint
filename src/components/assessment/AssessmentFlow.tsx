@@ -266,34 +266,19 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
 
       setResponses((prev) => ({ ...prev, [itemId]: { numeric, text, readiness: readinessLevel } }));
 
-      // Upsert response
-      const { data: existing } = await supabase
+      const { error } = await supabase
         .from("assessment_responses")
-        .select("id")
-        .eq("assessment_id", assessmentId)
-        .eq("item_id", itemId)
-        .limit(1);
-
-      if (existing && existing.length > 0) {
-        await supabase
-          .from("assessment_responses")
-          .update({
+        .upsert(
+          {
+            assessment_id: assessmentId,
+            item_id: itemId,
             response_value_numeric: numeric,
             response_value_text: text,
             is_reverse_scored: item.reverse_scored,
             readiness_level: readinessLevel,
-          })
-          .eq("id", existing[0].id);
-      } else {
-        await supabase.from("assessment_responses").insert({
-          assessment_id: assessmentId,
-          item_id: itemId,
-          response_value_numeric: numeric,
-          response_value_text: text,
-          is_reverse_scored: item.reverse_scored,
-          readiness_level: readinessLevel,
-        });
-      }
+          },
+          { onConflict: "assessment_id,item_id" }
+        );
 
       showSavedIndicator();
     },
