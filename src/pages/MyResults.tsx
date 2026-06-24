@@ -1472,6 +1472,7 @@ export default function MyResults({ isCoachView = false, adminView = false, targ
                 enabled={allowHighlighting}
               >
               <PTPNarrativeProvider {...ptpNarrativeProps}>
+                <PTPReportProgressOverlay />
                 <section>
                   <PTPProfileOverviewSection {...ptpNarrativeProps} />
                 </section>
