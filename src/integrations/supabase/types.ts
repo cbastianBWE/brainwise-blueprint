@@ -12377,6 +12377,13 @@ export type Database = {
           user_id: string
         }[]
       }
+      bw_paired_profile_subjects: {
+        Args: { p_profile: string }
+        Returns: {
+          full_name: string
+          pair_role: string
+        }[]
+      }
       bw_set_report_label: {
         Args: { p_label: string; p_profile: string }
         Returns: undefined
