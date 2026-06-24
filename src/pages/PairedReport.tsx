@@ -941,7 +941,7 @@ export default function PairedReport() {
                 </div>
                 <div style={pbox}>
                   <div style={boxLabel}>Promote the healthy kind</div>
-                  <Paras text={conflict.promote_healthy} style={{ color: GRAY }} />
+                  <Bullets text={conflict.promote_healthy} />
                 </div>
               </div>
             </div>
