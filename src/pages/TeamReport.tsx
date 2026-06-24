@@ -85,6 +85,38 @@ interface CoachSection {
   debrief_prompts: string[];
 }
 
+/* ---------- prose helpers ---------- */
+function splitParas(text: string): string[] {
+  if (!text) return [];
+  const t = text.trim();
+  if (/\n\s*\n/.test(t)) return t.split(/\n{2,}/).map((s) => s.trim()).filter(Boolean);
+  // Sentence split nearest to midpoint
+  const sentences = t.match(/[^.!?]+[.!?]+(\s+|$)|[^.!?]+$/g)?.map((s) => s.trim()).filter(Boolean) ?? [t];
+  if (sentences.length < 2) return [t];
+  const total = t.length;
+  let acc = 0, bestIdx = 0, bestDiff = Infinity;
+  for (let i = 0; i < sentences.length - 1; i++) {
+    acc += sentences[i].length + 1;
+    const diff = Math.abs(acc - total / 2);
+    if (diff < bestDiff) { bestDiff = diff; bestIdx = i; }
+  }
+  const first = sentences.slice(0, bestIdx + 1).join(" ");
+  const second = sentences.slice(bestIdx + 1).join(" ");
+  return [first, second].filter(Boolean);
+}
+function Paras({ text, style }: { text: string; style?: React.CSSProperties }) {
+  const paras = splitParas(text);
+  if (paras.length === 0) return null;
+  const base: React.CSSProperties = { color: GRAY, fontSize: 16, lineHeight: 1.6, maxWidth: "70ch", margin: 0, ...style };
+  return (
+    <>
+      {paras.map((p, i) => (
+        <p key={i} style={{ ...base, marginTop: i === 0 ? 0 : 12 }}>{p}</p>
+      ))}
+    </>
+  );
+}
+
 /* ---------- tooltip ---------- */
 type Tip = { x: number; y: number; text: string } | null;
 const TipCtx = { current: null as null | ((t: Tip) => void) };
