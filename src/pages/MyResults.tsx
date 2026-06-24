@@ -54,6 +54,7 @@ import {
   PTPCrossAssessmentSection,
   PTPAssessmentResponsesSection,
   PTPNarrativeProvider,
+  PTPReportProgressOverlay,
 } from "@/components/results/PTPNarrativeSections";
 import { ReportHighlightProvider } from "@/components/results/ReportHighlight";
 import PTPBrainOverview from "@/components/results/PTPBrainOverview";
