@@ -1498,8 +1498,8 @@ export function PTPReportProgressOverlay() {
   const pct = Math.round((completed / steps.length) * 100);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/70 backdrop-blur-sm p-4">
-      <div className="w-full max-w-md rounded-lg border bg-card p-6 shadow-lg">
+    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-[min(360px,calc(100vw-32px))] pointer-events-none">
+      <div className="rounded-lg border bg-card p-4 shadow-lg pointer-events-auto">
         <div className="flex items-center gap-3 mb-4">
           <Loader2 className="h-5 w-5 animate-spin text-primary" />
           <h2 className="text-lg font-semibold">Generating your report</h2>
