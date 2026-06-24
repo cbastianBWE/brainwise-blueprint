@@ -93,9 +93,9 @@ export function useNarrativeGenerator({
 
         for (const section of todo) {
           setCurrent(section);
-          const delays = [0, 1500, 3000];
+          const delays = [0, 5000, 10000, 20000];
           let success = false;
-          for (let attempt = 0; attempt < 3; attempt++) {
+          for (let attempt = 0; attempt < 4; attempt++) {
             if (delays[attempt] > 0) {
               await new Promise((r) => setTimeout(r, delays[attempt]));
             }
