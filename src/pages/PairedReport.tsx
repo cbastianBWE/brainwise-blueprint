@@ -871,7 +871,7 @@ export default function PairedReport() {
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }} className="two-grid">
                 <div style={pbox}>
                   <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6, color: COLOR_A }}>{nameA}</div>
-                  <Paras text={within.a} />
+                  <Bullets text={within.a} />
                 </div>
                 <div style={pbox}>
                   <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6, color: COLOR_B }}>{nameB}</div>
