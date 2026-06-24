@@ -125,7 +125,7 @@ function PairGlyph({ a, b, onOpen }: { a: number; b: number; onOpen: () => void 
       title="Click to enlarge"
       style={{ cursor: "zoom-in", display: "inline-block", borderRadius: 8, padding: 2 }}
     >
-      <svg viewBox={`0 0 ${W} ${H}`} width={W} height={H}>
+      <svg viewBox={`0 0 ${W} ${H}`} width="100%" style={{ maxWidth: W, display: "block", margin: "0 auto" }}>
         <line x1={L} y1={y} x2={Rr} y2={y} stroke={LINE} />
         <line x1={lo.toFixed(1)} y1={y} x2={hi.toFixed(1)} y2={y} stroke={LINE_STRONG} strokeWidth={3} />
         <circle cx={xa.toFixed(1)} cy={y} r={5} fill={COLOR_A} />
