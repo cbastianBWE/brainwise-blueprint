@@ -151,6 +151,13 @@ export default function GenerateReportDialog({ open, onOpenChange, allowedModes,
           return;
         }
         const id = (data as { team_profile_id: string }).team_profile_id;
+        if (reportLabel.trim()) {
+          try {
+            await supabase.rpc("bw_set_report_label" as never, { p_profile: id, p_label: reportLabel.trim() } as never);
+          } catch {
+            // label is cosmetic, do not block navigation
+          }
+        }
         onGenerated();
         onOpenChange(false);
         navigate(`/team-report/${id}`);
