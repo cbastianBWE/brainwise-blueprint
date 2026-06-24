@@ -9515,9 +9515,12 @@ export type Database = {
           content_type: string | null
           created_at: string
           created_by: string | null
+          duration_seconds: number | null
           folder_id: string | null
           id: string
           is_published: boolean
+          mux_asset_id: string | null
+          mux_status: string | null
           published_at: string
           resource_tab_id: string | null
           subscale_tags: string[] | null
@@ -9527,6 +9530,8 @@ export type Database = {
           updated_at: string
           url_kind: string | null
           url_or_content: string | null
+          video_source_id: string | null
+          video_source_type: string | null
         }
         Insert: {
           archived_at?: string | null
@@ -9536,9 +9541,12 @@ export type Database = {
           content_type?: string | null
           created_at?: string
           created_by?: string | null
+          duration_seconds?: number | null
           folder_id?: string | null
           id?: string
           is_published?: boolean
+          mux_asset_id?: string | null
+          mux_status?: string | null
           published_at?: string
           resource_tab_id?: string | null
           subscale_tags?: string[] | null
@@ -9548,6 +9556,8 @@ export type Database = {
           updated_at?: string
           url_kind?: string | null
           url_or_content?: string | null
+          video_source_id?: string | null
+          video_source_type?: string | null
         }
         Update: {
           archived_at?: string | null
@@ -9557,9 +9567,12 @@ export type Database = {
           content_type?: string | null
           created_at?: string
           created_by?: string | null
+          duration_seconds?: number | null
           folder_id?: string | null
           id?: string
           is_published?: boolean
+          mux_asset_id?: string | null
+          mux_status?: string | null
           published_at?: string
           resource_tab_id?: string | null
           subscale_tags?: string[] | null
@@ -9569,6 +9582,8 @@ export type Database = {
           updated_at?: string
           url_kind?: string | null
           url_or_content?: string | null
+          video_source_id?: string | null
+          video_source_type?: string | null
         }
         Relationships: [
           {
@@ -13122,6 +13137,14 @@ export type Database = {
           out_original_filename: string
           out_path: string
           out_size_bytes: number
+        }[]
+      }
+      get_resource_video_playback: {
+        Args: { p_resource_id: string }
+        Returns: {
+          out_mux_status: string
+          out_playback_id: string
+          out_video_source_type: string
         }[]
       }
       get_thumbnail_urls_for_entities: {
