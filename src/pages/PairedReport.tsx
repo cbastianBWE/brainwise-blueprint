@@ -875,7 +875,7 @@ export default function PairedReport() {
                 </div>
                 <div style={pbox}>
                   <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6, color: COLOR_B }}>{nameB}</div>
-                  <Paras text={within.b} />
+                  <Bullets text={within.b} />
                 </div>
               </div>
             </div>
