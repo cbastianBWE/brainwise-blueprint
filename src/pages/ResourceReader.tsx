@@ -344,7 +344,9 @@ export default function ResourceReader() {
   const hasFile = resource.content_asset_id != null;
 
   let body: JSX.Element;
-  if (!hasUrl && !hasFile) {
+  if (ct === "video" && !hasUrl && !hasFile) {
+    body = <MuxResourcePlayer resourceId={resource.resource_id} title={resource.title} />;
+  } else if (!hasUrl && !hasFile) {
     body = (
       <p className="italic text-muted-foreground">This resource has no content yet.</p>
     );
