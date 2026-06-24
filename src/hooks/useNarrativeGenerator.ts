@@ -93,21 +93,28 @@ export function useNarrativeGenerator({
 
         for (const section of todo) {
           setCurrent(section);
-          try {
-            const { data, error } = await supabase.functions.invoke(FN_NAME[kind], {
-              body: { ...idBody, section_type: section },
-            });
-            if (error || !data) {
-              localFailed.push(section);
-              continue;
+          const delays = [0, 1500, 3000];
+          let success = false;
+          for (let attempt = 0; attempt < 3; attempt++) {
+            if (delays[attempt] > 0) {
+              await new Promise((r) => setTimeout(r, delays[attempt]));
             }
-            const res = data as PlanResponse;
-            setExpected(res.sections_expected ?? []);
-            setDone(res.sections_done ?? []);
-            await onSectionDoneRef.current?.();
-          } catch {
-            localFailed.push(section);
+            try {
+              const { data, error } = await supabase.functions.invoke(FN_NAME[kind], {
+                body: { ...idBody, section_type: section },
+              });
+              if (error || !data) continue;
+              const res = data as PlanResponse;
+              setExpected(res.sections_expected ?? []);
+              setDone(res.sections_done ?? []);
+              await onSectionDoneRef.current?.();
+              success = true;
+              break;
+            } catch {
+              // retry
+            }
           }
+          if (!success) localFailed.push(section);
         }
 
         setCurrent(null);
