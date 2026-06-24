@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { ChevronDown, ChevronUp, Target } from "lucide-react";
+import { ChevronDown, ChevronUp, Target, Loader2, Check, Circle } from "lucide-react";
 import { PTP_DIMENSION_COLORS } from "@/lib/ptpDimensionColors";
 import { PtpDimensionLegend } from "@/components/results/PtpDimensionLegend";
 import { PTP_ITEM_FACET_NAMES } from "@/lib/ptpFacetNames";
