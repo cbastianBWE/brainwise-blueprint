@@ -298,6 +298,11 @@ export default function Assessment() {
           setSelectedInstrument(null);
           setContextType(null);
           setEntitlementSource(null);
+          const next = new URLSearchParams(searchParams);
+          next.delete("resumeInstrument");
+          next.delete("resumeContext");
+          next.delete("resumeSrc");
+          setSearchParams(next, { replace: true });
         }}
       />
     );
