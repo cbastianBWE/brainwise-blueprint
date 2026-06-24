@@ -686,7 +686,7 @@ export default function PairedReport() {
           <div style={{ color: ORANGE, fontSize: 13, letterSpacing: ".12em", textTransform: "uppercase", fontWeight: 700, marginBottom: 8 }}>
             BrainWise · Paired Profile
           </div>
-          <h1 style={{ margin: "0 0 4px", fontSize: 30 }}>{profile?.report_label || modeTitle(mode)}</h1>
+          <h1 style={{ margin: "0 0 4px", fontSize: 30 }}>{modeTitle(mode)}</h1>
           <div style={{ color: "rgba(255,255,255,.72)", fontSize: 14 }}>
             How the two of you fit, where you pull apart, and what to do about it.
           </div>
