@@ -894,7 +894,7 @@ export default function PairedReport() {
                 </div>
                 <div style={pbox}>
                   <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6, color: COLOR_B }}>What {firstB} needs from {firstA}</div>
-                  <Paras text={needs.b_needs_from_a} />
+                  <Bullets text={needs.b_needs_from_a} />
                 </div>
               </div>
             </div>
