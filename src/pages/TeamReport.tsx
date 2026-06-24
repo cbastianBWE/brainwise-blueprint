@@ -679,33 +679,38 @@ export default function TeamReport() {
     };
   });
 
+  const teamName = (profile as unknown as { report_label?: string | null; team_name?: string | null })?.report_label
+    ?? (profile as unknown as { team_name?: string | null })?.team_name
+    ?? "Team";
+
   return (
-    <div style={{ background: SAND, color: INK, fontFamily: '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif', lineHeight: 1.5, minHeight: "100vh" }}>
+    <div style={{ background: SAND, color: GRAY, fontFamily: 'Montserrat, system-ui, sans-serif', fontSize: 16, lineHeight: 1.6, minHeight: "100vh" }}>
       {/* Hero */}
       <header style={{ background: NAVY, color: "#ffffff", padding: "54px 0 110px" }}>
         <div style={{ maxWidth: 1040, margin: "0 auto", padding: "0 20px" }}>
-          <div style={{ color: ORANGE, letterSpacing: ".3em", fontSize: 18, marginBottom: 14 }}>•••</div>
-          <div style={{ fontSize: 12, letterSpacing: ".14em", textTransform: "uppercase", fontWeight: 700, color: ORANGE }}>
+          <img src="/brain-icon.png" alt="" style={{ height: 26, width: "auto", display: "block", marginBottom: 14 }} />
+          <div style={{ fontSize: 13, letterSpacing: ".14em", textTransform: "uppercase", fontWeight: 700, color: ORANGE }}>
             Team Threat Profile
           </div>
-          <h1 style={{ fontSize: 46, fontWeight: 800, color: "#fff", margin: "6px 0 14px" }}>
-            Team <span style={{ color: ORANGE }}>Report</span>
+          <h1 style={{ fontSize: 46, fontWeight: 800, color: "#fff", margin: "6px 0 14px", lineHeight: 1.15 }}>
+            {teamName === "Team" ? null : <>{teamName} </>}Team <span style={{ color: ORANGE }}>Report</span>
           </h1>
-          <p style={{ maxWidth: 560, color: "rgba(255,255,255,0.75)", margin: "0 0 26px" }}>
+          <p style={{ maxWidth: 560, color: "rgba(255,255,255,0.75)", margin: "0 0 26px", fontSize: 16, lineHeight: 1.6 }}>
             The patterns that shape how this team works under pressure, ranked so the few that matter most come first. Built from every member&apos;s Personal Threat Profile.
           </p>
           <div style={{ display: "flex", gap: 48, flexWrap: "wrap" }} className="meta-grid">
             <div>
-              <div style={{ fontSize: 11, letterSpacing: ".12em", textTransform: "uppercase", color: ORANGE, fontWeight: 700, marginBottom: 4 }}>Members</div>
-              <div style={{ color: "#fff", fontWeight: 700 }}>{profile.member_count}</div>
+              <div style={{ fontSize: 13, letterSpacing: ".12em", textTransform: "uppercase", color: ORANGE, fontWeight: 700, marginBottom: 4 }}>Members</div>
+              <div style={{ color: "#fff", fontWeight: 700, fontSize: 18 }}>{profile.member_count}</div>
             </div>
             <div>
-              <div style={{ fontSize: 11, letterSpacing: ".12em", textTransform: "uppercase", color: ORANGE, fontWeight: 700, marginBottom: 4 }}>Generated</div>
-              <div style={{ color: "#fff", fontWeight: 700 }}>{new Date().toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })}</div>
+              <div style={{ fontSize: 13, letterSpacing: ".12em", textTransform: "uppercase", color: ORANGE, fontWeight: 700, marginBottom: 4 }}>Generated</div>
+              <div style={{ color: "#fff", fontWeight: 700, fontSize: 18 }}>{new Date().toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })}</div>
             </div>
           </div>
         </div>
       </header>
+
 
       {/* Team in three (overlap) */}
       {Array.isArray(teamInThree) && teamInThree.length > 0 && (
