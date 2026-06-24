@@ -271,16 +271,16 @@ function Radial({ dims, labA, labB }: { dims: { name: string; a: number; b: numb
 }
 
 /* ---------- Agreement bar (A to B span) ---------- */
-function AgreementBar({ d }: { d: { name: string; a: number; b: number; color: string } }) {
+function AgreementBar({ d, labA, labB }: { d: { name: string; a: number; b: number; color: string }; labA: string; labB: string }) {
   const a = Math.max(0, Math.min(100, d.a));
   const b = Math.max(0, Math.min(100, d.b));
   const lo = Math.min(a, b), hi = Math.max(a, b), gap = Math.round(Math.abs(a - b));
   return (
     <div style={{ display: "grid", gridTemplateColumns: "100px 1fr 36px", alignItems: "center", gap: 10, margin: "8px 0" }}>
-      <div style={{ fontSize: 12, fontWeight: 600, textAlign: "right", color: d.color }}>{d.name}</div>
+      <div style={{ fontSize: 13, fontWeight: 600, textAlign: "right", color: d.color }}>{d.name}</div>
       <div
         style={{ position: "relative", height: 16 }}
-        onMouseMove={(e) => showTip(e, `${d.name}: Person A ${Math.round(a)}, Person B ${Math.round(b)} (gap ${gap})`)}
+        onMouseMove={(e) => showTip(e, `${d.name}: ${labA} ${Math.round(a)}, ${labB} ${Math.round(b)} (gap ${gap})`)}
         onMouseLeave={hideTip}
       >
         <div style={{ position: "absolute", top: 7, left: 0, right: 0, height: 2, background: LINE, borderRadius: 2 }} />
@@ -288,7 +288,7 @@ function AgreementBar({ d }: { d: { name: string; a: number; b: number; color: s
         <div style={{ position: "absolute", top: 3, left: `${a}%`, width: 10, height: 10, borderRadius: "50%", background: COLOR_A, transform: "translateX(-5px)" }} />
         <div style={{ position: "absolute", top: 3, left: `${b}%`, width: 10, height: 10, borderRadius: "50%", background: COLOR_B, transform: "translateX(-5px)" }} />
       </div>
-      <div style={{ fontSize: 12, color: GRAY, textAlign: "right" }}>{gap}</div>
+      <div style={{ fontSize: 13, color: GRAY, textAlign: "right" }}>{gap}</div>
     </div>
   );
 }
