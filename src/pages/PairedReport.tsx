@@ -961,7 +961,7 @@ export default function PairedReport() {
                 </div>
                 <div style={pbox}>
                   <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6, color: COLOR_B }}>{nameB}</div>
-                  <Paras text={repair.b} />
+                  <Bullets text={repair.b} />
                 </div>
               </div>
               {Array.isArray(repair.steps) && repair.steps.length > 0 && (
