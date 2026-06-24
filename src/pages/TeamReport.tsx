@@ -566,6 +566,11 @@ export default function TeamReport() {
         .pair-grid { grid-template-columns: 1fr !important; }
         .glyphrow-grid { grid-template-columns: repeat(2, 1fr) !important; }
         .meta-grid { gap: 18px !important; }
+        .leader-tbl, .leader-tbl tbody, .leader-tbl tr, .leader-tbl td { display: block !important; width: 100% !important; }
+        .leader-thead { display: none !important; }
+        .leader-tbl .leader-row { border: 1px solid ${LINE}; border-radius: 12px; margin-bottom: 12px; padding: 8px 4px; background: #fff; }
+        .leader-tbl td { border-top: 0 !important; padding: 8px 14px !important; }
+        .leader-tbl td::before { content: attr(data-label); display: block; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: ${GRAY}; font-weight: 700; margin-bottom: 4px; }
       }
     `;
     document.head.appendChild(s);
