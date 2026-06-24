@@ -1426,8 +1426,117 @@ export function PTPAssessmentResponsesSection(props: PTPNarrativeSectionsProps) 
 }
 
 /* =========================================================================
+   Progress overlay
+   ========================================================================= */
+
+export function PTPReportProgressOverlay() {
+  const {
+    loadingNarrativeSections,
+    loadingFacets,
+    loadingInterpretations,
+    loadingAllFacetInsights,
+    narrativeSections,
+    facetInterpretations,
+    elevatedFacets,
+    suppressedFacets,
+    allFacetInsights,
+    responsesExpanded,
+  } = usePTPNarrativeContext();
+
+  const generating =
+    loadingNarrativeSections ||
+    loadingFacets ||
+    loadingInterpretations ||
+    (responsesExpanded && loadingAllFacetInsights);
+
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    if (generating) {
+      const t = setTimeout(() => setVisible(true), 700);
+      return () => clearTimeout(t);
+    }
+    setVisible(false);
+  }, [generating]);
+
+  if (!visible) return null;
+
+  const noDrivingFacets =
+    !loadingFacets && elevatedFacets.length === 0 && suppressedFacets.length === 0;
+
+  const steps = [
+    {
+      label: "Profile & narrative",
+      done: !loadingNarrativeSections && !!narrativeSections,
+      active: loadingNarrativeSections,
+    },
+    {
+      label: "Driving facets",
+      done: !loadingFacets,
+      active: loadingFacets,
+    },
+    {
+      label: "Facet insights",
+      done: facetInterpretations.length > 0 || noDrivingFacets,
+      active:
+        loadingInterpretations ||
+        (!loadingFacets &&
+          elevatedFacets.length + suppressedFacets.length > 0 &&
+          facetInterpretations.length === 0),
+    },
+    ...(responsesExpanded
+      ? [
+          {
+            label: "Detailed response insights",
+            done: !loadingAllFacetInsights && allFacetInsights.length > 0,
+            active: loadingAllFacetInsights,
+          },
+        ]
+      : []),
+  ];
+
+  const completed = steps.filter((s) => s.done).length;
+  const pct = Math.round((completed / steps.length) * 100);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/70 backdrop-blur-sm p-4">
+      <div className="w-full max-w-md rounded-lg border bg-card p-6 shadow-lg">
+        <div className="flex items-center gap-3 mb-4">
+          <Loader2 className="h-5 w-5 animate-spin text-primary" />
+          <h2 className="text-lg font-semibold">Generating your report</h2>
+        </div>
+
+        <div className="h-2 w-full overflow-hidden rounded-full bg-muted mb-4">
+          <div
+            className="h-full bg-primary transition-all duration-500"
+            style={{ width: `${pct}%` }}
+          />
+        </div>
+
+        <ul className="space-y-2">
+          {steps.map((s) => (
+            <li key={s.label} className="flex items-center gap-3 text-sm">
+              {s.done ? (
+                <Check className="h-4 w-4 text-primary" />
+              ) : s.active ? (
+                <Loader2 className="h-4 w-4 animate-spin text-primary" />
+              ) : (
+                <Circle className="h-4 w-4 text-muted-foreground" />
+              )}
+              <span className={s.done ? "text-foreground" : s.active ? "text-foreground" : "text-muted-foreground"}>
+                {s.label}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  );
+}
+
+/* =========================================================================
    Default export — backwards-compatible wrapper
    ========================================================================= */
+
 
 export default function PTPNarrativeSections(props: PTPNarrativeSectionsProps) {
   if (isCoachLimited(props)) return <CoachLimitedNotice />;
