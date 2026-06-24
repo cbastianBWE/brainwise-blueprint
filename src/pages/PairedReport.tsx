@@ -239,7 +239,7 @@ function Radial({ dims }: { dims: { name: string; a: number; b: number; color: s
       </g>
     );
   });
-  const poly = (key: "a" | "b", color: string, lab: "Person A" | "Person B") => {
+  const poly = (key: "a" | "b", color: string, lab: string) => {
     const pts = dims.map((d, i) => {
       const [x, y] = pt(d[key], i);
       return `${x.toFixed(1)},${y.toFixed(1)}`;
@@ -264,8 +264,8 @@ function Radial({ dims }: { dims: { name: string; a: number; b: number; color: s
       {sectors}
       {rings}
       {spokes}
-      {poly("a", COLOR_A, "Person A")}
-      {poly("b", COLOR_B, "Person B")}
+      {poly("a", COLOR_A, labA)}
+      {poly("b", COLOR_B, labB)}
     </svg>
   );
 }
