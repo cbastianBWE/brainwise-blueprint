@@ -379,11 +379,12 @@ export default function ResourceEditor({
     onSaved();
   };
 
-  const requestModeSwitch = (target: "url" | "file") => {
+  const requestModeSwitch = (target: "url" | "file" | "mux") => {
     if (target === contentMode) return;
     const currentHasContent =
       (contentMode === "url" && urlOrContent.trim().length > 0) ||
-      (contentMode === "file" && contentAssetId != null);
+      (contentMode === "file" && contentAssetId != null) ||
+      (contentMode === "mux" && initial?.mux_status != null);
     if (currentHasContent) {
       setModeSwitchTarget(target);
       return;
@@ -391,13 +392,17 @@ export default function ResourceEditor({
     applyModeSwitch(target);
   };
 
-  const applyModeSwitch = (target: "url" | "file") => {
+  const applyModeSwitch = (target: "url" | "file" | "mux") => {
     setContentMode(target);
     if (target === "url") {
       setContentAssetId(null);
-    } else {
+    } else if (target === "file") {
       setUrlOrContent("");
       setUrlKind("");
+    } else if (target === "mux") {
+      setUrlOrContent("");
+      setUrlKind("");
+      setContentAssetId(null);
     }
     setModeSwitchTarget(null);
   };
