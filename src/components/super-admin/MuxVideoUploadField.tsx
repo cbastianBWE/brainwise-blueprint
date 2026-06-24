@@ -13,7 +13,8 @@ const ACCEPT = ".mp4,.webm,.mov";
 const ALLOWED_MIME = ["video/mp4", "video/webm", "video/quicktime"];
 
 interface Props {
-  contentItemId: string;
+  contentItemId?: string;
+  resourceId?: string;
   initialMuxStatus: string | null;
   initialPlaybackId: string | null;
   disabled?: boolean;
