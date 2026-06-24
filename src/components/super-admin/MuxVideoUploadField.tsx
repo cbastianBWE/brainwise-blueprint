@@ -228,7 +228,7 @@ export function MuxVideoUploadField({
         </div>
       )}
 
-      {hideAiMode || mode === "upload" ? (
+      {!aiAvailable || mode === "upload" ? (
         <div
           className={cn(
             "flex flex-col items-center justify-center gap-2 rounded-md border border-dashed p-6 text-center",
