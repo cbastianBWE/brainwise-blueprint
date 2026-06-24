@@ -912,7 +912,7 @@ export default function PairedReport() {
               </div>
               <div style={{ marginBottom: 16 }}>
                 <div style={{ fontSize: 11, letterSpacing: ".1em", textTransform: "uppercase", fontWeight: 800, marginBottom: 8, color: MUSTARD }}>Under pressure</div>
-                <Paras text={communication.under_pressure} />
+                <Bullets text={communication.under_pressure} />
               </div>
               {Array.isArray(communication.avoid_conflict) && communication.avoid_conflict.length > 0 && (
                 <div>
