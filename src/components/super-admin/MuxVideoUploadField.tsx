@@ -202,7 +202,7 @@ export function MuxVideoUploadField({
         </div>
       )}
 
-      {!hideAiMode && (
+      {aiAvailable && (
         <div className="inline-flex rounded-md border p-0.5">
           <button
             type="button"
