@@ -17,9 +17,9 @@ const PURPLE = "#3C096C";
 const GREEN = "#2D6A4F";
 const MUSTARD = "#7a5800";
 const AMBER = "#FFB703";
-const INK = "#1c2530";
-const MUTED = "#6b7280";
-const LINE = "#e7e3d9";
+const INK = "#6D6875";
+const MUTED = "#6D6875";
+const LINE = "rgba(2,31,54,0.12)";
 const CARD_BG = "#ffffff";
 const SHAPE_KEYS = ["allHigh", "allLow", "two", "even", "together"] as const;
 type ShapeKey = (typeof SHAPE_KEYS)[number];
@@ -85,6 +85,38 @@ interface CoachSection {
   debrief_prompts: string[];
 }
 
+/* ---------- prose helpers ---------- */
+function splitParas(text: string): string[] {
+  if (!text) return [];
+  const t = text.trim();
+  if (/\n\s*\n/.test(t)) return t.split(/\n{2,}/).map((s) => s.trim()).filter(Boolean);
+  // Sentence split nearest to midpoint
+  const sentences = t.match(/[^.!?]+[.!?]+(\s+|$)|[^.!?]+$/g)?.map((s) => s.trim()).filter(Boolean) ?? [t];
+  if (sentences.length < 2) return [t];
+  const total = t.length;
+  let acc = 0, bestIdx = 0, bestDiff = Infinity;
+  for (let i = 0; i < sentences.length - 1; i++) {
+    acc += sentences[i].length + 1;
+    const diff = Math.abs(acc - total / 2);
+    if (diff < bestDiff) { bestDiff = diff; bestIdx = i; }
+  }
+  const first = sentences.slice(0, bestIdx + 1).join(" ");
+  const second = sentences.slice(bestIdx + 1).join(" ");
+  return [first, second].filter(Boolean);
+}
+function Paras({ text, style }: { text: string; style?: React.CSSProperties }) {
+  const paras = splitParas(text);
+  if (paras.length === 0) return null;
+  const base: React.CSSProperties = { color: GRAY, fontSize: 16, lineHeight: 1.6, maxWidth: "70ch", margin: 0, ...style };
+  return (
+    <>
+      {paras.map((p, i) => (
+        <p key={i} style={{ ...base, marginTop: i === 0 ? 0 : 12 }}>{p}</p>
+      ))}
+    </>
+  );
+}
+
 /* ---------- tooltip ---------- */
 type Tip = { x: number; y: number; text: string } | null;
 const TipCtx = { current: null as null | ((t: Tip) => void) };
@@ -122,7 +154,7 @@ function DistGlyph({
       style={{ cursor: "zoom-in", display: "inline-block", borderRadius: 8, padding: 2 }}
     >
       <svg viewBox={`0 0 ${W} ${H}`} width={W} height={H}>
-        <line x1={L} y1={y} x2={Rr} y2={y} stroke="#e0dacb" />
+        <line x1={L} y1={y} x2={Rr} y2={y} stroke="rgba(2,31,54,0.12)" />
         <line x1={mx} y1={y - 12} x2={mx} y2={y + 12} stroke={NAVY} strokeWidth={1.5} opacity={0.45} />
         {scores.map((sc, i) => {
           const x = L + span * (sc / 100);
@@ -179,12 +211,12 @@ function DistModal({
             : `Each dot is one team member (${scores.length}). Hover a dot to see its score.`}
         </div>
         <svg viewBox={`0 0 ${W} ${H}`} width="100%" height={H}>
-          <line x1={L} y1={base} x2={Rr} y2={base} stroke="#cfc8b6" />
+          <line x1={L} y1={base} x2={Rr} y2={base} stroke="rgba(2,31,54,0.18)" />
           {[0, 25, 50, 75, 100].map((t) => {
             const x = L + span * (t / 100);
             return (
               <g key={t}>
-                <line x1={x} y1={base} x2={x} y2={base + 6} stroke="#cfc8b6" />
+                <line x1={x} y1={base} x2={x} y2={base + 6} stroke="rgba(2,31,54,0.18)" />
                 <text x={x} y={base + 20} fontSize={11} fill={GRAY} textAnchor="middle">{t}</text>
               </g>
             );
@@ -231,11 +263,11 @@ function Radial({ domains }: { domains: { name: string; mean: number; high: numb
     <svg viewBox="0 0 400 400" width="100%" style={{ maxWidth: 440, display: "block" }}>
       {sectors}
       {[25, 50, 75, 100].map((v) => (
-        <circle key={v} cx={C} cy={C} r={(R * v) / 100} fill="none" stroke="#e2dccd" />
+        <circle key={v} cx={C} cy={C} r={(R * v) / 100} fill="none" stroke="rgba(2,31,54,0.12)" />
       ))}
       {ang.map((a, i) => {
         const e = pol(a, R);
-        return <line key={i} x1={C} y1={C} x2={e[0]} y2={e[1]} stroke="#e2dccd" />;
+        return <line key={i} x1={C} y1={C} x2={e[0]} y2={e[1]} stroke="rgba(2,31,54,0.12)" />;
       })}
       <polygon points={polyPoints("high")} fill="none" stroke={PURPLE} strokeWidth={1.6} strokeDasharray="5 4" />
       <polygon points={polyPoints("low")} fill="none" stroke={MUSTARD} strokeWidth={1.6} strokeDasharray="5 4" />
@@ -287,7 +319,7 @@ function AgreementBar({ d }: { d: { name: string; mean: number; high: number; lo
         <span style={{ fontWeight: 700, color: d.color }}>{d.name}</span>
         <span style={{ fontSize: 12, color: MUTED }}>{d.desc}</span>
       </div>
-      <div style={{ position: "relative", height: 16, background: "#eee9dd", borderRadius: 999 }}>
+      <div style={{ position: "relative", height: 16, background: "rgba(2,31,54,0.10)", borderRadius: 999 }}>
         <div style={{ position: "absolute", top: 0, height: 16, borderRadius: 999, opacity: 0.45, left: `${d.low}%`, width: `${w}%`, background: d.color }} />
         <div onMouseMove={(e) => showTip(e, `${d.name} low: ${d.low}`)} onMouseLeave={hideTip}
           style={{ position: "absolute", top: 1, width: 14, height: 14, borderRadius: "50%", border: "2px solid #fff", transform: "translateX(-50%)", cursor: "pointer", boxShadow: "0 1px 3px rgba(0,0,0,.18)", left: `${d.low}%`, background: MUSTARD }} />
@@ -297,7 +329,7 @@ function AgreementBar({ d }: { d: { name: string; mean: number; high: number; lo
         <div onMouseMove={(e) => showTip(e, `${d.name}: low ${d.low}, avg ${d.mean}, high ${d.high}`)} onMouseLeave={hideTip}
           style={{ position: "absolute", top: -3, width: 22, height: 22, borderRadius: "50%", background: NAVY, border: "3px solid #fff", transform: "translateX(-50%)", cursor: "pointer", zIndex: 2, left: `${d.mean}%`, boxShadow: "0 1px 2px rgba(2,31,54,.06),0 8px 24px rgba(2,31,54,.06)" }} />
       </div>
-      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "#b3ac9c", marginTop: 4 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "rgba(2,31,54,0.35)", marginTop: 4 }}>
         <span>0</span><span>50</span><span>100</span>
       </div>
     </div>
@@ -318,13 +350,13 @@ function ArchGlyph({ k }: { k: ShapeKey }) {
   const dbox = (x0: number, x1: number, key: string) => (
     <rect key={key} x={x0} y={y - 7} width={x1 - x0} height={14} rx={4} fill="none" stroke={c} strokeDasharray="3 3" opacity={0.6} />
   );
-  const els: React.ReactNode[] = [<line key="ax" x1={L} y1={y} x2={Rr} y2={y} stroke="#e0dacb" />];
+  const els: React.ReactNode[] = [<line key="ax" x1={L} y1={y} x2={Rr} y2={y} stroke="rgba(2,31,54,0.12)" />];
   if (k === "together") [0.58, 0.63, 0.67, 0.6].forEach((t) => els.push(dot(L + span * t)));
   else if (k === "even") for (let i = 0; i < 7; i++) els.push(dot(L + span * (i / 6)));
   else if (k === "two") {
     [0.18, 0.23, 0.28].forEach((t) => els.push(dot(L + span * t)));
     [0.72, 0.77, 0.82].forEach((t) => els.push(dot(L + span * t)));
-    els.push(<line key="div" x1={L + span * 0.5} y1={y - 9} x2={L + span * 0.5} y2={y + 9} stroke="#cbb27a" strokeDasharray="2 2" />);
+    els.push(<line key="div" x1={L + span * 0.5} y1={y - 9} x2={L + span * 0.5} y2={y + 9} stroke="rgba(2,31,54,0.25)" strokeDasharray="2 2" />);
   } else if (k === "allHigh") {
     els.push(dbox(L, L + span * 0.4, "box"));
     [0.78, 0.84, 0.9].forEach((t) => els.push(dot(L + span * t)));
@@ -341,7 +373,7 @@ function Meter({ tier, kind }: { tier: number; kind: "strength" | "watch" }) {
   return (
     <span style={{ display: "inline-flex", gap: 3, marginLeft: 8 }}>
       {[0, 1, 2, 3].map((i) => (
-        <i key={i} style={{ width: 5, height: 12, borderRadius: 1, display: "inline-block", background: i < tier ? color : "#d8d2c4" }} />
+        <i key={i} style={{ width: 5, height: 12, borderRadius: 1, display: "inline-block", background: i < tier ? color : "rgba(2,31,54,0.15)" }} />
       ))}
     </span>
   );
@@ -404,7 +436,7 @@ function DriverCard({
         <div>
           <span style={{
             display: "inline-flex", alignItems: "center", gap: 8,
-            fontSize: 11, fontWeight: 800, letterSpacing: ".06em", textTransform: "uppercase",
+            fontSize: 13, fontWeight: 800, letterSpacing: ".06em", textTransform: "uppercase",
             padding: "4px 9px", borderRadius: 999, marginBottom: 8,
             background: kind === "strength" ? "rgba(45,106,79,.12)" : "rgba(255,183,3,.16)",
             color: kind === "strength" ? GREEN : MUSTARD,
@@ -412,8 +444,8 @@ function DriverCard({
             {label}
             <Meter tier={tier} kind={kind} />
           </span>
-          <div style={{ fontWeight: 800, color: NAVY, margin: "2px 0 6px" }}>{name}</div>
-          <div style={{ color: "#43505e", fontSize: 14 }}>{why}</div>
+          <div style={{ fontWeight: 800, color: NAVY, margin: "4px 0 8px", fontSize: 18 }}>{name}</div>
+          <div style={{ color: GRAY, fontSize: 16, lineHeight: 1.6, maxWidth: "70ch" }}>{why}</div>
           {actions.length > 0 && (
             <>
               <button
@@ -421,19 +453,19 @@ function DriverCard({
                 onClick={(e) => { e.stopPropagation(); setOpen((o) => !o); }}
                 style={{
                   marginTop: 12, display: "inline-flex", alignItems: "center", gap: 6,
-                  fontWeight: 700, fontSize: 13, cursor: "pointer", color: TEAL,
+                  fontWeight: 700, fontSize: 14, cursor: "pointer", color: TEAL,
                   background: "none", border: 0, padding: 0,
                 }}
               >
                 <span style={{ display: "inline-block", transition: ".2s", transform: open ? "rotate(90deg)" : "none" }}>▸</span>
                 See three things to {kind === "strength" ? "keep doing" : "try"}
               </button>
-              <div style={{ maxHeight: open ? 360 : 0, overflow: "hidden", transition: "max-height .3s ease", marginTop: open ? 12 : 0 }}>
-                <div style={{ fontSize: 11, letterSpacing: ".08em", textTransform: "uppercase", fontWeight: 800, color: MUTED, marginBottom: 6 }}>
+              <div style={{ maxHeight: open ? 600 : 0, overflow: "hidden", transition: "max-height .3s ease", marginTop: open ? 12 : 0 }}>
+                <div style={{ fontSize: 13, letterSpacing: ".08em", textTransform: "uppercase", fontWeight: 800, color: GRAY, marginBottom: 8 }}>
                   {kind === "strength" ? "Three things to keep doing" : "Three things to try"}
                 </div>
-                <ol style={{ margin: 0, paddingLeft: 20, color: "#39454f" }}>
-                  {actions.map((a, i) => <li key={i} style={{ marginBottom: 6 }}>{a}</li>)}
+                <ol style={{ margin: 0, paddingLeft: 24, color: GRAY, listStyleType: "decimal", fontSize: 16, lineHeight: 1.6 }}>
+                  {actions.map((a, i) => <li key={i} style={{ marginBottom: 8, paddingLeft: 4 }}>{a}</li>)}
                 </ol>
               </div>
             </>
@@ -451,13 +483,13 @@ function Acc({ title, children }: { title: string; children: React.ReactNode }) 
     <div style={{ background: CARD_BG, border: `1px solid ${LINE}`, borderRadius: 16, boxShadow: "0 1px 2px rgba(2,31,54,.06),0 8px 24px rgba(2,31,54,.06)", marginBottom: 12, overflow: "hidden" }}>
       <button type="button" onClick={() => setOpen((o) => !o)} style={{
         width: "100%", textAlign: "left", background: "none", border: 0, padding: "16px 18px",
-        fontSize: 15, fontWeight: 800, color: NAVY, cursor: "pointer",
+        fontSize: 18, fontWeight: 800, color: NAVY, cursor: "pointer",
         display: "flex", justifyContent: "space-between", alignItems: "center",
       }}>
         <span>{title}</span>
         <span style={{ color: TEAL, transition: ".25s", transform: open ? "rotate(90deg)" : "none" }}>▸</span>
       </button>
-      <div style={{ maxHeight: open ? 700 : 0, overflow: "hidden", transition: "max-height .3s ease, padding .3s ease", padding: open ? "0 18px 18px" : "0 18px", color: "#43505e" }}>
+      <div style={{ maxHeight: open ? 700 : 0, overflow: "hidden", transition: "max-height .3s ease, padding .3s ease", padding: open ? "0 18px 18px" : "0 18px", color: "#6D6875" }}>
         {children}
       </div>
     </div>
@@ -534,6 +566,11 @@ export default function TeamReport() {
         .pair-grid { grid-template-columns: 1fr !important; }
         .glyphrow-grid { grid-template-columns: repeat(2, 1fr) !important; }
         .meta-grid { gap: 18px !important; }
+        .leader-tbl, .leader-tbl tbody, .leader-tbl tr, .leader-tbl td { display: block !important; width: 100% !important; }
+        .leader-thead { display: none !important; }
+        .leader-tbl .leader-row { border: 1px solid ${LINE}; border-radius: 12px; margin-bottom: 12px; padding: 8px 4px; background: #fff; }
+        .leader-tbl td { border-top: 0 !important; padding: 8px 14px !important; }
+        .leader-tbl td::before { content: attr(data-label); display: block; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: ${GRAY}; font-weight: 700; margin-bottom: 4px; }
       }
     `;
     document.head.appendChild(s);
@@ -647,48 +684,53 @@ export default function TeamReport() {
     };
   });
 
+  const teamName = profile?.report_label
+    ?? (profile as unknown as { team_name?: string | null })?.team_name
+    ?? "Team";
+
   return (
-    <div style={{ background: SAND, color: INK, fontFamily: '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif', lineHeight: 1.5, minHeight: "100vh" }}>
+    <div style={{ background: SAND, color: GRAY, fontFamily: 'Montserrat, system-ui, sans-serif', fontSize: 16, lineHeight: 1.6, minHeight: "100vh" }}>
       {/* Hero */}
-      <header style={{ background: NAVY, color: "#dfe7ee", padding: "54px 0 110px" }}>
+      <header style={{ background: NAVY, color: "#ffffff", padding: "54px 0 110px" }}>
         <div style={{ maxWidth: 1040, margin: "0 auto", padding: "0 20px" }}>
-          <div style={{ color: ORANGE, letterSpacing: ".3em", fontSize: 18, marginBottom: 14 }}>•••</div>
-          <div style={{ fontSize: 12, letterSpacing: ".14em", textTransform: "uppercase", fontWeight: 700, color: ORANGE }}>
+          <img src="/brain-icon.png" alt="" style={{ height: 26, width: "auto", display: "block", marginBottom: 14 }} />
+          <div style={{ fontSize: 13, letterSpacing: ".14em", textTransform: "uppercase", fontWeight: 700, color: ORANGE }}>
             Team Threat Profile
           </div>
-          <h1 style={{ fontSize: 46, fontWeight: 800, color: "#fff", margin: "6px 0 14px" }}>
-            Team <span style={{ color: ORANGE }}>Report</span>
+          <h1 style={{ fontSize: 46, fontWeight: 800, color: "#fff", margin: "6px 0 14px", lineHeight: 1.15 }}>
+            {teamName === "Team" ? null : <>{teamName} </>}Team <span style={{ color: ORANGE }}>Report</span>
           </h1>
-          <p style={{ maxWidth: 560, color: "#aebccb", margin: "0 0 26px" }}>
+          <p style={{ maxWidth: 560, color: "rgba(255,255,255,0.75)", margin: "0 0 26px", fontSize: 16, lineHeight: 1.6 }}>
             The patterns that shape how this team works under pressure, ranked so the few that matter most come first. Built from every member&apos;s Personal Threat Profile.
           </p>
           <div style={{ display: "flex", gap: 48, flexWrap: "wrap" }} className="meta-grid">
             <div>
-              <div style={{ fontSize: 11, letterSpacing: ".12em", textTransform: "uppercase", color: ORANGE, fontWeight: 700, marginBottom: 4 }}>Members</div>
-              <div style={{ color: "#fff", fontWeight: 700 }}>{profile.member_count}</div>
+              <div style={{ fontSize: 13, letterSpacing: ".12em", textTransform: "uppercase", color: ORANGE, fontWeight: 700, marginBottom: 4 }}>Members</div>
+              <div style={{ color: "#fff", fontWeight: 700, fontSize: 18 }}>{profile.member_count}</div>
             </div>
             <div>
-              <div style={{ fontSize: 11, letterSpacing: ".12em", textTransform: "uppercase", color: ORANGE, fontWeight: 700, marginBottom: 4 }}>Generated</div>
-              <div style={{ color: "#fff", fontWeight: 700 }}>{new Date().toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })}</div>
+              <div style={{ fontSize: 13, letterSpacing: ".12em", textTransform: "uppercase", color: ORANGE, fontWeight: 700, marginBottom: 4 }}>Generated</div>
+              <div style={{ color: "#fff", fontWeight: 700, fontSize: 18 }}>{new Date().toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })}</div>
             </div>
           </div>
         </div>
       </header>
 
+
       {/* Team in three (overlap) */}
       {Array.isArray(teamInThree) && teamInThree.length > 0 && (
         <div style={{ maxWidth: 1040, margin: "-78px auto 0", padding: "0 20px" }}>
           <div style={{ background: CARD_BG, border: `1px solid ${LINE}`, borderRadius: 16, boxShadow: "0 1px 2px rgba(2,31,54,.06),0 8px 24px rgba(2,31,54,.06)" }}>
-            <div style={{ padding: "16px 18px", borderBottom: `1px solid ${LINE}`, fontSize: 12, letterSpacing: ".1em", textTransform: "uppercase", color: MUTED, fontWeight: 700 }}>
+            <div style={{ padding: "16px 18px", borderBottom: `1px solid ${LINE}`, fontSize: 13, letterSpacing: ".1em", textTransform: "uppercase", color: GRAY, fontWeight: 700 }}>
               Your team in three · the whole report in 30 seconds
             </div>
             {teamInThree.map((it, i) => (
               <div key={i} style={{ display: "grid", gridTemplateColumns: "54px 1fr", gap: 8, padding: 18, borderBottom: i === teamInThree.length - 1 ? "none" : `1px solid ${LINE}` }}>
                 <div style={{ fontSize: 34, fontWeight: 800, color: ORANGE, lineHeight: 1 }}>{i + 1}</div>
                 <div>
-                  <div style={{ fontWeight: 800, color: NAVY, marginBottom: 4 }}>{it.headline}</div>
-                  <div style={{ color: "#43505e" }}>{it.detail}</div>
-                  <div style={{ color: TEAL, fontWeight: 700, marginTop: 8 }}>{it.action}</div>
+                  <div style={{ fontWeight: 800, color: NAVY, marginBottom: 6, fontSize: 18 }}>{it.headline}</div>
+                  <Paras text={it.detail} />
+                  <div style={{ color: TEAL, fontWeight: 700, marginTop: 10, fontSize: 16 }}>{it.action}</div>
                 </div>
               </div>
             ))}
@@ -715,7 +757,7 @@ export default function TeamReport() {
       {/* Three domains */}
       <section style={{ padding: "34px 0" }}>
         <div style={{ maxWidth: 1040, margin: "0 auto", padding: "0 20px" }}>
-          <div style={{ fontSize: 12, letterSpacing: ".14em", textTransform: "uppercase", fontWeight: 700, color: ORANGE }}>Team Profile</div>
+          <div style={{ fontSize: 13, letterSpacing: ".14em", textTransform: "uppercase", fontWeight: 700, color: ORANGE }}>Team Profile</div>
           <h2 style={{ fontSize: 26, fontWeight: 800, color: NAVY, margin: "0 0 6px" }}>The three threat domains</h2>
           <p style={{ color: MUTED, maxWidth: 760, margin: "0 0 18px" }}>
             Center is zero, the outer ring is 100. Each sector is one domain. The solid line is the team average; the dashed lines and their dots are the team&apos;s high and low edges. The bars below show how much members agree.
@@ -723,7 +765,7 @@ export default function TeamReport() {
           <div style={{ background: CARD_BG, border: `1px solid ${LINE}`, borderRadius: 16, padding: 22, boxShadow: "0 1px 2px rgba(2,31,54,.06),0 8px 24px rgba(2,31,54,.06)" }}>
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
               <Radial domains={domains} />
-              <div style={{ display: "flex", gap: 18, flexWrap: "wrap", justifyContent: "center", fontSize: 12, color: "#43505e", margin: "4px 0" }}>
+              <div style={{ display: "flex", gap: 18, flexWrap: "wrap", justifyContent: "center", fontSize: 12, color: "#6D6875", margin: "4px 0" }}>
                 {domains.map((d) => (
                   <span key={d.name}>
                     <span style={{ display: "inline-block", width: 12, height: 12, borderRadius: "50%", verticalAlign: -1, marginRight: 6, background: d.color }} />
@@ -740,7 +782,7 @@ export default function TeamReport() {
                 {domains.map((d) => <AgreementBar key={d.name} d={d} />)}
               </div>
               <div style={{ display: "flex", gap: 18, flexWrap: "wrap", fontSize: 12, color: MUTED, marginTop: 8, justifyContent: "center" }}>
-                <span><span style={{ display: "inline-block", width: 12, height: 12, borderRadius: "50%", verticalAlign: -1, marginRight: 6, background: "#cfd6dd" }} />Range, low to high member</span>
+                <span><span style={{ display: "inline-block", width: 12, height: 12, borderRadius: "50%", verticalAlign: -1, marginRight: 6, background: "rgba(2,31,54,0.15)" }} />Range, low to high member</span>
                 <span><span style={{ display: "inline-block", width: 12, height: 12, borderRadius: "50%", verticalAlign: -1, marginRight: 6, background: NAVY }} />Team average</span>
               </div>
             </div>
@@ -774,8 +816,8 @@ export default function TeamReport() {
                 }}
               >
                 <ArchGlyph k={sh.k} />
-                <div style={{ fontWeight: 700, color: NAVY, fontSize: 14, marginTop: 8 }}>{sh.t}</div>
-                <div style={{ fontSize: 11, color: MUTED }}>{sh.s}</div>
+                <div style={{ fontWeight: 700, color: NAVY, fontSize: 16, marginTop: 8 }}>{sh.t}</div>
+                <div style={{ fontSize: 13, color: MUTED }}>{sh.s}</div>
               </div>
             ))}
           </div>
@@ -787,10 +829,10 @@ export default function TeamReport() {
         <section style={{ padding: "34px 0" }}>
           <div style={{ maxWidth: 1040, margin: "0 auto", padding: "0 20px" }}>
             <h2 style={{ fontSize: 26, fontWeight: 800, color: NAVY, margin: "0 0 6px" }}>What is driving your team</h2>
-            <p style={{ color: MUTED, maxWidth: 760, margin: "0 0 18px" }}>
+            <p style={{ color: GRAY, maxWidth: "70ch", margin: "0 0 18px", fontSize: 16, lineHeight: 1.6 }}>
               We open with the team&apos;s strength, then the areas to watch in priority order. The picture on each card is your team&apos;s real spread on that trait. Click any card for three specific moves; hover to see the question the team answered.
             </p>
-            {driving?.opening && <p style={{ fontSize: 14, color: "#43505e", marginBottom: 14 }}>{driving.opening}</p>}
+            {driving?.opening && <div style={{ marginBottom: 14 }}><Paras text={driving.opening} /></div>}
             {[...strengthDrivers, ...focusDrivers].map((d, i) => (
               <DriverCard key={i} idx={i} {...d} onOpenDist={openDist} />
             ))}
@@ -805,20 +847,20 @@ export default function TeamReport() {
             <h2 style={{ fontSize: 26, fontWeight: 800, color: NAVY, margin: "0 0 6px" }}>How this team communicates</h2>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }} className="pair-grid">
               <div style={{ background: CARD_BG, border: `1px solid ${LINE}`, borderRadius: 16, padding: 18, boxShadow: "0 1px 2px rgba(2,31,54,.06),0 8px 24px rgba(2,31,54,.06)" }}>
-                <div style={{ fontSize: 11, letterSpacing: ".1em", textTransform: "uppercase", fontWeight: 800, marginBottom: 8, color: TEAL }}>In general</div>
-                <div style={{ color: "#43505e", fontSize: 14 }}>{communication.general}</div>
+                <div style={{ fontSize: 13, letterSpacing: ".1em", textTransform: "uppercase", fontWeight: 800, marginBottom: 10, color: TEAL }}>In general</div>
+                <Paras text={communication.general} />
               </div>
               <div style={{ background: CARD_BG, border: `1px solid ${LINE}`, borderRadius: 16, padding: 18, boxShadow: "0 1px 2px rgba(2,31,54,.06),0 8px 24px rgba(2,31,54,.06)" }}>
-                <div style={{ fontSize: 11, letterSpacing: ".1em", textTransform: "uppercase", fontWeight: 800, marginBottom: 8, color: MUSTARD }}>Under pressure</div>
-                <div style={{ color: "#43505e", fontSize: 14 }}>{communication.under_pressure}</div>
+                <div style={{ fontSize: 13, letterSpacing: ".1em", textTransform: "uppercase", fontWeight: 800, marginBottom: 10, color: MUSTARD }}>Under pressure</div>
+                <Paras text={communication.under_pressure} />
               </div>
             </div>
             {Array.isArray(communication.avoid_conflict) && communication.avoid_conflict.length > 0 && (
               <div style={{ marginTop: 14, background: "rgba(255,183,3,.10)", border: "1px solid rgba(255,183,3,.35)", borderRadius: 12, padding: 16 }}>
-                <h4 style={{ margin: "0 0 8px", color: NAVY }}>Avoiding communication conflict</h4>
-                <ul style={{ margin: 0, paddingLeft: 18, color: "#43505e" }}>
-                  {communication.avoid_conflict.map((t, i) => <li key={i}>{t}</li>)}
-                </ul>
+                <h4 style={{ margin: "0 0 10px", color: NAVY, fontSize: 18 }}>Avoiding communication conflict</h4>
+                <ol style={{ margin: 0, paddingLeft: 22, color: GRAY, fontSize: 16, lineHeight: 1.6, listStyleType: "decimal" }}>
+                  {communication.avoid_conflict.map((t, i) => <li key={i} style={{ marginBottom: 6 }}>{t}</li>)}
+                </ol>
               </div>
             )}
           </div>
@@ -830,15 +872,15 @@ export default function TeamReport() {
         <section style={{ padding: "34px 0" }}>
           <div style={{ maxWidth: 1040, margin: "0 auto", padding: "0 20px" }}>
             <h2 style={{ fontSize: 26, fontWeight: 800, color: NAVY, margin: "0 0 6px" }}>How this team handles conflict</h2>
-            <p style={{ color: MUTED, maxWidth: 760, margin: "0 0 18px" }}>{conflict.summary}</p>
+            <div style={{ maxWidth: "70ch", margin: "0 0 18px" }}><Paras text={conflict.summary} /></div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }} className="pair-grid">
               <div style={{ background: CARD_BG, border: `1px solid ${LINE}`, borderRadius: 16, padding: 18, boxShadow: "0 1px 2px rgba(2,31,54,.06),0 8px 24px rgba(2,31,54,.06)" }}>
-                <div style={{ fontSize: 11, letterSpacing: ".1em", textTransform: "uppercase", fontWeight: 800, marginBottom: 8, color: TEAL }}>Mitigate unhealthy conflict</div>
-                <div style={{ color: "#43505e", fontSize: 14 }}>{conflict.mitigate}</div>
+                <div style={{ fontSize: 13, letterSpacing: ".1em", textTransform: "uppercase", fontWeight: 800, marginBottom: 10, color: TEAL }}>Mitigate unhealthy conflict</div>
+                <Paras text={conflict.mitigate} />
               </div>
               <div style={{ background: CARD_BG, border: `1px solid ${LINE}`, borderRadius: 16, padding: 18, boxShadow: "0 1px 2px rgba(2,31,54,.06),0 8px 24px rgba(2,31,54,.06)" }}>
-                <div style={{ fontSize: 11, letterSpacing: ".1em", textTransform: "uppercase", fontWeight: 800, marginBottom: 8, color: MUSTARD }}>Promote healthy conflict</div>
-                <div style={{ color: "#43505e", fontSize: 14 }}>{conflict.promote_healthy}</div>
+                <div style={{ fontSize: 13, letterSpacing: ".1em", textTransform: "uppercase", fontWeight: 800, marginBottom: 10, color: MUSTARD }}>Promote healthy conflict</div>
+                <Paras text={conflict.promote_healthy} />
               </div>
             </div>
           </div>
@@ -852,24 +894,25 @@ export default function TeamReport() {
             <h2 style={{ fontSize: 26, fontWeight: 800, color: NAVY, margin: "0 0 6px" }}>For the leader: the moves</h2>
             <p style={{ color: MUTED, maxWidth: 760, margin: "0 0 18px" }}>One page. The top drivers, what each costs the work, the lever, and who owns it.</p>
             <div style={{ background: CARD_BG, border: `1px solid ${LINE}`, borderRadius: 16, padding: 18, boxShadow: "0 1px 2px rgba(2,31,54,.06),0 8px 24px rgba(2,31,54,.06)" }}>
-              <div style={{ overflowX: "auto" }}>
-                <table style={{ width: "100%", borderCollapse: "collapse", overflow: "hidden", borderRadius: 12, border: `1px solid ${LINE}` }}>
-                  <thead>
+              <div style={{ overflowX: "auto" }} className="leader-tbl-wrap">
+                <table style={{ width: "100%", borderCollapse: "collapse", overflow: "hidden", borderRadius: 12, border: `1px solid ${LINE}` }} className="leader-tbl">
+                  <thead className="leader-thead">
                     <tr>
                       {["Driver", "Risk to the work", "The move", "Owner"].map((h) => (
-                        <th key={h} style={{ background: NAVY, color: "#fff", textAlign: "left", fontSize: 11, letterSpacing: ".08em", textTransform: "uppercase", padding: "12px 14px" }}>{h}</th>
+                        <th key={h} style={{ background: NAVY, color: "#fff", textAlign: "left", fontSize: 13, letterSpacing: ".08em", textTransform: "uppercase", padding: "14px 16px", fontWeight: 700 }}>{h}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
                     {(leader.rows ?? []).map((r, i) => {
                       const f = facetLookup(r.item);
+                      const driverName = f?.facetName ?? `Item ${r.item}`;
                       return (
-                        <tr key={i}>
-                          <td style={tdStyle}><b style={{ color: NAVY }}>{f?.facetName ?? `Item ${r.item}`}</b></td>
-                          <td style={tdStyle}>{r.risk_to_work}</td>
-                          <td style={tdStyle}>{r.the_move}</td>
-                          <td style={{ ...tdStyle, color: GRAY }}>{r.potential_owner}</td>
+                        <tr key={i} className="leader-row">
+                          <td style={tdStyle} data-label="Driver"><b style={{ color: NAVY, fontSize: 16 }}>{driverName}</b></td>
+                          <td style={tdStyle} data-label="Risk">{r.risk_to_work}</td>
+                          <td style={tdStyle} data-label="The move">{r.the_move}</td>
+                          <td style={{ ...tdStyle, color: GRAY }} data-label="Owner">{r.potential_owner}</td>
                         </tr>
                       );
                     })}
@@ -877,7 +920,7 @@ export default function TeamReport() {
                 </table>
               </div>
               {leader.lean_on && (
-                <div style={{ marginTop: 14, border: "1px solid rgba(45,106,79,.4)", background: "rgba(45,106,79,.07)", borderRadius: 12, padding: 16, color: "#33403a" }}>
+                <div style={{ marginTop: 14, border: "1px solid rgba(45,106,79,.4)", background: "rgba(45,106,79,.07)", borderRadius: 12, padding: 16, color: NAVY, fontSize: 16, lineHeight: 1.6 }}>
                   <b style={{ color: GREEN }}>Lean on:</b> {leader.lean_on}
                 </div>
               )}
@@ -896,7 +939,7 @@ export default function TeamReport() {
               const dim = activeShape && activeShape !== g.k;
               return (
                 <div key={g.k} style={{ marginBottom: 22, opacity: dim ? 0.25 : 1, filter: dim ? "grayscale(.4)" : "none" }}>
-                  <h4 style={{ display: "flex", alignItems: "center", gap: 10, color: NAVY, fontSize: 15, margin: "0 0 12px" }}>
+                  <h4 style={{ display: "flex", alignItems: "center", gap: 10, color: NAVY, fontSize: 18, margin: "0 0 12px" }}>
                     <span style={{ width: 12, height: 12, borderRadius: "50%", background: GC[g.k] }} />
                     {g.title}
                   </h4>
@@ -922,7 +965,7 @@ export default function TeamReport() {
                               onOpen={() => openDist(scores, GC[g.k], f.facetName)}
                             />
                           )}
-                          <div style={{ fontWeight: 700, color: NAVY, fontSize: 13, marginTop: 6 }}>{f.facetName}</div>
+                          <div style={{ fontWeight: 700, color: NAVY, fontSize: 14, marginTop: 6 }}>{f.facetName}</div>
                         </div>
                       );
                     })}
@@ -939,7 +982,7 @@ export default function TeamReport() {
         <section style={{ padding: "34px 0" }}>
           <div style={{ maxWidth: 1040, margin: "0 auto", padding: "0 20px" }}>
             <div style={{
-              display: "inline-block", border: `1px solid ${TEAL}`, color: TEAL, fontSize: 11,
+              display: "inline-block", border: `1px solid ${TEAL}`, color: TEAL, fontSize: 13,
               fontWeight: 800, letterSpacing: ".1em", textTransform: "uppercase",
               padding: "5px 12px", borderRadius: 999, marginBottom: 10,
             }}>For the coach, org admin &amp; super admin</div>
@@ -995,8 +1038,9 @@ export default function TeamReport() {
 }
 
 const tdStyle: React.CSSProperties = {
-  padding: 14, borderTop: `1px solid ${LINE}`, fontSize: 14, verticalAlign: "top", color: "#43505e",
+  padding: "16px 18px", borderTop: `1px solid ${LINE}`, fontSize: 16, lineHeight: 1.6, verticalAlign: "top", color: GRAY,
 };
+
 
 function GenerationBanner({
   status, running, expected, done, current, failed, onRetry, canDrive,
@@ -1014,7 +1058,7 @@ function GenerationBanner({
   const baseCard: React.CSSProperties = {
     background: CARD_BG, border: `1px solid ${LINE}`, borderRadius: 16,
     boxShadow: "0 1px 2px rgba(2,31,54,.06),0 8px 24px rgba(2,31,54,.06)",
-    padding: 16, fontSize: 14, color: "#43505e",
+    padding: 16, fontSize: 16, color: "#6D6875",
   };
   if (!canDrive) {
     return <div style={baseCard}>This report is still generating. Please check back shortly.</div>;

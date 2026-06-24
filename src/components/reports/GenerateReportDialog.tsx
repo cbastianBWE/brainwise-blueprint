@@ -71,6 +71,7 @@ export default function GenerateReportDialog({ open, onOpenChange, allowedModes,
   const [results, setResults] = useState<SubjectRow[]>([]);
   const [selected, setSelected] = useState<SubjectRow[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const [reportLabel, setReportLabel] = useState("");
   const debounceRef = useRef<number | null>(null);
 
   // Reset on close
@@ -82,6 +83,7 @@ export default function GenerateReportDialog({ open, onOpenChange, allowedModes,
       setResults([]);
       setSelected([]);
       setSubmitting(false);
+      setReportLabel("");
     }
   }, [open, allowedModes]);
 
@@ -149,6 +151,13 @@ export default function GenerateReportDialog({ open, onOpenChange, allowedModes,
           return;
         }
         const id = (data as { team_profile_id: string }).team_profile_id;
+        if (reportLabel.trim()) {
+          try {
+            await supabase.rpc("bw_set_report_label" as never, { p_profile: id, p_label: reportLabel.trim() } as never);
+          } catch {
+            // label is cosmetic, do not block navigation
+          }
+        }
         onGenerated();
         onOpenChange(false);
         navigate(`/team-report/${id}`);
@@ -205,6 +214,21 @@ export default function GenerateReportDialog({ open, onOpenChange, allowedModes,
               </div>
             </RadioGroup>
           </div>
+
+          {/* Report name (team only, optional) */}
+          {kind === "team" && (
+            <div className="space-y-2">
+              <Label htmlFor="report-label">Report name (optional)</Label>
+              <Input
+                id="report-label"
+                placeholder="e.g. Product leadership Q4"
+                value={reportLabel}
+                onChange={(e) => setReportLabel(e.target.value)}
+                maxLength={120}
+              />
+            </div>
+          )}
+
 
           {/* Mode (paired only) */}
           {kind === "paired" && (
