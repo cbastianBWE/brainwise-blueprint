@@ -12374,6 +12374,13 @@ export type Database = {
           user_id: string
         }[]
       }
+      bw_team_profile_distribution: {
+        Args: { p_profile: string }
+        Returns: {
+          item_number: number
+          scores: number[]
+        }[]
+      }
       calculate_nai_readiness_index: {
         Args: { p_dimension_scores: Json }
         Returns: number
