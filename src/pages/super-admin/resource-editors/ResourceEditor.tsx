@@ -20,6 +20,7 @@ import {
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Loader2, Save, Archive, BookOpen, Plus, X } from "lucide-react";
 import { FileUploadField } from "@/components/super-admin/FileUploadField";
+import { MuxVideoUploadField } from "@/components/super-admin/MuxVideoUploadField";
 import {
   GRANT_TYPE_OPTIONS, ACCOUNT_TYPE_OPTIONS, PLAN_TIER_OPTIONS,
   CORPORATE_LEVEL_OPTIONS, CONTENT_TYPE_OPTIONS, CERTIFICATION_TYPES,
@@ -88,7 +89,8 @@ export default function ResourceEditor({
   // Content mode for article/video. "url" = use URL field; "file" = use uploader.
   // For guide/worksheet/template, mode is forced to "file" and the selector is hidden.
   // Initial inference: if existing content_asset_id, file mode; else url mode.
-  const [contentMode, setContentMode] = useState<"url" | "file">(() => {
+  const [contentMode, setContentMode] = useState<"url" | "file" | "mux">(() => {
+    if (initial?.video_source_type === "mux") return "mux";
     if (initial?.content_asset_id) return "file";
     return "url";
   });
@@ -96,7 +98,7 @@ export default function ResourceEditor({
   const [archiveDialogOpen, setArchiveDialogOpen] = useState(false);
   const [archiveReason, setArchiveReason] = useState("");
   const [archiving, setArchiving] = useState(false);
-  const [modeSwitchTarget, setModeSwitchTarget] = useState<"url" | "file" | null>(null);
+  const [modeSwitchTarget, setModeSwitchTarget] = useState<"url" | "file" | "mux" | null>(null);
 
   // Grants state (edit mode only)
   const grantsQuery = useQuery({
@@ -229,7 +231,16 @@ export default function ResourceEditor({
         }
       }
 
-      if (contentType === "article" || contentType === "video") {
+      if (contentType === "video" && contentMode === "mux") {
+        if (initial?.mux_status !== "ready") {
+          toast({
+            title: "Video not ready",
+            description: "Upload the video and let Mux finish processing before publishing.",
+            variant: "destructive",
+          });
+          return;
+        }
+      } else if (contentType === "article" || contentType === "video") {
         if (!hasUrl && !hasFile) {
           toast({
             title: "Content required",
@@ -249,7 +260,11 @@ export default function ResourceEditor({
       }
     }
 
-    if (isPublished && (contentType === "article" || contentType === "video")) {
+    if (
+      isPublished &&
+      (contentType === "article" || contentType === "video") &&
+      !(contentType === "video" && contentMode === "mux")
+    ) {
       const hasUrl = urlOrContent.trim().length > 0;
       const hasFile = contentAssetId != null;
       if (hasUrl && !hasFile && !urlKind) {
@@ -377,11 +392,12 @@ export default function ResourceEditor({
     onSaved();
   };
 
-  const requestModeSwitch = (target: "url" | "file") => {
+  const requestModeSwitch = (target: "url" | "file" | "mux") => {
     if (target === contentMode) return;
     const currentHasContent =
       (contentMode === "url" && urlOrContent.trim().length > 0) ||
-      (contentMode === "file" && contentAssetId != null);
+      (contentMode === "file" && contentAssetId != null) ||
+      (contentMode === "mux" && initial?.mux_status != null);
     if (currentHasContent) {
       setModeSwitchTarget(target);
       return;
@@ -389,13 +405,17 @@ export default function ResourceEditor({
     applyModeSwitch(target);
   };
 
-  const applyModeSwitch = (target: "url" | "file") => {
+  const applyModeSwitch = (target: "url" | "file" | "mux") => {
     setContentMode(target);
     if (target === "url") {
       setContentAssetId(null);
-    } else {
+    } else if (target === "file") {
       setUrlOrContent("");
       setUrlKind("");
+    } else if (target === "mux") {
+      setUrlOrContent("");
+      setUrlKind("");
+      setContentAssetId(null);
     }
     setModeSwitchTarget(null);
   };
@@ -559,6 +579,19 @@ export default function ResourceEditor({
                       </p>
                     </div>
                   </div>
+                  {contentType === "video" && (
+                    <div className="flex items-start gap-2">
+                      <RadioGroupItem value="mux" id="contentmode-mux" className="mt-1" />
+                      <div className="space-y-0.5">
+                        <Label htmlFor="contentmode-mux" className="font-medium">
+                          Stream via Mux
+                        </Label>
+                        <p className="text-xs text-muted-foreground">
+                          Upload an MP4, WebM, or MOV; stored and streamed adaptively by Mux. Best for large videos.
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </RadioGroup>
               </div>
             )}
@@ -643,6 +676,28 @@ export default function ResourceEditor({
                     value={contentAssetId}
                     onChange={setContentAssetId}
                     disabled={saving}
+                  />
+                )}
+              </div>
+            )}
+
+            {/* Mux mode uploader (video only) */}
+            {contentType === "video" && contentMode === "mux" && (
+              <div className="space-y-2">
+                <p className="text-xs text-muted-foreground">
+                  MP4, WebM, or MOV up to 5 GB. Streamed via Mux. Required to publish.
+                </p>
+                {mode === "create" ? (
+                  <div className="rounded-md border border-dashed p-4 text-sm italic text-muted-foreground">
+                    Save the resource first to upload a Mux video.
+                  </div>
+                ) : (
+                  <MuxVideoUploadField
+                    resourceId={initial?.id}
+                    initialMuxStatus={initial?.mux_status ?? null}
+                    initialPlaybackId={initial?.video_source_id ?? null}
+                    disabled={saving}
+                    hideAiMode
                   />
                 )}
               </div>
@@ -1025,7 +1080,11 @@ export default function ResourceEditor({
             <AlertDialogDescription>
               {modeSwitchTarget === "file"
                 ? "Switching to file upload will clear the URL you've entered. Continue?"
-                : "Switching to URL will remove the uploaded file from this resource. The file remains in your asset library. Continue?"}
+                : modeSwitchTarget === "mux"
+                  ? "Switching to Mux will clear any URL or uploaded file on this resource. Continue?"
+                  : contentMode === "mux"
+                    ? "Switching away from Mux keeps the uploaded Mux video, but it will be ignored unless you publish with Mux. Continue?"
+                    : "Switching to URL will remove the uploaded file from this resource. The file remains in your asset library. Continue?"}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

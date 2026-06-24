@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronLeft, Loader2 } from "lucide-react";
 import DOMPurify from "dompurify";
+import MuxPlayer from "@mux/mux-player-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -123,6 +124,70 @@ function VideoPlayer({ resourceId }: { resourceId: string }) {
       controls
       className="mx-auto w-full max-w-4xl rounded-md bg-black"
       src={data.signed_url}
+    />
+  );
+}
+
+function useResourceVideoUrl(resourceId: string) {
+  return useQuery({
+    queryKey: ["resource-video-url", resourceId],
+    queryFn: async () => {
+      const { data, error } = await supabase.functions.invoke("get-resource-video-url", {
+        body: { p_resource_id: resourceId },
+      });
+      if (error) throw new Error(error.message || "Video not available.");
+      if ((data as any)?.error) throw new Error((data as any).error);
+      return data as
+        | { kind: "mux"; processing?: boolean; mux_status?: string; playback_id?: string; token?: string }
+        | { kind: "not_mux" };
+    },
+    staleTime: 60 * 60 * 1000,
+    refetchInterval: (q) =>
+      ((q.state.data as any)?.kind === "mux" && (q.state.data as any)?.processing) ? 8000 : false,
+  });
+}
+
+function MuxResourcePlayer({ resourceId, title }: { resourceId: string; title: string }) {
+  const { data, isLoading, isError, error, refetch } = useResourceVideoUrl(resourceId);
+  if (isLoading) {
+    return (
+      <div
+        className="flex aspect-video w-full items-center justify-center rounded-md bg-muted"
+        role="status"
+        aria-label="Loading video"
+      >
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" aria-hidden="true" />
+      </div>
+    );
+  }
+  if (isError) {
+    return (
+      <div className="space-y-3">
+        <p className="text-sm text-destructive">
+          Could not load video: {error instanceof Error ? error.message : "Unknown error"}
+        </p>
+        <Button size="sm" onClick={() => refetch()}>Retry</Button>
+      </div>
+    );
+  }
+  const d = data as any;
+  if (d?.kind !== "mux") {
+    return <p className="italic text-muted-foreground">This resource has no content yet.</p>;
+  }
+  if (d.processing || !d.playback_id || !d.token) {
+    return (
+      <p className="italic text-muted-foreground">
+        This video is still processing. It will appear here shortly.
+      </p>
+    );
+  }
+  return (
+    <MuxPlayer
+      playbackId={d.playback_id}
+      tokens={{ playback: d.token }}
+      metadata={{ video_title: title }}
+      streamType="on-demand"
+      className="mx-auto w-full max-w-4xl rounded-md"
     />
   );
 }
@@ -279,7 +344,9 @@ export default function ResourceReader() {
   const hasFile = resource.content_asset_id != null;
 
   let body: JSX.Element;
-  if (!hasUrl && !hasFile) {
+  if (ct === "video" && !hasUrl && !hasFile) {
+    body = <MuxResourcePlayer resourceId={resource.resource_id} title={resource.title} />;
+  } else if (!hasUrl && !hasFile) {
     body = (
       <p className="italic text-muted-foreground">This resource has no content yet.</p>
     );

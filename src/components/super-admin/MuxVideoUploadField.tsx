@@ -13,7 +13,8 @@ const ACCEPT = ".mp4,.webm,.mov";
 const ALLOWED_MIME = ["video/mp4", "video/webm", "video/quicktime"];
 
 interface Props {
-  contentItemId: string;
+  contentItemId?: string;
+  resourceId?: string;
   initialMuxStatus: string | null;
   initialPlaybackId: string | null;
   disabled?: boolean;
@@ -39,6 +40,7 @@ function deriveInitial(status: string | null, playbackId: string | null): State 
 
 export function MuxVideoUploadField({
   contentItemId,
+  resourceId,
   initialMuxStatus,
   initialPlaybackId,
   disabled,
@@ -48,14 +50,18 @@ export function MuxVideoUploadField({
   const [mode, setMode] = useState<Mode>("upload");
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
+  const targetTable = resourceId ? "resources" : "content_items";
+  const targetId = (resourceId ?? contentItemId) as string;
+  const aiAvailable = !hideAiMode && !!contentItemId;
+
   const statusQuery = useQuery({
-    queryKey: ["mux-upload-status", contentItemId],
+    queryKey: ["mux-upload-status", targetTable, targetId],
     enabled: state.kind === "processing",
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("content_items")
+      const { data, error } = await (supabase as any)
+        .from(targetTable)
         .select("mux_status, video_source_id")
-        .eq("id", contentItemId)
+        .eq("id", targetId)
         .single();
       if (error) throw error;
       return data as { mux_status: string | null; video_source_id: string | null };
@@ -93,7 +99,7 @@ export function MuxVideoUploadField({
     setState({ kind: "uploading", filename: file.name, progress: 0 });
 
     const { data, error } = await supabase.functions.invoke("mux-create-upload", {
-      body: { content_item_id: contentItemId },
+      body: resourceId ? { resource_id: resourceId } : { content_item_id: contentItemId },
     });
     if (error || !(data as any)?.upload_url) {
       setState({
@@ -196,7 +202,7 @@ export function MuxVideoUploadField({
         </div>
       )}
 
-      {!hideAiMode && (
+      {aiAvailable && (
         <div className="inline-flex rounded-md border p-0.5">
           <button
             type="button"
@@ -222,7 +228,7 @@ export function MuxVideoUploadField({
         </div>
       )}
 
-      {hideAiMode || mode === "upload" ? (
+      {!aiAvailable || mode === "upload" ? (
         <div
           className={cn(
             "flex flex-col items-center justify-center gap-2 rounded-md border border-dashed p-6 text-center",
@@ -261,8 +267,8 @@ export function MuxVideoUploadField({
       ) : (
         <HeygenGeneratePanel
           generateTarget={{ kind: "standalone" }}
-          resolveContentItemId={async () => contentItemId}
-          initialContentItemId={contentItemId}
+          resolveContentItemId={async () => contentItemId!}
+          initialContentItemId={contentItemId!}
           initialMuxStatus={initialMuxStatus}
           onReady={() => setState({ kind: "ready" })}
           disabled={disabled}
