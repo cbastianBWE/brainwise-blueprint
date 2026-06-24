@@ -79,7 +79,7 @@ export function useTeamProfile(teamProfileId: string | undefined): UseTeamProfil
       if (!teamProfileId) return;
       const { data, error } = await supabase
         .from("team_profiles" as never)
-        .select("id, structured, narrative_status, member_count, item_set, team_id, generated_by_role")
+        .select("id, structured, narrative_status, member_count, item_set, team_id, generated_by_role, report_label")
         .eq("id", teamProfileId)
         .maybeSingle();
       if (cancelledRef.current) return;
