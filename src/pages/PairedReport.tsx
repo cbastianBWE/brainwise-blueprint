@@ -667,8 +667,14 @@ export default function PairedReport() {
   });
 
   const sectionLabel: React.CSSProperties = {
-    fontSize: 13, letterSpacing: ".08em", textTransform: "uppercase",
-    color: GRAY, margin: "34px 0 12px", fontWeight: 700,
+    fontSize: 26, fontWeight: 800, color: NAVY, margin: "0 0 6px",
+  };
+  const sectionLead: React.CSSProperties = {
+    color: GRAY, maxWidth: 760, margin: "0 0 18px",
+  };
+  const boxLabel: React.CSSProperties = {
+    fontSize: 11, letterSpacing: ".1em", textTransform: "uppercase",
+    fontWeight: 800, marginBottom: 8, color: NAVY,
   };
   const cardStyle: React.CSSProperties = {
     background: CARD_BG, border: `1px solid ${LINE}`, borderRadius: 14,
