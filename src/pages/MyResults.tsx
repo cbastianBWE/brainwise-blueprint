@@ -54,6 +54,7 @@ import {
   PTPCrossAssessmentSection,
   PTPAssessmentResponsesSection,
   PTPNarrativeProvider,
+  PTPReportProgressOverlay,
 } from "@/components/results/PTPNarrativeSections";
 import { ReportHighlightProvider } from "@/components/results/ReportHighlight";
 import PTPBrainOverview from "@/components/results/PTPBrainOverview";
@@ -1471,6 +1472,7 @@ export default function MyResults({ isCoachView = false, adminView = false, targ
                 enabled={allowHighlighting}
               >
               <PTPNarrativeProvider {...ptpNarrativeProps}>
+                <PTPReportProgressOverlay />
                 <section>
                   <PTPProfileOverviewSection {...ptpNarrativeProps} />
                 </section>
