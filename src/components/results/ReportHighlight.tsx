@@ -118,7 +118,7 @@ export function HighlightableText({ blockKey, text }: { blockKey: string; text: 
     <span ref={ref} style={{ position: "relative" }}>
       {segs.length ? segs : text}
       {pop && (
-        <span ref={popRef} style={{ ...popStyle, left: pop.x, top: pop.y - 120, display: "flex", flexDirection: "column", gap: 6 }}>
+        <span ref={popRef} style={{ ...popStyle, left: pop.x, top: pop.y, display: "flex", flexDirection: "column", gap: 6 }}>
           <span style={{ display: "flex", gap: 6, justifyContent: "center" }}>
             {HIGHLIGHT_COLORS.map((c) => (
               <button key={c.key} aria-label={`Highlight ${c.label}`} onMouseDown={(e) => e.preventDefault()}
