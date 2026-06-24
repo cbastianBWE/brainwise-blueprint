@@ -20,6 +20,7 @@ import {
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Loader2, Save, Archive, BookOpen, Plus, X } from "lucide-react";
 import { FileUploadField } from "@/components/super-admin/FileUploadField";
+import { MuxVideoUploadField } from "@/components/super-admin/MuxVideoUploadField";
 import {
   GRANT_TYPE_OPTIONS, ACCOUNT_TYPE_OPTIONS, PLAN_TIER_OPTIONS,
   CORPORATE_LEVEL_OPTIONS, CONTENT_TYPE_OPTIONS, CERTIFICATION_TYPES,
