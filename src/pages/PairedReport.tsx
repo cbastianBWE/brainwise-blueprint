@@ -937,7 +937,7 @@ export default function PairedReport() {
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }} className="two-grid">
                 <div style={pbox}>
                   <div style={boxLabel}>Mitigate the unhealthy kind</div>
-                  <Paras text={conflict.mitigate} style={{ color: GRAY }} />
+                  <Bullets text={conflict.mitigate} />
                 </div>
                 <div style={pbox}>
                   <div style={boxLabel}>Promote the healthy kind</div>
