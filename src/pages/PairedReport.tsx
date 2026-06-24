@@ -828,10 +828,16 @@ export default function PairedReport() {
           <>
             <h2 style={sectionLabel}>What is driving your pair</h2>
             {driving?.opening && (
-              <div style={{ ...cardStyle, fontSize: 14 }}>{driving.opening}</div>
+              <div style={cardStyle}><Paras text={driving.opening} /></div>
             )}
             {[...strengthDrivers, ...focusDrivers].map((d, i) => (
-              <DriverCard key={i} {...d} onOpenDist={openDist} />
+              <DriverCard
+                key={i}
+                {...d}
+                why={nm(d.why)}
+                actions={d.actions.map(nm)}
+                onOpenDist={openDist}
+              />
             ))}
           </>
         )}
@@ -843,12 +849,12 @@ export default function PairedReport() {
             <div style={cardStyle}>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }} className="two-grid">
                 <div style={pbox}>
-                  <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 5, color: COLOR_A }}>Person A</div>
-                  <div style={{ fontSize: 13 }}>{within.a}</div>
+                  <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6, color: COLOR_A }}>{nameA}</div>
+                  <Paras text={within.a} />
                 </div>
                 <div style={pbox}>
-                  <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 5, color: COLOR_B }}>Person B</div>
-                  <div style={{ fontSize: 13 }}>{within.b}</div>
+                  <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6, color: COLOR_B }}>{nameB}</div>
+                  <Paras text={within.b} />
                 </div>
               </div>
             </div>
@@ -862,12 +868,12 @@ export default function PairedReport() {
             <div style={cardStyle}>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }} className="two-grid">
                 <div style={pbox}>
-                  <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 5, color: COLOR_A }}>What Person A needs from Person B</div>
-                  <div style={{ fontSize: 13 }}>{needs.a_needs_from_b}</div>
+                  <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6, color: COLOR_A }}>What {firstA} needs from {firstB}</div>
+                  <Paras text={needs.a_needs_from_b} />
                 </div>
                 <div style={pbox}>
-                  <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 5, color: COLOR_B }}>What Person B needs from Person A</div>
-                  <div style={{ fontSize: 13 }}>{needs.b_needs_from_a}</div>
+                  <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6, color: COLOR_B }}>What {firstB} needs from {firstA}</div>
+                  <Paras text={needs.b_needs_from_a} />
                 </div>
               </div>
             </div>
@@ -879,18 +885,22 @@ export default function PairedReport() {
           <>
             <h2 style={sectionLabel}>How the two of you communicate</h2>
             <div style={cardStyle}>
-              <div style={{ fontSize: 13, marginBottom: 8 }}>
-                <b>In general.</b> {communication.general}
+              <div style={{ marginBottom: 10 }}>
+                <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 4 }}>In general</div>
+                <Paras text={communication.general} />
               </div>
-              <div style={{ fontSize: 13, marginBottom: 8 }}>
-                <b>Under pressure.</b> {communication.under_pressure}
+              <div style={{ marginBottom: 10 }}>
+                <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 4 }}>Under pressure</div>
+                <Paras text={communication.under_pressure} />
               </div>
               {Array.isArray(communication.avoid_conflict) && communication.avoid_conflict.length > 0 && (
-                <div style={{ marginTop: 10, borderRadius: 10, padding: "11px 14px", fontSize: 13, background: "rgba(0,109,119,.07)", border: "1px solid rgba(0,109,119,.25)" }}>
-                  <b>To avoid communication conflict:</b>
-                  <ul style={{ margin: "6px 0 0", paddingLeft: 18 }}>
-                    {communication.avoid_conflict.map((t, i) => <li key={i}>{t}</li>)}
-                  </ul>
+                <div style={{ marginTop: 10, borderRadius: 10, padding: "13px 16px", fontSize: 15, background: "rgba(0,109,119,.07)", border: "1px solid rgba(0,109,119,.25)" }}>
+                  <div style={{ fontWeight: 700, marginBottom: 6 }}>To avoid communication conflict</div>
+                  <ol style={{ margin: 0, paddingLeft: 22, listStyleType: "decimal" }}>
+                    {communication.avoid_conflict.map((t, i) => (
+                      <li key={i} style={{ margin: "4px 0", lineHeight: 1.6 }}>{nm(t)}</li>
+                    ))}
+                  </ol>
                 </div>
               )}
             </div>
@@ -902,15 +912,15 @@ export default function PairedReport() {
           <>
             <h2 style={sectionLabel}>How the two of you handle conflict</h2>
             <div style={cardStyle}>
-              <div style={{ fontSize: 13, marginBottom: 8 }}>{conflict.summary}</div>
+              <div style={{ marginBottom: 10 }}><Paras text={conflict.summary} /></div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }} className="two-grid">
                 <div style={pbox}>
-                  <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 5 }}>Mitigate the unhealthy kind</div>
-                  <div style={{ fontSize: 13 }}>{conflict.mitigate}</div>
+                  <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6 }}>Mitigate the unhealthy kind</div>
+                  <Paras text={conflict.mitigate} />
                 </div>
                 <div style={pbox}>
-                  <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 5 }}>Promote the healthy kind</div>
-                  <div style={{ fontSize: 13 }}>{conflict.promote_healthy}</div>
+                  <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6 }}>Promote the healthy kind</div>
+                  <Paras text={conflict.promote_healthy} />
                 </div>
               </div>
             </div>
@@ -922,26 +932,28 @@ export default function PairedReport() {
           <>
             <h2 style={sectionLabel}>Repair after conflict</h2>
             <div style={cardStyle}>
-              <div style={{ fontSize: 13, marginBottom: 10 }}>{repair.overview}</div>
+              <div style={{ marginBottom: 10 }}><Paras text={repair.overview} /></div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }} className="two-grid">
                 <div style={pbox}>
-                  <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 5, color: COLOR_A }}>Person A</div>
-                  <div style={{ fontSize: 13 }}>{repair.a}</div>
+                  <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6, color: COLOR_A }}>{nameA}</div>
+                  <Paras text={repair.a} />
                 </div>
                 <div style={pbox}>
-                  <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 5, color: COLOR_B }}>Person B</div>
-                  <div style={{ fontSize: 13 }}>{repair.b}</div>
+                  <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6, color: COLOR_B }}>{nameB}</div>
+                  <Paras text={repair.b} />
                 </div>
               </div>
               {Array.isArray(repair.steps) && repair.steps.length > 0 && (
-                <div style={{ marginTop: 12, borderRadius: 10, padding: "11px 14px", fontSize: 13, background: "rgba(0,109,119,.07)", border: "1px solid rgba(0,109,119,.25)" }}>
-                  <b>A repair sequence for you:</b>
-                  <ol style={{ margin: "6px 0 0", paddingLeft: 18 }}>
-                    {repair.steps.map((t, i) => <li key={i}>{t}</li>)}
+                <div style={{ marginTop: 12, borderRadius: 10, padding: "13px 16px", fontSize: 15, background: "rgba(0,109,119,.07)", border: "1px solid rgba(0,109,119,.25)" }}>
+                  <div style={{ fontWeight: 700, marginBottom: 6 }}>A repair sequence for you</div>
+                  <ol style={{ margin: 0, paddingLeft: 22, listStyleType: "decimal" }}>
+                    {repair.steps.map((t, i) => (
+                      <li key={i} style={{ margin: "4px 0", lineHeight: 1.6 }}>{nm(t)}</li>
+                    ))}
                   </ol>
                 </div>
               )}
-              <div style={{ fontSize: 12, color: GRAY, fontStyle: "italic", marginTop: 10 }}>
+              <div style={{ fontSize: 13, color: GRAY, fontStyle: "italic", marginTop: 10 }}>
                 {repair.disclaimer || ROMANTIC_DEFAULT_DISCLAIMER}
               </div>
             </div>
@@ -953,27 +965,28 @@ export default function PairedReport() {
           <>
             <h2 style={sectionLabel}>Building intimacy</h2>
             <div style={cardStyle}>
-              <div style={{ fontSize: 13, marginBottom: 10 }}>{intimacy.overview}</div>
+              <div style={{ marginBottom: 10 }}><Paras text={intimacy.overview} /></div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }} className="two-grid">
                 <div style={pbox}>
-                  <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 5, color: COLOR_A }}>Person A</div>
-                  <ul style={{ margin: 0, paddingLeft: 18, fontSize: 13 }}>
-                    {(intimacy.a ?? []).map((t, i) => <li key={i}>{t}</li>)}
+                  <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6, color: COLOR_A }}>{nameA}</div>
+                  <ul style={{ margin: 0, paddingLeft: 18, fontSize: 15, lineHeight: 1.6 }}>
+                    {(intimacy.a ?? []).map((t, i) => <li key={i} style={{ margin: "4px 0" }}>{nm(t)}</li>)}
                   </ul>
                 </div>
                 <div style={pbox}>
-                  <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 5, color: COLOR_B }}>Person B</div>
-                  <ul style={{ margin: 0, paddingLeft: 18, fontSize: 13 }}>
-                    {(intimacy.b ?? []).map((t, i) => <li key={i}>{t}</li>)}
+                  <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6, color: COLOR_B }}>{nameB}</div>
+                  <ul style={{ margin: 0, paddingLeft: 18, fontSize: 15, lineHeight: 1.6 }}>
+                    {(intimacy.b ?? []).map((t, i) => <li key={i} style={{ margin: "4px 0" }}>{nm(t)}</li>)}
                   </ul>
                 </div>
               </div>
-              <div style={{ fontSize: 12, color: GRAY, fontStyle: "italic", marginTop: 10 }}>
+              <div style={{ fontSize: 13, color: GRAY, fontStyle: "italic", marginTop: 10 }}>
                 {intimacy.disclaimer || ROMANTIC_DEFAULT_DISCLAIMER}
               </div>
             </div>
           </>
         )}
+
 
         {/* full map */}
         {fullMapGroups.length > 0 && (
