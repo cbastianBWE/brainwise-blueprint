@@ -742,7 +742,7 @@ export default function PairedReport() {
                 <div style={{ color: ORANGE, fontWeight: 800, fontSize: 22 }}>{i + 1}</div>
                 <div style={{ fontWeight: 700, margin: "6px 0 4px", fontSize: 18 }}>{nm(t.headline)}</div>
                 <div style={{ fontSize: 15, color: GRAY, lineHeight: 1.6 }}>{nm(t.detail)}</div>
-                {t.action && <div style={{ color: TEAL, fontWeight: 600, fontSize: 14, marginTop: 8 }}>{nm(t.action)}</div>}
+                {t.action && <div style={{ color: TEAL, fontWeight: 600, fontSize: 14, marginTop: 8 }}>{renderBold(nm(t.action))}</div>}
               </div>
             ))}
           </div>
