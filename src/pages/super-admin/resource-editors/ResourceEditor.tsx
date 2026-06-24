@@ -579,6 +579,19 @@ export default function ResourceEditor({
                       </p>
                     </div>
                   </div>
+                  {contentType === "video" && (
+                    <div className="flex items-start gap-2">
+                      <RadioGroupItem value="mux" id="contentmode-mux" className="mt-1" />
+                      <div className="space-y-0.5">
+                        <Label htmlFor="contentmode-mux" className="font-medium">
+                          Stream via Mux
+                        </Label>
+                        <p className="text-xs text-muted-foreground">
+                          Upload an MP4, WebM, or MOV; stored and streamed adaptively by Mux. Best for large videos.
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </RadioGroup>
               </div>
             )}
