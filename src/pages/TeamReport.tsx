@@ -1038,8 +1038,9 @@ export default function TeamReport() {
 }
 
 const tdStyle: React.CSSProperties = {
-  padding: 14, borderTop: `1px solid ${LINE}`, fontSize: 14, verticalAlign: "top", color: "#6D6875",
+  padding: "16px 18px", borderTop: `1px solid ${LINE}`, fontSize: 16, lineHeight: 1.6, verticalAlign: "top", color: GRAY,
 };
+
 
 function GenerationBanner({
   status, running, expected, done, current, failed, onRetry, canDrive,
