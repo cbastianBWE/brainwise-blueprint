@@ -1037,8 +1037,8 @@ export default function PairedReport() {
                 {coach.why.map((w, i) => {
                   const f = facetLookup(w.item);
                   return (
-                    <div key={i} style={{ fontSize: 13, margin: "6px 0" }}>
-                      <b>{f?.facetName ?? `Item ${w.item}`}.</b> {w.rationale}
+                    <div key={i} style={{ fontSize: 14, margin: "6px 0", lineHeight: 1.6 }}>
+                      <b>{f?.facetName ?? `Item ${w.item}`}.</b> {nm(w.rationale)}
                     </div>
                   );
                 })}
@@ -1046,9 +1046,9 @@ export default function PairedReport() {
             )}
             {Array.isArray(coach.debrief_prompts) && coach.debrief_prompts.length > 0 && (
               <Acc title="Debrief prompts">
-                <ol style={{ margin: "6px 0", paddingLeft: 18 }}>
+                <ol style={{ margin: "6px 0", paddingLeft: 22, listStyleType: "decimal" }}>
                   {coach.debrief_prompts.map((p, i) => (
-                    <li key={i} style={{ fontSize: 13, margin: "4px 0" }}>{p}</li>
+                    <li key={i} style={{ fontSize: 14, margin: "4px 0", lineHeight: 1.6 }}>{nm(p)}</li>
                   ))}
                 </ol>
               </Acc>
@@ -1064,7 +1064,10 @@ export default function PairedReport() {
         a={distOpen?.a ?? 0}
         b={distOpen?.b ?? 0}
         title={distOpen?.title ?? "Distribution"}
+        labA={nameA}
+        labB={nameB}
       />
+
 
       {/* tooltip */}
       {tip && (
