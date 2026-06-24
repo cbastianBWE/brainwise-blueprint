@@ -834,7 +834,7 @@ export default function PairedReport() {
           <>
             <h2 style={sectionLabel}>What is driving your pair</h2>
             {driving?.opening && (
-              <Paras text={driving.opening} style={sectionLead} />
+              <div style={sectionLead}><Paras text={driving.opening} style={{ color: GRAY }} /></div>
             )}
             {[...strengthDrivers, ...focusDrivers].map((d, i) => (
               <DriverCard
