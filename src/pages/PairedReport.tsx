@@ -1,42 +1,90 @@
-import { useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
-import {
-  PolarAngleAxis,
-  PolarGrid,
-  PolarRadiusAxis,
-  Radar,
-  RadarChart,
-  ResponsiveContainer,
-} from "recharts";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { PTP_DIMENSION_COLORS } from "@/lib/ptpDimensionColors";
-import { PtpDimensionLegend } from "@/components/results/PtpDimensionLegend";
+import { Button } from "@/components/ui/button";
 import { usePairedProfile, type PairedFacetResult } from "@/hooks/usePairedProfile";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { useNarrativeGenerator } from "@/hooks/useNarrativeGenerator";
-import { Button } from "@/components/ui/button";
 
-const DOMAIN_TO_DIM: Record<string, string> = {
-  Protection: "DIM-PTP-01",
-  Participation: "DIM-PTP-02",
-  Prediction: "DIM-PTP-03",
-  Purpose: "DIM-PTP-04",
-  Pleasure: "DIM-PTP-05",
+/* ---------- palette (brand-only) ---------- */
+const NAVY = "#021F36";
+const TEAL = "#006D77";
+const GRAY = "#6D6875";
+const PURPLE = "#3C096C";
+const AMBER = "#FFB703";
+const GREEN = "#2D6A4F";
+const MUSTARD = "#7a5800";
+const ORANGE = "#F5741A";
+const SAND = "#F9F7F1";
+const CARD_BG = "#ffffff";
+const LINE = "rgba(2,31,54,.10)";
+const LINE_STRONG = "rgba(2,31,54,.18)";
+
+const COLOR_A = NAVY;
+const COLOR_B = MUSTARD;
+
+/* dimension colors (matches PTP_DIMENSION_COLORS) */
+const DIM_COLOR: Record<string, string> = {
+  Protection: NAVY,
+  Participation: TEAL,
+  Prediction: GRAY,
+  Purpose: PURPLE,
+  Pleasure: AMBER,
 };
+/* pale tint for Pleasure radial sector and pills so amber doesn't compete with the meter */
+const DIM_SECTOR_OPACITY: Record<string, number> = {
+  Protection: 0.08,
+  Participation: 0.08,
+  Prediction: 0.08,
+  Purpose: 0.08,
+  Pleasure: 0.05,
+};
+
+/* pair shape mapping */
+const PAIR_SHAPE_KEYS = ["farApart", "bothHigh", "bothLow", "bothMedium", "mild"] as const;
+type PairShapeKey = (typeof PAIR_SHAPE_KEYS)[number];
+const PSC: Record<PairShapeKey, string> = {
+  farApart: MUSTARD,
+  bothHigh: GREEN,
+  bothLow: NAVY,
+  bothMedium: TEAL,
+  mild: GRAY,
+};
+const PAIR_SHAPE_TITLE: Record<PairShapeKey, string> = {
+  farApart: "Far apart (opposite ends)",
+  bothHigh: "Both high",
+  bothLow: "Both low",
+  bothMedium: "Both medium",
+  mild: "Mild (small, soft difference)",
+};
+const PAIR_SHAPE_SHORT: Record<PairShapeKey, { t: string; s: string }> = {
+  farApart: { t: "Far apart", s: "opposite ends" },
+  bothHigh: { t: "Both high", s: "both up here" },
+  bothLow: { t: "Both low", s: "neither is high" },
+  bothMedium: { t: "Both medium", s: "meet in the middle" },
+  mild: { t: "Mild", s: "a soft difference" },
+};
+
+function pairShapeKey(shape: string | null | undefined, a?: number, b?: number): PairShapeKey {
+  const s = (shape ?? "").toLowerCase();
+  if (s.includes("far apart") || s === "farapart") return "farApart";
+  if (s.includes("both high")) return "bothHigh";
+  if (s.includes("both low")) return "bothLow";
+  if (s.includes("both medium") || s.includes("medium")) return "bothMedium";
+  if (s.includes("mild")) return "mild";
+  // fallback inference
+  if (typeof a === "number" && typeof b === "number") {
+    const diff = Math.abs(a - b);
+    const mean = (a + b) / 2;
+    if (diff >= 35) return "farApart";
+    if (mean >= 65 && diff < 20) return "bothHigh";
+    if (mean <= 35 && diff < 20) return "bothLow";
+    if (diff < 12) return "bothMedium";
+    return "mild";
+  }
+  return "mild";
+}
 
 const PRIVILEGED_ACCOUNT_TYPES = new Set([
   "org_admin",
@@ -44,135 +92,349 @@ const PRIVILEGED_ACCOUNT_TYPES = new Set([
   "brainwise_super_admin",
 ]);
 
-const COLOR_A = "#021F36"; // Navy - Person A
-const COLOR_B = "#7a5800"; // Mustard - Person B
-const TINT_A = "rgba(2, 31, 54, 0.06)";
-const TINT_B = "rgba(122, 88, 0, 0.06)";
-
-function domainColor(domain: string): string {
-  return PTP_DIMENSION_COLORS[DOMAIN_TO_DIM[domain] ?? ""] ?? "#021F36";
+/* ---------- tooltip ---------- */
+type Tip = { x: number; y: number; text: string } | null;
+const TipCtx = { current: null as null | ((t: Tip) => void) };
+function useTipController() {
+  const [tip, setTip] = useState<Tip>(null);
+  useEffect(() => {
+    TipCtx.current = setTip;
+    return () => { TipCtx.current = null; };
+  }, []);
+  return tip;
 }
+function showTip(e: React.MouseEvent, text: string) {
+  TipCtx.current?.({
+    x: Math.min(e.clientX + 12, window.innerWidth - 310),
+    y: e.clientY + 14,
+    text,
+  });
+}
+function hideTip() { TipCtx.current?.(null); }
 
-function DomainPill({ domain }: { domain: string }) {
+/* ---------- Pair distribution glyph (two dots) ---------- */
+function PairGlyph({ a, b, onOpen }: { a: number; b: number; onOpen: () => void }) {
+  const clamp = (v: number) => Math.max(0, Math.min(100, v));
+  const ax = clamp(a), bx = clamp(b);
+  const W = 150, H = 28, y = 14, L = 12, Rr = W - 12, span = Rr - L;
+  const xa = L + span * (ax / 100), xb = L + span * (bx / 100);
+  const lo = Math.min(xa, xb), hi = Math.max(xa, xb);
   return (
     <span
-      style={{
-        backgroundColor: domainColor(domain),
-        color: "white",
-        padding: "2px 8px",
-        borderRadius: 999,
-        fontSize: 11,
-        fontWeight: 600,
-        display: "inline-block",
-      }}
+      onClick={(e) => { e.stopPropagation(); onOpen(); }}
+      title="Click to enlarge"
+      style={{ cursor: "zoom-in", display: "inline-block", borderRadius: 8, padding: 2 }}
     >
-      {domain}
+      <svg viewBox={`0 0 ${W} ${H}`} width={W} height={H}>
+        <line x1={L} y1={y} x2={Rr} y2={y} stroke={LINE} />
+        <line x1={lo.toFixed(1)} y1={y} x2={hi.toFixed(1)} y2={y} stroke={LINE_STRONG} strokeWidth={3} />
+        <circle cx={xa.toFixed(1)} cy={y} r={5} fill={COLOR_A} />
+        <circle cx={xb.toFixed(1)} cy={y} r={5} fill={COLOR_B} />
+      </svg>
     </span>
   );
 }
 
-function renderBold(text: string) {
-  const parts = text.split(/(\*\*[^*]+\*\*)/g);
-  return parts.map((p, i) =>
-    p.startsWith("**") && p.endsWith("**") ? (
-      <strong key={i}>{p.slice(2, -2)}</strong>
-    ) : (
-      <span key={i}>{p}</span>
-    ),
-  );
-}
-
-function PairGlyph({ a, b }: { a: number; b: number }) {
-  const clamp = (v: number) => Math.max(0, Math.min(100, v));
-  const ax = clamp(a);
-  const bx = clamp(b);
-  const left = Math.min(ax, bx);
-  const right = Math.max(ax, bx);
+/* ---------- enlarge modal (labelled A and B) ---------- */
+function PairDistModal({
+  open, onClose, a, b, title,
+}: { open: boolean; onClose: () => void; a: number; b: number; title: string }) {
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open, onClose]);
+  if (!open) return null;
+  const W = 600, H = 200, L = 60, Rr = W - 30, span = Rr - L, base = H - 48;
+  const pts: { lab: string; v: number; c: string }[] = [
+    { lab: "Person A", v: a, c: COLOR_A },
+    { lab: "Person B", v: b, c: COLOR_B },
+  ];
   return (
-    <div style={{ position: "relative", height: 16, width: "100%", minWidth: 80 }}>
-      <div
-        style={{
-          position: "absolute",
-          top: 7,
-          left: 0,
-          right: 0,
-          height: 2,
-          background: "hsl(var(--muted))",
-          borderRadius: 1,
-        }}
-      />
-      <div
-        style={{
-          position: "absolute",
-          top: 7,
-          left: `${left}%`,
-          width: `${right - left}%`,
-          height: 2,
-          background: "hsl(var(--muted-foreground))",
-          opacity: 0.6,
-        }}
-      />
-      <span
-        title={`Person A: ${Math.round(a)}`}
-        style={{
-          position: "absolute",
-          top: 3,
-          left: `calc(${ax}% - 5px)`,
-          width: 10,
-          height: 10,
-          borderRadius: "50%",
-          background: COLOR_A,
-        }}
-      />
-      <span
-        title={`Person B: ${Math.round(b)}`}
-        style={{
-          position: "absolute",
-          top: 3,
-          left: `calc(${bx}% - 5px)`,
-          width: 10,
-          height: 10,
-          borderRadius: "50%",
-          background: COLOR_B,
-        }}
-      />
+    <div
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      style={{
+        position: "fixed", inset: 0, background: "rgba(2,31,54,.55)",
+        display: "flex", alignItems: "center", justifyContent: "center", zIndex: 60, padding: 20,
+      }}
+    >
+      <div style={{
+        background: "#fff", borderRadius: 16, maxWidth: 680, width: "100%",
+        padding: "22px 24px 26px", boxShadow: "0 24px 60px rgba(2,31,54,.35)", position: "relative",
+      }}>
+        <button onClick={onClose} aria-label="Close" style={{
+          position: "absolute", top: 12, right: 16, border: 0, background: "none",
+          fontSize: 24, lineHeight: 1, color: GRAY, cursor: "pointer",
+        }}>×</button>
+        <h3 style={{ margin: "0 0 2px", fontSize: 17, color: NAVY }}>{title}</h3>
+        <div style={{ fontSize: 13, color: GRAY, marginBottom: 14 }}>
+          Person A and Person B. Hover a dot to see its score.
+        </div>
+        <svg viewBox={`0 0 ${W} ${H}`} width="100%" height={H}>
+          <line x1={L} y1={base} x2={Rr} y2={base} stroke={LINE_STRONG} />
+          {[0, 25, 50, 75, 100].map((t) => {
+            const x = L + span * (t / 100);
+            return (
+              <g key={t}>
+                <line x1={x} y1={base} x2={x} y2={base + 6} stroke={LINE_STRONG} />
+                <text x={x} y={base + 20} fontSize={11} fill={GRAY} textAnchor="middle">{t}</text>
+              </g>
+            );
+          })}
+          {pts.map(({ lab, v, c }) => {
+            const x = L + span * (Math.max(0, Math.min(100, v)) / 100);
+            return (
+              <g key={lab}>
+                <line x1={x.toFixed(1)} y1={44} x2={x.toFixed(1)} y2={base} stroke={c} strokeWidth={1} strokeDasharray="3 3" opacity={0.4} />
+                <circle cx={x.toFixed(1)} cy={(base - 34).toFixed(1)} r={9} fill={c}
+                  onMouseMove={(e) => showTip(e, `${lab}: ${Math.round(v)}`)} onMouseLeave={hideTip}
+                  style={{ cursor: "pointer" }} />
+                <text x={x.toFixed(1)} y={36} fontSize={12} fill={c} textAnchor="middle" fontWeight={600}>
+                  {lab} {Math.round(v)}
+                </text>
+              </g>
+            );
+          })}
+        </svg>
+      </div>
     </div>
   );
 }
 
-interface PairInThreeItem { headline: string; detail: string; action: string; }
-interface DrivingItem { item: number; why: string; action: string; }
-interface DrivingFacetsSection {
-  opening: string;
-  strengths: DrivingItem[];
-  focus: DrivingItem[];
-}
-interface WithinPersonSection { a: string; b: string; }
-interface NeedsSection { a_needs_from_b: string; b_needs_from_a: string; }
-interface CommunicationSection {
-  general: string;
-  under_pressure: string;
-  avoid_conflict: string[];
-}
-interface ConflictSection { summary: string; mitigate: string; promote_healthy: string; }
-interface RepairSection { overview: string; a: string; b: string; steps: string[]; disclaimer: string; }
-interface IntimacySection { overview: string; a: string[]; b: string[]; disclaimer: string; }
-interface CoachSection {
-  why: { item: number; rationale: string }[];
-  debrief_prompts: string[];
-}
-
-function StatusCard({ title }: { title: string }) {
+/* ---------- Radial (polygon, 3 or 5 dims) ---------- */
+function Radial({ dims }: { dims: { name: string; a: number; b: number; color: string }[] }) {
+  const W = 380, H = 360, cx = 190, cy = 180, R = 122, N = dims.length;
+  if (N < 3) return null;
+  const ang = (i: number) => (-90 + i * (360 / N)) * Math.PI / 180;
+  const pt = (v: number, i: number): [number, number] => [
+    cx + R * (Math.max(0, Math.min(100, v)) / 100) * Math.cos(ang(i)),
+    cy + R * (Math.max(0, Math.min(100, v)) / 100) * Math.sin(ang(i)),
+  ];
+  const sectors = dims.map((d, i) => {
+    const a0 = ang(i) - Math.PI / N, a1 = ang(i) + Math.PI / N;
+    const x0 = cx + R * Math.cos(a0), y0 = cy + R * Math.sin(a0);
+    const x1 = cx + R * Math.cos(a1), y1 = cy + R * Math.sin(a1);
+    return (
+      <path key={`s${i}`}
+        d={`M${cx},${cy} L${x0.toFixed(1)},${y0.toFixed(1)} A${R},${R} 0 0 1 ${x1.toFixed(1)},${y1.toFixed(1)} Z`}
+        fill={d.color} opacity={DIM_SECTOR_OPACITY[d.name] ?? 0.08} />
+    );
+  });
+  const rings = [0.33, 0.66, 1].map((r, ri) => {
+    const pts = dims.map((_, i) => {
+      const x = cx + R * r * Math.cos(ang(i)), y = cy + R * r * Math.sin(ang(i));
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    }).join(" ");
+    return <polygon key={`r${ri}`} points={pts} fill="none" stroke={LINE} />;
+  });
+  const spokes = dims.map((d, i) => {
+    const x = cx + R * Math.cos(ang(i)), y = cy + R * Math.sin(ang(i));
+    const lx = cx + (R + 22) * Math.cos(ang(i)), ly = cy + (R + 22) * Math.sin(ang(i));
+    return (
+      <g key={`sp${i}`}>
+        <line x1={cx} y1={cy} x2={x.toFixed(1)} y2={y.toFixed(1)} stroke={LINE} />
+        <text x={lx.toFixed(1)} y={ly.toFixed(1)} fontSize={11} fill={d.color}
+          textAnchor="middle" dominantBaseline="middle" fontWeight={600}>{d.name}</text>
+      </g>
+    );
+  });
+  const poly = (key: "a" | "b", color: string, lab: "Person A" | "Person B") => {
+    const pts = dims.map((d, i) => {
+      const [x, y] = pt(d[key], i);
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    }).join(" ");
+    return (
+      <g>
+        <polygon points={pts} fill={color} fillOpacity={0.10} stroke={color} strokeWidth={2} />
+        {dims.map((d, i) => {
+          const [x, y] = pt(d[key], i);
+          return (
+            <circle key={`${key}${i}`} cx={x.toFixed(1)} cy={y.toFixed(1)} r={3.8} fill={color}
+              onMouseMove={(e) => showTip(e, `${d.name} ${lab}: ${Math.round(d[key])}`)}
+              onMouseLeave={hideTip}
+              style={{ cursor: "pointer" }} />
+          );
+        })}
+      </g>
+    );
+  };
   return (
-    <Card>
-      <CardContent className="p-6 text-center text-muted-foreground">{title}</CardContent>
-    </Card>
+    <svg viewBox={`0 0 ${W} ${H}`} width="100%" style={{ maxWidth: 400, display: "block" }}>
+      {sectors}
+      {rings}
+      {spokes}
+      {poly("a", COLOR_A, "Person A")}
+      {poly("b", COLOR_B, "Person B")}
+    </svg>
   );
 }
 
-function findFacet(items: PairedFacetResult[] | undefined, itemNumber: number) {
-  return items?.find((f) => f.itemNumber === itemNumber);
+/* ---------- Agreement bar (A to B span) ---------- */
+function AgreementBar({ d }: { d: { name: string; a: number; b: number; color: string } }) {
+  const a = Math.max(0, Math.min(100, d.a));
+  const b = Math.max(0, Math.min(100, d.b));
+  const lo = Math.min(a, b), hi = Math.max(a, b), gap = Math.round(Math.abs(a - b));
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "100px 1fr 36px", alignItems: "center", gap: 10, margin: "8px 0" }}>
+      <div style={{ fontSize: 12, fontWeight: 600, textAlign: "right", color: d.color }}>{d.name}</div>
+      <div
+        style={{ position: "relative", height: 16 }}
+        onMouseMove={(e) => showTip(e, `${d.name}: Person A ${Math.round(a)}, Person B ${Math.round(b)} (gap ${gap})`)}
+        onMouseLeave={hideTip}
+      >
+        <div style={{ position: "absolute", top: 7, left: 0, right: 0, height: 2, background: LINE, borderRadius: 2 }} />
+        <div style={{ position: "absolute", top: 6, left: `${lo}%`, width: `${hi - lo}%`, height: 4, background: LINE_STRONG, borderRadius: 2 }} />
+        <div style={{ position: "absolute", top: 3, left: `${a}%`, width: 10, height: 10, borderRadius: "50%", background: COLOR_A, transform: "translateX(-5px)" }} />
+        <div style={{ position: "absolute", top: 3, left: `${b}%`, width: 10, height: 10, borderRadius: "50%", background: COLOR_B, transform: "translateX(-5px)" }} />
+      </div>
+      <div style={{ fontSize: 12, color: GRAY, textAlign: "right" }}>{gap}</div>
+    </div>
+  );
 }
+
+/* ---------- meter ---------- */
+function Meter({ tier, kind }: { tier: number; kind: "strength" | "watch" }) {
+  const color = kind === "strength" ? GREEN : AMBER;
+  return (
+    <span style={{ display: "inline-flex", gap: 3, marginLeft: 8, verticalAlign: "middle" }}>
+      {[0, 1, 2, 3].map((i) => (
+        <i key={i} style={{ width: 9, height: 5, borderRadius: 1, display: "inline-block", background: i < tier ? color : LINE }} />
+      ))}
+    </span>
+  );
+}
+function tierFromDriver(score: number | null | undefined): number {
+  if (!score || score <= 0) return 1;
+  if (score < 0.4) return 2;
+  if (score < 0.7) return 3;
+  return 4;
+}
+
+/* ---------- driver card ---------- */
+interface DriverCardProps {
+  kind: "strength" | "watch";
+  rank?: number;
+  shape: PairShapeKey;
+  label: string;
+  name: string;
+  why: string;
+  actions: string[];
+  question: string;
+  a?: number;
+  b?: number;
+  tier: number;
+  onOpenDist: (a: number, b: number, title: string) => void;
+}
+function DriverCard({
+  kind, rank, shape, label, name, why, actions, question, a, b, tier, onOpenDist,
+}: DriverCardProps) {
+  const [open, setOpen] = useState(false);
+  const accent = kind === "strength" ? GREEN : PSC[shape];
+  return (
+    <div
+      onMouseMove={question ? (e) => showTip(e, `Question answered: ${question}`) : undefined}
+      onMouseLeave={hideTip}
+      style={{
+        background: kind === "strength" ? "linear-gradient(0deg,rgba(45,106,79,.05),rgba(45,106,79,.05)),#fff" : CARD_BG,
+        border: `1px solid ${LINE}`,
+        borderLeft: `6px solid ${accent}`,
+        borderRadius: 14,
+        boxShadow: "0 1px 2px rgba(2,31,54,.04)",
+        padding: "18px 20px",
+        marginBottom: 14,
+      }}
+    >
+      <div style={{ display: "grid", gridTemplateColumns: "170px 1fr", gap: 16, alignItems: "start" }} className="dr-grid">
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          {kind === "strength"
+            ? <span style={{ color: GREEN, fontSize: 22 }}>★</span>
+            : (
+              <span style={{
+                background: NAVY, color: "#fff", width: 22, height: 22, borderRadius: "50%",
+                display: "inline-flex", alignItems: "center", justifyContent: "center",
+                fontSize: 12, fontWeight: 700,
+              }}>{rank}</span>
+            )}
+          {typeof a === "number" && typeof b === "number" && (
+            <PairGlyph a={a} b={b} onOpen={() => onOpenDist(a, b, name)} />
+          )}
+        </div>
+        <div>
+          <span style={{
+            display: "inline-flex", alignItems: "center", gap: 8,
+            fontSize: 11, fontWeight: 700, letterSpacing: ".04em", textTransform: "uppercase",
+            padding: "3px 9px", borderRadius: 999,
+            background: kind === "strength" ? "rgba(45,106,79,.12)" : "rgba(255,183,3,.16)",
+            color: kind === "strength" ? GREEN : MUSTARD,
+          }}>
+            {label}
+            <Meter tier={tier} kind={kind} />
+          </span>
+          <div style={{ fontWeight: 700, fontSize: 16, color: NAVY, margin: "8px 0 3px" }}>{name}</div>
+          <div style={{ color: GRAY, fontSize: 13 }}>{why}</div>
+          {actions.length > 0 && (
+            <>
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); setOpen((o) => !o); }}
+                style={{
+                  marginTop: 10, border: 0, background: "none", color: TEAL, fontWeight: 600,
+                  fontSize: 13, cursor: "pointer", padding: 0, display: "inline-flex", alignItems: "center", gap: 6,
+                }}
+              >
+                <span style={{ display: "inline-block", transition: ".15s", transform: open ? "rotate(90deg)" : "none" }}>▸</span>
+                See three things to {kind === "strength" ? "keep doing" : "try"}
+              </button>
+              <div style={{ maxHeight: open ? 400 : 0, overflow: "hidden", transition: ".2s", marginTop: open ? 10 : 0, opacity: open ? 1 : 0 }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: GRAY, textTransform: "uppercase", letterSpacing: ".05em", marginBottom: 6 }}>
+                  {kind === "strength" ? "Three things to keep doing" : "Three things to try"}
+                </div>
+                <ol style={{ margin: 0, paddingLeft: 18 }}>
+                  {actions.map((act, i) => (
+                    <li key={i} style={{ fontSize: 13, margin: "4px 0" }}>{act}</li>
+                  ))}
+                </ol>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ---------- collapsible accordion ---------- */
+function Acc({ title, defaultOpen = false, children }: { title: string; defaultOpen?: boolean; children: React.ReactNode }) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div style={{ border: `1px solid ${LINE}`, borderRadius: 10, marginBottom: 8, background: "#fff" }}>
+      <button type="button" onClick={() => setOpen((o) => !o)} style={{
+        width: "100%", textAlign: "left", background: "none", border: 0, padding: "12px 14px",
+        fontWeight: 600, fontSize: 14, color: NAVY, cursor: "pointer",
+        display: "flex", justifyContent: "space-between", alignItems: "center",
+      }}>
+        <span>{title}</span>
+        <span style={{ color: TEAL, transition: ".15s", transform: open ? "rotate(90deg)" : "none" }}>▸</span>
+      </button>
+      <div style={{ maxHeight: open ? 600 : 0, overflow: "hidden", transition: ".2s", padding: open ? "0 14px 14px" : "0 14px" }}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+/* ---------- section types ---------- */
+interface PairInThreeItem { headline: string; detail: string; action: string; }
+interface DrivingItem { item: number; why: string; actions?: string[]; action?: string; }
+interface DrivingFacetsSection { opening: string; strengths: DrivingItem[]; focus: DrivingItem[]; }
+interface WithinPersonSection { a: string; b: string; }
+interface NeedsSection { a_needs_from_b: string; b_needs_from_a: string; }
+interface CommunicationSection { general: string; under_pressure: string; avoid_conflict: string[]; }
+interface ConflictSection { summary: string; mitigate: string; promote_healthy: string; }
+interface RepairSection { overview: string; a: string; b: string; steps: string[]; disclaimer: string; }
+interface IntimacySection { overview: string; a: string[]; b: string[]; disclaimer: string; }
+interface CoachSection { why: { item: number; rationale: string }[]; debrief_prompts: string[]; }
 
 function modeTitle(mode: string | null): string {
   if (mode === "work") return "Work Paired Report";
@@ -181,17 +443,15 @@ function modeTitle(mode: string | null): string {
   return "Paired Report";
 }
 
+const ROMANTIC_DEFAULT_DISCLAIMER =
+  "This reflects tendencies from a self-report profile, not a diagnosis or a verdict on the relationship. If any pattern here involves fear, control, or harm, please reach out to a qualified professional.";
+
+/* ---------- page ---------- */
 export default function PairedReport() {
   const { pairedProfileId } = useParams<{ pairedProfileId: string }>();
   const {
-    loading,
-    noAccess,
-    profile,
-    mode,
-    sections,
-    status,
-    refetchSections,
-    refetchProfile,
+    loading, noAccess, profile, mode, sections, status,
+    refetchSections, refetchProfile,
   } = usePairedProfile(pairedProfileId);
   const { profile: userProfile } = useUserProfile();
 
@@ -211,41 +471,62 @@ export default function PairedReport() {
     },
   });
 
-  const { radarData, dimensionIds } = useMemo(() => {
-    const dims = profile?.structured?.dimensions ?? {};
-    const present = Object.keys(dims);
-    const order = ["Protection", "Participation", "Prediction", "Purpose", "Pleasure"].filter(
-      (d) => present.includes(d),
-    );
-    return {
-      radarData: order.map((d) => ({ domain: d, a: dims[d]?.a ?? 0, b: dims[d]?.b ?? 0 })),
-      dimensionIds: order.map((d) => DOMAIN_TO_DIM[d]).filter(Boolean),
-    };
+  /* question text */
+  const [questionByItem, setQuestionByItem] = useState<Map<number, string>>(new Map());
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase.from("items").select("item_number,item_text").eq("instrument_id", "INST-001");
+      if (cancelled) return;
+      const rows = (data ?? []) as Array<{ item_number: number | null; item_text: string }>;
+      setQuestionByItem(new Map(rows.filter((r) => r.item_number != null).map((r) => [r.item_number as number, r.item_text])));
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  /* tooltip & modal */
+  const tip = useTipController();
+  const [distOpen, setDistOpen] = useState<{ a: number; b: number; title: string } | null>(null);
+  const openDist = useCallback((a: number, b: number, title: string) => {
+    setDistOpen({ a, b, title });
+  }, []);
+
+  /* responsive */
+  useEffect(() => {
+    const s = document.createElement("style");
+    s.innerHTML = `
+      @media (max-width: 720px) {
+        .dr-grid { grid-template-columns: 1fr !important; }
+        .two-grid { grid-template-columns: 1fr !important; }
+        .three-grid { grid-template-columns: 1fr !important; }
+        .glyphrow-grid { grid-template-columns: repeat(2, 1fr) !important; }
+        .facets-grid { grid-template-columns: 1fr !important; }
+        .rad-flex { flex-direction: column !important; }
+      }
+    `;
+    document.head.appendChild(s);
+    return () => { s.remove(); };
+  }, []);
+
+  /* derived */
+  const isRomantic = mode === "romantic";
+
+  const dims = useMemo(() => {
+    const all = profile?.structured?.dimensions ?? {};
+    const order = ["Protection", "Participation", "Prediction", "Purpose", "Pleasure"].filter((d) => all[d] != null);
+    return order.map((name) => ({
+      name,
+      a: Math.round(all[name]?.a ?? 0),
+      b: Math.round(all[name]?.b ?? 0),
+      color: DIM_COLOR[name] ?? NAVY,
+    }));
   }, [profile]);
 
-  if (loading) {
-    return (
-      <div className="container mx-auto p-6 space-y-4">
-        <Skeleton className="h-10 w-64" />
-        <Skeleton className="h-40 w-full" />
-        <Skeleton className="h-80 w-full" />
-      </div>
-    );
-  }
-
-  if (noAccess || !profile) {
-    return (
-      <div className="container mx-auto p-6">
-        <StatusCard title="You do not have access to this paired report." />
-      </div>
-    );
-  }
-
   const facetLookup = (item: number): PairedFacetResult | undefined =>
-    findFacet(profile.structured?.facets, item) ??
-    findFacet(profile.structured?.strengths, item) ??
-    findFacet(profile.structured?.focusAreas, item) ??
-    findFacet(profile.structured?.fullMap, item);
+    profile?.structured?.facets?.find((f) => f.itemNumber === item) ??
+    profile?.structured?.strengths?.find((f) => f.itemNumber === item) ??
+    profile?.structured?.focusAreas?.find((f) => f.itemNumber === item) ??
+    profile?.structured?.fullMap?.find((f) => f.itemNumber === item);
 
   const pairInThree = sections["pair_in_three"] as PairInThreeItem[] | undefined;
   const driving = sections["driving_facets"] as DrivingFacetsSection | undefined;
@@ -257,435 +538,485 @@ export default function PairedReport() {
   const intimacy = sections["intimacy"] as IntimacySection | undefined;
   const coach = sections["coach"] as CoachSection | undefined;
 
-  const axisCountWord = radarData.length === 3 ? "three" : "five";
-  const isRomantic = mode === "romantic";
+  /* full map groups */
+  const fullMapGroups = useMemo(() => {
+    const full = profile?.structured?.fullMap ?? profile?.structured?.facets ?? [];
+    const buckets: Record<PairShapeKey, PairedFacetResult[]> = {
+      farApart: [], bothHigh: [], bothLow: [], bothMedium: [], mild: [],
+    };
+    for (const f of full) buckets[pairShapeKey(f.shape, f.stats?.a, f.stats?.b)].push(f);
+    return PAIR_SHAPE_KEYS.filter((k) => buckets[k].length > 0).map((k) => ({
+      k, items: buckets[k],
+    }));
+  }, [profile]);
+
+  const [activeShape, setActiveShape] = useState<PairShapeKey | null>(null);
+
+  /* ---------- early returns ---------- */
+  if (loading) {
+    return (
+      <div style={{ background: SAND, minHeight: "100vh", padding: 24 }}>
+        <div style={{ maxWidth: 880, margin: "0 auto" }} className="space-y-4">
+          <Skeleton className="h-10 w-64" />
+          <Skeleton className="h-40 w-full" />
+          <Skeleton className="h-80 w-full" />
+        </div>
+      </div>
+    );
+  }
+  if (noAccess || !profile) {
+    return (
+      <div style={{ background: SAND, minHeight: "100vh", padding: 24 }}>
+        <div style={{ maxWidth: 880, margin: "0 auto", background: CARD_BG, border: `1px solid ${LINE}`, borderRadius: 14, padding: 24, textAlign: "center", color: GRAY }}>
+          You do not have access to this paired report.
+        </div>
+      </div>
+    );
+  }
+
+  /* driver lists */
+  const strengthFacets = profile.structured?.strengths ?? [];
+  const focusFacets = profile.structured?.focusAreas ?? [];
+
+  const strengthDrivers = strengthFacets.map((f, i) => {
+    const src = driving?.strengths?.[i];
+    const actions = src?.actions ?? (src?.action ? [src.action] : []);
+    return {
+      kind: "strength" as const,
+      shape: pairShapeKey(f.shape, f.stats?.a, f.stats?.b),
+      label: i === 0 ? "Start here · your strength" : "Strength",
+      name: f.facetName,
+      why: src?.why ?? "",
+      actions,
+      question: questionByItem.get(f.itemNumber) ?? "",
+      a: f.stats?.a,
+      b: f.stats?.b,
+      tier: tierFromDriver(f.driverScore),
+    };
+  });
+  const focusDrivers = focusFacets.map((f, idx) => {
+    const src = driving?.focus?.[idx];
+    const actions = src?.actions ?? (src?.action ? [src.action] : []);
+    const sev = f.driverScore ?? 0;
+    let label = "Worth watching";
+    if (sev >= 0.7) label = "Watch closely";
+    else if (sev >= 0.4) label = "Watch";
+    else label = "Quiet but real";
+    return {
+      kind: "watch" as const,
+      rank: idx + 1,
+      shape: pairShapeKey(f.shape, f.stats?.a, f.stats?.b),
+      label,
+      name: f.facetName,
+      why: src?.why ?? "",
+      actions,
+      question: questionByItem.get(f.itemNumber) ?? "",
+      a: f.stats?.a,
+      b: f.stats?.b,
+      tier: tierFromDriver(f.driverScore),
+    };
+  });
+
+  const sectionLabel: React.CSSProperties = {
+    fontSize: 13, letterSpacing: ".08em", textTransform: "uppercase",
+    color: GRAY, margin: "34px 0 12px", fontWeight: 700,
+  };
+  const cardStyle: React.CSSProperties = {
+    background: CARD_BG, border: `1px solid ${LINE}`, borderRadius: 14,
+    padding: "18px 20px", marginBottom: 14, boxShadow: "0 1px 2px rgba(2,31,54,.04)",
+  };
+  const pbox: React.CSSProperties = {
+    border: `1px solid ${LINE}`, borderRadius: 10, padding: "13px 15px",
+  };
 
   return (
-    <div className="container mx-auto p-6 space-y-6 max-w-5xl">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold">{modeTitle(mode)}</h1>
-        <p className="text-muted-foreground">Person A and Person B</p>
-      </div>
+    <div style={{ background: SAND, color: NAVY, fontFamily: '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif', lineHeight: 1.55, minHeight: "100vh" }}>
+      <div style={{ maxWidth: 880, margin: "0 auto", padding: "0 18px 80px" }}>
+        {/* Hero */}
+        <div style={{ background: NAVY, color: "#fff", borderRadius: "0 0 20px 20px", margin: "0 -18px 0", padding: "30px 28px 56px" }}>
+          <div style={{ color: ORANGE, fontSize: 12, letterSpacing: ".12em", textTransform: "uppercase", fontWeight: 700, marginBottom: 8 }}>
+            BrainWise · Paired Profile
+          </div>
+          <h1 style={{ margin: "0 0 4px", fontSize: 27 }}>{modeTitle(mode)}</h1>
+          <div style={{ color: "rgba(255,255,255,.72)", fontSize: 13 }}>
+            How the two of you fit, where you pull apart, and what to do about it.
+          </div>
+          <div style={{ display: "flex", gap: 26, marginTop: 16, flexWrap: "wrap" }}>
+            {[
+              { k: "PAIR", v: "Person A & Person B" },
+              { k: "CONTEXT", v: mode ? mode.charAt(0).toUpperCase() + mode.slice(1) : "" },
+              { k: "DIMENSIONS", v: dims.length === 3 ? "Three" : dims.length === 5 ? "All five" : `${dims.length}` },
+              { k: "GENERATED", v: new Date().toLocaleDateString(undefined, { year: "numeric", month: "short" }) },
+            ].map((m) => (
+              <div key={m.k} style={{ fontSize: 12, color: "rgba(255,255,255,.72)" }}>
+                {m.k}
+                <b style={{ display: "block", color: "#fff", fontSize: 14, fontWeight: 600, marginTop: 2 }}>{m.v}</b>
+              </div>
+            ))}
+          </div>
+          <div style={{ display: "flex", gap: 16, marginTop: 16 }}>
+            <span style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 13, color: "rgba(255,255,255,.85)" }}>
+              <span style={{ width: 13, height: 13, borderRadius: "50%", background: COLOR_A, display: "inline-block" }} />Person A
+            </span>
+            <span style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 13, color: "rgba(255,255,255,.85)" }}>
+              <span style={{ width: 13, height: 13, borderRadius: "50%", background: COLOR_B, display: "inline-block" }} />Person B
+            </span>
+          </div>
+        </div>
 
-      <GenerationBanner
-        status={status}
-        running={generator.running}
-        expected={generator.expected}
-        done={generator.done}
-        current={generator.current}
-        failed={generator.failed}
-        onRetry={generator.retry}
-        canDrive={canSeePrivileged}
-      />
+        {/* pair in three (overlap) */}
+        {Array.isArray(pairInThree) && pairInThree.length > 0 && (
+          <div style={{ margin: "-34px -2px 0", display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }} className="three-grid">
+            {pairInThree.slice(0, 3).map((t, i) => (
+              <div key={i} style={{ background: "#fff", border: `1px solid ${LINE}`, borderRadius: 14, padding: 16, boxShadow: "0 6px 18px rgba(2,31,54,.08)" }}>
+                <div style={{ color: ORANGE, fontWeight: 800, fontSize: 20 }}>{i + 1}</div>
+                <div style={{ fontWeight: 700, margin: "6px 0 4px", fontSize: 15 }}>{t.headline}</div>
+                <div style={{ fontSize: 13, color: GRAY }}>{t.detail}</div>
+                {t.action && <div style={{ color: TEAL, fontWeight: 600, fontSize: 13, marginTop: 8 }}>{t.action}</div>}
+              </div>
+            ))}
+          </div>
+        )}
 
-      {/* pair_in_three */}
-          {Array.isArray(pairInThree) && pairInThree.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Paired profile overview</CardTitle>
-              </CardHeader>
-              <CardContent className="grid gap-4 md:grid-cols-3">
-                {pairInThree.map((it, i) => (
-                  <div key={i} className="rounded-md border p-4 space-y-2">
-                    <div className="font-semibold">{it.headline}</div>
-                    <div className="text-sm text-muted-foreground">{it.detail}</div>
-                    <div className="text-sm">{renderBold(it.action)}</div>
+        {/* status banner */}
+        {status !== "complete" && (
+          <div style={{ marginTop: 20 }}>
+            <GenerationBanner
+              status={status}
+              running={generator.running}
+              expected={generator.expected}
+              done={generator.done}
+              current={generator.current}
+              failed={generator.failed}
+              onRetry={generator.retry}
+              canDrive={canSeePrivileged}
+            />
+          </div>
+        )}
+
+        {/* romantic disclaimer */}
+        {isRomantic && (
+          <div style={{
+            background: "#fff", border: `1px solid ${AMBER}`, borderLeft: `5px solid ${AMBER}`,
+            borderRadius: 10, padding: "12px 16px", fontSize: 13, color: MUSTARD, marginTop: 14, marginBottom: 14,
+          }}>
+            {ROMANTIC_DEFAULT_DISCLAIMER}
+          </div>
+        )}
+
+        {/* Radial */}
+        {dims.length >= 3 && (
+          <>
+            <h2 style={sectionLabel}>The two of you at a glance</h2>
+            <div style={cardStyle}>
+              <div style={{ display: "flex", gap: 18, flexWrap: "wrap", alignItems: "center", justifyContent: "center" }} className="rad-flex">
+                <Radial dims={dims} />
+                <div style={{ flex: 1, minWidth: 240 }}>
+                  <div style={{ fontSize: 13, color: GRAY, marginBottom: 8 }}>
+                    Each axis is one dimension. The two outlines are Person A and Person B. The bars show how far apart you sit on each one.
                   </div>
+                  <div>
+                    {dims.map((d) => <AgreementBar key={d.name} d={d} />)}
+                  </div>
+                </div>
+              </div>
+              <div style={{ display: "flex", gap: 14, flexWrap: "wrap", justifyContent: "center", marginTop: 6 }}>
+                <span style={{ fontSize: 12, color: GRAY, display: "flex", alignItems: "center", gap: 6 }}>
+                  <span style={{ width: 13, height: 13, borderRadius: "50%", background: COLOR_A, display: "inline-block" }} />Person A
+                </span>
+                <span style={{ fontSize: 12, color: GRAY, display: "flex", alignItems: "center", gap: 6 }}>
+                  <span style={{ width: 13, height: 13, borderRadius: "50%", background: COLOR_B, display: "inline-block" }} />Person B
+                </span>
+              </div>
+              <div style={{ display: "flex", gap: 12, flexWrap: "wrap", justifyContent: "center", marginTop: 8 }}>
+                {dims.map((d) => (
+                  <span key={d.name} style={{ fontSize: 11, display: "flex", alignItems: "center", gap: 5, color: GRAY }}>
+                    <i style={{ width: 9, height: 9, borderRadius: 2, display: "inline-block", background: d.color }} />{d.name}
+                  </span>
                 ))}
-              </CardContent>
-            </Card>
-          )}
+              </div>
+            </div>
+          </>
+        )}
 
-          {/* Radial */}
-          {radarData.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Both of you across the {axisCountWord} domains</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div style={{ width: "100%", height: 380 }}>
-                  <ResponsiveContainer>
-                    <RadarChart data={radarData} outerRadius="75%">
-                      <PolarGrid />
-                      <PolarAngleAxis
-                        dataKey="domain"
-                        tick={(props: {
-                          x: number;
-                          y: number;
-                          textAnchor: string;
-                          payload: { value: string };
-                        }) => {
-                          const { x, y, textAnchor, payload } = props;
-                          return (
-                            <text
-                              x={x}
-                              y={y}
-                              textAnchor={textAnchor}
-                              fill={domainColor(payload.value)}
-                              fontWeight={600}
-                              fontSize={13}
-                            >
-                              {payload.value}
-                            </text>
-                          );
-                        }}
-                      />
-                      <PolarRadiusAxis domain={[0, 100]} tick={{ fontSize: 10 }} />
-                      <Radar
-                        name="Person A"
-                        dataKey="a"
-                        stroke={COLOR_A}
-                        fill={COLOR_A}
-                        fillOpacity={0.13}
-                        strokeWidth={2}
-                        dot
-                      />
-                      <Radar
-                        name="Person B"
-                        dataKey="b"
-                        stroke={COLOR_B}
-                        fill={COLOR_B}
-                        fillOpacity={0.13}
-                        strokeWidth={2}
-                        dot
-                      />
-                    </RadarChart>
-                  </ResponsiveContainer>
+        {/* shape glyphs */}
+        <h2 style={sectionLabel}>The shapes a pair can make</h2>
+        <div style={cardStyle}>
+          <div style={{ fontSize: 13, color: GRAY, marginBottom: 10 }}>
+            Every trait below falls into one of these. Tap one to highlight it in the full map.
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 10 }} className="glyphrow-grid">
+            {PAIR_SHAPE_KEYS.map((k) => {
+              const sample: Record<PairShapeKey, [number, number]> = {
+                farApart: [84, 26], bothHigh: [78, 74], bothLow: [22, 26], bothMedium: [52, 55], mild: [50, 60],
+              };
+              const [sa, sb] = sample[k];
+              const meta = PAIR_SHAPE_SHORT[k];
+              const active = activeShape === k;
+              return (
+                <div
+                  key={k}
+                  onClick={() => setActiveShape((a) => (a === k ? null : k))}
+                  style={{
+                    background: "#fff", border: `1px solid ${active ? NAVY : LINE}`,
+                    borderRadius: 12, padding: "12px 10px", textAlign: "center", cursor: "pointer",
+                    boxShadow: active ? `0 0 0 2px rgba(2,31,54,.12)` : "none", transition: ".12s",
+                  }}
+                >
+                  <PairGlyph a={sa} b={sb} onOpen={() => openDist(sa, sb, meta.t)} />
+                  <div style={{ fontWeight: 700, fontSize: 13, marginTop: 6 }}>{meta.t}</div>
+                  <div style={{ fontSize: 11, color: GRAY, marginTop: 2 }}>{meta.s}</div>
                 </div>
-                <div className="flex flex-wrap gap-4 text-xs mt-2">
-                  <span className="flex items-center gap-2">
-                    <span style={{ width: 10, height: 10, borderRadius: "50%", background: COLOR_A, display: "inline-block" }} />
-                    Person A
-                  </span>
-                  <span className="flex items-center gap-2">
-                    <span style={{ width: 10, height: 10, borderRadius: "50%", background: COLOR_B, display: "inline-block" }} />
-                    Person B
-                  </span>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* drivers */}
+        {(strengthDrivers.length > 0 || focusDrivers.length > 0) && (
+          <>
+            <h2 style={sectionLabel}>What is driving your pair</h2>
+            {driving?.opening && (
+              <div style={{ ...cardStyle, fontSize: 14 }}>{driving.opening}</div>
+            )}
+            {[...strengthDrivers, ...focusDrivers].map((d, i) => (
+              <DriverCard key={i} {...d} onOpenDist={openDist} />
+            ))}
+          </>
+        )}
+
+        {/* within */}
+        {within && (
+          <>
+            <h2 style={sectionLabel}>What is going on inside each of you</h2>
+            <div style={cardStyle}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }} className="two-grid">
+                <div style={pbox}>
+                  <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 5, color: COLOR_A }}>Person A</div>
+                  <div style={{ fontSize: 13 }}>{within.a}</div>
                 </div>
-                <PtpDimensionLegend dimensionIds={dimensionIds} />
-              </CardContent>
-            </Card>
-          )}
-
-          {/* How to read */}
-          <Card>
-            <CardHeader>
-              <CardTitle>How to read the shapes</CardTitle>
-            </CardHeader>
-            <CardContent className="text-sm text-muted-foreground">
-              Each spoke is one of the threat domains. Person A is the dark line, Person B is the bright line. Where the two lines sit far apart, the pair spans a wide range on that domain; where they sit together, the pair is aligned. Being far apart is often a strength, not a problem: it usually means one of you covers what the other does not.
-            </CardContent>
-          </Card>
-
-          {/* driving_facets */}
-          {driving && (
-            <Card>
-              <CardHeader>
-                <CardTitle>What is driving your pair</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <p className="text-sm">{driving.opening}</p>
-                {(driving.strengths?.length ?? 0) === 0 && (driving.focus?.length ?? 0) === 0 ? null : (
-                  <>
-                    {driving.strengths?.length > 0 && (
-                      <div className="space-y-3">
-                        <h3 className="font-semibold">Strengths</h3>
-                        {driving.strengths.map((s, i) => {
-                          const f = facetLookup(s.item);
-                          return (
-                            <div key={i} className="rounded-md border p-4 space-y-2">
-                              <div className="flex items-center gap-2 flex-wrap">
-                                <span className="font-semibold">{f?.facetName ?? `Item ${s.item}`}</span>
-                                {f?.domain && <DomainPill domain={f.domain} />}
-                                {f?.label && (
-                                  <span className="text-xs px-2 py-0.5 rounded bg-muted">{f.label}</span>
-                                )}
-                              </div>
-                              {f?.stats && typeof f.stats.a === "number" && typeof f.stats.b === "number" && (
-                                <PairGlyph a={f.stats.a} b={f.stats.b} />
-                              )}
-                              <p className="text-sm">{s.why}</p>
-                              <p className="text-sm font-semibold">{s.action}</p>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                    {driving.focus?.length > 0 && (
-                      <div className="space-y-3">
-                        <h3 className="font-semibold">Areas to watch</h3>
-                        {driving.focus.map((s, i) => {
-                          const f = facetLookup(s.item);
-                          return (
-                            <div key={i} className="rounded-md border p-4 space-y-2">
-                              <div className="flex items-center gap-2 flex-wrap">
-                                <span className="font-semibold">{f?.facetName ?? `Item ${s.item}`}</span>
-                                {f?.domain && <DomainPill domain={f.domain} />}
-                                {f?.label && (
-                                  <span className="text-xs px-2 py-0.5 rounded bg-muted">{f.label}</span>
-                                )}
-                              </div>
-                              {f?.stats && typeof f.stats.a === "number" && typeof f.stats.b === "number" && (
-                                <PairGlyph a={f.stats.a} b={f.stats.b} />
-                              )}
-                              <p className="text-sm">{s.why}</p>
-                              <p className="text-sm font-semibold">{s.action}</p>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </>
-                )}
-              </CardContent>
-            </Card>
-          )}
-
-          {/* within_person */}
-          {within && (
-            <Card>
-              <CardHeader>
-                <CardTitle>What is going on inside each of you</CardTitle>
-              </CardHeader>
-              <CardContent className="grid gap-4 md:grid-cols-2">
-                <div className="rounded-md border p-4" style={{ background: TINT_A }}>
-                  <div className="font-semibold mb-1" style={{ color: COLOR_A }}>Person A</div>
-                  <p className="text-sm">{within.a}</p>
+                <div style={pbox}>
+                  <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 5, color: COLOR_B }}>Person B</div>
+                  <div style={{ fontSize: 13 }}>{within.b}</div>
                 </div>
-                <div className="rounded-md border p-4" style={{ background: TINT_B }}>
-                  <div className="font-semibold mb-1" style={{ color: COLOR_B }}>Person B</div>
-                  <p className="text-sm">{within.b}</p>
-                </div>
-              </CardContent>
-            </Card>
-          )}
+              </div>
+            </div>
+          </>
+        )}
 
-          {/* needs */}
-          {needs && (
-            <Card>
-              <CardHeader>
-                <CardTitle>What each of you needs from the other</CardTitle>
-              </CardHeader>
-              <CardContent className="grid gap-4 md:grid-cols-2">
-                <div className="rounded-md border p-4" style={{ background: TINT_A }}>
-                  <div className="font-semibold mb-1" style={{ color: COLOR_A }}>What Person A needs from Person B</div>
-                  <p className="text-sm">{needs.a_needs_from_b}</p>
+        {/* needs */}
+        {needs && (
+          <>
+            <h2 style={sectionLabel}>What each of you needs from the other</h2>
+            <div style={cardStyle}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }} className="two-grid">
+                <div style={pbox}>
+                  <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 5, color: COLOR_A }}>What Person A needs from Person B</div>
+                  <div style={{ fontSize: 13 }}>{needs.a_needs_from_b}</div>
                 </div>
-                <div className="rounded-md border p-4" style={{ background: TINT_B }}>
-                  <div className="font-semibold mb-1" style={{ color: COLOR_B }}>What Person B needs from Person A</div>
-                  <p className="text-sm">{needs.b_needs_from_a}</p>
+                <div style={pbox}>
+                  <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 5, color: COLOR_B }}>What Person B needs from Person A</div>
+                  <div style={{ fontSize: 13 }}>{needs.b_needs_from_a}</div>
                 </div>
-              </CardContent>
-            </Card>
-          )}
+              </div>
+            </div>
+          </>
+        )}
 
-          {/* communication */}
-          {communication && (
-            <Card>
-              <CardHeader>
-                <CardTitle>How the pair communicates</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="rounded-md border p-4">
-                    <div className="font-semibold mb-1">In general</div>
-                    <p className="text-sm">{communication.general}</p>
-                  </div>
-                  <div className="rounded-md border p-4">
-                    <div className="font-semibold mb-1">Under pressure</div>
-                    <p className="text-sm">{communication.under_pressure}</p>
-                  </div>
+        {/* communication */}
+        {communication && (
+          <>
+            <h2 style={sectionLabel}>How the two of you communicate</h2>
+            <div style={cardStyle}>
+              <div style={{ fontSize: 13, marginBottom: 8 }}>
+                <b>In general.</b> {communication.general}
+              </div>
+              <div style={{ fontSize: 13, marginBottom: 8 }}>
+                <b>Under pressure.</b> {communication.under_pressure}
+              </div>
+              {Array.isArray(communication.avoid_conflict) && communication.avoid_conflict.length > 0 && (
+                <div style={{ marginTop: 10, borderRadius: 10, padding: "11px 14px", fontSize: 13, background: "rgba(0,109,119,.07)", border: "1px solid rgba(0,109,119,.25)" }}>
+                  <b>To avoid communication conflict:</b>
+                  <ul style={{ margin: "6px 0 0", paddingLeft: 18 }}>
+                    {communication.avoid_conflict.map((t, i) => <li key={i}>{t}</li>)}
+                  </ul>
                 </div>
-                {Array.isArray(communication.avoid_conflict) && communication.avoid_conflict.length > 0 && (
-                  <div>
-                    <h4 className="font-semibold mb-2">Avoiding communication conflict</h4>
-                    <ul className="list-disc pl-6 space-y-1 text-sm">
-                      {communication.avoid_conflict.map((t, i) => <li key={i}>{t}</li>)}
-                    </ul>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
+              )}
+            </div>
+          </>
+        )}
 
-          {/* conflict */}
-          {conflict && (
-            <Card>
-              <CardHeader>
-                <CardTitle>How the pair handles conflict</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <p className="text-sm">{conflict.summary}</p>
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="rounded-md border p-4">
-                    <div className="font-semibold mb-1">Mitigate unhealthy conflict</div>
-                    <p className="text-sm">{conflict.mitigate}</p>
-                  </div>
-                  <div className="rounded-md border p-4">
-                    <div className="font-semibold mb-1">Promote healthy conflict</div>
-                    <p className="text-sm">{conflict.promote_healthy}</p>
-                  </div>
+        {/* conflict */}
+        {conflict && (
+          <>
+            <h2 style={sectionLabel}>How the two of you handle conflict</h2>
+            <div style={cardStyle}>
+              <div style={{ fontSize: 13, marginBottom: 8 }}>{conflict.summary}</div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }} className="two-grid">
+                <div style={pbox}>
+                  <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 5 }}>Mitigate the unhealthy kind</div>
+                  <div style={{ fontSize: 13 }}>{conflict.mitigate}</div>
                 </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* repair (romantic only) */}
-          {isRomantic && repair && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Repair after conflict</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <p className="text-sm">{repair.overview}</p>
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="rounded-md border p-4" style={{ background: TINT_A }}>
-                    <div className="font-semibold mb-1" style={{ color: COLOR_A }}>Person A</div>
-                    <p className="text-sm">{repair.a}</p>
-                  </div>
-                  <div className="rounded-md border p-4" style={{ background: TINT_B }}>
-                    <div className="font-semibold mb-1" style={{ color: COLOR_B }}>Person B</div>
-                    <p className="text-sm">{repair.b}</p>
-                  </div>
+                <div style={pbox}>
+                  <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 5 }}>Promote the healthy kind</div>
+                  <div style={{ fontSize: 13 }}>{conflict.promote_healthy}</div>
                 </div>
-                {Array.isArray(repair.steps) && repair.steps.length > 0 && (
-                  <div>
-                    <h4 className="font-semibold mb-2">Repair, step by step</h4>
-                    <ol className="list-decimal pl-6 space-y-1 text-sm">
-                      {repair.steps.map((t, i) => <li key={i}>{t}</li>)}
-                    </ol>
-                  </div>
-                )}
-                {repair.disclaimer && (
-                  <p className="text-xs text-muted-foreground italic">{repair.disclaimer}</p>
-                )}
-              </CardContent>
-            </Card>
-          )}
+              </div>
+            </div>
+          </>
+        )}
 
-          {/* intimacy (romantic only) */}
-          {isRomantic && intimacy && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Building intimacy</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <p className="text-sm">{intimacy.overview}</p>
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="rounded-md border p-4" style={{ background: TINT_A }}>
-                    <div className="font-semibold mb-1" style={{ color: COLOR_A }}>Person A</div>
-                    <ul className="list-disc pl-5 space-y-1 text-sm">
-                      {(intimacy.a ?? []).map((t, i) => <li key={i}>{t}</li>)}
-                    </ul>
-                  </div>
-                  <div className="rounded-md border p-4" style={{ background: TINT_B }}>
-                    <div className="font-semibold mb-1" style={{ color: COLOR_B }}>Person B</div>
-                    <ul className="list-disc pl-5 space-y-1 text-sm">
-                      {(intimacy.b ?? []).map((t, i) => <li key={i}>{t}</li>)}
-                    </ul>
-                  </div>
+        {/* repair (romantic only) */}
+        {isRomantic && repair && (
+          <>
+            <h2 style={sectionLabel}>Repair after conflict</h2>
+            <div style={cardStyle}>
+              <div style={{ fontSize: 13, marginBottom: 10 }}>{repair.overview}</div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }} className="two-grid">
+                <div style={pbox}>
+                  <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 5, color: COLOR_A }}>Person A</div>
+                  <div style={{ fontSize: 13 }}>{repair.a}</div>
                 </div>
-                {intimacy.disclaimer && (
-                  <p className="text-xs text-muted-foreground italic">{intimacy.disclaimer}</p>
-                )}
-              </CardContent>
-            </Card>
-          )}
+                <div style={pbox}>
+                  <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 5, color: COLOR_B }}>Person B</div>
+                  <div style={{ fontSize: 13 }}>{repair.b}</div>
+                </div>
+              </div>
+              {Array.isArray(repair.steps) && repair.steps.length > 0 && (
+                <div style={{ marginTop: 12, borderRadius: 10, padding: "11px 14px", fontSize: 13, background: "rgba(0,109,119,.07)", border: "1px solid rgba(0,109,119,.25)" }}>
+                  <b>A repair sequence for you:</b>
+                  <ol style={{ margin: "6px 0 0", paddingLeft: 18 }}>
+                    {repair.steps.map((t, i) => <li key={i}>{t}</li>)}
+                  </ol>
+                </div>
+              )}
+              <div style={{ fontSize: 12, color: GRAY, fontStyle: "italic", marginTop: 10 }}>
+                {repair.disclaimer || ROMANTIC_DEFAULT_DISCLAIMER}
+              </div>
+            </div>
+          </>
+        )}
 
-          {/* Every pattern we found */}
-          {Array.isArray(profile.structured?.facets) && profile.structured!.facets!.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Every pattern we found</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Collapsible defaultOpen={false}>
-                  <CollapsibleTrigger className="text-sm font-medium underline">
-                    Show all {profile.structured!.facets!.length} facets
-                  </CollapsibleTrigger>
-                  <CollapsibleContent className="mt-4">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Facet</TableHead>
-                          <TableHead>Domain</TableHead>
-                          <TableHead>Shape</TableHead>
-                          <TableHead>Pattern</TableHead>
-                          <TableHead>A vs B</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {[...profile.structured!.facets!]
-                          .sort((x, y) => (x.domain ?? "").localeCompare(y.domain ?? ""))
-                          .map((f, i) => (
-                            <TableRow key={i}>
-                              <TableCell className="font-medium">{f.facetName}</TableCell>
-                              <TableCell><DomainPill domain={f.domain} /></TableCell>
-                              <TableCell className="text-sm">{f.shape}</TableCell>
-                              <TableCell className="text-sm">{f.label ?? "—"}</TableCell>
-                              <TableCell style={{ minWidth: 120 }}>
-                                {f.stats && typeof f.stats.a === "number" && typeof f.stats.b === "number" ? (
-                                  <PairGlyph a={f.stats.a} b={f.stats.b} />
-                                ) : null}
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                      </TableBody>
-                    </Table>
-                  </CollapsibleContent>
-                </Collapsible>
-              </CardContent>
-            </Card>
-          )}
+        {/* intimacy (romantic only) */}
+        {isRomantic && intimacy && (
+          <>
+            <h2 style={sectionLabel}>Building intimacy</h2>
+            <div style={cardStyle}>
+              <div style={{ fontSize: 13, marginBottom: 10 }}>{intimacy.overview}</div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }} className="two-grid">
+                <div style={pbox}>
+                  <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 5, color: COLOR_A }}>Person A</div>
+                  <ul style={{ margin: 0, paddingLeft: 18, fontSize: 13 }}>
+                    {(intimacy.a ?? []).map((t, i) => <li key={i}>{t}</li>)}
+                  </ul>
+                </div>
+                <div style={pbox}>
+                  <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 5, color: COLOR_B }}>Person B</div>
+                  <ul style={{ margin: 0, paddingLeft: 18, fontSize: 13 }}>
+                    {(intimacy.b ?? []).map((t, i) => <li key={i}>{t}</li>)}
+                  </ul>
+                </div>
+              </div>
+              <div style={{ fontSize: 12, color: GRAY, fontStyle: "italic", marginTop: 10 }}>
+                {intimacy.disclaimer || ROMANTIC_DEFAULT_DISCLAIMER}
+              </div>
+            </div>
+          </>
+        )}
 
-          {/* coach */}
-          {canSeePrivileged && coach && (
-            <Card>
-              <CardHeader>
-                <CardTitle>For the coach: running the debrief</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {Array.isArray(coach.why) && coach.why.length > 0 && (
-                  <div className="space-y-3">
-                    {coach.why.map((w, i) => {
-                      const f = facetLookup(w.item);
+        {/* full map */}
+        {fullMapGroups.length > 0 && (
+          <>
+            <h2 style={sectionLabel}>Every pattern between you</h2>
+            {fullMapGroups.map((g) => {
+              const dim = activeShape && activeShape !== g.k;
+              return (
+                <div key={g.k} style={{ marginBottom: 14, opacity: dim ? 0.3 : 1 }}>
+                  <h4 style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 14, margin: "0 0 8px", color: NAVY }}>
+                    <span style={{ width: 11, height: 11, borderRadius: 3, display: "inline-block", background: PSC[g.k] }} />
+                    {PAIR_SHAPE_TITLE[g.k]}
+                  </h4>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10 }} className="facets-grid">
+                    {g.items.map((f) => {
+                      const q = questionByItem.get(f.itemNumber) ?? "";
+                      const a = f.stats?.a, b = f.stats?.b;
                       return (
-                        <div key={i} className="rounded-md border p-4 space-y-1">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="font-semibold">{f?.facetName ?? `Item ${w.item}`}</span>
-                            {f?.domain && <DomainPill domain={f.domain} />}
-                          </div>
-                          <p className="text-sm">{w.rationale}</p>
+                        <div
+                          key={f.itemNumber}
+                          onMouseMove={q ? (e) => showTip(e, `Question answered: ${q}`) : undefined}
+                          onMouseLeave={hideTip}
+                          style={{
+                            border: `1px solid ${LINE}`, borderTop: `3px solid ${PSC[g.k]}`,
+                            borderRadius: 10, padding: "11px 13px", background: "#fff", cursor: "help",
+                          }}
+                        >
+                          {typeof a === "number" && typeof b === "number" && (
+                            <PairGlyph a={a} b={b} onOpen={() => openDist(a, b, f.facetName)} />
+                          )}
+                          <div style={{ fontWeight: 600, fontSize: 13, marginTop: 4 }}>{f.facetName}</div>
                         </div>
                       );
                     })}
                   </div>
-                )}
-                {Array.isArray(coach.debrief_prompts) && coach.debrief_prompts.length > 0 && (
-                  <div>
-                    <h4 className="font-semibold mb-2">Debrief prompts</h4>
-                    <ol className="list-decimal pl-6 space-y-1 text-sm">
-                      {coach.debrief_prompts.map((p, i) => <li key={i}>{p}</li>)}
-                    </ol>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
+                </div>
+              );
+            })}
+          </>
+        )}
+
+        {/* coach (privileged) */}
+        {canSeePrivileged && coach && (
+          <>
+            <h2 style={sectionLabel}>For the coach or admin only</h2>
+            {Array.isArray(coach.why) && coach.why.length > 0 && (
+              <Acc title="Why these were flagged" defaultOpen>
+                {coach.why.map((w, i) => {
+                  const f = facetLookup(w.item);
+                  return (
+                    <div key={i} style={{ fontSize: 13, margin: "6px 0" }}>
+                      <b>{f?.facetName ?? `Item ${w.item}`}.</b> {w.rationale}
+                    </div>
+                  );
+                })}
+              </Acc>
+            )}
+            {Array.isArray(coach.debrief_prompts) && coach.debrief_prompts.length > 0 && (
+              <Acc title="Debrief prompts">
+                <ol style={{ margin: "6px 0", paddingLeft: 18 }}>
+                  {coach.debrief_prompts.map((p, i) => (
+                    <li key={i} style={{ fontSize: 13, margin: "4px 0" }}>{p}</li>
+                  ))}
+                </ol>
+              </Acc>
+            )}
+          </>
+        )}
+      </div>
+
+      {/* distribution modal */}
+      <PairDistModal
+        open={!!distOpen}
+        onClose={() => setDistOpen(null)}
+        a={distOpen?.a ?? 0}
+        b={distOpen?.b ?? 0}
+        title={distOpen?.title ?? "Distribution"}
+      />
+
+      {/* tooltip */}
+      {tip && (
+        <div style={{
+          position: "fixed", pointerEvents: "none", background: NAVY, color: "#fff",
+          fontSize: 12, lineHeight: 1.4, padding: "8px 11px", borderRadius: 8,
+          zIndex: 9999, maxWidth: 300, left: tip.x, top: tip.y,
+        }}>{tip.text}</div>
+      )}
     </div>
   );
 }
 
+/* ---------- Generation banner ---------- */
 function GenerationBanner({
-  status,
-  running,
-  expected,
-  done,
-  current,
-  failed,
-  onRetry,
-  canDrive,
+  status, running, expected, done, current, failed, onRetry, canDrive,
 }: {
   status: string | null;
   running: boolean;
@@ -697,35 +1028,29 @@ function GenerationBanner({
   canDrive: boolean;
 }) {
   if (status === "complete") return null;
+  const base: React.CSSProperties = {
+    background: CARD_BG, border: `1px solid ${LINE}`, borderRadius: 14,
+    boxShadow: "0 1px 2px rgba(2,31,54,.04)", padding: 16, fontSize: 14, color: GRAY,
+  };
   if (!canDrive) {
-    return (
-      <StatusCard title="This report is still generating. Please check back shortly." />
-    );
+    return <div style={base}>This report is still generating. Please check back shortly.</div>;
   }
   if (running) {
     const total = expected.length || 0;
     const idx = Math.min(done.length + 1, total);
     return (
-      <Card>
-        <CardContent className="p-4 text-sm">
-          Generating section {total > 0 ? `${idx} of ${total}` : ""}
-          {current ? `: ${current.replace(/_/g, " ")}` : ""}…
-        </CardContent>
-      </Card>
+      <div style={base}>
+        Generating section {total > 0 ? `${idx} of ${total}` : ""}
+        {current ? `: ${current.replace(/_/g, " ")}` : ""}…
+      </div>
     );
   }
   if (failed.length > 0) {
     return (
-      <Card>
-        <CardContent className="p-4 text-sm flex items-center justify-between gap-4">
-          <span>
-            Some sections didn't finish ({failed.join(", ")}). You can retry the missing ones.
-          </span>
-          <Button size="sm" variant="outline" onClick={onRetry}>
-            Retry
-          </Button>
-        </CardContent>
-      </Card>
+      <div style={{ ...base, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
+        <span>Some sections didn&apos;t finish ({failed.join(", ")}). You can retry the missing ones.</span>
+        <Button size="sm" variant="outline" onClick={onRetry}>Retry</Button>
+      </div>
     );
   }
   return null;
