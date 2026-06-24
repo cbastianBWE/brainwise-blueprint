@@ -535,11 +535,18 @@ export default function PairedReport() {
     return (
       <>
         {paras.map((p, i) => (
-          <p key={i} style={{ margin: i === 0 ? 0 : "10px 0 0", fontSize: 16, lineHeight: 1.6, maxWidth: "70ch", ...style }}>{p}</p>
+          <p key={i} style={{ margin: i === 0 ? 0 : "10px 0 0", fontSize: 16, lineHeight: 1.6, maxWidth: "70ch", ...style }}>{renderBold(p)}</p>
         ))}
       </>
     );
   };
+  const Bullets = ({ text }: { text: string }) => (
+    <ul style={{ margin: 0, paddingLeft: 22, listStyleType: "disc" }}>
+      {splitSentences(nm(text)).map((s, i) => (
+        <li key={i} style={{ fontSize: 16, lineHeight: 1.6, margin: "4px 0" }}>{renderBold(s)}</li>
+      ))}
+    </ul>
+  );
 
   /* tooltip & modal */
   const tip = useTipController();
