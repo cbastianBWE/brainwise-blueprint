@@ -40,6 +40,7 @@ function deriveInitial(status: string | null, playbackId: string | null): State 
 
 export function MuxVideoUploadField({
   contentItemId,
+  resourceId,
   initialMuxStatus,
   initialPlaybackId,
   disabled,
@@ -49,14 +50,18 @@ export function MuxVideoUploadField({
   const [mode, setMode] = useState<Mode>("upload");
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
+  const targetTable = resourceId ? "resources" : "content_items";
+  const targetId = (resourceId ?? contentItemId) as string;
+  const aiAvailable = !hideAiMode && !!contentItemId;
+
   const statusQuery = useQuery({
-    queryKey: ["mux-upload-status", contentItemId],
+    queryKey: ["mux-upload-status", targetTable, targetId],
     enabled: state.kind === "processing",
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("content_items")
+      const { data, error } = await (supabase as any)
+        .from(targetTable)
         .select("mux_status, video_source_id")
-        .eq("id", contentItemId)
+        .eq("id", targetId)
         .single();
       if (error) throw error;
       return data as { mux_status: string | null; video_source_id: string | null };
