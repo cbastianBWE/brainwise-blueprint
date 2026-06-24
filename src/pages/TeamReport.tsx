@@ -483,7 +483,7 @@ function Acc({ title, children }: { title: string; children: React.ReactNode }) 
     <div style={{ background: CARD_BG, border: `1px solid ${LINE}`, borderRadius: 16, boxShadow: "0 1px 2px rgba(2,31,54,.06),0 8px 24px rgba(2,31,54,.06)", marginBottom: 12, overflow: "hidden" }}>
       <button type="button" onClick={() => setOpen((o) => !o)} style={{
         width: "100%", textAlign: "left", background: "none", border: 0, padding: "16px 18px",
-        fontSize: 15, fontWeight: 800, color: NAVY, cursor: "pointer",
+        fontSize: 18, fontWeight: 800, color: NAVY, cursor: "pointer",
         display: "flex", justifyContent: "space-between", alignItems: "center",
       }}>
         <span>{title}</span>
@@ -816,7 +816,7 @@ export default function TeamReport() {
                 }}
               >
                 <ArchGlyph k={sh.k} />
-                <div style={{ fontWeight: 700, color: NAVY, fontSize: 14, marginTop: 8 }}>{sh.t}</div>
+                <div style={{ fontWeight: 700, color: NAVY, fontSize: 16, marginTop: 8 }}>{sh.t}</div>
                 <div style={{ fontSize: 13, color: MUTED }}>{sh.s}</div>
               </div>
             ))}
@@ -939,7 +939,7 @@ export default function TeamReport() {
               const dim = activeShape && activeShape !== g.k;
               return (
                 <div key={g.k} style={{ marginBottom: 22, opacity: dim ? 0.25 : 1, filter: dim ? "grayscale(.4)" : "none" }}>
-                  <h4 style={{ display: "flex", alignItems: "center", gap: 10, color: NAVY, fontSize: 15, margin: "0 0 12px" }}>
+                  <h4 style={{ display: "flex", alignItems: "center", gap: 10, color: NAVY, fontSize: 18, margin: "0 0 12px" }}>
                     <span style={{ width: 12, height: 12, borderRadius: "50%", background: GC[g.k] }} />
                     {g.title}
                   </h4>
@@ -965,7 +965,7 @@ export default function TeamReport() {
                               onOpen={() => openDist(scores, GC[g.k], f.facetName)}
                             />
                           )}
-                          <div style={{ fontWeight: 700, color: NAVY, fontSize: 13, marginTop: 6 }}>{f.facetName}</div>
+                          <div style={{ fontWeight: 700, color: NAVY, fontSize: 14, marginTop: 6 }}>{f.facetName}</div>
                         </div>
                       );
                     })}
@@ -1058,7 +1058,7 @@ function GenerationBanner({
   const baseCard: React.CSSProperties = {
     background: CARD_BG, border: `1px solid ${LINE}`, borderRadius: 16,
     boxShadow: "0 1px 2px rgba(2,31,54,.06),0 8px 24px rgba(2,31,54,.06)",
-    padding: 16, fontSize: 14, color: "#6D6875",
+    padding: 16, fontSize: 16, color: "#6D6875",
   };
   if (!canDrive) {
     return <div style={baseCard}>This report is still generating. Please check back shortly.</div>;
