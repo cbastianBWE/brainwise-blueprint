@@ -667,7 +667,7 @@ export default function PairedReport() {
   });
 
   const sectionLabel: React.CSSProperties = {
-    fontSize: 26, fontWeight: 800, color: NAVY, margin: "0 0 6px",
+    fontSize: 26, fontWeight: 800, color: NAVY, margin: "34px 0 6px",
   };
   const sectionLead: React.CSSProperties = {
     color: GRAY, maxWidth: 760, margin: "0 0 18px",
