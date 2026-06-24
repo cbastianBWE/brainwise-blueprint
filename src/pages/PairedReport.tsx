@@ -508,7 +508,7 @@ export default function PairedReport() {
   const firstA = nameA.split(" ")[0] || "Person A";
   const firstB = nameB.split(" ")[0] || "Person B";
   const nm = useCallback(
-    (s: string) => (s ?? "").replaceAll("Person A", firstA).replaceAll("Person B", firstB),
+    (s: string) => (s ?? "").split("Person A").join(firstA).split("Person B").join(firstB),
     [firstA, firstB],
   );
 
