@@ -436,7 +436,7 @@ function DriverCard({
         <div>
           <span style={{
             display: "inline-flex", alignItems: "center", gap: 8,
-            fontSize: 11, fontWeight: 800, letterSpacing: ".06em", textTransform: "uppercase",
+            fontSize: 13, fontWeight: 800, letterSpacing: ".06em", textTransform: "uppercase",
             padding: "4px 9px", borderRadius: 999, marginBottom: 8,
             background: kind === "strength" ? "rgba(45,106,79,.12)" : "rgba(255,183,3,.16)",
             color: kind === "strength" ? GREEN : MUSTARD,
