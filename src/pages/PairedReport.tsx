@@ -92,6 +92,14 @@ const PRIVILEGED_ACCOUNT_TYPES = new Set([
   "brainwise_super_admin",
 ]);
 
+/* ---------- bold markdown + sentence split helpers ---------- */
+const renderBold = (s: string) => {
+  const parts = (s ?? "").split(/\*\*(.+?)\*\*/g);
+  return parts.map((p, i) => (i % 2 === 1 ? <strong key={i}>{p}</strong> : <span key={i}>{p}</span>));
+};
+const splitSentences = (raw: string) =>
+  (raw ?? "").replace(/([.!?])\s+(?=[A-Z(])/g, "$1|").split("|").map((s) => s.trim()).filter(Boolean);
+
 /* ---------- tooltip ---------- */
 type Tip = { x: number; y: number; text: string } | null;
 const TipCtx = { current: null as null | ((t: Tip) => void) };
