@@ -996,7 +996,7 @@ export default function PairedReport() {
                 </div>
                 <div style={pbox}>
                   <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6, color: COLOR_B }}>{nameB}</div>
-                  <ul style={{ margin: 0, paddingLeft: 18, fontSize: 15, lineHeight: 1.6 }}>
+                  <ul style={{ margin: 0, paddingLeft: 22, listStyleType: "disc", fontSize: 16, lineHeight: 1.6 }}>
                     {(intimacy.b ?? []).map((t, i) => <li key={i} style={{ margin: "4px 0" }}>{nm(t)}</li>)}
                   </ul>
                 </div>
