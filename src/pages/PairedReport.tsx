@@ -390,9 +390,9 @@ function DriverCard({
                 <div style={{ fontSize: 12, fontWeight: 700, color: GRAY, textTransform: "uppercase", letterSpacing: ".05em", marginBottom: 6 }}>
                   {kind === "strength" ? "Three things to keep doing" : "Three things to try"}
                 </div>
-                <ol style={{ margin: 0, paddingLeft: 18 }}>
+                <ol style={{ margin: 0, paddingLeft: 22, listStyleType: "decimal" }}>
                   {actions.map((act, i) => (
-                    <li key={i} style={{ fontSize: 15, margin: "4px 0", lineHeight: 1.6 }}>{act}</li>
+                    <li key={i} style={{ fontSize: 15, margin: "4px 0", lineHeight: 1.6 }}>{renderBold(act)}</li>
                   ))}
                 </ol>
               </div>
