@@ -392,7 +392,7 @@ function DriverCard({
                 </div>
                 <ol style={{ margin: 0, paddingLeft: 18 }}>
                   {actions.map((act, i) => (
-                    <li key={i} style={{ fontSize: 13, margin: "4px 0" }}>{act}</li>
+                    <li key={i} style={{ fontSize: 15, margin: "4px 0", lineHeight: 1.6 }}>{act}</li>
                   ))}
                 </ol>
               </div>
