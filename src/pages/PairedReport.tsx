@@ -891,20 +891,20 @@ export default function PairedReport() {
           <>
             <h2 style={sectionLabel}>How the two of you communicate</h2>
             <div style={cardStyle}>
-              <div style={{ marginBottom: 10 }}>
-                <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 4 }}>In general</div>
+              <div style={{ marginBottom: 16 }}>
+                <div style={{ fontSize: 11, letterSpacing: ".1em", textTransform: "uppercase", fontWeight: 800, marginBottom: 8, color: TEAL }}>In general</div>
                 <Paras text={communication.general} />
               </div>
-              <div style={{ marginBottom: 10 }}>
-                <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 4 }}>Under pressure</div>
+              <div style={{ marginBottom: 16 }}>
+                <div style={{ fontSize: 11, letterSpacing: ".1em", textTransform: "uppercase", fontWeight: 800, marginBottom: 8, color: MUSTARD }}>Under pressure</div>
                 <Paras text={communication.under_pressure} />
               </div>
               {Array.isArray(communication.avoid_conflict) && communication.avoid_conflict.length > 0 && (
-                <div style={{ marginTop: 10, borderRadius: 10, padding: "13px 16px", fontSize: 15, background: "rgba(0,109,119,.07)", border: "1px solid rgba(0,109,119,.25)" }}>
-                  <div style={{ fontWeight: 700, marginBottom: 6 }}>To avoid communication conflict</div>
+                <div>
+                  <h4 style={{ margin: "0 0 8px", color: NAVY }}>Avoiding communication conflict</h4>
                   <ol style={{ margin: 0, paddingLeft: 22, listStyleType: "decimal" }}>
                     {communication.avoid_conflict.map((t, i) => (
-                      <li key={i} style={{ margin: "4px 0", lineHeight: 1.6 }}>{nm(t)}</li>
+                      <li key={i} style={{ margin: "4px 0", lineHeight: 1.6, fontSize: 16 }}>{nm(t)}</li>
                     ))}
                   </ol>
                 </div>
