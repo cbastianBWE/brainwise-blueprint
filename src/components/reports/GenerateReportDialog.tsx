@@ -215,6 +215,21 @@ export default function GenerateReportDialog({ open, onOpenChange, allowedModes,
             </RadioGroup>
           </div>
 
+          {/* Report name (team only, optional) */}
+          {kind === "team" && (
+            <div className="space-y-2">
+              <Label htmlFor="report-label">Report name (optional)</Label>
+              <Input
+                id="report-label"
+                placeholder="e.g. Product leadership Q4"
+                value={reportLabel}
+                onChange={(e) => setReportLabel(e.target.value)}
+                maxLength={120}
+              />
+            </div>
+          )}
+
+
           {/* Mode (paired only) */}
           {kind === "paired" && (
             <div className="space-y-2">
