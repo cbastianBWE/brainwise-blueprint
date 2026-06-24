@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { useReportHighlights, type ReportHighlight } from "@/hooks/useReportHighlights";
 import { HIGHLIGHT_COLORS, highlightCss, blockTextSha } from "@/lib/reportHighlightColors";
 
@@ -70,7 +70,7 @@ export function HighlightableText({ blockKey, text }: { blockKey: string; text: 
     segs.push(
       <mark key={`m${i}`} title={hasNote ? h.note! : undefined}
         style={{ background: highlightCss(h.color), color: "inherit", padding: "0 1px", borderRadius: 2, cursor: "pointer", borderBottom: hasNote ? "2px dotted currentColor" : undefined }}
-        onClick={(ev) => { ev.stopPropagation(); const r = (ev.target as HTMLElement).getBoundingClientRect(); setPop(null); setEditNote(h.note ?? ""); setEditPop({ id: h.id, x: r.left + r.width / 2, y: r.top }); }}>
+        onClick={(ev) => { ev.stopPropagation(); const r = (ev.target as HTMLElement).getBoundingClientRect(); setPop(null); setEditNote(h.note ?? ""); let etop = r.top - 140; if (etop < 8) etop = r.bottom + 8; let ex = r.left + r.width / 2; ex = Math.min(Math.max(ex, 120), window.innerWidth - 120); setEditPop({ id: h.id, x: ex, y: etop }); }}>
         {text.slice(h.s, h.e)}
       </mark>
     );
@@ -78,7 +78,7 @@ export function HighlightableText({ blockKey, text }: { blockKey: string; text: 
   });
   if (cursor < text.length) segs.push(<span key="tend">{text.slice(cursor)}</span>);
 
-  const onMouseUp = () => {
+  const detectSelection = useCallback(() => {
     const el = ref.current; const sel = window.getSelection();
     if (!el || !sel || sel.rangeCount === 0 || sel.isCollapsed) return;
     const range = sel.getRangeAt(0);
@@ -87,19 +87,38 @@ export function HighlightableText({ blockKey, text }: { blockKey: string; text: 
     const start = pre.toString().length; const end = start + range.toString().length;
     if (end <= start) return;
     const rect = range.getBoundingClientRect();
+    const POP_H = 130;
+    let top = rect.top - POP_H; if (top < 8) top = rect.bottom + 8;
+    let x = rect.left + rect.width / 2;
+    x = Math.min(Math.max(x, 120), window.innerWidth - 120);
     setEditPop(null);
     setCreateNote("");
-    setPop({ x: rect.left + rect.width / 2, y: rect.top, start, end });
-  };
+    setPop({ x, y: top, start, end });
+  }, []);
+
+  useEffect(() => {
+    const onUp = (e: MouseEvent) => {
+      const t = e.target as Node | null;
+      if (t && (popRef.current?.contains(t) || editRef.current?.contains(t))) return;
+      detectSelection();
+    };
+    const onTouch = () => setTimeout(detectSelection, 80);
+    document.addEventListener("mouseup", onUp);
+    document.addEventListener("touchend", onTouch);
+    return () => {
+      document.removeEventListener("mouseup", onUp);
+      document.removeEventListener("touchend", onTouch);
+    };
+  }, [detectSelection]);
 
   const popStyle: React.CSSProperties = { position: "fixed", transform: "translateX(-50%)", zIndex: 60, background: "var(--bw-white)", border: "1px solid var(--border-1)", borderRadius: 8, padding: "8px", boxShadow: "var(--shadow-md)" };
   const taStyle: React.CSSProperties = { width: 200, minHeight: 48, resize: "vertical", fontSize: 12, fontFamily: "inherit", color: "var(--fg-1)", border: "1px solid var(--border-1)", borderRadius: 6, padding: "4px 6px", boxSizing: "border-box" };
 
   return (
-    <span ref={ref} onMouseUp={onMouseUp} style={{ position: "relative" }}>
+    <span ref={ref} style={{ position: "relative" }}>
       {segs.length ? segs : text}
       {pop && (
-        <span ref={popRef} style={{ ...popStyle, left: pop.x, top: pop.y - 120, display: "flex", flexDirection: "column", gap: 6 }}>
+        <span ref={popRef} style={{ ...popStyle, left: pop.x, top: pop.y, display: "flex", flexDirection: "column", gap: 6 }}>
           <span style={{ display: "flex", gap: 6, justifyContent: "center" }}>
             {HIGHLIGHT_COLORS.map((c) => (
               <button key={c.key} aria-label={`Highlight ${c.label}`} onMouseDown={(e) => e.preventDefault()}
@@ -113,7 +132,7 @@ export function HighlightableText({ blockKey, text }: { blockKey: string; text: 
         </span>
       )}
       {editPop && (
-        <span ref={editRef} style={{ ...popStyle, left: editPop.x, top: editPop.y - 132, display: "flex", flexDirection: "column", gap: 6 }}>
+        <span ref={editRef} style={{ ...popStyle, left: editPop.x, top: editPop.y, display: "flex", flexDirection: "column", gap: 6 }}>
           <textarea value={editNote} onChange={(e) => setEditNote(e.target.value)} onMouseDown={(e) => e.stopPropagation()} onMouseUp={(e) => e.stopPropagation()}
             placeholder="Add a comment" aria-label="Edit highlight comment" style={taStyle} />
           <span style={{ display: "flex", gap: 8, justifyContent: "space-between", alignItems: "center" }}>

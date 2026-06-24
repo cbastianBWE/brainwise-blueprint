@@ -771,9 +771,13 @@ export function PTPProfileOverviewSection(props: PTPNarrativeSectionsProps) {
         {loadingNarrativeSections ? (
           <p style={{ fontSize: 14, color: "var(--fg-3)", margin: 0 }}>Generating profile overview...</p>
         ) : narrativeSections?.profile_overview ? (
-          <p style={{ fontSize: 14, color: "var(--fg-2)", lineHeight: 1.6, margin: 0 }}>
-            <HighlightableText blockKey="profile_overview" text={narrativeSections.profile_overview} />
-          </p>
+          <>
+            {narrativeSections.profile_overview.split(/\n\s*\n/).map(s => s.trim()).filter(Boolean).map((para, i) => (
+              <p key={i} style={{ fontSize: 14, color: "var(--fg-2)", lineHeight: 1.6, margin: i === 0 ? 0 : "12px 0 0" }}>
+                <HighlightableText blockKey={i === 0 ? "profile_overview" : `profile_overview:${i}`} text={para} />
+              </p>
+            ))}
+          </>
         ) : profileOverviewText ? (
           <p style={{ fontSize: 14, color: "var(--fg-2)", lineHeight: 1.6, margin: 0 }}>{profileOverviewText}</p>
         ) : null}
@@ -917,7 +921,7 @@ export function PTPProfileOverviewSection(props: PTPNarrativeSectionsProps) {
                     >
                       {i + 1}
                     </div>
-                    <p style={{ fontSize: 14, color: "var(--fg-1)", lineHeight: 1.55, margin: 0 }}>{q}</p>
+                    <p style={{ fontSize: 14, color: "var(--fg-1)", lineHeight: 1.55, margin: 0 }}><HighlightableText blockKey={`coach_questions:${i}`} text={q} /></p>
                   </div>
                 ))}
               </div>
