@@ -444,8 +444,8 @@ function DriverCard({
             {label}
             <Meter tier={tier} kind={kind} />
           </span>
-          <div style={{ fontWeight: 800, color: NAVY, margin: "2px 0 6px" }}>{name}</div>
-          <div style={{ color: "#6D6875", fontSize: 14 }}>{why}</div>
+          <div style={{ fontWeight: 800, color: NAVY, margin: "4px 0 8px", fontSize: 18 }}>{name}</div>
+          <div style={{ color: GRAY, fontSize: 16, lineHeight: 1.6, maxWidth: "70ch" }}>{why}</div>
           {actions.length > 0 && (
             <>
               <button
@@ -453,19 +453,19 @@ function DriverCard({
                 onClick={(e) => { e.stopPropagation(); setOpen((o) => !o); }}
                 style={{
                   marginTop: 12, display: "inline-flex", alignItems: "center", gap: 6,
-                  fontWeight: 700, fontSize: 13, cursor: "pointer", color: TEAL,
+                  fontWeight: 700, fontSize: 14, cursor: "pointer", color: TEAL,
                   background: "none", border: 0, padding: 0,
                 }}
               >
                 <span style={{ display: "inline-block", transition: ".2s", transform: open ? "rotate(90deg)" : "none" }}>▸</span>
                 See three things to {kind === "strength" ? "keep doing" : "try"}
               </button>
-              <div style={{ maxHeight: open ? 360 : 0, overflow: "hidden", transition: "max-height .3s ease", marginTop: open ? 12 : 0 }}>
-                <div style={{ fontSize: 11, letterSpacing: ".08em", textTransform: "uppercase", fontWeight: 800, color: MUTED, marginBottom: 6 }}>
+              <div style={{ maxHeight: open ? 600 : 0, overflow: "hidden", transition: "max-height .3s ease", marginTop: open ? 12 : 0 }}>
+                <div style={{ fontSize: 13, letterSpacing: ".08em", textTransform: "uppercase", fontWeight: 800, color: GRAY, marginBottom: 8 }}>
                   {kind === "strength" ? "Three things to keep doing" : "Three things to try"}
                 </div>
-                <ol style={{ margin: 0, paddingLeft: 20, color: "#6D6875" }}>
-                  {actions.map((a, i) => <li key={i} style={{ marginBottom: 6 }}>{a}</li>)}
+                <ol style={{ margin: 0, paddingLeft: 24, color: GRAY, listStyleType: "decimal", fontSize: 16, lineHeight: 1.6 }}>
+                  {actions.map((a, i) => <li key={i} style={{ marginBottom: 8, paddingLeft: 4 }}>{a}</li>)}
                 </ol>
               </div>
             </>
