@@ -1080,7 +1080,11 @@ export default function ResourceEditor({
             <AlertDialogDescription>
               {modeSwitchTarget === "file"
                 ? "Switching to file upload will clear the URL you've entered. Continue?"
-                : "Switching to URL will remove the uploaded file from this resource. The file remains in your asset library. Continue?"}
+                : modeSwitchTarget === "mux"
+                  ? "Switching to Mux will clear any URL or uploaded file on this resource. Continue?"
+                  : contentMode === "mux"
+                    ? "Switching away from Mux keeps the uploaded Mux video, but it will be ignored unless you publish with Mux. Continue?"
+                    : "Switching to URL will remove the uploaded file from this resource. The file remains in your asset library. Continue?"}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
