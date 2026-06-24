@@ -25,6 +25,7 @@ export interface TeamProfileRow {
   item_set: string | null;
   team_id: string | null;
   generated_by_role: string | null;
+  report_label: string | null;
   structured: {
     dimensions?: Record<string, { mean: number; high: number; low: number; facetCount?: number }>;
     strengths?: TeamFacetResult[];
