@@ -10449,6 +10449,7 @@ export type Database = {
           member_count: number
           narrative_status: string
           organization_id: string | null
+          report_label: string | null
           structured: Json
           team_id: string | null
         }
@@ -10462,6 +10463,7 @@ export type Database = {
           member_count: number
           narrative_status?: string
           organization_id?: string | null
+          report_label?: string | null
           structured: Json
           team_id?: string | null
         }
@@ -10475,6 +10477,7 @@ export type Database = {
           member_count?: number
           narrative_status?: string
           organization_id?: string | null
+          report_label?: string | null
           structured?: Json
           team_id?: string | null
         }
@@ -12373,6 +12376,10 @@ export type Database = {
           organization_id: string
           user_id: string
         }[]
+      }
+      bw_set_report_label: {
+        Args: { p_label: string; p_profile: string }
+        Returns: undefined
       }
       bw_team_profile_distribution: {
         Args: { p_profile: string }
