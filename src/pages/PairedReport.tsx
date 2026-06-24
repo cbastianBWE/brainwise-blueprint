@@ -484,6 +484,55 @@ export default function PairedReport() {
     return () => { cancelled = true; };
   }, []);
 
+  /* subject names (gated RPC) */
+  const [nameA, setNameA] = useState<string>("Person A");
+  const [nameB, setNameB] = useState<string>("Person B");
+  useEffect(() => {
+    if (!pairedProfileId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data } = await supabase.rpc("bw_paired_profile_subjects" as never, { p_profile: pairedProfileId } as never);
+        if (cancelled) return;
+        const rows = (data ?? []) as Array<{ pair_role: "A" | "B"; full_name: string }>;
+        const a = rows.find((r) => r.pair_role === "A")?.full_name;
+        const b = rows.find((r) => r.pair_role === "B")?.full_name;
+        if (a) setNameA(a);
+        if (b) setNameB(b);
+      } catch {
+        // keep fallbacks
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [pairedProfileId]);
+  const firstA = nameA.split(" ")[0] || "Person A";
+  const firstB = nameB.split(" ")[0] || "Person B";
+  const nm = useCallback(
+    (s: string) => (s ?? "").replaceAll("Person A", firstA).replaceAll("Person B", firstB),
+    [firstA, firstB],
+  );
+
+  /* paragraph splitter */
+  const splitParas = useCallback((raw: string): string[] => {
+    const s = (raw ?? "").trim();
+    if (!s) return [];
+    if (/\n{2,}/.test(s)) return s.split(/\n{2,}/).map((p) => p.trim()).filter(Boolean);
+    const sentences = s.match(/[^.!?]+[.!?]+(\s|$)|[^.!?]+$/g)?.map((x) => x.trim()).filter(Boolean) ?? [s];
+    if (sentences.length < 2) return [s];
+    const mid = Math.ceil(sentences.length / 2);
+    return [sentences.slice(0, mid).join(" "), sentences.slice(mid).join(" ")];
+  }, []);
+  const Paras = ({ text, style }: { text: string; style?: React.CSSProperties }) => {
+    const paras = splitParas(nm(text));
+    return (
+      <>
+        {paras.map((p, i) => (
+          <p key={i} style={{ margin: i === 0 ? 0 : "10px 0 0", fontSize: 16, lineHeight: 1.6, maxWidth: "70ch", ...style }}>{p}</p>
+        ))}
+      </>
+    );
+  };
+
   /* tooltip & modal */
   const tip = useTipController();
   const [distOpen, setDistOpen] = useState<{ a: number; b: number; title: string } | null>(null);
