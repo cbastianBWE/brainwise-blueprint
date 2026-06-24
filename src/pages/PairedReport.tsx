@@ -917,16 +917,16 @@ export default function PairedReport() {
         {conflict && (
           <>
             <h2 style={sectionLabel}>How the two of you handle conflict</h2>
+            <div style={sectionLead}><Paras text={conflict.summary} style={{ color: GRAY }} /></div>
             <div style={cardStyle}>
-              <div style={{ marginBottom: 10 }}><Paras text={conflict.summary} /></div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }} className="two-grid">
                 <div style={pbox}>
-                  <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6 }}>Mitigate the unhealthy kind</div>
-                  <Paras text={conflict.mitigate} />
+                  <div style={boxLabel}>Mitigate the unhealthy kind</div>
+                  <Paras text={conflict.mitigate} style={{ color: GRAY }} />
                 </div>
                 <div style={pbox}>
-                  <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6 }}>Promote the healthy kind</div>
-                  <Paras text={conflict.promote_healthy} />
+                  <div style={boxLabel}>Promote the healthy kind</div>
+                  <Paras text={conflict.promote_healthy} style={{ color: GRAY }} />
                 </div>
               </div>
             </div>
