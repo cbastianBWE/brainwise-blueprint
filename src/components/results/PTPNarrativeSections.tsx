@@ -921,7 +921,7 @@ export function PTPProfileOverviewSection(props: PTPNarrativeSectionsProps) {
                     >
                       {i + 1}
                     </div>
-                    <p style={{ fontSize: 14, color: "var(--fg-1)", lineHeight: 1.55, margin: 0 }}>{q}</p>
+                    <p style={{ fontSize: 14, color: "var(--fg-1)", lineHeight: 1.55, margin: 0 }}><HighlightableText blockKey={`coach_questions:${i}`} text={q} /></p>
                   </div>
                 ))}
               </div>
