@@ -680,6 +680,28 @@ export default function ResourceEditor({
                 )}
               </div>
             )}
+
+            {/* Mux mode uploader (video only) */}
+            {contentType === "video" && contentMode === "mux" && (
+              <div className="space-y-2">
+                <p className="text-xs text-muted-foreground">
+                  MP4, WebM, or MOV up to 5 GB. Streamed via Mux. Required to publish.
+                </p>
+                {mode === "create" ? (
+                  <div className="rounded-md border border-dashed p-4 text-sm italic text-muted-foreground">
+                    Save the resource first to upload a Mux video.
+                  </div>
+                ) : (
+                  <MuxVideoUploadField
+                    resourceId={initial?.id}
+                    initialMuxStatus={initial?.mux_status ?? null}
+                    initialPlaybackId={initial?.video_source_id ?? null}
+                    disabled={saving}
+                    hideAiMode
+                  />
+                )}
+              </div>
+            )}
           </div>
         )}
         {/* Tab assignment */}
