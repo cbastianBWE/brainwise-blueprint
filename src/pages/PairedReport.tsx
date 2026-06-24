@@ -92,6 +92,14 @@ const PRIVILEGED_ACCOUNT_TYPES = new Set([
   "brainwise_super_admin",
 ]);
 
+/* ---------- bold markdown + sentence split helpers ---------- */
+const renderBold = (s: string) => {
+  const parts = (s ?? "").split(/\*\*(.+?)\*\*/g);
+  return parts.map((p, i) => (i % 2 === 1 ? <strong key={i}>{p}</strong> : <span key={i}>{p}</span>));
+};
+const splitSentences = (raw: string) =>
+  (raw ?? "").replace(/([.!?])\s+(?=[A-Z(])/g, "$1|").split("|").map((s) => s.trim()).filter(Boolean);
+
 /* ---------- tooltip ---------- */
 type Tip = { x: number; y: number; text: string } | null;
 const TipCtx = { current: null as null | ((t: Tip) => void) };
@@ -125,7 +133,7 @@ function PairGlyph({ a, b, onOpen }: { a: number; b: number; onOpen: () => void 
       title="Click to enlarge"
       style={{ cursor: "zoom-in", display: "inline-block", borderRadius: 8, padding: 2 }}
     >
-      <svg viewBox={`0 0 ${W} ${H}`} width={W} height={H}>
+      <svg viewBox={`0 0 ${W} ${H}`} width="100%" style={{ maxWidth: W, display: "block", margin: "0 auto" }}>
         <line x1={L} y1={y} x2={Rr} y2={y} stroke={LINE} />
         <line x1={lo.toFixed(1)} y1={y} x2={hi.toFixed(1)} y2={y} stroke={LINE_STRONG} strokeWidth={3} />
         <circle cx={xa.toFixed(1)} cy={y} r={5} fill={COLOR_A} />
@@ -372,7 +380,7 @@ function DriverCard({
             <Meter tier={tier} kind={kind} />
           </span>
           <div style={{ fontWeight: 700, fontSize: 18, color: NAVY, margin: "8px 0 4px" }}>{name}</div>
-          <div style={{ color: GRAY, fontSize: 15, lineHeight: 1.6, maxWidth: "70ch" }}>{why}</div>
+          <div style={{ color: GRAY, fontSize: 15, lineHeight: 1.6, maxWidth: "70ch" }}>{renderBold(why)}</div>
           {actions.length > 0 && (
             <>
               <button
@@ -390,9 +398,9 @@ function DriverCard({
                 <div style={{ fontSize: 12, fontWeight: 700, color: GRAY, textTransform: "uppercase", letterSpacing: ".05em", marginBottom: 6 }}>
                   {kind === "strength" ? "Three things to keep doing" : "Three things to try"}
                 </div>
-                <ol style={{ margin: 0, paddingLeft: 18 }}>
+                <ol style={{ margin: 0, paddingLeft: 22, listStyleType: "decimal" }}>
                   {actions.map((act, i) => (
-                    <li key={i} style={{ fontSize: 15, margin: "4px 0", lineHeight: 1.6 }}>{act}</li>
+                    <li key={i} style={{ fontSize: 15, margin: "4px 0", lineHeight: 1.6 }}>{renderBold(act)}</li>
                   ))}
                 </ol>
               </div>
@@ -527,11 +535,18 @@ export default function PairedReport() {
     return (
       <>
         {paras.map((p, i) => (
-          <p key={i} style={{ margin: i === 0 ? 0 : "10px 0 0", fontSize: 16, lineHeight: 1.6, maxWidth: "70ch", ...style }}>{p}</p>
+          <p key={i} style={{ margin: i === 0 ? 0 : "10px 0 0", fontSize: 16, lineHeight: 1.6, maxWidth: "70ch", ...style }}>{renderBold(p)}</p>
         ))}
       </>
     );
   };
+  const Bullets = ({ text }: { text: string }) => (
+    <ul style={{ margin: 0, paddingLeft: 22, listStyleType: "disc" }}>
+      {splitSentences(nm(text)).map((s, i) => (
+        <li key={i} style={{ fontSize: 16, lineHeight: 1.6, margin: "4px 0" }}>{renderBold(s)}</li>
+      ))}
+    </ul>
+  );
 
   /* tooltip & modal */
   const tip = useTipController();
@@ -727,7 +742,7 @@ export default function PairedReport() {
                 <div style={{ color: ORANGE, fontWeight: 800, fontSize: 22 }}>{i + 1}</div>
                 <div style={{ fontWeight: 700, margin: "6px 0 4px", fontSize: 18 }}>{nm(t.headline)}</div>
                 <div style={{ fontSize: 15, color: GRAY, lineHeight: 1.6 }}>{nm(t.detail)}</div>
-                {t.action && <div style={{ color: TEAL, fontWeight: 600, fontSize: 14, marginTop: 8 }}>{nm(t.action)}</div>}
+                {t.action && <div style={{ color: TEAL, fontWeight: 600, fontSize: 14, marginTop: 8 }}>{renderBold(nm(t.action))}</div>}
               </div>
             ))}
           </div>
@@ -856,11 +871,11 @@ export default function PairedReport() {
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }} className="two-grid">
                 <div style={pbox}>
                   <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6, color: COLOR_A }}>{nameA}</div>
-                  <Paras text={within.a} />
+                  <Bullets text={within.a} />
                 </div>
                 <div style={pbox}>
                   <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6, color: COLOR_B }}>{nameB}</div>
-                  <Paras text={within.b} />
+                  <Bullets text={within.b} />
                 </div>
               </div>
             </div>
@@ -875,11 +890,11 @@ export default function PairedReport() {
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }} className="two-grid">
                 <div style={pbox}>
                   <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6, color: COLOR_A }}>What {firstA} needs from {firstB}</div>
-                  <Paras text={needs.a_needs_from_b} />
+                  <Bullets text={needs.a_needs_from_b} />
                 </div>
                 <div style={pbox}>
                   <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6, color: COLOR_B }}>What {firstB} needs from {firstA}</div>
-                  <Paras text={needs.b_needs_from_a} />
+                  <Bullets text={needs.b_needs_from_a} />
                 </div>
               </div>
             </div>
@@ -893,11 +908,11 @@ export default function PairedReport() {
             <div style={cardStyle}>
               <div style={{ marginBottom: 16 }}>
                 <div style={{ fontSize: 11, letterSpacing: ".1em", textTransform: "uppercase", fontWeight: 800, marginBottom: 8, color: TEAL }}>In general</div>
-                <Paras text={communication.general} />
+                <Bullets text={communication.general} />
               </div>
               <div style={{ marginBottom: 16 }}>
                 <div style={{ fontSize: 11, letterSpacing: ".1em", textTransform: "uppercase", fontWeight: 800, marginBottom: 8, color: MUSTARD }}>Under pressure</div>
-                <Paras text={communication.under_pressure} />
+                <Bullets text={communication.under_pressure} />
               </div>
               {Array.isArray(communication.avoid_conflict) && communication.avoid_conflict.length > 0 && (
                 <div>
@@ -922,11 +937,11 @@ export default function PairedReport() {
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }} className="two-grid">
                 <div style={pbox}>
                   <div style={boxLabel}>Mitigate the unhealthy kind</div>
-                  <Paras text={conflict.mitigate} style={{ color: GRAY }} />
+                  <Bullets text={conflict.mitigate} />
                 </div>
                 <div style={pbox}>
                   <div style={boxLabel}>Promote the healthy kind</div>
-                  <Paras text={conflict.promote_healthy} style={{ color: GRAY }} />
+                  <Bullets text={conflict.promote_healthy} />
                 </div>
               </div>
             </div>
@@ -942,11 +957,11 @@ export default function PairedReport() {
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }} className="two-grid">
                 <div style={pbox}>
                   <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6, color: COLOR_A }}>{nameA}</div>
-                  <Paras text={repair.a} />
+                  <Bullets text={repair.a} />
                 </div>
                 <div style={pbox}>
                   <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6, color: COLOR_B }}>{nameB}</div>
-                  <Paras text={repair.b} />
+                  <Bullets text={repair.b} />
                 </div>
               </div>
               {Array.isArray(repair.steps) && repair.steps.length > 0 && (
@@ -975,13 +990,13 @@ export default function PairedReport() {
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }} className="two-grid">
                 <div style={pbox}>
                   <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6, color: COLOR_A }}>{nameA}</div>
-                  <ul style={{ margin: 0, paddingLeft: 18, fontSize: 15, lineHeight: 1.6 }}>
+                  <ul style={{ margin: 0, paddingLeft: 22, listStyleType: "disc", fontSize: 16, lineHeight: 1.6 }}>
                     {(intimacy.a ?? []).map((t, i) => <li key={i} style={{ margin: "4px 0" }}>{nm(t)}</li>)}
                   </ul>
                 </div>
                 <div style={pbox}>
                   <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6, color: COLOR_B }}>{nameB}</div>
-                  <ul style={{ margin: 0, paddingLeft: 18, fontSize: 15, lineHeight: 1.6 }}>
+                  <ul style={{ margin: 0, paddingLeft: 22, listStyleType: "disc", fontSize: 16, lineHeight: 1.6 }}>
                     {(intimacy.b ?? []).map((t, i) => <li key={i} style={{ margin: "4px 0" }}>{nm(t)}</li>)}
                   </ul>
                 </div>
