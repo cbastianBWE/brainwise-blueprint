@@ -267,8 +267,8 @@ export function MuxVideoUploadField({
       ) : (
         <HeygenGeneratePanel
           generateTarget={{ kind: "standalone" }}
-          resolveContentItemId={async () => contentItemId}
-          initialContentItemId={contentItemId}
+          resolveContentItemId={async () => contentItemId!}
+          initialContentItemId={contentItemId!}
           initialMuxStatus={initialMuxStatus}
           onReady={() => setState({ kind: "ready" })}
           disabled={disabled}
