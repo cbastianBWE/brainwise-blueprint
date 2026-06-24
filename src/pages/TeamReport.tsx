@@ -889,24 +889,25 @@ export default function TeamReport() {
             <h2 style={{ fontSize: 26, fontWeight: 800, color: NAVY, margin: "0 0 6px" }}>For the leader: the moves</h2>
             <p style={{ color: MUTED, maxWidth: 760, margin: "0 0 18px" }}>One page. The top drivers, what each costs the work, the lever, and who owns it.</p>
             <div style={{ background: CARD_BG, border: `1px solid ${LINE}`, borderRadius: 16, padding: 18, boxShadow: "0 1px 2px rgba(2,31,54,.06),0 8px 24px rgba(2,31,54,.06)" }}>
-              <div style={{ overflowX: "auto" }}>
-                <table style={{ width: "100%", borderCollapse: "collapse", overflow: "hidden", borderRadius: 12, border: `1px solid ${LINE}` }}>
-                  <thead>
+              <div style={{ overflowX: "auto" }} className="leader-tbl-wrap">
+                <table style={{ width: "100%", borderCollapse: "collapse", overflow: "hidden", borderRadius: 12, border: `1px solid ${LINE}` }} className="leader-tbl">
+                  <thead className="leader-thead">
                     <tr>
                       {["Driver", "Risk to the work", "The move", "Owner"].map((h) => (
-                        <th key={h} style={{ background: NAVY, color: "#fff", textAlign: "left", fontSize: 11, letterSpacing: ".08em", textTransform: "uppercase", padding: "12px 14px" }}>{h}</th>
+                        <th key={h} style={{ background: NAVY, color: "#fff", textAlign: "left", fontSize: 13, letterSpacing: ".08em", textTransform: "uppercase", padding: "14px 16px", fontWeight: 700 }}>{h}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
                     {(leader.rows ?? []).map((r, i) => {
                       const f = facetLookup(r.item);
+                      const driverName = f?.facetName ?? `Item ${r.item}`;
                       return (
-                        <tr key={i}>
-                          <td style={tdStyle}><b style={{ color: NAVY }}>{f?.facetName ?? `Item ${r.item}`}</b></td>
-                          <td style={tdStyle}>{r.risk_to_work}</td>
-                          <td style={tdStyle}>{r.the_move}</td>
-                          <td style={{ ...tdStyle, color: GRAY }}>{r.potential_owner}</td>
+                        <tr key={i} className="leader-row">
+                          <td style={tdStyle} data-label="Driver"><b style={{ color: NAVY, fontSize: 16 }}>{driverName}</b></td>
+                          <td style={tdStyle} data-label="Risk">{r.risk_to_work}</td>
+                          <td style={tdStyle} data-label="The move">{r.the_move}</td>
+                          <td style={{ ...tdStyle, color: GRAY }} data-label="Owner">{r.potential_owner}</td>
                         </tr>
                       );
                     })}
@@ -914,7 +915,7 @@ export default function TeamReport() {
                 </table>
               </div>
               {leader.lean_on && (
-                <div style={{ marginTop: 14, border: "1px solid rgba(45,106,79,.4)", background: "rgba(45,106,79,.07)", borderRadius: 12, padding: 16, color: "#021F36" }}>
+                <div style={{ marginTop: 14, border: "1px solid rgba(45,106,79,.4)", background: "rgba(45,106,79,.07)", borderRadius: 12, padding: 16, color: NAVY, fontSize: 16, lineHeight: 1.6 }}>
                   <b style={{ color: GREEN }}>Lean on:</b> {leader.lean_on}
                 </div>
               )}
