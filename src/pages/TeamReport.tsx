@@ -757,7 +757,7 @@ export default function TeamReport() {
       {/* Three domains */}
       <section style={{ padding: "34px 0" }}>
         <div style={{ maxWidth: 1040, margin: "0 auto", padding: "0 20px" }}>
-          <div style={{ fontSize: 12, letterSpacing: ".14em", textTransform: "uppercase", fontWeight: 700, color: ORANGE }}>Team Profile</div>
+          <div style={{ fontSize: 13, letterSpacing: ".14em", textTransform: "uppercase", fontWeight: 700, color: ORANGE }}>Team Profile</div>
           <h2 style={{ fontSize: 26, fontWeight: 800, color: NAVY, margin: "0 0 6px" }}>The three threat domains</h2>
           <p style={{ color: MUTED, maxWidth: 760, margin: "0 0 18px" }}>
             Center is zero, the outer ring is 100. Each sector is one domain. The solid line is the team average; the dashed lines and their dots are the team&apos;s high and low edges. The bars below show how much members agree.
@@ -817,7 +817,7 @@ export default function TeamReport() {
               >
                 <ArchGlyph k={sh.k} />
                 <div style={{ fontWeight: 700, color: NAVY, fontSize: 14, marginTop: 8 }}>{sh.t}</div>
-                <div style={{ fontSize: 11, color: MUTED }}>{sh.s}</div>
+                <div style={{ fontSize: 13, color: MUTED }}>{sh.s}</div>
               </div>
             ))}
           </div>
@@ -982,7 +982,7 @@ export default function TeamReport() {
         <section style={{ padding: "34px 0" }}>
           <div style={{ maxWidth: 1040, margin: "0 auto", padding: "0 20px" }}>
             <div style={{
-              display: "inline-block", border: `1px solid ${TEAL}`, color: TEAL, fontSize: 11,
+              display: "inline-block", border: `1px solid ${TEAL}`, color: TEAL, fontSize: 13,
               fontWeight: 800, letterSpacing: ".1em", textTransform: "uppercase",
               padding: "5px 12px", borderRadius: 999, marginBottom: 10,
             }}>For the coach, org admin &amp; super admin</div>
