@@ -115,7 +115,7 @@ export function HighlightableText({ blockKey, text }: { blockKey: string; text: 
   const taStyle: React.CSSProperties = { width: 200, minHeight: 48, resize: "vertical", fontSize: 12, fontFamily: "inherit", color: "var(--fg-1)", border: "1px solid var(--border-1)", borderRadius: 6, padding: "4px 6px", boxSizing: "border-box" };
 
   return (
-    <span ref={ref} onMouseUp={onMouseUp} style={{ position: "relative" }}>
+    <span ref={ref} style={{ position: "relative" }}>
       {segs.length ? segs : text}
       {pop && (
         <span ref={popRef} style={{ ...popStyle, left: pop.x, top: pop.y - 120, display: "flex", flexDirection: "column", gap: 6 }}>
