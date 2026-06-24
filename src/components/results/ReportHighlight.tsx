@@ -132,7 +132,7 @@ export function HighlightableText({ blockKey, text }: { blockKey: string; text: 
         </span>
       )}
       {editPop && (
-        <span ref={editRef} style={{ ...popStyle, left: editPop.x, top: editPop.y - 132, display: "flex", flexDirection: "column", gap: 6 }}>
+        <span ref={editRef} style={{ ...popStyle, left: editPop.x, top: editPop.y, display: "flex", flexDirection: "column", gap: 6 }}>
           <textarea value={editNote} onChange={(e) => setEditNote(e.target.value)} onMouseDown={(e) => e.stopPropagation()} onMouseUp={(e) => e.stopPropagation()}
             placeholder="Add a comment" aria-label="Edit highlight comment" style={taStyle} />
           <span style={{ display: "flex", gap: 8, justifyContent: "space-between", alignItems: "center" }}>
