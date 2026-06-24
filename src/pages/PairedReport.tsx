@@ -380,7 +380,7 @@ function DriverCard({
             <Meter tier={tier} kind={kind} />
           </span>
           <div style={{ fontWeight: 700, fontSize: 18, color: NAVY, margin: "8px 0 4px" }}>{name}</div>
-          <div style={{ color: GRAY, fontSize: 15, lineHeight: 1.6, maxWidth: "70ch" }}>{why}</div>
+          <div style={{ color: GRAY, fontSize: 15, lineHeight: 1.6, maxWidth: "70ch" }}>{renderBold(why)}</div>
           {actions.length > 0 && (
             <>
               <button
