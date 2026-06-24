@@ -684,7 +684,7 @@ export default function TeamReport() {
     };
   });
 
-  const teamName = (profile as unknown as { report_label?: string | null; team_name?: string | null })?.report_label
+  const teamName = profile?.report_label
     ?? (profile as unknown as { team_name?: string | null })?.team_name
     ?? "Team";
 
