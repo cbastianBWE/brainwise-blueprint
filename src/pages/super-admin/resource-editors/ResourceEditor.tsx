@@ -231,7 +231,16 @@ export default function ResourceEditor({
         }
       }
 
-      if (contentType === "article" || contentType === "video") {
+      if (contentType === "video" && contentMode === "mux") {
+        if (initial?.mux_status !== "ready") {
+          toast({
+            title: "Video not ready",
+            description: "Upload the video and let Mux finish processing before publishing.",
+            variant: "destructive",
+          });
+          return;
+        }
+      } else if (contentType === "article" || contentType === "video") {
         if (!hasUrl && !hasFile) {
           toast({
             title: "Content required",
@@ -251,7 +260,11 @@ export default function ResourceEditor({
       }
     }
 
-    if (isPublished && (contentType === "article" || contentType === "video")) {
+    if (
+      isPublished &&
+      (contentType === "article" || contentType === "video") &&
+      !(contentType === "video" && contentMode === "mux")
+    ) {
       const hasUrl = urlOrContent.trim().length > 0;
       const hasFile = contentAssetId != null;
       if (hasUrl && !hasFile && !urlKind) {
