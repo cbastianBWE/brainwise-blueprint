@@ -28,6 +28,7 @@ export default function SubscriptionGate({ children, feature }: Props) {
   const { isBypassAdmin, isCorp, isIndividual, loading: roleLoading } = useAccountRole();
   const { profile, loading: profileLoading } = useUserProfile();
   const { user } = useAuth();
+  const userId = user?.id;
   const [featureCheck, setFeatureCheck] = useState<"pending" | "allowed" | "denied">("pending");
 
   const isModuleFeature = !!feature && feature.startsWith("module:");
@@ -36,13 +37,13 @@ export default function SubscriptionGate({ children, feature }: Props) {
   const needsFeatureRpc = !!feature && (isModuleFeature || isCorp);
 
   useEffect(() => {
-    if (!needsFeatureRpc || !user) return;
+    if (!needsFeatureRpc || !userId) return;
 
     let cancelled = false;
     setFeatureCheck("pending");
     (async () => {
       const { data, error } = await supabase.rpc("user_has_feature", {
-        p_user: user.id,
+        p_user: userId,
         p_feature: feature,
       });
       if (cancelled) return;
@@ -50,7 +51,7 @@ export default function SubscriptionGate({ children, feature }: Props) {
     })();
 
     return () => { cancelled = true; };
-  }, [needsFeatureRpc, feature, user]);
+  }, [needsFeatureRpc, feature, userId]);
 
   if (roleLoading || profileLoading) return null;
   if (needsFeatureRpc && featureCheck === "pending") return null;

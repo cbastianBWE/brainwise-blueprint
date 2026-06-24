@@ -200,6 +200,46 @@ export default function Assessment() {
     init();
   }, [searchParams, setSearchParams, user, isCorp, canBypassAssessmentPaywall]);
 
+  // Persist standard selection in URL so a remount or refresh resumes in place.
+  useEffect(() => {
+    if (!selectedInstrument) return;
+    if (selectedInstrument.epnAssignmentId || selectedInstrument.preexistingAssessmentId) return;
+    const next = new URLSearchParams();
+    next.set("resumeInstrument", selectedInstrument.instrument_id);
+    if (contextType) next.set("resumeContext", contextType);
+    if (entitlementSource) next.set("resumeSrc", entitlementSource);
+    setSearchParams(next, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedInstrument, contextType, entitlementSource]);
+
+  // Rehydrate selection from URL after remount/refresh.
+  useEffect(() => {
+    if (selectedInstrument || !user) return;
+    const resumeId = searchParams.get("resumeInstrument");
+    if (!resumeId) return;
+    const shortName = INSTRUMENT_ID_TO_SHORT_NAME[resumeId];
+    const instrumentName = INSTRUMENT_ID_TO_NAME[resumeId];
+    if (!shortName || !instrumentName) return;
+    const ctx = searchParams.get("resumeContext") as 'professional' | 'personal' | 'both' | null;
+    const src = searchParams.get("resumeSrc") as EntitlementSource | null;
+    (async () => {
+      const { data } = await supabase
+        .from("platform_versions")
+        .select("version_string")
+        .eq("is_active", true)
+        .limit(1)
+        .single();
+      if (ctx) setContextType(ctx);
+      if (src) setEntitlementSource(src);
+      setSelectedInstrument({
+        instrument_id: resumeId,
+        instrument_name: instrumentName,
+        instrument_version: data?.version_string || "1.0",
+        short_name: shortName,
+      });
+    })();
+  }, [user, searchParams, selectedInstrument]);
+
   const handleStartEpn = async (assignmentId: string) => {
     setEpnStarting(true);
     const { data: versionData } = await supabase
@@ -258,6 +298,11 @@ export default function Assessment() {
           setSelectedInstrument(null);
           setContextType(null);
           setEntitlementSource(null);
+          const next = new URLSearchParams(searchParams);
+          next.delete("resumeInstrument");
+          next.delete("resumeContext");
+          next.delete("resumeSrc");
+          setSearchParams(next, { replace: true });
         }}
       />
     );
