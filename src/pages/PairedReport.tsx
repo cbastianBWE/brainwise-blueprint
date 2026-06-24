@@ -679,36 +679,36 @@ export default function PairedReport() {
   };
 
   return (
-    <div style={{ background: SAND, color: NAVY, fontFamily: '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif', lineHeight: 1.55, minHeight: "100vh" }}>
+    <div style={{ background: SAND, color: NAVY, fontFamily: 'Montserrat, system-ui, sans-serif', lineHeight: 1.6, fontSize: 16, minHeight: "100vh" }}>
       <div style={{ maxWidth: 880, margin: "0 auto", padding: "0 18px 80px" }}>
         {/* Hero */}
         <div style={{ background: NAVY, color: "#fff", borderRadius: "0 0 20px 20px", margin: "0 -18px 0", padding: "30px 28px 56px" }}>
-          <div style={{ color: ORANGE, fontSize: 12, letterSpacing: ".12em", textTransform: "uppercase", fontWeight: 700, marginBottom: 8 }}>
+          <div style={{ color: ORANGE, fontSize: 13, letterSpacing: ".12em", textTransform: "uppercase", fontWeight: 700, marginBottom: 8 }}>
             BrainWise · Paired Profile
           </div>
-          <h1 style={{ margin: "0 0 4px", fontSize: 27 }}>{modeTitle(mode)}</h1>
-          <div style={{ color: "rgba(255,255,255,.72)", fontSize: 13 }}>
+          <h1 style={{ margin: "0 0 4px", fontSize: 30 }}>{profile?.report_label || modeTitle(mode)}</h1>
+          <div style={{ color: "rgba(255,255,255,.72)", fontSize: 14 }}>
             How the two of you fit, where you pull apart, and what to do about it.
           </div>
           <div style={{ display: "flex", gap: 26, marginTop: 16, flexWrap: "wrap" }}>
             {[
-              { k: "PAIR", v: "Person A & Person B" },
+              { k: "PAIR", v: `${nameA} & ${nameB}` },
               { k: "CONTEXT", v: mode ? mode.charAt(0).toUpperCase() + mode.slice(1) : "" },
               { k: "DIMENSIONS", v: dims.length === 3 ? "Three" : dims.length === 5 ? "All five" : `${dims.length}` },
               { k: "GENERATED", v: new Date().toLocaleDateString(undefined, { year: "numeric", month: "short" }) },
             ].map((m) => (
-              <div key={m.k} style={{ fontSize: 12, color: "rgba(255,255,255,.72)" }}>
+              <div key={m.k} style={{ fontSize: 13, color: "rgba(255,255,255,.72)" }}>
                 {m.k}
-                <b style={{ display: "block", color: "#fff", fontSize: 14, fontWeight: 600, marginTop: 2 }}>{m.v}</b>
+                <b style={{ display: "block", color: "#fff", fontSize: 15, fontWeight: 600, marginTop: 2 }}>{m.v}</b>
               </div>
             ))}
           </div>
-          <div style={{ display: "flex", gap: 16, marginTop: 16 }}>
-            <span style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 13, color: "rgba(255,255,255,.85)" }}>
-              <span style={{ width: 13, height: 13, borderRadius: "50%", background: COLOR_A, display: "inline-block" }} />Person A
+          <div style={{ display: "flex", gap: 16, marginTop: 16, flexWrap: "wrap" }}>
+            <span style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 14, color: "rgba(255,255,255,.85)" }}>
+              <span style={{ width: 13, height: 13, borderRadius: "50%", background: COLOR_A, display: "inline-block" }} />{nameA}
             </span>
-            <span style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 13, color: "rgba(255,255,255,.85)" }}>
-              <span style={{ width: 13, height: 13, borderRadius: "50%", background: COLOR_B, display: "inline-block" }} />Person B
+            <span style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 14, color: "rgba(255,255,255,.85)" }}>
+              <span style={{ width: 13, height: 13, borderRadius: "50%", background: COLOR_B, display: "inline-block" }} />{nameB}
             </span>
           </div>
         </div>
@@ -718,10 +718,10 @@ export default function PairedReport() {
           <div style={{ margin: "-34px -2px 0", display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }} className="three-grid">
             {pairInThree.slice(0, 3).map((t, i) => (
               <div key={i} style={{ background: "#fff", border: `1px solid ${LINE}`, borderRadius: 14, padding: 16, boxShadow: "0 6px 18px rgba(2,31,54,.08)" }}>
-                <div style={{ color: ORANGE, fontWeight: 800, fontSize: 20 }}>{i + 1}</div>
-                <div style={{ fontWeight: 700, margin: "6px 0 4px", fontSize: 15 }}>{t.headline}</div>
-                <div style={{ fontSize: 13, color: GRAY }}>{t.detail}</div>
-                {t.action && <div style={{ color: TEAL, fontWeight: 600, fontSize: 13, marginTop: 8 }}>{t.action}</div>}
+                <div style={{ color: ORANGE, fontWeight: 800, fontSize: 22 }}>{i + 1}</div>
+                <div style={{ fontWeight: 700, margin: "6px 0 4px", fontSize: 18 }}>{nm(t.headline)}</div>
+                <div style={{ fontSize: 15, color: GRAY, lineHeight: 1.6 }}>{nm(t.detail)}</div>
+                {t.action && <div style={{ color: TEAL, fontWeight: 600, fontSize: 14, marginTop: 8 }}>{nm(t.action)}</div>}
               </div>
             ))}
           </div>
@@ -747,7 +747,7 @@ export default function PairedReport() {
         {isRomantic && (
           <div style={{
             background: "#fff", border: `1px solid ${AMBER}`, borderLeft: `5px solid ${AMBER}`,
-            borderRadius: 10, padding: "12px 16px", fontSize: 13, color: MUSTARD, marginTop: 14, marginBottom: 14,
+            borderRadius: 10, padding: "12px 16px", fontSize: 14, color: MUSTARD, marginTop: 14, marginBottom: 14,
           }}>
             {ROMANTIC_DEFAULT_DISCLAIMER}
           </div>
@@ -759,27 +759,27 @@ export default function PairedReport() {
             <h2 style={sectionLabel}>The two of you at a glance</h2>
             <div style={cardStyle}>
               <div style={{ display: "flex", gap: 18, flexWrap: "wrap", alignItems: "center", justifyContent: "center" }} className="rad-flex">
-                <Radial dims={dims} />
+                <Radial dims={dims} labA={nameA} labB={nameB} />
                 <div style={{ flex: 1, minWidth: 240 }}>
-                  <div style={{ fontSize: 13, color: GRAY, marginBottom: 8 }}>
-                    Each axis is one dimension. The two outlines are Person A and Person B. The bars show how far apart you sit on each one.
+                  <div style={{ fontSize: 14, color: GRAY, marginBottom: 8, lineHeight: 1.6 }}>
+                    Each axis is one dimension. The two outlines are {nameA} and {nameB}. The bars show how far apart you sit on each one.
                   </div>
                   <div>
-                    {dims.map((d) => <AgreementBar key={d.name} d={d} />)}
+                    {dims.map((d) => <AgreementBar key={d.name} d={d} labA={nameA} labB={nameB} />)}
                   </div>
                 </div>
               </div>
               <div style={{ display: "flex", gap: 14, flexWrap: "wrap", justifyContent: "center", marginTop: 6 }}>
-                <span style={{ fontSize: 12, color: GRAY, display: "flex", alignItems: "center", gap: 6 }}>
-                  <span style={{ width: 13, height: 13, borderRadius: "50%", background: COLOR_A, display: "inline-block" }} />Person A
+                <span style={{ fontSize: 13, color: GRAY, display: "flex", alignItems: "center", gap: 6 }}>
+                  <span style={{ width: 13, height: 13, borderRadius: "50%", background: COLOR_A, display: "inline-block" }} />{nameA}
                 </span>
-                <span style={{ fontSize: 12, color: GRAY, display: "flex", alignItems: "center", gap: 6 }}>
-                  <span style={{ width: 13, height: 13, borderRadius: "50%", background: COLOR_B, display: "inline-block" }} />Person B
+                <span style={{ fontSize: 13, color: GRAY, display: "flex", alignItems: "center", gap: 6 }}>
+                  <span style={{ width: 13, height: 13, borderRadius: "50%", background: COLOR_B, display: "inline-block" }} />{nameB}
                 </span>
               </div>
               <div style={{ display: "flex", gap: 12, flexWrap: "wrap", justifyContent: "center", marginTop: 8 }}>
                 {dims.map((d) => (
-                  <span key={d.name} style={{ fontSize: 11, display: "flex", alignItems: "center", gap: 5, color: GRAY }}>
+                  <span key={d.name} style={{ fontSize: 13, display: "flex", alignItems: "center", gap: 5, color: GRAY }}>
                     <i style={{ width: 9, height: 9, borderRadius: 2, display: "inline-block", background: d.color }} />{d.name}
                   </span>
                 ))}
@@ -787,6 +787,8 @@ export default function PairedReport() {
             </div>
           </>
         )}
+
+
 
         {/* shape glyphs */}
         <h2 style={sectionLabel}>The shapes a pair can make</h2>
