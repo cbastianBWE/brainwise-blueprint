@@ -908,7 +908,7 @@ export default function PairedReport() {
             <div style={cardStyle}>
               <div style={{ marginBottom: 16 }}>
                 <div style={{ fontSize: 11, letterSpacing: ".1em", textTransform: "uppercase", fontWeight: 800, marginBottom: 8, color: TEAL }}>In general</div>
-                <Paras text={communication.general} />
+                <Bullets text={communication.general} />
               </div>
               <div style={{ marginBottom: 16 }}>
                 <div style={{ fontSize: 11, letterSpacing: ".1em", textTransform: "uppercase", fontWeight: 800, marginBottom: 8, color: MUSTARD }}>Under pressure</div>
