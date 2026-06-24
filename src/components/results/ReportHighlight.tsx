@@ -70,7 +70,7 @@ export function HighlightableText({ blockKey, text }: { blockKey: string; text: 
     segs.push(
       <mark key={`m${i}`} title={hasNote ? h.note! : undefined}
         style={{ background: highlightCss(h.color), color: "inherit", padding: "0 1px", borderRadius: 2, cursor: "pointer", borderBottom: hasNote ? "2px dotted currentColor" : undefined }}
-        onClick={(ev) => { ev.stopPropagation(); const r = (ev.target as HTMLElement).getBoundingClientRect(); setPop(null); setEditNote(h.note ?? ""); setEditPop({ id: h.id, x: r.left + r.width / 2, y: r.top }); }}>
+        onClick={(ev) => { ev.stopPropagation(); const r = (ev.target as HTMLElement).getBoundingClientRect(); setPop(null); setEditNote(h.note ?? ""); let etop = r.top - 140; if (etop < 8) etop = r.bottom + 8; let ex = r.left + r.width / 2; ex = Math.min(Math.max(ex, 120), window.innerWidth - 120); setEditPop({ id: h.id, x: ex, y: etop }); }}>
         {text.slice(h.s, h.e)}
       </mark>
     );
