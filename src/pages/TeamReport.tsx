@@ -17,9 +17,9 @@ const PURPLE = "#3C096C";
 const GREEN = "#2D6A4F";
 const MUSTARD = "#7a5800";
 const AMBER = "#FFB703";
-const INK = "#1c2530";
-const MUTED = "#6b7280";
-const LINE = "#e7e3d9";
+const INK = "#6D6875";
+const MUTED = "#6D6875";
+const LINE = "rgba(2,31,54,0.12)";
 const CARD_BG = "#ffffff";
 const SHAPE_KEYS = ["allHigh", "allLow", "two", "even", "together"] as const;
 type ShapeKey = (typeof SHAPE_KEYS)[number];
@@ -122,7 +122,7 @@ function DistGlyph({
       style={{ cursor: "zoom-in", display: "inline-block", borderRadius: 8, padding: 2 }}
     >
       <svg viewBox={`0 0 ${W} ${H}`} width={W} height={H}>
-        <line x1={L} y1={y} x2={Rr} y2={y} stroke="#e0dacb" />
+        <line x1={L} y1={y} x2={Rr} y2={y} stroke="rgba(2,31,54,0.12)" />
         <line x1={mx} y1={y - 12} x2={mx} y2={y + 12} stroke={NAVY} strokeWidth={1.5} opacity={0.45} />
         {scores.map((sc, i) => {
           const x = L + span * (sc / 100);
@@ -179,12 +179,12 @@ function DistModal({
             : `Each dot is one team member (${scores.length}). Hover a dot to see its score.`}
         </div>
         <svg viewBox={`0 0 ${W} ${H}`} width="100%" height={H}>
-          <line x1={L} y1={base} x2={Rr} y2={base} stroke="#cfc8b6" />
+          <line x1={L} y1={base} x2={Rr} y2={base} stroke="rgba(2,31,54,0.18)" />
           {[0, 25, 50, 75, 100].map((t) => {
             const x = L + span * (t / 100);
             return (
               <g key={t}>
-                <line x1={x} y1={base} x2={x} y2={base + 6} stroke="#cfc8b6" />
+                <line x1={x} y1={base} x2={x} y2={base + 6} stroke="rgba(2,31,54,0.18)" />
                 <text x={x} y={base + 20} fontSize={11} fill={GRAY} textAnchor="middle">{t}</text>
               </g>
             );
@@ -231,11 +231,11 @@ function Radial({ domains }: { domains: { name: string; mean: number; high: numb
     <svg viewBox="0 0 400 400" width="100%" style={{ maxWidth: 440, display: "block" }}>
       {sectors}
       {[25, 50, 75, 100].map((v) => (
-        <circle key={v} cx={C} cy={C} r={(R * v) / 100} fill="none" stroke="#e2dccd" />
+        <circle key={v} cx={C} cy={C} r={(R * v) / 100} fill="none" stroke="rgba(2,31,54,0.12)" />
       ))}
       {ang.map((a, i) => {
         const e = pol(a, R);
-        return <line key={i} x1={C} y1={C} x2={e[0]} y2={e[1]} stroke="#e2dccd" />;
+        return <line key={i} x1={C} y1={C} x2={e[0]} y2={e[1]} stroke="rgba(2,31,54,0.12)" />;
       })}
       <polygon points={polyPoints("high")} fill="none" stroke={PURPLE} strokeWidth={1.6} strokeDasharray="5 4" />
       <polygon points={polyPoints("low")} fill="none" stroke={MUSTARD} strokeWidth={1.6} strokeDasharray="5 4" />
@@ -287,7 +287,7 @@ function AgreementBar({ d }: { d: { name: string; mean: number; high: number; lo
         <span style={{ fontWeight: 700, color: d.color }}>{d.name}</span>
         <span style={{ fontSize: 12, color: MUTED }}>{d.desc}</span>
       </div>
-      <div style={{ position: "relative", height: 16, background: "#eee9dd", borderRadius: 999 }}>
+      <div style={{ position: "relative", height: 16, background: "rgba(2,31,54,0.10)", borderRadius: 999 }}>
         <div style={{ position: "absolute", top: 0, height: 16, borderRadius: 999, opacity: 0.45, left: `${d.low}%`, width: `${w}%`, background: d.color }} />
         <div onMouseMove={(e) => showTip(e, `${d.name} low: ${d.low}`)} onMouseLeave={hideTip}
           style={{ position: "absolute", top: 1, width: 14, height: 14, borderRadius: "50%", border: "2px solid #fff", transform: "translateX(-50%)", cursor: "pointer", boxShadow: "0 1px 3px rgba(0,0,0,.18)", left: `${d.low}%`, background: MUSTARD }} />
@@ -297,7 +297,7 @@ function AgreementBar({ d }: { d: { name: string; mean: number; high: number; lo
         <div onMouseMove={(e) => showTip(e, `${d.name}: low ${d.low}, avg ${d.mean}, high ${d.high}`)} onMouseLeave={hideTip}
           style={{ position: "absolute", top: -3, width: 22, height: 22, borderRadius: "50%", background: NAVY, border: "3px solid #fff", transform: "translateX(-50%)", cursor: "pointer", zIndex: 2, left: `${d.mean}%`, boxShadow: "0 1px 2px rgba(2,31,54,.06),0 8px 24px rgba(2,31,54,.06)" }} />
       </div>
-      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "#b3ac9c", marginTop: 4 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "rgba(2,31,54,0.35)", marginTop: 4 }}>
         <span>0</span><span>50</span><span>100</span>
       </div>
     </div>
@@ -318,13 +318,13 @@ function ArchGlyph({ k }: { k: ShapeKey }) {
   const dbox = (x0: number, x1: number, key: string) => (
     <rect key={key} x={x0} y={y - 7} width={x1 - x0} height={14} rx={4} fill="none" stroke={c} strokeDasharray="3 3" opacity={0.6} />
   );
-  const els: React.ReactNode[] = [<line key="ax" x1={L} y1={y} x2={Rr} y2={y} stroke="#e0dacb" />];
+  const els: React.ReactNode[] = [<line key="ax" x1={L} y1={y} x2={Rr} y2={y} stroke="rgba(2,31,54,0.12)" />];
   if (k === "together") [0.58, 0.63, 0.67, 0.6].forEach((t) => els.push(dot(L + span * t)));
   else if (k === "even") for (let i = 0; i < 7; i++) els.push(dot(L + span * (i / 6)));
   else if (k === "two") {
     [0.18, 0.23, 0.28].forEach((t) => els.push(dot(L + span * t)));
     [0.72, 0.77, 0.82].forEach((t) => els.push(dot(L + span * t)));
-    els.push(<line key="div" x1={L + span * 0.5} y1={y - 9} x2={L + span * 0.5} y2={y + 9} stroke="#cbb27a" strokeDasharray="2 2" />);
+    els.push(<line key="div" x1={L + span * 0.5} y1={y - 9} x2={L + span * 0.5} y2={y + 9} stroke="rgba(2,31,54,0.25)" strokeDasharray="2 2" />);
   } else if (k === "allHigh") {
     els.push(dbox(L, L + span * 0.4, "box"));
     [0.78, 0.84, 0.9].forEach((t) => els.push(dot(L + span * t)));
@@ -341,7 +341,7 @@ function Meter({ tier, kind }: { tier: number; kind: "strength" | "watch" }) {
   return (
     <span style={{ display: "inline-flex", gap: 3, marginLeft: 8 }}>
       {[0, 1, 2, 3].map((i) => (
-        <i key={i} style={{ width: 5, height: 12, borderRadius: 1, display: "inline-block", background: i < tier ? color : "#d8d2c4" }} />
+        <i key={i} style={{ width: 5, height: 12, borderRadius: 1, display: "inline-block", background: i < tier ? color : "rgba(2,31,54,0.15)" }} />
       ))}
     </span>
   );
@@ -413,7 +413,7 @@ function DriverCard({
             <Meter tier={tier} kind={kind} />
           </span>
           <div style={{ fontWeight: 800, color: NAVY, margin: "2px 0 6px" }}>{name}</div>
-          <div style={{ color: "#43505e", fontSize: 14 }}>{why}</div>
+          <div style={{ color: "#6D6875", fontSize: 14 }}>{why}</div>
           {actions.length > 0 && (
             <>
               <button
@@ -432,7 +432,7 @@ function DriverCard({
                 <div style={{ fontSize: 11, letterSpacing: ".08em", textTransform: "uppercase", fontWeight: 800, color: MUTED, marginBottom: 6 }}>
                   {kind === "strength" ? "Three things to keep doing" : "Three things to try"}
                 </div>
-                <ol style={{ margin: 0, paddingLeft: 20, color: "#39454f" }}>
+                <ol style={{ margin: 0, paddingLeft: 20, color: "#6D6875" }}>
                   {actions.map((a, i) => <li key={i} style={{ marginBottom: 6 }}>{a}</li>)}
                 </ol>
               </div>
@@ -457,7 +457,7 @@ function Acc({ title, children }: { title: string; children: React.ReactNode }) 
         <span>{title}</span>
         <span style={{ color: TEAL, transition: ".25s", transform: open ? "rotate(90deg)" : "none" }}>▸</span>
       </button>
-      <div style={{ maxHeight: open ? 700 : 0, overflow: "hidden", transition: "max-height .3s ease, padding .3s ease", padding: open ? "0 18px 18px" : "0 18px", color: "#43505e" }}>
+      <div style={{ maxHeight: open ? 700 : 0, overflow: "hidden", transition: "max-height .3s ease, padding .3s ease", padding: open ? "0 18px 18px" : "0 18px", color: "#6D6875" }}>
         {children}
       </div>
     </div>
@@ -650,7 +650,7 @@ export default function TeamReport() {
   return (
     <div style={{ background: SAND, color: INK, fontFamily: '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif', lineHeight: 1.5, minHeight: "100vh" }}>
       {/* Hero */}
-      <header style={{ background: NAVY, color: "#dfe7ee", padding: "54px 0 110px" }}>
+      <header style={{ background: NAVY, color: "#ffffff", padding: "54px 0 110px" }}>
         <div style={{ maxWidth: 1040, margin: "0 auto", padding: "0 20px" }}>
           <div style={{ color: ORANGE, letterSpacing: ".3em", fontSize: 18, marginBottom: 14 }}>•••</div>
           <div style={{ fontSize: 12, letterSpacing: ".14em", textTransform: "uppercase", fontWeight: 700, color: ORANGE }}>
@@ -659,7 +659,7 @@ export default function TeamReport() {
           <h1 style={{ fontSize: 46, fontWeight: 800, color: "#fff", margin: "6px 0 14px" }}>
             Team <span style={{ color: ORANGE }}>Report</span>
           </h1>
-          <p style={{ maxWidth: 560, color: "#aebccb", margin: "0 0 26px" }}>
+          <p style={{ maxWidth: 560, color: "rgba(255,255,255,0.75)", margin: "0 0 26px" }}>
             The patterns that shape how this team works under pressure, ranked so the few that matter most come first. Built from every member&apos;s Personal Threat Profile.
           </p>
           <div style={{ display: "flex", gap: 48, flexWrap: "wrap" }} className="meta-grid">
@@ -687,7 +687,7 @@ export default function TeamReport() {
                 <div style={{ fontSize: 34, fontWeight: 800, color: ORANGE, lineHeight: 1 }}>{i + 1}</div>
                 <div>
                   <div style={{ fontWeight: 800, color: NAVY, marginBottom: 4 }}>{it.headline}</div>
-                  <div style={{ color: "#43505e" }}>{it.detail}</div>
+                  <div style={{ color: "#6D6875" }}>{it.detail}</div>
                   <div style={{ color: TEAL, fontWeight: 700, marginTop: 8 }}>{it.action}</div>
                 </div>
               </div>
@@ -723,7 +723,7 @@ export default function TeamReport() {
           <div style={{ background: CARD_BG, border: `1px solid ${LINE}`, borderRadius: 16, padding: 22, boxShadow: "0 1px 2px rgba(2,31,54,.06),0 8px 24px rgba(2,31,54,.06)" }}>
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
               <Radial domains={domains} />
-              <div style={{ display: "flex", gap: 18, flexWrap: "wrap", justifyContent: "center", fontSize: 12, color: "#43505e", margin: "4px 0" }}>
+              <div style={{ display: "flex", gap: 18, flexWrap: "wrap", justifyContent: "center", fontSize: 12, color: "#6D6875", margin: "4px 0" }}>
                 {domains.map((d) => (
                   <span key={d.name}>
                     <span style={{ display: "inline-block", width: 12, height: 12, borderRadius: "50%", verticalAlign: -1, marginRight: 6, background: d.color }} />
@@ -740,7 +740,7 @@ export default function TeamReport() {
                 {domains.map((d) => <AgreementBar key={d.name} d={d} />)}
               </div>
               <div style={{ display: "flex", gap: 18, flexWrap: "wrap", fontSize: 12, color: MUTED, marginTop: 8, justifyContent: "center" }}>
-                <span><span style={{ display: "inline-block", width: 12, height: 12, borderRadius: "50%", verticalAlign: -1, marginRight: 6, background: "#cfd6dd" }} />Range, low to high member</span>
+                <span><span style={{ display: "inline-block", width: 12, height: 12, borderRadius: "50%", verticalAlign: -1, marginRight: 6, background: "rgba(2,31,54,0.15)" }} />Range, low to high member</span>
                 <span><span style={{ display: "inline-block", width: 12, height: 12, borderRadius: "50%", verticalAlign: -1, marginRight: 6, background: NAVY }} />Team average</span>
               </div>
             </div>
@@ -790,7 +790,7 @@ export default function TeamReport() {
             <p style={{ color: MUTED, maxWidth: 760, margin: "0 0 18px" }}>
               We open with the team&apos;s strength, then the areas to watch in priority order. The picture on each card is your team&apos;s real spread on that trait. Click any card for three specific moves; hover to see the question the team answered.
             </p>
-            {driving?.opening && <p style={{ fontSize: 14, color: "#43505e", marginBottom: 14 }}>{driving.opening}</p>}
+            {driving?.opening && <p style={{ fontSize: 14, color: "#6D6875", marginBottom: 14 }}>{driving.opening}</p>}
             {[...strengthDrivers, ...focusDrivers].map((d, i) => (
               <DriverCard key={i} idx={i} {...d} onOpenDist={openDist} />
             ))}
@@ -806,17 +806,17 @@ export default function TeamReport() {
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }} className="pair-grid">
               <div style={{ background: CARD_BG, border: `1px solid ${LINE}`, borderRadius: 16, padding: 18, boxShadow: "0 1px 2px rgba(2,31,54,.06),0 8px 24px rgba(2,31,54,.06)" }}>
                 <div style={{ fontSize: 11, letterSpacing: ".1em", textTransform: "uppercase", fontWeight: 800, marginBottom: 8, color: TEAL }}>In general</div>
-                <div style={{ color: "#43505e", fontSize: 14 }}>{communication.general}</div>
+                <div style={{ color: "#6D6875", fontSize: 14 }}>{communication.general}</div>
               </div>
               <div style={{ background: CARD_BG, border: `1px solid ${LINE}`, borderRadius: 16, padding: 18, boxShadow: "0 1px 2px rgba(2,31,54,.06),0 8px 24px rgba(2,31,54,.06)" }}>
                 <div style={{ fontSize: 11, letterSpacing: ".1em", textTransform: "uppercase", fontWeight: 800, marginBottom: 8, color: MUSTARD }}>Under pressure</div>
-                <div style={{ color: "#43505e", fontSize: 14 }}>{communication.under_pressure}</div>
+                <div style={{ color: "#6D6875", fontSize: 14 }}>{communication.under_pressure}</div>
               </div>
             </div>
             {Array.isArray(communication.avoid_conflict) && communication.avoid_conflict.length > 0 && (
               <div style={{ marginTop: 14, background: "rgba(255,183,3,.10)", border: "1px solid rgba(255,183,3,.35)", borderRadius: 12, padding: 16 }}>
                 <h4 style={{ margin: "0 0 8px", color: NAVY }}>Avoiding communication conflict</h4>
-                <ul style={{ margin: 0, paddingLeft: 18, color: "#43505e" }}>
+                <ul style={{ margin: 0, paddingLeft: 18, color: "#6D6875" }}>
                   {communication.avoid_conflict.map((t, i) => <li key={i}>{t}</li>)}
                 </ul>
               </div>
@@ -834,11 +834,11 @@ export default function TeamReport() {
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }} className="pair-grid">
               <div style={{ background: CARD_BG, border: `1px solid ${LINE}`, borderRadius: 16, padding: 18, boxShadow: "0 1px 2px rgba(2,31,54,.06),0 8px 24px rgba(2,31,54,.06)" }}>
                 <div style={{ fontSize: 11, letterSpacing: ".1em", textTransform: "uppercase", fontWeight: 800, marginBottom: 8, color: TEAL }}>Mitigate unhealthy conflict</div>
-                <div style={{ color: "#43505e", fontSize: 14 }}>{conflict.mitigate}</div>
+                <div style={{ color: "#6D6875", fontSize: 14 }}>{conflict.mitigate}</div>
               </div>
               <div style={{ background: CARD_BG, border: `1px solid ${LINE}`, borderRadius: 16, padding: 18, boxShadow: "0 1px 2px rgba(2,31,54,.06),0 8px 24px rgba(2,31,54,.06)" }}>
                 <div style={{ fontSize: 11, letterSpacing: ".1em", textTransform: "uppercase", fontWeight: 800, marginBottom: 8, color: MUSTARD }}>Promote healthy conflict</div>
-                <div style={{ color: "#43505e", fontSize: 14 }}>{conflict.promote_healthy}</div>
+                <div style={{ color: "#6D6875", fontSize: 14 }}>{conflict.promote_healthy}</div>
               </div>
             </div>
           </div>
@@ -877,7 +877,7 @@ export default function TeamReport() {
                 </table>
               </div>
               {leader.lean_on && (
-                <div style={{ marginTop: 14, border: "1px solid rgba(45,106,79,.4)", background: "rgba(45,106,79,.07)", borderRadius: 12, padding: 16, color: "#33403a" }}>
+                <div style={{ marginTop: 14, border: "1px solid rgba(45,106,79,.4)", background: "rgba(45,106,79,.07)", borderRadius: 12, padding: 16, color: "#021F36" }}>
                   <b style={{ color: GREEN }}>Lean on:</b> {leader.lean_on}
                 </div>
               )}
@@ -995,7 +995,7 @@ export default function TeamReport() {
 }
 
 const tdStyle: React.CSSProperties = {
-  padding: 14, borderTop: `1px solid ${LINE}`, fontSize: 14, verticalAlign: "top", color: "#43505e",
+  padding: 14, borderTop: `1px solid ${LINE}`, fontSize: 14, verticalAlign: "top", color: "#6D6875",
 };
 
 function GenerationBanner({
@@ -1014,7 +1014,7 @@ function GenerationBanner({
   const baseCard: React.CSSProperties = {
     background: CARD_BG, border: `1px solid ${LINE}`, borderRadius: 16,
     boxShadow: "0 1px 2px rgba(2,31,54,.06),0 8px 24px rgba(2,31,54,.06)",
-    padding: 16, fontSize: 14, color: "#43505e",
+    padding: 16, fontSize: 14, color: "#6D6875",
   };
   if (!canDrive) {
     return <div style={baseCard}>This report is still generating. Please check back shortly.</div>;
