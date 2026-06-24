@@ -57,7 +57,16 @@ export default function Resources() {
     );
   }
 
-  const defaultTabSlug = tabs[0]?.slug ?? "";
+  // Coaches land on the Coach Resources tab by default; super admins keep the
+  // normal first-tab default. viewer_role comes from get_user_resources
+  // ('super_admin' | 'self'); a non-super viewer who can see the coach-only
+  // tab is a coach.
+  const isCoachViewer =
+    (data as any)?.viewer_role !== "super_admin" &&
+    tabs.some((t) => t.slug === "coach_resources");
+  const defaultTabSlug = isCoachViewer
+    ? "coach_resources"
+    : (tabs[0]?.slug ?? "");
 
   return (
     <div className="container mx-auto p-6">
