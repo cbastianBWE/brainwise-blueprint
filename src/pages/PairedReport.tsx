@@ -425,8 +425,12 @@ function Acc({ title, defaultOpen = false, children }: { title: string; defaultO
         <span>{title}</span>
         <span style={{ color: TEAL, transition: ".15s", transform: open ? "rotate(90deg)" : "none" }}>▸</span>
       </button>
-      <div style={{ maxHeight: open ? 600 : 0, overflow: "hidden", transition: ".2s", padding: open ? "0 14px 14px" : "0 14px" }}>
-        {children}
+      <div style={{ display: "grid", gridTemplateRows: open ? "1fr" : "0fr", transition: "grid-template-rows .25s ease" }}>
+        <div style={{ overflow: "hidden" }}>
+          <div style={{ padding: "0 14px 14px" }}>
+            {children}
+          </div>
+        </div>
       </div>
     </div>
   );
