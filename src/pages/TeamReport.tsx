@@ -833,10 +833,10 @@ export default function TeamReport() {
         <section style={{ padding: "34px 0" }}>
           <div style={{ maxWidth: 1040, margin: "0 auto", padding: "0 20px" }}>
             <h2 style={{ fontSize: 26, fontWeight: 800, color: NAVY, margin: "0 0 6px" }}>What is driving your team</h2>
-            <p style={{ color: GRAY, maxWidth: "70ch", margin: "0 0 18px", fontSize: 16, lineHeight: 1.6 }}>
+            <p style={{ color: GRAY, margin: "0 0 18px", fontSize: 16, lineHeight: 1.6 }}>
               We open with the team&apos;s strength, then the areas to watch in priority order. The picture on each card is your team&apos;s real spread on that trait. Click any card for three specific moves; hover to see the question the team answered.
             </p>
-            {driving?.opening && <div style={{ marginBottom: 14 }}><Paras text={driving.opening} /></div>}
+            {driving?.opening && <div style={{ marginBottom: 14 }}><Paras text={driving.opening} style={{ maxWidth: "none" }} /></div>}
             {[...strengthDrivers, ...focusDrivers].map((d, i) => (
               <DriverCard key={i} idx={i} {...d} onOpenDist={openDist} />
             ))}
