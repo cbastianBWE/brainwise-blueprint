@@ -489,8 +489,12 @@ function Acc({ title, children }: { title: string; children: React.ReactNode }) 
         <span>{title}</span>
         <span style={{ color: TEAL, transition: ".25s", transform: open ? "rotate(90deg)" : "none" }}>▸</span>
       </button>
-      <div style={{ maxHeight: open ? 700 : 0, overflow: "hidden", transition: "max-height .3s ease, padding .3s ease", padding: open ? "0 18px 18px" : "0 18px", color: "#6D6875" }}>
-        {children}
+      <div style={{ display: "grid", gridTemplateRows: open ? "1fr" : "0fr", transition: "grid-template-rows .3s ease", color: "#6D6875" }}>
+        <div style={{ overflow: "hidden" }}>
+          <div style={{ padding: "0 18px 18px" }}>
+            {children}
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -872,7 +876,7 @@ export default function TeamReport() {
         <section style={{ padding: "34px 0" }}>
           <div style={{ maxWidth: 1040, margin: "0 auto", padding: "0 20px" }}>
             <h2 style={{ fontSize: 26, fontWeight: 800, color: NAVY, margin: "0 0 6px" }}>How this team handles conflict</h2>
-            <div style={{ maxWidth: "70ch", margin: "0 0 18px" }}><Paras text={conflict.summary} /></div>
+            <div style={{ margin: "0 0 18px" }}><Paras text={conflict.summary} /></div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }} className="pair-grid">
               <div style={{ background: CARD_BG, border: `1px solid ${LINE}`, borderRadius: 16, padding: 18, boxShadow: "0 1px 2px rgba(2,31,54,.06),0 8px 24px rgba(2,31,54,.06)" }}>
                 <div style={{ fontSize: 13, letterSpacing: ".1em", textTransform: "uppercase", fontWeight: 800, marginBottom: 10, color: TEAL }}>Mitigate unhealthy conflict</div>
@@ -1004,9 +1008,9 @@ export default function TeamReport() {
             )}
             {Array.isArray(coach.debrief_prompts) && coach.debrief_prompts.length > 0 && (
               <Acc title="Conversation prompts for the debrief">
-                <ul style={{ margin: 0, paddingLeft: 18 }}>
-                  {coach.debrief_prompts.map((p, i) => <li key={i} style={{ marginBottom: 6 }}>{p}</li>)}
-                </ul>
+                <ol style={{ margin: 0, paddingLeft: 24, listStyleType: "decimal", listStylePosition: "outside" }}>
+                  {coach.debrief_prompts.map((p, i) => <li key={i} style={{ marginBottom: 8, listStyleType: "decimal" }}>{p}</li>)}
+                </ol>
               </Acc>
             )}
             <div style={{ color: MUTED, fontSize: 12, padding: "30px 0 60px", borderTop: `1px solid ${LINE}`, marginTop: 20 }}>
