@@ -460,13 +460,15 @@ function DriverCard({
                 <span style={{ display: "inline-block", transition: ".2s", transform: open ? "rotate(90deg)" : "none" }}>▸</span>
                 See three things to {kind === "strength" ? "keep doing" : "try"}
               </button>
-              <div style={{ maxHeight: open ? 600 : 0, overflow: "hidden", transition: "max-height .3s ease", marginTop: open ? 12 : 0 }}>
-                <div style={{ fontSize: 13, letterSpacing: ".08em", textTransform: "uppercase", fontWeight: 800, color: GRAY, marginBottom: 8 }}>
-                  {kind === "strength" ? "Three things to keep doing" : "Three things to try"}
+              <div style={{ display: "grid", gridTemplateRows: open ? "1fr" : "0fr", transition: "grid-template-rows .3s ease", marginTop: open ? 12 : 0 }}>
+                <div style={{ overflow: "hidden" }}>
+                  <div style={{ fontSize: 13, letterSpacing: ".08em", textTransform: "uppercase", fontWeight: 800, color: GRAY, marginBottom: 8 }}>
+                    {kind === "strength" ? "Three things to keep doing" : "Three things to try"}
+                  </div>
+                  <ol style={{ margin: 0, paddingLeft: 24, color: GRAY, listStyleType: "decimal", fontSize: 16, lineHeight: 1.6 }}>
+                    {actions.map((a, i) => <li key={i} style={{ marginBottom: 8, paddingLeft: 4 }}>{a}</li>)}
+                  </ol>
                 </div>
-                <ol style={{ margin: 0, paddingLeft: 24, color: GRAY, listStyleType: "decimal", fontSize: 16, lineHeight: 1.6 }}>
-                  {actions.map((a, i) => <li key={i} style={{ marginBottom: 8, paddingLeft: 4 }}>{a}</li>)}
-                </ol>
               </div>
             </>
           )}
