@@ -932,7 +932,7 @@ export default function PairedReport() {
         {conflict && (
           <>
             <h2 style={sectionLabel}>How the two of you handle conflict</h2>
-            <div style={sectionLead}><Paras text={conflict.summary} style={{ color: GRAY }} /></div>
+            <div style={{ color: GRAY, margin: "0 0 18px" }}><Paras text={conflict.summary} style={{ color: GRAY, maxWidth: "none" }} /></div>
             <div style={cardStyle}>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }} className="two-grid">
                 <div style={pbox}>
