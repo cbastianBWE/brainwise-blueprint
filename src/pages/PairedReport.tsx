@@ -394,15 +394,17 @@ function DriverCard({
                 <span style={{ display: "inline-block", transition: ".15s", transform: open ? "rotate(90deg)" : "none" }}>▸</span>
                 See three things to {kind === "strength" ? "keep doing" : "try"}
               </button>
-              <div style={{ maxHeight: open ? 400 : 0, overflow: "hidden", transition: ".2s", marginTop: open ? 10 : 0, opacity: open ? 1 : 0 }}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: GRAY, textTransform: "uppercase", letterSpacing: ".05em", marginBottom: 6 }}>
-                  {kind === "strength" ? "Three things to keep doing" : "Three things to try"}
+              <div style={{ display: "grid", gridTemplateRows: open ? "1fr" : "0fr", transition: "grid-template-rows .2s ease", marginTop: open ? 10 : 0 }}>
+                <div style={{ overflow: "hidden" }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: GRAY, textTransform: "uppercase", letterSpacing: ".05em", marginBottom: 6 }}>
+                    {kind === "strength" ? "Three things to keep doing" : "Three things to try"}
+                  </div>
+                  <ol style={{ margin: 0, paddingLeft: 22, listStyleType: "decimal" }}>
+                    {actions.map((act, i) => (
+                      <li key={i} style={{ fontSize: 15, margin: "4px 0", lineHeight: 1.6 }}>{renderBold(act)}</li>
+                    ))}
+                  </ol>
                 </div>
-                <ol style={{ margin: 0, paddingLeft: 22, listStyleType: "decimal" }}>
-                  {actions.map((act, i) => (
-                    <li key={i} style={{ fontSize: 15, margin: "4px 0", lineHeight: 1.6 }}>{renderBold(act)}</li>
-                  ))}
-                </ol>
               </div>
             </>
           )}
