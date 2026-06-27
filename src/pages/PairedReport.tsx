@@ -849,7 +849,7 @@ export default function PairedReport() {
           <>
             <h2 style={sectionLabel}>What is driving your pair</h2>
             {driving?.opening && (
-              <div style={sectionLead}><Paras text={driving.opening} style={{ color: GRAY }} /></div>
+              <div style={{ color: GRAY, margin: "0 0 18px" }}><Paras text={driving.opening} style={{ color: GRAY, maxWidth: "none" }} /></div>
             )}
             {[...strengthDrivers, ...focusDrivers].map((d, i) => (
               <DriverCard
@@ -953,7 +953,7 @@ export default function PairedReport() {
           <>
             <h2 style={sectionLabel}>Repair after conflict</h2>
             <div style={cardStyle}>
-              <div style={{ marginBottom: 10 }}><Paras text={repair.overview} /></div>
+              <div style={{ marginBottom: 10 }}><Paras text={repair.overview} style={{ maxWidth: "none" }} /></div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }} className="two-grid">
                 <div style={pbox}>
                   <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6, color: COLOR_A }}>{nameA}</div>
@@ -986,7 +986,7 @@ export default function PairedReport() {
           <>
             <h2 style={sectionLabel}>Building intimacy</h2>
             <div style={cardStyle}>
-              <div style={{ marginBottom: 10 }}><Paras text={intimacy.overview} /></div>
+              <div style={{ marginBottom: 10 }}><Paras text={intimacy.overview} style={{ maxWidth: "none" }} /></div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }} className="two-grid">
                 <div style={pbox}>
                   <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6, color: COLOR_A }}>{nameA}</div>

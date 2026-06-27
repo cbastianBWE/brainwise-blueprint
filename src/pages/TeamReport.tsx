@@ -763,7 +763,7 @@ export default function TeamReport() {
         <div style={{ maxWidth: 1040, margin: "0 auto", padding: "0 20px" }}>
           <div style={{ fontSize: 13, letterSpacing: ".14em", textTransform: "uppercase", fontWeight: 700, color: ORANGE }}>Team Profile</div>
           <h2 style={{ fontSize: 26, fontWeight: 800, color: NAVY, margin: "0 0 6px" }}>The three threat domains</h2>
-          <p style={{ color: MUTED, maxWidth: 760, margin: "0 0 18px" }}>
+          <p style={{ color: MUTED, margin: "0 0 18px" }}>
             Center is zero, the outer ring is 100. Each sector is one domain. The solid line is the team average; the dashed lines and their dots are the team&apos;s high and low edges. The bars below show how much members agree.
           </p>
           <div style={{ background: CARD_BG, border: `1px solid ${LINE}`, borderRadius: 16, padding: 22, boxShadow: "0 1px 2px rgba(2,31,54,.06),0 8px 24px rgba(2,31,54,.06)" }}>
@@ -798,7 +798,7 @@ export default function TeamReport() {
       <section style={{ padding: "34px 0" }}>
         <div style={{ maxWidth: 1040, margin: "0 auto", padding: "0 20px" }}>
           <h2 style={{ fontSize: 26, fontWeight: 800, color: NAVY, margin: "0 0 6px" }}>How to read the shapes</h2>
-          <p style={{ color: MUTED, maxWidth: 760, margin: "0 0 18px" }}>
+          <p style={{ color: MUTED, margin: "0 0 18px" }}>
             Every card below is one of five pictures. A dot is a teammate, placed lower to higher. Click a shape to highlight it in the full map.
           </p>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 12 }} className="glyphrow-grid">
@@ -896,7 +896,7 @@ export default function TeamReport() {
         <section style={{ padding: "34px 0" }}>
           <div style={{ maxWidth: 1040, margin: "0 auto", padding: "0 20px" }}>
             <h2 style={{ fontSize: 26, fontWeight: 800, color: NAVY, margin: "0 0 6px" }}>For the leader: the moves</h2>
-            <p style={{ color: MUTED, maxWidth: 760, margin: "0 0 18px" }}>One page. The top drivers, what each costs the work, the lever, and who owns it.</p>
+            <p style={{ color: MUTED, margin: "0 0 18px" }}>One page. The top drivers, what each costs the work, the lever, and who owns it.</p>
             <div style={{ background: CARD_BG, border: `1px solid ${LINE}`, borderRadius: 16, padding: 18, boxShadow: "0 1px 2px rgba(2,31,54,.06),0 8px 24px rgba(2,31,54,.06)" }}>
               <div style={{ overflowX: "auto" }} className="leader-tbl-wrap">
                 <table style={{ width: "100%", borderCollapse: "collapse", overflow: "hidden", borderRadius: 12, border: `1px solid ${LINE}` }} className="leader-tbl">
@@ -938,7 +938,7 @@ export default function TeamReport() {
         <section style={{ padding: "34px 0" }}>
           <div style={{ maxWidth: 1040, margin: "0 auto", padding: "0 20px" }}>
             <h2 style={{ fontSize: 26, fontWeight: 800, color: NAVY, margin: "0 0 6px" }}>Every pattern we found</h2>
-            <p style={{ color: MUTED, maxWidth: 760, margin: "0 0 18px" }}>The full map, grouped by the five shapes above. The picture on each is the team&apos;s real spread. Hover any trait to see the question the team answered.</p>
+            <p style={{ color: MUTED, margin: "0 0 18px" }}>The full map, grouped by the five shapes above. The picture on each is the team&apos;s real spread. Hover any trait to see the question the team answered.</p>
             {fullMapGroups.map((g) => {
               const dim = activeShape && activeShape !== g.k;
               return (
@@ -991,7 +991,7 @@ export default function TeamReport() {
               padding: "5px 12px", borderRadius: 999, marginBottom: 10,
             }}>For the coach, org admin &amp; super admin</div>
             <h2 style={{ fontSize: 26, fontWeight: 800, color: NAVY, margin: "0 0 6px" }}>Running the debrief</h2>
-            <p style={{ color: MUTED, maxWidth: 760, margin: "0 0 18px" }}>Facilitation material, shown to coaches and administrators.</p>
+            <p style={{ color: MUTED, margin: "0 0 18px" }}>Facilitation material, shown to coaches and administrators.</p>
             {Array.isArray(coach.why) && coach.why.length > 0 && (
               <Acc title="The why behind each call">
                 <ul style={{ margin: 0, paddingLeft: 18 }}>
