@@ -445,7 +445,7 @@ interface DrivingFacetsSection { opening: string; strengths: DrivingItem[]; focu
 interface WithinPersonSection { a: string; b: string; }
 interface NeedsSection { a_needs_from_b: string; b_needs_from_a: string; }
 interface CommunicationSection { general: string; under_pressure: string; avoid_conflict: string[]; }
-interface ConflictSection { summary: string; mitigate: string; promote_healthy: string; }
+interface ConflictSection { summary: string; mitigate: string; promote_healthy: string; per_person?: { a: { read: string; counter_move: string }; b: { read: string; counter_move: string } }; }
 interface RepairSection { overview: string; a: string; b: string; steps: string[]; disclaimer: string; }
 interface IntimacySection { overview: string; a: string[]; b: string[]; disclaimer: string; }
 interface CoachSection { why: { item: number; rationale: string }[]; debrief_prompts: string[]; }
@@ -951,6 +951,25 @@ export default function PairedReport() {
                 </div>
               </div>
             </div>
+            {conflict.per_person && (
+              <div style={cardStyle}>
+                <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 10, color: GRAY }}>Where each of you may be vulnerable in conflict</div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }} className="two-grid">
+                  <div style={pbox}>
+                    <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6, color: COLOR_A }}>{nameA}</div>
+                    <Paras text={conflict.per_person.a.read} />
+                    <div style={{ ...boxLabel, marginTop: 10 }}>What helps most</div>
+                    <Paras text={conflict.per_person.a.counter_move} />
+                  </div>
+                  <div style={pbox}>
+                    <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6, color: COLOR_B }}>{nameB}</div>
+                    <Paras text={conflict.per_person.b.read} />
+                    <div style={{ ...boxLabel, marginTop: 10 }}>What helps most</div>
+                    <Paras text={conflict.per_person.b.counter_move} />
+                  </div>
+                </div>
+              </div>
+            )}
           </>
         )}
 
