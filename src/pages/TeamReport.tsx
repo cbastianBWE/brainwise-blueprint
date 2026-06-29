@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useTeamProfile, type TeamFacetResult } from "@/hooks/useTeamProfile";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { useNarrativeGenerator } from "@/hooks/useNarrativeGenerator";
+import { HighlightableText, TeamReportHighlightProvider } from "@/components/results/ReportHighlight";
 
 /* ---------- palette ---------- */
 const NAVY = "#021F36";
@@ -104,14 +105,16 @@ function splitParas(text: string): string[] {
   const second = sentences.slice(bestIdx + 1).join(" ");
   return [first, second].filter(Boolean);
 }
-function Paras({ text, style }: { text: string; style?: React.CSSProperties }) {
+function Paras({ text, style, blockKey }: { text: string; style?: React.CSSProperties; blockKey?: string }) {
   const paras = splitParas(text);
   if (paras.length === 0) return null;
   const base: React.CSSProperties = { color: GRAY, fontSize: 16, lineHeight: 1.6, maxWidth: "70ch", margin: 0, ...style };
   return (
     <>
       {paras.map((p, i) => (
-        <p key={i} style={{ ...base, marginTop: i === 0 ? 0 : 12 }}>{p}</p>
+        <p key={i} style={{ ...base, marginTop: i === 0 ? 0 : 12 }}>
+          {blockKey ? <HighlightableText blockKey={`${blockKey}:${i}`} text={p} /> : p}
+        </p>
       ))}
     </>
   );
@@ -515,6 +518,7 @@ export default function TeamReport() {
     !!userProfile &&
     (userProfile.is_practitioner_coach ||
       PRIVILEGED_ACCOUNT_TYPES.has(userProfile.account_type ?? ""));
+  const canHighlight = !noAccess;
 
   const generator = useNarrativeGenerator({
     kind: "team",
@@ -696,6 +700,7 @@ export default function TeamReport() {
 
   return (
     <div style={{ background: SAND, color: GRAY, fontFamily: 'Montserrat, system-ui, sans-serif', fontSize: 16, lineHeight: 1.6, minHeight: "100vh" }}>
+      <TeamReportHighlightProvider teamProfileId={teamProfileId} enabled={canHighlight}>
       {/* Hero */}
       <header style={{ background: NAVY, color: "#ffffff", padding: "54px 0 110px" }}>
         <div style={{ maxWidth: 1040, margin: "0 auto", padding: "0 20px" }}>
@@ -735,7 +740,7 @@ export default function TeamReport() {
                 <div style={{ fontSize: 34, fontWeight: 800, color: ORANGE, lineHeight: 1 }}>{i + 1}</div>
                 <div>
                   <div style={{ fontWeight: 800, color: NAVY, marginBottom: 6, fontSize: 18 }}>{it.headline}</div>
-                  <Paras text={it.detail} />
+                  <Paras text={it.detail} blockKey={`team_in_three:${i}:detail`} />
                   <div style={{ color: TEAL, fontWeight: 700, marginTop: 10, fontSize: 16 }}>{it.action}</div>
                 </div>
               </div>
@@ -744,6 +749,11 @@ export default function TeamReport() {
         </div>
       )}
 
+      {canHighlight && (
+        <div style={{ maxWidth: 1040, margin: "16px auto 0", padding: "0 20px", color: MUTED, fontSize: 13 }}>
+          Tip: select any text in this report to highlight it, and add a comment to anything you want to remember or discuss. Your highlights and notes are saved to your view.
+        </div>
+      )}
       {/* status banner */}
       {status !== "complete" && (
         <div style={{ maxWidth: 1040, margin: "20px auto 0", padding: "0 20px" }}>
@@ -838,7 +848,7 @@ export default function TeamReport() {
             <p style={{ color: GRAY, margin: "0 0 18px", fontSize: 16, lineHeight: 1.6 }}>
               We open with the team&apos;s strength, then the areas to watch in priority order. The picture on each card is your team&apos;s real spread on that trait. Click any card for three specific moves; hover to see the question the team answered.
             </p>
-            {driving?.opening && <div style={{ marginBottom: 14 }}><Paras text={driving.opening} style={{ maxWidth: "none" }} /></div>}
+            {driving?.opening && <div style={{ marginBottom: 14 }}><Paras text={driving.opening} style={{ maxWidth: "none" }} blockKey="driving:opening" /></div>}
             {[...strengthDrivers, ...focusDrivers].map((d, i) => (
               <DriverCard key={i} idx={i} {...d} onOpenDist={openDist} />
             ))}
@@ -854,18 +864,18 @@ export default function TeamReport() {
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }} className="pair-grid">
               <div style={{ background: CARD_BG, border: `1px solid ${LINE}`, borderRadius: 16, padding: 18, boxShadow: "0 1px 2px rgba(2,31,54,.06),0 8px 24px rgba(2,31,54,.06)" }}>
                 <div style={{ fontSize: 13, letterSpacing: ".1em", textTransform: "uppercase", fontWeight: 800, marginBottom: 10, color: TEAL }}>In general</div>
-                <Paras text={communication.general} />
+                <Paras text={communication.general} blockKey="communication:general" />
               </div>
               <div style={{ background: CARD_BG, border: `1px solid ${LINE}`, borderRadius: 16, padding: 18, boxShadow: "0 1px 2px rgba(2,31,54,.06),0 8px 24px rgba(2,31,54,.06)" }}>
                 <div style={{ fontSize: 13, letterSpacing: ".1em", textTransform: "uppercase", fontWeight: 800, marginBottom: 10, color: MUSTARD }}>Under pressure</div>
-                <Paras text={communication.under_pressure} />
+                <Paras text={communication.under_pressure} blockKey="communication:under_pressure" />
               </div>
             </div>
             {Array.isArray(communication.avoid_conflict) && communication.avoid_conflict.length > 0 && (
               <div style={{ marginTop: 14, background: "rgba(255,183,3,.10)", border: "1px solid rgba(255,183,3,.35)", borderRadius: 12, padding: 16 }}>
                 <h4 style={{ margin: "0 0 10px", color: NAVY, fontSize: 18 }}>Avoiding communication conflict</h4>
                 <ol style={{ margin: 0, paddingLeft: 22, color: GRAY, fontSize: 16, lineHeight: 1.6, listStyleType: "decimal" }}>
-                  {communication.avoid_conflict.map((t, i) => <li key={i} style={{ marginBottom: 6 }}>{t}</li>)}
+                  {communication.avoid_conflict.map((t, i) => <li key={i} style={{ marginBottom: 6 }}><HighlightableText blockKey={`communication:avoid_conflict:${i}`} text={t} /></li>)}
                 </ol>
               </div>
             )}
@@ -878,15 +888,15 @@ export default function TeamReport() {
         <section style={{ padding: "34px 0" }}>
           <div style={{ maxWidth: 1040, margin: "0 auto", padding: "0 20px" }}>
             <h2 style={{ fontSize: 26, fontWeight: 800, color: NAVY, margin: "0 0 6px" }}>How this team handles conflict</h2>
-            <div style={{ margin: "0 0 18px" }}><Paras text={conflict.summary} style={{ maxWidth: "none" }} /></div>
+            <div style={{ margin: "0 0 18px" }}><Paras text={conflict.summary} style={{ maxWidth: "none" }} blockKey="conflict:summary" /></div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }} className="pair-grid">
               <div style={{ background: CARD_BG, border: `1px solid ${LINE}`, borderRadius: 16, padding: 18, boxShadow: "0 1px 2px rgba(2,31,54,.06),0 8px 24px rgba(2,31,54,.06)" }}>
                 <div style={{ fontSize: 13, letterSpacing: ".1em", textTransform: "uppercase", fontWeight: 800, marginBottom: 10, color: TEAL }}>Mitigate unhealthy conflict</div>
-                <Paras text={conflict.mitigate} />
+                <Paras text={conflict.mitigate} blockKey="conflict:mitigate" />
               </div>
               <div style={{ background: CARD_BG, border: `1px solid ${LINE}`, borderRadius: 16, padding: 18, boxShadow: "0 1px 2px rgba(2,31,54,.06),0 8px 24px rgba(2,31,54,.06)" }}>
                 <div style={{ fontSize: 13, letterSpacing: ".1em", textTransform: "uppercase", fontWeight: 800, marginBottom: 10, color: MUSTARD }}>Promote healthy conflict</div>
-                <Paras text={conflict.promote_healthy} />
+                <Paras text={conflict.promote_healthy} blockKey="conflict:promote" />
               </div>
             </div>
           </div>
@@ -916,8 +926,8 @@ export default function TeamReport() {
                       return (
                         <tr key={i} className="leader-row">
                           <td style={tdStyle} data-label="Driver"><b style={{ color: NAVY, fontSize: 16 }}>{driverName}</b></td>
-                          <td style={tdStyle} data-label="Risk">{r.risk_to_work}</td>
-                          <td style={tdStyle} data-label="The move">{r.the_move}</td>
+                          <td style={tdStyle} data-label="Risk"><HighlightableText blockKey={`leader:risk:${i}`} text={r.risk_to_work} /></td>
+                          <td style={tdStyle} data-label="The move"><HighlightableText blockKey={`leader:move:${i}`} text={r.the_move} /></td>
                           <td style={{ ...tdStyle, color: GRAY }} data-label="Owner">{r.potential_owner}</td>
                         </tr>
                       );
@@ -927,7 +937,7 @@ export default function TeamReport() {
               </div>
               {leader.lean_on && (
                 <div style={{ marginTop: 14, border: "1px solid rgba(45,106,79,.4)", background: "rgba(45,106,79,.07)", borderRadius: 12, padding: 16, color: NAVY, fontSize: 16, lineHeight: 1.6 }}>
-                  <b style={{ color: GREEN }}>Lean on:</b> {leader.lean_on}
+                  <b style={{ color: GREEN }}>Lean on:</b> <HighlightableText blockKey="leader:lean_on" text={leader.lean_on} />
                 </div>
               )}
             </div>
@@ -1001,7 +1011,7 @@ export default function TeamReport() {
                     const f = facetLookup(w.item);
                     return (
                       <li key={i} style={{ marginBottom: 8 }}>
-                        <b style={{ color: NAVY }}>{f?.facetName ?? `Item ${w.item}`}:</b> {w.rationale}
+                        <b style={{ color: NAVY }}>{f?.facetName ?? `Item ${w.item}`}:</b> <HighlightableText blockKey={`coach:why:${i}`} text={w.rationale} />
                       </li>
                     );
                   })}
@@ -1011,7 +1021,7 @@ export default function TeamReport() {
             {Array.isArray(coach.debrief_prompts) && coach.debrief_prompts.length > 0 && (
               <Acc title="Conversation prompts for the debrief">
                 <ol style={{ margin: 0, paddingLeft: 24, listStyleType: "decimal", listStylePosition: "outside" }}>
-                  {coach.debrief_prompts.map((p, i) => <li key={i} style={{ marginBottom: 8, listStyleType: "decimal" }}>{p}</li>)}
+                  {coach.debrief_prompts.map((p, i) => <li key={i} style={{ marginBottom: 8, listStyleType: "decimal" }}><HighlightableText blockKey={`coach:debrief:${i}`} text={p} /></li>)}
                 </ol>
               </Acc>
             )}
@@ -1039,6 +1049,7 @@ export default function TeamReport() {
           zIndex: 9999, maxWidth: 300, left: tip.x, top: tip.y,
         }}>{tip.text}</div>
       )}
+      </TeamReportHighlightProvider>
     </div>
   );
 }
