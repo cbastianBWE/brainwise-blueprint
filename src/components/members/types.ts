@@ -65,6 +65,7 @@ export const MEMBER_COLUMN_IDS = [
   "certifications",
   "status",
   "last_login",
+  "last_assessment",
   "actions",
 ] as const;
 
