@@ -113,6 +113,9 @@ export default function MembersFilterBar({
         ? "Has assignments"
         : "No assignments";
 
+  const actorLabel = filters.is_coach_actor === null ? "Coach actor: All" : filters.is_coach_actor ? "Coach actor: Yes" : "Coach actor: No";
+  const clientLabel = filters.is_coach_client === null ? "Coach client: All" : filters.is_coach_client ? "Coach client: Yes" : "Coach client: No";
+
   const accountTypesSelected = filters.account_types ?? [];
   const accountTypeLabel =
     accountTypesSelected.length === 0
