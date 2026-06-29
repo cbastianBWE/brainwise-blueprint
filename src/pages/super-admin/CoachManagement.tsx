@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/table";
 import { Plus, Trash2, Download, Upload, Loader2 } from "lucide-react";
 import * as XLSX from "xlsx";
+import CoachClientTrackingSection from "@/components/super-admin/CoachClientTrackingSection";
 
 const CERT_TYPES = [
   { value: "ptp_coach", label: "PTP Certified Coach" },
@@ -373,83 +374,95 @@ export default function CoachManagement() {
 
   return (
     <div className="space-y-6 p-6">
-      <h1 className="text-2xl font-bold">Coach Invitations</h1>
+      <h1 className="text-2xl font-bold">Coach Management</h1>
 
+      <Tabs defaultValue="invitations">
+        <TabsList>
+          <TabsTrigger value="invitations">Invitations</TabsTrigger>
+          <TabsTrigger value="tracking">Client &amp; Actor Tracking</TabsTrigger>
+        </TabsList>
 
-      {/* Section 1 — Invite */}
-      <Card>
-        <CardHeader><CardTitle>Invite Coaches</CardTitle></CardHeader>
-        <CardContent>
-          <Tabs defaultValue="single">
-            <TabsList>
-              <TabsTrigger value="single">Single Invite</TabsTrigger>
-              <TabsTrigger value="bulk">Bulk Invite</TabsTrigger>
-              <TabsTrigger value="upload">Upload Excel</TabsTrigger>
-            </TabsList>
-            <TabsContent value="single"><SingleInviteTab /></TabsContent>
-            <TabsContent value="bulk"><BulkInviteTab /></TabsContent>
-            <TabsContent value="upload"><UploadExcelTab /></TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
+        <TabsContent value="invitations" className="space-y-6">
+          {/* Section 1 — Invite */}
+          <Card>
+            <CardHeader><CardTitle>Invite Coaches</CardTitle></CardHeader>
+            <CardContent>
+              <Tabs defaultValue="single">
+                <TabsList>
+                  <TabsTrigger value="single">Single Invite</TabsTrigger>
+                  <TabsTrigger value="bulk">Bulk Invite</TabsTrigger>
+                  <TabsTrigger value="upload">Upload Excel</TabsTrigger>
+                </TabsList>
+                <TabsContent value="single"><SingleInviteTab /></TabsContent>
+                <TabsContent value="bulk"><BulkInviteTab /></TabsContent>
+                <TabsContent value="upload"><UploadExcelTab /></TabsContent>
+              </Tabs>
+            </CardContent>
+          </Card>
 
-      {/* Section 2 — Pending */}
-      <Card>
-        <CardHeader><CardTitle>Pending Invitations</CardTitle></CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
-          ) : invitations.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-4">No pending invitations.</p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Certification</TableHead>
-                  <TableHead>Invited</TableHead>
-                  <TableHead>Expires</TableHead>
-                  <TableHead>Email Status</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {invitations.map((inv) => (
-                  <TableRow key={inv.id}>
-                    <TableCell>{inv.first_name} {inv.last_name}</TableCell>
-                    <TableCell>{inv.email}</TableCell>
-                    <TableCell>{CERT_LABELS[inv.certification_type] || inv.certification_type}</TableCell>
-                    <TableCell>{new Date(inv.created_at).toLocaleDateString()}</TableCell>
-                    <TableCell>{new Date(inv.expires_at).toLocaleDateString()}</TableCell>
-                    <TableCell>
-                      {inv.email_send_status === "sent" ? (
-                        <Badge variant="secondary">Sent</Badge>
-                      ) : inv.email_send_status === "failed" ? (
-                        <Badge variant="destructive" title={inv.email_send_error || "Unknown error"}>
-                          Failed
-                        </Badge>
-                      ) : (
-                        <Badge variant="outline">Pending</Badge>
-                      )}
-                    </TableCell>
-                    <TableCell className="flex gap-2">
-                      <Button
-                        size="sm"
-                        variant={inv.email_send_status === "failed" ? "default" : "outline"}
-                        onClick={() => handleResend(inv)}
-                      >
-                        {inv.email_send_status === "failed" ? "Retry Email" : "Resend"}
-                      </Button>
-                      <Button size="sm" variant="ghost" onClick={() => handleCancel(inv)}>Cancel</Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+          {/* Section 2 — Pending */}
+          <Card>
+            <CardHeader><CardTitle>Pending Invitations</CardTitle></CardHeader>
+            <CardContent>
+              {loading ? (
+                <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
+              ) : invitations.length === 0 ? (
+                <p className="text-sm text-muted-foreground py-4">No pending invitations.</p>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Email</TableHead>
+                      <TableHead>Certification</TableHead>
+                      <TableHead>Invited</TableHead>
+                      <TableHead>Expires</TableHead>
+                      <TableHead>Email Status</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {invitations.map((inv) => (
+                      <TableRow key={inv.id}>
+                        <TableCell>{inv.first_name} {inv.last_name}</TableCell>
+                        <TableCell>{inv.email}</TableCell>
+                        <TableCell>{CERT_LABELS[inv.certification_type] || inv.certification_type}</TableCell>
+                        <TableCell>{new Date(inv.created_at).toLocaleDateString()}</TableCell>
+                        <TableCell>{new Date(inv.expires_at).toLocaleDateString()}</TableCell>
+                        <TableCell>
+                          {inv.email_send_status === "sent" ? (
+                            <Badge variant="secondary">Sent</Badge>
+                          ) : inv.email_send_status === "failed" ? (
+                            <Badge variant="destructive" title={inv.email_send_error || "Unknown error"}>
+                              Failed
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline">Pending</Badge>
+                          )}
+                        </TableCell>
+                        <TableCell className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant={inv.email_send_status === "failed" ? "default" : "outline"}
+                            onClick={() => handleResend(inv)}
+                          >
+                            {inv.email_send_status === "failed" ? "Retry Email" : "Resend"}
+                          </Button>
+                          <Button size="sm" variant="ghost" onClick={() => handleCancel(inv)}>Cancel</Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="tracking">
+          <CoachClientTrackingSection />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
