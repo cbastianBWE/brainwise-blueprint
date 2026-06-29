@@ -700,6 +700,7 @@ export default function TeamReport() {
 
   return (
     <div style={{ background: SAND, color: GRAY, fontFamily: 'Montserrat, system-ui, sans-serif', fontSize: 16, lineHeight: 1.6, minHeight: "100vh" }}>
+      <TeamReportHighlightProvider teamProfileId={teamProfileId} enabled={canHighlight}>
       {/* Hero */}
       <header style={{ background: NAVY, color: "#ffffff", padding: "54px 0 110px" }}>
         <div style={{ maxWidth: 1040, margin: "0 auto", padding: "0 20px" }}>
