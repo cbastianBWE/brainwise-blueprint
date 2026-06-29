@@ -25,6 +25,7 @@ const LABELS: Record<MemberColumnId, string> = {
   certifications: "Certifications",
   status: "Status",
   last_login: "Last login",
+  last_assessment: "Last assessment",
   actions: "Actions",
 };
 
