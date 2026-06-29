@@ -257,6 +257,9 @@ export default function MembersTable({
                 </Tooltip>
               </TableHead>
             )}
+            {showCol("last_assessment") && (
+              <TableHead className="hidden lg:table-cell">Last assessment</TableHead>
+            )}
             <TableHead className="w-10" />
           </TableRow>
         </TableHeader>
