@@ -98,6 +98,15 @@ export default function MemberDrawerCoach({
     },
   });
 
+  const relQuery = useQuery({
+    queryKey: ["coach-client-tracking", userId],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("super_admin_coach_client_tracking" as any, { p_user_id: userId });
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+  });
+
   const countNum = Number(count);
   const canOpenDialog =
     !!selectedCertId &&
