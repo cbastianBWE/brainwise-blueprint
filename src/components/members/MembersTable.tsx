@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { highlightMatch } from "@/lib/highlightMatch";
+import { useMemberAssessmentCompletions } from "@/hooks/useMemberAssessmentCompletions";
 import type { MemberRow, MembersSortState, MemberColumnId } from "./types";
 
 interface Props {
