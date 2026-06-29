@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { highlightMatch } from "@/lib/highlightMatch";
+import { useMemberAssessmentCompletions } from "@/hooks/useMemberAssessmentCompletions";
 import type { MemberRow, MembersSortState, MemberColumnId } from "./types";
 
 interface Props {
@@ -47,6 +48,14 @@ const SORTABLE: Record<string, MembersSortState["column"]> = {
   certifications: "certification_count",
   status: "account_status",
   last_login: "last_login",
+};
+
+const INSTRUMENT_LABEL: Record<string, string> = {
+  "INST-001": "PTP",
+  "INST-002": "NAI",
+  "INST-002L": "EPN",
+  "INST-003": "AIRSA",
+  "INST-004": "HSS",
 };
 
 const formatAccountType = (t: string | null): string => {
@@ -150,6 +159,7 @@ export default function MembersTable({
   onImpersonate,
 }: Props) {
   const showCol = (id: MemberColumnId) => visibleColumns.includes(id);
+  const { data: completionsByUser } = useMemberAssessmentCompletions(rows);
   const pageIds = (rows ?? []).map((r) => r.user_id);
   const allSelected = pageIds.length > 0 && pageIds.every((id) => selectedIds.has(id));
   const colCount =
@@ -246,6 +256,9 @@ export default function MembersTable({
                   </TooltipContent>
                 </Tooltip>
               </TableHead>
+            )}
+            {showCol("last_assessment") && (
+              <TableHead className="hidden lg:table-cell">Last assessment</TableHead>
             )}
             <TableHead className="w-10" />
           </TableRow>
@@ -375,6 +388,37 @@ export default function MembersTable({
                       ) : (
                         <span className="text-muted-foreground">—</span>
                       )}
+                    </TableCell>
+                  )}
+                  {showCol("last_assessment") && (
+                    <TableCell className="hidden lg:table-cell">
+                      {(() => {
+                        const items = completionsByUser?.[row.user_id] ?? [];
+                        if (items.length === 0)
+                          return <span className="text-muted-foreground">—</span>;
+                        return (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span>
+                                {formatDistanceToNow(new Date(items[0].last_completed_at), {
+                                  addSuffix: true,
+                                })}
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <div className="text-xs font-medium mb-1">Completed assessments</div>
+                              <ul className="space-y-0.5">
+                                {items.map((it, i) => (
+                                  <li key={i} className="text-xs">
+                                    {INSTRUMENT_LABEL[it.instrument_id] ?? it.instrument_id} ·{" "}
+                                    {new Date(it.last_completed_at).toLocaleDateString()}
+                                  </li>
+                                ))}
+                              </ul>
+                            </TooltipContent>
+                          </Tooltip>
+                        );
+                      })()}
                     </TableCell>
                   )}
                   <TableCell

@@ -14285,6 +14285,14 @@ export type Database = {
         Args: { p_feature: string; p_org: string }
         Returns: boolean
       }
+      org_member_assessment_completions: {
+        Args: { p_org: string }
+        Returns: {
+          instrument_id: string
+          last_completed_at: string
+          user_id: string
+        }[]
+      }
       org_set_mfa_required: {
         Args: { p_enabled: boolean; p_organization_id: string }
         Returns: Json
