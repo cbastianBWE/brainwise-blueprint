@@ -100,6 +100,8 @@ export const SYSTEM_DEFAULT_FILTERS: MembersFilterState = {
   last_active_within_days: null,
   created_within_days: null,
   has_supervisor: null,
+  is_coach_actor: null,
+  is_coach_client: null,
 };
 
 export const SYSTEM_DEFAULT_SORT: MembersSortState = {
