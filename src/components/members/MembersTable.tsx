@@ -424,6 +424,13 @@ export default function MembersTable({
                       })()}
                     </TableCell>
                   )}
+                  {showCol("relationship") && (
+                    <TableCell className="hidden lg:table-cell">
+                      {row.is_coach_actor ? <Badge>Actor</Badge>
+                        : row.is_coach_client ? <Badge variant="secondary">Coach client</Badge>
+                        : <span className="text-muted-foreground">—</span>}
+                    </TableCell>
+                  )}
                   <TableCell
                     data-stop-row-click
                     onClick={(e) => e.stopPropagation()}
