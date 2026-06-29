@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { usePairedProfile, type PairedFacetResult } from "@/hooks/usePairedProfile";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { useNarrativeGenerator } from "@/hooks/useNarrativeGenerator";
+import { HighlightableText, PairedReportHighlightProvider } from "@/components/results/ReportHighlight";
 
 /* ---------- palette (brand-only) ---------- */
 const NAVY = "#021F36";
@@ -473,6 +474,7 @@ export default function PairedReport() {
     !!userProfile &&
     (userProfile.is_practitioner_coach ||
       PRIVILEGED_ACCOUNT_TYPES.has(userProfile.account_type ?? ""));
+  const canHighlight = !noAccess;
 
   const generator = useNarrativeGenerator({
     kind: "paired",
@@ -536,20 +538,24 @@ export default function PairedReport() {
     const mid = Math.ceil(sentences.length / 2);
     return [sentences.slice(0, mid).join(" "), sentences.slice(mid).join(" ")];
   }, []);
-  const Paras = ({ text, style }: { text: string; style?: React.CSSProperties }) => {
+  const Paras = ({ text, style, blockKey }: { text: string; style?: React.CSSProperties; blockKey?: string }) => {
     const paras = splitParas(nm(text));
     return (
       <>
         {paras.map((p, i) => (
-          <p key={i} style={{ margin: i === 0 ? 0 : "10px 0 0", fontSize: 16, lineHeight: 1.6, maxWidth: "70ch", ...style }}>{renderBold(p)}</p>
+          <p key={i} style={{ margin: i === 0 ? 0 : "10px 0 0", fontSize: 16, lineHeight: 1.6, maxWidth: "70ch", ...style }}>
+            {blockKey ? <HighlightableText blockKey={`${blockKey}:${i}`} text={p} /> : renderBold(p)}
+          </p>
         ))}
       </>
     );
   };
-  const Bullets = ({ text }: { text: string }) => (
+  const Bullets = ({ text, blockKey }: { text: string; blockKey?: string }) => (
     <ul style={{ margin: 0, paddingLeft: 22, listStyleType: "disc" }}>
       {splitSentences(nm(text)).map((s, i) => (
-        <li key={i} style={{ fontSize: 16, lineHeight: 1.6, margin: "4px 0" }}>{renderBold(s)}</li>
+        <li key={i} style={{ fontSize: 16, lineHeight: 1.6, margin: "4px 0" }}>
+          {blockKey ? <HighlightableText blockKey={`${blockKey}:${i}`} text={s} /> : renderBold(s)}
+        </li>
       ))}
     </ul>
   );
