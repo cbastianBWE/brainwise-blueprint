@@ -27,6 +27,8 @@ export interface MembersFilterState {
   last_active_within_days: number | null;
   created_within_days: number | null;
   has_supervisor: boolean | null;
+  is_coach_actor: boolean | null;
+  is_coach_client: boolean | null;
 }
 
 export interface MembersSortState {
