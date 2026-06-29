@@ -713,6 +713,7 @@ export default function PairedReport() {
 
   return (
     <div style={{ background: SAND, color: NAVY, fontFamily: 'Montserrat, system-ui, sans-serif', lineHeight: 1.6, fontSize: 16, minHeight: "100vh" }}>
+      <PairedReportHighlightProvider pairedProfileId={pairedProfileId} enabled={canHighlight}>
       <div style={{ maxWidth: 880, margin: "0 auto", padding: "0 18px 80px" }}>
         {/* Hero */}
         <div style={{ background: NAVY, color: "#fff", borderRadius: "0 0 20px 20px", margin: "0 -18px 0", padding: "30px 28px 56px" }}>
@@ -753,10 +754,16 @@ export default function PairedReport() {
               <div key={i} style={{ background: "#fff", border: `1px solid ${LINE}`, borderRadius: 14, padding: 16, boxShadow: "0 6px 18px rgba(2,31,54,.08)" }}>
                 <div style={{ color: ORANGE, fontWeight: 800, fontSize: 22 }}>{i + 1}</div>
                 <div style={{ fontWeight: 700, margin: "6px 0 4px", fontSize: 18 }}>{nm(t.headline)}</div>
-                <div style={{ fontSize: 15, color: GRAY, lineHeight: 1.6 }}>{nm(t.detail)}</div>
+                <div style={{ fontSize: 15, color: GRAY, lineHeight: 1.6 }}><HighlightableText blockKey={`pair-in-three:${i}:detail`} text={nm(t.detail)} /></div>
                 {t.action && <div style={{ color: TEAL, fontWeight: 600, fontSize: 14, marginTop: 8 }}>{renderBold(nm(t.action))}</div>}
               </div>
             ))}
+          </div>
+        )}
+
+        {canHighlight && (
+          <div style={{ marginTop: 22, display: "flex", gap: 10, alignItems: "flex-start", background: "rgba(0,109,119,.08)", border: "1px solid rgba(0,109,119,.25)", borderRadius: 10, padding: "10px 14px", fontSize: 14, color: NAVY }}>
+            <span>Tip: select any text in this report to highlight it, and add a comment to anything you want to remember or discuss. Your highlights and notes are saved to your view.</span>
           </div>
         )}
 
@@ -861,7 +868,7 @@ export default function PairedReport() {
           <>
             <h2 style={sectionLabel}>What is driving your pair</h2>
             {driving?.opening && (
-              <div style={{ color: GRAY, margin: "0 0 18px" }}><Paras text={driving.opening} style={{ color: GRAY, maxWidth: "none" }} /></div>
+              <div style={{ color: GRAY, margin: "0 0 18px" }}><Paras text={driving.opening} style={{ color: GRAY, maxWidth: "none" }} blockKey="driving:opening" /></div>
             )}
             {[...strengthDrivers, ...focusDrivers].map((d, i) => (
               <DriverCard
@@ -883,11 +890,11 @@ export default function PairedReport() {
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }} className="two-grid">
                 <div style={pbox}>
                   <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6, color: COLOR_A }}>{nameA}</div>
-                  <Bullets text={within.a} />
+                  <Bullets text={within.a} blockKey="within:a" />
                 </div>
                 <div style={pbox}>
                   <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6, color: COLOR_B }}>{nameB}</div>
-                  <Bullets text={within.b} />
+                  <Bullets text={within.b} blockKey="within:b" />
                 </div>
               </div>
             </div>
@@ -902,11 +909,11 @@ export default function PairedReport() {
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }} className="two-grid">
                 <div style={pbox}>
                   <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6, color: COLOR_A }}>What {firstA} needs from {firstB}</div>
-                  <Bullets text={needs.a_needs_from_b} />
+                  <Bullets text={needs.a_needs_from_b} blockKey="needs:a_from_b" />
                 </div>
                 <div style={pbox}>
                   <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6, color: COLOR_B }}>What {firstB} needs from {firstA}</div>
-                  <Bullets text={needs.b_needs_from_a} />
+                  <Bullets text={needs.b_needs_from_a} blockKey="needs:b_from_a" />
                 </div>
               </div>
             </div>
@@ -920,11 +927,11 @@ export default function PairedReport() {
             <div style={cardStyle}>
               <div style={{ marginBottom: 16 }}>
                 <div style={{ fontSize: 11, letterSpacing: ".1em", textTransform: "uppercase", fontWeight: 800, marginBottom: 8, color: TEAL }}>In general</div>
-                <Bullets text={communication.general} />
+                <Bullets text={communication.general} blockKey="communication:general" />
               </div>
               <div style={{ marginBottom: 16 }}>
                 <div style={{ fontSize: 11, letterSpacing: ".1em", textTransform: "uppercase", fontWeight: 800, marginBottom: 8, color: MUSTARD }}>Under pressure</div>
-                <Bullets text={communication.under_pressure} />
+                <Bullets text={communication.under_pressure} blockKey="communication:under_pressure" />
               </div>
               {Array.isArray(communication.avoid_conflict) && communication.avoid_conflict.length > 0 && (
                 <div>
@@ -944,16 +951,16 @@ export default function PairedReport() {
         {conflict && (
           <>
             <h2 style={sectionLabel}>How the two of you handle conflict</h2>
-            <div style={{ color: GRAY, margin: "0 0 18px" }}><Paras text={conflict.summary} style={{ color: GRAY, maxWidth: "none" }} /></div>
+            <div style={{ color: GRAY, margin: "0 0 18px" }}><Paras text={conflict.summary} style={{ color: GRAY, maxWidth: "none" }} blockKey="conflict:summary" /></div>
             <div style={cardStyle}>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }} className="two-grid">
                 <div style={pbox}>
                   <div style={boxLabel}>Mitigate the unhealthy kind</div>
-                  <Bullets text={conflict.mitigate} />
+                  <Bullets text={conflict.mitigate} blockKey="conflict:mitigate" />
                 </div>
                 <div style={pbox}>
                   <div style={boxLabel}>Promote the healthy kind</div>
-                  <Bullets text={conflict.promote_healthy} />
+                  <Bullets text={conflict.promote_healthy} blockKey="conflict:promote" />
                 </div>
               </div>
             </div>
@@ -963,15 +970,15 @@ export default function PairedReport() {
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }} className="two-grid">
                   <div style={pbox}>
                     <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6, color: COLOR_A }}>{nameA}</div>
-                    <Paras text={conflict.per_person.a.read} />
+                    <Paras text={conflict.per_person.a.read} blockKey="conflict:per_person:a:read" />
                     <div style={{ ...boxLabel, marginTop: 10 }}>What helps most</div>
-                    <Paras text={conflict.per_person.a.counter_move} />
+                    <Paras text={conflict.per_person.a.counter_move} blockKey="conflict:per_person:a:counter" />
                   </div>
                   <div style={pbox}>
                     <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6, color: COLOR_B }}>{nameB}</div>
-                    <Paras text={conflict.per_person.b.read} />
+                    <Paras text={conflict.per_person.b.read} blockKey="conflict:per_person:b:read" />
                     <div style={{ ...boxLabel, marginTop: 10 }}>What helps most</div>
-                    <Paras text={conflict.per_person.b.counter_move} />
+                    <Paras text={conflict.per_person.b.counter_move} blockKey="conflict:per_person:b:counter" />
                   </div>
                 </div>
               </div>
@@ -984,15 +991,15 @@ export default function PairedReport() {
           <>
             <h2 style={sectionLabel}>Repair after conflict</h2>
             <div style={cardStyle}>
-              <div style={{ marginBottom: 10 }}><Paras text={repair.overview} style={{ maxWidth: "none" }} /></div>
+              <div style={{ marginBottom: 10 }}><Paras text={repair.overview} style={{ maxWidth: "none" }} blockKey="repair:overview" /></div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }} className="two-grid">
                 <div style={pbox}>
                   <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6, color: COLOR_A }}>{nameA}</div>
-                  <Bullets text={repair.a} />
+                  <Bullets text={repair.a} blockKey="repair:a" />
                 </div>
                 <div style={pbox}>
                   <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6, color: COLOR_B }}>{nameB}</div>
-                  <Bullets text={repair.b} />
+                  <Bullets text={repair.b} blockKey="repair:b" />
                 </div>
               </div>
               {Array.isArray(repair.steps) && repair.steps.length > 0 && (
@@ -1000,7 +1007,7 @@ export default function PairedReport() {
                   <div style={{ fontWeight: 700, marginBottom: 6 }}>A repair sequence for you</div>
                   <ol style={{ margin: 0, paddingLeft: 22, listStyleType: "decimal" }}>
                     {repair.steps.map((t, i) => (
-                      <li key={i} style={{ margin: "4px 0", lineHeight: 1.6 }}>{nm(t)}</li>
+                      <li key={i} style={{ margin: "4px 0", lineHeight: 1.6 }}><HighlightableText blockKey={`repair:steps:${i}`} text={nm(t)} /></li>
                     ))}
                   </ol>
                 </div>
@@ -1017,18 +1024,18 @@ export default function PairedReport() {
           <>
             <h2 style={sectionLabel}>Building intimacy</h2>
             <div style={cardStyle}>
-              <div style={{ marginBottom: 10 }}><Paras text={intimacy.overview} style={{ maxWidth: "none" }} /></div>
+              <div style={{ marginBottom: 10 }}><Paras text={intimacy.overview} style={{ maxWidth: "none" }} blockKey="intimacy:overview" /></div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }} className="two-grid">
                 <div style={pbox}>
                   <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6, color: COLOR_A }}>{nameA}</div>
                   <ul style={{ margin: 0, paddingLeft: 22, listStyleType: "disc", fontSize: 16, lineHeight: 1.6 }}>
-                    {(intimacy.a ?? []).map((t, i) => <li key={i} style={{ margin: "4px 0" }}>{nm(t)}</li>)}
+                    {(intimacy.a ?? []).map((t, i) => <li key={i} style={{ margin: "4px 0" }}><HighlightableText blockKey={`intimacy:a:${i}`} text={nm(t)} /></li>)}
                   </ul>
                 </div>
                 <div style={pbox}>
                   <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6, color: COLOR_B }}>{nameB}</div>
                   <ul style={{ margin: 0, paddingLeft: 22, listStyleType: "disc", fontSize: 16, lineHeight: 1.6 }}>
-                    {(intimacy.b ?? []).map((t, i) => <li key={i} style={{ margin: "4px 0" }}>{nm(t)}</li>)}
+                    {(intimacy.b ?? []).map((t, i) => <li key={i} style={{ margin: "4px 0" }}><HighlightableText blockKey={`intimacy:b:${i}`} text={nm(t)} /></li>)}
                   </ul>
                 </div>
               </div>
@@ -1090,7 +1097,7 @@ export default function PairedReport() {
                   const f = facetLookup(w.item);
                   return (
                     <div key={i} style={{ fontSize: 14, margin: "6px 0", lineHeight: 1.6 }}>
-                      <b>{f?.facetName ?? `Item ${w.item}`}.</b> {nm(w.rationale)}
+                      <b>{f?.facetName ?? `Item ${w.item}`}.</b> <HighlightableText blockKey={`coach:why:${i}`} text={nm(w.rationale)} />
                     </div>
                   );
                 })}
@@ -1100,7 +1107,7 @@ export default function PairedReport() {
               <Acc title="Debrief prompts">
                 <ol style={{ margin: "6px 0", paddingLeft: 22, listStyleType: "decimal" }}>
                   {coach.debrief_prompts.map((p, i) => (
-                    <li key={i} style={{ fontSize: 14, margin: "4px 0", lineHeight: 1.6 }}>{nm(p)}</li>
+                    <li key={i} style={{ fontSize: 14, margin: "4px 0", lineHeight: 1.6 }}><HighlightableText blockKey={`coach:debrief:${i}`} text={nm(p)} /></li>
                   ))}
                 </ol>
               </Acc>
