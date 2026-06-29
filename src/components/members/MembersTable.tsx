@@ -50,6 +50,14 @@ const SORTABLE: Record<string, MembersSortState["column"]> = {
   last_login: "last_login",
 };
 
+const INSTRUMENT_LABEL: Record<string, string> = {
+  "INST-001": "PTP",
+  "INST-002": "NAI",
+  "INST-002L": "EPN",
+  "INST-003": "AIRSA",
+  "INST-004": "HSS",
+};
+
 const formatAccountType = (t: string | null): string => {
   if (!t) return "—";
   return t.split("_").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
