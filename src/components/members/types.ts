@@ -81,6 +81,7 @@ export const SYSTEM_DEFAULT_COLUMNS: MemberColumnId[] = [
   "certifications",
   "status",
   "last_login",
+  "last_assessment",
   "actions",
 ];
 
