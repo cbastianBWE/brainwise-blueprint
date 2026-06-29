@@ -232,6 +232,30 @@ export default function MembersFilterBar({
           </DropdownMenuContent>
         </DropdownMenu>
 
+        {/* Coach actor */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm">{actorLabel}<ChevronDown className="h-3.5 w-3.5 ml-1" /></Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            <DropdownMenuItem onClick={() => update({ is_coach_actor: null })}>All</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => update({ is_coach_actor: true })}>Actor</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => update({ is_coach_actor: false })}>Not actor</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        {/* Coach client */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm">{clientLabel}<ChevronDown className="h-3.5 w-3.5 ml-1" /></Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            <DropdownMenuItem onClick={() => update({ is_coach_client: null })}>All</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => update({ is_coach_client: true })}>Coach client</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => update({ is_coach_client: false })}>Not coach client</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
         {/* More filters (cycle 1 stub) */}
         <Tooltip>
           <TooltipTrigger asChild>
