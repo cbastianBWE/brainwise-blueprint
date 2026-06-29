@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useTeamProfile, type TeamFacetResult } from "@/hooks/useTeamProfile";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { useNarrativeGenerator } from "@/hooks/useNarrativeGenerator";
+import { HighlightableText, TeamReportHighlightProvider } from "@/components/results/ReportHighlight";
 
 /* ---------- palette ---------- */
 const NAVY = "#021F36";
