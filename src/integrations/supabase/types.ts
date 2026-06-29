@@ -14532,6 +14532,8 @@ export type Database = {
           p_created_within?: string
           p_has_active_assignments?: boolean
           p_has_supervisor?: boolean
+          p_is_coach_actor?: boolean
+          p_is_coach_client?: boolean
           p_is_mentor?: boolean
           p_last_active_within?: string
           p_limit?: number
@@ -14549,6 +14551,8 @@ export type Database = {
           certification_count: number
           email: string
           full_name: string
+          is_coach_actor: boolean
+          is_coach_client: boolean
           is_mentor: boolean
           last_sign_in_at: string
           organization_id: string
@@ -14761,6 +14765,24 @@ export type Database = {
       subscribe_to_newsletter: {
         Args: { p_email: string; p_source?: string; p_turnstile_token: string }
         Returns: Json
+      }
+      super_admin_coach_client_tracking: {
+        Args: { p_user_id?: string }
+        Returns: {
+          actor_instrument_id: string
+          assessment_completed: boolean
+          client_email: string
+          client_name: string
+          client_user_id: string
+          coach_client_id: string
+          coach_name: string
+          coach_user_id: string
+          completed_at: string
+          debrief_completed: boolean
+          invitation_status: string
+          invited_at: string
+          is_actor: boolean
+        }[]
       }
       super_admin_list_orgs_with_usage: {
         Args: never
