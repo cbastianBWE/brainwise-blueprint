@@ -518,6 +518,7 @@ export default function TeamReport() {
     !!userProfile &&
     (userProfile.is_practitioner_coach ||
       PRIVILEGED_ACCOUNT_TYPES.has(userProfile.account_type ?? ""));
+  const canHighlight = !noAccess;
 
   const generator = useNarrativeGenerator({
     kind: "team",
