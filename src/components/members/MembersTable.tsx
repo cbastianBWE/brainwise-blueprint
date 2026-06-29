@@ -260,6 +260,9 @@ export default function MembersTable({
             {showCol("last_assessment") && (
               <TableHead className="hidden lg:table-cell">Last assessment</TableHead>
             )}
+            {showCol("relationship") && (
+              <TableHead className="hidden lg:table-cell">Relationship</TableHead>
+            )}
             <TableHead className="w-10" />
           </TableRow>
         </TableHeader>
