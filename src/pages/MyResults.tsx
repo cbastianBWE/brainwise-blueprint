@@ -31,7 +31,7 @@ import {
   Cell,
   LabelList,
 } from "recharts";
-import { FileText, MessageSquare, RefreshCw, ArrowRight, AlertTriangle, X } from "lucide-react";
+import { FileText, MessageSquare, RefreshCw, ArrowRight, AlertTriangle, X, Highlighter } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
