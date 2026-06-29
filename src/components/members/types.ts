@@ -12,6 +12,8 @@ export interface MemberRow {
   account_status: string;
   last_sign_in_at: string | null;
   show_coach_tab: boolean;
+  is_coach_actor?: boolean | null;
+  is_coach_client?: boolean | null;
   total_count: number;
 }
 
@@ -25,6 +27,8 @@ export interface MembersFilterState {
   last_active_within_days: number | null;
   created_within_days: number | null;
   has_supervisor: boolean | null;
+  is_coach_actor: boolean | null;
+  is_coach_client: boolean | null;
 }
 
 export interface MembersSortState {
@@ -66,6 +70,7 @@ export const MEMBER_COLUMN_IDS = [
   "status",
   "last_login",
   "last_assessment",
+  "relationship",
   "actions",
 ] as const;
 
@@ -95,6 +100,8 @@ export const SYSTEM_DEFAULT_FILTERS: MembersFilterState = {
   last_active_within_days: null,
   created_within_days: null,
   has_supervisor: null,
+  is_coach_actor: null,
+  is_coach_client: null,
 };
 
 export const SYSTEM_DEFAULT_SORT: MembersSortState = {

@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -98,6 +99,15 @@ export default function MemberDrawerCoach({
     },
   });
 
+  const relQuery = useQuery({
+    queryKey: ["coach-client-tracking", userId],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("super_admin_coach_client_tracking" as any, { p_user_id: userId });
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+  });
+
   const countNum = Number(count);
   const canOpenDialog =
     !!selectedCertId &&
@@ -157,6 +167,38 @@ export default function MemberDrawerCoach({
           </div>
         </div>
       </section>
+
+      {!relQuery.error && (relQuery.data?.length ?? 0) > 0 && (
+        <section className="space-y-2">
+          <h3 className="text-sm font-semibold">Coach client & actor activity</h3>
+          <div className="rounded-md border divide-y">
+            {(relQuery.data ?? []).map((row, i) => (
+              <div key={i} className="p-3 text-sm flex flex-wrap items-center gap-2">
+                {row.is_actor ? (
+                  <Badge>Actor</Badge>
+                ) : (
+                  <Badge variant="secondary">Coach client</Badge>
+                )}
+                <span className="text-muted-foreground">{row.invitation_status}</span>
+                <span className="text-muted-foreground">·</span>
+                <span>
+                  {row.assessment_completed
+                    ? `Completed ${new Date(row.completed_at).toLocaleDateString()}`
+                    : "Not completed"}
+                </span>
+                {row.debrief_completed && (
+                  <>
+                    <span className="text-muted-foreground">·</span>
+                    <span>Debrief complete</span>
+                  </>
+                )}
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+
 
       {showCertActions && (
         <section className="space-y-3">

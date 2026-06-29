@@ -260,6 +260,9 @@ export default function MembersTable({
             {showCol("last_assessment") && (
               <TableHead className="hidden lg:table-cell">Last assessment</TableHead>
             )}
+            {showCol("relationship") && (
+              <TableHead className="hidden lg:table-cell">Relationship</TableHead>
+            )}
             <TableHead className="w-10" />
           </TableRow>
         </TableHeader>
@@ -419,6 +422,13 @@ export default function MembersTable({
                           </Tooltip>
                         );
                       })()}
+                    </TableCell>
+                  )}
+                  {showCol("relationship") && (
+                    <TableCell className="hidden lg:table-cell">
+                      {row.is_coach_actor ? <Badge>Actor</Badge>
+                        : row.is_coach_client ? <Badge variant="secondary">Coach client</Badge>
+                        : <span className="text-muted-foreground">—</span>}
                     </TableCell>
                   )}
                   <TableCell

@@ -113,6 +113,9 @@ export default function MembersFilterBar({
         ? "Has assignments"
         : "No assignments";
 
+  const actorLabel = filters.is_coach_actor === null ? "Coach actor: All" : filters.is_coach_actor ? "Coach actor: Yes" : "Coach actor: No";
+  const clientLabel = filters.is_coach_client === null ? "Coach client: All" : filters.is_coach_client ? "Coach client: Yes" : "Coach client: No";
+
   const accountTypesSelected = filters.account_types ?? [];
   const accountTypeLabel =
     accountTypesSelected.length === 0
@@ -226,6 +229,30 @@ export default function MembersFilterBar({
             <DropdownMenuItem onClick={() => update({ has_active_assignments: false })}>
               Has none
             </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        {/* Coach actor */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm">{actorLabel}<ChevronDown className="h-3.5 w-3.5 ml-1" /></Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            <DropdownMenuItem onClick={() => update({ is_coach_actor: null })}>All</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => update({ is_coach_actor: true })}>Actor</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => update({ is_coach_actor: false })}>Not actor</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        {/* Coach client */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm">{clientLabel}<ChevronDown className="h-3.5 w-3.5 ml-1" /></Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            <DropdownMenuItem onClick={() => update({ is_coach_client: null })}>All</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => update({ is_coach_client: true })}>Coach client</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => update({ is_coach_client: false })}>Not coach client</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
 
