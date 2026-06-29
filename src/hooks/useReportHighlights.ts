@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 export interface ReportHighlight {
-  id: string; block_key: string; context_tab: string;
+  id: string; block_key: string; context_tab?: string;
   start_offset: number; end_offset: number;
   block_text_sha: string; quoted_text: string; color: string | null;
   note: string | null;

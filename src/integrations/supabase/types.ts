@@ -8321,6 +8321,87 @@ export type Database = {
           },
         ]
       }
+      paired_report_highlights: {
+        Row: {
+          block_key: string
+          block_text_sha: string
+          color: string | null
+          created_at: string
+          end_offset: number
+          id: string
+          note: string | null
+          paired_profile_id: string
+          quoted_text: string
+          start_offset: number
+          updated_at: string
+          viewer_user_id: string
+        }
+        Insert: {
+          block_key: string
+          block_text_sha: string
+          color?: string | null
+          created_at?: string
+          end_offset: number
+          id?: string
+          note?: string | null
+          paired_profile_id: string
+          quoted_text: string
+          start_offset: number
+          updated_at?: string
+          viewer_user_id: string
+        }
+        Update: {
+          block_key?: string
+          block_text_sha?: string
+          color?: string | null
+          created_at?: string
+          end_offset?: number
+          id?: string
+          note?: string | null
+          paired_profile_id?: string
+          quoted_text?: string
+          start_offset?: number
+          updated_at?: string
+          viewer_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "paired_report_highlights_paired_profile_id_fkey"
+            columns: ["paired_profile_id"]
+            isOneToOne: false
+            referencedRelation: "paired_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "paired_report_highlights_viewer_user_id_fkey"
+            columns: ["viewer_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "paired_report_highlights_viewer_user_id_fkey"
+            columns: ["viewer_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "paired_report_highlights_viewer_user_id_fkey"
+            columns: ["viewer_user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "paired_report_highlights_viewer_user_id_fkey"
+            columns: ["viewer_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       peer_access_requests: {
         Row: {
           action_token: string | null
@@ -10509,6 +10590,87 @@ export type Database = {
             columns: ["team_id"]
             isOneToOne: false
             referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      team_report_highlights: {
+        Row: {
+          block_key: string
+          block_text_sha: string
+          color: string | null
+          created_at: string
+          end_offset: number
+          id: string
+          note: string | null
+          quoted_text: string
+          start_offset: number
+          team_profile_id: string
+          updated_at: string
+          viewer_user_id: string
+        }
+        Insert: {
+          block_key: string
+          block_text_sha: string
+          color?: string | null
+          created_at?: string
+          end_offset: number
+          id?: string
+          note?: string | null
+          quoted_text: string
+          start_offset: number
+          team_profile_id: string
+          updated_at?: string
+          viewer_user_id: string
+        }
+        Update: {
+          block_key?: string
+          block_text_sha?: string
+          color?: string | null
+          created_at?: string
+          end_offset?: number
+          id?: string
+          note?: string | null
+          quoted_text?: string
+          start_offset?: number
+          team_profile_id?: string
+          updated_at?: string
+          viewer_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_report_highlights_team_profile_id_fkey"
+            columns: ["team_profile_id"]
+            isOneToOne: false
+            referencedRelation: "team_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_report_highlights_viewer_user_id_fkey"
+            columns: ["viewer_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_report_highlights_viewer_user_id_fkey"
+            columns: ["viewer_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "team_report_highlights_viewer_user_id_fkey"
+            columns: ["viewer_user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_report_highlights_viewer_user_id_fkey"
+            columns: ["viewer_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
