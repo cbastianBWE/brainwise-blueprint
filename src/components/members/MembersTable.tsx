@@ -159,6 +159,7 @@ export default function MembersTable({
   onImpersonate,
 }: Props) {
   const showCol = (id: MemberColumnId) => visibleColumns.includes(id);
+  const { data: completionsByUser } = useMemberAssessmentCompletions(rows);
   const pageIds = (rows ?? []).map((r) => r.user_id);
   const allSelected = pageIds.length > 0 && pageIds.every((id) => selectedIds.has(id));
   const colCount =
