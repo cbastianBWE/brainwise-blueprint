@@ -12,6 +12,8 @@ export interface MemberRow {
   account_status: string;
   last_sign_in_at: string | null;
   show_coach_tab: boolean;
+  is_coach_actor?: boolean | null;
+  is_coach_client?: boolean | null;
   total_count: number;
 }
 
