@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { useReportHighlights, type ReportHighlight } from "@/hooks/useReportHighlights";
+import { usePairedReportHighlights, useTeamReportHighlights } from "@/hooks/useProfileReportHighlights";
 import { HIGHLIGHT_COLORS, highlightCss, blockTextSha } from "@/lib/reportHighlightColors";
 
 interface HighlightCtx {
@@ -14,6 +15,18 @@ const Ctx = createContext<HighlightCtx | null>(null);
 export function ReportHighlightProvider({ assessmentResultId, contextTab, enabled, children }:
   { assessmentResultId: string | undefined; contextTab: string; enabled: boolean; children: React.ReactNode }) {
   const hl = useReportHighlights(assessmentResultId, contextTab, enabled);
+  return <Ctx.Provider value={hl}>{children}</Ctx.Provider>;
+}
+
+export function PairedReportHighlightProvider({ pairedProfileId, enabled, children }:
+  { pairedProfileId: string | undefined; enabled: boolean; children: React.ReactNode }) {
+  const hl = usePairedReportHighlights(pairedProfileId, enabled);
+  return <Ctx.Provider value={hl}>{children}</Ctx.Provider>;
+}
+
+export function TeamReportHighlightProvider({ teamProfileId, enabled, children }:
+  { teamProfileId: string | undefined; enabled: boolean; children: React.ReactNode }) {
+  const hl = useTeamReportHighlights(teamProfileId, enabled);
   return <Ctx.Provider value={hl}>{children}</Ctx.Provider>;
 }
 
