@@ -179,6 +179,8 @@ export default function Members() {
           ? `${filters.created_within_days} days`
           : null,
         p_has_supervisor: filters.has_supervisor,
+        p_is_coach_actor: filters.is_coach_actor,
+        p_is_coach_client: filters.is_coach_client,
         p_sort_column: sort.column,
         p_sort_direction: sort.direction,
         p_specific_user_id: null,
