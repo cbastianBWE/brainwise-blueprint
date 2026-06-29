@@ -31,7 +31,7 @@ import {
   Cell,
   LabelList,
 } from "recharts";
-import { FileText, MessageSquare, RefreshCw, ArrowRight, AlertTriangle, X } from "lucide-react";
+import { FileText, MessageSquare, RefreshCw, ArrowRight, AlertTriangle, X, Highlighter } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -1473,6 +1473,15 @@ export default function MyResults({ isCoachView = false, adminView = false, targ
               >
               <PTPNarrativeProvider {...ptpNarrativeProps}>
                 <PTPReportProgressOverlay />
+                {allowHighlighting && (
+                  <div style={{ display: "flex", gap: 10, alignItems: "flex-start",
+                    background: "rgba(0,109,119,0.06)", border: "1px solid rgba(0,109,119,0.25)",
+                    borderRadius: 10, padding: "10px 14px", margin: "0 0 16px",
+                    fontSize: 14, lineHeight: 1.55, color: "#021F36" }}>
+                    <Highlighter size={16} style={{ color: "#006D77", marginTop: 2, flexShrink: 0 }} />
+                    <span>Tip: select any text in this report to highlight it, and add a comment to anything you want to remember or discuss. Your highlights and notes are saved to your view.</span>
+                  </div>
+                )}
                 <section>
                   <PTPProfileOverviewSection {...ptpNarrativeProps} />
                 </section>
