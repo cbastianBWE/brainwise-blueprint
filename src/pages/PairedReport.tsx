@@ -1136,6 +1136,7 @@ export default function PairedReport() {
           zIndex: 9999, maxWidth: 300, left: tip.x, top: tip.y,
         }}>{tip.text}</div>
       )}
+      </PairedReportHighlightProvider>
     </div>
   );
 }
