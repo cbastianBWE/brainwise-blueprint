@@ -105,14 +105,16 @@ function splitParas(text: string): string[] {
   const second = sentences.slice(bestIdx + 1).join(" ");
   return [first, second].filter(Boolean);
 }
-function Paras({ text, style }: { text: string; style?: React.CSSProperties }) {
+function Paras({ text, style, blockKey }: { text: string; style?: React.CSSProperties; blockKey?: string }) {
   const paras = splitParas(text);
   if (paras.length === 0) return null;
   const base: React.CSSProperties = { color: GRAY, fontSize: 16, lineHeight: 1.6, maxWidth: "70ch", margin: 0, ...style };
   return (
     <>
       {paras.map((p, i) => (
-        <p key={i} style={{ ...base, marginTop: i === 0 ? 0 : 12 }}>{p}</p>
+        <p key={i} style={{ ...base, marginTop: i === 0 ? 0 : 12 }}>
+          {blockKey ? <HighlightableText blockKey={`${blockKey}:${i}`} text={p} /> : p}
+        </p>
       ))}
     </>
   );
