@@ -390,6 +390,37 @@ export default function MembersTable({
                       )}
                     </TableCell>
                   )}
+                  {showCol("last_assessment") && (
+                    <TableCell className="hidden lg:table-cell">
+                      {(() => {
+                        const items = completionsByUser?.[row.user_id] ?? [];
+                        if (items.length === 0)
+                          return <span className="text-muted-foreground">—</span>;
+                        return (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span>
+                                {formatDistanceToNow(new Date(items[0].last_completed_at), {
+                                  addSuffix: true,
+                                })}
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <div className="text-xs font-medium mb-1">Completed assessments</div>
+                              <ul className="space-y-0.5">
+                                {items.map((it, i) => (
+                                  <li key={i} className="text-xs">
+                                    {INSTRUMENT_LABEL[it.instrument_id] ?? it.instrument_id} ·{" "}
+                                    {new Date(it.last_completed_at).toLocaleDateString()}
+                                  </li>
+                                ))}
+                              </ul>
+                            </TooltipContent>
+                          </Tooltip>
+                        );
+                      })()}
+                    </TableCell>
+                  )}
                   <TableCell
                     data-stop-row-click
                     onClick={(e) => e.stopPropagation()}
