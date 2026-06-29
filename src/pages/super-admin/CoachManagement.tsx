@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/table";
 import { Plus, Trash2, Download, Upload, Loader2 } from "lucide-react";
 import * as XLSX from "xlsx";
+import CoachClientTrackingSection from "@/components/super-admin/CoachClientTrackingSection";
 
 const CERT_TYPES = [
   { value: "ptp_coach", label: "PTP Certified Coach" },
