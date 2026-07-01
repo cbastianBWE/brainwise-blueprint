@@ -469,6 +469,7 @@ function BulkInviteCard({
   const [parsedRows, setParsedRows] = useState<ParsedRow[]>([]);
   const [bulkResults, setBulkResults] = useState<BulkResultRow[]>([]);
   const [fileName, setFileName] = useState<string>("");
+  const [requiredInstrumentId, setRequiredInstrumentId] = useState("INST-001");
 
   const escapeCsv = (value: string) => {
     if (/[",\n]/.test(value)) return `"${value.replace(/"/g, '""')}"`;
@@ -502,6 +503,7 @@ function BulkInviteCard({
     setParsedRows([]);
     setBulkResults([]);
     setFileName("");
+    setRequiredInstrumentId("INST-001");
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
@@ -588,6 +590,7 @@ function BulkInviteCard({
           body: JSON.stringify({
             organization_id: orgId,
             rows: parsedRows,
+            required_instrument_id: requiredInstrumentId,
           }),
         },
       );
@@ -720,6 +723,21 @@ function BulkInviteCard({
                   + {parsedRows.length - 10} more
                 </div>
               )}
+            </div>
+            <div className="space-y-2">
+              <Label>Assessment for all invitees</Label>
+              <Select value={requiredInstrumentId} onValueChange={setRequiredInstrumentId} disabled={bulkStage === "sending"}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {PUBLIC_INSTRUMENTS.map((i) => (
+                    <SelectItem key={i.instrument_id} value={i.instrument_id}>
+                      {i.short_name} ({i.name})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={reset} disabled={bulkStage === "sending"}>

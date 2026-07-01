@@ -12520,7 +12520,11 @@ export type Database = {
       }
       bulk_deactivate_users: { Args: { p_user_ids: string[] }; Returns: Json }
       bulk_invitation_create: {
-        Args: { p_organization_id: string; p_rows: Json }
+        Args: {
+          p_organization_id: string
+          p_required_instrument_id?: string
+          p_rows: Json
+        }
         Returns: {
           code: string
           department_created: boolean
