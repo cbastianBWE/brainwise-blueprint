@@ -46,6 +46,7 @@ export interface UpsertQuestionParams {
   display_order: number;
   points: number;
   explanation: string | null;
+  question_image_asset_id: string | null;
   reason: string;
 }
 
@@ -56,6 +57,7 @@ export interface UpsertOptionParams {
   is_correct: boolean;
   match_pair_key: string | null;
   display_order: number;
+  option_image_asset_id: string | null;
   reason: string;
 }
 
@@ -67,6 +69,7 @@ export function useQuizAuthoring() {
       p_question_type: p.question_type,
       p_question_text: p.question_text,
       p_question_image_url: null as any,
+      p_question_image_asset_id: p.question_image_asset_id as any,
       p_display_order: p.display_order,
       p_points: p.points,
       p_explanation: p.explanation as any,
