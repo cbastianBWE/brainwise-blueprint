@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import MfaChallenge from "@/components/MfaChallenge";
 import { useImpersonation } from "@/contexts/ImpersonationProvider";
 import { useAuth } from "@/hooks/useAuth";
+import { getTrustedDeviceToken } from "@/lib/trustedDevice";
 
 interface JustificationModalProps {
   target: {
