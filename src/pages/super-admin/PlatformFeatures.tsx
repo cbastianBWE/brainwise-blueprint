@@ -35,6 +35,30 @@ export default function PlatformFeatures() {
   const [platformReason, setPlatformReason] = useState("");
   const [platformBusy, setPlatformBusy] = useState(false);
 
+  // Trusted device settings
+  const [tdLoading, setTdLoading] = useState(true);
+  const [tdEnabled, setTdEnabled] = useState(true);
+  const [tdWindowDays, setTdWindowDays] = useState(30);
+  const [tdImpDays, setTdImpDays] = useState(1);
+  const [tdSaveOpen, setTdSaveOpen] = useState(false);
+  const [tdReason, setTdReason] = useState("");
+  const [tdBusy, setTdBusy] = useState(false);
+
+  const loadTdSettings = async () => {
+    setTdLoading(true);
+    const { data, error } = await (supabase.rpc as any)("get_trusted_device_settings");
+    if (!error && Array.isArray(data) && data[0]) {
+      const row = data[0] as { window_days: number; impersonation_window_hours: number; enabled: boolean };
+      setTdWindowDays(Number(row.window_days) || 30);
+      setTdImpDays(Math.max(1, Math.round((Number(row.impersonation_window_hours) || 24) / 24)));
+      setTdEnabled(!!row.enabled);
+    } else if (error) {
+      toast.error(`Failed to load trusted device settings: ${error.message}`);
+    }
+    setTdLoading(false);
+  };
+
+
   const loadRows = async () => {
     setRowsLoading(true);
     const { data, error } = await (supabase.from("platform_features" as any) as any)
