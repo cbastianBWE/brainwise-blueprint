@@ -366,6 +366,7 @@ export default function QuizQuestionsEditor() {
                     key={q.client_id}
                     question={q}
                     index={idx}
+                    contentItemId={contentItemId!}
                     onChange={updateQuestion}
                     onSave={saveQuestion}
                     onArchive={archiveQuestion}
