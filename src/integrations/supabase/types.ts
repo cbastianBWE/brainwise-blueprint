@@ -14657,6 +14657,8 @@ export type Database = {
           p_module_id?: string
           p_newsletter_article_id?: string
           p_original_filename: string
+          p_quiz_answer_option_id?: string
+          p_quiz_question_id?: string
           p_reason: string
           p_ref_field?: string
           p_resource_id?: string

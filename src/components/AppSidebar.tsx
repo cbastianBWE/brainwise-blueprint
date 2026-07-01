@@ -4,7 +4,7 @@ import {
   Users, Users2, Building2, UsersRound, Activity, Heart, Award, UserCircle,
   ShieldCheck, Briefcase, GitBranch, FlaskConical, LogOut, History, Shield,
   CreditCard, Receipt, ChevronDown, ChevronRight, FileText, Library, Ticket,
-  GraduationCap, Bell, Newspaper, SlidersHorizontal, Wallet, FileMinus2, Repeat, Clock, UserPlus, Mail, Inbox, Webhook, Megaphone, Target, Blocks,
+  GraduationCap, Bell, Newspaper, SlidersHorizontal, Wallet, FileMinus2, Repeat, Clock, UserPlus, Mail, Inbox, Webhook, Megaphone, Target, Blocks, HelpCircle,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -540,6 +540,19 @@ export function AppSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               )}
+              <SidebarMenuItem key="help">
+                <SidebarMenuButton asChild>
+                  <NavLink
+                    to="/help"
+                    end
+                    className="hover:bg-sidebar-accent"
+                    activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                  >
+                    <HelpCircle className="h-4 w-4 shrink-0" />
+                    {!collapsed && <span>Help Center</span>}
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
                   <NavLink
