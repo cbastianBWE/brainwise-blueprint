@@ -367,14 +367,6 @@ export default function QuizViewer({
   };
 
   const renderQuestion = () => {
-    if (isUnsupported) {
-      return (
-        <div className="rounded-lg border border-dashed bg-card p-6 text-center text-sm text-muted-foreground">
-          This question type isn't supported yet — contact your administrator. You can
-          continue to the next question.
-        </div>
-      );
-    }
     switch (currentQuestion.question_type) {
       case "multiple_choice":
         return (
