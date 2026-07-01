@@ -180,13 +180,23 @@ function validateQuestion(q: DraftQuestion): string | null {
 interface Props {
   question: DraftQuestion;
   index: number;
+  contentItemId: string;
   onChange: (next: DraftQuestion) => void;
   onSave: (q: DraftQuestion, reason: string) => Promise<void>;
   onArchive: (q: DraftQuestion, reason: string) => Promise<void>;
   busy: boolean;
 }
 
-export function QuestionCard({ question, index, onChange, onSave, onArchive, busy }: Props) {
+export function QuestionCard({
+  question,
+  index,
+  contentItemId,
+  onChange,
+  onSave,
+  onArchive,
+  busy,
+}: Props) {
+  const { urlMap } = useQuizAssets(contentItemId);
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: `q-card:${question.client_id}`,
   });
