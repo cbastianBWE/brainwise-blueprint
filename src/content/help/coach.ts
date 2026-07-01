@@ -41,6 +41,7 @@ export const coachContent: HelpRoleContent = {
             "In the sidebar, click My Clients. This is your roster of coaching clients and the hub for inviting new ones.",
           imageUrl: myClients.url,
           imageAlt: "Coach sidebar with My Clients highlighted",
+          capture: { path: "/my-clients", assetPath: "src/assets/help/coach/10_my_clients.png" },
           hotspots: [{ ...SIDEBAR.myClients, label: "Click My Clients" }],
         },
         {
@@ -76,6 +77,7 @@ export const coachContent: HelpRoleContent = {
             "In the sidebar, expand My Clients and click Client Results. Every client who has completed an assessment appears here.",
           imageUrl: clientResults.url,
           imageAlt: "Sidebar with Client Results highlighted",
+          capture: { path: "/client-results", assetPath: "src/assets/help/coach/11_client_results.png" },
           hotspots: [{ ...SIDEBAR.clientResults, label: "Click Client Results" }],
         },
         {
@@ -106,6 +108,7 @@ export const coachContent: HelpRoleContent = {
             "In the sidebar, click Orders & Invoices. This is where you see past orders, download invoices, and start a new order.",
           imageUrl: orders.url,
           imageAlt: "Sidebar with Orders & Invoices highlighted",
+          capture: { path: "/orders", assetPath: "src/assets/help/coach/40_orders.png" },
           hotspots: [{ ...SIDEBAR.invoices, label: "Click Orders & Invoices" }],
         },
         {
@@ -114,6 +117,7 @@ export const coachContent: HelpRoleContent = {
             "Click Order Assessment to start a new purchase. Pick the assessment, the quantity, and the payer, then check out. Credits show up immediately after payment and can be sent to clients from My Clients.",
           imageUrl: orderAssessment.url,
           imageAlt: "Order Assessment page",
+          capture: { path: "/order-assessment", assetPath: "src/assets/help/coach/41_order_assessment.png" },
         },
       ],
     },
@@ -128,6 +132,7 @@ export const coachContent: HelpRoleContent = {
             "In the sidebar, click Team & Paired Reports. You'll see every report you've generated so far.",
           imageUrl: teamPaired.url,
           imageAlt: "Sidebar with Team & Paired Reports highlighted",
+          capture: { path: "/team-paired-reports", assetPath: "src/assets/help/coach/30_team_paired.png" },
           hotspots: [{ ...SIDEBAR.teamPaired, label: "Click Team & Paired Reports" }],
         },
         {
@@ -158,6 +163,7 @@ export const coachContent: HelpRoleContent = {
             "In the sidebar, click Feedback Templates. Templates are grouped by review panel type (Written Summary, Skills Practice, etc.) and are private to you.",
           imageUrl: feedbackTemplates.url,
           imageAlt: "Feedback templates page grouped by review panel type",
+          capture: { path: "/coach/templates", assetPath: "src/assets/help/coach/20_feedback_templates.png" },
           hotspots: [{ ...SIDEBAR.feedbackTemplates, label: "Click Feedback Templates" }],
         },
         {
@@ -183,6 +189,7 @@ export const coachContent: HelpRoleContent = {
             "In the sidebar, click Certification. You'll see your current certification path, completed modules, mentor reviews, and what's still outstanding.",
           imageUrl: certification.url,
           imageAlt: "Sidebar with Certification highlighted",
+          capture: { path: "/coach/certification", assetPath: "src/assets/help/coach/60_certification.png" },
           hotspots: [{ ...SIDEBAR.certification, label: "Click Certification" }],
         },
         {
@@ -203,6 +210,7 @@ export const coachContent: HelpRoleContent = {
             "Sign in and you'll arrive at Dashboard. Quick-jump cards take you to My Clients, Team & Paired Reports, and Client Results, and any in-progress assessments of your own appear in 'Continue where you left off'.",
           imageUrl: coachDashboard.url,
           imageAlt: "Coach dashboard with quick-jump cards",
+          capture: { path: "/dashboard", assetPath: "src/assets/help/coach/90_dashboard.png" },
         },
         {
           title: "Switch to a client's report from here",
@@ -222,6 +230,7 @@ export const coachContent: HelpRoleContent = {
             "Click AI Chat in the sidebar. As a coach, you can load any client whose results you have access to into the assessment context bar at the top.",
           imageUrl: aiChat.url,
           imageAlt: "Coach AI Chat with client context selector",
+          capture: { path: "/ai-chat", assetPath: "src/assets/help/coach/70_ai_chat.png" },
           hotspots: [
             { x: 1.2, y: 27.0, w: 18.3, h: 1.9, label: "Click AI Chat" },
           ],
@@ -249,6 +258,7 @@ export const coachContent: HelpRoleContent = {
             "Click Resources in the sidebar. As a coach you'll land on the Coach Resources tab by default — it holds the PTP coach cards, debrief videos ('What Great Looks Like'), and every reference guide.",
           imageUrl: resourcesPage.url,
           imageAlt: "Coach Resources page with folders and guides",
+          capture: { path: "/resources", assetPath: "src/assets/help/coach/80_resources.png" },
           hotspots: [
             { x: 33.5, y: 9.5, w: 15.5, h: 2.4, label: "Coach Resources tab" },
           ],
@@ -276,6 +286,7 @@ export const coachContent: HelpRoleContent = {
             "Click My Assessments in the sidebar to see everything you've completed personally. This is separate from Client Results and stays private to you.",
           imageUrl: coachMyResults.url,
           imageAlt: "Coach's own My Results page",
+          capture: { path: "/my-results", assetPath: "src/assets/help/coach/91_my_results.png" },
         },
         {
           title: "Take a new assessment",
@@ -295,6 +306,7 @@ export const coachContent: HelpRoleContent = {
             "Click Settings in the sidebar. Your profile info, password, notification preferences, two-factor authentication, and trusted devices are all here.",
           imageUrl: coachSettings.url,
           imageAlt: "Coach settings page",
+          capture: { path: "/settings", assetPath: "src/assets/help/coach/92_settings.png" },
         },
         {
           title: "Enable two-factor authentication",
