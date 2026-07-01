@@ -1,30 +1,37 @@
 #!/usr/bin/env python3
 """
-Capture BrainWise Help Center screenshots for every documented role.
+Capture BrainWise Help Center screenshots — single source of truth.
 
-The Help Center pages under `/help` render static PNGs stored on the Lovable
-CDN. Each PNG was captured by logging into a test account with Playwright and
-screenshotting a page at a fixed 1280×1800 viewport. When the UI changes, the
-screenshots go stale — this script re-captures every one in a single run.
+Reads every `capture: { path, assetPath, scrollY?, tabName?, waitMs? }`
+entry from the help content files under `src/content/help/{role}.ts`,
+logs into the matching test account, screenshots each page at 1280×1800,
+and — with `--upload` — pipes each PNG through `lovable-assets` and
+overwrites the matching `<assetPath>.asset.json` pointer file.
 
-Usage (from a machine with Python + Playwright installed):
+Add a new guide? Just add a step with a `capture` block. The next run
+picks it up automatically — no edits to this script needed.
 
-    pip install playwright
+Usage
+-----
+    # Install once (in the sandbox this is preinstalled)
+    python -m pip install playwright
     python -m playwright install chromium
-    python scripts/capture-help-screenshots.py                # all roles
-    python scripts/capture-help-screenshots.py --role coach   # one role
-    python scripts/capture-help-screenshots.py --base-url https://brainwise-seedling.lovable.app
 
-After running, upload the freshly captured PNGs to the CDN with the sandbox
-`lovable-assets` CLI and overwrite the matching `*.asset.json` files under
-`src/assets/help/<role>/`. Existing filenames are intentionally stable so the
-guide files under `src/content/help/` do NOT need to change.
+    # Screenshot everything to /tmp/help-screenshots and stop
+    python scripts/capture-help-screenshots.py
 
-Screenshots are written to `/tmp/help-screenshots/<role>/` by default.
+    # Screenshot AND upload/replace the .asset.json pointers in one pass
+    python scripts/capture-help-screenshots.py --upload
 
-Credentials for the test accounts are read from environment variables to keep
-the file safe to commit. Defaults fall back to the accounts BrainWise uses in
-staging — override anything sensitive locally:
+    # Just one role
+    python scripts/capture-help-screenshots.py --role coach --upload
+
+    # Point at production if you want live-URL screenshots
+    python scripts/capture-help-screenshots.py \\
+        --base-url https://brainwise-seedling.lovable.app --upload
+
+Credentials come from env vars (staging test-account defaults below).
+Override sensitive values locally:
 
     export HELP_INDIVIDUAL_EMAIL=...       HELP_INDIVIDUAL_PASSWORD=...
     export HELP_COACH_EMAIL=...            HELP_COACH_PASSWORD=...
@@ -35,163 +42,110 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import json
 import os
+import re
+import subprocess
 import sys
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable, List, Optional
+from typing import Dict, List, Optional
 
 from playwright.async_api import Page, async_playwright  # type: ignore
 
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+CONTENT_DIR = PROJECT_ROOT / "src" / "content" / "help"
 VIEWPORT = {"width": 1280, "height": 1800}
+
+ROLE_FILES = {
+    "individual": "individual.ts",
+    "coach": "coach.ts",
+    "org_member": "org_member.ts",
+    "org_admin": "org_admin.ts",
+}
+
+ROLE_CREDS = {
+    # role: (email env var, password env var, default email, default password)
+    "individual": ("HELP_INDIVIDUAL_EMAIL", "HELP_INDIVIDUAL_PASSWORD",
+                   "cplummer19912003@gmail.com", "Evergreen225!"),
+    "coach":      ("HELP_COACH_EMAIL", "HELP_COACH_PASSWORD",
+                   "testcoach@gmail.com", "Testcoach1"),
+    "org_member": ("HELP_ORG_MEMBER_EMAIL", "HELP_ORG_MEMBER_PASSWORD",
+                   "testclientbwe+employee@gmail.com", "Testemployee1!"),
+    "org_admin":  ("HELP_ORG_ADMIN_EMAIL", "HELP_ORG_ADMIN_PASSWORD",
+                   "testclientbwe+orgmember@gmail.com", "Testorgmember1!"),
+}
 
 
 @dataclass
 class Capture:
-    """A single screenshot: navigate to `path`, wait, then screenshot to `name`.png."""
-
+    role: str
     path: str
-    name: str
-    # Optional post-navigation action (click a tab, expand a menu, etc.)
-    interact: Optional[Callable[[Page], "asyncio.Future[None]"]] = None
+    asset_path: str  # project-relative, e.g. src/assets/help/individual/10_dashboard.png
+    scroll_y: Optional[int] = None
+    tab_name: Optional[str] = None
     wait_ms: int = 2500
 
-
-@dataclass
-class RoleCapture:
-    role: str
-    email_env: str
-    password_env: str
-    default_email: str
-    default_password: str
-    pages: List[Capture] = field(default_factory=list)
-
-
-async def click_tab(page: Page, name: str) -> None:
-    await page.get_by_role("tab", name=name).click()
-    await page.wait_for_timeout(1200)
-
-
-async def click_text(page: Page, text: str) -> None:
-    await page.get_by_text(text, exact=True).first.click()
-    await page.wait_for_timeout(800)
-
-
-async def scroll_to(page: Page, y: int) -> None:
-    await page.evaluate(f"window.scrollTo(0, {y})")
-    await page.wait_for_timeout(400)
+    @property
+    def basename(self) -> str:
+        return Path(self.asset_path).name  # e.g. 10_dashboard.png
 
 
 # ---------------------------------------------------------------------------
-# Role configuration. Screenshot filenames MUST match the imports in
-# `src/content/help/<role>.ts` — do not rename without also updating the
-# corresponding .asset.json filename.
+# Parse capture entries out of the .ts files (single source of truth).
+# Each entry is one line of the form:
+#   capture: { path: "…", assetPath: "…", scrollY: 900, tabName: "Users" },
+# Fields other than path/assetPath are optional and may appear in any order.
 # ---------------------------------------------------------------------------
 
-ROLES: List[RoleCapture] = [
-    RoleCapture(
-        role="individual",
-        email_env="HELP_INDIVIDUAL_EMAIL",
-        password_env="HELP_INDIVIDUAL_PASSWORD",
-        default_email="cplummer19912003@gmail.com",
-        default_password="Evergreen225!",
-        pages=[
-            Capture("/dashboard", "10_dashboard"),
-            Capture("/assessment", "20_assessment_landing"),
-            Capture("/my-results", "30_my_results"),
-            Capture(
-                "/my-results",
-                "31_my_results_scroll",
-                interact=lambda p: scroll_to(p, 1400),
-            ),
-            Capture("/development-plan", "40_development_plan"),
-            Capture("/shared", "50_shared_with_me"),
-            Capture("/settings/sharing", "51_sharing_requests"),
-            Capture("/notification-settings", "60_notification_settings"),
-            Capture(
-                "/notification-settings",
-                "61_notification_settings_scroll",
-                interact=lambda p: scroll_to(p, 900),
-            ),
-            Capture("/settings", "70_settings"),
-            Capture("/ai-chat", "80_ai_chat"),
-            Capture("/ai-chat/history", "81_chat_history"),
-            Capture("/my-learning", "90_my_learning"),
-        ],
-    ),
-    RoleCapture(
-        role="coach",
-        email_env="HELP_COACH_EMAIL",
-        password_env="HELP_COACH_PASSWORD",
-        default_email="testcoach@gmail.com",
-        default_password="Testcoach1",
-        pages=[
-            Capture("/my-clients", "10_my_clients"),
-            Capture("/client-results", "11_client_results"),
-            Capture("/coach/templates", "20_feedback_templates"),
-            Capture("/team-paired-reports", "30_team_paired"),
-            Capture("/orders", "40_orders"),
-            Capture("/order-assessment", "41_order_assessment"),
-            Capture("/coach/certification", "60_certification"),
-            Capture("/ai-chat", "70_ai_chat"),
-            Capture("/resources", "80_resources"),
-            Capture("/dashboard", "90_dashboard"),
-            Capture("/my-results", "91_my_results"),
-            Capture("/settings", "92_settings"),
-        ],
-    ),
-    RoleCapture(
-        role="org_member",
-        email_env="HELP_ORG_MEMBER_EMAIL",
-        password_env="HELP_ORG_MEMBER_PASSWORD",
-        default_email="testclientbwe+employee@gmail.com",
-        default_password="Testemployee1!",
-        pages=[
-            Capture("/dashboard", "10_dashboard"),
-            Capture("/my-results", "20_my_results"),
-            Capture("/development-plan", "30_dev_plan"),
-            Capture("/shared", "40_shared"),
-            Capture("/assessment", "50_assessment"),
-            Capture("/notification-settings", "60_notifications"),
-            Capture("/settings", "70_settings"),
-            Capture("/ai-chat", "80_ai_chat"),
-            Capture("/ai-chat/history", "81_chat_history"),
-            Capture("/my-learning", "90_my_learning"),
-        ],
-    ),
-    RoleCapture(
-        role="org_admin",
-        email_env="HELP_ORG_ADMIN_EMAIL",
-        password_env="HELP_ORG_ADMIN_PASSWORD",
-        default_email="testclientbwe+orgmember@gmail.com",
-        default_password="Testorgmember1!",
-        pages=[
-            Capture("/dashboard", "10_dashboard"),
-            Capture("/admin/users", "20_users_invite"),
-            Capture(
-                "/admin/users",
-                "21_users_list",
-                interact=lambda p: click_tab(p, "Users"),
-            ),
-            Capture(
-                "/admin/users",
-                "22_pending_invitations",
-                interact=lambda p: scroll_to(p, 1200),
-            ),
-            Capture("/team-paired-reports", "30_team_paired"),
-            Capture("/admin/resources", "35_admin_resources"),
-            Capture("/company/features", "40_features"),
-            Capture(
-                "/company/features",
-                "41_features_overrides",
-                interact=lambda p: scroll_to(p, 1400),
-            ),
-            Capture("/dashboard/interventions", "60_interventions"),
-            Capture("/settings", "80_settings"),
-        ],
-    ),
-]
+CAPTURE_RE = re.compile(
+    r"capture:\s*\{\s*(?P<body>[^{}]+?)\}", re.DOTALL
+)
+FIELD_STRING_RE = re.compile(r'(\w+)\s*:\s*"([^"]*)"')
+FIELD_NUMBER_RE = re.compile(r"(\w+)\s*:\s*(\d+)")
 
+
+def parse_captures(role: str, file_path: Path) -> List[Capture]:
+    text = file_path.read_text(encoding="utf-8")
+    out: List[Capture] = []
+    for m in CAPTURE_RE.finditer(text):
+        body = m.group("body")
+        strings = dict(FIELD_STRING_RE.findall(body))
+        numbers = {k: int(v) for k, v in FIELD_NUMBER_RE.findall(body)
+                   if k not in strings}
+        path = strings.get("path")
+        asset_path = strings.get("assetPath")
+        if not path or not asset_path:
+            continue
+        out.append(Capture(
+            role=role,
+            path=path,
+            asset_path=asset_path,
+            scroll_y=numbers.get("scrollY"),
+            tab_name=strings.get("tabName"),
+            wait_ms=numbers.get("waitMs", 2500),
+        ))
+    return out
+
+
+def load_all_captures(role_filter: Optional[str]) -> Dict[str, List[Capture]]:
+    grouped: Dict[str, List[Capture]] = {}
+    for role, filename in ROLE_FILES.items():
+        if role_filter and role != role_filter:
+            continue
+        path = CONTENT_DIR / filename
+        if not path.exists():
+            print(f"! missing content file: {path}", file=sys.stderr)
+            continue
+        caps = parse_captures(role, path)
+        if caps:
+            grouped[role] = caps
+    return grouped
+
+
+# ---------------------------------------------------------------------------
+# Playwright
+# ---------------------------------------------------------------------------
 
 async def login(page: Page, base_url: str, email: str, password: str) -> None:
     await page.goto(f"{base_url}/login", wait_until="domcontentloaded")
@@ -204,68 +158,128 @@ async def login(page: Page, base_url: str, email: str, password: str) -> None:
         raise RuntimeError(f"Login failed for {email}; still on {page.url}")
 
 
-async def capture_role(role_cfg: RoleCapture, base_url: str, out_root: Path) -> None:
-    email = os.environ.get(role_cfg.email_env, role_cfg.default_email)
-    password = os.environ.get(role_cfg.password_env, role_cfg.default_password)
-    out_dir = out_root / role_cfg.role
-    out_dir.mkdir(parents=True, exist_ok=True)
+async def do_capture(page: Page, base_url: str, cap: Capture, out_png: Path) -> None:
+    await page.goto(f"{base_url}{cap.path}", wait_until="domcontentloaded")
+    await page.wait_for_timeout(cap.wait_ms)
+    if cap.tab_name:
+        try:
+            await page.get_by_role("tab", name=cap.tab_name).click()
+            await page.wait_for_timeout(1200)
+        except Exception as exc:
+            print(f"    ! tab click '{cap.tab_name}' failed: {exc}")
+    if cap.scroll_y is not None:
+        await page.evaluate(f"window.scrollTo(0, {cap.scroll_y})")
+        await page.wait_for_timeout(400)
+    out_png.parent.mkdir(parents=True, exist_ok=True)
+    await page.screenshot(path=str(out_png))
+
+
+# ---------------------------------------------------------------------------
+# Uploads — writes the new .asset.json pointer next to the target PNG path.
+# ---------------------------------------------------------------------------
+
+def upload_to_cdn(png_path: Path, cap: Capture) -> None:
+    filename = cap.basename
+    try:
+        result = subprocess.run(
+            ["lovable-assets", "create", "--file", str(png_path), "--filename", filename],
+            check=True, capture_output=True, text=True,
+        )
+    except FileNotFoundError:
+        raise RuntimeError("`lovable-assets` CLI not on PATH — run without --upload "
+                           "or execute this inside the Lovable sandbox.")
+    except subprocess.CalledProcessError as exc:
+        raise RuntimeError(f"lovable-assets failed for {filename}: {exc.stderr.strip()}") from exc
+
+    # Verify JSON, then write to <assetPath>.asset.json (overwrite in place).
+    try:
+        json.loads(result.stdout)
+    except json.JSONDecodeError as exc:
+        raise RuntimeError(f"unexpected lovable-assets output for {filename}: {exc}\n{result.stdout}")
+
+    pointer_path = PROJECT_ROOT / f"{cap.asset_path}.asset.json"
+    pointer_path.write_text(result.stdout, encoding="utf-8")
+    print(f"    ↑ uploaded → {pointer_path.relative_to(PROJECT_ROOT)}")
+
+
+# ---------------------------------------------------------------------------
+# Driver
+# ---------------------------------------------------------------------------
+
+async def capture_role(role: str, caps: List[Capture], base_url: str,
+                       out_root: Path, do_upload: bool) -> None:
+    email_env, pw_env, default_email, default_pw = ROLE_CREDS[role]
+    email = os.environ.get(email_env, default_email)
+    password = os.environ.get(pw_env, default_pw)
+    role_out = out_root / role
 
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True)
         ctx = await browser.new_context(viewport=VIEWPORT)
         page = await ctx.new_page()
-        print(f"[{role_cfg.role}] logging in as {email}")
+        print(f"[{role}] logging in as {email} ({len(caps)} captures)")
         await login(page, base_url, email, password)
 
-        for cap in role_cfg.pages:
+        for cap in caps:
+            out_png = role_out / cap.basename
             try:
-                await page.goto(f"{base_url}{cap.path}", wait_until="domcontentloaded")
-                await page.wait_for_timeout(cap.wait_ms)
-                if cap.interact:
-                    try:
-                        await cap.interact(page)
-                    except Exception as exc:  # noqa: BLE001
-                        print(f"  ! interact failed for {cap.name}: {exc}")
-                target = out_dir / f"{cap.name}.png"
-                await page.screenshot(path=str(target))
-                print(f"  ✓ {cap.path} → {target.name}")
-            except Exception as exc:  # noqa: BLE001
+                await do_capture(page, base_url, cap, out_png)
+                print(f"  ✓ {cap.path} → {cap.basename}")
+                if do_upload:
+                    upload_to_cdn(out_png, cap)
+            except Exception as exc:
                 print(f"  ✗ {cap.path} failed: {exc}")
 
         await browser.close()
 
 
 async def main() -> int:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
-        "--role",
-        choices=[r.role for r in ROLES],
-        help="Capture a single role (default: all).",
-    )
-    parser.add_argument(
-        "--base-url",
-        default=os.environ.get("HELP_BASE_URL", "http://localhost:8080"),
-        help="BrainWise base URL (default: http://localhost:8080).",
-    )
-    parser.add_argument(
-        "--out",
-        default="/tmp/help-screenshots",
-        help="Directory to write screenshots to.",
-    )
+    parser = argparse.ArgumentParser(description=__doc__,
+                                     formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("--role", choices=list(ROLE_FILES.keys()),
+                        help="Capture a single role (default: all).")
+    parser.add_argument("--base-url",
+                        default=os.environ.get("HELP_BASE_URL", "http://localhost:8080"),
+                        help="BrainWise base URL (default: http://localhost:8080).")
+    parser.add_argument("--out", default="/tmp/help-screenshots",
+                        help="Where to write PNGs on disk.")
+    parser.add_argument("--upload", action="store_true",
+                        help="After each screenshot, upload to the CDN via `lovable-assets` "
+                             "and overwrite the matching *.asset.json pointer in the repo.")
+    parser.add_argument("--dry-run", action="store_true",
+                        help="Print the parsed capture list and exit without launching a browser.")
     args = parser.parse_args()
+
+    grouped = load_all_captures(args.role)
+    total = sum(len(v) for v in grouped.values())
+    if total == 0:
+        print("No `capture:` entries found in src/content/help/*.ts — nothing to do.")
+        return 1
+
+    print(f"Discovered {total} capture(s) across {len(grouped)} role(s):")
+    for role, caps in grouped.items():
+        print(f"  {role}: {len(caps)}")
+        for c in caps:
+            extra = []
+            if c.scroll_y is not None: extra.append(f"scrollY={c.scroll_y}")
+            if c.tab_name: extra.append(f"tab='{c.tab_name}'")
+            suffix = f"  ({', '.join(extra)})" if extra else ""
+            print(f"    - {c.path} → {c.asset_path}{suffix}")
+
+    if args.dry_run:
+        return 0
 
     out_root = Path(args.out)
     out_root.mkdir(parents=True, exist_ok=True)
+    base = args.base_url.rstrip("/")
 
-    roles = [r for r in ROLES if not args.role or r.role == args.role]
-    for role_cfg in roles:
-        await capture_role(role_cfg, args.base_url.rstrip("/"), out_root)
+    for role, caps in grouped.items():
+        await capture_role(role, caps, base, out_root, args.upload)
 
-    print(f"\nDone. Screenshots in {out_root}.")
-    print(
-        "Next: upload each PNG with `lovable-assets create --file <png> --filename "
-        "<name>.png > src/assets/help/<role>/<name>.png.asset.json`, then commit."
-    )
+    print(f"\nDone. PNGs in {out_root}.")
+    if not args.upload:
+        print("Re-run with `--upload` to push these to the CDN and overwrite the "
+              "matching *.asset.json pointers in one step.")
     return 0
 
 
