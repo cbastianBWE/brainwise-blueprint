@@ -74,7 +74,27 @@ export default function PlatformFeatures() {
     setRowsLoading(false);
   };
 
-  useEffect(() => { loadRows(); }, []);
+  useEffect(() => { loadRows(); loadTdSettings(); }, []);
+
+  const confirmTdSave = async () => {
+    const reason = tdReason.trim();
+    if (reason.length < 10) return;
+    setTdBusy(true);
+    const { error } = await (supabase.rpc as any)("set_trusted_device_settings", {
+      p_window_days: Number(tdWindowDays),
+      p_impersonation_window_hours: Number(tdImpDays) * 24,
+      p_enabled: tdEnabled,
+      p_reason: reason,
+    });
+    setTdBusy(false);
+    if (error) {
+      toast.error(error.message ?? "Failed to update trusted device settings");
+      return;
+    }
+    toast.success("Trusted device settings updated");
+    setTdSaveOpen(false);
+    setTdReason("");
+  };
 
   const openToggleDialog = (row: PlatformFeatureRow, next: boolean) => {
     setPlatformReason("");
