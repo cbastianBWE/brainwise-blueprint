@@ -21,6 +21,23 @@ export interface HelpHotspot {
   shape?: "rect" | "circle";
 }
 
+export interface HelpCapture {
+  /** Route to navigate to under the app base URL (e.g. "/dashboard"). */
+  path: string;
+  /**
+   * Project-relative path of the target PNG whose `.asset.json` sibling
+   * will be overwritten after the capture is uploaded to the CDN.
+   * Example: "src/assets/help/individual/10_dashboard.png"
+   */
+  assetPath: string;
+  /** Scroll to Y (in px) after load, before screenshotting. */
+  scrollY?: number;
+  /** Click a tab by its accessible name (e.g. "Users") before screenshotting. */
+  tabName?: string;
+  /** Extra ms to wait after navigation (default 2500). */
+  waitMs?: number;
+}
+
 export interface HelpStep {
   title: string;
   body: string;
@@ -29,6 +46,13 @@ export interface HelpStep {
   imageAlt?: string;
   /** Optional highlight boxes drawn over the screenshot. */
   hotspots?: HelpHotspot[];
+  /**
+   * Optional capture spec — when present the capture script will re-shoot
+   * this step's screenshot and re-upload it to the CDN. Attach `capture`
+   * to whichever step "owns" a unique screenshot; other steps that reuse
+   * the same imageUrl don't need it.
+   */
+  capture?: HelpCapture;
 }
 
 export interface HelpGuide {
