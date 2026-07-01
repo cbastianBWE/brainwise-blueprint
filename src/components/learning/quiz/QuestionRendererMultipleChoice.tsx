@@ -6,6 +6,8 @@ export interface QuizAnswerOption {
   option_text: string;
   is_correct?: boolean | null;
   match_pair_key?: string | null;
+  option_image_url?: string | null;
+  option_image_asset_id?: string | null;
 }
 
 interface Props {
@@ -14,6 +16,7 @@ interface Props {
   onAnswer: (id: string) => void;
   locked?: boolean;
   disabled?: boolean;
+  imageUrlMap?: Map<string, string>;
 }
 
 export default function QuestionRendererMultipleChoice({
@@ -22,6 +25,7 @@ export default function QuestionRendererMultipleChoice({
   onAnswer,
   locked,
   disabled,
+  imageUrlMap,
 }: Props) {
   return (
     <div className="space-y-3">
@@ -31,6 +35,9 @@ export default function QuestionRendererMultipleChoice({
         const showCorrect = locked && isCorrect;
         const showWrong = locked && selected && !isCorrect;
         const dim = locked && !selected && !isCorrect;
+        const imgUrl = opt.option_image_asset_id
+          ? imageUrlMap?.get(opt.option_image_asset_id)
+          : undefined;
         return (
           <button
             key={opt.id}
@@ -48,6 +55,13 @@ export default function QuestionRendererMultipleChoice({
               (disabled || locked) && "cursor-default",
             )}
           >
+            {imgUrl && (
+              <img
+                src={imgUrl}
+                alt=""
+                className="mb-3 max-h-32 w-auto rounded-md object-contain"
+              />
+            )}
             <div className="flex items-center justify-between gap-3">
               <span className="font-medium">{opt.option_text}</span>
               {showCorrect && <Check className="h-5 w-5 text-[var(--bw-forest)] shrink-0" />}

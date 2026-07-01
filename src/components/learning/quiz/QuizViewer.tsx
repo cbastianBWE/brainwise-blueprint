@@ -12,7 +12,9 @@ import QuestionRendererMultipleChoice, {
 import QuestionRendererTrueFalse from "./QuestionRendererTrueFalse";
 import QuestionRendererSelectAll from "./QuestionRendererSelectAll";
 import QuestionRendererMatch from "./QuestionRendererMatch";
+import QuestionRendererMatchPicture from "./QuestionRendererMatchPicture";
 import QuizSummaryScreen from "./QuizSummaryScreen";
+import { useQuizAssets } from "@/hooks/useQuizAssets";
 
 type AnswerValue = string | string[] | Record<string, string>;
 
@@ -26,6 +28,7 @@ interface QuizQuestion {
     | "match_picture";
   question_text: string;
   question_image_url: string | null;
+  question_image_asset_id?: string | null;
   display_order: number;
   points: number;
   explanation: string | null;
@@ -96,10 +99,9 @@ function isAnswerComplete(q: QuizQuestion, a: AnswerValue | undefined): boolean 
     case "select_all":
       return Array.isArray(a) && a.length > 0;
     case "match_definition":
+    case "match_picture":
       if (typeof a !== "object" || Array.isArray(a)) return false;
       return (q.prompts ?? []).every((p) => !!(a as Record<string, string>)[p.id]);
-    case "match_picture":
-      return false;
     default:
       return false;
   }
@@ -127,6 +129,8 @@ export default function QuizViewer({
       return data as unknown as QuizPayload;
     },
   });
+
+  const { urlMap } = useQuizAssets(contentItemId);
 
   const [stage, setStage] = useState<Stage>("intro");
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -290,7 +294,9 @@ export default function QuizViewer({
   const isLocked = isAlways && lockedQuestions.has(currentQuestion.id);
   const complete = isAnswerComplete(currentQuestion, currentAnswer);
   const isLast = currentIndex === sortedQuestions.length - 1;
-  const isUnsupported = currentQuestion.question_type === "match_picture";
+  const headerImageUrl = currentQuestion.question_image_asset_id
+    ? urlMap.get(currentQuestion.question_image_asset_id)
+    : undefined;
 
   const setAnswerFor = (val: AnswerValue) =>
     setAnswers((prev) => ({ ...prev, [currentQuestion.id]: val }));
@@ -311,7 +317,7 @@ export default function QuizViewer({
         correct =
           picked.size === correctIds.size &&
           [...picked].every((id) => correctIds.has(id));
-      } else if (q.question_type === "match_definition") {
+      } else if (q.question_type === "match_definition" || q.question_type === "match_picture") {
         const pairs = (a as Record<string, string>) ?? {};
         correct = (q.prompts ?? []).every((p) => {
           const aid = pairs[p.id];
@@ -361,14 +367,6 @@ export default function QuizViewer({
   };
 
   const renderQuestion = () => {
-    if (isUnsupported) {
-      return (
-        <div className="rounded-lg border border-dashed bg-card p-6 text-center text-sm text-muted-foreground">
-          This question type isn't supported yet — contact your administrator. You can
-          continue to the next question.
-        </div>
-      );
-    }
     switch (currentQuestion.question_type) {
       case "multiple_choice":
         return (
@@ -378,6 +376,7 @@ export default function QuizViewer({
             onAnswer={(id) => setAnswerFor(id)}
             locked={isLocked}
             disabled={viewerRole !== "self" || stage === "submitting"}
+            imageUrlMap={urlMap}
           />
         );
       case "true_false":
@@ -398,6 +397,7 @@ export default function QuizViewer({
             onAnswer={(ids) => setAnswerFor(ids)}
             locked={isLocked}
             disabled={viewerRole !== "self" || stage === "submitting"}
+            imageUrlMap={urlMap}
           />
         );
       case "match_definition":
@@ -415,35 +415,55 @@ export default function QuizViewer({
             disabled={viewerRole !== "self" || stage === "submitting"}
           />
         );
+      case "match_picture":
+        return (
+          <QuestionRendererMatchPicture
+            prompts={currentQuestion.prompts ?? []}
+            answers={currentQuestion.answers ?? []}
+            value={
+              currentAnswer && typeof currentAnswer === "object" && !Array.isArray(currentAnswer)
+                ? (currentAnswer as Record<string, string>)
+                : undefined
+            }
+            onAnswer={(pairs) => setAnswerFor(pairs)}
+            locked={isLocked}
+            disabled={viewerRole !== "self" || stage === "submitting"}
+            imageUrlMap={urlMap}
+          />
+        );
       default:
         return null;
     }
   };
 
-  const primaryLabel = isUnsupported
-    ? isLast
-      ? "Skip and submit"
-      : "Skip"
-    : isAlways && !isLocked
-      ? "Submit this question"
-      : isLast
-        ? "Submit quiz"
-        : "Save and continue";
+  const primaryLabel = isAlways && !isLocked
+    ? "Submit this question"
+    : isLast
+      ? "Submit quiz"
+      : "Save and continue";
 
   const primaryDisabled =
     viewerRole !== "self" ||
     stage === "submitting" ||
-    (!isUnsupported && !isLocked && !complete);
+    (!isLocked && !complete);
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <QuizProgressBar states={dotStates} currentIndex={currentIndex} />
 
       <div className="rounded-xl border bg-card p-6 sm:p-8 space-y-6">
+        {headerImageUrl && (
+          <img
+            src={headerImageUrl}
+            alt=""
+            className="max-h-48 w-auto rounded-md object-contain"
+          />
+        )}
         <h2 className="text-xl sm:text-2xl font-semibold leading-snug">
           {currentQuestion.question_text}
         </h2>
         {renderQuestion()}
+
 
         {isLocked && currentQuestion.explanation && (
           <div className="rounded-md border bg-muted/50 p-4 text-sm">
