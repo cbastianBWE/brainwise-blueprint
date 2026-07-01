@@ -139,6 +139,9 @@ function MemberDrawerBody({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
+                <DropdownMenuItem onSelect={() => setRevokeDevicesOpen(true)}>
+                  Revoke trusted devices
+                </DropdownMenuItem>
                 <DropdownMenuItem disabled>Reset MFA (coming soon)</DropdownMenuItem>
                 <DropdownMenuItem disabled>
                   Trigger password reset (coming soon)
