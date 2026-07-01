@@ -6,6 +6,9 @@ import shared from "@/assets/help/org_member/40_shared.png.asset.json";
 import assessment from "@/assets/help/org_member/50_assessment.png.asset.json";
 import notifications from "@/assets/help/org_member/60_notifications.png.asset.json";
 import settings from "@/assets/help/org_member/70_settings.png.asset.json";
+import aiChat from "@/assets/help/org_member/80_ai_chat.png.asset.json";
+import chatHistory from "@/assets/help/org_member/81_chat_history.png.asset.json";
+import myLearning from "@/assets/help/org_member/90_my_learning.png.asset.json";
 
 export const orgMemberContent: HelpRoleContent = {
   role: "org_member",
