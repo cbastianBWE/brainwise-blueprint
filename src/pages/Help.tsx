@@ -69,9 +69,11 @@ const HelpRoleTab = ({
 }: {
   content: HelpRoleContent;
   query: string;
-  onOpenImage: (url: string, alt: string) => void;
+  onOpenImage: (url: string, alt: string, hotspots?: HelpGuide["steps"][number]["hotspots"]) => void;
 }) => {
   const guides = content.guides.filter((g) => matchesQuery(g, query));
+
+
 
   return (
     <div className="space-y-6">
@@ -121,7 +123,7 @@ const HelpRoleTab = ({
                           <button
                             type="button"
                             onClick={() =>
-                              onOpenImage(step.imageUrl!, step.imageAlt ?? step.title)
+                              onOpenImage(step.imageUrl!, step.imageAlt ?? step.title, step.hotspots)
                             }
                             className="group relative block overflow-hidden rounded-md border bg-muted/40 transition hover:border-primary text-left"
                           >
@@ -166,7 +168,11 @@ export default function Help() {
     defaultRoleFor(accountType, isPractitionerCoach, isSuperAdmin),
   );
   const [query, setQuery] = useState("");
-  const [preview, setPreview] = useState<{ url: string; alt: string } | null>(null);
+  const [preview, setPreview] = useState<{
+    url: string;
+    alt: string;
+    hotspots?: HelpGuide["steps"][number]["hotspots"];
+  } | null>(null);
 
   // If the role list resolves after mount, make sure the active tab is one the
   // viewer can actually see.
@@ -227,7 +233,7 @@ export default function Help() {
               <HelpRoleTab
                 content={helpContent[r]}
                 query={query}
-                onOpenImage={(url, alt) => setPreview({ url, alt })}
+                onOpenImage={(url, alt, hotspots) => setPreview({ url, alt, hotspots })}
               />
             </TabsContent>
           ))}
@@ -238,10 +244,11 @@ export default function Help() {
         <DialogContent className="max-w-5xl p-2 md:p-4">
           <DialogTitle className="sr-only">{preview?.alt ?? "Screenshot"}</DialogTitle>
           {preview && (
-            <img
+            <AnnotatedScreenshot
               src={preview.url}
               alt={preview.alt}
-              className="w-full h-auto rounded"
+              hotspots={preview.hotspots}
+              className="max-w-none w-full"
             />
           )}
         </DialogContent>
