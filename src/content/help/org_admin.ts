@@ -2,10 +2,13 @@ import type { HelpRoleContent } from "./types";
 import dashboard from "@/assets/help/org_admin/10_dashboard.png.asset.json";
 import invite from "@/assets/help/org_admin/20_users_invite.png.asset.json";
 import usersList from "@/assets/help/org_admin/21_users_list.png.asset.json";
+import pendingInvites from "@/assets/help/org_admin/22_pending_invitations.png.asset.json";
 import teamPaired from "@/assets/help/org_admin/30_team_paired.png.asset.json";
 import adminResources from "@/assets/help/org_admin/35_admin_resources.png.asset.json";
 import features from "@/assets/help/org_admin/40_features.png.asset.json";
+import featuresOverrides from "@/assets/help/org_admin/41_features_overrides.png.asset.json";
 import interventions from "@/assets/help/org_admin/60_interventions.png.asset.json";
+import adminSettings from "@/assets/help/org_admin/80_settings.png.asset.json";
 
 export const orgAdminContent: HelpRoleContent = {
   role: "org_admin",
