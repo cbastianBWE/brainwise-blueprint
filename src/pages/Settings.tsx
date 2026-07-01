@@ -18,6 +18,7 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { useMfaRequired, useMfaSatisfied } from "@/hooks/useMfaStatus";
 import { callIdentityMutation } from "@/lib/identityMutation";
+import { useTrustedDevices, useRevokeTrustedDevice } from "@/hooks/useTrustedDevices";
 
 interface MfaFactor {
   id: string;
