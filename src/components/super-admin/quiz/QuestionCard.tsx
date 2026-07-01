@@ -394,9 +394,31 @@ export function QuestionCard({
             </div>
           </div>
 
+          {question.question_type !== "true_false" && (
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">
+                Question image (optional)
+              </Label>
+              <QuizImagePicker
+                parentKind="quiz_question"
+                parentId={question.id}
+                currentAssetId={question.question_image_asset_id}
+                previewUrl={
+                  question.question_image_asset_id
+                    ? urlMap.get(question.question_image_asset_id) ?? null
+                    : null
+                }
+                onAttached={(assetId) => setField("question_image_asset_id", assetId)}
+              />
+            </div>
+          )}
+
           <div className="space-y-2">
             <Label className="text-xs uppercase tracking-wide text-muted-foreground">
-              {question.question_type === "match_definition" ? "Pairs" : "Options"}
+              {question.question_type === "match_definition" ||
+              question.question_type === "match_picture"
+                ? "Pairs"
+                : "Options"}
             </Label>
             {question.question_type === "multiple_choice" && (
               <MultipleChoiceOptionsEditor
@@ -422,6 +444,13 @@ export function QuestionCard({
               <MatchOptionsEditor
                 pairs={question.pairs}
                 onChange={(pairs) => setField("pairs", pairs)}
+              />
+            )}
+            {question.question_type === "match_picture" && (
+              <MatchPictureOptionsEditor
+                pairs={question.pairs}
+                onChange={(pairs) => setField("pairs", pairs)}
+                imageUrlMap={urlMap}
               />
             )}
           </div>
