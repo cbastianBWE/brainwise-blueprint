@@ -2,10 +2,13 @@ import type { HelpRoleContent } from "./types";
 import dashboard from "@/assets/help/org_admin/10_dashboard.png.asset.json";
 import invite from "@/assets/help/org_admin/20_users_invite.png.asset.json";
 import usersList from "@/assets/help/org_admin/21_users_list.png.asset.json";
+import pendingInvites from "@/assets/help/org_admin/22_pending_invitations.png.asset.json";
 import teamPaired from "@/assets/help/org_admin/30_team_paired.png.asset.json";
 import adminResources from "@/assets/help/org_admin/35_admin_resources.png.asset.json";
 import features from "@/assets/help/org_admin/40_features.png.asset.json";
+import featuresOverrides from "@/assets/help/org_admin/41_features_overrides.png.asset.json";
 import interventions from "@/assets/help/org_admin/60_interventions.png.asset.json";
+import adminSettings from "@/assets/help/org_admin/80_settings.png.asset.json";
 
 export const orgAdminContent: HelpRoleContent = {
   role: "org_admin",
@@ -219,6 +222,122 @@ export const orgAdminContent: HelpRoleContent = {
           title: "Add a resource",
           body:
             "Create folders for topics and add resources inside them — links, uploads, or Mux-streamed videos. Members see everything you publish under their own Resources tab.",
+        },
+      ],
+    },
+    {
+      id: "pending-invitations",
+      title: "Track and resend pending invitations",
+      summary: "See who hasn't accepted yet, resend, or revoke before they redeem.",
+      steps: [
+        {
+          title: "Scroll to Pending invitations",
+          body:
+            "On the User Management page (Invite tab), scroll below the Bulk invite card. Every unredeemed invitation still within its expiration window is listed here.",
+          imageUrl: pendingInvites.url,
+          imageAlt: "Pending invitations section on the Invite tab",
+        },
+        {
+          title: "Search, resend, or revoke",
+          body:
+            "Use the search box to find a specific invite by email or department. Each row gives you actions to resend the email (useful if it landed in spam) or revoke the invite so the link stops working.",
+          hotspots: [
+            { x: 25.7, y: 65.0, w: 34.3, h: 1.6, label: "Search invitations" },
+          ],
+        },
+      ],
+    },
+    {
+      id: "feature-overrides",
+      title: "Turn features on or off per member",
+      summary: "Grant or restrict AI Chat and specific instruments for individual users.",
+      steps: [
+        {
+          title: "Open Features and scroll to overrides",
+          body:
+            "Click Features in the sidebar, then scroll to Member Feature Overrides. You'll see every active member with per-feature toggles for AI Chat and each assessment they have access to.",
+          imageUrl: featuresOverrides.url,
+          imageAlt: "Member feature overrides table",
+        },
+        {
+          title: "Restrict a feature for one person",
+          body:
+            "Flip a toggle off to remove that feature for a specific member. Overrides can only restrict — you cannot grant access beyond what your organization's contract entitles.",
+        },
+        {
+          title: "Find a member fast",
+          body:
+            "Use the search box above the table to filter by name or email. Deactivated members are hidden here; reactivate them first from the Users tab if you need to adjust their features.",
+        },
+      ],
+    },
+    {
+      id: "read-team-dashboards",
+      title: "Read a team or NAI dashboard",
+      summary: "Move from a completed assessment set to a leader-ready view of the team.",
+      steps: [
+        {
+          title: "Open the right dashboard",
+          body:
+            "Under Dashboards in the sidebar, pick the dashboard your organization has entitled — typically the PTP team dashboard and, if included, the NAI (Neuroscience Adoption Index) executive dashboard. Only members with completed assessments are included in the view.",
+        },
+        {
+          title: "Interpret the top scorecards",
+          body:
+            "The scorecards summarize alignment, blind spots, confirmed strengths, and gaps at the team level. Click any card to filter the details below to just that segment (e.g., only blind spots).",
+        },
+        {
+          title: "Save recommendations to Interventions",
+          body:
+            "Each dashboard suggests interventions based on the patterns it sees. Click Save on any recommendation to add it to your Interventions tracker so it becomes an assignable action item.",
+        },
+      ],
+    },
+    {
+      id: "member-drawer-actions",
+      title: "Take action on a single member",
+      summary: "Open a member's drawer to reset MFA, revoke trusted devices, or deactivate them.",
+      steps: [
+        {
+          title: "Open the Users tab and click a row",
+          body:
+            "On the User Management page, switch to the Users tab and click any row to slide open that member's drawer. Every per-user action lives inside the drawer's overflow menu.",
+          imageUrl: usersList.url,
+          imageAlt: "Users list — click a row to open the drawer",
+        },
+        {
+          title: "Revoke trusted devices",
+          body:
+            "Choose 'Revoke trusted devices' from the drawer menu. Any browser that skipped 2FA for this user will be forced to re-verify on their next sign-in. Use this if a member reports a lost or stolen device.",
+        },
+        {
+          title: "Deactivate or reactivate",
+          body:
+            "Deactivate cuts off access immediately without deleting historical data — safe when someone leaves the org. You can reactivate them later if they return; their reports and highlights come back with them.",
+        },
+      ],
+    },
+    {
+      id: "admin-account-security",
+      title: "Secure your admin account",
+      summary: "Enable 2FA on your own account and manage trusted devices — required best practice for admins.",
+      steps: [
+        {
+          title: "Open Settings",
+          body:
+            "Click Settings in the sidebar. Because you can invite users, generate team reports, and change org configuration, keeping your own 2FA on is the single most important security step.",
+          imageUrl: adminSettings.url,
+          imageAlt: "Admin settings page",
+        },
+        {
+          title: "Enable two-factor authentication",
+          body:
+            "In the Two-Factor Authentication card, click Enable and enroll an authenticator app. If your org has enforced mandatory 2FA under Features, you must enroll before you can continue using the platform.",
+        },
+        {
+          title: "Manage your trusted devices",
+          body:
+            "The Trusted Devices card shows every browser that currently skips your 2FA prompt. Revoke anything unfamiliar. If you get a new laptop, revoke the old one from the new browser after you sign in.",
         },
       ],
     },

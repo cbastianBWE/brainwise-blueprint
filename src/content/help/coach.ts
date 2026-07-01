@@ -6,6 +6,11 @@ import teamPaired from "@/assets/help/coach/30_team_paired.png.asset.json";
 import orders from "@/assets/help/coach/40_orders.png.asset.json";
 import orderAssessment from "@/assets/help/coach/41_order_assessment.png.asset.json";
 import certification from "@/assets/help/coach/60_certification.png.asset.json";
+import aiChat from "@/assets/help/coach/70_ai_chat.png.asset.json";
+import resourcesPage from "@/assets/help/coach/80_resources.png.asset.json";
+import coachDashboard from "@/assets/help/coach/90_dashboard.png.asset.json";
+import coachMyResults from "@/assets/help/coach/91_my_results.png.asset.json";
+import coachSettings from "@/assets/help/coach/92_settings.png.asset.json";
 
 // Sidebar hotspots (percentages of a 1280x1800 screenshot). Item height ≈ 1.7%.
 const SB = { x: 1.2, w: 17.2, h: 1.7 };
@@ -184,6 +189,122 @@ export const coachContent: HelpRoleContent = {
           title: "Work through required items",
           body:
             "Each requirement links to the exact page you need — a module to complete, an assessment to take, or a review panel to submit for mentor feedback.",
+        },
+      ],
+    },
+    {
+      id: "coach-dashboard",
+      title: "Use your coach dashboard",
+      summary: "Get oriented every time you sign in — the dashboard is your daily home.",
+      steps: [
+        {
+          title: "Land on Dashboard",
+          body:
+            "Sign in and you'll arrive at Dashboard. Quick-jump cards take you to My Clients, Team & Paired Reports, and Client Results, and any in-progress assessments of your own appear in 'Continue where you left off'.",
+          imageUrl: coachDashboard.url,
+          imageAlt: "Coach dashboard with quick-jump cards",
+        },
+        {
+          title: "Switch to a client's report from here",
+          body:
+            "Use the Client Results card to jump straight into whichever client you're about to debrief with. It saves a click compared to opening the full My Clients roster.",
+        },
+      ],
+    },
+    {
+      id: "prepare-with-ai-chat",
+      title: "Prepare for a session with AI Chat",
+      summary: "Talk through a client's report with AI before your session.",
+      steps: [
+        {
+          title: "Open AI Chat",
+          body:
+            "Click AI Chat in the sidebar. As a coach, you can load any client whose results you have access to into the assessment context bar at the top.",
+          imageUrl: aiChat.url,
+          imageAlt: "Coach AI Chat with client context selector",
+          hotspots: [
+            { x: 1.2, y: 27.0, w: 18.3, h: 1.9, label: "Click AI Chat" },
+          ],
+        },
+        {
+          title: "Ask session-prep questions",
+          body:
+            "Prompts that work well: 'Summarize this client's PTP in three bullets', 'What tensions between drivers should we explore?', 'Suggest three coaching questions for a debrief.' The assistant treats your client's report as context, not as chat memory the client will see.",
+        },
+        {
+          title: "Save the conversation for later",
+          body:
+            "Every conversation is saved automatically under Chat History. Reopen it during your next session with the same client so context carries forward.",
+        },
+      ],
+    },
+    {
+      id: "coach-resources",
+      title: "Find and use Coach Resources",
+      summary: "Access reference cards, videos, and debrief guides curated for coaches.",
+      steps: [
+        {
+          title: "Open Resources",
+          body:
+            "Click Resources in the sidebar. As a coach you'll land on the Coach Resources tab by default — it holds the PTP coach cards, debrief videos ('What Great Looks Like'), and every reference guide.",
+          imageUrl: resourcesPage.url,
+          imageAlt: "Coach Resources page with folders and guides",
+          hotspots: [
+            { x: 33.5, y: 9.5, w: 15.5, h: 2.4, label: "Coach Resources tab" },
+          ],
+        },
+        {
+          title: "Open a folder or resource",
+          body:
+            "Folders like 'PTP Coach Cards' group related material. Everything on this page is also shown at the top level so you can browse quickly without drilling in. Use the search bar to jump to a specific topic.",
+        },
+        {
+          title: "Watch a debrief video",
+          body:
+            "Video resources (like the WGLL debrief example) stream via Mux — hit play and share your screen if you're using it during a session.",
+        },
+      ],
+    },
+    {
+      id: "coach-own-results",
+      title: "Manage your own assessments",
+      summary: "You take BrainWise assessments too — treat your own results like any client.",
+      steps: [
+        {
+          title: "Open My Assessments",
+          body:
+            "Click My Assessments in the sidebar to see everything you've completed personally. This is separate from Client Results and stays private to you.",
+          imageUrl: coachMyResults.url,
+          imageAlt: "Coach's own My Results page",
+        },
+        {
+          title: "Take a new assessment",
+          body:
+            "Use the Take Another Assessment button on your report to complete another instrument. Your own results show up in your AI Chat context too, which is useful when you want to compare yourself with a client's profile.",
+        },
+      ],
+    },
+    {
+      id: "coach-account-security",
+      title: "Update account & security settings",
+      summary: "Change your password, enable 2FA, and manage trusted devices.",
+      steps: [
+        {
+          title: "Open Settings",
+          body:
+            "Click Settings in the sidebar. Your profile info, password, notification preferences, two-factor authentication, and trusted devices are all here.",
+          imageUrl: coachSettings.url,
+          imageAlt: "Coach settings page",
+        },
+        {
+          title: "Enable two-factor authentication",
+          body:
+            "In the Two-Factor Authentication card, click Enable and scan the QR code with an authenticator app. As a coach with access to client data, keeping 2FA on is strongly recommended.",
+        },
+        {
+          title: "Revoke trusted devices",
+          body:
+            "Open the Trusted Devices card to see every browser that skips your 2FA prompt. Click Revoke on anything unfamiliar or that you no longer use.",
         },
       ],
     },

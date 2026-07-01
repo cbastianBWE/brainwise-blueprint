@@ -9,6 +9,9 @@ import sharingRequests from "@/assets/help/individual/51_sharing_requests.png.as
 import notif from "@/assets/help/individual/60_notification_settings.png.asset.json";
 import notifScroll from "@/assets/help/individual/61_notification_settings_scroll.png.asset.json";
 import settings from "@/assets/help/individual/70_settings.png.asset.json";
+import aiChat from "@/assets/help/individual/80_ai_chat.png.asset.json";
+import chatHistory from "@/assets/help/individual/81_chat_history.png.asset.json";
+import myLearning from "@/assets/help/individual/90_my_learning.png.asset.json";
 
 export const individualContent: HelpRoleContent = {
   role: "individual",
@@ -172,6 +175,115 @@ export const individualContent: HelpRoleContent = {
             "For your profile, password, and privacy preferences, use the other tabs under Settings.",
           imageUrl: settings.url,
           imageAlt: "General settings page",
+        },
+      ],
+    },
+    {
+      id: "explore-with-ai-chat",
+      title: "Explore your results with AI Chat",
+      summary: "Talk through your assessment with an AI coach that already knows your report.",
+      steps: [
+        {
+          title: "Open AI Chat",
+          body:
+            "Click AI Chat in the sidebar. The assistant already has every completed assessment on your account loaded as context — you don't have to explain anything about yourself first.",
+          imageUrl: aiChat.url,
+          imageAlt: "AI Chat page with assessment context pre-loaded",
+          hotspots: [
+            { x: 1.2, y: 17.0, w: 18.3, h: 1.9, label: "Click AI Chat" },
+          ],
+        },
+        {
+          title: "Pick which reports to focus on",
+          body:
+            "The 'Assessment context' bar at the top lists every report the assistant can see. Click a chip to include or exclude it — useful if you want to talk about just your latest PTP without pulling in older assessments.",
+        },
+        {
+          title: "Ask real questions",
+          body:
+            "Ask things like 'What should I work on first?', 'How do my Prediction and Protection scores interact?', or 'Give me three actions I can take this week.' You get more from specific prompts than open-ended ones.",
+        },
+        {
+          title: "Watch your message allowance",
+          body:
+            "The top-right shows how many messages you have left this period. When you run out, you can wait for it to reset or ask your admin about a higher allowance.",
+        },
+      ],
+    },
+    {
+      id: "review-chat-history",
+      title: "Review past AI Chat conversations",
+      summary: "Come back to a previous conversation instead of starting over.",
+      steps: [
+        {
+          title: "Open Chat History",
+          body:
+            "Click Chat History in the sidebar. Every past conversation is listed newest-first with the assessments that were in context and how long the session ran.",
+          imageUrl: chatHistory.url,
+          imageAlt: "Chat History page listing past conversations",
+          hotspots: [
+            { x: 1.2, y: 18.5, w: 18.3, h: 1.9, label: "Click Chat History" },
+          ],
+        },
+        {
+          title: "Reopen or start fresh",
+          body:
+            "Click View on any card to reopen that conversation and keep talking. Use New Chat (top-right) if you'd rather start with a clean slate.",
+          hotspots: [
+            { x: 78.0, y: 7.0, w: 18.5, h: 2.4, label: "New Chat" },
+          ],
+        },
+      ],
+    },
+    {
+      id: "my-learning",
+      title: "Browse and enroll in learning",
+      summary: "Find courses and modules that build on your assessment results.",
+      steps: [
+        {
+          title: "Open My Learning",
+          body:
+            "Click My Learning in the sidebar. The Assigned tab shows anything a coach or admin required for you; the Browse & Enroll tab shows what else you can add to your queue.",
+          imageUrl: myLearning.url,
+          imageAlt: "My Learning page with Browse & Enroll tab",
+          hotspots: [
+            { x: 1.2, y: 20.5, w: 18.3, h: 1.9, label: "Click My Learning" },
+            { x: 32.0, y: 9.5, w: 12.0, h: 2.4, label: "Browse & Enroll" },
+          ],
+        },
+        {
+          title: "Enroll and track progress",
+          body:
+            "Click any card to open the module or path, then Enroll. Your progress saves as you go and re-appears on your dashboard so it's easy to pick back up.",
+        },
+      ],
+    },
+    {
+      id: "two-factor-and-trusted-devices",
+      title: "Set up two-factor authentication",
+      summary: "Add a second sign-in step and mark trusted browsers so you don't have to re-verify every time.",
+      steps: [
+        {
+          title: "Open Settings",
+          body:
+            "Click Settings in the sidebar. Scroll to the Security section — you'll see cards for two-factor authentication and Trusted Devices.",
+          imageUrl: settings.url,
+          imageAlt: "Settings page with security section",
+        },
+        {
+          title: "Enroll with an authenticator app",
+          body:
+            "In the Two-Factor Authentication card, click Enable. Scan the QR code with any authenticator app (Google Authenticator, 1Password, Authy, etc.), then enter the 6-digit code to confirm.",
+        },
+        {
+          title: "Trust this browser at sign-in",
+          body:
+            "Next time you sign in, tick 'Trust this device' on the 2FA prompt. That browser will skip the 2FA step for the trust window your admin set (typically 30 days).",
+        },
+        {
+          title: "Revoke a trusted browser",
+          body:
+            "Open the Trusted Devices card on the Settings page to see every browser you've marked as trusted. Click Revoke on anything you no longer use, and you'll be asked for 2FA the next time you sign in there.",
         },
       ],
     },
