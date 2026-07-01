@@ -99,10 +99,9 @@ function isAnswerComplete(q: QuizQuestion, a: AnswerValue | undefined): boolean 
     case "select_all":
       return Array.isArray(a) && a.length > 0;
     case "match_definition":
+    case "match_picture":
       if (typeof a !== "object" || Array.isArray(a)) return false;
       return (q.prompts ?? []).every((p) => !!(a as Record<string, string>)[p.id]);
-    case "match_picture":
-      return false;
     default:
       return false;
   }
