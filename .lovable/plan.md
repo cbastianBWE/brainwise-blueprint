@@ -1,51 +1,48 @@
-# Help Center at `/help` with role-aware, screenshot-backed guides
+## Add click-target annotations to Help Center screenshots
 
-## What ships
+Overlay a highlight (bordered box + subtle glow, optionally a numbered badge) on each screenshot showing exactly where the user should click or type for that step.
 
-- A new **Help Center** page at `/help`, added to the app sidebar for every signed-in user.
-- Role-aware tabs across the top: **For you** (auto-selects the viewer's role) plus tabs for every role they're allowed to see. Regular users see only their own tab; admins, super admins, coaches, and mentors see all tabs.
-- Each role tab contains **3–5 how-to guides**. Each guide is a stepped walkthrough: numbered steps, short prose, and inline screenshots of the real app (click to enlarge in a Dialog).
-- A simple search box that filters guides across the visible tabs by title/keyword.
-- Guides authored as structured data (TS objects), not free-form markdown, so screenshots and steps stay in sync and are easy to regenerate.
+### Approach
 
-## Roles and top tasks per role
+Two parts: (1) extend the guide data model so each step can declare one or more "hotspots" on its screenshot, and (2) render those hotspots as an overlay on top of the image in the Help page — not baked into the PNG. This keeps screenshots reusable, lets us re-capture without re-annotating, and stays crisp at any zoom.
 
-Draft task list — trim/swap before I capture:
+### Data model change
 
-- **Individual** — take an assessment, view your results, highlight & annotate a report, share results with a coach, manage notifications.
-- **Coach Client** — accept a coach invite, take the assigned assessment, view what your coach can see, revoke sharing.
-- **Coach** — invite a client, order/assign an assessment, review client results, share a report / team report, manage certification progress.
-- **Mentor** — open a trainee, review their assessments & progress, leave written feedback, use a feedback template.
-- **Org Member (corporate_employee)** — accept the org invite, complete the required assessment, view your results, notification preferences.
-- **Org Admin / Company Admin** — invite members (single + bulk), pick the assessment for an invite, view the members table & completion status, share resources, revoke a member.
-- **Super Admin** — invite an org, manage coach clients & tracking, run impersonation with justification, revoke trusted devices, toggle platform features.
+In `src/content/help/types.ts`, add an optional `hotspots` array to `HelpStep`:
 
-## Screenshot capture
+```ts
+type Hotspot = {
+  // percentages of the image's natural size, 0-100
+  x: number; y: number; w: number; h: number;
+  label?: string;       // optional short caption ("Click here")
+  shape?: "rect" | "circle";
+};
+type HelpStep = { /* existing */ hotspots?: Hotspot[] };
+```
 
-- Playwright, headless, against `localhost:8080`. Signs in per role using the credentials you paste, walks each flow, saves PNGs to `src/assets/help/<role>/<task>-<step>.png` and externalizes them via `lovable-assets` so the repo stays light.
-- Credentials used once per session, never logged or echoed. Individual role: `cplummer19912003@gmail.com` (provided).
-- Small dev script `scripts/capture-help-screenshots.ts` so we can rerun captures after UI changes instead of hand-updating images.
+Percent-based coords mean the overlay scales correctly on any screen.
 
-## Data & UI structure
+### Renderer
 
-- `src/content/help/types.ts` — `HelpGuide`, `HelpStep`, `HelpRole` types.
-- `src/content/help/<role>.ts` — one file per role exporting an array of guides. Steps reference screenshot asset pointers.
-- `src/pages/Help.tsx` — tabs (role gating via `useAccountRole`), search, guide list, and guide detail view.
-- Route registered in `src/App.tsx` under `AppLayout`; sidebar entry added in `src/components/AppSidebar.tsx` (visible to all signed-in users; admin/coach/mentor roles see extra tabs).
+New `src/components/help/AnnotatedScreenshot.tsx`:
+- Wraps `<img>` in a `relative` container.
+- For each hotspot renders an absolutely positioned box using `left/top/width/height` in `%`.
+- Styling: 2px brand-primary border, soft primary-tinted glow (`box-shadow`), rounded corners, subtle pulse animation, and a numbered circular badge in the top-left of the box.
+- Optional `label` renders as a small chip beneath the box.
 
-## Delivery in phases
+`src/pages/Help.tsx` swaps its raw `<img>` for `<AnnotatedScreenshot>` when a step has hotspots (falls back to the plain image otherwise).
 
-1. **Now:** Ship page, tabs, gating, search, and the full **Individual** role guides (5 tasks) with real screenshots captured from your test account. This proves the pattern.
-2. **Next:** Coach Client guides (captured using a client account you paste when phase 1 lands).
-3. **After:** Coach → Mentor → Org Member → Org/Company Admin → Super Admin, one role at a time as you paste each role's creds.
+### Authoring the coordinates
 
-## What I need between phases
+For each existing Individual guide screenshot, I'll open the PNG, identify the click target (button, field, tab), and write the hotspot rect in percentages. Steps that are purely informational (no single click target) get no hotspot. I'll do this for the 5 Individual guides already captured, then apply the same pattern to every future role as we capture them.
 
-- Test-account credentials for the next role each time (email + password).
-- Any edits to the task list for that role before I capture.
+### Scope of this change
 
-## Out of scope for this pass
+- Additive only. No existing screenshot is re-captured or replaced.
+- Only `src/content/help/types.ts`, `src/content/help/individual.ts` (adding `hotspots`), the new `AnnotatedScreenshot` component, and the render site in `src/pages/Help.tsx` change.
+- Same pattern will be used for Coach, Coach Client, etc. as we capture them next.
 
-- Video walkthroughs, in-product tooltip tours, or a marketing-site help center.
-- Translations. English only.
-- Automated screenshot drift detection in CI — the rerunnable script is the manual equivalent.
+### Optional niceties (say yes/no)
+
+- Numbered badges on each hotspot (1, 2, 3) when a single step has multiple targets.
+- Click-to-zoom on the whole screenshot (lightbox) so users can see the annotation at full size.
