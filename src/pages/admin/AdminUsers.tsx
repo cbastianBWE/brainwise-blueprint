@@ -104,11 +104,16 @@ function BulkInviteCard({
 }) {
   const { toast } = useToast();
   const qc = useQueryClient();
+  const { orgInstrumentIncluded } = useOrgInstrumentAccess();
+  const bulkInstrumentOptions = PUBLIC_INSTRUMENTS.filter(
+    (i) => i.short_name === "PTP" || orgInstrumentIncluded(i.uuid)
+  );
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [bulkStage, setBulkStage] = useState<BulkStage>("idle");
   const [parsedRows, setParsedRows] = useState<ParsedRow[]>([]);
   const [bulkResults, setBulkResults] = useState<BulkResultRow[]>([]);
   const [fileName, setFileName] = useState<string>("");
+  const [requiredInstrumentId, setRequiredInstrumentId] = useState("INST-001");
 
   const escapeCsv = (value: string) => {
     if (/[",\n]/.test(value)) {
