@@ -47,6 +47,21 @@ const Login = () => {
         const { data: factorsData } = await supabase.auth.mfa.listFactors();
         const hasVerified = (factorsData?.totp ?? []).some((f) => f.status === "verified");
         if (hasVerified) {
+          try {
+            const token = getTrustedDeviceToken();
+            if (token) {
+              const { data: trusted } = await supabase.rpc("check_trusted_device" as any, { p_token: token });
+              if (trusted === true) {
+                setLoading(false);
+                await redirectByRole(data.user.id);
+                return;
+              } else {
+                clearTrustedDeviceToken();
+              }
+            }
+          } catch {
+            // fall through to challenge
+          }
           setMfaUserId(data.user.id);
           setLoading(false);
           return;
