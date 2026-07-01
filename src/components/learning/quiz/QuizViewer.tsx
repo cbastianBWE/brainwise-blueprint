@@ -413,35 +413,55 @@ export default function QuizViewer({
             disabled={viewerRole !== "self" || stage === "submitting"}
           />
         );
+      case "match_picture":
+        return (
+          <QuestionRendererMatchPicture
+            prompts={currentQuestion.prompts ?? []}
+            answers={currentQuestion.answers ?? []}
+            value={
+              currentAnswer && typeof currentAnswer === "object" && !Array.isArray(currentAnswer)
+                ? (currentAnswer as Record<string, string>)
+                : undefined
+            }
+            onAnswer={(pairs) => setAnswerFor(pairs)}
+            locked={isLocked}
+            disabled={viewerRole !== "self" || stage === "submitting"}
+            imageUrlMap={urlMap}
+          />
+        );
       default:
         return null;
     }
   };
 
-  const primaryLabel = isUnsupported
-    ? isLast
-      ? "Skip and submit"
-      : "Skip"
-    : isAlways && !isLocked
-      ? "Submit this question"
-      : isLast
-        ? "Submit quiz"
-        : "Save and continue";
+  const primaryLabel = isAlways && !isLocked
+    ? "Submit this question"
+    : isLast
+      ? "Submit quiz"
+      : "Save and continue";
 
   const primaryDisabled =
     viewerRole !== "self" ||
     stage === "submitting" ||
-    (!isUnsupported && !isLocked && !complete);
+    (!isLocked && !complete);
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <QuizProgressBar states={dotStates} currentIndex={currentIndex} />
 
       <div className="rounded-xl border bg-card p-6 sm:p-8 space-y-6">
+        {headerImageUrl && (
+          <img
+            src={headerImageUrl}
+            alt=""
+            className="max-h-48 w-auto rounded-md object-contain"
+          />
+        )}
         <h2 className="text-xl sm:text-2xl font-semibold leading-snug">
           {currentQuestion.question_text}
         </h2>
         {renderQuestion()}
+
 
         {isLocked && currentQuestion.explanation && (
           <div className="rounded-md border bg-muted/50 p-4 text-sm">
