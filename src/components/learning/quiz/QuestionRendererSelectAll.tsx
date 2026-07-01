@@ -8,6 +8,7 @@ interface Props {
   onAnswer: (ids: string[]) => void;
   locked?: boolean;
   disabled?: boolean;
+  imageUrlMap?: Map<string, string>;
 }
 
 export default function QuestionRendererSelectAll({
@@ -16,6 +17,7 @@ export default function QuestionRendererSelectAll({
   onAnswer,
   locked,
   disabled,
+  imageUrlMap,
 }: Props) {
   const selected = new Set(value ?? []);
   const toggle = (id: string) => {
