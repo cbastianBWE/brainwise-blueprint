@@ -166,6 +166,14 @@ function validateQuestion(q: DraftQuestion): string | null {
         return "All pairs need both a prompt and an answer.";
       return null;
     }
+    case "match_picture": {
+      if (q.pairs.length < 2) return "At least 2 pairs required.";
+      if (q.pairs.some((p) => p.prompt.option_text.trim() === ""))
+        return "Every picture pair needs a text prompt.";
+      if (q.pairs.some((p) => !p.answer.option_image_asset_id))
+        return "Each picture answer needs an image (save the question, then add images).";
+      return null;
+    }
   }
 }
 
