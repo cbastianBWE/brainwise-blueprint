@@ -37,6 +37,7 @@ export const orgMemberContent: HelpRoleContent = {
             "You'll arrive at the dashboard. This is your home base — every assessment, report, and setting is one click away in the left sidebar.",
           imageUrl: dashboard.url,
           imageAlt: "Corporate member dashboard with sidebar navigation",
+          capture: { path: "/dashboard", assetPath: "src/assets/help/org_member/10_dashboard.png" },
           hotspots: [
             { x: 1.2, y: 4.0, w: 18.3, h: 33.0, label: "Sidebar navigation" },
           ],
@@ -54,6 +55,7 @@ export const orgMemberContent: HelpRoleContent = {
             "Click Assessment in the sidebar. You'll see the assessments your organization has entitled for you. When your admin invited you they picked the specific assessment for you to complete first — it will be at the top.",
           imageUrl: assessment.url,
           imageAlt: "Assessment page listing available assessments",
+          capture: { path: "/assessment", assetPath: "src/assets/help/org_member/50_assessment.png" },
           hotspots: [
             { x: 1.2, y: 14.0, w: 18.3, h: 1.9, label: "Click Assessment" },
           ],
@@ -81,6 +83,7 @@ export const orgMemberContent: HelpRoleContent = {
             "Click My Results in the sidebar. If you have completed more than one assessment, use the dropdown in the top right to switch between them.",
           imageUrl: myResults.url,
           imageAlt: "My Results page with assessment selector",
+          capture: { path: "/my-results", assetPath: "src/assets/help/org_member/20_my_results.png" },
           hotspots: [
             { x: 74.8, y: 6.2, w: 22.5, h: 2.3, label: "Switch assessment" },
           ],
@@ -108,6 +111,7 @@ export const orgMemberContent: HelpRoleContent = {
             "Click My Development Plan in the sidebar. The page pulls the top themes from your latest report and turns them into suggested actions you can commit to.",
           imageUrl: devPlan.url,
           imageAlt: "Development plan page",
+          capture: { path: "/development-plan", assetPath: "src/assets/help/org_member/30_dev_plan.png" },
           hotspots: [
             { x: 1.2, y: 20.5, w: 18.3, h: 1.9, label: "Click My Development Plan" },
           ],
@@ -130,6 +134,7 @@ export const orgMemberContent: HelpRoleContent = {
             "Click Shared in the sidebar. There are two tabs: 'Corp Shared Results' shows people in your organization who shared their results with you or with your department, and 'Generally Shared' shows outside sharing.",
           imageUrl: shared.url,
           imageAlt: "Shared results page with department listing",
+          capture: { path: "/shared", assetPath: "src/assets/help/org_member/40_shared.png" },
           hotspots: [
             { x: 1.2, y: 12.5, w: 18.3, h: 1.9, label: "Click Shared" },
             { x: 23.5, y: 5.5, w: 30.0, h: 3.0, label: "Corp vs. Generally shared tabs" },
@@ -153,6 +158,7 @@ export const orgMemberContent: HelpRoleContent = {
             "In the sidebar, click Settings, then Notification Settings. Each category has a 'Set all' control so you can turn a whole section on or off in one click.",
           imageUrl: notifications.url,
           imageAlt: "Notification settings page",
+          capture: { path: "/notification-settings", assetPath: "src/assets/help/org_member/60_notifications.png" },
         },
       ],
     },
@@ -167,6 +173,7 @@ export const orgMemberContent: HelpRoleContent = {
             "Click Settings in the sidebar. From here you can update your display name, change your password, enroll or manage two-factor authentication, and review devices you've trusted.",
           imageUrl: settings.url,
           imageAlt: "Settings page",
+          capture: { path: "/settings", assetPath: "src/assets/help/org_member/70_settings.png" },
         },
         {
           title: "Trust this device (optional)",
@@ -210,6 +217,7 @@ export const orgMemberContent: HelpRoleContent = {
             "Click AI Chat in the sidebar. The assistant already has every assessment on your account loaded — you don't need to paste anything.",
           imageUrl: aiChat.url,
           imageAlt: "AI Chat page with assessment context loaded",
+          capture: { path: "/ai-chat", assetPath: "src/assets/help/org_member/80_ai_chat.png" },
           hotspots: [
             { x: 1.2, y: 17.0, w: 18.3, h: 1.9, label: "Click AI Chat" },
           ],
@@ -242,6 +250,7 @@ export const orgMemberContent: HelpRoleContent = {
             "Click Chat History in the sidebar. Every past conversation is listed newest first, with the assessments that were in context and how long the session ran.",
           imageUrl: chatHistory.url,
           imageAlt: "Chat history listing past conversations",
+          capture: { path: "/ai-chat/history", assetPath: "src/assets/help/org_member/81_chat_history.png" },
         },
         {
           title: "Reopen or start fresh",
@@ -261,6 +270,7 @@ export const orgMemberContent: HelpRoleContent = {
             "Click My Learning in the sidebar. The Assigned tab lists anything your admin or coach required for you. Complete these first — they may be tied to a certification or org requirement.",
           imageUrl: myLearning.url,
           imageAlt: "My Learning page",
+          capture: { path: "/my-learning", assetPath: "src/assets/help/org_member/90_my_learning.png" },
         },
         {
           title: "Enroll in more",
