@@ -240,6 +240,7 @@ function BulkInviteCard({
           body: JSON.stringify({
             organization_id: orgId,
             rows: parsedRows,
+            required_instrument_id: requiredInstrumentId,
           }),
         }
       );
