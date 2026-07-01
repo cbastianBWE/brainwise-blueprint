@@ -317,7 +317,7 @@ export default function QuizViewer({
         correct =
           picked.size === correctIds.size &&
           [...picked].every((id) => correctIds.has(id));
-      } else if (q.question_type === "match_definition") {
+      } else if (q.question_type === "match_definition" || q.question_type === "match_picture") {
         const pairs = (a as Record<string, string>) ?? {};
         correct = (q.prompts ?? []).every((p) => {
           const aid = pairs[p.id];
