@@ -9,6 +9,7 @@ import { Search, HelpCircle, ImageIcon } from "lucide-react";
 import { useAccountRole } from "@/lib/accountRoles";
 import { helpContent, helpRoleOrder } from "@/content/help";
 import type { HelpGuide, HelpRoleContent } from "@/content/help/types";
+import { AnnotatedScreenshot } from "@/components/help/AnnotatedScreenshot";
 
 /**
  * Which help tabs a viewer sees.
@@ -122,13 +123,12 @@ const HelpRoleTab = ({
                             onClick={() =>
                               onOpenImage(step.imageUrl!, step.imageAlt ?? step.title)
                             }
-                            className="group relative block overflow-hidden rounded-md border bg-muted/40 transition hover:border-primary"
+                            className="group relative block overflow-hidden rounded-md border bg-muted/40 transition hover:border-primary text-left"
                           >
-                            <img
+                            <AnnotatedScreenshot
                               src={step.imageUrl}
                               alt={step.imageAlt ?? step.title}
-                              loading="lazy"
-                              className="w-full max-w-2xl"
+                              hotspots={step.hotspots}
                             />
                             <span className="absolute right-2 top-2 flex items-center gap-1 rounded bg-background/80 px-2 py-1 text-[10px] text-muted-foreground opacity-0 backdrop-blur transition group-hover:opacity-100">
                               <ImageIcon className="h-3 w-3" /> Click to enlarge
