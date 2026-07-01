@@ -239,7 +239,10 @@ export function QuestionCard({ question, index, onChange, onSave, onArchive, bus
     setSaving(true);
     try {
       let toCommit = question;
-      if (question.question_type === "match_definition") {
+      if (
+        question.question_type === "match_definition" ||
+        question.question_type === "match_picture"
+      ) {
         toCommit = { ...question, options: pairsToOptions(question.pairs) };
       }
       await onSave(toCommit, saveReason.trim());
