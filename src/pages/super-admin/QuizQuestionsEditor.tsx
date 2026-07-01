@@ -205,6 +205,7 @@ export default function QuizQuestionsEditor() {
       points: 1,
       explanation: "",
       display_order: questions.length,
+      question_image_asset_id: null,
       options: seed.options,
       pairs: seed.pairs,
       dirty: true,
