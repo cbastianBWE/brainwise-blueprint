@@ -63,7 +63,9 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
   const [items, setItems] = useState<Item[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [reviewingUnanswered, setReviewingUnanswered] = useState(false);
+  const [reviewing, setReviewing] = useState(false);
   const [responses, setResponses] = useState<Record<string, { numeric: number; text: string | null; readiness: string | null }>>({});
+  const [unsavedItems, setUnsavedItems] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [showExitDialog, setShowExitDialog] = useState(false);
   const [showSubmitDialog, setShowSubmitDialog] = useState(false);
@@ -71,6 +73,11 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
   const [submitting, setSubmitting] = useState(false);
   const [responseScales, setResponseScales] = useState<ResponseScale[]>([]);
   const autoSaveTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+  const loadedAssessmentRef = useRef<string | null>(null);
+  const responsesRef = useRef(responses);
+  const itemsRef = useRef(items);
+  useEffect(() => { responsesRef.current = responses; }, [responses]);
+  useEffect(() => { itemsRef.current = items; }, [items]);
   
 
   const [needsAck, setNeedsAck] = useState(false);
