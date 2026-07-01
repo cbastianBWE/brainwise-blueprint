@@ -1,6 +1,8 @@
 import type { HelpRoleContent } from "./types";
 import { individualContent } from "./individual";
 import { coachContent } from "./coach";
+import { orgMemberContent } from "./org_member";
+import { orgAdminContent } from "./org_admin";
 
 const placeholder = (
   role: HelpRoleContent["role"],
@@ -16,20 +18,12 @@ const placeholder = (
 export const helpContent: Record<HelpRoleContent["role"], HelpRoleContent> = {
   individual: individualContent,
   coach: coachContent,
+  org_member: orgMemberContent,
+  org_admin: orgAdminContent,
   mentor: placeholder(
     "mentor",
     "Mentor",
     "You mentor coaches-in-training. Guides for reviewing trainees, leaving feedback, and using templates are on the way.",
-  ),
-  org_member: placeholder(
-    "org_member",
-    "Org Member",
-    "Your organization gave you access. Guides for accepting the invite, completing your assigned assessment, and viewing your results are on the way.",
-  ),
-  org_admin: placeholder(
-    "org_admin",
-    "Org / Company Admin",
-    "You administer an organization on BrainWise. Guides for inviting members (single and bulk), picking assessments, reviewing completion, and sharing resources are on the way.",
   ),
   super_admin: placeholder(
     "super_admin",
