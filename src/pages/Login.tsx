@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useRoleRedirect } from "@/hooks/useAuth";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import MfaChallenge from "@/components/MfaChallenge";
+import { getTrustedDeviceToken, clearTrustedDeviceToken } from "@/lib/trustedDevice";
 
 const Login = () => {
   const [email, setEmail] = useState("");
