@@ -27,6 +27,9 @@ export const individualContent: HelpRoleContent = {
             "In the sidebar on the left, click Assessment. This is where every assessment you can take is listed.",
           imageUrl: dashboard.url,
           imageAlt: "Sidebar with Assessment link highlighted",
+          hotspots: [
+            { x: 1.2, y: 14.0, w: 18.3, h: 1.9, label: "Click Assessment" },
+          ],
         },
         {
           title: "Pick an assessment and start",
@@ -34,6 +37,9 @@ export const individualContent: HelpRoleContent = {
             "You'll see the assessments available to you. Click Start on the one you want to take. If it's your first time, you may be asked to acknowledge how the assessment works before questions begin.",
           imageUrl: assessmentLanding.url,
           imageAlt: "Assessment landing page listing available assessments",
+          hotspots: [
+            { x: 26.3, y: 14.4, w: 32.8, h: 13.4, label: "Pick an assessment card" },
+          ],
         },
         {
           title: "Work through the questions",
@@ -60,6 +66,9 @@ export const individualContent: HelpRoleContent = {
             "Click My Results in the sidebar. If you have more than one completed assessment, use the selector at the top to switch between them.",
           imageUrl: myResults.url,
           imageAlt: "My Results page overview",
+          hotspots: [
+            { x: 1.2, y: 8.0, w: 18.3, h: 1.9, label: "Click My Results" },
+          ],
         },
         {
           title: "Read the narrative sections",
@@ -110,6 +119,9 @@ export const individualContent: HelpRoleContent = {
             "Go to Settings → Sharing Requests, or use the Shared With Me link in the sidebar to see who currently has access to your results.",
           imageUrl: sharingRequests.url,
           imageAlt: "Sharing requests screen",
+          hotspots: [
+            { x: 1.2, y: 24.0, w: 18.3, h: 1.9, label: "Open Settings" },
+          ],
         },
         {
           title: "Invite by email",
@@ -148,6 +160,11 @@ export const individualContent: HelpRoleContent = {
           title: "Use \"Set all\" for a whole category",
           body:
             "Each category has a Set all dropdown at the top-right. Use it to switch every notification in that category on or off in one click.",
+          imageUrl: notifScroll.url,
+          imageAlt: "Set all dropdown on a notification category",
+          hotspots: [
+            { x: 69.8, y: 14.4, w: 12.0, h: 1.4, label: "Set all to…" },
+          ],
         },
         {
           title: "General account settings",

@@ -9,6 +9,7 @@ import { Search, HelpCircle, ImageIcon } from "lucide-react";
 import { useAccountRole } from "@/lib/accountRoles";
 import { helpContent, helpRoleOrder } from "@/content/help";
 import type { HelpGuide, HelpRoleContent } from "@/content/help/types";
+import { AnnotatedScreenshot } from "@/components/help/AnnotatedScreenshot";
 
 /**
  * Which help tabs a viewer sees.
@@ -68,9 +69,11 @@ const HelpRoleTab = ({
 }: {
   content: HelpRoleContent;
   query: string;
-  onOpenImage: (url: string, alt: string) => void;
+  onOpenImage: (url: string, alt: string, hotspots?: HelpGuide["steps"][number]["hotspots"]) => void;
 }) => {
   const guides = content.guides.filter((g) => matchesQuery(g, query));
+
+
 
   return (
     <div className="space-y-6">
@@ -120,15 +123,14 @@ const HelpRoleTab = ({
                           <button
                             type="button"
                             onClick={() =>
-                              onOpenImage(step.imageUrl!, step.imageAlt ?? step.title)
+                              onOpenImage(step.imageUrl!, step.imageAlt ?? step.title, step.hotspots)
                             }
-                            className="group relative block overflow-hidden rounded-md border bg-muted/40 transition hover:border-primary"
+                            className="group relative block overflow-hidden rounded-md border bg-muted/40 transition hover:border-primary text-left"
                           >
-                            <img
+                            <AnnotatedScreenshot
                               src={step.imageUrl}
                               alt={step.imageAlt ?? step.title}
-                              loading="lazy"
-                              className="w-full max-w-2xl"
+                              hotspots={step.hotspots}
                             />
                             <span className="absolute right-2 top-2 flex items-center gap-1 rounded bg-background/80 px-2 py-1 text-[10px] text-muted-foreground opacity-0 backdrop-blur transition group-hover:opacity-100">
                               <ImageIcon className="h-3 w-3" /> Click to enlarge
@@ -166,7 +168,11 @@ export default function Help() {
     defaultRoleFor(accountType, isPractitionerCoach, isSuperAdmin),
   );
   const [query, setQuery] = useState("");
-  const [preview, setPreview] = useState<{ url: string; alt: string } | null>(null);
+  const [preview, setPreview] = useState<{
+    url: string;
+    alt: string;
+    hotspots?: HelpGuide["steps"][number]["hotspots"];
+  } | null>(null);
 
   // If the role list resolves after mount, make sure the active tab is one the
   // viewer can actually see.
@@ -227,7 +233,7 @@ export default function Help() {
               <HelpRoleTab
                 content={helpContent[r]}
                 query={query}
-                onOpenImage={(url, alt) => setPreview({ url, alt })}
+                onOpenImage={(url, alt, hotspots) => setPreview({ url, alt, hotspots })}
               />
             </TabsContent>
           ))}
@@ -238,10 +244,11 @@ export default function Help() {
         <DialogContent className="max-w-5xl p-2 md:p-4">
           <DialogTitle className="sr-only">{preview?.alt ?? "Screenshot"}</DialogTitle>
           {preview && (
-            <img
+            <AnnotatedScreenshot
               src={preview.url}
               alt={preview.alt}
-              className="w-full h-auto rounded"
+              hotspots={preview.hotspots}
+              className="max-w-none w-full"
             />
           )}
         </DialogContent>
