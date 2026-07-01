@@ -30,6 +30,7 @@ export const individualContent: HelpRoleContent = {
             "In the sidebar on the left, click Assessment. This is where every assessment you can take is listed.",
           imageUrl: dashboard.url,
           imageAlt: "Sidebar with Assessment link highlighted",
+          capture: { path: "/dashboard", assetPath: "src/assets/help/individual/10_dashboard.png" },
           hotspots: [
             { x: 1.2, y: 14.0, w: 18.3, h: 1.9, label: "Click Assessment" },
           ],
@@ -40,6 +41,7 @@ export const individualContent: HelpRoleContent = {
             "You'll see the assessments available to you. Click Start on the one you want to take. If it's your first time, you may be asked to acknowledge how the assessment works before questions begin.",
           imageUrl: assessmentLanding.url,
           imageAlt: "Assessment landing page listing available assessments",
+          capture: { path: "/assessment", assetPath: "src/assets/help/individual/20_assessment_landing.png" },
           hotspots: [
             { x: 26.3, y: 14.4, w: 32.8, h: 13.4, label: "Pick an assessment card" },
           ],
@@ -69,6 +71,7 @@ export const individualContent: HelpRoleContent = {
             "Click My Results in the sidebar. If you have more than one completed assessment, use the selector at the top to switch between them.",
           imageUrl: myResults.url,
           imageAlt: "My Results page overview",
+          capture: { path: "/my-results", assetPath: "src/assets/help/individual/30_my_results.png" },
           hotspots: [
             { x: 1.2, y: 8.0, w: 18.3, h: 1.9, label: "Click My Results" },
           ],
@@ -79,6 +82,7 @@ export const individualContent: HelpRoleContent = {
             "Scroll down through the profile overview and each dimension. Each section explains what your scores mean and what to do about them in plain language.",
           imageUrl: myResultsScroll.url,
           imageAlt: "My Results narrative scrolled to show dimensions",
+          capture: { path: "/my-results", assetPath: "src/assets/help/individual/31_my_results_scroll.png", scrollY: 1400 },
         },
         {
           title: "Use coaching questions to reflect",
@@ -122,6 +126,7 @@ export const individualContent: HelpRoleContent = {
             "Go to Settings → Sharing Requests, or use the Shared With Me link in the sidebar to see who currently has access to your results.",
           imageUrl: sharingRequests.url,
           imageAlt: "Sharing requests screen",
+          capture: { path: "/settings/sharing", assetPath: "src/assets/help/individual/51_sharing_requests.png" },
           hotspots: [
             { x: 1.2, y: 24.0, w: 18.3, h: 1.9, label: "Open Settings" },
           ],
@@ -137,6 +142,7 @@ export const individualContent: HelpRoleContent = {
             "The list shows every active share. Click Revoke next to any name to remove their access immediately.",
           imageUrl: sharedWithMe.url,
           imageAlt: "Shared With Me listing current shares",
+          capture: { path: "/shared", assetPath: "src/assets/help/individual/50_shared_with_me.png" },
         },
       ],
     },
@@ -151,6 +157,7 @@ export const individualContent: HelpRoleContent = {
             "Go to Settings → Notifications from the sidebar. You'll see notifications grouped by category (results, sharing, learning, etc.).",
           imageUrl: notif.url,
           imageAlt: "Notification settings page",
+          capture: { path: "/notification-settings", assetPath: "src/assets/help/individual/60_notification_settings.png" },
         },
         {
           title: "Toggle individual notifications",
@@ -158,6 +165,7 @@ export const individualContent: HelpRoleContent = {
             "Each notification has an Email and In-app toggle. Turn on the ones you want, turn off the ones you don't. Changes save automatically.",
           imageUrl: notifScroll.url,
           imageAlt: "Notification categories with toggles",
+          capture: { path: "/notification-settings", assetPath: "src/assets/help/individual/61_notification_settings_scroll.png", scrollY: 900 },
         },
         {
           title: "Use \"Set all\" for a whole category",
@@ -175,6 +183,7 @@ export const individualContent: HelpRoleContent = {
             "For your profile, password, and privacy preferences, use the other tabs under Settings.",
           imageUrl: settings.url,
           imageAlt: "General settings page",
+          capture: { path: "/settings", assetPath: "src/assets/help/individual/70_settings.png" },
         },
       ],
     },
@@ -189,6 +198,7 @@ export const individualContent: HelpRoleContent = {
             "Click AI Chat in the sidebar. The assistant already has every completed assessment on your account loaded as context — you don't have to explain anything about yourself first.",
           imageUrl: aiChat.url,
           imageAlt: "AI Chat page with assessment context pre-loaded",
+          capture: { path: "/ai-chat", assetPath: "src/assets/help/individual/80_ai_chat.png" },
           hotspots: [
             { x: 1.2, y: 17.0, w: 18.3, h: 1.9, label: "Click AI Chat" },
           ],
@@ -221,6 +231,7 @@ export const individualContent: HelpRoleContent = {
             "Click Chat History in the sidebar. Every past conversation is listed newest-first with the assessments that were in context and how long the session ran.",
           imageUrl: chatHistory.url,
           imageAlt: "Chat History page listing past conversations",
+          capture: { path: "/ai-chat/history", assetPath: "src/assets/help/individual/81_chat_history.png" },
           hotspots: [
             { x: 1.2, y: 18.5, w: 18.3, h: 1.9, label: "Click Chat History" },
           ],
@@ -246,6 +257,7 @@ export const individualContent: HelpRoleContent = {
             "Click My Learning in the sidebar. The Assigned tab shows anything a coach or admin required for you; the Browse & Enroll tab shows what else you can add to your queue.",
           imageUrl: myLearning.url,
           imageAlt: "My Learning page with Browse & Enroll tab",
+          capture: { path: "/my-learning", assetPath: "src/assets/help/individual/90_my_learning.png" },
           hotspots: [
             { x: 1.2, y: 20.5, w: 18.3, h: 1.9, label: "Click My Learning" },
             { x: 32.0, y: 9.5, w: 12.0, h: 2.4, label: "Browse & Enroll" },
