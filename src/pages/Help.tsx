@@ -32,7 +32,6 @@ function visibleRoles(
 
   if (accountType === "coach" || isPractitionerCoach) {
     roles.add("coach");
-    roles.add("coach_client");
   }
   if (isMentor) roles.add("mentor");
   if (accountType === "corporate_employee") roles.add("org_member");

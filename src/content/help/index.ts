@@ -1,5 +1,6 @@
 import type { HelpRoleContent } from "./types";
 import { individualContent } from "./individual";
+import { coachContent } from "./coach";
 
 const placeholder = (
   role: HelpRoleContent["role"],
@@ -14,16 +15,7 @@ const placeholder = (
 
 export const helpContent: Record<HelpRoleContent["role"], HelpRoleContent> = {
   individual: individualContent,
-  coach_client: placeholder(
-    "coach_client",
-    "Coach Client",
-    "You were invited into the platform by a coach. Guides for accepting the invite, taking your assigned assessment, and understanding what your coach can see are on the way.",
-  ),
-  coach: placeholder(
-    "coach",
-    "Coach",
-    "You use BrainWise with your own coaching clients. Guides for inviting clients, ordering assessments, reviewing results, and sharing reports are on the way.",
-  ),
+  coach: coachContent,
   mentor: placeholder(
     "mentor",
     "Mentor",
@@ -44,11 +36,17 @@ export const helpContent: Record<HelpRoleContent["role"], HelpRoleContent> = {
     "Super Admin",
     "You administer the platform. Guides for organization setup, coach tracking, impersonation, trusted devices, and platform features are on the way.",
   ),
+  // Coach clients follow the same flow as Individuals — we intentionally
+  // don't surface a separate tab. Kept in the map so the type stays exhaustive.
+  coach_client: placeholder(
+    "coach_client",
+    "Coach Client",
+    "Coach clients use the same flows as individual users — see the Individual tab.",
+  ),
 };
 
 export const helpRoleOrder: HelpRoleContent["role"][] = [
   "individual",
-  "coach_client",
   "org_member",
   "coach",
   "mentor",
