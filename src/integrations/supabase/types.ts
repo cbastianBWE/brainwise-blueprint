@@ -9075,7 +9075,7 @@ export type Database = {
           match_pair_key: string | null
           option_image_asset_id: string | null
           option_image_url: string | null
-          option_text: string
+          option_text: string | null
           question_id: string
           updated_at: string
           updated_by: string | null
@@ -9090,7 +9090,7 @@ export type Database = {
           match_pair_key?: string | null
           option_image_asset_id?: string | null
           option_image_url?: string | null
-          option_text: string
+          option_text?: string | null
           question_id: string
           updated_at?: string
           updated_by?: string | null
@@ -9105,7 +9105,7 @@ export type Database = {
           match_pair_key?: string | null
           option_image_asset_id?: string | null
           option_image_url?: string | null
-          option_text?: string
+          option_text?: string | null
           question_id?: string
           updated_at?: string
           updated_by?: string | null
@@ -12101,6 +12101,15 @@ export type Database = {
           p_archive_reason: string
           p_article_id: string
           p_caller_id: string
+        }
+        Returns: Json
+      }
+      _cascade_archive_asset_refs_for_quiz: {
+        Args: {
+          p_archive_reason: string
+          p_caller_id: string
+          p_quiz_answer_option_id: string
+          p_quiz_question_id: string
         }
         Returns: Json
       }
@@ -15314,6 +15323,7 @@ export type Database = {
           p_id: string
           p_is_correct: boolean
           p_match_pair_key: string
+          p_option_image_asset_id?: string
           p_option_image_url: string
           p_option_text: string
           p_question_id: string
@@ -15328,6 +15338,7 @@ export type Database = {
           p_explanation: string
           p_id: string
           p_points: number
+          p_question_image_asset_id?: string
           p_question_image_url: string
           p_question_text: string
           p_question_type: string
