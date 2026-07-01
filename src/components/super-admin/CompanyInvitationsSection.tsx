@@ -469,6 +469,7 @@ function BulkInviteCard({
   const [parsedRows, setParsedRows] = useState<ParsedRow[]>([]);
   const [bulkResults, setBulkResults] = useState<BulkResultRow[]>([]);
   const [fileName, setFileName] = useState<string>("");
+  const [requiredInstrumentId, setRequiredInstrumentId] = useState("INST-001");
 
   const escapeCsv = (value: string) => {
     if (/[",\n]/.test(value)) return `"${value.replace(/"/g, '""')}"`;
