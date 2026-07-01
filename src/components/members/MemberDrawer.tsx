@@ -68,6 +68,7 @@ function MemberDrawerBody({
   const queryClient = useQueryClient();
   const [impersonateTarget, setImpersonateTarget] = useState<MemberRow | null>(null);
   const [mentorDialogOpen, setMentorDialogOpen] = useState(false);
+  const [revokeDevicesOpen, setRevokeDevicesOpen] = useState(false);
   const isSelf = member.user_id === currentUserId;
   const showCoach = member.show_coach_tab;
   const showAccess = member.organization_id === null;
@@ -76,6 +77,10 @@ function MemberDrawerBody({
   useEffect(() => {
     setHasUnsavedChanges(mentorDialogOpen);
   }, [mentorDialogOpen, setHasUnsavedChanges]);
+
+  useEffect(() => {
+    setHasUnsavedChanges(revokeDevicesOpen);
+  }, [revokeDevicesOpen, setHasUnsavedChanges]);
 
   return (
     <div className="flex flex-col h-full">
