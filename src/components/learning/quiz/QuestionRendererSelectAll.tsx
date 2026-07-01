@@ -37,6 +37,9 @@ export default function QuestionRendererSelectAll({
         const missedCorrect = locked && isCorrect && !picked;
         const wrongPicked = locked && picked && !isCorrect;
         const rightPicked = locked && picked && isCorrect;
+        const imgUrl = opt.option_image_asset_id
+          ? imageUrlMap?.get(opt.option_image_asset_id)
+          : undefined;
         return (
           <button
             key={opt.id}
@@ -54,6 +57,13 @@ export default function QuestionRendererSelectAll({
               (disabled || locked) && "cursor-default",
             )}
           >
+            {imgUrl && (
+              <img
+                src={imgUrl}
+                alt=""
+                className="mb-3 max-h-32 w-auto rounded-md object-contain"
+              />
+            )}
             <div className="flex items-center justify-between gap-3">
               <span className="flex items-center gap-3 font-medium">
                 {picked ? (
