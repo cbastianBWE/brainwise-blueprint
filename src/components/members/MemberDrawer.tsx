@@ -251,6 +251,32 @@ function MemberDrawerBody({
           };
         }}
       />
+
+      <JustifiedActionDialog
+        open={revokeDevicesOpen}
+        onOpenChange={setRevokeDevicesOpen}
+        title="Revoke trusted devices"
+        description={
+          <span>
+            This signs <strong>{member.full_name ?? member.email}</strong> out of the "trust this device" state on every browser. They will need a two-factor code on next login. This does not remove their authenticator.
+          </span>
+        }
+        successTitle="Trusted devices revoked"
+        onSubmit={async (reason) => {
+          const { data, error } = await supabase.rpc("revoke_all_trusted_devices" as any, {
+            p_user_id: member.user_id,
+            p_reason: reason,
+          } as any);
+          if (error) throw error;
+          const count = (data as number) ?? 0;
+          return {
+            changed: count > 0,
+            note: count === 0
+              ? "This user had no active trusted devices."
+              : `Revoked ${count} trusted device${count === 1 ? "" : "s"}.`,
+          };
+        }}
+      />
     </div>
   );
 }
