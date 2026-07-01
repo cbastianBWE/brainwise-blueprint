@@ -6,6 +6,11 @@ import teamPaired from "@/assets/help/coach/30_team_paired.png.asset.json";
 import orders from "@/assets/help/coach/40_orders.png.asset.json";
 import orderAssessment from "@/assets/help/coach/41_order_assessment.png.asset.json";
 import certification from "@/assets/help/coach/60_certification.png.asset.json";
+import aiChat from "@/assets/help/coach/70_ai_chat.png.asset.json";
+import resourcesPage from "@/assets/help/coach/80_resources.png.asset.json";
+import coachDashboard from "@/assets/help/coach/90_dashboard.png.asset.json";
+import coachMyResults from "@/assets/help/coach/91_my_results.png.asset.json";
+import coachSettings from "@/assets/help/coach/92_settings.png.asset.json";
 
 // Sidebar hotspots (percentages of a 1280x1800 screenshot). Item height ≈ 1.7%.
 const SB = { x: 1.2, w: 17.2, h: 1.7 };
