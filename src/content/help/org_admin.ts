@@ -27,6 +27,7 @@ export const orgAdminContent: HelpRoleContent = {
             "Click Users in the sidebar. You'll land on the Invite tab by default.",
           imageUrl: dashboard.url,
           imageAlt: "Org admin dashboard sidebar",
+          capture: { path: "/dashboard", assetPath: "src/assets/help/org_admin/10_dashboard.png" },
           hotspots: [
             { x: 1.2, y: 18.0, w: 18.3, h: 1.9, label: "Click Users" },
           ],
@@ -37,6 +38,7 @@ export const orgAdminContent: HelpRoleContent = {
             "Enter the invitee's email and department (both required). Optionally add their supervisor's email and org level — you'll need the supervisor email if you want the person included in dual-rater assessments like AIRSA.",
           imageUrl: invite.url,
           imageAlt: "Invite a user form",
+          capture: { path: "/admin/users", assetPath: "src/assets/help/org_admin/20_users_invite.png" },
           hotspots: [
             { x: 25.7, y: 21.5, w: 33.6, h: 1.6, label: "Email (required)" },
             { x: 60.5, y: 21.5, w: 33.5, h: 1.6, label: "Department (required)" },
@@ -94,6 +96,7 @@ export const orgAdminContent: HelpRoleContent = {
             "On the User Management page, switch to the Users tab. Everyone linked to your organization appears here.",
           imageUrl: usersList.url,
           imageAlt: "User list with search and status",
+          capture: { path: "/admin/users", assetPath: "src/assets/help/org_admin/21_users_list.png", tabName: "Users" },
           hotspots: [
             { x: 28.9, y: 11.0, w: 6.6, h: 1.6, label: "Users tab" },
             { x: 25.7, y: 23.5, w: 34.3, h: 1.6, label: "Search users" },
@@ -122,6 +125,7 @@ export const orgAdminContent: HelpRoleContent = {
             "Click Team & Paired Reports in the sidebar. This is where every team or paired report you've generated lives.",
           imageUrl: teamPaired.url,
           imageAlt: "Team & Paired Reports page",
+          capture: { path: "/team-paired-reports", assetPath: "src/assets/help/org_admin/30_team_paired.png" },
           hotspots: [
             { x: 1.2, y: 21.5, w: 18.3, h: 1.9, label: "Click Team & Paired Reports" },
             { x: 81.5, y: 7.0, w: 15.5, h: 2.4, label: "Generate report" },
@@ -150,6 +154,7 @@ export const orgAdminContent: HelpRoleContent = {
             "Click Features in the sidebar. The top card shows your contract configuration — tier, entitled assessments, and monthly allowances. These are read-only; contact BrainWise to change them.",
           imageUrl: features.url,
           imageAlt: "Organization Features page",
+          capture: { path: "/company/features", assetPath: "src/assets/help/org_admin/40_features.png" },
           hotspots: [
             { x: 1.2, y: 24.5, w: 18.3, h: 1.9, label: "Click Features" },
           ],
@@ -187,6 +192,7 @@ export const orgAdminContent: HelpRoleContent = {
             "Under Dashboards, click Interventions. Every recommendation saved from a team or NAI dashboard shows up here with status, priority, target date, and owner.",
           imageUrl: interventions.url,
           imageAlt: "Intervention tracking page",
+          capture: { path: "/dashboard/interventions", assetPath: "src/assets/help/org_admin/60_interventions.png" },
           hotspots: [
             { x: 1.2, y: 32.5, w: 18.3, h: 1.9, label: "Click Interventions" },
           ],
@@ -217,6 +223,7 @@ export const orgAdminContent: HelpRoleContent = {
             "Navigate to /admin/resources (or open Resources from the sidebar and switch to the admin view). Nothing is published until you add it here.",
           imageUrl: adminResources.url,
           imageAlt: "Admin resources page",
+          capture: { path: "/admin/resources", assetPath: "src/assets/help/org_admin/35_admin_resources.png" },
         },
         {
           title: "Add a resource",
@@ -236,6 +243,7 @@ export const orgAdminContent: HelpRoleContent = {
             "On the User Management page (Invite tab), scroll below the Bulk invite card. Every unredeemed invitation still within its expiration window is listed here.",
           imageUrl: pendingInvites.url,
           imageAlt: "Pending invitations section on the Invite tab",
+          capture: { path: "/admin/users", assetPath: "src/assets/help/org_admin/22_pending_invitations.png", scrollY: 1200 },
         },
         {
           title: "Search, resend, or revoke",
@@ -258,6 +266,7 @@ export const orgAdminContent: HelpRoleContent = {
             "Click Features in the sidebar, then scroll to Member Feature Overrides. You'll see every active member with per-feature toggles for AI Chat and each assessment they have access to.",
           imageUrl: featuresOverrides.url,
           imageAlt: "Member feature overrides table",
+          capture: { path: "/company/features", assetPath: "src/assets/help/org_admin/41_features_overrides.png", scrollY: 1400 },
         },
         {
           title: "Restrict a feature for one person",
@@ -328,6 +337,7 @@ export const orgAdminContent: HelpRoleContent = {
             "Click Settings in the sidebar. Because you can invite users, generate team reports, and change org configuration, keeping your own 2FA on is the single most important security step.",
           imageUrl: adminSettings.url,
           imageAlt: "Admin settings page",
+          capture: { path: "/settings", assetPath: "src/assets/help/org_admin/80_settings.png" },
         },
         {
           title: "Enable two-factor authentication",
