@@ -57,6 +57,12 @@ const MfaChallenge = ({ userId, onSuccess, onCancel, allowTrustDevice = true }: 
         code: code.trim(),
       });
       if (error) throw error;
+      if (allowTrustDevice && trustChecked && settings?.enabled) {
+        try {
+          const { data: raw, error: mintErr } = await supabase.rpc("mint_trusted_device" as any, { p_label: buildDeviceLabel() });
+          if (!mintErr && typeof raw === "string") setTrustedDeviceToken(raw);
+        } catch { /* swallow */ }
+      }
       await queryClient.invalidateQueries({ queryKey: ["mfa-satisfied", userId] });
       await onSuccess();
     } catch (err: any) {
