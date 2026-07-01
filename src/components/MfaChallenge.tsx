@@ -108,6 +108,24 @@ const MfaChallenge = ({ userId, onSuccess, onCancel, allowTrustDevice = true }: 
             disabled={initializing}
           />
         </div>
+        {allowTrustDevice && settings?.enabled && (
+          <div className="flex items-start gap-2">
+            <Checkbox
+              id="trust-device"
+              checked={trustChecked}
+              onCheckedChange={(v) => setTrustChecked(v === true)}
+              disabled={initializing || verifying}
+            />
+            <div className="space-y-0.5">
+              <Label htmlFor="trust-device" className="font-medium cursor-pointer">
+                Trust this device for {settings.window_days} days
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                You won't need a code on this browser until then.
+              </p>
+            </div>
+          </div>
+        )}
         <Button
           type="submit"
           className="w-full"
