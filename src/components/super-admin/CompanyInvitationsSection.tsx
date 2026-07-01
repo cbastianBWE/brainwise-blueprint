@@ -23,6 +23,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   Loader2, Mail, Upload, Download, Trash2, Users, Send,
 } from "lucide-react";
+import { PUBLIC_INSTRUMENTS } from "@/lib/instruments";
 
 const NONE = "__none__";
 
@@ -106,6 +107,7 @@ export default function CompanyInvitationsSection({ orgId }: { orgId: string }) 
   const [deptName, setDeptName] = useState<string>(NONE);
   const [supervisorEmail, setSupervisorEmail] = useState("");
   const [orgLevel, setOrgLevel] = useState<string>(NONE);
+  const [requiredInstrumentId, setRequiredInstrumentId] = useState("INST-001");
   const [sendingSingle, setSendingSingle] = useState(false);
   const [manualCode, setManualCode] = useState<{ email: string; code: string } | null>(null);
 
@@ -153,6 +155,7 @@ export default function CompanyInvitationsSection({ orgId }: { orgId: string }) 
     setDeptName(NONE);
     setSupervisorEmail("");
     setOrgLevel(NONE);
+    setRequiredInstrumentId("INST-001");
   };
 
   const handleSendSingle = async () => {
@@ -185,6 +188,7 @@ export default function CompanyInvitationsSection({ orgId }: { orgId: string }) 
             supervisor_email: supervisorEmail.trim() || null,
             org_level: orgLevel === NONE ? null : orgLevel,
             account_type: role,
+            required_instrument_id: requiredInstrumentId,
           }),
         },
       );
@@ -310,6 +314,20 @@ export default function CompanyInvitationsSection({ orgId }: { orgId: string }) 
                   <SelectItem value={NONE}>None</SelectItem>
                   {ORG_LEVELS.map((l) => (
                     <SelectItem key={l} value={l}>{l}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Assessment</Label>
+              <Select value={requiredInstrumentId} onValueChange={setRequiredInstrumentId} disabled={sendingSingle}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {PUBLIC_INSTRUMENTS.map((i) => (
+                    <SelectItem key={i.instrument_id} value={i.instrument_id}>
+                      {i.short_name} ({i.name})
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
