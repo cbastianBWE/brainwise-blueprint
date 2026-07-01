@@ -175,5 +175,99 @@ export const orgMemberContent: HelpRoleContent = {
         },
       ],
     },
+    {
+      id: "share-your-results",
+      title: "Share your results with a manager or coach",
+      summary: "Grant a colleague or coach read access to your report on your terms.",
+      steps: [
+        {
+          title: "Open Sharing from Settings",
+          body:
+            "Click Settings in the sidebar and open the Sharing section. This is where you invite someone by email, choose what they can see, and revoke access later.",
+          imageUrl: settings.url,
+          imageAlt: "Settings page",
+        },
+        {
+          title: "Invite by email",
+          body:
+            "Enter the person's email, pick which assessment(s) to share, and send. They'll get a link to view your report. If they're already in your organization, it shows up under their Shared page immediately.",
+        },
+        {
+          title: "Revoke access anytime",
+          body:
+            "The list on the same page shows everyone who currently has access. Click Revoke next to any name to cut them off — the change is immediate.",
+        },
+      ],
+    },
+    {
+      id: "ai-chat-your-results",
+      title: "Talk to AI Chat about your report",
+      summary: "Get a plain-English walk-through of your results without waiting for a coach.",
+      steps: [
+        {
+          title: "Open AI Chat",
+          body:
+            "Click AI Chat in the sidebar. The assistant already has every assessment on your account loaded — you don't need to paste anything.",
+          imageUrl: aiChat.url,
+          imageAlt: "AI Chat page with assessment context loaded",
+          hotspots: [
+            { x: 1.2, y: 17.0, w: 18.3, h: 1.9, label: "Click AI Chat" },
+          ],
+        },
+        {
+          title: "Focus the context",
+          body:
+            "Use the chips at the top to include or exclude specific assessments. If you just want to talk about your latest PTP, deselect the others so the answers stay on-topic.",
+        },
+        {
+          title: "Ask actionable questions",
+          body:
+            "Good prompts: 'What are my top two development priorities?', 'What should I bring up in my next 1:1 with my manager?', 'Explain my Prediction score like I'm hearing this word for the first time.'",
+        },
+        {
+          title: "Watch your message allowance",
+          body:
+            "The top-right shows how many messages remain this period. If you run out, wait for the reset or ask your admin about upgrading the org's AI allowance.",
+        },
+      ],
+    },
+    {
+      id: "chat-history",
+      title: "Reopen past AI Chat conversations",
+      summary: "Pick up where you left off instead of starting a new chat every time.",
+      steps: [
+        {
+          title: "Open Chat History",
+          body:
+            "Click Chat History in the sidebar. Every past conversation is listed newest first, with the assessments that were in context and how long the session ran.",
+          imageUrl: chatHistory.url,
+          imageAlt: "Chat history listing past conversations",
+        },
+        {
+          title: "Reopen or start fresh",
+          body:
+            "Click View on any card to continue the same conversation. Use New Chat (top-right) when you want a clean slate.",
+        },
+      ],
+    },
+    {
+      id: "my-learning",
+      title: "Complete assigned learning",
+      summary: "See courses your admin assigned and browse others you can enroll in.",
+      steps: [
+        {
+          title: "Open My Learning",
+          body:
+            "Click My Learning in the sidebar. The Assigned tab lists anything your admin or coach required for you. Complete these first — they may be tied to a certification or org requirement.",
+          imageUrl: myLearning.url,
+          imageAlt: "My Learning page",
+        },
+        {
+          title: "Enroll in more",
+          body:
+            "Switch to Browse & Enroll to see additional certification paths and modules. Enrolling adds them to your queue and to the 'Continue where you left off' card on your dashboard.",
+        },
+      ],
+    },
   ],
 };
