@@ -171,11 +171,12 @@ export default function MentorTraineeDetail() {
       ) : (
         <Tabs
           value={activeTab}
-          onValueChange={(v) => setActiveTab(v as "progress" | "summary" | "notes")}
+          onValueChange={(v) => setActiveTab(v as "progress" | "summary" | "assessments" | "notes")}
         >
           <TabsList>
             <TabsTrigger value="progress">Progress</TabsTrigger>
             <TabsTrigger value="summary">Summary</TabsTrigger>
+            <TabsTrigger value="assessments">Assessments</TabsTrigger>
             <TabsTrigger value="notes">Notes</TabsTrigger>
           </TabsList>
 
@@ -199,6 +200,15 @@ export default function MentorTraineeDetail() {
               </CardContent>
             </Card>
           </TabsContent>
+
+          <TabsContent value="assessments">
+            <Card>
+              <CardContent className="pt-6">
+                <MentorTraineeAssessments traineeId={traineeId ?? ""} />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
 
           <TabsContent value="notes">
             <Card>
