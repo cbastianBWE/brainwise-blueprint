@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import MentorProgressTree from "@/components/mentor/MentorProgressTree";
 import MentorTraineeCumulativeProgress from "@/components/mentor/MentorTraineeCumulativeProgress";
 import MentorTraineeNotesPanel from "@/components/mentor/MentorTraineeNotesPanel";
+import MentorTraineeAssessments from "@/components/mentor/MentorTraineeAssessments";
 import ReviewDrawer from "@/components/mentor/ReviewDrawer";
 
 interface DrawerState {
@@ -64,7 +65,7 @@ export default function MentorTraineeDetail() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [drawer, setDrawer] = useState<DrawerState | null>(null);
-  const [activeTab, setActiveTab] = useState<"progress" | "summary" | "notes">("progress");
+  const [activeTab, setActiveTab] = useState<"progress" | "summary" | "assessments" | "notes">("progress");
 
   const handleActionComplete = () => {
     if (!drawer || !traineeId) return;
