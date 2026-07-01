@@ -154,6 +154,7 @@ import VerifyConversion from "./pages/VerifyConversion";
 import Departed from "./pages/Departed";
 import MfaEnrollment from "./pages/MfaEnrollment";
 import AccessHistory from "./pages/AccessHistory";
+import Help from "./pages/Help";
 import CookieConsentBanner from "@/components/CookieConsentBanner";
 import ImpersonationProvider from "@/contexts/ImpersonationProvider";
 import ImpersonationBanner from "@/components/impersonation/ImpersonationBanner";
@@ -251,6 +252,7 @@ const App = () => (
               <Route path="/settings/sharing-requests" element={<SharingRequests />} />
               <Route path="/settings/billing" element={<CorpRedirect toastMessage="Your organization handles billing directly."><BillingSettings /></CorpRedirect>} />
               <Route path="/settings/access-history" element={<AccessHistory />} />
+              <Route path="/help" element={<Help />} />
 
               {/* Coach */}
               <Route path="/coach/clients" element={<PractitionerCoachGuard><CoachClients /></PractitionerCoachGuard>} />
