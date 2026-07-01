@@ -44,6 +44,24 @@ const JustificationModal = ({ target, onClose }: JustificationModalProps) => {
     }
   }, [target]);
 
+  const handleStartError = (message: string) => {
+    if (message.includes("MFA_REQUIRED")) {
+      toast.error("Fresh MFA verification required. Please try again.");
+      setStep(1);
+    } else if (message.includes("NESTED_IMPERSONATION")) {
+      toast.error("You already have an active impersonation session. End it first.");
+      onClose();
+    } else if (message.includes("SELF_IMPERSONATION")) {
+      toast.error("You cannot impersonate yourself.");
+      onClose();
+    } else if (message.includes("TARGET_NOT_FOUND")) {
+      toast.error("Target user not found.");
+      onClose();
+    } else {
+      toast.error(message);
+    }
+  };
+
   const handleMfaSuccess = async () => {
     if (!target) return;
     setSubmitting(true);
@@ -51,24 +69,34 @@ const JustificationModal = ({ target, onClose }: JustificationModalProps) => {
       await beginImpersonation(target.user_id, mode, justification.trim());
     } catch (err: any) {
       setSubmitting(false);
-      const message = err?.message || "Could not start impersonation";
-      if (message.includes("MFA_REQUIRED")) {
-        toast.error("Fresh MFA verification required. Please try again.");
-        setStep(1);
-      } else if (message.includes("NESTED_IMPERSONATION")) {
-        toast.error("You already have an active impersonation session. End it first.");
-        onClose();
-      } else if (message.includes("SELF_IMPERSONATION")) {
-        toast.error("You cannot impersonate yourself.");
-        onClose();
-      } else if (message.includes("TARGET_NOT_FOUND")) {
-        toast.error("Target user not found.");
-        onClose();
-      } else {
-        toast.error(message);
-      }
+      handleStartError(err?.message || "Could not start impersonation");
     }
   };
+
+  useEffect(() => {
+    if (step !== 2 || !target) return;
+    const token = getTrustedDeviceToken();
+    if (!token) return;
+    let cancelled = false;
+    (async () => {
+      setSubmitting(true);
+      try {
+        await beginImpersonation(target.user_id, mode, justification.trim());
+      } catch (err: any) {
+        if (cancelled) return;
+        setSubmitting(false);
+        const m = err?.message || "";
+        if (m.includes("MFA_REQUIRED")) {
+          // fall through to MfaChallenge
+        } else {
+          handleStartError(m);
+        }
+      }
+    })();
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step]);
+
 
   if (!target) return null;
 
