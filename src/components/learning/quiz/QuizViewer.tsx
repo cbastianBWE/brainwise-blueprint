@@ -376,6 +376,7 @@ export default function QuizViewer({
             onAnswer={(id) => setAnswerFor(id)}
             locked={isLocked}
             disabled={viewerRole !== "self" || stage === "submitting"}
+            imageUrlMap={urlMap}
           />
         );
       case "true_false":
@@ -396,6 +397,7 @@ export default function QuizViewer({
             onAnswer={(ids) => setAnswerFor(ids)}
             locked={isLocked}
             disabled={viewerRole !== "self" || stage === "submitting"}
+            imageUrlMap={urlMap}
           />
         );
       case "match_definition":
