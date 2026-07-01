@@ -540,6 +540,19 @@ export function AppSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               )}
+              <SidebarMenuItem key="help">
+                <SidebarMenuButton asChild>
+                  <NavLink
+                    to="/help"
+                    end
+                    className="hover:bg-sidebar-accent"
+                    activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                  >
+                    <HelpCircle className="h-4 w-4 shrink-0" />
+                    {!collapsed && <span>Help Center</span>}
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
                   <NavLink
