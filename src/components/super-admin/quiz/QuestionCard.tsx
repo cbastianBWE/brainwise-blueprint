@@ -106,6 +106,7 @@ export function seedForType(type: QuizQuestionType): {
         pairs: [],
       };
     case "match_definition":
+    case "match_picture":
       return { options: [], pairs: [buildPair(), buildPair()] };
   }
 }
@@ -113,9 +114,13 @@ export function seedForType(type: QuizQuestionType): {
 function hasContentBeyondDefaults(q: DraftQuestion): boolean {
   if (q.question_text.trim().length > 0) return true;
   if (q.explanation.trim().length > 0) return true;
-  if (q.question_type === "match_definition") {
+  if (q.question_image_asset_id) return true;
+  if (q.question_type === "match_definition" || q.question_type === "match_picture") {
     return q.pairs.some(
-      (p) => p.prompt.option_text.trim().length > 0 || p.answer.option_text.trim().length > 0
+      (p) =>
+        p.prompt.option_text.trim().length > 0 ||
+        p.answer.option_text.trim().length > 0 ||
+        !!p.answer.option_image_asset_id
     );
   }
   if (q.question_type === "true_false") {
