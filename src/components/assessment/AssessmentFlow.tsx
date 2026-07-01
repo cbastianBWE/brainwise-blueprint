@@ -540,9 +540,14 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
         </Button>
 
         {isLast ? (
-          <Button onClick={() => setShowSubmitDialog(true)} disabled={!currentResponse}>
-            Submit Assessment
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setReviewing(true)}>
+              Review your responses
+            </Button>
+            <Button onClick={() => setShowSubmitDialog(true)} disabled={!currentResponse}>
+              Submit Assessment
+            </Button>
+          </div>
         ) : (
           <Button
             variant="outline"
