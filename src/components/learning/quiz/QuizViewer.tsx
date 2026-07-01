@@ -294,7 +294,9 @@ export default function QuizViewer({
   const isLocked = isAlways && lockedQuestions.has(currentQuestion.id);
   const complete = isAnswerComplete(currentQuestion, currentAnswer);
   const isLast = currentIndex === sortedQuestions.length - 1;
-  const isUnsupported = currentQuestion.question_type === "match_picture";
+  const headerImageUrl = currentQuestion.question_image_asset_id
+    ? urlMap.get(currentQuestion.question_image_asset_id)
+    : undefined;
 
   const setAnswerFor = (val: AnswerValue) =>
     setAnswers((prev) => ({ ...prev, [currentQuestion.id]: val }));
