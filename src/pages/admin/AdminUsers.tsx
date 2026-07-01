@@ -28,6 +28,7 @@ import { useOrgInstrumentAccess, DASHBOARD_INSTRUMENT_UUIDS } from "@/hooks/useO
 import {
   Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter,
 } from "@/components/ui/sheet";
+import { PUBLIC_INSTRUMENTS } from "@/lib/instruments";
 
 const ADD_DEPT_VALUE = "__add_department__";
 
@@ -469,12 +470,16 @@ export default function AdminUsers() {
   const qc = useQueryClient();
   const { orgInstrumentIncluded } = useOrgInstrumentAccess();
   const showEpn = orgInstrumentIncluded(DASHBOARD_INSTRUMENT_UUIDS.NAI);
+  const inviteInstrumentOptions = PUBLIC_INSTRUMENTS.filter(
+    (i) => i.short_name === "PTP" || orgInstrumentIncluded(i.uuid)
+  );
 
   const [orgId, setOrgId] = useState<string | null | undefined>(undefined);
   const [email, setEmail] = useState("");
   const [department, setDepartment] = useState<string>("");
   const [supervisor, setSupervisor] = useState("");
   const [orgLevel, setOrgLevel] = useState<string>("");
+  const [requiredInstrumentId, setRequiredInstrumentId] = useState("INST-001");
   const [sending, setSending] = useState(false);
 
   const [deptDialogOpen, setDeptDialogOpen] = useState(false);
@@ -816,6 +821,7 @@ export default function AdminUsers() {
             supervisor_email: cleanedSupervisor || null,
             org_level: orgLevel === "" ? null : orgLevel,
             account_type: "corporate_employee",
+            required_instrument_id: requiredInstrumentId,
           }),
         }
       );
@@ -845,6 +851,7 @@ export default function AdminUsers() {
       }
       setEmail("");
       setSupervisor("");
+      setRequiredInstrumentId("INST-001");
       return;
     }
 
@@ -1388,6 +1395,21 @@ export default function AdminUsers() {
                   <SelectItem value="__unset__">-- Not specified --</SelectItem>
                   {ORG_LEVELS.map((l) => (
                     <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="invite-instrument">Assessment</Label>
+              <Select value={requiredInstrumentId} onValueChange={setRequiredInstrumentId} disabled={sending}>
+                <SelectTrigger id="invite-instrument">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {inviteInstrumentOptions.map((i) => (
+                    <SelectItem key={i.instrument_id} value={i.instrument_id}>
+                      {i.short_name} ({i.name})
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>

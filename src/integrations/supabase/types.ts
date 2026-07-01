@@ -3831,6 +3831,7 @@ export type Database = {
       corporate_invitations: {
         Row: {
           account_type: string
+          assessment_completed_at: string | null
           code: string
           created_at: string
           created_by_user_id: string
@@ -3839,14 +3840,18 @@ export type Database = {
           expires_at: string
           id: string
           invitee_email: string
+          last_assessment_reminder_at: string | null
+          last_signup_reminder_at: string | null
           org_level: string | null
           organization_id: string
           redeemed_at: string | null
           redeemed_by_user_id: string | null
+          required_instrument_id: string | null
           supervisor_email: string | null
         }
         Insert: {
           account_type?: string
+          assessment_completed_at?: string | null
           code: string
           created_at?: string
           created_by_user_id: string
@@ -3855,14 +3860,18 @@ export type Database = {
           expires_at?: string
           id?: string
           invitee_email: string
+          last_assessment_reminder_at?: string | null
+          last_signup_reminder_at?: string | null
           org_level?: string | null
           organization_id: string
           redeemed_at?: string | null
           redeemed_by_user_id?: string | null
+          required_instrument_id?: string | null
           supervisor_email?: string | null
         }
         Update: {
           account_type?: string
+          assessment_completed_at?: string | null
           code?: string
           created_at?: string
           created_by_user_id?: string
@@ -3871,10 +3880,13 @@ export type Database = {
           expires_at?: string
           id?: string
           invitee_email?: string
+          last_assessment_reminder_at?: string | null
+          last_signup_reminder_at?: string | null
           org_level?: string | null
           organization_id?: string
           redeemed_at?: string | null
           redeemed_by_user_id?: string | null
+          required_instrument_id?: string | null
           supervisor_email?: string | null
         }
         Relationships: [
@@ -12157,6 +12169,7 @@ export type Database = {
           p_invitee_email: string
           p_org_level?: string
           p_organization_id: string
+          p_required_instrument_id?: string
           p_session_id: string
           p_supervisor_email?: string
         }
@@ -12706,6 +12719,23 @@ export type Database = {
       corporate_employee_verify_individual: {
         Args: { p_token: string }
         Returns: Json
+      }
+      corporate_invitation_record_reminder: {
+        Args: { p_invitation_id: string; p_stage: string }
+        Returns: undefined
+      }
+      corporate_invitation_reminder_scan: {
+        Args: never
+        Returns: {
+          code: string
+          expires_at: string
+          instrument_id: string
+          instrument_name: string
+          invitation_id: string
+          invitee_email: string
+          organization_name: string
+          stage: string
+        }[]
       }
       create_actor_debrief_order: {
         Args: {
@@ -13403,6 +13433,7 @@ export type Database = {
           p_invitee_email: string
           p_org_level?: string
           p_organization_id: string
+          p_required_instrument_id?: string
           p_supervisor_email?: string
         }
         Returns: {
