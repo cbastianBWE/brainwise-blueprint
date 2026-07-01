@@ -2928,6 +2928,8 @@ export type Database = {
           lesson_block_id: string | null
           module_id: string | null
           newsletter_article_id: string | null
+          quiz_answer_option_id: string | null
+          quiz_question_id: string | null
           ref_field: string
           resource_id: string | null
           user_id: string | null
@@ -2944,6 +2946,8 @@ export type Database = {
           lesson_block_id?: string | null
           module_id?: string | null
           newsletter_article_id?: string | null
+          quiz_answer_option_id?: string | null
+          quiz_question_id?: string | null
           ref_field: string
           resource_id?: string | null
           user_id?: string | null
@@ -2960,6 +2964,8 @@ export type Database = {
           lesson_block_id?: string | null
           module_id?: string | null
           newsletter_article_id?: string | null
+          quiz_answer_option_id?: string | null
+          quiz_question_id?: string | null
           ref_field?: string
           resource_id?: string | null
           user_id?: string | null
@@ -3040,6 +3046,20 @@ export type Database = {
             columns: ["newsletter_article_id"]
             isOneToOne: false
             referencedRelation: "newsletter_articles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_asset_refs_quiz_answer_option_id_fkey"
+            columns: ["quiz_answer_option_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_answer_options"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_asset_refs_quiz_question_id_fkey"
+            columns: ["quiz_question_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_questions"
             referencedColumns: ["id"]
           },
           {
@@ -9053,6 +9073,7 @@ export type Database = {
           id: string
           is_correct: boolean
           match_pair_key: string | null
+          option_image_asset_id: string | null
           option_image_url: string | null
           option_text: string
           question_id: string
@@ -9067,6 +9088,7 @@ export type Database = {
           id?: string
           is_correct?: boolean
           match_pair_key?: string | null
+          option_image_asset_id?: string | null
           option_image_url?: string | null
           option_text: string
           question_id: string
@@ -9081,6 +9103,7 @@ export type Database = {
           id?: string
           is_correct?: boolean
           match_pair_key?: string | null
+          option_image_asset_id?: string | null
           option_image_url?: string | null
           option_text?: string
           question_id?: string
@@ -9114,6 +9137,13 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quiz_answer_options_option_image_asset_id_fkey"
+            columns: ["option_image_asset_id"]
+            isOneToOne: false
+            referencedRelation: "content_assets"
             referencedColumns: ["id"]
           },
           {
@@ -9251,6 +9281,7 @@ export type Database = {
           explanation: string | null
           id: string
           points: number
+          question_image_asset_id: string | null
           question_image_url: string | null
           question_text: string
           question_type: string
@@ -9266,6 +9297,7 @@ export type Database = {
           explanation?: string | null
           id?: string
           points?: number
+          question_image_asset_id?: string | null
           question_image_url?: string | null
           question_text: string
           question_type: string
@@ -9281,6 +9313,7 @@ export type Database = {
           explanation?: string | null
           id?: string
           points?: number
+          question_image_asset_id?: string | null
           question_image_url?: string | null
           question_text?: string
           question_type?: string
@@ -9321,6 +9354,13 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quiz_questions_question_image_asset_id_fkey"
+            columns: ["question_image_asset_id"]
+            isOneToOne: false
+            referencedRelation: "content_assets"
             referencedColumns: ["id"]
           },
           {
