@@ -104,6 +104,7 @@ export function useQuizAuthoring() {
       p_question_id: p.question_id,
       p_option_text: p.option_text,
       p_option_image_url: null as any,
+      p_option_image_asset_id: p.option_image_asset_id as any,
       p_is_correct: p.is_correct,
       p_match_pair_key: p.match_pair_key as any,
       p_display_order: p.display_order,
