@@ -503,6 +503,7 @@ function BulkInviteCard({
     setParsedRows([]);
     setBulkResults([]);
     setFileName("");
+    setRequiredInstrumentId("INST-001");
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
