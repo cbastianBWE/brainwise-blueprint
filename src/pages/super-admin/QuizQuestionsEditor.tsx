@@ -47,11 +47,14 @@ function rowsToDraft(qRows: any[], oRows: any[]): DraftQuestion[] {
       option_text: o.option_text ?? "",
       is_correct: !!o.is_correct,
       display_order: o.display_order ?? 0,
+      option_image_asset_id: o.option_image_asset_id ?? null,
       // carry match_pair_key piggybacked
       ...({ match_pair_key: o.match_pair_key ?? null } as any),
     }));
     const pairs: MatchPair[] =
-      q.question_type === "match_definition" ? optionsToPairs(options) : [];
+      q.question_type === "match_definition" || q.question_type === "match_picture"
+        ? optionsToPairs(options)
+        : [];
     return {
       client_id: crypto.randomUUID(),
       id: q.id,
@@ -60,6 +63,7 @@ function rowsToDraft(qRows: any[], oRows: any[]): DraftQuestion[] {
       points: q.points ?? 1,
       explanation: q.explanation ?? "",
       display_order: q.display_order ?? 0,
+      question_image_asset_id: q.question_image_asset_id ?? null,
       options,
       pairs,
       dirty: false,
