@@ -4,21 +4,27 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
+import { setTrustedDeviceToken, buildDeviceLabel } from "@/lib/trustedDevice";
+import { useTrustedDeviceSettings } from "@/hooks/useTrustedDevices";
 
 interface Props {
   userId: string;
   onSuccess: () => void | Promise<void>;
   onCancel?: () => void;
+  allowTrustDevice?: boolean;
 }
 
-const MfaChallenge = ({ userId, onSuccess, onCancel }: Props) => {
+const MfaChallenge = ({ userId, onSuccess, onCancel, allowTrustDevice = true }: Props) => {
   const queryClient = useQueryClient();
+  const { data: settings } = useTrustedDeviceSettings();
   const [factorId, setFactorId] = useState<string | null>(null);
   const [challengeId, setChallengeId] = useState<string | null>(null);
   const [code, setCode] = useState("");
   const [verifying, setVerifying] = useState(false);
   const [initializing, setInitializing] = useState(true);
+  const [trustChecked, setTrustChecked] = useState(false);
 
   useEffect(() => {
     (async () => {
