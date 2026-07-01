@@ -35,12 +35,16 @@ import {
   pairsToOptions,
   type MatchPair,
 } from "./MatchOptionsEditor";
+import { MatchPictureOptionsEditor } from "./MatchPictureOptionsEditor";
+import { QuizImagePicker } from "./QuizImagePicker";
+import { useQuizAssets } from "@/hooks/useQuizAssets";
 
 export type QuizQuestionType =
   | "multiple_choice"
   | "true_false"
   | "select_all"
-  | "match_definition";
+  | "match_definition"
+  | "match_picture";
 
 export interface DraftQuestion {
   client_id: string;
@@ -50,6 +54,7 @@ export interface DraftQuestion {
   points: number;
   explanation: string;
   display_order: number;
+  question_image_asset_id: string | null;
   options: DraftOption[]; // for mc/tf/sa; for match these are flat (paired)
   pairs: MatchPair[]; // only used for match
   dirty: boolean;
@@ -61,6 +66,7 @@ const QUESTION_TYPE_OPTIONS: { value: QuizQuestionType; label: string }[] = [
   { value: "true_false", label: "True / False" },
   { value: "select_all", label: "Select all that apply" },
   { value: "match_definition", label: "Match definition" },
+  { value: "match_picture", label: "Match picture" },
 ];
 
 export function seedForType(type: QuizQuestionType): {
