@@ -5083,6 +5083,7 @@ export type Database = {
           facet_name: string | null
           facet_ref: string | null
           id: string
+          include_in_romantic: boolean | null
           instrument_id: string
           instrument_version: string | null
           item_id: string
@@ -5091,6 +5092,7 @@ export type Database = {
           notes: string | null
           rater_type: string | null
           reverse_scored: boolean
+          romantic_include_reason: string | null
           scale_type: string | null
         }
         Insert: {
@@ -5102,6 +5104,7 @@ export type Database = {
           facet_name?: string | null
           facet_ref?: string | null
           id?: string
+          include_in_romantic?: boolean | null
           instrument_id: string
           instrument_version?: string | null
           item_id: string
@@ -5110,6 +5113,7 @@ export type Database = {
           notes?: string | null
           rater_type?: string | null
           reverse_scored?: boolean
+          romantic_include_reason?: string | null
           scale_type?: string | null
         }
         Update: {
@@ -5121,6 +5125,7 @@ export type Database = {
           facet_name?: string | null
           facet_ref?: string | null
           id?: string
+          include_in_romantic?: boolean | null
           instrument_id?: string
           instrument_version?: string | null
           item_id?: string
@@ -5129,6 +5134,7 @@ export type Database = {
           notes?: string | null
           rater_type?: string | null
           reverse_scored?: boolean
+          romantic_include_reason?: string | null
           scale_type?: string | null
         }
         Relationships: [
@@ -13506,6 +13512,31 @@ export type Database = {
         }[]
       }
       list_feedback_templates: { Args: { p_panel_type: string }; Returns: Json }
+      list_mentor_trainee_client_tracking: {
+        Args: never
+        Returns: {
+          actor_instrument_id: string
+          assessment_completed: boolean
+          client_email: string
+          client_name: string
+          client_user_id: string
+          coach_client_id: string
+          completed_at: string
+          debrief_completed: boolean
+          invitation_status: string
+          invited_at: string
+          is_actor: boolean
+          trainee_user_id: string
+        }[]
+      }
+      list_mentor_trainee_completions: {
+        Args: never
+        Returns: {
+          instrument_id: string
+          last_completed_at: string
+          trainee_user_id: string
+        }[]
+      }
       list_mentor_trainee_notes: {
         Args: { p_trainee_user_id: string }
         Returns: Json

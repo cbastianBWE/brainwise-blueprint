@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import MentorProgressTree from "@/components/mentor/MentorProgressTree";
 import MentorTraineeCumulativeProgress from "@/components/mentor/MentorTraineeCumulativeProgress";
 import MentorTraineeNotesPanel from "@/components/mentor/MentorTraineeNotesPanel";
+import MentorTraineeAssessments from "@/components/mentor/MentorTraineeAssessments";
 import ReviewDrawer from "@/components/mentor/ReviewDrawer";
 
 interface DrawerState {
@@ -64,7 +65,7 @@ export default function MentorTraineeDetail() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [drawer, setDrawer] = useState<DrawerState | null>(null);
-  const [activeTab, setActiveTab] = useState<"progress" | "summary" | "notes">("progress");
+  const [activeTab, setActiveTab] = useState<"progress" | "summary" | "assessments" | "notes">("progress");
 
   const handleActionComplete = () => {
     if (!drawer || !traineeId) return;
@@ -170,11 +171,12 @@ export default function MentorTraineeDetail() {
       ) : (
         <Tabs
           value={activeTab}
-          onValueChange={(v) => setActiveTab(v as "progress" | "summary" | "notes")}
+          onValueChange={(v) => setActiveTab(v as "progress" | "summary" | "assessments" | "notes")}
         >
           <TabsList>
             <TabsTrigger value="progress">Progress</TabsTrigger>
             <TabsTrigger value="summary">Summary</TabsTrigger>
+            <TabsTrigger value="assessments">Assessments</TabsTrigger>
             <TabsTrigger value="notes">Notes</TabsTrigger>
           </TabsList>
 
@@ -198,6 +200,15 @@ export default function MentorTraineeDetail() {
               </CardContent>
             </Card>
           </TabsContent>
+
+          <TabsContent value="assessments">
+            <Card>
+              <CardContent className="pt-6">
+                <MentorTraineeAssessments traineeId={traineeId ?? ""} />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
 
           <TabsContent value="notes">
             <Card>
