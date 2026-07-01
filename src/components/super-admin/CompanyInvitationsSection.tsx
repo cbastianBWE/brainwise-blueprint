@@ -724,6 +724,21 @@ function BulkInviteCard({
                 </div>
               )}
             </div>
+            <div className="space-y-2">
+              <Label>Assessment for all invitees</Label>
+              <Select value={requiredInstrumentId} onValueChange={setRequiredInstrumentId} disabled={bulkStage === "sending"}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {PUBLIC_INSTRUMENTS.map((i) => (
+                    <SelectItem key={i.instrument_id} value={i.instrument_id}>
+                      {i.short_name} ({i.name})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={reset} disabled={bulkStage === "sending"}>
                 Cancel
