@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
+import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
@@ -34,6 +35,30 @@ export default function PlatformFeatures() {
   const [platformReason, setPlatformReason] = useState("");
   const [platformBusy, setPlatformBusy] = useState(false);
 
+  // Trusted device settings
+  const [tdLoading, setTdLoading] = useState(true);
+  const [tdEnabled, setTdEnabled] = useState(true);
+  const [tdWindowDays, setTdWindowDays] = useState(30);
+  const [tdImpDays, setTdImpDays] = useState(1);
+  const [tdSaveOpen, setTdSaveOpen] = useState(false);
+  const [tdReason, setTdReason] = useState("");
+  const [tdBusy, setTdBusy] = useState(false);
+
+  const loadTdSettings = async () => {
+    setTdLoading(true);
+    const { data, error } = await (supabase.rpc as any)("get_trusted_device_settings");
+    if (!error && Array.isArray(data) && data[0]) {
+      const row = data[0] as { window_days: number; impersonation_window_hours: number; enabled: boolean };
+      setTdWindowDays(Number(row.window_days) || 30);
+      setTdImpDays(Math.max(1, Math.round((Number(row.impersonation_window_hours) || 24) / 24)));
+      setTdEnabled(!!row.enabled);
+    } else if (error) {
+      toast.error(`Failed to load trusted device settings: ${error.message}`);
+    }
+    setTdLoading(false);
+  };
+
+
   const loadRows = async () => {
     setRowsLoading(true);
     const { data, error } = await (supabase.from("platform_features" as any) as any)
@@ -49,7 +74,27 @@ export default function PlatformFeatures() {
     setRowsLoading(false);
   };
 
-  useEffect(() => { loadRows(); }, []);
+  useEffect(() => { loadRows(); loadTdSettings(); }, []);
+
+  const confirmTdSave = async () => {
+    const reason = tdReason.trim();
+    if (reason.length < 10) return;
+    setTdBusy(true);
+    const { error } = await (supabase.rpc as any)("set_trusted_device_settings", {
+      p_window_days: Number(tdWindowDays),
+      p_impersonation_window_hours: Number(tdImpDays) * 24,
+      p_enabled: tdEnabled,
+      p_reason: reason,
+    });
+    setTdBusy(false);
+    if (error) {
+      toast.error(error.message ?? "Failed to update trusted device settings");
+      return;
+    }
+    toast.success("Trusted device settings updated");
+    setTdSaveOpen(false);
+    setTdReason("");
+  };
 
   const openToggleDialog = (row: PlatformFeatureRow, next: boolean) => {
     setPlatformReason("");
@@ -126,6 +171,124 @@ export default function PlatformFeatures() {
           )}
         </CardContent>
       </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Trusted device security</CardTitle>
+          <CardDescription>
+            Configure how long a browser stays trusted after a successful two-factor code.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {tdLoading ? (
+            <div className="space-y-2">
+              <Skeleton className="h-12 w-full" />
+              <Skeleton className="h-12 w-full" />
+              <Skeleton className="h-12 w-full" />
+            </div>
+          ) : (
+            <>
+              <div className="flex items-center justify-between gap-4 rounded-md border p-4">
+                <div className="min-w-0">
+                  <div className="font-medium">Allow users to trust this device</div>
+                  <div className="text-xs text-muted-foreground">
+                    When off, users must enter a code on every login.
+                  </div>
+                </div>
+                <Switch
+                  checked={tdEnabled}
+                  onCheckedChange={setTdEnabled}
+                  aria-label="Enable trusted devices"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="td-window-days">Login trust window (days)</Label>
+                <Input
+                  id="td-window-days"
+                  type="number"
+                  min={1}
+                  max={365}
+                  value={tdWindowDays}
+                  onChange={(e) => setTdWindowDays(Number(e.target.value))}
+                />
+                <p className="text-xs text-muted-foreground">
+                  How long a browser can skip the two-factor code at login.
+                </p>
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="td-imp-days">Impersonation trust window (days)</Label>
+                <Input
+                  id="td-imp-days"
+                  type="number"
+                  min={1}
+                  max={365}
+                  value={tdImpDays}
+                  onChange={(e) => setTdImpDays(Number(e.target.value))}
+                />
+                <p className="text-xs text-muted-foreground">
+                  How long a super admin can skip the code before impersonating on a trusted browser (shorter for safety).
+                </p>
+              </div>
+              <div className="flex justify-end">
+                <Button
+                  onClick={() => { setTdReason(""); setTdSaveOpen(true); }}
+                  disabled={tdWindowDays < 1 || tdWindowDays > 365 || tdImpDays < 1 || tdImpDays > 365}
+                >
+                  Save
+                </Button>
+              </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
+
+      <Dialog
+        open={tdSaveOpen}
+        onOpenChange={(o) => { if (!o && !tdBusy) { setTdSaveOpen(false); setTdReason(""); } }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Update trusted device settings</DialogTitle>
+            <DialogDescription>
+              Provide a reason (minimum 10 characters). This will be audited.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="rounded-md border border-destructive/30 bg-destructive/5 p-3 flex gap-2 text-sm">
+            <AlertTriangle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
+            <span>This changes trust behavior for ALL users.</span>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="td-reason">Reason</Label>
+            <Textarea
+              id="td-reason"
+              value={tdReason}
+              onChange={(e) => setTdReason(e.target.value)}
+              placeholder="Why are you making this change?"
+              rows={3}
+            />
+            <p className="text-xs text-muted-foreground">
+              {tdReason.trim().length}/10 minimum
+            </p>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => { setTdSaveOpen(false); setTdReason(""); }}
+              disabled={tdBusy}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={confirmTdSave}
+              disabled={tdBusy || tdReason.trim().length < 10}
+            >
+              {tdBusy && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Confirm
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
 
       <Dialog
         open={!!pendingToggle}

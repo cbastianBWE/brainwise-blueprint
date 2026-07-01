@@ -14648,7 +14648,7 @@ export type Database = {
         Returns: Json
       }
       revoke_all_trusted_devices: {
-        Args: { p_user_id: string }
+        Args: { p_reason: string; p_user_id: string }
         Returns: number
       }
       revoke_certification: {
@@ -14866,6 +14866,7 @@ export type Database = {
         Args: {
           p_enabled: boolean
           p_impersonation_window_hours: number
+          p_reason: string
           p_window_days: number
         }
         Returns: Json

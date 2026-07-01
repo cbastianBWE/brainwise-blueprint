@@ -68,6 +68,7 @@ function MemberDrawerBody({
   const queryClient = useQueryClient();
   const [impersonateTarget, setImpersonateTarget] = useState<MemberRow | null>(null);
   const [mentorDialogOpen, setMentorDialogOpen] = useState(false);
+  const [revokeDevicesOpen, setRevokeDevicesOpen] = useState(false);
   const isSelf = member.user_id === currentUserId;
   const showCoach = member.show_coach_tab;
   const showAccess = member.organization_id === null;
@@ -76,6 +77,10 @@ function MemberDrawerBody({
   useEffect(() => {
     setHasUnsavedChanges(mentorDialogOpen);
   }, [mentorDialogOpen, setHasUnsavedChanges]);
+
+  useEffect(() => {
+    setHasUnsavedChanges(revokeDevicesOpen);
+  }, [revokeDevicesOpen, setHasUnsavedChanges]);
 
   return (
     <div className="flex flex-col h-full">
@@ -134,6 +139,9 @@ function MemberDrawerBody({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
+                <DropdownMenuItem onSelect={() => setRevokeDevicesOpen(true)}>
+                  Revoke trusted devices
+                </DropdownMenuItem>
                 <DropdownMenuItem disabled>Reset MFA (coming soon)</DropdownMenuItem>
                 <DropdownMenuItem disabled>
                   Trigger password reset (coming soon)
@@ -240,6 +248,32 @@ function MemberDrawerBody({
               : nextIsMentor
                 ? "This user is already a mentor."
                 : "This user is already not a mentor.",
+          };
+        }}
+      />
+
+      <JustifiedActionDialog
+        open={revokeDevicesOpen}
+        onOpenChange={setRevokeDevicesOpen}
+        title="Revoke trusted devices"
+        description={
+          <span>
+            This signs <strong>{member.full_name ?? member.email}</strong> out of the "trust this device" state on every browser. They will need a two-factor code on next login. This does not remove their authenticator.
+          </span>
+        }
+        successTitle="Trusted devices revoked"
+        onSubmit={async (reason) => {
+          const { data, error } = await supabase.rpc("revoke_all_trusted_devices" as any, {
+            p_user_id: member.user_id,
+            p_reason: reason,
+          } as any);
+          if (error) throw error;
+          const count = (data as number) ?? 0;
+          return {
+            changed: count > 0,
+            note: count === 0
+              ? "This user had no active trusted devices."
+              : `Revoked ${count} trusted device${count === 1 ? "" : "s"}.`,
           };
         }}
       />
