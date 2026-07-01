@@ -18,6 +18,7 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { useMfaRequired, useMfaSatisfied } from "@/hooks/useMfaStatus";
 import { callIdentityMutation } from "@/lib/identityMutation";
+import { useTrustedDevices, useRevokeTrustedDevice } from "@/hooks/useTrustedDevices";
 
 interface MfaFactor {
   id: string;
@@ -271,6 +272,67 @@ function MfaSection({ userId }: { userId: string }) {
   );
 }
 
+function TrustedDevicesCard({ userId }: { userId: string }) {
+  const { data: devices } = useTrustedDevices(userId);
+  const revoke = useRevokeTrustedDevice();
+
+  if (!devices || devices.length === 0) return null;
+
+  const fmt = (d: string | null) => (d ? new Date(d).toLocaleDateString() : "never");
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-lg">
+          <ShieldCheck className="h-5 w-5" /> Trusted devices
+        </CardTitle>
+        <CardDescription>
+          Browsers where you can skip the two-factor code. Revoke any you don't recognize.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-2">
+          {devices.map((d) => (
+            <div key={d.id} className="flex items-center justify-between border rounded-md p-3">
+              <div className="text-sm">
+                <div className="font-medium flex items-center gap-2">
+                  {d.label || "This browser"}
+                  {d.impersonation_trusted_at && (
+                    <Badge variant="secondary" className="text-xs">Impersonation</Badge>
+                  )}
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  Added {fmt(d.created_at)} · Last used {fmt(d.last_used_at)}
+                </div>
+              </div>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="outline" size="sm">Revoke</Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Revoke this trusted device?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      The next sign-in from that browser will require a verification code.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={() => revoke.mutate(d.id)}>
+                      Revoke
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+
 
 const timezones = [
   "America/New_York", "America/Chicago", "America/Denver", "America/Los_Angeles",
@@ -429,6 +491,7 @@ export default function SettingsPage() {
 
       {/* MFA */}
       {user && <MfaSection userId={user.id} />}
+      {user && <TrustedDevicesCard userId={user.id} />}
 
       {/* Preferences */}
       <Card>

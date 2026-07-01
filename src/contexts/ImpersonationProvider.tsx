@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, useCallback, ReactNode 
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { getTrustedDeviceToken } from "@/lib/trustedDevice";
 
 export interface ImpersonationSession {
   sessionId: string;
@@ -135,10 +136,18 @@ const ImpersonationProvider = ({ children }: { children: ReactNode }) => {
 
   const beginImpersonation = useCallback(
     async (targetUserId: string, mode: "observe" | "act", justification: string) => {
+      const deviceToken = getTrustedDeviceToken();
       const { data, error } = await supabase.functions.invoke("impersonation-start", {
-        body: { target_user_id: targetUserId, mode, justification },
+        body: { target_user_id: targetUserId, mode, justification, ...(deviceToken ? { device_token: deviceToken } : {}) },
       });
-      if (error) throw error;
+      if (error) {
+        let code = error.message;
+        try {
+          const b = await (error as any).context?.json?.();
+          if (b?.code) code = b.code;
+        } catch { /* ignore */ }
+        throw new Error(code);
+      }
       if (!data?.access_token || !data?.refresh_token) {
         throw new Error("impersonation-start did not return tokens");
       }

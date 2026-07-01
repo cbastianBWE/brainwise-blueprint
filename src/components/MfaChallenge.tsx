@@ -4,21 +4,27 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
+import { setTrustedDeviceToken, buildDeviceLabel } from "@/lib/trustedDevice";
+import { useTrustedDeviceSettings } from "@/hooks/useTrustedDevices";
 
 interface Props {
   userId: string;
   onSuccess: () => void | Promise<void>;
   onCancel?: () => void;
+  allowTrustDevice?: boolean;
 }
 
-const MfaChallenge = ({ userId, onSuccess, onCancel }: Props) => {
+const MfaChallenge = ({ userId, onSuccess, onCancel, allowTrustDevice = true }: Props) => {
   const queryClient = useQueryClient();
+  const { data: settings } = useTrustedDeviceSettings();
   const [factorId, setFactorId] = useState<string | null>(null);
   const [challengeId, setChallengeId] = useState<string | null>(null);
   const [code, setCode] = useState("");
   const [verifying, setVerifying] = useState(false);
   const [initializing, setInitializing] = useState(true);
+  const [trustChecked, setTrustChecked] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -51,6 +57,12 @@ const MfaChallenge = ({ userId, onSuccess, onCancel }: Props) => {
         code: code.trim(),
       });
       if (error) throw error;
+      if (allowTrustDevice && trustChecked && settings?.enabled) {
+        try {
+          const { data: raw, error: mintErr } = await supabase.rpc("mint_trusted_device" as any, { p_label: buildDeviceLabel() });
+          if (!mintErr && typeof raw === "string") setTrustedDeviceToken(raw);
+        } catch { /* swallow */ }
+      }
       await queryClient.invalidateQueries({ queryKey: ["mfa-satisfied", userId] });
       await onSuccess();
     } catch (err: any) {
@@ -96,6 +108,24 @@ const MfaChallenge = ({ userId, onSuccess, onCancel }: Props) => {
             disabled={initializing}
           />
         </div>
+        {allowTrustDevice && settings?.enabled && (
+          <div className="flex items-start gap-2">
+            <Checkbox
+              id="trust-device"
+              checked={trustChecked}
+              onCheckedChange={(v) => setTrustChecked(v === true)}
+              disabled={initializing || verifying}
+            />
+            <div className="space-y-0.5">
+              <Label htmlFor="trust-device" className="font-medium cursor-pointer">
+                Trust this device for {settings.window_days} days
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                You won't need a code on this browser until then.
+              </p>
+            </div>
+          </div>
+        )}
         <Button
           type="submit"
           className="w-full"
