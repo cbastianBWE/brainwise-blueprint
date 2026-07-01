@@ -10795,6 +10795,69 @@ export type Database = {
         }
         Relationships: []
       }
+      trusted_device_settings: {
+        Row: {
+          enabled: boolean
+          id: boolean
+          impersonation_window_hours: number
+          updated_at: string
+          updated_by: string | null
+          window_days: number
+        }
+        Insert: {
+          enabled?: boolean
+          id?: boolean
+          impersonation_window_hours?: number
+          updated_at?: string
+          updated_by?: string | null
+          window_days?: number
+        }
+        Update: {
+          enabled?: boolean
+          id?: boolean
+          impersonation_window_hours?: number
+          updated_at?: string
+          updated_by?: string | null
+          window_days?: number
+        }
+        Relationships: []
+      }
+      trusted_devices: {
+        Row: {
+          created_at: string
+          id: string
+          impersonation_trusted_at: string | null
+          label: string | null
+          last_used_at: string | null
+          login_trusted_at: string
+          revoked_at: string | null
+          token_hash: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          impersonation_trusted_at?: string | null
+          label?: string | null
+          last_used_at?: string | null
+          login_trusted_at?: string
+          revoked_at?: string | null
+          token_hash: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          impersonation_trusted_at?: string | null
+          label?: string | null
+          last_used_at?: string | null
+          login_trusted_at?: string
+          revoked_at?: string | null
+          token_hash?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_curriculum_assignments: {
         Row: {
           assigned_at: string
@@ -12609,6 +12672,11 @@ export type Database = {
         Args: { p_max_age_seconds?: number; p_session_id: string }
         Returns: boolean
       }
+      check_trusted_device: { Args: { p_token: string }; Returns: boolean }
+      check_trusted_device_for_impersonation: {
+        Args: { p_token: string }
+        Returns: boolean
+      }
       claim_content_item_ai_assist: {
         Args: { p_content_item_id: string }
         Returns: Json
@@ -13353,6 +13421,14 @@ export type Database = {
         Args: { p_entity_ids: string[]; p_entity_type: string }
         Returns: Json
       }
+      get_trusted_device_settings: {
+        Args: never
+        Returns: {
+          enabled: boolean
+          impersonation_window_hours: number
+          window_days: number
+        }[]
+      }
       get_unread_notification_count: { Args: never; Returns: number }
       get_user_completion_export: {
         Args: { p_user_ids: string[] }
@@ -13638,6 +13714,17 @@ export type Database = {
         }[]
       }
       list_scheduled_assignments: { Args: never; Returns: Json }
+      list_trusted_devices: {
+        Args: never
+        Returns: {
+          created_at: string
+          id: string
+          impersonation_trusted_at: string
+          label: string
+          last_used_at: string
+          login_trusted_at: string
+        }[]
+      }
       list_user_audit_history: {
         Args: {
           p_categories?: string[]
@@ -13712,6 +13799,7 @@ export type Database = {
         }
         Returns: Json
       }
+      mint_trusted_device: { Args: { p_label?: string }; Returns: string }
       module_entitlement_admin_list: {
         Args: { p_org_id: string; p_principal_type: string; p_user_id: string }
         Returns: Json
@@ -14458,6 +14546,10 @@ export type Database = {
         Args: { p_article_id: string; p_reason: string }
         Returns: Json
       }
+      reanchor_trusted_device_impersonation: {
+        Args: { p_token: string }
+        Returns: boolean
+      }
       reap_pending_uploads: { Args: never; Returns: Json }
       reconcile_supervisors_for_org: {
         Args: { p_organization_id: string }
@@ -14555,11 +14647,16 @@ export type Database = {
         Args: { p_reason: string; p_version_id: string }
         Returns: Json
       }
+      revoke_all_trusted_devices: {
+        Args: { p_user_id: string }
+        Returns: number
+      }
       revoke_certification: {
         Args: { p_certification_id: string; p_reason: string }
         Returns: Json
       }
       revoke_ptp_share: { Args: { p_viewer_user_id: string }; Returns: Json }
+      revoke_trusted_device: { Args: { p_id: string }; Returns: boolean }
       run_asset_hard_delete: { Args: never; Returns: Json }
       save_lesson_block_draft: {
         Args: { p_content_item_id: string; p_draft_json: Json }
@@ -14762,6 +14859,14 @@ export type Database = {
           p_role: string
           p_storage_path: string
           p_trainee_user_id?: string
+        }
+        Returns: Json
+      }
+      set_trusted_device_settings: {
+        Args: {
+          p_enabled: boolean
+          p_impersonation_window_hours: number
+          p_window_days: number
         }
         Returns: Json
       }
