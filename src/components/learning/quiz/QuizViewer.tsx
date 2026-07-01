@@ -12,7 +12,9 @@ import QuestionRendererMultipleChoice, {
 import QuestionRendererTrueFalse from "./QuestionRendererTrueFalse";
 import QuestionRendererSelectAll from "./QuestionRendererSelectAll";
 import QuestionRendererMatch from "./QuestionRendererMatch";
+import QuestionRendererMatchPicture from "./QuestionRendererMatchPicture";
 import QuizSummaryScreen from "./QuizSummaryScreen";
+import { useQuizAssets } from "@/hooks/useQuizAssets";
 
 type AnswerValue = string | string[] | Record<string, string>;
 
@@ -26,6 +28,7 @@ interface QuizQuestion {
     | "match_picture";
   question_text: string;
   question_image_url: string | null;
+  question_image_asset_id?: string | null;
   display_order: number;
   points: number;
   explanation: string | null;
