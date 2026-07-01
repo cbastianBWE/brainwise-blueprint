@@ -35,12 +35,16 @@ import {
   pairsToOptions,
   type MatchPair,
 } from "./MatchOptionsEditor";
+import { MatchPictureOptionsEditor } from "./MatchPictureOptionsEditor";
+import { QuizImagePicker } from "./QuizImagePicker";
+import { useQuizAssets } from "@/hooks/useQuizAssets";
 
 export type QuizQuestionType =
   | "multiple_choice"
   | "true_false"
   | "select_all"
-  | "match_definition";
+  | "match_definition"
+  | "match_picture";
 
 export interface DraftQuestion {
   client_id: string;
@@ -50,6 +54,7 @@ export interface DraftQuestion {
   points: number;
   explanation: string;
   display_order: number;
+  question_image_asset_id: string | null;
   options: DraftOption[]; // for mc/tf/sa; for match these are flat (paired)
   pairs: MatchPair[]; // only used for match
   dirty: boolean;
@@ -61,6 +66,7 @@ const QUESTION_TYPE_OPTIONS: { value: QuizQuestionType; label: string }[] = [
   { value: "true_false", label: "True / False" },
   { value: "select_all", label: "Select all that apply" },
   { value: "match_definition", label: "Match definition" },
+  { value: "match_picture", label: "Match picture" },
 ];
 
 export function seedForType(type: QuizQuestionType): {
@@ -100,6 +106,7 @@ export function seedForType(type: QuizQuestionType): {
         pairs: [],
       };
     case "match_definition":
+    case "match_picture":
       return { options: [], pairs: [buildPair(), buildPair()] };
   }
 }
@@ -107,9 +114,13 @@ export function seedForType(type: QuizQuestionType): {
 function hasContentBeyondDefaults(q: DraftQuestion): boolean {
   if (q.question_text.trim().length > 0) return true;
   if (q.explanation.trim().length > 0) return true;
-  if (q.question_type === "match_definition") {
+  if (q.question_image_asset_id) return true;
+  if (q.question_type === "match_definition" || q.question_type === "match_picture") {
     return q.pairs.some(
-      (p) => p.prompt.option_text.trim().length > 0 || p.answer.option_text.trim().length > 0
+      (p) =>
+        p.prompt.option_text.trim().length > 0 ||
+        p.answer.option_text.trim().length > 0 ||
+        !!p.answer.option_image_asset_id
     );
   }
   if (q.question_type === "true_false") {
@@ -155,19 +166,37 @@ function validateQuestion(q: DraftQuestion): string | null {
         return "All pairs need both a prompt and an answer.";
       return null;
     }
+    case "match_picture": {
+      if (q.pairs.length < 2) return "At least 2 pairs required.";
+      if (q.pairs.some((p) => p.prompt.option_text.trim() === ""))
+        return "Every picture pair needs a text prompt.";
+      if (q.pairs.some((p) => !p.answer.option_image_asset_id))
+        return "Each picture answer needs an image (save the question, then add images).";
+      return null;
+    }
   }
 }
 
 interface Props {
   question: DraftQuestion;
   index: number;
+  contentItemId: string;
   onChange: (next: DraftQuestion) => void;
   onSave: (q: DraftQuestion, reason: string) => Promise<void>;
   onArchive: (q: DraftQuestion, reason: string) => Promise<void>;
   busy: boolean;
 }
 
-export function QuestionCard({ question, index, onChange, onSave, onArchive, busy }: Props) {
+export function QuestionCard({
+  question,
+  index,
+  contentItemId,
+  onChange,
+  onSave,
+  onArchive,
+  busy,
+}: Props) {
+  const { urlMap } = useQuizAssets(contentItemId);
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: `q-card:${question.client_id}`,
   });
@@ -220,7 +249,10 @@ export function QuestionCard({ question, index, onChange, onSave, onArchive, bus
     setSaving(true);
     try {
       let toCommit = question;
-      if (question.question_type === "match_definition") {
+      if (
+        question.question_type === "match_definition" ||
+        question.question_type === "match_picture"
+      ) {
         toCommit = { ...question, options: pairsToOptions(question.pairs) };
       }
       await onSave(toCommit, saveReason.trim());
@@ -362,9 +394,31 @@ export function QuestionCard({ question, index, onChange, onSave, onArchive, bus
             </div>
           </div>
 
+          {question.question_type !== "true_false" && (
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">
+                Question image (optional)
+              </Label>
+              <QuizImagePicker
+                parentKind="quiz_question"
+                parentId={question.id}
+                currentAssetId={question.question_image_asset_id}
+                previewUrl={
+                  question.question_image_asset_id
+                    ? urlMap.get(question.question_image_asset_id) ?? null
+                    : null
+                }
+                onAttached={(assetId) => setField("question_image_asset_id", assetId)}
+              />
+            </div>
+          )}
+
           <div className="space-y-2">
             <Label className="text-xs uppercase tracking-wide text-muted-foreground">
-              {question.question_type === "match_definition" ? "Pairs" : "Options"}
+              {question.question_type === "match_definition" ||
+              question.question_type === "match_picture"
+                ? "Pairs"
+                : "Options"}
             </Label>
             {question.question_type === "multiple_choice" && (
               <MultipleChoiceOptionsEditor
@@ -390,6 +444,13 @@ export function QuestionCard({ question, index, onChange, onSave, onArchive, bus
               <MatchOptionsEditor
                 pairs={question.pairs}
                 onChange={(pairs) => setField("pairs", pairs)}
+              />
+            )}
+            {question.question_type === "match_picture" && (
+              <MatchPictureOptionsEditor
+                pairs={question.pairs}
+                onChange={(pairs) => setField("pairs", pairs)}
+                imageUrlMap={urlMap}
               />
             )}
           </div>

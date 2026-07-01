@@ -47,11 +47,14 @@ function rowsToDraft(qRows: any[], oRows: any[]): DraftQuestion[] {
       option_text: o.option_text ?? "",
       is_correct: !!o.is_correct,
       display_order: o.display_order ?? 0,
+      option_image_asset_id: o.option_image_asset_id ?? null,
       // carry match_pair_key piggybacked
       ...({ match_pair_key: o.match_pair_key ?? null } as any),
     }));
     const pairs: MatchPair[] =
-      q.question_type === "match_definition" ? optionsToPairs(options) : [];
+      q.question_type === "match_definition" || q.question_type === "match_picture"
+        ? optionsToPairs(options)
+        : [];
     return {
       client_id: crypto.randomUUID(),
       id: q.id,
@@ -60,6 +63,7 @@ function rowsToDraft(qRows: any[], oRows: any[]): DraftQuestion[] {
       points: q.points ?? 1,
       explanation: q.explanation ?? "",
       display_order: q.display_order ?? 0,
+      question_image_asset_id: q.question_image_asset_id ?? null,
       options,
       pairs,
       dirty: false,
@@ -201,6 +205,7 @@ export default function QuizQuestionsEditor() {
       points: 1,
       explanation: "",
       display_order: questions.length,
+      question_image_asset_id: null,
       options: seed.options,
       pairs: seed.pairs,
       dirty: true,
@@ -226,12 +231,14 @@ export default function QuizQuestionsEditor() {
         display_order: q.display_order,
         points: q.points,
         explanation: q.explanation.trim() ? q.explanation.trim() : null,
+        question_image_asset_id: q.question_image_asset_id ?? null,
         reason,
       });
 
       // 2. compute target option set
-      const targetOptions: DraftOption[] =
-        q.question_type === "match_definition" ? pairsToOptions(q.pairs) : q.options;
+      const isMatch =
+        q.question_type === "match_definition" || q.question_type === "match_picture";
+      const targetOptions: DraftOption[] = isMatch ? pairsToOptions(q.pairs) : q.options;
 
       // map old options for this card (those that had a persisted id)
       const previous: DraftOption[] = q.options.filter((o) => !!o.id);
@@ -248,20 +255,19 @@ export default function QuizQuestionsEditor() {
       // 4. upsert each remaining option
       for (let i = 0; i < targetOptions.length; i++) {
         const opt = targetOptions[i];
-        const matchKey =
-          q.question_type === "match_definition"
-            ? // find the pair key for this option
-              (q.pairs.find((p) => p.prompt.client_id === opt.client_id)?.key ??
-                q.pairs.find((p) => p.answer.client_id === opt.client_id)?.key ??
-                null)
-            : null;
+        const matchKey = isMatch
+          ? (q.pairs.find((p) => p.prompt.client_id === opt.client_id)?.key ??
+              q.pairs.find((p) => p.answer.client_id === opt.client_id)?.key ??
+              null)
+          : null;
         await rpcs.upsertOption({
           id: opt.id,
           question_id: newId,
           option_text: opt.option_text.trim(),
           is_correct: opt.is_correct,
           match_pair_key: matchKey,
-          display_order: q.question_type === "match_definition" ? opt.display_order : i,
+          display_order: isMatch ? opt.display_order : i,
+          option_image_asset_id: opt.option_image_asset_id ?? null,
           reason,
         });
       }
@@ -360,6 +366,7 @@ export default function QuizQuestionsEditor() {
                     key={q.client_id}
                     question={q}
                     index={idx}
+                    contentItemId={contentItemId!}
                     onChange={updateQuestion}
                     onSave={saveQuestion}
                     onArchive={archiveQuestion}

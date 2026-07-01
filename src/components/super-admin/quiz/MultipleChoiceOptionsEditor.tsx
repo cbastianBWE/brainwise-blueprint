@@ -24,6 +24,7 @@ export interface DraftOption {
   option_text: string;
   is_correct: boolean;
   display_order: number;
+  option_image_asset_id?: string | null;
 }
 
 const MAX_TEXT = 200;
