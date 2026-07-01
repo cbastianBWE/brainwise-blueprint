@@ -491,6 +491,7 @@ export default function SettingsPage() {
 
       {/* MFA */}
       {user && <MfaSection userId={user.id} />}
+      {user && <TrustedDevicesCard userId={user.id} />}
 
       {/* Preferences */}
       <Card>
