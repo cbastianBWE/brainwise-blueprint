@@ -196,6 +196,8 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
   useEffect(() => {
     if (!user || !assessmentId) return;
     const load = async () => {
+      if (loadedAssessmentRef.current === assessmentId) return;
+
       let itemsQuery = supabase
         .from("items")
         .select("item_id, item_number, item_text, anchor_low, anchor_high, scale_type, reverse_scored, dimension_id")
@@ -239,6 +241,7 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
         if (scales) setResponseScales(scales);
       }
 
+      loadedAssessmentRef.current = assessmentId;
       setLoading(false);
       setConfirmingAck(false);
     };
@@ -247,23 +250,55 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
     return () => {
       if (autoSaveTimer.current) clearInterval(autoSaveTimer.current);
     };
-  }, [user, assessmentId, instrument.instrument_id, raterType, contextType, onExit, toast]);
-
-  // Auto-save every 60s
-  useEffect(() => {
-    if (!assessmentId) return;
-    autoSaveTimer.current = setInterval(() => {
-      showSavedIndicator();
-    }, 60000);
-    return () => {
-      if (autoSaveTimer.current) clearInterval(autoSaveTimer.current);
-    };
-  }, [assessmentId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, assessmentId, instrument.instrument_id, raterType, contextType]);
 
   const showSavedIndicator = () => {
     setSavedIndicator(true);
     setTimeout(() => setSavedIndicator(false), 2000);
   };
+
+  const flushUnsaved = useCallback(async () => {
+    if (!assessmentId) return;
+    const ids = Array.from(unsavedItems);
+    if (ids.length === 0) return;
+    for (const itemId of ids) {
+      const item = itemsRef.current.find((i) => i.item_id === itemId);
+      const resp = responsesRef.current[itemId];
+      if (!item || !resp) continue;
+      const { error } = await supabase
+        .from("assessment_responses")
+        .upsert(
+          {
+            assessment_id: assessmentId,
+            item_id: itemId,
+            response_value_numeric: resp.numeric,
+            response_value_text: resp.text,
+            is_reverse_scored: item.reverse_scored,
+            readiness_level: resp.readiness,
+          },
+          { onConflict: "assessment_id,item_id" }
+        );
+      if (!error) {
+        setUnsavedItems((prev) => {
+          const next = new Set(prev);
+          next.delete(itemId);
+          return next;
+        });
+      }
+    }
+  }, [assessmentId, unsavedItems]);
+
+  // Auto-save every 60s — silently retries anything still unsaved
+  useEffect(() => {
+    if (!assessmentId) return;
+    autoSaveTimer.current = setInterval(() => {
+      flushUnsaved();
+    }, 60000);
+    return () => {
+      if (autoSaveTimer.current) clearInterval(autoSaveTimer.current);
+    };
+  }, [assessmentId, flushUnsaved]);
 
   const saveResponse = useCallback(
     async (itemId: string, numeric: number, text: string | null, readinessLevel: string | null) => {
@@ -287,9 +322,28 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
           { onConflict: "assessment_id,item_id" }
         );
 
-      showSavedIndicator();
+      if (error) {
+        setUnsavedItems((prev) => {
+          const next = new Set(prev);
+          next.add(itemId);
+          return next;
+        });
+        toast({
+          title: "Save failed",
+          description: "Your last answer didn't save. Check your connection — we'll keep retrying.",
+          variant: "destructive",
+        });
+      } else {
+        setUnsavedItems((prev) => {
+          if (!prev.has(itemId)) return prev;
+          const next = new Set(prev);
+          next.delete(itemId);
+          return next;
+        });
+        showSavedIndicator();
+      }
     },
-    [assessmentId, items]
+    [assessmentId, items, toast]
   );
 
   const handleSubmit = async () => {
