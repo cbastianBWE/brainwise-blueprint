@@ -130,6 +130,8 @@ export default function QuizViewer({
     },
   });
 
+  const { urlMap } = useQuizAssets(contentItemId);
+
   const [stage, setStage] = useState<Stage>("intro");
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, AnswerValue>>({});
