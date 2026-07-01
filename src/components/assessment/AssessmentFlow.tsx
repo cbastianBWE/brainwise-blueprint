@@ -458,6 +458,151 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
     else setCurrentIndex(next);
   };
 
+  const renderItemControl = (item: Item) => {
+    const resp = responses[item.item_id];
+    if (item.scale_type === "Level 1-4 behavioral match") {
+      return (
+        <LevelMatchControl
+          item={item}
+          value={resp?.numeric ?? null}
+          raterType={raterType}
+          targetUserName={targetUserName}
+          onSelect={(val, text) => saveResponse(item.item_id, val, text, null)}
+        />
+      );
+    }
+    if (item.scale_type === "Never/Rarely/Often/Consistently") {
+      return (
+        <FrequencyControl
+          item={item}
+          value={resp?.numeric ?? null}
+          responseScales={responseScales}
+          raterType={raterType}
+          targetUserName={targetUserName}
+          onSelect={(val, text, readiness) => saveResponse(item.item_id, val, text, readiness)}
+        />
+      );
+    }
+    return (
+      <SliderControl
+        item={item}
+        value={resp?.numeric ?? null}
+        raterType={raterType}
+        targetUserName={targetUserName}
+        onSelect={(val) => saveResponse(item.item_id, val, null, null)}
+      />
+    );
+  };
+
+  if (reviewing) {
+    const answeredCount = items.filter((it) => responses[it.item_id] != null).length;
+    return (
+      <div className="fixed inset-0 bg-background flex flex-col z-50">
+        <div className="border-b px-4 py-3 flex items-center justify-between">
+          <div className="text-sm font-medium">Review your responses</div>
+          <div className="flex items-center gap-2">
+            {savedIndicator && (
+              <span className="text-xs text-muted-foreground flex items-center gap-1 animate-in fade-in">
+                <Check className="h-3 w-3" /> Saved
+              </span>
+            )}
+            <Button variant="ghost" size="icon" onClick={() => setShowExitDialog(true)}>
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-auto px-4 py-6">
+          <div className="w-full max-w-2xl mx-auto space-y-4">
+            {items.map((it, idx) => {
+              const answered = responses[it.item_id] != null;
+              return (
+                <Card key={it.item_id}>
+                  <CardContent className="p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="text-xs font-semibold text-muted-foreground">
+                        Item {idx + 1} of {items.length}
+                      </div>
+                      {!answered && (
+                        <span className="text-xs font-semibold rounded-full px-2 py-0.5 bg-[#FFB703]/10 text-[#7a5800] border border-[#FFB703]">
+                          Not answered
+                        </span>
+                      )}
+                    </div>
+                    {it.reverse_scored && (
+                      <div className="flex gap-2 rounded-lg border border-[#FFB703] bg-[#FFB703]/10 px-3 py-2">
+                        <AlertTriangle className="h-4 w-4 shrink-0 text-[#7a5800] mt-0.5" />
+                        <div className="text-xs text-[#7a5800]">
+                          <p className="font-semibold">Read this one carefully.</p>
+                          <p>Endpoint labels may run in the opposite direction.</p>
+                        </div>
+                      </div>
+                    )}
+                    {renderItemControl(it)}
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="border-t px-4 py-3 flex items-center justify-between gap-3">
+          <div className="text-sm text-muted-foreground">
+            Answered {answeredCount} of {items.length}
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setReviewing(false)}>
+              Back to questions
+            </Button>
+            <Button
+              onClick={() => setShowSubmitDialog(true)}
+              disabled={!allAnswered || unsavedItems.size > 0}
+            >
+              Submit Assessment
+            </Button>
+          </div>
+        </div>
+
+        <AlertDialog open={showExitDialog} onOpenChange={setShowExitDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Exit Assessment?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Your progress has been saved. You can resume this assessment at any time.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Continue Assessment</AlertDialogCancel>
+              <AlertDialogAction onClick={onExit}>Exit</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        <AlertDialog open={showSubmitDialog} onOpenChange={setShowSubmitDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Submit Assessment?</AlertDialogTitle>
+              <AlertDialogDescription>
+                {Object.keys(responses).length < items.length
+                  ? `You have answered ${Object.keys(responses).length} of ${items.length} items. You must answer all ${items.length} items before you can submit.`
+                  : "All items have been answered. Once submitted, responses cannot be changed."}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Go Back</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleSubmit}
+                disabled={submitting || !allAnswered || unsavedItems.size > 0}
+              >
+                {submitting ? 'Submitting...' : 'Submit'}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
+    );
+  }
+
   return (
     <div className="fixed inset-0 bg-background flex flex-col z-50">
       {/* Header */}
