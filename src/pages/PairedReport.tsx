@@ -550,15 +550,20 @@ export default function PairedReport() {
       </>
     );
   };
-  const Bullets = ({ text, blockKey }: { text: string; blockKey?: string }) => (
-    <ul style={{ margin: 0, paddingLeft: 22, listStyleType: "disc" }}>
-      {splitSentences(nm(text)).map((s, i) => (
-        <li key={i} style={{ fontSize: 16, lineHeight: 1.6, margin: "4px 0" }}>
-          {blockKey ? <HighlightableText blockKey={`${blockKey}:${i}`} text={s} /> : renderBold(s)}
-        </li>
-      ))}
-    </ul>
-  );
+  const Bullets = ({ text, blockKey }: { text: string | string[]; blockKey?: string }) => {
+    const items = Array.isArray(text)
+      ? text.map((t) => nm(t)).filter(Boolean)
+      : splitSentences(nm(text));
+    return (
+      <ul style={{ margin: 0, paddingLeft: 22, listStyleType: "disc" }}>
+        {items.map((s, i) => (
+          <li key={i} style={{ fontSize: 16, lineHeight: 1.6, margin: "4px 0" }}>
+            {blockKey ? <HighlightableText blockKey={`${blockKey}:${i}`} text={s} /> : renderBold(s)}
+          </li>
+        ))}
+      </ul>
+    );
+  };
 
   /* tooltip & modal */
   const tip = useTipController();
