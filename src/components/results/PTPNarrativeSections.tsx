@@ -303,6 +303,7 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
         return;
       }
       const ctx = ptpContextTab;
+      const useBoth = !!additionalAssessmentId && ctx === "combined";
 
       const { data: drivingRow } = await supabase
         .from("facet_interpretations")
