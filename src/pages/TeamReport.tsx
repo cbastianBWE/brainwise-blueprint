@@ -134,6 +134,8 @@ function IdeaBullets({ items, style, blockKey }: { items: string | string[]; sty
     );
   }
   return <Paras text={items} style={style} blockKey={blockKey} />;
+}
+
 
 /* ---------- tooltip ---------- */
 type Tip = { x: number; y: number; text: string } | null;
