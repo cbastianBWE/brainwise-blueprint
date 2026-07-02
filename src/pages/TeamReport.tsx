@@ -913,7 +913,7 @@ export default function TeamReport() {
               </div>
               <div style={{ background: CARD_BG, border: `1px solid ${LINE}`, borderRadius: 16, padding: 18, boxShadow: "0 1px 2px rgba(2,31,54,.06),0 8px 24px rgba(2,31,54,.06)" }}>
                 <div style={{ fontSize: 13, letterSpacing: ".1em", textTransform: "uppercase", fontWeight: 800, marginBottom: 10, color: MUSTARD }}>Promote healthy conflict</div>
-                <Paras text={conflict.promote_healthy} blockKey="conflict:promote" />
+                <IdeaBullets items={conflict.promote_healthy} blockKey="conflict:promote" />
               </div>
             </div>
           </div>
