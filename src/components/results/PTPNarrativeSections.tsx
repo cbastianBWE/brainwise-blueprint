@@ -473,7 +473,7 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
       }
     };
     fetchFacets();
-  }, [assessmentId, assessmentResultId, ptpContextTab]);
+  }, [assessmentId, additionalAssessmentId, assessmentResultId, ptpContextTab]);
 
   // ── facet_insights_all: full per-item interpretation array ──
   // DB-first; triggers server-side generate-all-facets when the user opens
