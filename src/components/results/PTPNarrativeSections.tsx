@@ -341,7 +341,7 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
       let elevated: FacetItem[];
       let suppressed: FacetItem[];
 
-      if (drivingData?.elevated || drivingData?.suppressed) {
+      if ((drivingData?.elevated || drivingData?.suppressed) && !useBoth) {
         // Canonical path: the driving_facets_${ctx} row exists, read it.
         elevated = (drivingData.elevated ?? []).slice(0, 10).map(toFacetItem);
         suppressed = (drivingData.suppressed ?? []).slice(0, 10).map(toFacetItem);
@@ -349,12 +349,24 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
         // Fallback: no driving_facets_${ctx} row (older assessments predate the
         // generate_driving_facets path). Recompute elevated/suppressed from raw
         // responses, same population mean/stdDev calculation the backend uses.
-        const { data: responses } = await supabase
-          .from("assessment_responses")
-          .select("response_value_numeric, is_reverse_scored, item_id")
-          .eq("assessment_id", assessmentId);
+        const responseFetches = [
+          supabase
+            .from("assessment_responses")
+            .select("response_value_numeric, is_reverse_scored, item_id")
+            .eq("assessment_id", assessmentId),
+        ];
+        if (useBoth) {
+          responseFetches.push(
+            supabase
+              .from("assessment_responses")
+              .select("response_value_numeric, is_reverse_scored, item_id")
+              .eq("assessment_id", additionalAssessmentId!),
+          );
+        }
+        const responseResults = await Promise.all(responseFetches);
+        const responses = responseResults.flatMap((r) => r.data ?? []);
 
-        if (!responses?.length) {
+        if (!responses.length) {
           setLoadingFacets(false);
           return;
         }
