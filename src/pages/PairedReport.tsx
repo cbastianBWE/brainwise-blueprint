@@ -443,11 +443,11 @@ function Acc({ title, defaultOpen = false, children }: { title: string; defaultO
 interface PairInThreeItem { headline: string; detail: string; action: string; }
 interface DrivingItem { item: number; why: string; actions?: string[]; action?: string; }
 interface DrivingFacetsSection { opening: string; strengths: DrivingItem[]; focus: DrivingItem[]; }
-interface WithinPersonSection { a: string; b: string; }
-interface NeedsSection { a_needs_from_b: string; b_needs_from_a: string; }
-interface CommunicationSection { general: string; under_pressure: string; avoid_conflict: string[]; }
-interface ConflictSection { summary: string; mitigate: string; promote_healthy: string; per_person?: { a: { read: string; counter_move: string }; b: { read: string; counter_move: string } }; }
-interface RepairSection { overview: string; a: string; b: string; steps: string[]; disclaimer: string; }
+interface WithinPersonSection { a: string | string[]; b: string | string[]; }
+interface NeedsSection { a_needs_from_b: string | string[]; b_needs_from_a: string | string[]; }
+interface CommunicationSection { general: string | string[]; under_pressure: string | string[]; avoid_conflict: string[]; }
+interface ConflictSection { summary: string; mitigate: string | string[]; promote_healthy: string | string[]; per_person?: { a: { read: string; counter_move: string }; b: { read: string; counter_move: string } }; }
+interface RepairSection { overview: string; a: string | string[]; b: string | string[]; steps: string[]; disclaimer: string; }
 interface IntimacySection { overview: string; a: string[]; b: string[]; disclaimer: string; }
 interface CoachSection { why: { item: number; rationale: string }[]; debrief_prompts: string[]; }
 
@@ -550,15 +550,20 @@ export default function PairedReport() {
       </>
     );
   };
-  const Bullets = ({ text, blockKey }: { text: string; blockKey?: string }) => (
-    <ul style={{ margin: 0, paddingLeft: 22, listStyleType: "disc" }}>
-      {splitSentences(nm(text)).map((s, i) => (
-        <li key={i} style={{ fontSize: 16, lineHeight: 1.6, margin: "4px 0" }}>
-          {blockKey ? <HighlightableText blockKey={`${blockKey}:${i}`} text={s} /> : renderBold(s)}
-        </li>
-      ))}
-    </ul>
-  );
+  const Bullets = ({ text, blockKey }: { text: string | string[]; blockKey?: string }) => {
+    const items = Array.isArray(text)
+      ? text.map((t) => nm(t)).filter(Boolean)
+      : splitSentences(nm(text));
+    return (
+      <ul style={{ margin: 0, paddingLeft: 22, listStyleType: "disc" }}>
+        {items.map((s, i) => (
+          <li key={i} style={{ fontSize: 16, lineHeight: 1.6, margin: "4px 0" }}>
+            {blockKey ? <HighlightableText blockKey={`${blockKey}:${i}`} text={s} /> : renderBold(s)}
+          </li>
+        ))}
+      </ul>
+    );
+  };
 
   /* tooltip & modal */
   const tip = useTipController();

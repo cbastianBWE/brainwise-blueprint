@@ -74,11 +74,11 @@ interface DrivingFacetsSection {
   focus: DrivingItem[];
 }
 interface CommunicationSection {
-  general: string;
-  under_pressure: string;
+  general: string | string[];
+  under_pressure: string | string[];
   avoid_conflict: string[];
 }
-interface ConflictSection { summary: string; mitigate: string; promote_healthy: string; }
+interface ConflictSection { summary: string; mitigate: string | string[]; promote_healthy: string | string[]; }
 interface LeaderBriefRow { item: number; risk_to_work: string; the_move: string; potential_owner: string; }
 interface LeaderBriefSection { rows: LeaderBriefRow[]; lean_on: string; }
 interface CoachSection {
@@ -119,6 +119,23 @@ function Paras({ text, style, blockKey }: { text: string; style?: React.CSSPrope
     </>
   );
 }
+function IdeaBullets({ items, style, blockKey }: { items: string | string[]; style?: React.CSSProperties; blockKey?: string }) {
+  if (Array.isArray(items)) {
+    const list = items.filter(Boolean);
+    if (!list.length) return null;
+    return (
+      <ul style={{ margin: 0, paddingLeft: 22, color: GRAY, fontSize: 16, lineHeight: 1.6, listStyleType: "disc", ...style }}>
+        {list.map((s, i) => (
+          <li key={i} style={{ margin: "4px 0" }}>
+            {blockKey ? <HighlightableText blockKey={`${blockKey}:${i}`} text={s} /> : s}
+          </li>
+        ))}
+      </ul>
+    );
+  }
+  return <Paras text={items} style={style} blockKey={blockKey} />;
+}
+
 
 /* ---------- tooltip ---------- */
 type Tip = { x: number; y: number; text: string } | null;
@@ -864,11 +881,11 @@ export default function TeamReport() {
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }} className="pair-grid">
               <div style={{ background: CARD_BG, border: `1px solid ${LINE}`, borderRadius: 16, padding: 18, boxShadow: "0 1px 2px rgba(2,31,54,.06),0 8px 24px rgba(2,31,54,.06)" }}>
                 <div style={{ fontSize: 13, letterSpacing: ".1em", textTransform: "uppercase", fontWeight: 800, marginBottom: 10, color: TEAL }}>In general</div>
-                <Paras text={communication.general} blockKey="communication:general" />
+                <IdeaBullets items={communication.general} blockKey="communication:general" />
               </div>
               <div style={{ background: CARD_BG, border: `1px solid ${LINE}`, borderRadius: 16, padding: 18, boxShadow: "0 1px 2px rgba(2,31,54,.06),0 8px 24px rgba(2,31,54,.06)" }}>
                 <div style={{ fontSize: 13, letterSpacing: ".1em", textTransform: "uppercase", fontWeight: 800, marginBottom: 10, color: MUSTARD }}>Under pressure</div>
-                <Paras text={communication.under_pressure} blockKey="communication:under_pressure" />
+                <IdeaBullets items={communication.under_pressure} blockKey="communication:under_pressure" />
               </div>
             </div>
             {Array.isArray(communication.avoid_conflict) && communication.avoid_conflict.length > 0 && (
@@ -892,11 +909,11 @@ export default function TeamReport() {
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }} className="pair-grid">
               <div style={{ background: CARD_BG, border: `1px solid ${LINE}`, borderRadius: 16, padding: 18, boxShadow: "0 1px 2px rgba(2,31,54,.06),0 8px 24px rgba(2,31,54,.06)" }}>
                 <div style={{ fontSize: 13, letterSpacing: ".1em", textTransform: "uppercase", fontWeight: 800, marginBottom: 10, color: TEAL }}>Mitigate unhealthy conflict</div>
-                <Paras text={conflict.mitigate} blockKey="conflict:mitigate" />
+                <IdeaBullets items={conflict.mitigate} blockKey="conflict:mitigate" />
               </div>
               <div style={{ background: CARD_BG, border: `1px solid ${LINE}`, borderRadius: 16, padding: 18, boxShadow: "0 1px 2px rgba(2,31,54,.06),0 8px 24px rgba(2,31,54,.06)" }}>
                 <div style={{ fontSize: 13, letterSpacing: ".1em", textTransform: "uppercase", fontWeight: 800, marginBottom: 10, color: MUSTARD }}>Promote healthy conflict</div>
-                <Paras text={conflict.promote_healthy} blockKey="conflict:promote" />
+                <IdeaBullets items={conflict.promote_healthy} blockKey="conflict:promote" />
               </div>
             </div>
           </div>
