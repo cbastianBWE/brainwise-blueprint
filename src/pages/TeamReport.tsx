@@ -119,6 +119,21 @@ function Paras({ text, style, blockKey }: { text: string; style?: React.CSSPrope
     </>
   );
 }
+function IdeaBullets({ items, style, blockKey }: { items: string | string[]; style?: React.CSSProperties; blockKey?: string }) {
+  if (Array.isArray(items)) {
+    const list = items.filter(Boolean);
+    if (!list.length) return null;
+    return (
+      <ul style={{ margin: 0, paddingLeft: 22, color: GRAY, fontSize: 16, lineHeight: 1.6, listStyleType: "disc", ...style }}>
+        {list.map((s, i) => (
+          <li key={i} style={{ margin: "4px 0" }}>
+            {blockKey ? <HighlightableText blockKey={`${blockKey}:${i}`} text={s} /> : s}
+          </li>
+        ))}
+      </ul>
+    );
+  }
+  return <Paras text={items} style={style} blockKey={blockKey} />;
 
 /* ---------- tooltip ---------- */
 type Tip = { x: number; y: number; text: string } | null;
