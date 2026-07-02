@@ -74,11 +74,11 @@ interface DrivingFacetsSection {
   focus: DrivingItem[];
 }
 interface CommunicationSection {
-  general: string;
-  under_pressure: string;
+  general: string | string[];
+  under_pressure: string | string[];
   avoid_conflict: string[];
 }
-interface ConflictSection { summary: string; mitigate: string; promote_healthy: string; }
+interface ConflictSection { summary: string; mitigate: string | string[]; promote_healthy: string | string[]; }
 interface LeaderBriefRow { item: number; risk_to_work: string; the_move: string; potential_owner: string; }
 interface LeaderBriefSection { rows: LeaderBriefRow[]; lean_on: string; }
 interface CoachSection {
