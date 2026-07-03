@@ -20,7 +20,17 @@ const INDUSTRIES = [
   "Real Estate", "Retail", "Telecommunications", "Transportation & Logistics", "Other",
 ];
 const EXPERIENCE = ["0-2", "3-5", "6-10", "11-20", "20+"];
-const ORG_LEVELS = ["IC", "Manager", "Director", "VP", "C-Suite", "Other"];
+
+// Maps the single "Role in Organization" answer to the org_level values the
+// company dashboards slice on. Keep in sync with dashboard slice options.
+const ROLE_TO_ORG_LEVEL: Record<string, string> = {
+  "Individual Contributor": "IC",
+  "Manager": "Manager",
+  "Director": "Director",
+  "VP/SVP": "VP",
+  "C-Suite": "C-Suite",
+  "Other": "Other",
+};
 
 const CORPORATE_TYPES = ["corporate_employee", "company_admin", "org_admin"];
 
@@ -35,8 +45,6 @@ const DemographicForm = () => {
   const [role, setRole] = useState("");
   const [industry, setIndustry] = useState("");
   const [experience, setExperience] = useState("");
-  
-  const [orgLevel, setOrgLevel] = useState("");
 
   useEffect(() => {
     if (!user) return;
@@ -52,8 +60,7 @@ const DemographicForm = () => {
 
   const isCorporate = accountType ? CORPORATE_TYPES.includes(accountType) : false;
 
-  const requiredMissing =
-    !role || !industry || !experience || (isCorporate && !orgLevel);
+  const requiredMissing = !role || !industry || !experience;
 
   const handleSave = async () => {
     if (!user || requiredMissing) return;
@@ -73,10 +80,13 @@ const DemographicForm = () => {
     }
 
     if (isCorporate) {
+      const derivedLevel = ROLE_TO_ORG_LEVEL[role] ?? "Other";
+      // Only write when org_level is currently null, so an invite-set value is preserved.
       const { error: userErr } = await supabase
         .from("users")
-        .update({ org_level: orgLevel })
-        .eq("id", user.id);
+        .update({ org_level: derivedLevel })
+        .eq("id", user.id)
+        .is("org_level", null);
       if (userErr) {
         setLoading(false);
         toast({ title: "Error", description: userErr.message, variant: "destructive" });
@@ -123,16 +133,6 @@ const DemographicForm = () => {
               <SelectContent>{EXPERIENCE.map(e => <SelectItem key={e} value={e}>{e}</SelectItem>)}</SelectContent>
             </Select>
           </div>
-
-          {isCorporate && (
-            <div className="space-y-2">
-              <Label>Organization Level</Label>
-              <Select value={orgLevel} onValueChange={setOrgLevel}>
-                <SelectTrigger><SelectValue placeholder="Select level" /></SelectTrigger>
-                <SelectContent>{ORG_LEVELS.map(l => <SelectItem key={l} value={l}>{l}</SelectItem>)}</SelectContent>
-              </Select>
-            </div>
-          )}
 
           <div className="pt-2">
             <Button onClick={handleSave} disabled={loading || requiredMissing} className="w-full">
