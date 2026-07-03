@@ -869,10 +869,14 @@ function SliderControl({
       <ManagerContextLine raterType={raterType} targetUserName={targetUserName} />
       <p className="text-xl font-medium text-foreground leading-relaxed">{item.item_text}</p>
       <div className="space-y-4 px-2">
-        <div className="flex justify-center">
-          <span className="text-3xl font-bold text-primary min-w-16">
-            {touched ? localVal : '—'}
-          </span>
+        <div className="flex items-center gap-4">
+          <span className="w-6 flex-shrink-0" />
+          <div className="flex-1 flex justify-center">
+            <span className="text-3xl font-bold text-primary min-w-16">
+              {touched ? localVal : '—'}
+            </span>
+          </div>
+          <span className="w-8 flex-shrink-0" />
         </div>
         <div className="flex items-center gap-4">
           <span className="text-sm font-medium text-muted-foreground w-6 text-center flex-shrink-0">0</span>
