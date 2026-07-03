@@ -781,6 +781,55 @@ function SliderControl({
 }) {
   const [localVal, setLocalVal] = useState(value ?? 50);
   const [touched, setTouched] = useState(value !== null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingSave = useRef<(() => void) | null>(null);
+
+  const clearTimer = () => {
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+      debounceRef.current = null;
+    }
+  };
+
+  const flushPending = () => {
+    clearTimer();
+    if (pendingSave.current) {
+      const run = pendingSave.current;
+      pendingSave.current = null;
+      run();
+    }
+  };
+
+  const scheduleSave = (v: number) => {
+    const persist = () => onSelect(v);
+    pendingSave.current = persist;
+    clearTimer();
+    debounceRef.current = setTimeout(() => {
+      debounceRef.current = null;
+      pendingSave.current = null;
+      persist();
+    }, 250);
+  };
+
+  const commitNow = (v: number) => {
+    clearTimer();
+    pendingSave.current = null;
+    onSelect(v);
+  };
+
+  useEffect(() => {
+    return () => {
+      flushPending();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [item.item_id]);
+
+  useEffect(() => {
+    return () => {
+      flushPending();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (value !== null) {
@@ -836,8 +885,9 @@ function SliderControl({
               onValueChange={([v]) => {
                 setLocalVal(v);
                 setTouched(true);
+                scheduleSave(v);
               }}
-              onValueCommit={([v]) => onSelect(v)}
+              onValueCommit={([v]) => commitNow(v)}
             />
           </div>
           <span className="text-sm font-medium text-muted-foreground w-8 text-center flex-shrink-0">100</span>
