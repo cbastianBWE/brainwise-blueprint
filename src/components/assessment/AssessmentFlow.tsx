@@ -783,6 +783,7 @@ function SliderControl({
   const [touched, setTouched] = useState(value !== null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingSave = useRef<(() => void) | null>(null);
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
 
   const clearTimer = () => {
     if (debounceRef.current) {
@@ -841,8 +842,15 @@ function SliderControl({
     }
   }, [item.item_id, value]);
 
+  // Focus the slider thumb on mount and on each new item, so arrow keys work
+  // immediately without a manual click. Scoped to this control's wrapper.
+  useEffect(() => {
+    const thumb = wrapperRef.current?.querySelector<HTMLElement>('[role="slider"]');
+    if (thumb) thumb.focus({ preventScroll: true });
+  }, [item.item_id]);
+
   return (
-    <div className="space-y-8 text-center">
+    <div ref={wrapperRef} className="space-y-8 text-center">
       <style>{`
         .assessment-slider [role="slider"] {
           width: 22px;
