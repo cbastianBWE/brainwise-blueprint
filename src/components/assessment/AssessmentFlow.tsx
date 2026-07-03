@@ -497,6 +497,20 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
 
   if (reviewing) {
     const answeredCount = items.filter((it) => responses[it.item_id] != null).length;
+    const jumpToNextUnanswered = () => {
+      const unansweredIdx = items
+        .map((it, i) => (responses[it.item_id] == null ? i : -1))
+        .filter((i) => i !== -1);
+      if (unansweredIdx.length === 0) return;
+      const target = unansweredIdx[jumpCursor.current % unansweredIdx.length];
+      jumpCursor.current += 1;
+      const el = document.getElementById(`review-item-${target}`);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        const thumb = el.querySelector<HTMLElement>('[role="slider"]');
+        if (thumb) thumb.focus({ preventScroll: true });
+      }
+    };
     return (
       <div className="fixed inset-0 bg-background flex flex-col z-50">
         <div className="border-b px-4 py-3 flex items-center justify-between">
@@ -515,10 +529,26 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
 
         <div className="flex-1 overflow-auto px-4 py-6">
           <div className="w-full max-w-2xl mx-auto space-y-4">
+            {answeredCount < items.length && (
+              <div className="flex items-center justify-between gap-3 rounded-lg border border-[#FFB703] bg-[#FFB703]/10 px-4 py-3">
+                <div className="text-sm text-[#7a5800]">
+                  <span className="font-semibold">{items.length - answeredCount} unanswered.</span>{" "}
+                  You must answer every item before you can submit.
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-[#FFB703] text-[#7a5800] shrink-0"
+                  onClick={jumpToNextUnanswered}
+                >
+                  Jump to next unanswered
+                </Button>
+              </div>
+            )}
             {items.map((it, idx) => {
               const answered = responses[it.item_id] != null;
               return (
-                <Card key={it.item_id}>
+                <Card key={it.item_id} id={`review-item-${idx}`}>
                   <CardContent className="p-4 space-y-3">
                     <div className="flex items-center justify-between">
                       <div className="text-xs font-semibold text-muted-foreground">
