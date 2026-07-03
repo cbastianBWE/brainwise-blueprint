@@ -76,6 +76,7 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
   const loadedAssessmentRef = useRef<string | null>(null);
   const responsesRef = useRef(responses);
   const itemsRef = useRef(items);
+  const jumpCursor = useRef(0);
   useEffect(() => { responsesRef.current = responses; }, [responses]);
   useEffect(() => { itemsRef.current = items; }, [items]);
   
