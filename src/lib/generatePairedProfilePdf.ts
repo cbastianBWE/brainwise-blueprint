@@ -21,6 +21,13 @@ import {
 } from "./generatePdfPrimitivesShared";
 import type { PairedPdfData, PairedFacetForPdf } from "./assemblePairedPdfData";
 
+const PAIRED_COVER_DISCLAIMER_ROMANTIC =
+  "This report interprets two self-report profiles and describes tendencies in how two people may relate. It is not a clinical assessment, a diagnosis, or a judgment about the relationship. If any pattern here involves fear, control, or harm, please seek support from a qualified professional.";
+
+const PAIRED_COVER_DISCLAIMER_NONROMANTIC =
+  "This report interprets two self-report profiles and describes tendencies in how two people tend to work together. It is not a clinical assessment, a diagnosis, or a judgment about either person. If any pattern here involves fear, control, or harm, please seek support from a qualified professional.";
+
+
 export interface PairedPdfSections {
   pairInThree: boolean;
   atAGlance: boolean;
@@ -331,7 +338,9 @@ export async function generatePairedProfilePdf(
     field2: { label: "DATE COMPLETED", value: todayLong },
     field3: { label: "RELATIONSHIP CONTEXT", value: modeCap },
     disclaimer:
-      "This report interprets two self-report profiles and describes tendencies in how two people may relate. It is not a clinical assessment, a diagnosis, or a judgment about the relationship. For romantic reports especially, if any pattern here involves fear, control, or harm, please seek support from a qualified professional.",
+      data.mode === "romantic"
+        ? PAIRED_COVER_DISCLAIMER_ROMANTIC
+        : PAIRED_COVER_DISCLAIMER_NONROMANTIC,
     copyright:
       "© {year} BrainWise Enterprises. Confidential and proprietary. Shared with the named recipients for their own reflection only; not to be reproduced or disclosed without written consent. The Personal Threat Profile and 5P model are the property of BrainWise Enterprises.",
   });
