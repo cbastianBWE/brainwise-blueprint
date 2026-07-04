@@ -1101,7 +1101,15 @@ export default function TeamReport() {
         }}>{tip.text}</div>
       )}
       </TeamReportHighlightProvider>
+      <ExportPdfModal
+        open={exportOpen}
+        onOpenChange={setExportOpen}
+        instrumentType="TEAM"
+        isCoachView={canSeePrivileged}
+        onExportTeam={handleExportTeam}
+      />
     </div>
+
   );
 }
 
