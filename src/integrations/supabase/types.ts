@@ -12938,6 +12938,10 @@ export type Database = {
       cron_publish_and_dispatch_due_articles: { Args: never; Returns: Json }
       current_user_account_type: { Args: never; Returns: string }
       current_user_active_plan_tier: { Args: never; Returns: string }
+      current_user_can_see_privileged_sections: {
+        Args: never
+        Returns: boolean
+      }
       current_user_department_id: { Args: never; Returns: string }
       current_user_is_mentor: { Args: never; Returns: boolean }
       current_user_is_practitioner_coach: { Args: never; Returns: boolean }
