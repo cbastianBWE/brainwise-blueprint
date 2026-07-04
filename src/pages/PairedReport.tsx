@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
+import { FileText } from "lucide-react";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -7,6 +9,10 @@ import { usePairedProfile, type PairedFacetResult } from "@/hooks/usePairedProfi
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { useNarrativeGenerator } from "@/hooks/useNarrativeGenerator";
 import { HighlightableText, PairedReportHighlightProvider } from "@/components/results/ReportHighlight";
+import ExportPdfModal, { type PairedPdfSectionsUi } from "@/components/results/ExportPdfModal";
+import { assemblePairedPdfData } from "@/lib/assemblePairedPdfData";
+import { generatePairedProfilePdf } from "@/lib/generatePairedProfilePdf";
+
 
 /* ---------- palette (brand-only) ---------- */
 const NAVY = "#021F36";
@@ -475,6 +481,21 @@ export default function PairedReport() {
     (userProfile.is_practitioner_coach ||
       PRIVILEGED_ACCOUNT_TYPES.has(userProfile.account_type ?? ""));
   const canHighlight = !noAccess;
+  const [exportOpen, setExportOpen] = useState(false);
+
+  const handleExportPaired = useCallback(
+    async (secs: PairedPdfSectionsUi) => {
+      if (!pairedProfileId) return;
+      const data = await assemblePairedPdfData({ pairedProfileId, canSeePrivileged });
+      if (!data) {
+        toast.error("Report is still generating.");
+        return;
+      }
+      await generatePairedProfilePdf(data, secs);
+    },
+    [pairedProfileId, canSeePrivileged],
+  );
+
 
   const generator = useNarrativeGenerator({
     kind: "paired",
@@ -725,10 +746,26 @@ export default function PairedReport() {
           <div style={{ color: ORANGE, fontSize: 13, letterSpacing: ".12em", textTransform: "uppercase", fontWeight: 700, marginBottom: 8 }}>
             BrainWise · Paired Profile
           </div>
-          <h1 style={{ margin: "0 0 4px", fontSize: 30 }}>{modeTitle(mode)}</h1>
-          <div style={{ color: "rgba(255,255,255,.72)", fontSize: 14 }}>
-            How the two of you fit, where you pull apart, and what to do about it.
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, flexWrap: "wrap" }}>
+            <div>
+              <h1 style={{ margin: "0 0 4px", fontSize: 30 }}>{modeTitle(mode)}</h1>
+              <div style={{ color: "rgba(255,255,255,.72)", fontSize: 14 }}>
+                How the two of you fit, where you pull apart, and what to do about it.
+              </div>
+            </div>
+            {status === "complete" && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setExportOpen(true)}
+                style={{ background: "#fff", color: NAVY, borderColor: "transparent" }}
+              >
+                <FileText className="mr-2 h-4 w-4" />
+                Export PDF
+              </Button>
+            )}
           </div>
+
           <div style={{ display: "flex", gap: 26, marginTop: 16, flexWrap: "wrap" }}>
             {[
               { k: "PAIR", v: `${nameA} & ${nameB}` },
