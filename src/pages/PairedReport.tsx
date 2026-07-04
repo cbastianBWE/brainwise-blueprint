@@ -1031,8 +1031,8 @@ export default function PairedReport() {
           </>
         )}
 
-        {/* repair (romantic only) */}
-        {isRomantic && repair && (
+        {/* repair (all modes) */}
+        {repair && (
           <>
             <h2 style={sectionLabel}>Repair after conflict</h2>
             <div style={cardStyle}>
