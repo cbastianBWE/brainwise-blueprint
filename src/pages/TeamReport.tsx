@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
+import { FileText } from "lucide-react";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -7,6 +9,10 @@ import { useTeamProfile, type TeamFacetResult } from "@/hooks/useTeamProfile";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { useNarrativeGenerator } from "@/hooks/useNarrativeGenerator";
 import { HighlightableText, TeamReportHighlightProvider } from "@/components/results/ReportHighlight";
+import ExportPdfModal, { type TeamPdfSectionsUi } from "@/components/results/ExportPdfModal";
+import { assembleTeamPdfData } from "@/lib/assembleTeamPdfData";
+import { generateTeamProfilePdf } from "@/lib/generateTeamProfilePdf";
+
 
 /* ---------- palette ---------- */
 const NAVY = "#021F36";
@@ -536,6 +542,20 @@ export default function TeamReport() {
     (userProfile.is_practitioner_coach ||
       PRIVILEGED_ACCOUNT_TYPES.has(userProfile.account_type ?? ""));
   const canHighlight = !noAccess;
+  const [exportOpen, setExportOpen] = useState(false);
+  const handleExportTeam = useCallback(
+    async (secs: TeamPdfSectionsUi) => {
+      if (!teamProfileId) return;
+      const data = await assembleTeamPdfData({ teamProfileId, canSeePrivileged });
+      if (!data) {
+        toast.error("Report is still generating.");
+        return;
+      }
+      await generateTeamProfilePdf(data, secs);
+    },
+    [teamProfileId, canSeePrivileged],
+  );
+
 
   const generator = useNarrativeGenerator({
     kind: "team",
@@ -741,6 +761,20 @@ export default function TeamReport() {
               <div style={{ color: "#fff", fontWeight: 700, fontSize: 18 }}>{new Date().toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })}</div>
             </div>
           </div>
+          {status === "complete" && (
+            <div style={{ marginTop: 20 }}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setExportOpen(true)}
+                style={{ background: "#fff", color: NAVY, borderColor: "transparent" }}
+              >
+                <FileText className="mr-2 h-4 w-4" />
+                Export PDF
+              </Button>
+            </div>
+          )}
+
         </div>
       </header>
 
@@ -1067,7 +1101,15 @@ export default function TeamReport() {
         }}>{tip.text}</div>
       )}
       </TeamReportHighlightProvider>
+      <ExportPdfModal
+        open={exportOpen}
+        onOpenChange={setExportOpen}
+        instrumentType="TEAM"
+        isCoachView={canSeePrivileged}
+        onExportTeam={handleExportTeam}
+      />
     </div>
+
   );
 }
 
