@@ -542,6 +542,20 @@ export default function TeamReport() {
     (userProfile.is_practitioner_coach ||
       PRIVILEGED_ACCOUNT_TYPES.has(userProfile.account_type ?? ""));
   const canHighlight = !noAccess;
+  const [exportOpen, setExportOpen] = useState(false);
+  const handleExportTeam = useCallback(
+    async (secs: TeamPdfSectionsUi) => {
+      if (!teamProfileId) return;
+      const data = await assembleTeamPdfData({ teamProfileId, canSeePrivileged });
+      if (!data) {
+        toast.error("Report is still generating.");
+        return;
+      }
+      await generateTeamProfilePdf(data, secs);
+    },
+    [teamProfileId, canSeePrivileged],
+  );
+
 
   const generator = useNarrativeGenerator({
     kind: "team",
