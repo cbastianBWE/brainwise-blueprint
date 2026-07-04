@@ -1058,7 +1058,7 @@ export default function PairedReport() {
                 </div>
               )}
               <div style={{ fontSize: 13, color: GRAY, fontStyle: "italic", marginTop: 10 }}>
-                {repair.disclaimer || ROMANTIC_DEFAULT_DISCLAIMER}
+                {repair.disclaimer || (isRomantic ? ROMANTIC_DEFAULT_DISCLAIMER : NONROMANTIC_DEFAULT_DISCLAIMER)}
               </div>
             </div>
           </>
