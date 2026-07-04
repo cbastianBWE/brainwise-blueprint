@@ -237,6 +237,8 @@ const App = () => (
               <Route path="/shared-with-me" element={<SharedWithMe />} />
               <Route path="/shared" element={<SharedHub />} />
               <Route path="/development-plan" element={<DevelopmentPlan />} />
+              <Route path="/coaching" element={<CoachingActivities />} />
+              <Route path="/coaching/:activityId" element={<CoachingActivityRunner />} />
               <Route path="/ai-chat" element={<SubscriptionGate feature="ai_chat"><AiChat /></SubscriptionGate>} />
               <Route path="/ai-chat/history" element={<SubscriptionGate feature="ai_chat"><AiChatHistory /></SubscriptionGate>} />
               <Route path="/resources" element={<SubscriptionGate feature="module:LMS"><Resources /></SubscriptionGate>} />
