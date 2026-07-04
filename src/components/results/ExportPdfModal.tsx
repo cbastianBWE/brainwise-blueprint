@@ -238,7 +238,7 @@ const PAIRED_GROUPS: SectionGroup<keyof PairedPdfSectionsUi>[] = [
       { key: "needs", name: "What each of you needs", description: "Two-column needs from each other" },
       { key: "communication", name: "Communication", description: "General, under pressure, avoiding conflict" },
       { key: "conflict", name: "Conflict", description: "Mitigate + promote healthy + read/counter-move" },
-      { key: "repair", name: "Repair", description: "Overview, steps, per-person guidance", romanticOnly: true },
+      { key: "repair", name: "Repair", description: "Overview, steps, per-person guidance" },
       { key: "intimacy", name: "Intimacy", description: "Overview and per-person guidance", romanticOnly: true },
     ],
   },
@@ -394,7 +394,7 @@ export default function ExportPdfModal({
 
   useEffect(() => {
     if (instrumentType === "PAIRED" && reportMode !== "romantic") {
-      setPairedSections((prev) => ({ ...prev, repair: false, intimacy: false }));
+      setPairedSections((prev) => ({ ...prev, intimacy: false }));
     }
   }, [instrumentType, reportMode]);
 

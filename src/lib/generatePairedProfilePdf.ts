@@ -522,8 +522,8 @@ export async function generatePairedProfilePdf(
     }
   }
 
-  // 10. repair (romantic only)
-  if (sections.repair && data.mode === "romantic" && s.repair) {
+  // 10. repair (all modes)
+  if (sections.repair && s.repair) {
     ctx.sectionHeading("Repair");
     if (s.repair.overview) paragraphs(ctx, nm(s.repair.overview));
     ctx.y += 2;
