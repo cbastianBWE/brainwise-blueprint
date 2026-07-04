@@ -2414,6 +2414,392 @@ export type Database = {
           },
         ]
       }
+      coaching_activities: {
+        Row: {
+          code: string
+          created_at: string
+          definition: Json
+          desired_outcome: string | null
+          id: string
+          module_group: string | null
+          sequence: number | null
+          status: string
+          tier: string | null
+          title: string
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          definition?: Json
+          desired_outcome?: string | null
+          id?: string
+          module_group?: string | null
+          sequence?: number | null
+          status?: string
+          tier?: string | null
+          title: string
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          definition?: Json
+          desired_outcome?: string | null
+          id?: string
+          module_group?: string | null
+          sequence?: number | null
+          status?: string
+          tier?: string | null
+          title?: string
+          updated_at?: string
+          version?: number
+        }
+        Relationships: []
+      }
+      coaching_activity_sessions: {
+        Row: {
+          activity_id: string
+          completed_at: string | null
+          context_snapshot: Json | null
+          created_at: string
+          current_step: number
+          id: string
+          parent_session_id: string | null
+          responses: Json
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          activity_id: string
+          completed_at?: string | null
+          context_snapshot?: Json | null
+          created_at?: string
+          current_step?: number
+          id?: string
+          parent_session_id?: string | null
+          responses?: Json
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          activity_id?: string
+          completed_at?: string | null
+          context_snapshot?: Json | null
+          created_at?: string
+          current_step?: number
+          id?: string
+          parent_session_id?: string | null
+          responses?: Json
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coaching_activity_sessions_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "coaching_activities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coaching_activity_sessions_parent_session_id_fkey"
+            columns: ["parent_session_id"]
+            isOneToOne: false
+            referencedRelation: "coaching_activity_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coaching_activity_sessions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coaching_activity_sessions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "coaching_activity_sessions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coaching_activity_sessions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      coaching_activity_shares: {
+        Row: {
+          granted_at: string
+          id: string
+          mode: string
+          owner_user_id: string
+          revoked_at: string | null
+          viewer_user_id: string
+        }
+        Insert: {
+          granted_at?: string
+          id?: string
+          mode?: string
+          owner_user_id: string
+          revoked_at?: string | null
+          viewer_user_id: string
+        }
+        Update: {
+          granted_at?: string
+          id?: string
+          mode?: string
+          owner_user_id?: string
+          revoked_at?: string | null
+          viewer_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coaching_activity_shares_owner_user_id_fkey"
+            columns: ["owner_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coaching_activity_shares_owner_user_id_fkey"
+            columns: ["owner_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "coaching_activity_shares_owner_user_id_fkey"
+            columns: ["owner_user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coaching_activity_shares_owner_user_id_fkey"
+            columns: ["owner_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coaching_activity_shares_viewer_user_id_fkey"
+            columns: ["viewer_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coaching_activity_shares_viewer_user_id_fkey"
+            columns: ["viewer_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "coaching_activity_shares_viewer_user_id_fkey"
+            columns: ["viewer_user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coaching_activity_shares_viewer_user_id_fkey"
+            columns: ["viewer_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      coaching_credit_grants: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          source: string | null
+          source_ref: string | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          source?: string | null
+          source_ref?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          source?: string | null
+          source_ref?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coaching_credit_grants_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coaching_credit_grants_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "coaching_credit_grants_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coaching_credit_grants_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      coaching_usage_counters: {
+        Row: {
+          count: number
+          created_at: string
+          id: string
+          org_id: string | null
+          period_start: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          count?: number
+          created_at?: string
+          id?: string
+          org_id?: string | null
+          period_start: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          count?: number
+          created_at?: string
+          id?: string
+          org_id?: string | null
+          period_start?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coaching_usage_counters_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coaching_usage_counters_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "coaching_usage_counters_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coaching_usage_counters_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      coaching_user_summary: {
+        Row: {
+          last_session_id: string | null
+          summary: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          last_session_id?: string | null
+          summary?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          last_session_id?: string | null
+          summary?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coaching_user_summary_last_session_id_fkey"
+            columns: ["last_session_id"]
+            isOneToOne: false
+            referencedRelation: "coaching_activity_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coaching_user_summary_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coaching_user_summary_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "coaching_user_summary_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coaching_user_summary_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cohort_members: {
         Row: {
           cohort_id: string
@@ -11409,6 +11795,7 @@ export type Database = {
           onboarding_completed_at: string | null
           onboarding_instrument_version: string | null
           one_time_chat_credits: number
+          one_time_coaching_credits: number
           org_level: string | null
           organization_id: string | null
           personal_email_pending: string | null
@@ -11452,6 +11839,7 @@ export type Database = {
           onboarding_completed_at?: string | null
           onboarding_instrument_version?: string | null
           one_time_chat_credits?: number
+          one_time_coaching_credits?: number
           org_level?: string | null
           organization_id?: string | null
           personal_email_pending?: string | null
@@ -11495,6 +11883,7 @@ export type Database = {
           onboarding_completed_at?: string | null
           onboarding_instrument_version?: string | null
           one_time_chat_credits?: number
+          one_time_coaching_credits?: number
           org_level?: string | null
           organization_id?: string | null
           personal_email_pending?: string | null
@@ -12769,6 +13158,24 @@ export type Database = {
           instrument_id: string
         }[]
       }
+      coaching_activity_access: {
+        Args: { p_activity_id: string }
+        Returns: {
+          activity_tier: string
+          allowed: boolean
+          reason: string
+        }[]
+      }
+      coaching_usage_check_and_consume: {
+        Args: { p_check_only?: boolean; p_user: string }
+        Returns: {
+          allowed: boolean
+          limit_val: number
+          reason: string
+          remaining: number
+          source: string
+        }[]
+      }
       commit_article_version: {
         Args: { p_article_id: string; p_reason: string; p_version_name: string }
         Returns: Json
@@ -12808,6 +13215,10 @@ export type Database = {
         Returns: string
       }
       consume_one_time_chat_credit: {
+        Args: { p_user: string }
+        Returns: number
+      }
+      consume_one_time_coaching_credit: {
         Args: { p_user: string }
         Returns: number
       }
@@ -13529,6 +13940,15 @@ export type Database = {
         Returns: Json
       }
       grant_one_time_chat_credits: {
+        Args: {
+          p_amount: number
+          p_source: string
+          p_source_ref: string
+          p_user: string
+        }
+        Returns: number
+      }
+      grant_one_time_coaching_credits: {
         Args: {
           p_amount: number
           p_source: string

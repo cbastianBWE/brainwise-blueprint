@@ -4,7 +4,7 @@ import {
   Users, Users2, Building2, UsersRound, Activity, Heart, Award, UserCircle,
   ShieldCheck, Briefcase, GitBranch, FlaskConical, LogOut, History, Shield,
   CreditCard, Receipt, ChevronDown, ChevronRight, FileText, Library, Ticket,
-  GraduationCap, Bell, Newspaper, SlidersHorizontal, Wallet, FileMinus2, Repeat, Clock, UserPlus, Mail, Inbox, Webhook, Megaphone, Target, Blocks, HelpCircle,
+  GraduationCap, Bell, Newspaper, SlidersHorizontal, Wallet, FileMinus2, Repeat, Clock, UserPlus, Mail, Inbox, Webhook, Megaphone, Target, Blocks, HelpCircle, Compass,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -43,6 +43,7 @@ const individualNav: NavItem[] = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { title: "My Results", url: "/my-results", icon: BarChart3 },
   { title: "My Development Plan", url: "/development-plan", icon: Target },
+  { title: "My Coaching", url: "/coaching", icon: Compass },
   { title: "Shared With Me", url: "/shared-with-me", icon: Inbox },
   { title: "Assessment", url: "/assessment", icon: ClipboardList },
   { title: "AI Chat", url: "/ai-chat", icon: MessageSquare },
@@ -55,6 +56,7 @@ const corporateNav: NavItem[] = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { title: "My Results", url: "/my-results", icon: BarChart3 },
   { title: "My Development Plan", url: "/development-plan", icon: Target },
+  { title: "My Coaching", url: "/coaching", icon: Compass },
   { title: "Shared", url: "/shared", icon: Inbox },
   { title: "Assessment", url: "/assessment", icon: ClipboardList },
   { title: "AI Chat", url: "/ai-chat", icon: MessageSquare },
@@ -68,6 +70,7 @@ const coachNav: NavItem[] = [
   { title: "My Assessments", url: "/assessment", icon: ClipboardList },
   { title: "My Results", url: "/my-results", icon: BarChart3 },
   { title: "My Development Plan", url: "/development-plan", icon: Target },
+  { title: "My Coaching", url: "/coaching", icon: Compass },
   { title: "Shared With Me", url: "/shared-with-me", icon: Inbox },
   { title: "My Clients", url: "/coach/clients", icon: Users },
   { title: "Team & Paired Reports", url: "/team-paired-reports", icon: UsersRound },
@@ -85,6 +88,7 @@ const adminNav: NavItem[] = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { title: "My Results", url: "/my-results", icon: BarChart3 },
   { title: "My Development Plan", url: "/development-plan", icon: Target },
+  { title: "My Coaching", url: "/coaching", icon: Compass },
   { title: "Shared", url: "/shared", icon: Inbox },
   { title: "Assessment", url: "/assessment", icon: ClipboardList },
   { title: "Users", url: "/admin/users", icon: Users },
@@ -101,6 +105,7 @@ const superAdminNav: NavItem[] = [
   { title: "Assessment", url: "/assessment", icon: ClipboardList },
   { title: "My Results", url: "/my-results", icon: FileText },
   { title: "My Development Plan", url: "/development-plan", icon: Target },
+  { title: "My Coaching", url: "/coaching", icon: Compass },
   { title: "Shared With Me", url: "/shared-with-me", icon: Inbox },
   { title: "Members", url: "/super-admin/members", icon: Users },
   { title: "Team & Paired Reports", url: "/team-paired-reports", icon: UsersRound },
