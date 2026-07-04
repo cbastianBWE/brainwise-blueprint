@@ -394,7 +394,7 @@ export default function ExportPdfModal({
 
   useEffect(() => {
     if (instrumentType === "PAIRED" && reportMode !== "romantic") {
-      setPairedSections((prev) => ({ ...prev, repair: false, intimacy: false }));
+      setPairedSections((prev) => ({ ...prev, intimacy: false }));
     }
   }, [instrumentType, reportMode]);
 
