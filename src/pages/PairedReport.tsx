@@ -467,6 +467,9 @@ function modeTitle(mode: string | null): string {
 const ROMANTIC_DEFAULT_DISCLAIMER =
   "This reflects tendencies from a self-report profile, not a diagnosis or a verdict on the relationship. If any pattern here involves fear, control, or harm, please reach out to a qualified professional.";
 
+const NONROMANTIC_DEFAULT_DISCLAIMER =
+  "This reflects tendencies from a self-report profile, not a diagnosis or a verdict. If any pattern here involves fear, control, or harm, please seek qualified support.";
+
 /* ---------- page ---------- */
 export default function PairedReport() {
   const { pairedProfileId } = useParams<{ pairedProfileId: string }>();
@@ -1028,8 +1031,8 @@ export default function PairedReport() {
           </>
         )}
 
-        {/* repair (romantic only) */}
-        {isRomantic && repair && (
+        {/* repair (all modes) */}
+        {repair && (
           <>
             <h2 style={sectionLabel}>Repair after conflict</h2>
             <div style={cardStyle}>
@@ -1055,7 +1058,7 @@ export default function PairedReport() {
                 </div>
               )}
               <div style={{ fontSize: 13, color: GRAY, fontStyle: "italic", marginTop: 10 }}>
-                {repair.disclaimer || ROMANTIC_DEFAULT_DISCLAIMER}
+                {repair.disclaimer || (isRomantic ? ROMANTIC_DEFAULT_DISCLAIMER : NONROMANTIC_DEFAULT_DISCLAIMER)}
               </div>
             </div>
           </>
