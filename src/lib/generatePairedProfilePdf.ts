@@ -313,20 +313,27 @@ export async function generatePairedProfilePdf(
   const { registerPdfFonts } = await import("./pdfFonts");
   registerPdfFonts(doc);
 
+  const todayLong = new Date().toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+  const modeCap = data.mode.charAt(0).toUpperCase() + data.mode.slice(1);
   await renderCoverPage(doc, {
     eyebrow: "PAIRED PROFILE",
     titleLine1: "Paired",
     titleLine2: "Report",
-    subtitle: `A shared view of how the two of you fit, where you pull apart, and what to do about it.`,
-    participantLabel: "PAIR",
-    participantValue: `${data.nameA} & ${data.nameB}`,
-    dateLabel: "GENERATED",
-    dateValue: new Date().toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    }),
-    contextPill: modeTitle(data.mode),
+    trademark: false,
+    subtitle:
+      "A neuroscience-based look at how two people fit, where they pull apart, and what to do about it, mapped to the BrainWise 5P model.",
+    contextPillLabel: `${data.mode.toUpperCase()} CONTEXT`,
+    field1: { label: "PAIR", value: `${data.nameA} & ${data.nameB}` },
+    field2: { label: "DATE COMPLETED", value: todayLong },
+    field3: { label: "RELATIONSHIP CONTEXT", value: modeCap },
+    disclaimer:
+      "This report interprets two self-report profiles and describes tendencies in how two people may relate. It is not a clinical assessment, a diagnosis, or a judgment about the relationship. For romantic reports especially, if any pattern here involves fear, control, or harm, please seek support from a qualified professional.",
+    copyright:
+      "© {year} BrainWise Enterprises. Confidential and proprietary. Shared with the named recipients for their own reflection only; not to be reproduced or disclosed without written consent. The Personal Threat Profile and 5P model are the property of BrainWise Enterprises.",
   });
 
   doc.addPage();

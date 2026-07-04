@@ -278,21 +278,26 @@ export async function generateTeamProfilePdf(
   const { registerPdfFonts } = await import("./pdfFonts");
   registerPdfFonts(doc);
 
+  const todayLong = new Date().toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
   await renderCoverPage(doc, {
     eyebrow: "TEAM THREAT PROFILE",
     titleLine1: data.teamName,
     titleLine2: "Team Report",
+    trademark: false,
     subtitle:
-      "The patterns that shape how this team works under pressure, ranked so the few that matter most come first.",
-    participantLabel: "TEAM",
-    participantValue: data.teamName,
-    dateLabel: "GENERATED",
-    dateValue: new Date().toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    }),
-    contextPill: `${data.memberCount} members`,
+      "The patterns that shape how this team works under pressure, built from every member's Personal Threat Profile and mapped to the BrainWise 5P model.",
+    contextPillLabel: `${data.memberCount} MEMBERS`,
+    field1: { label: "TEAM", value: data.teamName },
+    field2: { label: "DATE COMPLETED", value: todayLong },
+    field3: { label: "TEAM SIZE", value: `${data.memberCount} members` },
+    disclaimer:
+      "This report aggregates the self-report profiles of team members to describe group tendencies under pressure. It is not a clinical assessment, a diagnosis, or an evaluation of any individual. Individual responses are not identified. It is intended to support team discussion, not to rank or appraise people.",
+    copyright:
+      "© {year} BrainWise Enterprises. Confidential and proprietary. Shared with the named recipients for their own reflection only; not to be reproduced or disclosed without written consent. The Personal Threat Profile and 5P model are the property of BrainWise Enterprises.",
   });
 
   doc.addPage();
