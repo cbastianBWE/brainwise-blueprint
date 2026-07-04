@@ -53,6 +53,8 @@ import AiChat from "./pages/AiChat";
 import AiChatHistory from "./pages/AiChatHistory";
 import Resources from "./pages/Resources";
 import MyLearning from "./pages/MyLearning";
+import CoachingActivities from "./pages/coaching/CoachingActivities";
+import CoachingActivityRunner from "./pages/coaching/CoachingActivityRunner";
 import ResourceReader from "./pages/ResourceReader";
 import CertPathDetail from "./pages/learning/CertPathDetail";
 import CurriculumDetail from "./pages/learning/CurriculumDetail";
