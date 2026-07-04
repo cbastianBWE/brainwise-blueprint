@@ -292,7 +292,7 @@ export async function generateTeamProfilePdf(
       "The patterns that shape how this team works under pressure, built from every member's Personal Threat Profile and mapped to the BrainWise 5P model.",
     contextPillLabel: `${data.memberCount} MEMBERS`,
     field1: { label: "TEAM", value: data.teamName },
-    field2: { label: "DATE COMPLETED", value: today },
+    field2: { label: "DATE COMPLETED", value: todayLong },
     field3: { label: "TEAM SIZE", value: `${data.memberCount} members` },
     disclaimer:
       "This report aggregates the self-report profiles of team members to describe group tendencies under pressure. It is not a clinical assessment, a diagnosis, or an evaluation of any individual. Individual responses are not identified. It is intended to support team discussion, not to rank or appraise people.",

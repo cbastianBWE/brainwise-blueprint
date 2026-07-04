@@ -328,7 +328,7 @@ export async function generatePairedProfilePdf(
       "A neuroscience-based look at how two people fit, where they pull apart, and what to do about it, mapped to the BrainWise 5P model.",
     contextPillLabel: `${data.mode.toUpperCase()} CONTEXT`,
     field1: { label: "PAIR", value: `${data.nameA} & ${data.nameB}` },
-    field2: { label: "DATE COMPLETED", value: today },
+    field2: { label: "DATE COMPLETED", value: todayLong },
     field3: { label: "RELATIONSHIP CONTEXT", value: modeCap },
     disclaimer:
       "This report interprets two self-report profiles and describes tendencies in how two people may relate. It is not a clinical assessment, a diagnosis, or a judgment about the relationship. For romantic reports especially, if any pattern here involves fear, control, or harm, please seek support from a qualified professional.",
