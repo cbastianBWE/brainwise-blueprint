@@ -1179,7 +1179,16 @@ export default function PairedReport() {
         }}>{tip.text}</div>
       )}
       </PairedReportHighlightProvider>
+      <ExportPdfModal
+        open={exportOpen}
+        onOpenChange={setExportOpen}
+        instrumentType="PAIRED"
+        isCoachView={canSeePrivileged}
+        reportMode={mode ?? "work"}
+        onExportPaired={handleExportPaired}
+      />
     </div>
+
   );
 }
 
