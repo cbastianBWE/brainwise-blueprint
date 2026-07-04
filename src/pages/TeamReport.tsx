@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
+import { FileText } from "lucide-react";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -7,6 +9,10 @@ import { useTeamProfile, type TeamFacetResult } from "@/hooks/useTeamProfile";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { useNarrativeGenerator } from "@/hooks/useNarrativeGenerator";
 import { HighlightableText, TeamReportHighlightProvider } from "@/components/results/ReportHighlight";
+import ExportPdfModal, { type TeamPdfSectionsUi } from "@/components/results/ExportPdfModal";
+import { assembleTeamPdfData } from "@/lib/assembleTeamPdfData";
+import { generateTeamProfilePdf } from "@/lib/generateTeamProfilePdf";
+
 
 /* ---------- palette ---------- */
 const NAVY = "#021F36";
