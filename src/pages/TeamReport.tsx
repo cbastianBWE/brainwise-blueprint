@@ -761,6 +761,20 @@ export default function TeamReport() {
               <div style={{ color: "#fff", fontWeight: 700, fontSize: 18 }}>{new Date().toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })}</div>
             </div>
           </div>
+          {status === "complete" && (
+            <div style={{ marginTop: 20 }}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setExportOpen(true)}
+                style={{ background: "#fff", color: NAVY, borderColor: "transparent" }}
+              >
+                <FileText className="mr-2 h-4 w-4" />
+                Export PDF
+              </Button>
+            </div>
+          )}
+
         </div>
       </header>
 
