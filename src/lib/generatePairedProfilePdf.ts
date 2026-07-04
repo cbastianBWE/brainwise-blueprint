@@ -313,7 +313,7 @@ export async function generatePairedProfilePdf(
   const { registerPdfFonts } = await import("./pdfFonts");
   registerPdfFonts(doc);
 
-  const today = new Date().toLocaleDateString("en-US", {
+  const todayLong = new Date().toLocaleDateString("en-US", {
     year: "numeric",
     month: "long",
     day: "numeric",
