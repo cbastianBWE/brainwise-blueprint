@@ -467,6 +467,9 @@ function modeTitle(mode: string | null): string {
 const ROMANTIC_DEFAULT_DISCLAIMER =
   "This reflects tendencies from a self-report profile, not a diagnosis or a verdict on the relationship. If any pattern here involves fear, control, or harm, please reach out to a qualified professional.";
 
+const NONROMANTIC_DEFAULT_DISCLAIMER =
+  "This reflects tendencies from a self-report profile, not a diagnosis or a verdict. If any pattern here involves fear, control, or harm, please seek qualified support.";
+
 /* ---------- page ---------- */
 export default function PairedReport() {
   const { pairedProfileId } = useParams<{ pairedProfileId: string }>();
