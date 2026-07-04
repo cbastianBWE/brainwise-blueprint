@@ -21,6 +21,13 @@ import {
 } from "./generatePdfPrimitivesShared";
 import type { PairedPdfData, PairedFacetForPdf } from "./assemblePairedPdfData";
 
+const PAIRED_COVER_DISCLAIMER_ROMANTIC =
+  "This report interprets two self-report profiles and describes tendencies in how two people may relate. It is not a clinical assessment, a diagnosis, or a judgment about the relationship. If any pattern here involves fear, control, or harm, please seek support from a qualified professional.";
+
+const PAIRED_COVER_DISCLAIMER_NONROMANTIC =
+  "This report interprets two self-report profiles and describes tendencies in how two people tend to work together. It is not a clinical assessment, a diagnosis, or a judgment about either person. If any pattern here involves fear, control, or harm, please seek support from a qualified professional.";
+
+
 export interface PairedPdfSections {
   pairInThree: boolean;
   atAGlance: boolean;
