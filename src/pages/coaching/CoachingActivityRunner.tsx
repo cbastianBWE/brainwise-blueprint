@@ -631,13 +631,6 @@ export default function CoachingActivityRunner() {
       const remaining = (data as any)?.coaching_remaining;
       if (typeof remaining === "number") setCoachingRemaining(remaining);
       setResponses((r) => ({ ...r, analysis: { ...(r.analysis || {}), html } }));
-      // Persist analysis immediately (bypass debounce)
-      await supabase
-        .from("coaching_activity_sessions")
-        .update({
-          responses: { ...(session.responses || {}), analysis: { html } } as any,
-        })
-        .eq("id", session.id);
       return true;
     } finally {
       setAnalyzing(false);
