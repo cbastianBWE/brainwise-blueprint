@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Loader2, Compass, Lock, History } from "lucide-react";
+import { Loader2, Compass, Lock, History, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 type Tier = "Foundational" | "Typical" | "Advanced" | string;
@@ -20,6 +21,8 @@ interface Activity {
   sequence: number | null;
   desired_outcome: string | null;
   definition: any;
+  tags: string[] | null;
+  thumbnail_url: string | null;
 }
 
 interface AccessInfo {
@@ -70,6 +73,7 @@ function CoachingActivityCard({
 
   const locked = access && !access.allowed;
   const reason = access?.reason;
+  const tags = (activity.tags || []).slice(0, 4);
 
   let action: React.ReactNode = null;
   if (!access) {
@@ -111,7 +115,17 @@ function CoachingActivityCard({
   }
 
   return (
-    <Card className={locked ? "opacity-75" : ""}>
+    <Card className={`overflow-hidden ${locked ? "opacity-75" : ""}`}>
+      {activity.thumbnail_url ? (
+        <div className="aspect-video w-full overflow-hidden bg-muted">
+          <img
+            src={activity.thumbnail_url}
+            alt=""
+            className="h-full w-full object-cover"
+            loading="lazy"
+          />
+        </div>
+      ) : null}
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-2">
@@ -127,6 +141,15 @@ function CoachingActivityCard({
       </CardHeader>
       <CardContent className="space-y-4">
         <p className="text-sm text-muted-foreground line-clamp-2">{outcome}</p>
+        {tags.length > 0 && (
+          <div className="flex flex-wrap gap-1.5">
+            {tags.map((t) => (
+              <Badge key={t} variant="secondary" className="text-xs font-normal">
+                {t}
+              </Badge>
+            ))}
+          </div>
+        )}
         {action}
       </CardContent>
     </Card>
@@ -229,6 +252,7 @@ export default function CoachingActivities() {
   const [sessions, setSessions] = useState<SessionRow[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<"activities" | "history">("activities");
+  const [query, setQuery] = useState("");
 
   useEffect(() => {
     if (!user) return;
@@ -238,7 +262,7 @@ export default function CoachingActivities() {
       setError(null);
       const { data: actData, error: actErr } = await supabase
         .from("coaching_activities")
-        .select("id,code,title,tier,status,module_group,sequence,desired_outcome,definition")
+        .select("id,code,title,tier,status,module_group,sequence,desired_outcome,definition,tags,thumbnail_url")
         .order("sequence", { ascending: true, nullsFirst: false })
         .order("title");
       if (cancelled) return;
@@ -277,18 +301,42 @@ export default function CoachingActivities() {
     };
   }, [user]);
 
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return activities;
+    return activities.filter((a) => {
+      if (a.title?.toLowerCase().includes(q)) return true;
+      if (a.desired_outcome?.toLowerCase().includes(q)) return true;
+      if ((a.tags || []).some((t) => t.toLowerCase().includes(q))) return true;
+      return false;
+    });
+  }, [activities, query]);
+
   const grouped = useMemo(() => {
     const groups: Record<string, Activity[]> = {};
-    for (const a of activities) {
+    for (const a of filtered) {
       const key = a.module_group || a.tier || "Coaching";
       (groups[key] = groups[key] || []).push(a);
     }
     return groups;
-  }, [activities]);
+  }, [filtered]);
 
   const inProgressSet = useMemo(
     () => new Set(sessions.map((s) => s.activity_id)),
     [sessions],
+  );
+
+  const searchBox = (
+    <div className="relative">
+      <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+      <Input
+        type="search"
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        placeholder="Search activities by title, outcome, or tag"
+        className="pl-9"
+      />
+    </div>
   );
 
   const activitiesContent = loading ? (
@@ -314,24 +362,36 @@ export default function CoachingActivities() {
     </Card>
   ) : (
     <div className="space-y-6">
-      {Object.entries(grouped).map(([group, items]) => (
-        <section key={group} className="space-y-3">
-          <h2 className="text-sm font-semibold text-foreground">{group}</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {items.map((a) => (
-              <CoachingActivityCard
-                key={a.id}
-                activity={a}
-                access={access[a.id]}
-                inProgress={inProgressSet.has(a.id)}
-                onStart={() => navigate(`/coaching/${a.id}?fresh=1`)}
-                onResume={() => navigate(`/coaching/${a.id}`)}
-                onNav={(to) => navigate(to)}
-              />
-            ))}
-          </div>
-        </section>
-      ))}
+      {searchBox}
+      {filtered.length === 0 ? (
+        <Card>
+          <CardContent className="p-10 text-center">
+            <Search className="mx-auto h-8 w-8 text-muted-foreground" />
+            <p className="mt-3 text-sm text-muted-foreground">
+              No activities match your search.
+            </p>
+          </CardContent>
+        </Card>
+      ) : (
+        Object.entries(grouped).map(([group, items]) => (
+          <section key={group} className="space-y-3">
+            <h2 className="text-sm font-semibold text-foreground">{group}</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {items.map((a) => (
+                <CoachingActivityCard
+                  key={a.id}
+                  activity={a}
+                  access={access[a.id]}
+                  inProgress={inProgressSet.has(a.id)}
+                  onStart={() => navigate(`/coaching/${a.id}?fresh=1`)}
+                  onResume={() => navigate(`/coaching/${a.id}`)}
+                  onNav={(to) => navigate(to)}
+                />
+              ))}
+            </div>
+          </section>
+        ))
+      )}
     </div>
   );
 

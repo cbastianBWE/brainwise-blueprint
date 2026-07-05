@@ -2424,6 +2424,8 @@ export type Database = {
           module_group: string | null
           sequence: number | null
           status: string
+          tags: string[]
+          thumbnail_url: string | null
           tier: string | null
           title: string
           updated_at: string
@@ -2438,6 +2440,8 @@ export type Database = {
           module_group?: string | null
           sequence?: number | null
           status?: string
+          tags?: string[]
+          thumbnail_url?: string | null
           tier?: string | null
           title: string
           updated_at?: string
@@ -2452,6 +2456,8 @@ export type Database = {
           module_group?: string | null
           sequence?: number | null
           status?: string
+          tags?: string[]
+          thumbnail_url?: string | null
           tier?: string | null
           title?: string
           updated_at?: string
