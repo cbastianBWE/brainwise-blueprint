@@ -324,19 +324,6 @@ function RiskBlocksWidget({
   );
 }
 
-function AiAnalysisPanel({ html }: { html?: string }) {
-  if (!html) return null;
-  const clean = DOMPurify.sanitize(html, {
-    ALLOWED_TAGS: ["h3", "h4", "p", "ul", "ol", "li", "strong", "em", "br"],
-    ALLOWED_ATTR: [],
-  });
-  return (
-    <div
-      className="prose prose-sm max-w-none rounded-lg border bg-muted/30 p-4"
-      dangerouslySetInnerHTML={{ __html: clean }}
-    />
-  );
-}
 
 function ChatWidget({
   sessionId,
