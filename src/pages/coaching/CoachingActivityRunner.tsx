@@ -666,6 +666,11 @@ export default function CoachingActivityRunner() {
             return rest as Responses;
           })()
         : {};
+      // Abandon the current session before starting a new one
+      await supabase
+        .from("coaching_activity_sessions")
+        .update({ status: "abandoned" })
+        .eq("id", session.id);
       const { data: created } = await supabase
         .from("coaching_activity_sessions")
         .insert({
