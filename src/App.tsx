@@ -240,6 +240,7 @@ const App = () => (
               <Route path="/development-plan" element={<DevelopmentPlan />} />
               <Route path="/coaching" element={<CoachingActivities />} />
               <Route path="/coaching/:activityId" element={<CoachingActivityRunner />} />
+              <Route path="/coaching/session/:sessionId" element={<CoachingSessionView />} />
               <Route path="/ai-chat" element={<SubscriptionGate feature="ai_chat"><AiChat /></SubscriptionGate>} />
               <Route path="/ai-chat/history" element={<SubscriptionGate feature="ai_chat"><AiChatHistory /></SubscriptionGate>} />
               <Route path="/resources" element={<SubscriptionGate feature="module:LMS"><Resources /></SubscriptionGate>} />
