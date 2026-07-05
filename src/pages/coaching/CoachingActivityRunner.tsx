@@ -645,7 +645,6 @@ export default function CoachingActivityRunner() {
         status: "completed",
         completed_at: new Date().toISOString(),
         current_step: currentStep,
-        responses: responses as any,
       })
       .eq("id", session.id);
     setSession((prev) =>
