@@ -78,18 +78,34 @@ function buildUserPatch(responses: Responses): Record<string, unknown> {
 
 function useDebouncedSave(sessionId: string | null, current_step: number, responses: Responses) {
   const timer = useRef<number | null>(null);
+  const pending = useRef<{ step: number; patch: Record<string, unknown> } | null>(null);
+  const sessionIdRef = useRef(sessionId);
+  sessionIdRef.current = sessionId;
   useEffect(() => {
     if (!sessionId) return;
     if (timer.current) window.clearTimeout(timer.current);
+    const patch = buildUserPatch(responses);
+    pending.current = { step: current_step, patch };
     timer.current = window.setTimeout(async () => {
+      pending.current = null;
       await supabase.rpc("coaching_session_save", {
         p_session_id: sessionId,
         p_current_step: current_step,
-        p_patch: buildUserPatch(responses) as any,
+        p_patch: patch as any,
       });
     }, 600);
     return () => {
       if (timer.current) window.clearTimeout(timer.current);
+      const p = pending.current;
+      const sid = sessionIdRef.current;
+      if (p && sid) {
+        pending.current = null;
+        void supabase.rpc("coaching_session_save", {
+          p_session_id: sid,
+          p_current_step: p.step,
+          p_patch: p.patch as any,
+        });
+      }
     };
   }, [sessionId, current_step, JSON.stringify(responses)]);
 }
