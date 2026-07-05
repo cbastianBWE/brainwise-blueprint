@@ -66,16 +66,27 @@ interface Session {
 }
 
 // ---- Helpers ----
+const USER_INPUT_KEYS = ["action", "positives", "positiveAction", "negatives"] as const;
+
+function buildUserPatch(responses: Responses): Record<string, unknown> {
+  const patch: Record<string, unknown> = {};
+  for (const k of USER_INPUT_KEYS) {
+    if (responses[k] !== undefined) patch[k] = responses[k];
+  }
+  return patch;
+}
+
 function useDebouncedSave(sessionId: string | null, current_step: number, responses: Responses) {
   const timer = useRef<number | null>(null);
   useEffect(() => {
     if (!sessionId) return;
     if (timer.current) window.clearTimeout(timer.current);
     timer.current = window.setTimeout(async () => {
-      await supabase
-        .from("coaching_activity_sessions")
-        .update({ current_step, responses: responses as any })
-        .eq("id", sessionId);
+      await supabase.rpc("coaching_session_save", {
+        p_session_id: sessionId,
+        p_current_step: current_step,
+        p_patch: buildUserPatch(responses) as any,
+      });
     }, 600);
     return () => {
       if (timer.current) window.clearTimeout(timer.current);
