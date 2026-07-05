@@ -416,66 +416,6 @@ function ChatWidget({
   );
 }
 
-function SynthesisView({ responses }: { responses: Responses }) {
-  return (
-    <div className="space-y-6">
-      {responses.action && (
-        <div>
-          <h3 className="text-sm font-semibold text-muted-foreground">Your action</h3>
-          <p className="mt-1 text-sm">{responses.action}</p>
-        </div>
-      )}
-      {responses.positiveAction && (
-        <div>
-          <h3 className="text-sm font-semibold text-muted-foreground">Positive action</h3>
-          <p className="mt-1 text-sm">{responses.positiveAction}</p>
-        </div>
-      )}
-      {(responses.positives || []).length > 0 && (
-        <div>
-          <h3 className="text-sm font-semibold text-muted-foreground">Goals</h3>
-          <ul className="mt-1 list-disc pl-5 text-sm">
-            {responses.positives!.map((p, i) => (
-              <li key={i}>{p}</li>
-            ))}
-          </ul>
-        </div>
-      )}
-      {(responses.negatives || []).length > 0 && (
-        <div className="space-y-3">
-          <h3 className="text-sm font-semibold text-muted-foreground">Safeguards</h3>
-          {responses.negatives!.map((n, i) => (
-            <Card key={i}>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base">{n.text}</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2 text-sm">
-                {n.a && (
-                  <div>
-                    <span className="font-medium">Prevent: </span>
-                    {n.a}
-                  </div>
-                )}
-                {n.b && (
-                  <div>
-                    <span className="font-medium">In the moment: </span>
-                    {n.b}
-                  </div>
-                )}
-                {n.c && (
-                  <div>
-                    <span className="font-medium">Recover: </span>
-                    {n.c}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
 
 // ---- Main page ----
 export default function CoachingActivityRunner() {
