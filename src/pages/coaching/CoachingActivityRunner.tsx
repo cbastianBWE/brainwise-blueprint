@@ -535,6 +535,14 @@ export default function CoachingActivityRunner() {
           .limit(1)
           .maybeSingle();
         if (existing) s = existing as Session;
+      } else {
+        // Abandon any prior in-progress sessions for a clean restart
+        await supabase
+          .from("coaching_activity_sessions")
+          .update({ status: "abandoned" })
+          .eq("user_id", user.id)
+          .eq("activity_id", activityId)
+          .eq("status", "in_progress");
       }
       if (!s) {
         const { data: created } = await supabase
