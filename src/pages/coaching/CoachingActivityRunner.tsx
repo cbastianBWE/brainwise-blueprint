@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Loader2, ArrowLeft, ArrowRight, Plus, Trash2, Send, Share2, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
-import DOMPurify from "dompurify";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { SynthesisView, AiAnalysisPanel } from "@/components/coaching/CoachingViews";
 
 // ---- Types ----
 interface Step {
@@ -324,19 +324,6 @@ function RiskBlocksWidget({
   );
 }
 
-function AiAnalysisPanel({ html }: { html?: string }) {
-  if (!html) return null;
-  const clean = DOMPurify.sanitize(html, {
-    ALLOWED_TAGS: ["h3", "h4", "p", "ul", "ol", "li", "strong", "em", "br"],
-    ALLOWED_ATTR: [],
-  });
-  return (
-    <div
-      className="prose prose-sm max-w-none rounded-lg border bg-muted/30 p-4"
-      dangerouslySetInnerHTML={{ __html: clean }}
-    />
-  );
-}
 
 function ChatWidget({
   sessionId,
@@ -429,66 +416,6 @@ function ChatWidget({
   );
 }
 
-function SynthesisView({ responses }: { responses: Responses }) {
-  return (
-    <div className="space-y-6">
-      {responses.action && (
-        <div>
-          <h3 className="text-sm font-semibold text-muted-foreground">Your action</h3>
-          <p className="mt-1 text-sm">{responses.action}</p>
-        </div>
-      )}
-      {responses.positiveAction && (
-        <div>
-          <h3 className="text-sm font-semibold text-muted-foreground">Positive action</h3>
-          <p className="mt-1 text-sm">{responses.positiveAction}</p>
-        </div>
-      )}
-      {(responses.positives || []).length > 0 && (
-        <div>
-          <h3 className="text-sm font-semibold text-muted-foreground">Goals</h3>
-          <ul className="mt-1 list-disc pl-5 text-sm">
-            {responses.positives!.map((p, i) => (
-              <li key={i}>{p}</li>
-            ))}
-          </ul>
-        </div>
-      )}
-      {(responses.negatives || []).length > 0 && (
-        <div className="space-y-3">
-          <h3 className="text-sm font-semibold text-muted-foreground">Safeguards</h3>
-          {responses.negatives!.map((n, i) => (
-            <Card key={i}>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base">{n.text}</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2 text-sm">
-                {n.a && (
-                  <div>
-                    <span className="font-medium">Prevent: </span>
-                    {n.a}
-                  </div>
-                )}
-                {n.b && (
-                  <div>
-                    <span className="font-medium">In the moment: </span>
-                    {n.b}
-                  </div>
-                )}
-                {n.c && (
-                  <div>
-                    <span className="font-medium">Recover: </span>
-                    {n.c}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
 
 // ---- Main page ----
 export default function CoachingActivityRunner() {

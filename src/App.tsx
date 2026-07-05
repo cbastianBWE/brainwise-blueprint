@@ -55,6 +55,7 @@ import Resources from "./pages/Resources";
 import MyLearning from "./pages/MyLearning";
 import CoachingActivities from "./pages/coaching/CoachingActivities";
 import CoachingActivityRunner from "./pages/coaching/CoachingActivityRunner";
+import CoachingSessionView from "./pages/coaching/CoachingSessionView";
 import ResourceReader from "./pages/ResourceReader";
 import CertPathDetail from "./pages/learning/CertPathDetail";
 import CurriculumDetail from "./pages/learning/CurriculumDetail";
@@ -239,6 +240,7 @@ const App = () => (
               <Route path="/development-plan" element={<DevelopmentPlan />} />
               <Route path="/coaching" element={<CoachingActivities />} />
               <Route path="/coaching/:activityId" element={<CoachingActivityRunner />} />
+              <Route path="/coaching/session/:sessionId" element={<CoachingSessionView />} />
               <Route path="/ai-chat" element={<SubscriptionGate feature="ai_chat"><AiChat /></SubscriptionGate>} />
               <Route path="/ai-chat/history" element={<SubscriptionGate feature="ai_chat"><AiChatHistory /></SubscriptionGate>} />
               <Route path="/resources" element={<SubscriptionGate feature="module:LMS"><Resources /></SubscriptionGate>} />
