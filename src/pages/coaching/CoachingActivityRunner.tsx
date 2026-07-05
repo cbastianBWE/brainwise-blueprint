@@ -508,6 +508,8 @@ export default function CoachingActivityRunner() {
   const [existingShare, setExistingShare] = useState<{ id: string; mode: string } | null>(null);
   const [alwaysShare, setAlwaysShare] = useState(false);
 
+  const freshHandledRef = useRef(false);
+
   // Load activity + session
   useEffect(() => {
     if (!user || !activityId) return;
