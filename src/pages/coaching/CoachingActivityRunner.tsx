@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Loader2, ArrowLeft, ArrowRight, Plus, Trash2, Send, Share2, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
+import DOMPurify from "dompurify";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -65,16 +66,27 @@ interface Session {
 }
 
 // ---- Helpers ----
+const USER_INPUT_KEYS = ["action", "positives", "positiveAction", "negatives"] as const;
+
+function buildUserPatch(responses: Responses): Record<string, unknown> {
+  const patch: Record<string, unknown> = {};
+  for (const k of USER_INPUT_KEYS) {
+    if (responses[k] !== undefined) patch[k] = responses[k];
+  }
+  return patch;
+}
+
 function useDebouncedSave(sessionId: string | null, current_step: number, responses: Responses) {
   const timer = useRef<number | null>(null);
   useEffect(() => {
     if (!sessionId) return;
     if (timer.current) window.clearTimeout(timer.current);
     timer.current = window.setTimeout(async () => {
-      await supabase
-        .from("coaching_activity_sessions")
-        .update({ current_step, responses: responses as any })
-        .eq("id", sessionId);
+      await supabase.rpc("coaching_session_save", {
+        p_session_id: sessionId,
+        p_current_step: current_step,
+        p_patch: buildUserPatch(responses) as any,
+      });
     }, 600);
     return () => {
       if (timer.current) window.clearTimeout(timer.current);
@@ -298,10 +310,14 @@ function RiskBlocksWidget({
 
 function AiAnalysisPanel({ html }: { html?: string }) {
   if (!html) return null;
+  const clean = DOMPurify.sanitize(html, {
+    ALLOWED_TAGS: ["h3", "h4", "p", "ul", "ol", "li", "strong", "em", "br"],
+    ALLOWED_ATTR: [],
+  });
   return (
     <div
       className="prose prose-sm max-w-none rounded-lg border bg-muted/30 p-4"
-      dangerouslySetInnerHTML={{ __html: html }}
+      dangerouslySetInnerHTML={{ __html: clean }}
     />
   );
 }
@@ -519,6 +535,14 @@ export default function CoachingActivityRunner() {
           .limit(1)
           .maybeSingle();
         if (existing) s = existing as Session;
+      } else {
+        // Abandon any prior in-progress sessions for a clean restart
+        await supabase
+          .from("coaching_activity_sessions")
+          .update({ status: "abandoned" })
+          .eq("user_id", user.id)
+          .eq("activity_id", activityId)
+          .eq("status", "in_progress");
       }
       if (!s) {
         const { data: created } = await supabase
@@ -615,13 +639,6 @@ export default function CoachingActivityRunner() {
       const remaining = (data as any)?.coaching_remaining;
       if (typeof remaining === "number") setCoachingRemaining(remaining);
       setResponses((r) => ({ ...r, analysis: { ...(r.analysis || {}), html } }));
-      // Persist analysis immediately (bypass debounce)
-      await supabase
-        .from("coaching_activity_sessions")
-        .update({
-          responses: { ...(session.responses || {}), analysis: { html } } as any,
-        })
-        .eq("id", session.id);
       return true;
     } finally {
       setAnalyzing(false);
@@ -636,7 +653,6 @@ export default function CoachingActivityRunner() {
         status: "completed",
         completed_at: new Date().toISOString(),
         current_step: currentStep,
-        responses: responses as any,
       })
       .eq("id", session.id);
     setSession((prev) =>
@@ -658,6 +674,11 @@ export default function CoachingActivityRunner() {
             return rest as Responses;
           })()
         : {};
+      // Abandon the current session before starting a new one
+      await supabase
+        .from("coaching_activity_sessions")
+        .update({ status: "abandoned" })
+        .eq("id", session.id);
       const { data: created } = await supabase
         .from("coaching_activity_sessions")
         .insert({

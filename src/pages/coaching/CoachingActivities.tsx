@@ -161,21 +161,18 @@ export default function CoachingActivities() {
       if (cancelled) return;
       setSessions((sessData || []) as SessionRow[]);
 
-      // Access checks in parallel
-      const results = await Promise.all(
-        acts.map(async (a) => {
-          const { data } = await supabase.rpc("coaching_activity_access", { p_activity_id: a.id });
-          const row = Array.isArray(data) ? data[0] : (data as any);
-          const info: AccessInfo = {
-            allowed: !!row?.allowed,
-            reason: row?.reason || "unavailable",
-            activity_tier: row?.activity_tier ?? null,
-          };
-          return [a.id, info] as const;
-        }),
-      );
+      // Access checks in a single batch call
+      const { data: accessRows } = await supabase.rpc("coaching_activity_access_batch");
       if (cancelled) return;
-      setAccess(Object.fromEntries(results));
+      const accessMap: Record<string, AccessInfo> = {};
+      for (const row of (accessRows || []) as any[]) {
+        accessMap[row.activity_id] = {
+          allowed: !!row.allowed,
+          reason: row.reason || "unavailable",
+          activity_tier: row.activity_tier ?? null,
+        };
+      }
+      setAccess(accessMap);
       setLoading(false);
     })();
     return () => {
