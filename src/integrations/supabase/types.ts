@@ -13166,6 +13166,19 @@ export type Database = {
           reason: string
         }[]
       }
+      coaching_activity_access_batch: {
+        Args: never
+        Returns: {
+          activity_id: string
+          activity_tier: string
+          allowed: boolean
+          reason: string
+        }[]
+      }
+      coaching_session_save: {
+        Args: { p_current_step: number; p_patch: Json; p_session_id: string }
+        Returns: undefined
+      }
       coaching_usage_check_and_consume: {
         Args: { p_check_only?: boolean; p_user: string }
         Returns: {
