@@ -542,6 +542,7 @@ export default function CoachingActivityRunner() {
 
       // Find or create session
       let s: Session | null = null;
+      const doFresh = forceFresh && !freshHandledRef.current;
       if (!forceFresh) {
         const { data: existing } = await supabase
           .from("coaching_activity_sessions")
@@ -553,7 +554,8 @@ export default function CoachingActivityRunner() {
           .limit(1)
           .maybeSingle();
         if (existing) s = existing as Session;
-      } else {
+      } else if (doFresh) {
+        freshHandledRef.current = true;
         // Abandon any prior in-progress sessions for a clean restart
         await supabase
           .from("coaching_activity_sessions")
@@ -561,6 +563,9 @@ export default function CoachingActivityRunner() {
           .eq("user_id", user.id)
           .eq("activity_id", activityId)
           .eq("status", "in_progress");
+      } else {
+        // forceFresh already handled this mount; do not abandon or create again
+        return;
       }
       if (!s) {
         const { data: created } = await supabase
@@ -579,6 +584,9 @@ export default function CoachingActivityRunner() {
       if (cancelled) return;
       setSession(s);
       setLoading(false);
+      if (doFresh) {
+        navigate(`/coaching/${activityId}`, { replace: true });
+      }
     })();
     return () => {
       cancelled = true;
