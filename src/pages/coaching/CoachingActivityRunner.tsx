@@ -1310,6 +1310,25 @@ export default function CoachingActivityRunner() {
 
             {step?.widget === "synthesis" && <SynthesisView responses={responses} />}
 
+            {step?.widget === "image_select" && step.key && (
+              <ImageSelectWidget
+                step={step}
+                value={(responses[step.key] as SelectedImage[]) || []}
+                onChange={(v) => setResponses((r) => ({ ...r, [step.key!]: v }))}
+              />
+            )}
+
+            {step?.widget === "content" && (
+              <ContentWidget
+                step={step}
+                value={step.key ? ((responses[step.key] as string) || "") : ""}
+                onChange={(v) => {
+                  if (!step.key) return;
+                  setResponses((r) => ({ ...r, [step.key!]: v }));
+                }}
+              />
+            )}
+
             {/* Also show positives for step 3 (positiveAction) */}
             {step?.widget === "textarea" &&
               step.key === "positiveAction" &&
