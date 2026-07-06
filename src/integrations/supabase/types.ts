@@ -2421,7 +2421,7 @@ export type Database = {
           definition: Json
           desired_outcome: string | null
           id: string
-          module_group: string | null
+          module_group: string
           sequence: number | null
           status: string
           tags: string[]
@@ -2437,7 +2437,7 @@ export type Database = {
           definition?: Json
           desired_outcome?: string | null
           id?: string
-          module_group?: string | null
+          module_group: string
           sequence?: number | null
           status?: string
           tags?: string[]
@@ -2453,7 +2453,7 @@ export type Database = {
           definition?: Json
           desired_outcome?: string | null
           id?: string
-          module_group?: string | null
+          module_group?: string
           sequence?: number | null
           status?: string
           tags?: string[]
@@ -2689,6 +2689,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      coaching_media_library: {
+        Row: {
+          active: boolean
+          alt: string | null
+          alt_ai: boolean
+          bucket_id: string
+          category: string
+          created_at: string
+          id: string
+          sort_order: number
+          storage_path: string
+          tags: string[]
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          alt?: string | null
+          alt_ai?: boolean
+          bucket_id?: string
+          category: string
+          created_at?: string
+          id?: string
+          sort_order?: number
+          storage_path: string
+          tags?: string[]
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          alt?: string | null
+          alt_ai?: boolean
+          bucket_id?: string
+          category?: string
+          created_at?: string
+          id?: string
+          sort_order?: number
+          storage_path?: string
+          tags?: string[]
+          updated_at?: string
+        }
+        Relationships: []
       }
       coaching_usage_counters: {
         Row: {
@@ -5494,6 +5536,24 @@ export type Database = {
           scoring_unit?: string | null
           short_name?: string | null
           total_items?: number | null
+        }
+        Relationships: []
+      }
+      internal_function_secrets: {
+        Row: {
+          created_at: string
+          name: string
+          secret: string
+        }
+        Insert: {
+          created_at?: string
+          name: string
+          secret: string
+        }
+        Update: {
+          created_at?: string
+          name?: string
+          secret?: string
         }
         Relationships: []
       }

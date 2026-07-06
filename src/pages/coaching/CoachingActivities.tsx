@@ -8,8 +8,24 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 type Tier = "Foundational" | "Typical" | "Advanced" | string;
+
+interface Briefing {
+  hero_image_url?: string;
+  description?: string;
+  learning_outcomes?: string[];
+  time_estimate?: string;
+  prerequisites?: string;
+}
 
 interface Activity {
   id: string;
@@ -51,20 +67,176 @@ const tierBadgeVariant = (tier: Tier | null): "default" | "secondary" | "outline
   return "outline";
 };
 
+function getBriefing(activity: Activity): Briefing | null {
+  const def = activity.definition;
+  if (def && typeof def === "object" && def.briefing && typeof def.briefing === "object") {
+    return def.briefing as Briefing;
+  }
+  return null;
+}
+
+function BrandedPlaceholder() {
+  return (
+    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-muted to-muted/40">
+      <Compass className="h-10 w-10 text-muted-foreground" />
+    </div>
+  );
+}
+
+function CardMedia({ activity }: { activity: Activity }) {
+  return (
+    <div className="aspect-video w-full overflow-hidden bg-muted">
+      {activity.thumbnail_url ? (
+        <img
+          src={activity.thumbnail_url}
+          alt=""
+          className="h-full w-full object-cover"
+          loading="lazy"
+        />
+      ) : (
+        <BrandedPlaceholder />
+      )}
+    </div>
+  );
+}
+
+function BriefingDialog({
+  activity,
+  access,
+  inProgress,
+  open,
+  onOpenChange,
+}: {
+  activity: Activity | null;
+  access: AccessInfo | undefined;
+  inProgress: boolean;
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+}) {
+  const navigate = useNavigate();
+  if (!activity) return null;
+
+  const briefing = getBriefing(activity);
+  const heroSrc = briefing?.hero_image_url || activity.thumbnail_url || null;
+  const description =
+    briefing?.description || activity.desired_outcome || activity.title;
+  const outcomes = briefing?.learning_outcomes || [];
+
+  const close = () => onOpenChange(false);
+  const go = (to: string) => {
+    navigate(to);
+    close();
+  };
+
+  let footer: React.ReactNode = null;
+  if (!access) {
+    footer = (
+      <Button disabled>
+        <Loader2 className="h-4 w-4 animate-spin" />
+        Checking…
+      </Button>
+    );
+  } else if (access.allowed) {
+    if (inProgress) {
+      footer = (
+        <>
+          <Button variant="outline" onClick={() => go(`/coaching/${activity.id}`)}>
+            Resume
+          </Button>
+          <Button onClick={() => go(`/coaching/${activity.id}?fresh=1`)}>
+            Start over
+          </Button>
+        </>
+      );
+    } else {
+      footer = (
+        <Button onClick={() => go(`/coaching/${activity.id}?fresh=1`)}>Begin</Button>
+      );
+    }
+  } else if (access.reason === "ptp_required") {
+    footer = <Button onClick={() => go("/assessment")}>Take the PTP first</Button>;
+  } else if (
+    access.reason === "upgrade_required" ||
+    access.reason === "subscription_required"
+  ) {
+    footer = <Button onClick={() => go("/pricing")}>Upgrade to access</Button>;
+  } else {
+    footer = <Button disabled>Not available</Button>;
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-lg p-0 overflow-hidden">
+        <div className="w-full overflow-hidden bg-muted" style={{ aspectRatio: "2 / 1" }}>
+          {heroSrc ? (
+            <img
+              src={heroSrc}
+              alt=""
+              className="h-full w-full object-cover"
+              loading="lazy"
+            />
+          ) : (
+            <BrandedPlaceholder />
+          )}
+        </div>
+        <div className="p-6 space-y-4">
+          <DialogHeader className="space-y-2">
+            <div className="flex items-center gap-2">
+              <Badge variant={tierBadgeVariant(activity.tier)}>
+                {activity.tier || "General"}
+              </Badge>
+            </div>
+            <DialogTitle className="text-xl leading-snug">{activity.title}</DialogTitle>
+            <DialogDescription>{description}</DialogDescription>
+          </DialogHeader>
+
+          {outcomes.length > 0 && (
+            <div className="space-y-2">
+              <h3 className="text-sm font-semibold">What you'll get</h3>
+              <ul className="list-disc pl-5 space-y-1 text-sm text-muted-foreground">
+                {outcomes.map((o, i) => (
+                  <li key={i}>{o}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {(briefing?.time_estimate || briefing?.prerequisites) && (
+            <div className="space-y-2 text-sm">
+              {briefing?.time_estimate && (
+                <div className="flex gap-2">
+                  <span className="font-medium text-foreground">Time</span>
+                  <span className="text-muted-foreground">{briefing.time_estimate}</span>
+                </div>
+              )}
+              {briefing?.prerequisites && (
+                <div className="flex gap-2">
+                  <span className="font-medium text-foreground">Prerequisites</span>
+                  <span className="text-muted-foreground">{briefing.prerequisites}</span>
+                </div>
+              )}
+            </div>
+          )}
+
+          <DialogFooter className="gap-2">{footer}</DialogFooter>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function CoachingActivityCard({
   activity,
   access,
   inProgress,
-  onStart,
+  onOpenBriefing,
   onResume,
-  onNav,
 }: {
   activity: Activity;
   access: AccessInfo | undefined;
   inProgress: boolean;
-  onStart: () => void;
+  onOpenBriefing: () => void;
   onResume: () => void;
-  onNav: (to: string) => void;
 }) {
   const outcome =
     activity.desired_outcome ||
@@ -89,22 +261,22 @@ function CoachingActivityCard({
         {inProgress ? (
           <>
             <Button size="sm" onClick={onResume}>Resume</Button>
-            <Button size="sm" variant="outline" onClick={onStart}>Start over</Button>
+            <Button size="sm" variant="outline" onClick={onOpenBriefing}>Start over</Button>
           </>
         ) : (
-          <Button size="sm" onClick={onStart}>Start</Button>
+          <Button size="sm" onClick={onOpenBriefing}>Start</Button>
         )}
       </div>
     );
   } else if (reason === "ptp_required") {
     action = (
-      <Button size="sm" variant="outline" onClick={() => onNav("/assessment")}>
+      <Button size="sm" variant="outline" onClick={onOpenBriefing}>
         Take the PTP first
       </Button>
     );
   } else if (reason === "upgrade_required" || reason === "subscription_required") {
     action = (
-      <Button size="sm" variant="outline" onClick={() => onNav("/pricing")}>
+      <Button size="sm" variant="outline" onClick={onOpenBriefing}>
         Upgrade to access
       </Button>
     );
@@ -116,16 +288,14 @@ function CoachingActivityCard({
 
   return (
     <Card className={`overflow-hidden ${locked ? "opacity-75" : ""}`}>
-      {activity.thumbnail_url ? (
-        <div className="aspect-video w-full overflow-hidden bg-muted">
-          <img
-            src={activity.thumbnail_url}
-            alt=""
-            className="h-full w-full object-cover"
-            loading="lazy"
-          />
-        </div>
-      ) : null}
+      <button
+        type="button"
+        onClick={onOpenBriefing}
+        aria-label={`Open details for ${activity.title}`}
+        className="block w-full text-left cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      >
+        <CardMedia activity={activity} />
+      </button>
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-2">
@@ -137,7 +307,14 @@ function CoachingActivityCard({
             <Badge variant={tierBadgeVariant(activity.tier)}>{activity.tier || "General"}</Badge>
           </div>
         </div>
-        <CardTitle className="text-base leading-snug mt-2">{activity.title}</CardTitle>
+        <button
+          type="button"
+          onClick={onOpenBriefing}
+          aria-label={`Open details for ${activity.title}`}
+          className="mt-2 text-left cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
+        >
+          <CardTitle className="text-base leading-snug hover:underline">{activity.title}</CardTitle>
+        </button>
       </CardHeader>
       <CardContent className="space-y-4">
         <p className="text-sm text-muted-foreground line-clamp-2">{outcome}</p>
@@ -253,6 +430,7 @@ export default function CoachingActivities() {
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<"activities" | "history">("activities");
   const [query, setQuery] = useState("");
+  const [openActivity, setOpenActivity] = useState<Activity | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -282,7 +460,6 @@ export default function CoachingActivities() {
       if (cancelled) return;
       setSessions((sessData || []) as SessionRow[]);
 
-      // Access checks in a single batch call
       const { data: accessRows } = await supabase.rpc("coaching_activity_access_batch");
       if (cancelled) return;
       const accessMap: Record<string, AccessInfo> = {};
@@ -383,9 +560,8 @@ export default function CoachingActivities() {
                   activity={a}
                   access={access[a.id]}
                   inProgress={inProgressSet.has(a.id)}
-                  onStart={() => navigate(`/coaching/${a.id}?fresh=1`)}
+                  onOpenBriefing={() => setOpenActivity(a)}
                   onResume={() => navigate(`/coaching/${a.id}`)}
-                  onNav={(to) => navigate(to)}
                 />
               ))}
             </div>
@@ -416,6 +592,16 @@ export default function CoachingActivities() {
           {tab === "history" ? <HistoryTab /> : null}
         </TabsContent>
       </Tabs>
+
+      <BriefingDialog
+        activity={openActivity}
+        access={openActivity ? access[openActivity.id] : undefined}
+        inProgress={openActivity ? inProgressSet.has(openActivity.id) : false}
+        open={!!openActivity}
+        onOpenChange={(v) => {
+          if (!v) setOpenActivity(null);
+        }}
+      />
     </div>
   );
 }
