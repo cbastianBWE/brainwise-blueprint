@@ -25,6 +25,20 @@ interface Step {
   title?: string;
   helper?: string;
   placeholder?: string;
+  onComplete?: { touchpoint?: string };
+  // image_select
+  intro?: string;
+  source?: { library?: string };
+  pageSize?: number;
+  selectMin?: number;
+  softCap?: number;
+  tagOnSelect?: { prompt?: string; maxLen?: number };
+  overCapNudge?: string;
+  // content
+  body?: string;
+  media?: { type: string; src: string; alt?: string; caption?: string };
+  statements?: string[];
+  reflection?: { prompt?: string; placeholder?: string; optional?: boolean; minRows?: number };
 }
 
 interface Activity {
