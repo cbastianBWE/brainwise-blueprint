@@ -81,12 +81,11 @@ interface Session {
 }
 
 // ---- Helpers ----
-const USER_INPUT_KEYS = ["action", "positives", "positiveAction", "negatives"] as const;
-
 function buildUserPatch(responses: Responses): Record<string, unknown> {
   const patch: Record<string, unknown> = {};
-  for (const k of USER_INPUT_KEYS) {
-    if (responses[k] !== undefined) patch[k] = responses[k];
+  for (const k of Object.keys(responses)) {
+    if (k === "analysis" || k === "chat") continue;
+    patch[k] = (responses as any)[k];
   }
   return patch;
 }
