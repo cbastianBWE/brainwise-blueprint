@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { Loader2, ArrowLeft, ArrowRight, Plus, Trash2, Send, Share2, CheckCircle2 } from "lucide-react";
+import { Loader2, ArrowLeft, ArrowRight, Plus, Trash2, Send, Share2, CheckCircle2, Check, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -11,7 +11,8 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { SynthesisView, AiAnalysisPanel } from "@/components/coaching/CoachingViews";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { SynthesisView, AiAnalysisPanel, ChatTranscript } from "@/components/coaching/CoachingViews";
 
 // ---- Types ----
 interface Step {
@@ -24,6 +25,20 @@ interface Step {
   title?: string;
   helper?: string;
   placeholder?: string;
+  onComplete?: { touchpoint?: string };
+  // image_select
+  intro?: string;
+  source?: { library?: string };
+  pageSize?: number;
+  selectMin?: number;
+  softCap?: number;
+  tagOnSelect?: { prompt?: string; maxLen?: number };
+  overCapNudge?: string;
+  // content
+  body?: string;
+  media?: { type: string; src: string; alt?: string; caption?: string };
+  statements?: string[];
+  reflection?: { prompt?: string; placeholder?: string; optional?: boolean; minRows?: number };
 }
 
 interface Activity {
@@ -66,12 +81,11 @@ interface Session {
 }
 
 // ---- Helpers ----
-const USER_INPUT_KEYS = ["action", "positives", "positiveAction", "negatives"] as const;
-
 function buildUserPatch(responses: Responses): Record<string, unknown> {
   const patch: Record<string, unknown> = {};
-  for (const k of USER_INPUT_KEYS) {
-    if (responses[k] !== undefined) patch[k] = responses[k];
+  for (const k of Object.keys(responses)) {
+    if (k === "analysis" || k === "chat") continue;
+    patch[k] = (responses as any)[k];
   }
   return patch;
 }
@@ -417,6 +431,332 @@ function ChatWidget({
 }
 
 
+// ---- Image helpers ----
+const imgUrl = (path: string, w: number, h: number) =>
+  supabase.storage
+    .from("coaching-media")
+    .getPublicUrl(path, { transform: { width: w, height: h, resize: "cover" } }).data.publicUrl;
+
+interface LibraryImage {
+  id: string;
+  storage_path: string;
+  alt: string | null;
+}
+
+interface SelectedImage {
+  library_id: string;
+  storage_path: string;
+  tag: string;
+}
+
+function ImageSelectWidget({
+  step,
+  value,
+  onChange,
+}: {
+  step: Step;
+  value: SelectedImage[];
+  onChange: (next: SelectedImage[]) => void;
+}) {
+  const [images, setImages] = useState<LibraryImage[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [visible, setVisible] = useState(step.pageSize ?? 12);
+  const [dialogRow, setDialogRow] = useState<LibraryImage | null>(null);
+  const [tagDraft, setTagDraft] = useState("");
+  const softCap = step.softCap ?? 30;
+  const selectMin = step.selectMin ?? 3;
+  const pageSize = step.pageSize ?? 12;
+  const maxLen = step.tagOnSelect?.maxLen ?? 40;
+  const promptText = step.tagOnSelect?.prompt || "Add a short tag";
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const category = step.source?.library;
+      if (!category) {
+        setError("No image library configured.");
+        return;
+      }
+      const { data, error: err } = await supabase
+        .from("coaching_media_library")
+        .select("id, storage_path, alt")
+        .eq("category", category)
+        .eq("active", true)
+        .order("sort_order", { ascending: true });
+      if (cancelled) return;
+      if (err) {
+        setError("Couldn't load images.");
+        return;
+      }
+      setImages((data || []) as LibraryImage[]);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [step.source?.library]);
+
+  const selectedByPath = useMemo(() => {
+    const m = new Map<string, SelectedImage>();
+    (value || []).forEach((s) => m.set(s.storage_path, s));
+    return m;
+  }, [value]);
+
+  const openFor = (row: LibraryImage) => {
+    const existing = selectedByPath.get(row.storage_path);
+    setTagDraft(existing?.tag || "");
+    setDialogRow(row);
+  };
+
+  const closeDialog = () => {
+    setDialogRow(null);
+    setTagDraft("");
+  };
+
+  const saveDialog = () => {
+    if (!dialogRow) return;
+    const trimmed = tagDraft.trim();
+    if (!trimmed) return;
+    const existing = selectedByPath.get(dialogRow.storage_path);
+    let next: SelectedImage[];
+    if (existing) {
+      next = (value || []).map((s) =>
+        s.storage_path === dialogRow.storage_path ? { ...s, tag: trimmed } : s,
+      );
+    } else {
+      next = [
+        ...(value || []),
+        { library_id: dialogRow.id, storage_path: dialogRow.storage_path, tag: trimmed },
+      ];
+    }
+    onChange(next);
+    closeDialog();
+  };
+
+  const removeSelected = (path: string) => {
+    onChange((value || []).filter((s) => s.storage_path !== path));
+  };
+
+  const removeFromDialog = () => {
+    if (!dialogRow) return;
+    removeSelected(dialogRow.storage_path);
+    closeDialog();
+  };
+
+  const count = (value || []).length;
+  const overCap = count > softCap;
+
+  return (
+    <div className="space-y-4">
+      {step.intro && <p className="text-sm text-muted-foreground">{step.intro}</p>}
+
+      <div className="rounded-lg border p-3">
+        <div className="flex items-center justify-between">
+          <p className="text-xs font-medium text-muted-foreground">Selected</p>
+          <p className="text-xs text-muted-foreground">
+            {count} selected · cap {softCap}
+          </p>
+        </div>
+        {count === 0 ? (
+          <p className="mt-2 text-sm text-muted-foreground">Nothing selected yet.</p>
+        ) : (
+          <div className="mt-2 flex flex-wrap gap-2">
+            {(value || []).map((s) => (
+              <div key={s.storage_path} className="relative">
+                <img
+                  src={imgUrl(s.storage_path, 400, 400)}
+                  alt={s.tag}
+                  loading="lazy"
+                  className="h-20 w-20 rounded-md object-cover"
+                />
+                <button
+                  type="button"
+                  onClick={() => removeSelected(s.storage_path)}
+                  aria-label={`Remove ${s.tag}`}
+                  className="absolute -right-1 -top-1 rounded-full bg-background p-0.5 shadow-sm ring-1 ring-border"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+                <p className="mt-1 max-w-[5rem] truncate text-xs text-muted-foreground">{s.tag}</p>
+              </div>
+            ))}
+          </div>
+        )}
+        {overCap && step.overCapNudge && (
+          <p className="mt-2 text-sm text-destructive">
+            {step.overCapNudge.replace("{n}", String(count))}
+          </p>
+        )}
+      </div>
+
+      {error && <p className="text-sm text-destructive">{error}</p>}
+      {!images && !error && (
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Loader2 className="h-4 w-4 animate-spin" /> Loading images…
+        </div>
+      )}
+
+      {images && images.length > 0 && (
+        <>
+          <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5">
+            {images.slice(0, visible).map((row) => {
+              const sel = selectedByPath.get(row.storage_path);
+              const isSel = !!sel;
+              return (
+                <button
+                  key={row.id}
+                  type="button"
+                  onClick={() => openFor(row)}
+                  aria-label={`${row.alt || "Image"}${isSel ? " (selected)" : ""}`}
+                  className={`relative overflow-hidden rounded-md border transition ${
+                    isSel ? "ring-2 ring-primary" : "hover:opacity-90"
+                  }`}
+                >
+                  <img
+                    src={imgUrl(row.storage_path, 400, 400)}
+                    alt={row.alt || ""}
+                    loading="lazy"
+                    className="aspect-square w-full object-cover"
+                  />
+                  {isSel && (
+                    <>
+                      <span className="absolute right-1 top-1 rounded-full bg-primary p-0.5 text-primary-foreground">
+                        <Check className="h-3 w-3" />
+                      </span>
+                      {sel?.tag && (
+                        <span className="absolute inset-x-0 bottom-0 truncate bg-background/85 px-1.5 py-0.5 text-left text-xs">
+                          {sel.tag}
+                        </span>
+                      )}
+                    </>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+          {visible < images.length && (
+            <div className="flex justify-center">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setVisible((v) => v + pageSize)}
+              >
+                Show more
+              </Button>
+            </div>
+          )}
+        </>
+      )}
+
+      <p className="text-xs text-muted-foreground">
+        Choose at least {selectMin}.
+      </p>
+
+      <Dialog open={!!dialogRow} onOpenChange={(o) => (!o ? closeDialog() : null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{selectedByPath.get(dialogRow?.storage_path || "") ? "Edit tag" : "Add a tag"}</DialogTitle>
+          </DialogHeader>
+          {dialogRow && (
+            <div className="space-y-3">
+              <img
+                src={imgUrl(dialogRow.storage_path, 800, 800)}
+                alt={dialogRow.alt || ""}
+                loading="lazy"
+                className="max-h-[50vh] w-full rounded-md object-contain"
+              />
+              <div className="space-y-1">
+                <Label htmlFor="image-tag">Your tag</Label>
+                <Input
+                  id="image-tag"
+                  autoFocus
+                  value={tagDraft}
+                  maxLength={maxLen}
+                  placeholder={promptText}
+                  onChange={(e) => setTagDraft(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      saveDialog();
+                    }
+                  }}
+                />
+              </div>
+            </div>
+          )}
+          <DialogFooter className="gap-2 sm:justify-between">
+            <div>
+              {dialogRow && selectedByPath.get(dialogRow.storage_path) && (
+                <Button variant="outline" onClick={removeFromDialog}>
+                  Remove
+                </Button>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <Button variant="ghost" onClick={closeDialog}>
+                Cancel
+              </Button>
+              <Button onClick={saveDialog} disabled={!tagDraft.trim()}>
+                Save
+              </Button>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+function ContentWidget({
+  step,
+  value,
+  onChange,
+}: {
+  step: Step;
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <div className="space-y-4">
+      {step.intro && <p className="text-sm text-muted-foreground">{step.intro}</p>}
+      {step.body && <p className="whitespace-pre-wrap text-sm leading-relaxed">{step.body}</p>}
+      {step.media?.type === "image" && step.media.src && (
+        <figure className="space-y-1">
+          <img
+            src={step.media.src}
+            alt={step.media.alt || ""}
+            loading="lazy"
+            className="w-full rounded-md object-cover"
+          />
+          {step.media.caption && (
+            <figcaption className="text-xs text-muted-foreground">{step.media.caption}</figcaption>
+          )}
+        </figure>
+      )}
+      {step.statements && step.statements.length > 0 && (
+        <ul className="space-y-2">
+          {step.statements.map((s, i) => (
+            <li key={i} className="rounded-md border bg-muted/30 p-3 text-sm">
+              {s}
+            </li>
+          ))}
+        </ul>
+      )}
+      {step.reflection && step.key && (
+        <div className="space-y-2">
+          {step.reflection.prompt && <Label>{step.reflection.prompt}</Label>}
+          <Textarea
+            rows={step.reflection.minRows ?? 4}
+            placeholder={step.reflection.placeholder || "Type here…"}
+            value={value || ""}
+            onChange={(e) => onChange(e.target.value)}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+
 // ---- Main page ----
 export default function CoachingActivityRunner() {
   const { activityId } = useParams<{ activityId: string }>();
@@ -742,14 +1082,31 @@ export default function CoachingActivityRunner() {
     }
     if (step.widget === "ai_panel") return !!responses.analysis?.html;
     if (step.widget === "synthesis") return true;
+    if (step.widget === "image_select") {
+      const sel = (responses[step.key || ""] as SelectedImage[]) || [];
+      return sel.length >= (step.selectMin ?? 1) && sel.length <= (step.softCap ?? 30);
+    }
+    if (step.widget === "content") {
+      if (step.reflection && step.reflection.optional === false && step.key) {
+        return ((responses[step.key] as string) || "").trim().length > 0;
+      }
+      return true;
+    }
     return true;
   })();
 
   const goNext = async () => {
-    // Trigger analysis when leaving the last risk_blocks step with subfields (step 5)
     const isRiskDetail =
       step?.widget === "risk_blocks" && (step.subfields?.length ?? 0) > 0;
-    if (isRiskDetail && !responses.analysis?.html) {
+    const wantsAnalysis = isRiskDetail || step?.onComplete?.touchpoint === "analysis";
+    if (wantsAnalysis && !responses.analysis?.html) {
+      if (session) {
+        await supabase.rpc("coaching_session_save", {
+          p_session_id: session.id,
+          p_current_step: currentStep,
+          p_patch: buildUserPatch(responses) as any,
+        });
+      }
       const ok = await runAnalysis();
       if (!ok) return;
     }
@@ -804,6 +1161,31 @@ export default function CoachingActivityRunner() {
               </div>
             </CardHeader>
             <CardContent className="space-y-6">
+              {(() => {
+                const imgStep = steps.find((s) => s.widget === "image_select" && s.key);
+                const items = imgStep ? ((responses[imgStep.key!] as SelectedImage[]) || []) : [];
+                if (!imgStep || items.length === 0) return null;
+                return (
+                  <div>
+                    <h3 className="mb-2 text-sm font-semibold text-muted-foreground">Your pictures</h3>
+                    <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5">
+                      {items.map((s) => (
+                        <figure key={s.storage_path} className="space-y-1">
+                          <img
+                            src={imgUrl(s.storage_path, 400, 400)}
+                            alt={s.tag}
+                            loading="lazy"
+                            className="aspect-square w-full rounded-md object-cover"
+                          />
+                          <figcaption className="truncate text-xs text-muted-foreground">
+                            {s.tag}
+                          </figcaption>
+                        </figure>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
               <SynthesisView responses={responses} />
               {responses.analysis?.html && (
                 <div>
@@ -811,6 +1193,12 @@ export default function CoachingActivityRunner() {
                     Your coaching plan
                   </h3>
                   <AiAnalysisPanel html={responses.analysis.html} />
+                </div>
+              )}
+              {responses.chat && responses.chat.length > 0 && (
+                <div>
+                  <h3 className="mb-2 text-sm font-semibold text-muted-foreground">Conversation</h3>
+                  <ChatTranscript chat={responses.chat} />
                 </div>
               )}
             </CardContent>
@@ -921,6 +1309,25 @@ export default function CoachingActivityRunner() {
             )}
 
             {step?.widget === "synthesis" && <SynthesisView responses={responses} />}
+
+            {step?.widget === "image_select" && step.key && (
+              <ImageSelectWidget
+                step={step}
+                value={(responses[step.key] as SelectedImage[]) || []}
+                onChange={(v) => setResponses((r) => ({ ...r, [step.key!]: v }))}
+              />
+            )}
+
+            {step?.widget === "content" && (
+              <ContentWidget
+                step={step}
+                value={step.key ? ((responses[step.key] as string) || "") : ""}
+                onChange={(v) => {
+                  if (!step.key) return;
+                  setResponses((r) => ({ ...r, [step.key!]: v }));
+                }}
+              />
+            )}
 
             {/* Also show positives for step 3 (positiveAction) */}
             {step?.widget === "textarea" &&
