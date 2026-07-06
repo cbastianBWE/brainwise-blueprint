@@ -1161,6 +1161,31 @@ export default function CoachingActivityRunner() {
               </div>
             </CardHeader>
             <CardContent className="space-y-6">
+              {(() => {
+                const imgStep = steps.find((s) => s.widget === "image_select" && s.key);
+                const items = imgStep ? ((responses[imgStep.key!] as SelectedImage[]) || []) : [];
+                if (!imgStep || items.length === 0) return null;
+                return (
+                  <div>
+                    <h3 className="mb-2 text-sm font-semibold text-muted-foreground">Your pictures</h3>
+                    <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5">
+                      {items.map((s) => (
+                        <figure key={s.storage_path} className="space-y-1">
+                          <img
+                            src={imgUrl(s.storage_path, 400, 400)}
+                            alt={s.tag}
+                            loading="lazy"
+                            className="aspect-square w-full rounded-md object-cover"
+                          />
+                          <figcaption className="truncate text-xs text-muted-foreground">
+                            {s.tag}
+                          </figcaption>
+                        </figure>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
               <SynthesisView responses={responses} />
               {responses.analysis?.html && (
                 <div>
@@ -1168,6 +1193,12 @@ export default function CoachingActivityRunner() {
                     Your coaching plan
                   </h3>
                   <AiAnalysisPanel html={responses.analysis.html} />
+                </div>
+              )}
+              {responses.chat && responses.chat.length > 0 && (
+                <div>
+                  <h3 className="mb-2 text-sm font-semibold text-muted-foreground">Conversation</h3>
+                  <ChatTranscript chat={responses.chat} />
                 </div>
               )}
             </CardContent>
