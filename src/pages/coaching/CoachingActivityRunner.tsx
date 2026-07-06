@@ -1082,14 +1082,31 @@ export default function CoachingActivityRunner() {
     }
     if (step.widget === "ai_panel") return !!responses.analysis?.html;
     if (step.widget === "synthesis") return true;
+    if (step.widget === "image_select") {
+      const sel = (responses[step.key || ""] as SelectedImage[]) || [];
+      return sel.length >= (step.selectMin ?? 1) && sel.length <= (step.softCap ?? 30);
+    }
+    if (step.widget === "content") {
+      if (step.reflection && step.reflection.optional === false && step.key) {
+        return ((responses[step.key] as string) || "").trim().length > 0;
+      }
+      return true;
+    }
     return true;
   })();
 
   const goNext = async () => {
-    // Trigger analysis when leaving the last risk_blocks step with subfields (step 5)
     const isRiskDetail =
       step?.widget === "risk_blocks" && (step.subfields?.length ?? 0) > 0;
-    if (isRiskDetail && !responses.analysis?.html) {
+    const wantsAnalysis = isRiskDetail || step?.onComplete?.touchpoint === "analysis";
+    if (wantsAnalysis && !responses.analysis?.html) {
+      if (session) {
+        await supabase.rpc("coaching_session_save", {
+          p_session_id: session.id,
+          p_current_step: currentStep,
+          p_patch: buildUserPatch(responses) as any,
+        });
+      }
       const ok = await runAnalysis();
       if (!ok) return;
     }
