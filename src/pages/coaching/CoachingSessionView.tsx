@@ -20,7 +20,7 @@ interface SessionRow {
   status: string;
   responses: Responses | null;
   completed_at: string | null;
-  coaching_activities: { title: string; tier: string | null } | null;
+  coaching_activities: { title: string; tier: string | null; definition: any } | null;
 }
 
 export default function CoachingSessionView() {
@@ -48,7 +48,7 @@ export default function CoachingSessionView() {
       const { data } = await supabase
         .from("coaching_activity_sessions")
         .select(
-          "id, activity_id, status, responses, completed_at, coaching_activities(title, tier)",
+          "id, activity_id, status, responses, completed_at, coaching_activities(title, tier, definition)",
         )
         .eq("id", sessionId)
         .maybeSingle();
@@ -207,7 +207,7 @@ export default function CoachingSessionView() {
               </div>
             </div>
           ))}
-          <SynthesisView responses={responses} />
+          <SynthesisView responses={responses} steps={session.coaching_activities?.definition?.steps} />
         </CardContent>
       </Card>
 
