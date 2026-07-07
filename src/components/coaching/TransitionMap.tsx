@@ -6,7 +6,20 @@
  * Draw order (back → front): Purpose, Resolve, Support, Future, Present,
  * Pathway, Past, Life's Tools. Labels sit on top within their own group.
  */
-export default function TransitionMap({ className }: { className?: string }) {
+export default function TransitionMap({ className, onSelectGroup, lockedGroups = [] }: { className?: string; onSelectGroup?: (group: string) => void; lockedGroups?: string[] }) {
+  const groupProps = (name: string) => ({
+    className: "tm-region",
+    role: "button",
+    tabIndex: 0,
+    onClick: () => onSelectGroup?.(name),
+    onKeyDown: (e: React.KeyboardEvent<SVGGElement>) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        onSelectGroup?.(name);
+      }
+    },
+    "aria-label": `Open ${name} activities`,
+  });
   // Region palette — light tints, dark brand strokes and labels
   const PURPOSE_FILL = "#ECE3F4";
   const PURPOSE_STROKE = "#3C096C";
