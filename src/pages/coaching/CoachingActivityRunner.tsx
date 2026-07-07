@@ -1429,6 +1429,7 @@ export default function CoachingActivityRunner() {
       const done = items.filter((it) => (it.description || "").trim().length > 0).length;
       return done >= need;
     }
+    if (step.widget === "recap") return !!(responses.recap as { html?: string } | undefined)?.html;
     return true;
   })();
 
