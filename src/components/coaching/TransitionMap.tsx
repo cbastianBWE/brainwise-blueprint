@@ -1,3 +1,5 @@
+import type React from "react";
+
 /**
  * TransitionMap
  * Responsive SVG recreation of the "My BrainWise Transition Map".
