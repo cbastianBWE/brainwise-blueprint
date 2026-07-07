@@ -143,6 +143,15 @@ export default function CoachingSessionView() {
   const responses = (session.responses || {}) as Responses;
   const analysisHtml = responses.analysis?.html;
   const chat = responses.chat || [];
+  const pictureGroups = Object.values(responses).filter(
+    (v): v is Array<{ storage_path: string; tag?: string }> =>
+      Array.isArray(v) &&
+      v.length > 0 &&
+      v.every(
+        (it) =>
+          it && typeof it === "object" && typeof (it as any).storage_path === "string",
+      ),
+  );
   const title = session.coaching_activities?.title || "Coaching session";
   const tier = session.coaching_activities?.tier || null;
   const completed = session.completed_at
