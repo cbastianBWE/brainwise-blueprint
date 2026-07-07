@@ -596,6 +596,7 @@ export default function CoachClients() {
       p_certification_id: actorCert.id,
       p_coach_note: note.trim() || null,
       p_email_html: html,
+      p_results_released: resultsReleased,
     });
     const result = data as unknown as CreateActorDebriefOrderResult | null;
     if (error) {
