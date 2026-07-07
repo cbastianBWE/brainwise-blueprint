@@ -1894,7 +1894,7 @@ export default function CoachingActivityRunner() {
               responses.positives.length > 0 && (
                 <Card className="bg-muted/30">
                   <CardContent className="p-3">
-                    <p className="text-xs font-medium text-muted-foreground">Your positives</p>
+                    <p className="text-xs font-medium text-muted-foreground">Your measure of success</p>
                     <ul className="mt-1 list-disc pl-5 text-sm">
                       {responses.positives.map((v, i) => (
                         <li key={i}>{v}</li>
