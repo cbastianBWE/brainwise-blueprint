@@ -54,6 +54,7 @@ export default function TransitionMap({ className }: { className?: string }) {
       {/* ---------- PURPOSE: background cloud (back) ---------- */}
       <g data-group="Purpose">
         <path
+          transform="translate(0 -45) scale(1 1.12)"
           d="
             M 260,240
             C 210,180 240,110 320,110
@@ -77,8 +78,8 @@ export default function TransitionMap({ className }: { className?: string }) {
           strokeWidth="3"
         />
         <text
-          x="1360"
-          y="150"
+          x="1060"
+          y="200"
           fill={PURPOSE_LABEL}
           fontSize="44"
           fontWeight="700"
@@ -89,73 +90,7 @@ export default function TransitionMap({ className }: { className?: string }) {
         </text>
       </g>
 
-      {/* ---------- RESOLVE: top channel ---------- */}
-      <g data-group="Resolve">
-        <path
-          d="
-            M 470,380
-            L 470,240
-            L 1330,240
-            L 1330,330
-            L 1370,330
-            L 1310,380
-            L 1250,330
-            L 1290,330
-            L 1290,280
-            L 510,280
-            L 510,380 Z
-          "
-          fill={CHANNEL_FILL}
-          stroke={CHANNEL_STROKE}
-          strokeWidth="3"
-          strokeLinejoin="round"
-        />
-        <text
-          x="820"
-          y="270"
-          fill={CHANNEL_LABEL}
-          fontSize="34"
-          fontWeight="700"
-          fontFamily={FONT}
-        >
-          Resolve
-        </text>
-      </g>
-
-      {/* ---------- SUPPORT: bottom channel ---------- */}
-      <g data-group="Support">
-        <path
-          d="
-            M 470,620
-            L 470,760
-            L 1330,760
-            L 1330,660
-            L 1370,660
-            L 1310,610
-            L 1250,660
-            L 1290,660
-            L 1290,720
-            L 510,720
-            L 510,620 Z
-          "
-          fill={CHANNEL_FILL}
-          stroke={CHANNEL_STROKE}
-          strokeWidth="3"
-          strokeLinejoin="round"
-        />
-        <text
-          x="780"
-          y="748"
-          fill={CHANNEL_LABEL}
-          fontSize="34"
-          fontWeight="700"
-          fontFamily={FONT}
-        >
-          External support
-        </text>
-      </g>
-
-      {/* ---------- FUTURE: right cloud — fully inside Purpose, clear of arrow ---------- */}
+      {/* ---------- FUTURE: right cloud (drawn before channels so arrowheads sit on top) ---------- */}
       <g data-group="Future">
         <path
           d="
@@ -186,6 +121,73 @@ export default function TransitionMap({ className }: { className?: string }) {
           <tspan x="1380" dy="44">Future</tspan>
         </text>
       </g>
+
+      {/* ---------- RESOLVE: top channel (arrowhead into Future cloud) ---------- */}
+      <g data-group="Resolve">
+        <path
+          d="
+            M 470,380
+            L 470,240
+            L 1330,240
+            L 1330,330
+            L 1385,330
+            L 1310,415
+            L 1235,330
+            L 1290,330
+            L 1290,280
+            L 510,280
+            L 510,380 Z
+          "
+          fill={CHANNEL_FILL}
+          stroke={CHANNEL_STROKE}
+          strokeWidth="3"
+          strokeLinejoin="round"
+        />
+        <text
+          x="820"
+          y="270"
+          fill={CHANNEL_LABEL}
+          fontSize="34"
+          fontWeight="700"
+          fontFamily={FONT}
+        >
+          Resolve
+        </text>
+      </g>
+
+      {/* ---------- SUPPORT: bottom channel (arrowhead into Future cloud) ---------- */}
+      <g data-group="Support">
+        <path
+          d="
+            M 470,620
+            L 470,760
+            L 1330,760
+            L 1330,660
+            L 1385,660
+            L 1310,575
+            L 1235,660
+            L 1290,660
+            L 1290,720
+            L 510,720
+            L 510,620 Z
+          "
+          fill={CHANNEL_FILL}
+          stroke={CHANNEL_STROKE}
+          strokeWidth="3"
+          strokeLinejoin="round"
+        />
+        <text
+          x="780"
+          y="748"
+          fill={CHANNEL_LABEL}
+          fontSize="34"
+          fontWeight="700"
+          fontFamily={FONT}
+        >
+          External support
+        </text>
+      </g>
+
 
       {/* ---------- PAST: spiral shell + inner circle (behind Present) ---------- */}
       <g data-group="Past">
