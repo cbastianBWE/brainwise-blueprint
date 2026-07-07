@@ -101,7 +101,7 @@ interface Session {
 function buildUserPatch(responses: Responses): Record<string, unknown> {
   const patch: Record<string, unknown> = {};
   for (const k of Object.keys(responses)) {
-    if (k === "analysis" || k === "chat") continue;
+    if (k === "analysis" || k === "chat" || k === "recap") continue;
     patch[k] = (responses as any)[k];
   }
   return patch;
@@ -535,6 +535,55 @@ function ImageDescribeWidget({
       )}
     </div>
   );
+}
+
+function RecapWidget({
+  sessionId,
+  recap,
+  onRecap,
+}: {
+  sessionId: string;
+  recap?: { html?: string };
+  onRecap: (html: string, error: boolean) => void;
+}) {
+  const [loading, setLoading] = useState(false);
+  const firedRef = useRef(false);
+  useEffect(() => {
+    if (recap?.html || firedRef.current) return;
+    firedRef.current = true;
+    setLoading(true);
+    supabase.functions
+      .invoke("coaching-activity-recap", { body: { session_id: sessionId } })
+      .then(({ data, error }) => {
+        if (error || !(data as any)?.recap_html) {
+          onRecap(
+            "<p>Let's pick up from where you are. On the next step, add what you want to make sure is part of your future.</p>",
+            true,
+          );
+        } else {
+          onRecap((data as any).recap_html, false);
+        }
+      })
+      .catch(() =>
+        onRecap(
+          "<p>Let's pick up from where you are. On the next step, add what you want to make sure is part of your future.</p>",
+          true,
+        ),
+      )
+      .finally(() => setLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [recap?.html, sessionId]);
+
+  if (loading && !recap?.html) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-3 py-10 text-sm text-muted-foreground">
+        <Loader2 className="h-6 w-6 animate-spin" />
+        <p>Gathering the future you've been building…</p>
+      </div>
+    );
+  }
+  if (recap?.html) return <AiAnalysisPanel html={recap.html} />;
+  return null;
 }
 
 function ImageSelectWidget({
@@ -1429,6 +1478,7 @@ export default function CoachingActivityRunner() {
       const done = items.filter((it) => (it.description || "").trim().length > 0).length;
       return done >= need;
     }
+    if (step.widget === "recap") return !!(responses.recap as { html?: string } | undefined)?.html;
     return true;
   })();
 
@@ -1681,6 +1731,15 @@ export default function CoachingActivityRunner() {
                 onChange={(v) => setResponses((r) => ({ ...r, [step.fromKey!]: v }))}
               />
             )}
+
+            {step?.widget === "recap" && (
+              <RecapWidget
+                sessionId={session.id}
+                recap={responses.recap as { html?: string } | undefined}
+                onRecap={(html, error) =>
+                  setResponses((r) => ({ ...r, recap: { ...((r.recap as any) || {}), html, error } }))
+                }
+              />)}
 
 
 
