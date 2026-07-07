@@ -262,9 +262,9 @@ export default function TransitionMap({ className }: { className?: string }) {
 
       {/* ---------- PATHWAY: block arrow with layered tail ---------- */}
       <g data-group="Pathway">
-        {/* layered tail bars */}
-        <rect x="610" y="380" width="14" height="240" fill={PATHWAY_TAIL} />
-        <rect x="632" y="380" width="14" height="240" fill={PATHWAY_TAIL} />
+        {/* layered tail bars — flush with the arrow body's straight section */}
+        <rect x="610" y="410" width="14" height="180" fill={PATHWAY_TAIL} />
+        <rect x="632" y="410" width="14" height="180" fill={PATHWAY_TAIL} />
         {/* arrow body */}
         <path
           d="
