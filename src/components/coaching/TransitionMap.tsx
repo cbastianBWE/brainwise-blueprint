@@ -1,3 +1,5 @@
+import type React from "react";
+
 /**
  * TransitionMap
  * Responsive SVG recreation of the "My BrainWise Transition Map".
@@ -6,7 +8,20 @@
  * Draw order (back → front): Purpose, Resolve, Support, Future, Present,
  * Pathway, Past, Life's Tools. Labels sit on top within their own group.
  */
-export default function TransitionMap({ className }: { className?: string }) {
+export default function TransitionMap({ className, onSelectGroup, lockedGroups = [] }: { className?: string; onSelectGroup?: (group: string) => void; lockedGroups?: string[] }) {
+  const groupProps = (name: string) => ({
+    className: "tm-region",
+    role: "button",
+    tabIndex: 0,
+    onClick: () => onSelectGroup?.(name),
+    onKeyDown: (e: React.KeyboardEvent<SVGGElement>) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        onSelectGroup?.(name);
+      }
+    },
+    "aria-label": `Open ${name} activities`,
+  });
   // Region palette — light tints, dark brand strokes and labels
   const PURPOSE_FILL = "#ECE3F4";
   const PURPOSE_STROKE = "#3C096C";
@@ -51,8 +66,13 @@ export default function TransitionMap({ className }: { className?: string }) {
       role="img"
       aria-label="BrainWise Transition Map"
     >
+      <style>{`
+        .tm-region { cursor: pointer; transition: filter .15s ease; outline: none; }
+        .tm-region:hover { filter: brightness(0.95); }
+        .tm-region:focus-visible { filter: brightness(0.92) drop-shadow(0 0 3px rgba(2,31,54,0.45)); }
+      `}</style>
       {/* ---------- PURPOSE: background cloud (back) ---------- */}
-      <g data-group="Purpose">
+      <g data-group="Purpose" {...groupProps("Purpose")}>
         <path
           transform="translate(0 -45) scale(1 1.22)"
           d="
@@ -91,7 +111,7 @@ export default function TransitionMap({ className }: { className?: string }) {
       </g>
 
       {/* ---------- FUTURE: right cloud (drawn before channels so arrowheads sit on top) ---------- */}
-      <g data-group="Future">
+      <g data-group="Future" {...groupProps("Future")}>
         <path
           d="
             M 1220,430
@@ -123,7 +143,7 @@ export default function TransitionMap({ className }: { className?: string }) {
       </g>
 
       {/* ---------- RESOLVE: top channel (arrowhead into Future cloud) ---------- */}
-      <g data-group="Resolve">
+      <g data-group="Resolve" {...groupProps("Resolve")}>
         <path
           d="
             M 470,380
@@ -157,7 +177,7 @@ export default function TransitionMap({ className }: { className?: string }) {
       </g>
 
       {/* ---------- SUPPORT: bottom channel (arrowhead into Future cloud) ---------- */}
-      <g data-group="Support">
+      <g data-group="Support" {...groupProps("Support")}>
         <path
           d="
             M 470,657
@@ -192,7 +212,7 @@ export default function TransitionMap({ className }: { className?: string }) {
 
 
       {/* ---------- PAST: spiral shell + inner circle (behind Present) ---------- */}
-      <g data-group="Past">
+      <g data-group="Past" {...groupProps("Past")}>
         <path
           d="
             M 300,660
@@ -248,7 +268,7 @@ export default function TransitionMap({ className }: { className?: string }) {
       </g>
 
       {/* ---------- PRESENT: rounded square (in front of Past) ---------- */}
-      <g data-group="Present">
+      <g data-group="Present" {...groupProps("Present")}>
         <rect
           x="290"
           y="290"
@@ -273,7 +293,7 @@ export default function TransitionMap({ className }: { className?: string }) {
       </g>
 
       {/* ---------- PATHWAY: block arrow with layered tail ---------- */}
-      <g data-group="Pathway">
+      <g data-group="Pathway" {...groupProps("Pathway")}>
         <rect x="610" y="410" width="14" height="180" fill={PATHWAY_TAIL} />
         <rect x="632" y="410" width="14" height="180" fill={PATHWAY_TAIL} />
         <path
@@ -306,7 +326,7 @@ export default function TransitionMap({ className }: { className?: string }) {
 
 
       {/* ---------- LIFE'S TOOLS: small circle at arrow base (front) ---------- */}
-      <g data-group="Life's Tools">
+      <g data-group="Life's Tools" {...groupProps("Life's Tools")}>
         <circle
           cx="548"
           cy="500"
@@ -330,6 +350,49 @@ export default function TransitionMap({ className }: { className?: string }) {
 
 
       </g>
+
+      {/* ---------- LOCK BADGES (drawn last, on top) ---------- */}
+      {(() => {
+        const LOCK_POSITIONS: Record<string, { x: number; y: number }> = {
+          Purpose: { x: 1018, y: 186 },
+          Future: { x: 1338, y: 400 },
+          Present: { x: 300, y: 336 },
+          Past: { x: 158, y: 531 },
+          "Life's Tools": { x: 490, y: 500 },
+          Pathway: { x: 660, y: 501 },
+          Resolve: { x: 778, y: 256 },
+          Support: { x: 738, y: 773 },
+        };
+        const ORANGE = "#F5741A";
+        return lockedGroups
+          .filter((g) => g in LOCK_POSITIONS)
+          .map((g) => {
+            const { x, y } = LOCK_POSITIONS[g];
+            return (
+              <g key={`lock-${g}`} data-lock={g} pointerEvents="none">
+                <circle cx={x} cy={y} r={20} fill="#FFFFFF" stroke={ORANGE} strokeWidth={2.5} />
+                {/* Shackle arc */}
+                <path
+                  d={`M ${x - 6} ${y - 2} v -4 a 6 6 0 0 1 12 0 v 4`}
+                  fill="none"
+                  stroke={ORANGE}
+                  strokeWidth={2.5}
+                  strokeLinecap="round"
+                />
+                {/* Body */}
+                <rect
+                  x={x - 8}
+                  y={y - 2}
+                  width={16}
+                  height={12}
+                  rx={2.5}
+                  ry={2.5}
+                  fill={ORANGE}
+                />
+              </g>
+            );
+          });
+      })()}
     </svg>
   );
 }
