@@ -303,7 +303,7 @@ export default function TransitionMap({ className }: { className?: string }) {
         <circle
           cx="600"
           cy="500"
-          r="48"
+          r="40"
           fill={TOOLS_FILL}
           stroke={TOOLS_STROKE}
           strokeWidth="3"
@@ -312,13 +312,13 @@ export default function TransitionMap({ className }: { className?: string }) {
           x="600"
           y="497"
           fill={TOOLS_LABEL}
-          fontSize="15"
+          fontSize="18"
           fontWeight="700"
           fontFamily={FONT}
           textAnchor="middle"
         >
           <tspan x="600" dy="0">Life's</tspan>
-          <tspan x="600" dy="17">Tools</tspan>
+          <tspan x="600" dy="20">Tools</tspan>
         </text>
       </g>
     </svg>
