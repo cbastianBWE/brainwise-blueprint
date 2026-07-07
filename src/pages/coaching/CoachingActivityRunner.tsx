@@ -1410,6 +1410,16 @@ export default function CoachingActivityRunner() {
               />
             )}
 
+            {step?.widget === "image_describe" && (
+              <ImageDescribeWidget
+                step={step}
+                value={(responses[step.fromKey || ""] as SelectedImage[]) || []}
+                onChange={(v) => setResponses((r) => ({ ...r, [step.fromKey!]: v }))}
+              />
+            )}
+
+
+
             {/* Also show positives for step 3 (positiveAction) */}
             {step?.widget === "textarea" &&
               step.key === "positiveAction" &&
