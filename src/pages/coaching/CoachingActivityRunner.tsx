@@ -1683,6 +1683,15 @@ export default function CoachingActivityRunner() {
               />
             )}
 
+            {step?.widget === "recap" && (
+              <RecapWidget
+                sessionId={session.id}
+                recap={responses.recap as { html?: string } | undefined}
+                onRecap={(html, error) =>
+                  setResponses((r) => ({ ...r, recap: { ...((r.recap as any) || {}), html, error } }))
+                }
+              />)}
+
 
 
             {/* Also show positives for step 3 (positiveAction) */}
