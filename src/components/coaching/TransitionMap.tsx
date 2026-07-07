@@ -165,7 +165,7 @@ export default function TransitionMap({ className }: { className?: string }) {
             L 1330,760
             L 1330,710
             L 1385,710
-            L 1310,680
+            L 1310,690
             L 1235,710
             L 1290,710
             L 1290,720
