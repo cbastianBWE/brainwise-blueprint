@@ -163,15 +163,16 @@ export default function TransitionMap({ className }: { className?: string }) {
             M 470,620
             L 470,760
             L 1330,760
-            L 1330,710
-            L 1385,710
-            L 1310,690
-            L 1235,710
-            L 1290,710
+            L 1330,747
+            L 1385,747
+            L 1310,697
+            L 1235,747
+            L 1290,747
             L 1290,720
             L 510,720
             L 510,620 Z
           "
+
 
           fill={CHANNEL_FILL}
           stroke={CHANNEL_STROKE}
@@ -220,7 +221,8 @@ export default function TransitionMap({ className }: { className?: string }) {
         {/* "Past" sits just off the top edge of the outer ring */}
         <text
           x="200"
-          y="500"
+          y="545"
+
           fill={PAST_LABEL}
           fontSize="40"
           fontWeight="700"
