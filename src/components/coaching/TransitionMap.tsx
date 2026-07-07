@@ -111,7 +111,7 @@ export default function TransitionMap({ className, onSelectGroup, lockedGroups =
       </g>
 
       {/* ---------- FUTURE: right cloud (drawn before channels so arrowheads sit on top) ---------- */}
-      <g data-group="Future">
+      <g data-group="Future" {...groupProps("Future")}>
         <path
           d="
             M 1220,430
@@ -143,7 +143,7 @@ export default function TransitionMap({ className, onSelectGroup, lockedGroups =
       </g>
 
       {/* ---------- RESOLVE: top channel (arrowhead into Future cloud) ---------- */}
-      <g data-group="Resolve">
+      <g data-group="Resolve" {...groupProps("Resolve")}>
         <path
           d="
             M 470,380
@@ -177,7 +177,7 @@ export default function TransitionMap({ className, onSelectGroup, lockedGroups =
       </g>
 
       {/* ---------- SUPPORT: bottom channel (arrowhead into Future cloud) ---------- */}
-      <g data-group="Support">
+      <g data-group="Support" {...groupProps("Support")}>
         <path
           d="
             M 470,657
@@ -212,7 +212,7 @@ export default function TransitionMap({ className, onSelectGroup, lockedGroups =
 
 
       {/* ---------- PAST: spiral shell + inner circle (behind Present) ---------- */}
-      <g data-group="Past">
+      <g data-group="Past" {...groupProps("Past")}>
         <path
           d="
             M 300,660
@@ -268,7 +268,7 @@ export default function TransitionMap({ className, onSelectGroup, lockedGroups =
       </g>
 
       {/* ---------- PRESENT: rounded square (in front of Past) ---------- */}
-      <g data-group="Present">
+      <g data-group="Present" {...groupProps("Present")}>
         <rect
           x="290"
           y="290"
@@ -293,7 +293,7 @@ export default function TransitionMap({ className, onSelectGroup, lockedGroups =
       </g>
 
       {/* ---------- PATHWAY: block arrow with layered tail ---------- */}
-      <g data-group="Pathway">
+      <g data-group="Pathway" {...groupProps("Pathway")}>
         <rect x="610" y="410" width="14" height="180" fill={PATHWAY_TAIL} />
         <rect x="632" y="410" width="14" height="180" fill={PATHWAY_TAIL} />
         <path
@@ -326,7 +326,7 @@ export default function TransitionMap({ className, onSelectGroup, lockedGroups =
 
 
       {/* ---------- LIFE'S TOOLS: small circle at arrow base (front) ---------- */}
-      <g data-group="Life's Tools">
+      <g data-group="Life's Tools" {...groupProps("Life's Tools")}>
         <circle
           cx="548"
           cy="500"
