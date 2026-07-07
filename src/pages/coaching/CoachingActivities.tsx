@@ -624,9 +624,47 @@ export default function CoachingActivities() {
     </div>
   );
 
+  const mapView = (
+    <div className="space-y-6">
+      <div className="flex justify-center">
+        <Button
+          size="lg"
+          className="w-full max-w-4xl"
+          disabled={!introAccessible}
+          onClick={() => introAccessible && setSelectedGroup("Intro")}
+        >
+          Start here
+          {!introAccessible && (
+            <span className="ml-2 text-xs opacity-80">Coming soon</span>
+          )}
+        </Button>
+      </div>
+      <TransitionMap
+        className="w-full max-w-4xl mx-auto"
+        onSelectGroup={setSelectedGroup}
+        lockedGroups={lockedGroups}
+      />
+      <div className="flex justify-center">
+        <Button
+          size="lg"
+          variant={summaryUnlocked ? "default" : "secondary"}
+          className="w-full max-w-4xl"
+          disabled={!summaryUnlocked}
+          onClick={() => summaryUnlocked && setSelectedGroup("Summary")}
+        >
+          Wrap up
+          {!summaryUnlocked && (
+            <span className="ml-2 text-xs opacity-80">
+              Complete your journey to unlock
+            </span>
+          )}
+        </Button>
+      </div>
+    </div>
+  );
+
   return (
     <div className="container mx-auto space-y-6 p-6">
-      <TransitionMap className="w-full max-w-4xl mx-auto" />
       <div>
         <h1 className="text-2xl font-semibold">My Coaching</h1>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -639,13 +677,66 @@ export default function CoachingActivities() {
           <TabsTrigger value="activities">Activities</TabsTrigger>
           <TabsTrigger value="history">History</TabsTrigger>
         </TabsList>
-        <TabsContent value="activities" className="mt-4">
-          {activitiesContent}
+        <TabsContent value="activities" className="mt-4 space-y-4">
+          <div className="flex justify-end">
+            <div className="inline-flex rounded-md border bg-muted/40 p-0.5">
+              <Button
+                type="button"
+                size="sm"
+                variant={view === "map" ? "default" : "ghost"}
+                className="h-8"
+                onClick={() => setView("map")}
+              >
+                Map
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant={view === "list" ? "default" : "ghost"}
+                className="h-8"
+                onClick={() => setView("list")}
+              >
+                Browse all
+              </Button>
+            </div>
+          </div>
+          {view === "map" ? mapView : activitiesContent}
         </TabsContent>
         <TabsContent value="history" className="mt-4">
           {tab === "history" ? <HistoryTab /> : null}
         </TabsContent>
       </Tabs>
+
+      <Dialog
+        open={!!selectedGroup}
+        onOpenChange={(v) => {
+          if (!v) setSelectedGroup(null);
+        }}
+      >
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto p-6">
+          <DialogHeader>
+            <DialogTitle>{selectedGroup}</DialogTitle>
+          </DialogHeader>
+          {groupActivities.length === 0 ? (
+            <div className="py-16 text-center text-sm text-muted-foreground">
+              Nothing here yet. Check back soon.
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-2">
+              {groupActivities.map((a) => (
+                <CoachingActivityCard
+                  key={a.id}
+                  activity={a}
+                  access={access[a.id]}
+                  inProgress={inProgressSet.has(a.id)}
+                  onOpenBriefing={() => setOpenActivity(a)}
+                  onResume={() => navigate(`/coaching/${a.id}`)}
+                />
+              ))}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       <BriefingDialog
         activity={openActivity}
