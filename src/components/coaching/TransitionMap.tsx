@@ -160,22 +160,18 @@ export default function TransitionMap({ className }: { className?: string }) {
       <g data-group="Support">
         <path
           d="
-            M 470,620
-            L 470,760
-            L 1330,760
+            M 470,657
+            L 470,797
+            L 1330,797
             L 1330,747
             L 1385,747
             L 1310,697
             L 1235,747
             L 1290,747
-            L 1290,720
-            L 510,720
-            L 510,620 Z
+            L 1290,757
+            L 510,757
+            L 510,657 Z
           "
-
-
-
-
           fill={CHANNEL_FILL}
           stroke={CHANNEL_STROKE}
           strokeWidth="3"
@@ -183,7 +179,8 @@ export default function TransitionMap({ className }: { className?: string }) {
         />
         <text
           x="780"
-          y="748"
+          y="787"
+
           fill={CHANNEL_LABEL}
           fontSize="34"
           fontWeight="700"
