@@ -54,7 +54,7 @@ export default function TransitionMap({ className }: { className?: string }) {
       {/* ---------- PURPOSE: background cloud (back) ---------- */}
       <g data-group="Purpose">
         <path
-          transform="translate(0 -45) scale(1 1.12)"
+          transform="translate(0 -45) scale(1 1.22)"
           d="
             M 260,240
             C 210,180 240,110 320,110
