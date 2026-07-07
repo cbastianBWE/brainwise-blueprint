@@ -24,6 +24,12 @@ interface SessionRow {
 }
 
 export default function CoachingSessionView() {
+  const imgUrl = (path: string, w: number, h: number) =>
+    supabase.storage
+      .from("coaching-media")
+      .getPublicUrl(path, { transform: { width: w, height: h, resize: "cover" } })
+      .data.publicUrl;
+
   const { sessionId } = useParams<{ sessionId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
