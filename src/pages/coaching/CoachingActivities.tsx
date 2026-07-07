@@ -16,6 +16,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import TransitionMap from "@/components/coaching/TransitionMap";
 
 type Tier = "Foundational" | "Typical" | "Advanced" | string;
 
