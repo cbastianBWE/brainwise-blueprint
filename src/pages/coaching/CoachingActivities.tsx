@@ -523,6 +523,39 @@ export default function CoachingActivities() {
     [sessions],
   );
 
+  const MAP_GROUPS = [
+    "Purpose",
+    "Future",
+    "Present",
+    "Past",
+    "Life's Tools",
+    "Pathway",
+    "Resolve",
+    "Support",
+  ];
+  const JOURNEY_GROUPS = [
+    "Purpose",
+    "Future",
+    "Present",
+    "Past",
+    "Life's Tools",
+    "Pathway",
+  ];
+  const lockedGroups = MAP_GROUPS.filter((g) => !groupAccess[g]?.accessible);
+  const accessibleJourney = JOURNEY_GROUPS.filter((g) => groupAccess[g]?.accessible);
+  const summaryUnlocked =
+    accessibleJourney.length > 0 &&
+    accessibleJourney.every((g) => groupAccess[g]?.has_completed);
+  const introAccessible = !!groupAccess["Intro"]?.accessible;
+
+  const groupActivities = useMemo(
+    () =>
+      selectedGroup
+        ? activities.filter((a) => a.module_group === selectedGroup)
+        : [],
+    [activities, selectedGroup],
+  );
+
   const searchBox = (
     <div className="relative">
       <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
