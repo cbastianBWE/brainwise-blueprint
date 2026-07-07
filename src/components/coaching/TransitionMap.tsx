@@ -211,24 +211,27 @@ export default function TransitionMap({ className }: { className?: string }) {
           strokeWidth="3"
         />
         <text
-          x="140"
-          y="500"
+          x="250"
+          y="430"
           fill={PAST_LABEL}
-          fontSize="34"
+          fontSize="40"
           fontWeight="700"
           fontFamily={FONT}
+          textAnchor="middle"
         >
           Past
         </text>
         <text
-          x="230"
-          y="668"
-          fill={RECENT_PAST_LABEL}
-          fontSize="24"
+          x="300"
+          y="655"
+          fill="#F5F3F7"
+          fontSize="22"
           fontWeight="700"
           fontFamily={FONT}
+          textAnchor="middle"
         >
-          Recent past
+          <tspan x="300" dy="0">Recent</tspan>
+          <tspan x="300" dy="22">past</tspan>
         </text>
       </g>
 
