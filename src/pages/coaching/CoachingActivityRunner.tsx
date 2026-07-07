@@ -1166,6 +1166,13 @@ export default function CoachingActivityRunner() {
       }
       return true;
     }
+    if (step.widget === "image_describe") {
+      const items = (responses[step.fromKey || ""] as SelectedImage[]) || [];
+      if (items.length === 0) return false;
+      const need = step.minDescribed ?? items.length;
+      const done = items.filter((it) => (it.description || "").trim().length > 0).length;
+      return done >= need;
+    }
     return true;
   })();
 
