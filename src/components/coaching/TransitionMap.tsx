@@ -2,6 +2,9 @@
  * TransitionMap
  * Responsive SVG recreation of the "My BrainWise Transition Map".
  * Eight labeled regions, each a <g data-group="..."> for future interaction.
+ *
+ * Draw order (back → front): Purpose, Resolve, Support, Future, Present,
+ * Pathway, Past, Life's Tools. Labels sit on top within their own group.
  */
 export default function TransitionMap({ className }: { className?: string }) {
   // Region palette — light tints, dark brand strokes and labels
@@ -21,7 +24,7 @@ export default function TransitionMap({ className }: { className?: string }) {
   const PAST_STROKE = "#6D6875";
   const PAST_INNER_FILL = "#C7C4CD";
   const PAST_LABEL = "#4A4653";
-  const RECENT_PAST_LABEL = "#3A3740";
+  const RECENT_PAST_LABEL = "#F5F3F7";
 
   const TOOLS_FILL = "#EBE1CC";
   const TOOLS_STROKE = "#7A5800";
@@ -48,7 +51,7 @@ export default function TransitionMap({ className }: { className?: string }) {
       role="img"
       aria-label="BrainWise Transition Map"
     >
-      {/* ---------- PURPOSE: background cloud ---------- */}
+      {/* ---------- PURPOSE: background cloud (back) ---------- */}
       <g data-group="Purpose">
         <path
           d="
@@ -77,42 +80,12 @@ export default function TransitionMap({ className }: { className?: string }) {
           x="1360"
           y="150"
           fill={PURPOSE_LABEL}
-          fontSize="46"
-          fontWeight="700"
-          fontFamily={FONT}
-        >
-          Purpose
-        </text>
-      </g>
-
-      {/* ---------- FUTURE: right cloud ---------- */}
-      <g data-group="Future">
-        <path
-          d="
-            M 1150,340
-            C 1120,280 1180,220 1250,240
-            C 1280,190 1370,190 1400,250
-            C 1470,220 1550,280 1530,350
-            C 1590,380 1580,470 1520,490
-            C 1550,560 1470,620 1400,600
-            C 1370,660 1270,660 1240,600
-            C 1170,630 1090,570 1120,500
-            C 1060,470 1080,380 1150,340 Z
-          "
-          fill={FUTURE_FILL}
-          stroke={FUTURE_STROKE}
-          strokeWidth="3"
-        />
-        <text
-          x="1340"
-          y="280"
-          fill={FUTURE_LABEL}
-          fontSize="46"
+          fontSize="44"
           fontWeight="700"
           fontFamily={FONT}
           textAnchor="middle"
         >
-          Ideal Future
+          Purpose
         </text>
       </g>
 
@@ -182,56 +155,35 @@ export default function TransitionMap({ className }: { className?: string }) {
         </text>
       </g>
 
-      {/* ---------- PAST: spiral shell + inner circle ---------- */}
-      <g data-group="Past">
-        {/* outer disc with a wedge cut suggesting a spiral shell */}
+      {/* ---------- FUTURE: right cloud — fully inside Purpose, clear of arrow ---------- */}
+      <g data-group="Future">
         <path
           d="
-            M 300,660
-            m -220,0
-            a 220,220 0 1,0 440,0
-            a 220,220 0 1,0 -440,0
-            Z
-            M 300,660
-            L 520,660
-            A 220,220 0 0,0 300,440 Z
+            M 1220,430
+            C 1190,380 1240,320 1310,340
+            C 1340,290 1420,290 1450,350
+            C 1520,320 1580,380 1560,440
+            C 1600,470 1580,550 1520,570
+            C 1550,620 1470,680 1400,660
+            C 1370,710 1290,710 1260,660
+            C 1200,690 1140,620 1170,560
+            C 1120,530 1140,450 1220,430 Z
           "
-          fill={PAST_OUTER_FILL}
-          stroke={PAST_STROKE}
-          strokeWidth="3"
-          fillRule="evenodd"
-        />
-        {/* inner circle */}
-        <circle
-          cx="300"
-          cy="660"
-          r="90"
-          fill={PAST_INNER_FILL}
-          stroke={PAST_STROKE}
+          fill={FUTURE_FILL}
+          stroke={FUTURE_STROKE}
           strokeWidth="3"
         />
         <text
-          x="250"
-          y="430"
-          fill={PAST_LABEL}
+          x="1380"
+          y="440"
+          fill={FUTURE_LABEL}
           fontSize="40"
           fontWeight="700"
           fontFamily={FONT}
           textAnchor="middle"
         >
-          Past
-        </text>
-        <text
-          x="300"
-          y="655"
-          fill="#F5F3F7"
-          fontSize="22"
-          fontWeight="700"
-          fontFamily={FONT}
-          textAnchor="middle"
-        >
-          <tspan x="300" dy="0">Recent</tspan>
-          <tspan x="300" dy="22">past</tspan>
+          <tspan x="1380" dy="0">Ideal</tspan>
+          <tspan x="1380" dy="44">Future</tspan>
         </text>
       </g>
 
@@ -262,10 +214,8 @@ export default function TransitionMap({ className }: { className?: string }) {
 
       {/* ---------- PATHWAY: block arrow with layered tail ---------- */}
       <g data-group="Pathway">
-        {/* layered tail bars — flush with the arrow body's straight section */}
         <rect x="610" y="410" width="14" height="180" fill={PATHWAY_TAIL} />
         <rect x="632" y="410" width="14" height="180" fill={PATHWAY_TAIL} />
-        {/* arrow body */}
         <path
           d="
             M 656,410
@@ -294,27 +244,80 @@ export default function TransitionMap({ className }: { className?: string }) {
         </text>
       </g>
 
-      {/* ---------- LIFE'S TOOLS: small circle at arrow base ---------- */}
+      {/* ---------- PAST: spiral shell + inner circle ---------- */}
+      <g data-group="Past">
+        <path
+          d="
+            M 300,660
+            m -220,0
+            a 220,220 0 1,0 440,0
+            a 220,220 0 1,0 -440,0
+            Z
+            M 300,660
+            L 520,660
+            A 220,220 0 0,0 300,440 Z
+          "
+          fill={PAST_OUTER_FILL}
+          stroke={PAST_STROKE}
+          strokeWidth="3"
+          fillRule="evenodd"
+        />
+        <circle
+          cx="300"
+          cy="660"
+          r="90"
+          fill={PAST_INNER_FILL}
+          stroke={PAST_STROKE}
+          strokeWidth="3"
+        />
+        {/* "Past" sits on the outer ring, upper-left of inner circle */}
+        <text
+          x="200"
+          y="520"
+          fill={PAST_LABEL}
+          fontSize="30"
+          fontWeight="700"
+          fontFamily={FONT}
+          textAnchor="middle"
+        >
+          Past
+        </text>
+        {/* "Recent past" centered inside inner circle, two lines */}
+        <text
+          x="300"
+          y="655"
+          fill={RECENT_PAST_LABEL}
+          fontSize="22"
+          fontWeight="700"
+          fontFamily={FONT}
+          textAnchor="middle"
+        >
+          <tspan x="300" dy="0">Recent</tspan>
+          <tspan x="300" dy="24">past</tspan>
+        </text>
+      </g>
+
+      {/* ---------- LIFE'S TOOLS: small circle at arrow base (front) ---------- */}
       <g data-group="Life's Tools">
         <circle
           cx="600"
           cy="500"
-          r="50"
+          r="48"
           fill={TOOLS_FILL}
           stroke={TOOLS_STROKE}
           strokeWidth="3"
         />
         <text
           x="600"
-          y="420"
+          y="497"
           fill={TOOLS_LABEL}
-          fontSize="24"
+          fontSize="15"
           fontWeight="700"
           fontFamily={FONT}
           textAnchor="middle"
         >
           <tspan x="600" dy="0">Life's</tspan>
-          <tspan x="600" dy="24">Tools</tspan>
+          <tspan x="600" dy="17">Tools</tspan>
         </text>
       </g>
     </svg>
