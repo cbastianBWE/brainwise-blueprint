@@ -1655,6 +1655,14 @@ export default function CoachingActivityRunner() {
               />
             )}
 
+            {step?.widget === "text_select" && step.key && (
+              <TextSelectWidget
+                step={step}
+                value={(responses[step.key] as SelectedSaying[]) || []}
+                onChange={(v) => setResponses((r) => ({ ...r, [step.key!]: v }))}
+              />
+            )}
+
             {step?.widget === "content" && (
               <ContentWidget
                 step={step}
