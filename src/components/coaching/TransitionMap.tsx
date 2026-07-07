@@ -74,10 +74,10 @@ export default function TransitionMap({ className }: { className?: string }) {
           strokeWidth="3"
         />
         <text
-          x="1280"
-          y="200"
+          x="1360"
+          y="150"
           fill={PURPOSE_LABEL}
-          fontSize="44"
+          fontSize="46"
           fontWeight="700"
           fontFamily={FONT}
         >
