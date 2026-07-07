@@ -432,6 +432,11 @@ export default function CoachingActivities() {
   const [tab, setTab] = useState<"activities" | "history">("activities");
   const [query, setQuery] = useState("");
   const [openActivity, setOpenActivity] = useState<Activity | null>(null);
+  const [groupAccess, setGroupAccess] = useState<
+    Record<string, { accessible: boolean; has_completed: boolean }>
+  >({});
+  const [view, setView] = useState<"map" | "list">("map");
+  const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
