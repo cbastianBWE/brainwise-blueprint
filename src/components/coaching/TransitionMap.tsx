@@ -307,7 +307,7 @@ export default function TransitionMap({ className }: { className?: string }) {
       {/* ---------- LIFE'S TOOLS: small circle at arrow base (front) ---------- */}
       <g data-group="Life's Tools">
         <circle
-          cx="600"
+          cx="548"
           cy="500"
           r="52"
           fill={TOOLS_FILL}
@@ -315,7 +315,7 @@ export default function TransitionMap({ className }: { className?: string }) {
           strokeWidth="3"
         />
         <text
-          x="600"
+          x="548"
           y="495"
           fill={TOOLS_LABEL}
           fontSize="22"
@@ -323,9 +323,10 @@ export default function TransitionMap({ className }: { className?: string }) {
           fontFamily={FONT}
           textAnchor="middle"
         >
-          <tspan x="600" dy="0">Life's</tspan>
-          <tspan x="600" dy="24">Tools</tspan>
+          <tspan x="548" dy="0">Life's</tspan>
+          <tspan x="548" dy="24">Tools</tspan>
         </text>
+
 
       </g>
     </svg>
