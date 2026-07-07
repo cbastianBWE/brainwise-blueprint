@@ -104,12 +104,13 @@ export default function TransitionMap({ className }: { className?: string }) {
           strokeWidth="3"
         />
         <text
-          x="1330"
-          y="300"
+          x="1340"
+          y="280"
           fill={FUTURE_LABEL}
-          fontSize="44"
+          fontSize="46"
           fontWeight="700"
           fontFamily={FONT}
+          textAnchor="middle"
         >
           Ideal Future
         </text>
