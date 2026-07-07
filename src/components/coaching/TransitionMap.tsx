@@ -44,7 +44,7 @@ export default function TransitionMap({ className }: { className?: string }) {
   return (
     <svg
       className={className}
-      viewBox="0 0 1600 900"
+      viewBox="0 0 1600 980"
       width="100%"
       preserveAspectRatio="xMidYMid meet"
       xmlns="http://www.w3.org/2000/svg"
