@@ -477,6 +477,20 @@ export default function CoachingActivities() {
         };
       }
       setAccess(accessMap);
+
+      const { data: gaRows } = await supabase.rpc("coaching_group_access" as any);
+      if (cancelled) return;
+      const gaMap: Record<string, { accessible: boolean; has_completed: boolean }> = {};
+      for (const row of (gaRows || []) as any[]) {
+        const key = row.module_group ?? row.group ?? row.name;
+        if (!key) continue;
+        gaMap[key as string] = {
+          accessible: !!row.accessible,
+          has_completed: !!row.has_completed,
+        };
+      }
+      setGroupAccess(gaMap);
+
       setLoading(false);
     })();
     return () => {
