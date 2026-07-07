@@ -129,15 +129,16 @@ export default function TransitionMap({ className }: { className?: string }) {
             M 470,380
             L 470,240
             L 1330,240
-            L 1330,330
-            L 1385,330
-            L 1310,415
-            L 1235,330
-            L 1290,330
+            L 1330,290
+            L 1385,290
+            L 1310,340
+            L 1235,290
+            L 1290,290
             L 1290,280
             L 510,280
             L 510,380 Z
           "
+
           fill={CHANNEL_FILL}
           stroke={CHANNEL_STROKE}
           strokeWidth="3"
