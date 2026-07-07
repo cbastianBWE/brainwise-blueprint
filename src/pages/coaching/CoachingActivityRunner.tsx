@@ -39,6 +39,11 @@ interface Step {
   media?: { type: string; src: string; alt?: string; caption?: string };
   statements?: string[];
   reflection?: { prompt?: string; placeholder?: string; optional?: boolean; minRows?: number };
+  // image_describe
+  fromKey?: string;
+  questions?: string[];
+  descriptionPrompt?: string;
+  minDescribed?: number;
 }
 
 interface Activity {
@@ -447,6 +452,75 @@ interface SelectedImage {
   library_id: string;
   storage_path: string;
   tag: string;
+  description?: string;
+}
+
+function ImageDescribeWidget({
+  step,
+  value,
+  onChange,
+}: {
+  step: Step;
+  value: SelectedImage[];
+  onChange: (next: SelectedImage[]) => void;
+}) {
+  const describedCount = value.filter((it) => (it.description || "").trim().length > 0).length;
+
+  const updateDescription = (idx: number, description: string) => {
+    const next = value.map((it, i) => (i === idx ? { ...it, description } : it));
+    onChange(next);
+  };
+
+  return (
+    <div className="space-y-4">
+      {step.intro && <p className="text-sm text-muted-foreground">{step.intro}</p>}
+      {step.questions && step.questions.length > 0 && (
+        <ul className="list-disc space-y-1 pl-5 text-sm text-muted-foreground">
+          {step.questions.map((q, i) => (
+            <li key={i}>{q}</li>
+          ))}
+        </ul>
+      )}
+      {value.length === 0 ? (
+        <p className="text-sm text-muted-foreground">Select some pictures first.</p>
+      ) : (
+        <>
+          <div className="space-y-3">
+            {value.map((item, idx) => {
+              const labelId = `img-desc-${idx}`;
+              return (
+                <Card key={`${item.library_id}-${idx}`} className="p-4">
+                  <div className="flex gap-4">
+                    <img
+                      src={imgUrl(item.storage_path, 200, 200)}
+                      alt={item.tag || `Picture ${idx + 1}`}
+                      className="h-24 w-24 flex-shrink-0 rounded-md object-cover"
+                    />
+                    <div className="min-w-0 flex-1 space-y-2">
+                      <div id={labelId} className="text-sm font-semibold">
+                        {item.tag || `Picture ${idx + 1}`}
+                      </div>
+                      <Textarea
+                        rows={3}
+                        value={item.description || ""}
+                        onChange={(e) => updateDescription(idx, e.target.value)}
+                        placeholder={step.descriptionPrompt}
+                        aria-label={`Why "${item.tag || `picture ${idx + 1}`}" matters`}
+                        aria-labelledby={labelId}
+                      />
+                    </div>
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+          <p className="text-sm text-muted-foreground">
+            {describedCount} of {value.length} described
+          </p>
+        </>
+      )}
+    </div>
+  );
 }
 
 function ImageSelectWidget({
@@ -1092,6 +1166,13 @@ export default function CoachingActivityRunner() {
       }
       return true;
     }
+    if (step.widget === "image_describe") {
+      const items = (responses[step.fromKey || ""] as SelectedImage[]) || [];
+      if (items.length === 0) return false;
+      const need = step.minDescribed ?? items.length;
+      const done = items.filter((it) => (it.description || "").trim().length > 0).length;
+      return done >= need;
+    }
     return true;
   })();
 
@@ -1328,6 +1409,16 @@ export default function CoachingActivityRunner() {
                 }}
               />
             )}
+
+            {step?.widget === "image_describe" && (
+              <ImageDescribeWidget
+                step={step}
+                value={(responses[step.fromKey || ""] as SelectedImage[]) || []}
+                onChange={(v) => setResponses((r) => ({ ...r, [step.fromKey!]: v }))}
+              />
+            )}
+
+
 
             {/* Also show positives for step 3 (positiveAction) */}
             {step?.widget === "textarea" &&
