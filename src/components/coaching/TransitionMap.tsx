@@ -54,6 +54,7 @@ export default function TransitionMap({ className }: { className?: string }) {
       {/* ---------- PURPOSE: background cloud (back) ---------- */}
       <g data-group="Purpose">
         <path
+          transform="translate(0 -45) scale(1 1.12)"
           d="
             M 260,240
             C 210,180 240,110 320,110
@@ -77,8 +78,8 @@ export default function TransitionMap({ className }: { className?: string }) {
           strokeWidth="3"
         />
         <text
-          x="1360"
-          y="150"
+          x="1060"
+          y="200"
           fill={PURPOSE_LABEL}
           fontSize="44"
           fontWeight="700"
@@ -89,73 +90,7 @@ export default function TransitionMap({ className }: { className?: string }) {
         </text>
       </g>
 
-      {/* ---------- RESOLVE: top channel ---------- */}
-      <g data-group="Resolve">
-        <path
-          d="
-            M 470,380
-            L 470,240
-            L 1330,240
-            L 1330,330
-            L 1370,330
-            L 1310,380
-            L 1250,330
-            L 1290,330
-            L 1290,280
-            L 510,280
-            L 510,380 Z
-          "
-          fill={CHANNEL_FILL}
-          stroke={CHANNEL_STROKE}
-          strokeWidth="3"
-          strokeLinejoin="round"
-        />
-        <text
-          x="820"
-          y="270"
-          fill={CHANNEL_LABEL}
-          fontSize="34"
-          fontWeight="700"
-          fontFamily={FONT}
-        >
-          Resolve
-        </text>
-      </g>
-
-      {/* ---------- SUPPORT: bottom channel ---------- */}
-      <g data-group="Support">
-        <path
-          d="
-            M 470,620
-            L 470,760
-            L 1330,760
-            L 1330,660
-            L 1370,660
-            L 1310,610
-            L 1250,660
-            L 1290,660
-            L 1290,720
-            L 510,720
-            L 510,620 Z
-          "
-          fill={CHANNEL_FILL}
-          stroke={CHANNEL_STROKE}
-          strokeWidth="3"
-          strokeLinejoin="round"
-        />
-        <text
-          x="780"
-          y="748"
-          fill={CHANNEL_LABEL}
-          fontSize="34"
-          fontWeight="700"
-          fontFamily={FONT}
-        >
-          External support
-        </text>
-      </g>
-
-      {/* ---------- FUTURE: right cloud — fully inside Purpose, clear of arrow ---------- */}
+      {/* ---------- FUTURE: right cloud (drawn before channels so arrowheads sit on top) ---------- */}
       <g data-group="Future">
         <path
           d="
@@ -187,6 +122,73 @@ export default function TransitionMap({ className }: { className?: string }) {
         </text>
       </g>
 
+      {/* ---------- RESOLVE: top channel (arrowhead into Future cloud) ---------- */}
+      <g data-group="Resolve">
+        <path
+          d="
+            M 470,380
+            L 470,240
+            L 1330,240
+            L 1330,330
+            L 1385,330
+            L 1310,415
+            L 1235,330
+            L 1290,330
+            L 1290,280
+            L 510,280
+            L 510,380 Z
+          "
+          fill={CHANNEL_FILL}
+          stroke={CHANNEL_STROKE}
+          strokeWidth="3"
+          strokeLinejoin="round"
+        />
+        <text
+          x="820"
+          y="270"
+          fill={CHANNEL_LABEL}
+          fontSize="34"
+          fontWeight="700"
+          fontFamily={FONT}
+        >
+          Resolve
+        </text>
+      </g>
+
+      {/* ---------- SUPPORT: bottom channel (arrowhead into Future cloud) ---------- */}
+      <g data-group="Support">
+        <path
+          d="
+            M 470,620
+            L 470,760
+            L 1330,760
+            L 1330,660
+            L 1385,660
+            L 1310,575
+            L 1235,660
+            L 1290,660
+            L 1290,720
+            L 510,720
+            L 510,620 Z
+          "
+          fill={CHANNEL_FILL}
+          stroke={CHANNEL_STROKE}
+          strokeWidth="3"
+          strokeLinejoin="round"
+        />
+        <text
+          x="780"
+          y="748"
+          fill={CHANNEL_LABEL}
+          fontSize="34"
+          fontWeight="700"
+          fontFamily={FONT}
+        >
+          External support
+        </text>
+      </g>
+
+
       {/* ---------- PAST: spiral shell + inner circle (behind Present) ---------- */}
       <g data-group="Past">
         <path
@@ -208,15 +210,15 @@ export default function TransitionMap({ className }: { className?: string }) {
         <circle
           cx="300"
           cy="660"
-          r="90"
+          r="108"
           fill={PAST_INNER_FILL}
           stroke={PAST_STROKE}
           strokeWidth="3"
         />
-        {/* "Past" sits on the outer ring, above-left of the inner circle */}
+        {/* "Past" sits just off the top edge of the outer ring */}
         <text
           x="200"
-          y="520"
+          y="428"
           fill={PAST_LABEL}
           fontSize="40"
           fontWeight="700"
@@ -225,19 +227,20 @@ export default function TransitionMap({ className }: { className?: string }) {
         >
           Past
         </text>
-        {/* "Recent past" left-aligned inside the inner circle, two lines */}
+        {/* "Recent past" left-aligned inside the enlarged inner circle, two lines */}
         <text
-          x="235"
-          y="655"
+          x="222"
+          y="652"
           fill={RECENT_PAST_LABEL}
           fontSize="24"
           fontWeight="700"
           fontFamily={FONT}
           textAnchor="start"
         >
-          <tspan x="235" dy="0">Recent</tspan>
-          <tspan x="235" dy="26">past</tspan>
+          <tspan x="222" dy="0">Recent</tspan>
+          <tspan x="222" dy="26">past</tspan>
         </text>
+
       </g>
 
       {/* ---------- PRESENT: rounded square (in front of Past) ---------- */}
@@ -303,23 +306,24 @@ export default function TransitionMap({ className }: { className?: string }) {
         <circle
           cx="600"
           cy="500"
-          r="40"
+          r="52"
           fill={TOOLS_FILL}
           stroke={TOOLS_STROKE}
           strokeWidth="3"
         />
         <text
           x="600"
-          y="497"
+          y="495"
           fill={TOOLS_LABEL}
-          fontSize="18"
+          fontSize="22"
           fontWeight="700"
           fontFamily={FONT}
           textAnchor="middle"
         >
           <tspan x="600" dy="0">Life's</tspan>
-          <tspan x="600" dy="20">Tools</tspan>
+          <tspan x="600" dy="24">Tools</tspan>
         </text>
+
       </g>
     </svg>
   );
