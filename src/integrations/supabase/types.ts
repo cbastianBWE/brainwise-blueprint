@@ -2732,6 +2732,39 @@ export type Database = {
         }
         Relationships: []
       }
+      coaching_saying_library: {
+        Row: {
+          active: boolean
+          author: string | null
+          category: string
+          created_at: string
+          id: string
+          sort_order: number
+          text: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          author?: string | null
+          category?: string
+          created_at?: string
+          id?: string
+          sort_order?: number
+          text: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          author?: string | null
+          category?: string
+          created_at?: string
+          id?: string
+          sort_order?: number
+          text?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       coaching_usage_counters: {
         Row: {
           count: number
