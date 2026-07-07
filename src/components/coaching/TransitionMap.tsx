@@ -187,7 +187,60 @@ export default function TransitionMap({ className }: { className?: string }) {
         </text>
       </g>
 
-      {/* ---------- PRESENT: rounded square ---------- */}
+      {/* ---------- PAST: spiral shell + inner circle (behind Present) ---------- */}
+      <g data-group="Past">
+        <path
+          d="
+            M 300,660
+            m -220,0
+            a 220,220 0 1,0 440,0
+            a 220,220 0 1,0 -440,0
+            Z
+            M 300,660
+            L 520,660
+            A 220,220 0 0,0 300,440 Z
+          "
+          fill={PAST_OUTER_FILL}
+          stroke={PAST_STROKE}
+          strokeWidth="3"
+          fillRule="evenodd"
+        />
+        <circle
+          cx="300"
+          cy="660"
+          r="90"
+          fill={PAST_INNER_FILL}
+          stroke={PAST_STROKE}
+          strokeWidth="3"
+        />
+        {/* "Past" sits on the outer ring, above-left of the inner circle */}
+        <text
+          x="200"
+          y="520"
+          fill={PAST_LABEL}
+          fontSize="40"
+          fontWeight="700"
+          fontFamily={FONT}
+          textAnchor="middle"
+        >
+          Past
+        </text>
+        {/* "Recent past" left-aligned inside the inner circle, two lines */}
+        <text
+          x="235"
+          y="655"
+          fill={RECENT_PAST_LABEL}
+          fontSize="24"
+          fontWeight="700"
+          fontFamily={FONT}
+          textAnchor="start"
+        >
+          <tspan x="235" dy="0">Recent</tspan>
+          <tspan x="235" dy="26">past</tspan>
+        </text>
+      </g>
+
+      {/* ---------- PRESENT: rounded square (in front of Past) ---------- */}
       <g data-group="Present">
         <rect
           x="290"
@@ -244,65 +297,13 @@ export default function TransitionMap({ className }: { className?: string }) {
         </text>
       </g>
 
-      {/* ---------- PAST: spiral shell + inner circle ---------- */}
-      <g data-group="Past">
-        <path
-          d="
-            M 300,660
-            m -220,0
-            a 220,220 0 1,0 440,0
-            a 220,220 0 1,0 -440,0
-            Z
-            M 300,660
-            L 520,660
-            A 220,220 0 0,0 300,440 Z
-          "
-          fill={PAST_OUTER_FILL}
-          stroke={PAST_STROKE}
-          strokeWidth="3"
-          fillRule="evenodd"
-        />
-        <circle
-          cx="300"
-          cy="660"
-          r="90"
-          fill={PAST_INNER_FILL}
-          stroke={PAST_STROKE}
-          strokeWidth="3"
-        />
-        {/* "Past" sits on the outer ring, upper-left of inner circle */}
-        <text
-          x="200"
-          y="520"
-          fill={PAST_LABEL}
-          fontSize="30"
-          fontWeight="700"
-          fontFamily={FONT}
-          textAnchor="middle"
-        >
-          Past
-        </text>
-        {/* "Recent past" centered inside inner circle, two lines */}
-        <text
-          x="300"
-          y="655"
-          fill={RECENT_PAST_LABEL}
-          fontSize="22"
-          fontWeight="700"
-          fontFamily={FONT}
-          textAnchor="middle"
-        >
-          <tspan x="300" dy="0">Recent</tspan>
-          <tspan x="300" dy="24">past</tspan>
-        </text>
-      </g>
 
       {/* ---------- LIFE'S TOOLS: small circle at arrow base (front) ---------- */}
       <g data-group="Life's Tools">
         <circle
           cx="600"
           cy="500"
-          r="48"
+          r="40"
           fill={TOOLS_FILL}
           stroke={TOOLS_STROKE}
           strokeWidth="3"
@@ -311,13 +312,13 @@ export default function TransitionMap({ className }: { className?: string }) {
           x="600"
           y="497"
           fill={TOOLS_LABEL}
-          fontSize="15"
+          fontSize="18"
           fontWeight="700"
           fontFamily={FONT}
           textAnchor="middle"
         >
           <tspan x="600" dy="0">Life's</tspan>
-          <tspan x="600" dy="17">Tools</tspan>
+          <tspan x="600" dy="20">Tools</tspan>
         </text>
       </g>
     </svg>
