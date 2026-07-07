@@ -46,6 +46,18 @@ interface Step {
   minDescribed?: number;
   subfieldLabels?: Record<string, string>;
   subfieldHelpers?: Record<string, string>;
+  // text_select
+  selectExactly?: number;
+  reflectOnSelect?: { modal?: boolean; prompt?: string; maxLen?: number };
+  // synthesis label
+  summaryLabel?: string;
+}
+
+interface SelectedSaying {
+  saying_id: string;
+  text: string;
+  author: string | null;
+  description: string;
 }
 
 interface Activity {
