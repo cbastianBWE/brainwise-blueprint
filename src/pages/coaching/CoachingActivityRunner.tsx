@@ -1411,6 +1411,11 @@ export default function CoachingActivityRunner() {
       const sel = (responses[step.key || ""] as SelectedImage[]) || [];
       return sel.length >= (step.selectMin ?? 1) && sel.length <= (step.softCap ?? 30);
     }
+    if (step.widget === "text_select") {
+      const sel = (responses[step.key || ""] as SelectedSaying[]) || [];
+      const need = step.selectExactly ?? 3;
+      return sel.length === need && sel.every((s) => (s.description || "").trim().length > 0);
+    }
     if (step.widget === "content") {
       if (step.reflection && step.reflection.optional === false && step.key) {
         return ((responses[step.key] as string) || "").trim().length > 0;
