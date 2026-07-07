@@ -574,6 +574,7 @@ export default function CoachingActivities() {
 
   return (
     <div className="container mx-auto space-y-6 p-6">
+      <TransitionMap className="w-full max-w-4xl mx-auto" />
       <div>
         <h1 className="text-2xl font-semibold">My Coaching</h1>
         <p className="mt-1 text-sm text-muted-foreground">
