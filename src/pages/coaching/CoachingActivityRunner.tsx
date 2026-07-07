@@ -44,6 +44,8 @@ interface Step {
   questions?: string[];
   descriptionPrompt?: string;
   minDescribed?: number;
+  subfieldLabels?: Record<string, string>;
+  subfieldHelpers?: Record<string, string>;
 }
 
 interface Activity {
@@ -283,7 +285,7 @@ function RiskBlocksWidget({
         <div className="flex gap-2">
           <Input
             value={draft}
-            placeholder="Add a risk or concern…"
+            placeholder={step.placeholder || "Add a risk or concern…"}
             onChange={(e) => setDraft(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Enter") {
@@ -301,16 +303,18 @@ function RiskBlocksWidget({
     );
   }
 
-  const labels: Record<string, string> = {
+  const defaultLabels: Record<string, string> = {
     a: "Prevent",
     b: "In the moment",
     c: "Recover",
   };
-  const helpers: Record<string, string> = {
+  const defaultHelpers: Record<string, string> = {
     a: "How you can reduce the chance this happens.",
     b: "What you'll do if it starts to happen.",
     c: "How you'll recover if it does happen.",
   };
+  const label = (sf: string) => step.subfieldLabels?.[sf] ?? defaultLabels[sf] ?? sf;
+  const helper = (sf: string) => step.subfieldHelpers?.[sf] ?? defaultHelpers[sf] ?? "";
 
   return (
     <div className="space-y-4">
@@ -323,8 +327,8 @@ function RiskBlocksWidget({
           <CardContent className="space-y-3">
             {subfields.map((sf) => (
               <div key={sf} className="space-y-1">
-                <Label>{labels[sf] || sf}</Label>
-                <p className="text-xs text-muted-foreground">{helpers[sf] || ""}</p>
+                <Label>{label(sf)}</Label>
+                <p className="text-xs text-muted-foreground">{helper(sf)}</p>
                 <Textarea
                   rows={2}
                   value={(n as any)[sf] || ""}
