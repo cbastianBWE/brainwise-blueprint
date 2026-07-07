@@ -74,10 +74,10 @@ export default function TransitionMap({ className }: { className?: string }) {
           strokeWidth="3"
         />
         <text
-          x="1280"
-          y="200"
+          x="1360"
+          y="150"
           fill={PURPOSE_LABEL}
-          fontSize="44"
+          fontSize="46"
           fontWeight="700"
           fontFamily={FONT}
         >
@@ -104,12 +104,13 @@ export default function TransitionMap({ className }: { className?: string }) {
           strokeWidth="3"
         />
         <text
-          x="1330"
-          y="300"
+          x="1340"
+          y="280"
           fill={FUTURE_LABEL}
-          fontSize="44"
+          fontSize="46"
           fontWeight="700"
           fontFamily={FONT}
+          textAnchor="middle"
         >
           Ideal Future
         </text>
@@ -210,24 +211,27 @@ export default function TransitionMap({ className }: { className?: string }) {
           strokeWidth="3"
         />
         <text
-          x="140"
-          y="500"
+          x="250"
+          y="430"
           fill={PAST_LABEL}
-          fontSize="34"
+          fontSize="40"
           fontWeight="700"
           fontFamily={FONT}
+          textAnchor="middle"
         >
           Past
         </text>
         <text
-          x="230"
-          y="668"
-          fill={RECENT_PAST_LABEL}
-          fontSize="24"
+          x="300"
+          y="655"
+          fill="#F5F3F7"
+          fontSize="22"
           fontWeight="700"
           fontFamily={FONT}
+          textAnchor="middle"
         >
-          Recent past
+          <tspan x="300" dy="0">Recent</tspan>
+          <tspan x="300" dy="22">past</tspan>
         </text>
       </g>
 
@@ -258,9 +262,9 @@ export default function TransitionMap({ className }: { className?: string }) {
 
       {/* ---------- PATHWAY: block arrow with layered tail ---------- */}
       <g data-group="Pathway">
-        {/* layered tail bars */}
-        <rect x="610" y="380" width="14" height="240" fill={PATHWAY_TAIL} />
-        <rect x="632" y="380" width="14" height="240" fill={PATHWAY_TAIL} />
+        {/* layered tail bars — flush with the arrow body's straight section */}
+        <rect x="610" y="410" width="14" height="180" fill={PATHWAY_TAIL} />
+        <rect x="632" y="410" width="14" height="180" fill={PATHWAY_TAIL} />
         {/* arrow body */}
         <path
           d="
@@ -302,15 +306,15 @@ export default function TransitionMap({ className }: { className?: string }) {
         />
         <text
           x="600"
-          y="495"
+          y="420"
           fill={TOOLS_LABEL}
-          fontSize="22"
+          fontSize="24"
           fontWeight="700"
           fontFamily={FONT}
           textAnchor="middle"
         >
           <tspan x="600" dy="0">Life's</tspan>
-          <tspan x="600" dy="22">Tools</tspan>
+          <tspan x="600" dy="24">Tools</tspan>
         </text>
       </g>
     </svg>
