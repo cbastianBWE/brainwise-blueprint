@@ -129,15 +129,16 @@ export default function TransitionMap({ className }: { className?: string }) {
             M 470,380
             L 470,240
             L 1330,240
-            L 1330,330
-            L 1385,330
-            L 1310,415
-            L 1235,330
-            L 1290,330
+            L 1330,290
+            L 1385,290
+            L 1310,340
+            L 1235,290
+            L 1290,290
             L 1290,280
             L 510,280
             L 510,380 Z
           "
+
           fill={CHANNEL_FILL}
           stroke={CHANNEL_STROKE}
           strokeWidth="3"
@@ -162,15 +163,16 @@ export default function TransitionMap({ className }: { className?: string }) {
             M 470,620
             L 470,760
             L 1330,760
-            L 1330,660
-            L 1385,660
-            L 1310,575
-            L 1235,660
-            L 1290,660
+            L 1330,710
+            L 1385,710
+            L 1310,690
+            L 1235,710
+            L 1290,710
             L 1290,720
             L 510,720
             L 510,620 Z
           "
+
           fill={CHANNEL_FILL}
           stroke={CHANNEL_STROKE}
           strokeWidth="3"
@@ -218,7 +220,7 @@ export default function TransitionMap({ className }: { className?: string }) {
         {/* "Past" sits just off the top edge of the outer ring */}
         <text
           x="200"
-          y="428"
+          y="500"
           fill={PAST_LABEL}
           fontSize="40"
           fontWeight="700"
@@ -229,17 +231,18 @@ export default function TransitionMap({ className }: { className?: string }) {
         </text>
         {/* "Recent past" left-aligned inside the enlarged inner circle, two lines */}
         <text
-          x="222"
+          x="205"
           y="652"
-          fill={RECENT_PAST_LABEL}
+          fill="#3A3740"
           fontSize="24"
           fontWeight="700"
           fontFamily={FONT}
           textAnchor="start"
         >
-          <tspan x="222" dy="0">Recent</tspan>
-          <tspan x="222" dy="26">past</tspan>
+          <tspan x="205" dy="0">Recent</tspan>
+          <tspan x="205" dy="26">past</tspan>
         </text>
+
 
       </g>
 
@@ -304,7 +307,7 @@ export default function TransitionMap({ className }: { className?: string }) {
       {/* ---------- LIFE'S TOOLS: small circle at arrow base (front) ---------- */}
       <g data-group="Life's Tools">
         <circle
-          cx="600"
+          cx="548"
           cy="500"
           r="52"
           fill={TOOLS_FILL}
@@ -312,7 +315,7 @@ export default function TransitionMap({ className }: { className?: string }) {
           strokeWidth="3"
         />
         <text
-          x="600"
+          x="548"
           y="495"
           fill={TOOLS_LABEL}
           fontSize="22"
@@ -320,9 +323,10 @@ export default function TransitionMap({ className }: { className?: string }) {
           fontFamily={FONT}
           textAnchor="middle"
         >
-          <tspan x="600" dy="0">Life's</tspan>
-          <tspan x="600" dy="24">Tools</tspan>
+          <tspan x="548" dy="0">Life's</tspan>
+          <tspan x="548" dy="24">Tools</tspan>
         </text>
+
 
       </g>
     </svg>

@@ -13363,6 +13363,7 @@ export type Database = {
           p_certification_id: string
           p_coach_note?: string
           p_email_html?: string
+          p_results_released?: boolean
         }
         Returns: Json
       }
