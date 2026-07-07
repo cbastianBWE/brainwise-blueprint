@@ -350,6 +350,49 @@ export default function TransitionMap({ className, onSelectGroup, lockedGroups =
 
 
       </g>
+
+      {/* ---------- LOCK BADGES (drawn last, on top) ---------- */}
+      {(() => {
+        const LOCK_POSITIONS: Record<string, { x: number; y: number }> = {
+          Purpose: { x: 1018, y: 186 },
+          Future: { x: 1338, y: 400 },
+          Present: { x: 300, y: 336 },
+          Past: { x: 158, y: 531 },
+          "Life's Tools": { x: 490, y: 500 },
+          Pathway: { x: 660, y: 501 },
+          Resolve: { x: 778, y: 256 },
+          Support: { x: 738, y: 773 },
+        };
+        const ORANGE = "#F5741A";
+        return lockedGroups
+          .filter((g) => g in LOCK_POSITIONS)
+          .map((g) => {
+            const { x, y } = LOCK_POSITIONS[g];
+            return (
+              <g key={`lock-${g}`} data-lock={g} pointerEvents="none">
+                <circle cx={x} cy={y} r={20} fill="#FFFFFF" stroke={ORANGE} strokeWidth={2.5} />
+                {/* Shackle arc */}
+                <path
+                  d={`M ${x - 6} ${y - 2} v -4 a 6 6 0 0 1 12 0 v 4`}
+                  fill="none"
+                  stroke={ORANGE}
+                  strokeWidth={2.5}
+                  strokeLinecap="round"
+                />
+                {/* Body */}
+                <rect
+                  x={x - 8}
+                  y={y - 2}
+                  width={16}
+                  height={12}
+                  rx={2.5}
+                  ry={2.5}
+                  fill={ORANGE}
+                />
+              </g>
+            );
+          });
+      })()}
     </svg>
   );
 }
