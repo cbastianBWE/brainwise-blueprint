@@ -220,7 +220,7 @@ export default function TransitionMap({ className }: { className?: string }) {
         {/* "Past" sits just off the top edge of the outer ring */}
         <text
           x="200"
-          y="428"
+          y="500"
           fill={PAST_LABEL}
           fontSize="40"
           fontWeight="700"
@@ -231,17 +231,18 @@ export default function TransitionMap({ className }: { className?: string }) {
         </text>
         {/* "Recent past" left-aligned inside the enlarged inner circle, two lines */}
         <text
-          x="222"
+          x="205"
           y="652"
-          fill={RECENT_PAST_LABEL}
+          fill="#3A3740"
           fontSize="24"
           fontWeight="700"
           fontFamily={FONT}
           textAnchor="start"
         >
-          <tspan x="222" dy="0">Recent</tspan>
-          <tspan x="222" dy="26">past</tspan>
+          <tspan x="205" dy="0">Recent</tspan>
+          <tspan x="205" dy="26">past</tspan>
         </text>
+
 
       </g>
 
