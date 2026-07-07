@@ -40,65 +40,66 @@ export function AiAnalysisPanel({ html }: { html?: string }) {
   );
 }
 
-export function SynthesisView({ responses }: { responses: Responses }) {
-  return (
-    <div className="space-y-6">
-      {responses.action && (
-        <div>
-          <h3 className="text-sm font-semibold text-muted-foreground">Your action</h3>
-          <p className="mt-1 text-sm">{responses.action}</p>
-        </div>
-      )}
-      {responses.positiveAction && (
-        <div>
-          <h3 className="text-sm font-semibold text-muted-foreground">Positive action</h3>
-          <p className="mt-1 text-sm">{responses.positiveAction}</p>
-        </div>
-      )}
-      {(responses.positives || []).length > 0 && (
-        <div>
-          <h3 className="text-sm font-semibold text-muted-foreground">Goals</h3>
-          <ul className="mt-1 list-disc pl-5 text-sm">
-            {responses.positives!.map((p, i) => (
-              <li key={i}>{p}</li>
+export function SynthesisView({ responses, steps }: { responses: Responses; steps?: any[] }) {
+  if (!steps || steps.length === 0) return null;
+  const rendered = new Set<string>();
+  const defaultRiskLabels: Record<string, string> = { a: "Prevent", b: "In the moment", c: "Recover" };
+  const sections: JSX.Element[] = [];
+  for (const step of steps) {
+    const w = step.widget;
+    const key = step.key as string | undefined;
+    if (["ai_panel", "synthesis", "image_select", "image_describe"].includes(w) || !key || rendered.has(key)) continue;
+    const heading = step.summaryLabel || step.label || step.title || key;
+    if (w === "textarea" || w === "content") {
+      const v = (responses as any)[key];
+      if (typeof v === "string" && v.trim()) {
+        rendered.add(key);
+        sections.push(
+          <div key={key}>
+            <h3 className="text-sm font-semibold text-muted-foreground">{heading}</h3>
+            <p className="mt-1 whitespace-pre-wrap text-sm">{v}</p>
+          </div>
+        );
+      }
+    } else if (w === "list_builder") {
+      const arr = (responses as any)[key] as string[] | undefined;
+      if (Array.isArray(arr) && arr.length > 0) {
+        rendered.add(key);
+        sections.push(
+          <div key={key}>
+            <h3 className="text-sm font-semibold text-muted-foreground">{heading}</h3>
+            <ul className="mt-1 list-disc pl-5 text-sm">{arr.map((p, i) => <li key={i}>{p}</li>)}</ul>
+          </div>
+        );
+      }
+    } else if (w === "risk_blocks") {
+      if (!(step.subfields && step.subfields.length > 0)) continue;
+      const arr = (responses as any)[key] as Negative[] | undefined;
+      if (Array.isArray(arr) && arr.length > 0) {
+        rendered.add(key);
+        const labels: Record<string, string> = { ...defaultRiskLabels, ...(step.subfieldLabels || {}) };
+        sections.push(
+          <div key={key} className="space-y-3">
+            <h3 className="text-sm font-semibold text-muted-foreground">{heading}</h3>
+            {arr.map((n, i) => (
+              <Card key={i}>
+                <CardHeader className="pb-2"><CardTitle className="text-base">{n.text}</CardTitle></CardHeader>
+                <CardContent className="space-y-2 text-sm">
+                  {(step.subfields as string[]).map((sf) =>
+                    (n as any)[sf] ? (
+                      <div key={sf}><span className="font-medium">{labels[sf] || sf}: </span>{(n as any)[sf]}</div>
+                    ) : null
+                  )}
+                </CardContent>
+              </Card>
             ))}
-          </ul>
-        </div>
-      )}
-      {(responses.negatives || []).length > 0 && (
-        <div className="space-y-3">
-          <h3 className="text-sm font-semibold text-muted-foreground">Safeguards</h3>
-          {responses.negatives!.map((n, i) => (
-            <Card key={i}>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base">{n.text}</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2 text-sm">
-                {n.a && (
-                  <div>
-                    <span className="font-medium">Prevent: </span>
-                    {n.a}
-                  </div>
-                )}
-                {n.b && (
-                  <div>
-                    <span className="font-medium">In the moment: </span>
-                    {n.b}
-                  </div>
-                )}
-                {n.c && (
-                  <div>
-                    <span className="font-medium">Recover: </span>
-                    {n.c}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
-    </div>
-  );
+          </div>
+        );
+      }
+    }
+  }
+  if (sections.length === 0) return null;
+  return <div className="space-y-6">{sections}</div>;
 }
 
 export function ChatTranscript({ chat }: { chat: ChatMsg[] }) {

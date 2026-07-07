@@ -1271,7 +1271,7 @@ export default function CoachingActivityRunner() {
                   </div>
                 );
               })()}
-              <SynthesisView responses={responses} />
+              <SynthesisView responses={responses} steps={steps} />
               {responses.analysis?.html && (
                 <div>
                   <h3 className="mb-2 text-sm font-semibold text-muted-foreground">
@@ -1393,7 +1393,7 @@ export default function CoachingActivityRunner() {
               </div>
             )}
 
-            {step?.widget === "synthesis" && <SynthesisView responses={responses} />}
+            {step?.widget === "synthesis" && <SynthesisView responses={responses} steps={steps} />}
 
             {step?.widget === "image_select" && step.key && (
               <ImageSelectWidget
