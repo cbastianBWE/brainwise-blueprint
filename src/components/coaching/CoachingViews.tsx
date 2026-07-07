@@ -72,6 +72,27 @@ export function SynthesisView({ responses, steps }: { responses: Responses; step
           </div>
         );
       }
+    } else if (w === "text_select") {
+      const arr = (responses as any)[key] as Array<{ text: string; author: string | null; description: string }> | undefined;
+      if (Array.isArray(arr) && arr.length > 0) {
+        rendered.add(key);
+        sections.push(
+          <div key={key} className="space-y-3">
+            <h3 className="text-sm font-semibold text-muted-foreground">{heading}</h3>
+            {arr.map((s, i) => (
+              <div key={i} className="space-y-1">
+                <blockquote className="border-l-2 pl-3 text-sm italic">{s.text}</blockquote>
+                {s.author && (
+                  <p className="text-xs text-muted-foreground">— {s.author}</p>
+                )}
+                {s.description && (
+                  <p className="text-sm">{s.description}</p>
+                )}
+              </div>
+            ))}
+          </div>
+        );
+      }
     } else if (w === "risk_blocks") {
       if (!(step.subfields && step.subfields.length > 0)) continue;
       const arr = (responses as any)[key] as Negative[] | undefined;
