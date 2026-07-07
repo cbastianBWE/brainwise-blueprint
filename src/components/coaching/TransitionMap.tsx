@@ -306,15 +306,15 @@ export default function TransitionMap({ className }: { className?: string }) {
         />
         <text
           x="600"
-          y="495"
+          y="420"
           fill={TOOLS_LABEL}
-          fontSize="22"
+          fontSize="24"
           fontWeight="700"
           fontFamily={FONT}
           textAnchor="middle"
         >
           <tspan x="600" dy="0">Life's</tspan>
-          <tspan x="600" dy="22">Tools</tspan>
+          <tspan x="600" dy="24">Tools</tspan>
         </text>
       </g>
     </svg>
