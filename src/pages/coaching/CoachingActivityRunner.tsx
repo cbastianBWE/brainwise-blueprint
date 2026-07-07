@@ -49,6 +49,8 @@ interface Step {
   // text_select
   selectExactly?: number;
   reflectOnSelect?: { modal?: boolean; prompt?: string; maxLen?: number };
+  // ai suggestions
+  suggest?: { mode: "auto" | "on_demand"; count?: number; buttonLabel?: string; prompt?: string };
 }
 
 interface SelectedSaying {
@@ -584,6 +586,104 @@ function RecapWidget({
   }
   if (recap?.html) return <AiAnalysisPanel html={recap.html} />;
   return null;
+}
+
+function SuggestionPanel({
+  sessionId,
+  stepKey,
+  suggest,
+  existing,
+  pending,
+  onPendingChange,
+  onAdd,
+}: {
+  sessionId: string;
+  stepKey: string;
+  suggest: { mode: string; buttonLabel?: string };
+  existing: string[];
+  pending: string[] | undefined;
+  onPendingChange: (next: string[]) => void;
+  onAdd: (text: string) => void;
+}) {
+  const [loading, setLoading] = useState(false);
+  const firedRef = useRef(false);
+
+  const generate = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("coaching-activity-suggest", {
+        body: { session_id: sessionId, key: stepKey, exclude: [...existing, ...(pending || [])] },
+      });
+      const list =
+        !error && Array.isArray((data as any)?.suggestions)
+          ? ((data as any).suggestions as string[])
+          : [];
+      const merged = [...(pending || [])];
+      for (const s of list) {
+        if (!merged.some((m) => m.toLowerCase().trim() === s.toLowerCase().trim())) merged.push(s);
+      }
+      onPendingChange(merged);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (suggest.mode === "auto" && pending === undefined && !firedRef.current) {
+      firedRef.current = true;
+      generate();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [suggest.mode, pending]);
+
+  const items = pending || [];
+
+  if (suggest.mode === "auto" && loading && items.length === 0) {
+    return (
+      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <Loader2 className="h-4 w-4 animate-spin" />
+        <span>Thinking of a few ideas…</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      {items.length > 0 && (
+        <div className="rounded-md border border-dashed p-3 space-y-2">
+          <p className="text-xs font-medium text-muted-foreground">Suggested for you</p>
+          {items.map((item, i) => (
+            <div key={i} className="flex items-start gap-2">
+              <p className="flex-1 text-sm">{item}</p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  onAdd(item);
+                  onPendingChange(items.filter((_, j) => j !== i));
+                }}
+              >
+                Add
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onPendingChange(items.filter((_, j) => j !== i))}
+              >
+                Dismiss
+              </Button>
+            </div>
+          ))}
+        </div>
+      )}
+      {suggest.mode === "on_demand" && (
+        <Button variant="outline" size="sm" onClick={generate} disabled={loading}>
+          {loading && <Loader2 className="h-4 w-4 animate-spin" />}
+          {suggest.buttonLabel || "Suggest a few more"}
+        </Button>
+      )}
+    </div>
+  );
 }
 
 function ImageSelectWidget({
@@ -1659,12 +1759,34 @@ export default function CoachingActivityRunner() {
               />
             )}
 
+            {step?.widget === "list_builder" && step.suggest && step.key && (
+              <SuggestionPanel
+                sessionId={session.id}
+                stepKey={step.key}
+                suggest={step.suggest}
+                existing={(responses[step.key] as string[]) || []}
+                pending={(responses._suggest as any)?.[step.key]}
+                onPendingChange={(next) =>
+                  setResponses((r) => ({
+                    ...r,
+                    _suggest: { ...((r._suggest as any) || {}), [step.key!]: next },
+                  }))
+                }
+                onAdd={(text) =>
+                  setResponses((r) => ({
+                    ...r,
+                    [step.key!]: [...((r[step.key!] as string[]) || []), text],
+                  }))
+                }
+              />
+            )}
+
             {step?.widget === "risk_blocks" && (
               <>
                 {(step.subfields?.length ?? 0) > 0 && responses.positives && responses.positives.length > 0 && (
                   <Card className="bg-muted/30">
                     <CardContent className="p-3">
-                      <p className="text-xs font-medium text-muted-foreground">Your goals</p>
+                      <p className="text-xs font-medium text-muted-foreground">Your measure of success</p>
                       <ul className="mt-1 list-disc pl-5 text-sm">
                         {responses.positives.map((v, i) => (
                           <li key={i}>{v}</li>
@@ -1679,6 +1801,28 @@ export default function CoachingActivityRunner() {
                   onChange={(v) => setResponses((r) => ({ ...r, negatives: v }))}
                 />
               </>
+            )}
+
+            {step?.widget === "risk_blocks" && step.suggest && (step.subfields?.length ?? 0) === 0 && step.key && (
+              <SuggestionPanel
+                sessionId={session.id}
+                stepKey={step.key}
+                suggest={step.suggest}
+                existing={((responses.negatives as Negative[]) || []).map((n) => n.text).filter(Boolean)}
+                pending={(responses._suggest as any)?.[step.key]}
+                onPendingChange={(next) =>
+                  setResponses((r) => ({
+                    ...r,
+                    _suggest: { ...((r._suggest as any) || {}), [step.key!]: next },
+                  }))
+                }
+                onAdd={(text) =>
+                  setResponses((r) => ({
+                    ...r,
+                    negatives: [...((r.negatives as Negative[]) || []), { text }],
+                  }))
+                }
+              />
             )}
 
             {step?.widget === "ai_panel" && (
@@ -1750,7 +1894,7 @@ export default function CoachingActivityRunner() {
               responses.positives.length > 0 && (
                 <Card className="bg-muted/30">
                   <CardContent className="p-3">
-                    <p className="text-xs font-medium text-muted-foreground">Your positives</p>
+                    <p className="text-xs font-medium text-muted-foreground">Your measure of success</p>
                     <ul className="mt-1 list-disc pl-5 text-sm">
                       {responses.positives.map((v, i) => (
                         <li key={i}>{v}</li>
