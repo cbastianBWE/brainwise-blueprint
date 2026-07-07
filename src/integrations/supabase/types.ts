@@ -13241,6 +13241,14 @@ export type Database = {
           reason: string
         }[]
       }
+      coaching_group_access: {
+        Args: never
+        Returns: {
+          accessible: boolean
+          has_completed: boolean
+          module_group: string
+        }[]
+      }
       coaching_session_save: {
         Args: { p_current_step: number; p_patch: Json; p_session_id: string }
         Returns: undefined
