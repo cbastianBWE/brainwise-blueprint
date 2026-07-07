@@ -66,8 +66,13 @@ export default function TransitionMap({ className, onSelectGroup, lockedGroups =
       role="img"
       aria-label="BrainWise Transition Map"
     >
+      <style>{`
+        .tm-region { cursor: pointer; transition: filter .15s ease; outline: none; }
+        .tm-region:hover { filter: brightness(0.95); }
+        .tm-region:focus-visible { filter: brightness(0.92) drop-shadow(0 0 3px rgba(2,31,54,0.45)); }
+      `}</style>
       {/* ---------- PURPOSE: background cloud (back) ---------- */}
-      <g data-group="Purpose">
+      <g data-group="Purpose" {...groupProps("Purpose")}>
         <path
           transform="translate(0 -45) scale(1 1.22)"
           d="
