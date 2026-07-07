@@ -24,6 +24,12 @@ interface SessionRow {
 }
 
 export default function CoachingSessionView() {
+  const imgUrl = (path: string, w: number, h: number) =>
+    supabase.storage
+      .from("coaching-media")
+      .getPublicUrl(path, { transform: { width: w, height: h, resize: "cover" } })
+      .data.publicUrl;
+
   const { sessionId } = useParams<{ sessionId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -137,6 +143,15 @@ export default function CoachingSessionView() {
   const responses = (session.responses || {}) as Responses;
   const analysisHtml = responses.analysis?.html;
   const chat = responses.chat || [];
+  const pictureGroups = Object.values(responses).filter(
+    (v): v is Array<{ storage_path: string; tag?: string }> =>
+      Array.isArray(v) &&
+      v.length > 0 &&
+      v.every(
+        (it) =>
+          it && typeof it === "object" && typeof (it as any).storage_path === "string",
+      ),
+  );
   const title = session.coaching_activities?.title || "Coaching session";
   const tier = session.coaching_activities?.tier || null;
   const completed = session.completed_at
@@ -170,6 +185,28 @@ export default function CoachingSessionView() {
           <CardTitle className="text-base">Your responses</CardTitle>
         </CardHeader>
         <CardContent>
+          {pictureGroups.map((group, gi) => (
+            <div key={gi} className="mb-6">
+              <h3 className="mb-2 text-sm font-semibold text-muted-foreground">Your pictures</h3>
+              <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5">
+                {group.map((img) => (
+                  <figure key={img.storage_path} className="space-y-1">
+                    <img
+                      src={imgUrl(img.storage_path, 400, 400)}
+                      alt={img.tag || ""}
+                      loading="lazy"
+                      className="aspect-square w-full rounded-md object-cover"
+                    />
+                    {img.tag && (
+                      <figcaption className="truncate text-xs text-muted-foreground">
+                        {img.tag}
+                      </figcaption>
+                    )}
+                  </figure>
+                ))}
+              </div>
+            </div>
+          ))}
           <SynthesisView responses={responses} />
         </CardContent>
       </Card>

@@ -25,7 +25,10 @@ export interface Responses {
 
 export function AiAnalysisPanel({ html }: { html?: string }) {
   if (!html) return null;
-  const clean = DOMPurify.sanitize(html, {
+  let src = html.trim();
+  if (src.startsWith("```"))
+    src = src.replace(/^```[a-zA-Z]*\s*/, "").replace(/```\s*$/, "").trim();
+  const clean = DOMPurify.sanitize(src, {
     ALLOWED_TAGS: ["h3", "h4", "p", "ul", "ol", "li", "strong", "em", "br"],
     ALLOWED_ATTR: [],
   });
