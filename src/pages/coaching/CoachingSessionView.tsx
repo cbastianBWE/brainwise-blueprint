@@ -185,6 +185,28 @@ export default function CoachingSessionView() {
           <CardTitle className="text-base">Your responses</CardTitle>
         </CardHeader>
         <CardContent>
+          {pictureGroups.map((group, gi) => (
+            <div key={gi} className="mb-6">
+              <h3 className="mb-2 text-sm font-semibold text-muted-foreground">Your pictures</h3>
+              <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5">
+                {group.map((img) => (
+                  <figure key={img.storage_path} className="space-y-1">
+                    <img
+                      src={imgUrl(img.storage_path, 400, 400)}
+                      alt={img.tag || ""}
+                      loading="lazy"
+                      className="aspect-square w-full rounded-md object-cover"
+                    />
+                    {img.tag && (
+                      <figcaption className="truncate text-xs text-muted-foreground">
+                        {img.tag}
+                      </figcaption>
+                    )}
+                  </figure>
+                ))}
+              </div>
+            </div>
+          ))}
           <SynthesisView responses={responses} />
         </CardContent>
       </Card>
