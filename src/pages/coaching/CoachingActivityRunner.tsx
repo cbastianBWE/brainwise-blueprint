@@ -1759,12 +1759,34 @@ export default function CoachingActivityRunner() {
               />
             )}
 
+            {step?.widget === "list_builder" && step.suggest && step.key && (
+              <SuggestionPanel
+                sessionId={session.id}
+                stepKey={step.key}
+                suggest={step.suggest}
+                existing={(responses[step.key] as string[]) || []}
+                pending={(responses._suggest as any)?.[step.key]}
+                onPendingChange={(next) =>
+                  setResponses((r) => ({
+                    ...r,
+                    _suggest: { ...((r._suggest as any) || {}), [step.key!]: next },
+                  }))
+                }
+                onAdd={(text) =>
+                  setResponses((r) => ({
+                    ...r,
+                    [step.key!]: [...((r[step.key!] as string[]) || []), text],
+                  }))
+                }
+              />
+            )}
+
             {step?.widget === "risk_blocks" && (
               <>
                 {(step.subfields?.length ?? 0) > 0 && responses.positives && responses.positives.length > 0 && (
                   <Card className="bg-muted/30">
                     <CardContent className="p-3">
-                      <p className="text-xs font-medium text-muted-foreground">Your goals</p>
+                      <p className="text-xs font-medium text-muted-foreground">Your measure of success</p>
                       <ul className="mt-1 list-disc pl-5 text-sm">
                         {responses.positives.map((v, i) => (
                           <li key={i}>{v}</li>
@@ -1779,6 +1801,28 @@ export default function CoachingActivityRunner() {
                   onChange={(v) => setResponses((r) => ({ ...r, negatives: v }))}
                 />
               </>
+            )}
+
+            {step?.widget === "risk_blocks" && step.suggest && (step.subfields?.length ?? 0) === 0 && step.key && (
+              <SuggestionPanel
+                sessionId={session.id}
+                stepKey={step.key}
+                suggest={step.suggest}
+                existing={((responses.negatives as Negative[]) || []).map((n) => n.text).filter(Boolean)}
+                pending={(responses._suggest as any)?.[step.key]}
+                onPendingChange={(next) =>
+                  setResponses((r) => ({
+                    ...r,
+                    _suggest: { ...((r._suggest as any) || {}), [step.key!]: next },
+                  }))
+                }
+                onAdd={(text) =>
+                  setResponses((r) => ({
+                    ...r,
+                    negatives: [...((r.negatives as Negative[]) || []), { text }],
+                  }))
+                }
+              />
             )}
 
             {step?.widget === "ai_panel" && (
