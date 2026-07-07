@@ -221,7 +221,8 @@ export default function TransitionMap({ className }: { className?: string }) {
         {/* "Past" sits just off the top edge of the outer ring */}
         <text
           x="200"
-          y="500"
+          y="545"
+
           fill={PAST_LABEL}
           fontSize="40"
           fontWeight="700"
