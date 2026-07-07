@@ -49,8 +49,6 @@ interface Step {
   // text_select
   selectExactly?: number;
   reflectOnSelect?: { modal?: boolean; prompt?: string; maxLen?: number };
-  // synthesis label
-  summaryLabel?: string;
 }
 
 interface SelectedSaying {
