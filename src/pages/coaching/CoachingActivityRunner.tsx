@@ -49,6 +49,8 @@ interface Step {
   // text_select
   selectExactly?: number;
   reflectOnSelect?: { modal?: boolean; prompt?: string; maxLen?: number };
+  // ai suggestions
+  suggest?: { mode: "auto" | "on_demand"; count?: number; buttonLabel?: string; prompt?: string };
 }
 
 interface SelectedSaying {
