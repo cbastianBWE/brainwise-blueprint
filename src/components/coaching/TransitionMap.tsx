@@ -44,7 +44,7 @@ export default function TransitionMap({ className }: { className?: string }) {
   return (
     <svg
       className={className}
-      viewBox="0 0 1600 900"
+      viewBox="0 0 1600 980"
       width="100%"
       preserveAspectRatio="xMidYMid meet"
       xmlns="http://www.w3.org/2000/svg"
@@ -54,7 +54,7 @@ export default function TransitionMap({ className }: { className?: string }) {
       {/* ---------- PURPOSE: background cloud (back) ---------- */}
       <g data-group="Purpose">
         <path
-          transform="translate(0 -45) scale(1 1.12)"
+          transform="translate(0 -45) scale(1 1.22)"
           d="
             M 260,240
             C 210,180 240,110 320,110
@@ -163,15 +163,16 @@ export default function TransitionMap({ className }: { className?: string }) {
             M 470,620
             L 470,760
             L 1330,760
-            L 1330,747
-            L 1385,747
-            L 1310,697
-            L 1235,747
-            L 1290,747
+            L 1330,710
+            L 1385,710
+            L 1310,660
+            L 1235,710
+            L 1290,710
             L 1290,720
             L 510,720
             L 510,620 Z
           "
+
 
 
           fill={CHANNEL_FILL}
