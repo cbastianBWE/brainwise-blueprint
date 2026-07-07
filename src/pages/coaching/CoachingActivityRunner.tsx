@@ -39,6 +39,11 @@ interface Step {
   media?: { type: string; src: string; alt?: string; caption?: string };
   statements?: string[];
   reflection?: { prompt?: string; placeholder?: string; optional?: boolean; minRows?: number };
+  // image_describe
+  fromKey?: string;
+  questions?: string[];
+  descriptionPrompt?: string;
+  minDescribed?: number;
 }
 
 interface Activity {
