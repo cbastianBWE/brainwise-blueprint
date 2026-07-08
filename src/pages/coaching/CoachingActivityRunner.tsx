@@ -1643,8 +1643,16 @@ function QaMultimodalWidget({
       if (error) throw new Error(error.message);
       const { upload_url, media_id } = (data || {}) as { upload_url: string; upload_id?: string; media_id: string };
       if (!upload_url || !media_id) throw new Error("Upload broker returned no URL");
+      const file =
+        blob instanceof File
+          ? blob
+          : new File(
+              [blob],
+              `answer-${Date.now()}.webm`,
+              { type: blob.type || (kind === "audio" ? "audio/webm" : "video/webm") },
+            );
       await new Promise<void>((resolve, reject) => {
-        const upload = UpChunk.createUpload({ endpoint: upload_url, file: blob as any });
+        const upload = UpChunk.createUpload({ endpoint: upload_url, file });
         upload.on("error", (err: any) => reject(new Error(err?.detail?.message || "Upload failed")));
         upload.on("success", () => resolve());
       });
