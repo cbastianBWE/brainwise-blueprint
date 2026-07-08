@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Loader2, ArrowLeft, ArrowRight, Plus, Trash2, Send, Share2, CheckCircle2, Check, X, Mic, Video as VideoIcon, Square, Upload as UploadIcon, RotateCcw } from "lucide-react";
-import * as UpChunk from "@mux/upchunk";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -13,8 +12,19 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { SynthesisView, AiAnalysisPanel, ChatTranscript, ResourceVideo } from "@/components/coaching/CoachingViews";
+import { SynthesisView, AiAnalysisPanel, ChatTranscript, ResourceVideo, CoachingRecordingPlayer } from "@/components/coaching/CoachingViews";
 import TransitionMapWalkthrough from "@/components/coaching/TransitionMapWalkthrough";
+import {
+  MultimodalField,
+  MediaRecorderPane,
+  DictateButton,
+  uploadCoachingRecording,
+  isMMRec,
+  mmIsFilled,
+  type MMValue,
+} from "@/components/coaching/MultimodalField";
+
+
 
 // ---- Types ----
 interface Step {
@@ -73,7 +83,7 @@ interface SelectedSaying {
   saying_id: string;
   text: string;
   author: string | null;
-  description: string;
+  description: MMValue;
 }
 
 interface Activity {
@@ -85,10 +95,10 @@ interface Activity {
 }
 
 interface Negative {
-  text: string;
-  a?: string;
-  b?: string;
-  c?: string;
+  text: MMValue;
+  a?: MMValue;
+  b?: MMValue;
+  c?: MMValue;
 }
 
 interface ChatMsg {
@@ -165,20 +175,27 @@ function TextareaWidget({
   step,
   value,
   onChange,
+  sessionId,
+  activityCode,
 }: {
   step: Step;
-  value: string;
-  onChange: (v: string) => void;
+  value: MMValue | undefined;
+  onChange: (v: MMValue) => void;
+  sessionId: string;
+  activityCode: string;
 }) {
   return (
     <div className="space-y-2">
       {step.label && <Label>{step.label}</Label>}
       {step.helper && <p className="text-sm text-muted-foreground">{step.helper}</p>}
-      <Textarea
-        rows={6}
-        placeholder={step.placeholder || "Type here…"}
-        value={value || ""}
-        onChange={(e) => onChange(e.target.value)}
+      <MultimodalField
+        value={value}
+        onChange={onChange}
+        sessionId={sessionId}
+        activityCode={activityCode}
+        questionKey={step.key || "text"}
+        placeholder={step.placeholder}
+        minRows={6}
       />
     </div>
   );
@@ -189,19 +206,25 @@ function ListBuilderWidget({
   items,
   onChange,
   reference,
+  sessionId,
+  activityCode,
 }: {
   step: Step;
-  items: string[];
-  onChange: (next: string[]) => void;
+  items: MMValue[];
+  onChange: (next: MMValue[]) => void;
   reference?: { title: string; items: string[] };
+  sessionId: string;
+  activityCode: string;
 }) {
   const min = step.min ?? 0;
-  const [draft, setDraft] = useState("");
+  const [draft, setDraft] = useState<MMValue>("");
+  const [nonce, setNonce] = useState(0);
   const add = () => {
-    const t = draft.trim();
-    if (!t) return;
-    onChange([...(items || []), t]);
+    if (!mmIsFilled(draft)) return;
+    const next = typeof draft === "string" ? draft.trim() : draft;
+    onChange([...(items || []), next as MMValue]);
     setDraft("");
+    setNonce((n) => n + 1);
   };
   return (
     <div className="space-y-3">
@@ -220,15 +243,21 @@ function ListBuilderWidget({
       {step.helper && <p className="text-sm text-muted-foreground">{step.helper}</p>}
       <div className="space-y-2">
         {(items || []).map((v, i) => (
-          <div key={i} className="flex items-center gap-2">
-            <Input
-              value={v}
-              onChange={(e) => {
-                const next = [...items];
-                next[i] = e.target.value;
-                onChange(next);
-              }}
-            />
+          <div key={i} className="flex items-start gap-2">
+            {isMMRec(v) ? (
+              <div className="flex-1">
+                <CoachingRecordingPlayer mediaId={v.media_id} />
+              </div>
+            ) : (
+              <Input
+                value={v as string}
+                onChange={(e) => {
+                  const next = [...items];
+                  next[i] = e.target.value;
+                  onChange(next);
+                }}
+              />
+            )}
             <Button
               variant="ghost"
               size="icon"
@@ -240,22 +269,31 @@ function ListBuilderWidget({
           </div>
         ))}
       </div>
-      <div className="flex gap-2">
-        <Input
+      <div className="rounded-md border p-3 space-y-2">
+        <p className="text-xs font-medium text-muted-foreground">Add an item</p>
+        <MultimodalField
+          key={nonce}
           value={draft}
-          placeholder="Add an item…"
-          onChange={(e) => setDraft(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              add();
+          onChange={(v) => {
+            setDraft(v);
+            if (isMMRec(v)) {
+              onChange([...(items || []), v]);
+              setDraft("");
+              setNonce((n) => n + 1);
             }
           }}
+          sessionId={sessionId}
+          activityCode={activityCode}
+          questionKey={`${step.key || "items"}:${(items || []).length}:${nonce}`}
+          placeholder="Add an item…"
+          minRows={2}
         />
-        <Button type="button" onClick={add}>
-          <Plus className="h-4 w-4" />
-          Add
-        </Button>
+        {typeof draft === "string" && (
+          <Button type="button" size="sm" onClick={add} disabled={!mmIsFilled(draft)}>
+            <Plus className="h-4 w-4" />
+            Add
+          </Button>
+        )}
       </div>
       {min > 0 && (
         <p className="text-xs text-muted-foreground">
@@ -266,40 +304,54 @@ function ListBuilderWidget({
   );
 }
 
+
+
 function RiskBlocksWidget({
   step,
   items,
   onChange,
+  sessionId,
+  activityCode,
 }: {
   step: Step;
   items: Negative[];
   onChange: (next: Negative[]) => void;
+  sessionId: string;
+  activityCode: string;
 }) {
   const subfields = step.subfields || [];
   const editingSub = subfields.length > 0;
-  const [draft, setDraft] = useState("");
+  const [draft, setDraft] = useState<MMValue>("");
+  const [nonce, setNonce] = useState(0);
 
   if (!editingSub) {
     const add = () => {
-      const t = draft.trim();
-      if (!t) return;
-      onChange([...(items || []), { text: t }]);
+      if (!mmIsFilled(draft)) return;
+      const val = typeof draft === "string" ? draft.trim() : draft;
+      onChange([...(items || []), { text: val as any }]);
       setDraft("");
+      setNonce((n) => n + 1);
     };
     return (
       <div className="space-y-3">
         {step.helper && <p className="text-sm text-muted-foreground">{step.helper}</p>}
         <div className="space-y-2">
           {(items || []).map((n, i) => (
-            <div key={i} className="flex items-center gap-2">
-              <Input
-                value={n.text}
-                onChange={(e) => {
-                  const next = [...items];
-                  next[i] = { ...next[i], text: e.target.value };
-                  onChange(next);
-                }}
-              />
+            <div key={i} className="flex items-start gap-2">
+              {isMMRec(n.text as any) ? (
+                <div className="flex-1">
+                  <CoachingRecordingPlayer mediaId={(n.text as any).media_id} />
+                </div>
+              ) : (
+                <Input
+                  value={(n.text as any) || ""}
+                  onChange={(e) => {
+                    const next = [...items];
+                    next[i] = { ...next[i], text: e.target.value as any };
+                    onChange(next);
+                  }}
+                />
+              )}
               <Button
                 variant="ghost"
                 size="icon"
@@ -311,22 +363,31 @@ function RiskBlocksWidget({
             </div>
           ))}
         </div>
-        <div className="flex gap-2">
-          <Input
+        <div className="rounded-md border p-3 space-y-2">
+          <p className="text-xs font-medium text-muted-foreground">Add a risk</p>
+          <MultimodalField
+            key={nonce}
             value={draft}
-            placeholder={step.placeholder || "Add a risk or concern…"}
-            onChange={(e) => setDraft(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                add();
+            onChange={(v) => {
+              setDraft(v);
+              if (isMMRec(v)) {
+                onChange([...(items || []), { text: v as any }]);
+                setDraft("");
+                setNonce((n) => n + 1);
               }
             }}
+            sessionId={sessionId}
+            activityCode={activityCode}
+            questionKey={`${step.key || "negatives"}:${(items || []).length}:text:${nonce}`}
+            placeholder={step.placeholder || "Add a risk or concern…"}
+            minRows={2}
           />
-          <Button type="button" onClick={add}>
-            <Plus className="h-4 w-4" />
-            Add
-          </Button>
+          {typeof draft === "string" && (
+            <Button type="button" size="sm" onClick={add} disabled={!mmIsFilled(draft)}>
+              <Plus className="h-4 w-4" />
+              Add
+            </Button>
+          )}
         </div>
       </div>
     );
@@ -351,21 +412,29 @@ function RiskBlocksWidget({
       {(items || []).map((n, i) => (
         <Card key={i}>
           <CardHeader className="pb-2">
-            <CardTitle className="text-base">{n.text || `Risk ${i + 1}`}</CardTitle>
+            <CardTitle className="text-base">
+              {typeof n.text === "string" ? (n.text || `Risk ${i + 1}`) : `Risk ${i + 1}`}
+            </CardTitle>
+            {isMMRec(n.text as any) && (
+              <div className="pt-2"><CoachingRecordingPlayer mediaId={(n.text as any).media_id} /></div>
+            )}
           </CardHeader>
           <CardContent className="space-y-3">
             {subfields.map((sf) => (
               <div key={sf} className="space-y-1">
                 <Label>{label(sf)}</Label>
                 <p className="text-xs text-muted-foreground">{helper(sf)}</p>
-                <Textarea
-                  rows={2}
-                  value={(n as any)[sf] || ""}
-                  onChange={(e) => {
+                <MultimodalField
+                  value={(n as any)[sf]}
+                  onChange={(v) => {
                     const next = [...items];
-                    next[i] = { ...next[i], [sf]: e.target.value };
+                    next[i] = { ...next[i], [sf]: v as any };
                     onChange(next);
                   }}
+                  sessionId={sessionId}
+                  activityCode={activityCode}
+                  questionKey={`${step.key || "negatives"}:${i}:${sf}`}
+                  minRows={2}
                 />
               </div>
             ))}
@@ -375,6 +444,7 @@ function RiskBlocksWidget({
     </div>
   );
 }
+
 
 
 function ChatWidget({
@@ -460,9 +530,12 @@ function ChatWidget({
             }
           }}
         />
-        <Button onClick={send} disabled={sending || !message.trim()}>
-          {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-        </Button>
+        <div className="flex flex-col gap-1">
+          <Button onClick={send} disabled={sending || !message.trim()}>
+            {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+          </Button>
+          <DictateButton onFinal={(t) => setMessage((m) => (m ? m + " " : "") + t)} />
+        </div>
       </div>
     </div>
   );
@@ -485,21 +558,25 @@ interface SelectedImage {
   library_id: string;
   storage_path: string;
   tag: string;
-  description?: string;
+  description?: MMValue;
 }
 
 function ImageDescribeWidget({
   step,
   value,
   onChange,
+  sessionId,
+  activityCode,
 }: {
   step: Step;
   value: SelectedImage[];
   onChange: (next: SelectedImage[]) => void;
+  sessionId: string;
+  activityCode: string;
 }) {
-  const describedCount = value.filter((it) => (it.description || "").trim().length > 0).length;
+  const describedCount = value.filter((it) => mmIsFilled(it.description)).length;
 
-  const updateDescription = (idx: number, description: string) => {
+  const updateDescription = (idx: number, description: MMValue) => {
     const next = value.map((it, i) => (i === idx ? { ...it, description } : it));
     onChange(next);
   };
@@ -533,13 +610,14 @@ function ImageDescribeWidget({
                       <div id={labelId} className="text-sm font-semibold">
                         {item.tag || `Picture ${idx + 1}`}
                       </div>
-                      <Textarea
-                        rows={3}
-                        value={item.description || ""}
-                        onChange={(e) => updateDescription(idx, e.target.value)}
+                      <MultimodalField
+                        value={item.description}
+                        onChange={(v) => updateDescription(idx, v)}
+                        sessionId={sessionId}
+                        activityCode={activityCode}
+                        questionKey={`${step.fromKey || "images"}:${item.library_id}:desc`}
                         placeholder={step.descriptionPrompt}
-                        aria-label={`Why "${item.tag || `picture ${idx + 1}`}" matters`}
-                        aria-labelledby={labelId}
+                        minRows={3}
                       />
                     </div>
                   </div>
@@ -1021,20 +1099,23 @@ function ImageSelectWidget({
               />
               <div className="space-y-1">
                 <Label htmlFor="image-tag">Your tag</Label>
-                <Input
-                  id="image-tag"
-                  autoFocus
-                  value={tagDraft}
-                  maxLength={maxLen}
-                  placeholder={promptText}
-                  onChange={(e) => setTagDraft(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      saveDialog();
-                    }
-                  }}
-                />
+                <div className="flex gap-2">
+                  <Input
+                    id="image-tag"
+                    autoFocus
+                    value={tagDraft}
+                    maxLength={maxLen}
+                    placeholder={promptText}
+                    onChange={(e) => setTagDraft(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        saveDialog();
+                      }
+                    }}
+                  />
+                  <DictateButton onFinal={(t) => setTagDraft((cur) => (cur ? cur + " " : "") + t)} />
+                </div>
               </div>
             </div>
           )}
@@ -1071,18 +1152,21 @@ function TextSelectWidget({
   step,
   value,
   onChange,
+  sessionId,
+  activityCode,
 }: {
   step: Step;
   value: SelectedSaying[];
   onChange: (next: SelectedSaying[]) => void;
+  sessionId: string;
+  activityCode: string;
 }) {
   const [rows, setRows] = useState<SayingRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [dialogRow, setDialogRow] = useState<SayingRow | null>(null);
-  const [reasonDraft, setReasonDraft] = useState("");
+  const [reasonDraft, setReasonDraft] = useState<MMValue>("");
   const selectExactly = step.selectExactly ?? 3;
   const promptText = step.reflectOnSelect?.prompt || "Why does this resonate?";
-  const maxLen = step.reflectOnSelect?.maxLen ?? 400;
 
   useEffect(() => {
     let cancelled = false;
@@ -1118,7 +1202,7 @@ function TextSelectWidget({
 
   const openFor = (row: SayingRow) => {
     const existing = selectedById.get(row.id);
-    setReasonDraft(existing?.description || "");
+    setReasonDraft(existing?.description ?? "");
     setDialogRow(row);
   };
 
@@ -1129,13 +1213,13 @@ function TextSelectWidget({
 
   const saveDialog = () => {
     if (!dialogRow) return;
-    const trimmed = reasonDraft.trim();
-    if (!trimmed) return;
+    if (!mmIsFilled(reasonDraft)) return;
+    const desc: MMValue = typeof reasonDraft === "string" ? reasonDraft.trim() : reasonDraft;
     const existing = selectedById.get(dialogRow.id);
     let next: SelectedSaying[];
     if (existing) {
       next = (value || []).map((s) =>
-        s.saying_id === dialogRow.id ? { ...s, description: trimmed } : s,
+        s.saying_id === dialogRow.id ? { ...s, description: desc } : s,
       );
     } else {
       next = [
@@ -1144,7 +1228,7 @@ function TextSelectWidget({
           saying_id: dialogRow.id,
           text: dialogRow.text,
           author: dialogRow.author,
-          description: trimmed,
+          description: desc,
         },
       ];
     }
@@ -1183,8 +1267,11 @@ function TextSelectWidget({
               <li key={s.saying_id} className="flex items-start gap-2 rounded-md border bg-muted/30 p-2">
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm">{s.text}</p>
-                  {s.description && (
+                  {typeof s.description === "string" && s.description && (
                     <p className="mt-0.5 truncate text-xs text-muted-foreground">{s.description}</p>
+                  )}
+                  {isMMRec(s.description) && (
+                    <p className="mt-0.5 text-xs text-muted-foreground italic">Recorded answer</p>
                   )}
                 </div>
                 <Button
@@ -1262,15 +1349,15 @@ function TextSelectWidget({
                 )}
               </blockquote>
               <div className="space-y-1">
-                <Label htmlFor="saying-reason">{promptText}</Label>
-                <Textarea
-                  id="saying-reason"
-                  autoFocus
-                  rows={4}
-                  maxLength={maxLen}
-                  placeholder={promptText}
+                <Label>{promptText}</Label>
+                <MultimodalField
                   value={reasonDraft}
-                  onChange={(e) => setReasonDraft(e.target.value)}
+                  onChange={setReasonDraft}
+                  sessionId={sessionId}
+                  activityCode={activityCode}
+                  questionKey={`${step.key || "sayings"}:${dialogRow.id}:reason`}
+                  placeholder={promptText}
+                  minRows={4}
                 />
               </div>
             </div>
@@ -1287,7 +1374,7 @@ function TextSelectWidget({
               <Button variant="ghost" onClick={closeDialog}>
                 Cancel
               </Button>
-              <Button onClick={saveDialog} disabled={!reasonDraft.trim()}>
+              <Button onClick={saveDialog} disabled={!mmIsFilled(reasonDraft)}>
                 Save
               </Button>
             </div>
@@ -1302,10 +1389,14 @@ function ContentWidget({
   step,
   value,
   onChange,
+  sessionId,
+  activityCode,
 }: {
   step: Step;
-  value: string;
-  onChange: (v: string) => void;
+  value: MMValue | undefined;
+  onChange: (v: MMValue) => void;
+  sessionId: string;
+  activityCode: string;
 }) {
   return (
     <div className="space-y-4">
@@ -1343,11 +1434,14 @@ function ContentWidget({
       {step.reflection && step.key && (
         <div className="space-y-2">
           {step.reflection.prompt && <Label>{step.reflection.prompt}</Label>}
-          <Textarea
-            rows={step.reflection.minRows ?? 4}
-            placeholder={step.reflection.placeholder || "Type here…"}
-            value={value || ""}
-            onChange={(e) => onChange(e.target.value)}
+          <MultimodalField
+            value={value}
+            onChange={onChange}
+            sessionId={sessionId}
+            activityCode={activityCode}
+            questionKey={step.key}
+            placeholder={step.reflection.placeholder}
+            minRows={step.reflection.minRows ?? 4}
           />
         </div>
       )}
@@ -1364,215 +1458,8 @@ type QaAnswer = {
   skipped?: boolean;
 };
 
-function formatElapsed(ms: number) {
-  const s = Math.floor(ms / 1000);
-  const m = Math.floor(s / 60);
-  const rem = s % 60;
-  return `${m}:${rem.toString().padStart(2, "0")}`;
-}
+// MediaRecorderPane, DictateButton — imported from MultimodalField module.
 
-function MediaRecorderPane({
-  kind,
-  onConfirm,
-  uploading,
-  disabled,
-}: {
-  kind: "audio" | "video";
-  onConfirm: (blob: Blob) => void;
-  uploading: boolean;
-  disabled?: boolean;
-}) {
-  const [permError, setPermError] = useState<string | null>(null);
-  const [recording, setRecording] = useState(false);
-  const [elapsed, setElapsed] = useState(0);
-  const [blob, setBlob] = useState<Blob | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const streamRef = useRef<MediaStream | null>(null);
-  const recorderRef = useRef<MediaRecorder | null>(null);
-  const chunksRef = useRef<Blob[]>([]);
-  const startedAtRef = useRef<number>(0);
-  const timerRef = useRef<number | null>(null);
-  const liveVideoRef = useRef<HTMLVideoElement | null>(null);
-
-  const cleanupStream = useCallback(() => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach((t) => t.stop());
-      streamRef.current = null;
-    }
-    if (timerRef.current) {
-      window.clearInterval(timerRef.current);
-      timerRef.current = null;
-    }
-  }, []);
-
-  useEffect(() => () => {
-    cleanupStream();
-    if (previewUrl) URL.revokeObjectURL(previewUrl);
-  }, [cleanupStream, previewUrl]);
-
-  const start = async () => {
-    setPermError(null);
-    setBlob(null);
-    if (previewUrl) {
-      URL.revokeObjectURL(previewUrl);
-      setPreviewUrl(null);
-    }
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia(
-        kind === "audio" ? { audio: true } : { video: true, audio: true },
-      );
-      streamRef.current = stream;
-      if (kind === "video" && liveVideoRef.current) {
-        liveVideoRef.current.srcObject = stream;
-        liveVideoRef.current.muted = true;
-        await liveVideoRef.current.play().catch(() => {});
-      }
-      const mime = kind === "audio" ? "audio/webm" : "video/webm";
-      const rec = new MediaRecorder(stream, MediaRecorder.isTypeSupported(mime) ? { mimeType: mime } : undefined);
-      recorderRef.current = rec;
-      chunksRef.current = [];
-      rec.ondataavailable = (e) => {
-        if (e.data && e.data.size > 0) chunksRef.current.push(e.data);
-      };
-      rec.onstop = () => {
-        const b = new Blob(chunksRef.current, { type: rec.mimeType || mime });
-        setBlob(b);
-        setPreviewUrl(URL.createObjectURL(b));
-        cleanupStream();
-      };
-      rec.start();
-      startedAtRef.current = Date.now();
-      setElapsed(0);
-      timerRef.current = window.setInterval(() => {
-        setElapsed(Date.now() - startedAtRef.current);
-      }, 250);
-      setRecording(true);
-    } catch (e: any) {
-      setPermError(
-        e?.name === "NotAllowedError"
-          ? `Permission to use the ${kind === "audio" ? "microphone" : "camera"} was denied. You can answer as text instead.`
-          : e?.message || "Could not start recording.",
-      );
-      cleanupStream();
-    }
-  };
-
-  const stop = () => {
-    const rec = recorderRef.current;
-    if (rec && rec.state !== "inactive") rec.stop();
-    setRecording(false);
-  };
-
-  return (
-    <div className="space-y-3">
-      {kind === "video" && (recording || !blob) && (
-        <video
-          ref={liveVideoRef}
-          className="w-full rounded-md bg-black"
-          playsInline
-          muted
-          style={{ display: recording ? "block" : "none" }}
-        />
-      )}
-      {permError && (
-        <p className="rounded-md border border-destructive/40 bg-destructive/5 p-2 text-sm text-destructive">{permError}</p>
-      )}
-      {!recording && !blob && (
-        <Button
-          type="button"
-          variant="outline"
-          onClick={start}
-          disabled={disabled}
-          aria-label={`Start ${kind} recording`}
-        >
-          {kind === "audio" ? <Mic className="h-4 w-4" /> : <VideoIcon className="h-4 w-4" />}
-          Record {kind}
-        </Button>
-      )}
-      {recording && (
-        <div className="flex items-center gap-3">
-          <span aria-hidden className="inline-block h-2.5 w-2.5 animate-pulse rounded-full bg-red-500" />
-          <span className="text-sm tabular-nums" aria-live="polite">Recording {formatElapsed(elapsed)}</span>
-          <Button type="button" variant="outline" onClick={stop} aria-label="Stop recording">
-            <Square className="h-4 w-4" />
-            Stop
-          </Button>
-        </div>
-      )}
-      {!recording && blob && previewUrl && (
-        <div className="space-y-2">
-          {kind === "audio" ? (
-            <audio src={previewUrl} controls className="w-full" />
-          ) : (
-            <video src={previewUrl} controls className="w-full rounded-md bg-black" playsInline />
-          )}
-          <div className="flex flex-wrap gap-2">
-            <Button
-              type="button"
-              onClick={() => onConfirm(blob)}
-              disabled={uploading || disabled}
-              style={{ backgroundColor: "var(--bw-orange)", color: "white" }}
-            >
-              {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-              {uploading ? "Uploading…" : "Use this recording"}
-            </Button>
-            <Button type="button" variant="outline" onClick={start} disabled={uploading || disabled}>
-              <RotateCcw className="h-4 w-4" />
-              Re-record
-            </Button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function DictateButton({ onFinal, disabled }: { onFinal: (text: string) => void; disabled?: boolean }) {
-  const [listening, setListening] = useState(false);
-  const recRef = useRef<any>(null);
-  const supported =
-    typeof window !== "undefined" &&
-    ((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition);
-  if (!supported) return null;
-  const toggle = () => {
-    if (listening) {
-      try { recRef.current?.stop(); } catch { /* ignore */ }
-      setListening(false);
-      return;
-    }
-    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    const rec = new SR();
-    rec.continuous = true;
-    rec.interimResults = false;
-    rec.lang = navigator.language || "en-US";
-    rec.onresult = (event: any) => {
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        const r = event.results[i];
-        if (r.isFinal && r[0]?.transcript) onFinal(r[0].transcript.trim() + " ");
-      }
-    };
-    rec.onend = () => setListening(false);
-    rec.onerror = () => setListening(false);
-    recRef.current = rec;
-    try {
-      rec.start();
-      setListening(true);
-    } catch { setListening(false); }
-  };
-  return (
-    <Button
-      type="button"
-      variant={listening ? "default" : "outline"}
-      onClick={toggle}
-      disabled={disabled}
-      aria-pressed={listening}
-      aria-label={listening ? "Stop dictation" : "Start dictation"}
-    >
-      <Mic className="h-4 w-4" />
-      {listening ? "Stop dictating" : "Dictate"}
-    </Button>
-  );
-}
 
 function QaMultimodalWidget({
   step,
@@ -1642,29 +1529,12 @@ function QaMultimodalWidget({
     setUploading(true);
     setUploadError(null);
     try {
-      const { data, error } = await supabase.functions.invoke("coaching-response-upload", {
-        body: {
-          coaching_session_id: sessionId,
-          activity_code: activityCode,
-          question_key: q.key,
-          kind,
-        },
-      });
-      if (error) throw new Error(error.message);
-      const { upload_url, media_id } = (data || {}) as { upload_url: string; upload_id?: string; media_id: string };
-      if (!upload_url || !media_id) throw new Error("Upload broker returned no URL");
-      const file =
-        blob instanceof File
-          ? blob
-          : new File(
-              [blob],
-              `answer-${Date.now()}.webm`,
-              { type: blob.type || (kind === "audio" ? "audio/webm" : "video/webm") },
-            );
-      await new Promise<void>((resolve, reject) => {
-        const upload = UpChunk.createUpload({ endpoint: upload_url, file });
-        upload.on("error", (err: any) => reject(new Error(err?.detail?.message || "Upload failed")));
-        upload.on("success", () => resolve());
+      const { media_id } = await uploadCoachingRecording({
+        sessionId,
+        activityCode,
+        questionKey: q.key,
+        kind,
+        blob,
       });
       const next = { ...value, [q.key]: { mode: kind, media_id } as QaAnswer };
       onChange(next);
@@ -1675,6 +1545,7 @@ function QaMultimodalWidget({
       setUploading(false);
     }
   };
+
 
   const hasAnswerForCurrent =
     (mode === "text" || mode === "dictate") ? text.trim().length > 0 : !!existing?.media_id;
@@ -2174,12 +2045,11 @@ export default function CoachingActivityRunner() {
   const canAdvance = (() => {
     if (!step) return false;
     if (step.widget === "textarea") {
-      const v = (responses[step.key || ""] as string) || "";
-      return v.trim().length > 0;
+      return mmIsFilled(responses[step.key || ""]);
     }
     if (step.widget === "list_builder") {
-      const arr = (responses[step.key || ""] as string[]) || [];
-      const listOk = arr.length >= (step.min ?? 0) && arr.every((x) => x.trim().length > 0);
+      const arr = (responses[step.key || ""] as MMValue[]) || [];
+      const listOk = arr.length >= (step.min ?? 0) && arr.every((x) => mmIsFilled(x));
       if (step.prioritize) {
         const picks = (responses[step.prioritize.priorityKey] as string[]) || [];
         return listOk && picks.length === step.prioritize.selectExactly;
@@ -2189,9 +2059,9 @@ export default function CoachingActivityRunner() {
     if (step.widget === "risk_blocks") {
       const negs = (responses.negatives || []) as Negative[];
       if (!(step.subfields && step.subfields.length > 0)) {
-        return negs.length > 0;
+        return negs.length > 0 && negs.every((n) => mmIsFilled(n.text));
       }
-      return negs.every((n) => step.subfields!.every((sf) => ((n as any)[sf] || "").trim().length > 0));
+      return negs.every((n) => step.subfields!.every((sf) => mmIsFilled((n as any)[sf])));
     }
     if (step.widget === "ai_panel") return !!responses.analysis?.html;
     if (step.widget === "synthesis") return true;
@@ -2202,11 +2072,11 @@ export default function CoachingActivityRunner() {
     if (step.widget === "text_select") {
       const sel = (responses[step.key || ""] as SelectedSaying[]) || [];
       const need = step.selectExactly ?? 3;
-      return sel.length === need && sel.every((s) => (s.description || "").trim().length > 0);
+      return sel.length === need && sel.every((s) => mmIsFilled(s.description));
     }
     if (step.widget === "content") {
       if (step.reflection && step.reflection.optional === false && step.key) {
-        return ((responses[step.key] as string) || "").trim().length > 0;
+        return mmIsFilled(responses[step.key]);
       }
       return true;
     }
@@ -2214,7 +2084,7 @@ export default function CoachingActivityRunner() {
       const items = (responses[step.fromKey || ""] as SelectedImage[]) || [];
       if (items.length === 0) return false;
       const need = step.minDescribed ?? items.length;
-      const done = items.filter((it) => (it.description || "").trim().length > 0).length;
+      const done = items.filter((it) => mmIsFilled(it.description)).length;
       return done >= need;
     }
     if (step.widget === "recap") return !!(responses.recap as { html?: string } | undefined)?.html;
@@ -2415,20 +2285,24 @@ export default function CoachingActivityRunner() {
             {step?.widget === "textarea" && (
               <TextareaWidget
                 step={step}
-                value={(responses[step.key || ""] as string) || ""}
+                value={(responses[step.key || ""] as MMValue) || ""}
                 onChange={(v) =>
                   setResponses((r) => ({ ...r, [step.key || "text"]: v }))
                 }
+                sessionId={session.id}
+                activityCode={activity.code || ""}
               />
             )}
 
             {step?.widget === "list_builder" && (
               <ListBuilderWidget
                 step={step}
-                items={(responses[step.key || ""] as string[]) || []}
+                items={(responses[step.key || ""] as MMValue[]) || []}
                 onChange={(v) =>
                   setResponses((r) => ({ ...r, [step.key || "items"]: v }))
                 }
+                sessionId={session.id}
+                activityCode={activity.code || ""}
               />
             )}
 
@@ -2437,7 +2311,7 @@ export default function CoachingActivityRunner() {
                 sessionId={session.id}
                 stepKey={step.key}
                 suggest={step.suggest}
-                existing={(responses[step.key] as string[]) || []}
+                existing={((responses[step.key] as MMValue[]) || []).filter((v): v is string => typeof v === "string")}
                 pending={(responses._suggest as any)?.[step.key]}
                 onPendingChange={(next) =>
                   setResponses((r) => ({
@@ -2448,7 +2322,7 @@ export default function CoachingActivityRunner() {
                 onAdd={(text) =>
                   setResponses((r) => ({
                     ...r,
-                    [step.key!]: [...((r[step.key!] as string[]) || []), text],
+                    [step.key!]: [...((r[step.key!] as MMValue[]) || []), text],
                   }))
                 }
               />
@@ -2456,7 +2330,7 @@ export default function CoachingActivityRunner() {
 
             {step?.widget === "list_builder" && step.prioritize && step.key && (
               <PrioritizePanel
-                items={(responses[step.key] as string[]) || []}
+                items={((responses[step.key] as MMValue[]) || []).filter((v): v is string => typeof v === "string")}
                 selectExactly={step.prioritize.selectExactly}
                 title={step.prioritize.title}
                 prompt={step.prioritize.prompt}
@@ -2476,7 +2350,7 @@ export default function CoachingActivityRunner() {
                       <p className="text-xs font-medium text-muted-foreground">Your measure of success</p>
                       <ul className="mt-1 list-disc pl-5 text-sm">
                         {responses.positives.map((v, i) => (
-                          <li key={i}>{v}</li>
+                          <li key={i}>{typeof v === "string" ? v : "(recording)"}</li>
                         ))}
                       </ul>
                     </CardContent>
@@ -2486,6 +2360,8 @@ export default function CoachingActivityRunner() {
                   step={step}
                   items={(responses.negatives as Negative[]) || []}
                   onChange={(v) => setResponses((r) => ({ ...r, negatives: v }))}
+                  sessionId={session.id}
+                  activityCode={activity.code || ""}
                 />
               </>
             )}
@@ -2495,7 +2371,9 @@ export default function CoachingActivityRunner() {
                 sessionId={session.id}
                 stepKey={step.key}
                 suggest={step.suggest}
-                existing={((responses.negatives as Negative[]) || []).map((n) => n.text).filter(Boolean)}
+                existing={((responses.negatives as Negative[]) || [])
+                  .map((n) => n.text)
+                  .filter((t): t is string => typeof t === "string" && t.length > 0)}
                 pending={(responses._suggest as any)?.[step.key]}
                 onPendingChange={(next) =>
                   setResponses((r) => ({
@@ -2541,17 +2419,21 @@ export default function CoachingActivityRunner() {
                 step={step}
                 value={(responses[step.key] as SelectedSaying[]) || []}
                 onChange={(v) => setResponses((r) => ({ ...r, [step.key!]: v }))}
+                sessionId={session.id}
+                activityCode={activity.code || ""}
               />
             )}
 
             {step?.widget === "content" && (
               <ContentWidget
                 step={step}
-                value={step.key ? ((responses[step.key] as string) || "") : ""}
+                value={step.key ? (responses[step.key] as MMValue | undefined) : undefined}
                 onChange={(v) => {
                   if (!step.key) return;
                   setResponses((r) => ({ ...r, [step.key!]: v }));
                 }}
+                sessionId={session.id}
+                activityCode={activity.code || ""}
               />
             )}
 
@@ -2560,6 +2442,8 @@ export default function CoachingActivityRunner() {
                 step={step}
                 value={(responses[step.fromKey || ""] as SelectedImage[]) || []}
                 onChange={(v) => setResponses((r) => ({ ...r, [step.fromKey!]: v }))}
+                sessionId={session.id}
+                activityCode={activity.code || ""}
               />
             )}
 

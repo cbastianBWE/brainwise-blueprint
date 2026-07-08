@@ -134,11 +134,14 @@ export function CoachingRecordingPlayer({ mediaId }: { mediaId: string }) {
 }
 
 
+export type MMRecView = { mode?: "audio" | "video"; media_id: string };
+export type MMValueView = string | MMRecView;
+
 export interface Negative {
-  text: string;
-  a?: string;
-  b?: string;
-  c?: string;
+  text: MMValueView;
+  a?: MMValueView;
+  b?: MMValueView;
+  c?: MMValueView;
 }
 
 export interface ChatMsg {
@@ -147,9 +150,9 @@ export interface ChatMsg {
 }
 
 export interface Responses {
-  action?: string;
-  positives?: string[];
-  positiveAction?: string;
+  action?: MMValueView;
+  positives?: MMValueView[];
+  positiveAction?: MMValueView;
   negatives?: Negative[];
   analysis?: { html?: string; [k: string]: unknown };
   chat?: ChatMsg[];
@@ -173,6 +176,22 @@ export function AiAnalysisPanel({ html }: { html?: string }) {
   );
 }
 
+function isRec(v: unknown): v is { media_id: string } {
+  return !!v && typeof v === "object" && typeof (v as any).media_id === "string";
+}
+function renderMM(v: unknown): JSX.Element | null {
+  if (typeof v === "string") {
+    if (!v.trim()) return null;
+    return <p className="whitespace-pre-wrap text-sm">{v}</p>;
+  }
+  if (isRec(v)) return <CoachingRecordingPlayer mediaId={(v as any).media_id} />;
+  return null;
+}
+function mmFilled(v: unknown): boolean {
+  if (typeof v === "string") return v.trim().length > 0;
+  return isRec(v);
+}
+
 export function SynthesisView({ responses, steps }: { responses: Responses; steps?: any[] }) {
   if (!steps || steps.length === 0) return null;
   const rendered = new Set<string>();
@@ -185,40 +204,49 @@ export function SynthesisView({ responses, steps }: { responses: Responses; step
     const heading = step.summaryLabel || step.label || step.title || key;
     if (w === "textarea" || w === "content") {
       const v = (responses as any)[key];
-      if (typeof v === "string" && v.trim()) {
+      if (mmFilled(v)) {
         rendered.add(key);
         sections.push(
           <div key={key}>
             <h3 className="text-sm font-semibold text-muted-foreground">{heading}</h3>
-            <p className="mt-1 whitespace-pre-wrap text-sm">{v}</p>
+            <div className="mt-1">{renderMM(v)}</div>
           </div>
         );
       }
     } else if (w === "list_builder") {
-      const arr = (responses as any)[key] as string[] | undefined;
+      const arr = (responses as any)[key] as unknown[] | undefined;
       if (Array.isArray(arr) && arr.length > 0) {
         rendered.add(key);
         const priorityKey = step.prioritize?.priorityKey as string | undefined;
         const prioritized = priorityKey
-          ? new Set(((responses as any)[priorityKey] as string[] | undefined) || [])
+          ? new Set((((responses as any)[priorityKey] as unknown[] | undefined) || []).filter((x) => typeof x === "string") as string[])
           : null;
         sections.push(
           <div key={key}>
             <h3 className="text-sm font-semibold text-muted-foreground">{heading}</h3>
-            <ul className="mt-1 list-disc pl-5 text-sm">
+            <ul className="mt-1 space-y-2 text-sm">
               {arr.map((p, i) => {
-                const marked = prioritized?.has(p);
+                const marked = typeof p === "string" && prioritized?.has(p);
                 return (
                   <li key={i} className={marked ? "font-semibold" : undefined}>
-                    {marked && (
-                      <span aria-hidden style={{ color: "var(--bw-orange)" }} className="mr-1">★</span>
-                    )}
-                    <span style={marked ? { color: "var(--bw-orange)" } : undefined}>{p}</span>
-                    {marked && (
-                      <span className="ml-2 rounded bg-[var(--bw-orange)]/10 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-[var(--bw-orange)]">
-                        Top {step.prioritize?.selectExactly ?? ""}
+                    {typeof p === "string" ? (
+                      <span className="inline-flex items-start gap-1">
+                        <span aria-hidden className="mt-1">•</span>
+                        <span>
+                          {marked && (
+                            <span aria-hidden style={{ color: "var(--bw-orange)" }} className="mr-1">★</span>
+                          )}
+                          <span style={marked ? { color: "var(--bw-orange)" } : undefined}>{p}</span>
+                          {marked && (
+                            <span className="ml-2 rounded bg-[var(--bw-orange)]/10 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-[var(--bw-orange)]">
+                              Top {step.prioritize?.selectExactly ?? ""}
+                            </span>
+                          )}
+                        </span>
                       </span>
-                    )}
+                    ) : isRec(p) ? (
+                      <CoachingRecordingPlayer mediaId={(p as any).media_id} />
+                    ) : null}
                   </li>
                 );
               })}
@@ -227,7 +255,7 @@ export function SynthesisView({ responses, steps }: { responses: Responses; step
         );
       }
     } else if (w === "text_select") {
-      const arr = (responses as any)[key] as Array<{ text: string; author: string | null; description: string }> | undefined;
+      const arr = (responses as any)[key] as Array<{ text: string; author: string | null; description: unknown }> | undefined;
       if (Array.isArray(arr) && arr.length > 0) {
         rendered.add(key);
         sections.push(
@@ -239,9 +267,7 @@ export function SynthesisView({ responses, steps }: { responses: Responses; step
                 {s.author && (
                   <p className="text-xs text-muted-foreground">— {s.author}</p>
                 )}
-                {s.description && (
-                  <p className="text-sm">{s.description}</p>
-                )}
+                {mmFilled(s.description) && <div>{renderMM(s.description)}</div>}
               </div>
             ))}
           </div>
@@ -249,7 +275,7 @@ export function SynthesisView({ responses, steps }: { responses: Responses; step
       }
     } else if (w === "risk_blocks") {
       if (!(step.subfields && step.subfields.length > 0)) continue;
-      const arr = (responses as any)[key] as Negative[] | undefined;
+      const arr = (responses as any)[key] as any[] | undefined;
       if (Array.isArray(arr) && arr.length > 0) {
         rendered.add(key);
         const labels: Record<string, string> = { ...defaultRiskLabels, ...(step.subfieldLabels || {}) };
@@ -258,13 +284,29 @@ export function SynthesisView({ responses, steps }: { responses: Responses; step
             <h3 className="text-sm font-semibold text-muted-foreground">{heading}</h3>
             {arr.map((n, i) => (
               <Card key={i}>
-                <CardHeader className="pb-2"><CardTitle className="text-base">{n.text}</CardTitle></CardHeader>
-                <CardContent className="space-y-2 text-sm">
-                  {(step.subfields as string[]).map((sf) =>
-                    (n as any)[sf] ? (
-                      <div key={sf}><span className="font-medium">{labels[sf] || sf}: </span>{(n as any)[sf]}</div>
-                    ) : null
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base">
+                    {typeof n.text === "string" ? (n.text || `Risk ${i + 1}`) : `Risk ${i + 1}`}
+                  </CardTitle>
+                  {isRec(n.text) && (
+                    <div className="pt-2"><CoachingRecordingPlayer mediaId={(n.text as any).media_id} /></div>
                   )}
+                </CardHeader>
+                <CardContent className="space-y-2 text-sm">
+                  {(step.subfields as string[]).map((sf) => {
+                    const val = (n as any)[sf];
+                    if (!mmFilled(val)) return null;
+                    return (
+                      <div key={sf}>
+                        <span className="font-medium">{labels[sf] || sf}: </span>
+                        {typeof val === "string" ? (
+                          <span>{val}</span>
+                        ) : (
+                          <div className="mt-1"><CoachingRecordingPlayer mediaId={(val as any).media_id} /></div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </CardContent>
               </Card>
             ))}
