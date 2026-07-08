@@ -17,6 +17,7 @@ import {
 interface SessionRow {
   id: string;
   activity_id: string;
+  user_id: string;
   status: string;
   responses: Responses | null;
   completed_at: string | null;
@@ -48,7 +49,7 @@ export default function CoachingSessionView() {
       const { data } = await supabase
         .from("coaching_activity_sessions")
         .select(
-          "id, activity_id, status, responses, completed_at, coaching_activities(title, tier, definition)",
+          "id, activity_id, user_id, status, responses, completed_at, coaching_activities(title, tier, definition)",
         )
         .eq("id", sessionId)
         .maybeSingle();
@@ -161,15 +162,23 @@ export default function CoachingSessionView() {
         day: "numeric",
       })
     : null;
+  const isOwner = !!user && !!session && user.id === session.user_id;
 
   return (
     <div className="container mx-auto max-w-3xl space-y-6 p-6">
       <div>
         <Button asChild variant="ghost" size="sm" className="-ml-2 mb-2">
-          <Link to="/coaching">
-            <ArrowLeft className="h-4 w-4" />
-            My Coaching
-          </Link>
+          {isOwner ? (
+            <Link to="/coaching">
+              <ArrowLeft className="h-4 w-4" />
+              My Coaching
+            </Link>
+          ) : (
+            <Link to={`/coach/client-results?user_id=${session.user_id}`}>
+              <ArrowLeft className="h-4 w-4" />
+              Back to client
+            </Link>
+          )}
         </Button>
         <div className="flex flex-wrap items-center gap-2">
           {tier && <Badge variant="outline">{tier}</Badge>}
@@ -177,6 +186,11 @@ export default function CoachingSessionView() {
             <span className="text-xs text-muted-foreground">Completed {completed}</span>
           )}
         </div>
+        {!isOwner && (
+          <p className="mt-2 text-sm text-muted-foreground">
+            Viewing your client's coaching session.
+          </p>
+        )}
         <h1 className="mt-2 text-2xl font-semibold">{title}</h1>
       </div>
 
@@ -233,35 +247,37 @@ export default function CoachingSessionView() {
         </Card>
       )}
 
-      <div className="flex flex-wrap gap-2 pt-2">
-        <Button onClick={() => navigate(`/coaching/${session.activity_id}?fresh=1`)}>
-          <RotateCcw className="h-4 w-4" />
-          Do it again
-        </Button>
-        {coachUserId && (
-          <Button
-            variant="outline"
-            onClick={shareWithCoach}
-            disabled={!!existingShareId || sharing}
-          >
-            {existingShareId ? (
-              <>
-                <CheckCircle2 className="h-4 w-4" />
-                Shared
-              </>
-            ) : (
-              <>
-                {sharing ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Share2 className="h-4 w-4" />
-                )}
-                Share with my coach
-              </>
-            )}
+      {isOwner && (
+        <div className="flex flex-wrap gap-2 pt-2">
+          <Button onClick={() => navigate(`/coaching/${session.activity_id}?fresh=1`)}>
+            <RotateCcw className="h-4 w-4" />
+            Do it again
           </Button>
-        )}
-      </div>
+          {coachUserId && (
+            <Button
+              variant="outline"
+              onClick={shareWithCoach}
+              disabled={!!existingShareId || sharing}
+            >
+              {existingShareId ? (
+                <>
+                  <CheckCircle2 className="h-4 w-4" />
+                  Shared
+                </>
+              ) : (
+                <>
+                  {sharing ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Share2 className="h-4 w-4" />
+                  )}
+                  Share with my coach
+                </>
+              )}
+            </Button>
+          )}
+        </div>
+      )}
     </div>
   );
 }
