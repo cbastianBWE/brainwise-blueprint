@@ -2218,6 +2218,7 @@ export default function CoachingActivityRunner() {
       return done >= need;
     }
     if (step.widget === "recap") return !!(responses.recap as { html?: string } | undefined)?.html;
+    if (step.widget === "transition_map") return true;
     if (step.widget === "qa_multimodal") {
       const qs = (step.questions as Array<{ key: string }>) || [];
       const bag = (responses[step.key || ""] as Record<string, QaAnswer>) || {};
