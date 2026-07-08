@@ -2029,12 +2029,11 @@ export default function CoachingActivityRunner() {
   const canAdvance = (() => {
     if (!step) return false;
     if (step.widget === "textarea") {
-      const v = (responses[step.key || ""] as string) || "";
-      return v.trim().length > 0;
+      return mmIsFilled(responses[step.key || ""]);
     }
     if (step.widget === "list_builder") {
-      const arr = (responses[step.key || ""] as string[]) || [];
-      const listOk = arr.length >= (step.min ?? 0) && arr.every((x) => x.trim().length > 0);
+      const arr = (responses[step.key || ""] as MMValue[]) || [];
+      const listOk = arr.length >= (step.min ?? 0) && arr.every((x) => mmIsFilled(x));
       if (step.prioritize) {
         const picks = (responses[step.prioritize.priorityKey] as string[]) || [];
         return listOk && picks.length === step.prioritize.selectExactly;
@@ -2044,9 +2043,9 @@ export default function CoachingActivityRunner() {
     if (step.widget === "risk_blocks") {
       const negs = (responses.negatives || []) as Negative[];
       if (!(step.subfields && step.subfields.length > 0)) {
-        return negs.length > 0;
+        return negs.length > 0 && negs.every((n) => mmIsFilled(n.text));
       }
-      return negs.every((n) => step.subfields!.every((sf) => ((n as any)[sf] || "").trim().length > 0));
+      return negs.every((n) => step.subfields!.every((sf) => mmIsFilled((n as any)[sf])));
     }
     if (step.widget === "ai_panel") return !!responses.analysis?.html;
     if (step.widget === "synthesis") return true;
@@ -2057,11 +2056,11 @@ export default function CoachingActivityRunner() {
     if (step.widget === "text_select") {
       const sel = (responses[step.key || ""] as SelectedSaying[]) || [];
       const need = step.selectExactly ?? 3;
-      return sel.length === need && sel.every((s) => (s.description || "").trim().length > 0);
+      return sel.length === need && sel.every((s) => mmIsFilled(s.description));
     }
     if (step.widget === "content") {
       if (step.reflection && step.reflection.optional === false && step.key) {
-        return ((responses[step.key] as string) || "").trim().length > 0;
+        return mmIsFilled(responses[step.key]);
       }
       return true;
     }
@@ -2069,7 +2068,7 @@ export default function CoachingActivityRunner() {
       const items = (responses[step.fromKey || ""] as SelectedImage[]) || [];
       if (items.length === 0) return false;
       const need = step.minDescribed ?? items.length;
-      const done = items.filter((it) => (it.description || "").trim().length > 0).length;
+      const done = items.filter((it) => mmIsFilled(it.description)).length;
       return done >= need;
     }
     if (step.widget === "recap") return !!(responses.recap as { html?: string } | undefined)?.html;
