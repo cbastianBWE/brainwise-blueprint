@@ -1333,6 +1333,13 @@ function ContentWidget({
           ))}
         </ul>
       )}
+      {step.resources && step.resources.length > 0 && (
+        <div className="space-y-4">
+          {step.resources.map((r) => (
+            <ResourceVideo key={r.id} resourceId={r.id} title={r.title} />
+          ))}
+        </div>
+      )}
       {step.reflection && step.key && (
         <div className="space-y-2">
           {step.reflection.prompt && <Label>{step.reflection.prompt}</Label>}
