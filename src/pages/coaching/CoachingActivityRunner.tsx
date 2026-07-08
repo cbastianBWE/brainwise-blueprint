@@ -1795,6 +1795,20 @@ export default function CoachingActivityRunner() {
               />
             )}
 
+            {step?.widget === "list_builder" && step.prioritize && step.key && (
+              <PrioritizePanel
+                items={(responses[step.key] as string[]) || []}
+                selectExactly={step.prioritize.selectExactly}
+                title={step.prioritize.title}
+                prompt={step.prioritize.prompt}
+                helper={step.prioritize.helper}
+                selected={(responses[step.prioritize.priorityKey] as string[]) || []}
+                onChange={(next) =>
+                  setResponses((r) => ({ ...r, [step.prioritize!.priorityKey]: next }))
+                }
+              />
+            )}
+
             {step?.widget === "risk_blocks" && (
               <>
                 {(step.subfields?.length ?? 0) > 0 && responses.positives && responses.positives.length > 0 && (
