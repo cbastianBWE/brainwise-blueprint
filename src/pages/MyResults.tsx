@@ -46,6 +46,7 @@ import {
 import { format } from "date-fns";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import DrivingFacetScores from "@/components/results/DrivingFacetScores";
+import PtpIntroGate from "@/components/results/PtpIntroGate";
 import {
   PTPProfileOverviewSection,
   PTPDimensionHighlightsSection,
