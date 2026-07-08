@@ -1380,10 +1380,14 @@ function ContentWidget({
   step,
   value,
   onChange,
+  sessionId,
+  activityCode,
 }: {
   step: Step;
-  value: string;
-  onChange: (v: string) => void;
+  value: MMValue | undefined;
+  onChange: (v: MMValue) => void;
+  sessionId: string;
+  activityCode: string;
 }) {
   return (
     <div className="space-y-4">
@@ -1421,11 +1425,14 @@ function ContentWidget({
       {step.reflection && step.key && (
         <div className="space-y-2">
           {step.reflection.prompt && <Label>{step.reflection.prompt}</Label>}
-          <Textarea
-            rows={step.reflection.minRows ?? 4}
-            placeholder={step.reflection.placeholder || "Type here…"}
-            value={value || ""}
-            onChange={(e) => onChange(e.target.value)}
+          <MultimodalField
+            value={value}
+            onChange={onChange}
+            sessionId={sessionId}
+            activityCode={activityCode}
+            questionKey={step.key}
+            placeholder={step.reflection.placeholder}
+            minRows={step.reflection.minRows ?? 4}
           />
         </div>
       )}
