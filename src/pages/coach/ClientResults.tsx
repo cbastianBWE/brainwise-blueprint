@@ -478,6 +478,7 @@ function AssessmentList({
 
       <div className="mt-8">
         <CoachClientPlan clientUserId={clientUserId} />
+        <CoachClientCoaching clientUserId={clientUserId} clientName={clientName} />
       </div>
     </div>
   );
