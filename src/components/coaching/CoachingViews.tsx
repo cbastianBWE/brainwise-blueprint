@@ -223,8 +223,43 @@ export function SynthesisView({ responses, steps }: { responses: Responses; step
           </div>
         );
       }
+    } else if (w === "qa_multimodal") {
+      const bag = (responses as any)[key] as
+        | Record<string, { mode?: string; text?: string; media_id?: string; skipped?: boolean }>
+        | undefined;
+      const questions = (step.questions as Array<{ key: string; prompt: string }>) || [];
+      if (bag && questions.length > 0) {
+        rendered.add(key);
+        sections.push(
+          <div key={key} className="space-y-4">
+            <h3 className="text-sm font-semibold text-muted-foreground">{heading}</h3>
+            {questions.map((q) => {
+              const a = bag[q.key];
+              return (
+                <div key={q.key} className="space-y-2">
+                  <h4 className="text-sm font-medium">{q.prompt}</h4>
+                  {!a || a.skipped ? (
+                    <p className="text-sm italic text-muted-foreground">Skipped</p>
+                  ) : a.mode === "audio" || a.mode === "video" ? (
+                    a.media_id ? (
+                      <CoachingRecordingPlayer mediaId={a.media_id} />
+                    ) : (
+                      <p className="text-xs text-muted-foreground">Recording unavailable.</p>
+                    )
+                  ) : a.text ? (
+                    <p className="whitespace-pre-wrap text-sm">{a.text}</p>
+                  ) : (
+                    <p className="text-sm italic text-muted-foreground">No answer</p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        );
+      }
     }
   }
+
   if (sections.length === 0) return null;
   return <div className="space-y-6">{sections}</div>;
 }
