@@ -1443,29 +1443,12 @@ function QaMultimodalWidget({
     setUploading(true);
     setUploadError(null);
     try {
-      const { data, error } = await supabase.functions.invoke("coaching-response-upload", {
-        body: {
-          coaching_session_id: sessionId,
-          activity_code: activityCode,
-          question_key: q.key,
-          kind,
-        },
-      });
-      if (error) throw new Error(error.message);
-      const { upload_url, media_id } = (data || {}) as { upload_url: string; upload_id?: string; media_id: string };
-      if (!upload_url || !media_id) throw new Error("Upload broker returned no URL");
-      const file =
-        blob instanceof File
-          ? blob
-          : new File(
-              [blob],
-              `answer-${Date.now()}.webm`,
-              { type: blob.type || (kind === "audio" ? "audio/webm" : "video/webm") },
-            );
-      await new Promise<void>((resolve, reject) => {
-        const upload = UpChunk.createUpload({ endpoint: upload_url, file });
-        upload.on("error", (err: any) => reject(new Error(err?.detail?.message || "Upload failed")));
-        upload.on("success", () => resolve());
+      const { media_id } = await uploadCoachingRecording({
+        sessionId,
+        activityCode,
+        questionKey: q.key,
+        kind,
+        blob,
       });
       const next = { ...value, [q.key]: { mode: kind, media_id } as QaAnswer };
       onChange(next);
@@ -1476,6 +1459,7 @@ function QaMultimodalWidget({
       setUploading(false);
     }
   };
+
 
   const hasAnswerForCurrent =
     (mode === "text" || mode === "dictate") ? text.trim().length > 0 : !!existing?.media_id;
