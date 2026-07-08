@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Loader2, ArrowLeft, ArrowRight, Plus, Trash2, Send, Share2, CheckCircle2, Check, X, Mic, Video as VideoIcon, Square, Upload as UploadIcon, RotateCcw } from "lucide-react";
-import * as UpChunk from "@mux/upchunk";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -13,8 +12,17 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { SynthesisView, AiAnalysisPanel, ChatTranscript, ResourceVideo } from "@/components/coaching/CoachingViews";
+import { SynthesisView, AiAnalysisPanel, ChatTranscript, ResourceVideo, CoachingRecordingPlayer } from "@/components/coaching/CoachingViews";
 import TransitionMapWalkthrough from "@/components/coaching/TransitionMapWalkthrough";
+import {
+  MultimodalField,
+  MediaRecorderPane,
+  DictateButton,
+  isMMRec,
+  mmIsFilled,
+  type MMValue,
+} from "@/components/coaching/MultimodalField";
+
 
 // ---- Types ----
 interface Step {
