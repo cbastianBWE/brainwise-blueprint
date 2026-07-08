@@ -1,5 +1,90 @@
+import { useState } from "react";
 import DOMPurify from "dompurify";
+import MuxPlayer from "@mux/mux-player-react";
+import { useQuery } from "@tanstack/react-query";
+import { Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+
+interface RecordingResponse {
+  kind?: string;
+  processing?: boolean;
+  playback_id?: string;
+  token?: string;
+  media_kind?: "audio" | "video";
+  mux_status?: string;
+  transcript?: string | null;
+  transcript_status?: string | null;
+}
+
+export function CoachingRecordingPlayer({ mediaId }: { mediaId: string }) {
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ["coaching-recording", mediaId],
+    queryFn: async () => {
+      const { data, error } = await supabase.functions.invoke("get-coaching-response-video-url", {
+        body: { p_media_id: mediaId },
+      });
+      if (error) throw error;
+      return data as RecordingResponse;
+    },
+    staleTime: 60_000,
+    retry: false,
+  });
+  const [showTranscript, setShowTranscript] = useState(false);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+        <Loader2 className="h-3 w-3 animate-spin" /> Loading recording…
+      </div>
+    );
+  }
+  if (isError || !data) {
+    return <p className="text-xs text-muted-foreground">Recording unavailable.</p>;
+  }
+  if (data.processing) {
+    return <p className="text-xs text-muted-foreground">This recording is still processing.</p>;
+  }
+  if (!data.playback_id || !data.token) {
+    return <p className="text-xs text-muted-foreground">Recording unavailable.</p>;
+  }
+  const isAudio = data.media_kind === "audio";
+  return (
+    <div className="space-y-2">
+      <MuxPlayer
+        playbackId={data.playback_id}
+        tokens={{ playback: data.token }}
+        streamType="on-demand"
+        {...(isAudio ? { audio: true } : {})}
+        style={
+          isAudio
+            ? { width: "100%" }
+            : { maxHeight: "50vh", aspectRatio: "16/9", width: "100%" }
+        }
+      />
+      {data.transcript_status === "ready" && data.transcript && (
+        <div className="rounded-md border bg-muted/30">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="w-full justify-between"
+            onClick={() => setShowTranscript((v) => !v)}
+            aria-expanded={showTranscript}
+          >
+            Transcript
+            <span aria-hidden>{showTranscript ? "−" : "+"}</span>
+          </Button>
+          {showTranscript && (
+            <p className="whitespace-pre-wrap px-3 pb-3 text-sm">{data.transcript}</p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 
 export interface Negative {
   text: string;
@@ -138,8 +223,43 @@ export function SynthesisView({ responses, steps }: { responses: Responses; step
           </div>
         );
       }
+    } else if (w === "qa_multimodal") {
+      const bag = (responses as any)[key] as
+        | Record<string, { mode?: string; text?: string; media_id?: string; skipped?: boolean }>
+        | undefined;
+      const questions = (step.questions as Array<{ key: string; prompt: string }>) || [];
+      if (bag && questions.length > 0) {
+        rendered.add(key);
+        sections.push(
+          <div key={key} className="space-y-4">
+            <h3 className="text-sm font-semibold text-muted-foreground">{heading}</h3>
+            {questions.map((q) => {
+              const a = bag[q.key];
+              return (
+                <div key={q.key} className="space-y-2">
+                  <h4 className="text-sm font-medium">{q.prompt}</h4>
+                  {!a || a.skipped ? (
+                    <p className="text-sm italic text-muted-foreground">Skipped</p>
+                  ) : a.mode === "audio" || a.mode === "video" ? (
+                    a.media_id ? (
+                      <CoachingRecordingPlayer mediaId={a.media_id} />
+                    ) : (
+                      <p className="text-xs text-muted-foreground">Recording unavailable.</p>
+                    )
+                  ) : a.text ? (
+                    <p className="whitespace-pre-wrap text-sm">{a.text}</p>
+                  ) : (
+                    <p className="text-sm italic text-muted-foreground">No answer</p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        );
+      }
     }
   }
+
   if (sections.length === 0) return null;
   return <div className="space-y-6">{sections}</div>;
 }
