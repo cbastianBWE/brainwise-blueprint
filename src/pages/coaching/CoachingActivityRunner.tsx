@@ -2217,8 +2217,10 @@ export default function CoachingActivityRunner() {
     const wantsAnalysis = isRiskDetail || step?.onComplete?.touchpoint === "analysis";
     if (step?.widget === "qa_multimodal" && wantsAnalysis && session) {
       const bag = (responses[step.key || ""] as Record<string, QaAnswer>) || {};
-      const recorded = Object.values(bag).filter((a) => !a.skipped && a.media_id);
-      if (recorded.length > 0) {
+      const recordedKeys = Object.entries(bag)
+        .filter(([, a]) => !a.skipped && !!a.media_id)
+        .map(([k]) => k);
+      if (recordedKeys.length > 0) {
         setWaitingForTranscripts(true);
         const deadline = Date.now() + 75_000;
         while (Date.now() < deadline) {
@@ -2227,9 +2229,8 @@ export default function CoachingActivityRunner() {
             .select("question_key, transcript_status")
             .eq("coaching_session_id", session.id);
           const rows = (data || []) as Array<{ question_key: string; transcript_status: string | null }>;
-          const done = recorded.every((a) => {
-            const row = rows.find((r) => r.question_key && Object.entries(bag).some(([k, v]) => v.media_id === a.media_id && k === r.question_key));
-            const st = row?.transcript_status;
+          const done = recordedKeys.every((qk) => {
+            const st = rows.find((r) => r.question_key === qk)?.transcript_status;
             return st === "ready" || st === "failed";
           });
           if (done) break;
