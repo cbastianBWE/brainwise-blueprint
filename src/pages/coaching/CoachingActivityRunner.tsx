@@ -2262,20 +2262,24 @@ export default function CoachingActivityRunner() {
             {step?.widget === "textarea" && (
               <TextareaWidget
                 step={step}
-                value={(responses[step.key || ""] as string) || ""}
+                value={(responses[step.key || ""] as MMValue) || ""}
                 onChange={(v) =>
                   setResponses((r) => ({ ...r, [step.key || "text"]: v }))
                 }
+                sessionId={session.id}
+                activityCode={activity.code || ""}
               />
             )}
 
             {step?.widget === "list_builder" && (
               <ListBuilderWidget
                 step={step}
-                items={(responses[step.key || ""] as string[]) || []}
+                items={(responses[step.key || ""] as MMValue[]) || []}
                 onChange={(v) =>
                   setResponses((r) => ({ ...r, [step.key || "items"]: v }))
                 }
+                sessionId={session.id}
+                activityCode={activity.code || ""}
               />
             )}
 
@@ -2284,7 +2288,7 @@ export default function CoachingActivityRunner() {
                 sessionId={session.id}
                 stepKey={step.key}
                 suggest={step.suggest}
-                existing={(responses[step.key] as string[]) || []}
+                existing={((responses[step.key] as MMValue[]) || []).filter((v): v is string => typeof v === "string")}
                 pending={(responses._suggest as any)?.[step.key]}
                 onPendingChange={(next) =>
                   setResponses((r) => ({
@@ -2295,7 +2299,7 @@ export default function CoachingActivityRunner() {
                 onAdd={(text) =>
                   setResponses((r) => ({
                     ...r,
-                    [step.key!]: [...((r[step.key!] as string[]) || []), text],
+                    [step.key!]: [...((r[step.key!] as MMValue[]) || []), text],
                   }))
                 }
               />
@@ -2303,7 +2307,7 @@ export default function CoachingActivityRunner() {
 
             {step?.widget === "list_builder" && step.prioritize && step.key && (
               <PrioritizePanel
-                items={(responses[step.key] as string[]) || []}
+                items={((responses[step.key] as MMValue[]) || []).filter((v): v is string => typeof v === "string")}
                 selectExactly={step.prioritize.selectExactly}
                 title={step.prioritize.title}
                 prompt={step.prioritize.prompt}
@@ -2323,7 +2327,7 @@ export default function CoachingActivityRunner() {
                       <p className="text-xs font-medium text-muted-foreground">Your measure of success</p>
                       <ul className="mt-1 list-disc pl-5 text-sm">
                         {responses.positives.map((v, i) => (
-                          <li key={i}>{v}</li>
+                          <li key={i}>{typeof v === "string" ? v : "(recording)"}</li>
                         ))}
                       </ul>
                     </CardContent>
@@ -2333,6 +2337,8 @@ export default function CoachingActivityRunner() {
                   step={step}
                   items={(responses.negatives as Negative[]) || []}
                   onChange={(v) => setResponses((r) => ({ ...r, negatives: v }))}
+                  sessionId={session.id}
+                  activityCode={activity.code || ""}
                 />
               </>
             )}
@@ -2342,7 +2348,9 @@ export default function CoachingActivityRunner() {
                 sessionId={session.id}
                 stepKey={step.key}
                 suggest={step.suggest}
-                existing={((responses.negatives as Negative[]) || []).map((n) => n.text).filter(Boolean)}
+                existing={((responses.negatives as Negative[]) || [])
+                  .map((n) => n.text)
+                  .filter((t): t is string => typeof t === "string" && t.length > 0)}
                 pending={(responses._suggest as any)?.[step.key]}
                 onPendingChange={(next) =>
                   setResponses((r) => ({
