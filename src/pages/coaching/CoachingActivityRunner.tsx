@@ -40,6 +40,8 @@ interface Step {
   body?: string;
   media?: { type: string; src: string; alt?: string; caption?: string };
   statements?: string[];
+  resources?: { id: string; title?: string }[];
+  beats?: { group: string; label: string; body: string }[];
   reflection?: { prompt?: string; placeholder?: string; optional?: boolean; minRows?: number };
   // image_describe
   fromKey?: string;
