@@ -175,20 +175,27 @@ function TextareaWidget({
   step,
   value,
   onChange,
+  sessionId,
+  activityCode,
 }: {
   step: Step;
-  value: string;
-  onChange: (v: string) => void;
+  value: MMValue | undefined;
+  onChange: (v: MMValue) => void;
+  sessionId: string;
+  activityCode: string;
 }) {
   return (
     <div className="space-y-2">
       {step.label && <Label>{step.label}</Label>}
       {step.helper && <p className="text-sm text-muted-foreground">{step.helper}</p>}
-      <Textarea
-        rows={6}
-        placeholder={step.placeholder || "Type here…"}
-        value={value || ""}
-        onChange={(e) => onChange(e.target.value)}
+      <MultimodalField
+        value={value}
+        onChange={onChange}
+        sessionId={sessionId}
+        activityCode={activityCode}
+        questionKey={step.key || "text"}
+        placeholder={step.placeholder}
+        minRows={6}
       />
     </div>
   );
@@ -199,19 +206,25 @@ function ListBuilderWidget({
   items,
   onChange,
   reference,
+  sessionId,
+  activityCode,
 }: {
   step: Step;
-  items: string[];
-  onChange: (next: string[]) => void;
+  items: MMValue[];
+  onChange: (next: MMValue[]) => void;
   reference?: { title: string; items: string[] };
+  sessionId: string;
+  activityCode: string;
 }) {
   const min = step.min ?? 0;
-  const [draft, setDraft] = useState("");
+  const [draft, setDraft] = useState<MMValue>("");
+  const [nonce, setNonce] = useState(0);
   const add = () => {
-    const t = draft.trim();
-    if (!t) return;
-    onChange([...(items || []), t]);
+    if (!mmIsFilled(draft)) return;
+    const next = typeof draft === "string" ? draft.trim() : draft;
+    onChange([...(items || []), next as MMValue]);
     setDraft("");
+    setNonce((n) => n + 1);
   };
   return (
     <div className="space-y-3">
@@ -230,15 +243,21 @@ function ListBuilderWidget({
       {step.helper && <p className="text-sm text-muted-foreground">{step.helper}</p>}
       <div className="space-y-2">
         {(items || []).map((v, i) => (
-          <div key={i} className="flex items-center gap-2">
-            <Input
-              value={v}
-              onChange={(e) => {
-                const next = [...items];
-                next[i] = e.target.value;
-                onChange(next);
-              }}
-            />
+          <div key={i} className="flex items-start gap-2">
+            {isMMRec(v) ? (
+              <div className="flex-1">
+                <CoachingRecordingPlayer mediaId={v.media_id} />
+              </div>
+            ) : (
+              <Input
+                value={v as string}
+                onChange={(e) => {
+                  const next = [...items];
+                  next[i] = e.target.value;
+                  onChange(next);
+                }}
+              />
+            )}
             <Button
               variant="ghost"
               size="icon"
@@ -250,22 +269,31 @@ function ListBuilderWidget({
           </div>
         ))}
       </div>
-      <div className="flex gap-2">
-        <Input
+      <div className="rounded-md border p-3 space-y-2">
+        <p className="text-xs font-medium text-muted-foreground">Add an item</p>
+        <MultimodalField
+          key={nonce}
           value={draft}
-          placeholder="Add an item…"
-          onChange={(e) => setDraft(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              add();
+          onChange={(v) => {
+            setDraft(v);
+            if (isMMRec(v)) {
+              onChange([...(items || []), v]);
+              setDraft("");
+              setNonce((n) => n + 1);
             }
           }}
+          sessionId={sessionId}
+          activityCode={activityCode}
+          questionKey={`${step.key || "items"}:${(items || []).length}:${nonce}`}
+          placeholder="Add an item…"
+          minRows={2}
         />
-        <Button type="button" onClick={add}>
-          <Plus className="h-4 w-4" />
-          Add
-        </Button>
+        {typeof draft === "string" && (
+          <Button type="button" size="sm" onClick={add} disabled={!mmIsFilled(draft)}>
+            <Plus className="h-4 w-4" />
+            Add
+          </Button>
+        )}
       </div>
       {min > 0 && (
         <p className="text-xs text-muted-foreground">
@@ -275,6 +303,8 @@ function ListBuilderWidget({
     </div>
   );
 }
+
+
 
 function RiskBlocksWidget({
   step,
