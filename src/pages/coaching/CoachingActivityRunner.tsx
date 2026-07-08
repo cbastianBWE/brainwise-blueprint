@@ -1858,6 +1858,7 @@ export default function CoachingActivityRunner() {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [analyzing, setAnalyzing] = useState(false);
+  const [waitingForTranscripts, setWaitingForTranscripts] = useState(false);
   const [coachingRemaining, setCoachingRemaining] = useState<number | null>(null);
 
   const [coachUserId, setCoachUserId] = useState<string | null>(null);
