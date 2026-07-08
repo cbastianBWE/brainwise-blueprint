@@ -13,7 +13,8 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { SynthesisView, AiAnalysisPanel, ChatTranscript } from "@/components/coaching/CoachingViews";
+import { SynthesisView, AiAnalysisPanel, ChatTranscript, ResourceVideo } from "@/components/coaching/CoachingViews";
+import TransitionMapWalkthrough from "@/components/coaching/TransitionMapWalkthrough";
 
 // ---- Types ----
 interface Step {
@@ -39,6 +40,8 @@ interface Step {
   body?: string;
   media?: { type: string; src: string; alt?: string; caption?: string };
   statements?: string[];
+  resources?: { id: string; title?: string }[];
+  beats?: { group: string; label: string; body: string }[];
   reflection?: { prompt?: string; placeholder?: string; optional?: boolean; minRows?: number };
   // image_describe
   fromKey?: string;
@@ -1330,6 +1333,13 @@ function ContentWidget({
           ))}
         </ul>
       )}
+      {step.resources && step.resources.length > 0 && (
+        <div className="space-y-4">
+          {step.resources.map((r) => (
+            <ResourceVideo key={r.id} resourceId={r.id} title={r.title} />
+          ))}
+        </div>
+      )}
       {step.reflection && step.key && (
         <div className="space-y-2">
           {step.reflection.prompt && <Label>{step.reflection.prompt}</Label>}
@@ -2208,6 +2218,7 @@ export default function CoachingActivityRunner() {
       return done >= need;
     }
     if (step.widget === "recap") return !!(responses.recap as { html?: string } | undefined)?.html;
+    if (step.widget === "transition_map") return true;
     if (step.widget === "qa_multimodal") {
       const qs = (step.questions as Array<{ key: string }>) || [];
       const bag = (responses[step.key || ""] as Record<string, QaAnswer>) || {};
@@ -2569,6 +2580,10 @@ export default function CoachingActivityRunner() {
                 value={(responses[step.key] as Record<string, QaAnswer>) || {}}
                 onChange={(next) => setResponses((r) => ({ ...r, [step.key!]: next }))}
               />
+            )}
+
+            {step?.widget === "transition_map" && (
+              <TransitionMapWalkthrough step={{ intro: step.intro, beats: step.beats || [] }} />
             )}
 
             {waitingForTranscripts && (
