@@ -2672,6 +2672,17 @@ export default function CoachingActivityRunner() {
               <TransitionMapWalkthrough step={{ intro: step.intro, beats: step.beats || [] }} />
             )}
 
+            {step?.widget === "ikigai" && (
+              <IkigaiWidget
+                step={step}
+                session={session}
+                responses={responses}
+                setResponses={setResponses}
+                activityCode={activity.code || ""}
+                setCoachingRemaining={setCoachingRemaining}
+              />
+            )}
+
             {waitingForTranscripts && (
               <div className="flex items-center gap-2 rounded-md border bg-muted/30 p-3 text-sm">
                 <Loader2 className="h-4 w-4 animate-spin" />
