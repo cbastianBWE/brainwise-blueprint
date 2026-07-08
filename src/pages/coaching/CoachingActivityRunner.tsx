@@ -95,10 +95,10 @@ interface Activity {
 }
 
 interface Negative {
-  text: string;
-  a?: string;
-  b?: string;
-  c?: string;
+  text: MMValue;
+  a?: MMValue;
+  b?: MMValue;
+  c?: MMValue;
 }
 
 interface ChatMsg {
