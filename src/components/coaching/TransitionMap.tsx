@@ -8,7 +8,7 @@ import type React from "react";
  * Draw order (back → front): Purpose, Resolve, Support, Future, Present,
  * Pathway, Past, Life's Tools. Labels sit on top within their own group.
  */
-export default function TransitionMap({ className, onSelectGroup, lockedGroups = [] }: { className?: string; onSelectGroup?: (group: string) => void; lockedGroups?: string[] }) {
+export default function TransitionMap({ className, onSelectGroup, lockedGroups = [], activeGroup }: { className?: string; onSelectGroup?: (group: string) => void; lockedGroups?: string[]; activeGroup?: string }) {
   const groupProps = (name: string) => ({
     className: "tm-region",
     role: "button",
@@ -21,7 +21,15 @@ export default function TransitionMap({ className, onSelectGroup, lockedGroups =
       }
     },
     "aria-label": `Open ${name} activities`,
+    style: activeGroup
+      ? {
+          opacity: activeGroup === name ? 1 : 0.3,
+          filter: activeGroup === name ? "drop-shadow(0 0 8px rgba(2,31,54,0.5))" : "none",
+          transition: "opacity .2s ease, filter .2s ease",
+        }
+      : undefined,
   });
+
   // Region palette — light tints, dark brand strokes and labels
   const PURPOSE_FILL = "#ECE3F4";
   const PURPOSE_STROKE = "#3C096C";
