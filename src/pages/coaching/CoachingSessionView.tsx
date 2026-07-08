@@ -162,15 +162,23 @@ export default function CoachingSessionView() {
         day: "numeric",
       })
     : null;
+  const isOwner = !!user && !!session && user.id === session.user_id;
 
   return (
     <div className="container mx-auto max-w-3xl space-y-6 p-6">
       <div>
         <Button asChild variant="ghost" size="sm" className="-ml-2 mb-2">
-          <Link to="/coaching">
-            <ArrowLeft className="h-4 w-4" />
-            My Coaching
-          </Link>
+          {isOwner ? (
+            <Link to="/coaching">
+              <ArrowLeft className="h-4 w-4" />
+              My Coaching
+            </Link>
+          ) : (
+            <Link to={`/coach/client-results?user_id=${session.user_id}`}>
+              <ArrowLeft className="h-4 w-4" />
+              Back to client
+            </Link>
+          )}
         </Button>
         <div className="flex flex-wrap items-center gap-2">
           {tier && <Badge variant="outline">{tier}</Badge>}
@@ -178,6 +186,11 @@ export default function CoachingSessionView() {
             <span className="text-xs text-muted-foreground">Completed {completed}</span>
           )}
         </div>
+        {!isOwner && (
+          <p className="mt-2 text-sm text-muted-foreground">
+            Viewing your client's coaching session.
+          </p>
+        )}
         <h1 className="mt-2 text-2xl font-semibold">{title}</h1>
       </div>
 
