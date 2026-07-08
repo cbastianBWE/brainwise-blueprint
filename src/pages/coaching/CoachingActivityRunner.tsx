@@ -2582,6 +2582,10 @@ export default function CoachingActivityRunner() {
               />
             )}
 
+            {step?.widget === "transition_map" && (
+              <TransitionMapWalkthrough step={{ intro: step.intro, beats: step.beats || [] }} />
+            )}
+
             {waitingForTranscripts && (
               <div className="flex items-center gap-2 rounded-md border bg-muted/30 p-3 text-sm">
                 <Loader2 className="h-4 w-4 animate-spin" />
