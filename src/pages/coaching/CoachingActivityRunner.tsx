@@ -51,6 +51,15 @@ interface Step {
   reflectOnSelect?: { modal?: boolean; prompt?: string; maxLen?: number };
   // ai suggestions
   suggest?: { mode: "auto" | "on_demand"; count?: number; buttonLabel?: string; prompt?: string };
+  // list_builder soft nudge + prioritize pass
+  softTarget?: number;
+  prioritize?: {
+    selectExactly: number;
+    title?: string;
+    prompt?: string;
+    helper?: string;
+    priorityKey: string;
+  };
 }
 
 interface SelectedSaying {
@@ -1545,7 +1554,12 @@ export default function CoachingActivityRunner() {
     }
     if (step.widget === "list_builder") {
       const arr = (responses[step.key || ""] as string[]) || [];
-      return arr.length >= (step.min ?? 0) && arr.every((x) => x.trim().length > 0);
+      const listOk = arr.length >= (step.min ?? 0) && arr.every((x) => x.trim().length > 0);
+      if (step.prioritize) {
+        const picks = (responses[step.prioritize.priorityKey] as string[]) || [];
+        return listOk && picks.length === step.prioritize.selectExactly;
+      }
+      return listOk;
     }
     if (step.widget === "risk_blocks") {
       const negs = (responses.negatives || []) as Negative[];
