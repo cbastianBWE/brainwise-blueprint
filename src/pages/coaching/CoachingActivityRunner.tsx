@@ -77,6 +77,13 @@ interface Step {
     helper?: string;
     priorityKey: string;
   };
+  // ikigai
+  lenses?: Array<{ key: string; storeKey: string; label: string; prompt?: string }>;
+  mapAction?: { label?: string; touchpoint?: string; function?: string };
+  override?: { mode?: string; storeKey?: string };
+  mapKey?: string;
+  regionLabels?: Record<string, string>;
+  lensKeys?: Record<string, string>;
 }
 
 interface SelectedSaying {
