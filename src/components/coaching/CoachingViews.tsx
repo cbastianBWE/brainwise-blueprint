@@ -65,10 +65,31 @@ export function SynthesisView({ responses, steps }: { responses: Responses; step
       const arr = (responses as any)[key] as string[] | undefined;
       if (Array.isArray(arr) && arr.length > 0) {
         rendered.add(key);
+        const priorityKey = step.prioritize?.priorityKey as string | undefined;
+        const prioritized = priorityKey
+          ? new Set(((responses as any)[priorityKey] as string[] | undefined) || [])
+          : null;
         sections.push(
           <div key={key}>
             <h3 className="text-sm font-semibold text-muted-foreground">{heading}</h3>
-            <ul className="mt-1 list-disc pl-5 text-sm">{arr.map((p, i) => <li key={i}>{p}</li>)}</ul>
+            <ul className="mt-1 list-disc pl-5 text-sm">
+              {arr.map((p, i) => {
+                const marked = prioritized?.has(p);
+                return (
+                  <li key={i} className={marked ? "font-semibold" : undefined}>
+                    {marked && (
+                      <span aria-hidden style={{ color: "var(--bw-orange)" }} className="mr-1">★</span>
+                    )}
+                    <span style={marked ? { color: "var(--bw-orange)" } : undefined}>{p}</span>
+                    {marked && (
+                      <span className="ml-2 rounded bg-[var(--bw-orange)]/10 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-[var(--bw-orange)]">
+                        Top {step.prioritize?.selectExactly ?? ""}
+                      </span>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
           </div>
         );
       }
