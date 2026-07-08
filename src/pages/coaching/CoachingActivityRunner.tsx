@@ -75,6 +75,7 @@ interface SelectedSaying {
 
 interface Activity {
   id: string;
+  code?: string | null;
   title: string;
   tier: string | null;
   definition: any;
