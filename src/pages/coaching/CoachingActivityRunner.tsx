@@ -83,7 +83,7 @@ interface SelectedSaying {
   saying_id: string;
   text: string;
   author: string | null;
-  description: string;
+  description: MMValue;
 }
 
 interface Activity {
