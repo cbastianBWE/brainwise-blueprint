@@ -247,35 +247,37 @@ export default function CoachingSessionView() {
         </Card>
       )}
 
-      <div className="flex flex-wrap gap-2 pt-2">
-        <Button onClick={() => navigate(`/coaching/${session.activity_id}?fresh=1`)}>
-          <RotateCcw className="h-4 w-4" />
-          Do it again
-        </Button>
-        {coachUserId && (
-          <Button
-            variant="outline"
-            onClick={shareWithCoach}
-            disabled={!!existingShareId || sharing}
-          >
-            {existingShareId ? (
-              <>
-                <CheckCircle2 className="h-4 w-4" />
-                Shared
-              </>
-            ) : (
-              <>
-                {sharing ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Share2 className="h-4 w-4" />
-                )}
-                Share with my coach
-              </>
-            )}
+      {isOwner && (
+        <div className="flex flex-wrap gap-2 pt-2">
+          <Button onClick={() => navigate(`/coaching/${session.activity_id}?fresh=1`)}>
+            <RotateCcw className="h-4 w-4" />
+            Do it again
           </Button>
-        )}
-      </div>
+          {coachUserId && (
+            <Button
+              variant="outline"
+              onClick={shareWithCoach}
+              disabled={!!existingShareId || sharing}
+            >
+              {existingShareId ? (
+                <>
+                  <CheckCircle2 className="h-4 w-4" />
+                  Shared
+                </>
+              ) : (
+                <>
+                  {sharing ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Share2 className="h-4 w-4" />
+                  )}
+                  Share with my coach
+                </>
+              )}
+            </Button>
+          )}
+        </div>
+      )}
     </div>
   );
 }
