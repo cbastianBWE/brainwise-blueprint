@@ -511,6 +511,24 @@ export function SynthesisView({ responses, steps }: { responses: Responses; step
           </div>
         );
       }
+    } else if (w === "ikigai") {
+      const map = (responses as any)[step.mapKey || "ikigai_map"] as IkigaiMap | undefined;
+      const overrides = (responses as any)[step.override?.storeKey || "ikigai_overrides"] as
+        | Record<string, string[]>
+        | undefined;
+      if (map && Array.isArray(map.items) && map.items.length > 0) {
+        rendered.add(key);
+        sections.push(
+          <div key={key} className="space-y-3">
+            <h3 className="text-sm font-semibold text-muted-foreground">{heading}</h3>
+            <IkigaiRegionsView
+              map={map}
+              overrides={overrides}
+              regionLabels={(step.regionLabels as Record<string, string>) || {}}
+            />
+          </div>,
+        );
+      }
     }
   }
 
