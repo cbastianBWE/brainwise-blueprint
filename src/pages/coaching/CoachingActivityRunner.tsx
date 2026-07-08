@@ -1346,7 +1346,507 @@ function ContentWidget({
 }
 
 
+// ---- qa_multimodal widget ----
+type QaAnswer = {
+  mode: "text" | "dictate" | "audio" | "video";
+  text?: string;
+  media_id?: string;
+  skipped?: boolean;
+};
+
+function formatElapsed(ms: number) {
+  const s = Math.floor(ms / 1000);
+  const m = Math.floor(s / 60);
+  const rem = s % 60;
+  return `${m}:${rem.toString().padStart(2, "0")}`;
+}
+
+function MediaRecorderPane({
+  kind,
+  onConfirm,
+  uploading,
+  disabled,
+}: {
+  kind: "audio" | "video";
+  onConfirm: (blob: Blob) => void;
+  uploading: boolean;
+  disabled?: boolean;
+}) {
+  const [permError, setPermError] = useState<string | null>(null);
+  const [recording, setRecording] = useState(false);
+  const [elapsed, setElapsed] = useState(0);
+  const [blob, setBlob] = useState<Blob | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const recorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+  const startedAtRef = useRef<number>(0);
+  const timerRef = useRef<number | null>(null);
+  const liveVideoRef = useRef<HTMLVideoElement | null>(null);
+
+  const cleanupStream = useCallback(() => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((t) => t.stop());
+      streamRef.current = null;
+    }
+    if (timerRef.current) {
+      window.clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+  }, []);
+
+  useEffect(() => () => {
+    cleanupStream();
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+  }, [cleanupStream, previewUrl]);
+
+  const start = async () => {
+    setPermError(null);
+    setBlob(null);
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+      setPreviewUrl(null);
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia(
+        kind === "audio" ? { audio: true } : { video: true, audio: true },
+      );
+      streamRef.current = stream;
+      if (kind === "video" && liveVideoRef.current) {
+        liveVideoRef.current.srcObject = stream;
+        liveVideoRef.current.muted = true;
+        await liveVideoRef.current.play().catch(() => {});
+      }
+      const mime = kind === "audio" ? "audio/webm" : "video/webm";
+      const rec = new MediaRecorder(stream, MediaRecorder.isTypeSupported(mime) ? { mimeType: mime } : undefined);
+      recorderRef.current = rec;
+      chunksRef.current = [];
+      rec.ondataavailable = (e) => {
+        if (e.data && e.data.size > 0) chunksRef.current.push(e.data);
+      };
+      rec.onstop = () => {
+        const b = new Blob(chunksRef.current, { type: rec.mimeType || mime });
+        setBlob(b);
+        setPreviewUrl(URL.createObjectURL(b));
+        cleanupStream();
+      };
+      rec.start();
+      startedAtRef.current = Date.now();
+      setElapsed(0);
+      timerRef.current = window.setInterval(() => {
+        setElapsed(Date.now() - startedAtRef.current);
+      }, 250);
+      setRecording(true);
+    } catch (e: any) {
+      setPermError(
+        e?.name === "NotAllowedError"
+          ? `Permission to use the ${kind === "audio" ? "microphone" : "camera"} was denied. You can answer as text instead.`
+          : e?.message || "Could not start recording.",
+      );
+      cleanupStream();
+    }
+  };
+
+  const stop = () => {
+    const rec = recorderRef.current;
+    if (rec && rec.state !== "inactive") rec.stop();
+    setRecording(false);
+  };
+
+  return (
+    <div className="space-y-3">
+      {kind === "video" && (recording || !blob) && (
+        <video
+          ref={liveVideoRef}
+          className="w-full rounded-md bg-black"
+          playsInline
+          muted
+          style={{ display: recording ? "block" : "none" }}
+        />
+      )}
+      {permError && (
+        <p className="rounded-md border border-destructive/40 bg-destructive/5 p-2 text-sm text-destructive">{permError}</p>
+      )}
+      {!recording && !blob && (
+        <Button
+          type="button"
+          variant="outline"
+          onClick={start}
+          disabled={disabled}
+          aria-label={`Start ${kind} recording`}
+        >
+          {kind === "audio" ? <Mic className="h-4 w-4" /> : <VideoIcon className="h-4 w-4" />}
+          Record {kind}
+        </Button>
+      )}
+      {recording && (
+        <div className="flex items-center gap-3">
+          <span aria-hidden className="inline-block h-2.5 w-2.5 animate-pulse rounded-full bg-red-500" />
+          <span className="text-sm tabular-nums" aria-live="polite">Recording {formatElapsed(elapsed)}</span>
+          <Button type="button" variant="outline" onClick={stop} aria-label="Stop recording">
+            <Square className="h-4 w-4" />
+            Stop
+          </Button>
+        </div>
+      )}
+      {!recording && blob && previewUrl && (
+        <div className="space-y-2">
+          {kind === "audio" ? (
+            <audio src={previewUrl} controls className="w-full" />
+          ) : (
+            <video src={previewUrl} controls className="w-full rounded-md bg-black" playsInline />
+          )}
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="button"
+              onClick={() => onConfirm(blob)}
+              disabled={uploading || disabled}
+              style={{ backgroundColor: "var(--bw-orange)", color: "white" }}
+            >
+              {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+              {uploading ? "Uploading…" : "Use this recording"}
+            </Button>
+            <Button type="button" variant="outline" onClick={start} disabled={uploading || disabled}>
+              <RotateCcw className="h-4 w-4" />
+              Re-record
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function DictateButton({ onFinal, disabled }: { onFinal: (text: string) => void; disabled?: boolean }) {
+  const [listening, setListening] = useState(false);
+  const recRef = useRef<any>(null);
+  const supported =
+    typeof window !== "undefined" &&
+    ((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition);
+  if (!supported) return null;
+  const toggle = () => {
+    if (listening) {
+      try { recRef.current?.stop(); } catch { /* ignore */ }
+      setListening(false);
+      return;
+    }
+    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const rec = new SR();
+    rec.continuous = true;
+    rec.interimResults = false;
+    rec.lang = navigator.language || "en-US";
+    rec.onresult = (event: any) => {
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const r = event.results[i];
+        if (r.isFinal && r[0]?.transcript) onFinal(r[0].transcript.trim() + " ");
+      }
+    };
+    rec.onend = () => setListening(false);
+    rec.onerror = () => setListening(false);
+    recRef.current = rec;
+    try {
+      rec.start();
+      setListening(true);
+    } catch { setListening(false); }
+  };
+  return (
+    <Button
+      type="button"
+      variant={listening ? "default" : "outline"}
+      onClick={toggle}
+      disabled={disabled}
+      aria-pressed={listening}
+      aria-label={listening ? "Stop dictation" : "Start dictation"}
+    >
+      <Mic className="h-4 w-4" />
+      {listening ? "Stop dictating" : "Dictate"}
+    </Button>
+  );
+}
+
+function QaMultimodalWidget({
+  step,
+  sessionId,
+  activityCode,
+  value,
+  onChange,
+}: {
+  step: Step;
+  sessionId: string;
+  activityCode: string;
+  value: Record<string, QaAnswer>;
+  onChange: (next: Record<string, QaAnswer>) => void;
+}) {
+  const questions = (step.questions as Array<{ key: string; prompt: string }>) || [];
+  const modes = (step.modes && step.modes.length > 0 ? step.modes : ["text"]) as Array<
+    "text" | "dictate" | "audio" | "video"
+  >;
+  const allowSkip = !!step.allowSkip;
+
+  const firstUnanswered = Math.max(
+    0,
+    questions.findIndex((q) => {
+      const a = value[q.key];
+      return !a || (!a.skipped && !a.text?.trim() && !a.media_id);
+    }),
+  );
+  const [idx, setIdx] = useState<number>(firstUnanswered === -1 ? 0 : firstUnanswered);
+  const q = questions[idx];
+  const existing = q ? value[q.key] : undefined;
+
+  const [mode, setMode] = useState<"text" | "dictate" | "audio" | "video">(
+    (existing?.mode as any) || modes[0],
+  );
+  const [text, setText] = useState<string>(
+    existing?.mode === "text" || existing?.mode === "dictate" ? existing.text || "" : "",
+  );
+  const [videoSource, setVideoSource] = useState<"record" | "upload">("record");
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const a = value[q?.key || ""];
+    setMode((a?.mode as any) || modes[0]);
+    setText(a?.mode === "text" || a?.mode === "dictate" ? a.text || "" : "");
+    setUploadError(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [idx]);
+
+  if (!q) return null;
+
+  const saveTextAnswer = () => {
+    const trimmed = text.trim();
+    if (!trimmed) return;
+    const next = { ...value, [q.key]: { mode, text: trimmed } as QaAnswer };
+    onChange(next);
+    if (idx < questions.length - 1) setIdx(idx + 1);
+  };
+
+  const skip = () => {
+    const next = { ...value, [q.key]: { mode, skipped: true } as QaAnswer };
+    onChange(next);
+    if (idx < questions.length - 1) setIdx(idx + 1);
+  };
+
+  const uploadMedia = async (blob: Blob, kind: "audio" | "video") => {
+    setUploading(true);
+    setUploadError(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("coaching-response-upload", {
+        body: {
+          coaching_session_id: sessionId,
+          activity_code: activityCode,
+          question_key: q.key,
+          kind,
+        },
+      });
+      if (error) throw new Error(error.message);
+      const { upload_url, media_id } = (data || {}) as { upload_url: string; upload_id?: string; media_id: string };
+      if (!upload_url || !media_id) throw new Error("Upload broker returned no URL");
+      await new Promise<void>((resolve, reject) => {
+        const upload = UpChunk.createUpload({ endpoint: upload_url, file: blob as any });
+        upload.on("error", (err: any) => reject(new Error(err?.detail?.message || "Upload failed")));
+        upload.on("success", () => resolve());
+      });
+      const next = { ...value, [q.key]: { mode: kind, media_id } as QaAnswer };
+      onChange(next);
+      if (idx < questions.length - 1) setIdx(idx + 1);
+    } catch (e: any) {
+      setUploadError(e?.message || "Upload failed. Please try again.");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const hasAnswerForCurrent =
+    (mode === "text" || mode === "dictate") ? text.trim().length > 0 : !!existing?.media_id;
+
+  const answeredCount = questions.filter((qq) => {
+    const a = value[qq.key];
+    return !!a && (a.skipped || !!a.text?.trim() || !!a.media_id);
+  }).length;
+
+  const modeLabels: Record<string, string> = {
+    text: "Type",
+    dictate: "Dictate",
+    audio: "Record audio",
+    video: "Record video",
+  };
+
+  return (
+    <div className="space-y-5">
+      {step.intro && <p className="text-sm text-muted-foreground">{step.intro}</p>}
+
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          Question {idx + 1} of {questions.length}
+        </span>
+        <span className="text-xs text-muted-foreground">{answeredCount} / {questions.length} answered</span>
+      </div>
+
+      <div className="flex flex-wrap gap-1 rounded-md border p-1" role="tablist" aria-label="Answer mode">
+        {questions.map((_, i) => (
+          <button
+            key={i}
+            type="button"
+            role="tab"
+            aria-selected={i === idx}
+            onClick={() => setIdx(i)}
+            className={`h-2 flex-1 min-w-[16px] rounded-sm ${i === idx ? "bg-primary" : value[questions[i].key]?.skipped ? "bg-muted-foreground/40" : value[questions[i].key] ? "bg-primary/40" : "bg-muted"}`}
+            aria-label={`Go to question ${i + 1}`}
+          />
+        ))}
+      </div>
+
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base">{q.prompt}</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {modes.length > 1 && (
+            <div className="flex flex-wrap gap-2">
+              {modes.map((m) => {
+                if (m === "dictate") {
+                  const supported =
+                    typeof window !== "undefined" &&
+                    ((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition);
+                  if (!supported) return null;
+                }
+                return (
+                  <Button
+                    key={m}
+                    type="button"
+                    size="sm"
+                    variant={mode === m ? "default" : "outline"}
+                    onClick={() => setMode(m)}
+                  >
+                    {modeLabels[m]}
+                  </Button>
+                );
+              })}
+            </div>
+          )}
+
+          {(mode === "text" || mode === "dictate") && (
+            <div className="space-y-2">
+              <Textarea
+                rows={5}
+                placeholder="Type your answer here…"
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+              />
+              {mode === "dictate" && (
+                <DictateButton onFinal={(t) => setText((cur) => (cur ? cur + " " : "") + t)} />
+              )}
+            </div>
+          )}
+
+          {mode === "audio" && (
+            <MediaRecorderPane
+              kind="audio"
+              uploading={uploading}
+              onConfirm={(blob) => uploadMedia(blob, "audio")}
+            />
+          )}
+
+          {mode === "video" && (
+            <div className="space-y-3">
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={videoSource === "record" ? "default" : "outline"}
+                  onClick={() => setVideoSource("record")}
+                >
+                  <VideoIcon className="h-4 w-4" />
+                  Record
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={videoSource === "upload" ? "default" : "outline"}
+                  onClick={() => setVideoSource("upload")}
+                >
+                  <UploadIcon className="h-4 w-4" />
+                  Upload a file
+                </Button>
+              </div>
+              {videoSource === "record" ? (
+                <MediaRecorderPane
+                  kind="video"
+                  uploading={uploading}
+                  onConfirm={(blob) => uploadMedia(blob, "video")}
+                />
+              ) : (
+                <div className="space-y-2">
+                  <Input
+                    type="file"
+                    accept="video/*"
+                    disabled={uploading}
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) uploadMedia(f, "video");
+                    }}
+                  />
+                  {uploading && (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Uploading…
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {existing?.media_id && !uploading && (
+            <p className="text-xs text-muted-foreground">
+              Saved. Choose another mode or re-record to replace this answer.
+            </p>
+          )}
+          {uploadError && (
+            <p className="text-sm text-destructive">{uploadError}</p>
+          )}
+
+          <div className="flex flex-wrap gap-2 pt-2">
+            {(mode === "text" || mode === "dictate") && (
+              <Button
+                type="button"
+                onClick={saveTextAnswer}
+                disabled={!hasAnswerForCurrent}
+                style={hasAnswerForCurrent ? { backgroundColor: "var(--bw-orange)", color: "white" } : undefined}
+              >
+                <Check className="h-4 w-4" />
+                {idx < questions.length - 1 ? "Save & next" : "Save"}
+              </Button>
+            )}
+            {allowSkip && (
+              <Button type="button" variant="ghost" onClick={skip} disabled={uploading}>
+                Skip
+              </Button>
+            )}
+            {idx > 0 && (
+              <Button type="button" variant="outline" onClick={() => setIdx(idx - 1)} disabled={uploading}>
+                <ArrowLeft className="h-4 w-4" />
+                Previous
+              </Button>
+            )}
+            {idx < questions.length - 1 && (existing?.skipped || existing?.text || existing?.media_id) && (
+              <Button type="button" variant="outline" onClick={() => setIdx(idx + 1)} disabled={uploading}>
+                Next
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+
 // ---- Main page ----
+
 export default function CoachingActivityRunner() {
   const { activityId } = useParams<{ activityId: string }>();
   const [search] = useSearchParams();
