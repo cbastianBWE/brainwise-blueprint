@@ -42,7 +42,10 @@ interface Step {
   reflection?: { prompt?: string; placeholder?: string; optional?: boolean; minRows?: number };
   // image_describe
   fromKey?: string;
-  questions?: string[];
+  questions?: any;
+  // qa_multimodal
+  modes?: string[];
+  allowSkip?: boolean;
   descriptionPrompt?: string;
   minDescribed?: number;
   subfieldLabels?: Record<string, string>;
