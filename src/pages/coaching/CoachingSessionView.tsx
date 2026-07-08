@@ -17,6 +17,7 @@ import {
 interface SessionRow {
   id: string;
   activity_id: string;
+  user_id: string;
   status: string;
   responses: Responses | null;
   completed_at: string | null;
