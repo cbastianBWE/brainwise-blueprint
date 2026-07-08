@@ -308,11 +308,10 @@ export default function PtpIntroGate() {
   return (
     <Dialog open={open} onOpenChange={() => { /* non-dismissable */ }}>
       <DialogContent
-        className="max-w-2xl"
+        className="max-w-2xl [&>button.absolute]:hidden"
         onPointerDownOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => e.preventDefault()}
         onInteractOutside={(e) => e.preventDefault()}
-        hideClose
       >
         <DialogHeader>
           <DialogTitle>{current.card_title}</DialogTitle>
