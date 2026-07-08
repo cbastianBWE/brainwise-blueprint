@@ -1099,20 +1099,23 @@ function ImageSelectWidget({
               />
               <div className="space-y-1">
                 <Label htmlFor="image-tag">Your tag</Label>
-                <Input
-                  id="image-tag"
-                  autoFocus
-                  value={tagDraft}
-                  maxLength={maxLen}
-                  placeholder={promptText}
-                  onChange={(e) => setTagDraft(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      saveDialog();
-                    }
-                  }}
-                />
+                <div className="flex gap-2">
+                  <Input
+                    id="image-tag"
+                    autoFocus
+                    value={tagDraft}
+                    maxLength={maxLen}
+                    placeholder={promptText}
+                    onChange={(e) => setTagDraft(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        saveDialog();
+                      }
+                    }}
+                  />
+                  <DictateButton onFinal={(t) => setTagDraft((cur) => (cur ? cur + " " : "") + t)} />
+                </div>
               </div>
             </div>
           )}
