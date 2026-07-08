@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { SynthesisView, AiAnalysisPanel, ChatTranscript, ResourceVideo, CoachingRecordingPlayer } from "@/components/coaching/CoachingViews";
+import { SynthesisView, AiAnalysisPanel, ChatTranscript, ResourceVideo, CoachingRecordingPlayer, IkigaiRegionsView, IKIGAI_LENSES, type IkigaiMap, type IkigaiLens } from "@/components/coaching/CoachingViews";
 import TransitionMapWalkthrough from "@/components/coaching/TransitionMapWalkthrough";
 import {
   MultimodalField,
