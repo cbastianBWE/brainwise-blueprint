@@ -310,36 +310,48 @@ function RiskBlocksWidget({
   step,
   items,
   onChange,
+  sessionId,
+  activityCode,
 }: {
   step: Step;
   items: Negative[];
   onChange: (next: Negative[]) => void;
+  sessionId: string;
+  activityCode: string;
 }) {
   const subfields = step.subfields || [];
   const editingSub = subfields.length > 0;
-  const [draft, setDraft] = useState("");
+  const [draft, setDraft] = useState<MMValue>("");
+  const [nonce, setNonce] = useState(0);
 
   if (!editingSub) {
     const add = () => {
-      const t = draft.trim();
-      if (!t) return;
-      onChange([...(items || []), { text: t }]);
+      if (!mmIsFilled(draft)) return;
+      const val = typeof draft === "string" ? draft.trim() : draft;
+      onChange([...(items || []), { text: val as any }]);
       setDraft("");
+      setNonce((n) => n + 1);
     };
     return (
       <div className="space-y-3">
         {step.helper && <p className="text-sm text-muted-foreground">{step.helper}</p>}
         <div className="space-y-2">
           {(items || []).map((n, i) => (
-            <div key={i} className="flex items-center gap-2">
-              <Input
-                value={n.text}
-                onChange={(e) => {
-                  const next = [...items];
-                  next[i] = { ...next[i], text: e.target.value };
-                  onChange(next);
-                }}
-              />
+            <div key={i} className="flex items-start gap-2">
+              {isMMRec(n.text as any) ? (
+                <div className="flex-1">
+                  <CoachingRecordingPlayer mediaId={(n.text as any).media_id} />
+                </div>
+              ) : (
+                <Input
+                  value={(n.text as any) || ""}
+                  onChange={(e) => {
+                    const next = [...items];
+                    next[i] = { ...next[i], text: e.target.value as any };
+                    onChange(next);
+                  }}
+                />
+              )}
               <Button
                 variant="ghost"
                 size="icon"
@@ -351,22 +363,31 @@ function RiskBlocksWidget({
             </div>
           ))}
         </div>
-        <div className="flex gap-2">
-          <Input
+        <div className="rounded-md border p-3 space-y-2">
+          <p className="text-xs font-medium text-muted-foreground">Add a risk</p>
+          <MultimodalField
+            key={nonce}
             value={draft}
-            placeholder={step.placeholder || "Add a risk or concern…"}
-            onChange={(e) => setDraft(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                add();
+            onChange={(v) => {
+              setDraft(v);
+              if (isMMRec(v)) {
+                onChange([...(items || []), { text: v as any }]);
+                setDraft("");
+                setNonce((n) => n + 1);
               }
             }}
+            sessionId={sessionId}
+            activityCode={activityCode}
+            questionKey={`${step.key || "negatives"}:${(items || []).length}:text:${nonce}`}
+            placeholder={step.placeholder || "Add a risk or concern…"}
+            minRows={2}
           />
-          <Button type="button" onClick={add}>
-            <Plus className="h-4 w-4" />
-            Add
-          </Button>
+          {typeof draft === "string" && (
+            <Button type="button" size="sm" onClick={add} disabled={!mmIsFilled(draft)}>
+              <Plus className="h-4 w-4" />
+              Add
+            </Button>
+          )}
         </div>
       </div>
     );
@@ -391,21 +412,29 @@ function RiskBlocksWidget({
       {(items || []).map((n, i) => (
         <Card key={i}>
           <CardHeader className="pb-2">
-            <CardTitle className="text-base">{n.text || `Risk ${i + 1}`}</CardTitle>
+            <CardTitle className="text-base">
+              {typeof n.text === "string" ? (n.text || `Risk ${i + 1}`) : `Risk ${i + 1}`}
+            </CardTitle>
+            {isMMRec(n.text as any) && (
+              <div className="pt-2"><CoachingRecordingPlayer mediaId={(n.text as any).media_id} /></div>
+            )}
           </CardHeader>
           <CardContent className="space-y-3">
             {subfields.map((sf) => (
               <div key={sf} className="space-y-1">
                 <Label>{label(sf)}</Label>
                 <p className="text-xs text-muted-foreground">{helper(sf)}</p>
-                <Textarea
-                  rows={2}
-                  value={(n as any)[sf] || ""}
-                  onChange={(e) => {
+                <MultimodalField
+                  value={(n as any)[sf]}
+                  onChange={(v) => {
                     const next = [...items];
-                    next[i] = { ...next[i], [sf]: e.target.value };
+                    next[i] = { ...next[i], [sf]: v as any };
                     onChange(next);
                   }}
+                  sessionId={sessionId}
+                  activityCode={activityCode}
+                  questionKey={`${step.key || "negatives"}:${i}:${sf}`}
+                  minRows={2}
                 />
               </div>
             ))}
@@ -415,6 +444,7 @@ function RiskBlocksWidget({
     </div>
   );
 }
+
 
 
 function ChatWidget({
