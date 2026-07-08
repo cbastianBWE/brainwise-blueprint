@@ -565,14 +565,18 @@ function ImageDescribeWidget({
   step,
   value,
   onChange,
+  sessionId,
+  activityCode,
 }: {
   step: Step;
   value: SelectedImage[];
   onChange: (next: SelectedImage[]) => void;
+  sessionId: string;
+  activityCode: string;
 }) {
-  const describedCount = value.filter((it) => (it.description || "").trim().length > 0).length;
+  const describedCount = value.filter((it) => mmIsFilled(it.description)).length;
 
-  const updateDescription = (idx: number, description: string) => {
+  const updateDescription = (idx: number, description: MMValue) => {
     const next = value.map((it, i) => (i === idx ? { ...it, description } : it));
     onChange(next);
   };
@@ -606,13 +610,14 @@ function ImageDescribeWidget({
                       <div id={labelId} className="text-sm font-semibold">
                         {item.tag || `Picture ${idx + 1}`}
                       </div>
-                      <Textarea
-                        rows={3}
-                        value={item.description || ""}
-                        onChange={(e) => updateDescription(idx, e.target.value)}
+                      <MultimodalField
+                        value={item.description}
+                        onChange={(v) => updateDescription(idx, v)}
+                        sessionId={sessionId}
+                        activityCode={activityCode}
+                        questionKey={`${step.fromKey || "images"}:${item.library_id}:desc`}
                         placeholder={step.descriptionPrompt}
-                        aria-label={`Why "${item.tag || `picture ${idx + 1}`}" matters`}
-                        aria-labelledby={labelId}
+                        minRows={3}
                       />
                     </div>
                   </div>
