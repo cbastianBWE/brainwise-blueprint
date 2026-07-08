@@ -2422,6 +2422,8 @@ export default function CoachingActivityRunner() {
                 step={step}
                 value={(responses[step.fromKey || ""] as SelectedImage[]) || []}
                 onChange={(v) => setResponses((r) => ({ ...r, [step.fromKey!]: v }))}
+                sessionId={session.id}
+                activityCode={activity.code || ""}
               />
             )}
 
