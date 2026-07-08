@@ -49,7 +49,7 @@ export default function CoachingSessionView() {
       const { data } = await supabase
         .from("coaching_activity_sessions")
         .select(
-          "id, activity_id, status, responses, completed_at, coaching_activities(title, tier, definition)",
+          "id, activity_id, user_id, status, responses, completed_at, coaching_activities(title, tier, definition)",
         )
         .eq("id", sessionId)
         .maybeSingle();
