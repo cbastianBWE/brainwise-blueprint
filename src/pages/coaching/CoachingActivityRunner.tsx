@@ -2416,6 +2416,8 @@ export default function CoachingActivityRunner() {
                 step={step}
                 value={(responses[step.key] as SelectedSaying[]) || []}
                 onChange={(v) => setResponses((r) => ({ ...r, [step.key!]: v }))}
+                sessionId={session.id}
+                activityCode={activity.code || ""}
               />
             )}
 
