@@ -157,9 +157,16 @@ function VideoStep({
   if (phase === "done") {
     return (
       <div className="space-y-6">
-        <div className="flex items-center gap-2 text-sm" style={{ color: "var(--bw-forest)" }}>
-          <CircleCheck className="h-4 w-4" />
-          {doneReason === "watched" ? "Video complete" : "Skipped"}
+        <div className="space-y-1">
+          <div className="flex items-center gap-2 text-sm" style={{ color: "var(--bw-forest)" }}>
+            <CircleCheck className="h-4 w-4" />
+            {doneReason === "watched" ? "Video complete" : "Skipped"}
+          </div>
+          {doneReason === "skipped" && (
+            <p className="text-xs text-muted-foreground">
+              No problem. You can watch this anytime from the Resources tab.
+            </p>
+          )}
         </div>
         <div className="flex justify-end">
           <Button
@@ -276,7 +283,8 @@ export default function PtpIntroGate() {
     const firstUnfinished = videos.findIndex(
       (v) => v.my_status === "not_started" || v.my_status === "in_progress",
     );
-    setIdx(firstUnfinished === -1 ? videos.length - 1 : firstUnfinished);
+    if (firstUnfinished === -1) return;
+    setIdx(firstUnfinished);
     setOpen(true);
   }, [status, videos]);
 
