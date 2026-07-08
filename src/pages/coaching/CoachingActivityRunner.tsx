@@ -2605,7 +2605,7 @@ export default function CoachingActivityRunner() {
               Finish
             </Button>
           ) : (
-            <Button onClick={goNext} disabled={!canAdvance || analyzing}>
+            <Button onClick={goNext} disabled={!canAdvance || analyzing || waitingForTranscripts}>
               Next
               <ArrowRight className="h-4 w-4" />
             </Button>
