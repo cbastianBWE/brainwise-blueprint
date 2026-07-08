@@ -18,6 +18,54 @@ interface RecordingResponse {
   transcript_status?: string | null;
 }
 
+interface ResourceVideoResponse {
+  kind?: string;
+  processing?: boolean;
+  playback_id?: string;
+  token?: string;
+  mux_status?: string;
+}
+
+export function ResourceVideo({ resourceId, title }: { resourceId: string; title?: string }) {
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ["resource-video", resourceId],
+    queryFn: async () => {
+      const { data, error } = await supabase.functions.invoke("get-resource-video-url", {
+        body: { p_resource_id: resourceId },
+      });
+      if (error) throw error;
+      return data as ResourceVideoResponse;
+    },
+    staleTime: 60_000,
+    retry: false,
+  });
+
+  return (
+    <div className="space-y-2">
+      {title && <h4 className="text-sm font-medium">{title}</h4>}
+      {isLoading ? (
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <Loader2 className="h-3 w-3 animate-spin" /> Loading video…
+        </div>
+      ) : isError || !data ? (
+        <p className="text-xs text-muted-foreground">Video unavailable.</p>
+      ) : data.processing ? (
+        <p className="text-xs text-muted-foreground">This video is still processing.</p>
+      ) : data.kind !== "mux" || !data.playback_id || !data.token ? (
+        <p className="text-xs text-muted-foreground">Video unavailable.</p>
+      ) : (
+        <MuxPlayer
+          playbackId={data.playback_id}
+          tokens={{ playback: data.token }}
+          streamType="on-demand"
+          style={{ maxHeight: "60vh", aspectRatio: "16/9", width: "100%" }}
+        />
+      )}
+    </div>
+  );
+}
+
+
 export function CoachingRecordingPlayer({ mediaId }: { mediaId: string }) {
   const { data, isLoading, isError } = useQuery({
     queryKey: ["coaching-recording", mediaId],
