@@ -46,6 +46,7 @@ import {
 import { format } from "date-fns";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import DrivingFacetScores from "@/components/results/DrivingFacetScores";
+import PtpIntroGate from "@/components/results/PtpIntroGate";
 import {
   PTPProfileOverviewSection,
   PTPDimensionHighlightsSection,
@@ -1000,6 +1001,10 @@ export default function MyResults({ isCoachView = false, adminView = false, targ
 
   return (
     <div className="p-6 space-y-8 max-w-5xl mx-auto">
+      {!isCoachView && !adminView && !targetUserId &&
+        (selected?.result.instrument_id ?? "") === "INST-001" && (
+          <PtpIntroGate />
+        )}
       {/* Assessment selector */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <h1 className="text-2xl font-bold text-foreground">
