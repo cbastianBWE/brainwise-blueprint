@@ -558,7 +558,7 @@ interface SelectedImage {
   library_id: string;
   storage_path: string;
   tag: string;
-  description?: string;
+  description?: MMValue;
 }
 
 function ImageDescribeWidget({
