@@ -134,11 +134,14 @@ export function CoachingRecordingPlayer({ mediaId }: { mediaId: string }) {
 }
 
 
+export type MMRecView = { mode?: "audio" | "video"; media_id: string };
+export type MMValueView = string | MMRecView;
+
 export interface Negative {
-  text: string;
-  a?: string;
-  b?: string;
-  c?: string;
+  text: MMValueView;
+  a?: MMValueView;
+  b?: MMValueView;
+  c?: MMValueView;
 }
 
 export interface ChatMsg {
@@ -147,9 +150,9 @@ export interface ChatMsg {
 }
 
 export interface Responses {
-  action?: string;
-  positives?: string[];
-  positiveAction?: string;
+  action?: MMValueView;
+  positives?: MMValueView[];
+  positiveAction?: MMValueView;
   negatives?: Negative[];
   analysis?: { html?: string; [k: string]: unknown };
   chat?: ChatMsg[];
