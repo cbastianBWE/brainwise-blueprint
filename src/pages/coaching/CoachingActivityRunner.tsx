@@ -1149,18 +1149,21 @@ function TextSelectWidget({
   step,
   value,
   onChange,
+  sessionId,
+  activityCode,
 }: {
   step: Step;
   value: SelectedSaying[];
   onChange: (next: SelectedSaying[]) => void;
+  sessionId: string;
+  activityCode: string;
 }) {
   const [rows, setRows] = useState<SayingRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [dialogRow, setDialogRow] = useState<SayingRow | null>(null);
-  const [reasonDraft, setReasonDraft] = useState("");
+  const [reasonDraft, setReasonDraft] = useState<MMValue>("");
   const selectExactly = step.selectExactly ?? 3;
   const promptText = step.reflectOnSelect?.prompt || "Why does this resonate?";
-  const maxLen = step.reflectOnSelect?.maxLen ?? 400;
 
   useEffect(() => {
     let cancelled = false;
@@ -1196,7 +1199,7 @@ function TextSelectWidget({
 
   const openFor = (row: SayingRow) => {
     const existing = selectedById.get(row.id);
-    setReasonDraft(existing?.description || "");
+    setReasonDraft(existing?.description ?? "");
     setDialogRow(row);
   };
 
@@ -1207,13 +1210,13 @@ function TextSelectWidget({
 
   const saveDialog = () => {
     if (!dialogRow) return;
-    const trimmed = reasonDraft.trim();
-    if (!trimmed) return;
+    if (!mmIsFilled(reasonDraft)) return;
+    const desc: MMValue = typeof reasonDraft === "string" ? reasonDraft.trim() : reasonDraft;
     const existing = selectedById.get(dialogRow.id);
     let next: SelectedSaying[];
     if (existing) {
       next = (value || []).map((s) =>
-        s.saying_id === dialogRow.id ? { ...s, description: trimmed } : s,
+        s.saying_id === dialogRow.id ? { ...s, description: desc } : s,
       );
     } else {
       next = [
@@ -1222,7 +1225,7 @@ function TextSelectWidget({
           saying_id: dialogRow.id,
           text: dialogRow.text,
           author: dialogRow.author,
-          description: trimmed,
+          description: desc,
         },
       ];
     }
@@ -1261,8 +1264,11 @@ function TextSelectWidget({
               <li key={s.saying_id} className="flex items-start gap-2 rounded-md border bg-muted/30 p-2">
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm">{s.text}</p>
-                  {s.description && (
+                  {typeof s.description === "string" && s.description && (
                     <p className="mt-0.5 truncate text-xs text-muted-foreground">{s.description}</p>
+                  )}
+                  {isMMRec(s.description) && (
+                    <p className="mt-0.5 text-xs text-muted-foreground italic">Recorded answer</p>
                   )}
                 </div>
                 <Button
@@ -1340,15 +1346,15 @@ function TextSelectWidget({
                 )}
               </blockquote>
               <div className="space-y-1">
-                <Label htmlFor="saying-reason">{promptText}</Label>
-                <Textarea
-                  id="saying-reason"
-                  autoFocus
-                  rows={4}
-                  maxLength={maxLen}
-                  placeholder={promptText}
+                <Label>{promptText}</Label>
+                <MultimodalField
                   value={reasonDraft}
-                  onChange={(e) => setReasonDraft(e.target.value)}
+                  onChange={setReasonDraft}
+                  sessionId={sessionId}
+                  activityCode={activityCode}
+                  questionKey={`${step.key || "sayings"}:${dialogRow.id}:reason`}
+                  placeholder={promptText}
+                  minRows={4}
                 />
               </div>
             </div>
@@ -1365,7 +1371,7 @@ function TextSelectWidget({
               <Button variant="ghost" onClick={closeDialog}>
                 Cancel
               </Button>
-              <Button onClick={saveDialog} disabled={!reasonDraft.trim()}>
+              <Button onClick={saveDialog} disabled={!mmIsFilled(reasonDraft)}>
                 Save
               </Button>
             </div>
