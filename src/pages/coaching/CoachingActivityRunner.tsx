@@ -2199,6 +2199,14 @@ export default function CoachingActivityRunner() {
       return done >= need;
     }
     if (step.widget === "recap") return !!(responses.recap as { html?: string } | undefined)?.html;
+    if (step.widget === "qa_multimodal") {
+      const qs = (step.questions as Array<{ key: string }>) || [];
+      const bag = (responses[step.key || ""] as Record<string, QaAnswer>) || {};
+      return qs.every((qq) => {
+        const a = bag[qq.key];
+        return !!a && (a.skipped || !!a.text?.trim() || !!a.media_id);
+      });
+    }
     return true;
   })();
 
@@ -2206,6 +2214,29 @@ export default function CoachingActivityRunner() {
     const isRiskDetail =
       step?.widget === "risk_blocks" && (step.subfields?.length ?? 0) > 0;
     const wantsAnalysis = isRiskDetail || step?.onComplete?.touchpoint === "analysis";
+    if (step?.widget === "qa_multimodal" && wantsAnalysis && session) {
+      const bag = (responses[step.key || ""] as Record<string, QaAnswer>) || {};
+      const recorded = Object.values(bag).filter((a) => !a.skipped && a.media_id);
+      if (recorded.length > 0) {
+        setWaitingForTranscripts(true);
+        const deadline = Date.now() + 75_000;
+        while (Date.now() < deadline) {
+          const { data } = await supabase
+            .from("coaching_response_media")
+            .select("question_key, transcript_status")
+            .eq("coaching_session_id", session.id);
+          const rows = (data || []) as Array<{ question_key: string; transcript_status: string | null }>;
+          const done = recorded.every((a) => {
+            const row = rows.find((r) => r.question_key && Object.entries(bag).some(([k, v]) => v.media_id === a.media_id && k === r.question_key));
+            const st = row?.transcript_status;
+            return st === "ready" || st === "failed";
+          });
+          if (done) break;
+          await new Promise((r) => setTimeout(r, 2500));
+        }
+        setWaitingForTranscripts(false);
+      }
+    }
     if (wantsAnalysis && !responses.analysis?.html) {
       if (session) {
         await supabase.rpc("coaching_session_save", {
@@ -2219,6 +2250,7 @@ export default function CoachingActivityRunner() {
     }
     setStep(Math.min(currentStep + 1, steps.length - 1));
   };
+
 
   const goBack = () => setStep(Math.max(currentStep - 1, 0));
 
