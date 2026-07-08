@@ -1374,7 +1374,7 @@ export default function CoachingActivityRunner() {
       setLoading(true);
       const { data: act } = await supabase
         .from("coaching_activities")
-        .select("id,title,tier,definition")
+        .select("id,code,title,tier,definition")
         .eq("id", activityId)
         .maybeSingle();
       if (cancelled) return;
