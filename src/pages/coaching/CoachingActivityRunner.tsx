@@ -530,9 +530,12 @@ function ChatWidget({
             }
           }}
         />
-        <Button onClick={send} disabled={sending || !message.trim()}>
-          {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-        </Button>
+        <div className="flex flex-col gap-1">
+          <Button onClick={send} disabled={sending || !message.trim()}>
+            {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+          </Button>
+          <DictateButton onFinal={(t) => setMessage((m) => (m ? m + " " : "") + t)} />
+        </div>
       </div>
     </div>
   );
