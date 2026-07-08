@@ -192,6 +192,170 @@ function mmFilled(v: unknown): boolean {
   return isRec(v);
 }
 
+// ---- Ikigai helpers (shared by runner + keepsake) ----
+export type IkigaiLens = "love" | "good" | "need" | "paid";
+export const IKIGAI_LENSES: IkigaiLens[] = ["love", "good", "need", "paid"];
+
+export interface IkigaiItem {
+  label: string;
+  source_lens: IkigaiLens;
+  lenses: IkigaiLens[];
+  region: string;
+}
+export interface IkigaiMap {
+  items: IkigaiItem[];
+  candidates?: string[];
+  model?: string;
+  generated_at?: string;
+}
+
+export function deriveIkigaiRegion(lenses: string[], sourceLens: string): string {
+  const valid: string[] = ["love", "good", "need", "paid"];
+  const set = Array.from(new Set(lenses.filter((l) => valid.includes(l))));
+  const has = (l: string) => set.includes(l);
+  const n = set.length;
+  const src = valid.includes(sourceLens) ? sourceLens : (set[0] ?? "love");
+  if (n <= 1) return n === 1 ? set[0] : src;
+  if (n === 2) {
+    if (has("love") && has("good")) return "passion";
+    if (has("good") && has("paid")) return "profession";
+    if (has("paid") && has("need")) return "vocation";
+    if (has("need") && has("love")) return "mission";
+    return src;
+  }
+  if (n === 3) {
+    if (has("love") && has("good") && has("need")) return "delight";
+    if (has("love") && has("good") && has("paid")) return "satisfaction";
+    if (has("good") && has("paid") && has("need")) return "comfortable";
+    if (has("love") && has("paid") && has("need")) return "excitement";
+    return src;
+  }
+  return "ikigai";
+}
+
+export function effectiveIkigaiLenses(
+  item: IkigaiItem,
+  overrides?: Record<string, string[]>,
+): IkigaiLens[] {
+  const raw = overrides?.[item.label];
+  const list = (raw && raw.length > 0 ? raw : item.lenses) || [];
+  const set = new Set<IkigaiLens>(
+    list.filter((l): l is IkigaiLens => (IKIGAI_LENSES as string[]).includes(l)),
+  );
+  if (item.source_lens && (IKIGAI_LENSES as string[]).includes(item.source_lens)) {
+    set.add(item.source_lens);
+  }
+  return Array.from(set);
+}
+
+const IKIGAI_REGION_ORDER = [
+  "love", "good", "need", "paid",
+  "passion", "mission", "profession", "vocation",
+  "satisfaction", "comfortable", "delight", "excitement",
+  "ikigai",
+];
+
+function IkigaiBackdrop({ regionLabels }: { regionLabels: Record<string, string> }) {
+  return (
+    <svg viewBox="0 0 400 400" className="mx-auto h-56 w-full max-w-xs" aria-hidden>
+      <g strokeWidth="2" stroke="hsl(var(--primary))">
+        <circle cx="160" cy="160" r="110" fill="hsl(var(--primary))" fillOpacity="0.08" />
+        <circle cx="240" cy="160" r="110" fill="hsl(var(--primary))" fillOpacity="0.08" />
+        <circle cx="160" cy="240" r="110" fill="hsl(var(--primary))" fillOpacity="0.08" />
+        <circle cx="240" cy="240" r="110" fill="hsl(var(--primary))" fillOpacity="0.08" />
+      </g>
+      <g fontSize="11" textAnchor="middle" className="fill-muted-foreground">
+        <text x="70" y="80">{regionLabels.love || "Love"}</text>
+        <text x="330" y="80">{regionLabels.good || "Good at"}</text>
+        <text x="70" y="335">{regionLabels.need || "World needs"}</text>
+        <text x="330" y="335">{regionLabels.paid || "Paid for"}</text>
+      </g>
+      <text x="200" y="205" textAnchor="middle" fontSize="13" fontWeight="600" fill="var(--bw-orange)">
+        {regionLabels.ikigai || "Ikigai"}
+      </text>
+    </svg>
+  );
+}
+
+export function IkigaiRegionsView({
+  map,
+  overrides,
+  regionLabels,
+  renderItem,
+}: {
+  map: IkigaiMap | undefined;
+  overrides?: Record<string, string[]>;
+  regionLabels: Record<string, string>;
+  renderItem?: (item: IkigaiItem, isCandidate: boolean) => JSX.Element;
+}) {
+  if (!map || !Array.isArray(map.items) || map.items.length === 0) return null;
+  const candidateSet = new Set(map.candidates || []);
+  const byRegion = new Map<string, IkigaiItem[]>();
+  for (const raw of map.items) {
+    const lenses = effectiveIkigaiLenses(raw, overrides);
+    const region = deriveIkigaiRegion(lenses, raw.source_lens);
+    const item: IkigaiItem = { ...raw, lenses, region };
+    if (!byRegion.has(region)) byRegion.set(region, []);
+    byRegion.get(region)!.push(item);
+  }
+  const ordered = IKIGAI_REGION_ORDER.filter((r) => (byRegion.get(r) || []).length > 0);
+  return (
+    <div className="space-y-4">
+      <IkigaiBackdrop regionLabels={regionLabels} />
+      <div className="grid gap-3 sm:grid-cols-2">
+        {ordered.map((r) => {
+          const items = byRegion.get(r)!;
+          const isCentre = r === "ikigai";
+          return (
+            <Card
+              key={r}
+              className={
+                isCentre
+                  ? "border-[var(--bw-orange)] bg-[var(--bw-orange)]/5"
+                  : "bg-muted/30"
+              }
+            >
+              <CardHeader className="pb-2">
+                <CardTitle
+                  className={
+                    isCentre
+                      ? "text-base"
+                      : "text-sm font-semibold text-muted-foreground"
+                  }
+                  style={isCentre ? { color: "var(--bw-orange)" } : undefined}
+                >
+                  {regionLabels[r] || r}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="flex flex-wrap gap-2 pt-0">
+                {items.map((it, i) => {
+                  const cand = candidateSet.has(it.label);
+                  if (renderItem) {
+                    return <div key={`${it.label}-${i}`}>{renderItem(it, cand)}</div>;
+                  }
+                  return (
+                    <span
+                      key={`${it.label}-${i}`}
+                      className={
+                        "inline-flex items-center gap-1 rounded-full border px-2 py-1 text-xs " +
+                        (cand ? "border-[var(--bw-orange)]" : "border-border")
+                      }
+                      style={cand ? { color: "var(--bw-orange)" } : undefined}
+                    >
+                      {cand && <span aria-hidden>★</span>}
+                      {it.label}
+                    </span>
+                  );
+                })}
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export function SynthesisView({ responses, steps }: { responses: Responses; steps?: any[] }) {
   if (!steps || steps.length === 0) return null;
   const rendered = new Set<string>();
