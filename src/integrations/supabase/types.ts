@@ -2732,6 +2732,89 @@ export type Database = {
         }
         Relationships: []
       }
+      coaching_response_media: {
+        Row: {
+          activity_code: string | null
+          coaching_session_id: string | null
+          created_at: string
+          duration_seconds: number | null
+          id: string
+          kind: string
+          mux_asset_id: string | null
+          mux_status: string
+          mux_upload_id: string | null
+          playback_id: string | null
+          question_key: string
+          transcript: string | null
+          transcript_status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          activity_code?: string | null
+          coaching_session_id?: string | null
+          created_at?: string
+          duration_seconds?: number | null
+          id?: string
+          kind: string
+          mux_asset_id?: string | null
+          mux_status?: string
+          mux_upload_id?: string | null
+          playback_id?: string | null
+          question_key: string
+          transcript?: string | null
+          transcript_status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          activity_code?: string | null
+          coaching_session_id?: string | null
+          created_at?: string
+          duration_seconds?: number | null
+          id?: string
+          kind?: string
+          mux_asset_id?: string | null
+          mux_status?: string
+          mux_upload_id?: string | null
+          playback_id?: string | null
+          question_key?: string
+          transcript?: string | null
+          transcript_status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coaching_response_media_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coaching_response_media_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "coaching_response_media_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coaching_response_media_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       coaching_saying_library: {
         Row: {
           active: boolean
