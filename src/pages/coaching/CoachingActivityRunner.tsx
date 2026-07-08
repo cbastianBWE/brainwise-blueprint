@@ -2416,11 +2416,13 @@ export default function CoachingActivityRunner() {
             {step?.widget === "content" && (
               <ContentWidget
                 step={step}
-                value={step.key ? ((responses[step.key] as string) || "") : ""}
+                value={step.key ? (responses[step.key] as MMValue | undefined) : undefined}
                 onChange={(v) => {
                   if (!step.key) return;
                   setResponses((r) => ({ ...r, [step.key!]: v }));
                 }}
+                sessionId={session.id}
+                activityCode={activity.code || ""}
               />
             )}
 
