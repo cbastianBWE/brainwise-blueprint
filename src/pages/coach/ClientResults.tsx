@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import MyResults from "@/pages/MyResults";
 import { CoachClientPlan } from "@/components/development-plan/CoachClientPlan";
+import CoachClientCoaching from "@/components/coaching/CoachClientCoaching";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
