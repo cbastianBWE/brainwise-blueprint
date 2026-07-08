@@ -9278,6 +9278,204 @@ export type Database = {
           },
         ]
       }
+      ptp_intro_gate_state: {
+        Row: {
+          created_at: string
+          id: string
+          outcome: string | null
+          resolved_at: string
+          triggering_result_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          outcome?: string | null
+          resolved_at?: string
+          triggering_result_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          outcome?: string | null
+          resolved_at?: string
+          triggering_result_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ptp_intro_gate_state_triggering_result_id_fkey"
+            columns: ["triggering_result_id"]
+            isOneToOne: false
+            referencedRelation: "assessment_results"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ptp_intro_gate_state_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ptp_intro_gate_state_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "ptp_intro_gate_state_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ptp_intro_gate_state_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ptp_intro_gate_videos: {
+        Row: {
+          card_body: string | null
+          card_title: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          position: number
+          resource_id: string
+          runtime_label: string | null
+          updated_at: string
+        }
+        Insert: {
+          card_body?: string | null
+          card_title?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          position: number
+          resource_id: string
+          runtime_label?: string | null
+          updated_at?: string
+        }
+        Update: {
+          card_body?: string | null
+          card_title?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          position?: number
+          resource_id?: string
+          runtime_label?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ptp_intro_gate_videos_resource_id_fkey"
+            columns: ["resource_id"]
+            isOneToOne: true
+            referencedRelation: "resources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ptp_intro_video_progress: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          duration_seconds: number | null
+          first_started_at: string | null
+          gate_video_id: string
+          id: string
+          last_position_seconds: number
+          max_percent: number
+          resource_id: string | null
+          status: string
+          updated_at: string
+          user_id: string
+          watched_seconds: number
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          duration_seconds?: number | null
+          first_started_at?: string | null
+          gate_video_id: string
+          id?: string
+          last_position_seconds?: number
+          max_percent?: number
+          resource_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+          watched_seconds?: number
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          duration_seconds?: number | null
+          first_started_at?: string | null
+          gate_video_id?: string
+          id?: string
+          last_position_seconds?: number
+          max_percent?: number
+          resource_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+          watched_seconds?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ptp_intro_video_progress_gate_video_id_fkey"
+            columns: ["gate_video_id"]
+            isOneToOne: false
+            referencedRelation: "ptp_intro_gate_videos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ptp_intro_video_progress_resource_id_fkey"
+            columns: ["resource_id"]
+            isOneToOne: false
+            referencedRelation: "resources"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ptp_intro_video_progress_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ptp_intro_video_progress_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "ptp_intro_video_progress_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ptp_intro_video_progress_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ptp_report_highlights: {
         Row: {
           assessment_result_id: string
@@ -15124,6 +15322,19 @@ export type Database = {
       pseudonymize_user: {
         Args: { p_reason?: string; p_user_id: string }
         Returns: number
+      }
+      ptp_intro_gate_resolve: { Args: never; Returns: Json }
+      ptp_intro_gate_status: { Args: never; Returns: Json }
+      ptp_intro_video_progress_upsert: {
+        Args: {
+          p_duration?: number
+          p_event?: string
+          p_gate_video_id: string
+          p_last_position?: number
+          p_max_percent?: number
+          p_watched_seconds_delta?: number
+        }
+        Returns: Json
       }
       ptp_profile_facet_rows: {
         Args: { p_item_set: string; p_user_ids: string[] }
