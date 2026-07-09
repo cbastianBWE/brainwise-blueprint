@@ -94,6 +94,7 @@ export default function InstrumentSelection({ onSelect }: Props) {
   const [subscriptionPlans, setSubscriptionPlans] = useState<Array<{ plan_name: string; tier: string; billing_period: string; price_usd: number | null; stripe_price_id: string }>>([]);
   const [selfPayCoachInstrumentIds, setSelfPayCoachInstrumentIds] = useState<Set<string>>(new Set());
   const [actorDebriefInstrumentIds, setActorDebriefInstrumentIds] = useState<Set<string>>(new Set());
+  const [freeGrantInstrumentIds, setFreeGrantInstrumentIds] = useState<Set<string>>(new Set());
   const [ptpContextProgress, setPtpContextProgress] = useState<Map<string, string>>(new Map());
   const [airsaAwaiting, setAirsaAwaiting] = useState<{ completed_at: string } | null>(null);
 
