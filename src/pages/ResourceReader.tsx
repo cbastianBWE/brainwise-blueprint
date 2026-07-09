@@ -360,13 +360,20 @@ export default function ResourceReader() {
             </p>
             <Button
               onClick={() => {
-                if (resource.url_or_content) {
+                if (resource.url_or_content && isSafeHttpUrl(resource.url_or_content)) {
                   window.open(resource.url_or_content, "_blank", "noopener,noreferrer");
+                } else {
+                  toast({
+                    title: "Can't open link",
+                    description: "This link can't be opened.",
+                    variant: "destructive",
+                  });
                 }
               }}
             >
               Open article in new tab
             </Button>
+
           </CardContent>
         </Card>
       );
