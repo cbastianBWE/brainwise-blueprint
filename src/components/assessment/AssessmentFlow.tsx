@@ -235,7 +235,7 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
 
       if (instrument.instrument_id === "INST-003") {
         const { data: scales } = await supabase
-          .from("response_scales")
+          .from("response_scales_public" as any)
           .select("response_value, numeric_equivalent, display_label, readiness_translation")
           .eq("scale_type", "Never/Rarely/Often/Consistently");
         if (scales) setResponseScales(scales);

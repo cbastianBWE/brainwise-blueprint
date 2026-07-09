@@ -358,7 +358,7 @@ export default function MyResults({ isCoachView = false, adminView = false, targ
 
       // Fetch dimension names for display
       const { data: dimensionRows } = await supabase
-        .from("dimensions")
+        .from("dimensions_public" as any)
         .select("dimension_id, dimension_name")
         .in("instrument_id", instrumentIds);
 
