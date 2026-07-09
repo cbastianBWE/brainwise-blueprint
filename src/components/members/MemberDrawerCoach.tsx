@@ -456,6 +456,95 @@ export default function MemberDrawerCoach({
           </>
         )}
       </section>
+
+      <section className="space-y-3">
+        <h3 className="text-sm font-semibold">Free client assessment grants</h3>
+        <div className="rounded-md border p-3 space-y-3">
+          <div className="text-sm">
+            <span className="text-muted-foreground">Current balance: </span>
+            <span className="font-medium">{renderFreeClientSummary()}</span>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Instrument</Label>
+            <Select value={freeClientInstrument} onValueChange={setFreeClientInstrument}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select instrument" />
+              </SelectTrigger>
+              <SelectContent>
+                {INSTRUMENTS.map((i) => (
+                  <SelectItem key={i.code} value={i.code}>
+                    {i.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Count</Label>
+            <Input
+              type="number"
+              min={1}
+              value={freeClientCount}
+              onChange={(e) => setFreeClientCount(e.target.value)}
+            />
+          </div>
+
+          <Button
+            onClick={() => setFreeClientGrantOpen(true)}
+            disabled={!canOpenFreeClientDialog}
+            className="w-full"
+          >
+            Grant free client assessments
+          </Button>
+
+          <p className="text-xs text-muted-foreground">
+            This action is audit-logged.
+          </p>
+        </div>
+
+        <JustifiedActionDialog
+          open={freeClientGrantOpen}
+          onOpenChange={setFreeClientGrantOpen}
+          title="Grant free client assessments"
+          description={
+            <span>
+              You are about to grant <strong>{freeClientCount}</strong> free{" "}
+              <strong>{instrumentLabel(freeClientInstrument)}</strong> client
+              assessment(s) to <strong>{fullName ?? "this coach"}</strong>.
+            </span>
+          }
+          successTitle={`Granted ${freeClientCount} free client assessment(s)`}
+          onSubmit={async (reason) => {
+            const { error } = await supabase.rpc(
+              "grant_free_client_assessments" as any,
+              {
+                p_coach_user_id: userId,
+                p_instrument_id: freeClientInstrument,
+                p_count: Number(freeClientCount),
+                p_reason: reason,
+              } as any,
+            );
+            if (error) throw error;
+            await loadFreeClientPool();
+            setFreeClientCount("1");
+            setFreeClientInstrument("");
+            return { changed: true };
+          }}
+          mapError={(raw) => {
+            if (raw.includes("count_must_be_positive"))
+              return "Count must be a positive number.";
+            if (raw.includes("invalid_instrument_id"))
+              return "Please select a valid instrument.";
+            if (raw.includes("coach_not_found"))
+              return "That coach could not be found.";
+            if (raw.includes("reason_required_min_chars"))
+              return "Please provide a longer reason for this action.";
+            return null;
+          }}
+        />
+      </section>
     </div>
   );
 }
