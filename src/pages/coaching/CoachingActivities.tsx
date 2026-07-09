@@ -521,25 +521,82 @@ export default function CoachingActivities() {
     };
   }, [user]);
 
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return activities;
-    return activities.filter((a) => {
-      if (a.title?.toLowerCase().includes(q)) return true;
-      if (a.desired_outcome?.toLowerCase().includes(q)) return true;
-      if ((a.tags || []).some((t) => t.toLowerCase().includes(q))) return true;
-      return false;
-    });
-  }, [activities, query]);
-
   const grouped = useMemo(() => {
     const groups: Record<string, Activity[]> = {};
-    for (const a of filtered) {
+    for (const a of activities) {
       const key = a.module_group || a.tier || "Coaching";
       (groups[key] = groups[key] || []).push(a);
     }
     return groups;
-  }, [filtered]);
+  }, [activities]);
+
+  // Debounced semantic search via edge function
+  useEffect(() => {
+    const q = query.trim();
+    if (!q) {
+      setSubmittedQuery("");
+      setSearchResults(null);
+      setSearching(false);
+      return;
+    }
+    const t = setTimeout(() => {
+      setSubmittedQuery(q);
+    }, 400);
+    return () => clearTimeout(t);
+  }, [query]);
+
+  useEffect(() => {
+    const q = submittedQuery.trim();
+    if (!q) return;
+    let cancelled = false;
+    setSearching(true);
+    (async () => {
+      const { data, error: fnErr } = await supabase.functions.invoke(
+        "coaching-activity-search",
+        { body: { query: q } },
+      );
+      if (cancelled) return;
+      if (fnErr || !data?.success) {
+        setSearchResults([]);
+        setSearching(false);
+        return;
+      }
+      const results = (data.results || []) as Array<{
+        activity_id: string;
+        code: string;
+        title: string;
+        module_group: string | null;
+        tier: string | null;
+        description: string | null;
+        thumbnail_url: string | null;
+        similarity: number;
+      }>;
+      const mapped: Activity[] = results.map((r) => {
+        const existing = activities.find((a) => a.id === r.activity_id);
+        return (
+          existing || {
+            id: r.activity_id,
+            code: r.code,
+            title: r.title,
+            tier: r.tier,
+            status: "published",
+            module_group: r.module_group,
+            sequence: null,
+            desired_outcome: r.description,
+            definition: {},
+            tags: [],
+            thumbnail_url: r.thumbnail_url,
+          }
+        );
+      });
+      setSearchResults(mapped);
+      setSearching(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [submittedQuery, activities]);
+
 
   const inProgressSet = useMemo(
     () => new Set(sessions.map((s) => s.activity_id)),
