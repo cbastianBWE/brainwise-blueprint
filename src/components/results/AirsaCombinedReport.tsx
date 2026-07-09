@@ -354,7 +354,7 @@ export default function AirsaCombinedReport({
           .select("section_type, facet_data")
           .eq("assessment_result_id", assessmentResultId)
           .like("section_type", "airsa_%"),
-        supabase.from("airsa_skills_public" as any).select("item_number, is_new_skill"),
+        (supabase as any).from("airsa_skills_public").select("item_number, is_new_skill"),
       ]);
 
       if (cancelled) return;
