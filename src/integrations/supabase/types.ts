@@ -12833,6 +12833,7 @@ export type Database = {
           item_id: string | null
           item_number: number | null
           item_text: string | null
+          rater_type: string | null
         }
         Insert: {
           anchor_high?: string | null
@@ -12847,6 +12848,7 @@ export type Database = {
           item_id?: string | null
           item_number?: number | null
           item_text?: string | null
+          rater_type?: string | null
         }
         Update: {
           anchor_high?: string | null
@@ -12861,6 +12863,7 @@ export type Database = {
           item_id?: string | null
           item_number?: number | null
           item_text?: string | null
+          rater_type?: string | null
         }
         Relationships: [
           {
