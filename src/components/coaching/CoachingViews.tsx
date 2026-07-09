@@ -201,12 +201,29 @@ export interface IkigaiItem {
   source_lens: IkigaiLens;
   lenses: IkigaiLens[];
   region: string;
+  reasoning?: string;
+}
+export interface IkigaiSufficiency {
+  enough: boolean;
+  note: string;
+  questions: string[];
 }
 export interface IkigaiMap {
   items: IkigaiItem[];
   candidates?: string[];
+  sufficiency?: IkigaiSufficiency;
   model?: string;
   generated_at?: string;
+}
+
+const IKIGAI_LENS_COLORS: Record<IkigaiLens, string> = {
+  love: "var(--bw-orange)",
+  good: "var(--bw-navy-500)",
+  need: "var(--bw-plum)",
+  paid: "var(--bw-mustard)",
+};
+export function ikigaiLensColor(l: IkigaiLens): string {
+  return IKIGAI_LENS_COLORS[l];
 }
 
 export function deriveIkigaiRegion(lenses: string[], sourceLens: string): string {
