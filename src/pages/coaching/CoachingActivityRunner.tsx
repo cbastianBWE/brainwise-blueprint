@@ -52,6 +52,10 @@ import { IkigaiWidget } from "./runner/widgets/IkigaiWidget";
 import { InnerTeamWidget } from "./runner/widgets/InnerTeamWidget";
 import { PtpDisplayWidget } from "./runner/widgets/PtpDisplayWidget";
 import { AssessmentUploadWidget } from "./runner/widgets/AssessmentUploadWidget";
+import { ImageSelectWidget } from "./runner/widgets/ImageSelectWidget";
+import { TextSelectWidget } from "./runner/widgets/TextSelectWidget";
+import { ImageDescribeWidget } from "./runner/widgets/ImageDescribeWidget";
+import { RecapWidget } from "./runner/widgets/RecapWidget";
 
 
 // ---- Widgets ----
