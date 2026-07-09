@@ -2288,21 +2288,6 @@ const ACCEPT_MIME: Record<string, string> = {
 const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
 const MAX_UPLOAD_COUNT = 8;
 
-function inferFileType(file: File, accept: string[]): AssessmentFileType | null {
-  const name = file.name.toLowerCase();
-  if (accept.includes("pdf") && (file.type === "application/pdf" || name.endsWith(".pdf"))) return "pdf";
-  if (accept.includes("image") && file.type.startsWith("image/")) return "image";
-  if (accept.includes("docx") && (name.endsWith(".docx") || file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document")) return "docx";
-  return null;
-}
-
-function extForFile(file: File, type: AssessmentFileType): string {
-  const m = file.name.toLowerCase().match(/\.([a-z0-9]+)$/);
-  if (m) return m[1];
-  if (type === "pdf") return "pdf";
-  if (type === "docx") return "docx";
-  return "bin";
-}
 
 function AssessmentUploadWidget({
   step,
