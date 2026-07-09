@@ -1059,7 +1059,16 @@ export default function CoachClients() {
               <DialogTitle>Order Assessment</DialogTitle>
               <DialogDescription>Set up an assessment for a new or existing client</DialogDescription>
             </DialogHeader>
-            {isActorDebrief ? (
+            {isFreeGrant ? (
+              <div className="mt-2">
+                {sharedFormFields}
+                <div className="mt-4">
+                  <Button className="w-full gap-2" onClick={handleOrderFreeGrant} disabled={submitting || !email}>
+                    <Send className="h-4 w-4" aria-hidden="true" /> {submitting ? "Sending..." : "Send Free Assessment"}
+                  </Button>
+                </div>
+              </div>
+            ) : isActorDebrief ? (
               <div className="mt-2">
                 {sharedFormFields}
                 <div className="mt-4">
