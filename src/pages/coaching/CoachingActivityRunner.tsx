@@ -2544,7 +2544,7 @@ export default function CoachingActivityRunner() {
     (async () => {
       setLoading(true);
       const { data: act } = await supabase
-        .from("coaching_activities_public" as any)
+        .from("coaching_activities_public")
         .select("id,code,title,tier,definition")
         .eq("id", activityId)
         .maybeSingle();

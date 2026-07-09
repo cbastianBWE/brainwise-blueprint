@@ -670,7 +670,7 @@ export default function MyResults({ isCoachView = false, adminView = false, targ
       if (!responses?.length) { setDimensionFacetRanges({}); return; }
       const itemIds = responses.map(r => r.item_id);
       const { data: items } = await supabase
-        .from('items_presentation' as any)
+        .from("items_presentation")
         .select('item_id, dimension_id, context_type')
         .in('item_id', itemIds);
       const itemMap = new Map((items ?? []).map(i => [i.item_id, i]));
@@ -745,7 +745,7 @@ export default function MyResults({ isCoachView = false, adminView = false, targ
 
       const itemIds = responses.map(r => r.item_id);
       const { data: items } = await supabase
-        .from('items_presentation' as any)
+        .from("items_presentation")
         .select('item_id, dimension_id, context_type')
         .in('item_id', itemIds);
 

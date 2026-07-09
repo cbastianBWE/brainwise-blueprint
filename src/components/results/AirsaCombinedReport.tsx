@@ -354,7 +354,7 @@ export default function AirsaCombinedReport({
           .select("section_type, facet_data")
           .eq("assessment_result_id", assessmentResultId)
           .like("section_type", "airsa_%"),
-        (supabase as any).from("airsa_skills_public").select("item_number, is_new_skill"),
+        supabase.from("airsa_skills_public").select("item_number, is_new_skill"),
       ]);
 
       if (cancelled) return;
@@ -399,7 +399,7 @@ export default function AirsaCombinedReport({
     let cancelled = false;
     (async () => {
       const { data: rows } = await supabase
-        .from("airsa_skills_public" as any)
+        .from("airsa_skills_public")
         .select("item_number, skill_name, short_description, dimension_id")
         .order("item_number");
       if (!cancelled && rows) setSelfOnlySkillList(rows as any);

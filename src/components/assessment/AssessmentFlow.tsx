@@ -200,7 +200,7 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
       if (loadedAssessmentRef.current === assessmentId) return;
 
       let itemsQuery = supabase
-        .from("items_presentation" as any)
+        .from("items_presentation")
         .select("item_id, item_number, item_text, anchor_low, anchor_high, dimension_id")
         .eq("instrument_id", instrument.instrument_id)
         .eq("rater_type", raterType === "manager" ? "Manager" : "Self")

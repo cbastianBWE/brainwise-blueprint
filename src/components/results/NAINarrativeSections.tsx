@@ -112,7 +112,7 @@ export default function NAINarrativeSections({
       setLoading(true);
 
       const { data: allItems } = await supabase
-        .from("items_presentation" as any)
+        .from("items_presentation")
         .select("item_id, item_text, item_number, dimension_id, facet_name")
         .eq("instrument_id", "INST-002")
         .order("item_number");
@@ -157,7 +157,7 @@ export default function NAINarrativeSections({
         if (ptpResponses?.length) {
           const ptpItemIds = ptpResponses.map((r) => r.item_id);
           const { data: ptpItems } = await supabase
-            .from("items_presentation" as any)
+            .from("items_presentation")
             .select("item_id, facet_name, dimension_id")
             .in("item_id", ptpItemIds);
 

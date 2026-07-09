@@ -166,7 +166,7 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
 
       const itemIds = merged.map((r) => r.item_id);
       const { data: items } = await supabase
-        .from("items_presentation" as any)
+        .from("items_presentation")
         .select("item_id, item_text, item_number, dimension_id, context_type, anchor_low, anchor_high")
         .in("item_id", itemIds);
 
@@ -373,7 +373,7 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
 
         const itemIds = responses.map((r) => r.item_id);
         const { data: items } = await supabase
-          .from("items_presentation" as any)
+          .from("items_presentation")
           .select("item_id, item_number, dimension_id, facet_name, context_type")
           .in("item_id", itemIds);
         const itemMap = new Map((items ?? []).map((i) => [i.item_id, i]));

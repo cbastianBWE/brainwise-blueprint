@@ -88,7 +88,7 @@ export async function assembleTeamPdfData(params: {
   }
 
   const { data: items } = await supabase
-    .from("items_presentation" as any)
+    .from("items_presentation")
     .select("item_number,item_text")
     .eq("instrument_id", "INST-001");
   const itemText = new Map<number, string>();

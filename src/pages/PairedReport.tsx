@@ -516,7 +516,7 @@ export default function PairedReport() {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const { data } = await (supabase as any).from("items_presentation").select("item_number,item_text").eq("instrument_id", "INST-001");
+      const { data } = await supabase.from("items_presentation").select("item_number,item_text").eq("instrument_id", "INST-001");
       if (cancelled) return;
       const rows = (data ?? []) as Array<{ item_number: number | null; item_text: string }>;
       setQuestionByItem(new Map(rows.filter((r) => r.item_number != null).map((r) => [r.item_number as number, r.item_text])));
