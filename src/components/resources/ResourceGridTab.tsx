@@ -198,7 +198,16 @@ export default function ResourceGridTab({ tab, emptyStateText, showAllAtRoot = f
         void handleFileDownload(resource);
       }
     } else if (resource.url_kind === "external_link" && resource.url_or_content) {
-      window.open(resource.url_or_content, "_blank", "noopener,noreferrer");
+      if (isSafeHttpUrl(resource.url_or_content)) {
+        window.open(resource.url_or_content, "_blank", "noopener,noreferrer");
+      } else {
+        toast({
+          title: "Can't open link",
+          description: "This link can't be opened.",
+          variant: "destructive",
+        });
+      }
+
     } else {
       navigate(`/resources/${resource.resource_id}`);
     }
