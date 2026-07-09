@@ -2163,6 +2163,8 @@ export default function CoachingActivityRunner() {
   const [coachUserId, setCoachUserId] = useState<string | null>(null);
   const [existingShare, setExistingShare] = useState<{ id: string; mode: string } | null>(null);
   const [alwaysShare, setAlwaysShare] = useState(false);
+  const [accessDenial, setAccessDenial] = useState<string | null>(null);
+
 
   const freshHandledRef = useRef(false);
 
