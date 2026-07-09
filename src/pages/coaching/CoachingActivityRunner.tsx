@@ -3319,6 +3319,17 @@ export default function CoachingActivityRunner() {
               <PtpDisplayWidget step={step} userId={user.id} />
             )}
 
+            {step?.widget === "assessment_upload" && user && (
+              <AssessmentUploadWidget
+                step={step}
+                session={session}
+                userId={user.id}
+                responses={responses}
+                setResponses={setResponses}
+                setCoachingRemaining={(n) => setCoachingRemaining(n)}
+              />
+            )}
+
 
             {step?.widget === "ikigai" && (
               <IkigaiWidget
