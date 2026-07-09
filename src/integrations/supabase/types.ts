@@ -2535,6 +2535,42 @@ export type Database = {
         }
         Relationships: []
       }
+      coaching_activity_embeddings: {
+        Row: {
+          activity_id: string
+          content: string
+          embedding: string | null
+          updated_at: string
+        }
+        Insert: {
+          activity_id: string
+          content: string
+          embedding?: string | null
+          updated_at?: string
+        }
+        Update: {
+          activity_id?: string
+          content?: string
+          embedding?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coaching_activity_embeddings_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: true
+            referencedRelation: "coaching_activities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coaching_activity_embeddings_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: true
+            referencedRelation: "coaching_activities_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       coaching_activity_sessions: {
         Row: {
           activity_id: string
@@ -15983,6 +16019,23 @@ export type Database = {
       schedule_article: {
         Args: { p_article_id: string; p_publish_at: string; p_reason: string }
         Returns: Json
+      }
+      search_coaching_activities: {
+        Args: {
+          p_match_count?: number
+          p_min_similarity?: number
+          p_query_embedding: string
+        }
+        Returns: {
+          activity_id: string
+          code: string
+          description: string
+          module_group: string
+          similarity: number
+          thumbnail_url: string
+          tier: string
+          title: string
+        }[]
       }
       search_impersonation_targets: {
         Args: {
