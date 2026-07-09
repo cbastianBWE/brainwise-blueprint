@@ -86,6 +86,12 @@ interface Step {
   lensKeys?: Record<string, string>;
   // ptp_display
   instrument?: string;
+  // assessment_upload
+  accept?: string[];
+  bucket?: string;
+  uploadsTable?: string;
+  analysisKey?: string;
+  suggestions?: string[];
 }
 
 interface SelectedSaying {
