@@ -132,6 +132,10 @@ export default function CoachClients() {
   const [actorCert, setActorCert] = useState<{ id: string; certification_type: string; status: string; free_uses_expire_at: string | null } | null>(null);
   const [actorsUsed, setActorsUsed] = useState<number>(0);
   const [isActorDebrief, setIsActorDebrief] = useState(false);
+  const [freePool, setFreePool] = useState<Record<string, number>>({});
+  const [isFreeGrant, setIsFreeGrant] = useState(false);
+
+  const hasAnyFreeBalance = Object.values(freePool).some((b) => b > 0);
 
   const canOfferActorDebrief =
     !!actorCert
