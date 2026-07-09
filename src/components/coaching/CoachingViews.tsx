@@ -279,24 +279,33 @@ function IkigaiBackdrop({ regionLabels }: { regionLabels: Record<string, string>
   const paidC = IKIGAI_LENS_COLORS.paid;
   return (
     <svg
-      viewBox="0 0 500 500"
+      viewBox="0 0 500 520"
       className="mx-auto h-auto w-full max-w-lg"
       aria-hidden
       preserveAspectRatio="xMidYMid meet"
     >
       <g strokeWidth="2.5">
-        <circle cx="195" cy="195" r="145" fill={loveC} fillOpacity="0.15" stroke={loveC} />
-        <circle cx="305" cy="195" r="145" fill={goodC} fillOpacity="0.15" stroke={goodC} />
-        <circle cx="195" cy="305" r="145" fill={needC} fillOpacity="0.15" stroke={needC} />
-        <circle cx="305" cy="305" r="145" fill={paidC} fillOpacity="0.15" stroke={paidC} />
+        <circle cx="195" cy="205" r="145" fill={loveC} fillOpacity="0.15" stroke={loveC} />
+        <circle cx="305" cy="205" r="145" fill={goodC} fillOpacity="0.15" stroke={goodC} />
+        <circle cx="195" cy="315" r="145" fill={needC} fillOpacity="0.15" stroke={needC} />
+        <circle cx="305" cy="315" r="145" fill={paidC} fillOpacity="0.15" stroke={paidC} />
       </g>
       <g fontSize="18" fontWeight="600" textAnchor="middle">
-        <text x="70" y="80" fill={loveC}>{regionLabels.love || "Love"}</text>
-        <text x="430" y="80" fill={goodC}>{regionLabels.good || "Good at"}</text>
-        <text x="70" y="440" fill={needC}>{regionLabels.need || "World needs"}</text>
-        <text x="430" y="440" fill={paidC}>{regionLabels.paid || "Paid for"}</text>
+        <text x="110" y="80" fill={loveC}>{regionLabels.love || "What you love"}</text>
+        <text x="390" y="70" fill={goodC}>
+          <tspan x="390" dy="0">What you&apos;re</tspan>
+          <tspan x="390" dy="20">good at</tspan>
+        </text>
+        <text x="110" y="480" fill={needC}>
+          <tspan x="110" dy="0">What the</tspan>
+          <tspan x="110" dy="20">world needs</tspan>
+        </text>
+        <text x="390" y="480" fill={paidC}>
+          <tspan x="390" dy="0">What you can</tspan>
+          <tspan x="390" dy="20">be paid for</tspan>
+        </text>
       </g>
-      <text x="250" y="258" textAnchor="middle" fontSize="22" fontWeight="700" fill="var(--bw-orange)">
+      <text x="250" y="268" textAnchor="middle" fontSize="22" fontWeight="700" fill="var(--bw-orange)">
         {regionLabels.ikigai || "Ikigai"}
       </text>
     </svg>
