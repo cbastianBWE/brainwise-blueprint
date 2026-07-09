@@ -27,7 +27,7 @@ interface Item {
   anchor_low: string | null;
   anchor_high: string | null;
   scale_type: string | null;
-  reverse_scored: boolean;
+  dimension_id: string | null;
   dimension_id: string | null;
 }
 
