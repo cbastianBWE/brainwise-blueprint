@@ -110,7 +110,7 @@ async function fetchCommon(assessmentResultId: string): Promise<CommonFetched> {
     .maybeSingle();
 
   const { data: dimensionRows } = await supabase
-    .from("dimensions")
+    .from("dimensions_public" as any)
     .select("dimension_id, dimension_name")
     .eq("instrument_id", result.instrument_id ?? "");
 
