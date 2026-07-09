@@ -451,6 +451,9 @@ export default function CoachingActivities() {
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<"activities" | "history">("activities");
   const [query, setQuery] = useState("");
+  const [submittedQuery, setSubmittedQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<Activity[] | null>(null);
+  const [searching, setSearching] = useState(false);
   const [openActivity, setOpenActivity] = useState<Activity | null>(null);
   const [groupAccess, setGroupAccess] = useState<
     Record<string, { accessible: boolean; has_completed: boolean }>
