@@ -1565,11 +1565,6 @@ function ImageSelectWidget({
   );
 }
 
-interface SayingRow {
-  id: string;
-  text: string;
-  author: string | null;
-}
 
 function TextSelectWidget({
   step,
