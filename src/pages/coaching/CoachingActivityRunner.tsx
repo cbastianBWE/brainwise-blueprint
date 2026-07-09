@@ -2270,15 +2270,6 @@ function PtpDisplayWidget({ step, userId }: { step: Step; userId: string }) {
 
 // ---- Assessment upload widget ----
 
-type AssessmentFileType = "pdf" | "image" | "docx";
-
-interface AssessmentUploadRow {
-  id: string;
-  label: string;
-  file_type: AssessmentFileType;
-  original_filename: string;
-  storage_path: string;
-}
 
 const ACCEPT_MIME: Record<string, string> = {
   pdf: "application/pdf",
