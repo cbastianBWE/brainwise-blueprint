@@ -122,24 +122,57 @@ export function RiskBlocksWidget({
             )}
           </CardHeader>
           <CardContent className="space-y-3">
-            {subfields.map((sf) => (
-              <div key={sf} className="space-y-1">
-                <Label>{label(sf)}</Label>
-                <p className="text-xs text-muted-foreground">{helper(sf)}</p>
-                <MultimodalField
-                  value={(n as any)[sf]}
-                  onChange={(v) => {
-                    const next = [...items];
-                    next[i] = { ...next[i], [sf]: v as any };
-                    onChange(next);
-                  }}
-                  sessionId={sessionId}
-                  activityCode={activityCode}
-                  questionKey={`${step.key || "negatives"}:${i}:${sf}`}
-                  minRows={2}
-                />
-              </div>
-            ))}
+            {subfields.map((sf) => {
+              const type = step.subfieldTypes?.[sf];
+              const options = step.subfieldOptions?.[sf];
+              const isSelect = type === "select" && Array.isArray(options) && options.length > 0;
+              return (
+                <div key={sf} className="space-y-1">
+                  <Label>{label(sf)}</Label>
+                  <p className="text-xs text-muted-foreground">{helper(sf)}</p>
+                  {isSelect ? (
+                    <div className="flex flex-wrap gap-2 pt-1">
+                      {options!.map((opt) => {
+                        const selected = (n as any)[sf] === opt;
+                        return (
+                          <button
+                            key={opt}
+                            type="button"
+                            onClick={() => {
+                              const next = [...items];
+                              next[i] = { ...next[i], [sf]: opt as any };
+                              onChange(next);
+                            }}
+                            className={
+                              "px-3 py-1.5 rounded-md border text-sm transition-colors " +
+                              (selected
+                                ? "bg-primary text-primary-foreground border-primary"
+                                : "bg-background hover:bg-accent hover:text-accent-foreground border-input")
+                            }
+                            aria-pressed={selected}
+                          >
+                            {opt}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <MultimodalField
+                      value={(n as any)[sf]}
+                      onChange={(v) => {
+                        const next = [...items];
+                        next[i] = { ...next[i], [sf]: v as any };
+                        onChange(next);
+                      }}
+                      sessionId={sessionId}
+                      activityCode={activityCode}
+                      questionKey={`${step.key || "negatives"}:${i}:${sf}`}
+                      minRows={2}
+                    />
+                  )}
+                </div>
+              );
+            })}
           </CardContent>
         </Card>
       ))}
