@@ -636,16 +636,47 @@ export default function CoachingActivities() {
     [activities, selectedGroup],
   );
 
+  const onSearchSubmit = (e?: React.FormEvent) => {
+    e?.preventDefault();
+    const q = query.trim();
+    if (!q) {
+      setSubmittedQuery("");
+      setSearchResults(null);
+      return;
+    }
+    setSubmittedQuery(q);
+  };
+
   const searchBox = (
-    <div className="relative">
-      <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-      <Input
-        type="search"
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        placeholder="Search activities by title, outcome, or tag"
-        className="pl-9"
-      />
+    <form onSubmit={onSearchSubmit} className="flex gap-2">
+      <div className="relative flex-1">
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          type="search"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search activities"
+          className="pl-9"
+        />
+      </div>
+      <Button type="submit" variant="outline" disabled={searching || !query.trim()}>
+        {searching ? <Loader2 className="h-4 w-4 animate-spin" /> : "Search"}
+      </Button>
+    </form>
+  );
+
+  const renderCards = (items: Activity[]) => (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      {items.map((a) => (
+        <CoachingActivityCard
+          key={a.id}
+          activity={a}
+          access={access[a.id]}
+          inProgress={inProgressSet.has(a.id)}
+          onOpenBriefing={() => setOpenActivity(a)}
+          onResume={() => navigate(`/coaching/${a.id}`)}
+        />
+      ))}
     </div>
   );
 
@@ -673,36 +704,40 @@ export default function CoachingActivities() {
   ) : (
     <div className="space-y-6">
       {searchBox}
-      {filtered.length === 0 ? (
-        <Card>
-          <CardContent className="p-10 text-center">
-            <Search className="mx-auto h-8 w-8 text-muted-foreground" />
-            <p className="mt-3 text-sm text-muted-foreground">
-              No activities match your search.
-            </p>
-          </CardContent>
-        </Card>
+      {submittedQuery ? (
+        searching ? (
+          <div className="flex items-center justify-center gap-2 py-16 text-sm text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Searching…
+          </div>
+        ) : searchResults && searchResults.length > 0 ? (
+          <section className="space-y-3">
+            <h2 className="text-sm font-semibold text-foreground">
+              Results for "{submittedQuery}"
+            </h2>
+            {renderCards(searchResults)}
+          </section>
+        ) : (
+          <Card>
+            <CardContent className="p-10 text-center">
+              <Search className="mx-auto h-8 w-8 text-muted-foreground" />
+              <p className="mt-3 text-sm text-muted-foreground">
+                No matching activities
+              </p>
+            </CardContent>
+          </Card>
+        )
       ) : (
         Object.entries(grouped).map(([group, items]) => (
           <section key={group} className="space-y-3">
             <h2 className="text-sm font-semibold text-foreground">{group}</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {items.map((a) => (
-                <CoachingActivityCard
-                  key={a.id}
-                  activity={a}
-                  access={access[a.id]}
-                  inProgress={inProgressSet.has(a.id)}
-                  onOpenBriefing={() => setOpenActivity(a)}
-                  onResume={() => navigate(`/coaching/${a.id}`)}
-                />
-              ))}
-            </div>
+            {renderCards(items)}
           </section>
         ))
       )}
     </div>
   );
+
 
   const mapView = (
     <div className="space-y-6">
