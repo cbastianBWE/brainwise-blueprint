@@ -82,9 +82,49 @@ export default function MemberDrawerCoach({
   const [markCertifyOpen, setMarkCertifyOpen] = useState(false);
   const [selectedCertType, setSelectedCertType] = useState<string>("");
 
+  // Free client assessment grants (separate pool from certification pools)
+  const [freeClientBalances, setFreeClientBalances] = useState<Record<string, number>>({});
+  const [freeClientInstrument, setFreeClientInstrument] = useState<string>("");
+  const [freeClientCount, setFreeClientCount] = useState<string>("1");
+  const [freeClientGrantOpen, setFreeClientGrantOpen] = useState(false);
+
   useEffect(() => {
-    setHasUnsavedChanges(grantDialogOpen || markCertifyOpen);
-  }, [grantDialogOpen, markCertifyOpen, setHasUnsavedChanges]);
+    setHasUnsavedChanges(grantDialogOpen || markCertifyOpen || freeClientGrantOpen);
+  }, [grantDialogOpen, markCertifyOpen, freeClientGrantOpen, setHasUnsavedChanges]);
+
+  const loadFreeClientPool = async () => {
+    const { data, error } = await supabase.rpc(
+      "admin_list_coach_free_pool" as any,
+      { p_coach_user_id: userId } as any,
+    );
+    if (error) {
+      console.error("admin_list_coach_free_pool error:", error);
+      return;
+    }
+    const map: Record<string, number> = {};
+    ((data ?? []) as any[]).forEach((row: any) => {
+      if (row?.instrument_id) map[row.instrument_id] = Number(row.balance) || 0;
+    });
+    setFreeClientBalances(map);
+  };
+
+  useEffect(() => {
+    loadFreeClientPool();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId]);
+
+  const renderFreeClientSummary = () => {
+    const entries = INSTRUMENTS.filter((i) => (freeClientBalances[i.code] ?? 0) > 0);
+    if (entries.length === 0) return "—";
+    return entries.map((i) => `${i.label}: ${freeClientBalances[i.code]}`).join(", ");
+  };
+
+  const freeClientCountNum = Number(freeClientCount);
+  const canOpenFreeClientDialog =
+    !!freeClientInstrument &&
+    Number.isFinite(freeClientCountNum) &&
+    freeClientCountNum >= 1;
+
 
   const certsQuery = useQuery({
     queryKey: ["coach-certifications", userId],
