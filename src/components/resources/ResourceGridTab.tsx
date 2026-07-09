@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Tile } from "@/components/tile/Tile";
 import { useResourceAccessLog } from "@/hooks/useResourceAccessLog";
+import { isSafeHttpUrl } from "@/lib/safeUrl";
+
 import { resolveTierThumbnailUrls } from "@/lib/assetUrls";
 import UpgradeNudgeModal from "./UpgradeNudgeModal";
 import type { Resource, ResourceFolder, ResourceTab, UpgradeEntityType } from "./types";
