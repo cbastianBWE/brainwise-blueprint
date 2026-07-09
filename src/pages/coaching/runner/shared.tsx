@@ -43,6 +43,8 @@ export interface Step {
   minDescribed?: number;
   subfieldLabels?: Record<string, string>;
   subfieldHelpers?: Record<string, string>;
+  subfieldTypes?: Record<string, string>;
+  subfieldOptions?: Record<string, string[]>;
   // text_select
   selectExactly?: number;
   reflectOnSelect?: { modal?: boolean; prompt?: string; maxLen?: number };
