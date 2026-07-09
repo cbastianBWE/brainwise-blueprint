@@ -241,7 +241,9 @@ export default function ResourceReader() {
   const { resourceId } = useParams<{ resourceId: string }>();
   const navigate = useNavigate();
   const logAccess = useResourceAccessLog();
+  const { toast } = useToast();
   const [upgradeOpen, setUpgradeOpen] = useState(false);
+
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ["get_user_resources"],
