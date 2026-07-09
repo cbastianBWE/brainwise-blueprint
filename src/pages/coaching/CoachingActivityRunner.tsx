@@ -47,6 +47,11 @@ import {
   inferFileType,
   extForFile,
 } from "./runner/shared";
+import { ListBuilderWidget } from "./runner/widgets/ListBuilderWidget";
+import { IkigaiWidget } from "./runner/widgets/IkigaiWidget";
+import { InnerTeamWidget } from "./runner/widgets/InnerTeamWidget";
+import { PtpDisplayWidget } from "./runner/widgets/PtpDisplayWidget";
+import { AssessmentUploadWidget } from "./runner/widgets/AssessmentUploadWidget";
 
 
 // ---- Widgets ----
