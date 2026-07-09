@@ -550,6 +550,36 @@ export default function InstrumentSelection({ onSelect }: Props) {
                     </Button>
                   );
                 }
+              } else if (hasFreeGrant) {
+                const ptpCtx = inst.instrument_id === "INST-001" ? ptpContextProgress.get(instrumentUuid) : undefined;
+                if (ptpCtx === "professional_done") {
+                  buttonContent = (
+                    <Button
+                      className="w-full"
+                      onClick={() => handleSelect(inst, "personal", 'coach_paid_client')}
+                    >
+                      Continue your PTP — Personal half
+                    </Button>
+                  );
+                } else if (ptpCtx === "personal_done") {
+                  buttonContent = (
+                    <Button
+                      className="w-full"
+                      onClick={() => handleSelect(inst, "professional", 'coach_paid_client')}
+                    >
+                      Continue your PTP — Professional half
+                    </Button>
+                  );
+                } else {
+                  buttonContent = (
+                    <Button
+                      className="w-full"
+                      onClick={() => handleSelect(inst, undefined, 'coach_paid_client')}
+                    >
+                      {startLabel}
+                    </Button>
+                  );
+                }
               } else if (purchaseAccess) {
                 const ptpCtx = inst.instrument_id === "INST-001" ? ptpContextProgress.get(instrumentUuid) : undefined;
                 if (ptpCtx === "professional_done") {
