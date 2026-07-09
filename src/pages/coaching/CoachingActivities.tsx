@@ -445,7 +445,7 @@ export default function CoachingActivities() {
       setLoading(true);
       setError(null);
       const { data: actData, error: actErr } = await supabase
-        .from("coaching_activities")
+        .from("coaching_activities_public" as any)
         .select("id,code,title,tier,status,module_group,sequence,desired_outcome,definition,tags,thumbnail_url")
         .order("sequence", { ascending: true, nullsFirst: false })
         .order("title");

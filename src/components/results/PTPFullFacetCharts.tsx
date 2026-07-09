@@ -74,7 +74,7 @@ export default function PTPFullFacetCharts({
 
       const itemIds = allResponses.map((r) => r.item_id);
       const { data: items } = await supabase
-        .from("items")
+        .from("items_presentation" as any)
         .select("item_id, item_text, item_number, dimension_id, context_type")
         .in("item_id", itemIds);
 
