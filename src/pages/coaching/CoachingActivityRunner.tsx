@@ -145,7 +145,7 @@ interface Session {
 function buildUserPatch(responses: Responses): Record<string, unknown> {
   const patch: Record<string, unknown> = {};
   for (const k of Object.keys(responses)) {
-    if (k === "analysis" || k === "chat" || k === "recap") continue;
+    if (k === "analysis" || k === "chat" || k === "recap" || k === "assessment_analysis") continue;
     patch[k] = (responses as any)[k];
   }
   return patch;
