@@ -557,15 +557,6 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
                         </span>
                       )}
                     </div>
-                    {it.reverse_scored && (
-                      <div className="flex gap-2 rounded-lg border border-[#FFB703] bg-[#FFB703]/10 px-3 py-2">
-                        <AlertTriangle className="h-4 w-4 shrink-0 text-[#7a5800] mt-0.5" />
-                        <div className="text-xs text-[#7a5800]">
-                          <p className="font-semibold">Read this one carefully.</p>
-                          <p>Endpoint labels may run in the opposite direction.</p>
-                        </div>
-                      </div>
-                    )}
                     {renderItemControl(it)}
                   </CardContent>
                 </Card>
