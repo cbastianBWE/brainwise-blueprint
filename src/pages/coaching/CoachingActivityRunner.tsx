@@ -37,6 +37,7 @@ interface Step {
   title?: string;
   helper?: string;
   placeholder?: string;
+  addLabel?: string;
   onComplete?: { touchpoint?: string };
   // image_select
   intro?: string;
@@ -947,7 +948,7 @@ function RiskBlocksWidget({
           ))}
         </div>
         <div className="rounded-md border p-3 space-y-2">
-          <p className="text-xs font-medium text-muted-foreground">Add a risk</p>
+          <p className="text-xs font-medium text-muted-foreground">{step.addLabel || "Add a risk"}</p>
           <MultimodalField
             key={nonce}
             value={draft}
