@@ -1,28 +1,53 @@
-## The bug
+# CoachingActivityRunner Hardening — Staged Plan
 
-The "Mark Debrief Complete" button in the coach's per-client assessment detail table (`src/pages/coach/CoachClients.tsx`, ~line 1187) is gated on:
+Behavior-preserving cleanup of `src/pages/coaching/CoachingActivityRunner.tsx` (~3,690 lines, 17 widget wrappers, 45 useState / 4 useMemo / 8 useCallback / 0 memo / 0 lazy). Two distinct problems:
 
-```ts
-c.invitation_status === "completed" && c.assessment_status === "completed"
-```
+1. **Runtime lag** — every keystroke re-renders the whole runner; nothing memoized.
+2. **File size** — slow/expensive to edit in Lovable.
 
-The DB shows three coach_clients rows where the underlying assessment is `status='completed'` but the `coach_clients.invitation_status` never advanced past `partially_completed`. For those clients — exactly the ones the coach needs to debrief — the button is hidden even though the assessment is done and the debrief is legitimately pending.
+Activities are DB rows, not code — the runner only grows when a new widget *type* is added, which is rare. Keep the config-driven runner; do NOT split per activity.
 
-Older rows kept invitation_status in sync with the assessment; something in the recent invitation-status flow now leaves it at `partially_completed`, which is what surfaced this regression.
+## Guardrails (after every stage)
+- Preview click-through: **0420 Your PTP, 0450 Your team, 0503 Recent past, 0505 Major influencers**.
+- Type in text fields, run one AI analysis, check console for errors.
+- Commit only when green. One stage per prompt.
 
-## Fix (frontend only, minimal)
+## Stage 0 — Profile first
+Open React DevTools Profiler in the live app. Record while (a) typing in a `qa_multimodal` field and (b) filling influencer detail cards. Capture which components re-render per keystroke and their durations. Track B choices depend on this evidence — don't guess.
 
-Loosen the visibility gate to key off the assessment being done, not the invitation status:
+## Track A — File split (safe, mechanical; do regardless of Stage 0)
 
-- In `src/pages/coach/CoachClients.tsx`, change the button condition from
-  `c.invitation_status === "completed" && c.assessment_status === "completed"`
-  to
-  `c.assessment_status === "completed"`.
+**A1 — Shared module.** Create `src/pages/coaching/runner/shared.tsx`. Move verbatim:
+- Types: `Step`, `Activity`, `Negative`, `ChatMsg`, `Responses`, `Session`, `SelectedSaying`, `SelectedImage`, `LibraryImage`, `SayingRow`, `QaAnswer`, `AssessmentFileType`, `AssessmentUploadRow`.
+- Helpers: `buildUserPatch`, `useDebouncedSave`, `imgUrl`, `humanizeBand`, `inferFileType`, `extForFile`.
+- Any small internal component used by ≥2 widgets (e.g. multimodal input field, local recording control) — grep first.
+Update runner to import from `./runner/shared`. No re-exports of items already in `CoachingViews.tsx`.
 
-Everything else stays as-is:
-- The button still auto-shows "Debrief Done" and disables when `debrief_completed=true` (which is what happens when the coach used "release results immediately").
-- No changes to the ordering modal, the `results_released` toggle, or the DB update on click.
+**A2 — Heavy/self-contained widgets** → `src/pages/coaching/runner/widgets/<Name>.tsx`:
+`PtpDisplayWidget`, `AssessmentUploadWidget`, `IkigaiWidget` (+ `IkigaiItemCard`), `InnerTeamWidget` (+ `InnerTeamCharacterCard`).
 
-## Out of scope (flagging, not fixing here)
+**A3 — Selection/media widgets:**
+`ImageSelectWidget`, `TextSelectWidget`, `ImageDescribeWidget`, `RecapWidget`.
 
-The stuck `invitation_status='partially_completed'` on completed assessments is a backend/data issue in the invitation state machine. Worth a follow-up to have the assessment-completion path also bump `coach_clients.invitation_status` to `completed`, but that's a separate backend change and not required to unblock the coach.
+**A4 — Core/text widgets:**
+`TextareaWidget`, `ListBuilderWidget`, `RiskBlocksWidget`, `ChatWidget`, `PrioritizePanel`, `SuggestionPanel`, `ContentWidget`, `QaMultimodalWidget`.
+
+Each batch: move verbatim, named export, import shared from `../shared`, views from `@/components/coaching/CoachingViews`, re-import into runner. Zero logic/JSX/string changes. After A4 the runner is a ~600–900 line orchestration shell.
+
+## Track B — Reactivity fixes (apply only what the profiler implicated)
+- **B1** Stabilize handler props with `useCallback`; pass narrow slices of `responses` (e.g. `responses.negatives`) rather than the whole object.
+- **B2** Wrap each widget export in `React.memo`.
+- **B3** If chrome (step header / progress / briefing) re-renders per keystroke, extract & memoize it.
+- **B4** (last resort) Local input state in text widgets, propagate to `responses` on blur/debounce. Highest risk of stale-save bugs.
+
+## Track C — Lazy load (after Track A)
+Convert imports of heavy widgets — `PtpDisplayWidget`, `AssessmentUploadWidget`, `IkigaiWidget`, `InnerTeamWidget`, `ImageSelectWidget`, `TextSelectWidget` — to `React.lazy`, wrap widget-dispatch area in a single `<Suspense fallback={<Spinner/>}>`. Light widgets stay as normal imports.
+
+## Label fix (fold into A4 or standalone)
+In `RiskBlocksWidget` collect-mode: change `<p>Add a risk</p>` → `<p>{step.addLabel || "Add a risk"}</p>` and add `addLabel?: string` to `Step`. (Already applied in a prior turn — verify still present after A4 move.)
+
+## Recommended order
+Stage 0 → A1 → A2 → A3 → A4 (+ label fix) → B1/B2 per profile → C → B3/B4 only if still laggy.
+
+## Deliverable per stage
+One prompt, one commit, one guardrail pass. Track A alone yields the biggest Lovable-velocity win and is safe; Track B is strictly evidence-driven.
