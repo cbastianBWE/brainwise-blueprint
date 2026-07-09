@@ -451,6 +451,9 @@ export default function CoachingActivities() {
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<"activities" | "history">("activities");
   const [query, setQuery] = useState("");
+  const [submittedQuery, setSubmittedQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<Activity[] | null>(null);
+  const [searching, setSearching] = useState(false);
   const [openActivity, setOpenActivity] = useState<Activity | null>(null);
   const [groupAccess, setGroupAccess] = useState<
     Record<string, { accessible: boolean; has_completed: boolean }>
@@ -518,25 +521,82 @@ export default function CoachingActivities() {
     };
   }, [user]);
 
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return activities;
-    return activities.filter((a) => {
-      if (a.title?.toLowerCase().includes(q)) return true;
-      if (a.desired_outcome?.toLowerCase().includes(q)) return true;
-      if ((a.tags || []).some((t) => t.toLowerCase().includes(q))) return true;
-      return false;
-    });
-  }, [activities, query]);
-
   const grouped = useMemo(() => {
     const groups: Record<string, Activity[]> = {};
-    for (const a of filtered) {
+    for (const a of activities) {
       const key = a.module_group || a.tier || "Coaching";
       (groups[key] = groups[key] || []).push(a);
     }
     return groups;
-  }, [filtered]);
+  }, [activities]);
+
+  // Debounced semantic search via edge function
+  useEffect(() => {
+    const q = query.trim();
+    if (!q) {
+      setSubmittedQuery("");
+      setSearchResults(null);
+      setSearching(false);
+      return;
+    }
+    const t = setTimeout(() => {
+      setSubmittedQuery(q);
+    }, 400);
+    return () => clearTimeout(t);
+  }, [query]);
+
+  useEffect(() => {
+    const q = submittedQuery.trim();
+    if (!q) return;
+    let cancelled = false;
+    setSearching(true);
+    (async () => {
+      const { data, error: fnErr } = await supabase.functions.invoke(
+        "coaching-activity-search",
+        { body: { query: q } },
+      );
+      if (cancelled) return;
+      if (fnErr || !data?.success) {
+        setSearchResults([]);
+        setSearching(false);
+        return;
+      }
+      const results = (data.results || []) as Array<{
+        activity_id: string;
+        code: string;
+        title: string;
+        module_group: string | null;
+        tier: string | null;
+        description: string | null;
+        thumbnail_url: string | null;
+        similarity: number;
+      }>;
+      const mapped: Activity[] = results.map((r) => {
+        const existing = activities.find((a) => a.id === r.activity_id);
+        return (
+          existing || {
+            id: r.activity_id,
+            code: r.code,
+            title: r.title,
+            tier: r.tier,
+            status: "published",
+            module_group: r.module_group,
+            sequence: null,
+            desired_outcome: r.description,
+            definition: {},
+            tags: [],
+            thumbnail_url: r.thumbnail_url,
+          }
+        );
+      });
+      setSearchResults(mapped);
+      setSearching(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [submittedQuery, activities]);
+
 
   const inProgressSet = useMemo(
     () => new Set(sessions.map((s) => s.activity_id)),
@@ -576,16 +636,47 @@ export default function CoachingActivities() {
     [activities, selectedGroup],
   );
 
+  const onSearchSubmit = (e?: React.FormEvent) => {
+    e?.preventDefault();
+    const q = query.trim();
+    if (!q) {
+      setSubmittedQuery("");
+      setSearchResults(null);
+      return;
+    }
+    setSubmittedQuery(q);
+  };
+
   const searchBox = (
-    <div className="relative">
-      <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-      <Input
-        type="search"
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        placeholder="Search activities by title, outcome, or tag"
-        className="pl-9"
-      />
+    <form onSubmit={onSearchSubmit} className="flex gap-2">
+      <div className="relative flex-1">
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          type="search"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search activities"
+          className="pl-9"
+        />
+      </div>
+      <Button type="submit" variant="outline" disabled={searching || !query.trim()}>
+        {searching ? <Loader2 className="h-4 w-4 animate-spin" /> : "Search"}
+      </Button>
+    </form>
+  );
+
+  const renderCards = (items: Activity[]) => (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      {items.map((a) => (
+        <CoachingActivityCard
+          key={a.id}
+          activity={a}
+          access={access[a.id]}
+          inProgress={inProgressSet.has(a.id)}
+          onOpenBriefing={() => setOpenActivity(a)}
+          onResume={() => navigate(`/coaching/${a.id}`)}
+        />
+      ))}
     </div>
   );
 
@@ -613,36 +704,40 @@ export default function CoachingActivities() {
   ) : (
     <div className="space-y-6">
       {searchBox}
-      {filtered.length === 0 ? (
-        <Card>
-          <CardContent className="p-10 text-center">
-            <Search className="mx-auto h-8 w-8 text-muted-foreground" />
-            <p className="mt-3 text-sm text-muted-foreground">
-              No activities match your search.
-            </p>
-          </CardContent>
-        </Card>
+      {submittedQuery ? (
+        searching ? (
+          <div className="flex items-center justify-center gap-2 py-16 text-sm text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Searching…
+          </div>
+        ) : searchResults && searchResults.length > 0 ? (
+          <section className="space-y-3">
+            <h2 className="text-sm font-semibold text-foreground">
+              Results for "{submittedQuery}"
+            </h2>
+            {renderCards(searchResults)}
+          </section>
+        ) : (
+          <Card>
+            <CardContent className="p-10 text-center">
+              <Search className="mx-auto h-8 w-8 text-muted-foreground" />
+              <p className="mt-3 text-sm text-muted-foreground">
+                No matching activities
+              </p>
+            </CardContent>
+          </Card>
+        )
       ) : (
         Object.entries(grouped).map(([group, items]) => (
           <section key={group} className="space-y-3">
             <h2 className="text-sm font-semibold text-foreground">{group}</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {items.map((a) => (
-                <CoachingActivityCard
-                  key={a.id}
-                  activity={a}
-                  access={access[a.id]}
-                  inProgress={inProgressSet.has(a.id)}
-                  onOpenBriefing={() => setOpenActivity(a)}
-                  onResume={() => navigate(`/coaching/${a.id}`)}
-                />
-              ))}
-            </div>
+            {renderCards(items)}
           </section>
         ))
       )}
     </div>
   );
+
 
   const mapView = (
     <div className="space-y-6">
