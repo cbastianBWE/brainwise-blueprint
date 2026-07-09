@@ -306,6 +306,17 @@ export default function CoachClients() {
           .in("status", ["invited", "started", "completed"]);
         setActorsUsed(count ?? 0);
       }
+
+      // Load the coach's own free-client-assessment pool
+      const { data: freePoolRows } = await supabase
+        .from("coach_free_assessment_pool")
+        .select("instrument_id, balance")
+        .eq("coach_user_id", user.id);
+      const poolMap: Record<string, number> = {};
+      (freePoolRows ?? []).forEach((r: any) => {
+        if (r?.instrument_id) poolMap[r.instrument_id] = Number(r.balance) || 0;
+      });
+      setFreePool(poolMap);
     })();
   }, [user]);
 
