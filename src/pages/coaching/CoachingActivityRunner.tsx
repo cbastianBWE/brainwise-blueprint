@@ -407,30 +407,59 @@ function IkigaiWidget({
     });
   };
 
+  const sufficiency = map?.sufficiency;
+
   return (
     <div className="space-y-6">
+      <div className="rounded-md border bg-muted/30 p-3">
+        <p className="text-sm font-semibold">How this works</p>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Brainstorm each of the four lenses below — just put down whatever comes,
+          one idea per line. You don't need to sort them. When you're ready,
+          choose <span className="font-medium">Map my Ikigai</span> and your coach
+          will work out where your ideas overlap and show you the picture. Nothing
+          is fixed: you can adjust where any idea sits, and re-map as often as
+          you like.
+        </p>
+      </div>
       {step.intro && <p className="text-sm text-muted-foreground">{step.intro}</p>}
       <div className="grid gap-4 md:grid-cols-2">
-        {lenses.map((l) => (
-          <div key={l.key} className="rounded-md border p-3">
-            <p className="text-sm font-medium">{l.label}</p>
-            {l.prompt && (
-              <p className="mt-1 text-xs text-muted-foreground">{l.prompt}</p>
-            )}
-            <div className="mt-3">
-              <ListBuilderWidget
-                step={{ ...step, key: l.storeKey, helper: undefined, prioritize: undefined, min: 0 } as Step}
-                items={((responses as any)[l.storeKey] as MMValue[]) || []}
-                onChange={(v) => setResponses((r) => ({ ...r, [l.storeKey]: v }))}
-                sessionId={session.id}
-                activityCode={activityCode}
-              />
+        {lenses.map((l) => {
+          const lensKey = (l.key as IkigaiLens) || "love";
+          const color = (IKIGAI_LENSES as string[]).includes(lensKey)
+            ? `var(--bw-${lensKey === "love" ? "orange" : lensKey === "good" ? "navy-500" : lensKey === "need" ? "plum" : "mustard"})`
+            : undefined;
+          return (
+            <div
+              key={l.key}
+              className="rounded-md border p-3"
+              style={color ? { borderColor: color } : undefined}
+            >
+              <p className="text-sm font-medium" style={color ? { color } : undefined}>
+                {l.label}
+              </p>
+              {l.prompt && (
+                <p className="mt-1 text-xs text-muted-foreground">{l.prompt}</p>
+              )}
+              <div className="mt-3">
+                <ListBuilderWidget
+                  step={{ ...step, key: l.storeKey, helper: undefined, prioritize: undefined, min: 0 } as Step}
+                  items={((responses as any)[l.storeKey] as MMValue[]) || []}
+                  onChange={(v) => setResponses((r) => ({ ...r, [l.storeKey]: v }))}
+                  sessionId={session.id}
+                  activityCode={activityCode}
+                />
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
       <div className="flex items-center gap-3">
-        <Button onClick={doMap} disabled={mapping || totalItems === 0}>
+        <Button
+          onClick={doMap}
+          disabled={mapping || totalItems === 0}
+          variant={map?.items?.length && sufficiency?.enough === false ? "default" : "default"}
+        >
           {mapping && <Loader2 className="h-4 w-4 animate-spin" />}
           {map?.items?.length ? "Re-map" : step.mapAction?.label || "Map my Ikigai"}
         </Button>
@@ -441,6 +470,32 @@ function IkigaiWidget({
         )}
       </div>
 
+      {map?.items?.length && sufficiency && sufficiency.enough === false ? (
+        <div
+          className="rounded-md border p-4"
+          style={{ borderColor: "var(--bw-orange)", background: "color-mix(in oklab, var(--bw-orange) 8%, transparent)" }}
+        >
+          <p className="text-sm font-semibold" style={{ color: "var(--bw-orange)" }}>
+            Go deeper
+          </p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Your map is looking a little thin. A few questions to go deeper — add
+            anything they spark, then re-map. You can still continue when you're
+            ready.
+          </p>
+          {sufficiency.note && (
+            <p className="mt-2 text-sm">{sufficiency.note}</p>
+          )}
+          {sufficiency.questions?.length > 0 && (
+            <ul className="mt-2 list-disc space-y-1 pl-5 text-sm">
+              {sufficiency.questions.map((q, i) => (
+                <li key={i}>{q}</li>
+              ))}
+            </ul>
+          )}
+        </div>
+      ) : null}
+
       {map?.items?.length ? (
         <IkigaiRegionsView
           map={map}
@@ -450,56 +505,100 @@ function IkigaiWidget({
             const current = new Set<IkigaiLens>(it.lenses);
             const hasOverride = !!overrides[it.label];
             return (
-              <div className="rounded-md border bg-background p-2 text-xs">
-                <div className="flex items-center gap-1 font-medium">
-                  {cand && (
-                    <span aria-hidden style={{ color: "var(--bw-orange)" }}>★</span>
-                  )}
-                  <span>{it.label}</span>
-                </div>
-                <div className="mt-2 flex flex-wrap items-center gap-2">
-                  {IKIGAI_LENSES.map((ln) => {
-                    const checked = current.has(ln);
-                    return (
-                      <label
-                        key={ln}
-                        className={
-                          "inline-flex cursor-pointer items-center gap-1 rounded-full border px-2 py-0.5 " +
-                          (checked
-                            ? "border-primary bg-primary/10"
-                            : "text-muted-foreground")
-                        }
-                      >
-                        <input
-                          type="checkbox"
-                          className="h-3 w-3"
-                          checked={checked}
-                          onChange={(e) => {
-                            const next = new Set(current);
-                            if (e.target.checked) next.add(ln);
-                            else if (next.size > 1) next.delete(ln);
-                            setOverride(it.label, Array.from(next));
-                          }}
-                        />
-                        {regionLabels[ln] || ln}
-                      </label>
-                    );
-                  })}
-                  {hasOverride && (
-                    <button
-                      type="button"
-                      className="text-[10px] uppercase tracking-wide text-muted-foreground underline"
-                      onClick={() => clearOverride(it.label)}
-                    >
-                      reset
-                    </button>
-                  )}
-                </div>
-              </div>
+              <IkigaiItemCard
+                item={it}
+                cand={cand}
+                current={current}
+                hasOverride={hasOverride}
+                regionLabels={regionLabels}
+                onToggle={(ln, checked) => {
+                  const next = new Set(current);
+                  if (checked) next.add(ln);
+                  else if (next.size > 1) next.delete(ln);
+                  setOverride(it.label, Array.from(next));
+                }}
+                onReset={() => clearOverride(it.label)}
+              />
             );
           }}
         />
       ) : null}
+    </div>
+  );
+}
+
+function IkigaiItemCard({
+  item,
+  cand,
+  current,
+  hasOverride,
+  regionLabels,
+  onToggle,
+  onReset,
+}: {
+  item: { label: string; reasoning?: string };
+  cand: boolean;
+  current: Set<IkigaiLens>;
+  hasOverride: boolean;
+  regionLabels: Record<string, string>;
+  onToggle: (ln: IkigaiLens, checked: boolean) => void;
+  onReset: () => void;
+}) {
+  const [showReason, setShowReason] = useState(false);
+  return (
+    <div className="rounded-md border bg-background p-2 text-xs">
+      <div className="flex items-center gap-1 font-medium">
+        {cand && (
+          <span aria-hidden style={{ color: "var(--bw-orange)" }}>★</span>
+        )}
+        <span>{item.label}</span>
+        {item.reasoning && (
+          <button
+            type="button"
+            className="ml-auto text-[10px] uppercase tracking-wide text-muted-foreground underline"
+            onClick={() => setShowReason((v) => !v)}
+            aria-expanded={showReason}
+          >
+            {showReason ? "hide why" : "why?"}
+          </button>
+        )}
+      </div>
+      {showReason && item.reasoning && (
+        <p className="mt-1 text-[11px] italic text-muted-foreground">{item.reasoning}</p>
+      )}
+      <div className="mt-2 flex flex-wrap items-center gap-2">
+        {IKIGAI_LENSES.map((ln) => {
+          const checked = current.has(ln);
+          return (
+            <label
+              key={ln}
+              className={
+                "inline-flex cursor-pointer items-center gap-1 rounded-full border px-2 py-0.5 " +
+                (checked
+                  ? "border-primary bg-primary/10"
+                  : "text-muted-foreground")
+              }
+            >
+              <input
+                type="checkbox"
+                className="h-3 w-3"
+                checked={checked}
+                onChange={(e) => onToggle(ln, e.target.checked)}
+              />
+              {regionLabels[ln] || ln}
+            </label>
+          );
+        })}
+        {hasOverride && (
+          <button
+            type="button"
+            className="text-[10px] uppercase tracking-wide text-muted-foreground underline"
+            onClick={onReset}
+          >
+            reset
+          </button>
+        )}
+      </div>
     </div>
   );
 }

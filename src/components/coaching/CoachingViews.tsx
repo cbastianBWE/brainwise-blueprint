@@ -201,12 +201,29 @@ export interface IkigaiItem {
   source_lens: IkigaiLens;
   lenses: IkigaiLens[];
   region: string;
+  reasoning?: string;
+}
+export interface IkigaiSufficiency {
+  enough: boolean;
+  note: string;
+  questions: string[];
 }
 export interface IkigaiMap {
   items: IkigaiItem[];
   candidates?: string[];
+  sufficiency?: IkigaiSufficiency;
   model?: string;
   generated_at?: string;
+}
+
+const IKIGAI_LENS_COLORS: Record<IkigaiLens, string> = {
+  love: "var(--bw-orange)",
+  good: "var(--bw-navy-500)",
+  need: "var(--bw-plum)",
+  paid: "var(--bw-mustard)",
+};
+export function ikigaiLensColor(l: IkigaiLens): string {
+  return IKIGAI_LENS_COLORS[l];
 }
 
 export function deriveIkigaiRegion(lenses: string[], sourceLens: string): string {
@@ -256,21 +273,30 @@ const IKIGAI_REGION_ORDER = [
 ];
 
 function IkigaiBackdrop({ regionLabels }: { regionLabels: Record<string, string> }) {
+  const loveC = IKIGAI_LENS_COLORS.love;
+  const goodC = IKIGAI_LENS_COLORS.good;
+  const needC = IKIGAI_LENS_COLORS.need;
+  const paidC = IKIGAI_LENS_COLORS.paid;
   return (
-    <svg viewBox="0 0 400 400" className="mx-auto h-56 w-full max-w-xs" aria-hidden>
-      <g strokeWidth="2" stroke="hsl(var(--primary))">
-        <circle cx="160" cy="160" r="110" fill="hsl(var(--primary))" fillOpacity="0.08" />
-        <circle cx="240" cy="160" r="110" fill="hsl(var(--primary))" fillOpacity="0.08" />
-        <circle cx="160" cy="240" r="110" fill="hsl(var(--primary))" fillOpacity="0.08" />
-        <circle cx="240" cy="240" r="110" fill="hsl(var(--primary))" fillOpacity="0.08" />
+    <svg
+      viewBox="0 0 500 500"
+      className="mx-auto h-auto w-full max-w-lg"
+      aria-hidden
+      preserveAspectRatio="xMidYMid meet"
+    >
+      <g strokeWidth="2.5">
+        <circle cx="195" cy="195" r="145" fill={loveC} fillOpacity="0.15" stroke={loveC} />
+        <circle cx="305" cy="195" r="145" fill={goodC} fillOpacity="0.15" stroke={goodC} />
+        <circle cx="195" cy="305" r="145" fill={needC} fillOpacity="0.15" stroke={needC} />
+        <circle cx="305" cy="305" r="145" fill={paidC} fillOpacity="0.15" stroke={paidC} />
       </g>
-      <g fontSize="11" textAnchor="middle" className="fill-muted-foreground">
-        <text x="70" y="80">{regionLabels.love || "Love"}</text>
-        <text x="330" y="80">{regionLabels.good || "Good at"}</text>
-        <text x="70" y="335">{regionLabels.need || "World needs"}</text>
-        <text x="330" y="335">{regionLabels.paid || "Paid for"}</text>
+      <g fontSize="18" fontWeight="600" textAnchor="middle">
+        <text x="70" y="80" fill={loveC}>{regionLabels.love || "Love"}</text>
+        <text x="430" y="80" fill={goodC}>{regionLabels.good || "Good at"}</text>
+        <text x="70" y="440" fill={needC}>{regionLabels.need || "World needs"}</text>
+        <text x="430" y="440" fill={paidC}>{regionLabels.paid || "Paid for"}</text>
       </g>
-      <text x="200" y="205" textAnchor="middle" fontSize="13" fontWeight="600" fill="var(--bw-orange)">
+      <text x="250" y="258" textAnchor="middle" fontSize="22" fontWeight="700" fill="var(--bw-orange)">
         {regionLabels.ikigai || "Ikigai"}
       </text>
     </svg>
