@@ -880,21 +880,36 @@ export default function CoachClients() {
         <div className="space-y-2">
           <Label className="text-sm">Assessment Instruments <span className="text-muted-foreground">(select at least one)</span></Label>
           <div className={`space-y-2 rounded-md border p-3 ${instrumentError ? "border-destructive" : "border-border"}`}>
-            {INSTRUMENTS.filter(inst => allowedInstrumentIds.has(inst.id)).map(inst => (
-              <label key={inst.id} className="flex items-start gap-3 cursor-pointer">
-                <Checkbox
-                  checked={selectedInstruments.includes(inst.id)}
-                  onCheckedChange={() => toggleInstrument(inst.id)}
-                  className="mt-0.5"
-                />
-                <div className="flex-1">
-                  <span className="font-medium text-sm">{inst.id}</span>
-                  <span className="text-muted-foreground text-xs ml-2">— {inst.name}</span>
-                  <p className="text-xs text-muted-foreground mt-0.5">{inst.desc}</p>
-                </div>
-              </label>
-            ))}
-            {certsLoaded && allowedInstrumentIds.size === 0 && (
+            {INSTRUMENTS
+              .filter(inst => {
+                if (isFreeGrant) {
+                  const code = CANONICAL_INSTRUMENTS.find(i => i.short_name === inst.id)?.instrument_id;
+                  return !!code && (freePool[code] ?? 0) > 0;
+                }
+                return allowedInstrumentIds.has(inst.id);
+              })
+              .map(inst => {
+                const code = CANONICAL_INSTRUMENTS.find(i => i.short_name === inst.id)?.instrument_id;
+                const remaining = code ? (freePool[code] ?? 0) : 0;
+                return (
+                  <label key={inst.id} className="flex items-start gap-3 cursor-pointer">
+                    <Checkbox
+                      checked={selectedInstruments.includes(inst.id)}
+                      onCheckedChange={() => toggleInstrument(inst.id)}
+                      className="mt-0.5"
+                    />
+                    <div className="flex-1">
+                      <span className="font-medium text-sm">{inst.id}</span>
+                      <span className="text-muted-foreground text-xs ml-2">— {inst.name}</span>
+                      {isFreeGrant && (
+                        <span className="text-xs text-muted-foreground ml-2">({remaining} free remaining)</span>
+                      )}
+                      <p className="text-xs text-muted-foreground mt-0.5">{inst.desc}</p>
+                    </div>
+                  </label>
+                );
+              })}
+            {!isFreeGrant && certsLoaded && allowedInstrumentIds.size === 0 && (
               <div className="rounded-md border border-dashed border-muted-foreground/30 p-4 text-sm text-muted-foreground">
                 You don't have any active certifications. Complete a certification path to start ordering assessments for clients.{" "}
                 <a href="/certifications" className="text-primary underline underline-offset-2">View certifications</a>
@@ -904,7 +919,7 @@ export default function CoachClients() {
           {instrumentError && (
             <p className="text-xs text-destructive">Please select at least one instrument.</p>
           )}
-          {selectedInstruments.length > 0 && (
+          {!isFreeGrant && selectedInstruments.length > 0 && (
             <p className="text-xs text-muted-foreground">
               {selectedInstruments.length} instrument{selectedInstruments.length !== 1 ? "s" : ""} selected
               {" "}— {perAssessmentPrice !== null
