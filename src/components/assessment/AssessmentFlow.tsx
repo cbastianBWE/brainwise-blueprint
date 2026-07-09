@@ -315,7 +315,6 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
             item_id: itemId,
             response_value_numeric: numeric,
             response_value_text: text,
-            is_reverse_scored: item.reverse_scored,
             readiness_level: readinessLevel,
           },
           { onConflict: "assessment_id,item_id" }
