@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Tile } from "@/components/tile/Tile";
 import { useResourceAccessLog } from "@/hooks/useResourceAccessLog";
+import { isSafeHttpUrl } from "@/lib/safeUrl";
+
 import { resolveTierThumbnailUrls } from "@/lib/assetUrls";
 import UpgradeNudgeModal from "./UpgradeNudgeModal";
 import type { Resource, ResourceFolder, ResourceTab, UpgradeEntityType } from "./types";
@@ -196,7 +198,16 @@ export default function ResourceGridTab({ tab, emptyStateText, showAllAtRoot = f
         void handleFileDownload(resource);
       }
     } else if (resource.url_kind === "external_link" && resource.url_or_content) {
-      window.open(resource.url_or_content, "_blank", "noopener,noreferrer");
+      if (isSafeHttpUrl(resource.url_or_content)) {
+        window.open(resource.url_or_content, "_blank", "noopener,noreferrer");
+      } else {
+        toast({
+          title: "Can't open link",
+          description: "This link can't be opened.",
+          variant: "destructive",
+        });
+      }
+
     } else {
       navigate(`/resources/${resource.resource_id}`);
     }
@@ -227,8 +238,10 @@ export default function ResourceGridTab({ tab, emptyStateText, showAllAtRoot = f
           externalLink={
             r.url_kind === "external_link" &&
             r.content_asset_id == null &&
-            !!r.url_or_content
+            !!r.url_or_content &&
+            isSafeHttpUrl(r.url_or_content)
           }
+
           onClick={() => handleResourceClick(r)}
         />
       ))}
