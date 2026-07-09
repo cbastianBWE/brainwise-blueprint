@@ -238,8 +238,10 @@ export default function ResourceGridTab({ tab, emptyStateText, showAllAtRoot = f
           externalLink={
             r.url_kind === "external_link" &&
             r.content_asset_id == null &&
-            !!r.url_or_content
+            !!r.url_or_content &&
+            isSafeHttpUrl(r.url_or_content)
           }
+
           onClick={() => handleResourceClick(r)}
         />
       ))}
