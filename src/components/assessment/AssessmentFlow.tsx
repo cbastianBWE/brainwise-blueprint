@@ -27,7 +27,6 @@ interface Item {
   anchor_low: string | null;
   anchor_high: string | null;
   scale_type: string | null;
-  reverse_scored: boolean;
   dimension_id: string | null;
 }
 
@@ -201,7 +200,7 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
 
       let itemsQuery = supabase
         .from("items_presentation")
-        .select("item_id, item_number, item_text, anchor_low, anchor_high, dimension_id, scale_type, reverse_scored")
+        .select("item_id, item_number, item_text, anchor_low, anchor_high, dimension_id, scale_type")
         .eq("instrument_id", instrument.instrument_id)
         .eq("rater_type", raterType === "manager" ? "Manager" : "Self")
         .order("item_number", { ascending: true });
@@ -275,7 +274,6 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
             item_id: itemId,
             response_value_numeric: resp.numeric,
             response_value_text: resp.text,
-            is_reverse_scored: item.reverse_scored,
             readiness_level: resp.readiness,
           },
           { onConflict: "assessment_id,item_id" }
@@ -317,7 +315,6 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
             item_id: itemId,
             response_value_numeric: numeric,
             response_value_text: text,
-            is_reverse_scored: item.reverse_scored,
             readiness_level: readinessLevel,
           },
           { onConflict: "assessment_id,item_id" }
@@ -560,15 +557,6 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
                         </span>
                       )}
                     </div>
-                    {it.reverse_scored && (
-                      <div className="flex gap-2 rounded-lg border border-[#FFB703] bg-[#FFB703]/10 px-3 py-2">
-                        <AlertTriangle className="h-4 w-4 shrink-0 text-[#7a5800] mt-0.5" />
-                        <div className="text-xs text-[#7a5800]">
-                          <p className="font-semibold">Read this one carefully.</p>
-                          <p>Endpoint labels may run in the opposite direction.</p>
-                        </div>
-                      </div>
-                    )}
                     {renderItemControl(it)}
                   </CardContent>
                 </Card>
@@ -664,18 +652,15 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
       {/* Content */}
       <div className="flex-1 flex items-center justify-center px-4 py-8 overflow-auto">
         <div className="w-full max-w-2xl">
-          {currentItem.reverse_scored && (
-            <div className="mb-6 flex gap-3 rounded-lg border border-[#FFB703] bg-[#FFB703]/10 px-4 py-3">
-              <AlertTriangle className="h-5 w-5 shrink-0 text-[#7a5800] mt-0.5" />
-              <div className="text-sm text-[#7a5800]">
-                <p className="font-semibold">Read this one carefully.</p>
-                <p className="mt-0.5">
-                  The scale labels on this question may run in the opposite direction from the
-                  previous ones. Check both endpoint labels before you respond.
-                </p>
-              </div>
+          <div className="mb-6 flex gap-3 rounded-lg border border-[#FFB703] bg-[#FFB703]/10 px-4 py-3">
+            <AlertTriangle className="h-5 w-5 shrink-0 text-[#7a5800] mt-0.5" />
+            <div className="text-sm text-[#7a5800]">
+              <p className="font-semibold">Read each item carefully.</p>
+              <p className="mt-0.5">
+                Check both endpoint labels before you respond — they can vary between items.
+              </p>
             </div>
-          )}
+          </div>
           {currentItem.scale_type === "Level 1-4 behavioral match" ? (
             <LevelMatchControl
               item={currentItem}
