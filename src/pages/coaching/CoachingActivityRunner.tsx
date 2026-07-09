@@ -3211,6 +3211,10 @@ export default function CoachingActivityRunner() {
       const m = (responses as any)[step.mapKey || "ikigai_map"] as { items?: unknown[] } | undefined;
       return Array.isArray(m?.items) && (m!.items as unknown[]).length > 0;
     }
+    if (step.widget === "inner_team") {
+      const m = (responses as any)[step.mapKey || "inner_team_map"] as { characters?: unknown[] } | undefined;
+      return Array.isArray(m?.characters) && (m!.characters as unknown[]).length > 0;
+    }
     if (step.widget === "qa_multimodal") {
       const qs = (step.questions as Array<{ key: string }>) || [];
       const bag = (responses[step.key || ""] as Record<string, QaAnswer>) || {};
