@@ -869,7 +869,7 @@ export default function CoachClients() {
         <Label className="text-sm">Personal Note <span className="text-muted-foreground">(optional)</span></Label>
         <Textarea value={note} onChange={e => setNote(e.target.value)} placeholder="A brief message to your client..." rows={2} />
       </div>
-      {(isActorDebrief || actorOnlyMode) ? (
+      {(!isFreeGrant && (isActorDebrief || actorOnlyMode)) ? (
         <div className="space-y-2">
           <Label className="text-sm">Assessment Instrument</Label>
           <div className="rounded-md border border-border p-3 text-sm">
