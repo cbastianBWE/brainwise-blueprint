@@ -650,7 +650,7 @@ export default function InstrumentSelection({ onSelect }: Props) {
               return (
                 <Card
                   key={inst.instrument_id}
-                  className={`relative transition-all ${isRecommended ? "ring-2 ring-primary" : ""} ${canBypassAssessmentPaywall || isCorp || subscriptionAccess || coachPaid || selfPayCoachInvited || purchaseAccess || actorDebrief || hasFreeCertPool ? "hover:shadow-md" : "opacity-80"}`}
+                  className={`relative transition-all ${isRecommended ? "ring-2 ring-primary" : ""} ${canBypassAssessmentPaywall || isCorp || subscriptionAccess || coachPaid || selfPayCoachInvited || purchaseAccess || actorDebrief || hasFreeGrant || hasFreeCertPool ? "hover:shadow-md" : "opacity-80"}`}
                 >
                   {isRecommended && (
                     <div className="absolute -top-3 left-4">
