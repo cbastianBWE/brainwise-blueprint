@@ -27,10 +27,10 @@ interface Props {
 }
 
 const INSTRUMENTS: { code: string; label: string }[] = [
-  { code: "PTP", label: "PTP" },
-  { code: "NAI", label: "NAI" },
-  { code: "AIRSA", label: "AIRSA" },
-  { code: "HSS", label: "HSS" },
+  { code: "INST-001", label: "PTP" },
+  { code: "INST-002", label: "NAI" },
+  { code: "INST-003", label: "AIRSA" },
+  { code: "INST-004", label: "HSS" },
 ];
 
 interface CertRow {
