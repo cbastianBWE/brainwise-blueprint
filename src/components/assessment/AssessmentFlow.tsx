@@ -28,7 +28,7 @@ interface Item {
   anchor_high: string | null;
   scale_type: string | null;
   dimension_id: string | null;
-  dimension_id: string | null;
+}
 }
 
 interface ResponseScale {
@@ -201,7 +201,7 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
 
       let itemsQuery = supabase
         .from("items_presentation")
-        .select("item_id, item_number, item_text, anchor_low, anchor_high, dimension_id, scale_type, reverse_scored")
+        .select("item_id, item_number, item_text, anchor_low, anchor_high, dimension_id, scale_type")
         .eq("instrument_id", instrument.instrument_id)
         .eq("rater_type", raterType === "manager" ? "Manager" : "Self")
         .order("item_number", { ascending: true });
@@ -275,7 +275,6 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
             item_id: itemId,
             response_value_numeric: resp.numeric,
             response_value_text: resp.text,
-            is_reverse_scored: item.reverse_scored,
             readiness_level: resp.readiness,
           },
           { onConflict: "assessment_id,item_id" }
