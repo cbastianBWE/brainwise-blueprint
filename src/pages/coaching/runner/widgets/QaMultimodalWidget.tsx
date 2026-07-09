@@ -198,7 +198,7 @@ export function QaMultimodalWidget({
                   onClick={() => setVideoSource("record")}
                 >
                   <VideoIcon className="h-4 w-4" />
-                  Record
+                  Use camera
                 </Button>
                 <Button
                   type="button"
