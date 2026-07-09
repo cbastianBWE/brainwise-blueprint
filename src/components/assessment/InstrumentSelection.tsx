@@ -205,16 +205,20 @@ export default function InstrumentSelection({ onSelect }: Props) {
       if (selfPayCoachClientsRes.data) {
         const selfPayIds = new Set<string>();
         const actorIds = new Set<string>();
+        const freeGrantIds = new Set<string>();
         selfPayCoachClientsRes.data.forEach((row) => {
           if (!row.instrument_id) return;
           if (row.invitation_source === "actor_debrief") {
             actorIds.add(row.instrument_id);
+          } else if (row.invitation_source === "free_grant") {
+            freeGrantIds.add(row.instrument_id);
           } else {
             selfPayIds.add(row.instrument_id);
           }
         });
         setSelfPayCoachInstrumentIds(selfPayIds);
         setActorDebriefInstrumentIds(actorIds);
+        setFreeGrantInstrumentIds(freeGrantIds);
       }
 
       // Compute cert-pool eligibility — mirrors link_assessment_to_coach_client trigger branch (b) OR-clause exactly.
