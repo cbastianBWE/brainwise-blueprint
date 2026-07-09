@@ -94,6 +94,7 @@ export default function InstrumentSelection({ onSelect }: Props) {
   const [subscriptionPlans, setSubscriptionPlans] = useState<Array<{ plan_name: string; tier: string; billing_period: string; price_usd: number | null; stripe_price_id: string }>>([]);
   const [selfPayCoachInstrumentIds, setSelfPayCoachInstrumentIds] = useState<Set<string>>(new Set());
   const [actorDebriefInstrumentIds, setActorDebriefInstrumentIds] = useState<Set<string>>(new Set());
+  const [freeGrantInstrumentIds, setFreeGrantInstrumentIds] = useState<Set<string>>(new Set());
   const [ptpContextProgress, setPtpContextProgress] = useState<Map<string, string>>(new Map());
   const [airsaAwaiting, setAirsaAwaiting] = useState<{ completed_at: string } | null>(null);
 
@@ -204,16 +205,20 @@ export default function InstrumentSelection({ onSelect }: Props) {
       if (selfPayCoachClientsRes.data) {
         const selfPayIds = new Set<string>();
         const actorIds = new Set<string>();
+        const freeGrantIds = new Set<string>();
         selfPayCoachClientsRes.data.forEach((row) => {
           if (!row.instrument_id) return;
           if (row.invitation_source === "actor_debrief") {
             actorIds.add(row.instrument_id);
+          } else if (row.invitation_source === "free_grant") {
+            freeGrantIds.add(row.instrument_id);
           } else {
             selfPayIds.add(row.instrument_id);
           }
         });
         setSelfPayCoachInstrumentIds(selfPayIds);
         setActorDebriefInstrumentIds(actorIds);
+        setFreeGrantInstrumentIds(freeGrantIds);
       }
 
       // Compute cert-pool eligibility — mirrors link_assessment_to_coach_client trigger branch (b) OR-clause exactly.
@@ -409,6 +414,7 @@ export default function InstrumentSelection({ onSelect }: Props) {
             purchasedInstrumentIds.has(inst.short_name);
           const selfPayCoachInvited = selfPayCoachInstrumentIds.has(uuid);
           const actorDebrief = actorDebriefInstrumentIds.has(uuid);
+          const hasFreeGrant = freeGrantInstrumentIds.has(uuid);
           const hasFreeCertPool = freeCertPoolInstrumentIds.has(inst.instrument_id);
           const hasCompleted = completedInstrumentIds.has(inst.instrument_id);
           const inProgress = inProgressInstrumentIds.has(inst.instrument_id);
@@ -419,6 +425,7 @@ export default function InstrumentSelection({ onSelect }: Props) {
             hasPurchase ||
             selfPayCoachInvited ||
             actorDebrief ||
+            hasFreeGrant ||
             hasFreeCertPool ||
             hasCompleted ||
             inProgress ||
@@ -488,6 +495,7 @@ export default function InstrumentSelection({ onSelect }: Props) {
               const purchaseAccess = hasPurchase;
               const selfPayCoachInvited = selfPayCoachInstrumentIds.has(instrumentUuid);
               const actorDebrief = actorDebriefInstrumentIds.has(instrumentUuid);
+              const hasFreeGrant = freeGrantInstrumentIds.has(instrumentUuid);
               const hasFreeCertPool = freeCertPoolInstrumentIds.has(inst.instrument_id);
 
               const isInProgress = inProgressInstrumentIds.has(inst.instrument_id);
@@ -539,6 +547,36 @@ export default function InstrumentSelection({ onSelect }: Props) {
                       onClick={() => handleSelect(inst, undefined, 'coach_paid_client')}
                     >
                       {isInProgress ? "Continue Assessment" : "Start Assessment (Coach Paid)"}
+                    </Button>
+                  );
+                }
+              } else if (hasFreeGrant) {
+                const ptpCtx = inst.instrument_id === "INST-001" ? ptpContextProgress.get(instrumentUuid) : undefined;
+                if (ptpCtx === "professional_done") {
+                  buttonContent = (
+                    <Button
+                      className="w-full"
+                      onClick={() => handleSelect(inst, "personal", 'coach_paid_client')}
+                    >
+                      Continue your PTP — Personal half
+                    </Button>
+                  );
+                } else if (ptpCtx === "personal_done") {
+                  buttonContent = (
+                    <Button
+                      className="w-full"
+                      onClick={() => handleSelect(inst, "professional", 'coach_paid_client')}
+                    >
+                      Continue your PTP — Professional half
+                    </Button>
+                  );
+                } else {
+                  buttonContent = (
+                    <Button
+                      className="w-full"
+                      onClick={() => handleSelect(inst, undefined, 'coach_paid_client')}
+                    >
+                      {startLabel}
                     </Button>
                   );
                 }
@@ -612,7 +650,7 @@ export default function InstrumentSelection({ onSelect }: Props) {
               return (
                 <Card
                   key={inst.instrument_id}
-                  className={`relative transition-all ${isRecommended ? "ring-2 ring-primary" : ""} ${canBypassAssessmentPaywall || isCorp || subscriptionAccess || coachPaid || selfPayCoachInvited || purchaseAccess || actorDebrief || hasFreeCertPool ? "hover:shadow-md" : "opacity-80"}`}
+                  className={`relative transition-all ${isRecommended ? "ring-2 ring-primary" : ""} ${canBypassAssessmentPaywall || isCorp || subscriptionAccess || coachPaid || selfPayCoachInvited || purchaseAccess || actorDebrief || hasFreeGrant || hasFreeCertPool ? "hover:shadow-md" : "opacity-80"}`}
                 >
                   {isRecommended && (
                     <div className="absolute -top-3 left-4">

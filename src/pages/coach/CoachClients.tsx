@@ -132,6 +132,10 @@ export default function CoachClients() {
   const [actorCert, setActorCert] = useState<{ id: string; certification_type: string; status: string; free_uses_expire_at: string | null } | null>(null);
   const [actorsUsed, setActorsUsed] = useState<number>(0);
   const [isActorDebrief, setIsActorDebrief] = useState(false);
+  const [freePool, setFreePool] = useState<Record<string, number>>({});
+  const [isFreeGrant, setIsFreeGrant] = useState(false);
+
+  const hasAnyFreeBalance = Object.values(freePool).some((b) => b > 0);
 
   const canOfferActorDebrief =
     !!actorCert
@@ -302,6 +306,17 @@ export default function CoachClients() {
           .in("status", ["invited", "started", "completed"]);
         setActorsUsed(count ?? 0);
       }
+
+      // Load the coach's own free-client-assessment pool
+      const { data: freePoolRows } = await supabase
+        .from("coach_free_assessment_pool")
+        .select("instrument_id, balance")
+        .eq("coach_user_id", user.id);
+      const poolMap: Record<string, number> = {};
+      (freePoolRows ?? []).forEach((r: any) => {
+        if (r?.instrument_id) poolMap[r.instrument_id] = Number(r.balance) || 0;
+      });
+      setFreePool(poolMap);
     })();
   }, [user]);
 
@@ -345,11 +360,25 @@ export default function CoachClients() {
     }
   }, []);
 
+  const refreshFreePool = async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from("coach_free_assessment_pool")
+      .select("instrument_id, balance")
+      .eq("coach_user_id", user.id);
+    const poolMap: Record<string, number> = {};
+    (data ?? []).forEach((r: any) => {
+      if (r?.instrument_id) poolMap[r.instrument_id] = Number(r.balance) || 0;
+    });
+    setFreePool(poolMap);
+  };
+
   const resetForm = () => {
     setFirstName(""); setLastName(""); setEmail(""); setNote("");
     setSelectedInstruments([]); setInstrumentError(false);
     setResultsReleased(false);
     setIsActorDebrief(false);
+    setIsFreeGrant(false);
   };
 
   const toggleInstrument = (instrumentId: string) => {
@@ -629,6 +658,121 @@ export default function CoachClients() {
     setSubmitting(false);
   };
 
+  const handleOrderFreeGrant = async () => {
+    if (!user || !email) {
+      toast.error("Please fill in client email.");
+      return;
+    }
+    if (selectedInstruments.length === 0) {
+      setInstrumentError(true);
+      toast.error("Please select at least one assessment instrument.");
+      return;
+    }
+    setSubmitting(true);
+
+    const instCodes = selectedInstruments
+      .map((shortId) => CANONICAL_INSTRUMENTS.find((i) => i.short_name === shortId)?.instrument_id)
+      .filter(Boolean) as string[];
+
+    const { error } = await supabase.rpc("create_free_client_order" as any, {
+      p_client_email: email,
+      p_client_first_name: firstName || null,
+      p_client_last_name: lastName || null,
+      p_instrument_ids: instCodes,
+      p_coach_note: note || null,
+      p_results_released: resultsReleased,
+    } as any);
+
+    if (error) {
+      const map: Record<string, string> = {
+        insufficient_free_balance: "You don't have enough free assessments left for one of the selected instruments.",
+        no_instruments: "Please select at least one assessment instrument.",
+        invalid_email_format: "Please enter a valid email address.",
+      };
+      const key = (error.message || "").split(":")[0].trim();
+      toast.error(map[key] ?? ("Could not send free assessment: " + error.message));
+      setSubmitting(false);
+      return;
+    }
+
+    // Send invitation email (reuse the exact same flow as handleOrderClientPays)
+    const selectedNames = selectedInstruments
+      .map((id) => INSTRUMENTS.find((i) => i.id === id)?.name)
+      .filter(Boolean) as string[];
+
+    const instrumentListHtml = selectedNames
+      .map((n) => `<li style="margin-bottom:6px;">${escHtml(n)}</li>`)
+      .join("");
+
+    const coachNoteHtml = note
+      ? `<blockquote style="border-left:4px solid #F5741A;margin:20px 0;padding:12px 16px;background:#ffffff;border-radius:4px;font-style:italic;color:#4B4751;font-family:'Montserrat','Helvetica Neue',Arial,sans-serif;">"${escHtml(note).replace(/\n/g, "<br/>")}"</blockquote>`
+      : "";
+
+    const signupUrl = `${window.location.origin}/signup?email=${encodeURIComponent(email)}`;
+
+    const html = `
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"></head>
+<body style="margin:0;padding:0;background:#F9F7F1;font-family:'Montserrat','Helvetica Neue',Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#F9F7F1;padding:40px 0;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:8px;overflow:hidden;">
+        <tr><td style="background:#021F36;padding:24px 32px;">
+          <h1 style="margin:0;color:#ffffff;font-size:22px;font-family:'Poppins','Helvetica Neue',Arial,sans-serif;font-weight:800;letter-spacing:-0.01em;">BrainWise Enterprises</h1>
+        </td></tr>
+        <tr><td style="padding:32px;">
+          <h2 style="font-size:20px;color:#021F36;margin:0 0 16px;font-family:'Poppins','Helvetica Neue',Arial,sans-serif;font-weight:700;letter-spacing:-0.01em;">Hi ${escHtml(firstName) || "there"},</h2>
+          <p style="font-size:15px;color:#4B4751;line-height:1.6;margin:0 0 16px;font-family:'Montserrat','Helvetica Neue',Arial,sans-serif;font-weight:400;">
+            You've been invited to complete a BrainWise assessment${selectedNames.length > 1 ? "s" : ""}. When you register, you'll be able to choose your preferred payment method.
+          </p>
+          <ul style="font-size:15px;color:#4B4751;line-height:1.8;padding-left:20px;margin:0 0 16px;font-family:'Montserrat','Helvetica Neue',Arial,sans-serif;">
+            ${instrumentListHtml}
+          </ul>
+          ${coachNoteHtml}
+          <p style="font-size:14px;color:#4B4751;margin:0 0 28px;font-family:'Montserrat','Helvetica Neue',Arial,sans-serif;">
+            Please complete your assessment${selectedNames.length > 1 ? "s" : ""} within <strong>14 days</strong> of receiving this invitation.
+          </p>
+          <table cellpadding="0" cellspacing="0" style="margin:0 0 28px;"><tr><td style="background:#F5741A;border-radius:999px;padding:14px 28px;">
+            <a href="${signupUrl}" style="color:#ffffff;text-decoration:none;font-size:15px;font-weight:600;font-family:'Montserrat','Helvetica Neue',Arial,sans-serif;">Get Started</a>
+          </td></tr></table>
+          <p style="font-size:14px;color:#4B4751;margin:0;font-family:'Montserrat','Helvetica Neue',Arial,sans-serif;">Best regards,<br/><strong>The BrainWise Team</strong></p>
+        </td></tr>
+        <tr><td style="padding:20px 32px;border-top:1px solid #EDEAE0;text-align:center;">
+          <p style="font-size:12px;color:#6D6875;margin:0;font-family:'Montserrat','Helvetica Neue',Arial,sans-serif;">© ${new Date().getFullYear()} BrainWise Enterprises. All rights reserved.</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`.trim();
+
+    const { data: emailData, error: emailError } = await supabase.rpc(
+      "send_coach_invitation_email",
+      {
+        p_to: email,
+        p_subject: "You've Been Invited to Complete a BrainWise Assessment",
+        p_html: html,
+        p_email_type: "coach_invitation_self_pay",
+      },
+    );
+    const emailResult = emailData as unknown as SendCoachInvitationEmailResult | null;
+    if (emailError || !emailResult?.dispatched) {
+      console.error("[CoachClients] send_coach_invitation_email failed:", emailError);
+      toast.warning("Free assessment created but invitation email failed to send.");
+    } else {
+      toast.success("Free assessment invitation sent!", {
+        description: `${firstName} ${lastName} (${email}) has been invited for ${selectedNames.length} assessment${selectedNames.length > 1 ? "s" : ""}.`,
+      });
+    }
+
+    resetForm();
+    await refreshFreePool();
+    setModalOpen(false);
+    fetchClients();
+    setSubmitting(false);
+  };
+
   // Stats
   // totalSignedUpClients: distinct emails where the client has a user account
   // (client_user_id IS NOT NULL means signup completed and trigger fired).
@@ -725,7 +869,7 @@ export default function CoachClients() {
         <Label className="text-sm">Personal Note <span className="text-muted-foreground">(optional)</span></Label>
         <Textarea value={note} onChange={e => setNote(e.target.value)} placeholder="A brief message to your client..." rows={2} />
       </div>
-      {(isActorDebrief || actorOnlyMode) ? (
+      {(!isFreeGrant && (isActorDebrief || actorOnlyMode)) ? (
         <div className="space-y-2">
           <Label className="text-sm">Assessment Instrument</Label>
           <div className="rounded-md border border-border p-3 text-sm">
@@ -736,21 +880,36 @@ export default function CoachClients() {
         <div className="space-y-2">
           <Label className="text-sm">Assessment Instruments <span className="text-muted-foreground">(select at least one)</span></Label>
           <div className={`space-y-2 rounded-md border p-3 ${instrumentError ? "border-destructive" : "border-border"}`}>
-            {INSTRUMENTS.filter(inst => allowedInstrumentIds.has(inst.id)).map(inst => (
-              <label key={inst.id} className="flex items-start gap-3 cursor-pointer">
-                <Checkbox
-                  checked={selectedInstruments.includes(inst.id)}
-                  onCheckedChange={() => toggleInstrument(inst.id)}
-                  className="mt-0.5"
-                />
-                <div className="flex-1">
-                  <span className="font-medium text-sm">{inst.id}</span>
-                  <span className="text-muted-foreground text-xs ml-2">— {inst.name}</span>
-                  <p className="text-xs text-muted-foreground mt-0.5">{inst.desc}</p>
-                </div>
-              </label>
-            ))}
-            {certsLoaded && allowedInstrumentIds.size === 0 && (
+            {INSTRUMENTS
+              .filter(inst => {
+                if (isFreeGrant) {
+                  const code = CANONICAL_INSTRUMENTS.find(i => i.short_name === inst.id)?.instrument_id;
+                  return !!code && (freePool[code] ?? 0) > 0;
+                }
+                return allowedInstrumentIds.has(inst.id);
+              })
+              .map(inst => {
+                const code = CANONICAL_INSTRUMENTS.find(i => i.short_name === inst.id)?.instrument_id;
+                const remaining = code ? (freePool[code] ?? 0) : 0;
+                return (
+                  <label key={inst.id} className="flex items-start gap-3 cursor-pointer">
+                    <Checkbox
+                      checked={selectedInstruments.includes(inst.id)}
+                      onCheckedChange={() => toggleInstrument(inst.id)}
+                      className="mt-0.5"
+                    />
+                    <div className="flex-1">
+                      <span className="font-medium text-sm">{inst.id}</span>
+                      <span className="text-muted-foreground text-xs ml-2">— {inst.name}</span>
+                      {isFreeGrant && (
+                        <span className="text-xs text-muted-foreground ml-2">({remaining} free remaining)</span>
+                      )}
+                      <p className="text-xs text-muted-foreground mt-0.5">{inst.desc}</p>
+                    </div>
+                  </label>
+                );
+              })}
+            {!isFreeGrant && certsLoaded && allowedInstrumentIds.size === 0 && (
               <div className="rounded-md border border-dashed border-muted-foreground/30 p-4 text-sm text-muted-foreground">
                 You don't have any active certifications. Complete a certification path to start ordering assessments for clients.{" "}
                 <a href="/certifications" className="text-primary underline underline-offset-2">View certifications</a>
@@ -760,7 +919,7 @@ export default function CoachClients() {
           {instrumentError && (
             <p className="text-xs text-destructive">Please select at least one instrument.</p>
           )}
-          {selectedInstruments.length > 0 && (
+          {!isFreeGrant && selectedInstruments.length > 0 && (
             <p className="text-xs text-muted-foreground">
               {selectedInstruments.length} instrument{selectedInstruments.length !== 1 ? "s" : ""} selected
               {" "}— {perAssessmentPrice !== null
@@ -787,7 +946,33 @@ export default function CoachClients() {
                 : `Covered by your certification — no payment required. ${4 - actorsUsed} of 4 remaining.`}
             </p>
           </div>
-          <Switch checked={isActorDebrief} onCheckedChange={setIsActorDebrief} disabled={actorOnlyMode} />
+          <Switch
+            checked={isActorDebrief}
+            onCheckedChange={(v) => {
+              setIsActorDebrief(v);
+              if (v) setIsFreeGrant(false);
+            }}
+            disabled={actorOnlyMode}
+          />
+        </div>
+      )}
+      {hasAnyFreeBalance && (
+        <div className="flex items-center justify-between rounded-md border p-3">
+          <div className="space-y-0.5 pr-3">
+            <Label className="text-sm">Send as a free assessment (from your granted pool)</Label>
+            <p className="text-xs text-muted-foreground">
+              Uses one of your admin-granted free client assessments — no payment required.
+            </p>
+          </div>
+          <Switch
+            checked={isFreeGrant}
+            onCheckedChange={(v) => {
+              setIsFreeGrant(v);
+              if (v) setIsActorDebrief(false);
+              setSelectedInstruments([]);
+              setInstrumentError(false);
+            }}
+          />
         </div>
       )}
     </div>
@@ -874,7 +1059,16 @@ export default function CoachClients() {
               <DialogTitle>Order Assessment</DialogTitle>
               <DialogDescription>Set up an assessment for a new or existing client</DialogDescription>
             </DialogHeader>
-            {isActorDebrief ? (
+            {isFreeGrant ? (
+              <div className="mt-2">
+                {sharedFormFields}
+                <div className="mt-4">
+                  <Button className="w-full gap-2" onClick={handleOrderFreeGrant} disabled={submitting || !email}>
+                    <Send className="h-4 w-4" aria-hidden="true" /> {submitting ? "Sending..." : "Send Free Assessment"}
+                  </Button>
+                </div>
+              </div>
+            ) : isActorDebrief ? (
               <div className="mt-2">
                 {sharedFormFields}
                 <div className="mt-4">
