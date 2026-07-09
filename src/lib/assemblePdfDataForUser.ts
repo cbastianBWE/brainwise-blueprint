@@ -213,7 +213,7 @@ export async function assemblePtpPdfData(params: {
     if (responses?.length) {
       const itemIds = responses.map((r: any) => r.item_id);
       const { data: items } = await supabase
-        .from('items')
+        .from("items_presentation")
         .select('item_id, dimension_id, context_type')
         .in('item_id', itemIds);
       const itemMap = new Map((items ?? []).map((i: any) => [i.item_id, i]));
@@ -361,7 +361,7 @@ export async function assemblePtpPdfData(params: {
       if (allResponses.length > 0) {
         const itemIds = allResponses.map((r: any) => r.item_id);
         const { data: items } = await supabase
-          .from("items")
+          .from("items_presentation")
           .select("item_id, item_text, item_number, dimension_id, context_type, facet_name")
           .in("item_id", itemIds);
         const itemMap = new Map((items ?? []).map((i: any) => [i.item_id, i]));
@@ -433,7 +433,7 @@ export async function assemblePtpPdfData(params: {
       if (responses?.length) {
         const itemIds = responses.map((r: any) => r.item_id);
         const { data: items } = await supabase
-          .from("items")
+          .from("items_presentation")
           .select("item_id, item_text, item_number, dimension_id, context_type, facet_name")
           .in("item_id", itemIds);
         const itemMap = new Map((items ?? []).map((i: any) => [i.item_id, i]));
@@ -514,7 +514,7 @@ export async function assemblePtpPdfData(params: {
     if (allResponses.length > 0) {
       const itemIds = allResponses.map((r: any) => r.item_id);
       const { data: items } = await supabase
-        .from("items")
+        .from("items_presentation")
         .select("item_id, item_text, item_number, dimension_id, context_type")
         .in("item_id", itemIds);
 
@@ -612,7 +612,7 @@ export async function assembleNaiPdfData(params: {
   });
 
   const { data: allItems } = await supabase
-    .from("items")
+    .from("items_presentation")
     .select("item_id, item_text, item_number, dimension_id, facet_name")
     .eq("instrument_id", "INST-002")
     .order("item_number");
@@ -892,7 +892,7 @@ export async function assembleAirsaPdfData(params: {
   let selfOnlySkills: AirsaPdfData["selfOnlySkills"] = null;
   if (isSelfOnly) {
     const { data: skillRows } = await supabase
-      .from("airsa_skills")
+      .from("airsa_skills_public")
       .select("item_number, skill_name, short_description, dimension_id")
       .order("item_number");
     selfOnlySkills = (skillRows ?? []) as any;

@@ -66,7 +66,7 @@ export default function DrivingFacetScores({ assessmentId, additionalAssessmentI
       // Get item details
       const itemIds = allResponses.map((r) => r.item_id);
       const { data: items } = await supabase
-        .from("items")
+        .from("items_presentation")
         .select("item_id, item_text, dimension_id, facet_name")
         .in("item_id", itemIds);
 
@@ -91,7 +91,7 @@ export default function DrivingFacetScores({ assessmentId, additionalAssessmentI
       let filteredItems = scoredItems;
       if (contextFilter) {
         const { data: contextItems } = await supabase
-          .from('items')
+          .from("items_presentation")
           .select('item_id, context_type')
           .in('item_id', allResponses.map(r => r.item_id));
         const contextItemMap = new Map((contextItems ?? []).map(i => [i.item_id, i.context_type]));

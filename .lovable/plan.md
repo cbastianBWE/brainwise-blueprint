@@ -1,48 +1,39 @@
-## Add click-target annotations to Help Center screenshots
 
-Overlay a highlight (bordered box + subtle glow, optionally a numbered badge) on each screenshot showing exactly where the user should click or type for that step.
+# Repoint frontend reads to secure views
 
-### Approach
+Mechanical swap of `.from("<base>")` → `.from("<view>" as any)` on read paths only. `as any` cast is needed because the new views aren't yet in the generated `Database` types. No writes, no edge functions, no operations (`opsSupabase`) code touched.
 
-Two parts: (1) extend the guide data model so each step can declare one or more "hotspots" on its screenshot, and (2) render those hotspots as an overlay on top of the image in the Help page — not baked into the PNG. This keeps screenshots reusable, lets us re-capture without re-annotating, and stays crisp at any zoom.
+## 1. `items` → `items_presentation` (16 call sites)
 
-### Data model change
+- `src/components/assessment/AssessmentFlow.tsx` (~L203) — also drop `reverse_scored, scale_type` from `.select(...)`; keep `item_id, item_number, item_text, anchor_low, anchor_high, dimension_id`.
+- `src/pages/MyResults.tsx` (L673, L748)
+- `src/components/results/DrivingFacetScores.tsx` (L69, L94)
+- `src/components/results/PTPNarrativeSections.tsx` (L169, L376)
+- `src/components/results/PTPFullFacetCharts.tsx` (L77)
+- `src/components/results/NAINarrativeSections.tsx` (L115, L160)
+- `src/pages/PairedReport.tsx` (L519)
+- `src/pages/TeamReport.tsx` (L590)
+- `src/lib/assemblePdfDataForUser.ts` (L216, L364, L436, L517, L615)
+- `src/lib/assembleTeamPdfData.ts` (L91)
+- `src/lib/assemblePairedPdfData.ts` (L125)
 
-In `src/content/help/types.ts`, add an optional `hotspots` array to `HelpStep`:
+Left untouched: `src/pages/operations/*`, `ItemFormDialog.tsx` (all `opsSupabase`, different table); `supabase/functions/generate-report`, `supabase/functions/calculate-scores` (service_role on base table).
 
-```ts
-type Hotspot = {
-  // percentages of the image's natural size, 0-100
-  x: number; y: number; w: number; h: number;
-  label?: string;       // optional short caption ("Click here")
-  shape?: "rect" | "circle";
-};
-type HelpStep = { /* existing */ hotspots?: Hotspot[] };
-```
+## 2. `airsa_skills` → `airsa_skills_public` (3 call sites)
 
-Percent-based coords mean the overlay scales correctly on any screen.
+- `src/components/results/AirsaCombinedReport.tsx` (L357, L402)
+- `src/lib/assemblePdfDataForUser.ts` (L895)
 
-### Renderer
+## 3. `coaching_activities` → `coaching_activities_public` (2 read call sites)
 
-New `src/components/help/AnnotatedScreenshot.tsx`:
-- Wraps `<img>` in a `relative` container.
-- For each hotspot renders an absolutely positioned box using `left/top/width/height` in `%`.
-- Styling: 2px brand-primary border, soft primary-tinted glow (`box-shadow`), rounded corners, subtle pulse animation, and a numbered circular badge in the top-left of the box.
-- Optional `label` renders as a small chip beneath the box.
+- `src/pages/coaching/CoachingActivities.tsx` (L448) — list read
+- `src/pages/coaching/CoachingActivityRunner.tsx` (L2547) — single-activity read
 
-`src/pages/Help.tsx` swaps its raw `<img>` for `<AnnotatedScreenshot>` when a step has hotspots (falls back to the plain image otherwise).
+Writes to `coaching_activities` (authoring/admin paths) and edge function reads for `analysis_prompt`/`chat_prompt` remain on the base table.
 
-### Authoring the coordinates
+## Notes
 
-For each existing Individual guide screenshot, I'll open the PNG, identify the click target (button, field, tab), and write the hotspot rect in percentages. Steps that are purely informational (no single click target) get no hotspot. I'll do this for the 5 Individual guides already captured, then apply the same pattern to every future role as we capture them.
+- Every swap adds `as any` on the table name argument (`.from("items_presentation" as any)`), matching the pattern already used in the repo for view/table names not in `Database` types (e.g., `useTeamProfile.ts` uses `"team_profiles" as never`). Result-row typing at call sites already uses `as any` / interface casts, so no downstream types break.
+- No behavior change expected — views return the same rows for the columns each callsite already reads. `AssessmentFlow` continues to work because `calculate-scores` (server-side) is the sole consumer of `reverse_scored`/`scale_type`.
 
-### Scope of this change
-
-- Additive only. No existing screenshot is re-captured or replaced.
-- Only `src/content/help/types.ts`, `src/content/help/individual.ts` (adding `hotspots`), the new `AnnotatedScreenshot` component, and the render site in `src/pages/Help.tsx` change.
-- Same pattern will be used for Coach, Coach Client, etc. as we capture them next.
-
-### Optional niceties (say yes/no)
-
-- Numbered badges on each hotspot (1, 2, 3) when a single step has multiple targets.
-- Click-to-zoom on the whole screenshot (lightbox) so users can see the annotation at full size.
+Ready to switch to build mode and apply.
