@@ -662,6 +662,13 @@ export type Database = {
             referencedRelation: "dimensions"
             referencedColumns: ["dimension_id"]
           },
+          {
+            foreignKeyName: "airsa_skills_dimension_id_fkey"
+            columns: ["dimension_id"]
+            isOneToOne: false
+            referencedRelation: "dimensions_public"
+            referencedColumns: ["dimension_id"]
+          },
         ]
       }
       assessment_acknowledgments: {
@@ -5804,6 +5811,13 @@ export type Database = {
             columns: ["dimension_id"]
             isOneToOne: false
             referencedRelation: "dimensions"
+            referencedColumns: ["dimension_id"]
+          },
+          {
+            foreignKeyName: "items_dimension_id_fkey"
+            columns: ["dimension_id"]
+            isOneToOne: false
+            referencedRelation: "dimensions_public"
             referencedColumns: ["dimension_id"]
           },
           {
@@ -12628,6 +12642,13 @@ export type Database = {
             referencedRelation: "dimensions"
             referencedColumns: ["dimension_id"]
           },
+          {
+            foreignKeyName: "airsa_skills_dimension_id_fkey"
+            columns: ["dimension_id"]
+            isOneToOne: false
+            referencedRelation: "dimensions_public"
+            referencedColumns: ["dimension_id"]
+          },
         ]
       }
       coach_clients_client_view: {
@@ -12819,6 +12840,47 @@ export type Database = {
         }
         Relationships: []
       }
+      dimensions_public: {
+        Row: {
+          dimension_id: string | null
+          dimension_name: string | null
+          high_score_label: string | null
+          id: string | null
+          instrument_id: string | null
+          instrument_version: string | null
+          low_score_label: string | null
+          short_name: string | null
+        }
+        Insert: {
+          dimension_id?: string | null
+          dimension_name?: string | null
+          high_score_label?: string | null
+          id?: string | null
+          instrument_id?: string | null
+          instrument_version?: string | null
+          low_score_label?: string | null
+          short_name?: string | null
+        }
+        Update: {
+          dimension_id?: string | null
+          dimension_name?: string | null
+          high_score_label?: string | null
+          id?: string | null
+          instrument_id?: string | null
+          instrument_version?: string | null
+          low_score_label?: string | null
+          short_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dimensions_instrument_id_fkey"
+            columns: ["instrument_id"]
+            isOneToOne: false
+            referencedRelation: "instruments"
+            referencedColumns: ["instrument_id"]
+          },
+        ]
+      }
       items_presentation: {
         Row: {
           anchor_high: string | null
@@ -12874,6 +12936,13 @@ export type Database = {
             columns: ["dimension_id"]
             isOneToOne: false
             referencedRelation: "dimensions"
+            referencedColumns: ["dimension_id"]
+          },
+          {
+            foreignKeyName: "items_dimension_id_fkey"
+            columns: ["dimension_id"]
+            isOneToOne: false
+            referencedRelation: "dimensions_public"
             referencedColumns: ["dimension_id"]
           },
           {
@@ -13007,6 +13076,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      response_scales_public: {
+        Row: {
+          display_label: string | null
+          numeric_equivalent: number | null
+          readiness_translation: string | null
+          response_value: string | null
+          scale_type: string | null
+        }
+        Insert: {
+          display_label?: string | null
+          numeric_equivalent?: number | null
+          readiness_translation?: string | null
+          response_value?: string | null
+          scale_type?: string | null
+        }
+        Update: {
+          display_label?: string | null
+          numeric_equivalent?: number | null
+          readiness_translation?: string | null
+          response_value?: string | null
+          scale_type?: string | null
+        }
+        Relationships: []
       }
     }
     Functions: {
@@ -13648,6 +13741,10 @@ export type Database = {
       }
       bw_can_read_paired_profile: {
         Args: { p_profile: string }
+        Returns: boolean
+      }
+      bw_can_read_ptp_result: {
+        Args: { p_result_id: string }
         Returns: boolean
       }
       bw_can_read_team_profile: {
