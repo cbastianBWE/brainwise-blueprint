@@ -2559,6 +2559,7 @@ export default function CoachingActivityRunner() {
     }
     if (step.widget === "recap") return !!(responses.recap as { html?: string } | undefined)?.html;
     if (step.widget === "transition_map") return true;
+    if (step.widget === "ptp_display") return true;
     if (step.widget === "ikigai") {
       const m = (responses as any)[step.mapKey || "ikigai_map"] as { items?: unknown[] } | undefined;
       return Array.isArray(m?.items) && (m!.items as unknown[]).length > 0;
