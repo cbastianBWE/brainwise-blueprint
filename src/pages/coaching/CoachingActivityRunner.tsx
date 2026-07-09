@@ -2945,6 +2945,11 @@ export default function CoachingActivityRunner() {
               <TransitionMapWalkthrough step={{ intro: step.intro, beats: step.beats || [] }} />
             )}
 
+            {step?.widget === "ptp_display" && user && (
+              <PtpDisplayWidget step={step} userId={user.id} />
+            )}
+
+
             {step?.widget === "ikigai" && (
               <IkigaiWidget
                 step={step}
