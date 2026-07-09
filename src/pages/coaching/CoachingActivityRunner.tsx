@@ -94,6 +94,8 @@ interface Step {
   suggestions?: string[];
   // inner_team
   charactersKey?: string;
+  elicitKey?: string;
+  suggestAction?: { label?: string; touchpoint?: string; function?: string };
   layerLabels?: Record<string, string>;
   powerLabels?: Record<string, string>;
   attributeLabels?: Record<string, string>;
