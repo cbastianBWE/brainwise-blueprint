@@ -2174,15 +2174,6 @@ const PTP_DIM_COLORS: Record<string, string> = {
   "DIM-PTP-05": "#FFB703",
 };
 
-function humanizeBand(band: string | undefined | null, mean?: number | null): string {
-  if (!band && typeof mean === "number") {
-    if (mean >= 70) return "High";
-    if (mean >= 40) return "Moderate";
-    return "Low";
-  }
-  if (!band) return "—";
-  return band.replace(/_/g, "–").replace(/\b\w/g, (c) => c.toUpperCase());
-}
 
 function PtpDisplayWidget({ step, userId }: { step: Step; userId: string }) {
   const instrument = step.instrument || "INST-001";
