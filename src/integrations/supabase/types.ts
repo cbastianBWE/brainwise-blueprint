@@ -12834,6 +12834,7 @@ export type Database = {
           item_number: number | null
           item_text: string | null
           rater_type: string | null
+          reverse_scored: boolean | null
           scale_type: string | null
         }
         Insert: {
@@ -12850,6 +12851,7 @@ export type Database = {
           item_number?: number | null
           item_text?: string | null
           rater_type?: string | null
+          reverse_scored?: boolean | null
           scale_type?: string | null
         }
         Update: {
@@ -12866,6 +12868,7 @@ export type Database = {
           item_number?: number | null
           item_text?: string | null
           rater_type?: string | null
+          reverse_scored?: boolean | null
           scale_type?: string | null
         }
         Relationships: [
