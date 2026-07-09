@@ -930,6 +930,13 @@ export type Database = {
             referencedRelation: "items"
             referencedColumns: ["item_id"]
           },
+          {
+            foreignKeyName: "assessment_responses_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items_presentation"
+            referencedColumns: ["item_id"]
+          },
         ]
       }
       assessment_results: {
@@ -2511,6 +2518,13 @@ export type Database = {
             columns: ["activity_id"]
             isOneToOne: false
             referencedRelation: "coaching_activities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coaching_activity_sessions_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "coaching_activities_public"
             referencedColumns: ["id"]
           },
           {
@@ -9406,6 +9420,13 @@ export type Database = {
             referencedRelation: "items"
             referencedColumns: ["item_id"]
           },
+          {
+            foreignKeyName: "ptp_facet_types_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items_presentation"
+            referencedColumns: ["item_id"]
+          },
         ]
       }
       ptp_intro_gate_state: {
@@ -12577,6 +12598,38 @@ export type Database = {
           },
         ]
       }
+      airsa_skills_public: {
+        Row: {
+          dimension_id: string | null
+          is_new_skill: boolean | null
+          item_number: number | null
+          short_description: string | null
+          skill_name: string | null
+        }
+        Insert: {
+          dimension_id?: string | null
+          is_new_skill?: boolean | null
+          item_number?: number | null
+          short_description?: string | null
+          skill_name?: string | null
+        }
+        Update: {
+          dimension_id?: string | null
+          is_new_skill?: boolean | null
+          item_number?: number | null
+          short_description?: string | null
+          skill_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "airsa_skills_dimension_id_fkey"
+            columns: ["dimension_id"]
+            isOneToOne: false
+            referencedRelation: "dimensions"
+            referencedColumns: ["dimension_id"]
+          },
+        ]
+      }
       coach_clients_client_view: {
         Row: {
           assessment_id: string | null
@@ -12712,6 +12765,117 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "assessments"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      coaching_activities_public: {
+        Row: {
+          code: string | null
+          created_at: string | null
+          definition: Json | null
+          desired_outcome: string | null
+          id: string | null
+          module_group: string | null
+          sequence: number | null
+          status: string | null
+          tags: string[] | null
+          thumbnail_url: string | null
+          tier: string | null
+          title: string | null
+          updated_at: string | null
+          version: number | null
+        }
+        Insert: {
+          code?: string | null
+          created_at?: string | null
+          definition?: never
+          desired_outcome?: string | null
+          id?: string | null
+          module_group?: string | null
+          sequence?: number | null
+          status?: string | null
+          tags?: string[] | null
+          thumbnail_url?: string | null
+          tier?: string | null
+          title?: string | null
+          updated_at?: string | null
+          version?: number | null
+        }
+        Update: {
+          code?: string | null
+          created_at?: string | null
+          definition?: never
+          desired_outcome?: string | null
+          id?: string | null
+          module_group?: string | null
+          sequence?: number | null
+          status?: string | null
+          tags?: string[] | null
+          thumbnail_url?: string | null
+          tier?: string | null
+          title?: string | null
+          updated_at?: string | null
+          version?: number | null
+        }
+        Relationships: []
+      }
+      items_presentation: {
+        Row: {
+          anchor_high: string | null
+          anchor_low: string | null
+          context_type: string | null
+          dimension_id: string | null
+          facet_name: string | null
+          id: string | null
+          include_in_romantic: boolean | null
+          instrument_id: string | null
+          instrument_version: string | null
+          item_id: string | null
+          item_number: number | null
+          item_text: string | null
+        }
+        Insert: {
+          anchor_high?: string | null
+          anchor_low?: string | null
+          context_type?: string | null
+          dimension_id?: string | null
+          facet_name?: string | null
+          id?: string | null
+          include_in_romantic?: boolean | null
+          instrument_id?: string | null
+          instrument_version?: string | null
+          item_id?: string | null
+          item_number?: number | null
+          item_text?: string | null
+        }
+        Update: {
+          anchor_high?: string | null
+          anchor_low?: string | null
+          context_type?: string | null
+          dimension_id?: string | null
+          facet_name?: string | null
+          id?: string | null
+          include_in_romantic?: boolean | null
+          instrument_id?: string | null
+          instrument_version?: string | null
+          item_id?: string | null
+          item_number?: number | null
+          item_text?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "items_dimension_id_fkey"
+            columns: ["dimension_id"]
+            isOneToOne: false
+            referencedRelation: "dimensions"
+            referencedColumns: ["dimension_id"]
+          },
+          {
+            foreignKeyName: "items_instrument_id_fkey"
+            columns: ["instrument_id"]
+            isOneToOne: false
+            referencedRelation: "instruments"
+            referencedColumns: ["instrument_id"]
           },
         ]
       }
