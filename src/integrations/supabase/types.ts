@@ -2158,6 +2158,62 @@ export type Database = {
         }
         Relationships: []
       }
+      coach_free_assessment_pool: {
+        Row: {
+          balance: number
+          coach_user_id: string
+          created_at: string
+          id: string
+          instrument_id: string
+          updated_at: string
+        }
+        Insert: {
+          balance?: number
+          coach_user_id: string
+          created_at?: string
+          id?: string
+          instrument_id: string
+          updated_at?: string
+        }
+        Update: {
+          balance?: number
+          coach_user_id?: string
+          created_at?: string
+          id?: string
+          instrument_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coach_free_assessment_pool_coach_user_id_fkey"
+            columns: ["coach_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coach_free_assessment_pool_coach_user_id_fkey"
+            columns: ["coach_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "coach_free_assessment_pool_coach_user_id_fkey"
+            columns: ["coach_user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coach_free_assessment_pool_coach_user_id_fkey"
+            columns: ["coach_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       coach_invitations: {
         Row: {
           accepted_at: string | null
@@ -13374,6 +13430,13 @@ export type Database = {
         Args: { p_invitation_id: string }
         Returns: Json
       }
+      admin_list_coach_free_pool: {
+        Args: { p_coach_user_id: string }
+        Returns: {
+          balance: number
+          instrument_id: string
+        }[]
+      }
       admin_log_password_reset: {
         Args: { p_target_user_id: string }
         Returns: undefined
@@ -14003,6 +14066,17 @@ export type Database = {
           p_reason: string
           p_ref_field: string
           p_resource_id?: string
+        }
+        Returns: Json
+      }
+      create_free_client_order: {
+        Args: {
+          p_client_email: string
+          p_client_first_name: string
+          p_client_last_name: string
+          p_coach_note?: string
+          p_instrument_ids: string[]
+          p_results_released?: boolean
         }
         Returns: Json
       }
@@ -14653,6 +14727,15 @@ export type Database = {
       }
       grant_certification: {
         Args: { p_certification_id: string; p_reason?: string }
+        Returns: Json
+      }
+      grant_free_client_assessments: {
+        Args: {
+          p_coach_user_id: string
+          p_count: number
+          p_instrument_id: string
+          p_reason: string
+        }
         Returns: Json
       }
       grant_one_time_chat_credits: {
