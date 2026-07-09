@@ -238,7 +238,7 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
           .from("response_scales_public" as any)
           .select("response_value, numeric_equivalent, display_label, readiness_translation")
           .eq("scale_type", "Never/Rarely/Often/Consistently");
-        if (scales) setResponseScales(scales);
+        if (scales) setResponseScales(scales as any);
       }
 
       loadedAssessmentRef.current = assessmentId;
