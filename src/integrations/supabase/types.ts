@@ -2634,6 +2634,53 @@ export type Database = {
           },
         ]
       }
+      coaching_assessment_uploads: {
+        Row: {
+          coaching_session_id: string
+          created_at: string
+          extracted_text: string | null
+          file_type: string
+          id: string
+          label: string | null
+          original_filename: string | null
+          status: string
+          storage_path: string
+          user_id: string
+        }
+        Insert: {
+          coaching_session_id: string
+          created_at?: string
+          extracted_text?: string | null
+          file_type: string
+          id?: string
+          label?: string | null
+          original_filename?: string | null
+          status?: string
+          storage_path: string
+          user_id: string
+        }
+        Update: {
+          coaching_session_id?: string
+          created_at?: string
+          extracted_text?: string | null
+          file_type?: string
+          id?: string
+          label?: string | null
+          original_filename?: string | null
+          status?: string
+          storage_path?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coaching_assessment_uploads_coaching_session_id_fkey"
+            columns: ["coaching_session_id"]
+            isOneToOne: false
+            referencedRelation: "coaching_activity_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       coaching_credit_grants: {
         Row: {
           amount: number
