@@ -29,7 +29,6 @@ interface Item {
   scale_type: string | null;
   dimension_id: string | null;
 }
-}
 
 interface ResponseScale {
   response_value: string | null;
