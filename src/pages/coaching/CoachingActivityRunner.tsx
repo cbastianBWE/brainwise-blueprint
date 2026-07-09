@@ -1874,12 +1874,6 @@ function ContentWidget({
 
 
 // ---- qa_multimodal widget ----
-type QaAnswer = {
-  mode: "text" | "dictate" | "audio" | "video";
-  text?: string;
-  media_id?: string;
-  skipped?: boolean;
-};
 
 // MediaRecorderPane, DictateButton — imported from MultimodalField module.
 
