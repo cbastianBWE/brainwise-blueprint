@@ -363,7 +363,7 @@ export default function MyResults({ isCoachView = false, adminView = false, targ
         .in("instrument_id", instrumentIds);
 
       const dimNameMap = new Map(
-        (dimensionRows ?? []).map((d) => [d.dimension_id, d.dimension_name])
+        (dimensionRows ?? []).map((d: any) => [d.dimension_id, d.dimension_name])
       );
       setDimensionNameMap(dimNameMap);
 
