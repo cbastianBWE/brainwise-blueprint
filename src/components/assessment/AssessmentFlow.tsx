@@ -201,7 +201,7 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
 
       let itemsQuery = supabase
         .from("items_presentation")
-        .select("item_id, item_number, item_text, anchor_low, anchor_high, dimension_id")
+        .select("item_id, item_number, item_text, anchor_low, anchor_high, dimension_id, scale_type, reverse_scored")
         .eq("instrument_id", instrument.instrument_id)
         .eq("rater_type", raterType === "manager" ? "Manager" : "Self")
         .order("item_number", { ascending: true });
