@@ -1184,7 +1184,7 @@ export default function CoachClients() {
                         >
                           <Mail className="h-3 w-3" aria-hidden="true" /> {sendingReminderId === c.id ? "Sending..." : "Remind"}
                         </Button>
-                        {c.invitation_status === "completed" && c.assessment_status === "completed" && (
+                        {c.assessment_status === "completed" && (
                           <Button
                             size="sm"
                             variant={c.debrief_completed ? "secondary" : "default"}
