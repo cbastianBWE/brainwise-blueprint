@@ -84,6 +84,8 @@ interface Step {
   mapKey?: string;
   regionLabels?: Record<string, string>;
   lensKeys?: Record<string, string>;
+  // ptp_display
+  instrument?: string;
 }
 
 interface SelectedSaying {
