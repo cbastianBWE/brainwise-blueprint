@@ -946,7 +946,33 @@ export default function CoachClients() {
                 : `Covered by your certification — no payment required. ${4 - actorsUsed} of 4 remaining.`}
             </p>
           </div>
-          <Switch checked={isActorDebrief} onCheckedChange={setIsActorDebrief} disabled={actorOnlyMode} />
+          <Switch
+            checked={isActorDebrief}
+            onCheckedChange={(v) => {
+              setIsActorDebrief(v);
+              if (v) setIsFreeGrant(false);
+            }}
+            disabled={actorOnlyMode}
+          />
+        </div>
+      )}
+      {hasAnyFreeBalance && (
+        <div className="flex items-center justify-between rounded-md border p-3">
+          <div className="space-y-0.5 pr-3">
+            <Label className="text-sm">Send as a free assessment (from your granted pool)</Label>
+            <p className="text-xs text-muted-foreground">
+              Uses one of your admin-granted free client assessments — no payment required.
+            </p>
+          </div>
+          <Switch
+            checked={isFreeGrant}
+            onCheckedChange={(v) => {
+              setIsFreeGrant(v);
+              if (v) setIsActorDebrief(false);
+              setSelectedInstruments([]);
+              setInstrumentError(false);
+            }}
+          />
         </div>
       )}
     </div>
