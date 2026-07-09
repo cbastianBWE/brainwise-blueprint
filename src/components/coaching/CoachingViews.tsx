@@ -590,3 +590,204 @@ export function ChatTranscript({ chat }: { chat: ChatMsg[] }) {
     </div>
   );
 }
+
+// ---------- Inner team ("Your team" / MBWC-0450) ----------
+export type TeamLayer = "primary" | "secondary" | "tertiary";
+export type TeamPower = "low" | "moderate" | "high";
+export const TEAM_LAYERS: TeamLayer[] = ["primary", "secondary", "tertiary"];
+
+export interface InnerTeamCharacter {
+  name: string;
+  description?: string;
+  core_desire?: string;
+  greatest_fear?: string;
+  strength?: string;
+  weakness?: string;
+  layer: TeamLayer;
+  power_now?: TeamPower;
+  power_future?: TeamPower;
+  when_useful?: string;
+  talent?: string;
+}
+export interface TeamPair { a: string; b: string; note?: string }
+export interface InnerTeamSufficiency { enough: boolean; note: string; questions: string[] }
+export interface InnerTeamMap {
+  characters: InnerTeamCharacter[];
+  allies?: TeamPair[];
+  conflicts?: TeamPair[];
+  decision_driver?: { name: string; note?: string };
+  grow?: string[];
+  shrink?: string[];
+  sufficiency?: InnerTeamSufficiency;
+  model?: string;
+  generated_at?: string;
+}
+
+const TEAM_LAYER_COLORS: Record<TeamLayer, string> = {
+  primary: "var(--bw-orange)",
+  secondary: "var(--bw-navy-500)",
+  tertiary: "var(--bw-plum)",
+};
+export function teamLayerColor(l: TeamLayer): string { return TEAM_LAYER_COLORS[l]; }
+
+const DEFAULT_LAYER_LABELS: Record<TeamLayer, string> = {
+  primary: "Primary — shows up daily and drives",
+  secondary: "Secondary — triggered, often by a threat",
+  tertiary: "Tertiary — rare, but can take over",
+};
+
+export function effectiveTeamLayer(
+  c: InnerTeamCharacter,
+  overrides?: Record<string, string>,
+): TeamLayer {
+  const o = overrides?.[c.name];
+  return o === "primary" || o === "secondary" || o === "tertiary" ? o : c.layer;
+}
+
+function TeamCircleBackdrop({ layerLabels }: { layerLabels: Record<string, string> }) {
+  const p = TEAM_LAYER_COLORS.primary;
+  const s = TEAM_LAYER_COLORS.secondary;
+  const t = TEAM_LAYER_COLORS.tertiary;
+  const shortLabel = (k: TeamLayer) =>
+    (layerLabels[k] || DEFAULT_LAYER_LABELS[k]).split("—")[0].trim();
+  return (
+    <svg
+      viewBox="0 0 500 500"
+      className="mx-auto h-auto w-full max-w-md"
+      aria-hidden
+      preserveAspectRatio="xMidYMid meet"
+    >
+      <g strokeWidth="2.5">
+        <circle cx="250" cy="250" r="220" fill={t} fillOpacity="0.08" stroke={t} />
+        <circle cx="250" cy="250" r="150" fill={s} fillOpacity="0.12" stroke={s} />
+        <circle cx="250" cy="250" r="80" fill={p} fillOpacity="0.18" stroke={p} />
+      </g>
+      <text x="250" y="256" textAnchor="middle" fontSize="20" fontWeight="700" fill={p}>
+        You
+      </text>
+      <g fontSize="14" fontWeight="600" textAnchor="middle">
+        <text x="250" y="180" fill={p}>{shortLabel("primary")}</text>
+        <text x="250" y="110" fill={s}>{shortLabel("secondary")}</text>
+        <text x="250" y="40" fill={t}>{shortLabel("tertiary")}</text>
+      </g>
+    </svg>
+  );
+}
+
+export function InnerTeamCircleView({
+  map,
+  overrides,
+  layerLabels,
+  renderItem,
+}: {
+  map: InnerTeamMap | undefined;
+  overrides?: Record<string, string>;
+  layerLabels: Record<string, string>;
+  renderItem?: (c: InnerTeamCharacter, grow: boolean, shrink: boolean) => JSX.Element;
+}) {
+  if (!map || !Array.isArray(map.characters) || map.characters.length === 0) return null;
+  const growSet = new Set(map.grow || []);
+  const shrinkSet = new Set(map.shrink || []);
+  const byLayer = new Map<TeamLayer, InnerTeamCharacter[]>();
+  for (const c of map.characters) {
+    const layer = effectiveTeamLayer(c, overrides);
+    if (!byLayer.has(layer)) byLayer.set(layer, []);
+    byLayer.get(layer)!.push(c);
+  }
+  const ordered = TEAM_LAYERS.filter((l) => (byLayer.get(l) || []).length > 0);
+  const pairLine = (p: TeamPair, glyph: string) =>
+    `${p.a} ${glyph} ${p.b}${p.note ? ` — ${p.note}` : ""}`;
+  return (
+    <div className="space-y-4">
+      <TeamCircleBackdrop layerLabels={layerLabels} />
+      <div className="grid gap-3 sm:grid-cols-3">
+        {ordered.map((l) => {
+          const cs = byLayer.get(l)!;
+          const color = TEAM_LAYER_COLORS[l];
+          return (
+            <Card key={l} className="bg-muted/30" style={{ borderColor: color }}>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-semibold" style={{ color }}>
+                  {layerLabels[l] || DEFAULT_LAYER_LABELS[l]}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2 pt-0">
+                {cs.map((c, i) => (
+                  <div key={`${c.name}-${i}`}>
+                    {renderItem ? (
+                      renderItem(c, growSet.has(c.name), shrinkSet.has(c.name))
+                    ) : (
+                      <span className="inline-flex items-center gap-1 rounded-full border px-2 py-1 text-xs">
+                        {growSet.has(c.name) && <span aria-hidden style={{ color: "var(--bw-orange)" }}>★</span>}
+                        {c.name}
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+
+      {(map.decision_driver?.name ||
+        (map.allies?.length ?? 0) > 0 ||
+        (map.conflicts?.length ?? 0) > 0 ||
+        (map.grow?.length ?? 0) > 0 ||
+        (map.shrink?.length ?? 0) > 0) && (
+        <Card className="bg-muted/30">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-semibold text-muted-foreground">
+              How your team plays together
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3 pt-0 text-sm">
+            {map.decision_driver?.name && (
+              <p>
+                <span className="font-medium">Who tends to drive:</span> {map.decision_driver.name}
+                {map.decision_driver.note ? ` — ${map.decision_driver.note}` : ""}
+              </p>
+            )}
+            {(map.allies?.length ?? 0) > 0 && (
+              <div>
+                <p className="font-medium">Allies</p>
+                <ul className="mt-1 list-disc space-y-1 pl-5">
+                  {map.allies!.map((p, i) => (
+                    <li key={i}>{pairLine(p, "+")}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {(map.conflicts?.length ?? 0) > 0 && (
+              <div>
+                <p className="font-medium">Tensions</p>
+                <ul className="mt-1 list-disc space-y-1 pl-5">
+                  {map.conflicts!.map((p, i) => (
+                    <li key={i}>{pairLine(p, "vs")}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {((map.grow?.length ?? 0) > 0 || (map.shrink?.length ?? 0) > 0) && (
+              <div className="grid gap-2 sm:grid-cols-2">
+                {(map.grow?.length ?? 0) > 0 && (
+                  <p>
+                    <span className="font-medium" style={{ color: "var(--bw-orange)" }}>See more of:</span>{" "}
+                    {map.grow!.join(", ")}
+                  </p>
+                )}
+                {(map.shrink?.length ?? 0) > 0 && (
+                  <p>
+                    <span className="font-medium text-muted-foreground">See less of:</span>{" "}
+                    {map.shrink!.join(", ")}
+                  </p>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+}
+
