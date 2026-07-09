@@ -2193,10 +2193,12 @@ export default function CoachingActivityRunner() {
       });
       const accRow = Array.isArray(accData) ? accData[0] : (accData as any);
       if (!accRow?.allowed) {
-        toast.error("You don't have access to this activity.");
-        navigate("/coaching");
+        const reason = accRow?.reason || "not_available";
+        setAccessDenial(reason);
+        setLoading(false);
         return;
       }
+      setAccessDenial(null);
 
       // Find or create session
       let s: Session | null = null;
