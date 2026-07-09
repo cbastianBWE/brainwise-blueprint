@@ -360,11 +360,25 @@ export default function CoachClients() {
     }
   }, []);
 
+  const refreshFreePool = async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from("coach_free_assessment_pool")
+      .select("instrument_id, balance")
+      .eq("coach_user_id", user.id);
+    const poolMap: Record<string, number> = {};
+    (data ?? []).forEach((r: any) => {
+      if (r?.instrument_id) poolMap[r.instrument_id] = Number(r.balance) || 0;
+    });
+    setFreePool(poolMap);
+  };
+
   const resetForm = () => {
     setFirstName(""); setLastName(""); setEmail(""); setNote("");
     setSelectedInstruments([]); setInstrumentError(false);
     setResultsReleased(false);
     setIsActorDebrief(false);
+    setIsFreeGrant(false);
   };
 
   const toggleInstrument = (instrumentId: string) => {
