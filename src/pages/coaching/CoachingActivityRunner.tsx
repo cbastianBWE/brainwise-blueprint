@@ -92,6 +92,11 @@ interface Step {
   uploadsTable?: string;
   analysisKey?: string;
   suggestions?: string[];
+  // inner_team
+  charactersKey?: string;
+  layerLabels?: Record<string, string>;
+  powerLabels?: Record<string, string>;
+  attributeLabels?: Record<string, string>;
 }
 
 interface SelectedSaying {
