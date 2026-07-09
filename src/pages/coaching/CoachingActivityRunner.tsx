@@ -56,6 +56,13 @@ import { ImageSelectWidget } from "./runner/widgets/ImageSelectWidget";
 import { TextSelectWidget } from "./runner/widgets/TextSelectWidget";
 import { ImageDescribeWidget } from "./runner/widgets/ImageDescribeWidget";
 import { RecapWidget } from "./runner/widgets/RecapWidget";
+import { TextareaWidget } from "./runner/widgets/TextareaWidget";
+import { RiskBlocksWidget } from "./runner/widgets/RiskBlocksWidget";
+import { ChatWidget } from "./runner/widgets/ChatWidget";
+import { PrioritizePanel } from "./runner/widgets/PrioritizePanel";
+import { SuggestionPanel } from "./runner/widgets/SuggestionPanel";
+import { ContentWidget } from "./runner/widgets/ContentWidget";
+import { QaMultimodalWidget } from "./runner/widgets/QaMultimodalWidget";
 
 
 // ---- Widgets ----
