@@ -345,16 +345,36 @@ function HistoryTab() {
     let cancelled = false;
     (async () => {
       setLoading(true);
-      const { data } = await supabase
+      const { data: sess, error: sessErr } = await supabase
         .from("coaching_activity_sessions")
-        .select(
-          "id, activity_id, completed_at, created_at, coaching_activities(title, tier)",
-        )
+        .select("id, activity_id, completed_at, created_at")
         .eq("user_id", user.id)
         .eq("status", "completed")
         .order("completed_at", { ascending: false });
       if (cancelled) return;
-      setRows((data as unknown as HistoryRow[]) || []);
+      if (sessErr || !sess) {
+        setRows([]);
+        setLoading(false);
+        return;
+      }
+      const activityIds = [...new Set(sess.map((s) => s.activity_id))];
+      const titleMap = new Map<string, { title: string; tier: string | null }>();
+      if (activityIds.length > 0) {
+        const { data: acts } = await supabase
+          .from("coaching_activities_public")
+          .select("id, title, tier")
+          .in("id", activityIds);
+        for (const a of (acts || []) as { id: string; title: string; tier: string | null }[]) {
+          titleMap.set(a.id, { title: a.title, tier: a.tier });
+        }
+      }
+      if (cancelled) return;
+      setRows(
+        sess.map((s) => ({
+          ...s,
+          coaching_activities: titleMap.get(s.activity_id) || null,
+        })) as HistoryRow[],
+      );
       setLoading(false);
     })();
     return () => {
