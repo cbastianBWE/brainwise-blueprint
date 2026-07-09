@@ -982,24 +982,7 @@ function ChatWidget({
 }
 
 
-// ---- Image helpers ----
-const imgUrl = (path: string, w: number, h: number) =>
-  supabase.storage
-    .from("coaching-media")
-    .getPublicUrl(path, { transform: { width: w, height: h, resize: "cover" } }).data.publicUrl;
 
-interface LibraryImage {
-  id: string;
-  storage_path: string;
-  alt: string | null;
-}
-
-interface SelectedImage {
-  library_id: string;
-  storage_path: string;
-  tag: string;
-  description?: MMValue;
-}
 
 function ImageDescribeWidget({
   step,
