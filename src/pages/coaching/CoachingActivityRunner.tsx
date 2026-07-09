@@ -2441,7 +2441,63 @@ export default function CoachingActivityRunner() {
     [user, coachUserId],
   );
 
-  if (loading || !activity || !session) {
+  if (loading) {
+    return (
+      <div className="container mx-auto p-6">
+        <div className="flex items-center justify-center py-24">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </div>
+      </div>
+    );
+  }
+
+  if (accessDenial) {
+    const isPtp = accessDenial === "ptp_required";
+    const isUpgrade = accessDenial === "upgrade_required" || accessDenial === "subscription_required";
+    return (
+      <div className="container mx-auto max-w-2xl space-y-4 p-6">
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="sm" onClick={() => navigate("/coaching")}>
+            <ArrowLeft className="h-4 w-4" />
+            Back
+          </Button>
+        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">
+              {isPtp
+                ? "Your Personal Threat Profile is needed first"
+                : isUpgrade
+                ? "Upgrade to access this activity"
+                : "This activity isn't available"}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              {isPtp
+                ? "This coaching activity is built from your Personal Threat Profile. Take the PTP first so we can tailor the reflection to you — it takes about 15 minutes."
+                : isUpgrade
+                ? "This activity is part of a paid tier. Upgrade to unlock it."
+                : "You don't have access to this activity right now."}
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {isPtp && (
+                <Button onClick={() => navigate("/assessment")}>Take the PTP</Button>
+              )}
+              {isUpgrade && (
+                <Button onClick={() => navigate("/pricing")}>Upgrade</Button>
+              )}
+              <Button variant="outline" onClick={() => navigate("/coaching")}>
+                Back to coaching
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!activity || !session) {
     return (
       <div className="container mx-auto p-6">
         <div className="flex items-center justify-center py-24">
