@@ -81,6 +81,10 @@ export interface Step {
   layerLabels?: Record<string, string>;
   powerLabels?: Record<string, string>;
   attributeLabels?: Record<string, string>;
+  // scored_factors
+  factors?: Array<{ key: string; label: string; side?: string; helper?: string }>;
+  sides?: Array<{ key: string; label: string; goal?: string }>;
+  scale?: { min?: number; max?: number };
 }
 
 export interface SelectedSaying {
