@@ -63,6 +63,7 @@ import { PrioritizePanel } from "./runner/widgets/PrioritizePanel";
 import { SuggestionPanel } from "./runner/widgets/SuggestionPanel";
 import { ContentWidget } from "./runner/widgets/ContentWidget";
 import { QaMultimodalWidget } from "./runner/widgets/QaMultimodalWidget";
+import { ScoredFactorsWidget } from "./runner/widgets/ScoredFactorsWidget";
 
 
 
@@ -503,6 +504,11 @@ export default function CoachingActivityRunner() {
         return !!a && (a.skipped || !!a.text?.trim() || !!a.media_id);
       });
     }
+    if (step.widget === "scored_factors") {
+      const scores = (responses[step.key || ""] as Record<string, number>) || {};
+      const factors = step.factors || [];
+      return factors.length > 0 && factors.every((f) => typeof scores[f.key] === "number");
+    }
     return true;
   })();
 
@@ -868,6 +874,14 @@ export default function CoachingActivityRunner() {
                 sessionId={session.id}
                 activityCode={activity.code || ""}
                 value={(responses[step.key] as Record<string, QaAnswer>) || {}}
+                onChange={(next) => setResponses((r) => ({ ...r, [step.key!]: next }))}
+              />
+            )}
+
+            {step?.widget === "scored_factors" && step.key && (
+              <ScoredFactorsWidget
+                step={step}
+                value={(responses[step.key] as Record<string, number>) || {}}
                 onChange={(next) => setResponses((r) => ({ ...r, [step.key!]: next }))}
               />
             )}
