@@ -226,6 +226,14 @@ export function ikigaiLensColor(l: IkigaiLens): string {
   return IKIGAI_LENS_COLORS[l];
 }
 
+export type HedgehogLens = "passion" | "best" | "engine";
+export const HEDGEHOG_LENSES: HedgehogLens[] = ["passion", "best", "engine"];
+const HEDGEHOG_LENS_COLORS: Record<HedgehogLens, string> = {
+  passion: "var(--bw-orange)",
+  best: "var(--bw-navy-500)",
+  engine: "var(--bw-plum)",
+};
+
 export function deriveIkigaiRegion(lenses: string[], sourceLens: string): string {
   const valid: string[] = ["love", "good", "need", "paid"];
   const set = Array.from(new Set(lenses.filter((l) => valid.includes(l))));
