@@ -258,16 +258,33 @@ export function deriveIkigaiRegion(lenses: string[], sourceLens: string): string
   return "ikigai";
 }
 
+export function deriveHedgehogRegion(lenses: string[], sourceLens: string): string {
+  const valid = ["passion", "best", "engine"];
+  const set = Array.from(new Set(lenses.filter((l) => valid.includes(l))));
+  const has = (l: string) => set.includes(l);
+  const n = set.length;
+  const src = valid.includes(sourceLens) ? sourceLens : (set[0] ?? "passion");
+  if (n <= 1) return n === 1 ? set[0] : src;
+  if (n === 2) {
+    if (has("passion") && has("best")) return "passion_best";
+    if (has("best") && has("engine")) return "best_engine";
+    if (has("engine") && has("passion")) return "engine_passion";
+    return src;
+  }
+  return "hedgehog";
+}
+
 export function effectiveIkigaiLenses(
   item: IkigaiItem,
   overrides?: Record<string, string[]>,
+  validLenses: string[] = IKIGAI_LENSES as string[],
 ): IkigaiLens[] {
   const raw = overrides?.[item.label];
   const list = (raw && raw.length > 0 ? raw : item.lenses) || [];
   const set = new Set<IkigaiLens>(
-    list.filter((l): l is IkigaiLens => (IKIGAI_LENSES as string[]).includes(l)),
+    list.filter((l): l is IkigaiLens => validLenses.includes(l)),
   );
-  if (item.source_lens && (IKIGAI_LENSES as string[]).includes(item.source_lens)) {
+  if (item.source_lens && validLenses.includes(item.source_lens)) {
     set.add(item.source_lens);
   }
   return Array.from(set);
@@ -278,6 +295,12 @@ const IKIGAI_REGION_ORDER = [
   "passion", "mission", "profession", "vocation",
   "satisfaction", "comfortable", "delight", "excitement",
   "ikigai",
+];
+
+const HEDGEHOG_REGION_ORDER = [
+  "passion", "best", "engine",
+  "passion_best", "best_engine", "engine_passion",
+  "hedgehog",
 ];
 
 function IkigaiBackdrop({ regionLabels }: { regionLabels: Record<string, string> }) {
