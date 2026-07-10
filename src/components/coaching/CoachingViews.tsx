@@ -387,23 +387,27 @@ export function IkigaiRegionsView({
   renderItem?: (item: IkigaiItem, isCandidate: boolean) => JSX.Element;
 }) {
   if (!map || !Array.isArray(map.items) || map.items.length === 0) return null;
+  const isHog = (map as any)?.variant === "hedgehog";
+  const regionOf = isHog ? deriveHedgehogRegion : deriveIkigaiRegion;
+  const validLenses = isHog ? (HEDGEHOG_LENSES as string[]) : (IKIGAI_LENSES as string[]);
+  const order = isHog ? HEDGEHOG_REGION_ORDER : IKIGAI_REGION_ORDER;
   const candidateSet = new Set(map.candidates || []);
   const byRegion = new Map<string, IkigaiItem[]>();
   for (const raw of map.items) {
-    const lenses = effectiveIkigaiLenses(raw, overrides);
-    const region = deriveIkigaiRegion(lenses, raw.source_lens);
+    const lenses = effectiveIkigaiLenses(raw, overrides, validLenses);
+    const region = regionOf(lenses, raw.source_lens);
     const item: IkigaiItem = { ...raw, lenses, region };
     if (!byRegion.has(region)) byRegion.set(region, []);
     byRegion.get(region)!.push(item);
   }
-  const ordered = IKIGAI_REGION_ORDER.filter((r) => (byRegion.get(r) || []).length > 0);
+  const ordered = order.filter((r) => (byRegion.get(r) || []).length > 0);
   return (
     <div className="space-y-4">
-      <IkigaiBackdrop regionLabels={regionLabels} />
+      {isHog ? <HedgehogBackdrop regionLabels={regionLabels} /> : <IkigaiBackdrop regionLabels={regionLabels} />}
       <div className="grid gap-3 sm:grid-cols-2">
         {ordered.map((r) => {
           const items = byRegion.get(r)!;
-          const isCentre = r === "ikigai";
+          const isCentre = r === "ikigai" || r === "hedgehog";
           return (
             <Card
               key={r}
