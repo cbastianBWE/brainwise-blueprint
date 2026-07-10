@@ -13,8 +13,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus } from "lucide-react";
+import { Plus, Users } from "lucide-react";
 import GenerateReportDialog from "@/components/reports/GenerateReportDialog";
+import ManageReportAccessDialog from "@/components/reports/ManageReportAccessDialog";
 
 interface ReportRow {
   report_id: string;
