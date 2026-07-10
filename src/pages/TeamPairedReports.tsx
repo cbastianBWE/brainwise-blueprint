@@ -60,6 +60,8 @@ export default function TeamPairedReports() {
   const [rows, setRows] = useState<ReportRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [manageReport, setManageReport] = useState<{ reportId: string; kind: "team" | "paired"; title: string } | null>(null);
+  const isSuperAdmin = profile?.account_type === "brainwise_super_admin";
 
   const allowedModes = useMemo<("work" | "personal" | "romantic")[]>(() => {
     const t = profile?.account_type;
