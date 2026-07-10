@@ -63,6 +63,7 @@ import { PrioritizePanel } from "./runner/widgets/PrioritizePanel";
 import { SuggestionPanel } from "./runner/widgets/SuggestionPanel";
 import { ContentWidget } from "./runner/widgets/ContentWidget";
 import { QaMultimodalWidget } from "./runner/widgets/QaMultimodalWidget";
+import { ScoredFactorsWidget } from "./runner/widgets/ScoredFactorsWidget";
 
 
 
