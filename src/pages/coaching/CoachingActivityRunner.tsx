@@ -878,6 +878,14 @@ export default function CoachingActivityRunner() {
               />
             )}
 
+            {step?.widget === "scored_factors" && step.key && (
+              <ScoredFactorsWidget
+                step={step}
+                value={(responses[step.key] as Record<string, number>) || {}}
+                onChange={(next) => setResponses((r) => ({ ...r, [step.key!]: next }))}
+              />
+            )}
+
             {step?.widget === "transition_map" && (
               <TransitionMapWalkthrough step={{ intro: step.intro, beats: step.beats || [] }} />
             )}
