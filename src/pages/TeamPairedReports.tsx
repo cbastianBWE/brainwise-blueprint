@@ -13,8 +13,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus } from "lucide-react";
+import { Plus, Users } from "lucide-react";
 import GenerateReportDialog from "@/components/reports/GenerateReportDialog";
+import ManageReportAccessDialog from "@/components/reports/ManageReportAccessDialog";
 
 interface ReportRow {
   report_id: string;
@@ -59,6 +60,8 @@ export default function TeamPairedReports() {
   const [rows, setRows] = useState<ReportRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [manageReport, setManageReport] = useState<{ reportId: string; kind: "team" | "paired"; title: string } | null>(null);
+  const isSuperAdmin = profile?.account_type === "brainwise_super_admin";
 
   const allowedModes = useMemo<("work" | "personal" | "romantic")[]>(() => {
     const t = profile?.account_type;
@@ -138,9 +141,27 @@ export default function TeamPairedReports() {
                       <TableCell>{statusBadge(r.narrative_status)}</TableCell>
                       <TableCell>{formatDate(r.computed_at)}</TableCell>
                       <TableCell className="text-right">
-                        <Button asChild variant="outline" size="sm">
-                          <Link to={href}>Open</Link>
-                        </Button>
+                        <div className="flex items-center justify-end gap-2">
+                          {isSuperAdmin && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() =>
+                                setManageReport({
+                                  reportId: r.report_id,
+                                  kind: r.kind,
+                                  title: r.subjects,
+                                })
+                              }
+                            >
+                              <Users className="h-4 w-4 mr-1" />
+                              Manage access
+                            </Button>
+                          )}
+                          <Button asChild variant="outline" size="sm">
+                            <Link to={href}>Open</Link>
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   );
@@ -156,6 +177,12 @@ export default function TeamPairedReports() {
         onOpenChange={setDialogOpen}
         allowedModes={allowedModes}
         onGenerated={load}
+      />
+
+      <ManageReportAccessDialog
+        report={manageReport}
+        open={manageReport !== null}
+        onOpenChange={(o) => { if (!o) setManageReport(null); }}
       />
     </div>
   );
