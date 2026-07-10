@@ -84,15 +84,24 @@ function BrandedPlaceholder() {
   );
 }
 
+const renderImg = (url: string | null | undefined, w: number, h: number): string | undefined => {
+  if (!url) return undefined;
+  const transformed = url.replace("/storage/v1/object/public/", "/storage/v1/render/image/public/");
+  if (transformed === url) return url; // not a Supabase public URL — leave unchanged
+  const sep = transformed.includes("?") ? "&" : "?";
+  return `${transformed}${sep}width=${w}&height=${h}&resize=cover&quality=70`;
+};
+
 function CardMedia({ activity }: { activity: Activity }) {
   return (
     <div className="aspect-video w-full overflow-hidden bg-muted">
       {activity.thumbnail_url ? (
         <img
-          src={activity.thumbnail_url}
+          src={renderImg(activity.thumbnail_url, 480, 270)}
           alt=""
           className="h-full w-full object-cover"
           loading="lazy"
+          decoding="async"
         />
       ) : (
         <BrandedPlaceholder />
@@ -100,6 +109,7 @@ function CardMedia({ activity }: { activity: Activity }) {
     </div>
   );
 }
+
 
 function BriefingDialog({
   activity,
