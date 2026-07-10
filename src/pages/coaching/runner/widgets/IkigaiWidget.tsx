@@ -250,16 +250,18 @@ function IkigaiItemCard({
   cand,
   current,
   hasOverride,
+  lensChoices,
   regionLabels,
   onToggle,
   onReset,
 }: {
   item: { label: string; reasoning?: string };
   cand: boolean;
-  current: Set<IkigaiLens>;
+  current: Set<string>;
   hasOverride: boolean;
+  lensChoices: string[];
   regionLabels: Record<string, string>;
-  onToggle: (ln: IkigaiLens, checked: boolean) => void;
+  onToggle: (ln: string, checked: boolean) => void;
   onReset: () => void;
 }) {
   const [showReason, setShowReason] = useState(false);
@@ -285,7 +287,7 @@ function IkigaiItemCard({
         <p className="mt-1 text-[11px] italic text-muted-foreground">{item.reasoning}</p>
       )}
       <div className="mt-2 flex flex-wrap items-center gap-2">
-        {IKIGAI_LENSES.map((ln) => {
+        {lensChoices.map((ln) => {
           const checked = current.has(ln);
           return (
             <label
