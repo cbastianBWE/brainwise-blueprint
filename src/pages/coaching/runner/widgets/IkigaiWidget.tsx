@@ -108,27 +108,44 @@ export function IkigaiWidget({
   };
 
   const sufficiency = map?.sufficiency;
+  const isHog = step.variant === "hedgehog";
+  const lensChoices = (step.lenses || []).map((l) => l.key);
+
+  const LENS_COLOR: Record<string, string> = {
+    love: "var(--bw-orange)", good: "var(--bw-navy-500)", need: "var(--bw-plum)", paid: "var(--bw-mustard)",
+    passion: "var(--bw-orange)", best: "var(--bw-navy-500)", engine: "var(--bw-plum)",
+  };
 
   return (
     <div className="space-y-6">
       <div className="rounded-md border bg-muted/30 p-3">
         <p className="text-sm font-semibold">How this works</p>
         <p className="mt-1 text-sm text-muted-foreground">
-          Brainstorm each of the four lenses below — just put down whatever comes,
-          one idea per line. You don't need to sort them. When you're ready,
-          choose <span className="font-medium">Map my Ikigai</span> and your coach
-          will work out where your ideas overlap and show you the picture. Nothing
-          is fixed: you can adjust where any idea sits, and re-map as often as
-          you like.
+          {isHog ? (
+            <>
+              Brainstorm each of the three circles below — just put down whatever
+              comes, one idea per line. You don&apos;t need to sort them. When
+              you&apos;re ready, choose <span className="font-medium">Map my Hedgehog</span> and
+              your coach will work out where your ideas overlap and show you the
+              picture. Nothing is fixed: you can adjust where any idea sits, and
+              re-map as often as you like.
+            </>
+          ) : (
+            <>
+              Brainstorm each of the four lenses below — just put down whatever comes,
+              one idea per line. You don&apos;t need to sort them. When you&apos;re ready,
+              choose <span className="font-medium">Map my Ikigai</span> and your coach
+              will work out where your ideas overlap and show you the picture. Nothing
+              is fixed: you can adjust where any idea sits, and re-map as often as
+              you like.
+            </>
+          )}
         </p>
       </div>
       {step.intro && <p className="text-sm text-muted-foreground">{step.intro}</p>}
       <div className="grid gap-4 md:grid-cols-2">
         {lenses.map((l) => {
-          const lensKey = (l.key as IkigaiLens) || "love";
-          const color = (IKIGAI_LENSES as string[]).includes(lensKey)
-            ? `var(--bw-${lensKey === "love" ? "orange" : lensKey === "good" ? "navy-500" : lensKey === "need" ? "plum" : "mustard"})`
-            : undefined;
+          const color = LENS_COLOR[l.key] || undefined;
           return (
             <div
               key={l.key}
