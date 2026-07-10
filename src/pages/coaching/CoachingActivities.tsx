@@ -613,19 +613,7 @@ export default function CoachingActivities() {
     "Resolve",
     "Support",
   ];
-  const JOURNEY_GROUPS = [
-    "Purpose",
-    "Future",
-    "Present",
-    "Past",
-    "Life's Tools",
-    "Pathway",
-  ];
   const lockedGroups = MAP_GROUPS.filter((g) => !groupAccess[g]?.accessible);
-  const accessibleJourney = JOURNEY_GROUPS.filter((g) => groupAccess[g]?.accessible);
-  const summaryUnlocked =
-    accessibleJourney.length > 0 &&
-    accessibleJourney.every((g) => groupAccess[g]?.has_completed);
   const introAccessible = !!groupAccess["Intro"]?.accessible;
 
   const groupActivities = useMemo(
@@ -762,17 +750,11 @@ export default function CoachingActivities() {
       <div className="flex justify-center">
         <Button
           size="lg"
-          variant={summaryUnlocked ? "default" : "secondary"}
+          variant="default"
           className="w-full max-w-4xl"
-          disabled={!summaryUnlocked}
-          onClick={() => summaryUnlocked && setSelectedGroup("Summary")}
+          onClick={() => setSelectedGroup("Summary")}
         >
           Wrap up
-          {!summaryUnlocked && (
-            <span className="ml-2 text-xs opacity-80">
-              Complete your journey to unlock
-            </span>
-          )}
         </Button>
       </div>
     </div>
