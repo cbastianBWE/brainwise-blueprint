@@ -178,7 +178,7 @@ export function IkigaiWidget({
           variant={map?.items?.length && sufficiency?.enough === false ? "default" : "default"}
         >
           {mapping && <Loader2 className="h-4 w-4 animate-spin" />}
-          {map?.items?.length ? "Re-map" : step.mapAction?.label || "Map my Ikigai"}
+          {map?.items?.length ? "Re-map" : step.mapAction?.label || (isHog ? "Map my Hedgehog" : "Map my Ikigai")}
         </Button>
         {totalItems === 0 && (
           <p className="text-xs text-muted-foreground">
