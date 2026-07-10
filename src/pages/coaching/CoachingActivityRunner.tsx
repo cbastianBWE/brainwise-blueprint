@@ -504,6 +504,11 @@ export default function CoachingActivityRunner() {
         return !!a && (a.skipped || !!a.text?.trim() || !!a.media_id);
       });
     }
+    if (step.widget === "scored_factors") {
+      const scores = (responses[step.key || ""] as Record<string, number>) || {};
+      const factors = step.factors || [];
+      return factors.length > 0 && factors.every((f) => typeof scores[f.key] === "number");
+    }
     return true;
   })();
 
