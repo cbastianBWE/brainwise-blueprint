@@ -141,9 +141,27 @@ export default function TeamPairedReports() {
                       <TableCell>{statusBadge(r.narrative_status)}</TableCell>
                       <TableCell>{formatDate(r.computed_at)}</TableCell>
                       <TableCell className="text-right">
-                        <Button asChild variant="outline" size="sm">
-                          <Link to={href}>Open</Link>
-                        </Button>
+                        <div className="flex items-center justify-end gap-2">
+                          {isSuperAdmin && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() =>
+                                setManageReport({
+                                  reportId: r.report_id,
+                                  kind: r.kind,
+                                  title: r.subjects,
+                                })
+                              }
+                            >
+                              <Users className="h-4 w-4 mr-1" />
+                              Manage access
+                            </Button>
+                          )}
+                          <Button asChild variant="outline" size="sm">
+                            <Link to={href}>Open</Link>
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   );
