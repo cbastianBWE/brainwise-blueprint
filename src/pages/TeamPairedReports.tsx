@@ -178,6 +178,15 @@ export default function TeamPairedReports() {
         allowedModes={allowedModes}
         onGenerated={load}
       />
+
+      <ManageReportAccessDialog
+        report={manageReport}
+        open={manageReport !== null}
+        onOpenChange={(o) => { if (!o) setManageReport(null); }}
+      />
+    </div>
+  );
+}
     </div>
   );
 }
