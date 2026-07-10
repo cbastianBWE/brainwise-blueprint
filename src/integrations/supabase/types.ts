@@ -10333,6 +10333,99 @@ export type Database = {
           },
         ]
       }
+      report_access_grants: {
+        Row: {
+          coach_user_id: string
+          granted_at: string
+          granted_by: string
+          granted_reason: string | null
+          id: string
+          report_id: string
+          report_type: string
+          revoked_at: string | null
+          revoked_reason: string | null
+        }
+        Insert: {
+          coach_user_id: string
+          granted_at?: string
+          granted_by: string
+          granted_reason?: string | null
+          id?: string
+          report_id: string
+          report_type: string
+          revoked_at?: string | null
+          revoked_reason?: string | null
+        }
+        Update: {
+          coach_user_id?: string
+          granted_at?: string
+          granted_by?: string
+          granted_reason?: string | null
+          id?: string
+          report_id?: string
+          report_type?: string
+          revoked_at?: string | null
+          revoked_reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "report_access_grants_coach_user_id_fkey"
+            columns: ["coach_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "report_access_grants_coach_user_id_fkey"
+            columns: ["coach_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "report_access_grants_coach_user_id_fkey"
+            columns: ["coach_user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "report_access_grants_coach_user_id_fkey"
+            columns: ["coach_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "report_access_grants_granted_by_fkey"
+            columns: ["granted_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "report_access_grants_granted_by_fkey"
+            columns: ["granted_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "report_access_grants_granted_by_fkey"
+            columns: ["granted_by"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "report_access_grants_granted_by_fkey"
+            columns: ["granted_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       resource_access_grants: {
         Row: {
           created_at: string
@@ -13445,6 +13538,24 @@ export type Database = {
         }
         Returns: string
       }
+      admin_grant_report_access: {
+        Args: {
+          p_coach_user_id: string
+          p_reason: string
+          p_report_id: string
+          p_report_type: string
+        }
+        Returns: Json
+      }
+      admin_grant_report_access_bulk: {
+        Args: {
+          p_coach_user_ids: string[]
+          p_reason: string
+          p_report_id: string
+          p_report_type: string
+        }
+        Returns: Json
+      }
       admin_invitation_create: {
         Args: {
           p_account_type?: string
@@ -13473,6 +13584,16 @@ export type Database = {
           instrument_id: string
         }[]
       }
+      admin_list_report_grantees: {
+        Args: { p_report_id: string; p_report_type: string }
+        Returns: {
+          coach_user_id: string
+          email: string
+          full_name: string
+          granted_at: string
+          granted_by: string
+        }[]
+      }
       admin_log_password_reset: {
         Args: { p_target_user_id: string }
         Returns: undefined
@@ -13496,6 +13617,23 @@ export type Database = {
       admin_revoke_company_admin: {
         Args: { p_target_user_id: string }
         Returns: undefined
+      }
+      admin_revoke_report_access: {
+        Args: {
+          p_coach_user_id: string
+          p_reason: string
+          p_report_id: string
+          p_report_type: string
+        }
+        Returns: Json
+      }
+      admin_search_coaches: {
+        Args: { p_query: string }
+        Returns: {
+          email: string
+          full_name: string
+          user_id: string
+        }[]
       }
       admin_set_org_branding: {
         Args: {
@@ -15029,6 +15167,18 @@ export type Database = {
           tags: string[]
           title: string
           updated_at: string
+        }[]
+      }
+      list_reports_shared_with_me: {
+        Args: never
+        Returns: {
+          computed_at: string
+          granted_at: string
+          instrument_id: string
+          member_count: number
+          report_id: string
+          report_type: string
+          title: string
         }[]
       }
       list_scheduled_assignments: { Args: never; Returns: Json }
