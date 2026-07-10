@@ -750,17 +750,11 @@ export default function CoachingActivities() {
       <div className="flex justify-center">
         <Button
           size="lg"
-          variant={summaryUnlocked ? "default" : "secondary"}
+          variant="default"
           className="w-full max-w-4xl"
-          disabled={!summaryUnlocked}
-          onClick={() => summaryUnlocked && setSelectedGroup("Summary")}
+          onClick={() => setSelectedGroup("Summary")}
         >
           Wrap up
-          {!summaryUnlocked && (
-            <span className="ml-2 text-xs opacity-80">
-              Complete your journey to unlock
-            </span>
-          )}
         </Button>
       </div>
     </div>
