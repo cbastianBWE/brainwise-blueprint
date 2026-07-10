@@ -17,6 +17,7 @@ export interface Step {
   helper?: string;
   placeholder?: string;
   addLabel?: string;
+  variant?: string;
   onComplete?: { touchpoint?: string };
   // image_select
   intro?: string;
