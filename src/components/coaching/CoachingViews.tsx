@@ -343,6 +343,38 @@ function IkigaiBackdrop({ regionLabels }: { regionLabels: Record<string, string>
   );
 }
 
+function HedgehogBackdrop({ regionLabels }: { regionLabels: Record<string, string> }) {
+  const p = HEDGEHOG_LENS_COLORS.passion;
+  const b = HEDGEHOG_LENS_COLORS.best;
+  const e = HEDGEHOG_LENS_COLORS.engine;
+  return (
+    <svg viewBox="0 0 500 470" className="mx-auto h-auto w-full max-w-lg" aria-hidden preserveAspectRatio="xMidYMid meet">
+      <g strokeWidth="2.5">
+        <circle cx="190" cy="195" r="145" fill={p} fillOpacity="0.15" stroke={p} />
+        <circle cx="310" cy="195" r="145" fill={b} fillOpacity="0.15" stroke={b} />
+        <circle cx="250" cy="300" r="145" fill={e} fillOpacity="0.15" stroke={e} />
+      </g>
+      <g fontSize="17" fontWeight="600" textAnchor="middle">
+        <text x="120" y="95" fill={p}>
+          <tspan x="120" dy="0">What you&apos;re</tspan>
+          <tspan x="120" dy="19">passionate about</tspan>
+        </text>
+        <text x="380" y="95" fill={b}>
+          <tspan x="380" dy="0">What you can</tspan>
+          <tspan x="380" dy="19">be best at</tspan>
+        </text>
+        <text x="250" y="452" fill={e}>
+          <tspan x="250" dy="0">What drives your</tspan>
+          <tspan x="250" dy="19">economic engine</tspan>
+        </text>
+      </g>
+      <text x="250" y="240" textAnchor="middle" fontSize="17" fontWeight="700" fill="var(--bw-orange)">
+        {regionLabels.hedgehog || "Hedgehog"}
+      </text>
+    </svg>
+  );
+}
+
 export function IkigaiRegionsView({
   map,
   overrides,
