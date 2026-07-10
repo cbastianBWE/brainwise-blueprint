@@ -181,11 +181,13 @@ function BriefingDialog({
         <div className="w-full overflow-hidden bg-muted" style={{ aspectRatio: "2 / 1" }}>
           {heroSrc ? (
             <img
-              src={heroSrc}
+              src={renderImg(heroSrc, 800, 400)}
               alt=""
               className="h-full w-full object-cover"
               loading="lazy"
+              decoding="async"
             />
+
           ) : (
             <BrandedPlaceholder />
           )}
