@@ -226,6 +226,14 @@ export function ikigaiLensColor(l: IkigaiLens): string {
   return IKIGAI_LENS_COLORS[l];
 }
 
+export type HedgehogLens = "passion" | "best" | "engine";
+export const HEDGEHOG_LENSES: HedgehogLens[] = ["passion", "best", "engine"];
+const HEDGEHOG_LENS_COLORS: Record<HedgehogLens, string> = {
+  passion: "var(--bw-orange)",
+  best: "var(--bw-navy-500)",
+  engine: "var(--bw-plum)",
+};
+
 export function deriveIkigaiRegion(lenses: string[], sourceLens: string): string {
   const valid: string[] = ["love", "good", "need", "paid"];
   const set = Array.from(new Set(lenses.filter((l) => valid.includes(l))));
@@ -250,16 +258,33 @@ export function deriveIkigaiRegion(lenses: string[], sourceLens: string): string
   return "ikigai";
 }
 
+export function deriveHedgehogRegion(lenses: string[], sourceLens: string): string {
+  const valid = ["passion", "best", "engine"];
+  const set = Array.from(new Set(lenses.filter((l) => valid.includes(l))));
+  const has = (l: string) => set.includes(l);
+  const n = set.length;
+  const src = valid.includes(sourceLens) ? sourceLens : (set[0] ?? "passion");
+  if (n <= 1) return n === 1 ? set[0] : src;
+  if (n === 2) {
+    if (has("passion") && has("best")) return "passion_best";
+    if (has("best") && has("engine")) return "best_engine";
+    if (has("engine") && has("passion")) return "engine_passion";
+    return src;
+  }
+  return "hedgehog";
+}
+
 export function effectiveIkigaiLenses(
   item: IkigaiItem,
   overrides?: Record<string, string[]>,
+  validLenses: string[] = IKIGAI_LENSES as string[],
 ): IkigaiLens[] {
   const raw = overrides?.[item.label];
   const list = (raw && raw.length > 0 ? raw : item.lenses) || [];
   const set = new Set<IkigaiLens>(
-    list.filter((l): l is IkigaiLens => (IKIGAI_LENSES as string[]).includes(l)),
+    list.filter((l): l is IkigaiLens => validLenses.includes(l)),
   );
-  if (item.source_lens && (IKIGAI_LENSES as string[]).includes(item.source_lens)) {
+  if (item.source_lens && validLenses.includes(item.source_lens)) {
     set.add(item.source_lens);
   }
   return Array.from(set);
@@ -270,6 +295,12 @@ const IKIGAI_REGION_ORDER = [
   "passion", "mission", "profession", "vocation",
   "satisfaction", "comfortable", "delight", "excitement",
   "ikigai",
+];
+
+const HEDGEHOG_REGION_ORDER = [
+  "passion", "best", "engine",
+  "passion_best", "best_engine", "engine_passion",
+  "hedgehog",
 ];
 
 function IkigaiBackdrop({ regionLabels }: { regionLabels: Record<string, string> }) {
@@ -312,6 +343,38 @@ function IkigaiBackdrop({ regionLabels }: { regionLabels: Record<string, string>
   );
 }
 
+function HedgehogBackdrop({ regionLabels }: { regionLabels: Record<string, string> }) {
+  const p = HEDGEHOG_LENS_COLORS.passion;
+  const b = HEDGEHOG_LENS_COLORS.best;
+  const e = HEDGEHOG_LENS_COLORS.engine;
+  return (
+    <svg viewBox="0 0 500 470" className="mx-auto h-auto w-full max-w-lg" aria-hidden preserveAspectRatio="xMidYMid meet">
+      <g strokeWidth="2.5">
+        <circle cx="190" cy="195" r="145" fill={p} fillOpacity="0.15" stroke={p} />
+        <circle cx="310" cy="195" r="145" fill={b} fillOpacity="0.15" stroke={b} />
+        <circle cx="250" cy="300" r="145" fill={e} fillOpacity="0.15" stroke={e} />
+      </g>
+      <g fontSize="17" fontWeight="600" textAnchor="middle">
+        <text x="120" y="95" fill={p}>
+          <tspan x="120" dy="0">What you&apos;re</tspan>
+          <tspan x="120" dy="19">passionate about</tspan>
+        </text>
+        <text x="380" y="95" fill={b}>
+          <tspan x="380" dy="0">What you can</tspan>
+          <tspan x="380" dy="19">be best at</tspan>
+        </text>
+        <text x="250" y="452" fill={e}>
+          <tspan x="250" dy="0">What drives your</tspan>
+          <tspan x="250" dy="19">economic engine</tspan>
+        </text>
+      </g>
+      <text x="250" y="240" textAnchor="middle" fontSize="17" fontWeight="700" fill="var(--bw-orange)">
+        {regionLabels.hedgehog || "Hedgehog"}
+      </text>
+    </svg>
+  );
+}
+
 export function IkigaiRegionsView({
   map,
   overrides,
@@ -324,23 +387,27 @@ export function IkigaiRegionsView({
   renderItem?: (item: IkigaiItem, isCandidate: boolean) => JSX.Element;
 }) {
   if (!map || !Array.isArray(map.items) || map.items.length === 0) return null;
+  const isHog = (map as any)?.variant === "hedgehog";
+  const regionOf = isHog ? deriveHedgehogRegion : deriveIkigaiRegion;
+  const validLenses = isHog ? (HEDGEHOG_LENSES as string[]) : (IKIGAI_LENSES as string[]);
+  const order = isHog ? HEDGEHOG_REGION_ORDER : IKIGAI_REGION_ORDER;
   const candidateSet = new Set(map.candidates || []);
   const byRegion = new Map<string, IkigaiItem[]>();
   for (const raw of map.items) {
-    const lenses = effectiveIkigaiLenses(raw, overrides);
-    const region = deriveIkigaiRegion(lenses, raw.source_lens);
+    const lenses = effectiveIkigaiLenses(raw, overrides, validLenses);
+    const region = regionOf(lenses, raw.source_lens);
     const item: IkigaiItem = { ...raw, lenses, region };
     if (!byRegion.has(region)) byRegion.set(region, []);
     byRegion.get(region)!.push(item);
   }
-  const ordered = IKIGAI_REGION_ORDER.filter((r) => (byRegion.get(r) || []).length > 0);
+  const ordered = order.filter((r) => (byRegion.get(r) || []).length > 0);
   return (
     <div className="space-y-4">
-      <IkigaiBackdrop regionLabels={regionLabels} />
+      {isHog ? <HedgehogBackdrop regionLabels={regionLabels} /> : <IkigaiBackdrop regionLabels={regionLabels} />}
       <div className="grid gap-3 sm:grid-cols-2">
         {ordered.map((r) => {
           const items = byRegion.get(r)!;
-          const isCentre = r === "ikigai";
+          const isCentre = r === "ikigai" || r === "hedgehog";
           return (
             <Card
               key={r}
