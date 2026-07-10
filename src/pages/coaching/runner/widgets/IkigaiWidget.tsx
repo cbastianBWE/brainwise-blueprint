@@ -219,7 +219,7 @@ export function IkigaiWidget({
           overrides={overrides as Record<string, string[]>}
           regionLabels={regionLabels}
           renderItem={(it, cand) => {
-            const current = new Set<IkigaiLens>(it.lenses);
+            const current = new Set<string>(it.lenses);
             const hasOverride = !!overrides[it.label];
             return (
               <IkigaiItemCard
@@ -227,12 +227,13 @@ export function IkigaiWidget({
                 cand={cand}
                 current={current}
                 hasOverride={hasOverride}
+                lensChoices={lensChoices}
                 regionLabels={regionLabels}
                 onToggle={(ln, checked) => {
                   const next = new Set(current);
                   if (checked) next.add(ln);
                   else if (next.size > 1) next.delete(ln);
-                  setOverride(it.label, Array.from(next));
+                  setOverride(it.label, Array.from(next) as IkigaiLens[]);
                 }}
                 onReset={() => clearOverride(it.label)}
               />
