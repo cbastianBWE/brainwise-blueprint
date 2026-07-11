@@ -265,6 +265,7 @@ function MemberReport({
           <TabsTrigger value="results">Results</TabsTrigger>
           <TabsTrigger value="plan">Development Plan</TabsTrigger>
           <TabsTrigger value="coaching">Coaching</TabsTrigger>
+          <TabsTrigger value="ask-ai">Ask AI</TabsTrigger>
         </TabsList>
         <TabsContent value="results" className="mt-4">
           <MyResults
@@ -280,6 +281,9 @@ function MemberReport({
         </TabsContent>
         <TabsContent value="coaching" className="mt-4">
           <CoachClientCoaching clientUserId={memberId} />
+        </TabsContent>
+        <TabsContent value="ask-ai" className="mt-4">
+          <CoachClientChat subjectUserId={memberId} />
         </TabsContent>
       </Tabs>
     </div>
