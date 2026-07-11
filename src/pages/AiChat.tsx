@@ -98,6 +98,9 @@ export default function AiChat() {
   const [tier, setTier] = useState<string>("base");
   const [message, setMessage] = useState<string>("");
   const [sending, setSending] = useState<boolean>(false);
+  const [attachedDocs, setAttachedDocs] = useState<Array<{ id: string; file_name: string }>>([]);
+  const [uploadingDoc, setUploadingDoc] = useState<boolean>(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [allAssessments, setAllAssessments] = useState<AssessmentOption[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
