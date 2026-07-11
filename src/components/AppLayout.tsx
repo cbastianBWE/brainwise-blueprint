@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { CoachDisclosureGate } from "@/components/coach/CoachDisclosureGate";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
+import { readBulkToken, claimPendingBulkSeat } from "@/lib/bulkSeatClaim";
 
 interface CouponData {
   stripe_coupon_id: string | null;
