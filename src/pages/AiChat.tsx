@@ -468,6 +468,7 @@ export default function AiChat() {
           message: userMsg,
           conversation_history: history,
           assessment_result_ids: ownSelected,
+          document_ids: attachedDocs.map((d) => d.id),
           peer_result_ids: peerSelected,
           peer_labels: peerLabels,
           subscription_tier: tier,
