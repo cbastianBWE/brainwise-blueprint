@@ -494,6 +494,14 @@ export default function DevelopmentPlan() {
         </div>
       </header>
 
+      <Tabs defaultValue="mine">
+        <TabsList className="mb-4">
+          <TabsTrigger value="mine">My Development</TabsTrigger>
+          <TabsTrigger value="team">Team</TabsTrigger>
+          <TabsTrigger value="paired">Paired</TabsTrigger>
+        </TabsList>
+        <TabsContent value="mine">
+
       {isLoading && (
         <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
       )}
