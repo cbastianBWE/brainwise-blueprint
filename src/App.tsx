@@ -152,6 +152,7 @@ import OperationsInbound from "./pages/operations/OperationsInbound";
 import OperationsLeadCapture from "./pages/operations/OperationsLeadCapture";
 import PublicInvoicePay from "./pages/public/PublicInvoicePay";
 import PublicEstimateRespond from "./pages/public/PublicEstimateRespond";
+import VerifyCertification from "./pages/VerifyCertification";
 import EpnComplete from "./pages/EpnComplete";
 import AirsaManagerComplete from "./pages/AirsaManagerComplete";
 import VerifyConversion from "./pages/VerifyConversion";
@@ -184,6 +185,7 @@ const App = () => (
             <Route path="/" element={<Home />} />
             <Route path="/pay/:token" element={<PublicInvoicePay />} />
             <Route path="/estimate/:token" element={<PublicEstimateRespond />} />
+            <Route path="/verify/cert/:certId" element={<VerifyCertification />} />
             <Route path="/coming-soon" element={<ComingSoon />} />
             <Route path="/signup" element={<SignUp />} />
             <Route path="/login" element={<Login />} />
