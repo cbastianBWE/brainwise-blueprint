@@ -1585,7 +1585,7 @@ export default function MyResults({ isCoachView = false, adminView = false, targ
                 assessmentId={selected.result.assessment_id}
                 dimensionScores={dimensionScores as [string, { mean?: number; band?: string }][]}
                 dimensionNameMap={dimensionNameMap}
-                isCoachView={coachViewActive}
+                isCoachView={coachContentActive}
                 permissionLevel={permissionLevel}
                 otherAssessments={assessments.filter(a => a.result.id !== selected?.result.id)}
               />
