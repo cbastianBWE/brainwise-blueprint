@@ -641,6 +641,12 @@ export default function CoachingActivities() {
   >({});
   const [view, setView] = useState<"map" | "list">("map");
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
+  const [currentRun, setCurrentRun] = useState<number>(1);
+  const [reloadKey, setReloadKey] = useState(0);
+  const [reviewOpen, setReviewOpen] = useState(false);
+  const [freshOpen, setFreshOpen] = useState(false);
+
+  const reload = useCallback(() => setReloadKey((k) => k + 1), []);
 
   useEffect(() => {
     if (!user) return;
@@ -662,13 +668,18 @@ export default function CoachingActivities() {
       const acts = (actData || []) as Activity[];
       setActivities(acts);
 
-      const { data: sessData } = await supabase
+      const { data: runState } = await supabase.rpc("coaching_get_run_state" as any);
+      const run = ((runState as any)?.current_run as number) ?? 1;
+      if (!cancelled) setCurrentRun(run);
+
+      const { data: sessData } = await (supabase
         .from("coaching_activity_sessions")
         .select("id,activity_id,status")
         .eq("user_id", user.id)
-        .eq("status", "in_progress");
+        .eq("status", "in_progress") as any)
+        .eq("run_number", run);
       if (cancelled) return;
-      setSessions((sessData || []) as SessionRow[]);
+      setSessions(((sessData as any) || []) as SessionRow[]);
 
       const { data: accessRows } = await supabase.rpc("coaching_activity_access_batch");
       if (cancelled) return;
@@ -700,7 +711,7 @@ export default function CoachingActivities() {
     return () => {
       cancelled = true;
     };
-  }, [user]);
+  }, [user, reloadKey]);
 
   const grouped = useMemo(() => {
     const groups: Record<string, Activity[]> = {};
