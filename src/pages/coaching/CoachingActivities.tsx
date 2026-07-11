@@ -662,6 +662,46 @@ function HistoryTab() {
 
   return (
     <div className="space-y-6">
+      {reviews.length > 0 && (
+        <div className="space-y-3">
+          <h3 className="text-sm font-semibold text-foreground">Reviews & Action Plans</h3>
+          <div className="space-y-2">
+            {reviews.map((r) => {
+              const when = new Date(r.created_at).toLocaleDateString(undefined, {
+                year: "numeric",
+                month: "short",
+                day: "numeric",
+              });
+              return (
+                <Collapsible key={r.id}>
+                  <Card>
+                    <CollapsibleTrigger asChild>
+                      <button
+                        type="button"
+                        className="w-full text-left p-4 flex items-center justify-between gap-3 hover:bg-muted/40 rounded-t-lg"
+                      >
+                        <div className="min-w-0 flex flex-wrap items-center gap-2">
+                          <span className="text-sm font-medium">{when}</span>
+                          <Badge variant="secondary">Run {r.run_number}</Badge>
+                          <span className="text-xs text-muted-foreground">
+                            {r.activity_count} {r.activity_count === 1 ? "activity" : "activities"}
+                          </span>
+                        </div>
+                        <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0 transition-transform data-[state=open]:rotate-180" />
+                      </button>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <div className="border-t p-4">
+                        <ReviewBody review={r.review || {}} />
+                      </div>
+                    </CollapsibleContent>
+                  </Card>
+                </Collapsible>
+              );
+            })}
+          </div>
+        </div>
+      )}
       {currentList}
       {priorRuns.length > 0 && user && (
         <div className="space-y-3">
