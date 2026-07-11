@@ -72,6 +72,7 @@ export default function GenerateReportDialog({ open, onOpenChange, allowedModes,
   const [selected, setSelected] = useState<SubjectRow[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [reportLabel, setReportLabel] = useState("");
+  const [releaseNow, setReleaseNow] = useState(false);
   const debounceRef = useRef<number | null>(null);
 
   // Reset on close
