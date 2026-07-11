@@ -178,6 +178,10 @@ export default function GenerateReportDialog({ open, onOpenChange, allowedModes,
           return;
         }
         const id = (data as { paired_profile_id: string }).paired_profile_id;
+        if (releaseNow) {
+          try { await supabase.rpc("bw_set_report_release" as never, { p_profile: id, p_kind: "paired", p_released: true } as never); }
+          catch { /* held by default */ }
+        }
         onGenerated();
         onOpenChange(false);
         navigate(`/paired-report/${id}`);
