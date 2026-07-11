@@ -1,7 +1,10 @@
 import jsPDF from "jspdf";
 import {
   PAGE_W,
+  PAGE_H,
   MARGIN_L,
+  MARGIN_B,
+  MARGIN_T,
   CONTENT_W,
   NAVY,
   MUTED,
@@ -49,19 +52,19 @@ const PAIR_SHAPES = ["farApart", "bothHigh", "bothLow", "bothMedium", "mild"] as
 type PairShapeKey = (typeof PAIR_SHAPES)[number];
 
 const PAIR_SHAPE_TITLE: Record<PairShapeKey, string> = {
-  farApart: "Far apart (opposite ends)",
+  farApart: "Far apart",
   bothHigh: "Both high",
   bothLow: "Both low",
   bothMedium: "Both medium",
-  mild: "Mild (small, soft difference)",
+  mild: "Mild",
 };
 
 const PAIR_SHAPE_DESC: Record<PairShapeKey, string> = {
-  farApart: "One of you is high while the other is low. Expect friction unless it is named.",
-  bothHigh: "You are both up here. Amplifies what this drives, for better and worse.",
-  bothLow: "Neither of you is high on this. It rarely comes up on its own.",
-  bothMedium: "You meet in the middle. Manageable, but easy to overlook.",
-  mild: "A small, soft difference. Worth noticing rather than working on.",
+  farApart: "opposite ends",
+  bothHigh: "both up here",
+  bothLow: "neither is high",
+  bothMedium: "meet in the middle",
+  mild: "a soft difference",
 };
 
 function pairShapeKey(shape: string | null | undefined, a?: number, b?: number): PairShapeKey {
@@ -115,40 +118,89 @@ function bulletList(ctx: PdfContext, items: string[], indent = 6): void {
   }
 }
 
+interface ColLine {
+  text: string;
+  x: number;
+}
+
 function twoColumn(
   ctx: PdfContext,
   leftTitle: string,
   leftBody: string[],
   rightTitle: string,
   rightBody: string[],
+  opts: { bulleted?: boolean } = {},
 ): void {
   const { doc } = ctx;
+  const bulleted = opts.bulleted ?? false;
   const colGap = 6;
   const colW = (CONTENT_W - colGap) / 2;
+  const lineH = 4.5;
+  const leftX = MARGIN_L;
+  const rightX = MARGIN_L + colW + colGap;
 
-  const startY = ctx.y;
-  const renderCol = (title: string, body: string[], x: number) => {
-    ctx.y = startY;
+  doc.setFont("Montserrat", "normal");
+  doc.setFontSize(9);
+  const bulletW = doc.getTextWidth("• ");
+
+  const wrapCol = (body: string[], x: number): ColLine[] => {
+    doc.setFont("Montserrat", "normal");
+    doc.setFontSize(9);
+    const out: ColLine[] = [];
+    body.forEach((raw, idx) => {
+      const clean = cleanMarkdown(raw);
+      if (!clean) return;
+      if (bulleted) {
+        const wrapped: string[] = doc.splitTextToSize(clean, colW - 5 - bulletW);
+        wrapped.forEach((ln, i) => {
+          out.push({ text: i === 0 ? "• " + ln : ln, x: i === 0 ? x : x + bulletW });
+        });
+      } else {
+        const wrapped: string[] = doc.splitTextToSize(clean, colW - 5);
+        wrapped.forEach((ln) => out.push({ text: ln, x }));
+        if (idx < body.length - 1) out.push({ text: "", x });
+      }
+    });
+    return out;
+  };
+
+  const drawTitles = (y: number): number => {
     doc.setFont("Poppins", "bold");
     doc.setFontSize(10);
     doc.setTextColor(...NAVY);
-    doc.text(title, x, ctx.y);
-    ctx.y += 5;
-    doc.setFont("Montserrat", "normal");
-    doc.setFontSize(9);
-    doc.setTextColor(...BLACK);
-    for (const raw of body) {
-      const lines = doc.splitTextToSize(cleanMarkdown(raw), colW - 5);
-      for (const line of lines) {
-        doc.text("• " + line, x, ctx.y);
-        ctx.y += 4.5;
-      }
-    }
-    return ctx.y;
+    doc.text(leftTitle, leftX, y);
+    doc.text(rightTitle, rightX, y);
+    return y + 5;
   };
-  const leftEnd = renderCol(leftTitle, leftBody, MARGIN_L);
-  const rightEnd = renderCol(rightTitle, rightBody, MARGIN_L + colW + colGap);
-  ctx.y = Math.max(leftEnd, rightEnd) + 3;
+
+  const leftLines = wrapCol(leftBody, leftX);
+  const rightLines = wrapCol(rightBody, rightX);
+
+  ctx.ensureBlockSpace(5 + lineH * 3);
+  let y = drawTitles(ctx.y);
+  doc.setFont("Montserrat", "normal");
+  doc.setFontSize(9);
+  doc.setTextColor(...BLACK);
+
+  const n = Math.max(leftLines.length, rightLines.length);
+  for (let i = 0; i < n; i++) {
+    if (y + lineH > PAGE_H - MARGIN_B) {
+      ctx.y = y;
+      ctx.addFooter();
+      doc.addPage();
+      ctx.renderContinuationHeader();
+      y = drawTitles(MARGIN_T);
+      doc.setFont("Montserrat", "normal");
+      doc.setFontSize(9);
+      doc.setTextColor(...BLACK);
+    }
+    const L = leftLines[i];
+    const R = rightLines[i];
+    if (L && L.text) doc.text(L.text, L.x, y);
+    if (R && R.text) doc.text(R.text, R.x, y);
+    y += lineH;
+  }
+  ctx.y = y + 3;
 }
 
 function paragraphs(ctx: PdfContext, text: string): void {
@@ -167,14 +219,18 @@ function drivingCard(
   const accent = args.kind === "strength" ? GREEN : MUSTARD;
   const kindLabel = args.kind === "strength" ? "STRENGTH" : "FOCUS";
 
-  ctx.ensureBlockSpace(28);
-  const boxTop = ctx.y;
-  const nameLines = doc.splitTextToSize(cleanMarkdown(args.name), CONTENT_W - 6);
-  const whyLines = doc.splitTextToSize(cleanMarkdown(args.why), CONTENT_W - 6);
+  doc.setFont("Poppins", "bold");
+  doc.setFontSize(11);
+  const nameLines = doc.splitTextToSize(cleanMarkdown(args.name), CONTENT_W - 8);
+  doc.setFont("Montserrat", "normal");
+  doc.setFontSize(9);
+  const whyLines = doc.splitTextToSize(cleanMarkdown(args.why), CONTENT_W - 8);
   const actLines = args.actions.flatMap((a) =>
-    doc.splitTextToSize("• " + cleanMarkdown(a), CONTENT_W - 10),
+    doc.splitTextToSize("• " + cleanMarkdown(a), CONTENT_W - 12),
   );
   const contentH = 6 + nameLines.length * 4.5 + whyLines.length * 4.5 + actLines.length * 4.5 + 6;
+  ctx.ensureBlockSpace(contentH + 3);
+  const boxTop = ctx.y;
 
   doc.setDrawColor(220, 220, 220);
   doc.setFillColor(255, 255, 255);
@@ -282,12 +338,12 @@ function drawRadial(ctx: PdfContext, data: PairedPdfData): void {
   doc.text(data.nameB, midX + 4, ctx.y + 1);
   ctx.y += 6;
 
-  // Agreement bars
+  // Agreement bars — keep all dimension bars together as one block.
   ctx.y += 3;
   const barH = 4;
   const rowH = 8;
+  ctx.ensureBlockSpace(dimOrder.length * rowH + 4);
   for (const name of dimOrder) {
-    ctx.checkPageBreak(rowH + 2);
     const y = ctx.y;
     doc.setFont("Montserrat", "semibold");
     doc.setFontSize(8.5);
@@ -463,6 +519,7 @@ export async function generatePairedProfilePdf(
       asLines(s.needs.a_needs_from_b).map(nm),
       `What ${data.firstB} needs from ${data.firstA}`,
       asLines(s.needs.b_needs_from_a).map(nm),
+      { bulleted: true },
     );
   }
 
@@ -518,6 +575,7 @@ export async function generatePairedProfilePdf(
       asLines(s.conflict.mitigate).map(nm),
       "Promote healthy",
       asLines(s.conflict.promote_healthy).map(nm),
+      { bulleted: true },
     );
     if (s.conflict.per_person) {
       ctx.checkPageBreak(6);
@@ -635,9 +693,20 @@ export async function generatePairedProfilePdf(
       doc.text("Why these matter", MARGIN_L, ctx.y);
       ctx.y += 5;
       for (const w of s.coach.why) {
-        const name = data.itemText.get(w.item) ?? `Item ${w.item}`;
-        paragraphs(ctx, `${name}: ${nm(w.rationale)}`);
-        ctx.y += 1;
+        const q = data.itemText.get(w.item) ?? `Item ${w.item}`;
+        ctx.ensureBlockSpace(16);
+        doc.setFont("Montserrat", "semibold");
+        doc.setFontSize(8.5);
+        doc.setTextColor(...MUTED);
+        const ql = doc.splitTextToSize(cleanMarkdown(q), CONTENT_W);
+        for (const l of ql) {
+          ctx.checkPageBreak(5);
+          doc.text(l, MARGIN_L, ctx.y);
+          ctx.y += 4;
+        }
+        ctx.y += 0.5;
+        paragraphs(ctx, nm(w.rationale));
+        ctx.y += 2;
       }
     }
     if (Array.isArray(s.coach.debrief_prompts) && s.coach.debrief_prompts.length > 0) {

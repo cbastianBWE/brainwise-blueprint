@@ -1,7 +1,10 @@
 import jsPDF from "jspdf";
 import {
   PAGE_W,
+  PAGE_H,
   MARGIN_L,
+  MARGIN_B,
+  MARGIN_T,
   CONTENT_W,
   NAVY,
   MUTED,
@@ -40,19 +43,19 @@ const TEAM_SHAPES = ["allHigh", "allLow", "two", "even", "together"] as const;
 type TeamShapeKey = (typeof TEAM_SHAPES)[number];
 
 const TEAM_SHAPE_TITLE: Record<TeamShapeKey, string> = {
-  allHigh: "All high",
-  allLow: "All low",
-  two: "Two camps",
-  even: "Evenly spread",
-  together: "Together in the middle",
+  allHigh: "Nobody down there",
+  allLow: "Nobody up here",
+  two: "Two groups",
+  even: "Even spread",
+  together: "Together",
 };
 
 const TEAM_SHAPE_DESC: Record<TeamShapeKey, string> = {
-  allHigh: "Almost everyone rates this high. Strong amplifier — good and bad.",
-  allLow: "Almost no one rates this high. Rarely surfaces without prompting.",
-  two: "The team splits into two clear groups. Expect friction if it goes unnamed.",
-  even: "Members are spread across the range. No shared centre of gravity yet.",
-  together: "Most of the team clusters in the middle. Steady, easy to overlook.",
+  allHigh: "everyone is high here",
+  allLow: "no one is high, unwatched",
+  two: "the team is split",
+  even: "a full spectrum",
+  together: "real common ground",
 };
 
 const TEAM_SHAPE_COLOR: Record<TeamShapeKey, readonly [number, number, number]> = {
@@ -85,39 +88,89 @@ function paragraphs(ctx: PdfContext, text: string): void {
   }
 }
 
+interface ColLine {
+  text: string;
+  x: number;
+}
+
 function twoColumn(
   ctx: PdfContext,
   leftTitle: string,
   leftBody: string[],
   rightTitle: string,
   rightBody: string[],
+  opts: { bulleted?: boolean } = {},
 ): void {
   const { doc } = ctx;
+  const bulleted = opts.bulleted ?? false;
   const colGap = 6;
   const colW = (CONTENT_W - colGap) / 2;
-  const startY = ctx.y;
-  const renderCol = (title: string, body: string[], x: number) => {
-    ctx.y = startY;
+  const lineH = 4.5;
+  const leftX = MARGIN_L;
+  const rightX = MARGIN_L + colW + colGap;
+
+  doc.setFont("Montserrat", "normal");
+  doc.setFontSize(9);
+  const bulletW = doc.getTextWidth("• ");
+
+  const wrapCol = (body: string[], x: number): ColLine[] => {
+    doc.setFont("Montserrat", "normal");
+    doc.setFontSize(9);
+    const out: ColLine[] = [];
+    body.forEach((raw, idx) => {
+      const clean = cleanMarkdown(raw);
+      if (!clean) return;
+      if (bulleted) {
+        const wrapped: string[] = doc.splitTextToSize(clean, colW - 5 - bulletW);
+        wrapped.forEach((ln, i) => {
+          out.push({ text: i === 0 ? "• " + ln : ln, x: i === 0 ? x : x + bulletW });
+        });
+      } else {
+        const wrapped: string[] = doc.splitTextToSize(clean, colW - 5);
+        wrapped.forEach((ln) => out.push({ text: ln, x }));
+        if (idx < body.length - 1) out.push({ text: "", x });
+      }
+    });
+    return out;
+  };
+
+  const drawTitles = (y: number): number => {
     doc.setFont("Poppins", "bold");
     doc.setFontSize(10);
     doc.setTextColor(...NAVY);
-    doc.text(title, x, ctx.y);
-    ctx.y += 5;
-    doc.setFont("Montserrat", "normal");
-    doc.setFontSize(9);
-    doc.setTextColor(...BLACK);
-    for (const raw of body) {
-      const lines = doc.splitTextToSize(cleanMarkdown(raw), colW - 5);
-      for (const line of lines) {
-        doc.text("• " + line, x, ctx.y);
-        ctx.y += 4.5;
-      }
-    }
-    return ctx.y;
+    doc.text(leftTitle, leftX, y);
+    doc.text(rightTitle, rightX, y);
+    return y + 5;
   };
-  const leftEnd = renderCol(leftTitle, leftBody, MARGIN_L);
-  const rightEnd = renderCol(rightTitle, rightBody, MARGIN_L + colW + colGap);
-  ctx.y = Math.max(leftEnd, rightEnd) + 3;
+
+  const leftLines = wrapCol(leftBody, leftX);
+  const rightLines = wrapCol(rightBody, rightX);
+
+  ctx.ensureBlockSpace(5 + lineH * 3);
+  let y = drawTitles(ctx.y);
+  doc.setFont("Montserrat", "normal");
+  doc.setFontSize(9);
+  doc.setTextColor(...BLACK);
+
+  const n = Math.max(leftLines.length, rightLines.length);
+  for (let i = 0; i < n; i++) {
+    if (y + lineH > PAGE_H - MARGIN_B) {
+      ctx.y = y;
+      ctx.addFooter();
+      doc.addPage();
+      ctx.renderContinuationHeader();
+      y = drawTitles(MARGIN_T);
+      doc.setFont("Montserrat", "normal");
+      doc.setFontSize(9);
+      doc.setTextColor(...BLACK);
+    }
+    const L = leftLines[i];
+    const R = rightLines[i];
+    if (L && L.text) doc.text(L.text, L.x, y);
+    if (R && R.text) doc.text(R.text, R.x, y);
+    y += lineH;
+  }
+  ctx.y = y + 3;
 }
 
 function drivingCard(
@@ -127,14 +180,18 @@ function drivingCard(
   const { doc } = ctx;
   const accent = args.kind === "strength" ? GREEN : MUSTARD;
   const kindLabel = args.kind === "strength" ? "STRENGTH" : "FOCUS";
-  ctx.ensureBlockSpace(28);
-  const boxTop = ctx.y;
-  const nameLines = doc.splitTextToSize(cleanMarkdown(args.name), CONTENT_W - 6);
-  const whyLines = doc.splitTextToSize(cleanMarkdown(args.why), CONTENT_W - 6);
+  doc.setFont("Poppins", "bold");
+  doc.setFontSize(11);
+  const nameLines = doc.splitTextToSize(cleanMarkdown(args.name), CONTENT_W - 8);
+  doc.setFont("Montserrat", "normal");
+  doc.setFontSize(9);
+  const whyLines = doc.splitTextToSize(cleanMarkdown(args.why), CONTENT_W - 8);
   const actLines = args.actions.flatMap((a) =>
-    doc.splitTextToSize("• " + cleanMarkdown(a), CONTENT_W - 10),
+    doc.splitTextToSize("• " + cleanMarkdown(a), CONTENT_W - 12),
   );
   const contentH = 6 + nameLines.length * 4.5 + whyLines.length * 4.5 + actLines.length * 4.5 + 6;
+  ctx.ensureBlockSpace(contentH + 3);
+  const boxTop = ctx.y;
   doc.setDrawColor(220, 220, 220);
   doc.setFillColor(255, 255, 255);
   doc.roundedRect(MARGIN_L, boxTop, CONTENT_W, contentH, 2, 2, "FD");
@@ -447,6 +504,7 @@ export async function generateTeamProfilePdf(
       asLines(s.conflict.mitigate),
       "Promote healthy",
       asLines(s.conflict.promote_healthy),
+      { bulleted: true },
     );
   }
 
@@ -503,7 +561,8 @@ export async function generateTeamProfilePdf(
       ctx.checkPageBreak(12);
       doc.setFillColor(245, 250, 245);
       doc.setDrawColor(200, 220, 200);
-      const dl = doc.splitTextToSize("Lean on: " + cleanMarkdown(s.leader_brief.lean_on), CONTENT_W - 6);
+      const leanRaw = cleanMarkdown(s.leader_brief.lean_on).replace(/^\s*lean on:\s*/i, "");
+      const dl = doc.splitTextToSize("Lean on: " + leanRaw, CONTENT_W - 6);
       const h = dl.length * 4.5 + 6;
       doc.roundedRect(MARGIN_L, ctx.y, CONTENT_W, h, 2, 2, "FD");
       doc.setFont("Montserrat", "normal");
@@ -568,9 +627,20 @@ export async function generateTeamProfilePdf(
       doc.text("Why these matter", MARGIN_L, ctx.y);
       ctx.y += 5;
       for (const w of s.coach.why) {
-        const name = data.itemText.get(w.item) ?? `Item ${w.item}`;
-        paragraphs(ctx, `${name}: ${w.rationale}`);
-        ctx.y += 1;
+        const q = data.itemText.get(w.item) ?? `Item ${w.item}`;
+        ctx.ensureBlockSpace(16);
+        doc.setFont("Montserrat", "semibold");
+        doc.setFontSize(8.5);
+        doc.setTextColor(...MUTED);
+        const ql = doc.splitTextToSize(cleanMarkdown(q), CONTENT_W);
+        for (const l of ql) {
+          ctx.checkPageBreak(5);
+          doc.text(l, MARGIN_L, ctx.y);
+          ctx.y += 4;
+        }
+        ctx.y += 0.5;
+        paragraphs(ctx, w.rationale);
+        ctx.y += 2;
       }
     }
     if (Array.isArray(s.coach.debrief_prompts) && s.coach.debrief_prompts.length > 0) {
