@@ -523,7 +523,8 @@ function HistoryTab() {
         setLoading(false);
         return;
       }
-      const activityIds = [...new Set(sess.map((s) => s.activity_id))];
+      const sessRows = (sess as any[]) as { id: string; activity_id: string; completed_at: string | null; created_at: string }[];
+      const activityIds = [...new Set(sessRows.map((s) => s.activity_id))];
       const titleMap = new Map<string, { title: string; tier: string | null }>();
       if (activityIds.length > 0) {
         const { data: acts } = await supabase
@@ -536,7 +537,7 @@ function HistoryTab() {
       }
       if (cancelled) return;
       setRows(
-        sess.map((s) => ({
+        sessRows.map((s) => ({
           ...s,
           coaching_activities: titleMap.get(s.activity_id) || null,
         })) as HistoryRow[],
