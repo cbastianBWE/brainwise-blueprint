@@ -575,6 +575,7 @@ export async function generatePairedProfilePdf(
       asLines(s.conflict.mitigate).map(nm),
       "Promote healthy",
       asLines(s.conflict.promote_healthy).map(nm),
+      { bulleted: true },
     );
     if (s.conflict.per_person) {
       ctx.checkPageBreak(6);
