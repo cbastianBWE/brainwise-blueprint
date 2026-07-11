@@ -74,6 +74,7 @@ import BillingSettings from "./pages/BillingSettings";
 import CoachClients from "./pages/coach/CoachClients";
 import OrderAssessment from "./pages/coach/OrderAssessment";
 import ClientResults from "./pages/coach/ClientResults";
+import OrgMembers from "./pages/coach/OrgMembers";
 import CoachInvoices from "./pages/coach/CoachInvoices";
 import CoachProfile from "./pages/coach/CoachProfile";
 
