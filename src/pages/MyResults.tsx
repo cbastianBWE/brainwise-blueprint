@@ -1421,7 +1421,7 @@ export default function MyResults({ isCoachView = false, adminView = false, targ
               dimensionNameMap,
               recommendations,
               permissionLevel,
-              isCoachView,
+              isCoachView: coachContentActive,
               ptpContextTab,
               otherAssessments: assessments.filter(a => a.result.id !== effectiveSelected?.result.id),
             };
