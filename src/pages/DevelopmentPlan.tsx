@@ -21,6 +21,8 @@ import {
 import { toast } from "sonner";
 import { ShareWithCoachDialog } from "@/components/development-plan/ShareWithCoachDialog";
 import { PTP_DIMENSION_NAMES } from "@/lib/ptpDimensionColors";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import ReportCommitmentsTab from "@/components/development-plan/ReportCommitmentsTab";
 
 type Status = "not_started" | "in_progress" | "done" | "paused";
 
@@ -46,7 +48,7 @@ interface PlanComment {
 
 interface PlanItem {
   id: string;
-  source: "ptp" | "custom";
+  source: "ptp" | "custom" | "team_report" | "paired_report";
   source_context: string | null;
   card_title: string | null;
   dimension_tags: string[] | null;
@@ -125,8 +127,9 @@ export default function DevelopmentPlan() {
   });
 
   const allItems = (data?.items ?? []) as PlanItem[];
-  const activeItems = allItems.filter((i) => !i.archived_at);
-  const archivedItems = allItems.filter((i) => i.archived_at);
+  const isMineSource = (i: PlanItem) => i.source === "ptp" || i.source === "custom";
+  const activeItems = allItems.filter((i) => !i.archived_at && isMineSource(i));
+  const archivedItems = allItems.filter((i) => i.archived_at && isMineSource(i));
 
   const refresh = () => queryClient.invalidateQueries({ queryKey: ["development-plan"] });
 
@@ -491,6 +494,14 @@ export default function DevelopmentPlan() {
         </div>
       </header>
 
+      <Tabs defaultValue="mine">
+        <TabsList className="mb-4">
+          <TabsTrigger value="mine">My Development</TabsTrigger>
+          <TabsTrigger value="team">Team</TabsTrigger>
+          <TabsTrigger value="paired">Paired</TabsTrigger>
+        </TabsList>
+        <TabsContent value="mine">
+
       {isLoading && (
         <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
       )}
@@ -539,6 +550,15 @@ export default function DevelopmentPlan() {
           </div>
         </>
       )}
+        </TabsContent>
+
+        <TabsContent value="team" className="mt-2">
+          <ReportCommitmentsTab kind="team" />
+        </TabsContent>
+        <TabsContent value="paired" className="mt-2">
+          <ReportCommitmentsTab kind="paired" />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

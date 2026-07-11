@@ -10,6 +10,7 @@ import { useUserProfile } from "@/hooks/useUserProfile";
 import { useNarrativeGenerator } from "@/hooks/useNarrativeGenerator";
 import { HighlightableText, TeamReportHighlightProvider } from "@/components/results/ReportHighlight";
 import ExportPdfModal, { type TeamPdfSectionsUi } from "@/components/results/ExportPdfModal";
+import AddReportCommitmentModal from "@/components/development-plan/AddReportCommitmentModal";
 import { assembleTeamPdfData } from "@/lib/assembleTeamPdfData";
 import { generateTeamProfilePdf } from "@/lib/generateTeamProfilePdf";
 
@@ -543,6 +544,7 @@ export default function TeamReport() {
       PRIVILEGED_ACCOUNT_TYPES.has(userProfile.account_type ?? ""));
   const canHighlight = !noAccess;
   const [exportOpen, setExportOpen] = useState(false);
+  const [commitOpen, setCommitOpen] = useState(false);
   const handleExportTeam = useCallback(
     async (secs: TeamPdfSectionsUi) => {
       if (!teamProfileId) return;
@@ -762,7 +764,7 @@ export default function TeamReport() {
             </div>
           </div>
           {status === "complete" && (
-            <div style={{ marginTop: 20 }}>
+            <div style={{ marginTop: 20, display: "flex", gap: 8, flexWrap: "wrap" }}>
               <Button
                 variant="outline"
                 size="sm"
@@ -771,6 +773,14 @@ export default function TeamReport() {
               >
                 <FileText className="mr-2 h-4 w-4" />
                 Export PDF
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCommitOpen(true)}
+                style={{ background: "#fff", color: NAVY, borderColor: "transparent" }}
+              >
+                Add to development plan
               </Button>
             </div>
           )}
@@ -1108,6 +1118,15 @@ export default function TeamReport() {
         isCoachView={canSeePrivileged}
         onExportTeam={handleExportTeam}
       />
+      {teamProfileId && (
+        <AddReportCommitmentModal
+          open={commitOpen}
+          onOpenChange={setCommitOpen}
+          reportId={teamProfileId}
+          reportKind="team"
+          suggestions={[]}
+        />
+      )}
     </div>
 
   );

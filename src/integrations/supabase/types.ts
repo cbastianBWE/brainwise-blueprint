@@ -2675,6 +2675,7 @@ export type Database = {
           id: string
           parent_session_id: string | null
           responses: Json
+          run_number: number
           status: string
           updated_at: string
           user_id: string
@@ -2688,6 +2689,7 @@ export type Database = {
           id?: string
           parent_session_id?: string | null
           responses?: Json
+          run_number?: number
           status?: string
           updated_at?: string
           user_id: string
@@ -2701,6 +2703,7 @@ export type Database = {
           id?: string
           parent_session_id?: string | null
           responses?: Json
+          run_number?: number
           status?: string
           updated_at?: string
           user_id?: string
@@ -3163,19 +3166,25 @@ export type Database = {
       }
       coaching_user_summary: {
         Row: {
+          current_run: number
           last_session_id: string | null
+          prior_runs: Json
           summary: Json
           updated_at: string
           user_id: string
         }
         Insert: {
+          current_run?: number
           last_session_id?: string | null
+          prior_runs?: Json
           summary?: Json
           updated_at?: string
           user_id: string
         }
         Update: {
+          current_run?: number
           last_session_id?: string | null
+          prior_runs?: Json
           summary?: Json
           updated_at?: string
           user_id?: string
@@ -5325,6 +5334,7 @@ export type Database = {
           sort_order: number
           source: string
           source_context: string | null
+          source_report_id: string | null
           source_result_id: string | null
           status: string
           target_date: string | null
@@ -5342,6 +5352,7 @@ export type Database = {
           sort_order?: number
           source?: string
           source_context?: string | null
+          source_report_id?: string | null
           source_result_id?: string | null
           status?: string
           target_date?: string | null
@@ -5359,6 +5370,7 @@ export type Database = {
           sort_order?: number
           source?: string
           source_context?: string | null
+          source_report_id?: string | null
           source_result_id?: string | null
           status?: string
           target_date?: string | null
@@ -10651,6 +10663,68 @@ export type Database = {
           },
         ]
       }
+      report_commitments: {
+        Row: {
+          action_text: string
+          archived_at: string | null
+          created_at: string
+          created_by: string
+          dimension_tags: string[]
+          id: string
+          report_id: string
+          report_kind: string
+        }
+        Insert: {
+          action_text: string
+          archived_at?: string | null
+          created_at?: string
+          created_by: string
+          dimension_tags?: string[]
+          id?: string
+          report_id: string
+          report_kind: string
+        }
+        Update: {
+          action_text?: string
+          archived_at?: string | null
+          created_at?: string
+          created_by?: string
+          dimension_tags?: string[]
+          id?: string
+          report_id?: string
+          report_kind?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "report_commitments_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "report_commitments_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "report_commitments_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "report_commitments_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       resource_access_grants: {
         Row: {
           created_at: string
@@ -14381,6 +14455,10 @@ export type Database = {
           reason: string
         }[]
       }
+      coaching_fresh_start_rotate: {
+        Args: { p_baseline: Json; p_user: string }
+        Returns: number
+      }
       coaching_group_access: {
         Args: never
         Returns: {
@@ -14708,6 +14786,20 @@ export type Database = {
       }
       dp_list_my_coaches: { Args: never; Returns: Json }
       dp_list_my_plan: { Args: { p_include_archived?: boolean }; Returns: Json }
+      dp_list_my_report_commitments: {
+        Args: { p_kind: string }
+        Returns: {
+          action_text: string
+          card_title: string
+          created_at: string
+          dimension_tags: string[]
+          id: string
+          progress_pct: number
+          source_report_id: string
+          status: string
+          target_date: string
+        }[]
+      }
       dp_notify_shared_coaches: {
         Args: {
           p_client: string
@@ -16408,6 +16500,31 @@ export type Database = {
       replace_lesson_blocks: {
         Args: { p_blocks: Json; p_content_item_id: string; p_reason: string }
         Returns: Json
+      }
+      report_add_commitments: {
+        Args: {
+          p_items: Json
+          p_kind: string
+          p_report_id: string
+          p_scope: string
+        }
+        Returns: Json
+      }
+      report_archive_commitment: {
+        Args: { p_commitment_id: string }
+        Returns: undefined
+      }
+      report_list_commitments: {
+        Args: { p_kind: string; p_report_id: string }
+        Returns: {
+          action_text: string
+          created_at: string
+          created_by: string
+          created_by_name: string
+          dimension_tags: string[]
+          id: string
+          is_mine: boolean
+        }[]
       }
       request_asset_upload: {
         Args: {

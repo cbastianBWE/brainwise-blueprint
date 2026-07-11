@@ -10,6 +10,7 @@ import { useUserProfile } from "@/hooks/useUserProfile";
 import { useNarrativeGenerator } from "@/hooks/useNarrativeGenerator";
 import { HighlightableText, PairedReportHighlightProvider } from "@/components/results/ReportHighlight";
 import ExportPdfModal, { type PairedPdfSectionsUi } from "@/components/results/ExportPdfModal";
+import AddReportCommitmentModal from "@/components/development-plan/AddReportCommitmentModal";
 import { assemblePairedPdfData } from "@/lib/assemblePairedPdfData";
 import { generatePairedProfilePdf } from "@/lib/generatePairedProfilePdf";
 
@@ -485,6 +486,7 @@ export default function PairedReport() {
       PRIVILEGED_ACCOUNT_TYPES.has(userProfile.account_type ?? ""));
   const canHighlight = !noAccess;
   const [exportOpen, setExportOpen] = useState(false);
+  const [commitOpen, setCommitOpen] = useState(false);
 
   const handleExportPaired = useCallback(
     async (secs: PairedPdfSectionsUi) => {
@@ -757,15 +759,25 @@ export default function PairedReport() {
               </div>
             </div>
             {status === "complete" && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setExportOpen(true)}
-                style={{ background: "#fff", color: NAVY, borderColor: "transparent" }}
-              >
-                <FileText className="mr-2 h-4 w-4" />
-                Export PDF
-              </Button>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setExportOpen(true)}
+                  style={{ background: "#fff", color: NAVY, borderColor: "transparent" }}
+                >
+                  <FileText className="mr-2 h-4 w-4" />
+                  Export PDF
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCommitOpen(true)}
+                  style={{ background: "#fff", color: NAVY, borderColor: "transparent" }}
+                >
+                  Add to development plan
+                </Button>
+              </div>
             )}
           </div>
 
@@ -1190,6 +1202,15 @@ export default function PairedReport() {
         reportMode={mode ?? "work"}
         onExportPaired={handleExportPaired}
       />
+      {pairedProfileId && (
+        <AddReportCommitmentModal
+          open={commitOpen}
+          onOpenChange={setCommitOpen}
+          reportId={pairedProfileId}
+          reportKind="paired"
+          suggestions={[]}
+        />
+      )}
     </div>
 
   );
