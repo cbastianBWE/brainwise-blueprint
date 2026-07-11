@@ -550,6 +550,15 @@ export default function DevelopmentPlan() {
           </div>
         </>
       )}
+        </TabsContent>
+
+        <TabsContent value="team" className="mt-2">
+          <ReportCommitmentsTab kind="team" />
+        </TabsContent>
+        <TabsContent value="paired" className="mt-2">
+          <ReportCommitmentsTab kind="paired" />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
