@@ -1088,6 +1088,12 @@ export default function CoachClients() {
                   Generate shareable link
                 </DropdownMenuItem>
               )}
+              <DropdownMenuItem
+                onClick={() => setSeatLinkModalOpen(true)}
+                disabled={certsLoaded && allowedInstrumentIds.size === 0}
+              >
+                Generate prepaid seat link
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         )}
