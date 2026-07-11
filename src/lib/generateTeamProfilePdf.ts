@@ -504,6 +504,7 @@ export async function generateTeamProfilePdf(
       asLines(s.conflict.mitigate),
       "Promote healthy",
       asLines(s.conflict.promote_healthy),
+      { bulleted: true },
     );
   }
 
