@@ -378,12 +378,12 @@ function PriorRunItem({ prior, userId }: { prior: PriorRun; userId: string }) {
   const load = async () => {
     if (rows !== null || loading) return;
     setLoading(true);
-    const { data: sess } = await supabase
+    const { data: sess } = await (supabase
       .from("coaching_activity_sessions")
       .select("id, activity_id, completed_at, created_at")
       .eq("user_id", userId)
-      .eq("status", "completed")
-      .eq("run_number" as any, prior.run as any)
+      .eq("status", "completed") as any)
+      .eq("run_number", prior.run)
       .order("completed_at", { ascending: false });
     const activityIds = [...new Set((sess || []).map((s) => s.activity_id))];
     const titleMap = new Map<string, { title: string; tier: string | null }>();
