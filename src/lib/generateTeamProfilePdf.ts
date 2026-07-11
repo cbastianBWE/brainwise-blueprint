@@ -1,7 +1,10 @@
 import jsPDF from "jspdf";
 import {
   PAGE_W,
+  PAGE_H,
   MARGIN_L,
+  MARGIN_B,
+  MARGIN_T,
   CONTENT_W,
   NAVY,
   MUTED,
