@@ -43,19 +43,19 @@ const TEAM_SHAPES = ["allHigh", "allLow", "two", "even", "together"] as const;
 type TeamShapeKey = (typeof TEAM_SHAPES)[number];
 
 const TEAM_SHAPE_TITLE: Record<TeamShapeKey, string> = {
-  allHigh: "All high",
-  allLow: "All low",
-  two: "Two camps",
-  even: "Evenly spread",
-  together: "Together in the middle",
+  allHigh: "Nobody down there",
+  allLow: "Nobody up here",
+  two: "Two groups",
+  even: "Even spread",
+  together: "Together",
 };
 
 const TEAM_SHAPE_DESC: Record<TeamShapeKey, string> = {
-  allHigh: "Almost everyone rates this high. Strong amplifier — good and bad.",
-  allLow: "Almost no one rates this high. Rarely surfaces without prompting.",
-  two: "The team splits into two clear groups. Expect friction if it goes unnamed.",
-  even: "Members are spread across the range. No shared centre of gravity yet.",
-  together: "Most of the team clusters in the middle. Steady, easy to overlook.",
+  allHigh: "everyone is high here",
+  allLow: "no one is high, unwatched",
+  two: "the team is split",
+  even: "a full spectrum",
+  together: "real common ground",
 };
 
 const TEAM_SHAPE_COLOR: Record<TeamShapeKey, readonly [number, number, number]> = {
