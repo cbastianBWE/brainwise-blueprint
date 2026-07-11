@@ -398,7 +398,7 @@ function PriorRunItem({ prior, userId }: { prior: PriorRun; userId: string }) {
       }
     }
     setRows(
-      (sess || []).map((s) => ({
+      sessRows.map((s) => ({
         ...s,
         coaching_activities: titleMap.get(s.activity_id) || null,
       })) as HistoryRow[],
