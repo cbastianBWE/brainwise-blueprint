@@ -21,6 +21,8 @@ import {
 import { toast } from "sonner";
 import { ShareWithCoachDialog } from "@/components/development-plan/ShareWithCoachDialog";
 import { PTP_DIMENSION_NAMES } from "@/lib/ptpDimensionColors";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import ReportCommitmentsTab from "@/components/development-plan/ReportCommitmentsTab";
 
 type Status = "not_started" | "in_progress" | "done" | "paused";
 
