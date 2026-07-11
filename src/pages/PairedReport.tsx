@@ -486,6 +486,7 @@ export default function PairedReport() {
       PRIVILEGED_ACCOUNT_TYPES.has(userProfile.account_type ?? ""));
   const canHighlight = !noAccess;
   const [exportOpen, setExportOpen] = useState(false);
+  const [commitOpen, setCommitOpen] = useState(false);
 
   const handleExportPaired = useCallback(
     async (secs: PairedPdfSectionsUi) => {
