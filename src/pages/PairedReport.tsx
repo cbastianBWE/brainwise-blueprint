@@ -1202,6 +1202,15 @@ export default function PairedReport() {
         reportMode={mode ?? "work"}
         onExportPaired={handleExportPaired}
       />
+      {pairedProfileId && (
+        <AddReportCommitmentModal
+          open={commitOpen}
+          onOpenChange={setCommitOpen}
+          reportId={pairedProfileId}
+          reportKind="paired"
+          suggestions={[]}
+        />
+      )}
     </div>
 
   );
