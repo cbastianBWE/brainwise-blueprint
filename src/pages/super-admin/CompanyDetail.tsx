@@ -158,6 +158,11 @@ export default function CompanyDetail() {
           <CompanyMembersSection orgId={orgId!} />
         </TabsContent>
 
+        <TabsContent value="coaches" className="mt-6">
+          <CompanyCoachesSection orgId={orgId!} />
+        </TabsContent>
+
+
         <TabsContent value="departments" className="mt-6">
           <CompanyDepartmentsSection orgId={orgId!} />
         </TabsContent>
