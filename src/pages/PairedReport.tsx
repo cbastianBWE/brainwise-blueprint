@@ -10,6 +10,7 @@ import { useUserProfile } from "@/hooks/useUserProfile";
 import { useNarrativeGenerator } from "@/hooks/useNarrativeGenerator";
 import { HighlightableText, PairedReportHighlightProvider } from "@/components/results/ReportHighlight";
 import ExportPdfModal, { type PairedPdfSectionsUi } from "@/components/results/ExportPdfModal";
+import AddReportCommitmentModal from "@/components/development-plan/AddReportCommitmentModal";
 import { assemblePairedPdfData } from "@/lib/assemblePairedPdfData";
 import { generatePairedProfilePdf } from "@/lib/generatePairedProfilePdf";
 
