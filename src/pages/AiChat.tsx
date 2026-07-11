@@ -404,6 +404,35 @@ export default function AiChat() {
     [user],
   );
 
+  const handleAttachDoc = async (file: File) => {
+    setUploadingDoc(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      if (sessionId) fd.append("chat_session_id", sessionId);
+      const { data, error } = await supabase.functions.invoke("upload-chat-doc", { body: fd });
+      if (error || !data?.success) {
+        toast.error(data?.message || error?.message || "Couldn't process that document.");
+        return;
+      }
+      setAttachedDocs((prev) => [...prev, { id: data.document.id, file_name: data.document.file_name }]);
+      if (data.was_truncated) {
+        toast.warning("That document was large — only the first part was kept as context.");
+      } else {
+        toast.success(`Attached ${data.document.file_name}.`);
+      }
+    } catch (e) {
+      toast.error("Couldn't upload that document.");
+    } finally {
+      setUploadingDoc(false);
+    }
+  };
+
+  const removeAttachedDoc = async (id: string) => {
+    setAttachedDocs((prev) => prev.filter((d) => d.id !== id));
+    await supabase.from("chat_session_documents").delete().eq("id", id);
+  };
+
   const handleSend = useCallback(async () => {
     if (!message.trim() || sending) return;
     const userMsg = message.trim();
