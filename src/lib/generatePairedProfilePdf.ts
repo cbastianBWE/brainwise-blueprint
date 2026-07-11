@@ -338,12 +338,12 @@ function drawRadial(ctx: PdfContext, data: PairedPdfData): void {
   doc.text(data.nameB, midX + 4, ctx.y + 1);
   ctx.y += 6;
 
-  // Agreement bars
+  // Agreement bars — keep all dimension bars together as one block.
   ctx.y += 3;
   const barH = 4;
   const rowH = 8;
+  ctx.ensureBlockSpace(dimOrder.length * rowH + 4);
   for (const name of dimOrder) {
-    ctx.checkPageBreak(rowH + 2);
     const y = ctx.y;
     doc.setFont("Montserrat", "semibold");
     doc.setFontSize(8.5);
