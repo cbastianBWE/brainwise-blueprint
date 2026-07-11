@@ -42,6 +42,11 @@ const SignUp = () => {
     certification_type: string;
   } | null>(null);
   const [tokenLoading, setTokenLoading] = useState(false);
+  const navigate = useNavigate();
+  const [bulkInfo, setBulkInfo] = useState<{
+    valid: boolean; reason: string; coach_name: string | null;
+    instrument_name: string | null; seats_remaining: number | null;
+  } | null>(null);
 
   useEffect(() => {
     // Pre-fill email from ?email= query param (client invitation flow)
