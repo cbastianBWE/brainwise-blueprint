@@ -558,6 +558,14 @@ function HistoryTab() {
         .sort((a, b) => b.run - a.run);
       if (!cancelled) setPriorRuns(priors);
 
+      const { data: revs } = await (supabase
+        .from("coaching_reviews" as any)
+        .select("id, run_number, review, activity_count, created_at")
+        .eq("user_id", user.id) as any)
+        .order("created_at", { ascending: false });
+      if (!cancelled) setReviews(((revs as any[]) ?? []) as SavedReview[]);
+
+
       const { data: sess, error: sessErr } = await (supabase
         .from("coaching_activity_sessions")
         .select("id, activity_id, completed_at, created_at")
