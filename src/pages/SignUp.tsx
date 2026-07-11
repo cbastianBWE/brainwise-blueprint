@@ -199,6 +199,29 @@ const SignUp = () => {
           <CardDescription>Join BrainWise to get started</CardDescription>
         </CardHeader>
         <CardContent>
+          {bulkInfo && (
+            <div className="flex items-start gap-2 rounded-md border border-primary/30 bg-primary/5 p-3 mb-4">
+              <Info className="h-5 w-5 text-primary mt-0.5 shrink-0" />
+              <p className="text-sm text-foreground">
+                {bulkInfo.valid ? (
+                  <>
+                    {bulkInfo.coach_name ? <strong>{bulkInfo.coach_name}</strong> : "Your coach"} has
+                    prepaid a <strong>{bulkInfo.instrument_name ?? "BrainWise"}</strong> assessment for you.
+                    Create your account and it will be added automatically
+                    {typeof bulkInfo.seats_remaining === "number" ? ` (${bulkInfo.seats_remaining} seats left)` : ""}.
+                  </>
+                ) : bulkInfo.reason === "exhausted" ? (
+                  <>This assessment link is full — all seats have been claimed. Ask your coach for a new link.</>
+                ) : bulkInfo.reason === "expired" ? (
+                  <>This assessment link has expired. Ask your coach for a new one.</>
+                ) : bulkInfo.reason === "not_yet_active" ? (
+                  <>This assessment link isn't active yet. Check back shortly.</>
+                ) : (
+                  <>This assessment link is no longer valid. You can still create an account below.</>
+                )}
+              </p>
+            </div>
+          )}
           {coachInvitation && (
             <div className="flex items-start gap-2 rounded-md border border-primary/30 bg-primary/5 p-3 mb-4">
               <Info className="h-5 w-5 text-primary mt-0.5 shrink-0" />
