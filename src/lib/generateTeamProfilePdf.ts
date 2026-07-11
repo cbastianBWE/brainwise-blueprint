@@ -561,7 +561,8 @@ export async function generateTeamProfilePdf(
       ctx.checkPageBreak(12);
       doc.setFillColor(245, 250, 245);
       doc.setDrawColor(200, 220, 200);
-      const dl = doc.splitTextToSize("Lean on: " + cleanMarkdown(s.leader_brief.lean_on), CONTENT_W - 6);
+      const leanRaw = cleanMarkdown(s.leader_brief.lean_on).replace(/^\s*lean on:\s*/i, "");
+      const dl = doc.splitTextToSize("Lean on: " + leanRaw, CONTENT_W - 6);
       const h = dl.length * 4.5 + 6;
       doc.roundedRect(MARGIN_L, ctx.y, CONTENT_W, h, 2, 2, "FD");
       doc.setFont("Montserrat", "normal");
