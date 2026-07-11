@@ -384,6 +384,21 @@ export default function CoachClients() {
     }
   }, []);
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("checkout") === "bulk_success") {
+      toast.success("Seat link is live", {
+        description: "Your prepaid link is ready to share below.",
+      });
+      fetchSeatLinks();
+      params.delete("checkout");
+      params.delete("session_id");
+      const newUrl = window.location.pathname + (params.toString() ? `?${params.toString()}` : "");
+      window.history.replaceState({}, "", newUrl);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const refreshFreePool = async () => {
     if (!user) return;
     const { data } = await supabase
