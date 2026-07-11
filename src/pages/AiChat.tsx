@@ -523,6 +523,7 @@ export default function AiChat() {
     sessionId,
     isCorp,
     fetchCorpUsage,
+    attachedDocs,
   ]);
 
   const handleEndChat = async () => {
