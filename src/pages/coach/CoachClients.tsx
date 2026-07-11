@@ -1213,6 +1213,55 @@ export default function CoachClients() {
         </Card>
       </div>
 
+      {seatLinks.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Prepaid Seat Links</CardTitle>
+            <CardDescription>
+              Share these links. Each signup uses one prepaid seat.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {seatLinks.map(link => {
+              const url = `${window.location.origin}/signup?bulk=${link.token}`;
+              const remaining = Math.max(link.seats_total - link.seats_claimed, 0);
+              const exhausted = link.status === "exhausted" || remaining === 0;
+              return (
+                <div key={link.id} className="flex items-start justify-between gap-4 rounded-md border p-3">
+                  <div className="min-w-0 flex-1 space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">{seatLinkInstrumentName(link.instrument_id)}</span>
+                      <Badge variant={exhausted ? "secondary" : "default"}>
+                        {exhausted ? "Full" : "Active"}
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      {link.seats_claimed} of {link.seats_total} seats used · {remaining} remaining
+                    </p>
+                    {link.coach_note && (
+                      <p className="text-xs text-muted-foreground italic">"{link.coach_note}"</p>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Input readOnly value={url} className="w-64 text-xs" onFocus={(e) => e.currentTarget.select()} />
+                    <Button
+                      size="icon"
+                      variant="outline"
+                      onClick={() => { navigator.clipboard.writeText(url); toast.success("Link copied"); }}
+                      aria-label="Copy link"
+                    >
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              );
+            })}
+          </CardContent>
+        </Card>
+      )}
+
+
+
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "clients" | "pending")}>
         <TabsList className="grid w-full max-w-md grid-cols-2">
           <TabsTrigger value="clients">Clients</TabsTrigger>
