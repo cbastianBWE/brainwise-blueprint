@@ -79,6 +79,20 @@ const SignUp = () => {
     })();
   }, [searchParams]);
 
+  useEffect(() => {
+    const bulk = searchParams.get("bulk");
+    if (!bulk) return;
+    stashBulkToken(bulk);
+    (async () => {
+      const claimed = await claimPendingBulkSeat();
+      if (claimed) { navigate("/my-results"); return; }
+      const { data } = await supabase.rpc("coach_bulk_link_public_info" as any, { p_token: bulk } as any);
+      const row = (data as any[])?.[0];
+      if (row) setBulkInfo(row);
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
+
   const validatePassword = (pw: string) => ({
     length: pw.length >= 8,
     uppercase: /[A-Z]/.test(pw),
