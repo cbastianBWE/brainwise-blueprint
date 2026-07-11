@@ -25,6 +25,7 @@ import CompanyDepartmentsSection from "@/components/super-admin/CompanyDepartmen
 import CompanyInvitationsSection from "@/components/super-admin/CompanyInvitationsSection";
 import CompanyBrandingSection from "@/components/super-admin/CompanyBrandingSection";
 import CompanyDomainsSection from "@/components/super-admin/CompanyDomainsSection";
+import CompanyCoachesSection from "@/components/super-admin/CompanyCoachesSection";
 import ModuleEntitlementsPanel from "@/components/super-admin/ModuleEntitlementsPanel";
 import OperationsWorkspaceSection from "@/components/super-admin/OperationsWorkspaceSection";
 
@@ -132,6 +133,7 @@ export default function CompanyDetail() {
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="members">Members</TabsTrigger>
+          <TabsTrigger value="coaches">Coaches</TabsTrigger>
           <TabsTrigger value="departments">Departments</TabsTrigger>
           <TabsTrigger value="invitations">Invitations</TabsTrigger>
           <TabsTrigger value="contract">Contract & Features</TabsTrigger>
@@ -155,6 +157,11 @@ export default function CompanyDetail() {
         <TabsContent value="members" className="mt-6">
           <CompanyMembersSection orgId={orgId!} />
         </TabsContent>
+
+        <TabsContent value="coaches" className="mt-6">
+          <CompanyCoachesSection orgId={orgId!} />
+        </TabsContent>
+
 
         <TabsContent value="departments" className="mt-6">
           <CompanyDepartmentsSection orgId={orgId!} />

@@ -8922,6 +8922,134 @@ export type Database = {
           },
         ]
       }
+      organization_coaches: {
+        Row: {
+          assigned_at: string
+          assigned_by: string | null
+          coach_user_id: string
+          ended_at: string | null
+          ended_by: string | null
+          id: string
+          note: string | null
+          organization_id: string
+          status: string
+        }
+        Insert: {
+          assigned_at?: string
+          assigned_by?: string | null
+          coach_user_id: string
+          ended_at?: string | null
+          ended_by?: string | null
+          id?: string
+          note?: string | null
+          organization_id: string
+          status?: string
+        }
+        Update: {
+          assigned_at?: string
+          assigned_by?: string | null
+          coach_user_id?: string
+          ended_at?: string | null
+          ended_by?: string | null
+          id?: string
+          note?: string | null
+          organization_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_coaches_assigned_by_fkey"
+            columns: ["assigned_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "organization_coaches_assigned_by_fkey"
+            columns: ["assigned_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "organization_coaches_assigned_by_fkey"
+            columns: ["assigned_by"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "organization_coaches_assigned_by_fkey"
+            columns: ["assigned_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "organization_coaches_coach_user_id_fkey"
+            columns: ["coach_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "organization_coaches_coach_user_id_fkey"
+            columns: ["coach_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "organization_coaches_coach_user_id_fkey"
+            columns: ["coach_user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "organization_coaches_coach_user_id_fkey"
+            columns: ["coach_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "organization_coaches_ended_by_fkey"
+            columns: ["ended_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "organization_coaches_ended_by_fkey"
+            columns: ["ended_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "organization_coaches_ended_by_fkey"
+            columns: ["ended_by"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "organization_coaches_ended_by_fkey"
+            columns: ["ended_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "organization_coaches_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organization_instruments: {
         Row: {
           created_at: string | null
@@ -14187,6 +14315,16 @@ export type Database = {
           out_stripe_coupon_id: string
         }[]
       }
+      coach_list_org_members: {
+        Args: never
+        Returns: {
+          email: string
+          full_name: string
+          member_user_id: string
+          organization_id: string
+          organization_name: string
+        }[]
+      }
       coach_shareable_link_coach_paid: {
         Args: {
           p_client_email: string
@@ -15118,6 +15256,14 @@ export type Database = {
       is_impersonating: { Args: never; Returns: boolean }
       is_impersonating_act: { Args: never; Returns: boolean }
       is_internal_user: { Args: { p_user_id: string }; Returns: boolean }
+      is_org_coach_of_member: {
+        Args: { p_coach?: string; p_member: string }
+        Returns: boolean
+      }
+      is_org_coach_of_org: {
+        Args: { p_coach?: string; p_org: string }
+        Returns: boolean
+      }
       list_active_newsletter_categories: { Args: never; Returns: Json }
       list_admin_newsletter_articles: {
         Args: {
@@ -16029,9 +16175,43 @@ export type Database = {
       ops_workflow_engine_run: { Args: never; Returns: Json }
       opt_in_to_newsletter: { Args: never; Returns: Json }
       opt_out_of_newsletter: { Args: never; Returns: Json }
+      org_assign_coach: {
+        Args: {
+          p_coach_user_id: string
+          p_note?: string
+          p_organization_id: string
+        }
+        Returns: {
+          assigned_at: string
+          assigned_by: string | null
+          coach_user_id: string
+          ended_at: string | null
+          ended_by: string | null
+          id: string
+          note: string | null
+          organization_id: string
+          status: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "organization_coaches"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       org_has_feature: {
         Args: { p_feature: string; p_org: string }
         Returns: boolean
+      }
+      org_list_coaches: {
+        Args: { p_org: string }
+        Returns: {
+          assigned_at: string
+          coach_user_id: string
+          email: string
+          full_name: string
+          note: string
+        }[]
       }
       org_member_assessment_completions: {
         Args: { p_org: string }
@@ -16044,6 +16224,10 @@ export type Database = {
       org_set_mfa_required: {
         Args: { p_enabled: boolean; p_organization_id: string }
         Returns: Json
+      }
+      org_unassign_coach: {
+        Args: { p_coach_user_id: string; p_organization_id: string }
+        Returns: undefined
       }
       peer_access_request_create: {
         Args: { p_target_user_id: string }
