@@ -153,6 +153,10 @@ export default function GenerateReportDialog({ open, onOpenChange, allowedModes,
           return;
         }
         const id = (data as { team_profile_id: string }).team_profile_id;
+        if (releaseNow) {
+          try { await (supabase.rpc as never)("bw_set_report_release" as never, { p_profile: id, p_kind: "team", p_released: true } as never); }
+          catch { /* held by default */ }
+        }
         if (reportLabel.trim()) {
           try {
             await supabase.rpc("bw_set_report_label" as never, { p_profile: id, p_label: reportLabel.trim() } as never);
