@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2, Download, FileText, Linkedin, Award } from "lucide-react";
+import { Loader2, Download, FileText, Linkedin, Award, Copy } from "lucide-react";
+import { toast } from "sonner";
 import { format } from "date-fns";
 import { jsPDF } from "jspdf";
 import { supabase } from "@/integrations/supabase/client";
@@ -269,11 +270,18 @@ function CertificationTabContent({ certificationId }: { certificationId: string 
     pdf.save(`BrainWise-${certType}-Certificate.pdf`);
   };
 
-  const handleLinkedIn = () => {
+  const verifyUrl = `${window.location.origin}/verify/cert/${certification.certification_id}`;
+  const suggestedCaption =
+    `I'm proud to be ${display_name} through BrainWise Enterprises! ` +
+    `You can verify my credential here: ${verifyUrl}`;
+
+  const handleAddToProfile = () => {
     const params = new URLSearchParams({
       startTask: "CERTIFICATION_NAME",
       name: display_name,
       organizationId: LINKEDIN_ORG_ID,
+      certId: certification.certification_id,
+      certUrl: verifyUrl,
     });
     if (certifiedAt) {
       const d = new Date(certifiedAt);
@@ -285,6 +293,23 @@ function CertificationTabContent({ certificationId }: { certificationId: string 
       "_blank",
       "noopener,noreferrer",
     );
+  };
+
+  const handleSharePost = () => {
+    window.open(
+      `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(verifyUrl)}`,
+      "_blank",
+      "noopener,noreferrer",
+    );
+  };
+
+  const handleCopyCaption = async () => {
+    try {
+      await navigator.clipboard.writeText(suggestedCaption);
+      toast.success("Caption copied — paste it into your LinkedIn post.");
+    } catch {
+      toast.error("Couldn't copy. You can select and copy the caption manually.");
+    }
   };
 
   return (
@@ -322,8 +347,14 @@ function CertificationTabContent({ certificationId }: { certificationId: string 
             </Button>
           </>
         )}
-        <Button onClick={handleLinkedIn} variant="outline">
-          <Linkedin className="h-4 w-4 mr-2" /> Share on LinkedIn
+        <Button onClick={handleAddToProfile} variant="outline">
+          <Linkedin className="h-4 w-4 mr-2" /> Add to LinkedIn profile
+        </Button>
+        <Button onClick={handleSharePost} variant="outline">
+          <Linkedin className="h-4 w-4 mr-2" /> Share as a post
+        </Button>
+        <Button onClick={handleCopyCaption} variant="outline">
+          <Copy className="h-4 w-4 mr-2" /> Copy caption
         </Button>
       </div>
 

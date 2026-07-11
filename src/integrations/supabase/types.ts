@@ -15295,6 +15295,10 @@ export type Database = {
         }
         Returns: Json
       }
+      get_public_certification: {
+        Args: { p_certification_id: string }
+        Returns: Json
+      }
       get_quiz_assets_for_trainee: {
         Args: { p_content_item_id: string; p_user_id?: string }
         Returns: {
