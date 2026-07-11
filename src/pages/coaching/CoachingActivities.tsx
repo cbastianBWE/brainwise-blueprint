@@ -954,11 +954,23 @@ export default function CoachingActivities() {
 
   return (
     <div className="container mx-auto space-y-6 p-6">
-      <div>
-        <h1 className="text-2xl font-semibold">My Coaching</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Short, guided activities to help you turn insight into action.
-        </p>
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-semibold">My Coaching</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Short, guided activities to help you turn insight into action.
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={() => setReviewOpen(true)}>
+            <Sparkles className="h-4 w-4 mr-2" />
+            Review & Action Plan
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => setFreshOpen(true)}>
+            <RotateCcw className="h-4 w-4 mr-2" />
+            Fresh Start
+          </Button>
+        </div>
       </div>
 
       <Tabs value={tab} onValueChange={(v) => setTab(v as "activities" | "history")}>
