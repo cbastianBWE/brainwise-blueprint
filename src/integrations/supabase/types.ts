@@ -16023,6 +16023,10 @@ export type Database = {
         Args: { p_rows?: Json; p_share_ptp_full?: boolean }
         Returns: undefined
       }
+      ptp_show_coach_content: {
+        Args: { p_owner_user_id: string }
+        Returns: boolean
+      }
       publish_article: {
         Args: { p_article_id: string; p_reason: string }
         Returns: Json

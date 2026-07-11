@@ -279,6 +279,7 @@ export default function MyResults({ isCoachView = false, adminView = false, targ
   const [shareWithCoach, setShareWithCoach] = useState<boolean | null>(null);
 
   const [coachViewActive, setCoachViewActive] = useState(isCoachView);
+  const [showCoachContent, setShowCoachContent] = useState(false);
 
   const [chatOpen, setChatOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState<Array<{role: 'user' | 'assistant'; content: string; timestamp: Date}>>([]);
@@ -317,7 +318,31 @@ export default function MyResults({ isCoachView = false, adminView = false, targ
     setCoachViewActive(isCoachView);
   }, [isCoachView]);
 
+  // Coach-only content (coaching questions, NAI pattern alert, CAFES mapping)
+  // is gated on the viewer's relationship to the report owner — NOT on
+  // isCoachView, which is also true for peers viewing a shared report. Only a
+  // coach of this client, an org/company admin in the owner's org, or a super
+  // admin qualifies.
+  useEffect(() => {
+    if (!isCoachView || !effectiveUserId) {
+      setShowCoachContent(false);
+      return;
+    }
+    let cancelled = false;
+    (supabase as any)
+      .rpc("ptp_show_coach_content", { p_owner_user_id: effectiveUserId })
+      .then(({ data }: { data: boolean | null }) => {
+        if (!cancelled) setShowCoachContent(data === true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isCoachView, effectiveUserId]);
+
+  const coachContentActive = coachViewActive && showCoachContent;
+
   const displayName = isCoachView ? clientName : profile?.full_name;
+
 
   // Fetch all completed assessment results
   useEffect(() => {
@@ -834,32 +859,32 @@ export default function MyResults({ isCoachView = false, adminView = false, targ
       displayName: displayName ?? null,
       sections,
       additionalAssessmentId,
-      isCoachView: coachViewActive,
+      isCoachView: coachContentActive,
     });
     await generateResultsPdf(pdfData, sections);
-  }, [selected, effectiveSelected, ptpContextTab, displayName, effectiveUserId, isBothAssessment, hasPtpTabs, ptpPersonalResults, coachViewActive]);
+  }, [selected, effectiveSelected, ptpContextTab, displayName, effectiveUserId, isBothAssessment, hasPtpTabs, ptpPersonalResults, coachContentActive]);
 
   const handleNaiPdfExport = useCallback(async (sections: import("@/components/results/ExportPdfModal").NaiPdfSectionsUi) => {
     if (!selected || !isNAI) return;
     const pdfData = await assembleNaiPdfData({
       userId: effectiveUserId!,
       assessmentResultId: selected.result.id,
-      isCoachView: coachViewActive,
+      isCoachView: coachContentActive,
       displayName: displayName ?? null,
     });
     generateNaiPdf(pdfData, sections);
-  }, [selected, isNAI, coachViewActive, displayName, effectiveUserId]);
+  }, [selected, isNAI, coachContentActive, displayName, effectiveUserId]);
 
   const handleAirsaPdfExport = useCallback(async (sections: AirsaPdfSectionsUi) => {
     if (!selected || !isAIRSA) return;
     const pdfData = await assembleAirsaPdfData({
       userId: effectiveUserId!,
       assessmentResultId: selected.result.id,
-      isCoachView: coachViewActive,
+      isCoachView: coachContentActive,
       displayName: displayName ?? null,
     });
     generateAirsaPdf(pdfData, sections);
-  }, [selected, isAIRSA, coachViewActive, displayName, effectiveUserId]);
+  }, [selected, isAIRSA, coachContentActive, displayName, effectiveUserId]);
 
   const chatMessagesRef = useRef<Array<{role: 'user' | 'assistant'; content: string; timestamp: Date}>>([]);
   const chatSessionIdRef = useRef<string | null>(null);
@@ -1123,8 +1148,8 @@ export default function MyResults({ isCoachView = false, adminView = false, targ
             </section>
           )}
 
-          {/* Coach/Client view toggle — only when coach is viewing client's NAI result */}
-          {isCoachView && isNAI && (
+          {/* Coach/Client view toggle — only when a coach/admin is viewing another user's NAI result */}
+          {showCoachContent && isNAI && (
             <section>
               <Tabs
                 value={coachViewActive ? "coach" : "client"}
@@ -1150,7 +1175,7 @@ export default function MyResults({ isCoachView = false, adminView = false, targ
               userFullName={displayName ?? null}
               completedAt={selected.completed_at}
               instrumentVersion={selected.result.instrument_version}
-              isCoachView={isCoachView}
+              isCoachView={coachContentActive}
               canTakeAssessments={canTakeAssessments}
               onExportClick={() => setExportModalOpen(true)}
             />
@@ -1396,7 +1421,7 @@ export default function MyResults({ isCoachView = false, adminView = false, targ
               dimensionNameMap,
               recommendations,
               permissionLevel,
-              isCoachView,
+              isCoachView: coachContentActive,
               ptpContextTab,
               otherAssessments: assessments.filter(a => a.result.id !== effectiveSelected?.result.id),
             };
@@ -1560,7 +1585,7 @@ export default function MyResults({ isCoachView = false, adminView = false, targ
                 assessmentId={selected.result.assessment_id}
                 dimensionScores={dimensionScores as [string, { mean?: number; band?: string }][]}
                 dimensionNameMap={dimensionNameMap}
-                isCoachView={coachViewActive}
+                isCoachView={coachContentActive}
                 permissionLevel={permissionLevel}
                 otherAssessments={assessments.filter(a => a.result.id !== selected?.result.id)}
               />
