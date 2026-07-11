@@ -627,9 +627,20 @@ export async function generateTeamProfilePdf(
       doc.text("Why these matter", MARGIN_L, ctx.y);
       ctx.y += 5;
       for (const w of s.coach.why) {
-        const name = data.itemText.get(w.item) ?? `Item ${w.item}`;
-        paragraphs(ctx, `${name}: ${w.rationale}`);
-        ctx.y += 1;
+        const q = data.itemText.get(w.item) ?? `Item ${w.item}`;
+        ctx.ensureBlockSpace(16);
+        doc.setFont("Montserrat", "semibold");
+        doc.setFontSize(8.5);
+        doc.setTextColor(...MUTED);
+        const ql = doc.splitTextToSize(cleanMarkdown(q), CONTENT_W);
+        for (const l of ql) {
+          ctx.checkPageBreak(5);
+          doc.text(l, MARGIN_L, ctx.y);
+          ctx.y += 4;
+        }
+        ctx.y += 0.5;
+        paragraphs(ctx, w.rationale);
+        ctx.y += 2;
       }
     }
     if (Array.isArray(s.coach.debrief_prompts) && s.coach.debrief_prompts.length > 0) {
