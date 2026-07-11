@@ -265,6 +265,7 @@ const App = () => (
               <Route path="/coach/clients" element={<PractitionerCoachGuard><CoachClients /></PractitionerCoachGuard>} />
               <Route path="/coach/order-assessment" element={<PractitionerCoachGuard><OrderAssessment /></PractitionerCoachGuard>} />
               <Route path="/coach/client-results" element={<PractitionerCoachGuard><ClientResults /></PractitionerCoachGuard>} />
+              <Route path="/coach/org-members" element={<PractitionerCoachGuard><OrgMembers /></PractitionerCoachGuard>} />
               <Route path="/coach/invoices" element={<PractitionerCoachGuard><CoachInvoices /></PractitionerCoachGuard>} />
               <Route path="/coach/resources" element={<RoleGuard allowedRoles={["coach"]}><Resources /></RoleGuard>} />
               <Route path="/coach/profile" element={<PractitionerCoachGuard><CoachProfile /></PractitionerCoachGuard>} />
