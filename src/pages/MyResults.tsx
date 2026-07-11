@@ -859,32 +859,32 @@ export default function MyResults({ isCoachView = false, adminView = false, targ
       displayName: displayName ?? null,
       sections,
       additionalAssessmentId,
-      isCoachView: coachViewActive,
+      isCoachView: coachContentActive,
     });
     await generateResultsPdf(pdfData, sections);
-  }, [selected, effectiveSelected, ptpContextTab, displayName, effectiveUserId, isBothAssessment, hasPtpTabs, ptpPersonalResults, coachViewActive]);
+  }, [selected, effectiveSelected, ptpContextTab, displayName, effectiveUserId, isBothAssessment, hasPtpTabs, ptpPersonalResults, coachContentActive]);
 
   const handleNaiPdfExport = useCallback(async (sections: import("@/components/results/ExportPdfModal").NaiPdfSectionsUi) => {
     if (!selected || !isNAI) return;
     const pdfData = await assembleNaiPdfData({
       userId: effectiveUserId!,
       assessmentResultId: selected.result.id,
-      isCoachView: coachViewActive,
+      isCoachView: coachContentActive,
       displayName: displayName ?? null,
     });
     generateNaiPdf(pdfData, sections);
-  }, [selected, isNAI, coachViewActive, displayName, effectiveUserId]);
+  }, [selected, isNAI, coachContentActive, displayName, effectiveUserId]);
 
   const handleAirsaPdfExport = useCallback(async (sections: AirsaPdfSectionsUi) => {
     if (!selected || !isAIRSA) return;
     const pdfData = await assembleAirsaPdfData({
       userId: effectiveUserId!,
       assessmentResultId: selected.result.id,
-      isCoachView: coachViewActive,
+      isCoachView: coachContentActive,
       displayName: displayName ?? null,
     });
     generateAirsaPdf(pdfData, sections);
-  }, [selected, isAIRSA, coachViewActive, displayName, effectiveUserId]);
+  }, [selected, isAIRSA, coachContentActive, displayName, effectiveUserId]);
 
   const chatMessagesRef = useRef<Array<{role: 'user' | 'assistant'; content: string; timestamp: Date}>>([]);
   const chatSessionIdRef = useRef<string | null>(null);
