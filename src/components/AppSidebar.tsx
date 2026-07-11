@@ -73,6 +73,7 @@ const coachNav: NavItem[] = [
   { title: "My Coaching", url: "/coaching", icon: Compass },
   { title: "Shared With Me", url: "/shared-with-me", icon: Inbox },
   { title: "My Clients", url: "/coach/clients", icon: Users },
+  { title: "Organization Members", url: "/coach/org-members", icon: Building2 },
   { title: "Team & Paired Reports", url: "/team-paired-reports", icon: UsersRound },
   
   { title: "Orders & Invoices", url: "/coach/invoices", icon: Receipt },
