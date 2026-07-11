@@ -318,7 +318,31 @@ export default function MyResults({ isCoachView = false, adminView = false, targ
     setCoachViewActive(isCoachView);
   }, [isCoachView]);
 
+  // Coach-only content (coaching questions, NAI pattern alert, CAFES mapping)
+  // is gated on the viewer's relationship to the report owner — NOT on
+  // isCoachView, which is also true for peers viewing a shared report. Only a
+  // coach of this client, an org/company admin in the owner's org, or a super
+  // admin qualifies.
+  useEffect(() => {
+    if (!isCoachView || !effectiveUserId) {
+      setShowCoachContent(false);
+      return;
+    }
+    let cancelled = false;
+    (supabase as any)
+      .rpc("ptp_show_coach_content", { p_owner_user_id: effectiveUserId })
+      .then(({ data }: { data: boolean | null }) => {
+        if (!cancelled) setShowCoachContent(data === true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isCoachView, effectiveUserId]);
+
+  const coachContentActive = coachViewActive && showCoachContent;
+
   const displayName = isCoachView ? clientName : profile?.full_name;
+
 
   // Fetch all completed assessment results
   useEffect(() => {
