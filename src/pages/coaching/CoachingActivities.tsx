@@ -490,6 +490,53 @@ function PriorRunItem({ prior, userId }: { prior: PriorRun; userId: string }) {
   );
 }
 
+interface ReviewData {
+  summary?: string;
+  strengths?: string[];
+  watch_outs?: string[];
+  action_plan?: string[];
+  themes?: string[];
+}
+
+interface SavedReview {
+  id: string;
+  run_number: number;
+  review: ReviewData;
+  activity_count: number;
+  created_at: string;
+}
+
+function ReviewBulletSection({ title, items }: { title: string; items?: string[] }) {
+  if (!items || items.length === 0) return null;
+  return (
+    <div className="space-y-1.5">
+      <h4 className="text-sm font-semibold">{title}</h4>
+      <ul className="list-disc pl-5 space-y-1 text-sm text-muted-foreground">
+        {items.map((s, i) => (
+          <li key={i}>{s}</li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function ReviewBody({ review }: { review: ReviewData }) {
+  return (
+    <div className="space-y-5">
+      {review.summary && (
+        <div className="space-y-1.5">
+          <h4 className="text-sm font-semibold">Summary</h4>
+          <p className="text-sm text-muted-foreground whitespace-pre-wrap">{review.summary}</p>
+        </div>
+      )}
+      <ReviewBulletSection title="Strengths" items={review.strengths} />
+      <ReviewBulletSection title="Watch-outs" items={review.watch_outs} />
+      <ReviewBulletSection title="Action plan" items={review.action_plan} />
+      <ReviewBulletSection title="Themes" items={review.themes} />
+    </div>
+  );
+}
+
 function HistoryTab() {
   const { user } = useAuth();
   const navigate = useNavigate();
