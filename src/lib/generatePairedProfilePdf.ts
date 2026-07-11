@@ -219,14 +219,18 @@ function drivingCard(
   const accent = args.kind === "strength" ? GREEN : MUSTARD;
   const kindLabel = args.kind === "strength" ? "STRENGTH" : "FOCUS";
 
-  ctx.ensureBlockSpace(28);
-  const boxTop = ctx.y;
-  const nameLines = doc.splitTextToSize(cleanMarkdown(args.name), CONTENT_W - 6);
-  const whyLines = doc.splitTextToSize(cleanMarkdown(args.why), CONTENT_W - 6);
+  doc.setFont("Poppins", "bold");
+  doc.setFontSize(11);
+  const nameLines = doc.splitTextToSize(cleanMarkdown(args.name), CONTENT_W - 8);
+  doc.setFont("Montserrat", "normal");
+  doc.setFontSize(9);
+  const whyLines = doc.splitTextToSize(cleanMarkdown(args.why), CONTENT_W - 8);
   const actLines = args.actions.flatMap((a) =>
-    doc.splitTextToSize("• " + cleanMarkdown(a), CONTENT_W - 10),
+    doc.splitTextToSize("• " + cleanMarkdown(a), CONTENT_W - 12),
   );
   const contentH = 6 + nameLines.length * 4.5 + whyLines.length * 4.5 + actLines.length * 4.5 + 6;
+  ctx.ensureBlockSpace(contentH + 3);
+  const boxTop = ctx.y;
 
   doc.setDrawColor(220, 220, 220);
   doc.setFillColor(255, 255, 255);
