@@ -85,6 +85,7 @@ export default function GenerateReportDialog({ open, onOpenChange, allowedModes,
       setSelected([]);
       setSubmitting(false);
       setReportLabel("");
+      setReleaseNow(false);
     }
   }, [open, allowedModes]);
 
