@@ -80,6 +80,26 @@ export default function TeamPairedReports() {
     setLoading(false);
   }, []);
 
+  const [releasingId, setReleasingId] = useState<string | null>(null);
+  const toggleRelease = async (r: ReportRow) => {
+    setReleasingId(r.report_id);
+    const { error } = await (supabase.rpc as unknown as (fn: string, args: Record<string, unknown>) => Promise<{ error: { message?: string } | null }>)(
+      "bw_set_report_release",
+      { p_profile: r.report_id, p_kind: r.kind, p_released: !r.released_to_subjects },
+    );
+    setReleasingId(null);
+    if (error) {
+      toast.error(
+        error.message?.includes("not_authorized")
+          ? "You don't have permission to release this report."
+          : "Couldn't update visibility. Please try again.",
+      );
+      return;
+    }
+    toast.success(r.released_to_subjects ? "Report hidden from participants." : "Report released to participants.");
+    load();
+  };
+
   useEffect(() => {
     load();
   }, [load]);
