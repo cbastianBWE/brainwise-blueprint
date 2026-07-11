@@ -127,8 +127,9 @@ export default function DevelopmentPlan() {
   });
 
   const allItems = (data?.items ?? []) as PlanItem[];
-  const activeItems = allItems.filter((i) => !i.archived_at);
-  const archivedItems = allItems.filter((i) => i.archived_at);
+  const isMineSource = (i: PlanItem) => i.source === "ptp" || i.source === "custom";
+  const activeItems = allItems.filter((i) => !i.archived_at && isMineSource(i));
+  const archivedItems = allItems.filter((i) => i.archived_at && isMineSource(i));
 
   const refresh = () => queryClient.invalidateQueries({ queryKey: ["development-plan"] });
 
