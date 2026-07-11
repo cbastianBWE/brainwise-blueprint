@@ -52,19 +52,19 @@ const PAIR_SHAPES = ["farApart", "bothHigh", "bothLow", "bothMedium", "mild"] as
 type PairShapeKey = (typeof PAIR_SHAPES)[number];
 
 const PAIR_SHAPE_TITLE: Record<PairShapeKey, string> = {
-  farApart: "Far apart (opposite ends)",
+  farApart: "Far apart",
   bothHigh: "Both high",
   bothLow: "Both low",
   bothMedium: "Both medium",
-  mild: "Mild (small, soft difference)",
+  mild: "Mild",
 };
 
 const PAIR_SHAPE_DESC: Record<PairShapeKey, string> = {
-  farApart: "One of you is high while the other is low. Expect friction unless it is named.",
-  bothHigh: "You are both up here. Amplifies what this drives, for better and worse.",
-  bothLow: "Neither of you is high on this. It rarely comes up on its own.",
-  bothMedium: "You meet in the middle. Manageable, but easy to overlook.",
-  mild: "A small, soft difference. Worth noticing rather than working on.",
+  farApart: "opposite ends",
+  bothHigh: "both up here",
+  bothLow: "neither is high",
+  bothMedium: "meet in the middle",
+  mild: "a soft difference",
 };
 
 function pairShapeKey(shape: string | null | undefined, a?: number, b?: number): PairShapeKey {
