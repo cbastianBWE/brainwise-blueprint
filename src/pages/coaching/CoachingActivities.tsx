@@ -510,12 +510,12 @@ function HistoryTab() {
         .sort((a, b) => b.run - a.run);
       if (!cancelled) setPriorRuns(priors);
 
-      const { data: sess, error: sessErr } = await supabase
+      const { data: sess, error: sessErr } = await (supabase
         .from("coaching_activity_sessions")
         .select("id, activity_id, completed_at, created_at")
         .eq("user_id", user.id)
-        .eq("status", "completed")
-        .eq("run_number" as any, currentRun as any)
+        .eq("status", "completed") as any)
+        .eq("run_number", currentRun)
         .order("completed_at", { ascending: false });
       if (cancelled) return;
       if (sessErr || !sess) {
