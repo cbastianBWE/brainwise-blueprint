@@ -28,6 +28,12 @@ const Onboarding = () => {
   useEffect(() => {
     if (!user || accountTypeLoading || alreadyOnboarded) return;
     (async () => {
+      // Prepaid seat link: claim the seat first so the auto-link path below
+      // sees the new coach_clients row and routes this person as an individual.
+      if (readBulkToken()) {
+        await claimPendingBulkSeat();
+      }
+
       // Coach client auto-link takes precedence
       const { data } = await supabase
         .from("coach_clients_client_view")
