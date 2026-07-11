@@ -1118,6 +1118,15 @@ export default function TeamReport() {
         isCoachView={canSeePrivileged}
         onExportTeam={handleExportTeam}
       />
+      {teamProfileId && (
+        <AddReportCommitmentModal
+          open={commitOpen}
+          onOpenChange={setCommitOpen}
+          reportId={teamProfileId}
+          reportKind="team"
+          suggestions={[]}
+        />
+      )}
     </div>
 
   );
