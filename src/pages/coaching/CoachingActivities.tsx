@@ -1183,8 +1183,17 @@ function ReviewActionPlanDialog({
       });
       if (cancelled) return;
       if (error) {
-        setErr("Couldn't generate your review. Please try again.");
+        const status = (error as any).context?.status;
+        if (status === 402) {
+          toast.error("You've used your coaching runs.", {
+            description: "Upgrade for more.",
+            action: { label: "Upgrade", onClick: () => (window.location.href = "/pricing") },
+          });
+        } else {
+          toast.error("Something went wrong. Please try again.");
+        }
         setLoading(false);
+        onOpenChange(false);
         return;
       }
       if ((data as any)?.activity_count === 0) {
