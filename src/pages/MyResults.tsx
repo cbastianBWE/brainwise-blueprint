@@ -1148,8 +1148,8 @@ export default function MyResults({ isCoachView = false, adminView = false, targ
             </section>
           )}
 
-          {/* Coach/Client view toggle — only when coach is viewing client's NAI result */}
-          {isCoachView && isNAI && (
+          {/* Coach/Client view toggle — only when a coach/admin is viewing another user's NAI result */}
+          {showCoachContent && isNAI && (
             <section>
               <Tabs
                 value={coachViewActive ? "coach" : "client"}
