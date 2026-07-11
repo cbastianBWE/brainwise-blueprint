@@ -543,6 +543,7 @@ function HistoryTab() {
   const [loading, setLoading] = useState(true);
   const [rows, setRows] = useState<HistoryRow[]>([]);
   const [priorRuns, setPriorRuns] = useState<PriorRun[]>([]);
+  const [reviews, setReviews] = useState<SavedReview[]>([]);
 
   useEffect(() => {
     if (!user) return;
