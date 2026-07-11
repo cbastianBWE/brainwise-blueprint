@@ -1175,7 +1175,7 @@ export default function MyResults({ isCoachView = false, adminView = false, targ
               userFullName={displayName ?? null}
               completedAt={selected.completed_at}
               instrumentVersion={selected.result.instrument_version}
-              isCoachView={isCoachView}
+              isCoachView={coachContentActive}
               canTakeAssessments={canTakeAssessments}
               onExportClick={() => setExportModalOpen(true)}
             />
