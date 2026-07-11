@@ -26,6 +26,7 @@ interface ReportRow {
   narrative_status: string;
   computed_at: string | null;
   subjects: string;
+  released_to_subjects: boolean;
 }
 
 function statusBadge(status: string) {
