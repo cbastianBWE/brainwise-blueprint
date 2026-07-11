@@ -13,7 +13,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus, Users } from "lucide-react";
+import { Plus, Users, Eye, EyeOff, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import GenerateReportDialog from "@/components/reports/GenerateReportDialog";
 import ManageReportAccessDialog from "@/components/reports/ManageReportAccessDialog";
 
