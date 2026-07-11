@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import MyResults from "@/pages/MyResults";
 import { CoachClientPlan } from "@/components/development-plan/CoachClientPlan";
 import CoachClientCoaching from "@/components/coaching/CoachClientCoaching";
+import CoachClientChat from "@/components/coach/CoachClientChat";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -264,6 +265,7 @@ function MemberReport({
           <TabsTrigger value="results">Results</TabsTrigger>
           <TabsTrigger value="plan">Development Plan</TabsTrigger>
           <TabsTrigger value="coaching">Coaching</TabsTrigger>
+          <TabsTrigger value="ask-ai">Ask AI</TabsTrigger>
         </TabsList>
         <TabsContent value="results" className="mt-4">
           <MyResults
@@ -279,6 +281,9 @@ function MemberReport({
         </TabsContent>
         <TabsContent value="coaching" className="mt-4">
           <CoachClientCoaching clientUserId={memberId} />
+        </TabsContent>
+        <TabsContent value="ask-ai" className="mt-4">
+          <CoachClientChat subjectUserId={memberId} />
         </TabsContent>
       </Tabs>
     </div>

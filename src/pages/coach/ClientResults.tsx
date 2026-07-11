@@ -9,6 +9,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ArrowLeft, User, FileText, Loader2, Search, AlertCircle } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import CoachClientChat from "@/components/coach/CoachClientChat";
 
 interface ClientInfo {
   id: string;
@@ -591,13 +593,24 @@ function CoachResultsView({
       >
         <ArrowLeft className="h-4 w-4 mr-1" aria-hidden="true" /> Back
       </Button>
-      <MyResults
-        isCoachView
-        targetUserId={userId}
-        preSelectedAssessmentId={assessmentId}
-        coachUserId={coachUserId}
-        permissionLevel={permissionLevel}
-      />
+      <Tabs defaultValue="report">
+        <TabsList className="mb-4">
+          <TabsTrigger value="report">Report</TabsTrigger>
+          <TabsTrigger value="ask-ai">Ask AI</TabsTrigger>
+        </TabsList>
+        <TabsContent value="report">
+          <MyResults
+            isCoachView
+            targetUserId={userId}
+            preSelectedAssessmentId={assessmentId}
+            coachUserId={coachUserId}
+            permissionLevel={permissionLevel}
+          />
+        </TabsContent>
+        <TabsContent value="ask-ai">
+          <CoachClientChat subjectUserId={userId} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
