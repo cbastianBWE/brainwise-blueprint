@@ -364,22 +364,157 @@ function CoachingActivityCard({
   );
 }
 
+interface PriorRun {
+  run: number;
+  summary: { text: string } | null;
+  ended_at: string | null;
+}
+
+function PriorRunItem({ prior, userId }: { prior: PriorRun; userId: string }) {
+  const [rows, setRows] = useState<HistoryRow[] | null>(null);
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+
+  const load = async () => {
+    if (rows !== null || loading) return;
+    setLoading(true);
+    const { data: sess } = await supabase
+      .from("coaching_activity_sessions")
+      .select("id, activity_id, completed_at, created_at")
+      .eq("user_id", userId)
+      .eq("status", "completed")
+      .eq("run_number" as any, prior.run as any)
+      .order("completed_at", { ascending: false });
+    const activityIds = [...new Set((sess || []).map((s) => s.activity_id))];
+    const titleMap = new Map<string, { title: string; tier: string | null }>();
+    if (activityIds.length > 0) {
+      const { data: acts } = await supabase
+        .from("coaching_activities_public")
+        .select("id, title, tier")
+        .in("id", activityIds);
+      for (const a of (acts || []) as { id: string; title: string; tier: string | null }[]) {
+        titleMap.set(a.id, { title: a.title, tier: a.tier });
+      }
+    }
+    setRows(
+      (sess || []).map((s) => ({
+        ...s,
+        coaching_activities: titleMap.get(s.activity_id) || null,
+      })) as HistoryRow[],
+    );
+    setLoading(false);
+  };
+
+  const endedStr = prior.ended_at
+    ? new Date(prior.ended_at).toLocaleDateString(undefined, {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      })
+    : "—";
+
+  return (
+    <Collapsible onOpenChange={(o) => o && load()}>
+      <Card>
+        <CollapsibleTrigger asChild>
+          <button
+            type="button"
+            className="w-full text-left p-4 flex items-center justify-between gap-3 hover:bg-muted/40 rounded-t-lg"
+          >
+            <div className="min-w-0">
+              <p className="text-sm font-medium">Run {prior.run} — ended {endedStr}</p>
+              {prior.summary?.text && (
+                <p className="mt-1 text-xs text-muted-foreground line-clamp-2">
+                  {prior.summary.text}
+                </p>
+              )}
+            </div>
+            <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0 transition-transform data-[state=open]:rotate-180" />
+          </button>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <div className="border-t p-4 space-y-3">
+            {prior.summary?.text && (
+              <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                {prior.summary.text}
+              </p>
+            )}
+            {loading ? (
+              <div className="flex justify-center py-6">
+                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+              </div>
+            ) : rows && rows.length === 0 ? (
+              <p className="text-xs text-muted-foreground">No completed activities in this run.</p>
+            ) : rows ? (
+              <ul className="space-y-2">
+                {rows.map((r) => {
+                  const title = r.coaching_activities?.title || "Coaching session";
+                  const tier = r.coaching_activities?.tier || null;
+                  const when = r.completed_at || r.created_at;
+                  const dateStr = when
+                    ? new Date(when).toLocaleDateString(undefined, {
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                      })
+                    : "";
+                  return (
+                    <li
+                      key={r.id}
+                      className="flex items-center justify-between gap-2 rounded-md border border-border p-2.5 text-sm"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {tier && <Badge variant={tierBadgeVariant(tier)}>{tier}</Badge>}
+                          <span className="text-xs text-muted-foreground">Completed {dateStr}</span>
+                        </div>
+                        <p className="mt-1 truncate">{title}</p>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => navigate(`/coaching/session/${r.id}`)}
+                      >
+                        View
+                      </Button>
+                    </li>
+                  );
+                })}
+              </ul>
+            ) : null}
+          </div>
+        </CollapsibleContent>
+      </Card>
+    </Collapsible>
+  );
+}
+
 function HistoryTab() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [rows, setRows] = useState<HistoryRow[]>([]);
+  const [priorRuns, setPriorRuns] = useState<PriorRun[]>([]);
 
   useEffect(() => {
     if (!user) return;
     let cancelled = false;
     (async () => {
       setLoading(true);
+
+      const { data: runState } = await supabase.rpc("coaching_get_run_state" as any);
+      const currentRun = ((runState as any)?.current_run as number) ?? 1;
+      const priors = (((runState as any)?.prior_runs as PriorRun[]) ?? [])
+        .slice()
+        .sort((a, b) => b.run - a.run);
+      if (!cancelled) setPriorRuns(priors);
+
       const { data: sess, error: sessErr } = await supabase
         .from("coaching_activity_sessions")
         .select("id, activity_id, completed_at, created_at")
         .eq("user_id", user.id)
         .eq("status", "completed")
+        .eq("run_number" as any, currentRun as any)
         .order("completed_at", { ascending: false });
       if (cancelled) return;
       if (sessErr || !sess) {
@@ -420,56 +555,70 @@ function HistoryTab() {
     );
   }
 
-  if (rows.length === 0) {
-    return (
+  const currentList =
+    rows.length === 0 ? (
       <Card>
         <CardContent className="p-10 text-center">
           <History className="mx-auto h-8 w-8 text-muted-foreground" />
           <p className="mt-3 text-sm text-muted-foreground">
-            You haven't completed any coaching activities yet.
+            You haven't completed any coaching activities in this run yet.
           </p>
         </CardContent>
       </Card>
+    ) : (
+      <div className="space-y-3">
+        {rows.map((r) => {
+          const title = r.coaching_activities?.title || "Coaching session";
+          const tier = r.coaching_activities?.tier || null;
+          const when = r.completed_at || r.created_at;
+          const dateStr = when
+            ? new Date(when).toLocaleDateString(undefined, {
+                year: "numeric",
+                month: "short",
+                day: "numeric",
+              })
+            : "";
+          return (
+            <Card key={r.id}>
+              <CardContent className="flex flex-wrap items-center justify-between gap-3 p-4">
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    {tier && <Badge variant={tierBadgeVariant(tier)}>{tier}</Badge>}
+                    <span className="text-xs text-muted-foreground">Completed {dateStr}</span>
+                  </div>
+                  <p className="mt-1 truncate text-sm font-medium">{title}</p>
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => navigate(`/coaching/session/${r.id}`)}
+                >
+                  View
+                </Button>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
     );
-  }
 
   return (
-    <div className="space-y-3">
-      {rows.map((r) => {
-        const title = r.coaching_activities?.title || "Coaching session";
-        const tier = r.coaching_activities?.tier || null;
-        const when = r.completed_at || r.created_at;
-        const dateStr = when
-          ? new Date(when).toLocaleDateString(undefined, {
-              year: "numeric",
-              month: "short",
-              day: "numeric",
-            })
-          : "";
-        return (
-          <Card key={r.id}>
-            <CardContent className="flex flex-wrap items-center justify-between gap-3 p-4">
-              <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  {tier && <Badge variant={tierBadgeVariant(tier)}>{tier}</Badge>}
-                  <span className="text-xs text-muted-foreground">Completed {dateStr}</span>
-                </div>
-                <p className="mt-1 truncate text-sm font-medium">{title}</p>
-              </div>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => navigate(`/coaching/session/${r.id}`)}
-              >
-                View
-              </Button>
-            </CardContent>
-          </Card>
-        );
-      })}
+    <div className="space-y-6">
+      {currentList}
+      {priorRuns.length > 0 && user && (
+        <div className="space-y-3">
+          <h3 className="text-sm font-semibold text-foreground">Previous runs</h3>
+          <div className="space-y-2">
+            {priorRuns.map((p) => (
+              <PriorRunItem key={p.run} prior={p} userId={user.id} />
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+
 
 export default function CoachingActivities() {
   const { user } = useAuth();
