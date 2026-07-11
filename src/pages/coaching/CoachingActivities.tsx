@@ -1054,3 +1054,212 @@ export default function CoachingActivities() {
     </div>
   );
 }
+
+interface ReviewData {
+  summary: string;
+  strengths: string[];
+  watch_outs: string[];
+  action_plan: string[];
+  themes: string[];
+}
+
+function ReviewActionPlanDialog({
+  open,
+  onOpenChange,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+}) {
+  const [loading, setLoading] = useState(false);
+  const [review, setReview] = useState<ReviewData | null>(null);
+  const [empty, setEmpty] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const [history, setHistory] = useState<{ role: "user" | "assistant"; content: string }[]>([]);
+  const [question, setQuestion] = useState("");
+  const [asking, setAsking] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      setErr(null);
+      setReview(null);
+      setEmpty(false);
+      setHistory([]);
+      const { data, error } = await supabase.functions.invoke("coaching-review-action-plan", {
+        body: { mode: "generate" },
+      });
+      if (cancelled) return;
+      if (error) {
+        setErr("Couldn't generate your review. Please try again.");
+        setLoading(false);
+        return;
+      }
+      if ((data as any)?.activity_count === 0) {
+        setEmpty(true);
+        setLoading(false);
+        return;
+      }
+      setReview((data as any)?.review ?? null);
+      setLoading(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [open]);
+
+  const send = async () => {
+    const q = question.trim();
+    if (!q || asking) return;
+    const nextHistory = [...history, { role: "user" as const, content: q }];
+    setHistory(nextHistory);
+    setQuestion("");
+    setAsking(true);
+    const { data, error } = await supabase.functions.invoke("coaching-review-action-plan", {
+      body: { mode: "ask", question: q, history },
+    });
+    setAsking(false);
+    if (error) {
+      toast.error("Couldn't get an answer. Please try again.");
+      return;
+    }
+    const answer = ((data as any)?.answer as string) ?? "";
+    setHistory([...nextHistory, { role: "assistant", content: answer }]);
+  };
+
+  const Section = ({ title, items }: { title: string; items: string[] }) => {
+    if (!items || items.length === 0) return null;
+    return (
+      <div className="space-y-1.5">
+        <h4 className="text-sm font-semibold">{title}</h4>
+        <ul className="list-disc pl-5 space-y-1 text-sm text-muted-foreground">
+          {items.map((s, i) => (
+            <li key={i}>{s}</li>
+          ))}
+        </ul>
+      </div>
+    );
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Review & Action Plan</DialogTitle>
+          <DialogDescription>
+            A synthesis of your work in this run, with room for follow-up questions.
+          </DialogDescription>
+        </DialogHeader>
+
+        {loading ? (
+          <div className="flex justify-center py-12">
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          </div>
+        ) : err ? (
+          <p className="text-sm text-destructive">{err}</p>
+        ) : empty ? (
+          <p className="text-sm text-muted-foreground py-4">
+            You haven't completed any activities in this run yet.
+          </p>
+        ) : review ? (
+          <div className="space-y-5">
+            {review.summary && (
+              <div className="space-y-1.5">
+                <h4 className="text-sm font-semibold">Summary</h4>
+                <p className="text-sm text-muted-foreground whitespace-pre-wrap">{review.summary}</p>
+              </div>
+            )}
+            <Section title="Strengths" items={review.strengths} />
+            <Section title="Watch-outs" items={review.watch_outs} />
+            <Section title="Action plan" items={review.action_plan} />
+            <Section title="Themes" items={review.themes} />
+
+            <div className="border-t pt-4 space-y-3">
+              <h4 className="text-sm font-semibold">Ask a question</h4>
+              {history.length > 0 && (
+                <div className="space-y-2 max-h-64 overflow-y-auto rounded-md border border-border p-3">
+                  {history.map((m, i) => (
+                    <div
+                      key={i}
+                      className={
+                        m.role === "user"
+                          ? "text-sm"
+                          : "text-sm text-muted-foreground whitespace-pre-wrap"
+                      }
+                    >
+                      <span className="text-xs uppercase tracking-wide mr-2 opacity-70">
+                        {m.role === "user" ? "You" : "Coach"}
+                      </span>
+                      {m.content}
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div className="flex gap-2 items-start">
+                <Textarea
+                  value={question}
+                  onChange={(e) => setQuestion(e.target.value)}
+                  placeholder="e.g. Which action should I start with this week?"
+                  rows={2}
+                  className="flex-1"
+                />
+                <Button onClick={send} disabled={asking || !question.trim()}>
+                  {asking ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                </Button>
+              </div>
+            </div>
+          </div>
+        ) : null}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function FreshStartConfirm({
+  open,
+  onOpenChange,
+  onDone,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  onDone: () => void;
+}) {
+  const [submitting, setSubmitting] = useState(false);
+
+  const confirm = async () => {
+    setSubmitting(true);
+    const { error } = await supabase.functions.invoke("coaching-fresh-start");
+    setSubmitting(false);
+    if (error) {
+      toast.error("Couldn't start fresh. Please try again.");
+      return;
+    }
+    toast.success("Fresh start complete — your journey has been reset.");
+    onOpenChange(false);
+    onDone();
+  };
+
+  return (
+    <AlertDialog open={open} onOpenChange={onOpenChange}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Start fresh?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Your current summary is cleared and rebuilt from your Personal Threat Profile,
+            and your journey resets so you can go through the activities again. Nothing is
+            lost — your previous work is saved and shown under "Previous runs" in your History.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={submitting}>Cancel</AlertDialogCancel>
+          <AlertDialogAction onClick={(e) => { e.preventDefault(); confirm(); }} disabled={submitting}>
+            {submitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+            Start fresh
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+
