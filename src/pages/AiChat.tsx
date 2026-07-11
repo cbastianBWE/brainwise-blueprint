@@ -20,7 +20,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { MessageSquare, Send, Loader2, History, Save, AlertTriangle, Search } from "lucide-react";
+import { MessageSquare, Send, Loader2, History, Save, AlertTriangle, Search, Paperclip, FileText } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import UsageCounter from "@/components/ai/UsageCounter";
@@ -98,6 +98,9 @@ export default function AiChat() {
   const [tier, setTier] = useState<string>("base");
   const [message, setMessage] = useState<string>("");
   const [sending, setSending] = useState<boolean>(false);
+  const [attachedDocs, setAttachedDocs] = useState<Array<{ id: string; file_name: string }>>([]);
+  const [uploadingDoc, setUploadingDoc] = useState<boolean>(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [allAssessments, setAllAssessments] = useState<AssessmentOption[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -401,6 +404,35 @@ export default function AiChat() {
     [user],
   );
 
+  const handleAttachDoc = async (file: File) => {
+    setUploadingDoc(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      if (sessionId) fd.append("chat_session_id", sessionId);
+      const { data, error } = await supabase.functions.invoke("upload-chat-doc", { body: fd });
+      if (error || !data?.success) {
+        toast.error(data?.message || error?.message || "Couldn't process that document.");
+        return;
+      }
+      setAttachedDocs((prev) => [...prev, { id: data.document.id, file_name: data.document.file_name }]);
+      if (data.was_truncated) {
+        toast.warning("That document was large — only the first part was kept as context.");
+      } else {
+        toast.success(`Attached ${data.document.file_name}.`);
+      }
+    } catch (e) {
+      toast.error("Couldn't upload that document.");
+    } finally {
+      setUploadingDoc(false);
+    }
+  };
+
+  const removeAttachedDoc = async (id: string) => {
+    setAttachedDocs((prev) => prev.filter((d) => d.id !== id));
+    await supabase.from("chat_session_documents").delete().eq("id", id);
+  };
+
   const handleSend = useCallback(async () => {
     if (!message.trim() || sending) return;
     const userMsg = message.trim();
@@ -436,6 +468,7 @@ export default function AiChat() {
           message: userMsg,
           conversation_history: history,
           assessment_result_ids: ownSelected,
+          document_ids: attachedDocs.map((d) => d.id),
           peer_result_ids: peerSelected,
           peer_labels: peerLabels,
           subscription_tier: tier,
@@ -490,6 +523,7 @@ export default function AiChat() {
     sessionId,
     isCorp,
     fetchCorpUsage,
+    attachedDocs,
   ]);
 
   const handleEndChat = async () => {
@@ -808,6 +842,25 @@ export default function AiChat() {
               </div>
             )}
 
+            {attachedDocs.length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-2">
+                {attachedDocs.map((d) => (
+                  <span key={d.id} className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs bg-muted/40">
+                    <FileText className="h-3 w-3 shrink-0" />
+                    <span className="max-w-[160px] truncate">{d.file_name}</span>
+                    <button
+                      type="button"
+                      onClick={() => removeAttachedDoc(d.id)}
+                      className="ml-0.5 text-muted-foreground hover:text-foreground"
+                      aria-label={`Remove ${d.file_name}`}
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+
             <div className="flex gap-2">
               <Textarea
                 ref={textareaRef}
@@ -824,6 +877,28 @@ export default function AiChat() {
                   }
                 }}
               />
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".pdf,.docx,.pptx,.txt,.md"
+                hidden
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) handleAttachDoc(f);
+                  e.currentTarget.value = "";
+                }}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="self-end"
+                disabled={uploadingDoc || sending}
+                title="Attach a document (PDF, DOCX, PPTX, TXT, MD)"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                {uploadingDoc ? <Loader2 className="h-4 w-4 animate-spin" /> : <Paperclip className="h-4 w-4" />}
+              </Button>
               <Button
                 onClick={handleSend}
                 disabled={

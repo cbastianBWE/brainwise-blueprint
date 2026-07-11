@@ -1577,6 +1577,74 @@ export type Database = {
           },
         ]
       }
+      chat_session_documents: {
+        Row: {
+          chat_session_id: string | null
+          created_at: string
+          extracted_text: string
+          extracted_text_token_count: number
+          file_name: string
+          file_size_bytes: number
+          id: string
+          mime_type: string
+          user_id: string
+          was_truncated: boolean
+        }
+        Insert: {
+          chat_session_id?: string | null
+          created_at?: string
+          extracted_text: string
+          extracted_text_token_count: number
+          file_name: string
+          file_size_bytes: number
+          id?: string
+          mime_type: string
+          user_id: string
+          was_truncated?: boolean
+        }
+        Update: {
+          chat_session_id?: string | null
+          created_at?: string
+          extracted_text?: string
+          extracted_text_token_count?: number
+          file_name?: string
+          file_size_bytes?: number
+          id?: string
+          mime_type?: string
+          user_id?: string
+          was_truncated?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_session_documents_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_session_documents_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "chat_session_documents_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_session_documents_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chat_sessions: {
         Row: {
           assessment_result_ids: string[]
@@ -3065,6 +3133,62 @@ export type Database = {
           },
           {
             foreignKeyName: "coaching_response_media_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      coaching_reviews: {
+        Row: {
+          activity_count: number
+          created_at: string
+          id: string
+          review: Json
+          run_number: number
+          user_id: string
+        }
+        Insert: {
+          activity_count?: number
+          created_at?: string
+          id?: string
+          review: Json
+          run_number?: number
+          user_id: string
+        }
+        Update: {
+          activity_count?: number
+          created_at?: string
+          id?: string
+          review?: Json
+          run_number?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coaching_reviews_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coaching_reviews_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "coaching_reviews_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coaching_reviews_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "users"
