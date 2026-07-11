@@ -10,6 +10,7 @@ import { Loader2, Info, Eye, EyeOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { TOS_VERSION, PRIVACY_VERSION } from "@/lib/legalVersions";
 import { setPendingNewsletterOptIn } from "@/lib/newsletterOptInIntent";
+import { stashBulkToken, claimPendingBulkSeat } from "@/lib/bulkSeatClaim";
 
 const CERT_LABELS: Record<string, string> = {
   ptp_coach: 'PTP Certified Coach',
@@ -41,6 +42,11 @@ const SignUp = () => {
     certification_type: string;
   } | null>(null);
   const [tokenLoading, setTokenLoading] = useState(false);
+  const navigate = useNavigate();
+  const [bulkInfo, setBulkInfo] = useState<{
+    valid: boolean; reason: string; coach_name: string | null;
+    instrument_name: string | null; seats_remaining: number | null;
+  } | null>(null);
 
   useEffect(() => {
     // Pre-fill email from ?email= query param (client invitation flow)
@@ -71,6 +77,20 @@ const SignUp = () => {
       }
       setTokenLoading(false);
     })();
+  }, [searchParams]);
+
+  useEffect(() => {
+    const bulk = searchParams.get("bulk");
+    if (!bulk) return;
+    stashBulkToken(bulk);
+    (async () => {
+      const claimed = await claimPendingBulkSeat();
+      if (claimed) { navigate("/my-results"); return; }
+      const { data } = await supabase.rpc("coach_bulk_link_public_info" as any, { p_token: bulk } as any);
+      const row = (data as any[])?.[0];
+      if (row) setBulkInfo(row);
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
   const validatePassword = (pw: string) => ({
@@ -179,6 +199,29 @@ const SignUp = () => {
           <CardDescription>Join BrainWise to get started</CardDescription>
         </CardHeader>
         <CardContent>
+          {bulkInfo && (
+            <div className="flex items-start gap-2 rounded-md border border-primary/30 bg-primary/5 p-3 mb-4">
+              <Info className="h-5 w-5 text-primary mt-0.5 shrink-0" />
+              <p className="text-sm text-foreground">
+                {bulkInfo.valid ? (
+                  <>
+                    {bulkInfo.coach_name ? <strong>{bulkInfo.coach_name}</strong> : "Your coach"} has
+                    prepaid a <strong>{bulkInfo.instrument_name ?? "BrainWise"}</strong> assessment for you.
+                    Create your account and it will be added automatically
+                    {typeof bulkInfo.seats_remaining === "number" ? ` (${bulkInfo.seats_remaining} seats left)` : ""}.
+                  </>
+                ) : bulkInfo.reason === "exhausted" ? (
+                  <>This assessment link is full — all seats have been claimed. Ask your coach for a new link.</>
+                ) : bulkInfo.reason === "expired" ? (
+                  <>This assessment link has expired. Ask your coach for a new one.</>
+                ) : bulkInfo.reason === "not_yet_active" ? (
+                  <>This assessment link isn't active yet. Check back shortly.</>
+                ) : (
+                  <>This assessment link is no longer valid. You can still create an account below.</>
+                )}
+              </p>
+            </div>
+          )}
           {coachInvitation && (
             <div className="flex items-start gap-2 rounded-md border border-primary/30 bg-primary/5 p-3 mb-4">
               <Info className="h-5 w-5 text-primary mt-0.5 shrink-0" />

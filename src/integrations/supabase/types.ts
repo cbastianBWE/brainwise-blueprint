@@ -1639,6 +1639,90 @@ export type Database = {
           },
         ]
       }
+      coach_bulk_links: {
+        Row: {
+          coach_note: string | null
+          coach_user_id: string
+          created_at: string
+          expires_at: string | null
+          id: string
+          instrument_id: string
+          paid_at: string | null
+          seats_claimed: number
+          seats_total: number
+          status: string
+          stripe_payment_intent_id: string | null
+          token: string
+          total_amount: number | null
+        }
+        Insert: {
+          coach_note?: string | null
+          coach_user_id: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          instrument_id: string
+          paid_at?: string | null
+          seats_claimed?: number
+          seats_total: number
+          status?: string
+          stripe_payment_intent_id?: string | null
+          token: string
+          total_amount?: number | null
+        }
+        Update: {
+          coach_note?: string | null
+          coach_user_id?: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          instrument_id?: string
+          paid_at?: string | null
+          seats_claimed?: number
+          seats_total?: number
+          status?: string
+          stripe_payment_intent_id?: string | null
+          token?: string
+          total_amount?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coach_bulk_links_coach_user_id_fkey"
+            columns: ["coach_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coach_bulk_links_coach_user_id_fkey"
+            columns: ["coach_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "coach_bulk_links_coach_user_id_fkey"
+            columns: ["coach_user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coach_bulk_links_coach_user_id_fkey"
+            columns: ["coach_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coach_bulk_links_instrument_id_fkey"
+            columns: ["instrument_id"]
+            isOneToOne: false
+            referencedRelation: "instruments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       coach_certification_actors: {
         Row: {
           access_code: string
@@ -1891,6 +1975,7 @@ export type Database = {
         Row: {
           actor_id: string | null
           assessment_id: string | null
+          bulk_link_id: string | null
           client_email: string
           client_first_name: string | null
           client_last_name: string | null
@@ -1921,6 +2006,7 @@ export type Database = {
         Insert: {
           actor_id?: string | null
           assessment_id?: string | null
+          bulk_link_id?: string | null
           client_email: string
           client_first_name?: string | null
           client_last_name?: string | null
@@ -1951,6 +2037,7 @@ export type Database = {
         Update: {
           actor_id?: string | null
           assessment_id?: string | null
+          bulk_link_id?: string | null
           client_email?: string
           client_first_name?: string | null
           client_last_name?: string | null
@@ -1991,6 +2078,13 @@ export type Database = {
             columns: ["assessment_id"]
             isOneToOne: false
             referencedRelation: "assessments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coach_clients_bulk_link_id_fkey"
+            columns: ["bulk_link_id"]
+            isOneToOne: false
+            referencedRelation: "coach_bulk_links"
             referencedColumns: ["id"]
           },
           {
@@ -14051,6 +14145,38 @@ export type Database = {
         Returns: Json
       }
       close_chat_session: { Args: { p_session_id: string }; Returns: undefined }
+      coach_bulk_link_claim: {
+        Args: { p_token: string }
+        Returns: {
+          already_claimed: boolean
+          coach_client_id: string
+          coach_user_id: string
+          instrument_id: string
+        }[]
+      }
+      coach_bulk_link_create: {
+        Args: {
+          p_coach_note?: string
+          p_instrument_id: string
+          p_seats: number
+        }
+        Returns: {
+          link_id: string
+          seats: number
+          token: string
+          total_amount: number
+        }[]
+      }
+      coach_bulk_link_public_info: {
+        Args: { p_token: string }
+        Returns: {
+          coach_name: string
+          instrument_name: string
+          reason: string
+          seats_remaining: number
+          valid: boolean
+        }[]
+      }
       coach_invitation_revoke: {
         Args: { p_coach_client_id: string }
         Returns: {

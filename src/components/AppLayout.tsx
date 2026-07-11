@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { CoachDisclosureGate } from "@/components/coach/CoachDisclosureGate";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
+import { readBulkToken, claimPendingBulkSeat } from "@/lib/bulkSeatClaim";
 
 interface CouponData {
   stripe_coupon_id: string | null;
@@ -20,6 +21,17 @@ export default function AppLayout() {
   const navigate = useNavigate();
   const [couponData, setCouponData] = useState<CouponData | null>(null);
   const [dismissed, setDismissed] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    if (!readBulkToken()) return;
+    let done = false;
+    (async () => {
+      if (done) return;
+      await claimPendingBulkSeat();
+    })();
+    return () => { done = true; };
+  }, [user]);
 
   useEffect(() => {
     if (!user) return;

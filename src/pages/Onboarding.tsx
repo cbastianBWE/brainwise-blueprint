@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { User, Building2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { readBulkToken, claimPendingBulkSeat } from "@/lib/bulkSeatClaim";
 
 const PENDING_INVITE_KEY = "pending_invite_code";
 
@@ -27,6 +28,12 @@ const Onboarding = () => {
   useEffect(() => {
     if (!user || accountTypeLoading || alreadyOnboarded) return;
     (async () => {
+      // Prepaid seat link: claim the seat first so the auto-link path below
+      // sees the new coach_clients row and routes this person as an individual.
+      if (readBulkToken()) {
+        await claimPendingBulkSeat();
+      }
+
       // Coach client auto-link takes precedence
       const { data } = await supabase
         .from("coach_clients_client_view")

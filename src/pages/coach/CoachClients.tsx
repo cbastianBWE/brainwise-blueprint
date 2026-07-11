@@ -21,11 +21,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import {
-  Users, ClipboardCheck, Clock, Plus, Send, Eye, Mail, ArrowLeft, ChevronDown, Loader2, AlertCircle,
+  Users, ClipboardCheck, Clock, Plus, Send, Eye, Mail, ArrowLeft, ChevronDown, Loader2, AlertCircle, Copy,
 } from "lucide-react";
 import { format } from "date-fns";
 import BulkInviteModal from "@/components/coach/BulkInviteModal";
 import ShareableLinkModal from "@/components/coach/ShareableLinkModal";
+import BulkSeatLinkModal from "@/components/coach/BulkSeatLinkModal";
 import PendingInvitations from "@/components/coach/PendingInvitations";
 import { INSTRUMENTS as CANONICAL_INSTRUMENTS } from "@/lib/instruments";
 import { escHtml } from "@/lib/escHtml";
@@ -127,6 +128,8 @@ export default function CoachClients() {
   const [certsLoaded, setCertsLoaded] = useState(false);
   const [bulkModalOpen, setBulkModalOpen] = useState(false);
   const [shareableModalOpen, setShareableModalOpen] = useState(false);
+  const [seatLinkModalOpen, setSeatLinkModalOpen] = useState(false);
+  const [seatLinks, setSeatLinks] = useState<Array<{ id: string; token: string; instrument_id: string; seats_total: number; seats_claimed: number; status: string; coach_note: string | null; created_at: string }>>([]);
   const [activeTab, setActiveTab] = useState<"clients" | "pending">("clients");
   const [perAssessmentPrice, setPerAssessmentPrice] = useState<number | null>(null);
   const [actorCert, setActorCert] = useState<{ id: string; certification_type: string; status: string; free_uses_expire_at: string | null } | null>(null);
@@ -263,7 +266,28 @@ export default function CoachClients() {
     }
   };
 
-  useEffect(() => { fetchClients(); }, [user]);
+  const fetchSeatLinks = async () => {
+    if (!user) return;
+    const { data, error } = await supabase
+      .from("coach_bulk_links" as any)
+      .select("id, token, instrument_id, seats_total, seats_claimed, status, coach_note, created_at")
+      .eq("coach_user_id", user.id)
+      .in("status", ["active", "exhausted"])
+      .order("created_at", { ascending: false });
+    if (!error && data) setSeatLinks(data as any);
+  };
+
+  const seatLinkInstrumentName = (uuid: string) => {
+    const map: Record<string, string> = {
+      "02618e9a-d411-44cf-b316-fe368edeac03": "PTP",
+      "77d1290f-1daf-44e0-931f-b9b8ad185520": "NAI",
+      "abb62120-8cc8-435f-babc-dd6a27fbc235": "AIRSA",
+      "90216d9d-153c-4b7b-abe0-1d7845c9e6e0": "HSS",
+    };
+    return map[uuid] ?? "Assessment";
+  };
+
+  useEffect(() => { fetchClients(); fetchSeatLinks(); }, [user]);
 
   useEffect(() => {
     if (!user) return;
@@ -358,6 +382,21 @@ export default function CoachClients() {
       const newUrl = window.location.pathname + (params.toString() ? `?${params.toString()}` : "");
       window.history.replaceState({}, "", newUrl);
     }
+  }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("checkout") === "bulk_success") {
+      toast.success("Seat link is live", {
+        description: "Your prepaid link is ready to share below.",
+      });
+      fetchSeatLinks();
+      params.delete("checkout");
+      params.delete("session_id");
+      const newUrl = window.location.pathname + (params.toString() ? `?${params.toString()}` : "");
+      window.history.replaceState({}, "", newUrl);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const refreshFreePool = async () => {
@@ -1049,6 +1088,12 @@ export default function CoachClients() {
                   Generate shareable link
                 </DropdownMenuItem>
               )}
+              <DropdownMenuItem
+                onClick={() => setSeatLinkModalOpen(true)}
+                disabled={certsLoaded && allowedInstrumentIds.size === 0}
+              >
+                Generate prepaid seat link
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         )}
@@ -1118,6 +1163,14 @@ export default function CoachClients() {
           perAssessmentPrice={perAssessmentPrice}
           onComplete={() => { setShareableModalOpen(false); fetchClients(); }}
         />
+
+        <BulkSeatLinkModal
+          open={seatLinkModalOpen}
+          onOpenChange={setSeatLinkModalOpen}
+          allowedInstrumentIds={allowedInstrumentIds}
+          perAssessmentPrice={perAssessmentPrice}
+          onComplete={() => { setSeatLinkModalOpen(false); fetchSeatLinks(); }}
+        />
       </div>
 
       {/* Stat cards */}
@@ -1159,6 +1212,55 @@ export default function CoachClients() {
           </CardContent>
         </Card>
       </div>
+
+      {seatLinks.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Prepaid Seat Links</CardTitle>
+            <CardDescription>
+              Share these links. Each signup uses one prepaid seat.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {seatLinks.map(link => {
+              const url = `${window.location.origin}/signup?bulk=${link.token}`;
+              const remaining = Math.max(link.seats_total - link.seats_claimed, 0);
+              const exhausted = link.status === "exhausted" || remaining === 0;
+              return (
+                <div key={link.id} className="flex items-start justify-between gap-4 rounded-md border p-3">
+                  <div className="min-w-0 flex-1 space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">{seatLinkInstrumentName(link.instrument_id)}</span>
+                      <Badge variant={exhausted ? "secondary" : "default"}>
+                        {exhausted ? "Full" : "Active"}
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      {link.seats_claimed} of {link.seats_total} seats used · {remaining} remaining
+                    </p>
+                    {link.coach_note && (
+                      <p className="text-xs text-muted-foreground italic">"{link.coach_note}"</p>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Input readOnly value={url} className="w-64 text-xs" onFocus={(e) => e.currentTarget.select()} />
+                    <Button
+                      size="icon"
+                      variant="outline"
+                      onClick={() => { navigator.clipboard.writeText(url); toast.success("Link copied"); }}
+                      aria-label="Copy link"
+                    >
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              );
+            })}
+          </CardContent>
+        </Card>
+      )}
+
+
 
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "clients" | "pending")}>
         <TabsList className="grid w-full max-w-md grid-cols-2">
