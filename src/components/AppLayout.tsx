@@ -24,6 +24,17 @@ export default function AppLayout() {
 
   useEffect(() => {
     if (!user) return;
+    if (!readBulkToken()) return;
+    let done = false;
+    (async () => {
+      if (done) return;
+      await claimPendingBulkSeat();
+    })();
+    return () => { done = true; };
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
     const fetchCoupon = async () => {
       const { data } = await supabase
         .from("users")
