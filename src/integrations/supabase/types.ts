@@ -14455,10 +14455,12 @@ export type Database = {
           reason: string
         }[]
       }
+      coaching_current_run: { Args: never; Returns: number }
       coaching_fresh_start_rotate: {
         Args: { p_baseline: Json; p_user: string }
         Returns: number
       }
+      coaching_get_run_state: { Args: never; Returns: Json }
       coaching_group_access: {
         Args: never
         Returns: {
