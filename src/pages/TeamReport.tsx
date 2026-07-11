@@ -764,7 +764,7 @@ export default function TeamReport() {
             </div>
           </div>
           {status === "complete" && (
-            <div style={{ marginTop: 20 }}>
+            <div style={{ marginTop: 20, display: "flex", gap: 8, flexWrap: "wrap" }}>
               <Button
                 variant="outline"
                 size="sm"
@@ -773,6 +773,14 @@ export default function TeamReport() {
               >
                 <FileText className="mr-2 h-4 w-4" />
                 Export PDF
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCommitOpen(true)}
+                style={{ background: "#fff", color: NAVY, borderColor: "transparent" }}
+              >
+                Add to development plan
               </Button>
             </div>
           )}
