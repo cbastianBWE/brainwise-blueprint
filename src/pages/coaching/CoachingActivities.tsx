@@ -385,7 +385,8 @@ function PriorRunItem({ prior, userId }: { prior: PriorRun; userId: string }) {
       .eq("status", "completed") as any)
       .eq("run_number", prior.run)
       .order("completed_at", { ascending: false });
-    const activityIds = [...new Set((sess || []).map((s) => s.activity_id))];
+    const sessRows = ((sess as any) || []) as { id: string; activity_id: string; completed_at: string | null; created_at: string }[];
+    const activityIds = [...new Set(sessRows.map((s) => s.activity_id))];
     const titleMap = new Map<string, { title: string; tier: string | null }>();
     if (activityIds.length > 0) {
       const { data: acts } = await supabase
