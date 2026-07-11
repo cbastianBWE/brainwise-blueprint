@@ -591,13 +591,24 @@ function CoachResultsView({
       >
         <ArrowLeft className="h-4 w-4 mr-1" aria-hidden="true" /> Back
       </Button>
-      <MyResults
-        isCoachView
-        targetUserId={userId}
-        preSelectedAssessmentId={assessmentId}
-        coachUserId={coachUserId}
-        permissionLevel={permissionLevel}
-      />
+      <Tabs defaultValue="report">
+        <TabsList className="mb-4">
+          <TabsTrigger value="report">Report</TabsTrigger>
+          <TabsTrigger value="ask-ai">Ask AI</TabsTrigger>
+        </TabsList>
+        <TabsContent value="report">
+          <MyResults
+            isCoachView
+            targetUserId={userId}
+            preSelectedAssessmentId={assessmentId}
+            coachUserId={coachUserId}
+            permissionLevel={permissionLevel}
+          />
+        </TabsContent>
+        <TabsContent value="ask-ai">
+          <CoachClientChat subjectUserId={userId} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
