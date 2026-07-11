@@ -519,6 +519,7 @@ export async function generatePairedProfilePdf(
       asLines(s.needs.a_needs_from_b).map(nm),
       `What ${data.firstB} needs from ${data.firstA}`,
       asLines(s.needs.b_needs_from_a).map(nm),
+      { bulleted: true },
     );
   }
 
