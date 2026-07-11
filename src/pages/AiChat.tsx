@@ -842,6 +842,25 @@ export default function AiChat() {
               </div>
             )}
 
+            {attachedDocs.length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-2">
+                {attachedDocs.map((d) => (
+                  <span key={d.id} className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs bg-muted/40">
+                    <FileText className="h-3 w-3 shrink-0" />
+                    <span className="max-w-[160px] truncate">{d.file_name}</span>
+                    <button
+                      type="button"
+                      onClick={() => removeAttachedDoc(d.id)}
+                      className="ml-0.5 text-muted-foreground hover:text-foreground"
+                      aria-label={`Remove ${d.file_name}`}
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+
             <div className="flex gap-2">
               <Textarea
                 ref={textareaRef}
@@ -858,6 +877,28 @@ export default function AiChat() {
                   }
                 }}
               />
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".pdf,.docx,.pptx,.txt,.md"
+                hidden
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) handleAttachDoc(f);
+                  e.currentTarget.value = "";
+                }}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="self-end"
+                disabled={uploadingDoc || sending}
+                title="Attach a document (PDF, DOCX, PPTX, TXT, MD)"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                {uploadingDoc ? <Loader2 className="h-4 w-4 animate-spin" /> : <Paperclip className="h-4 w-4" />}
+              </Button>
               <Button
                 onClick={handleSend}
                 disabled={
