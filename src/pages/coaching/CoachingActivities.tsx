@@ -490,12 +490,60 @@ function PriorRunItem({ prior, userId }: { prior: PriorRun; userId: string }) {
   );
 }
 
+interface ReviewData {
+  summary?: string;
+  strengths?: string[];
+  watch_outs?: string[];
+  action_plan?: string[];
+  themes?: string[];
+}
+
+interface SavedReview {
+  id: string;
+  run_number: number;
+  review: ReviewData;
+  activity_count: number;
+  created_at: string;
+}
+
+function ReviewBulletSection({ title, items }: { title: string; items?: string[] }) {
+  if (!items || items.length === 0) return null;
+  return (
+    <div className="space-y-1.5">
+      <h4 className="text-sm font-semibold">{title}</h4>
+      <ul className="list-disc pl-5 space-y-1 text-sm text-muted-foreground">
+        {items.map((s, i) => (
+          <li key={i}>{s}</li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function ReviewBody({ review }: { review: ReviewData }) {
+  return (
+    <div className="space-y-5">
+      {review.summary && (
+        <div className="space-y-1.5">
+          <h4 className="text-sm font-semibold">Summary</h4>
+          <p className="text-sm text-muted-foreground whitespace-pre-wrap">{review.summary}</p>
+        </div>
+      )}
+      <ReviewBulletSection title="Strengths" items={review.strengths} />
+      <ReviewBulletSection title="Watch-outs" items={review.watch_outs} />
+      <ReviewBulletSection title="Action plan" items={review.action_plan} />
+      <ReviewBulletSection title="Themes" items={review.themes} />
+    </div>
+  );
+}
+
 function HistoryTab() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [rows, setRows] = useState<HistoryRow[]>([]);
   const [priorRuns, setPriorRuns] = useState<PriorRun[]>([]);
+  const [reviews, setReviews] = useState<SavedReview[]>([]);
 
   useEffect(() => {
     if (!user) return;
@@ -509,6 +557,14 @@ function HistoryTab() {
         .slice()
         .sort((a, b) => b.run - a.run);
       if (!cancelled) setPriorRuns(priors);
+
+      const { data: revs } = await (supabase
+        .from("coaching_reviews" as any)
+        .select("id, run_number, review, activity_count, created_at")
+        .eq("user_id", user.id) as any)
+        .order("created_at", { ascending: false });
+      if (!cancelled) setReviews(((revs as any[]) ?? []) as SavedReview[]);
+
 
       const { data: sess, error: sessErr } = await (supabase
         .from("coaching_activity_sessions")
@@ -606,6 +662,46 @@ function HistoryTab() {
 
   return (
     <div className="space-y-6">
+      {reviews.length > 0 && (
+        <div className="space-y-3">
+          <h3 className="text-sm font-semibold text-foreground">Reviews & Action Plans</h3>
+          <div className="space-y-2">
+            {reviews.map((r) => {
+              const when = new Date(r.created_at).toLocaleDateString(undefined, {
+                year: "numeric",
+                month: "short",
+                day: "numeric",
+              });
+              return (
+                <Collapsible key={r.id}>
+                  <Card>
+                    <CollapsibleTrigger asChild>
+                      <button
+                        type="button"
+                        className="w-full text-left p-4 flex items-center justify-between gap-3 hover:bg-muted/40 rounded-t-lg"
+                      >
+                        <div className="min-w-0 flex flex-wrap items-center gap-2">
+                          <span className="text-sm font-medium">{when}</span>
+                          <Badge variant="secondary">Run {r.run_number}</Badge>
+                          <span className="text-xs text-muted-foreground">
+                            {r.activity_count} {r.activity_count === 1 ? "activity" : "activities"}
+                          </span>
+                        </div>
+                        <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0 transition-transform data-[state=open]:rotate-180" />
+                      </button>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <div className="border-t p-4">
+                        <ReviewBody review={r.review || {}} />
+                      </div>
+                    </CollapsibleContent>
+                  </Card>
+                </Collapsible>
+              );
+            })}
+          </div>
+        </div>
+      )}
       {currentList}
       {priorRuns.length > 0 && user && (
         <div className="space-y-3">
@@ -1055,13 +1151,8 @@ export default function CoachingActivities() {
   );
 }
 
-interface ReviewData {
-  summary: string;
-  strengths: string[];
-  watch_outs: string[];
-  action_plan: string[];
-  themes: string[];
-}
+
+
 
 function ReviewActionPlanDialog({
   open,
@@ -1128,20 +1219,6 @@ function ReviewActionPlanDialog({
     setHistory([...nextHistory, { role: "assistant", content: answer }]);
   };
 
-  const Section = ({ title, items }: { title: string; items: string[] }) => {
-    if (!items || items.length === 0) return null;
-    return (
-      <div className="space-y-1.5">
-        <h4 className="text-sm font-semibold">{title}</h4>
-        <ul className="list-disc pl-5 space-y-1 text-sm text-muted-foreground">
-          {items.map((s, i) => (
-            <li key={i}>{s}</li>
-          ))}
-        </ul>
-      </div>
-    );
-  };
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
@@ -1164,16 +1241,7 @@ function ReviewActionPlanDialog({
           </p>
         ) : review ? (
           <div className="space-y-5">
-            {review.summary && (
-              <div className="space-y-1.5">
-                <h4 className="text-sm font-semibold">Summary</h4>
-                <p className="text-sm text-muted-foreground whitespace-pre-wrap">{review.summary}</p>
-              </div>
-            )}
-            <Section title="Strengths" items={review.strengths} />
-            <Section title="Watch-outs" items={review.watch_outs} />
-            <Section title="Action plan" items={review.action_plan} />
-            <Section title="Themes" items={review.themes} />
+            <ReviewBody review={review} />
 
             <div className="border-t pt-4 space-y-3">
               <h4 className="text-sm font-semibold">Ask a question</h4>
