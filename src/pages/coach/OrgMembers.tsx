@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import MyResults from "@/pages/MyResults";
 import { CoachClientPlan } from "@/components/development-plan/CoachClientPlan";
 import CoachClientCoaching from "@/components/coaching/CoachClientCoaching";
+import CoachClientChat from "@/components/coach/CoachClientChat";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
