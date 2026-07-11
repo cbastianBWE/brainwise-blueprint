@@ -88,39 +88,89 @@ function paragraphs(ctx: PdfContext, text: string): void {
   }
 }
 
+interface ColLine {
+  text: string;
+  x: number;
+}
+
 function twoColumn(
   ctx: PdfContext,
   leftTitle: string,
   leftBody: string[],
   rightTitle: string,
   rightBody: string[],
+  opts: { bulleted?: boolean } = {},
 ): void {
   const { doc } = ctx;
+  const bulleted = opts.bulleted ?? false;
   const colGap = 6;
   const colW = (CONTENT_W - colGap) / 2;
-  const startY = ctx.y;
-  const renderCol = (title: string, body: string[], x: number) => {
-    ctx.y = startY;
+  const lineH = 4.5;
+  const leftX = MARGIN_L;
+  const rightX = MARGIN_L + colW + colGap;
+
+  doc.setFont("Montserrat", "normal");
+  doc.setFontSize(9);
+  const bulletW = doc.getTextWidth("• ");
+
+  const wrapCol = (body: string[], x: number): ColLine[] => {
+    doc.setFont("Montserrat", "normal");
+    doc.setFontSize(9);
+    const out: ColLine[] = [];
+    body.forEach((raw, idx) => {
+      const clean = cleanMarkdown(raw);
+      if (!clean) return;
+      if (bulleted) {
+        const wrapped: string[] = doc.splitTextToSize(clean, colW - 5 - bulletW);
+        wrapped.forEach((ln, i) => {
+          out.push({ text: i === 0 ? "• " + ln : ln, x: i === 0 ? x : x + bulletW });
+        });
+      } else {
+        const wrapped: string[] = doc.splitTextToSize(clean, colW - 5);
+        wrapped.forEach((ln) => out.push({ text: ln, x }));
+        if (idx < body.length - 1) out.push({ text: "", x });
+      }
+    });
+    return out;
+  };
+
+  const drawTitles = (y: number): number => {
     doc.setFont("Poppins", "bold");
     doc.setFontSize(10);
     doc.setTextColor(...NAVY);
-    doc.text(title, x, ctx.y);
-    ctx.y += 5;
-    doc.setFont("Montserrat", "normal");
-    doc.setFontSize(9);
-    doc.setTextColor(...BLACK);
-    for (const raw of body) {
-      const lines = doc.splitTextToSize(cleanMarkdown(raw), colW - 5);
-      for (const line of lines) {
-        doc.text("• " + line, x, ctx.y);
-        ctx.y += 4.5;
-      }
-    }
-    return ctx.y;
+    doc.text(leftTitle, leftX, y);
+    doc.text(rightTitle, rightX, y);
+    return y + 5;
   };
-  const leftEnd = renderCol(leftTitle, leftBody, MARGIN_L);
-  const rightEnd = renderCol(rightTitle, rightBody, MARGIN_L + colW + colGap);
-  ctx.y = Math.max(leftEnd, rightEnd) + 3;
+
+  const leftLines = wrapCol(leftBody, leftX);
+  const rightLines = wrapCol(rightBody, rightX);
+
+  ctx.ensureBlockSpace(5 + lineH * 3);
+  let y = drawTitles(ctx.y);
+  doc.setFont("Montserrat", "normal");
+  doc.setFontSize(9);
+  doc.setTextColor(...BLACK);
+
+  const n = Math.max(leftLines.length, rightLines.length);
+  for (let i = 0; i < n; i++) {
+    if (y + lineH > PAGE_H - MARGIN_B) {
+      ctx.y = y;
+      ctx.addFooter();
+      doc.addPage();
+      ctx.renderContinuationHeader();
+      y = drawTitles(MARGIN_T);
+      doc.setFont("Montserrat", "normal");
+      doc.setFontSize(9);
+      doc.setTextColor(...BLACK);
+    }
+    const L = leftLines[i];
+    const R = rightLines[i];
+    if (L && L.text) doc.text(L.text, L.x, y);
+    if (R && R.text) doc.text(R.text, R.x, y);
+    y += lineH;
+  }
+  ctx.y = y + 3;
 }
 
 function drivingCard(
