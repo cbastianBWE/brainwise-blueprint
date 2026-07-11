@@ -1048,6 +1048,9 @@ export default function CoachingActivities() {
           if (!v) setOpenActivity(null);
         }}
       />
+
+      <ReviewActionPlanDialog open={reviewOpen} onOpenChange={setReviewOpen} />
+      <FreshStartConfirm open={freshOpen} onOpenChange={setFreshOpen} onDone={reload} />
     </div>
   );
 }
