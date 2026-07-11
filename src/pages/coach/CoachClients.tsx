@@ -266,7 +266,28 @@ export default function CoachClients() {
     }
   };
 
-  useEffect(() => { fetchClients(); }, [user]);
+  const fetchSeatLinks = async () => {
+    if (!user) return;
+    const { data, error } = await supabase
+      .from("coach_bulk_links" as any)
+      .select("id, token, instrument_id, seats_total, seats_claimed, status, coach_note, created_at")
+      .eq("coach_user_id", user.id)
+      .in("status", ["active", "exhausted"])
+      .order("created_at", { ascending: false });
+    if (!error && data) setSeatLinks(data as any);
+  };
+
+  const seatLinkInstrumentName = (uuid: string) => {
+    const map: Record<string, string> = {
+      "02618e9a-d411-44cf-b316-fe368edeac03": "PTP",
+      "77d1290f-1daf-44e0-931f-b9b8ad185520": "NAI",
+      "abb62120-8cc8-435f-babc-dd6a27fbc235": "AIRSA",
+      "90216d9d-153c-4b7b-abe0-1d7845c9e6e0": "HSS",
+    };
+    return map[uuid] ?? "Assessment";
+  };
+
+  useEffect(() => { fetchClients(); fetchSeatLinks(); }, [user]);
 
   useEffect(() => {
     if (!user) return;
