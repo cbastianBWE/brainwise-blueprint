@@ -225,6 +225,35 @@ export default function GenerateReportDialog({ open, onOpenChange, allowedModes,
             </RadioGroup>
           </div>
 
+          {/* Participant visibility */}
+          <div className="space-y-2">
+            <Label>Participant visibility</Label>
+            <RadioGroup
+              value={releaseNow ? "release" : "hold"}
+              onValueChange={(v) => setReleaseNow(v === "release")}
+              className="space-y-2"
+            >
+              <div className="flex items-start gap-2">
+                <RadioGroupItem id="vis-hold" value="hold" className="mt-1" />
+                <div>
+                  <Label htmlFor="vis-hold" className="font-normal cursor-pointer">Hold for debrief</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Participants can't see the report until you release it. You can still open it yourself.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-start gap-2">
+                <RadioGroupItem id="vis-release" value="release" className="mt-1" />
+                <div>
+                  <Label htmlFor="vis-release" className="font-normal cursor-pointer">Release to participants now</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Participants can see the finished report as soon as it's ready.
+                  </p>
+                </div>
+              </div>
+            </RadioGroup>
+          </div>
+
           {/* Report name (team only, optional) */}
           {kind === "team" && (
             <div className="space-y-2">
