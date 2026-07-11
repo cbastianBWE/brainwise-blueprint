@@ -72,6 +72,7 @@ export default function GenerateReportDialog({ open, onOpenChange, allowedModes,
   const [selected, setSelected] = useState<SubjectRow[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [reportLabel, setReportLabel] = useState("");
+  const [releaseNow, setReleaseNow] = useState(false);
   const debounceRef = useRef<number | null>(null);
 
   // Reset on close
@@ -84,6 +85,7 @@ export default function GenerateReportDialog({ open, onOpenChange, allowedModes,
       setSelected([]);
       setSubmitting(false);
       setReportLabel("");
+      setReleaseNow(false);
     }
   }, [open, allowedModes]);
 
@@ -151,6 +153,10 @@ export default function GenerateReportDialog({ open, onOpenChange, allowedModes,
           return;
         }
         const id = (data as { team_profile_id: string }).team_profile_id;
+        if (releaseNow) {
+          try { await supabase.rpc("bw_set_report_release" as never, { p_profile: id, p_kind: "team", p_released: true } as never); }
+          catch { /* held by default */ }
+        }
         if (reportLabel.trim()) {
           try {
             await supabase.rpc("bw_set_report_label" as never, { p_profile: id, p_label: reportLabel.trim() } as never);
@@ -172,6 +178,10 @@ export default function GenerateReportDialog({ open, onOpenChange, allowedModes,
           return;
         }
         const id = (data as { paired_profile_id: string }).paired_profile_id;
+        if (releaseNow) {
+          try { await supabase.rpc("bw_set_report_release" as never, { p_profile: id, p_kind: "paired", p_released: true } as never); }
+          catch { /* held by default */ }
+        }
         onGenerated();
         onOpenChange(false);
         navigate(`/paired-report/${id}`);
@@ -211,6 +221,35 @@ export default function GenerateReportDialog({ open, onOpenChange, allowedModes,
               <div className="flex items-center gap-2">
                 <RadioGroupItem id="kind-paired" value="paired" />
                 <Label htmlFor="kind-paired" className="font-normal cursor-pointer">Paired</Label>
+              </div>
+            </RadioGroup>
+          </div>
+
+          {/* Participant visibility */}
+          <div className="space-y-2">
+            <Label>Participant visibility</Label>
+            <RadioGroup
+              value={releaseNow ? "release" : "hold"}
+              onValueChange={(v) => setReleaseNow(v === "release")}
+              className="space-y-2"
+            >
+              <div className="flex items-start gap-2">
+                <RadioGroupItem id="vis-hold" value="hold" className="mt-1" />
+                <div>
+                  <Label htmlFor="vis-hold" className="font-normal cursor-pointer">Hold for debrief</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Participants can't see the report until you release it. You can still open it yourself.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-start gap-2">
+                <RadioGroupItem id="vis-release" value="release" className="mt-1" />
+                <div>
+                  <Label htmlFor="vis-release" className="font-normal cursor-pointer">Release to participants now</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Participants can see the finished report as soon as it's ready.
+                  </p>
+                </div>
               </div>
             </RadioGroup>
           </div>

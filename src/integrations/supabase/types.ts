@@ -9271,6 +9271,7 @@ export type Database = {
           organization_id: string | null
           paired_assessment_id: string | null
           relationship_mode: string
+          released_to_subjects: boolean
           structured: Json
         }
         Insert: {
@@ -9284,6 +9285,7 @@ export type Database = {
           organization_id?: string | null
           paired_assessment_id?: string | null
           relationship_mode: string
+          released_to_subjects?: boolean
           structured: Json
         }
         Update: {
@@ -9297,6 +9299,7 @@ export type Database = {
           organization_id?: string | null
           paired_assessment_id?: string | null
           relationship_mode?: string
+          released_to_subjects?: boolean
           structured?: Json
         }
         Relationships: [
@@ -11858,6 +11861,7 @@ export type Database = {
           member_count: number
           narrative_status: string
           organization_id: string | null
+          released_to_subjects: boolean
           report_label: string | null
           structured: Json
           team_id: string | null
@@ -11872,6 +11876,7 @@ export type Database = {
           member_count: number
           narrative_status?: string
           organization_id?: string | null
+          released_to_subjects?: boolean
           report_label?: string | null
           structured: Json
           team_id?: string | null
@@ -11886,6 +11891,7 @@ export type Database = {
           member_count?: number
           narrative_status?: string
           organization_id?: string | null
+          released_to_subjects?: boolean
           report_label?: string | null
           structured?: Json
           team_id?: string | null
@@ -14218,6 +14224,7 @@ export type Database = {
           member_count: number
           narrative_status: string
           relationship_mode: string
+          released_to_subjects: boolean
           report_id: string
           subjects: string
         }[]
@@ -14240,6 +14247,10 @@ export type Database = {
       }
       bw_set_report_label: {
         Args: { p_label: string; p_profile: string }
+        Returns: undefined
+      }
+      bw_set_report_release: {
+        Args: { p_kind: string; p_profile: string; p_released: boolean }
         Returns: undefined
       }
       bw_team_profile_distribution: {
