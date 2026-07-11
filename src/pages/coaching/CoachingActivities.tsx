@@ -1102,13 +1102,8 @@ export default function CoachingActivities() {
   );
 }
 
-interface ReviewData {
-  summary: string;
-  strengths: string[];
-  watch_outs: string[];
-  action_plan: string[];
-  themes: string[];
-}
+
+
 
 function ReviewActionPlanDialog({
   open,
