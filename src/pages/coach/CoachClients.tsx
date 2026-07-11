@@ -1163,6 +1163,14 @@ export default function CoachClients() {
           perAssessmentPrice={perAssessmentPrice}
           onComplete={() => { setShareableModalOpen(false); fetchClients(); }}
         />
+
+        <BulkSeatLinkModal
+          open={seatLinkModalOpen}
+          onOpenChange={setSeatLinkModalOpen}
+          allowedInstrumentIds={allowedInstrumentIds}
+          perAssessmentPrice={perAssessmentPrice}
+          onComplete={() => { setSeatLinkModalOpen(false); fetchSeatLinks(); }}
+        />
       </div>
 
       {/* Stat cards */}
