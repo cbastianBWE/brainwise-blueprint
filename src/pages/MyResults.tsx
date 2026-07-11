@@ -279,6 +279,7 @@ export default function MyResults({ isCoachView = false, adminView = false, targ
   const [shareWithCoach, setShareWithCoach] = useState<boolean | null>(null);
 
   const [coachViewActive, setCoachViewActive] = useState(isCoachView);
+  const [showCoachContent, setShowCoachContent] = useState(false);
 
   const [chatOpen, setChatOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState<Array<{role: 'user' | 'assistant'; content: string; timestamp: Date}>>([]);
