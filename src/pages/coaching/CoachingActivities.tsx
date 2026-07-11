@@ -1221,7 +1221,16 @@ function ReviewActionPlanDialog({
     });
     setAsking(false);
     if (error) {
-      toast.error("Couldn't get an answer. Please try again.");
+      const status = (error as any).context?.status;
+      if (status === 402) {
+        toast.error("You've used your coaching runs.", {
+          description: "Upgrade for more.",
+          action: { label: "Upgrade", onClick: () => (window.location.href = "/pricing") },
+        });
+      } else {
+        toast.error("Something went wrong. Please try again.");
+      }
+      setHistory(history); // roll back optimistic user message
       return;
     }
     const answer = ((data as any)?.answer as string) ?? "";
