@@ -10,6 +10,7 @@ import { Loader2, Info, Eye, EyeOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { TOS_VERSION, PRIVACY_VERSION } from "@/lib/legalVersions";
 import { setPendingNewsletterOptIn } from "@/lib/newsletterOptInIntent";
+import { stashBulkToken, claimPendingBulkSeat } from "@/lib/bulkSeatClaim";
 
 const CERT_LABELS: Record<string, string> = {
   ptp_coach: 'PTP Certified Coach',
