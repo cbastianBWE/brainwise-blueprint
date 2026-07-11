@@ -759,15 +759,25 @@ export default function PairedReport() {
               </div>
             </div>
             {status === "complete" && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setExportOpen(true)}
-                style={{ background: "#fff", color: NAVY, borderColor: "transparent" }}
-              >
-                <FileText className="mr-2 h-4 w-4" />
-                Export PDF
-              </Button>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setExportOpen(true)}
+                  style={{ background: "#fff", color: NAVY, borderColor: "transparent" }}
+                >
+                  <FileText className="mr-2 h-4 w-4" />
+                  Export PDF
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCommitOpen(true)}
+                  style={{ background: "#fff", color: NAVY, borderColor: "transparent" }}
+                >
+                  Add to development plan
+                </Button>
+              </div>
             )}
           </div>
 
