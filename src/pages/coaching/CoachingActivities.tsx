@@ -1170,20 +1170,6 @@ function ReviewActionPlanDialog({
     setHistory([...nextHistory, { role: "assistant", content: answer }]);
   };
 
-  const Section = ({ title, items }: { title: string; items: string[] }) => {
-    if (!items || items.length === 0) return null;
-    return (
-      <div className="space-y-1.5">
-        <h4 className="text-sm font-semibold">{title}</h4>
-        <ul className="list-disc pl-5 space-y-1 text-sm text-muted-foreground">
-          {items.map((s, i) => (
-            <li key={i}>{s}</li>
-          ))}
-        </ul>
-      </div>
-    );
-  };
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
@@ -1206,16 +1192,7 @@ function ReviewActionPlanDialog({
           </p>
         ) : review ? (
           <div className="space-y-5">
-            {review.summary && (
-              <div className="space-y-1.5">
-                <h4 className="text-sm font-semibold">Summary</h4>
-                <p className="text-sm text-muted-foreground whitespace-pre-wrap">{review.summary}</p>
-              </div>
-            )}
-            <Section title="Strengths" items={review.strengths} />
-            <Section title="Watch-outs" items={review.watch_outs} />
-            <Section title="Action plan" items={review.action_plan} />
-            <Section title="Themes" items={review.themes} />
+            <ReviewBody review={review} />
 
             <div className="border-t pt-4 space-y-3">
               <h4 className="text-sm font-semibold">Ask a question</h4>
