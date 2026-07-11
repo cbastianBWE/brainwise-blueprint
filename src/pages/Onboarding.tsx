@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { User, Building2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { readBulkToken, claimPendingBulkSeat } from "@/lib/bulkSeatClaim";
 
 const PENDING_INVITE_KEY = "pending_invite_code";
 
