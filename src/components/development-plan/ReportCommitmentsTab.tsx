@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Users, Trash2 } from "lucide-react";
+import { Loader2, Users, Trash2, Target } from "lucide-react";
 
 interface ReportRow {
   report_id: string;
@@ -29,25 +29,32 @@ interface Mine {
 
 type RpcFn = (fn: string, args?: Record<string, unknown>) => Promise<{ data: unknown; error: { message?: string } | null }>;
 
+const safe = async <T,>(p: Promise<{ data: unknown; error: { message?: string } | null }>): Promise<T[]> => {
+  try {
+    const { data } = await p;
+    return ((data as T[]) ?? []);
+  } catch {
+    return [];
+  }
+};
+
 export default function ReportCommitmentsTab({ kind }: { kind: "team" | "paired" }) {
   const [reports, setReports] = useState<ReportRow[]>([]);
   const [shared, setShared] = useState<Record<string, Shared[]>>({});
   const [mine, setMine] = useState<Record<string, Mine[]>>({});
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
-    setError(false);
     try {
       const rpc = supabase.rpc as unknown as RpcFn;
-      const { data: repData } = await rpc("bw_list_my_reports");
-      const reps = ((repData as ReportRow[]) ?? []).filter((r) => r.kind === kind);
+      const repData = await safe<ReportRow>(rpc("bw_list_my_reports"));
+      const reps = repData.filter((r) => r.kind === kind);
       setReports(reps);
 
-      const { data: mineData } = await rpc("dp_list_my_report_commitments", { p_kind: kind });
+      const mineData = await safe<Mine>(rpc("dp_list_my_report_commitments", { p_kind: kind }));
       const mineByReport: Record<string, Mine[]> = {};
-      ((mineData as Mine[]) ?? []).forEach((m) => {
+      mineData.forEach((m) => {
         (mineByReport[m.source_report_id] ??= []).push(m);
       });
       setMine(mineByReport);
@@ -55,13 +62,11 @@ export default function ReportCommitmentsTab({ kind }: { kind: "team" | "paired"
       const sharedByReport: Record<string, Shared[]> = {};
       await Promise.all(
         reps.map(async (r) => {
-          const { data } = await rpc("report_list_commitments", { p_report_id: r.report_id, p_kind: kind });
-          sharedByReport[r.report_id] = (data as Shared[]) ?? [];
+          const data = await safe<Shared>(rpc("report_list_commitments", { p_report_id: r.report_id, p_kind: kind }));
+          sharedByReport[r.report_id] = data;
         }),
       );
       setShared(sharedByReport);
-    } catch {
-      setError(true);
     } finally {
       setLoading(false);
     }
@@ -84,18 +89,27 @@ export default function ReportCommitmentsTab({ kind }: { kind: "team" | "paired"
       </div>
     );
   }
-  if (error) {
+
+  const hasCommitments = reports.some(
+    (r) => (shared[r.report_id]?.length ?? 0) > 0 || (mine[r.report_id]?.length ?? 0) > 0,
+  );
+
+  if (reports.length === 0 || !hasCommitments) {
+    const label = kind === "team" ? "team" : "paired";
+    const href = `/shared/${label}-reports`;
     return (
-      <p className="text-sm text-muted-foreground py-8">
-        Couldn't load your {kind} commitments. Please try again.
-      </p>
-    );
-  }
-  if (reports.length === 0) {
-    return (
-      <p className="text-sm text-muted-foreground py-8">
-        You're not part of any {kind} reports yet, or none have been released to you.
-      </p>
+      <Card>
+        <CardContent className="py-12 flex flex-col items-center text-center gap-3">
+          <Target className="h-10 w-10 text-muted-foreground" />
+          <h3 className="text-lg font-semibold">No {label} commitments yet</h3>
+          <p className="text-sm text-muted-foreground max-w-md">
+            Add commitments from a {label} report using "Add to development plan", and they'll show up here.
+          </p>
+          <Button asChild variant="outline">
+            <Link to={href}>View my {label} reports</Link>
+          </Button>
+        </CardContent>
+      </Card>
     );
   }
 
