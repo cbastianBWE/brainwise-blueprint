@@ -145,7 +145,7 @@ export default function AddReportCommitmentModal({
               <label className="flex items-start gap-2 text-sm cursor-pointer">
                 <RadioGroupItem value="team" className="mt-0.5" />
                 <span>
-                  <span className="font-medium">Shared team commitment</span>
+                  <span className="font-medium">Shared {kindWord} commitment</span>
                   <span className="block text-xs text-muted-foreground">
                     Visible to everyone in this {reportKind === "team" ? "team" : "pair"} report.
                   </span>
