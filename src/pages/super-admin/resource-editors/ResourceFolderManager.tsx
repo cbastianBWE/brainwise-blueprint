@@ -307,11 +307,9 @@ function FolderRow({
         <Button size="sm" variant="ghost" onClick={onRename} title="Rename">
           <Pencil className="h-3.5 w-3.5" />
         </Button>
-        {isSubfolder && (
-          <Button size="sm" variant="ghost" onClick={onMove} title="Move">
-            <Move className="h-3.5 w-3.5" />
-          </Button>
-        )}
+        <Button size="sm" variant="ghost" onClick={onMove} title="Move">
+          <Move className="h-3.5 w-3.5" />
+        </Button>
         <Button size="sm" variant="ghost" onClick={onGrants} title="Grants">
           <Shield className="h-3.5 w-3.5" />
         </Button>
