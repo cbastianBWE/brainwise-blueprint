@@ -1208,7 +1208,10 @@ export default function PairedReport() {
           onOpenChange={setCommitOpen}
           reportId={pairedProfileId}
           reportKind="paired"
-          suggestions={[]}
+          suggestionGroups={[
+            { label: "Continue / next steps", items: (driving?.strengths ?? []).flatMap((s: any) => s.actions ?? (s.action ? [s.action] : [])) },
+            { label: "Things to try", items: (driving?.focus ?? []).flatMap((f: any) => f.actions ?? (f.action ? [f.action] : [])) },
+          ]}
         />
       )}
     </div>
