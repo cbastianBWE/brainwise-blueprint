@@ -27,6 +27,7 @@ export default function AddReportCommitmentModal({
   const [freeText, setFreeText] = useState("");
   const [scope, setScope] = useState<"individual" | "team">("individual");
   const [submitting, setSubmitting] = useState(false);
+  const kindWord = reportKind === "team" ? "team" : "paired";
 
   useEffect(() => {
     if (!open) {
