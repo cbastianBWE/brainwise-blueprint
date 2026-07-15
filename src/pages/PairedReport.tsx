@@ -1209,8 +1209,8 @@ export default function PairedReport() {
           reportId={pairedProfileId}
           reportKind="paired"
           suggestionGroups={[
-            { label: "Continue / next steps", items: (driving?.strengths ?? []).flatMap((s: any) => s.actions ?? (s.action ? [s.action] : [])) },
-            { label: "Things to try", items: (driving?.focus ?? []).flatMap((f: any) => f.actions ?? (f.action ? [f.action] : [])) },
+            { label: "Continue / next steps", items: (driving?.strengths ?? []).flatMap((s: any) => s.actions ?? (s.action ? [s.action] : [])).map(nm) },
+            { label: "Things to try", items: (driving?.focus ?? []).flatMap((f: any) => f.actions ?? (f.action ? [f.action] : [])).map(nm) },
           ]}
         />
       )}
