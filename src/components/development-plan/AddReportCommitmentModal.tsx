@@ -16,12 +16,12 @@ interface Props {
   onOpenChange: (o: boolean) => void;
   reportId: string;
   reportKind: "team" | "paired";
-  suggestions?: string[];
+  suggestionGroups?: { label: string; items: string[] }[];
   onAdded?: () => void;
 }
 
 export default function AddReportCommitmentModal({
-  open, onOpenChange, reportId, reportKind, suggestions = [], onAdded,
+  open, onOpenChange, reportId, reportKind, suggestionGroups = [], onAdded,
 }: Props) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [freeText, setFreeText] = useState("");
