@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
-type Kind = "team" | "paired";
+type Kind = "team" | "paired" | "ptp";
 
 interface PlanResponse {
   narrative_status: string;
@@ -19,6 +19,10 @@ interface Options {
   onSectionDone: () => void | Promise<void>;
   // Only privileged viewers should drive generation; pass false to disable.
   enabled?: boolean;
+  // PTP only: the narrative_context (professional | personal | combined). Included in every call.
+  context?: string;
+  // PTP only: whether to include coach_questions in the plan (coach viewers).
+  includeCoach?: boolean;
 }
 
 export interface NarrativeGeneratorState {
@@ -33,11 +37,13 @@ export interface NarrativeGeneratorState {
 const FN_NAME: Record<Kind, string> = {
   team: "generate-team-narrative",
   paired: "generate-paired-narrative",
+  ptp: "generate-ptp-narrative",
 };
 
 const ID_KEY: Record<Kind, string> = {
   team: "team_profile_id",
   paired: "paired_profile_id",
+  ptp: "assessment_result_id",
 };
 
 export function useNarrativeGenerator({
@@ -46,6 +52,8 @@ export function useNarrativeGenerator({
   status,
   onSectionDone,
   enabled = true,
+  context,
+  includeCoach,
 }: Options): NarrativeGeneratorState {
   const [running, setRunning] = useState(false);
   const [expected, setExpected] = useState<string[]>([]);
@@ -65,7 +73,9 @@ export function useNarrativeGenerator({
       setRunning(true);
       setFailed([]);
       try {
-        const idBody = { [ID_KEY[kind]]: id };
+        const idBody: Record<string, unknown> = { [ID_KEY[kind]]: id };
+        if (context) idBody.narrative_context = context;
+        if (kind === "ptp") idBody.include_coach = !!includeCoach;
         let plan: PlanResponse | null = null;
 
         if (only && only.length > 0) {
@@ -123,17 +133,23 @@ export function useNarrativeGenerator({
         setRunning(false);
       }
     },
-    [id, kind],
+    [id, kind, context, includeCoach],
   );
 
-  // Auto-run once per id when not complete.
+  // Auto-run once per (id, context) when not complete. PTP re-runs on context change and
+  // relies on the plan (todo) rather than a report-level status gate.
   useEffect(() => {
-    if (!enabled || !id || !status) return;
-    if (status === "complete") return;
-    if (startedRef.current === id) return;
-    startedRef.current = id;
+    if (!enabled || !id) return;
+    if (kind !== "ptp") {
+      if (!status || status === "complete") return;
+    } else if (!context) {
+      return;
+    }
+    const key = `${id}:${context ?? ""}`;
+    if (startedRef.current === key) return;
+    startedRef.current = key;
     void runLoop();
-  }, [enabled, id, status, runLoop]);
+  }, [enabled, id, status, context, kind, runLoop]);
 
   const retry = useCallback(() => {
     if (failed.length === 0) return;
