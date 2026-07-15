@@ -536,7 +536,7 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
       cancelled = true;
       if (pollInterval) clearInterval(pollInterval);
     };
-  }, [assessmentResultId, responsesExpanded]);
+  }, [assessmentResultId, responsesExpanded, sectionRefreshKey]);
 
   return {
     narrativeSections,
