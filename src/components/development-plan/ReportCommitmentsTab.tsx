@@ -34,30 +34,37 @@ export default function ReportCommitmentsTab({ kind }: { kind: "team" | "paired"
   const [shared, setShared] = useState<Record<string, Shared[]>>({});
   const [mine, setMine] = useState<Record<string, Mine[]>>({});
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
-    const rpc = supabase.rpc as unknown as RpcFn;
-    const { data: repData } = await rpc("bw_list_my_reports");
-    const reps = ((repData as ReportRow[]) ?? []).filter((r) => r.kind === kind);
-    setReports(reps);
+    setError(false);
+    try {
+      const rpc = supabase.rpc as unknown as RpcFn;
+      const { data: repData } = await rpc("bw_list_my_reports");
+      const reps = ((repData as ReportRow[]) ?? []).filter((r) => r.kind === kind);
+      setReports(reps);
 
-    const { data: mineData } = await rpc("dp_list_my_report_commitments", { p_kind: kind });
-    const mineByReport: Record<string, Mine[]> = {};
-    ((mineData as Mine[]) ?? []).forEach((m) => {
-      (mineByReport[m.source_report_id] ??= []).push(m);
-    });
-    setMine(mineByReport);
+      const { data: mineData } = await rpc("dp_list_my_report_commitments", { p_kind: kind });
+      const mineByReport: Record<string, Mine[]> = {};
+      ((mineData as Mine[]) ?? []).forEach((m) => {
+        (mineByReport[m.source_report_id] ??= []).push(m);
+      });
+      setMine(mineByReport);
 
-    const sharedByReport: Record<string, Shared[]> = {};
-    await Promise.all(
-      reps.map(async (r) => {
-        const { data } = await rpc("report_list_commitments", { p_report_id: r.report_id, p_kind: kind });
-        sharedByReport[r.report_id] = (data as Shared[]) ?? [];
-      }),
-    );
-    setShared(sharedByReport);
-    setLoading(false);
+      const sharedByReport: Record<string, Shared[]> = {};
+      await Promise.all(
+        reps.map(async (r) => {
+          const { data } = await rpc("report_list_commitments", { p_report_id: r.report_id, p_kind: kind });
+          sharedByReport[r.report_id] = (data as Shared[]) ?? [];
+        }),
+      );
+      setShared(sharedByReport);
+    } catch {
+      setError(true);
+    } finally {
+      setLoading(false);
+    }
   }, [kind]);
 
   useEffect(() => { load(); }, [load]);
