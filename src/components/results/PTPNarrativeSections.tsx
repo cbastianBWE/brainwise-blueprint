@@ -223,47 +223,6 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
 
       const ctx = ptpContextTab;
 
-      const requiredCacheTypes = [
-        `profile_overview_${ctx}`,
-        `personal_summary_${ctx}`,
-        `dimension_highlights_${ctx}`,
-        `cross_and_action_${ctx}`,
-        ...(isCoachView ? [`coach_questions_${ctx}`] : []),
-      ];
-      const { data: cachedRows } = await supabase
-        .from("facet_interpretations")
-        .select("section_type")
-        .eq("assessment_result_id", assessmentResultId)
-        .in("section_type", requiredCacheTypes);
-      const cachedTypeSet = new Set((cachedRows ?? []).map((r) => r.section_type));
-      const allCached = requiredCacheTypes.every((t) => cachedTypeSet.has(t));
-
-      if (!allCached) {
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
-        const authHeaders = { Authorization: `Bearer ${session?.access_token}` };
-
-        const calls = [
-          { generate_context_narrative: true, narrative_context: ctx },
-          { generate_dimension_highlights: true, narrative_context: ctx },
-          { generate_cross_and_action: true, narrative_context: ctx },
-          ...(isCoachView ? [{ generate_coach_questions: true, narrative_context: ctx }] : []),
-        ];
-
-        for (const extra of calls) {
-          const { error } = await supabase.functions.invoke("generate-facet-interpretations", {
-            body: { assessment_result_id: assessmentResultId, ...extra },
-            headers: authHeaders,
-          });
-          if (error) {
-            setLoadingNarrativeSections(false);
-            return;
-          }
-        }
-      }
-
-
       const sectionTypes = [
         `profile_overview_${ctx}`,
         `personal_summary_${ctx}`,
@@ -302,7 +261,7 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
     };
 
     fetchNarrativeSections();
-  }, [assessmentResultId, ptpContextTab, isCoachView]);
+  }, [assessmentResultId, ptpContextTab, isCoachView, sectionRefreshKey]);
 
   useEffect(() => {
     const fetchFacets = async () => {
