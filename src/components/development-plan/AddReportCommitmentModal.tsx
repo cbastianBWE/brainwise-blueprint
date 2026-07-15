@@ -84,29 +84,35 @@ export default function AddReportCommitmentModal({
           <DialogTitle>Add to development plan</DialogTitle>
           <DialogDescription>
             Choose actions from this report or write your own, then decide whether it's
-            a personal commitment or a shared team commitment.
+            a personal commitment or a shared {kindWord} commitment.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-5">
-          {suggestions.length > 0 && (
-            <div className="space-y-2">
-              <Label className="text-sm">Suggested from this report</Label>
-              <div className="space-y-2">
-                {suggestions.map((s, i) => (
-                  <label
-                    key={i}
-                    className="flex items-start gap-2 rounded-md border border-border p-2.5 text-sm cursor-pointer hover:bg-muted/40"
-                  >
-                    <Checkbox
-                      checked={selected.has(s)}
-                      onCheckedChange={() => toggle(s)}
-                      className="mt-0.5"
-                    />
-                    <span className="flex-1 leading-snug">{s}</span>
-                  </label>
-                ))}
-              </div>
+          {suggestionGroups.some((g) => g.items.length > 0) && (
+            <div className="space-y-4">
+              {suggestionGroups.map((group, gi) =>
+                group.items.length === 0 ? null : (
+                  <div key={gi} className="space-y-2">
+                    <Label className="text-sm">{group.label}</Label>
+                    <div className="space-y-2">
+                      {group.items.map((s, i) => (
+                        <label
+                          key={i}
+                          className="flex items-start gap-2 rounded-md border border-border p-2.5 text-sm cursor-pointer hover:bg-muted/40"
+                        >
+                          <Checkbox
+                            checked={selected.has(s)}
+                            onCheckedChange={() => toggle(s)}
+                            className="mt-0.5"
+                          />
+                          <span className="flex-1 leading-snug">{s}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                ),
+              )}
             </div>
           )}
 
