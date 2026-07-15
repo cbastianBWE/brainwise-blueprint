@@ -422,7 +422,12 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
   };
 
   const allAnswered = items.length > 0 && items.every((it) => responses[it.item_id] != null);
-  useEffect(() => { if (allAnswered) setReviewingUnanswered(false); }, [allAnswered]);
+  useEffect(() => {
+    if (allAnswered && reviewingUnanswered) {
+      setReviewingUnanswered(false);
+      setReviewing(true);
+    }
+  }, [allAnswered, reviewingUnanswered]);
 
   if (needsAck) {
     return (
