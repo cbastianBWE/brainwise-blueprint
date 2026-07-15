@@ -46,15 +46,20 @@ export default function CoachingSessionView() {
     let cancelled = false;
     (async () => {
       setLoading(true);
-      const { data } = await supabase
+      const { data: sess } = await supabase
         .from("coaching_activity_sessions")
-        .select(
-          "id, activity_id, user_id, status, responses, completed_at, coaching_activities(title, tier, definition)",
-        )
+        .select("id, activity_id, user_id, status, responses, completed_at")
         .eq("id", sessionId)
         .maybeSingle();
       if (cancelled) return;
-      setSession((data as unknown as SessionRow) || null);
+      if (!sess) { setSession(null); setLoading(false); return; }
+      const { data: act } = await supabase
+        .from("coaching_activities_public")
+        .select("title, tier, definition")
+        .eq("id", (sess as any).activity_id)
+        .maybeSingle();
+      if (cancelled) return;
+      setSession({ ...(sess as any), coaching_activities: (act as any) ?? null } as SessionRow);
       setLoading(false);
     })();
     return () => {
