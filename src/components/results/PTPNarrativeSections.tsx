@@ -949,7 +949,7 @@ function FacetList({
   prefix: string;
   data: ReturnType<typeof usePTPNarrativeData>;
 }) {
-  const { expandedFacets, setExpandedFacets, facetInterpretations, loadingInterpretations } = data;
+  const { expandedFacets, setExpandedFacets, allFacetInsights, loadingAllFacetInsights } = data;
 
   const toggleFacet = (key: string) => {
     setExpandedFacets((prev) => {
