@@ -142,6 +142,17 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
   const [allFacetInsights, setAllFacetInsights] = useState<FacetInterpretation[]>([]);
   const [loadingAllFacetInsights, setLoadingAllFacetInsights] = useState(false);
   const [allFacetsExpanded, setAllFacetsExpanded] = useState<Set<string>>(new Set());
+  const [sectionRefreshKey, setSectionRefreshKey] = useState(0);
+
+  const generator = useNarrativeGenerator({
+    kind: "ptp",
+    id: assessmentResultId,
+    context: ptpContextTab ?? undefined,
+    status: undefined, // ptp ignores the status gate; the plan defines the work
+    includeCoach: !!isCoachView,
+    enabled: true,
+    onSectionDone: async () => setSectionRefreshKey((k) => k + 1),
+  });
 
   useEffect(() => {
     const fetchResponses = async () => {
