@@ -555,6 +555,9 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
     loadingAllFacetInsights,
     allFacetsExpanded,
     setAllFacetsExpanded,
+    generator,
+    sectionRefreshKey,
+    ptpContextTab,
   };
 }
 
