@@ -70,7 +70,7 @@ export default function AddReportCommitmentModal({
     }
     toast.success(
       scope === "team"
-        ? `Added ${items.length} team commitment${items.length === 1 ? "" : "s"}.`
+        ? `Added ${items.length} ${kindWord} commitment${items.length === 1 ? "" : "s"}.`
         : `Added ${items.length} action${items.length === 1 ? "" : "s"} to your development plan.`,
     );
     onAdded?.();
