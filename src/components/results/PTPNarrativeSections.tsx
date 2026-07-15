@@ -1,12 +1,13 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { ChevronDown, ChevronUp, Target, Loader2, Check, Circle } from "lucide-react";
+import { ChevronDown, ChevronUp, Target, Loader2, Check, Circle, RefreshCw } from "lucide-react";
 import { PTP_DIMENSION_COLORS } from "@/lib/ptpDimensionColors";
 import { PtpDimensionLegend } from "@/components/results/PtpDimensionLegend";
 import { PTP_ITEM_FACET_NAMES } from "@/lib/ptpFacetNames";
 import { Button } from "@/components/ui/button";
 import { AddToDevelopmentPlanModal } from "@/components/results/AddToDevelopmentPlanModal";
 import { HighlightableText } from "@/components/results/ReportHighlight";
+import { useNarrativeGenerator } from "@/hooks/useNarrativeGenerator";
 
 const PTP_DIMENSION_NAMES: Record<string, string> = {
   "DIM-PTP-01": "Protection",
@@ -141,6 +142,17 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
   const [allFacetInsights, setAllFacetInsights] = useState<FacetInterpretation[]>([]);
   const [loadingAllFacetInsights, setLoadingAllFacetInsights] = useState(false);
   const [allFacetsExpanded, setAllFacetsExpanded] = useState<Set<string>>(new Set());
+  const [sectionRefreshKey, setSectionRefreshKey] = useState(0);
+
+  const generator = useNarrativeGenerator({
+    kind: "ptp",
+    id: assessmentResultId,
+    context: ptpContextTab ?? undefined,
+    status: undefined, // ptp ignores the status gate; the plan defines the work
+    includeCoach: !!isCoachView,
+    enabled: true,
+    onSectionDone: async () => setSectionRefreshKey((k) => k + 1),
+  });
 
   useEffect(() => {
     const fetchResponses = async () => {
@@ -211,47 +223,6 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
 
       const ctx = ptpContextTab;
 
-      const requiredCacheTypes = [
-        `profile_overview_${ctx}`,
-        `personal_summary_${ctx}`,
-        `dimension_highlights_${ctx}`,
-        `cross_and_action_${ctx}`,
-        ...(isCoachView ? [`coach_questions_${ctx}`] : []),
-      ];
-      const { data: cachedRows } = await supabase
-        .from("facet_interpretations")
-        .select("section_type")
-        .eq("assessment_result_id", assessmentResultId)
-        .in("section_type", requiredCacheTypes);
-      const cachedTypeSet = new Set((cachedRows ?? []).map((r) => r.section_type));
-      const allCached = requiredCacheTypes.every((t) => cachedTypeSet.has(t));
-
-      if (!allCached) {
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
-        const authHeaders = { Authorization: `Bearer ${session?.access_token}` };
-
-        const calls = [
-          { generate_context_narrative: true, narrative_context: ctx },
-          { generate_dimension_highlights: true, narrative_context: ctx },
-          { generate_cross_and_action: true, narrative_context: ctx },
-          ...(isCoachView ? [{ generate_coach_questions: true, narrative_context: ctx }] : []),
-        ];
-
-        for (const extra of calls) {
-          const { error } = await supabase.functions.invoke("generate-facet-interpretations", {
-            body: { assessment_result_id: assessmentResultId, ...extra },
-            headers: authHeaders,
-          });
-          if (error) {
-            setLoadingNarrativeSections(false);
-            return;
-          }
-        }
-      }
-
-
       const sectionTypes = [
         `profile_overview_${ctx}`,
         `personal_summary_${ctx}`,
@@ -290,7 +261,7 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
     };
 
     fetchNarrativeSections();
-  }, [assessmentResultId, ptpContextTab, isCoachView]);
+  }, [assessmentResultId, ptpContextTab, isCoachView, sectionRefreshKey]);
 
   useEffect(() => {
     const fetchFacets = async () => {
@@ -423,57 +394,9 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
       setElevatedFacets(elevated);
       setSuppressedFacets(suppressed);
       setLoadingFacets(false);
-
-      if (elevated.length > 0 || suppressed.length > 0) {
-        setLoadingInterpretations(true);
-        const { data: existing } = await supabase
-          .from("facet_interpretations")
-          .select("facet_data")
-          .eq("assessment_result_id", assessmentResultId)
-          .eq("section_type", `facet_insights_${ctx}`)
-          .maybeSingle();
-
-        if (existing?.facet_data) {
-          setFacetInterpretations(existing.facet_data as unknown as FacetInterpretation[]);
-          setLoadingInterpretations(false);
-          return;
-        }
-
-        const allFacets = [
-          ...elevated.map((f) => ({
-            name: f.facet_name,
-            score: Math.round(f.value),
-            question: assessmentResponses.find(r => r.facetName === f.facet_name)?.itemText ?? "",
-            type: "elevated",
-          })),
-          ...suppressed.map((f) => ({
-            name: f.facet_name,
-            score: Math.round(f.value),
-            question: assessmentResponses.find(r => r.facetName === f.facet_name)?.itemText ?? "",
-            type: "suppressed",
-          })),
-        ];
-
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
-        const { data, error } = await supabase.functions.invoke("generate-facet-interpretations", {
-          body: {
-            assessment_result_id: assessmentResultId,
-            facets: allFacets,
-            narrative_context: ctx,
-          },
-          headers: { Authorization: `Bearer ${session?.access_token}` },
-        });
-
-        if (!error && data?.facet_data) {
-          setFacetInterpretations(data.facet_data as FacetInterpretation[]);
-        }
-        setLoadingInterpretations(false);
-      }
     };
     fetchFacets();
-  }, [assessmentId, additionalAssessmentId, assessmentResultId, ptpContextTab]);
+  }, [assessmentId, additionalAssessmentId, assessmentResultId, ptpContextTab, sectionRefreshKey]);
 
   // ── facet_insights_all: full per-item interpretation array ──
   // DB-first; triggers server-side generate-all-facets when the user opens
@@ -613,7 +536,7 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
       cancelled = true;
       if (pollInterval) clearInterval(pollInterval);
     };
-  }, [assessmentResultId, responsesExpanded]);
+  }, [assessmentResultId, responsesExpanded, sectionRefreshKey]);
 
   return {
     narrativeSections,
@@ -632,6 +555,9 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
     loadingAllFacetInsights,
     allFacetsExpanded,
     setAllFacetsExpanded,
+    generator,
+    sectionRefreshKey,
+    ptpContextTab,
   };
 }
 
@@ -1023,7 +949,7 @@ function FacetList({
   prefix: string;
   data: ReturnType<typeof usePTPNarrativeData>;
 }) {
-  const { expandedFacets, setExpandedFacets, facetInterpretations, loadingInterpretations } = data;
+  const { expandedFacets, setExpandedFacets, allFacetInsights, loadingAllFacetInsights } = data;
 
   const toggleFacet = (key: string) => {
     setExpandedFacets((prev) => {
@@ -1035,7 +961,7 @@ function FacetList({
   };
 
   const getFacetInterpretation = (facetName: string) =>
-    facetInterpretations.find((f) => f.name === facetName);
+    allFacetInsights.find((f) => f.name === facetName);
 
   return (
     <div className="space-y-2">
@@ -1113,7 +1039,7 @@ function FacetList({
                     <span style={{ fontWeight: 600, color: "var(--fg-2)" }}>High end:</span> {anchorHigh}
                   </p>
                 </div>
-                {loadingInterpretations || !interpretation ? (
+                {loadingAllFacetInsights || !interpretation ? (
                   <p style={{ fontSize: 14, color: "var(--fg-3)", margin: 0 }}>Generating insights...</p>
                 ) : (
                   <div className="grid md:grid-cols-2 gap-4">
@@ -1443,104 +1369,84 @@ export function PTPAssessmentResponsesSection(props: PTPNarrativeSectionsProps) 
    ========================================================================= */
 
 export function PTPReportProgressOverlay() {
-  const {
-    loadingNarrativeSections,
-    loadingFacets,
-    loadingInterpretations,
-    loadingAllFacetInsights,
-    narrativeSections,
-    facetInterpretations,
-    elevatedFacets,
-    suppressedFacets,
-    allFacetInsights,
-    responsesExpanded,
-  } = usePTPNarrativeContext();
+  const { generator, ptpContextTab } = usePTPNarrativeContext();
+  const ctx = ptpContextTab ?? "professional";
+  const doneSet = new Set(generator?.done ?? []);
+  const running = !!generator?.running;
+  const failed = generator?.failed ?? [];
 
-  const generating =
-    loadingNarrativeSections ||
-    loadingFacets ||
-    loadingInterpretations ||
-    (responsesExpanded && loadingAllFacetInsights);
+  // The 12 visible sections and the tracked unit (if any) each depends on.
+  // null unit = pure data section, always complete.
+  const VISIBLE: { label: string; unit: string | null }[] = [
+    { label: "Dimension scores", unit: null },
+    { label: "Profile overview", unit: `overview_narrative_${ctx}` },
+    { label: "Suggested next steps", unit: `cross_and_action_${ctx}` },
+    { label: "Dimension highlights", unit: `dimension_highlights_${ctx}` },
+    { label: "Driving facet charts", unit: null },
+    { label: "Driving facet insights (high)", unit: "facet_insights_all" },
+    { label: "Driving facet insights (low)", unit: "facet_insights_all" },
+    { label: "Cross-assessment connections", unit: `cross_and_action_${ctx}` },
+    { label: "All facet charts", unit: null },
+    { label: "Threat facet charts", unit: null },
+    { label: "Reward facet charts", unit: null },
+    { label: "Your assessment responses", unit: "facet_insights_all" },
+  ];
+  const isDone = (u: string | null) => u === null || doneSet.has(u);
+  const completed = VISIBLE.filter((s) => isDone(s.unit)).length;
+  const total = VISIBLE.length;
 
+  const anyIncomplete = completed < total;
   const [visible, setVisible] = useState(false);
   useEffect(() => {
-    if (generating) {
+    if (running || (anyIncomplete && (generator?.expected?.length ?? 0) > 0)) {
       const t = setTimeout(() => setVisible(true), 700);
       return () => clearTimeout(t);
     }
     setVisible(false);
-  }, [generating]);
+  }, [running, anyIncomplete, generator?.expected?.length]);
 
-  if (!visible) return null;
+  if (!visible && failed.length === 0) return null;
 
-  const noDrivingFacets =
-    !loadingFacets && elevatedFacets.length === 0 && suppressedFacets.length === 0;
+  const currentLabel = generator?.current
+    ? (VISIBLE.find((s) => s.unit === generator.current)?.label ??
+       generator.current.replace(new RegExp(`_${ctx}$`), "").replace(/_/g, " "))
+    : null;
 
-  const steps = [
-    {
-      label: "Profile & narrative",
-      done: !loadingNarrativeSections && !!narrativeSections,
-      active: loadingNarrativeSections,
-    },
-    {
-      label: "Driving facets",
-      done: !loadingFacets,
-      active: loadingFacets,
-    },
-    {
-      label: "Facet insights",
-      done: facetInterpretations.length > 0 || noDrivingFacets,
-      active:
-        loadingInterpretations ||
-        (!loadingFacets &&
-          elevatedFacets.length + suppressedFacets.length > 0 &&
-          facetInterpretations.length === 0),
-    },
-    ...(responsesExpanded
-      ? [
-          {
-            label: "Detailed response insights",
-            done: !loadingAllFacetInsights && allFacetInsights.length > 0,
-            active: loadingAllFacetInsights,
-          },
-        ]
-      : []),
-  ];
-
-  const completed = steps.filter((s) => s.done).length;
-  const pct = Math.round((completed / steps.length) * 100);
+  const pct = Math.round((completed / total) * 100);
 
   return (
-    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-[min(360px,calc(100vw-32px))] pointer-events-none">
+    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-[min(400px,calc(100vw-32px))] pointer-events-none">
       <div className="rounded-lg border bg-card p-4 shadow-lg pointer-events-auto">
-        <div className="flex items-center gap-3 mb-4">
-          <Loader2 className="h-5 w-5 animate-spin text-primary" />
-          <h2 className="text-lg font-semibold">Generating your report</h2>
+        <div className="flex items-center gap-3 mb-3">
+          {running ? (
+            <Loader2 className="h-5 w-5 animate-spin text-primary" />
+          ) : (
+            <Check className="h-5 w-5 text-primary" />
+          )}
+          <div className="text-sm font-medium">
+            {running
+              ? `Generating section ${Math.min(completed + 1, total)} of ${total}${currentLabel ? `: ${currentLabel}` : ""}…`
+              : `Report ready — ${completed} of ${total} sections`}
+          </div>
         </div>
 
-        <div className="h-2 w-full overflow-hidden rounded-full bg-muted mb-4">
+        <div className="h-2 w-full overflow-hidden rounded-full bg-muted mb-3">
           <div
             className="h-full bg-primary transition-all duration-500"
             style={{ width: `${pct}%` }}
           />
         </div>
 
-        <ul className="space-y-2">
-          {steps.map((s) => (
-            <li key={s.label} className="flex items-center gap-3 text-sm">
-              {s.done ? (
-                <Check className="h-4 w-4 text-primary" />
-              ) : s.active ? (
-                <Loader2 className="h-4 w-4 animate-spin text-primary" />
-              ) : (
-                <Circle className="h-4 w-4 text-muted-foreground" />
-              )}
-              <span className={s.done ? "text-foreground" : s.active ? "text-foreground" : "text-muted-foreground"}>
-                {s.label}
-              </span>
-            </li>
-          ))}
-        </ul>
+        {failed.length > 0 && !running && (
+          <div className="flex items-center justify-between gap-3 pt-2 border-t">
+            <span className="text-xs text-muted-foreground">
+              {failed.length} section{failed.length > 1 ? "s" : ""} didn't finish.
+            </span>
+            <Button size="sm" variant="outline" onClick={() => generator?.retry()}>
+              <RefreshCw className="h-3.5 w-3.5 mr-1.5" /> Retry
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );

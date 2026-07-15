@@ -137,7 +137,7 @@ export default function PeerPtpReport({ targetUserId, ownerName }: Props) {
   const personalSummary = sec(`personal_summary_${ctx}`)?.facet_data ?? null;
   const dimensionHighlights = sec(`dimension_highlights_${ctx}`)?.facet_data ?? null;
   const crossAndAction = sec(`cross_and_action_${ctx}`)?.facet_data ?? null;
-  const facetInsights = sec(`facet_insights_${ctx}`)?.facet_data ?? null;
+  const facetInsights = sec(`facet_insights_all`)?.facet_data ?? null;
 
   return (
     <div className="p-6 md:p-8 space-y-8 max-w-5xl mx-auto">
