@@ -16,17 +16,18 @@ interface Props {
   onOpenChange: (o: boolean) => void;
   reportId: string;
   reportKind: "team" | "paired";
-  suggestions?: string[];
+  suggestionGroups?: { label: string; items: string[] }[];
   onAdded?: () => void;
 }
 
 export default function AddReportCommitmentModal({
-  open, onOpenChange, reportId, reportKind, suggestions = [], onAdded,
+  open, onOpenChange, reportId, reportKind, suggestionGroups = [], onAdded,
 }: Props) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [freeText, setFreeText] = useState("");
   const [scope, setScope] = useState<"individual" | "team">("individual");
   const [submitting, setSubmitting] = useState(false);
+  const kindWord = reportKind === "team" ? "team" : "paired";
 
   useEffect(() => {
     if (!open) {
@@ -69,7 +70,7 @@ export default function AddReportCommitmentModal({
     }
     toast.success(
       scope === "team"
-        ? `Added ${items.length} team commitment${items.length === 1 ? "" : "s"}.`
+        ? `Added ${items.length} ${kindWord} commitment${items.length === 1 ? "" : "s"}.`
         : `Added ${items.length} action${items.length === 1 ? "" : "s"} to your development plan.`,
     );
     onAdded?.();
@@ -83,29 +84,35 @@ export default function AddReportCommitmentModal({
           <DialogTitle>Add to development plan</DialogTitle>
           <DialogDescription>
             Choose actions from this report or write your own, then decide whether it's
-            a personal commitment or a shared team commitment.
+            a personal commitment or a shared {kindWord} commitment.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-5">
-          {suggestions.length > 0 && (
-            <div className="space-y-2">
-              <Label className="text-sm">Suggested from this report</Label>
-              <div className="space-y-2">
-                {suggestions.map((s, i) => (
-                  <label
-                    key={i}
-                    className="flex items-start gap-2 rounded-md border border-border p-2.5 text-sm cursor-pointer hover:bg-muted/40"
-                  >
-                    <Checkbox
-                      checked={selected.has(s)}
-                      onCheckedChange={() => toggle(s)}
-                      className="mt-0.5"
-                    />
-                    <span className="flex-1 leading-snug">{s}</span>
-                  </label>
-                ))}
-              </div>
+          {suggestionGroups.some((g) => g.items.length > 0) && (
+            <div className="space-y-4">
+              {suggestionGroups.map((group, gi) =>
+                group.items.length === 0 ? null : (
+                  <div key={gi} className="space-y-2">
+                    <Label className="text-sm">{group.label}</Label>
+                    <div className="space-y-2">
+                      {group.items.map((s, i) => (
+                        <label
+                          key={i}
+                          className="flex items-start gap-2 rounded-md border border-border p-2.5 text-sm cursor-pointer hover:bg-muted/40"
+                        >
+                          <Checkbox
+                            checked={selected.has(s)}
+                            onCheckedChange={() => toggle(s)}
+                            className="mt-0.5"
+                          />
+                          <span className="flex-1 leading-snug">{s}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                ),
+              )}
             </div>
           )}
 
@@ -138,7 +145,7 @@ export default function AddReportCommitmentModal({
               <label className="flex items-start gap-2 text-sm cursor-pointer">
                 <RadioGroupItem value="team" className="mt-0.5" />
                 <span>
-                  <span className="font-medium">Shared team commitment</span>
+                  <span className="font-medium">Shared {kindWord} commitment</span>
                   <span className="block text-xs text-muted-foreground">
                     Visible to everyone in this {reportKind === "team" ? "team" : "pair"} report.
                   </span>
