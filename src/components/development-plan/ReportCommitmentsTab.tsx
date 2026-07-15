@@ -126,7 +126,7 @@ export default function ReportCommitmentsTab({ kind }: { kind: "team" | "paired"
             <CardContent className="space-y-5">
               <div className="space-y-2">
                 <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  Shared team commitments
+                  Shared {kind === "team" ? "team" : "paired"} commitments
                 </h4>
                 {sh.length === 0 ? (
                   <p className="text-sm text-muted-foreground">None yet.</p>
