@@ -961,7 +961,7 @@ function FacetList({
   };
 
   const getFacetInterpretation = (facetName: string) =>
-    facetInterpretations.find((f) => f.name === facetName);
+    allFacetInsights.find((f) => f.name === facetName);
 
   return (
     <div className="space-y-2">
