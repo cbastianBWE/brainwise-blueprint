@@ -1369,104 +1369,84 @@ export function PTPAssessmentResponsesSection(props: PTPNarrativeSectionsProps) 
    ========================================================================= */
 
 export function PTPReportProgressOverlay() {
-  const {
-    loadingNarrativeSections,
-    loadingFacets,
-    loadingInterpretations,
-    loadingAllFacetInsights,
-    narrativeSections,
-    facetInterpretations,
-    elevatedFacets,
-    suppressedFacets,
-    allFacetInsights,
-    responsesExpanded,
-  } = usePTPNarrativeContext();
+  const { generator, ptpContextTab } = usePTPNarrativeContext();
+  const ctx = ptpContextTab ?? "professional";
+  const doneSet = new Set(generator?.done ?? []);
+  const running = !!generator?.running;
+  const failed = generator?.failed ?? [];
 
-  const generating =
-    loadingNarrativeSections ||
-    loadingFacets ||
-    loadingInterpretations ||
-    (responsesExpanded && loadingAllFacetInsights);
+  // The 12 visible sections and the tracked unit (if any) each depends on.
+  // null unit = pure data section, always complete.
+  const VISIBLE: { label: string; unit: string | null }[] = [
+    { label: "Dimension scores", unit: null },
+    { label: "Profile overview", unit: `overview_narrative_${ctx}` },
+    { label: "Suggested next steps", unit: `cross_and_action_${ctx}` },
+    { label: "Dimension highlights", unit: `dimension_highlights_${ctx}` },
+    { label: "Driving facet charts", unit: null },
+    { label: "Driving facet insights (high)", unit: "facet_insights_all" },
+    { label: "Driving facet insights (low)", unit: "facet_insights_all" },
+    { label: "Cross-assessment connections", unit: `cross_and_action_${ctx}` },
+    { label: "All facet charts", unit: null },
+    { label: "Threat facet charts", unit: null },
+    { label: "Reward facet charts", unit: null },
+    { label: "Your assessment responses", unit: "facet_insights_all" },
+  ];
+  const isDone = (u: string | null) => u === null || doneSet.has(u);
+  const completed = VISIBLE.filter((s) => isDone(s.unit)).length;
+  const total = VISIBLE.length;
 
+  const anyIncomplete = completed < total;
   const [visible, setVisible] = useState(false);
   useEffect(() => {
-    if (generating) {
+    if (running || (anyIncomplete && (generator?.expected?.length ?? 0) > 0)) {
       const t = setTimeout(() => setVisible(true), 700);
       return () => clearTimeout(t);
     }
     setVisible(false);
-  }, [generating]);
+  }, [running, anyIncomplete, generator?.expected?.length]);
 
-  if (!visible) return null;
+  if (!visible && failed.length === 0) return null;
 
-  const noDrivingFacets =
-    !loadingFacets && elevatedFacets.length === 0 && suppressedFacets.length === 0;
+  const currentLabel = generator?.current
+    ? (VISIBLE.find((s) => s.unit === generator.current)?.label ??
+       generator.current.replace(new RegExp(`_${ctx}$`), "").replace(/_/g, " "))
+    : null;
 
-  const steps = [
-    {
-      label: "Profile & narrative",
-      done: !loadingNarrativeSections && !!narrativeSections,
-      active: loadingNarrativeSections,
-    },
-    {
-      label: "Driving facets",
-      done: !loadingFacets,
-      active: loadingFacets,
-    },
-    {
-      label: "Facet insights",
-      done: facetInterpretations.length > 0 || noDrivingFacets,
-      active:
-        loadingInterpretations ||
-        (!loadingFacets &&
-          elevatedFacets.length + suppressedFacets.length > 0 &&
-          facetInterpretations.length === 0),
-    },
-    ...(responsesExpanded
-      ? [
-          {
-            label: "Detailed response insights",
-            done: !loadingAllFacetInsights && allFacetInsights.length > 0,
-            active: loadingAllFacetInsights,
-          },
-        ]
-      : []),
-  ];
-
-  const completed = steps.filter((s) => s.done).length;
-  const pct = Math.round((completed / steps.length) * 100);
+  const pct = Math.round((completed / total) * 100);
 
   return (
-    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-[min(360px,calc(100vw-32px))] pointer-events-none">
+    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-[min(400px,calc(100vw-32px))] pointer-events-none">
       <div className="rounded-lg border bg-card p-4 shadow-lg pointer-events-auto">
-        <div className="flex items-center gap-3 mb-4">
-          <Loader2 className="h-5 w-5 animate-spin text-primary" />
-          <h2 className="text-lg font-semibold">Generating your report</h2>
+        <div className="flex items-center gap-3 mb-3">
+          {running ? (
+            <Loader2 className="h-5 w-5 animate-spin text-primary" />
+          ) : (
+            <Check className="h-5 w-5 text-primary" />
+          )}
+          <div className="text-sm font-medium">
+            {running
+              ? `Generating section ${Math.min(completed + 1, total)} of ${total}${currentLabel ? `: ${currentLabel}` : ""}…`
+              : `Report ready — ${completed} of ${total} sections`}
+          </div>
         </div>
 
-        <div className="h-2 w-full overflow-hidden rounded-full bg-muted mb-4">
+        <div className="h-2 w-full overflow-hidden rounded-full bg-muted mb-3">
           <div
             className="h-full bg-primary transition-all duration-500"
             style={{ width: `${pct}%` }}
           />
         </div>
 
-        <ul className="space-y-2">
-          {steps.map((s) => (
-            <li key={s.label} className="flex items-center gap-3 text-sm">
-              {s.done ? (
-                <Check className="h-4 w-4 text-primary" />
-              ) : s.active ? (
-                <Loader2 className="h-4 w-4 animate-spin text-primary" />
-              ) : (
-                <Circle className="h-4 w-4 text-muted-foreground" />
-              )}
-              <span className={s.done ? "text-foreground" : s.active ? "text-foreground" : "text-muted-foreground"}>
-                {s.label}
-              </span>
-            </li>
-          ))}
-        </ul>
+        {failed.length > 0 && !running && (
+          <div className="flex items-center justify-between gap-3 pt-2 border-t">
+            <span className="text-xs text-muted-foreground">
+              {failed.length} section{failed.length > 1 ? "s" : ""} didn't finish.
+            </span>
+            <Button size="sm" variant="outline" onClick={() => generator?.retry()}>
+              <RefreshCw className="h-3.5 w-3.5 mr-1.5" /> Retry
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );
