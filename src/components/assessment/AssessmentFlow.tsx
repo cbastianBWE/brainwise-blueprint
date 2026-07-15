@@ -17,7 +17,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { X, ChevronLeft, ChevronRight, Check, AlertTriangle } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, Check } from "lucide-react";
 import PreAssessmentAcknowledgment from "./PreAssessmentAcknowledgment";
 
 interface Item {
@@ -422,7 +422,12 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
   };
 
   const allAnswered = items.length > 0 && items.every((it) => responses[it.item_id] != null);
-  useEffect(() => { if (allAnswered) setReviewingUnanswered(false); }, [allAnswered]);
+  useEffect(() => {
+    if (allAnswered && reviewingUnanswered) {
+      setReviewingUnanswered(false);
+      setReviewing(true);
+    }
+  }, [allAnswered, reviewingUnanswered]);
 
   if (needsAck) {
     return (
@@ -452,7 +457,7 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
   const goToNextUnanswered = () => {
     let next = items.findIndex((it, i) => i > currentIndex && responses[it.item_id] == null);
     if (next === -1) next = items.findIndex((it) => responses[it.item_id] == null);
-    if (next === -1) { setReviewingUnanswered(false); setCurrentIndex(items.length - 1); }
+    if (next === -1) { setReviewingUnanswered(false); setReviewing(true); }
     else setCurrentIndex(next);
   };
 
@@ -652,15 +657,6 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
       {/* Content */}
       <div className="flex-1 flex items-center justify-center px-4 py-8 overflow-auto">
         <div className="w-full max-w-2xl">
-          <div className="mb-6 flex gap-3 rounded-lg border border-[#FFB703] bg-[#FFB703]/10 px-4 py-3">
-            <AlertTriangle className="h-5 w-5 shrink-0 text-[#7a5800] mt-0.5" />
-            <div className="text-sm text-[#7a5800]">
-              <p className="font-semibold">Read each item carefully.</p>
-              <p className="mt-0.5">
-                Check both endpoint labels before you respond — they can vary between items.
-              </p>
-            </div>
-          </div>
           {currentItem.scale_type === "Level 1-4 behavioral match" ? (
             <LevelMatchControl
               item={currentItem}
