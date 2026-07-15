@@ -457,7 +457,7 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
   const goToNextUnanswered = () => {
     let next = items.findIndex((it, i) => i > currentIndex && responses[it.item_id] == null);
     if (next === -1) next = items.findIndex((it) => responses[it.item_id] == null);
-    if (next === -1) { setReviewingUnanswered(false); setCurrentIndex(items.length - 1); }
+    if (next === -1) { setReviewingUnanswered(false); setReviewing(true); }
     else setCurrentIndex(next);
   };
 
