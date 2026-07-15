@@ -84,6 +84,13 @@ export default function ReportCommitmentsTab({ kind }: { kind: "team" | "paired"
       </div>
     );
   }
+  if (error) {
+    return (
+      <p className="text-sm text-muted-foreground py-8">
+        Couldn't load your {kind} commitments. Please try again.
+      </p>
+    );
+  }
   if (reports.length === 0) {
     return (
       <p className="text-sm text-muted-foreground py-8">
