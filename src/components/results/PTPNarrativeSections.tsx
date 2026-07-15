@@ -394,57 +394,9 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
       setElevatedFacets(elevated);
       setSuppressedFacets(suppressed);
       setLoadingFacets(false);
-
-      if (elevated.length > 0 || suppressed.length > 0) {
-        setLoadingInterpretations(true);
-        const { data: existing } = await supabase
-          .from("facet_interpretations")
-          .select("facet_data")
-          .eq("assessment_result_id", assessmentResultId)
-          .eq("section_type", `facet_insights_${ctx}`)
-          .maybeSingle();
-
-        if (existing?.facet_data) {
-          setFacetInterpretations(existing.facet_data as unknown as FacetInterpretation[]);
-          setLoadingInterpretations(false);
-          return;
-        }
-
-        const allFacets = [
-          ...elevated.map((f) => ({
-            name: f.facet_name,
-            score: Math.round(f.value),
-            question: assessmentResponses.find(r => r.facetName === f.facet_name)?.itemText ?? "",
-            type: "elevated",
-          })),
-          ...suppressed.map((f) => ({
-            name: f.facet_name,
-            score: Math.round(f.value),
-            question: assessmentResponses.find(r => r.facetName === f.facet_name)?.itemText ?? "",
-            type: "suppressed",
-          })),
-        ];
-
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
-        const { data, error } = await supabase.functions.invoke("generate-facet-interpretations", {
-          body: {
-            assessment_result_id: assessmentResultId,
-            facets: allFacets,
-            narrative_context: ctx,
-          },
-          headers: { Authorization: `Bearer ${session?.access_token}` },
-        });
-
-        if (!error && data?.facet_data) {
-          setFacetInterpretations(data.facet_data as FacetInterpretation[]);
-        }
-        setLoadingInterpretations(false);
-      }
     };
     fetchFacets();
-  }, [assessmentId, additionalAssessmentId, assessmentResultId, ptpContextTab]);
+  }, [assessmentId, additionalAssessmentId, assessmentResultId, ptpContextTab, sectionRefreshKey]);
 
   // ── facet_insights_all: full per-item interpretation array ──
   // DB-first; triggers server-side generate-all-facets when the user opens
