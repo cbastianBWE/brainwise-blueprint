@@ -1,53 +1,32 @@
-# CoachingActivityRunner Hardening — Staged Plan
+# Verification of the F1 step 4 plan (individual PTP sectioned generation)
 
-Behavior-preserving cleanup of `src/pages/coaching/CoachingActivityRunner.tsx` (~3,690 lines, 17 widget wrappers, 45 useState / 4 useMemo / 8 useCallback / 0 memo / 0 lazy). Two distinct problems:
+I read the current `useNarrativeGenerator`, `PTPNarrativeSections`, and `PeerPtpReport` to check the plan against reality. The plan is coherent, backward-compatible for team/paired, and safe to apply. Two small clarifications worth flagging before build.
 
-1. **Runtime lag** — every keystroke re-renders the whole runner; nothing memoized.
-2. **File size** — slow/expensive to edit in Lovable.
+## What definitely won't break
 
-Activities are DB rows, not code — the runner only grows when a new widget *type* is added, which is rare. Keep the config-driven runner; do NOT split per activity.
+- **Team/paired hook usage.** They don't pass `context`, so:
+  - `idBody` stays `{ team_profile_id | paired_profile_id: id }` (no stray `narrative_context` or `include_coach`).
+  - The auto-run branch still gates on `status !== "complete"` and keys on `${id}:`.
+  - `startedRef.current === key` for `${id}:` matches the prior single-id gate, so no double-run and no stuck loop.
+- **Peer report swap.** `sec()` already filters by `currentResult.assessment_result_id`, and `facet_insights_all` is one row per result. Same element shape (`name`, `positive_self/others`, `negative_self/others`), same render block. Owner report, peer report, and PDF now share one source.
+- **Provider wiring.** `PTPNarrativeProvider` already forwards the full `usePTPNarrativeData` return through context; adding `generator` and `sectionRefreshKey` to that return automatically exposes them to `PTPReportProgressOverlay`, `FacetList`, and the response accordion.
+- **FacetList swap.** Sections 6/7 already know how to render a `FacetInterpretation`. `allFacetInsights` entries have the same shape and the same suffixed `name` used to look up matches, so `.find(f => f.name === facetName)` works unchanged.
+- **`fetchNarrativeSections` as a pure read.** On first render sections may be missing; the driver fills them and each `onSectionDone` bumps `sectionRefreshKey`, which re-runs the read effect. Already-generated reports (the common case, since `calculate-scores` fires the orchestrator) render immediately.
+- **`fetchFacets` cleanup.** Removing the `facet_insights_${ctx}` block is safe because sections 6/7 no longer read `facetInterpretations` after the FacetList swap. Leaving the `facetInterpretations` / `loadingInterpretations` state declarations dangling is a harmless dead branch.
 
-## Guardrails (after every stage)
-- Preview click-through: **0420 Your PTP, 0450 Your team, 0503 Recent past, 0505 Major influencers**.
-- Type in text fields, run one AI analysis, check console for errors.
-- Commit only when green. One stage per prompt.
+## Two things to confirm during build (not blockers)
 
-## Stage 0 — Profile first
-Open React DevTools Profiler in the live app. Record while (a) typing in a `qa_multimodal` field and (b) filling influencer detail cards. Capture which components re-render per keystroke and their durations. Track B choices depend on this evidence — don't guess.
+1. **Unit-name vs row-name mapping.** The plan's tracked unit is `overview_narrative_<ctx>`, but the DB rows the frontend reads are `profile_overview_<ctx>` and `personal_summary_<ctx>`. This is fine as long as the backend `overview_narrative_<ctx>` unit writes both of those rows (the prompt states "section content is unchanged", which implies it does). No frontend action needed — the read effect still selects the same `section_type` values it does today, and the driver only tracks unit names for progress. If the backend actually renamed the row to `overview_narrative_<ctx>`, the read effect will need the same rename. Worth a 30-second check on the first generated report.
 
-## Track A — File split (safe, mechanical; do regardless of Stage 0)
+2. **Progress overlay JSX in the prompt is stripped of tags** (blank lines instead of `<div>`s). Treat that block as pseudocode: the actual JSX must still render the header row (icon + label), the progress bar (`completed / total`), and the retry row. Logic (VISIBLE array, `isDone`, `visible` gate, `currentLabel` fallback) is correct as-is.
 
-**A1 — Shared module.** Create `src/pages/coaching/runner/shared.tsx`. Move verbatim:
-- Types: `Step`, `Activity`, `Negative`, `ChatMsg`, `Responses`, `Session`, `SelectedSaying`, `SelectedImage`, `LibraryImage`, `SayingRow`, `QaAnswer`, `AssessmentFileType`, `AssessmentUploadRow`.
-- Helpers: `buildUserPatch`, `useDebouncedSave`, `imgUrl`, `humanizeBand`, `inferFileType`, `extForFile`.
-- Any small internal component used by ≥2 widgets (e.g. multimodal input field, local recording control) — grep first.
-Update runner to import from `./runner/shared`. No re-exports of items already in `CoachingViews.tsx`.
+## Nothing else regresses
 
-**A2 — Heavy/self-contained widgets** → `src/pages/coaching/runner/widgets/<Name>.tsx`:
-`PtpDisplayWidget`, `AssessmentUploadWidget`, `IkigaiWidget` (+ `IkigaiItemCard`), `InnerTeamWidget` (+ `InnerTeamCharacterCard`).
+- `SharedResults` → `PeerPtpReport`: peer viewer keeps working; only the impact-table source key changes to a row the RPC already returns.
+- `MyResults` coach view: driver runs with `includeCoach: true`, plan includes `coach_questions_<ctx>`, existing coach-question render is unchanged.
+- `calculate-scores` still generates on scoring; the driver is only a healer + progress indicator, so the healthy path is unaffected.
+- No changes to PDF assembly, sharing controls, or NAI/AIRSA flows.
 
-**A3 — Selection/media widgets:**
-`ImageSelectWidget`, `TextSelectWidget`, `ImageDescribeWidget`, `RecapWidget`.
+## Recommendation
 
-**A4 — Core/text widgets:**
-`TextareaWidget`, `ListBuilderWidget`, `RiskBlocksWidget`, `ChatWidget`, `PrioritizePanel`, `SuggestionPanel`, `ContentWidget`, `QaMultimodalWidget`.
-
-Each batch: move verbatim, named export, import shared from `../shared`, views from `@/components/coaching/CoachingViews`, re-import into runner. Zero logic/JSX/string changes. After A4 the runner is a ~600–900 line orchestration shell.
-
-## Track B — Reactivity fixes (apply only what the profiler implicated)
-- **B1** Stabilize handler props with `useCallback`; pass narrow slices of `responses` (e.g. `responses.negatives`) rather than the whole object.
-- **B2** Wrap each widget export in `React.memo`.
-- **B3** If chrome (step header / progress / briefing) re-renders per keystroke, extract & memoize it.
-- **B4** (last resort) Local input state in text widgets, propagate to `responses` on blur/debounce. Highest risk of stale-save bugs.
-
-## Track C — Lazy load (after Track A)
-Convert imports of heavy widgets — `PtpDisplayWidget`, `AssessmentUploadWidget`, `IkigaiWidget`, `InnerTeamWidget`, `ImageSelectWidget`, `TextSelectWidget` — to `React.lazy`, wrap widget-dispatch area in a single `<Suspense fallback={<Spinner/>}>`. Light widgets stay as normal imports.
-
-## Label fix (fold into A4 or standalone)
-In `RiskBlocksWidget` collect-mode: change `<p>Add a risk</p>` → `<p>{step.addLabel || "Add a risk"}</p>` and add `addLabel?: string` to `Step`. (Already applied in a prior turn — verify still present after A4 move.)
-
-## Recommended order
-Stage 0 → A1 → A2 → A3 → A4 (+ label fix) → B1/B2 per profile → C → B3/B4 only if still laggy.
-
-## Deliverable per stage
-One prompt, one commit, one guardrail pass. Track A alone yields the biggest Lovable-velocity win and is safe; Track B is strictly evidence-driven.
+Proceed with the plan as written. During implementation, verify point (1) above on the first generated PTP report by checking that `profile_overview_<ctx>` and `personal_summary_<ctx>` rows exist after `overview_narrative_<ctx>` lands in `generator.done`. If they don't, add a small alias in the read effect — no other change needed.
