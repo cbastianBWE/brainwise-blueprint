@@ -81,6 +81,7 @@ export interface PairedPdfSectionsUi {
   needs: boolean;
   communication: boolean;
   conflict: boolean;
+  leaderActions: boolean;
   repair: boolean;
   intimacy: boolean;
   fullMap: boolean;
