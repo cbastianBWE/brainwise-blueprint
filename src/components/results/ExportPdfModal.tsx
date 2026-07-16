@@ -108,6 +108,8 @@ type SectionOption<K extends string> = {
   description: string;
   coachOnly?: boolean;
   romanticOnly?: boolean;
+  needsLeadership?: boolean;
+  needsLeaderActions?: boolean;
 };
 
 type SectionGroup<K extends string> = {
