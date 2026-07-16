@@ -1130,8 +1130,16 @@ export default function TeamReport() {
         onOpenChange={setExportOpen}
         instrumentType="TEAM"
         isCoachView={canSeePrivileged}
+        leadershipAvailable={hasLeadership}
         onExportTeam={handleExportTeam}
       />
+      {hasLeadership && (
+        <LeadershipModal
+          open={leadershipOpen}
+          onOpenChange={setLeadershipOpen}
+          items={leadership!}
+        />
+      )}
       {teamProfileId && (
         <AddReportCommitmentModal
           open={commitOpen}
