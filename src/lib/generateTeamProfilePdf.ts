@@ -33,6 +33,7 @@ export interface TeamPdfSections {
   drivingFacetCharts: boolean;
   communication: boolean;
   conflict: boolean;
+  leadership: boolean;
   leaderBrief: boolean;
   fullMap: boolean;
   fullMapCharts: boolean;
