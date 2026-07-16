@@ -84,7 +84,7 @@ const ASSET_KIND_CONFIG = {
     hintLine: "MP3, WAV, WebM, OGG, M4A up to 100 MB",
   },
   document: {
-    maxBytes: 50 * 1024 * 1024,
+    maxBytes: 200 * 1024 * 1024,
     mimeTypes: [
       "application/pdf",
       "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
@@ -93,7 +93,7 @@ const ASSET_KIND_CONFIG = {
     ],
     extensions: ".pdf,.docx,.xlsx,.pptx",
     label: "document",
-    hintLine: "PDF, DOCX, XLSX, PPTX up to 50 MB",
+    hintLine: "PDF, DOCX, XLSX, PPTX up to 200 MB",
   },
 } as const;
 
