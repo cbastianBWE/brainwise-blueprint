@@ -1228,6 +1228,12 @@ export default function MyResults({ isCoachView = false, adminView = false, targ
             >
               <FileText className="mr-2 h-4 w-4" /> Export PDF
             </Button>
+            {effectiveSelected?.isPTP && displayName && (
+              <PtpOnePagers
+                assessmentResultId={effectiveSelected.result.id}
+                userName={displayName}
+              />
+            )}
             {!isCoachView && canTakeAssessments && (
               <>
                 <Button
