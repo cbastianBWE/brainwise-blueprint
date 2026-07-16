@@ -555,6 +555,10 @@ export default function DevelopmentPlan() {
       )}
         </TabsContent>
 
+        <TabsContent value="coaching" className="mt-2">
+          <CoachingTab />
+        </TabsContent>
+
         <TabsContent value="team" className="mt-2">
           <ReportCommitmentsTab kind="team" />
         </TabsContent>
