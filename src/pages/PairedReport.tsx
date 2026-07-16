@@ -645,6 +645,8 @@ export default function PairedReport() {
   const repair = sections["repair"] as RepairSection | undefined;
   const intimacy = sections["intimacy"] as IntimacySection | undefined;
   const coach = sections["coach"] as CoachSection | undefined;
+  const leaderActions = sections["leader_actions"] as LeadershipItem[] | undefined;
+  const hasLeaderActions = mode === "work" && Array.isArray(leaderActions) && leaderActions.length > 0;
 
   /* full map groups */
   const fullMapGroups = useMemo(() => {
