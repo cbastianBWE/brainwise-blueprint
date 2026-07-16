@@ -270,6 +270,8 @@ function CoachingActivityCard({
   onResume: () => void;
 }) {
   const outcome =
+    (activity.definition && typeof activity.definition === "object" &&
+      (activity.definition as any).briefing?.description) ||
     activity.desired_outcome ||
     (activity.definition && typeof activity.definition === "object" && (activity.definition as any).desired_outcome) ||
     activity.title;
