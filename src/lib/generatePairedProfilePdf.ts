@@ -590,6 +590,34 @@ export async function generatePairedProfilePdf(
     }
   }
 
+  // 9b. leader actions (work mode only)
+  if (
+    sections.leaderActions &&
+    data.mode === "work" &&
+    Array.isArray(s.leader_actions) &&
+    s.leader_actions.length > 0
+  ) {
+    ctx.sectionHeading("For the leader");
+    for (let i = 0; i < Math.min(3, s.leader_actions.length); i++) {
+      const it = s.leader_actions[i];
+      ctx.ensureBlockSpace(20);
+      doc.setFont("Poppins", "bold");
+      doc.setFontSize(11);
+      doc.setTextColor(...NAVY);
+      doc.text(`${i + 1}. ${nm(it.headline ?? "")}`, MARGIN_L, ctx.y);
+      ctx.y += 5;
+      ctx.bodyText(nm(it.detail ?? ""));
+      if (it.action) {
+        doc.setFont("Poppins", "bold");
+        doc.setFontSize(9);
+        doc.setTextColor(...NAVY);
+        doc.text(nm(it.action), MARGIN_L, ctx.y);
+        ctx.y += 5;
+      }
+      ctx.y += 2;
+    }
+  }
+
   // 10. repair (all modes)
   if (sections.repair && s.repair) {
     ctx.sectionHeading("Repair");
