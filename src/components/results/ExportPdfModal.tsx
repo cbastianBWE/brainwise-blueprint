@@ -64,6 +64,7 @@ export interface TeamPdfSectionsUi {
   drivingFacetCharts: boolean;
   communication: boolean;
   conflict: boolean;
+  leadership: boolean;
   leaderBrief: boolean;
   fullMap: boolean;
   fullMapCharts: boolean;
@@ -80,6 +81,7 @@ export interface PairedPdfSectionsUi {
   needs: boolean;
   communication: boolean;
   conflict: boolean;
+  leaderActions: boolean;
   repair: boolean;
   intimacy: boolean;
   fullMap: boolean;
@@ -93,6 +95,8 @@ interface Props {
   instrumentType: "PTP" | "NAI" | "AIRSA" | "TEAM" | "PAIRED" | "OTHER";
   isCoachView?: boolean;
   reportMode?: "work" | "personal" | "romantic";
+  leadershipAvailable?: boolean;
+  leaderActionsAvailable?: boolean;
   onExportPtp?: (sections: PdfSections) => Promise<void>;
   onExportNai?: (sections: NaiPdfSectionsUi) => Promise<void>;
   onExportAirsa?: (sections: AirsaPdfSectionsUi) => Promise<void>;
@@ -106,6 +110,8 @@ type SectionOption<K extends string> = {
   description: string;
   coachOnly?: boolean;
   romanticOnly?: boolean;
+  needsLeadership?: boolean;
+  needsLeaderActions?: boolean;
 };
 
 type SectionGroup<K extends string> = {
@@ -238,6 +244,7 @@ const PAIRED_GROUPS: SectionGroup<keyof PairedPdfSectionsUi>[] = [
       { key: "needs", name: "What each of you needs", description: "Two-column needs from each other" },
       { key: "communication", name: "Communication", description: "General, under pressure, avoiding conflict" },
       { key: "conflict", name: "Conflict", description: "Mitigate + promote healthy + read/counter-move" },
+      { key: "leaderActions", name: "For the leader", description: "The three things the leader needs to know, each with one move", needsLeaderActions: true },
       { key: "repair", name: "Repair", description: "Overview, steps, per-person guidance" },
       { key: "intimacy", name: "Intimacy", description: "Overview and per-person guidance", romanticOnly: true },
     ],
@@ -278,6 +285,7 @@ const TEAM_GROUPS: SectionGroup<keyof TeamPdfSectionsUi>[] = [
     options: [
       { key: "communication", name: "Communication", description: "General, under pressure, avoiding conflict" },
       { key: "conflict", name: "Conflict", description: "Summary + mitigate + promote healthy" },
+      { key: "leadership", name: "For the leader", description: "The three things the leader needs to know, each with one move", needsLeadership: true },
       { key: "leaderBrief", name: "For the leader: the moves", description: "Driver / risk / move / owner + lean-on", coachOnly: true },
     ],
   },
@@ -302,6 +310,8 @@ export default function ExportPdfModal({
   instrumentType,
   isCoachView = false,
   reportMode,
+  leadershipAvailable = false,
+  leaderActionsAvailable = false,
   onExportPtp,
   onExportNai,
   onExportAirsa,
@@ -359,6 +369,7 @@ export default function ExportPdfModal({
     drivingFacetCharts: false,
     communication: true,
     conflict: true,
+    leadership: true,
     leaderBrief: true,
     fullMap: true,
     fullMapCharts: false,
@@ -375,6 +386,7 @@ export default function ExportPdfModal({
     needs: true,
     communication: true,
     conflict: true,
+    leaderActions: true,
     repair: true,
     intimacy: true,
     fullMap: true,
@@ -410,7 +422,9 @@ export default function ExportPdfModal({
         options: g.options.filter(
           (o) =>
             (!o.coachOnly || isCoachView) &&
-            (!o.romanticOnly || reportMode === "romantic"),
+            (!o.romanticOnly || reportMode === "romantic") &&
+            (!o.needsLeadership || leadershipAvailable) &&
+            (!o.needsLeaderActions || leaderActionsAvailable),
         ),
       }))
       .filter((g) => g.options.length > 0);
@@ -418,8 +432,8 @@ export default function ExportPdfModal({
   const visibleNaiGroups = useMemo(() => filterGroups(NAI_GROUPS), [isCoachView, reportMode]);
   const visiblePtpGroups = PTP_GROUPS;
   const visibleAirsaGroups = AIRSA_GROUPS;
-  const visibleTeamGroups = useMemo(() => filterGroups(TEAM_GROUPS), [isCoachView, reportMode]);
-  const visiblePairedGroups = useMemo(() => filterGroups(PAIRED_GROUPS), [isCoachView, reportMode]);
+  const visibleTeamGroups = useMemo(() => filterGroups(TEAM_GROUPS), [isCoachView, reportMode, leadershipAvailable]);
+  const visiblePairedGroups = useMemo(() => filterGroups(PAIRED_GROUPS), [isCoachView, reportMode, leaderActionsAvailable]);
 
   const allSelected = isPaired
     ? visiblePairedGroups.every((g) => g.options.every((o) => pairedSections[o.key]))

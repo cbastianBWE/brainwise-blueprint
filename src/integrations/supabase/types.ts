@@ -14390,6 +14390,10 @@ export type Database = {
           success: boolean
         }[]
       }
+      bw_all_subjects_consent: {
+        Args: { p_audience: string; p_subject_ids: string[] }
+        Returns: boolean
+      }
       bw_can_generate_paired: {
         Args: { p_a: string; p_b: string; p_caller: string; p_mode: string }
         Returns: boolean
@@ -14414,6 +14418,11 @@ export type Database = {
         Args: { p_profile: string }
         Returns: boolean
       }
+      bw_can_see_leadership_content: {
+        Args: { p_kind: string; p_profile: string }
+        Returns: boolean
+      }
+      bw_is_team_leader_of: { Args: { p_member: string }; Returns: boolean }
       bw_list_my_reports: {
         Args: never
         Returns: {

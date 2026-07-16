@@ -10,6 +10,7 @@ import { useUserProfile } from "@/hooks/useUserProfile";
 import { useNarrativeGenerator } from "@/hooks/useNarrativeGenerator";
 import { HighlightableText, TeamReportHighlightProvider } from "@/components/results/ReportHighlight";
 import ExportPdfModal, { type TeamPdfSectionsUi } from "@/components/results/ExportPdfModal";
+import LeadershipModal, { type LeadershipItem } from "@/components/results/LeadershipModal";
 import AddReportCommitmentModal from "@/components/development-plan/AddReportCommitmentModal";
 import { assembleTeamPdfData } from "@/lib/assembleTeamPdfData";
 import { generateTeamProfilePdf } from "@/lib/generateTeamProfilePdf";
@@ -544,6 +545,7 @@ export default function TeamReport() {
       PRIVILEGED_ACCOUNT_TYPES.has(userProfile.account_type ?? ""));
   const canHighlight = !noAccess;
   const [exportOpen, setExportOpen] = useState(false);
+  const [leadershipOpen, setLeadershipOpen] = useState(false);
   const [commitOpen, setCommitOpen] = useState(false);
   const handleExportTeam = useCallback(
     async (secs: TeamPdfSectionsUi) => {
@@ -634,6 +636,8 @@ export default function TeamReport() {
   const conflict = sections["conflict"] as ConflictSection | undefined;
   const leader = sections["leader_brief"] as LeaderBriefSection | undefined;
   const coach = sections["coach"] as CoachSection | undefined;
+  const leadership = sections["leadership"] as LeadershipItem[] | undefined;
+  const hasLeadership = Array.isArray(leadership) && leadership.length > 0;
 
   const facetLookup = (item: number): TeamFacetResult | undefined =>
     profile?.structured?.facets?.find((f) => f.itemNumber === item) ??
@@ -774,6 +778,16 @@ export default function TeamReport() {
                 <FileText className="mr-2 h-4 w-4" />
                 Export PDF
               </Button>
+              {hasLeadership && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setLeadershipOpen(true)}
+                  style={{ background: "#fff", color: NAVY, borderColor: "transparent" }}
+                >
+                  For the leader
+                </Button>
+              )}
               <Button
                 variant="outline"
                 size="sm"
@@ -1116,8 +1130,16 @@ export default function TeamReport() {
         onOpenChange={setExportOpen}
         instrumentType="TEAM"
         isCoachView={canSeePrivileged}
+        leadershipAvailable={hasLeadership}
         onExportTeam={handleExportTeam}
       />
+      {hasLeadership && (
+        <LeadershipModal
+          open={leadershipOpen}
+          onOpenChange={setLeadershipOpen}
+          items={leadership!}
+        />
+      )}
       {teamProfileId && (
         <AddReportCommitmentModal
           open={commitOpen}

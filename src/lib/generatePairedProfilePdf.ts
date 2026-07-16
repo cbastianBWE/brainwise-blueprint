@@ -41,6 +41,7 @@ export interface PairedPdfSections {
   needs: boolean;
   communication: boolean;
   conflict: boolean;
+  leaderActions: boolean;
   repair: boolean;
   intimacy: boolean;
   fullMap: boolean;
@@ -586,6 +587,34 @@ export async function generatePairedProfilePdf(
         `${data.firstB}: read + counter-move`,
         [nm(s.conflict.per_person.b.read), nm(s.conflict.per_person.b.counter_move)],
       );
+    }
+  }
+
+  // 9b. leader actions (work mode only)
+  if (
+    sections.leaderActions &&
+    data.mode === "work" &&
+    Array.isArray(s.leader_actions) &&
+    s.leader_actions.length > 0
+  ) {
+    ctx.sectionHeading("For the leader");
+    for (let i = 0; i < Math.min(3, s.leader_actions.length); i++) {
+      const it = s.leader_actions[i];
+      ctx.ensureBlockSpace(20);
+      doc.setFont("Poppins", "bold");
+      doc.setFontSize(11);
+      doc.setTextColor(...NAVY);
+      doc.text(`${i + 1}. ${nm(it.headline ?? "")}`, MARGIN_L, ctx.y);
+      ctx.y += 5;
+      ctx.bodyText(nm(it.detail ?? ""));
+      if (it.action) {
+        doc.setFont("Poppins", "bold");
+        doc.setFontSize(9);
+        doc.setTextColor(...NAVY);
+        doc.text(nm(it.action), MARGIN_L, ctx.y);
+        ctx.y += 5;
+      }
+      ctx.y += 2;
     }
   }
 

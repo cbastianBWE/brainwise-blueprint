@@ -25,6 +25,7 @@ export interface TeamPdfSectionData {
     rows: Array<{ item: number; risk_to_work: string; the_move: string; potential_owner: string }>;
     lean_on: string;
   };
+  leadership?: Array<{ headline: string; detail: string; action?: string }>;
   coach?: { why: Array<{ item: number; rationale: string }>; debrief_prompts: string[] };
 }
 

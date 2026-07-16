@@ -33,6 +33,7 @@ export interface TeamPdfSections {
   drivingFacetCharts: boolean;
   communication: boolean;
   conflict: boolean;
+  leadership: boolean;
   leaderBrief: boolean;
   fullMap: boolean;
   fullMapCharts: boolean;
@@ -506,6 +507,29 @@ export async function generateTeamProfilePdf(
       asLines(s.conflict.promote_healthy),
       { bulleted: true },
     );
+  }
+
+  // 7b. leadership snapshot (three headlines + moves)
+  if (sections.leadership && Array.isArray(s.leadership) && s.leadership.length > 0) {
+    ctx.sectionHeading("For the leader");
+    for (let i = 0; i < Math.min(3, s.leadership.length); i++) {
+      const it = s.leadership[i];
+      ctx.ensureBlockSpace(20);
+      doc.setFont("Poppins", "bold");
+      doc.setFontSize(11);
+      doc.setTextColor(...NAVY);
+      doc.text(`${i + 1}. ${it.headline ?? ""}`, MARGIN_L, ctx.y);
+      ctx.y += 5;
+      ctx.bodyText(it.detail ?? "");
+      if (it.action) {
+        doc.setFont("Poppins", "bold");
+        doc.setFontSize(9);
+        doc.setTextColor(...NAVY);
+        doc.text(it.action, MARGIN_L, ctx.y);
+        ctx.y += 5;
+      }
+      ctx.y += 2;
+    }
   }
 
   // 8. leader brief (privileged)

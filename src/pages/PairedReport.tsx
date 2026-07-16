@@ -10,6 +10,7 @@ import { useUserProfile } from "@/hooks/useUserProfile";
 import { useNarrativeGenerator } from "@/hooks/useNarrativeGenerator";
 import { HighlightableText, PairedReportHighlightProvider } from "@/components/results/ReportHighlight";
 import ExportPdfModal, { type PairedPdfSectionsUi } from "@/components/results/ExportPdfModal";
+import LeadershipModal, { type LeadershipItem } from "@/components/results/LeadershipModal";
 import AddReportCommitmentModal from "@/components/development-plan/AddReportCommitmentModal";
 import { assemblePairedPdfData } from "@/lib/assemblePairedPdfData";
 import { generatePairedProfilePdf } from "@/lib/generatePairedProfilePdf";
@@ -485,7 +486,8 @@ export default function PairedReport() {
     (userProfile.is_practitioner_coach ||
       PRIVILEGED_ACCOUNT_TYPES.has(userProfile.account_type ?? ""));
   const canHighlight = !noAccess;
-  const [exportOpen, setExportOpen] = useState(false);
+ const [exportOpen, setExportOpen] = useState(false);
+ const [leaderActionsOpen, setLeaderActionsOpen] = useState(false);
   const [commitOpen, setCommitOpen] = useState(false);
 
   const handleExportPaired = useCallback(
@@ -644,6 +646,8 @@ export default function PairedReport() {
   const repair = sections["repair"] as RepairSection | undefined;
   const intimacy = sections["intimacy"] as IntimacySection | undefined;
   const coach = sections["coach"] as CoachSection | undefined;
+  const leaderActions = sections["leader_actions"] as LeadershipItem[] | undefined;
+  const hasLeaderActions = mode === "work" && Array.isArray(leaderActions) && leaderActions.length > 0;
 
   /* full map groups */
   const fullMapGroups = useMemo(() => {
@@ -769,6 +773,16 @@ export default function PairedReport() {
                   <FileText className="mr-2 h-4 w-4" />
                   Export PDF
                 </Button>
+                {hasLeaderActions && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setLeaderActionsOpen(true)}
+                    style={{ background: "#fff", color: NAVY, borderColor: "transparent" }}
+                  >
+                    For the leader
+                  </Button>
+                )}
                 <Button
                   variant="outline"
                   size="sm"
@@ -1200,8 +1214,17 @@ export default function PairedReport() {
         instrumentType="PAIRED"
         isCoachView={canSeePrivileged}
         reportMode={mode ?? "work"}
+        leaderActionsAvailable={hasLeaderActions}
         onExportPaired={handleExportPaired}
       />
+      {hasLeaderActions && (
+        <LeadershipModal
+          open={leaderActionsOpen}
+          onOpenChange={setLeaderActionsOpen}
+          items={leaderActions!}
+          transform={nm}
+        />
+      )}
       {pairedProfileId && (
         <AddReportCommitmentModal
           open={commitOpen}
