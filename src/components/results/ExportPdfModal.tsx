@@ -308,6 +308,8 @@ export default function ExportPdfModal({
   instrumentType,
   isCoachView = false,
   reportMode,
+  leadershipAvailable = false,
+  leaderActionsAvailable = false,
   onExportPtp,
   onExportNai,
   onExportAirsa,
