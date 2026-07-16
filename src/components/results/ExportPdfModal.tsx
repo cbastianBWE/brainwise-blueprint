@@ -95,6 +95,8 @@ interface Props {
   instrumentType: "PTP" | "NAI" | "AIRSA" | "TEAM" | "PAIRED" | "OTHER";
   isCoachView?: boolean;
   reportMode?: "work" | "personal" | "romantic";
+  leadershipAvailable?: boolean;
+  leaderActionsAvailable?: boolean;
   onExportPtp?: (sections: PdfSections) => Promise<void>;
   onExportNai?: (sections: NaiPdfSectionsUi) => Promise<void>;
   onExportAirsa?: (sections: AirsaPdfSectionsUi) => Promise<void>;
