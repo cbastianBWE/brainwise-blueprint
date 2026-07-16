@@ -1221,12 +1221,8 @@ export default function PairedReport() {
         <LeadershipModal
           open={leaderActionsOpen}
           onOpenChange={setLeaderActionsOpen}
-          items={(leaderActions ?? []).map((it) => ({
-            ...it,
-            headline: nm(it.headline),
-            detail: nm(it.detail),
-            action: nm(it.action),
-          }))}
+          items={leaderActions!}
+          transform={nm}
         />
       )}
       {pairedProfileId && (
