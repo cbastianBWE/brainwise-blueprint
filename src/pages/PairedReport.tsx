@@ -486,7 +486,8 @@ export default function PairedReport() {
     (userProfile.is_practitioner_coach ||
       PRIVILEGED_ACCOUNT_TYPES.has(userProfile.account_type ?? ""));
   const canHighlight = !noAccess;
-  const [exportOpen, setExportOpen] = useState(false);
+ const [exportOpen, setExportOpen] = useState(false);
+ const [leaderActionsOpen, setLeaderActionsOpen] = useState(false);
   const [commitOpen, setCommitOpen] = useState(false);
 
   const handleExportPaired = useCallback(
