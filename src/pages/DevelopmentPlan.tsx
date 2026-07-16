@@ -48,8 +48,9 @@ interface PlanComment {
 
 interface PlanItem {
   id: string;
-  source: "ptp" | "custom" | "team_report" | "paired_report";
+  source: "ptp" | "custom" | "team_report" | "paired_report" | "coaching";
   source_context: string | null;
+  source_report_id?: string | null;
   card_title: string | null;
   dimension_tags: string[] | null;
   action_text: string;
