@@ -635,6 +635,8 @@ export default function TeamReport() {
   const conflict = sections["conflict"] as ConflictSection | undefined;
   const leader = sections["leader_brief"] as LeaderBriefSection | undefined;
   const coach = sections["coach"] as CoachSection | undefined;
+  const leadership = sections["leadership"] as LeadershipItem[] | undefined;
+  const hasLeadership = Array.isArray(leadership) && leadership.length > 0;
 
   const facetLookup = (item: number): TeamFacetResult | undefined =>
     profile?.structured?.facets?.find((f) => f.itemNumber === item) ??
