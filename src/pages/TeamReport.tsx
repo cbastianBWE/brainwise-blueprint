@@ -10,6 +10,7 @@ import { useUserProfile } from "@/hooks/useUserProfile";
 import { useNarrativeGenerator } from "@/hooks/useNarrativeGenerator";
 import { HighlightableText, TeamReportHighlightProvider } from "@/components/results/ReportHighlight";
 import ExportPdfModal, { type TeamPdfSectionsUi } from "@/components/results/ExportPdfModal";
+import LeadershipModal, { type LeadershipItem } from "@/components/results/LeadershipModal";
 import AddReportCommitmentModal from "@/components/development-plan/AddReportCommitmentModal";
 import { assembleTeamPdfData } from "@/lib/assembleTeamPdfData";
 import { generateTeamProfilePdf } from "@/lib/generateTeamProfilePdf";
