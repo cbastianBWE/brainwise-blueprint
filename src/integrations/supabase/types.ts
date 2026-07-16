@@ -13421,7 +13421,7 @@ export type Database = {
           code?: string | null
           created_at?: string | null
           definition?: never
-          desired_outcome?: string | null
+          desired_outcome?: never
           id?: string | null
           module_group?: string | null
           sequence?: number | null
@@ -13437,7 +13437,7 @@ export type Database = {
           code?: string | null
           created_at?: string | null
           definition?: never
-          desired_outcome?: string | null
+          desired_outcome?: never
           id?: string | null
           module_group?: string | null
           sequence?: number | null
@@ -14891,6 +14891,7 @@ export type Database = {
         }
         Returns: string
       }
+      dp_add_items_from_coaching: { Args: { p_items: Json }; Returns: Json }
       dp_add_items_from_ptp: { Args: { p_items: Json }; Returns: Json }
       dp_archive_item: {
         Args: { p_archived?: boolean; p_item_id: string }
@@ -14920,6 +14921,7 @@ export type Database = {
         Returns: boolean
       }
       dp_list_my_coaches: { Args: never; Returns: Json }
+      dp_list_my_coaching: { Args: never; Returns: Json }
       dp_list_my_plan: { Args: { p_include_archived?: boolean }; Returns: Json }
       dp_list_my_report_commitments: {
         Args: { p_kind: string }
