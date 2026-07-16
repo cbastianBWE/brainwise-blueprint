@@ -773,6 +773,16 @@ export default function PairedReport() {
                   <FileText className="mr-2 h-4 w-4" />
                   Export PDF
                 </Button>
+                {hasLeaderActions && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setLeaderActionsOpen(true)}
+                    style={{ background: "#fff", color: NAVY, borderColor: "transparent" }}
+                  >
+                    For the leader
+                  </Button>
+                )}
                 <Button
                   variant="outline"
                   size="sm"
