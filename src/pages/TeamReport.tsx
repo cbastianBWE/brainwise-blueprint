@@ -778,6 +778,16 @@ export default function TeamReport() {
                 <FileText className="mr-2 h-4 w-4" />
                 Export PDF
               </Button>
+              {hasLeadership && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setLeadershipOpen(true)}
+                  style={{ background: "#fff", color: NAVY, borderColor: "transparent" }}
+                >
+                  For the leader
+                </Button>
+              )}
               <Button
                 variant="outline"
                 size="sm"
