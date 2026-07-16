@@ -129,7 +129,7 @@ export default function DevelopmentPlan() {
   });
 
   const allItems = (data?.items ?? []) as PlanItem[];
-  const isMineSource = (i: PlanItem) => i.source === "ptp" || i.source === "custom";
+  const isMineSource = (i: PlanItem) => i.source === "ptp" || i.source === "custom" || i.source === "coaching";
   const activeItems = allItems.filter((i) => !i.archived_at && isMineSource(i));
   const archivedItems = allItems.filter((i) => i.archived_at && isMineSource(i));
 
