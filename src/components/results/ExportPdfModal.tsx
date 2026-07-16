@@ -369,6 +369,7 @@ export default function ExportPdfModal({
     drivingFacetCharts: false,
     communication: true,
     conflict: true,
+    leadership: true,
     leaderBrief: true,
     fullMap: true,
     fullMapCharts: false,
