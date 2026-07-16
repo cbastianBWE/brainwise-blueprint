@@ -59,6 +59,7 @@ import {
 } from "@/components/results/PTPNarrativeSections";
 import { ReportHighlightProvider } from "@/components/results/ReportHighlight";
 import PTPBrainOverview from "@/components/results/PTPBrainOverview";
+import PtpOnePagers from "@/components/results/PtpOnePagers";
 import PTPFullFacetCharts from "@/components/results/PTPFullFacetCharts";
 import NAINarrativeSections from "@/components/results/NAINarrativeSections";
 import ExportPdfModal, { type PdfSections } from "@/components/results/ExportPdfModal";
