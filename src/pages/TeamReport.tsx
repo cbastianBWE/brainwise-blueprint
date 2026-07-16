@@ -545,6 +545,7 @@ export default function TeamReport() {
       PRIVILEGED_ACCOUNT_TYPES.has(userProfile.account_type ?? ""));
   const canHighlight = !noAccess;
   const [exportOpen, setExportOpen] = useState(false);
+  const [leadershipOpen, setLeadershipOpen] = useState(false);
   const [commitOpen, setCommitOpen] = useState(false);
   const handleExportTeam = useCallback(
     async (secs: TeamPdfSectionsUi) => {
