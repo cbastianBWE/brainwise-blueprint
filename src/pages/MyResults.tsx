@@ -59,6 +59,7 @@ import {
 } from "@/components/results/PTPNarrativeSections";
 import { ReportHighlightProvider } from "@/components/results/ReportHighlight";
 import PTPBrainOverview from "@/components/results/PTPBrainOverview";
+import PtpOnePagers from "@/components/results/PtpOnePagers";
 import PTPFullFacetCharts from "@/components/results/PTPFullFacetCharts";
 import NAINarrativeSections from "@/components/results/NAINarrativeSections";
 import ExportPdfModal, { type PdfSections } from "@/components/results/ExportPdfModal";
@@ -1227,6 +1228,12 @@ export default function MyResults({ isCoachView = false, adminView = false, targ
             >
               <FileText className="mr-2 h-4 w-4" /> Export PDF
             </Button>
+            {effectiveSelected?.isPTP && displayName && (
+              <PtpOnePagers
+                assessmentResultId={effectiveSelected.result.id}
+                userName={displayName}
+              />
+            )}
             {!isCoachView && canTakeAssessments && (
               <>
                 <Button
