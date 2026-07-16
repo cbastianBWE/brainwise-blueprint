@@ -386,6 +386,7 @@ export default function ExportPdfModal({
     needs: true,
     communication: true,
     conflict: true,
+    leaderActions: true,
     repair: true,
     intimacy: true,
     fullMap: true,
