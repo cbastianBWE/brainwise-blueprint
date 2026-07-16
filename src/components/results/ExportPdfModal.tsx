@@ -242,6 +242,7 @@ const PAIRED_GROUPS: SectionGroup<keyof PairedPdfSectionsUi>[] = [
       { key: "needs", name: "What each of you needs", description: "Two-column needs from each other" },
       { key: "communication", name: "Communication", description: "General, under pressure, avoiding conflict" },
       { key: "conflict", name: "Conflict", description: "Mitigate + promote healthy + read/counter-move" },
+      { key: "leaderActions", name: "For the leader", description: "The three things the leader needs to know, each with one move", needsLeaderActions: true },
       { key: "repair", name: "Repair", description: "Overview, steps, per-person guidance" },
       { key: "intimacy", name: "Intimacy", description: "Overview and per-person guidance", romanticOnly: true },
     ],
