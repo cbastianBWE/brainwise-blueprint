@@ -201,12 +201,14 @@ export default function CoachingSessionView() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Your responses</CardTitle>
+          <CardTitle className="text-base">{isOwner ? "Your responses" : "Client's responses"}</CardTitle>
         </CardHeader>
         <CardContent>
           {pictureGroups.map((group, gi) => (
             <div key={gi} className="mb-6">
-              <h3 className="mb-2 text-sm font-semibold text-muted-foreground">Your pictures</h3>
+              <h3 className="mb-2 text-sm font-semibold text-muted-foreground">
+                {isOwner ? "Your pictures" : "Client's pictures"}
+              </h3>
               <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5">
                 {group.map((img) => (
                   <figure key={img.storage_path} className="space-y-1">
