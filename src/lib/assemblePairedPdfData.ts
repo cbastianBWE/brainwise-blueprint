@@ -41,6 +41,7 @@ export interface PairedPdfSectionData {
     disclaimer: string;
   };
   intimacy?: { overview: string; a: string[]; b: string[]; disclaimer: string };
+  leader_actions?: Array<{ headline: string; detail: string; action?: string }>;
   coach?: { why: Array<{ item: number; rationale: string }>; debrief_prompts: string[] };
 }
 
