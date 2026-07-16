@@ -422,7 +422,9 @@ export default function ExportPdfModal({
         options: g.options.filter(
           (o) =>
             (!o.coachOnly || isCoachView) &&
-            (!o.romanticOnly || reportMode === "romantic"),
+            (!o.romanticOnly || reportMode === "romantic") &&
+            (!o.needsLeadership || leadershipAvailable) &&
+            (!o.needsLeaderActions || leaderActionsAvailable),
         ),
       }))
       .filter((g) => g.options.length > 0);
@@ -430,8 +432,8 @@ export default function ExportPdfModal({
   const visibleNaiGroups = useMemo(() => filterGroups(NAI_GROUPS), [isCoachView, reportMode]);
   const visiblePtpGroups = PTP_GROUPS;
   const visibleAirsaGroups = AIRSA_GROUPS;
-  const visibleTeamGroups = useMemo(() => filterGroups(TEAM_GROUPS), [isCoachView, reportMode]);
-  const visiblePairedGroups = useMemo(() => filterGroups(PAIRED_GROUPS), [isCoachView, reportMode]);
+  const visibleTeamGroups = useMemo(() => filterGroups(TEAM_GROUPS), [isCoachView, reportMode, leadershipAvailable]);
+  const visiblePairedGroups = useMemo(() => filterGroups(PAIRED_GROUPS), [isCoachView, reportMode, leaderActionsAvailable]);
 
   const allSelected = isPaired
     ? visiblePairedGroups.every((g) => g.options.every((o) => pairedSections[o.key]))
