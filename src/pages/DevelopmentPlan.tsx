@@ -499,6 +499,7 @@ export default function DevelopmentPlan() {
       <Tabs defaultValue="mine">
         <TabsList className="mb-4">
           <TabsTrigger value="mine">My Development</TabsTrigger>
+          <TabsTrigger value="coaching">Coaching</TabsTrigger>
           <TabsTrigger value="team">Team</TabsTrigger>
           <TabsTrigger value="paired">Paired</TabsTrigger>
         </TabsList>
