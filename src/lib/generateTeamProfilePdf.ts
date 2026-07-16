@@ -520,7 +520,7 @@ export async function generateTeamProfilePdf(
       doc.setTextColor(...NAVY);
       doc.text(`${i + 1}. ${it.headline ?? ""}`, MARGIN_L, ctx.y);
       ctx.y += 5;
-      ctx.paragraph(it.detail ?? "");
+      ctx.bodyText(it.detail ?? "");
       if (it.action) {
         doc.setFont("Poppins", "bold");
         doc.setFontSize(9);
