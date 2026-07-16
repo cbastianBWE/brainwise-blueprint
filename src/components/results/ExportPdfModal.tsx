@@ -283,6 +283,7 @@ const TEAM_GROUPS: SectionGroup<keyof TeamPdfSectionsUi>[] = [
     options: [
       { key: "communication", name: "Communication", description: "General, under pressure, avoiding conflict" },
       { key: "conflict", name: "Conflict", description: "Summary + mitigate + promote healthy" },
+      { key: "leadership", name: "For the leader", description: "The three things the leader needs to know, each with one move", needsLeadership: true },
       { key: "leaderBrief", name: "For the leader: the moves", description: "Driver / risk / move / owner + lean-on", coachOnly: true },
     ],
   },
