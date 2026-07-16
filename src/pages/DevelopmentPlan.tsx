@@ -23,6 +23,7 @@ import { ShareWithCoachDialog } from "@/components/development-plan/ShareWithCoa
 import { PTP_DIMENSION_NAMES } from "@/lib/ptpDimensionColors";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import ReportCommitmentsTab from "@/components/development-plan/ReportCommitmentsTab";
+import CoachingTab from "@/components/development-plan/CoachingTab";
 
 type Status = "not_started" | "in_progress" | "done" | "paused";
 
