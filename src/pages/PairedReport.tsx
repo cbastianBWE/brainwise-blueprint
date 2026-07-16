@@ -1214,8 +1214,21 @@ export default function PairedReport() {
         instrumentType="PAIRED"
         isCoachView={canSeePrivileged}
         reportMode={mode ?? "work"}
+        leaderActionsAvailable={hasLeaderActions}
         onExportPaired={handleExportPaired}
       />
+      {hasLeaderActions && (
+        <LeadershipModal
+          open={leaderActionsOpen}
+          onOpenChange={setLeaderActionsOpen}
+          items={(leaderActions ?? []).map((it) => ({
+            ...it,
+            headline: nm(it.headline),
+            detail: nm(it.detail),
+            action: nm(it.action),
+          }))}
+        />
+      )}
       {pairedProfileId && (
         <AddReportCommitmentModal
           open={commitOpen}
