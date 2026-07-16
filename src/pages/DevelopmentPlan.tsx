@@ -23,6 +23,7 @@ import { ShareWithCoachDialog } from "@/components/development-plan/ShareWithCoa
 import { PTP_DIMENSION_NAMES } from "@/lib/ptpDimensionColors";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import ReportCommitmentsTab from "@/components/development-plan/ReportCommitmentsTab";
+import CoachingTab from "@/components/development-plan/CoachingTab";
 
 type Status = "not_started" | "in_progress" | "done" | "paused";
 
@@ -48,8 +49,9 @@ interface PlanComment {
 
 interface PlanItem {
   id: string;
-  source: "ptp" | "custom" | "team_report" | "paired_report";
+  source: "ptp" | "custom" | "team_report" | "paired_report" | "coaching";
   source_context: string | null;
+  source_report_id?: string | null;
   card_title: string | null;
   dimension_tags: string[] | null;
   action_text: string;
@@ -127,7 +129,7 @@ export default function DevelopmentPlan() {
   });
 
   const allItems = (data?.items ?? []) as PlanItem[];
-  const isMineSource = (i: PlanItem) => i.source === "ptp" || i.source === "custom";
+  const isMineSource = (i: PlanItem) => i.source === "ptp" || i.source === "custom" || i.source === "coaching";
   const activeItems = allItems.filter((i) => !i.archived_at && isMineSource(i));
   const archivedItems = allItems.filter((i) => i.archived_at && isMineSource(i));
 
@@ -497,6 +499,7 @@ export default function DevelopmentPlan() {
       <Tabs defaultValue="mine">
         <TabsList className="mb-4">
           <TabsTrigger value="mine">My Development</TabsTrigger>
+          <TabsTrigger value="coaching">Coaching</TabsTrigger>
           <TabsTrigger value="team">Team</TabsTrigger>
           <TabsTrigger value="paired">Paired</TabsTrigger>
         </TabsList>
@@ -550,6 +553,10 @@ export default function DevelopmentPlan() {
           </div>
         </>
       )}
+        </TabsContent>
+
+        <TabsContent value="coaching" className="mt-2">
+          <CoachingTab />
         </TabsContent>
 
         <TabsContent value="team" className="mt-2">
