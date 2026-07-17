@@ -253,7 +253,7 @@ export default function BriefingModal({ open, onClose, source }: Props) {
               </label>
 
               <MarketingButton type="submit" variant="primary" size="lg" fullWidth disabled={status === "submitting"} hideArrow>
-                {status === "submitting" ? "Sending…" : "Request Briefing"}
+                {status === "submitting" ? "Sending…" : "Request Conversation"}
               </MarketingButton>
 
               {status === "error" && (
