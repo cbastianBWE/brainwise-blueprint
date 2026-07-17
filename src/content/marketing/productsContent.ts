@@ -25,7 +25,7 @@ export const assessments: MarketingCardData[] = [
       "Facet-level breakdown for deeper insight on each dimension",
       "Optional debrief through a certified BrainWise coach",
     ],
-    cta: { label: "Book a Briefing", action: "open-briefing" },
+    cta: { label: "Book a Conversation", action: "open-briefing" },
   },
   {
     id: "nai",
@@ -40,7 +40,7 @@ export const assessments: MarketingCardData[] = [
       "Cross-instrument insights when paired with PTP",
       "Aggregate org-level dashboards for corporate deployments",
     ],
-    cta: { label: "Book a Briefing", action: "open-briefing" },
+    cta: { label: "Book a Conversation", action: "open-briefing" },
   },
   {
     id: "airsa",
@@ -55,7 +55,7 @@ export const assessments: MarketingCardData[] = [
       "Suitable for pre-training baselines and post-training measurement",
       "Aggregate org-level reporting for L&D programs",
     ],
-    cta: { label: "Book a Briefing", action: "open-briefing" },
+    cta: { label: "Book a Conversation", action: "open-briefing" },
   },
   {
     id: "hss",
@@ -70,7 +70,7 @@ export const assessments: MarketingCardData[] = [
       "Early-warning signal for behavioral drift",
       "Pairs naturally with corporate change initiatives",
     ],
-    cta: { label: "Book a Briefing", action: "open-briefing" },
+    cta: { label: "Book a Conversation", action: "open-briefing" },
   },
 ];
 
