@@ -125,23 +125,20 @@ export default function ForEnterprise() {
     {
       eyebrow: "Base",
       eyebrowColor: "var(--bw-teal)",
-      price: "$100",
-      title: "Base",
-      body: "PTP and the individual report, with the Foundational activity set. Per seat, per year.",
+      title: "Foundational",
+      body: "PTP and the individual report, with the Foundational activity set.",
     },
     {
       eyebrow: "Premium",
       eyebrowColor: "var(--bw-orange)",
-      price: "$125",
-      title: "Premium",
-      body: "Adds Paired Profiles and the Typical activity set. Per seat, per year.",
+      title: "Adds Paired Profiles",
+      body: "Adds Paired Profiles and the Typical activity set.",
     },
     {
       eyebrow: "Premium Plus",
       eyebrowColor: "var(--bw-plum)",
-      price: "$150",
-      title: "Premium Plus",
-      body: "Adds Team Profiles, the leader brief, the org dashboard, and the Advanced activity set. Per seat, per year.",
+      title: "Adds Team & Dashboard",
+      body: "Adds Team Profiles, the leader brief, the org dashboard, and the Advanced activity set.",
     },
   ];
 
@@ -261,43 +258,23 @@ export default function ForEnterprise() {
       <section style={{ background: "var(--bw-cream)", padding: `${isMobile ? 80 : 112}px ${padX}px` }}>
         <div style={{ maxWidth: 1200, margin: "0 auto" }}>
           <Eyebrow>Pricing</Eyebrow>
-          <h2 style={h2Style}>Per seat, per year. Priced to scale.</h2>
+          <h2 style={h2Style}>Per seat, per year. Tiered by depth.</h2>
 
           <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(3, 1fr)", gap: 20, marginTop: 48 }}>
             {pricingCards.map((c) => (
               <div key={c.title} style={cardStyle}>
                 <Eyebrow color={c.eyebrowColor}>{c.eyebrow}</Eyebrow>
-                <div
-                  style={{
-                    fontFamily: "'Poppins', sans-serif",
-                    fontWeight: 800,
-                    fontSize: 48,
-                    color: "var(--bw-navy)",
-                    letterSpacing: "-0.02em",
-                    lineHeight: 1,
-                    marginTop: 12,
-                  }}
-                >
-                  {c.price}
-                </div>
                 <h3 style={{ ...h3Style, marginTop: 12 }}>{c.title}</h3>
                 <p style={bodyStyle}>{c.body}</p>
               </div>
             ))}
           </div>
 
-          <p
-            style={{
-              fontFamily: "'Montserrat', sans-serif",
-              fontStyle: "italic",
-              fontSize: 13,
-              color: "var(--bw-slate-400)",
-              marginTop: 24,
-              textAlign: "center",
-            }}
-          >
-            Whole-organization development for a fraction of what per-executive coaching runs.
-          </p>
+          <div style={{ display: "flex", justifyContent: "center", marginTop: 32 }}>
+            <MarketingButton variant="primary" size="lg" onClick={() => openModal("enterprise_pricing_briefing")}>
+              Book a conversation for pricing
+            </MarketingButton>
+          </div>
         </div>
       </section>
 
