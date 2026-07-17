@@ -112,7 +112,7 @@ export default function MarketingFooter() {
           style={{
             marginTop: 40,
             display: "grid",
-            gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr 1fr 1fr",
+            gridTemplateColumns: isMobile ? "1fr" : "repeat(5, 1fr)",
             gap: isMobile ? 32 : 48,
           }}
         >
