@@ -209,6 +209,7 @@ const App = () => (
             <Route path="/newsletter/unsubscribe/:token" element={<NewsletterUnsubscribe />} />
             <Route path="/newsletter/:slug" element={<NewsletterArticle />} />
             <Route path="/products" element={<Products />} />
+            <Route path="/for-practitioners" element={<ForPractitioners />} />
             <Route path="/pricing" element={<PricingRouter />} />
             <Route path="/_dev/tile-preview" element={<TilePreview />} />
 
