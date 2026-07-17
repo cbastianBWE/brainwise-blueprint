@@ -211,6 +211,7 @@ const App = () => (
             <Route path="/newsletter/:slug" element={<NewsletterArticle />} />
             <Route path="/products" element={<Products />} />
             <Route path="/for-practitioners" element={<ForPractitioners />} />
+            <Route path="/for-individuals" element={<ForIndividuals />} />
             <Route path="/pricing" element={<PricingRouter />} />
             <Route path="/_dev/tile-preview" element={<TilePreview />} />
 
