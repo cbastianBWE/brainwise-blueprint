@@ -293,7 +293,7 @@ export default function Home() {
                     style={{ color: "var(--bw-navy)", borderColor: "var(--border-2)" }}
                     onClick={() => openModal("audience_card_enterprise")}
                   >
-                    Book a briefing
+                    Book a conversation
                   </MarketingButton>
                 ),
               },

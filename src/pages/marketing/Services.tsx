@@ -78,7 +78,7 @@ export default function Services() {
           </p>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginTop: 32 }}>
             <MarketingButton variant="primary" size="md" onClick={() => setBriefingOpen(true)}>
-              Book a Briefing
+              Book a Conversation
             </MarketingButton>
             <MarketingButton
               variant="invert"
@@ -242,7 +242,7 @@ export default function Services() {
             }}
           >
             <MarketingButton variant="primary" size="md" onClick={() => setBriefingOpen(true)}>
-              Book a Briefing
+              Book a Conversation
             </MarketingButton>
             <MarketingButton as={Link} to="/contact" variant="invert" size="md">
               Contact us

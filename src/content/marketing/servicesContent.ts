@@ -37,7 +37,7 @@ export const services: ServiceCard[] = [
       "90 days of deployment support with certified coaches",
       "Leadership-readable reporting throughout",
     ],
-    cta: { label: "Book a Briefing", action: "open-briefing" },
+    cta: { label: "Book a Conversation", action: "open-briefing" },
   },
   {
     id: "coach-certification",
@@ -67,7 +67,7 @@ export const services: ServiceCard[] = [
       "Custom development plans targeting specific dimensions",
       "Cohort workshops, 1:1 tracks, or hybrid formats",
     ],
-    cta: { label: "Book a Briefing", action: "open-briefing" },
+    cta: { label: "Book a Conversation", action: "open-briefing" },
   },
   {
     id: "executive-strategy",
@@ -82,7 +82,7 @@ export const services: ServiceCard[] = [
       "Pre-decision diagnostics for change initiatives and reorganizations",
       "Flexible models — monthly retainer or project-scoped engagement",
     ],
-    cta: { label: "Book a Briefing", action: "open-briefing" },
+    cta: { label: "Book a Conversation", action: "open-briefing" },
   },
   {
     id: "executive-coaching",
@@ -97,7 +97,7 @@ export const services: ServiceCard[] = [
       "Quarterly progress reviews with measurable dimensional change",
       "Coach matched to your profile and industry",
     ],
-    cta: { label: "Book a Briefing", action: "open-briefing" },
+    cta: { label: "Book a Conversation", action: "open-briefing" },
   },
   {
     id: "learning-development-services",
@@ -112,6 +112,6 @@ export const services: ServiceCard[] = [
       "Digital learning content production",
       "Learning-impact evaluation and ROI measurement",
     ],
-    cta: { label: "Book a Briefing", action: "open-briefing" },
+    cta: { label: "Book a Conversation", action: "open-briefing" },
   },
 ];

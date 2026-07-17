@@ -133,7 +133,7 @@ export default function Contact() {
             }}
           >
             Tell us what you're working on and we'll get back to you within one business day. For
-            30-minute briefings, use the Book a Briefing button — that path is faster.
+            30-minute conversations, use the Book a Conversation button — that path is faster.
           </p>
         </div>
       </section>

@@ -6,7 +6,7 @@ export const meta = {
   heroTitle: "The only AI transformation framework built on how the brain actually changes.",
   heroSubhead:
     "EVOLVE is a neuroscience-informed, diagnostic-first methodology that addresses the root causes of AI adoption failure. Not a playbook. A precision system.",
-  heroPrimaryCta: "Book a Briefing",
+  heroPrimaryCta: "Book a Conversation",
   heroSecondaryCta: "See how it works",
 
   problemEyebrow: "The Problem",
@@ -36,7 +36,7 @@ export const meta = {
   ctaEyebrow: "Get Started",
   ctaTitle:
     "Your workforce isn't resistant to AI. It's responding to real neurological threat signals. We know how to address them.",
-  ctaPrimaryLabel: "Book a Briefing",
+  ctaPrimaryLabel: "Book a Conversation",
   ctaSecondaryLabel: "See the instruments",
   ctaSecondaryTo: "/products",
 };
