@@ -125,23 +125,20 @@ export default function ForEnterprise() {
     {
       eyebrow: "Base",
       eyebrowColor: "var(--bw-teal)",
-      price: "$100",
-      title: "Base",
-      body: "PTP and the individual report, with the Foundational activity set. Per seat, per year.",
+      title: "Foundational",
+      body: "PTP and the individual report, with the Foundational activity set.",
     },
     {
       eyebrow: "Premium",
       eyebrowColor: "var(--bw-orange)",
-      price: "$125",
-      title: "Premium",
-      body: "Adds Paired Profiles and the Typical activity set. Per seat, per year.",
+      title: "Adds Paired Profiles",
+      body: "Adds Paired Profiles and the Typical activity set.",
     },
     {
       eyebrow: "Premium Plus",
       eyebrowColor: "var(--bw-plum)",
-      price: "$150",
-      title: "Premium Plus",
-      body: "Adds Team Profiles, the leader brief, the org dashboard, and the Advanced activity set. Per seat, per year.",
+      title: "Adds Team & Dashboard",
+      body: "Adds Team Profiles, the leader brief, the org dashboard, and the Advanced activity set.",
     },
   ];
 
