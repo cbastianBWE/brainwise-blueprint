@@ -112,7 +112,7 @@ export default function MarketingFooter() {
           style={{
             marginTop: 40,
             display: "grid",
-            gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr 1fr 1fr",
+            gridTemplateColumns: isMobile ? "1fr" : "repeat(5, 1fr)",
             gap: isMobile ? 32 : 48,
           }}
         >
@@ -150,6 +150,11 @@ export default function MarketingFooter() {
             >
               support@brainwiseenterprises.com
             </div>
+          </div>
+          <div>
+            <div style={columnHeading}>Product</div>
+            <Link to="/products" className="bw-footer-link" style={linkStyle}>Platform</Link>
+            <Link to="/pricing" className="bw-footer-link" style={linkStyle}>Pricing</Link>
           </div>
           <div>
             <div style={columnHeading}>Explore</div>
