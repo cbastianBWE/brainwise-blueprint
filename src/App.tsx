@@ -25,6 +25,7 @@ import Podcast from "./pages/marketing/Podcast";
 import Contact from "./pages/marketing/Contact";
 import Products from "./pages/marketing/Products";
 import ForPractitioners from "./pages/marketing/ForPractitioners";
+import ForIndividuals from "./pages/marketing/ForIndividuals";
 import Newsletter from "./pages/marketing/Newsletter";
 import NewsletterArticle from "./pages/marketing/NewsletterArticle";
 import NewsletterConfirm from "./pages/marketing/NewsletterConfirm";
