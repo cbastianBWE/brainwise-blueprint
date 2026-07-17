@@ -27,6 +27,7 @@ import Products from "./pages/marketing/Products";
 import ForPractitioners from "./pages/marketing/ForPractitioners";
 import ForIndividuals from "./pages/marketing/ForIndividuals";
 import ForEnterprise from "./pages/marketing/ForEnterprise";
+import Certification from "./pages/marketing/Certification";
 import Newsletter from "./pages/marketing/Newsletter";
 import NewsletterArticle from "./pages/marketing/NewsletterArticle";
 import NewsletterConfirm from "./pages/marketing/NewsletterConfirm";
@@ -214,6 +215,7 @@ const App = () => (
             <Route path="/for-practitioners" element={<ForPractitioners />} />
             <Route path="/for-individuals" element={<ForIndividuals />} />
             <Route path="/for-enterprise" element={<ForEnterprise />} />
+            <Route path="/certification" element={<Certification />} />
             <Route path="/pricing" element={<PricingRouter />} />
             <Route path="/_dev/tile-preview" element={<TilePreview />} />
 
