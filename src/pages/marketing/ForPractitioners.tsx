@@ -128,7 +128,7 @@ export default function ForPractitioners() {
               lineHeight: 1.55,
             }}
           >
-            Get certified to debrief the Personal Threat & Reward Profile and deliver paired and team profiles. Build your own practice, or bring the capability inside your organization.
+            Get certified to debrief the Personal Threat & Reward Profile and deliver paired and team profiles. Build your own practice, or develop the people inside your own organization.
           </p>
           <div style={{ display: "flex", gap: 14, marginTop: 36, flexWrap: "wrap" }}>
             <MarketingButton variant="primary" size="lg" onClick={() => openModal("practitioner_hero_briefing")}>
