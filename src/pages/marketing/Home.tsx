@@ -7,27 +7,13 @@ import MarketingButton from "@/components/marketing/MarketingButton";
 import Eyebrow from "@/components/marketing/Eyebrow";
 import DotArc from "@/components/marketing/DotArc";
 import BriefingModal from "@/components/marketing/BriefingModal";
-import { PUBLIC_INSTRUMENTS } from "@/lib/instruments";
 
 const stats = [
-  { value: "15%", label: "Only the share of people who are actually self-aware", citation: "Eurich, Harvard Business Review (2018)", color: "var(--bw-orange)" },
-  { value: "5–7×", label: "Median ROI from professional coaching", citation: "ICF / PwC Global Coaching Client Study (2024)", color: "var(--bw-teal)" },
-  { value: "6%", label: "Of organizations capture significant value from AI", citation: "McKinsey, State of AI (2025)", color: "var(--bw-forest)" },
-  { value: "4", label: "Validated BrainWise instruments. 168 items. Oxford-grounded.", citation: "", color: "var(--bw-plum)" },
+  { value: "89", label: "Facets the PTP measures across five dimensions", citation: "", color: "var(--bw-orange)" },
+  { value: "150+", label: "Structured, interactive coaching and development activities", citation: "", color: "var(--bw-teal)" },
+  { value: "3", label: "Report modes — individual, paired, and team, on one instrument", citation: "", color: "var(--bw-forest)" },
+  { value: "5–7×", label: "Median ROI from professional coaching", citation: "ICF / PwC Global Coaching Client Study (2024)", color: "var(--bw-plum)" },
 ];
-
-// Instrument tiles for the homepage. Body copy is hand-tuned per-instrument; names
-// and counts flow from PUBLIC_INSTRUMENTS to prevent drift from the public.instruments DB canonical.
-const INSTRUMENT_BODY_COPY: Record<string, string> = {
-  PTP: "Maps protective and reward-seeking patterns across five dimensions.",
-  NAI: "Measures readiness for AI on the C.A.F.E.S. dimensions: Certainty, Agency, Fairness, Ego stability, Saturation.",
-  AIRSA: "Behavioral readiness for AI-augmented work across 8 domains.",
-  HSS: "Tracks formation of AI behavior habits over time.",
-};
-const instruments = PUBLIC_INSTRUMENTS.map((inst) => ({
-  name: inst.short_name,
-  body: `${inst.name}. ${INSTRUMENT_BODY_COPY[inst.short_name] ?? inst.description} ${inst.total_items} items.`,
-}));
 
 function useIsBelow(width: number) {
   const [v, setV] = useState(typeof window !== "undefined" ? window.innerWidth < width : false);
@@ -52,7 +38,7 @@ export default function Home() {
 
   useEffect(() => {
     const prevTitle = document.title;
-    document.title = "BrainWise Enterprises — Neuroscience-grounded psychometric assessments";
+    document.title = "BrainWise Enterprises — AI-Powered Coaching and Development Platform";
     const setMeta = (name: string, content: string, attr: "name" | "property" = "name") => {
       let el = document.querySelector(`meta[${attr}="${name}"]`) as HTMLMetaElement | null;
       if (!el) {
@@ -64,7 +50,7 @@ export default function Home() {
       return el;
     };
     const desc =
-      "BrainWise translates neuroscience into validated psychometric assessments that explain workplace behavior for individuals, coaches, and enterprise teams.";
+      "BrainWise Enterprises is an AI-powered coaching and development platform with a proprietary personalization engine and a library of over 150 structured, interactive activities personalized to each individual.";
     setMeta("description", desc);
     setMeta("og:title", "BrainWise Enterprises", "property");
     setMeta("og:description", desc, "property");
@@ -85,7 +71,7 @@ export default function Home() {
       <section style={{ background: "var(--bw-navy)", padding: isMobile ? "64px 20px 80px" : "96px 48px 112px", position: "relative", overflow: "hidden" }}>
         <DotArc size={720} opacity={0.09} style={{ right: -160, top: -80 }} />
         <div style={{ maxWidth: 1200, margin: "0 auto", position: "relative", zIndex: 2 }}>
-          <Eyebrow>Neuroscience · Meets · Self-Awareness</Eyebrow>
+          <Eyebrow>AI-Powered Coaching and Development Platform</Eyebrow>
           <h1
             style={{
               fontFamily: "'Poppins', sans-serif",
@@ -98,8 +84,8 @@ export default function Home() {
               margin: 0,
             }}
           >
-            BrainWise translates neuroscience into validated{" "}
-            <span style={{ color: "var(--bw-orange)" }}>psychometric assessments</span>.
+            Know what is driving the change. And{" "}
+            <span style={{ color: "var(--bw-orange)" }}>what's quietly driving against it</span>.
           </h1>
           <p
             style={{
@@ -111,14 +97,14 @@ export default function Home() {
               lineHeight: 1.55,
             }}
           >
-            Four research-grounded instruments that explain workplace behavior — for individuals who want to grow, coaches who serve clients, and enterprise teams driving change.
+            BrainWise Enterprises is an AI-powered coaching and development platform. A proprietary engine personalizes a library of over 150 structured, interactive activities to each individual, so the work builds on itself over time.
           </p>
           <div style={{ display: "flex", gap: 14, marginTop: 36, flexWrap: "wrap" }}>
             <MarketingButton as={Link} to="/signup" variant="primary" size="lg">
               Sign Up
             </MarketingButton>
-            <MarketingButton as={Link} to="/login" variant="invert" size="lg">
-              Sign In
+            <MarketingButton variant="invert" size="lg" onClick={() => openModal("homepage_hero_briefing")}>
+              Book a conversation
             </MarketingButton>
           </div>
         </div>
@@ -163,6 +149,89 @@ export default function Home() {
         </div>
       </section>
 
+      {/* WHAT NOBODY ELSE DOES */}
+      <section style={{ background: "#fff", padding: `${isMobile ? 80 : 112}px ${padX}px`, borderBottom: "1px solid var(--divider)" }}>
+        <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+          <Eyebrow>What Nobody Else Does</Eyebrow>
+          <h2
+            style={{
+              fontFamily: "'Poppins', sans-serif",
+              fontWeight: 700,
+              fontSize: "clamp(28px, 3.5vw, 44px)",
+              color: "var(--bw-navy)",
+              lineHeight: 1.1,
+              letterSpacing: "-0.02em",
+              margin: 0,
+            }}
+          >
+            Three things no other assessment does.
+          </h2>
+
+          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(3, 1fr)", gap: 20, marginTop: 48 }}>
+            {[
+              {
+                eyebrow: "Paired Profile",
+                eyebrowColor: "var(--bw-orange)",
+                title: "See how any two people fit",
+                body: "Compares two people's profiles and interprets which overlaps create friction and which differences are strengths. Nothing else on the market does this.",
+              },
+              {
+                eyebrow: "Team Profile",
+                eyebrowColor: "var(--bw-teal)",
+                title: "Read a whole team at once",
+                body: "Aggregate patterns across a group, plus a private brief for the leader on where the friction is and why.",
+              },
+              {
+                eyebrow: "The Program",
+                eyebrowColor: "var(--bw-plum)",
+                title: "A program, not a test",
+                body: "Most activities personalize to a person's own profile, and many read what they did in earlier work, so the system builds on itself over time. Already use another assessment? Upload a DiSC, Enneagram, or Strengths result and the program takes it into account.",
+              },
+            ].map((c) => (
+              <div
+                key={c.eyebrow}
+                style={{
+                  background: "#fff",
+                  border: "1px solid var(--bw-cream-300)",
+                  borderRadius: "var(--r-lg)",
+                  padding: "32px 28px",
+                  boxShadow: "var(--shadow-sm)",
+                  minHeight: 280,
+                  display: "flex",
+                  flexDirection: "column",
+                }}
+              >
+                <Eyebrow color={c.eyebrowColor}>{c.eyebrow}</Eyebrow>
+                <h3
+                  style={{
+                    fontFamily: "'Poppins', sans-serif",
+                    fontWeight: 700,
+                    fontSize: 22,
+                    color: "var(--bw-navy)",
+                    lineHeight: 1.2,
+                    letterSpacing: "-0.01em",
+                    margin: 0,
+                  }}
+                >
+                  {c.title}
+                </h3>
+                <p
+                  style={{
+                    fontFamily: "'Montserrat', sans-serif",
+                    fontSize: 14.5,
+                    color: "var(--bw-slate)",
+                    lineHeight: 1.55,
+                    marginTop: 16,
+                  }}
+                >
+                  {c.body}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* AUDIENCE CARDS */}
       <section style={{ background: "var(--bw-cream)", padding: `${isMobile ? 80 : 112}px ${padX}px` }}>
         <div style={{ maxWidth: 1200, margin: "0 auto" }}>
@@ -184,38 +253,38 @@ export default function Home() {
           <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(3, 1fr)", gap: 20, marginTop: 48 }}>
             {[
               {
-                eyebrow: "Individuals",
-                eyebrowColor: "var(--bw-orange)",
-                title: "Understand how you actually respond",
-                body: "See how you respond to threat, change, and AI. Four assessments translate neuroscience into language you can act on — without a clinician in the loop.",
-                cta: (
-                  <MarketingButton as={Link} to="/signup" variant="primary" size="md">
-                    Get Started
-                  </MarketingButton>
-                ),
-              },
-              {
-                eyebrow: "Coaches",
+                eyebrow: "Practitioners",
                 eyebrowColor: "var(--bw-teal)",
-                title: "Bring data to your practice",
-                body: "Run validated assessments with your clients. Build a roster. Use cross-instrument patterns to anchor coaching plans in evidence.",
+                title: "Certify to debrief the PTP, or train as a full coach",
+                body: "Get certified to administer and debrief the Personal Threat & Reward Profile, including paired and team profiles. Go deeper with the full coach certification to work the whole activity library. Build your own practice, or bring the capability inside your organization.",
                 cta: (
                   <MarketingButton
                     variant="ghost"
                     size="md"
                     hideArrow
                     style={{ color: "var(--bw-navy)", borderColor: "var(--border-2)" }}
-                    onClick={() => openModal("audience_card_coach")}
+                    onClick={() => openModal("audience_card_practitioner")}
                   >
-                    Talk to Us
+                    Get certified
+                  </MarketingButton>
+                ),
+              },
+              {
+                eyebrow: "Individuals",
+                eyebrowColor: "var(--bw-orange)",
+                title: "Know what's driving your change",
+                body: "See what drives you across 89 facets. About 20 minutes, on your own.",
+                cta: (
+                  <MarketingButton as={Link} to="/signup" variant="primary" size="md">
+                    Sign up
                   </MarketingButton>
                 ),
               },
               {
                 eyebrow: "Enterprise",
                 eyebrowColor: "var(--bw-forest)",
-                title: "Diagnose adoption risk before it costs you",
-                body: "Aggregate dashboards across teams. Cross-instrument intervention plans. AI-readiness mapped against C.A.F.E.S. and PTP signals.",
+                title: "Development for everyone, at a cost you can scale",
+                body: "Give everyone in your organization access to personalized coaching and development, delivered by your own certified practitioner or run independently.",
                 cta: (
                   <MarketingButton
                     variant="ghost"
@@ -224,7 +293,7 @@ export default function Home() {
                     style={{ color: "var(--bw-navy)", borderColor: "var(--border-2)" }}
                     onClick={() => openModal("audience_card_enterprise")}
                   >
-                    Book a Briefing
+                    Book a briefing
                   </MarketingButton>
                 ),
               },
@@ -275,36 +344,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* INSTRUMENTS */}
-      <section style={{ background: "#fff", padding: `${isMobile ? 72 : 96}px ${padX}px` }}>
-        <div style={{ maxWidth: 1200, margin: "0 auto" }}>
-          <Eyebrow>The Instruments</Eyebrow>
-          <h2
-            style={{
-              fontFamily: "'Poppins', sans-serif",
-              fontWeight: 700,
-              fontSize: "clamp(26px, 3vw, 40px)",
-              color: "var(--bw-navy)",
-              margin: 0,
-              letterSpacing: "-0.02em",
-              lineHeight: 1.15,
-            }}
-          >
-            Four research-grounded assessments.
-          </h2>
-          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(2, 1fr)", gap: 32, marginTop: 48 }}>
-            {instruments.map((i) => (
-              <div key={i.name}>
-                <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 24, color: "var(--bw-navy)" }}>{i.name}</div>
-                <p style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 14.5, color: "var(--bw-slate)", lineHeight: 1.55, marginTop: 8 }}>
-                  {i.body}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* CTA */}
       <section style={{ background: "var(--bw-navy)", padding: `${isMobile ? 72 : 96}px ${padX}px`, position: "relative", overflow: "hidden" }}>
         <DotArc size={540} opacity={0.07} style={{ left: -120, bottom: -120 }} />
@@ -338,14 +377,14 @@ export default function Home() {
           </div>
           <div>
             <p style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 16, color: "rgba(255,255,255,0.8)", lineHeight: 1.6, margin: 0 }}>
-              Sign up takes a minute. Or book a 30-minute call to see how BrainWise fits your team.
+              Sign up, or book a 30-minute conversation to see how it fits your team.
             </p>
             <div style={{ display: "flex", gap: 12, marginTop: 24, flexWrap: "wrap" }}>
               <MarketingButton as={Link} to="/signup" variant="primary" size="lg">
                 Sign Up
               </MarketingButton>
               <MarketingButton variant="invert" size="lg" onClick={() => openModal("homepage_briefing_modal")}>
-                Book a Briefing
+                Book a conversation
               </MarketingButton>
             </div>
           </div>
