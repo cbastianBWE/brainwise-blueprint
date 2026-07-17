@@ -170,7 +170,7 @@ export default function ForPractitioners() {
           <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(2, 1fr)", gap: 20, marginTop: 48 }}>
             {[
               { eyebrow: "Independent practitioners", color: "var(--bw-teal)", body: "Run your own practice with your own clients." },
-              { eyebrow: "Internal teams", color: "var(--bw-orange)", body: "Certify your own people, so the capability stays inside your organization rather than depending on an outside contractor." },
+              { eyebrow: "Internal teams", color: "var(--bw-orange)", body: "Get your own team members certified through BrainWise, so you have practitioners on staff who can develop your people with the platform." },
             ].map((c) => (
               <div key={c.eyebrow} style={cardStyle}>
                 <Eyebrow color={c.color}>{c.eyebrow}</Eyebrow>
