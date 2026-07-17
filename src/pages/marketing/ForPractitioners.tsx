@@ -128,7 +128,7 @@ export default function ForPractitioners() {
               lineHeight: 1.55,
             }}
           >
-            Get certified to debrief the Personal Threat & Reward Profile and deliver paired and team profiles. Build your own practice, or bring the capability inside your organization.
+            Get certified to debrief the Personal Threat & Reward Profile and deliver paired and team profiles. Build your own practice, or develop the people inside your own organization.
           </p>
           <div style={{ display: "flex", gap: 14, marginTop: 36, flexWrap: "wrap" }}>
             <MarketingButton variant="primary" size="lg" onClick={() => openModal("practitioner_hero_briefing")}>
@@ -170,7 +170,7 @@ export default function ForPractitioners() {
           <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(2, 1fr)", gap: 20, marginTop: 48 }}>
             {[
               { eyebrow: "Independent practitioners", color: "var(--bw-teal)", body: "Run your own practice with your own clients." },
-              { eyebrow: "Internal teams", color: "var(--bw-orange)", body: "Certify your own people, so the capability stays inside your organization rather than depending on an outside contractor." },
+              { eyebrow: "Internal teams", color: "var(--bw-orange)", body: "Get your own team members certified through BrainWise, so you have practitioners on staff who can develop your people with the platform." },
             ].map((c) => (
               <div key={c.eyebrow} style={cardStyle}>
                 <Eyebrow color={c.color}>{c.eyebrow}</Eyebrow>
