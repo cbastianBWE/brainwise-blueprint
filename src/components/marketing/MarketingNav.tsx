@@ -4,6 +4,7 @@ import MarketingButton from "./MarketingButton";
 
 const navLinks = [
   { label: "For Practitioners", to: "/for-practitioners" },
+  { label: "For Individuals", to: "/for-individuals" },
   { label: "Products", to: "/products" },
   { label: "Pricing", to: "/pricing" },
   { label: "Services", to: "/services" },
