@@ -112,7 +112,7 @@ export default function BriefingModal({ open, onClose, source }: Props) {
         onClick={(e) => e.stopPropagation()}
         style={{
           background: "#fff",
-          width: "min(560px, 92vw)",
+          width: status === "success" ? "min(720px, 92vw)" : "min(560px, 92vw)",
           maxHeight: "92vh",
           overflowY: "auto",
           borderRadius: 22,
@@ -122,31 +122,48 @@ export default function BriefingModal({ open, onClose, source }: Props) {
         }}
       >
         {status === "success" ? (
-          <div style={{ textAlign: "center", padding: "24px 0" }}>
+          <div style={{ textAlign: "center", padding: "8px 0" }}>
             <div
               style={{
-                width: 64,
-                height: 64,
+                width: 56,
+                height: 56,
                 borderRadius: 999,
                 background: "#E9F2EC",
                 color: "var(--bw-forest)",
                 display: "inline-flex",
                 alignItems: "center",
                 justifyContent: "center",
-                fontSize: 28,
+                fontSize: 24,
                 fontWeight: 700,
-                marginBottom: 20,
+                marginBottom: 16,
               }}
             >
               ✓
             </div>
-            <h2 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 800, fontSize: 28, color: "var(--bw-navy)", margin: 0 }}>
-              Request received.
+            <h2 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 800, fontSize: 26, color: "var(--bw-navy)", margin: 0, letterSpacing: "-0.02em" }}>
+              You're in — now pick a time
             </h2>
-            <p style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 14.5, color: "var(--bw-slate)", marginTop: 8, lineHeight: 1.55 }}>
-              We'll be in touch within one business day at {form.email}.
+            <p style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 14.5, color: "var(--bw-slate)", marginTop: 8, marginBottom: 20, lineHeight: 1.55 }}>
+              We'll follow up at {form.email}. Grab a briefing slot below.
             </p>
-            <div style={{ marginTop: 24 }}>
+            <iframe
+              src="https://outlook.office.com/book/BrainWiseEnterprises@abcdeoflearning.com/"
+              title="Book your BrainWise briefing"
+              loading="lazy"
+              style={{ width: "100%", height: 640, border: "none", borderRadius: 8, display: "block" }}
+            />
+            <p style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 13, color: "var(--bw-slate)", marginTop: 12, marginBottom: 0 }}>
+              Trouble loading the calendar?{" "}
+              <a
+                href="https://outlook.office.com/book/BrainWiseEnterprises@abcdeoflearning.com/"
+                target="_blank"
+                rel="noopener"
+                style={{ color: "var(--bw-navy)", textDecoration: "underline" }}
+              >
+                Open it here
+              </a>
+            </p>
+            <div style={{ marginTop: 20 }}>
               <MarketingButton
                 variant="ghost"
                 onClick={onClose}
@@ -157,6 +174,7 @@ export default function BriefingModal({ open, onClose, source }: Props) {
               </MarketingButton>
             </div>
           </div>
+
         ) : (
           <>
             <Eyebrow>30-Minute Briefing</Eyebrow>
