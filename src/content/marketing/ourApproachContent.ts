@@ -28,7 +28,7 @@ export const meta = {
   researchEyebrow: "The Research",
   researchTitle: "Built on the research that explains why AI adoption fails. Designed to fix it.",
   researchHonestFraming:
-    "A controlled study comparing EVOLVE to a comparison condition does not yet exist. The methodology is new. What does exist is the research that explains why AI adoption fails — and an integrated system designed stage-by-stage to address those specific mechanisms.",
+    "EVOLVE is built on the established research that explains why AI adoption fails, and it is designed stage-by-stage to address those specific mechanisms.",
 
   differentiatorsEyebrow: "Why BrainWise",
   differentiatorsTitle: "What we do that no one else does.",
