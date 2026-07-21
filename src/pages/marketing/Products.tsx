@@ -213,7 +213,7 @@ export default function Products() {
               marginTop: 20,
             }}
           >
-            A library of over 150 structured, interactive activities. Most personalize to the person's own profile, and many read what they did in earlier work, so the system builds on itself over time.
+            A library of over 200 structured, interactive activities. Most personalize to the person's own profile, and many read what they did in earlier work, so the system builds on itself over time.
           </p>
           <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(3, 1fr)", gap: 20, marginTop: 40 }}>
             {programCards.map((c) => (
