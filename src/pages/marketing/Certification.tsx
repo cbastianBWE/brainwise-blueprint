@@ -144,7 +144,7 @@ export default function Certification() {
     {
       eyebrow: "A system, not a test",
       eyebrowColor: "var(--bw-teal)",
-      body: "Deliver a program across 150 structured, interactive activities that personalize to each client's profile and build on the work they've already done.",
+      body: "Deliver a program across 200 structured, interactive activities that personalize to each client's profile and build on the work they've already done.",
     },
     {
       eyebrow: "Tools nobody else has",
