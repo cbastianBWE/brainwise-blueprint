@@ -144,7 +144,7 @@ export default function Certification() {
     {
       eyebrow: "A system, not a test",
       eyebrowColor: "var(--bw-teal)",
-      body: "Deliver a program across 150 structured, interactive activities that personalize to each client's profile and build on the work they've already done.",
+      body: "Deliver a program across 200 structured, interactive activities that personalize to each client's profile and build on the work they've already done.",
     },
     {
       eyebrow: "Tools nobody else has",
@@ -170,7 +170,7 @@ export default function Certification() {
     },
     {
       q: "Is the instrument validated?",
-      a: "The PTP is grounded in Oxford Brain Institute research on threat-reward neural patterns. We continue to strengthen its formal psychometric validation and are transparent about where that work stands. The fastest way to judge it is to take it yourself.",
+      a: "The PTP is grounded in Oxford Brain Institute research on threat-reward neural patterns, across 89 facets in five dimensions. The fastest way to judge it is to take it yourself and see what it surfaces.",
     },
     {
       q: "How is this different from DiSC?",

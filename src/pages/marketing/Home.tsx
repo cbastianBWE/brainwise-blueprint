@@ -10,7 +10,7 @@ import BriefingModal from "@/components/marketing/BriefingModal";
 
 const stats = [
   { value: "89", label: "Facets the PTP measures across five dimensions", citation: "", color: "var(--bw-orange)" },
-  { value: "150+", label: "Structured, interactive coaching and development activities", citation: "", color: "var(--bw-teal)" },
+  { value: "200+", label: "Structured, interactive coaching and development activities", citation: "", color: "var(--bw-teal)" },
   { value: "3", label: "Report modes — individual, paired, and team, on one instrument", citation: "", color: "var(--bw-forest)" },
   { value: "5–7×", label: "Median ROI from professional coaching", citation: "ICF / PwC Global Coaching Client Study (2024)", color: "var(--bw-plum)" },
 ];

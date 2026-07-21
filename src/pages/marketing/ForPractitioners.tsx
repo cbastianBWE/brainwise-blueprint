@@ -186,7 +186,7 @@ export default function ForPractitioners() {
         <div style={{ maxWidth: 900, margin: "0 auto", display: "flex", flexDirection: "column", gap: 40 }}>
           <div>
             <h3 style={h3Style}>What you can deliver</h3>
-            <p style={bodyStyle}>The PTP debrief, the Paired Profile, and the Team Profile at the practitioner level. Once you hold the full coach certification, the complete 150-activity program with guided pathways.</p>
+            <p style={bodyStyle}>The PTP debrief, the Paired Profile, and the Team Profile at the practitioner level. Once you hold the full coach certification, the complete 200+ activity program with guided pathways.</p>
           </div>
           <div>
             <h3 style={h3Style}>It goes underneath what you already use</h3>

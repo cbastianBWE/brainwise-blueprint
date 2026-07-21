@@ -82,7 +82,7 @@ export default function Products() {
       return el;
     };
     const desc =
-      "The Personal Threat & Reward Profile and the platform it powers: individual, paired, and team reports, plus a program of over 150 personalized coaching and development activities.";
+      "The Personal Threat & Reward Profile and the platform it powers: individual, paired, and team reports, plus a program of over 200 personalized coaching and development activities.";
     setMeta("description", desc);
     setMeta("og:title", "The Platform — BrainWise Enterprises", "property");
     setMeta("og:description", desc, "property");
@@ -130,7 +130,7 @@ export default function Products() {
     {
       eyebrow: "Guided pathways",
       eyebrowColor: "var(--bw-plum)",
-      body: "Suggested sequences and AI-assisted 'what to do next,' so no one is left staring at 150 activities wondering where to start.",
+      body: "Suggested sequences and AI-assisted 'what to do next,' so no one is left staring at 200 activities wondering where to start.",
     },
   ];
 
@@ -168,7 +168,7 @@ export default function Products() {
               lineHeight: 1.55,
             }}
           >
-            One proprietary instrument — 89 facets across five dimensions — read for an individual, for any two people, and for a whole team. Then a program of over 150 activities does the work between sessions.
+            One proprietary instrument — 89 facets across five dimensions — read for an individual, for any two people, and for a whole team. Then a program of over 200 activities does the work between sessions.
           </p>
           <div style={{ display: "flex", gap: 14, marginTop: 36, flexWrap: "wrap" }}>
             <MarketingButton as={Link} to="/signup" variant="primary" size="lg">
@@ -213,7 +213,7 @@ export default function Products() {
               marginTop: 20,
             }}
           >
-            A library of over 150 structured, interactive activities. Most personalize to the person's own profile, and many read what they did in earlier work, so the system builds on itself over time.
+            A library of over 200 structured, interactive activities. Most personalize to the person's own profile, and many read what they did in earlier work, so the system builds on itself over time.
           </p>
           <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(3, 1fr)", gap: 20, marginTop: 40 }}>
             {programCards.map((c) => (
@@ -261,7 +261,7 @@ export default function Products() {
               marginTop: 20,
             }}
           >
-            The PTP is grounded in Oxford Brain Institute research on threat-reward neural patterns. We continue to strengthen its formal psychometric validation and are transparent about where that work stands.
+            The PTP is grounded in Oxford Brain Institute research on threat-reward neural patterns, across 89 facets in five dimensions.
           </p>
           <p
             style={{
