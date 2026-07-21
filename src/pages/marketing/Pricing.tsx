@@ -211,7 +211,7 @@ function PricingCoach({
   return (
     <div>
       <h2 style={headingStyle}>For coaches.</h2>
-      <p style={subheadStyle}>Certifications that grant ongoing platform access.</p>
+      <p style={subheadStyle}>We never take a percentage of your coaching fees or set your rates. You pay for certification, your subscription, and assessments; your clients pay platform fees to access the system, or you can cover those for them. That is all we charge.</p>
 
       <div style={{ marginTop: 48, display: "grid", gridTemplateColumns: cols, gap: 24, alignItems: "start" }}>
         {items.map((item) => {
