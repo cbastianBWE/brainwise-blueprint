@@ -125,22 +125,84 @@ export default function ForEnterprise() {
     {
       eyebrow: "Base",
       eyebrowColor: "var(--bw-teal)",
-      title: "Foundational",
-      body: "PTP and the individual report, with the Foundational activity set.",
+      title: "The foundation",
+      body: "The PTP and individual report, plus the Foundational activity set, the spine of the program almost everyone does.",
     },
     {
       eyebrow: "Premium",
       eyebrowColor: "var(--bw-orange)",
-      title: "Adds Paired Profiles",
-      body: "Adds Paired Profiles and the Typical activity set.",
+      title: "Adds depth",
+      body: "Everything in Base, plus Paired Profiles and the Typical activity set, going deeper across each area.",
     },
     {
       eyebrow: "Premium Plus",
       eyebrowColor: "var(--bw-plum)",
-      title: "Adds Team & Dashboard",
-      body: "Adds Team Profiles, the leader brief, the org dashboard, and the Advanced activity set.",
+      title: "The whole platform",
+      body: "Everything in Premium, plus Team Profiles, the leader brief, the org dashboard, and the Advanced activity set, the specialist tools for leaders who want to push further.",
     },
   ];
+
+  const whatPtpCards = [
+    {
+      eyebrow: "Self-Awareness",
+      eyebrowColor: "var(--bw-teal)",
+      title: "Self-awareness that lands",
+      body: "Not a four-box type, the specific driver underneath a leader's behavior, in their own words.",
+    },
+    {
+      eyebrow: "Change Navigation",
+      eyebrowColor: "var(--bw-orange)",
+      title: "Change navigation",
+      body: "Resistance is a threat response. When a leader can see which threat is firing, the conversation moves from arguing about the change to working the driver.",
+    },
+    {
+      eyebrow: "Team Insight",
+      eyebrowColor: "var(--bw-plum)",
+      title: "Team insight",
+      body: "A Team Profile shows aggregate patterns across a leadership group, plus a private brief for the leader on where the friction is and why.",
+    },
+    {
+      eyebrow: "Working Relationships",
+      eyebrowColor: "var(--bw-forest)",
+      title: "Working relationships",
+      body: "The Paired Profile reads any two people against each other and names which overlaps create friction and which differences are strengths. Nothing else on the market does this.",
+    },
+  ];
+
+  const builtForWorkCards = [
+    {
+      eyebrow: "Work-Safe Instrument",
+      eyebrowColor: "var(--bw-teal)",
+      title: "A work-safe instrument",
+      body: "PTP ships in a 47-item professional set built specifically for workplace use. It excludes the items no employer should ask about. Designed in, not bolted on, which is what clears an HR review.",
+    },
+    {
+      eyebrow: "Governance",
+      eyebrowColor: "var(--bw-orange)",
+      title: "Governance from the start",
+      body: "Consent controls, access grants, role-scoped team-leader permissions, and a full audit trail. What legal asks about on the first call.",
+    },
+    {
+      eyebrow: "Your Practitioner",
+      eyebrowColor: "var(--bw-plum)",
+      title: "Delivered by your own certified practitioner",
+      body: "Certify your own people so the capability stays inside your organization, and the program runs asynchronously, so no one has to babysit the experience.",
+    },
+    {
+      eyebrow: "See The Team",
+      eyebrowColor: "var(--bw-forest)",
+      title: "See the team before you commit",
+      body: "Run a Team Profile on your real leadership group, not a sample, and decide from your own team's results.",
+    },
+  ];
+
+  const evaluateSteps = [
+    "A short conversation about the leadership development problem you are actually trying to solve.",
+    "A Team Profile on your real leadership group. Not a sample. Yours.",
+    "A scoped pilot with a defined cohort and a measured outcome.",
+    "Rollout, priced per seat, with your own certified practitioner.",
+  ];
+
 
   return (
     <div className="bw-marketing-root" style={{ background: "var(--bg-1)", overflowX: "hidden" }}>
@@ -188,25 +250,52 @@ export default function ForEnterprise() {
         </div>
       </section>
 
-      {/* WHY IT WORKS */}
+      {/* THE PROBLEM */}
       <section style={{ background: "#fff", padding: `${isMobile ? 80 : 112}px ${padX}px`, borderBottom: "1px solid var(--divider)" }}>
         <div style={{ maxWidth: 1000, margin: "0 auto" }}>
-          <Eyebrow>Built For Work</Eyebrow>
-          <h2 style={h2Style}>Two things that make this deployable.</h2>
+          <Eyebrow color="var(--bw-orange)">The Problem</Eyebrow>
+          <h2 style={h2Style}>The people you most need to move are the ones you can't afford to coach.</h2>
+          <p style={{ ...bodyStyle, fontSize: 16, marginTop: 24, maxWidth: 820 }}>
+            Coaching works. It is also the most expensive line in your development budget per person reached, which is why it goes to the top of the house and stops. Everyone below gets a workshop and a personality assessment, and neither changes what people do on Monday. The leaders you most need to move through change are the ones you cannot afford to coach one to one.
+          </p>
+        </div>
+      </section>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 40, marginTop: 48 }}>
-            <div>
-              <h3 style={h3Style}>A work-safe instrument</h3>
-              <p style={{ ...bodyStyle, fontSize: 16 }}>
-                PTP ships in a 47-item professional set built specifically for workplace use. It excludes the items no employer should ask about. That was designed in, not bolted on, which is what clears an HR review.
-              </p>
-            </div>
-            <div>
-              <h3 style={h3Style}>See the team before you commit</h3>
-              <p style={{ ...bodyStyle, fontSize: 16 }}>
-                Run a Team Profile on your real leadership group, not a sample. It shows the shared drivers and the friction lines, with a private brief for the leader. Decide from your own team's results.
-              </p>
-            </div>
+      {/* WHAT PTP IS */}
+      <section style={{ background: "var(--bw-cream)", padding: `${isMobile ? 80 : 112}px ${padX}px` }}>
+        <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+          <Eyebrow color="var(--bw-teal)">What PTP Is</Eyebrow>
+          <h2 style={h2Style}>Personalized coaching, delivered at scale.</h2>
+          <p style={{ ...bodyStyle, fontSize: 16, marginTop: 24, maxWidth: 860 }}>
+            An AI-powered coaching platform with a proprietary engine underneath it. The Personal Threat & Reward Profile measures what drives a person and what drives against them across 89 facets in five dimensions, and a program of 200+ activities does the actual work.
+          </p>
+
+          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(2, 1fr)", gap: 20, marginTop: 48 }}>
+            {whatPtpCards.map((c) => (
+              <div key={c.title} style={cardStyle}>
+                <Eyebrow color={c.eyebrowColor}>{c.eyebrow}</Eyebrow>
+                <h3 style={h3Style}>{c.title}</h3>
+                <p style={bodyStyle}>{c.body}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* BUILT FOR WORK */}
+      <section style={{ background: "#fff", padding: `${isMobile ? 80 : 112}px ${padX}px`, borderBottom: "1px solid var(--divider)" }}>
+        <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+          <Eyebrow color="var(--bw-plum)">Built For Work</Eyebrow>
+          <h2 style={h2Style}>Deployable, deliberately.</h2>
+
+          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(2, 1fr)", gap: 20, marginTop: 48 }}>
+            {builtForWorkCards.map((c) => (
+              <div key={c.title} style={cardStyle}>
+                <Eyebrow color={c.eyebrowColor}>{c.eyebrow}</Eyebrow>
+                <h3 style={h3Style}>{c.title}</h3>
+                <p style={bodyStyle}>{c.body}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -214,7 +303,7 @@ export default function ForEnterprise() {
       {/* WHAT'S INCLUDED */}
       <section style={{ background: "var(--bw-cream)", padding: `${isMobile ? 80 : 112}px ${padX}px` }}>
         <div style={{ maxWidth: 1200, margin: "0 auto" }}>
-          <Eyebrow>What's Included</Eyebrow>
+          <Eyebrow color="var(--bw-forest)">What's Included</Eyebrow>
           <h2 style={h2Style}>A coaching program for your whole organization.</h2>
 
           <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(2, 1fr)", gap: 20, marginTop: 48 }}>
@@ -229,10 +318,70 @@ export default function ForEnterprise() {
         </div>
       </section>
 
+      {/* PRICING */}
+      <section style={{ background: "#fff", padding: `${isMobile ? 80 : 112}px ${padX}px`, borderBottom: "1px solid var(--divider)" }}>
+        <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+          <Eyebrow color="var(--bw-orange)">Pricing</Eyebrow>
+          <h2 style={h2Style}>Per seat, per year. Tiered by depth.</h2>
+          <p style={{ ...bodyStyle, fontSize: 16, marginTop: 24, maxWidth: 820 }}>
+            Every tier includes the coaching program. The tiers differ in how much of it each seat can reach.
+          </p>
+
+          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(3, 1fr)", gap: 20, marginTop: 48 }}>
+            {pricingCards.map((c) => (
+              <div key={c.title} style={cardStyle}>
+                <Eyebrow color={c.eyebrowColor}>{c.eyebrow}</Eyebrow>
+                <h3 style={{ ...h3Style, marginTop: 12 }}>{c.title}</h3>
+                <p style={bodyStyle}>{c.body}</p>
+              </div>
+            ))}
+          </div>
+
+          <div style={{ display: "flex", justifyContent: "center", marginTop: 32 }}>
+            <MarketingButton variant="primary" size="lg" onClick={() => openModal("enterprise_pricing_briefing")}>
+              Book a conversation for pricing
+            </MarketingButton>
+          </div>
+        </div>
+      </section>
+
+      {/* HOW TO EVALUATE THIS */}
+      <section style={{ background: "var(--bw-cream)", padding: `${isMobile ? 80 : 112}px ${padX}px` }}>
+        <div style={{ maxWidth: 1000, margin: "0 auto" }}>
+          <Eyebrow color="var(--bw-teal)">How to Evaluate This</Eyebrow>
+          <h2 style={h2Style}>Don't take our word for it. Run it on your own team.</h2>
+
+          <ol style={{ listStyle: "none", padding: 0, margin: "40px 0 0", display: "flex", flexDirection: "column", gap: 20 }}>
+            {evaluateSteps.map((step, i) => (
+              <li key={i} style={{ display: "flex", gap: 20, alignItems: "flex-start" }}>
+                <span
+                  style={{
+                    fontFamily: "'Poppins', sans-serif",
+                    fontWeight: 800,
+                    fontSize: 36,
+                    color: "var(--bw-orange)",
+                    lineHeight: 1,
+                    minWidth: 48,
+                    letterSpacing: "-0.02em",
+                  }}
+                >
+                  {i + 1}
+                </span>
+                <p style={{ ...bodyStyle, fontSize: 16, marginTop: 6 }}>{step}</p>
+              </li>
+            ))}
+          </ol>
+
+          <p style={{ ...bodyStyle, fontSize: 16, marginTop: 32, maxWidth: 820 }}>
+            We would rather you see your own team's profile and decide from that than be persuaded by a document.
+          </p>
+        </div>
+      </section>
+
       {/* DIAGNOSTIC LAYER */}
       <section style={{ background: "#fff", padding: `${isMobile ? 80 : 112}px ${padX}px`, borderBottom: "1px solid var(--divider)" }}>
         <div style={{ maxWidth: 1000, margin: "0 auto" }}>
-          <Eyebrow>Organizational Diagnostics</Eyebrow>
+          <Eyebrow color="var(--bw-plum)">Organizational Diagnostics</Eyebrow>
           <h2 style={h2Style}>Measure readiness before you invest.</h2>
           <p style={{ ...bodyStyle, fontSize: 16, marginTop: 24, maxWidth: 820 }}>
             For organizations navigating AI adoption and large-scale change, BrainWise adds an organizational diagnostic layer: the Neuroscience Adoption Index (NAI), the AI Readiness Skills Assessment (AIRSA), and the Habit Stabilization Scorecard (HSS), deployed through the EVOLVE methodology.
@@ -254,29 +403,6 @@ export default function ForEnterprise() {
         </div>
       </section>
 
-      {/* PRICING */}
-      <section style={{ background: "var(--bw-cream)", padding: `${isMobile ? 80 : 112}px ${padX}px` }}>
-        <div style={{ maxWidth: 1200, margin: "0 auto" }}>
-          <Eyebrow>Pricing</Eyebrow>
-          <h2 style={h2Style}>Per seat, per year. Tiered by depth.</h2>
-
-          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(3, 1fr)", gap: 20, marginTop: 48 }}>
-            {pricingCards.map((c) => (
-              <div key={c.title} style={cardStyle}>
-                <Eyebrow color={c.eyebrowColor}>{c.eyebrow}</Eyebrow>
-                <h3 style={{ ...h3Style, marginTop: 12 }}>{c.title}</h3>
-                <p style={bodyStyle}>{c.body}</p>
-              </div>
-            ))}
-          </div>
-
-          <div style={{ display: "flex", justifyContent: "center", marginTop: 32 }}>
-            <MarketingButton variant="primary" size="lg" onClick={() => openModal("enterprise_pricing_briefing")}>
-              Book a conversation for pricing
-            </MarketingButton>
-          </div>
-        </div>
-      </section>
 
       {/* CTA */}
       <section style={{ background: "var(--bw-navy)", padding: `${isMobile ? 72 : 96}px ${padX}px`, position: "relative", overflow: "hidden" }}>
