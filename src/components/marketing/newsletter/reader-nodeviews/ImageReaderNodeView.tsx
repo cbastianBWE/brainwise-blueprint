@@ -75,27 +75,42 @@ export default function ImageReaderNodeView({ node }: NodeViewProps) {
           }}
         >
           Photo by{" "}
-          <a
-            href={attribution.photographer_url}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ textDecoration: "underline", color: "inherit" }}
-          >
-            {attribution.photographer}
-          </a>
-          {attribution.source === "pexels" && (
-            <>
-              {" "}on{" "}
+          {(() => {
+            const photoUrl = safeHttpUrl(attribution.photographer_url);
+            return photoUrl ? (
               <a
-                href={attribution.source_url}
+                href={photoUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{ textDecoration: "underline", color: "inherit" }}
               >
-                Pexels
+                {attribution.photographer}
               </a>
+            ) : (
+              <span>{attribution.photographer}</span>
+            );
+          })()}
+          {attribution.source === "pexels" && (
+            <>
+              {" "}on{" "}
+              {(() => {
+                const srcUrl = safeHttpUrl(attribution.source_url);
+                return srcUrl ? (
+                  <a
+                    href={srcUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ textDecoration: "underline", color: "inherit" }}
+                  >
+                    Pexels
+                  </a>
+                ) : (
+                  <>Pexels</>
+                );
+              })()}
             </>
           )}
+
         </figcaption>
       )}
     </NodeViewWrapper>
