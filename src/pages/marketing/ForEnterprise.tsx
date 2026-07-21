@@ -125,22 +125,84 @@ export default function ForEnterprise() {
     {
       eyebrow: "Base",
       eyebrowColor: "var(--bw-teal)",
-      title: "Foundational",
-      body: "PTP and the individual report, with the Foundational activity set.",
+      title: "The foundation",
+      body: "The PTP and individual report, plus the Foundational activity set, the spine of the program almost everyone does.",
     },
     {
       eyebrow: "Premium",
       eyebrowColor: "var(--bw-orange)",
-      title: "Adds Paired Profiles",
-      body: "Adds Paired Profiles and the Typical activity set.",
+      title: "Adds depth",
+      body: "Everything in Base, plus Paired Profiles and the Typical activity set, going deeper across each area.",
     },
     {
       eyebrow: "Premium Plus",
       eyebrowColor: "var(--bw-plum)",
-      title: "Adds Team & Dashboard",
-      body: "Adds Team Profiles, the leader brief, the org dashboard, and the Advanced activity set.",
+      title: "The whole platform",
+      body: "Everything in Premium, plus Team Profiles, the leader brief, the org dashboard, and the Advanced activity set, the specialist tools for leaders who want to push further.",
     },
   ];
+
+  const whatPtpCards = [
+    {
+      eyebrow: "Self-Awareness",
+      eyebrowColor: "var(--bw-teal)",
+      title: "Self-awareness that lands",
+      body: "Not a four-box type, the specific driver underneath a leader's behavior, in their own words.",
+    },
+    {
+      eyebrow: "Change Navigation",
+      eyebrowColor: "var(--bw-orange)",
+      title: "Change navigation",
+      body: "Resistance is a threat response. When a leader can see which threat is firing, the conversation moves from arguing about the change to working the driver.",
+    },
+    {
+      eyebrow: "Team Insight",
+      eyebrowColor: "var(--bw-plum)",
+      title: "Team insight",
+      body: "A Team Profile shows aggregate patterns across a leadership group, plus a private brief for the leader on where the friction is and why.",
+    },
+    {
+      eyebrow: "Working Relationships",
+      eyebrowColor: "var(--bw-forest)",
+      title: "Working relationships",
+      body: "The Paired Profile reads any two people against each other and names which overlaps create friction and which differences are strengths. Nothing else on the market does this.",
+    },
+  ];
+
+  const builtForWorkCards = [
+    {
+      eyebrow: "Work-Safe Instrument",
+      eyebrowColor: "var(--bw-teal)",
+      title: "A work-safe instrument",
+      body: "PTP ships in a 47-item professional set built specifically for workplace use. It excludes the items no employer should ask about. Designed in, not bolted on, which is what clears an HR review.",
+    },
+    {
+      eyebrow: "Governance",
+      eyebrowColor: "var(--bw-orange)",
+      title: "Governance from the start",
+      body: "Consent controls, access grants, role-scoped team-leader permissions, and a full audit trail. What legal asks about on the first call.",
+    },
+    {
+      eyebrow: "Your Practitioner",
+      eyebrowColor: "var(--bw-plum)",
+      title: "Delivered by your own certified practitioner",
+      body: "Certify your own people so the capability stays inside your organization, and the program runs asynchronously, so no one has to babysit the experience.",
+    },
+    {
+      eyebrow: "See The Team",
+      eyebrowColor: "var(--bw-forest)",
+      title: "See the team before you commit",
+      body: "Run a Team Profile on your real leadership group, not a sample, and decide from your own team's results.",
+    },
+  ];
+
+  const evaluateSteps = [
+    "A short conversation about the leadership development problem you are actually trying to solve.",
+    "A Team Profile on your real leadership group. Not a sample. Yours.",
+    "A scoped pilot with a defined cohort and a measured outcome.",
+    "Rollout, priced per seat, with your own certified practitioner.",
+  ];
+
 
   return (
     <div className="bw-marketing-root" style={{ background: "var(--bg-1)", overflowX: "hidden" }}>
