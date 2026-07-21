@@ -2,6 +2,19 @@ import { NodeViewWrapper, type NodeViewProps } from "@tiptap/react";
 import { useNewsletterImageUrl } from "@/components/newsletter/editor/useNewsletterImageUrl";
 import type { NewsletterImageWidth } from "@/components/newsletter/tiptap/types";
 
+function safeHttpUrl(u: unknown): string | null {
+  if (typeof u !== "string") return null;
+  const t = u.trim();
+  if (!/^https?:\/\//i.test(t)) return null;
+  try {
+    const parsed = new URL(t);
+    return parsed.protocol === "http:" || parsed.protocol === "https:" ? parsed.href : null;
+  } catch {
+    return null;
+  }
+}
+
+
 export default function ImageReaderNodeView({ node }: NodeViewProps) {
   const assetId = (node.attrs.asset_id as string | null) ?? null;
   const importFailedSrc = (node.attrs.import_failed_src as string | null) ?? null;
