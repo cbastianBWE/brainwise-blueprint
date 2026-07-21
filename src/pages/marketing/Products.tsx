@@ -168,7 +168,7 @@ export default function Products() {
               lineHeight: 1.55,
             }}
           >
-            One proprietary instrument — 89 facets across five dimensions — read for an individual, for any two people, and for a whole team. Then a program of over 150 activities does the work between sessions.
+            One proprietary instrument — 89 facets across five dimensions — read for an individual, for any two people, and for a whole team. Then a program of over 200 activities does the work between sessions.
           </p>
           <div style={{ display: "flex", gap: 14, marginTop: 36, flexWrap: "wrap" }}>
             <MarketingButton as={Link} to="/signup" variant="primary" size="lg">
