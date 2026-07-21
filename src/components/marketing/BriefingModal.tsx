@@ -33,7 +33,7 @@ const inputStyle: CSSProperties = {
 };
 
 export default function BriefingModal({ open, onClose, source }: Props) {
-  const [form, setForm] = useState({ name: "", email: "", company: "", role: "", message: "", website: "" });
+  const [form, setForm] = useState({ name: "", email: "", company: "", role: "", message: "", website: "", reason: "" });
   const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState("");
   const firstInputRef = useRef<HTMLInputElement>(null);
@@ -55,7 +55,7 @@ export default function BriefingModal({ open, onClose, source }: Props) {
     if (open) {
       setStatus("idle");
       setErrorMsg("");
-      setForm({ name: "", email: "", company: "", role: "", message: "", website: "" });
+      setForm({ name: "", email: "", company: "", role: "", message: "", website: "", reason: "" });
     }
   }, [open]);
 
@@ -74,6 +74,7 @@ export default function BriefingModal({ open, onClose, source }: Props) {
           role: form.role,
           message: form.message || undefined,
           website: form.website,
+          reason: form.reason,
           source: source ?? "homepage_briefing_modal",
         },
       });
@@ -144,11 +145,11 @@ export default function BriefingModal({ open, onClose, source }: Props) {
               You're in — now pick a time
             </h2>
             <p style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 14.5, color: "var(--bw-slate)", marginTop: 8, marginBottom: 20, lineHeight: 1.55 }}>
-              We'll follow up at {form.email}. Grab a briefing slot below.
+              We'll follow up at {form.email}. Grab a time below.
             </p>
             <iframe
               src="https://outlook.office.com/book/BrainWiseEnterprises@abcdeoflearning.com/"
-              title="Book your BrainWise briefing"
+              title="Book your BrainWise conversation"
               loading="lazy"
               style={{ width: "100%", height: 640, border: "none", borderRadius: 8, display: "block" }}
             />
@@ -177,7 +178,7 @@ export default function BriefingModal({ open, onClose, source }: Props) {
 
         ) : (
           <>
-            <Eyebrow>30-Minute Briefing</Eyebrow>
+            <Eyebrow>30-Minute Conversation</Eyebrow>
             <h2
               id="briefing-title"
               style={{
@@ -209,6 +210,24 @@ export default function BriefingModal({ open, onClose, source }: Props) {
                 data-lpignore="true"
                 data-1p-ignore
               />
+
+              <label style={{ display: "block" }}>
+                <div style={labelStyle}>What's this about?</div>
+                <select
+                  required
+                  value={form.reason}
+                  onChange={(e) => setForm((f) => ({ ...f, reason: e.target.value }))}
+                  style={inputStyle}
+                >
+                  <option value="" disabled>Select one</option>
+                  <option value="enterprise">Enterprise or team deployment</option>
+                  <option value="practitioner">Practitioner certification</option>
+                  <option value="individual">Individual use</option>
+                  <option value="partnership_licensing">Partnership or licensing</option>
+                  <option value="other">Something else</option>
+                </select>
+              </label>
+
 
               <label style={{ display: "block" }}>
                 <div style={labelStyle}>Name</div>
