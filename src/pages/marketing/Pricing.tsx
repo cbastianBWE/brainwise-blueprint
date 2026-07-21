@@ -305,6 +305,161 @@ function PricingCoach({
           );
         })}
       </div>
+
+      <div style={{ height: 1, background: "var(--border-1)", margin: "56px 0 40px" }} />
+
+      <div>
+        <h3 style={{ ...headingStyle, fontSize: 20 }}>Your platform subscription</h3>
+        <p style={subheadStyle}>
+          Your certification includes your first year. After that, two tiers to match how much you run. Book a conversation and we'll walk you through the one that fits.
+        </p>
+
+        <div
+          style={{
+            marginTop: 32,
+            display: "grid",
+            gridTemplateColumns: isMobile ? "1fr" : "repeat(2, 1fr)",
+            gap: 24,
+            alignItems: "start",
+          }}
+        >
+          {[
+            {
+              eyebrow: "Basic",
+              title: "Run your practice",
+              body: "Everything you need to get certified, get set up, and start delivering to clients.",
+              features: [
+                "Order and deliver PTP assessments to your clients",
+                "Full client management and reporting on the platform",
+                "AI coaching on your own Personal Threat & Reward Profile",
+                "A monthly allowance of AI coaching messages across client questions and activities",
+              ],
+              recommended: false,
+            },
+            {
+              eyebrow: "Premium",
+              title: "Unlimited, end to end",
+              body: "Everything in Basic, with the ceilings removed, so the tool never gets in the way of the work.",
+              features: [
+                "Everything in Basic",
+                "Unlimited AI coaching across every client and every activity",
+                "Full, unlimited access to the entire activity library and platform",
+                "Priority support",
+              ],
+              recommended: true,
+            },
+          ].map((tier) => (
+            <div
+              key={tier.eyebrow}
+              style={{
+                position: "relative",
+                background: "white",
+                border: tier.recommended
+                  ? "2px solid var(--bw-orange)"
+                  : "1px solid var(--bw-cream-300)",
+                borderRadius: "var(--r-lg)",
+                padding: 32,
+                boxShadow: tier.recommended ? "var(--shadow-md)" : "none",
+                display: "flex",
+                flexDirection: "column",
+                gap: 16,
+              }}
+            >
+              {tier.recommended && (
+                <span
+                  style={{
+                    position: "absolute",
+                    top: -12,
+                    right: 24,
+                    background: "var(--bw-orange)",
+                    color: "white",
+                    padding: "4px 12px",
+                    fontSize: 11,
+                    fontFamily: "'Poppins', sans-serif",
+                    fontWeight: 700,
+                    letterSpacing: "0.12em",
+                    textTransform: "uppercase",
+                    borderRadius: "var(--r-pill)",
+                  }}
+                >
+                  Recommended
+                </span>
+              )}
+              <div
+                style={{
+                  fontFamily: "'Poppins', sans-serif",
+                  fontWeight: 600,
+                  fontSize: 12,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.18em",
+                  color: "var(--bw-orange)",
+                }}
+              >
+                {tier.eyebrow}
+              </div>
+              <h4
+                style={{
+                  fontFamily: "'Poppins', sans-serif",
+                  fontWeight: 700,
+                  fontSize: 22,
+                  color: "var(--bw-navy)",
+                  margin: 0,
+                }}
+              >
+                {tier.title}
+              </h4>
+              <p
+                style={{
+                  fontFamily: "'Montserrat', sans-serif",
+                  fontSize: 14,
+                  color: "var(--bw-slate-700)",
+                  lineHeight: 1.55,
+                  margin: 0,
+                }}
+              >
+                {tier.body}
+              </p>
+              <ul
+                style={{
+                  listStyle: "none",
+                  padding: 0,
+                  margin: 0,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 10,
+                  flex: 1,
+                }}
+              >
+                {tier.features.map((f) => (
+                  <li
+                    key={f}
+                    style={{
+                      display: "flex",
+                      alignItems: "flex-start",
+                      gap: 8,
+                      fontFamily: "'Montserrat', sans-serif",
+                      fontSize: 14,
+                      color: "var(--bw-slate-700)",
+                      lineHeight: 1.5,
+                    }}
+                  >
+                    <span aria-hidden style={{ color: "var(--bw-orange)", fontWeight: 700 }}>✓</span>
+                    <span>{f}</span>
+                  </li>
+                ))}
+              </ul>
+              <MarketingButton
+                variant={tier.recommended ? "primary" : "secondary"}
+                size="md"
+                onClick={onContact}
+                fullWidth
+              >
+                Book a conversation
+              </MarketingButton>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
