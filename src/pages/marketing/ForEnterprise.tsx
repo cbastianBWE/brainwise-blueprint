@@ -315,7 +315,7 @@ export default function ForEnterprise() {
             </p>
             <div style={{ display: "flex", gap: 12, marginTop: 24, flexWrap: "wrap" }}>
               <MarketingButton variant="primary" size="lg" onClick={() => openModal("enterprise_footer_briefing")}>
-                Book a briefing
+                Book a conversation
               </MarketingButton>
               <MarketingButton as={Link} to="/contact" variant="invert" size="lg">
                 Contact us
