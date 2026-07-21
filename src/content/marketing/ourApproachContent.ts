@@ -20,7 +20,7 @@ export const meta = {
   foundationEyebrow: "The Foundation",
   foundationTitle: "Four instruments. Deployed before any intervention begins.",
   foundationSubhead:
-    "You cannot treat what you have not measured. EVOLVE is the only AI transformation methodology built on validated psychometric diagnostics administered at the start of every engagement.",
+    "You cannot treat what you have not measured. EVOLVE is the only AI transformation methodology built on neuroscience-based diagnostics administered at the start of every engagement.",
   foundationFooterCopy: "Each instrument is available standalone or as part of a full EVOLVE engagement.",
   foundationFooterLinkLabel: "Learn more on the Products page",
   foundationFooterLinkTo: "/products",
