@@ -296,27 +296,42 @@ export function ImageNodeView({
       {node.attrs.attribution && (
         <div className="mt-1 text-center text-xs italic text-[var(--fg-4)]">
           Photo by{" "}
-          <a
-            href={node.attrs.attribution.photographer_url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="underline hover:text-[var(--fg-2)]"
-          >
-            {node.attrs.attribution.photographer}
-          </a>
-          {node.attrs.attribution.source === "pexels" && (
-            <>
-              {" "}on{" "}
+          {(() => {
+            const photoUrl = safeHttpUrl(node.attrs.attribution.photographer_url);
+            return photoUrl ? (
               <a
-                href={node.attrs.attribution.source_url}
+                href={photoUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="underline hover:text-[var(--fg-2)]"
               >
-                Pexels
+                {node.attrs.attribution.photographer}
               </a>
+            ) : (
+              <span>{node.attrs.attribution.photographer}</span>
+            );
+          })()}
+          {node.attrs.attribution.source === "pexels" && (
+            <>
+              {" "}on{" "}
+              {(() => {
+                const srcUrl = safeHttpUrl(node.attrs.attribution.source_url);
+                return srcUrl ? (
+                  <a
+                    href={srcUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline hover:text-[var(--fg-2)]"
+                  >
+                    Pexels
+                  </a>
+                ) : (
+                  <>Pexels</>
+                );
+              })()}
             </>
           )}
+
         </div>
       )}
 
