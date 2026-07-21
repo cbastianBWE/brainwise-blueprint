@@ -1229,6 +1229,7 @@ export type Database = {
           id: string
           message: string | null
           name: string
+          reason: string | null
           role: string
           source: string
           status: string
@@ -1245,6 +1246,7 @@ export type Database = {
           id?: string
           message?: string | null
           name: string
+          reason?: string | null
           role: string
           source?: string
           status?: string
@@ -1261,6 +1263,7 @@ export type Database = {
           id?: string
           message?: string | null
           name?: string
+          reason?: string | null
           role?: string
           source?: string
           status?: string
