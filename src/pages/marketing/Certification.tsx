@@ -165,10 +165,6 @@ export default function Certification() {
 
   const qa = [
     {
-      q: "Is it ICF accredited, or offer CCEUs?",
-      a: "Not yet, and we won't claim it before it's true. Accreditation is a named priority. PTP is a tool credential, complementary to a coaching-methodology credential, not a substitute.",
-    },
-    {
       q: "Is the instrument validated?",
       a: "The PTP is grounded in Oxford Brain Institute research on threat-reward neural patterns, across 89 facets in five dimensions. The fastest way to judge it is to take it yourself and see what it surfaces.",
     },
