@@ -210,6 +210,20 @@ export default function ForPractitioners() {
         </div>
       </section>
 
+      {/* YOUR PRACTICE STAYS YOURS */}
+      <section style={{ background: "var(--bw-cream)", padding: `${isMobile ? 80 : 112}px ${padX}px` }}>
+        <div style={{ maxWidth: 900, margin: "0 auto" }}>
+          <Eyebrow>Your Practice Stays Yours</Eyebrow>
+          <h2 style={h2Style}>You keep your clients, and every dollar you charge them.</h2>
+          <p style={{ ...bodyStyle, fontSize: 16, marginTop: 24 }}>
+            BrainWise never takes a percentage of your coaching fees, and never sets your rates. Coaching networks routinely take 30 to 40 percent and set the rate for you. We do not.
+          </p>
+          <p style={{ ...bodyStyle, fontSize: 16, marginTop: 16 }}>
+            What anyone pays BrainWise is only for access to the platform. You pay for your certification, your annual subscription, and assessments. Your clients pay a platform fee to use the system, an individual through their own subscription and an enterprise through its seats, and you can cover that on their behalf if you prefer. That is all we ever charge, and none of it touches what you charge for your coaching.
+          </p>
+        </div>
+      </section>
+
       {/* DIRECTORY PLACEHOLDER */}
       <section style={{ background: "var(--bw-cream)", padding: `${isMobile ? 80 : 112}px ${padX}px` }}>
         <div style={{ maxWidth: 900, margin: "0 auto" }}>
