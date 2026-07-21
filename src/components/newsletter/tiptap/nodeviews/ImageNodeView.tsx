@@ -22,6 +22,19 @@ import {
 } from "../../editor/useNewsletterImageUrl";
 import type { NewsletterImageWidth } from "../types";
 
+function safeHttpUrl(u: unknown): string | null {
+  if (typeof u !== "string") return null;
+  const t = u.trim();
+  if (!/^https?:\/\//i.test(t)) return null;
+  try {
+    const parsed = new URL(t);
+    return parsed.protocol === "http:" || parsed.protocol === "https:" ? parsed.href : null;
+  } catch {
+    return null;
+  }
+}
+
+
 const WIDTHS: Array<{ value: NewsletterImageWidth; label: string }> = [
   { value: "inline", label: "Inline" },
   { value: "wide", label: "Wide" },
