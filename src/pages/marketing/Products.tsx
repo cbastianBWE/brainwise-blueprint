@@ -130,7 +130,7 @@ export default function Products() {
     {
       eyebrow: "Guided pathways",
       eyebrowColor: "var(--bw-plum)",
-      body: "Suggested sequences and AI-assisted 'what to do next,' so no one is left staring at 150 activities wondering where to start.",
+      body: "Suggested sequences and AI-assisted 'what to do next,' so no one is left staring at 200 activities wondering where to start.",
     },
   ];
 
