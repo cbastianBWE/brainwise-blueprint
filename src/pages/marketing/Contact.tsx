@@ -10,8 +10,9 @@ import SocialLinks from "@/components/marketing/SocialLinks";
 const inquiryOptions = [
   { value: "general", label: "General" },
   { value: "sales", label: "Sales" },
-  { value: "coach_certification", label: "Coach Certification" },
+  { value: "coach_certification", label: "Practitioner Certification" },
   { value: "corporate", label: "Corporate / Enterprise" },
+  { value: "partnership_licensing", label: "Partnership / Licensing" },
   { value: "press", label: "Press" },
   { value: "other", label: "Other" },
 ];
