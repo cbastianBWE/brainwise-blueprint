@@ -141,18 +141,111 @@ export default function ForIndividuals() {
         </div>
       </section>
 
+      {/* THE RECOGNITION MOMENT */}
+      <section style={{ background: "#fff", padding: `${isMobile ? 80 : 112}px ${padX}px`, borderBottom: "1px solid var(--divider)" }}>
+        <div style={{ maxWidth: 900, margin: "0 auto" }}>
+          <Eyebrow color="var(--bw-orange)">The Recognition Moment</Eyebrow>
+          <h2 style={h2Style}>The moment you see yourself named.</h2>
+          <p style={{ ...bodyStyle, fontSize: 16, marginTop: 20, maxWidth: 780 }}>
+            Most people have the same reaction when they read their profile. They see a driver named that they have felt for years but never had words for, and they think, that is actually who I am. Most tests tell you your personality. This one tells you what is quietly driving it, and why the same conversation keeps going sideways.
+          </p>
+        </div>
+      </section>
+
+      {/* WHAT IT MEASURES */}
+      <section style={{ background: "var(--bw-cream)", padding: `${isMobile ? 80 : 112}px ${padX}px` }}>
+        <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+          <Eyebrow color="var(--bw-teal)">What It Measures</Eyebrow>
+          <h2 style={h2Style}>Three things your brain protects. Two it reaches for.</h2>
+          <p style={{ ...bodyStyle, fontSize: 16, marginTop: 20, maxWidth: 780 }}>
+            Your brain is always scanning for what threatens it and what rewards it. The PTP maps that across five dimensions, the five P's.
+          </p>
+          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(3, 1fr)", gap: 20, marginTop: 40 }}>
+            {[
+              { title: "Protection", body: "Feeling safe and secure." },
+              { title: "Participation", body: "Belonging and being welcomed." },
+              { title: "Prediction", body: "Understanding what is happening and what comes next." },
+            ].map((c) => (
+              <div key={c.title} style={cardStyle}>
+                <Eyebrow color="var(--bw-teal)">Threat driver</Eyebrow>
+                <h3 style={h3Style}>{c.title}</h3>
+                <p style={bodyStyle}>{c.body}</p>
+              </div>
+            ))}
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(2, 1fr)", gap: 20, marginTop: 20 }}>
+            {[
+              { title: "Purpose", body: "A sense of meaning." },
+              { title: "Pleasure", body: "Genuine enjoyment and joy." },
+            ].map((c) => (
+              <div key={c.title} style={cardStyle}>
+                <Eyebrow color="var(--bw-orange)">Reward driver</Eyebrow>
+                <h3 style={h3Style}>{c.title}</h3>
+                <p style={bodyStyle}>{c.body}</p>
+              </div>
+            ))}
+          </div>
+          <div
+            style={{
+              marginTop: 40,
+              padding: "24px 28px",
+              background: "#fff",
+              borderLeft: "4px solid var(--bw-orange)",
+              borderRadius: "var(--r-md)",
+              fontFamily: "'Poppins', sans-serif",
+              fontWeight: 600,
+              fontSize: 17,
+              color: "var(--bw-navy)",
+              lineHeight: 1.5,
+              maxWidth: 900,
+            }}
+          >
+            Reward needs safety first. Until the three threat drivers are met, purpose and pleasure stay out of reach. Seeing that pattern in yourself is where change starts.
+          </div>
+        </div>
+      </section>
+
       {/* WHAT YOU GET */}
       <section style={{ background: "#fff", padding: `${isMobile ? 80 : 112}px ${padX}px`, borderBottom: "1px solid var(--divider)" }}>
         <div style={{ maxWidth: 1200, margin: "0 auto" }}>
-          <Eyebrow>What You Get</Eyebrow>
+          <Eyebrow color="var(--bw-plum)">What You Get</Eyebrow>
           <h2 style={h2Style}>See what drives you.</h2>
-          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(3, 1fr)", gap: 20, marginTop: 48 }}>
+          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(2, 1fr)", gap: 20, marginTop: 48 }}>
             {[
-              { eyebrow: "Your Profile", color: "var(--bw-orange)", title: "Your own PTP", body: "Your Personal Threat & Reward Profile across 89 facets, with an AI-generated narrative written to your own results." },
-              { eyebrow: "Share It", color: "var(--bw-teal)", title: "Share your results", body: "Share your profile with a partner, a colleague, or your therapist, and talk about what actually drives you." },
-              { eyebrow: "Keep Growing", color: "var(--bw-plum)", title: "A personalized program", body: "Access a library of structured, interactive activities personalized to your profile, so the work builds on itself over time." },
+              { eyebrow: "Your Profile", color: "var(--bw-orange)", title: "Your own PTP", body: "Your profile across 89 facets, with a narrative written to your own results. Not a four-box type, the specific driver underneath your behavior." },
+              { eyebrow: "AI Coach", color: "var(--bw-teal)", title: "An AI coach that knows you", body: "Every activity is a short, guided conversation with an AI coach that already has your profile. It can surface values you haven't named or risks you're underweighting, and you keep only what lands, so a blank page is never where you start." },
+              { eyebrow: "Your Program", color: "var(--bw-plum)", title: "A personalized program", body: "200+ guided activities that adapt to your profile and build on your earlier work, so the journey compounds over time." },
+              { eyebrow: "Share It", color: "var(--bw-forest)", title: "Share it", body: "Share your results with a partner, a colleague, or your therapist, and talk about what actually drives you." },
             ].map((c) => (
-              <div key={c.eyebrow} style={cardStyle}>
+              <div key={c.title} style={cardStyle}>
+                <Eyebrow color={c.color}>{c.eyebrow}</Eyebrow>
+                <h3 style={h3Style}>{c.title}</h3>
+                <p style={bodyStyle}>{c.body}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* HOW IT WORKS */}
+      <section style={{ background: "var(--bw-cream)", padding: `${isMobile ? 80 : 112}px ${padX}px` }}>
+        <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+          <Eyebrow color="var(--bw-forest)">How It Works</Eyebrow>
+          <h2 style={h2Style}>One map, your whole journey.</h2>
+          <p style={{ ...bodyStyle, fontSize: 16, marginTop: 20, maxWidth: 820 }}>
+            Everything is organized around the Transition Map, a single picture that holds the whole journey: where you are now, where you want to be, what shaped you, the route between the two, and the support around you.
+          </p>
+          <p style={{ ...bodyStyle, fontSize: 16, marginTop: 16, maxWidth: 820 }}>
+            The activities run from naming a future worth moving toward, to meeting the players on your inner team, to building the habits that make a change hold.
+          </p>
+          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(2, 1fr)", gap: 20, marginTop: 40 }}>
+            {[
+              { eyebrow: "The Journey", color: "var(--bw-orange)", title: "Ten areas, in order", body: "From telling your story to making the change hold. You see the whole map before you begin." },
+              { eyebrow: "Three Depths", color: "var(--bw-teal)", title: "Foundational, Typical, Advanced", body: "Foundational activities almost everyone does, Typical to go deeper, Advanced to push further." },
+              { eyebrow: "Compounding", color: "var(--bw-plum)", title: "It builds on itself", body: "Activities read your earlier work, so the program remembers your journey." },
+              { eyebrow: "Personalized", color: "var(--bw-forest)", title: "Shaped by your own drivers", body: "In many activities the AI proposes options drawn from your profile, and you keep the ones that land." },
+            ].map((c) => (
+              <div key={c.title} style={cardStyle}>
                 <Eyebrow color={c.color}>{c.eyebrow}</Eyebrow>
                 <h3 style={h3Style}>{c.title}</h3>
                 <p style={bodyStyle}>{c.body}</p>
@@ -163,12 +256,12 @@ export default function ForIndividuals() {
       </section>
 
       {/* GOING DEEPER */}
-      <section style={{ background: "var(--bw-cream)", padding: `${isMobile ? 80 : 112}px ${padX}px` }}>
+      <section style={{ background: "#fff", padding: `${isMobile ? 80 : 112}px ${padX}px`, borderBottom: "1px solid var(--divider)" }}>
         <div style={{ maxWidth: 900, margin: "0 auto" }}>
-          <Eyebrow>Going Deeper</Eyebrow>
+          <Eyebrow color="var(--bw-plum)">Going Deeper</Eyebrow>
           <h2 style={h2Style}>Want to see how you and someone else fit?</h2>
           <p style={{ ...bodyStyle, fontSize: 16, marginTop: 20, maxWidth: 780 }}>
-            Paired and team profiles — seeing how you and another person actually work together, at work, on a team, or at home — are delivered through a certified practitioner. We'll help you find one.
+            Paired and team profiles, seeing how you and another person actually work together, at work, on a team, or at home, are delivered through a certified practitioner. We'll help you find one.
           </p>
           <p
             style={{
