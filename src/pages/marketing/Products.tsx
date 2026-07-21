@@ -261,7 +261,7 @@ export default function Products() {
               marginTop: 20,
             }}
           >
-            The PTP is grounded in Oxford Brain Institute research on threat-reward neural patterns. We continue to strengthen its formal psychometric validation and are transparent about where that work stands.
+            The PTP is grounded in Oxford Brain Institute research on threat-reward neural patterns, across 89 facets in five dimensions.
           </p>
           <p
             style={{
