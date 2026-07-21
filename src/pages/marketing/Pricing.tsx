@@ -310,75 +310,183 @@ function PricingCoach({
 }
 
 function PricingEnterprise({ onContact }: { onContact: () => void }) {
-  const inclusions = [
-    "All four assessment instruments",
-    "Unlimited workforce administrations within seat count",
-    "Org-level dashboards with AI-generated narratives",
-    "Cross-instrument insights and intervention recommendations",
-    "Dedicated account support",
+  const [w, setW] = useState(typeof window !== "undefined" ? window.innerWidth : 1280);
+  useEffect(() => {
+    const onR = () => setW(window.innerWidth);
+    window.addEventListener("resize", onR);
+    return () => window.removeEventListener("resize", onR);
+  }, []);
+  const isMobile = w < 768;
+
+  const tiers = [
+    {
+      eyebrow: "Base",
+      eyebrowColor: "var(--bw-teal)",
+      title: "Self-awareness for everyone",
+      body: "Give every person their own driver-level profile and a coaching program that starts working from day one. Development that finally reaches past the top of the house.",
+      inclusions: [
+        "The Personal Threat & Reward Profile for every seat, 89 facets across five dimensions",
+        "An AI-generated narrative written to each person's own results",
+        "The Foundational activity set, personalized to every profile",
+      ],
+      variant: "secondary" as const,
+      recommended: false,
+    },
+    {
+      eyebrow: "Premium",
+      eyebrowColor: "var(--bw-orange)",
+      title: "Add how people work together",
+      body: "Everything in Base, plus the Paired Profile, the one output no other assessment produces. See which overlaps between two people create friction and which differences are strengths.",
+      inclusions: [
+        "Everything in Base",
+        "Paired Profiles in work, personal, and romantic modes",
+        "The Typical activity set, deepening every person's program",
+      ],
+      variant: "secondary" as const,
+      recommended: false,
+    },
+    {
+      eyebrow: "Premium Plus",
+      eyebrowColor: "var(--bw-plum)",
+      title: "See and develop the whole organization",
+      body: "The complete picture. Read any team, hand every leader a private brief on where the friction is and why, and watch patterns move across your whole workforce from one dashboard. The tier built for developing a leadership layer at scale.",
+      inclusions: [
+        "Everything in Premium",
+        "Team Profiles with a private brief for each leader",
+        "An org dashboard showing patterns across your whole workforce",
+        "The complete Advanced activity set",
+      ],
+      variant: "primary" as const,
+      recommended: true,
+    },
   ];
+
   return (
     <div>
       <h2 style={headingStyle}>For organizations.</h2>
       <p style={subheadStyle}>
-        Invoice-based annual contracts. We'll scope your engagement around your team size, instruments
-        needed, and intended outcomes.
+        Per seat, per year, tiered by depth, and priced to reach your whole workforce. Book a
+        conversation and we'll scope the right tier and pricing to your team.
       </p>
 
       <div
         style={{
           marginTop: 48,
-          maxWidth: 720,
-          marginLeft: "auto",
-          marginRight: "auto",
-          background: "white",
-          border: "2px solid var(--bw-navy)",
-          borderRadius: "var(--r-lg)",
-          padding: 48,
-          boxShadow: "var(--shadow-md)",
+          display: "grid",
+          gridTemplateColumns: isMobile ? "1fr" : "repeat(3, 1fr)",
+          gap: 24,
         }}
       >
-        <div
-          style={{
-            fontFamily: "'Poppins', sans-serif",
-            fontWeight: 600,
-            fontSize: 12,
-            textTransform: "uppercase",
-            letterSpacing: "0.18em",
-            color: "var(--bw-orange)",
-            marginBottom: 16,
-          }}
-        >
-          What's included
-        </div>
-        <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 12 }}>
-          {inclusions.map((line) => (
-            <li
-              key={line}
+        {tiers.map((tier) => (
+          <div
+            key={tier.eyebrow}
+            style={{
+              position: "relative",
+              background: "white",
+              border: tier.recommended
+                ? "2px solid var(--bw-orange)"
+                : "1px solid var(--bw-cream-300)",
+              borderRadius: "var(--r-lg)",
+              padding: 28,
+              boxShadow: tier.recommended ? "var(--shadow-md)" : "none",
+              display: "flex",
+              flexDirection: "column",
+              gap: 16,
+            }}
+          >
+            {tier.recommended && (
+              <span
+                style={{
+                  position: "absolute",
+                  top: -12,
+                  right: 24,
+                  background: "var(--bw-orange)",
+                  color: "white",
+                  padding: "4px 12px",
+                  fontSize: 11,
+                  fontFamily: "'Poppins', sans-serif",
+                  fontWeight: 700,
+                  letterSpacing: "0.12em",
+                  textTransform: "uppercase",
+                  borderRadius: "var(--r-pill)",
+                }}
+              >
+                Recommended
+              </span>
+            )}
+            <div
               style={{
-                display: "flex",
-                alignItems: "flex-start",
-                gap: 8,
-                fontFamily: "'Montserrat', sans-serif",
-                fontSize: 15,
-                color: "var(--bw-slate-700)",
-                lineHeight: 1.55,
+                fontFamily: "'Poppins', sans-serif",
+                fontWeight: 600,
+                fontSize: 12,
+                textTransform: "uppercase",
+                letterSpacing: "0.18em",
+                color: tier.eyebrowColor,
               }}
             >
-              <span aria-hidden style={{ color: "var(--bw-orange)", fontWeight: 700 }}>✓</span>
-              <span>{line}</span>
-            </li>
-          ))}
-        </ul>
-        <div style={{ marginTop: 32, textAlign: "center" }}>
-          <MarketingButton variant="primary" size="md" onClick={onContact}>
-            Contact for enterprise pricing
-          </MarketingButton>
-        </div>
+              {tier.eyebrow}
+            </div>
+            <h3
+              style={{
+                fontFamily: "'Poppins', sans-serif",
+                fontWeight: 700,
+                fontSize: 22,
+                color: "var(--bw-navy)",
+                margin: 0,
+              }}
+            >
+              {tier.title}
+            </h3>
+            <p
+              style={{
+                fontFamily: "'Montserrat', sans-serif",
+                fontSize: 14,
+                color: "var(--bw-slate-700)",
+                lineHeight: 1.55,
+                margin: 0,
+              }}
+            >
+              {tier.body}
+            </p>
+            <ul
+              style={{
+                listStyle: "none",
+                padding: 0,
+                margin: 0,
+                display: "flex",
+                flexDirection: "column",
+                gap: 10,
+                flex: 1,
+              }}
+            >
+              {tier.inclusions.map((line) => (
+                <li
+                  key={line}
+                  style={{
+                    display: "flex",
+                    alignItems: "flex-start",
+                    gap: 8,
+                    fontFamily: "'Montserrat', sans-serif",
+                    fontSize: 14,
+                    color: "var(--bw-slate-700)",
+                    lineHeight: 1.5,
+                  }}
+                >
+                  <span aria-hidden style={{ color: "var(--bw-orange)", fontWeight: 700 }}>✓</span>
+                  <span>{line}</span>
+                </li>
+              ))}
+            </ul>
+            <MarketingButton variant={tier.variant} size="md" onClick={onContact} fullWidth>
+              Book a conversation
+            </MarketingButton>
+          </div>
+        ))}
       </div>
     </div>
   );
 }
+
 
 export default function MarketingPricing() {
   const location = useLocation();
