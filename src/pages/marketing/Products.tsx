@@ -82,7 +82,7 @@ export default function Products() {
       return el;
     };
     const desc =
-      "The Personal Threat & Reward Profile and the platform it powers: individual, paired, and team reports, plus a program of over 150 personalized coaching and development activities.";
+      "The Personal Threat & Reward Profile and the platform it powers: individual, paired, and team reports, plus a program of over 200 personalized coaching and development activities.";
     setMeta("description", desc);
     setMeta("og:title", "The Platform — BrainWise Enterprises", "property");
     setMeta("og:description", desc, "property");
