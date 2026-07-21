@@ -33,7 +33,7 @@ const inputStyle: CSSProperties = {
 };
 
 export default function BriefingModal({ open, onClose, source }: Props) {
-  const [form, setForm] = useState({ name: "", email: "", company: "", role: "", message: "", website: "" });
+  const [form, setForm] = useState({ name: "", email: "", company: "", role: "", message: "", website: "", reason: "" });
   const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState("");
   const firstInputRef = useRef<HTMLInputElement>(null);
