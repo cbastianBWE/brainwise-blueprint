@@ -2,6 +2,19 @@ import { NodeViewWrapper, type NodeViewProps } from "@tiptap/react";
 import { useNewsletterImageUrl } from "@/components/newsletter/editor/useNewsletterImageUrl";
 import type { NewsletterImageWidth } from "@/components/newsletter/tiptap/types";
 
+function safeHttpUrl(u: unknown): string | null {
+  if (typeof u !== "string") return null;
+  const t = u.trim();
+  if (!/^https?:\/\//i.test(t)) return null;
+  try {
+    const parsed = new URL(t);
+    return parsed.protocol === "http:" || parsed.protocol === "https:" ? parsed.href : null;
+  } catch {
+    return null;
+  }
+}
+
+
 export default function ImageReaderNodeView({ node }: NodeViewProps) {
   const assetId = (node.attrs.asset_id as string | null) ?? null;
   const importFailedSrc = (node.attrs.import_failed_src as string | null) ?? null;
@@ -62,27 +75,42 @@ export default function ImageReaderNodeView({ node }: NodeViewProps) {
           }}
         >
           Photo by{" "}
-          <a
-            href={attribution.photographer_url}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ textDecoration: "underline", color: "inherit" }}
-          >
-            {attribution.photographer}
-          </a>
-          {attribution.source === "pexels" && (
-            <>
-              {" "}on{" "}
+          {(() => {
+            const photoUrl = safeHttpUrl(attribution.photographer_url);
+            return photoUrl ? (
               <a
-                href={attribution.source_url}
+                href={photoUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{ textDecoration: "underline", color: "inherit" }}
               >
-                Pexels
+                {attribution.photographer}
               </a>
+            ) : (
+              <span>{attribution.photographer}</span>
+            );
+          })()}
+          {attribution.source === "pexels" && (
+            <>
+              {" "}on{" "}
+              {(() => {
+                const srcUrl = safeHttpUrl(attribution.source_url);
+                return srcUrl ? (
+                  <a
+                    href={srcUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ textDecoration: "underline", color: "inherit" }}
+                  >
+                    Pexels
+                  </a>
+                ) : (
+                  <>Pexels</>
+                );
+              })()}
             </>
           )}
+
         </figcaption>
       )}
     </NodeViewWrapper>
