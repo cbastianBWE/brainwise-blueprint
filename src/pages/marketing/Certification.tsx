@@ -224,8 +224,19 @@ export default function Certification() {
         </div>
       </section>
 
-      {/* THE LEVELS */}
+      {/* THE RECOGNITION MOMENT */}
       <section style={{ background: "#fff", padding: `${isMobile ? 80 : 112}px ${padX}px`, borderBottom: "1px solid var(--divider)" }}>
+        <div style={{ maxWidth: 900, margin: "0 auto" }}>
+          <Eyebrow color="var(--bw-orange)">The Recognition Moment</Eyebrow>
+          <h2 style={h2Style}>You take the PTP before you ever debrief one.</h2>
+          <p style={{ ...bodyStyle, fontSize: 16, marginTop: 24, maxWidth: 780 }}>
+            Before you certify, you take the PTP yourself. Most people have the same reaction. They see a driver named that they have felt for years but never had language for, and they think, that is actually who I am. That moment is what you will learn to create for a client. You will recognize it because you will have had it first.
+          </p>
+        </div>
+      </section>
+
+      {/* THE LEVELS */}
+      <section style={{ background: "var(--bw-cream)", padding: `${isMobile ? 80 : 112}px ${padX}px` }}>
         <div style={{ maxWidth: 1200, margin: "0 auto" }}>
           <Eyebrow>The Levels</Eyebrow>
           <h2 style={h2Style}>Go as deep as your practice needs.</h2>
@@ -253,68 +264,25 @@ export default function Certification() {
         </div>
       </section>
 
-      {/* THE PROGRAM */}
-      <section style={{ background: "var(--bw-cream)", padding: `${isMobile ? 80 : 112}px ${padX}px` }}>
-        <div style={{ maxWidth: 900, margin: "0 auto" }}>
-          <Eyebrow>The PTP Practitioner Program</Eyebrow>
-          <h2 style={h2Style}>What certification involves.</h2>
-          <p
-            style={{
-              fontFamily: "'Montserrat', sans-serif",
-              fontSize: 16,
-              color: "var(--bw-slate)",
-              lineHeight: 1.6,
-              marginTop: 24,
-            }}
-          >
-            The PTP Practitioner Certification trains you to deliver the Personal Threat & Reward Profile with depth and accuracy.
+      {/* HOW IT RUNS */}
+      <section style={{ background: "#fff", padding: `${isMobile ? 80 : 112}px ${padX}px`, borderBottom: "1px solid var(--divider)" }}>
+        <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+          <Eyebrow color="var(--bw-teal)">How It Runs</Eyebrow>
+          <h2 style={h2Style}>A blended program built around practice.</h2>
+          <p style={{ ...bodyStyle, fontSize: 16, marginTop: 24, maxWidth: 820 }}>
+            The PTP Practitioner Certification is a live, blended program, deliberately small so the coaching you get is real.
           </p>
 
-          <ul style={{ listStyle: "none", padding: 0, margin: "32px 0 0", display: "flex", flexDirection: "column", gap: 14 }}>
-            {programFeatures.map((f) => (
-              <li
-                key={f}
-                style={{
-                  display: "flex",
-                  alignItems: "flex-start",
-                  gap: 14,
-                  fontFamily: "'Montserrat', sans-serif",
-                  fontSize: 15.5,
-                  color: "var(--bw-navy)",
-                  lineHeight: 1.5,
-                  paddingBottom: 14,
-                  borderBottom: "1px solid var(--bw-cream-300)",
-                }}
-              >
-                <span
-                  aria-hidden
-                  style={{
-                    display: "inline-block",
-                    width: 8,
-                    height: 8,
-                    borderRadius: "50%",
-                    background: "var(--bw-orange)",
-                    marginTop: 8,
-                    flexShrink: 0,
-                  }}
-                />
-                {f}
-              </li>
-            ))}
-          </ul>
-        </div>
-      </section>
-
-      {/* TWO PATHS */}
-      <section style={{ background: "#fff", padding: `${isMobile ? 80 : 112}px ${padX}px`, borderBottom: "1px solid var(--divider)" }}>
-        <div style={{ maxWidth: 1100, margin: "0 auto" }}>
-          <Eyebrow>Who It's For</Eyebrow>
-          <h2 style={h2Style}>Independent, or inside your organization.</h2>
-
           <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(2, 1fr)", gap: 20, marginTop: 48 }}>
-            {paths.map((c) => (
-              <div key={c.eyebrow} style={cardStyle}>
+            {[
+              { eyebrow: "Small Cohorts", eyebrowColor: "var(--bw-teal)", title: "Personalized cohorts, never more than six to one", body: "Every cohort is capped at six participants to one master certified coach, so the ratio never slips. You are one of six people a master coach is actually developing, not a seat in a webinar." },
+              { eyebrow: "Format", eyebrowColor: "var(--bw-orange)", title: "Live plus self-paced", body: "Roughly nine hours of virtual instructor-led training across four sessions, plus about four and a half hours of self-paced modules, across nineteen structured modules." },
+              { eyebrow: "Practice", eyebrowColor: "var(--bw-plum)", title: "The actor debriefs", body: "You deliver your first real debriefs to two actors, one you know and one you do not, both of whom take the full assessment, with feedback each time." },
+              { eyebrow: "Graduation", eyebrowColor: "var(--bw-forest)", title: "A competency review", body: "A thirty-minute one-to-one before you graduate." },
+            ].map((c) => (
+              <div key={c.title} style={cardStyle}>
                 <Eyebrow color={c.eyebrowColor}>{c.eyebrow}</Eyebrow>
+                <h3 style={h3Style}>{c.title}</h3>
                 <p style={bodyStyle}>{c.body}</p>
               </div>
             ))}
@@ -322,8 +290,50 @@ export default function Certification() {
         </div>
       </section>
 
-      {/* WHY CERTIFY */}
+      {/* THE CRAFT */}
       <section style={{ background: "var(--bw-cream)", padding: `${isMobile ? 80 : 112}px ${padX}px` }}>
+        <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+          <Eyebrow color="var(--bw-plum)">The Craft</Eyebrow>
+          <h2 style={h2Style}>A debrief in two sessions, not a report read aloud.</h2>
+          <p style={{ ...bodyStyle, fontSize: 16, marginTop: 24, maxWidth: 820 }}>
+            The PTP debrief is delivered across two sessions, because there is too much in the report to cover well in one sitting, and the brain retains less when it is flooded. You learn to run it, not recite it.
+          </p>
+
+          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(3, 1fr)", gap: 20, marginTop: 48 }}>
+            {[
+              { eyebrow: "Session One", eyebrowColor: "var(--bw-teal)", title: "Orientation and walk-through", body: "You orient the participant to the science and walk the structure of their report together. Understanding and a few moments that resonate, not analysis. The participant drives the screen." },
+              { eyebrow: "Between Sessions", eyebrowColor: "var(--bw-orange)", title: "Independent review", body: "The participant reviews their own report, marking what stands out, what they question, and what they want to act on. Those marks stay private; you review independently." },
+              { eyebrow: "Session Two", eyebrowColor: "var(--bw-forest)", title: "Deep dive and planning", body: "You work from what they flagged, open the most charged facets, and turn insight into a development plan they track in the platform." },
+            ].map((c) => (
+              <div key={c.title} style={cardStyle}>
+                <Eyebrow color={c.eyebrowColor}>{c.eyebrow}</Eyebrow>
+                <h3 style={h3Style}>{c.title}</h3>
+                <p style={bodyStyle}>{c.body}</p>
+              </div>
+            ))}
+          </div>
+
+          <div
+            style={{
+              marginTop: 40,
+              padding: "28px 32px",
+              background: "#fff",
+              borderLeft: "4px solid var(--bw-orange)",
+              borderRadius: "var(--r-md)",
+              fontFamily: "'Montserrat', sans-serif",
+              fontSize: 16,
+              color: "var(--bw-navy)",
+              lineHeight: 1.6,
+              boxShadow: "var(--shadow-sm)",
+            }}
+          >
+            Three principles run through it. The participant drives. You ask, they interpret. And every facet is double-edged, so the coaching is rarely "raise this score," it is "see where this helps you and where it gets in your way, and choose."
+          </div>
+        </div>
+      </section>
+
+      {/* WHY CERTIFY */}
+      <section style={{ background: "#fff", padding: `${isMobile ? 80 : 112}px ${padX}px`, borderBottom: "1px solid var(--divider)" }}>
         <div style={{ maxWidth: 1200, margin: "0 auto" }}>
           <Eyebrow>Why Certify</Eyebrow>
           <h2 style={h2Style}>You leave with a practice to run, not a report to debrief.</h2>
@@ -342,6 +352,23 @@ export default function Certification() {
 
           <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(2, 1fr)", gap: 20, marginTop: 48 }}>
             {whyCertify.map((c) => (
+              <div key={c.eyebrow} style={cardStyle}>
+                <Eyebrow color={c.eyebrowColor}>{c.eyebrow}</Eyebrow>
+                <p style={bodyStyle}>{c.body}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* TWO PATHS */}
+      <section style={{ background: "var(--bw-cream)", padding: `${isMobile ? 80 : 112}px ${padX}px` }}>
+        <div style={{ maxWidth: 1100, margin: "0 auto" }}>
+          <Eyebrow>Who It's For</Eyebrow>
+          <h2 style={h2Style}>Independent, or inside your organization.</h2>
+
+          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(2, 1fr)", gap: 20, marginTop: 48 }}>
+            {paths.map((c) => (
               <div key={c.eyebrow} style={cardStyle}>
                 <Eyebrow color={c.eyebrowColor}>{c.eyebrow}</Eyebrow>
                 <p style={bodyStyle}>{c.body}</p>
