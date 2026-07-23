@@ -134,6 +134,7 @@ export default function CustomerFormDialog({ open, onOpenChange, customer }: Pro
   const [form, setForm] = useState<FormState>(emptyState());
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -141,6 +142,46 @@ export default function CustomerFormDialog({ open, onOpenChange, customer }: Pro
       setError(null);
     }
   }, [open, customer]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data: auth } = await opsSupabase.auth.getUser();
+      if (!auth.user?.id) return;
+      const { data } = await opsSupabase
+        .from("users" as any)
+        .select("role")
+        .eq("id", auth.user.id)
+        .maybeSingle();
+      if (!cancelled) setIsAdmin((data as any)?.role === "admin");
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  useEffect(() => {
+    if (!open || !customer?.id) return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await opsSupabase
+        .from("customers")
+        .select("remit_bank_name, remit_account_type, remit_routing_number, remit_account_number")
+        .eq("id", customer.id)
+        .maybeSingle();
+      if (cancelled || !data) return;
+      const d = data as any;
+      setForm((f) => ({
+        ...f,
+        remit_bank_name: d.remit_bank_name ?? "",
+        remit_account_type:
+          d.remit_account_type === "checking" || d.remit_account_type === "savings"
+            ? d.remit_account_type
+            : "",
+        remit_routing_number: d.remit_routing_number ?? "",
+        remit_account_number: d.remit_account_number ?? "",
+      }));
+    })();
+    return () => { cancelled = true; };
+  }, [open, customer?.id]);
 
   const set = <K extends keyof FormState>(k: K, v: FormState[K]) =>
     setForm((f) => ({ ...f, [k]: v }));
