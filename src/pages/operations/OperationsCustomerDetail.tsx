@@ -43,6 +43,23 @@ export default function OperationsCustomerDetail() {
   const [applyCreditMax, setApplyCreditMax] = useState<number>(0);
   const [contactDialogOpen, setContactDialogOpen] = useState(false);
   const [editingContact, setEditingContact] = useState<any | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [revealRemit, setRevealRemit] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data: auth } = await opsSupabase.auth.getUser();
+      if (!auth.user?.id) return;
+      const { data } = await opsSupabase
+        .from("users" as any)
+        .select("role")
+        .eq("id", auth.user.id)
+        .maybeSingle();
+      if (!cancelled) setIsAdmin((data as any)?.role === "admin");
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   const today = (() => {
     const d = new Date();
