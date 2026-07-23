@@ -222,6 +222,7 @@ const App = () => (
 
             {/* Departed route — protected, but ProtectedRoute won't redirect away from /departed */}
             <Route path="/departed" element={<ProtectedRoute><Departed /></ProtectedRoute>} />
+            <Route path="/report-payment-confirmed" element={<ProtectedRoute><ReportPaymentConfirmed /></ProtectedRoute>} />
             
 
             {/* Protected routes without sidebar */}
