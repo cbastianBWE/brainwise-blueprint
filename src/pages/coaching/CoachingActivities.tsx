@@ -1230,6 +1230,8 @@ export default function CoachingActivities() {
                   inProgress={inProgressSet.has(a.id)}
                   onOpenBriefing={() => setOpenActivity(a)}
                   onResume={() => navigate(`/coaching/${a.id}`)}
+                  canBuyProducts={canBuyProducts}
+                  priceForTier={priceForTier}
                 />
               ))}
             </div>
@@ -1245,6 +1247,8 @@ export default function CoachingActivities() {
         onOpenChange={(v) => {
           if (!v) setOpenActivity(null);
         }}
+        canBuyProducts={canBuyProducts}
+        priceForTier={priceForTier}
       />
 
       <ReviewActionPlanDialog open={reviewOpen} onOpenChange={setReviewOpen} />
