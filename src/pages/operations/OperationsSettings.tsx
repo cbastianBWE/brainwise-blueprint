@@ -214,6 +214,36 @@ export default function OperationsSettings() {
     }
   }
 
+  // ---------- Card processing fee recovery ----------
+  const [cardFee, setCardFee] = useState({ enabled: false, percent: "2.9", fixed: "0.30" });
+  const [savingCardFee, setSavingCardFee] = useState(false);
+
+  useEffect(() => {
+    const o = orgQ.data as any;
+    if (!o) return;
+    setCardFee({
+      enabled: o.card_fee_recovery_enabled === true,
+      percent: String(o.card_fee_percent ?? "2.9"),
+      fixed: String(o.card_fee_fixed ?? "0.30"),
+    });
+  }, [orgQ.data]);
+
+  async function saveCardFee() {
+    setSavingCardFee(true);
+    try {
+      const { error } = await supabase.rpc("ops_update_card_fee_settings" as any, {
+        p_enabled: cardFee.enabled,
+        p_percent: Number(cardFee.percent),
+        p_fixed: Number(cardFee.fixed),
+      });
+      if (error) { toast.error(error.message ?? "Save failed"); return; }
+      toast.success("Card fee settings saved.");
+      qc.invalidateQueries({ queryKey: ["ops", "org-branding"] });
+    } finally {
+      setSavingCardFee(false);
+    }
+  }
+
 
   // ---------- Numbering & Tax queries ----------
   const numberingQ = useQuery({
