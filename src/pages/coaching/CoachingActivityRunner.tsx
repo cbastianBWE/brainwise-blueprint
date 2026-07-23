@@ -64,6 +64,24 @@ import { SuggestionPanel } from "./runner/widgets/SuggestionPanel";
 import { ContentWidget } from "./runner/widgets/ContentWidget";
 import { QaMultimodalWidget } from "./runner/widgets/QaMultimodalWidget";
 import { ScoredFactorsWidget } from "./runner/widgets/ScoredFactorsWidget";
+import { useSubscriptionPlans } from "@/hooks/useSubscriptionPlans";
+
+async function startProductCheckout(productTier: string): Promise<void> {
+  const { data, error } = await supabase.functions.invoke("create-checkout", {
+    body: { mode: "product_purchase", product_tier: productTier },
+  });
+  if (error || !data?.url) {
+    toast.error("Couldn't start checkout. Please try again.");
+    return;
+  }
+  window.location.href = data.url as string;
+}
+
+function coachingProductTier(activityTier: string | null | undefined): string | null {
+  const t = (activityTier || "").toLowerCase();
+  if (t === "foundational" || t === "typical" || t === "advanced") return `coaching_${t}`;
+  return null;
+}
 
 
 
