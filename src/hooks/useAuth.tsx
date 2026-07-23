@@ -111,6 +111,15 @@ export const useRoleRedirect = () => {
   const navigate = useNavigate();
 
   const redirectByRole = async (userId: string) => {
+    const params = new URLSearchParams(window.location.search);
+    const next = params.get("next");
+    // Only accept an internal path. Anything starting with "//" or a scheme
+    // would be an open-redirect.
+    if (next && next.startsWith("/") && !next.startsWith("//")) {
+      navigate(next, { replace: true });
+      return;
+    }
+
     const { data } = await supabase
       .from("users")
       .select("account_type")
