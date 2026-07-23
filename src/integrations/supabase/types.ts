@@ -9759,8 +9759,10 @@ export type Database = {
       plan_tiers: {
         Row: {
           ai_coaching_limit: number
+          audience: string
           created_at: string
           display_name: string
+          entitlement_tier: string | null
           features: Json
           is_active: boolean
           one_time_credit_grant: number
@@ -9770,8 +9772,10 @@ export type Database = {
         }
         Insert: {
           ai_coaching_limit?: number
+          audience?: string
           created_at?: string
           display_name: string
+          entitlement_tier?: string | null
           features?: Json
           is_active?: boolean
           one_time_credit_grant?: number
@@ -9781,8 +9785,10 @@ export type Database = {
         }
         Update: {
           ai_coaching_limit?: number
+          audience?: string
           created_at?: string
           display_name?: string
+          entitlement_tier?: string | null
           features?: Json
           is_active?: boolean
           one_time_credit_grant?: number
@@ -11820,6 +11826,7 @@ export type Database = {
       }
       subscription_plans: {
         Row: {
+          audience: string
           billing_period: string
           created_at: string | null
           id: string
@@ -11831,6 +11838,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          audience?: string
           billing_period: string
           created_at?: string | null
           id?: string
@@ -11842,6 +11850,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          audience?: string
           billing_period?: string
           created_at?: string | null
           id?: string
@@ -14577,6 +14586,30 @@ export type Database = {
         Args: { p_kind: string; p_profile: string }
         Returns: boolean
       }
+      bw_get_active_price: {
+        Args: { p_billing_period?: string; p_tier: string }
+        Returns: {
+          amount_cents: number
+          price_usd: number
+          stripe_price_id: string
+        }[]
+      }
+      bw_get_my_plan_status: {
+        Args: never
+        Returns: {
+          account_type: string
+          ai_coaching_limit: number
+          audience: string
+          catalogue_tier: string
+          display_name: string
+          free_days_remaining: number
+          free_until: string
+          has_stripe_subscription: boolean
+          is_billing_exempt: boolean
+          one_time_chat_credits: number
+          subscription_status: string
+        }[]
+      }
       bw_is_team_leader_of: { Args: { p_member: string }; Returns: boolean }
       bw_list_my_report_orders: {
         Args: never
@@ -14631,6 +14664,15 @@ export type Database = {
         Returns: {
           full_name: string
           pair_role: string
+        }[]
+      }
+      bw_resolve_price_entitlement: {
+        Args: { p_stripe_price_id: string }
+        Returns: {
+          ai_coaching_limit: number
+          audience: string
+          entitlement_tier: string
+          tier: string
         }[]
       }
       bw_set_coach_comp: {
