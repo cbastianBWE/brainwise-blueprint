@@ -233,13 +233,13 @@ export default function CustomerFormDialog({ open, onOpenChange, customer }: Pro
       if (isEdit && customer) {
         const { error } = await opsSupabase
           .from("customers")
-          .update(payload)
+          .update(payload as any)
           .eq("id", customer.id);
         if (error) throw error;
         toast.success("Customer updated");
         queryClient.invalidateQueries({ queryKey: ["ops", "customer", customer.id] });
       } else {
-        const { error } = await opsSupabase.from("customers").insert(payload);
+        const { error } = await opsSupabase.from("customers").insert(payload as any);
         if (error) throw error;
         toast.success("Customer created");
       }
