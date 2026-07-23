@@ -817,8 +817,32 @@ export default function CoachingActivities() {
   const [reloadKey, setReloadKey] = useState(0);
   const [reviewOpen, setReviewOpen] = useState(false);
   const [freshOpen, setFreshOpen] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { oneTimePrice } = useSubscriptionPlans();
+  const { isCorp, isCompanyAdmin, isOrgAdmin } = useAccountRole();
+  const canBuyProducts = !isCorp && !isCompanyAdmin && !isOrgAdmin;
+
+  const priceForTier = useCallback(
+    (activityTier: string | null) => {
+      const pt = coachingProductTier(activityTier);
+      return pt ? oneTimePrice(pt) : null;
+    },
+    [oneTimePrice],
+  );
 
   const reload = useCallback(() => setReloadKey((k) => k + 1), []);
+
+  useEffect(() => {
+    if (searchParams.get("checkout") === "success") {
+      toast.success("Purchase complete — your coaching is unlocked.");
+      reload();
+      const next = new URLSearchParams(searchParams);
+      next.delete("checkout");
+      next.delete("product");
+      setSearchParams(next, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   useEffect(() => {
     if (!user) return;
