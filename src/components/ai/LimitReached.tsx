@@ -2,6 +2,9 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { useSubscriptionPlans } from "@/hooks/useSubscriptionPlans";
 
 interface Props {
   limit: number;
@@ -9,6 +12,7 @@ interface Props {
   creditBalance?: number;
   subscriptionActive?: boolean;
   premiumLimit?: number;
+  canBuyChatPack?: boolean;
 }
 
 export default function LimitReached({
@@ -17,8 +21,28 @@ export default function LimitReached({
   creditBalance = 0,
   subscriptionActive = true,
   premiumLimit = 400,
+  canBuyChatPack = false,
 }: Props) {
   const navigate = useNavigate();
+  const { oneTimePrice } = useSubscriptionPlans();
+  const chatPackPrice = oneTimePrice("chat_pack_100");
+
+  const buyChatPack = async () => {
+    const { data, error } = await supabase.functions.invoke("create-checkout", {
+      body: { mode: "product_purchase", product_tier: "chat_pack_100" },
+    });
+    if (error || !data?.url) {
+      toast.error("Couldn't start checkout. Please try again.");
+      return;
+    }
+    window.location.href = data.url as string;
+  };
+
+  const chatPackButton = canBuyChatPack ? (
+    <Button onClick={buyChatPack} variant="secondary" className="gap-2">
+      Buy 100 messages{chatPackPrice ? ` — $${chatPackPrice}` : ""}
+    </Button>
+  ) : null;
 
   if (!subscriptionActive) {
     return (
@@ -36,6 +60,12 @@ export default function LimitReached({
           <Button onClick={() => navigate("/pricing")} className="gap-2">
             Upgrade to Premium
           </Button>
+          {chatPackButton}
+          {canBuyChatPack && (
+            <p className="text-xs text-muted-foreground">
+              Chat packs never expire and work right away.
+            </p>
+          )}
           <button
             onClick={() => navigate("/settings")}
             className="text-xs text-muted-foreground underline hover:text-foreground transition-colors"
@@ -74,6 +104,7 @@ export default function LimitReached({
             Upgrade to Premium for {premiumLimit} Messages/Month
           </Button>
         )}
+        {chatPackButton}
         <button
           onClick={() => navigate("/settings")}
           className="text-xs text-muted-foreground underline hover:text-foreground transition-colors"

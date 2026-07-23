@@ -21,7 +21,7 @@ export function useAiUsage() {
   const fetchUsage = useCallback(async (subscriptionTier = "base") => {
     setLoading(true);
     const { data, error } = await supabase.functions.invoke("check-ai-usage", {
-      body: { subscription_tier: subscriptionTier, check_only: true },
+      body: { subscription_tier: subscriptionTier, usage_type: "ai_chat", check_only: true },
     });
     if (!error && data) setUsage(data as UsageData);
     setLoading(false);

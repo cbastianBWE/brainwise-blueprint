@@ -64,9 +64,10 @@ interface Peer {
 export default function AiChat() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { usage, loading: usageLoading, fetchUsage } = useAiUsage();
   const { isCorp, isCompanyAdmin, isOrgAdmin, isSuperAdmin } = useAccountRole();
+  const canBuyChatPack = !isCorp && !isCompanyAdmin && !isOrgAdmin;
   const { limitsFor } = useSubscriptionPlans();
   const { profile } = useUserProfile();
 
@@ -309,6 +310,19 @@ export default function AiChat() {
     };
     init();
   }, [user, fetchUsage]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Refresh usage after chat pack purchase ────────────────────────────────
+  useEffect(() => {
+    if (searchParams.get("checkout") === "success") {
+      toast.success("Chat pack added — you can keep chatting.");
+      (async () => { await fetchUsage(tier); })();
+      const next = new URLSearchParams(searchParams);
+      next.delete("checkout");
+      next.delete("product");
+      setSearchParams(next, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   // ── Auto-select new peer assessments when they load ──────────────────────
   useEffect(() => {
@@ -817,6 +831,7 @@ export default function AiChat() {
             creditBalance={usage.credit_balance ?? 0}
             subscriptionActive={usage.subscription_active !== false}
             premiumLimit={limitsFor(profile?.account_type === "coach" ? "coach_premium" : "premium")?.aiCoachingLimit ?? 0}
+            canBuyChatPack={canBuyChatPack}
           />
         ) : (
           <div className="space-y-2 shrink-0">
