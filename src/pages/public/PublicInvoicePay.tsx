@@ -82,11 +82,11 @@ export default function PublicInvoicePay() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  async function handlePayNow() {
+  async function handlePayNow(method?: "card" | "ach") {
     setStarting(true);
     setErrorMsg(null);
     try {
-      const { data, error } = await supabase.functions.invoke("ops-public-invoice-checkout", { body: { token } });
+      const { data, error } = await supabase.functions.invoke("ops-public-invoice-checkout", { body: { token, method } });
       if (error) {
         setErrorMsg(error.message ?? "Could not start checkout.");
         return;
