@@ -26,7 +26,7 @@ interface Props {
 }
 
 export default function SubscriptionGate({ children, feature }: Props) {
-  const { isBypassAdmin, isCorp, isIndividual, loading: roleLoading } = useAccountRole();
+  const { isBypassAdmin, isSuperAdmin, isCoach, isCoachPremium, isCorp, isIndividual, loading: roleLoading } = useAccountRole();
   const { profile, loading: profileLoading } = useUserProfile();
   const { user } = useAuth();
   const userId = user?.id;
