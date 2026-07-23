@@ -96,6 +96,8 @@ export function useAccountRole(): AccountRoleInfo {
   const isCorp = (CORPORATE_ROLES as readonly string[]).includes(accountType);
   const isBypassAdmin = (BYPASS_ROLES as readonly string[]).includes(accountType);
   const isSuperAdmin = accountType === "brainwise_super_admin";
+  const isCoachPremium =
+    accountType === "coach" && profile?.coach_subscription_tier === "premium";
 
   return {
     accountType,
@@ -106,6 +108,7 @@ export function useAccountRole(): AccountRoleInfo {
     isMentor: profile?.is_mentor === true,
     isSuperAdmin,
     isBypassAdmin,
+    isCoachPremium,
     canBypassAssessmentPaywall: isSuperAdmin,
     isCompanyAdmin: accountType === "company_admin",
     isOrgAdmin: accountType === "org_admin",
