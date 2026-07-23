@@ -500,7 +500,7 @@ export default function CoachInvoices() {
                 {receiptTx.instruments.map((name, i) => (
                   <div key={i} className="flex justify-between text-sm">
                     <span>{name}</span>
-                    <span>${PRICE_PER_INSTRUMENT.toFixed(2)}</span>
+                    <span>${(receiptTx.total_amount / Math.max(receiptTx.instruments.length, 1)).toFixed(2)}</span>
                   </div>
                 ))}
                 <div className="flex justify-between font-bold border-t pt-2">
