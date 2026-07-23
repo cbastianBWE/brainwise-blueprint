@@ -955,9 +955,9 @@ export default function OperationsProjectDetail() {
                           variant="ghost"
                           size="icon"
                           aria-label="View receipt"
-                          onClick={() => openReceipt(row.receipt_storage_path)}
+                          onClick={() => { setViewingExpense(row); setReceiptViewerOpen(true); }}
                         >
-                          <Receipt className="h-4 w-4 text-green-600" />
+                          <Receipt className="h-4 w-4 text-[var(--bw-forest)]" />
                         </Button>
                       ) : !row.is_invoiced ? (
                         <Button
