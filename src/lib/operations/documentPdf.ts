@@ -24,6 +24,10 @@ export type DocParty = {
   email?: string | null;
   billing_address?: any;
   tax_id?: string | null;
+  remit_bank_name?: string | null;
+  remit_account_type?: string | null;
+  remit_routing_number?: string | null;
+  remit_account_number?: string | null;
 };
 
 export type DocLine = {
