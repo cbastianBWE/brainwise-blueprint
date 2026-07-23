@@ -316,6 +316,25 @@ export default function OperationsCustomerDetail() {
                   Time · Total {timeTotals.total} h · Billable {timeTotals.billable} h · Unbilled {timeTotals.unbilled} h
                 </p>
               )}
+
+              {(c.remit_bank_name || c.remit_account_number || c.remit_routing_number) && (
+                <div className="rounded-md border p-3 space-y-2 text-sm">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium">Payment / Remit-to (prints on this client's invoices)</span>
+                    {isAdmin && (
+                      <Button variant="ghost" size="sm" onClick={() => setRevealRemit((v) => !v)}>
+                        {revealRemit ? "Hide" : "Reveal"}
+                      </Button>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    <div><span className="text-muted-foreground">Bank: </span>{c.remit_bank_name ?? "—"}</div>
+                    <div><span className="text-muted-foreground">Account type: </span><span className="capitalize">{c.remit_account_type ?? "—"}</span></div>
+                    <div><span className="text-muted-foreground">Routing: </span>{isAdmin && revealRemit ? (c.remit_routing_number ?? "—") : maskTail(c.remit_routing_number)}</div>
+                    <div><span className="text-muted-foreground">Account: </span>{isAdmin && revealRemit ? (c.remit_account_number ?? "—") : maskTail(c.remit_account_number)}</div>
+                  </div>
+                </div>
+              )}
             </>
           )}
         </CardContent>
