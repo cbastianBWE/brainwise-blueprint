@@ -352,6 +352,17 @@ export default function OperationsExpenses() {
         customerId={editing?.customer_id ?? null}
         expense={editing}
       />
+
+      <ReceiptViewerDialog
+        open={viewerOpen}
+        onOpenChange={(o) => { setViewerOpen(o); if (!o) setViewing(null); }}
+        receiptPath={viewing?.receipt_storage_path ?? null}
+        onEdit={() => {
+          setViewerOpen(false);
+          setEditing(viewing);
+          setEditOpen(true);
+        }}
+      />
     </div>
   );
 }
