@@ -164,6 +164,7 @@ import Departed from "./pages/Departed";
 import MfaEnrollment from "./pages/MfaEnrollment";
 import AccessHistory from "./pages/AccessHistory";
 import Help from "./pages/Help";
+import ReportPaymentConfirmed from "./pages/ReportPaymentConfirmed";
 import CookieConsentBanner from "@/components/CookieConsentBanner";
 import ImpersonationProvider from "@/contexts/ImpersonationProvider";
 import ImpersonationBanner from "@/components/impersonation/ImpersonationBanner";
