@@ -95,7 +95,7 @@ export default function OperationsInvoiceDetail() {
     queryFn: async () => {
       const { data, error } = await opsSupabase
         .from("customers")
-        .select("display_name, email, billing_address")
+        .select("display_name, email, billing_address, remit_bank_name, remit_account_type, remit_routing_number, remit_account_number")
         .eq("id", inv.customer_id)
         .maybeSingle();
       if (error) throw error;
