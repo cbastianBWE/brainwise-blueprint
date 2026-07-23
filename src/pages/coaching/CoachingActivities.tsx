@@ -1051,6 +1051,8 @@ export default function CoachingActivities() {
           inProgress={inProgressSet.has(a.id)}
           onOpenBriefing={() => setOpenActivity(a)}
           onResume={() => navigate(`/coaching/${a.id}`)}
+          canBuyProducts={canBuyProducts}
+          priceForTier={priceForTier}
         />
       ))}
     </div>
