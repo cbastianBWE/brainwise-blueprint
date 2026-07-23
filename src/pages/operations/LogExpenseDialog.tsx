@@ -393,12 +393,46 @@ export default function LogExpenseDialog({ open, onOpenChange, projectId, custom
 
           <div className="space-y-2">
             <Label htmlFor="receipt">Receipt</Label>
+
+            {isEdit && expense?.receipt_storage_path && !removeReceipt && !receiptFile && (
+              <div className="flex items-center justify-between rounded-md border p-2 text-sm">
+                <span className="text-muted-foreground">A receipt is attached.</span>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => openReceiptSigned(expense.receipt_storage_path!)}
+                  >
+                    View
+                  </Button>
+                  <Button type="button" variant="ghost" size="sm" onClick={() => setRemoveReceipt(true)}>
+                    Remove
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {isEdit && removeReceipt && !receiptFile && (
+              <div className="flex items-center justify-between rounded-md border border-destructive/40 bg-destructive/5 p-2 text-sm">
+                <span className="text-destructive">Receipt will be removed when you save.</span>
+                <Button type="button" variant="ghost" size="sm" onClick={() => setRemoveReceipt(false)}>
+                  Undo
+                </Button>
+              </div>
+            )}
+
             <Input
               id="receipt"
               type="file"
               accept="image/*,application/pdf"
               onChange={(e) => setReceiptFile(e.target.files?.[0] ?? null)}
             />
+            <p className="text-xs text-muted-foreground">
+              {isEdit && expense?.receipt_storage_path
+                ? "Choosing a file replaces the attached receipt."
+                : "Attach a PDF or image."}
+            </p>
           </div>
 
           <div className="space-y-2">
