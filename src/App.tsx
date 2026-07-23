@@ -137,6 +137,7 @@ import OperationsRecurringInvoices from "./pages/operations/OperationsRecurringI
 import OperationsRecurringInvoiceDetail from "./pages/operations/OperationsRecurringInvoiceDetail";
 import RecurringInvoiceForm from "./pages/operations/RecurringInvoiceForm";
 import OperationsReports from "./pages/operations/OperationsReports";
+import OperationsExpenses from "./pages/operations/OperationsExpenses";
 import OperationsDashboard from "./pages/operations/OperationsDashboard";
 import OperationsSettings from "./pages/operations/OperationsSettings";
 import OperationsImport from "./pages/operations/OperationsImport";
