@@ -87,6 +87,10 @@ const emptyState = (): FormState => ({
   state: "",
   postal_code: "",
   country: "US",
+  remit_bank_name: "",
+  remit_account_type: "",
+  remit_routing_number: "",
+  remit_account_number: "",
 });
 
 const fromCustomer = (c: CustomerRecord): FormState => {
