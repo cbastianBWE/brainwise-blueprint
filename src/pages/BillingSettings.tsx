@@ -3,8 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/hooks/useSubscription";
 import { supabase } from "@/integrations/supabase/client";
-import { PLANS } from "@/lib/stripe";
 import { useSubscriptionPlans } from "@/hooks/useSubscriptionPlans";
+import { useUserProfile } from "@/hooks/useUserProfile";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -25,20 +25,45 @@ interface PurchaseRow {
   purchased_at: string;
 }
 
+interface PlanStatus {
+  account_type: string | null;
+  audience: string | null;
+  catalogue_tier: string | null;
+  display_name: string | null;
+  ai_coaching_limit: number | null;
+  subscription_status: string | null;
+  has_stripe_subscription: boolean | null;
+  is_billing_exempt: boolean | null;
+  free_until: string | null;
+  free_days_remaining: number | null;
+  one_time_chat_credits: number | null;
+}
+
 export default function BillingSettings() {
   const { user } = useAuth();
-  const { subscription, loading, checkSubscription } = useSubscription();
+  const { subscription, loading } = useSubscription();
+  const { profile } = useUserProfile();
   const navigate = useNavigate();
-  const { priceFor, featuresFor } = useSubscriptionPlans();
+  const { priceFor, featuresFor, limitsFor, catalogueFor } = useSubscriptionPlans();
   const [portalLoading, setPortalLoading] = useState(false);
   const [purchases, setPurchases] = useState<PurchaseRow[]>([]);
   const [purchasesLoading, setPurchasesLoading] = useState(true);
   const [purchaseSearch, setPurchaseSearch] = useState("");
   const [receiptItem, setReceiptItem] = useState<PurchaseRow | null>(null);
+  const [planStatus, setPlanStatus] = useState<PlanStatus | null>(null);
+  const [planStatusLoading, setPlanStatusLoading] = useState(true);
 
-  const tier = subscription?.tier || "base";
-  const plan = PLANS[tier as keyof typeof PLANS] || PLANS.base;
-  const isActive = subscription?.subscribed === true;
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      const { data, error } = await supabase.rpc("bw_get_my_plan_status" as never);
+      if (!error && data) {
+        const row = Array.isArray(data) ? data[0] : data;
+        setPlanStatus(row as PlanStatus);
+      }
+      setPlanStatusLoading(false);
+    })();
+  }, [user]);
 
   useEffect(() => {
     if (!user) return;
@@ -145,6 +170,41 @@ export default function BillingSettings() {
       })
     : null;
 
+  const audience: "coach" | "individual" =
+    (planStatus?.audience as "coach" | "individual" | null) ??
+    (profile?.account_type === "coach" ? "coach" : "individual");
+  const catalogueTier = planStatus?.catalogue_tier ?? null;
+  const displayName = planStatus?.display_name ?? null;
+  const aiLimit = planStatus?.ai_coaching_limit ?? null;
+  const hasStripeSub = planStatus?.has_stripe_subscription === true;
+  const isExempt = planStatus?.is_billing_exempt === true;
+  const freeUntil = planStatus?.free_until ?? null;
+  const freeDaysRemaining = planStatus?.free_days_remaining ?? null;
+  const oneTimeCredits = planStatus?.one_time_chat_credits ?? profile?.one_time_chat_credits ?? 0;
+
+  const isActive = subscription?.subscribed === true || isExempt || !!freeUntil;
+  const features = catalogueTier ? featuresFor(catalogueTier) ?? [] : featuresFor("free") ?? [];
+  const oneTimeGrant = limitsFor("individual")?.oneTimeCreditGrant ?? null;
+
+  // Upgrade card gating: only show if a higher purchasable tier exists in this audience.
+  const cat = catalogueFor(audience);
+  const currentSort = catalogueTier
+    ? (cat.find((c) => c.tier === catalogueTier)?.sortOrder ?? -1)
+    : -1;
+  const higher = cat
+    .filter((c) => (c.monthly || c.annual) && c.sortOrder > currentSort)
+    .sort((a, b) => a.sortOrder - b.sortOrder);
+  const upgradeCandidate = higher[0] ?? null;
+
+  const showFreeExpiryUpgrade =
+    !isExempt && freeUntil !== null && freeDaysRemaining !== null && freeDaysRemaining < 30;
+  const showUpgradeCard =
+    !isExempt && !!upgradeCandidate && (!isActive || showFreeExpiryUpgrade || (!hasStripeSub && !freeUntil));
+
+  const freeUntilLabel = freeUntil
+    ? new Date(freeUntil).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })
+    : null;
+
   return (
     <div className="max-w-2xl mx-auto py-8 px-4 space-y-6">
       <div>
@@ -159,22 +219,24 @@ export default function BillingSettings() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {loading ? (
+          {loading || planStatusLoading ? (
             <p className="text-sm text-muted-foreground">Loading…</p>
           ) : !isActive ? (
             <>
               <div>
-                <p className="text-lg font-semibold text-foreground">Free Account</p>
+                <p className="text-lg font-semibold text-foreground">{displayName ?? "Free Account"}</p>
                 <p className="text-sm text-muted-foreground">No active subscription</p>
               </div>
+              {oneTimeCredits > 0 && oneTimeGrant !== null && (
+                <p className="text-sm text-muted-foreground">
+                  {oneTimeCredits} AI coaching messages available from assessment purchases
+                  {" "}({oneTimeGrant} per purchase).
+                </p>
+              )}
               <div className="space-y-1">
                 <p className="text-sm font-medium text-foreground">What's included:</p>
                 <ul className="text-sm text-muted-foreground space-y-1 ml-4 list-disc">
-                  {(featuresFor("free") ?? [
-                    "Per-assessment purchases available ($29.99 each)",
-                    "10 AI coaching messages per assessment purchased",
-                    "Limited resource library access",
-                  ]).map((f) => (
+                  {features.map((f) => (
                     <li key={f}>{f}</li>
                   ))}
                 </ul>
@@ -185,53 +247,72 @@ export default function BillingSettings() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-lg font-semibold text-foreground">
-                    {plan.name} Plan
-                    <Badge variant="secondary" className="ml-2">Active</Badge>
+                    {displayName ?? "Current"} Plan
+                    <Badge variant="secondary" className="ml-2">
+                      {isExempt ? "Complimentary" : "Active"}
+                    </Badge>
                   </p>
-                  {endDate && (
+                  {isExempt ? (
+                    <p className="text-sm text-muted-foreground">Complimentary — no billing on this account.</p>
+                  ) : freeUntilLabel && freeDaysRemaining !== null ? (
                     <p className="text-sm text-muted-foreground">
-                      Next billing date: {endDate}
+                      Complimentary until {freeUntilLabel}, {freeDaysRemaining} day
+                      {freeDaysRemaining === 1 ? "" : "s"} remaining
                     </p>
-                  )}
+                  ) : endDate ? (
+                    <p className="text-sm text-muted-foreground">Next billing date: {endDate}</p>
+                  ) : null}
                 </div>
               </div>
 
-              <div className="space-y-1">
-                <p className="text-sm font-medium text-foreground">Included features:</p>
-                <ul className="text-sm text-muted-foreground space-y-1 ml-4 list-disc">
-                  {(featuresFor(tier) ?? plan.features).map((f) => (
-                    <li key={f}>{f}</li>
-                  ))}
-                </ul>
-              </div>
+              {features.length > 0 && (
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-foreground">Included features:</p>
+                  <ul className="text-sm text-muted-foreground space-y-1 ml-4 list-disc">
+                    {features.map((f) => (
+                      <li key={f}>{f}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
 
-              <div className="flex items-center gap-2 text-sm">
-                <MessageSquare className="h-4 w-4 text-muted-foreground" />
-                <span className="text-muted-foreground">AI coaching limit: {plan.ai_limit} messages/month</span>
-              </div>
+              {aiLimit !== null && aiLimit > 0 && (
+                <div className="flex items-center gap-2 text-sm">
+                  <MessageSquare className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-muted-foreground">AI coaching limit: {aiLimit} messages/month</span>
+                </div>
+              )}
 
-              <div className="flex gap-3 pt-2">
-                <Button onClick={handleManage} disabled={portalLoading} variant="outline" className="gap-2">
-                  <ExternalLink className="h-4 w-4" />
-                  {portalLoading ? "Loading…" : "Manage Subscription"}
-                </Button>
-              </div>
+              {hasStripeSub && (
+                <div className="flex gap-3 pt-2">
+                  <Button onClick={handleManage} disabled={portalLoading} variant="outline" className="gap-2">
+                    <ExternalLink className="h-4 w-4" />
+                    {portalLoading ? "Loading…" : "Manage Subscription"}
+                  </Button>
+                </div>
+              )}
             </>
           )}
         </CardContent>
       </Card>
 
-      {!loading && (!isActive || tier === "base") && (
+      {!loading && !planStatusLoading && showUpgradeCard && upgradeCandidate && (
         <Card className="border-primary/30 bg-primary/5">
           <CardHeader>
-            <CardTitle className="text-lg">Upgrade to Premium</CardTitle>
+            <CardTitle className="text-lg">Upgrade to {upgradeCandidate.displayName}</CardTitle>
             <CardDescription>
-              ${priceFor("premium", "monthly") ?? PLANS.premium.monthly.price}/mo or ${priceFor("premium", "annual") ?? PLANS.premium.annual.price}/yr
+              {upgradeCandidate.monthly && (
+                <>${priceFor(upgradeCandidate.tier, "monthly") ?? upgradeCandidate.monthly.price}/mo</>
+              )}
+              {upgradeCandidate.monthly && upgradeCandidate.annual && " or "}
+              {upgradeCandidate.annual && (
+                <>${priceFor(upgradeCandidate.tier, "annual") ?? upgradeCandidate.annual.price}/yr</>
+              )}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <ul className="text-sm text-muted-foreground space-y-1 ml-4 list-disc">
-              {(featuresFor("premium") ?? PLANS.premium.features).map((f) => (
+              {upgradeCandidate.features.map((f) => (
                 <li key={f}>{f}</li>
               ))}
             </ul>
