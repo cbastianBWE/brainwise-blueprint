@@ -25,6 +25,7 @@ import ProjectFormDialog, { ProjectRecord } from "./ProjectFormDialog";
 import TaskFormDialog, { TaskRecord } from "./TaskFormDialog";
 import LogTimeDialog, { TimeEntryRecord } from "./LogTimeDialog";
 import LogExpenseDialog, { ExpenseRecord } from "./LogExpenseDialog";
+import ReceiptViewerDialog from "./ReceiptViewerDialog";
 import AddChargeDialog from "./AddChargeDialog";
 import TeamMemberDialog, { TeamMemberDialogMember } from "./TeamMemberDialog";
 import DurationPicker from "./DurationPicker";
@@ -32,16 +33,6 @@ import DurationPicker from "./DurationPicker";
 const toISODate = (d: Date) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 
-async function openReceipt(path: string) {
-  const { data, error } = await opsSupabase.storage
-    .from("operations-receipts")
-    .createSignedUrl(path, 600);
-  if (error || !data?.signedUrl) {
-    toast.error("Could not open receipt");
-    return;
-  }
-  window.open(data.signedUrl, "_blank", "noopener,noreferrer");
-}
 
 const startOfWeekMon = (d: Date) => {
   const x = new Date(d);
@@ -77,6 +68,8 @@ export default function OperationsProjectDetail() {
   const [editingTime, setEditingTime] = useState<TimeEntryRecord | null>(null);
   const [logExpenseOpen, setLogExpenseOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<ExpenseRecord | null>(null);
+  const [receiptViewerOpen, setReceiptViewerOpen] = useState(false);
+  const [viewingExpense, setViewingExpense] = useState<any | null>(null);
   const [chargeOpen, setChargeOpen] = useState(false);
   const [genOpen, setGenOpen] = useState(false);
   const [generating, setGenerating] = useState(false);
@@ -962,9 +955,9 @@ export default function OperationsProjectDetail() {
                           variant="ghost"
                           size="icon"
                           aria-label="View receipt"
-                          onClick={() => openReceipt(row.receipt_storage_path)}
+                          onClick={() => { setViewingExpense(row); setReceiptViewerOpen(true); }}
                         >
-                          <Receipt className="h-4 w-4 text-green-600" />
+                          <Receipt className="h-4 w-4 text-[var(--bw-forest)]" />
                         </Button>
                       ) : !row.is_invoiced ? (
                         <Button
@@ -1086,6 +1079,17 @@ export default function OperationsProjectDetail() {
           expense={editingExpense}
         />
       )}
+
+      <ReceiptViewerDialog
+        open={receiptViewerOpen}
+        onOpenChange={(o) => { setReceiptViewerOpen(o); if (!o) setViewingExpense(null); }}
+        receiptPath={viewingExpense?.receipt_storage_path ?? null}
+        onEdit={() => {
+          setReceiptViewerOpen(false);
+          setEditingExpense(viewingExpense as ExpenseRecord);
+          setLogExpenseOpen(true);
+        }}
+      />
       {id && (
         <AddChargeDialog
           open={chargeOpen}
