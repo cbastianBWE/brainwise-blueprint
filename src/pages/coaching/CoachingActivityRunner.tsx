@@ -715,10 +715,33 @@ export default function CoachingActivityRunner() {
               <CardTitle className="text-base">Next steps</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <div className="flex flex-wrap gap-2">
-                <Button variant="outline" onClick={() => restart(false)}>Start fresh</Button>
-                <Button variant="outline" onClick={() => restart(true)}>Reuse my answers</Button>
-              </div>
+              {repurchase ? (
+                (() => {
+                  const productTier = coachingProductTier(repurchase.tier);
+                  const price = productTier ? oneTimePrice(productTier) : null;
+                  const label = repurchase.tier
+                    ? repurchase.tier.charAt(0).toUpperCase() + repurchase.tier.slice(1)
+                    : "this tier";
+                  return (
+                    <div className="space-y-3">
+                      <p className="text-sm text-muted-foreground">
+                        You've completed this activity. Re-purchase {label} to run it again — your finished work above stays saved.
+                      </p>
+                      <Button
+                        onClick={() => productTier && startProductCheckout(productTier)}
+                        disabled={!productTier}
+                      >
+                        Re-purchase {label}{price ? ` — $${price}` : ""}
+                      </Button>
+                    </div>
+                  );
+                })()
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  <Button variant="outline" onClick={() => restart(false)}>Start fresh</Button>
+                  <Button variant="outline" onClick={() => restart(true)}>Reuse my answers</Button>
+                </div>
+              )}
               {coachUserId && (
                 <div className="space-y-3 border-t pt-3">
                   <div className="flex flex-wrap items-center gap-2">
