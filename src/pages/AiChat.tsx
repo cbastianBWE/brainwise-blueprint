@@ -26,7 +26,8 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import UsageCounter from "@/components/ai/UsageCounter";
 import LimitReached from "@/components/ai/LimitReached";
 import CorpUsageCounter from "@/components/ai/CorpUsageCounter";
-import { PLANS } from "@/lib/stripe";
+import { useSubscriptionPlans } from "@/hooks/useSubscriptionPlans";
+import { useUserProfile } from "@/hooks/useUserProfile";
 import { useAccountRole } from "@/lib/accountRoles";
 import { Card, CardContent } from "@/components/ui/card";
 
