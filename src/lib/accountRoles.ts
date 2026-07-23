@@ -41,6 +41,12 @@ export interface AccountRoleInfo {
   isSuperAdmin: boolean;
   isBypassAdmin: boolean;
   /**
+   * True only for a coach on the paid Coach Premium tier. Derived from
+   * users.coach_subscription_tier, NOT subscription_tier, which is not
+   * meaningful for coaches. Use this anywhere a coach needs paid access.
+   */
+  isCoachPremium: boolean;
+  /**
    * True only for super admin. Use this on the assessment-take surface
    * (InstrumentSelection) where coaches MUST be gated like base-tier
    * individuals. Distinct from isBypassAdmin, which also covers coaches
