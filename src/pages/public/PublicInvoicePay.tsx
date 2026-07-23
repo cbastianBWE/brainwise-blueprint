@@ -191,9 +191,25 @@ function PaidContent({ doc, starting, errorMsg, onPay }: { doc: PublicDoc; start
         <div className="mt-6 flex flex-col items-end gap-2">
           {errorMsg && <p className="text-sm text-destructive">{errorMsg}</p>}
           {canPay ? (
-            <Button onClick={onPay} disabled={starting}>
-              {starting ? "Starting checkout…" : "Pay now"}
-            </Button>
+            doc.card_fee?.enabled ? (
+              <div className="flex flex-col items-end gap-2">
+                <div className="flex gap-2">
+                  <Button variant="outline" onClick={() => onPay("ach")} disabled={starting}>
+                    {starting ? "…" : `Pay by bank ${formatMoney(doc.card_fee.bank_total, currency)}`}
+                  </Button>
+                  <Button onClick={() => onPay("card")} disabled={starting}>
+                    {starting ? "…" : `Pay by card ${formatMoney(doc.card_fee.card_total, currency)}`}
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Paying by bank transfer (ACH) avoids the card processing cost.
+                </p>
+              </div>
+            ) : (
+              <Button onClick={() => onPay()} disabled={starting}>
+                {starting ? "Starting checkout…" : "Pay now"}
+              </Button>
+            )
           ) : fullyPaid ? (
             <p className="text-sm text-muted-foreground">This invoice is paid in full.</p>
           ) : null}
