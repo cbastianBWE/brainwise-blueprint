@@ -9893,6 +9893,108 @@ export type Database = {
           },
         ]
       }
+      product_purchases: {
+        Row: {
+          amount_cents: number
+          currency: string
+          id: string
+          metadata: Json
+          payer: string
+          purchased_at: string
+          purchased_by: string | null
+          stripe_checkout_session_id: string | null
+          stripe_payment_intent_id: string | null
+          stripe_price_id: string | null
+          tier: string
+          user_id: string
+        }
+        Insert: {
+          amount_cents: number
+          currency?: string
+          id?: string
+          metadata?: Json
+          payer?: string
+          purchased_at?: string
+          purchased_by?: string | null
+          stripe_checkout_session_id?: string | null
+          stripe_payment_intent_id?: string | null
+          stripe_price_id?: string | null
+          tier: string
+          user_id: string
+        }
+        Update: {
+          amount_cents?: number
+          currency?: string
+          id?: string
+          metadata?: Json
+          payer?: string
+          purchased_at?: string
+          purchased_by?: string | null
+          stripe_checkout_session_id?: string | null
+          stripe_payment_intent_id?: string | null
+          stripe_price_id?: string | null
+          tier?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_purchases_purchased_by_fkey"
+            columns: ["purchased_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_purchases_purchased_by_fkey"
+            columns: ["purchased_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "product_purchases_purchased_by_fkey"
+            columns: ["purchased_by"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_purchases_purchased_by_fkey"
+            columns: ["purchased_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_purchases_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_purchases_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "product_purchases_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_purchases_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ptp_facet_types: {
         Row: {
           floor_risk: string
@@ -14610,6 +14712,10 @@ export type Database = {
           subscription_status: string
         }[]
       }
+      bw_has_product: {
+        Args: { p_tier: string; p_user: string }
+        Returns: boolean
+      }
       bw_is_team_leader_of: { Args: { p_member: string }; Returns: boolean }
       bw_list_my_report_orders: {
         Args: never
@@ -14665,6 +14771,10 @@ export type Database = {
           full_name: string
           pair_role: string
         }[]
+      }
+      bw_product_opened_at: {
+        Args: { p_tier: string; p_user: string }
+        Returns: string
       }
       bw_resolve_price_entitlement: {
         Args: { p_stripe_price_id: string }
@@ -16875,6 +16985,20 @@ export type Database = {
           p_block_id: string
           p_model?: string
           p_response_text: string
+        }
+        Returns: Json
+      }
+      record_product_purchase: {
+        Args: {
+          p_amount_cents: number
+          p_metadata?: Json
+          p_payer?: string
+          p_payment_intent?: string
+          p_price_id?: string
+          p_purchased_by?: string
+          p_session_id?: string
+          p_tier: string
+          p_user_id: string
         }
         Returns: Json
       }
