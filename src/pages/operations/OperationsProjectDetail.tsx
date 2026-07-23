@@ -943,6 +943,7 @@ export default function OperationsProjectDetail() {
                   <TableHead className="text-right">Amount</TableHead>
                   <TableHead>Billable</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>Receipt</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
