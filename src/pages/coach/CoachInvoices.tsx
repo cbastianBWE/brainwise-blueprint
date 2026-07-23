@@ -27,6 +27,8 @@ interface Transaction {
 
 export default function CoachInvoices() {
   const { user } = useAuth();
+  const { oneTimePrice } = useSubscriptionPlans();
+  const fallbackPrice = oneTimePrice("individual") ?? 0;
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
