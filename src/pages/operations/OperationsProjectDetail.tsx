@@ -1079,6 +1079,17 @@ export default function OperationsProjectDetail() {
           expense={editingExpense}
         />
       )}
+
+      <ReceiptViewerDialog
+        open={receiptViewerOpen}
+        onOpenChange={(o) => { setReceiptViewerOpen(o); if (!o) setViewingExpense(null); }}
+        receiptPath={viewingExpense?.receipt_storage_path ?? null}
+        onEdit={() => {
+          setReceiptViewerOpen(false);
+          setEditingExpense(viewingExpense as ExpenseRecord);
+          setLogExpenseOpen(true);
+        }}
+      />
       {id && (
         <AddChargeDialog
           open={chargeOpen}
