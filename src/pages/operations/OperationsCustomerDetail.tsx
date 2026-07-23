@@ -30,6 +30,9 @@ const BILLING_LABELS: Record<string, string> = {
 const humanize = (s: string | null | undefined) =>
   (s ?? "").replace(/_/g, " ").trim();
 
+const maskTail = (v: string | null | undefined) =>
+  v ? "••••" + String(v).slice(-4) : "—";
+
 export default function OperationsCustomerDetail() {
   const { id = "" } = useParams();
   const navigate = useNavigate();
