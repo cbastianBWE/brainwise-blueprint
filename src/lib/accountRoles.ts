@@ -63,7 +63,7 @@ export interface AccountRoleInfo {
  * Use this hook everywhere role-based branching is needed.
  *
  * - isCorp: any corporate role (employee or admin).
- * - isBypassAdmin: super admin or coach; skips Stripe subscription gating
+ * - isBypassAdmin: super admin only; skips Stripe subscription gating
  *   on AI chat / resources / results surfaces.
  * - canBypassAssessmentPaywall: super admin only; skips the assessment-take
  *   paywall in InstrumentSelection. Coaches are explicitly NOT included so
