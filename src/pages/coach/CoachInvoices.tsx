@@ -96,6 +96,22 @@ export default function CoachInvoices() {
         }
       }
 
+      // Fetch actual charged amounts per payment intent
+      const paymentIntentIds = [...new Set(rows.map((r) => r.stripe_payment_intent_id).filter(Boolean))] as string[];
+      const paidByIntent = new Map<string, number>();
+      if (paymentIntentIds.length > 0) {
+        const { data: purchaseRows } = await supabase
+          .from("assessment_purchases")
+          .select("stripe_payment_intent_id, amount_paid")
+          .eq("user_id", user.id)
+          .in("stripe_payment_intent_id", paymentIntentIds);
+        for (const p of purchaseRows ?? []) {
+          const pi = p.stripe_payment_intent_id as string | null;
+          if (!pi) continue;
+          paidByIntent.set(pi, (paidByIntent.get(pi) ?? 0) + Number(p.amount_paid ?? 0));
+        }
+      }
+
       // Group by stripe_payment_intent_id
       const grouped: Record<string, typeof rows> = {};
       rows.forEach((r) => {
@@ -117,13 +133,16 @@ export default function CoachInvoices() {
         if (allCompleted) status = "Completed";
         else if (anyOpened) status = "In Progress";
 
+        const actualPaid = paidByIntent.get(piId) ?? 0;
+        const total_amount = actualPaid > 0 ? actualPaid : instruments.length * fallbackPrice;
+
         return {
           payment_intent_id: piId,
           created_at: earliest,
           client_email: email,
           client_name: nameMap[email] || email,
           instruments,
-          total_amount: instruments.length * PRICE_PER_INSTRUMENT,
+          total_amount,
           status,
         };
       });
