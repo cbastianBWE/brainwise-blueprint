@@ -24,6 +24,10 @@ export type DocParty = {
   email?: string | null;
   billing_address?: any;
   tax_id?: string | null;
+  remit_bank_name?: string | null;
+  remit_account_type?: string | null;
+  remit_routing_number?: string | null;
+  remit_account_number?: string | null;
 };
 
 export type DocLine = {
@@ -312,6 +316,33 @@ export async function generateDocumentPdf(args: {
     drawTotal("Balance due", money(data.balance_due, currency), true);
   }
   y += 10;
+
+  // ---- Payment details (remit-to, invoices only) ----
+  if (kind === "invoice") {
+    const hasRemit =
+      billTo.remit_bank_name || billTo.remit_account_number || billTo.remit_routing_number;
+    if (hasRemit) {
+      if (y > H - 120) { doc.addPage(); y = M; }
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(9);
+      doc.setTextColor(120, 120, 120);
+      doc.text("PAYMENT DETAILS", M, y);
+      y += 13;
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(60, 60, 60);
+      const at = billTo.remit_account_type ? String(billTo.remit_account_type) : "";
+      const atNice = at ? at.charAt(0).toUpperCase() + at.slice(1) : "";
+      [
+        billTo.remit_bank_name ? `Bank: ${billTo.remit_bank_name}` : "",
+        atNice ? `Account type: ${atNice}` : "",
+        billTo.remit_routing_number ? `Routing number: ${billTo.remit_routing_number}` : "",
+        billTo.remit_account_number ? `Account number: ${billTo.remit_account_number}` : "",
+      ]
+        .filter(Boolean)
+        .forEach((l) => { doc.text(String(l), M, y); y += 12; });
+      y += 6;
+    }
+  }
 
   // ---- Notes / terms ----
   const block = (label: string, text?: string | null) => {

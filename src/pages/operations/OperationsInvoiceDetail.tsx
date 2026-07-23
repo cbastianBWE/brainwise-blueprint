@@ -41,6 +41,7 @@ import { downloadDocumentPdf, generateDocumentPdf } from "@/lib/operations/docum
 import RecordPaymentDialog from "./RecordPaymentDialog";
 
 const PAID_TERMINAL = new Set(["paid", "void", "written_off"]);
+const maskTail = (v: string | null | undefined) => (v ? "••••" + String(v).slice(-4) : "—");
 const WRITE_OFF_STATUSES = new Set(["sent", "viewed", "overdue", "partially_paid"]);
 
 export default function OperationsInvoiceDetail() {
@@ -58,6 +59,23 @@ export default function OperationsInvoiceDetail() {
   const [refunding, setRefunding] = useState(false);
   const [sendOpen, setSendOpen] = useState(false);
   const [attachReceipts, setAttachReceipts] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [revealRemit, setRevealRemit] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data: auth } = await opsSupabase.auth.getUser();
+      if (!auth.user?.id) return;
+      const { data } = await opsSupabase
+        .from("users" as any)
+        .select("role")
+        .eq("id", auth.user.id)
+        .maybeSingle();
+      if (!cancelled) setIsAdmin((data as any)?.role === "admin");
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   const invoiceQ = useQuery({
     queryKey: ["ops", "invoice", id],
@@ -77,7 +95,7 @@ export default function OperationsInvoiceDetail() {
     queryFn: async () => {
       const { data, error } = await opsSupabase
         .from("customers")
-        .select("display_name, email, billing_address")
+        .select("display_name, email, billing_address, remit_bank_name, remit_account_type, remit_routing_number, remit_account_number")
         .eq("id", inv.customer_id)
         .maybeSingle();
       if (error) throw error;
@@ -197,6 +215,10 @@ export default function OperationsInvoiceDetail() {
       display_name: cust?.display_name,
       email: cust?.email,
       billing_address: cust?.billing_address,
+      remit_bank_name: (cust as any)?.remit_bank_name,
+      remit_account_type: (cust as any)?.remit_account_type,
+      remit_routing_number: (cust as any)?.remit_routing_number,
+      remit_account_number: (cust as any)?.remit_account_number,
     };
     const label = kind === "receipt" ? "Receipt" : "Invoice";
     downloadDocumentPdf({ kind, template, data, branding, billTo }, `${label}-${inv.invoice_number}.pdf`);
@@ -282,6 +304,10 @@ export default function OperationsInvoiceDetail() {
           display_name: cust?.display_name,
           email: cust?.email,
           billing_address: cust?.billing_address,
+          remit_bank_name: (cust as any)?.remit_bank_name,
+          remit_account_type: (cust as any)?.remit_account_type,
+          remit_routing_number: (cust as any)?.remit_routing_number,
+          remit_account_number: (cust as any)?.remit_account_number,
         };
         const blob = await generateDocumentPdf({ kind: "invoice", template: "standard", data: docData, branding, billTo });
         const path = `${inv.org_id}/Invoice-${inv.id}.pdf`;
@@ -482,6 +508,25 @@ export default function OperationsInvoiceDetail() {
               <dd className="whitespace-pre-line">{formatAddress(cust?.billing_address)}</dd>
             </div>
           </dl>
+
+          {((cust as any)?.remit_bank_name || (cust as any)?.remit_account_number || (cust as any)?.remit_routing_number) && (
+            <div className="mt-4 rounded-md border p-3 space-y-2 text-sm">
+              <div className="flex items-center justify-between">
+                <span className="font-medium">Payment / Remit-to (prints on the invoice)</span>
+                {isAdmin && (
+                  <Button variant="ghost" size="sm" onClick={() => setRevealRemit((v) => !v)}>
+                    {revealRemit ? "Hide" : "Reveal"}
+                  </Button>
+                )}
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                <div><span className="text-muted-foreground">Bank: </span>{(cust as any)?.remit_bank_name ?? "—"}</div>
+                <div><span className="text-muted-foreground">Account type: </span><span className="capitalize">{(cust as any)?.remit_account_type ?? "—"}</span></div>
+                <div><span className="text-muted-foreground">Routing: </span>{isAdmin && revealRemit ? ((cust as any)?.remit_routing_number ?? "—") : maskTail((cust as any)?.remit_routing_number)}</div>
+                <div><span className="text-muted-foreground">Account: </span>{isAdmin && revealRemit ? ((cust as any)?.remit_account_number ?? "—") : maskTail((cust as any)?.remit_account_number)}</div>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 

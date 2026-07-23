@@ -11702,6 +11702,62 @@ export type Database = {
           },
         ]
       }
+      shared_credit_grants: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          source: string | null
+          source_ref: string | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          source?: string | null
+          source_ref?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          source?: string | null
+          source_ref?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shared_credit_grants_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shared_credit_grants_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "shared_credit_grants_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shared_credit_grants_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sharing_preferences: {
         Row: {
           created_at: string
@@ -13137,6 +13193,7 @@ export type Database = {
           pseudonymized_at: string | null
           reactivation_deadline: string | null
           share_results_with_coach: boolean
+          shared_ai_credits: number
           stripe_coupon_id: string | null
           stripe_subscription_id: string | null
           subscription_status: string
@@ -13184,6 +13241,7 @@ export type Database = {
           pseudonymized_at?: string | null
           reactivation_deadline?: string | null
           share_results_with_coach?: boolean
+          shared_ai_credits?: number
           stripe_coupon_id?: string | null
           stripe_subscription_id?: string | null
           subscription_status?: string
@@ -13231,6 +13289,7 @@ export type Database = {
           pseudonymized_at?: string | null
           reactivation_deadline?: string | null
           share_results_with_coach?: boolean
+          shared_ai_credits?: number
           stripe_coupon_id?: string | null
           stripe_subscription_id?: string | null
           subscription_status?: string
@@ -14716,6 +14775,7 @@ export type Database = {
         Args: { p_tier: string; p_user: string }
         Returns: boolean
       }
+      bw_has_shared_credit: { Args: { p_user: string }; Returns: boolean }
       bw_is_team_leader_of: { Args: { p_member: string }; Returns: boolean }
       bw_list_my_report_orders: {
         Args: never
@@ -15004,6 +15064,7 @@ export type Database = {
         Args: { p_user: string }
         Returns: number
       }
+      consume_shared_ai_credit: { Args: { p_user: string }; Returns: number }
       contract_upsert: {
         Args: {
           p_ai_chat_enabled_override?: boolean
@@ -15800,6 +15861,15 @@ export type Database = {
         Returns: number
       }
       grant_one_time_coaching_credits: {
+        Args: {
+          p_amount: number
+          p_source: string
+          p_source_ref: string
+          p_user: string
+        }
+        Returns: number
+      }
+      grant_shared_ai_credits: {
         Args: {
           p_amount: number
           p_source: string
