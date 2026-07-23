@@ -197,6 +197,9 @@ export default function LogExpenseDialog({ open, onOpenChange, projectId, custom
           replacedOldPath = expense.receipt_storage_path;
         }
         receipt_storage_path = path;
+      } else if (isEdit && removeReceipt && expense?.receipt_storage_path) {
+        replacedOldPath = expense.receipt_storage_path;
+        receipt_storage_path = null;
       }
 
       if (isEdit && expense) {
