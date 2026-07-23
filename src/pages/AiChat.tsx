@@ -311,6 +311,19 @@ export default function AiChat() {
     init();
   }, [user, fetchUsage]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // ── Refresh usage after chat pack purchase ────────────────────────────────
+  useEffect(() => {
+    if (searchParams.get("checkout") === "success") {
+      toast.success("Chat pack added — you can keep chatting.");
+      (async () => { await fetchUsage(tier); })();
+      const next = new URLSearchParams(searchParams);
+      next.delete("checkout");
+      next.delete("product");
+      setSearchParams(next, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
+
   // ── Auto-select new peer assessments when they load ──────────────────────
   useEffect(() => {
     if (peerAssessments.length > 0) {
