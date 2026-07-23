@@ -59,6 +59,23 @@ export default function OperationsInvoiceDetail() {
   const [refunding, setRefunding] = useState(false);
   const [sendOpen, setSendOpen] = useState(false);
   const [attachReceipts, setAttachReceipts] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [revealRemit, setRevealRemit] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data: auth } = await opsSupabase.auth.getUser();
+      if (!auth.user?.id) return;
+      const { data } = await opsSupabase
+        .from("users" as any)
+        .select("role")
+        .eq("id", auth.user.id)
+        .maybeSingle();
+      if (!cancelled) setIsAdmin((data as any)?.role === "admin");
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   const invoiceQ = useQuery({
     queryKey: ["ops", "invoice", id],
