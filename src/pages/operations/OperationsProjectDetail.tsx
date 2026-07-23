@@ -953,8 +953,31 @@ export default function OperationsProjectDetail() {
                     <TableCell>{row.expense_categories?.name ?? "—"}</TableCell>
                     <TableCell>{row.vendor_name ?? "—"}</TableCell>
                     <TableCell className="text-right">{formatMoney(row.amount, row.currency_code)}</TableCell>
-                    <TableCell>{row.is_billable ? "Yes" : "No"}</TableCell>
+                  <TableCell>{row.is_billable ? "Yes" : "No"}</TableCell>
                     <TableCell>{row.is_invoiced ? "Invoiced" : "Unbilled"}</TableCell>
+                    <TableCell>
+                      {row.receipt_storage_path ? (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          aria-label="View receipt"
+                          onClick={() => openReceipt(row.receipt_storage_path)}
+                        >
+                          <Receipt className="h-4 w-4 text-green-600" />
+                        </Button>
+                      ) : !row.is_invoiced ? (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          aria-label="Attach receipt"
+                          onClick={() => { setEditingExpense(row as ExpenseRecord); setLogExpenseOpen(true); }}
+                        >
+                          <Paperclip className="h-4 w-4 text-muted-foreground" />
+                        </Button>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
+                    </TableCell>
                     <TableCell className="text-right">
                       {!row.is_invoiced && (
                         <div className="flex justify-end gap-1">
