@@ -306,9 +306,9 @@ export default function OperationsExpenses() {
                           variant="ghost"
                           size="icon"
                           aria-label="View receipt"
-                          onClick={() => openReceipt(r.receipt_storage_path)}
+                          onClick={() => { setViewing(r); setViewerOpen(true); }}
                         >
-                          <Receipt className="h-4 w-4 text-green-600" />
+                          <Receipt className="h-4 w-4 text-[var(--bw-forest)]" />
                         </Button>
                       ) : (
                         <Button
