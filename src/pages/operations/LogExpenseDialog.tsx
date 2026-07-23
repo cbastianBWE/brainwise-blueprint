@@ -79,6 +79,7 @@ export default function LogExpenseDialog({ open, onOpenChange, projectId, custom
   const [markupPercentage, setMarkupPercentage] = useState<string>("");
   const [notes, setNotes] = useState<string>("");
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
+  const [removeReceipt, setRemoveReceipt] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
