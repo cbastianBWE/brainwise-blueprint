@@ -21,6 +21,7 @@ type PublicDoc = {
     remit_account_number?: string | null;
   };
   org: { name: string };
+  card_fee?: { enabled: boolean; bank_total: number; card_total: number };
   lines: Array<{ description: string | null; quantity: number | null; unit_price: number | null; line_total: number | null }>;
 };
 
