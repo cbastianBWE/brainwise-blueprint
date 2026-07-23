@@ -362,6 +362,43 @@ export default function CustomerFormDialog({ open, onOpenChange, customer }: Pro
             </div>
           </div>
 
+          {isAdmin && (
+            <div className="space-y-3 pt-2 border-t">
+              <h3 className="text-sm font-medium">Payment / Remit-to details</h3>
+              <p className="text-xs text-muted-foreground">
+                Your bank details for this client. These print on this client's invoices so they know where to send payment. Visible to admins only.
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="remit_bank_name">Bank name</Label>
+                  <Input id="remit_bank_name" value={form.remit_bank_name} onChange={(e) => set("remit_bank_name", e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Account type</Label>
+                  <Select
+                    value={form.remit_account_type || "__none"}
+                    onValueChange={(v) => set("remit_account_type", (v === "__none" ? "" : v) as FormState["remit_account_type"])}
+                  >
+                    <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none">Not set</SelectItem>
+                      <SelectItem value="checking">Checking</SelectItem>
+                      <SelectItem value="savings">Savings</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="remit_routing_number">Routing number</Label>
+                  <Input id="remit_routing_number" inputMode="numeric" value={form.remit_routing_number} onChange={(e) => set("remit_routing_number", e.target.value)} />
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="remit_account_number">Account number</Label>
+                  <Input id="remit_account_number" inputMode="numeric" value={form.remit_account_number} onChange={(e) => set("remit_account_number", e.target.value)} />
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="space-y-2">
             <Label htmlFor="notes">Notes</Label>
             <Textarea id="notes" rows={3} value={form.notes} onChange={(e) => set("notes", e.target.value)} />
