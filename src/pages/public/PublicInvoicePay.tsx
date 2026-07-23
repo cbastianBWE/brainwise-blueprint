@@ -124,7 +124,7 @@ export default function PublicInvoicePay() {
   );
 }
 
-function PaidContent({ doc, starting, errorMsg, onPay }: { doc: PublicDoc; starting: boolean; errorMsg: string | null; onPay: () => void }) {
+function PaidContent({ doc, starting, errorMsg, onPay }: { doc: PublicDoc; starting: boolean; errorMsg: string | null; onPay: (method?: "card" | "ach") => void }) {
   const invoice = doc.document;
   const currency = invoice.currency_code;
   const status = (invoice.status ?? "").toLowerCase();
