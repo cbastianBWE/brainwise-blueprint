@@ -41,6 +41,7 @@ import { downloadDocumentPdf, generateDocumentPdf } from "@/lib/operations/docum
 import RecordPaymentDialog from "./RecordPaymentDialog";
 
 const PAID_TERMINAL = new Set(["paid", "void", "written_off"]);
+const maskTail = (v: string | null | undefined) => (v ? "••••" + String(v).slice(-4) : "—");
 const WRITE_OFF_STATUSES = new Set(["sent", "viewed", "overdue", "partially_paid"]);
 
 export default function OperationsInvoiceDetail() {
