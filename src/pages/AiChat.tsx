@@ -26,7 +26,8 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import UsageCounter from "@/components/ai/UsageCounter";
 import LimitReached from "@/components/ai/LimitReached";
 import CorpUsageCounter from "@/components/ai/CorpUsageCounter";
-import { PLANS } from "@/lib/stripe";
+import { useSubscriptionPlans } from "@/hooks/useSubscriptionPlans";
+import { useUserProfile } from "@/hooks/useUserProfile";
 import { useAccountRole } from "@/lib/accountRoles";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -66,6 +67,8 @@ export default function AiChat() {
   const [searchParams] = useSearchParams();
   const { usage, loading: usageLoading, fetchUsage } = useAiUsage();
   const { isCorp, isCompanyAdmin, isOrgAdmin, isSuperAdmin } = useAccountRole();
+  const { limitsFor } = useSubscriptionPlans();
+  const { profile } = useUserProfile();
 
   const [corpUsage, setCorpUsage] = useState<{
     ai_chat_enabled: boolean;
@@ -813,7 +816,7 @@ export default function AiChat() {
             tier={usage.tier || tier}
             creditBalance={usage.credit_balance ?? 0}
             subscriptionActive={usage.subscription_active !== false}
-            premiumLimit={PLANS.premium.ai_limit}
+            premiumLimit={limitsFor(profile?.account_type === "coach" ? "coach_premium" : "premium")?.aiCoachingLimit ?? 0}
           />
         ) : (
           <div className="space-y-2 shrink-0">

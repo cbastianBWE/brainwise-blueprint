@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { ASSESSMENT_PURCHASE } from "@/lib/stripe";
+import { useSubscriptionPlans } from "@/hooks/useSubscriptionPlans";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";
@@ -32,6 +32,7 @@ type Stage = "form" | "submitting";
 export default function BulkSeatLinkModal({
   open, onOpenChange, allowedInstrumentIds, perAssessmentPrice,
 }: Props) {
+  const { oneTimePriceId } = useSubscriptionPlans();
   const [stage, setStage] = useState<Stage>("form");
   const [instrumentShortId, setInstrumentShortId] = useState<string>("");
   const [seats, setSeats] = useState<string>("5");
@@ -83,8 +84,14 @@ export default function BulkSeatLinkModal({
       return;
     }
 
+    const priceId = oneTimePriceId("individual");
+    if (!priceId) {
+      toast.error("Pricing is unavailable right now. Please try again shortly.");
+      setStage("form");
+      return;
+    }
     const { data: checkoutData, error: checkoutErr } = await supabase.functions.invoke("create-checkout", {
-      body: { mode: "coach_bulk_link", price_id: ASSESSMENT_PURCHASE.price_id, bulk_link_id: linkId },
+      body: { mode: "coach_bulk_link", price_id: priceId, bulk_link_id: linkId },
     });
     if (checkoutErr || !checkoutData?.url) {
       toast.error("Link created but checkout could not start. It is saved as unpaid — contact support.");

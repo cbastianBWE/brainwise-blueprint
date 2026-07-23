@@ -6,8 +6,7 @@ import MarketingFooter from "@/components/marketing/MarketingFooter";
 import MarketingButton from "@/components/marketing/MarketingButton";
 import Eyebrow from "@/components/marketing/Eyebrow";
 import BriefingModal from "@/components/marketing/BriefingModal";
-import { PLANS, ASSESSMENT_PURCHASE, type PlanTier } from "@/lib/stripe";
-import { useSubscriptionPlans } from "@/hooks/useSubscriptionPlans";
+import { useSubscriptionPlans, type CatalogueTier } from "@/hooks/useSubscriptionPlans";
 import { coachPricing, type CoachPricingItem } from "@/content/marketing/coachPricingContent";
 
 type Segment = "individual" | "coach" | "enterprise";
@@ -56,134 +55,159 @@ const comingSoonBadge: React.CSSProperties = {
 };
 
 function PricingIndividual({ isMobile, onSignup, onContact }: { isMobile: boolean; onSignup: () => void; onContact: () => void }) {
-  const tiers = Object.entries(PLANS) as [PlanTier, (typeof PLANS)[PlanTier]][];
-  const { featuresFor } = useSubscriptionPlans();
+  const { catalogueFor, oneTimePrice, loading } = useSubscriptionPlans();
+  const tiers = catalogueFor("individual");
+  const purchasable = tiers.filter((t) => t.monthly || t.annual);
+  const recommendedTier = purchasable.length
+    ? purchasable.reduce((a, b) => (a.sortOrder >= b.sortOrder ? a : b)).tier
+    : null;
+  const assessmentPrice = oneTimePrice("individual");
 
+  const renderCard = (t: CatalogueTier) => {
+    const isRecommended = t.tier === recommendedTier;
+    const monthly = t.monthly;
+    const annual = t.annual;
+    const primary = monthly ?? annual;
+    if (!primary) return null;
+    const annualSavings = monthly && annual ? Math.round(monthly.price * 12 - annual.price) : 0;
+
+    return (
+      <div
+        key={t.tier}
+        style={{
+          position: "relative",
+          background: "white",
+          border: `${isRecommended ? 2 : 1}px solid ${isRecommended ? "var(--bw-orange)" : "var(--border-1)"}`,
+          borderRadius: "var(--r-lg)",
+          padding: 32,
+          boxShadow: isRecommended ? "var(--shadow-md)" : "none",
+          display: "flex",
+          flexDirection: "column",
+          gap: 16,
+        }}
+      >
+        {isRecommended && (
+          <span
+            style={{
+              position: "absolute",
+              top: -12,
+              right: 24,
+              background: "var(--bw-orange)",
+              color: "white",
+              padding: "4px 12px",
+              fontSize: 11,
+              fontFamily: "'Poppins', sans-serif",
+              fontWeight: 700,
+              letterSpacing: "0.12em",
+              textTransform: "uppercase",
+              borderRadius: "var(--r-pill)",
+            }}
+          >
+            Recommended
+          </span>
+        )}
+        <h3
+          style={{
+            fontFamily: "'Poppins', sans-serif",
+            fontWeight: 700,
+            fontSize: 22,
+            color: "var(--bw-navy)",
+            margin: 0,
+          }}
+        >
+          {t.displayName}
+        </h3>
+        <div>
+          <span
+            style={{
+              fontFamily: "'Poppins', sans-serif",
+              fontWeight: 800,
+              fontSize: 36,
+              color: "var(--bw-navy)",
+            }}
+          >
+            ${primary.price}
+          </span>
+          <span style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 14, color: "var(--bw-slate)", marginLeft: 6 }}>
+            /{monthly ? "month" : "year"}
+          </span>
+        </div>
+        {monthly && annual && (
+          <p style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 13, color: "var(--bw-slate)", margin: 0 }}>
+            Or ${annual.price}/year (save ${annualSavings})
+          </p>
+        )}
+        <div style={{ height: 1, background: "var(--border-1)" }} />
+        <ul
+          style={{
+            listStyle: "none",
+            padding: 0,
+            margin: 0,
+            display: "flex",
+            flexDirection: "column",
+            gap: 10,
+            flex: 1,
+          }}
+        >
+          {t.features.map((f) => (
+            <li
+              key={f}
+              style={{
+                display: "flex",
+                alignItems: "flex-start",
+                gap: 8,
+                fontFamily: "'Montserrat', sans-serif",
+                fontSize: 14,
+                color: "var(--bw-slate-700)",
+                lineHeight: 1.5,
+              }}
+            >
+              <span aria-hidden style={{ color: "var(--bw-orange)", fontWeight: 700 }}>✓</span>
+              <span>{f}</span>
+            </li>
+          ))}
+        </ul>
+        <MarketingButton variant={isRecommended ? "primary" : "secondary"} size="md" onClick={onSignup} fullWidth>
+          Get Started
+        </MarketingButton>
+      </div>
+    );
+  };
 
   return (
     <div>
       <h2 style={headingStyle}>For individuals.</h2>
       <p style={subheadStyle}>Self-paced subscriptions and one-time assessment purchases.</p>
 
-      <div
-        style={{
-          marginTop: 48,
-          display: "grid",
-          gridTemplateColumns: isMobile ? "1fr" : "repeat(2, 1fr)",
-          gap: 24,
-        }}
-      >
-        {tiers.map(([tier, plan]) => {
-          const isPremium = tier === "premium";
-          const annualSavings = Math.round(plan.monthly.price * 12 - plan.annual.price);
-          return (
-            <div
-              key={tier}
-              style={{
-                position: "relative",
-                background: "white",
-                border: `${isPremium ? 2 : 1}px solid ${isPremium ? "var(--bw-orange)" : "var(--border-1)"}`,
-                borderRadius: "var(--r-lg)",
-                padding: 32,
-                boxShadow: isPremium ? "var(--shadow-md)" : "none",
-                display: "flex",
-                flexDirection: "column",
-                gap: 16,
-              }}
-            >
-              {isPremium && (
-                <span
-                  style={{
-                    position: "absolute",
-                    top: -12,
-                    right: 24,
-                    background: "var(--bw-orange)",
-                    color: "white",
-                    padding: "4px 12px",
-                    fontSize: 11,
-                    fontFamily: "'Poppins', sans-serif",
-                    fontWeight: 700,
-                    letterSpacing: "0.12em",
-                    textTransform: "uppercase",
-                    borderRadius: "var(--r-pill)",
-                  }}
-                >
-                  Recommended
-                </span>
-              )}
-              <h3
-                style={{
-                  fontFamily: "'Poppins', sans-serif",
-                  fontWeight: 700,
-                  fontSize: 22,
-                  color: "var(--bw-navy)",
-                  margin: 0,
-                }}
-              >
-                {plan.name}
-              </h3>
-              <div>
-                <span
-                  style={{
-                    fontFamily: "'Poppins', sans-serif",
-                    fontWeight: 800,
-                    fontSize: 36,
-                    color: "var(--bw-navy)",
-                  }}
-                >
-                  ${plan.monthly.price}
-                </span>
-                <span style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 14, color: "var(--bw-slate)", marginLeft: 6 }}>
-                  /month
-                </span>
-              </div>
-              <p style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 13, color: "var(--bw-slate)", margin: 0 }}>
-                Or ${plan.annual.price}/year (save ${annualSavings})
-              </p>
-              <div style={{ height: 1, background: "var(--border-1)" }} />
-              <ul
-                style={{
-                  listStyle: "none",
-                  padding: 0,
-                  margin: 0,
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 10,
-                  flex: 1,
-                }}
-              >
-                {(featuresFor(tier) ?? plan.features).map((f) => (
-                  <li
-                    key={f}
-                    style={{
-                      display: "flex",
-                      alignItems: "flex-start",
-                      gap: 8,
-                      fontFamily: "'Montserrat', sans-serif",
-                      fontSize: 14,
-                      color: "var(--bw-slate-700)",
-                      lineHeight: 1.5,
-                    }}
-                  >
-                    <span aria-hidden style={{ color: "var(--bw-orange)", fontWeight: 700 }}>✓</span>
-                    <span>{f}</span>
-                  </li>
-                ))}
-              </ul>
-              <MarketingButton variant={isPremium ? "primary" : "secondary"} size="md" onClick={onSignup} fullWidth>
-                Get Started
-              </MarketingButton>
-            </div>
-          );
-        })}
-      </div>
+      {loading ? (
+        <p style={{ ...subheadStyle, marginTop: 32 }}>Loading plans…</p>
+      ) : purchasable.length === 0 ? (
+        <p style={{ ...subheadStyle, marginTop: 32 }}>
+          Plans are unavailable right now. Please try again shortly.
+        </p>
+      ) : (
+        <div
+          style={{
+            marginTop: 48,
+            display: "grid",
+            gridTemplateColumns: isMobile ? "1fr" : "repeat(2, 1fr)",
+            gap: 24,
+          }}
+        >
+          {purchasable.map(renderCard)}
+        </div>
+      )}
 
       <div style={{ height: 1, background: "var(--border-1)", margin: "56px 0 40px" }} />
 
       <div>
         <h3 style={{ ...headingStyle, fontSize: 20 }}>Or buy a single assessment</h3>
         <p style={subheadStyle}>
-          ${ASSESSMENT_PURCHASE.price} per assessment for the PTP. NAI, AIRSA, and HSS are available through a consultation.
+          {assessmentPrice !== null ? (
+            <>${assessmentPrice} per assessment for the PTP. NAI, AIRSA, and HSS are available through a consultation.</>
+          ) : (
+            <>Per-assessment PTP pricing loading… NAI, AIRSA, and HSS are available through a consultation.</>
+          )}
         </p>
         <div style={{ marginTop: 20, display: "flex", flexWrap: "wrap", gap: 12 }}>
           <MarketingButton variant="secondary" size="md" onClick={onSignup}>
