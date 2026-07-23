@@ -645,6 +645,7 @@ export default function OperationsSettings() {
           <TabsTrigger value="branding">Branding</TabsTrigger>
           <TabsTrigger value="templates">Templates & Reminders</TabsTrigger>
           <TabsTrigger value="late_fees">Late Fees</TabsTrigger>
+          <TabsTrigger value="payments">Payments</TabsTrigger>
           <TabsTrigger value="sales">Sales & Commission</TabsTrigger>
           <TabsTrigger value="custom_fields">Custom Fields</TabsTrigger>
           <TabsTrigger value="numbering">Numbering & Tax</TabsTrigger>
