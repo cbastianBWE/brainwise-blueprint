@@ -17,9 +17,10 @@ interface Props {
    * keep full access. This is intentionally checked before the bypass-role
    * shortcut so coaches can be gated too.
    *
-   * Non-module keys keep prior behavior: corporate resolves via user_has_feature,
-   * individuals gate on Stripe subscription status (ai_chat allows a credit
-   * bypass), and bypass roles (super admin, coach) pass.
+   * Non-module keys: super admin bypasses. Coaches pass everything except
+   * `ai_chat`, which requires Coach Premium or one-time chat credits.
+   * Corporate resolves via user_has_feature; individuals gate on Stripe
+   * subscription status (ai_chat allows a credit bypass).
    */
   feature?: string;
 }
