@@ -22,6 +22,8 @@ export default function OperationsExpenses() {
   const [editing, setEditing] = useState<
     (ExpenseRecord & { project_id: string | null; customer_id: string | null }) | null
   >(null);
+  const [viewerOpen, setViewerOpen] = useState(false);
+  const [viewing, setViewing] = useState<any | null>(null);
 
   const [search, setSearch] = useState("");
   const [customerFilter, setCustomerFilter] = useState("all");
