@@ -113,6 +113,13 @@ const fromCustomer = (c: CustomerRecord): FormState => {
     state: str(addr.state),
     postal_code: str(addr.postal_code),
     country: str(addr.country) || "US",
+    remit_bank_name: c.remit_bank_name ?? "",
+    remit_account_type:
+      c.remit_account_type === "checking" || c.remit_account_type === "savings"
+        ? c.remit_account_type
+        : "",
+    remit_routing_number: c.remit_routing_number ?? "",
+    remit_account_number: c.remit_account_number ?? "",
   };
 };
 
