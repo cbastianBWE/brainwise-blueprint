@@ -21,7 +21,18 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+
+async function openReceiptSigned(path: string) {
+  const { data, error } = await opsSupabase.storage
+    .from("operations-receipts")
+    .createSignedUrl(path, 600);
+  if (error || !data?.signedUrl) {
+    toast.error("Could not open receipt");
+    return;
+  }
+  window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+}
+
 
 export type ExpenseRecord = {
   id: string;
