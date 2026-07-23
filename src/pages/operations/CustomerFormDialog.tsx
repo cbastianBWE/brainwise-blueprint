@@ -35,6 +35,10 @@ type CustomerRecord = {
   notes?: string | null;
   tax_id?: string | null;
   billing_address?: Record<string, unknown> | null;
+  remit_bank_name?: string | null;
+  remit_account_type?: string | null;
+  remit_routing_number?: string | null;
+  remit_account_number?: string | null;
 };
 
 type Props = {
