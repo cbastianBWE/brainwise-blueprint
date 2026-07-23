@@ -318,6 +318,28 @@ export async function generateDocumentPdf(args: {
   }
   y += 10;
 
+  // ---- Payment options (dual pricing, invoices only) ----
+  if (kind === "invoice" && data.payment_options) {
+    if (y > H - 120) { doc.addPage(); y = M; }
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9);
+    doc.setTextColor(120, 120, 120);
+    doc.text("PAYMENT OPTIONS", M, y);
+    y += 13;
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(60, 60, 60);
+    doc.text(`Pay by bank transfer (ACH): ${money(data.payment_options.bank_total, currency)}`, M, y);
+    y += 12;
+    doc.text(`Pay by card: ${money(data.payment_options.card_total, currency)} (includes card processing)`, M, y);
+    y += 12;
+    doc.setTextColor(120, 120, 120);
+    doc.setFontSize(8);
+    doc.text("Pay by bank transfer to avoid the card processing cost.", M, y);
+    y += 12;
+    doc.setFontSize(9);
+    y += 4;
+  }
+
   // ---- Payment details (remit-to, invoices only) ----
   if (kind === "invoice") {
     const hasRemit =
