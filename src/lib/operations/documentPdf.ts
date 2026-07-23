@@ -316,29 +316,30 @@ export async function generateDocumentPdf(args: {
     drawTotal("Amount paid", money(data.amount_paid, currency));
     drawTotal("Balance due", money(data.balance_due, currency), true);
   }
+
+  // ---- Payment options (dual pricing) — called out right under Balance due ----
+  if (kind === "invoice" && data.payment_options) {
+    y += 8;
+    doc.setDrawColor(accent[0], accent[1], accent[2]);
+    doc.setLineWidth(1);
+    doc.line(labelX, y - 4, totalsX, y - 4);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8);
+    doc.setTextColor(120, 120, 120);
+    doc.text("PAYMENT OPTIONS", labelX, y + 6);
+    y += 16;
+    drawTotal("Pay by bank (ACH)", money(data.payment_options.bank_total, currency), true);
+    drawTotal("Pay by card", money(data.payment_options.card_total, currency), true);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    doc.setTextColor(120, 120, 120);
+    doc.text("Bank transfer (ACH) avoids the card processing cost.", totalsX, y, { align: "right" });
+    y += 12;
+    doc.setFontSize(9);
+  }
+
   y += 10;
 
-  // ---- Payment options (dual pricing, invoices only) ----
-  if (kind === "invoice" && data.payment_options) {
-    if (y > H - 120) { doc.addPage(); y = M; }
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(9);
-    doc.setTextColor(120, 120, 120);
-    doc.text("PAYMENT OPTIONS", M, y);
-    y += 13;
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(60, 60, 60);
-    doc.text(`Pay by bank transfer (ACH): ${money(data.payment_options.bank_total, currency)}`, M, y);
-    y += 12;
-    doc.text(`Pay by card: ${money(data.payment_options.card_total, currency)} (includes card processing)`, M, y);
-    y += 12;
-    doc.setTextColor(120, 120, 120);
-    doc.setFontSize(8);
-    doc.text("Pay by bank transfer to avoid the card processing cost.", M, y);
-    y += 12;
-    doc.setFontSize(9);
-    y += 4;
-  }
 
   // ---- Payment details (remit-to, invoices only) ----
   if (kind === "invoice") {
