@@ -215,6 +215,10 @@ export default function OperationsInvoiceDetail() {
       display_name: cust?.display_name,
       email: cust?.email,
       billing_address: cust?.billing_address,
+      remit_bank_name: (cust as any)?.remit_bank_name,
+      remit_account_type: (cust as any)?.remit_account_type,
+      remit_routing_number: (cust as any)?.remit_routing_number,
+      remit_account_number: (cust as any)?.remit_account_number,
     };
     const label = kind === "receipt" ? "Receipt" : "Invoice";
     downloadDocumentPdf({ kind, template, data, branding, billTo }, `${label}-${inv.invoice_number}.pdf`);
