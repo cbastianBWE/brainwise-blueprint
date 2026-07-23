@@ -13,7 +13,13 @@ type PublicDoc = {
   document_type: "invoice" | "estimate";
   purpose?: string;
   document: any;
-  customer: { display_name: string };
+  customer: {
+    display_name: string;
+    remit_bank_name?: string | null;
+    remit_account_type?: string | null;
+    remit_routing_number?: string | null;
+    remit_account_number?: string | null;
+  };
   org: { name: string };
   lines: Array<{ description: string | null; quantity: number | null; unit_price: number | null; line_total: number | null }>;
 };
