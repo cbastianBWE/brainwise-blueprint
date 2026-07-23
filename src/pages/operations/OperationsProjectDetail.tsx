@@ -68,6 +68,8 @@ export default function OperationsProjectDetail() {
   const [editingTime, setEditingTime] = useState<TimeEntryRecord | null>(null);
   const [logExpenseOpen, setLogExpenseOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<ExpenseRecord | null>(null);
+  const [receiptViewerOpen, setReceiptViewerOpen] = useState(false);
+  const [viewingExpense, setViewingExpense] = useState<any | null>(null);
   const [chargeOpen, setChargeOpen] = useState(false);
   const [genOpen, setGenOpen] = useState(false);
   const [generating, setGenerating] = useState(false);
