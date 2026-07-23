@@ -12,19 +12,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Paperclip, Receipt, Pencil, ArrowUpDown, Search } from "lucide-react";
 import { formatMoney } from "./_shared";
 import LogExpenseDialog, { ExpenseRecord } from "./LogExpenseDialog";
+import ReceiptViewerDialog from "./ReceiptViewerDialog";
 
 type SortKey = "date" | "amount" | "customer" | "project" | "category" | "vendor";
-
-async function openReceipt(path: string) {
-  const { data, error } = await opsSupabase.storage
-    .from("operations-receipts")
-    .createSignedUrl(path, 600);
-  if (error || !data?.signedUrl) {
-    toast.error("Could not open receipt");
-    return;
-  }
-  window.open(data.signedUrl, "_blank", "noopener,noreferrer");
-}
 
 export default function OperationsExpenses() {
   const queryClient = useQueryClient();
