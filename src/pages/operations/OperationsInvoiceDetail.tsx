@@ -508,6 +508,25 @@ export default function OperationsInvoiceDetail() {
               <dd className="whitespace-pre-line">{formatAddress(cust?.billing_address)}</dd>
             </div>
           </dl>
+
+          {((cust as any)?.remit_bank_name || (cust as any)?.remit_account_number || (cust as any)?.remit_routing_number) && (
+            <div className="mt-4 rounded-md border p-3 space-y-2 text-sm">
+              <div className="flex items-center justify-between">
+                <span className="font-medium">Payment / Remit-to (prints on the invoice)</span>
+                {isAdmin && (
+                  <Button variant="ghost" size="sm" onClick={() => setRevealRemit((v) => !v)}>
+                    {revealRemit ? "Hide" : "Reveal"}
+                  </Button>
+                )}
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                <div><span className="text-muted-foreground">Bank: </span>{(cust as any)?.remit_bank_name ?? "—"}</div>
+                <div><span className="text-muted-foreground">Account type: </span><span className="capitalize">{(cust as any)?.remit_account_type ?? "—"}</span></div>
+                <div><span className="text-muted-foreground">Routing: </span>{isAdmin && revealRemit ? ((cust as any)?.remit_routing_number ?? "—") : maskTail((cust as any)?.remit_routing_number)}</div>
+                <div><span className="text-muted-foreground">Account: </span>{isAdmin && revealRemit ? ((cust as any)?.remit_account_number ?? "—") : maskTail((cust as any)?.remit_account_number)}</div>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
