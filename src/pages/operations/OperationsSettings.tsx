@@ -1279,6 +1279,52 @@ export default function OperationsSettings() {
           <LeadScoringRulesCard />
           <WorkflowRulesCard />
         </TabsContent>
+
+        <TabsContent value="payments" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Card processing fee recovery</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                When on, invoices offer two ways to pay. Bank transfer (ACH) is charged the exact
+                invoice amount. Card payments are charged a grossed-up total that covers the processing
+                cost, so you net the invoice amount either way. It's presented to the customer as a
+                bank-transfer saving. Admins only.
+              </p>
+              <div className="flex items-center gap-3">
+                <Switch
+                  id="card_fee_enabled"
+                  checked={cardFee.enabled}
+                  onCheckedChange={(v) => setCardFee((f) => ({ ...f, enabled: v === true }))}
+                />
+                <Label htmlFor="card_fee_enabled" className="cursor-pointer">
+                  Recover card processing fees on invoices
+                </Label>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-md">
+                <div className="space-y-2">
+                  <Label htmlFor="card_fee_percent">Percent fee (%)</Label>
+                  <Input id="card_fee_percent" type="number" step="0.01" min="0"
+                    value={cardFee.percent}
+                    onChange={(e) => setCardFee((f) => ({ ...f, percent: e.target.value }))} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="card_fee_fixed">Fixed fee (per payment)</Label>
+                  <Input id="card_fee_fixed" type="number" step="0.01" min="0"
+                    value={cardFee.fixed}
+                    onChange={(e) => setCardFee((f) => ({ ...f, fixed: e.target.value }))} />
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Stripe's US card fee is 2.9% + $0.30. Leave these as-is unless your rate differs.
+              </p>
+              <Button onClick={saveCardFee} disabled={savingCardFee}>
+                {savingCardFee ? "Saving…" : "Save"}
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
 
       {/* Numbering scheme edit dialog */}
