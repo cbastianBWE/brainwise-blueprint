@@ -85,6 +85,7 @@ export function useAccountRole(): AccountRoleInfo {
       isMentor: false,
       isSuperAdmin: false,
       isBypassAdmin: false,
+      isCoachPremium: false,
       canBypassAssessmentPaywall: false,
       isCompanyAdmin: false,
       isOrgAdmin: false,
