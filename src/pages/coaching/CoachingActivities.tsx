@@ -311,12 +311,16 @@ function CoachingActivityCard({
   inProgress,
   onOpenBriefing,
   onResume,
+  canBuyProducts,
+  priceForTier,
 }: {
   activity: Activity;
   access: AccessInfo | undefined;
   inProgress: boolean;
   onOpenBriefing: () => void;
   onResume: () => void;
+  canBuyProducts: boolean;
+  priceForTier: (activityTier: string | null) => number | null;
 }) {
   const outcome =
     (activity.definition && typeof activity.definition === "object" &&
@@ -356,6 +360,26 @@ function CoachingActivityCard({
         Take the PTP first
       </Button>
     );
+  } else if (reason === "upgrade_required" && canBuyProducts && coachingProductTier(access.activity_tier)) {
+    const productTier = coachingProductTier(access.activity_tier)!;
+    const price = priceForTier(access.activity_tier);
+    action = (
+      <Button size="sm" onClick={() => startProductCheckout(productTier)}>
+        Unlock {capTier(access.activity_tier)}{price ? ` — $${price}` : ""}
+      </Button>
+    );
+  } else if (reason === "entitlement_required" && canBuyProducts) {
+    const price = priceForTier("foundational");
+    action = (
+      <div className="flex flex-col gap-2">
+        <Button size="sm" onClick={() => startProductCheckout("coaching_foundational")}>
+          Unlock Foundational{price ? ` — $${price}` : ""}
+        </Button>
+        <Button size="sm" variant="outline" onClick={onOpenBriefing}>
+          Take the PTP
+        </Button>
+      </div>
+    );
   } else if (reason === "upgrade_required" || reason === "subscription_required") {
     action = (
       <Button size="sm" variant="outline" onClick={onOpenBriefing}>
@@ -367,6 +391,7 @@ function CoachingActivityCard({
       <Button size="sm" variant="outline" disabled>Not available</Button>
     );
   }
+
 
   return (
     <Card className={`overflow-hidden ${locked ? "opacity-75" : ""}`}>
