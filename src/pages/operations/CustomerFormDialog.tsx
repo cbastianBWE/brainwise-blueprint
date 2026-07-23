@@ -64,6 +64,10 @@ type FormState = {
   state: string;
   postal_code: string;
   country: string;
+  remit_bank_name: string;
+  remit_account_type: "" | "checking" | "savings";
+  remit_routing_number: string;
+  remit_account_number: string;
 };
 
 const emptyState = (): FormState => ({
