@@ -35,6 +35,10 @@ type CustomerRecord = {
   notes?: string | null;
   tax_id?: string | null;
   billing_address?: Record<string, unknown> | null;
+  remit_bank_name?: string | null;
+  remit_account_type?: string | null;
+  remit_routing_number?: string | null;
+  remit_account_number?: string | null;
 };
 
 type Props = {
@@ -60,6 +64,10 @@ type FormState = {
   state: string;
   postal_code: string;
   country: string;
+  remit_bank_name: string;
+  remit_account_type: "" | "checking" | "savings";
+  remit_routing_number: string;
+  remit_account_number: string;
 };
 
 const emptyState = (): FormState => ({
@@ -79,6 +87,10 @@ const emptyState = (): FormState => ({
   state: "",
   postal_code: "",
   country: "US",
+  remit_bank_name: "",
+  remit_account_type: "",
+  remit_routing_number: "",
+  remit_account_number: "",
 });
 
 const fromCustomer = (c: CustomerRecord): FormState => {
@@ -101,6 +113,13 @@ const fromCustomer = (c: CustomerRecord): FormState => {
     state: str(addr.state),
     postal_code: str(addr.postal_code),
     country: str(addr.country) || "US",
+    remit_bank_name: c.remit_bank_name ?? "",
+    remit_account_type:
+      c.remit_account_type === "checking" || c.remit_account_type === "savings"
+        ? c.remit_account_type
+        : "",
+    remit_routing_number: c.remit_routing_number ?? "",
+    remit_account_number: c.remit_account_number ?? "",
   };
 };
 
@@ -115,6 +134,7 @@ export default function CustomerFormDialog({ open, onOpenChange, customer }: Pro
   const [form, setForm] = useState<FormState>(emptyState());
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -122,6 +142,46 @@ export default function CustomerFormDialog({ open, onOpenChange, customer }: Pro
       setError(null);
     }
   }, [open, customer]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data: auth } = await opsSupabase.auth.getUser();
+      if (!auth.user?.id) return;
+      const { data } = await opsSupabase
+        .from("users" as any)
+        .select("role")
+        .eq("id", auth.user.id)
+        .maybeSingle();
+      if (!cancelled) setIsAdmin((data as any)?.role === "admin");
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  useEffect(() => {
+    if (!open || !customer?.id) return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await opsSupabase
+        .from("customers")
+        .select("remit_bank_name, remit_account_type, remit_routing_number, remit_account_number")
+        .eq("id", customer.id)
+        .maybeSingle();
+      if (cancelled || !data) return;
+      const d = data as any;
+      setForm((f) => ({
+        ...f,
+        remit_bank_name: d.remit_bank_name ?? "",
+        remit_account_type:
+          d.remit_account_type === "checking" || d.remit_account_type === "savings"
+            ? d.remit_account_type
+            : "",
+        remit_routing_number: d.remit_routing_number ?? "",
+        remit_account_number: d.remit_account_number ?? "",
+      }));
+    })();
+    return () => { cancelled = true; };
+  }, [open, customer?.id]);
 
   const set = <K extends keyof FormState>(k: K, v: FormState[K]) =>
     setForm((f) => ({ ...f, [k]: v }));
@@ -159,19 +219,27 @@ export default function CustomerFormDialog({ open, onOpenChange, customer }: Pro
       notes: trimOrNull(form.notes),
       tax_id: trimOrNull(form.tax_id),
       billing_address,
+      ...(isAdmin
+        ? {
+            remit_bank_name: trimOrNull(form.remit_bank_name),
+            remit_account_type: form.remit_account_type || null,
+            remit_routing_number: trimOrNull(form.remit_routing_number),
+            remit_account_number: trimOrNull(form.remit_account_number),
+          }
+        : {}),
     };
 
     try {
       if (isEdit && customer) {
         const { error } = await opsSupabase
           .from("customers")
-          .update(payload)
+          .update(payload as any)
           .eq("id", customer.id);
         if (error) throw error;
         toast.success("Customer updated");
         queryClient.invalidateQueries({ queryKey: ["ops", "customer", customer.id] });
       } else {
-        const { error } = await opsSupabase.from("customers").insert(payload);
+        const { error } = await opsSupabase.from("customers").insert(payload as any);
         if (error) throw error;
         toast.success("Customer created");
       }
@@ -293,6 +361,43 @@ export default function CustomerFormDialog({ open, onOpenChange, customer }: Pro
               </div>
             </div>
           </div>
+
+          {isAdmin && (
+            <div className="space-y-3 pt-2 border-t">
+              <h3 className="text-sm font-medium">Payment / Remit-to details</h3>
+              <p className="text-xs text-muted-foreground">
+                Your bank details for this client. These print on this client's invoices so they know where to send payment. Visible to admins only.
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="remit_bank_name">Bank name</Label>
+                  <Input id="remit_bank_name" value={form.remit_bank_name} onChange={(e) => set("remit_bank_name", e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Account type</Label>
+                  <Select
+                    value={form.remit_account_type || "__none"}
+                    onValueChange={(v) => set("remit_account_type", (v === "__none" ? "" : v) as FormState["remit_account_type"])}
+                  >
+                    <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none">Not set</SelectItem>
+                      <SelectItem value="checking">Checking</SelectItem>
+                      <SelectItem value="savings">Savings</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="remit_routing_number">Routing number</Label>
+                  <Input id="remit_routing_number" inputMode="numeric" value={form.remit_routing_number} onChange={(e) => set("remit_routing_number", e.target.value)} />
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="remit_account_number">Account number</Label>
+                  <Input id="remit_account_number" inputMode="numeric" value={form.remit_account_number} onChange={(e) => set("remit_account_number", e.target.value)} />
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="notes">Notes</Label>

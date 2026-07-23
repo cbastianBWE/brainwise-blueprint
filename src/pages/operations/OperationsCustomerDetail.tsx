@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
@@ -30,6 +30,9 @@ const BILLING_LABELS: Record<string, string> = {
 const humanize = (s: string | null | undefined) =>
   (s ?? "").replace(/_/g, " ").trim();
 
+const maskTail = (v: string | null | undefined) =>
+  v ? "••••" + String(v).slice(-4) : "—";
+
 export default function OperationsCustomerDetail() {
   const { id = "" } = useParams();
   const navigate = useNavigate();
@@ -40,6 +43,23 @@ export default function OperationsCustomerDetail() {
   const [applyCreditMax, setApplyCreditMax] = useState<number>(0);
   const [contactDialogOpen, setContactDialogOpen] = useState(false);
   const [editingContact, setEditingContact] = useState<any | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [revealRemit, setRevealRemit] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data: auth } = await opsSupabase.auth.getUser();
+      if (!auth.user?.id) return;
+      const { data } = await opsSupabase
+        .from("users" as any)
+        .select("role")
+        .eq("id", auth.user.id)
+        .maybeSingle();
+      if (!cancelled) setIsAdmin((data as any)?.role === "admin");
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   const today = (() => {
     const d = new Date();
@@ -295,6 +315,25 @@ export default function OperationsCustomerDetail() {
                 <p className="text-sm text-muted-foreground">
                   Time · Total {timeTotals.total} h · Billable {timeTotals.billable} h · Unbilled {timeTotals.unbilled} h
                 </p>
+              )}
+
+              {(c.remit_bank_name || c.remit_account_number || c.remit_routing_number) && (
+                <div className="rounded-md border p-3 space-y-2 text-sm">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium">Payment / Remit-to (prints on this client's invoices)</span>
+                    {isAdmin && (
+                      <Button variant="ghost" size="sm" onClick={() => setRevealRemit((v) => !v)}>
+                        {revealRemit ? "Hide" : "Reveal"}
+                      </Button>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    <div><span className="text-muted-foreground">Bank: </span>{c.remit_bank_name ?? "—"}</div>
+                    <div><span className="text-muted-foreground">Account type: </span><span className="capitalize">{c.remit_account_type ?? "—"}</span></div>
+                    <div><span className="text-muted-foreground">Routing: </span>{isAdmin && revealRemit ? (c.remit_routing_number ?? "—") : maskTail(c.remit_routing_number)}</div>
+                    <div><span className="text-muted-foreground">Account: </span>{isAdmin && revealRemit ? (c.remit_account_number ?? "—") : maskTail(c.remit_account_number)}</div>
+                  </div>
+                </div>
               )}
             </>
           )}

@@ -13,7 +13,13 @@ type PublicDoc = {
   document_type: "invoice" | "estimate";
   purpose?: string;
   document: any;
-  customer: { display_name: string };
+  customer: {
+    display_name: string;
+    remit_bank_name?: string | null;
+    remit_account_type?: string | null;
+    remit_routing_number?: string | null;
+    remit_account_number?: string | null;
+  };
   org: { name: string };
   lines: Array<{ description: string | null; quantity: number | null; unit_price: number | null; line_total: number | null }>;
 };
@@ -164,6 +170,22 @@ function PaidContent({ doc, starting, errorMsg, onPay }: { doc: PublicDoc; start
           <Row label="Amount paid" value={formatMoney(invoice.amount_paid, currency)} />
           <Row label="Balance due" value={formatMoney(invoice.balance_due, currency)} bold />
         </div>
+
+        {(() => {
+          const r = doc.customer;
+          const hasRemit = r?.remit_bank_name || r?.remit_account_number || r?.remit_routing_number;
+          if (!hasRemit) return null;
+          return (
+            <div className="mt-6 rounded-md border p-4 text-sm space-y-1">
+              <p className="font-medium">Pay by bank transfer</p>
+              {r.remit_bank_name && (<div><span className="text-muted-foreground">Bank: </span>{r.remit_bank_name}</div>)}
+              {r.remit_account_type && (<div><span className="text-muted-foreground">Account type: </span><span className="capitalize">{r.remit_account_type}</span></div>)}
+              {r.remit_routing_number && (<div><span className="text-muted-foreground">Routing number: </span>{r.remit_routing_number}</div>)}
+              {r.remit_account_number && (<div><span className="text-muted-foreground">Account number: </span>{r.remit_account_number}</div>)}
+            </div>
+          );
+        })()}
+
 
         <div className="mt-6 flex flex-col items-end gap-2">
           {errorMsg && <p className="text-sm text-destructive">{errorMsg}</p>}
