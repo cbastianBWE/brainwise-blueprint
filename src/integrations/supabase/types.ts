@@ -17022,6 +17022,13 @@ export type Database = {
         Args: { p_content_item_id: string; p_text: string }
         Returns: Json
       }
+      scan_coach_free_year_expiry: {
+        Args: never
+        Returns: {
+          notified: number
+          run_at: string
+        }[]
+      }
       schedule_article: {
         Args: { p_article_id: string; p_publish_at: string; p_reason: string }
         Returns: Json

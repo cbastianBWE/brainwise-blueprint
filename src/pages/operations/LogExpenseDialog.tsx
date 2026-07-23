@@ -23,6 +23,20 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+
+
+async function openReceiptSigned(path: string) {
+  const { data, error } = await opsSupabase.storage
+    .from("operations-receipts")
+    .createSignedUrl(path, 600);
+  if (error || !data?.signedUrl) {
+    toast.error("Could not open receipt");
+    return;
+  }
+  window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+}
+
+
 export type ExpenseRecord = {
   id: string;
   date: string;
@@ -65,6 +79,7 @@ export default function LogExpenseDialog({ open, onOpenChange, projectId, custom
   const [markupPercentage, setMarkupPercentage] = useState<string>("");
   const [notes, setNotes] = useState<string>("");
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
+  const [removeReceipt, setRemoveReceipt] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -108,6 +123,7 @@ export default function LogExpenseDialog({ open, onOpenChange, projectId, custom
       setNotes("");
     }
     setReceiptFile(null);
+    setRemoveReceipt(false);
     setError(null);
   }, [open, expense]);
 
@@ -181,6 +197,9 @@ export default function LogExpenseDialog({ open, onOpenChange, projectId, custom
           replacedOldPath = expense.receipt_storage_path;
         }
         receipt_storage_path = path;
+      } else if (isEdit && removeReceipt && expense?.receipt_storage_path) {
+        replacedOldPath = expense.receipt_storage_path;
+        receipt_storage_path = null;
       }
 
       if (isEdit && expense) {
@@ -233,6 +252,7 @@ export default function LogExpenseDialog({ open, onOpenChange, projectId, custom
 
       queryClient.invalidateQueries({ queryKey: ["ops", "project-expenses", projectId] });
       queryClient.invalidateQueries({ queryKey: ["ops", "project-expense-rollup", projectId] });
+      queryClient.invalidateQueries({ queryKey: ["ops", "expenses-all"] });
       onOpenChange(false);
     } catch (err: any) {
       toast.error(err?.message ?? (isEdit ? "Failed to update expense" : "Failed to log expense"));
@@ -373,12 +393,46 @@ export default function LogExpenseDialog({ open, onOpenChange, projectId, custom
 
           <div className="space-y-2">
             <Label htmlFor="receipt">Receipt</Label>
+
+            {isEdit && expense?.receipt_storage_path && !removeReceipt && !receiptFile && (
+              <div className="flex items-center justify-between rounded-md border p-2 text-sm">
+                <span className="text-muted-foreground">A receipt is attached.</span>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => openReceiptSigned(expense.receipt_storage_path!)}
+                  >
+                    View
+                  </Button>
+                  <Button type="button" variant="ghost" size="sm" onClick={() => setRemoveReceipt(true)}>
+                    Remove
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {isEdit && removeReceipt && !receiptFile && (
+              <div className="flex items-center justify-between rounded-md border border-destructive/40 bg-destructive/5 p-2 text-sm">
+                <span className="text-destructive">Receipt will be removed when you save.</span>
+                <Button type="button" variant="ghost" size="sm" onClick={() => setRemoveReceipt(false)}>
+                  Undo
+                </Button>
+              </div>
+            )}
+
             <Input
               id="receipt"
               type="file"
               accept="image/*,application/pdf"
               onChange={(e) => setReceiptFile(e.target.files?.[0] ?? null)}
             />
+            <p className="text-xs text-muted-foreground">
+              {isEdit && expense?.receipt_storage_path
+                ? "Choosing a file replaces the attached receipt."
+                : "Attach a PDF or image."}
+            </p>
           </div>
 
           <div className="space-y-2">

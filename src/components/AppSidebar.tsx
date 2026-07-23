@@ -146,6 +146,7 @@ const crmNav: NavItem[] = [
 const operationsNav: NavItem[] = [
   { title: "Customers", url: "/operations/customers", icon: Users2, sectionHeader: "Operations" },
   { title: "My Time", url: "/operations/my-time", icon: Clock },
+  { title: "Expenses", url: "/operations/expenses", icon: Receipt },
   { title: "Items", url: "/operations/items", icon: Library },
   { title: "Invoices", url: "/operations/invoices", icon: Receipt },
   { title: "Estimates", url: "/operations/estimates", icon: FileText },

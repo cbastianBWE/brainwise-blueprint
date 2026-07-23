@@ -137,6 +137,7 @@ import OperationsRecurringInvoices from "./pages/operations/OperationsRecurringI
 import OperationsRecurringInvoiceDetail from "./pages/operations/OperationsRecurringInvoiceDetail";
 import RecurringInvoiceForm from "./pages/operations/RecurringInvoiceForm";
 import OperationsReports from "./pages/operations/OperationsReports";
+import OperationsExpenses from "./pages/operations/OperationsExpenses";
 import OperationsDashboard from "./pages/operations/OperationsDashboard";
 import OperationsSettings from "./pages/operations/OperationsSettings";
 import OperationsImport from "./pages/operations/OperationsImport";
@@ -367,6 +368,7 @@ const App = () => (
                 <Route path="/operations/recurring-invoices/:id/edit" element={<RecurringInvoiceForm />} />
                 <Route path="/operations/recurring-invoices/:id" element={<OperationsRecurringInvoiceDetail />} />
                 <Route path="/operations/projects/:id" element={<OperationsProjectDetail />} />
+                <Route path="/operations/expenses" element={<OperationsExpenses />} />
                 <Route path="/operations/reports" element={<OperationsReports />} />
                 <Route path="/operations/settings" element={<OperationsSettings />} />
                 <Route path="/operations/import" element={<OperationsImport />} />

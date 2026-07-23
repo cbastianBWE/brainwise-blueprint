@@ -19,7 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Pencil, Plus, FileText, Trash2, Play, Square, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { Pencil, Plus, FileText, Trash2, Play, Square, X, ChevronLeft, ChevronRight, Receipt, Paperclip } from "lucide-react";
 import { formatMoney } from "./_shared";
 import ProjectFormDialog, { ProjectRecord } from "./ProjectFormDialog";
 import TaskFormDialog, { TaskRecord } from "./TaskFormDialog";
@@ -31,6 +31,17 @@ import DurationPicker from "./DurationPicker";
 
 const toISODate = (d: Date) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
+async function openReceipt(path: string) {
+  const { data, error } = await opsSupabase.storage
+    .from("operations-receipts")
+    .createSignedUrl(path, 600);
+  if (error || !data?.signedUrl) {
+    toast.error("Could not open receipt");
+    return;
+  }
+  window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+}
 
 const startOfWeekMon = (d: Date) => {
   const x = new Date(d);
@@ -932,6 +943,7 @@ export default function OperationsProjectDetail() {
                   <TableHead className="text-right">Amount</TableHead>
                   <TableHead>Billable</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>Receipt</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -942,8 +954,31 @@ export default function OperationsProjectDetail() {
                     <TableCell>{row.expense_categories?.name ?? "—"}</TableCell>
                     <TableCell>{row.vendor_name ?? "—"}</TableCell>
                     <TableCell className="text-right">{formatMoney(row.amount, row.currency_code)}</TableCell>
-                    <TableCell>{row.is_billable ? "Yes" : "No"}</TableCell>
+                  <TableCell>{row.is_billable ? "Yes" : "No"}</TableCell>
                     <TableCell>{row.is_invoiced ? "Invoiced" : "Unbilled"}</TableCell>
+                    <TableCell>
+                      {row.receipt_storage_path ? (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          aria-label="View receipt"
+                          onClick={() => openReceipt(row.receipt_storage_path)}
+                        >
+                          <Receipt className="h-4 w-4 text-green-600" />
+                        </Button>
+                      ) : !row.is_invoiced ? (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          aria-label="Attach receipt"
+                          onClick={() => { setEditingExpense(row as ExpenseRecord); setLogExpenseOpen(true); }}
+                        >
+                          <Paperclip className="h-4 w-4 text-muted-foreground" />
+                        </Button>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
+                    </TableCell>
                     <TableCell className="text-right">
                       {!row.is_invoiced && (
                         <div className="flex justify-end gap-1">
