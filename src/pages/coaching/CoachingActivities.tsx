@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Loader2, Compass, Lock, History, Search, Send, RotateCcw, Sparkles, ChevronDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -34,6 +34,31 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import TransitionMap from "@/components/coaching/TransitionMap";
+import { useSubscriptionPlans } from "@/hooks/useSubscriptionPlans";
+import { useAccountRole } from "@/lib/accountRoles";
+
+async function startProductCheckout(productTier: string): Promise<void> {
+  const { data, error } = await supabase.functions.invoke("create-checkout", {
+    body: { mode: "product_purchase", product_tier: productTier },
+  });
+  if (error || !data?.url) {
+    toast.error("Couldn't start checkout. Please try again.");
+    return;
+  }
+  window.location.href = data.url as string;
+}
+
+// activity_tier ('foundational'|'typical'|'advanced') -> product tier key
+function coachingProductTier(activityTier: string | null | undefined): string | null {
+  const t = (activityTier || "").toLowerCase();
+  if (t === "foundational" || t === "typical" || t === "advanced") return `coaching_${t}`;
+  return null;
+}
+
+function capTier(t: string | null | undefined): string {
+  if (!t) return "this tier";
+  return t.charAt(0).toUpperCase() + t.slice(1).toLowerCase();
+}
 
 
 type Tier = "Foundational" | "Typical" | "Advanced" | string;
