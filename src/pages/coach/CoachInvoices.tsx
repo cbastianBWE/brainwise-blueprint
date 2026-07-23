@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { useSubscriptionPlans } from "@/hooks/useSubscriptionPlans";
 import { format, parseISO, isAfter, isBefore, startOfDay, endOfDay } from "date-fns";
 import { jsPDF } from "jspdf";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
