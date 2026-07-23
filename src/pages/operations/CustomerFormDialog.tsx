@@ -219,6 +219,14 @@ export default function CustomerFormDialog({ open, onOpenChange, customer }: Pro
       notes: trimOrNull(form.notes),
       tax_id: trimOrNull(form.tax_id),
       billing_address,
+      ...(isAdmin
+        ? {
+            remit_bank_name: trimOrNull(form.remit_bank_name),
+            remit_account_type: form.remit_account_type || null,
+            remit_routing_number: trimOrNull(form.remit_routing_number),
+            remit_account_number: trimOrNull(form.remit_account_number),
+          }
+        : {}),
     };
 
     try {
