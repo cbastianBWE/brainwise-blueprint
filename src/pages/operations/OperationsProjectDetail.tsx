@@ -25,6 +25,7 @@ import ProjectFormDialog, { ProjectRecord } from "./ProjectFormDialog";
 import TaskFormDialog, { TaskRecord } from "./TaskFormDialog";
 import LogTimeDialog, { TimeEntryRecord } from "./LogTimeDialog";
 import LogExpenseDialog, { ExpenseRecord } from "./LogExpenseDialog";
+import ReceiptViewerDialog from "./ReceiptViewerDialog";
 import AddChargeDialog from "./AddChargeDialog";
 import TeamMemberDialog, { TeamMemberDialogMember } from "./TeamMemberDialog";
 import DurationPicker from "./DurationPicker";
@@ -32,16 +33,6 @@ import DurationPicker from "./DurationPicker";
 const toISODate = (d: Date) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 
-async function openReceipt(path: string) {
-  const { data, error } = await opsSupabase.storage
-    .from("operations-receipts")
-    .createSignedUrl(path, 600);
-  if (error || !data?.signedUrl) {
-    toast.error("Could not open receipt");
-    return;
-  }
-  window.open(data.signedUrl, "_blank", "noopener,noreferrer");
-}
 
 const startOfWeekMon = (d: Date) => {
   const x = new Date(d);
