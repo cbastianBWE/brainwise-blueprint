@@ -332,6 +332,11 @@ export default function CoachingActivityRunner() {
   const restart = useCallback(
     async (reuseAnswers: boolean) => {
       if (!session || !user || !activityId) return;
+      if (repurchase) {
+        const productTier = coachingProductTier(repurchase.tier);
+        if (productTier) startProductCheckout(productTier);
+        return;
+      }
       const base: Responses = reuseAnswers
         ? (() => {
             const { analysis, chat, ...rest } = session.responses || {};
@@ -343,7 +348,7 @@ export default function CoachingActivityRunner() {
         .from("coaching_activity_sessions")
         .update({ status: "abandoned" })
         .eq("id", session.id);
-      const { data: created } = await supabase
+      const { data: created, error: insErr } = await supabase
         .from("coaching_activity_sessions")
         .insert({
           user_id: user.id,
@@ -355,11 +360,19 @@ export default function CoachingActivityRunner() {
         })
         .select("*")
         .single();
+      if (insErr) {
+        if ((insErr.message || "").includes("activity_completed_repurchase_required")) {
+          setRepurchase({ tier: (activity?.tier || "").toLowerCase() });
+          return;
+        }
+        toast.error("Couldn't restart the activity.");
+        return;
+      }
       if (created) {
         setSession(created as Session);
       }
     },
-    [session, user, activityId],
+    [session, user, activityId, repurchase, activity],
   );
 
   const shareSnapshot = useCallback(async () => {
