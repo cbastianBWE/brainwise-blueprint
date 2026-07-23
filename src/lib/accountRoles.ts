@@ -14,7 +14,6 @@ export const CORPORATE_ROLES = [
 
 export const BYPASS_ROLES = [
   "brainwise_super_admin",
-  "coach",
 ] as const;
 
 export type CorporateRole = (typeof CORPORATE_ROLES)[number];
