@@ -2587,6 +2587,30 @@ export type Database = {
           },
         ]
       }
+      coach_order_notes: {
+        Row: {
+          coach_note: string
+          coach_user_id: string
+          consumed_at: string | null
+          created_at: string
+          id: string
+        }
+        Insert: {
+          coach_note: string
+          coach_user_id: string
+          consumed_at?: string | null
+          created_at?: string
+          id?: string
+        }
+        Update: {
+          coach_note?: string
+          coach_user_id?: string
+          consumed_at?: string | null
+          created_at?: string
+          id?: string
+        }
+        Relationships: []
+      }
       coach_pending_bulk_batches: {
         Row: {
           coach_user_id: string
@@ -3572,7 +3596,9 @@ export type Database = {
       comp_coupons: {
         Row: {
           applicable_account_types: string[] | null
+          applicable_coach_user_ids: string[] | null
           applicable_instrument_ids: string[] | null
+          applicable_report_types: string[] | null
           archive_reason: string | null
           archived_at: string | null
           created_at: string
@@ -3585,12 +3611,15 @@ export type Database = {
           max_redemptions: number | null
           notes: string | null
           percent_off: number
+          promo_code: string | null
           redeem_by: string
           stripe_coupon_id: string
         }
         Insert: {
           applicable_account_types?: string[] | null
+          applicable_coach_user_ids?: string[] | null
           applicable_instrument_ids?: string[] | null
+          applicable_report_types?: string[] | null
           archive_reason?: string | null
           archived_at?: string | null
           created_at?: string
@@ -3603,12 +3632,15 @@ export type Database = {
           max_redemptions?: number | null
           notes?: string | null
           percent_off: number
+          promo_code?: string | null
           redeem_by: string
           stripe_coupon_id: string
         }
         Update: {
           applicable_account_types?: string[] | null
+          applicable_coach_user_ids?: string[] | null
           applicable_instrument_ids?: string[] | null
+          applicable_report_types?: string[] | null
           archive_reason?: string | null
           archived_at?: string | null
           created_at?: string
@@ -3621,6 +3653,7 @@ export type Database = {
           max_redemptions?: number | null
           notes?: string | null
           percent_off?: number
+          promo_code?: string | null
           redeem_by?: string
           stripe_coupon_id?: string
         }
@@ -10852,6 +10885,116 @@ export type Database = {
           },
         ]
       }
+      report_orders: {
+        Row: {
+          amount_cents: number
+          client_email: string | null
+          client_user_id: string | null
+          coach_user_id: string
+          created_at: string
+          created_by: string | null
+          currency: string
+          generated_at: string | null
+          generated_profile_id: string | null
+          id: string
+          instrument_id: string | null
+          order_type: string
+          organization_id: string | null
+          paid_at: string | null
+          payer: string
+          relationship_mode: string | null
+          release_now: boolean
+          report_label: string | null
+          status: string
+          stripe_checkout_session_id: string | null
+          stripe_payment_intent_id: string | null
+          stripe_price_id: string
+          subject_user_ids: string[]
+          team_id: string | null
+        }
+        Insert: {
+          amount_cents: number
+          client_email?: string | null
+          client_user_id?: string | null
+          coach_user_id: string
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          generated_at?: string | null
+          generated_profile_id?: string | null
+          id?: string
+          instrument_id?: string | null
+          order_type: string
+          organization_id?: string | null
+          paid_at?: string | null
+          payer?: string
+          relationship_mode?: string | null
+          release_now?: boolean
+          report_label?: string | null
+          status?: string
+          stripe_checkout_session_id?: string | null
+          stripe_payment_intent_id?: string | null
+          stripe_price_id: string
+          subject_user_ids: string[]
+          team_id?: string | null
+        }
+        Update: {
+          amount_cents?: number
+          client_email?: string | null
+          client_user_id?: string | null
+          coach_user_id?: string
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          generated_at?: string | null
+          generated_profile_id?: string | null
+          id?: string
+          instrument_id?: string | null
+          order_type?: string
+          organization_id?: string | null
+          paid_at?: string | null
+          payer?: string
+          relationship_mode?: string | null
+          release_now?: boolean
+          report_label?: string | null
+          status?: string
+          stripe_checkout_session_id?: string | null
+          stripe_payment_intent_id?: string | null
+          stripe_price_id?: string
+          subject_user_ids?: string[]
+          team_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "report_orders_client_user_id_fkey"
+            columns: ["client_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "report_orders_client_user_id_fkey"
+            columns: ["client_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "report_orders_client_user_id_fkey"
+            columns: ["client_user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "report_orders_client_user_id_fkey"
+            columns: ["client_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       resource_access_grants: {
         Row: {
           created_at: string
@@ -12851,6 +12994,9 @@ export type Database = {
           account_type: string | null
           avatar_asset_id: string | null
           bio: string | null
+          coach_billing_exempt: boolean
+          coach_subscription_free_until: string | null
+          coach_subscription_tier: string | null
           conversion_token: string | null
           conversion_token_expires_at: string | null
           coupon_amount: number | null
@@ -12895,6 +13041,9 @@ export type Database = {
           account_type?: string | null
           avatar_asset_id?: string | null
           bio?: string | null
+          coach_billing_exempt?: boolean
+          coach_subscription_free_until?: string | null
+          coach_subscription_tier?: string | null
           conversion_token?: string | null
           conversion_token_expires_at?: string | null
           coupon_amount?: number | null
@@ -12939,6 +13088,9 @@ export type Database = {
           account_type?: string | null
           avatar_asset_id?: string | null
           bio?: string | null
+          coach_billing_exempt?: boolean
+          coach_subscription_free_until?: string | null
+          coach_subscription_tier?: string | null
           conversion_token?: string | null
           conversion_token_expires_at?: string | null
           coupon_amount?: number | null
@@ -14426,6 +14578,23 @@ export type Database = {
         Returns: boolean
       }
       bw_is_team_leader_of: { Args: { p_member: string }; Returns: boolean }
+      bw_list_my_report_orders: {
+        Args: never
+        Returns: {
+          amount_cents: number
+          client_email: string
+          created_at: string
+          order_id: string
+          order_type: string
+          payer: string
+          relationship_mode: string
+          release_now: boolean
+          report_label: string
+          status: string
+          subject_count: number
+          subject_names: string
+        }[]
+      }
       bw_list_my_reports: {
         Args: never
         Returns: {
@@ -14448,12 +14617,25 @@ export type Database = {
           user_id: string
         }[]
       }
+      bw_list_team_payer_candidates: {
+        Args: { p_subject_user_ids: string[] }
+        Returns: {
+          full_name: string
+          has_email: boolean
+          is_subject: boolean
+          user_id: string
+        }[]
+      }
       bw_paired_profile_subjects: {
         Args: { p_profile: string }
         Returns: {
           full_name: string
           pair_role: string
         }[]
+      }
+      bw_set_coach_comp: {
+        Args: { p_coach: string; p_comped: boolean; p_reason?: string }
+        Returns: Json
       }
       bw_set_report_label: {
         Args: { p_label: string; p_profile: string }
@@ -14493,6 +14675,7 @@ export type Database = {
         Args: { p_content_item_id: string }
         Returns: Json
       }
+      claim_report_order: { Args: { p_order_id: string }; Returns: Json }
       close_chat_session: { Args: { p_session_id: string }; Returns: undefined }
       coach_bulk_link_claim: {
         Args: { p_token: string }
@@ -14628,6 +14811,10 @@ export type Database = {
         Returns: undefined
       }
       complete_lesson: { Args: { p_content_item_id: string }; Returns: Json }
+      complete_report_order: {
+        Args: { p_order_id: string; p_profile_id: string }
+        Returns: boolean
+      }
       compose_notification_email: {
         Args: {
           p_full_name: string
@@ -14787,6 +14974,20 @@ export type Database = {
           p_reason: string
           p_style: string
           p_votes_visible: boolean
+        }
+        Returns: Json
+      }
+      create_report_order: {
+        Args: {
+          p_client_user_id?: string
+          p_instrument_id?: string
+          p_order_type: string
+          p_payer?: string
+          p_relationship_mode?: string
+          p_release_now?: boolean
+          p_report_label?: string
+          p_subject_user_ids: string[]
+          p_team_id?: string
         }
         Returns: Json
       }
@@ -15059,6 +15260,20 @@ export type Database = {
           out_internal_name: string
           out_percent_off: number
           out_stripe_coupon_id: string
+        }[]
+      }
+      get_applicable_report_coupon: {
+        Args: {
+          p_caller_user_id: string
+          p_promo_code?: string
+          p_report_type: string
+        }
+        Returns: {
+          out_coupon_id: string
+          out_internal_name: string
+          out_percent_off: number
+          out_stripe_coupon_id: string
+          out_via: string
         }[]
       }
       get_article_for_reader: { Args: { p_slug: string }; Returns: Json }
@@ -15762,6 +15977,14 @@ export type Database = {
         Returns: Json
       }
       mark_notifications_read: { Args: { p_ids: string[] }; Returns: Json }
+      mark_report_order_paid: {
+        Args: {
+          p_order_id: string
+          p_payment_intent?: string
+          p_session_id?: string
+        }
+        Returns: Json
+      }
       mark_skills_practice_signoff: {
         Args: {
           p_content_item_id: string
@@ -16621,6 +16844,10 @@ export type Database = {
         }
         Returns: Json
       }
+      release_report_order_claim: {
+        Args: { p_order_id: string }
+        Returns: boolean
+      }
       reorder_content_items: {
         Args: { p_module_id: string; p_ordered_ids: string[]; p_reason: string }
         Returns: Json
@@ -16716,6 +16943,7 @@ export type Database = {
         Args: { p_reason: string; p_version_id: string }
         Returns: Json
       }
+      revert_expired_coach_free_years: { Args: never; Returns: number }
       revoke_all_trusted_devices: {
         Args: { p_reason: string; p_user_id: string }
         Returns: number
