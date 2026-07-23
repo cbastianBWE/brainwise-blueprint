@@ -328,15 +328,15 @@ export default function InstrumentSelection({ onSelect }: Props) {
     return premiumUuids.some(uuid => selfPayCoachInstrumentIds.has(uuid));
   };
 
-  const getSelfPayTotal = () => {
+  const getPerAssessmentPrice = (): number | null => {
     const perAssessmentPlan = subscriptionPlans.find(p => p.tier === "individual");
-    const price = perAssessmentPlan?.price_usd ?? 29.99;
-    return selfPayCoachInstrumentIds.size * price;
+    return perAssessmentPlan?.price_usd ?? null;
   };
 
-  const getPerAssessmentPrice = () => {
-    const perAssessmentPlan = subscriptionPlans.find(p => p.tier === "individual");
-    return perAssessmentPlan?.price_usd ?? 29.99;
+  const getSelfPayTotal = (): number | null => {
+    const price = getPerAssessmentPrice();
+    if (price == null) return null;
+    return selfPayCoachInstrumentIds.size * price;
   };
 
   const handleSelfPayPerAssessment = async () => {
