@@ -818,6 +818,7 @@ export default function AiChat() {
             creditBalance={usage.credit_balance ?? 0}
             subscriptionActive={usage.subscription_active !== false}
             premiumLimit={limitsFor(profile?.account_type === "coach" ? "coach_premium" : "premium")?.aiCoachingLimit ?? 0}
+            canBuyChatPack={canBuyChatPack}
           />
         ) : (
           <div className="space-y-2 shrink-0">
