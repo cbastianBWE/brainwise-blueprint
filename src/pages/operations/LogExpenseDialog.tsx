@@ -123,6 +123,7 @@ export default function LogExpenseDialog({ open, onOpenChange, projectId, custom
       setNotes("");
     }
     setReceiptFile(null);
+    setRemoveReceipt(false);
     setError(null);
   }, [open, expense]);
 
