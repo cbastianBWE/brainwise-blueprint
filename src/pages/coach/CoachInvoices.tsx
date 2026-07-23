@@ -285,9 +285,10 @@ export default function CoachInvoices() {
     y += 7;
 
     doc.setFont("helvetica", "normal");
+    const perUnit = tx.total_amount / Math.max(tx.instruments.length, 1);
     tx.instruments.forEach((name) => {
       doc.text(name, 14, y);
-      doc.text(`$${PRICE_PER_INSTRUMENT.toFixed(2)}`, 150, y);
+      doc.text(`$${perUnit.toFixed(2)}`, 150, y);
       y += 7;
     });
 
