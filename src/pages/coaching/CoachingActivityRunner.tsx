@@ -64,6 +64,24 @@ import { SuggestionPanel } from "./runner/widgets/SuggestionPanel";
 import { ContentWidget } from "./runner/widgets/ContentWidget";
 import { QaMultimodalWidget } from "./runner/widgets/QaMultimodalWidget";
 import { ScoredFactorsWidget } from "./runner/widgets/ScoredFactorsWidget";
+import { useSubscriptionPlans } from "@/hooks/useSubscriptionPlans";
+
+async function startProductCheckout(productTier: string): Promise<void> {
+  const { data, error } = await supabase.functions.invoke("create-checkout", {
+    body: { mode: "product_purchase", product_tier: productTier },
+  });
+  if (error || !data?.url) {
+    toast.error("Couldn't start checkout. Please try again.");
+    return;
+  }
+  window.location.href = data.url as string;
+}
+
+function coachingProductTier(activityTier: string | null | undefined): string | null {
+  const t = (activityTier || "").toLowerCase();
+  if (t === "foundational" || t === "typical" || t === "advanced") return `coaching_${t}`;
+  return null;
+}
 
 
 
@@ -91,6 +109,8 @@ export default function CoachingActivityRunner() {
   const [existingShare, setExistingShare] = useState<{ id: string; mode: string } | null>(null);
   const [alwaysShare, setAlwaysShare] = useState(false);
   const [accessDenial, setAccessDenial] = useState<string | null>(null);
+  const [repurchase, setRepurchase] = useState<{ tier: string } | null>(null);
+  const { oneTimePrice } = useSubscriptionPlans();
 
 
   const freshHandledRef = useRef(false);
@@ -127,6 +147,29 @@ export default function CoachingActivityRunner() {
       }
       setAccessDenial(null);
 
+      // Completable-once gate: a finished paid-tier activity cannot be re-run until
+      // the tier is re-purchased. Show the completed run read-only instead of starting a new one.
+      const { data: runStateData } = await supabase.rpc(
+        "coaching_activity_run_state" as any,
+        { p_activity_id: activityId },
+      );
+      const rs = Array.isArray(runStateData) ? runStateData[0] : (runStateData as any);
+      if (rs?.locked) {
+        setRepurchase({ tier: (rs.activity_tier || "").toLowerCase() });
+        if (rs.latest_completed_session_id) {
+          const { data: completed } = await supabase
+            .from("coaching_activity_sessions")
+            .select("*")
+            .eq("id", rs.latest_completed_session_id)
+            .maybeSingle();
+          if (completed) setSession(completed as Session);
+        }
+        setLoading(false);
+        if (cancelled) return;
+        return;
+      }
+      setRepurchase(null);
+
       // Find or create session
       let s: Session | null = null;
       const doFresh = forceFresh && !freshHandledRef.current;
@@ -155,7 +198,7 @@ export default function CoachingActivityRunner() {
         return;
       }
       if (!s) {
-        const { data: created } = await supabase
+        const { data: created, error: insErr } = await supabase
           .from("coaching_activity_sessions")
           .insert({
             user_id: user.id,
@@ -166,6 +209,14 @@ export default function CoachingActivityRunner() {
           })
           .select("*")
           .single();
+        if (insErr) {
+          if ((insErr.message || "").includes("activity_completed_repurchase_required")) {
+            setRepurchase({ tier: (act?.tier || "").toLowerCase() });
+            setLoading(false);
+            return;
+          }
+          throw insErr;
+        }
         s = created as Session;
       }
       if (cancelled) return;
@@ -281,6 +332,11 @@ export default function CoachingActivityRunner() {
   const restart = useCallback(
     async (reuseAnswers: boolean) => {
       if (!session || !user || !activityId) return;
+      if (repurchase) {
+        const productTier = coachingProductTier(repurchase.tier);
+        if (productTier) startProductCheckout(productTier);
+        return;
+      }
       const base: Responses = reuseAnswers
         ? (() => {
             const { analysis, chat, ...rest } = session.responses || {};
@@ -292,7 +348,7 @@ export default function CoachingActivityRunner() {
         .from("coaching_activity_sessions")
         .update({ status: "abandoned" })
         .eq("id", session.id);
-      const { data: created } = await supabase
+      const { data: created, error: insErr } = await supabase
         .from("coaching_activity_sessions")
         .insert({
           user_id: user.id,
@@ -304,11 +360,19 @@ export default function CoachingActivityRunner() {
         })
         .select("*")
         .single();
+      if (insErr) {
+        if ((insErr.message || "").includes("activity_completed_repurchase_required")) {
+          setRepurchase({ tier: (activity?.tier || "").toLowerCase() });
+          return;
+        }
+        toast.error("Couldn't restart the activity.");
+        return;
+      }
       if (created) {
         setSession(created as Session);
       }
     },
-    [session, user, activityId],
+    [session, user, activityId, repurchase, activity],
   );
 
   const shareSnapshot = useCallback(async () => {
@@ -651,10 +715,33 @@ export default function CoachingActivityRunner() {
               <CardTitle className="text-base">Next steps</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <div className="flex flex-wrap gap-2">
-                <Button variant="outline" onClick={() => restart(false)}>Start fresh</Button>
-                <Button variant="outline" onClick={() => restart(true)}>Reuse my answers</Button>
-              </div>
+              {repurchase ? (
+                (() => {
+                  const productTier = coachingProductTier(repurchase.tier);
+                  const price = productTier ? oneTimePrice(productTier) : null;
+                  const label = repurchase.tier
+                    ? repurchase.tier.charAt(0).toUpperCase() + repurchase.tier.slice(1)
+                    : "this tier";
+                  return (
+                    <div className="space-y-3">
+                      <p className="text-sm text-muted-foreground">
+                        You've completed this activity. Re-purchase {label} to run it again — your finished work above stays saved.
+                      </p>
+                      <Button
+                        onClick={() => productTier && startProductCheckout(productTier)}
+                        disabled={!productTier}
+                      >
+                        Re-purchase {label}{price ? ` — $${price}` : ""}
+                      </Button>
+                    </div>
+                  );
+                })()
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  <Button variant="outline" onClick={() => restart(false)}>Start fresh</Button>
+                  <Button variant="outline" onClick={() => restart(true)}>Reuse my answers</Button>
+                </div>
+              )}
               {coachUserId && (
                 <div className="space-y-3 border-t pt-3">
                   <div className="flex flex-wrap items-center gap-2">

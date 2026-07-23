@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Loader2, Compass, Lock, History, Search, Send, RotateCcw, Sparkles, ChevronDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -34,6 +34,31 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import TransitionMap from "@/components/coaching/TransitionMap";
+import { useSubscriptionPlans } from "@/hooks/useSubscriptionPlans";
+import { useAccountRole } from "@/lib/accountRoles";
+
+async function startProductCheckout(productTier: string): Promise<void> {
+  const { data, error } = await supabase.functions.invoke("create-checkout", {
+    body: { mode: "product_purchase", product_tier: productTier },
+  });
+  if (error || !data?.url) {
+    toast.error("Couldn't start checkout. Please try again.");
+    return;
+  }
+  window.location.href = data.url as string;
+}
+
+// activity_tier ('foundational'|'typical'|'advanced') -> product tier key
+function coachingProductTier(activityTier: string | null | undefined): string | null {
+  const t = (activityTier || "").toLowerCase();
+  if (t === "foundational" || t === "typical" || t === "advanced") return `coaching_${t}`;
+  return null;
+}
+
+function capTier(t: string | null | undefined): string {
+  if (!t) return "this tier";
+  return t.charAt(0).toUpperCase() + t.slice(1).toLowerCase();
+}
 
 
 type Tier = "Foundational" | "Typical" | "Advanced" | string;
@@ -129,18 +154,23 @@ function CardMedia({ activity }: { activity: Activity }) {
 }
 
 
+
 function BriefingDialog({
   activity,
   access,
   inProgress,
   open,
   onOpenChange,
+  canBuyProducts,
+  priceForTier,
 }: {
   activity: Activity | null;
   access: AccessInfo | undefined;
   inProgress: boolean;
   open: boolean;
   onOpenChange: (v: boolean) => void;
+  canBuyProducts: boolean;
+  priceForTier: (activityTier: string | null) => number | null;
 }) {
   const navigate = useNavigate();
   if (!activity) return null;
@@ -184,6 +214,24 @@ function BriefingDialog({
     }
   } else if (access.reason === "ptp_required") {
     footer = <Button onClick={() => go("/assessment")}>Take the PTP first</Button>;
+  } else if (access.reason === "upgrade_required" && canBuyProducts && coachingProductTier(access.activity_tier)) {
+    const productTier = coachingProductTier(access.activity_tier)!;
+    const price = priceForTier(access.activity_tier);
+    footer = (
+      <Button onClick={() => { close(); startProductCheckout(productTier); }}>
+        Unlock {capTier(access.activity_tier)}{price ? ` — $${price}` : ""}
+      </Button>
+    );
+  } else if (access.reason === "entitlement_required" && canBuyProducts) {
+    const price = priceForTier("foundational");
+    footer = (
+      <>
+        <Button variant="outline" onClick={() => go("/assessment")}>Take the PTP</Button>
+        <Button onClick={() => { close(); startProductCheckout("coaching_foundational"); }}>
+          Unlock Foundational{price ? ` — $${price}` : ""}
+        </Button>
+      </>
+    );
   } else if (
     access.reason === "upgrade_required" ||
     access.reason === "subscription_required"
@@ -192,6 +240,7 @@ function BriefingDialog({
   } else {
     footer = <Button disabled>Not available</Button>;
   }
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -262,12 +311,16 @@ function CoachingActivityCard({
   inProgress,
   onOpenBriefing,
   onResume,
+  canBuyProducts,
+  priceForTier,
 }: {
   activity: Activity;
   access: AccessInfo | undefined;
   inProgress: boolean;
   onOpenBriefing: () => void;
   onResume: () => void;
+  canBuyProducts: boolean;
+  priceForTier: (activityTier: string | null) => number | null;
 }) {
   const outcome =
     (activity.definition && typeof activity.definition === "object" &&
@@ -307,6 +360,26 @@ function CoachingActivityCard({
         Take the PTP first
       </Button>
     );
+  } else if (reason === "upgrade_required" && canBuyProducts && coachingProductTier(access.activity_tier)) {
+    const productTier = coachingProductTier(access.activity_tier)!;
+    const price = priceForTier(access.activity_tier);
+    action = (
+      <Button size="sm" onClick={() => startProductCheckout(productTier)}>
+        Unlock {capTier(access.activity_tier)}{price ? ` — $${price}` : ""}
+      </Button>
+    );
+  } else if (reason === "entitlement_required" && canBuyProducts) {
+    const price = priceForTier("foundational");
+    action = (
+      <div className="flex flex-col gap-2">
+        <Button size="sm" onClick={() => startProductCheckout("coaching_foundational")}>
+          Unlock Foundational{price ? ` — $${price}` : ""}
+        </Button>
+        <Button size="sm" variant="outline" onClick={onOpenBriefing}>
+          Take the PTP
+        </Button>
+      </div>
+    );
   } else if (reason === "upgrade_required" || reason === "subscription_required") {
     action = (
       <Button size="sm" variant="outline" onClick={onOpenBriefing}>
@@ -318,6 +391,7 @@ function CoachingActivityCard({
       <Button size="sm" variant="outline" disabled>Not available</Button>
     );
   }
+
 
   return (
     <Card className={`overflow-hidden ${locked ? "opacity-75" : ""}`}>
@@ -743,8 +817,32 @@ export default function CoachingActivities() {
   const [reloadKey, setReloadKey] = useState(0);
   const [reviewOpen, setReviewOpen] = useState(false);
   const [freshOpen, setFreshOpen] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { oneTimePrice } = useSubscriptionPlans();
+  const { isCorp, isCompanyAdmin, isOrgAdmin } = useAccountRole();
+  const canBuyProducts = !isCorp && !isCompanyAdmin && !isOrgAdmin;
+
+  const priceForTier = useCallback(
+    (activityTier: string | null) => {
+      const pt = coachingProductTier(activityTier);
+      return pt ? oneTimePrice(pt) : null;
+    },
+    [oneTimePrice],
+  );
 
   const reload = useCallback(() => setReloadKey((k) => k + 1), []);
+
+  useEffect(() => {
+    if (searchParams.get("checkout") === "success") {
+      toast.success("Purchase complete — your coaching is unlocked.");
+      reload();
+      const next = new URLSearchParams(searchParams);
+      next.delete("checkout");
+      next.delete("product");
+      setSearchParams(next, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   useEffect(() => {
     if (!user) return;
@@ -953,6 +1051,8 @@ export default function CoachingActivities() {
           inProgress={inProgressSet.has(a.id)}
           onOpenBriefing={() => setOpenActivity(a)}
           onResume={() => navigate(`/coaching/${a.id}`)}
+          canBuyProducts={canBuyProducts}
+          priceForTier={priceForTier}
         />
       ))}
     </div>
@@ -1130,6 +1230,8 @@ export default function CoachingActivities() {
                   inProgress={inProgressSet.has(a.id)}
                   onOpenBriefing={() => setOpenActivity(a)}
                   onResume={() => navigate(`/coaching/${a.id}`)}
+                  canBuyProducts={canBuyProducts}
+                  priceForTier={priceForTier}
                 />
               ))}
             </div>
@@ -1145,6 +1247,8 @@ export default function CoachingActivities() {
         onOpenChange={(v) => {
           if (!v) setOpenActivity(null);
         }}
+        canBuyProducts={canBuyProducts}
+        priceForTier={priceForTier}
       />
 
       <ReviewActionPlanDialog open={reviewOpen} onOpenChange={setReviewOpen} />

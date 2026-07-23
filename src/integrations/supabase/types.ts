@@ -15033,6 +15033,16 @@ export type Database = {
           reason: string
         }[]
       }
+      coaching_activity_run_state: {
+        Args: { p_activity_id: string }
+        Returns: {
+          activity_tier: string
+          allowed: boolean
+          latest_completed_session_id: string
+          locked: boolean
+          reason: string
+        }[]
+      }
       coaching_current_run: { Args: never; Returns: number }
       coaching_fresh_start_rotate: {
         Args: { p_baseline: Json; p_user: string }
