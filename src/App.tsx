@@ -368,6 +368,7 @@ const App = () => (
                 <Route path="/operations/recurring-invoices/:id/edit" element={<RecurringInvoiceForm />} />
                 <Route path="/operations/recurring-invoices/:id" element={<OperationsRecurringInvoiceDetail />} />
                 <Route path="/operations/projects/:id" element={<OperationsProjectDetail />} />
+                <Route path="/operations/expenses" element={<OperationsExpenses />} />
                 <Route path="/operations/reports" element={<OperationsReports />} />
                 <Route path="/operations/settings" element={<OperationsSettings />} />
                 <Route path="/operations/import" element={<OperationsImport />} />
