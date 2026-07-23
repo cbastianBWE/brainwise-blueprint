@@ -176,6 +176,32 @@ function BriefingDialog({
     briefing?.description || activity.desired_outcome || activity.title;
   const outcomes = briefing?.learning_outcomes || [];
 
+function BriefingDialog({
+  activity,
+  access,
+  inProgress,
+  open,
+  onOpenChange,
+  canBuyProducts,
+  priceForTier,
+}: {
+  activity: Activity | null;
+  access: AccessInfo | undefined;
+  inProgress: boolean;
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  canBuyProducts: boolean;
+  priceForTier: (activityTier: string | null) => number | null;
+}) {
+  const navigate = useNavigate();
+  if (!activity) return null;
+
+  const briefing = getBriefing(activity);
+  const heroSrc = briefing?.hero_image_url || activity.thumbnail_url || null;
+  const description =
+    briefing?.description || activity.desired_outcome || activity.title;
+  const outcomes = briefing?.learning_outcomes || [];
+
   const close = () => onOpenChange(false);
   const go = (to: string) => {
     navigate(to);
@@ -209,6 +235,24 @@ function BriefingDialog({
     }
   } else if (access.reason === "ptp_required") {
     footer = <Button onClick={() => go("/assessment")}>Take the PTP first</Button>;
+  } else if (access.reason === "upgrade_required" && canBuyProducts && coachingProductTier(access.activity_tier)) {
+    const productTier = coachingProductTier(access.activity_tier)!;
+    const price = priceForTier(access.activity_tier);
+    footer = (
+      <Button onClick={() => { close(); startProductCheckout(productTier); }}>
+        Unlock {capTier(access.activity_tier)}{price ? ` — $${price}` : ""}
+      </Button>
+    );
+  } else if (access.reason === "entitlement_required" && canBuyProducts) {
+    const price = priceForTier("foundational");
+    footer = (
+      <>
+        <Button variant="outline" onClick={() => go("/assessment")}>Take the PTP</Button>
+        <Button onClick={() => { close(); startProductCheckout("coaching_foundational"); }}>
+          Unlock Foundational{price ? ` — $${price}` : ""}
+        </Button>
+      </>
+    );
   } else if (
     access.reason === "upgrade_required" ||
     access.reason === "subscription_required"
@@ -217,6 +261,7 @@ function BriefingDialog({
   } else {
     footer = <Button disabled>Not available</Button>;
   }
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
