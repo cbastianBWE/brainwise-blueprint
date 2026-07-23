@@ -52,6 +52,7 @@ export type DocData = {
   balance_due?: number | null;
   notes_to_customer?: string | null;
   terms_and_conditions?: string | null;
+  payment_options?: { bank_total: number; card_total: number } | null;
   lines: DocLine[];
 };
 
