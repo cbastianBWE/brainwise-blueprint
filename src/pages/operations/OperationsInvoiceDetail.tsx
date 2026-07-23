@@ -214,6 +214,7 @@ export default function OperationsInvoiceDetail() {
       balance_due: inv.balance_due,
       notes_to_customer: inv.notes_to_customer,
       terms_and_conditions: inv.terms_and_conditions,
+      payment_options: (kind === "invoice" && cardFeeOn && balanceDue > 0) ? { bank_total: balanceDue, card_total: cardTotal } : null,
       lines: (linesQ.data ?? []).filter((l: any) => l.line_type !== "header"),
     };
     const billTo = {
@@ -303,6 +304,7 @@ export default function OperationsInvoiceDetail() {
           balance_due: inv.balance_due,
           notes_to_customer: inv.notes_to_customer,
           terms_and_conditions: inv.terms_and_conditions,
+          payment_options: (cardFeeOn && balanceDue > 0) ? { bank_total: balanceDue, card_total: cardTotal } : null,
           lines: (linesQ.data ?? []).filter((l: any) => l.line_type !== "header"),
         };
         const billTo = {
