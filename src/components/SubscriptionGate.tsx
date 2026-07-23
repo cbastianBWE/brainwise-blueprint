@@ -17,15 +17,16 @@ interface Props {
    * keep full access. This is intentionally checked before the bypass-role
    * shortcut so coaches can be gated too.
    *
-   * Non-module keys keep prior behavior: corporate resolves via user_has_feature,
-   * individuals gate on Stripe subscription status (ai_chat allows a credit
-   * bypass), and bypass roles (super admin, coach) pass.
+   * Non-module keys: super admin bypasses. Coaches pass everything except
+   * `ai_chat`, which requires Coach Premium or one-time chat credits.
+   * Corporate resolves via user_has_feature; individuals gate on Stripe
+   * subscription status (ai_chat allows a credit bypass).
    */
   feature?: string;
 }
 
 export default function SubscriptionGate({ children, feature }: Props) {
-  const { isBypassAdmin, isCorp, isIndividual, loading: roleLoading } = useAccountRole();
+  const { isBypassAdmin, isSuperAdmin, isCoach, isCoachPremium, isCorp, isIndividual, loading: roleLoading } = useAccountRole();
   const { profile, loading: profileLoading } = useUserProfile();
   const { user } = useAuth();
   const userId = user?.id;
@@ -64,7 +65,21 @@ export default function SubscriptionGate({ children, feature }: Props) {
     return <Navigate to="/dashboard" replace />;
   }
 
-  // Non-module behavior below is unchanged.
+  // Non-module behavior below.
+  if (isSuperAdmin) return <>{children}</>;
+
+  if (isCoach) {
+    // Free coaches administer the PTP only. AI chat is the paid boundary.
+    if (feature === "ai_chat") {
+      const credits = profile?.one_time_chat_credits ?? 0;
+      if (isCoachPremium || credits > 0) return <>{children}</>;
+      return <Navigate to="/settings/plan" replace />;
+    }
+    // Everything else keeps today's behaviour for coaches.
+    return <>{children}</>;
+  }
+
+  // Keep isBypassAdmin referenced for future non-super bypass roles (currently a no-op).
   if (isBypassAdmin) return <>{children}</>;
 
   if (isCorp) {

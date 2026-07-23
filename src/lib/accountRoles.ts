@@ -14,7 +14,6 @@ export const CORPORATE_ROLES = [
 
 export const BYPASS_ROLES = [
   "brainwise_super_admin",
-  "coach",
 ] as const;
 
 export type CorporateRole = (typeof CORPORATE_ROLES)[number];
@@ -42,6 +41,12 @@ export interface AccountRoleInfo {
   isSuperAdmin: boolean;
   isBypassAdmin: boolean;
   /**
+   * True only for a coach on the paid Coach Premium tier. Derived from
+   * users.coach_subscription_tier, NOT subscription_tier, which is not
+   * meaningful for coaches. Use this anywhere a coach needs paid access.
+   */
+  isCoachPremium: boolean;
+  /**
    * True only for super admin. Use this on the assessment-take surface
    * (InstrumentSelection) where coaches MUST be gated like base-tier
    * individuals. Distinct from isBypassAdmin, which also covers coaches
@@ -58,7 +63,7 @@ export interface AccountRoleInfo {
  * Use this hook everywhere role-based branching is needed.
  *
  * - isCorp: any corporate role (employee or admin).
- * - isBypassAdmin: super admin or coach; skips Stripe subscription gating
+ * - isBypassAdmin: super admin only; skips Stripe subscription gating
  *   on AI chat / resources / results surfaces.
  * - canBypassAssessmentPaywall: super admin only; skips the assessment-take
  *   paywall in InstrumentSelection. Coaches are explicitly NOT included so
@@ -80,6 +85,7 @@ export function useAccountRole(): AccountRoleInfo {
       isMentor: false,
       isSuperAdmin: false,
       isBypassAdmin: false,
+      isCoachPremium: false,
       canBypassAssessmentPaywall: false,
       isCompanyAdmin: false,
       isOrgAdmin: false,
@@ -90,6 +96,8 @@ export function useAccountRole(): AccountRoleInfo {
   const isCorp = (CORPORATE_ROLES as readonly string[]).includes(accountType);
   const isBypassAdmin = (BYPASS_ROLES as readonly string[]).includes(accountType);
   const isSuperAdmin = accountType === "brainwise_super_admin";
+  const isCoachPremium =
+    accountType === "coach" && profile?.coach_subscription_tier === "premium";
 
   return {
     accountType,
@@ -100,6 +108,7 @@ export function useAccountRole(): AccountRoleInfo {
     isMentor: profile?.is_mentor === true,
     isSuperAdmin,
     isBypassAdmin,
+    isCoachPremium,
     canBypassAssessmentPaywall: isSuperAdmin,
     isCompanyAdmin: accountType === "company_admin",
     isOrgAdmin: accountType === "org_admin",

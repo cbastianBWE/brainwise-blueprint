@@ -241,9 +241,12 @@ interface MyResultsProps {
 export default function MyResults({ isCoachView = false, adminView = false, targetUserId, preSelectedAssessmentId, coachUserId, permissionLevel = null, viewLabel, defaultInstrumentId, allowHighlighting = true }: MyResultsProps) {
   const { user } = useAuth();
   const { profile } = useUserProfile();
-  const { isBypassAdmin, isCoach, canBypassAssessmentPaywall } = useAccountRole();
-  const effectiveTier = isBypassAdmin ? "premium" : (profile?.subscription_tier ?? "base");
-  const hasActiveAccess = isBypassAdmin || profile?.subscription_status === "active";
+  const { isBypassAdmin, isCoach, isCoachPremium, canBypassAssessmentPaywall } = useAccountRole();
+  // A paid coach keeps premium-level access; their tier is not in subscription_tier.
+  const effectiveTier =
+    isBypassAdmin || isCoachPremium ? "premium" : (profile?.subscription_tier ?? "base");
+  const hasActiveAccess =
+    isBypassAdmin || isCoachPremium || profile?.subscription_status === "active";
   const { usage: aiUsage, fetchUsage: fetchAiUsage } = useAiUsage();
   const chatCreditBalance = aiUsage?.credit_balance ?? 0;
   const canUseChat = hasActiveAccess || chatCreditBalance > 0;
