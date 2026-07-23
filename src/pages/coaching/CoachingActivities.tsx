@@ -154,27 +154,6 @@ function CardMedia({ activity }: { activity: Activity }) {
 }
 
 
-function BriefingDialog({
-  activity,
-  access,
-  inProgress,
-  open,
-  onOpenChange,
-}: {
-  activity: Activity | null;
-  access: AccessInfo | undefined;
-  inProgress: boolean;
-  open: boolean;
-  onOpenChange: (v: boolean) => void;
-}) {
-  const navigate = useNavigate();
-  if (!activity) return null;
-
-  const briefing = getBriefing(activity);
-  const heroSrc = briefing?.hero_image_url || activity.thumbnail_url || null;
-  const description =
-    briefing?.description || activity.desired_outcome || activity.title;
-  const outcomes = briefing?.learning_outcomes || [];
 
 function BriefingDialog({
   activity,
