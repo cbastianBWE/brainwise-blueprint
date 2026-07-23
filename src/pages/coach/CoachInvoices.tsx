@@ -23,7 +23,7 @@ interface Transaction {
   status: "Completed" | "In Progress" | "Sent";
 }
 
-const PRICE_PER_INSTRUMENT = 29.99;
+
 
 export default function CoachInvoices() {
   const { user } = useAuth();
