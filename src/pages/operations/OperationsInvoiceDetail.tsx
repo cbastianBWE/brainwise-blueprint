@@ -428,10 +428,20 @@ export default function OperationsInvoiceDetail() {
                   Record payment
                 </Button>
               )}
-              {canPay && (
-                <Button onClick={handlePayNow} disabled={paying}>
+              {canPay && !cardFeeOn && (
+                <Button onClick={() => handlePayNow()} disabled={paying}>
                   {paying ? "Starting checkout…" : "Pay now"}
                 </Button>
+              )}
+              {canPay && cardFeeOn && (
+                <>
+                  <Button variant="outline" onClick={() => handlePayNow("ach")} disabled={paying}>
+                    {paying ? "…" : `Pay by bank ${formatMoney(balanceDue, currency)}`}
+                  </Button>
+                  <Button onClick={() => handlePayNow("card")} disabled={paying}>
+                    {paying ? "…" : `Pay by card ${formatMoney(cardTotal, currency)}`}
+                  </Button>
+                </>
               )}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
