@@ -252,6 +252,7 @@ export default function LogExpenseDialog({ open, onOpenChange, projectId, custom
 
       queryClient.invalidateQueries({ queryKey: ["ops", "project-expenses", projectId] });
       queryClient.invalidateQueries({ queryKey: ["ops", "project-expense-rollup", projectId] });
+      queryClient.invalidateQueries({ queryKey: ["ops", "expenses-all"] });
       onOpenChange(false);
     } catch (err: any) {
       toast.error(err?.message ?? (isEdit ? "Failed to update expense" : "Failed to log expense"));
