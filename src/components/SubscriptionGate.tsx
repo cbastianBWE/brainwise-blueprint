@@ -65,7 +65,21 @@ export default function SubscriptionGate({ children, feature }: Props) {
     return <Navigate to="/dashboard" replace />;
   }
 
-  // Non-module behavior below is unchanged.
+  // Non-module behavior below.
+  if (isSuperAdmin) return <>{children}</>;
+
+  if (isCoach) {
+    // Free coaches administer the PTP only. AI chat is the paid boundary.
+    if (feature === "ai_chat") {
+      const credits = profile?.one_time_chat_credits ?? 0;
+      if (isCoachPremium || credits > 0) return <>{children}</>;
+      return <Navigate to="/settings/plan" replace />;
+    }
+    // Everything else keeps today's behaviour for coaches.
+    return <>{children}</>;
+  }
+
+  // Keep isBypassAdmin referenced for future non-super bypass roles (currently a no-op).
   if (isBypassAdmin) return <>{children}</>;
 
   if (isCorp) {
