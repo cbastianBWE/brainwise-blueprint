@@ -20,7 +20,7 @@ export default function LimitReached({
   tier,
   creditBalance = 0,
   subscriptionActive = true,
-  premiumLimit = 400,
+  premiumLimit = 150,
   canBuyChatPack = false,
 }: Props) {
   const navigate = useNavigate();

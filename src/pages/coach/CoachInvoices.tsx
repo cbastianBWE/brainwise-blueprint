@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { useSubscriptionPlans } from "@/hooks/useSubscriptionPlans";
 import { format, parseISO, isAfter, isBefore, startOfDay, endOfDay } from "date-fns";
 import { jsPDF } from "jspdf";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,10 +23,12 @@ interface Transaction {
   status: "Completed" | "In Progress" | "Sent";
 }
 
-const PRICE_PER_INSTRUMENT = 29.99;
+
 
 export default function CoachInvoices() {
   const { user } = useAuth();
+  const { oneTimePrice } = useSubscriptionPlans();
+  const fallbackPrice = oneTimePrice("individual") ?? 0;
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -93,6 +96,22 @@ export default function CoachInvoices() {
         }
       }
 
+      // Fetch actual charged amounts per payment intent
+      const paymentIntentIds = [...new Set(rows.map((r) => r.stripe_payment_intent_id).filter(Boolean))] as string[];
+      const paidByIntent = new Map<string, number>();
+      if (paymentIntentIds.length > 0) {
+        const { data: purchaseRows } = await supabase
+          .from("assessment_purchases")
+          .select("stripe_payment_intent_id, amount_paid")
+          .eq("user_id", user.id)
+          .in("stripe_payment_intent_id", paymentIntentIds);
+        for (const p of purchaseRows ?? []) {
+          const pi = p.stripe_payment_intent_id as string | null;
+          if (!pi) continue;
+          paidByIntent.set(pi, (paidByIntent.get(pi) ?? 0) + Number(p.amount_paid ?? 0));
+        }
+      }
+
       // Group by stripe_payment_intent_id
       const grouped: Record<string, typeof rows> = {};
       rows.forEach((r) => {
@@ -114,13 +133,16 @@ export default function CoachInvoices() {
         if (allCompleted) status = "Completed";
         else if (anyOpened) status = "In Progress";
 
+        const actualPaid = paidByIntent.get(piId) ?? 0;
+        const total_amount = actualPaid > 0 ? actualPaid : instruments.length * fallbackPrice;
+
         return {
           payment_intent_id: piId,
           created_at: earliest,
           client_email: email,
           client_name: nameMap[email] || email,
           instruments,
-          total_amount: instruments.length * PRICE_PER_INSTRUMENT,
+          total_amount,
           status,
         };
       });
@@ -263,9 +285,10 @@ export default function CoachInvoices() {
     y += 7;
 
     doc.setFont("helvetica", "normal");
+    const perUnit = tx.total_amount / Math.max(tx.instruments.length, 1);
     tx.instruments.forEach((name) => {
       doc.text(name, 14, y);
-      doc.text(`$${PRICE_PER_INSTRUMENT.toFixed(2)}`, 150, y);
+      doc.text(`$${perUnit.toFixed(2)}`, 150, y);
       y += 7;
     });
 
@@ -477,7 +500,7 @@ export default function CoachInvoices() {
                 {receiptTx.instruments.map((name, i) => (
                   <div key={i} className="flex justify-between text-sm">
                     <span>{name}</span>
-                    <span>${PRICE_PER_INSTRUMENT.toFixed(2)}</span>
+                    <span>${(receiptTx.total_amount / Math.max(receiptTx.instruments.length, 1)).toFixed(2)}</span>
                   </div>
                 ))}
                 <div className="flex justify-between font-bold border-t pt-2">

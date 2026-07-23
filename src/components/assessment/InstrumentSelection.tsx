@@ -328,15 +328,15 @@ export default function InstrumentSelection({ onSelect }: Props) {
     return premiumUuids.some(uuid => selfPayCoachInstrumentIds.has(uuid));
   };
 
-  const getSelfPayTotal = () => {
+  const getPerAssessmentPrice = (): number | null => {
     const perAssessmentPlan = subscriptionPlans.find(p => p.tier === "individual");
-    const price = perAssessmentPlan?.price_usd ?? 29.99;
-    return selfPayCoachInstrumentIds.size * price;
+    return perAssessmentPlan?.price_usd ?? null;
   };
 
-  const getPerAssessmentPrice = () => {
-    const perAssessmentPlan = subscriptionPlans.find(p => p.tier === "individual");
-    return perAssessmentPlan?.price_usd ?? 29.99;
+  const getSelfPayTotal = (): number | null => {
+    const price = getPerAssessmentPrice();
+    if (price == null) return null;
+    return selfPayCoachInstrumentIds.size * price;
   };
 
   const handleSelfPayPerAssessment = async () => {
@@ -765,16 +765,38 @@ export default function InstrumentSelection({ onSelect }: Props) {
             </Card>
             <Card>
               <CardContent className="pt-4 space-y-2">
-                <div className="flex items-center justify-between">
-                  <p className="font-semibold">Pay Per Assessment</p>
-                  <p className="text-sm font-medium">${getSelfPayTotal().toFixed(2)}</p>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  One-time payment of ${getPerAssessmentPrice().toFixed(2)} × {selfPayCoachInstrumentIds.size} assessment{selfPayCoachInstrumentIds.size !== 1 ? "s" : ""} your coach ordered. No subscription required.
-                </p>
-                <Button className="w-full" variant="outline" onClick={handleSelfPayPerAssessment} disabled={selfPayDialogLoading}>
-                  {selfPayDialogLoading ? "Processing..." : `Pay $${getSelfPayTotal().toFixed(2)} Once`}
-                </Button>
+                {(() => {
+                  const perPrice = getPerAssessmentPrice();
+                  const total = getSelfPayTotal();
+                  const unavailable = perPrice == null || total == null;
+                  return (
+                    <>
+                      <div className="flex items-center justify-between">
+                        <p className="font-semibold">Pay Per Assessment</p>
+                        <p className="text-sm font-medium">
+                          {unavailable ? "—" : `$${total!.toFixed(2)}`}
+                        </p>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        {unavailable
+                          ? "Pricing unavailable, please refresh."
+                          : `One-time payment of $${perPrice!.toFixed(2)} × ${selfPayCoachInstrumentIds.size} assessment${selfPayCoachInstrumentIds.size !== 1 ? "s" : ""} your coach ordered. No subscription required.`}
+                      </p>
+                      <Button
+                        className="w-full"
+                        variant="outline"
+                        onClick={handleSelfPayPerAssessment}
+                        disabled={selfPayDialogLoading || unavailable}
+                      >
+                        {selfPayDialogLoading
+                          ? "Processing..."
+                          : unavailable
+                          ? "Pricing unavailable"
+                          : `Pay $${total!.toFixed(2)} Once`}
+                      </Button>
+                    </>
+                  );
+                })()}
               </CardContent>
             </Card>
           </div>
