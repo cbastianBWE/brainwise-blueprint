@@ -147,6 +147,29 @@ export default function CoachingActivityRunner() {
       }
       setAccessDenial(null);
 
+      // Completable-once gate: a finished paid-tier activity cannot be re-run until
+      // the tier is re-purchased. Show the completed run read-only instead of starting a new one.
+      const { data: runStateData } = await supabase.rpc(
+        "coaching_activity_run_state" as any,
+        { p_activity_id: activityId },
+      );
+      const rs = Array.isArray(runStateData) ? runStateData[0] : (runStateData as any);
+      if (rs?.locked) {
+        setRepurchase({ tier: (rs.activity_tier || "").toLowerCase() });
+        if (rs.latest_completed_session_id) {
+          const { data: completed } = await supabase
+            .from("coaching_activity_sessions")
+            .select("*")
+            .eq("id", rs.latest_completed_session_id)
+            .maybeSingle();
+          if (completed) setSession(completed as Session);
+        }
+        setLoading(false);
+        if (cancelled) return;
+        return;
+      }
+      setRepurchase(null);
+
       // Find or create session
       let s: Session | null = null;
       const doFresh = forceFresh && !freshHandledRef.current;
@@ -175,7 +198,7 @@ export default function CoachingActivityRunner() {
         return;
       }
       if (!s) {
-        const { data: created } = await supabase
+        const { data: created, error: insErr } = await supabase
           .from("coaching_activity_sessions")
           .insert({
             user_id: user.id,
@@ -186,6 +209,14 @@ export default function CoachingActivityRunner() {
           })
           .select("*")
           .single();
+        if (insErr) {
+          if ((insErr.message || "").includes("activity_completed_repurchase_required")) {
+            setRepurchase({ tier: (act?.tier || "").toLowerCase() });
+            setLoading(false);
+            return;
+          }
+          throw insErr;
+        }
         s = created as Session;
       }
       if (cancelled) return;
