@@ -64,9 +64,10 @@ interface Peer {
 export default function AiChat() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { usage, loading: usageLoading, fetchUsage } = useAiUsage();
   const { isCorp, isCompanyAdmin, isOrgAdmin, isSuperAdmin } = useAccountRole();
+  const canBuyChatPack = !isCorp && !isCompanyAdmin && !isOrgAdmin;
   const { limitsFor } = useSubscriptionPlans();
   const { profile } = useUserProfile();
 
