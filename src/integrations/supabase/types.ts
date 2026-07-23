@@ -3042,6 +3042,53 @@ export type Database = {
           },
         ]
       }
+      coaching_foundational_grandfathered: {
+        Row: {
+          captured_at: string
+          reason: string
+          user_id: string
+        }
+        Insert: {
+          captured_at?: string
+          reason?: string
+          user_id: string
+        }
+        Update: {
+          captured_at?: string
+          reason?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coaching_foundational_grandfathered_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coaching_foundational_grandfathered_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "coaching_foundational_grandfathered_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coaching_foundational_grandfathered_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       coaching_media_library: {
         Row: {
           active: boolean
@@ -16801,6 +16848,10 @@ export type Database = {
       ops_stripe_collection_enabled: {
         Args: { p_org: string }
         Returns: boolean
+      }
+      ops_update_card_fee_settings: {
+        Args: { p_enabled: boolean; p_fixed: number; p_percent: number }
+        Returns: undefined
       }
       ops_update_contact: {
         Args: { p_id: string; p_payload: Json }

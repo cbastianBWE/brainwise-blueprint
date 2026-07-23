@@ -21,6 +21,7 @@ type PublicDoc = {
     remit_account_number?: string | null;
   };
   org: { name: string };
+  card_fee?: { enabled: boolean; bank_total: number; card_total: number };
   lines: Array<{ description: string | null; quantity: number | null; unit_price: number | null; line_total: number | null }>;
 };
 
@@ -81,11 +82,11 @@ export default function PublicInvoicePay() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  async function handlePayNow() {
+  async function handlePayNow(method?: "card" | "ach") {
     setStarting(true);
     setErrorMsg(null);
     try {
-      const { data, error } = await supabase.functions.invoke("ops-public-invoice-checkout", { body: { token } });
+      const { data, error } = await supabase.functions.invoke("ops-public-invoice-checkout", { body: { token, method } });
       if (error) {
         setErrorMsg(error.message ?? "Could not start checkout.");
         return;
@@ -123,7 +124,7 @@ export default function PublicInvoicePay() {
   );
 }
 
-function PaidContent({ doc, starting, errorMsg, onPay }: { doc: PublicDoc; starting: boolean; errorMsg: string | null; onPay: () => void }) {
+function PaidContent({ doc, starting, errorMsg, onPay }: { doc: PublicDoc; starting: boolean; errorMsg: string | null; onPay: (method?: "card" | "ach") => void }) {
   const invoice = doc.document;
   const currency = invoice.currency_code;
   const status = (invoice.status ?? "").toLowerCase();
@@ -190,9 +191,25 @@ function PaidContent({ doc, starting, errorMsg, onPay }: { doc: PublicDoc; start
         <div className="mt-6 flex flex-col items-end gap-2">
           {errorMsg && <p className="text-sm text-destructive">{errorMsg}</p>}
           {canPay ? (
-            <Button onClick={onPay} disabled={starting}>
-              {starting ? "Starting checkout…" : "Pay now"}
-            </Button>
+            doc.card_fee?.enabled ? (
+              <div className="flex flex-col items-end gap-2">
+                <div className="flex gap-2">
+                  <Button variant="outline" onClick={() => onPay("ach")} disabled={starting}>
+                    {starting ? "…" : `Pay by bank ${formatMoney(doc.card_fee.bank_total, currency)}`}
+                  </Button>
+                  <Button onClick={() => onPay("card")} disabled={starting}>
+                    {starting ? "…" : `Pay by card ${formatMoney(doc.card_fee.card_total, currency)}`}
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Paying by bank transfer (ACH) avoids the card processing cost.
+                </p>
+              </div>
+            ) : (
+              <Button onClick={() => onPay()} disabled={starting}>
+                {starting ? "Starting checkout…" : "Pay now"}
+              </Button>
+            )
           ) : fullyPaid ? (
             <p className="text-sm text-muted-foreground">This invoice is paid in full.</p>
           ) : null}

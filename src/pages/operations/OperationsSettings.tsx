@@ -214,6 +214,36 @@ export default function OperationsSettings() {
     }
   }
 
+  // ---------- Card processing fee recovery ----------
+  const [cardFee, setCardFee] = useState({ enabled: false, percent: "2.9", fixed: "0.30" });
+  const [savingCardFee, setSavingCardFee] = useState(false);
+
+  useEffect(() => {
+    const o = orgQ.data as any;
+    if (!o) return;
+    setCardFee({
+      enabled: o.card_fee_recovery_enabled === true,
+      percent: String(o.card_fee_percent ?? "2.9"),
+      fixed: String(o.card_fee_fixed ?? "0.30"),
+    });
+  }, [orgQ.data]);
+
+  async function saveCardFee() {
+    setSavingCardFee(true);
+    try {
+      const { error } = await supabase.rpc("ops_update_card_fee_settings" as any, {
+        p_enabled: cardFee.enabled,
+        p_percent: Number(cardFee.percent),
+        p_fixed: Number(cardFee.fixed),
+      });
+      if (error) { toast.error(error.message ?? "Save failed"); return; }
+      toast.success("Card fee settings saved.");
+      qc.invalidateQueries({ queryKey: ["ops", "org-branding"] });
+    } finally {
+      setSavingCardFee(false);
+    }
+  }
+
 
   // ---------- Numbering & Tax queries ----------
   const numberingQ = useQuery({
@@ -615,6 +645,7 @@ export default function OperationsSettings() {
           <TabsTrigger value="branding">Branding</TabsTrigger>
           <TabsTrigger value="templates">Templates & Reminders</TabsTrigger>
           <TabsTrigger value="late_fees">Late Fees</TabsTrigger>
+          <TabsTrigger value="payments">Payments</TabsTrigger>
           <TabsTrigger value="sales">Sales & Commission</TabsTrigger>
           <TabsTrigger value="custom_fields">Custom Fields</TabsTrigger>
           <TabsTrigger value="numbering">Numbering & Tax</TabsTrigger>
@@ -1247,6 +1278,52 @@ export default function OperationsSettings() {
         <TabsContent value="automation" className="space-y-6">
           <LeadScoringRulesCard />
           <WorkflowRulesCard />
+        </TabsContent>
+
+        <TabsContent value="payments" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Card processing fee recovery</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                When on, invoices offer two ways to pay. Bank transfer (ACH) is charged the exact
+                invoice amount. Card payments are charged a grossed-up total that covers the processing
+                cost, so you net the invoice amount either way. It's presented to the customer as a
+                bank-transfer saving. Admins only.
+              </p>
+              <div className="flex items-center gap-3">
+                <Switch
+                  id="card_fee_enabled"
+                  checked={cardFee.enabled}
+                  onCheckedChange={(v) => setCardFee((f) => ({ ...f, enabled: v === true }))}
+                />
+                <Label htmlFor="card_fee_enabled" className="cursor-pointer">
+                  Recover card processing fees on invoices
+                </Label>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-md">
+                <div className="space-y-2">
+                  <Label htmlFor="card_fee_percent">Percent fee (%)</Label>
+                  <Input id="card_fee_percent" type="number" step="0.01" min="0"
+                    value={cardFee.percent}
+                    onChange={(e) => setCardFee((f) => ({ ...f, percent: e.target.value }))} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="card_fee_fixed">Fixed fee (per payment)</Label>
+                  <Input id="card_fee_fixed" type="number" step="0.01" min="0"
+                    value={cardFee.fixed}
+                    onChange={(e) => setCardFee((f) => ({ ...f, fixed: e.target.value }))} />
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Stripe's US card fee is 2.9% + $0.30. Leave these as-is unless your rate differs.
+              </p>
+              <Button onClick={saveCardFee} disabled={savingCardFee}>
+                {savingCardFee ? "Saving…" : "Save"}
+              </Button>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
 

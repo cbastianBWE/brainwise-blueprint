@@ -168,13 +168,18 @@ export default function OperationsInvoiceDetail() {
 
   const balanceDue = Number(inv?.balance_due ?? 0);
   const canPay = !!inv && balanceDue > 0 && !PAID_TERMINAL.has((inv.status ?? "").toLowerCase());
+  const orgCardFee = (orgBrandingQ.data ?? {}) as any;
+  const cardFeeOn = orgCardFee.card_fee_recovery_enabled === true;
+  const cardPct = Number(orgCardFee.card_fee_percent ?? 2.9) / 100;
+  const cardFixed = Number(orgCardFee.card_fee_fixed ?? 0.3);
+  const cardTotal = Math.round(((balanceDue + cardFixed) / (1 - cardPct)) * 100) / 100;
 
-  async function handlePayNow() {
+  async function handlePayNow(method?: "card" | "ach") {
     if (!inv) return;
     setPaying(true);
     try {
       const { data, error } = await supabase.functions.invoke("ops-invoice-checkout", {
-        body: { invoice_id: inv.id },
+        body: { invoice_id: inv.id, method },
       });
       if (error) {
         const ctxMsg = await readFunctionsErrorMessage(error);
@@ -423,10 +428,20 @@ export default function OperationsInvoiceDetail() {
                   Record payment
                 </Button>
               )}
-              {canPay && (
-                <Button onClick={handlePayNow} disabled={paying}>
+              {canPay && !cardFeeOn && (
+                <Button onClick={() => handlePayNow()} disabled={paying}>
                   {paying ? "Starting checkout…" : "Pay now"}
                 </Button>
+              )}
+              {canPay && cardFeeOn && (
+                <>
+                  <Button variant="outline" onClick={() => handlePayNow("ach")} disabled={paying}>
+                    {paying ? "…" : `Pay by bank ${formatMoney(balanceDue, currency)}`}
+                  </Button>
+                  <Button onClick={() => handlePayNow("card")} disabled={paying}>
+                    {paying ? "…" : `Pay by card ${formatMoney(cardTotal, currency)}`}
+                  </Button>
+                </>
               )}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
