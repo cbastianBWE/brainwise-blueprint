@@ -46,7 +46,8 @@ export default function DrivingFacetScores({ assessmentId, additionalAssessmentI
       const { data: responses, error } = await supabase
         .from("assessment_responses")
         .select("response_value_numeric, is_reverse_scored, item_id")
-        .eq("assessment_id", assessmentId);
+        .eq("assessment_id", assessmentId)
+        .order("item_id");
 
       if (error || !responses?.length) {
         setLoading(false);
@@ -58,7 +59,8 @@ export default function DrivingFacetScores({ assessmentId, additionalAssessmentI
         const { data: additionalResponses } = await supabase
           .from("assessment_responses")
           .select("response_value_numeric, is_reverse_scored, item_id")
-          .eq("assessment_id", additionalAssessmentId);
+          .eq("assessment_id", additionalAssessmentId)
+          .order("item_id");
         if (additionalResponses?.length) {
           allResponses = [...allResponses, ...additionalResponses];
         }
