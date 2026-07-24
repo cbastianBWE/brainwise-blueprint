@@ -519,6 +519,8 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
     loadingNarrativeSections,
     elevatedFacets,
     suppressedFacets,
+    elevatedFacetsFootnote,
+    suppressedFacetsFootnote,
     facetInterpretations,
     loadingFacets,
     loadingInterpretations,
