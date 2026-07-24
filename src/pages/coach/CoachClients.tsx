@@ -132,6 +132,7 @@ export default function CoachClients() {
   const [seatLinks, setSeatLinks] = useState<Array<{ id: string; token: string; instrument_id: string; seats_total: number; seats_claimed: number; status: string; coach_note: string | null; created_at: string }>>([]);
   const [activeTab, setActiveTab] = useState<"clients" | "pending">("clients");
   const [perAssessmentPrice, setPerAssessmentPrice] = useState<number | null>(null);
+  const [perAssessmentPriceId, setPerAssessmentPriceId] = useState<string | null>(null);
   const [actorCert, setActorCert] = useState<{ id: string; certification_type: string; status: string; free_uses_expire_at: string | null } | null>(null);
   const [actorsUsed, setActorsUsed] = useState<number>(0);
   const [isActorDebrief, setIsActorDebrief] = useState(false);
@@ -348,7 +349,7 @@ export default function CoachClients() {
     (async () => {
       const { data, error } = await supabase
         .from("subscription_plans")
-        .select("price_usd")
+        .select("price_usd, stripe_price_id")
         .eq("plan_name", "Per Assessment")
         .eq("billing_period", "one_time")
         .eq("is_active", true)
@@ -356,9 +357,11 @@ export default function CoachClients() {
       if (error) {
         console.error("[CoachClients] Per Assessment price lookup failed:", error);
         setPerAssessmentPrice(null);
+        setPerAssessmentPriceId(null);
         return;
       }
       setPerAssessmentPrice(Number(data.price_usd));
+      setPerAssessmentPriceId(data.stripe_price_id ?? null);
     })();
   }, []);
 
@@ -446,11 +449,15 @@ export default function CoachClients() {
       toast.error("Please select at least one assessment instrument.");
       return;
     }
+    if (!perAssessmentPriceId) {
+      toast.error("Pricing is unavailable right now. Please refresh and try again.");
+      return;
+    }
     setSubmitting(true);
     try {
       const instrumentIds = getSelectedUuids();
       const payload = {
-        price_id: "price_1TS3WY2FY7qIyIXAalOKbxdZ",
+        price_id: perAssessmentPriceId,
         mode: "coach_order",
         instrument_ids: instrumentIds,
         quantity: selectedInstruments.length,
@@ -1132,7 +1139,7 @@ export default function CoachClients() {
                 {sharedFormFields}
 
                 <TabsContent value="coach-pays" className="mt-4">
-                  <Button className="w-full gap-2" onClick={handleOrderCoachPays} disabled={submitting || !email}>
+                  <Button className="w-full gap-2" onClick={handleOrderCoachPays} disabled={submitting || !email || !perAssessmentPriceId}>
                     <ClipboardCheck className="h-4 w-4" aria-hidden="true" /> {submitting ? "Processing..." : "Proceed to Payment"}
                   </Button>
                 </TabsContent>

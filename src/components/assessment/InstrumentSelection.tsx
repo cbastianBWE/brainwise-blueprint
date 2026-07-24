@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
@@ -333,6 +334,13 @@ export default function InstrumentSelection({ onSelect }: Props) {
     return perAssessmentPlan?.price_usd ?? null;
   };
 
+  const getPerAssessmentPriceId = (): string | null => {
+    const plan = subscriptionPlans.find(
+      p => p.tier === "individual" && p.billing_period === "one_time"
+    );
+    return plan?.stripe_price_id ?? null;
+  };
+
   const getSelfPayTotal = (): number | null => {
     const price = getPerAssessmentPrice();
     if (price == null) return null;
@@ -340,18 +348,27 @@ export default function InstrumentSelection({ onSelect }: Props) {
   };
 
   const handleSelfPayPerAssessment = async () => {
+    const priceId = getPerAssessmentPriceId();
+    if (!priceId) {
+      toast.error("Pricing is unavailable right now. Please refresh and try again.");
+      return;
+    }
     setSelfPayDialogLoading(true);
     const instrumentIds = Array.from(selfPayCoachInstrumentIds).join(",");
-    const { data } = await supabase.functions.invoke("create-checkout", {
+    const { data, error } = await supabase.functions.invoke("create-checkout", {
       body: {
-        price_id: "price_1TS3WY2FY7qIyIXAalOKbxdZ",
+        price_id: priceId,
         mode: "payment",
         instrument_ids: instrumentIds,
         quantity: selfPayCoachInstrumentIds.size,
       },
     });
     setSelfPayDialogLoading(false);
-    if (data?.url) window.location.href = data.url;
+    if (error || !data?.url) {
+      toast.error("Could not start checkout. Please try again or contact support.");
+      return;
+    }
+    window.location.href = data.url;
   };
 
   const handleSubscribe = async (priceId: string) => {
@@ -768,7 +785,7 @@ export default function InstrumentSelection({ onSelect }: Props) {
                 {(() => {
                   const perPrice = getPerAssessmentPrice();
                   const total = getSelfPayTotal();
-                  const unavailable = perPrice == null || total == null;
+                  const unavailable = perPrice == null || total == null || getPerAssessmentPriceId() == null;
                   return (
                     <>
                       <div className="flex items-center justify-between">
