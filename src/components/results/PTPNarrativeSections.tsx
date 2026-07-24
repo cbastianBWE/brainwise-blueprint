@@ -163,14 +163,16 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
         supabase
           .from("assessment_responses")
           .select("response_value_numeric, is_reverse_scored, item_id")
-          .eq("assessment_id", assessmentId),
+          .eq("assessment_id", assessmentId)
+          .order("item_id"),
       ];
       if (useBoth) {
         fetches.push(
           supabase
             .from("assessment_responses")
             .select("response_value_numeric, is_reverse_scored, item_id")
-            .eq("assessment_id", additionalAssessmentId!),
+            .eq("assessment_id", additionalAssessmentId!)
+            .order("item_id"),
         );
       }
       const results = await Promise.all(fetches);
