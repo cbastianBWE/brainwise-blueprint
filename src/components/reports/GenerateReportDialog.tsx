@@ -301,6 +301,10 @@ export default function GenerateReportDialog({ open, onOpenChange, allowedModes,
           if (reportLabel.trim()) {
             try { await supabase.rpc("bw_set_report_label" as never, { p_profile: id, p_label: reportLabel.trim() } as never); } catch { /* cosmetic */ }
           }
+          if (blockedResult?.billing_mode === "included") {
+            const rem = blockedResult.included_remaining;
+            toast.success(rem === null || rem === undefined ? "Report generated (covered by your organization)." : `Report generated. ${rem} included ${kind} report${rem === 1 ? "" : "s"} remaining.`);
+          }
           onGenerated();
           onOpenChange(false);
           navigate(`/team-report/${id}`);
