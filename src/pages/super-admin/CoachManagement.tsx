@@ -381,6 +381,7 @@ export default function CoachManagement() {
         <TabsList>
           <TabsTrigger value="invitations">Invitations</TabsTrigger>
           <TabsTrigger value="tracking">Client &amp; Actor Tracking</TabsTrigger>
+          <TabsTrigger value="cohorts">Cohorts &amp; Sessions</TabsTrigger>
         </TabsList>
 
         <TabsContent value="invitations" className="space-y-6">
