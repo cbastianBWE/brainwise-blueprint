@@ -322,6 +322,10 @@ export default function GenerateReportDialog({ open, onOpenChange, allowedModes,
           if (releaseNow) {
             try { await supabase.rpc("bw_set_report_release" as never, { p_profile: id, p_kind: "paired", p_released: true } as never); } catch { /* held */ }
           }
+          if (blockedResult?.billing_mode === "included") {
+            const rem = blockedResult.included_remaining;
+            toast.success(rem === null || rem === undefined ? "Report generated (covered by your organization)." : `Report generated. ${rem} included ${kind} report${rem === 1 ? "" : "s"} remaining.`);
+          }
           onGenerated();
           onOpenChange(false);
           navigate(`/paired-report/${id}`);
