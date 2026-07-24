@@ -650,6 +650,39 @@ export default function Certification() {
       <MarketingFooter />
 
       <BriefingModal open={modalOpen} onClose={() => setModalOpen(false)} source={modalSource} />
+
+      <Dialog open={!!enrollFor} onOpenChange={(o) => !o && setEnrollFor(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Enroll — {enrollFor?.name}</DialogTitle>
+            <DialogDescription>
+              Tuition is $1,500. We'll send confirmation and session invites to the email below.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label htmlFor="enroll-email">Email</Label>
+              <Input id="enroll-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label htmlFor="enroll-first">First name</Label>
+                <Input id="enroll-first" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+              </div>
+              <div>
+                <Label htmlFor="enroll-last">Last name</Label>
+                <Input id="enroll-last" value={lastName} onChange={(e) => setLastName(e.target.value)} />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEnrollFor(null)} disabled={enrolling}>Cancel</Button>
+            <Button onClick={handleEnroll} disabled={enrolling || !email.trim()}>
+              {enrolling ? "Starting checkout…" : "Continue to checkout"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
