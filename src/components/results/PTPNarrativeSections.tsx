@@ -1010,8 +1010,10 @@ function FacetList({
                     <span style={{ fontWeight: 600, color: "var(--fg-2)" }}>High end:</span> {anchorHigh}
                   </p>
                 </div>
-                {loadingAllFacetInsights || !interpretation ? (
+                {loadingAllFacetInsights ? (
                   <p style={{ fontSize: 14, color: "var(--fg-3)", margin: 0 }}>Generating insights...</p>
+                ) : !interpretation ? (
+                  <p style={{ fontSize: 14, color: "var(--fg-3)", margin: 0 }}>Insight text is not available for this facet.</p>
                 ) : (
                   <div className="grid md:grid-cols-2 gap-4">
                     <div>
