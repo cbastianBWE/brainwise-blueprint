@@ -124,6 +124,8 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
 
   const [elevatedFacets, setElevatedFacets] = useState<FacetItem[]>([]);
   const [suppressedFacets, setSuppressedFacets] = useState<FacetItem[]>([]);
+  const [elevatedFacetsFootnote, setElevatedFacetsFootnote] = useState<string | null>(null);
+  const [suppressedFacetsFootnote, setSuppressedFacetsFootnote] = useState<string | null>(null);
   const [facetInterpretations, setFacetInterpretations] = useState<FacetInterpretation[]>([]);
   const [loadingFacets, setLoadingFacets] = useState(true);
   const [loadingInterpretations, setLoadingInterpretations] = useState(false);
