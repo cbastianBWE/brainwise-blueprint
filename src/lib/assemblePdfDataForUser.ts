@@ -261,6 +261,8 @@ export async function assemblePtpPdfData(params: {
   // Narrative + facet sections
   let elevatedFacets: PdfData["elevatedFacets"] = [];
   let suppressedFacets: PdfData["suppressedFacets"] = [];
+  let elevatedFacetsFootnote: string | null = null;
+  let suppressedFacetsFootnote: string | null = null;
   let assessmentResponses: PdfData["assessmentResponses"] = [];
   let narrativeSections: PdfData["narrativeSections"] = null;
 
