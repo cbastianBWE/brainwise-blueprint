@@ -235,11 +235,6 @@ function FacetSection({
         </div>
         <ScrollBar orientation="horizontal" />
       </ScrollArea>
-      {total > 10 && (
-        <p className="text-xs text-muted-foreground mt-2">
-          Showing top 10 of {total} {title.toLowerCase()}
-        </p>
-      )}
     </div>
   );
 }
