@@ -71,7 +71,7 @@ export default function DrivingFacetScores({ assessmentId, additionalAssessmentI
       const itemIds = allResponses.map((r) => r.item_id);
       const { data: items } = await supabase
         .from("items_presentation")
-        .select("item_id, item_text, dimension_id, facet_name")
+        .select("item_id, item_text, item_number, dimension_id, facet_name")
         .in("item_id", itemIds);
 
       const itemMap = new Map(
@@ -79,7 +79,7 @@ export default function DrivingFacetScores({ assessmentId, additionalAssessmentI
       );
 
       // Build scored values with reverse scoring applied
-      const scoredItems = allResponses.map((r) => {
+      const scoredItems: FacetItem[] = allResponses.map((r) => {
         const item = itemMap.get(r.item_id);
         const raw = Number(r.response_value_numeric);
         const value = r.is_reverse_scored ? 100 - raw : raw;
@@ -87,6 +87,7 @@ export default function DrivingFacetScores({ assessmentId, additionalAssessmentI
           item_text: item?.item_text ?? r.item_id,
           dimension_id: item?.dimension_id ?? "",
           facet_name: item?.facet_name ?? "",
+          itemNumber: item?.item_number ?? 0,
           value,
         };
       });
@@ -106,14 +107,12 @@ export default function DrivingFacetScores({ assessmentId, additionalAssessmentI
         if (!filteredItems.length) filteredItems = scoredItems;
       }
 
-      const selection = selectDrivingFacets(
-        filteredItems.map((s) => ({ ...s, facetName: s.facet_name })),
-      );
+      const selection = selectDrivingFacets(filteredItems);
 
-      setElevated(selection.elevated);
-      setSuppressed(selection.suppressed);
-      setTotalElevated(selection.totalElevated);
-      setTotalSuppressed(selection.totalSuppressed);
+      setElevated(selection.elevated.items);
+      setSuppressed(selection.suppressed.items);
+      setElevatedSide(selection.elevated);
+      setSuppressedSide(selection.suppressed);
       setLoading(false);
     };
 
