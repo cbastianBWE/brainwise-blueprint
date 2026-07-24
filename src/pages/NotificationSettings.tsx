@@ -295,11 +295,6 @@ function LifecycleReminderCard() {
   );
 }
 
-function NotificationSettingsEndMarker() {
-  return null;
-    </div>
-  );
-}
 
 const NEWSLETTER_KEY = ["newsletter", "subscription"] as const;
 
