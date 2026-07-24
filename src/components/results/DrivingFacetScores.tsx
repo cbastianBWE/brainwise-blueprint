@@ -146,11 +146,11 @@ export default function DrivingFacetScores({ assessmentId, additionalAssessmentI
           </p>
         ) : (
           <>
-            {elevated.length > 0 && (
-              <FacetSection title="Highest Scoring Facets" items={elevated} total={totalElevated} />
+            {elevated.length > 0 && elevatedSide && (
+              <FacetSection title="Highest Scoring Facets" items={elevated} footnote={drivingFacetFootnote(elevatedSide)} />
             )}
-            {suppressed.length > 0 && (
-              <FacetSection title="Lowest Scoring Facets" items={suppressed} total={totalSuppressed} />
+            {suppressed.length > 0 && suppressedSide && (
+              <FacetSection title="Lowest Scoring Facets" items={suppressed} footnote={drivingFacetFootnote(suppressedSide)} />
             )}
           </>
         )}
