@@ -36,8 +36,8 @@ export default function DrivingFacetScores({ assessmentId, additionalAssessmentI
   const [loading, setLoading] = useState(true);
   const [elevated, setElevated] = useState<FacetItem[]>([]);
   const [suppressed, setSuppressed] = useState<FacetItem[]>([]);
-  const [totalElevated, setTotalElevated] = useState(0);
-  const [totalSuppressed, setTotalSuppressed] = useState(0);
+  const [elevatedSide, setElevatedSide] = useState<DrivingFacetSide<FacetItem> | null>(null);
+  const [suppressedSide, setSuppressedSide] = useState<DrivingFacetSide<FacetItem> | null>(null);
 
   useEffect(() => {
     const fetch = async () => {
