@@ -65,6 +65,8 @@ export default function PeerPtpReport({ targetUserId, ownerName }: Props) {
   const [drivingFacets, setDrivingFacets] = useState<{
     elevated: Array<{ facet_name: string; dimension_id: string; value: number }>;
     suppressed: Array<{ facet_name: string; dimension_id: string; value: number }>;
+    elevatedFootnote: string | null;
+    suppressedFootnote: string | null;
   } | null>(null);
 
   useEffect(() => {
