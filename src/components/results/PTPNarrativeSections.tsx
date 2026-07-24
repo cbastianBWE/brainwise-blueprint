@@ -339,6 +339,7 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
         const value = r.is_reverse_scored ? 100 - raw : raw;
         return {
           value,
+          itemNumber: item?.item_number ?? 0,
           facetName: item?.facet_name ?? "",
           facet_name: item?.facet_name ?? "",
           item_number: item?.item_number ?? 0,
@@ -359,11 +360,13 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
       }
 
       const selection = selectDrivingFacets(scored);
-      const elevated = selection.elevated.map(toFacetItem);
-      const suppressed = selection.suppressed.map(toFacetItem);
+      const elevated = selection.elevated.items.map(toFacetItem);
+      const suppressed = selection.suppressed.items.map(toFacetItem);
 
       setElevatedFacets(elevated);
       setSuppressedFacets(suppressed);
+      setElevatedFacetsFootnote(drivingFacetFootnote(selection.elevated));
+      setSuppressedFacetsFootnote(drivingFacetFootnote(selection.suppressed));
       setLoadingFacets(false);
     };
     fetchFacets();
