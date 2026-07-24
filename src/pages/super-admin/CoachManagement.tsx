@@ -464,6 +464,10 @@ export default function CoachManagement() {
         <TabsContent value="tracking">
           <CoachClientTrackingSection />
         </TabsContent>
+
+        <TabsContent value="cohorts">
+          <CohortsSessionsSection />
+        </TabsContent>
       </Tabs>
     </div>
   );
