@@ -28,7 +28,7 @@ interface FacetItem {
 interface Props {
   assessmentId: string;
   additionalAssessmentId?: string;
-  contextFilter?: 'professional' | 'personal';
+  contextFilter?: 'professional' | 'personal' | 'combined';
 }
 
 export default function DrivingFacetScores({ assessmentId, additionalAssessmentId, contextFilter }: Props) {
