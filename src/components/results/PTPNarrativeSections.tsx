@@ -1067,7 +1067,7 @@ export function PTPFacetInsightsElevatedSection(props: PTPNarrativeSectionsProps
   if (data.loadingFacets || data.elevatedFacets.length === 0) return null;
   return (
     <div>
-      <h3 style={sectionHeadingStyle}>Driving facet insights — high scoring drivers</h3>
+      <h3 style={sectionHeadingStyle}>Driving facet insights — highest scoring facets</h3>
       <PtpDimensionLegend dimensionIds={[...new Set(data.elevatedFacets.map((f) => f.dimension_id))]} />
       <FacetList facets={data.elevatedFacets} prefix="elevated" data={data} />
     </div>
