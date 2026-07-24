@@ -13,7 +13,7 @@ import { PTP_ITEM_FACET_NAMES } from "./ptpFacetNames";
 import type { NaiPdfData } from "./generateNaiPdf";
 import type { AirsaPdfData } from "./generateAirsaPdf";
 import type { PdfSections } from "@/components/results/ExportPdfModal";
-import { selectDrivingFacets } from "./selectDrivingFacets";
+import { selectDrivingFacets, drivingFacetFootnote } from "./selectDrivingFacets";
 
 interface DimensionScore {
   mean?: number;
