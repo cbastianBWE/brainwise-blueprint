@@ -25,6 +25,7 @@ import {
 import { Plus, Trash2, Download, Upload, Loader2 } from "lucide-react";
 import * as XLSX from "xlsx";
 import CoachClientTrackingSection from "@/components/super-admin/CoachClientTrackingSection";
+import CohortsSessionsSection from "@/components/super-admin/CohortsSessionsSection";
 
 const CERT_TYPES = [
   { value: "ptp_coach", label: "PTP Certified Coach" },
@@ -380,6 +381,7 @@ export default function CoachManagement() {
         <TabsList>
           <TabsTrigger value="invitations">Invitations</TabsTrigger>
           <TabsTrigger value="tracking">Client &amp; Actor Tracking</TabsTrigger>
+          <TabsTrigger value="cohorts">Cohorts &amp; Sessions</TabsTrigger>
         </TabsList>
 
         <TabsContent value="invitations" className="space-y-6">
@@ -461,6 +463,10 @@ export default function CoachManagement() {
 
         <TabsContent value="tracking">
           <CoachClientTrackingSection />
+        </TabsContent>
+
+        <TabsContent value="cohorts">
+          <CohortsSessionsSection />
         </TabsContent>
       </Tabs>
     </div>
