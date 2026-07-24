@@ -506,6 +506,100 @@ export default function Certification() {
         </div>
       </section>
 
+      {/* ENROLLMENT */}
+      <section id="enroll" style={{ background: "#fff", padding: `${isMobile ? 80 : 112}px ${padX}px`, borderBottom: "1px solid var(--divider)" }}>
+        <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+          <Eyebrow color="var(--bw-orange)">Enroll</Eyebrow>
+          <h2 style={h2Style}>Pick a cohort and get started.</h2>
+          <p style={{ ...bodyStyle, fontSize: 16, marginTop: 24, maxWidth: 780 }}>
+            Cohorts are small and fill fast. Tuition is $1,500. After checkout, you'll get an email to set your password and see your session invites.
+          </p>
+
+          {showEnrolledBanner && (
+            <div
+              style={{
+                marginTop: 32,
+                padding: "20px 24px",
+                background: "var(--bw-cream)",
+                borderLeft: "4px solid var(--bw-forest)",
+                borderRadius: "var(--r-md)",
+                fontFamily: "'Montserrat', sans-serif",
+                color: "var(--bw-navy)",
+                fontSize: 15,
+                lineHeight: 1.55,
+              }}
+            >
+              Your enrollment is confirmed — check your email to set your password and see your session invites.
+            </div>
+          )}
+
+          {cohorts.length === 0 ? (
+            <div style={{ marginTop: 40, padding: "32px 28px", background: "var(--bw-cream)", borderRadius: "var(--r-lg)", textAlign: "center" }}>
+              <p style={{ ...bodyStyle, marginTop: 0, fontSize: 16 }}>
+                New cohorts are being scheduled — check back soon.
+              </p>
+              <div style={{ marginTop: 20 }}>
+                <MarketingButton variant="primary" size="md" onClick={() => openModal("certification_enroll_briefing")}>
+                  Request a briefing
+                </MarketingButton>
+              </div>
+            </div>
+          ) : (
+            <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fit, minmax(340px, 1fr))", gap: 20, marginTop: 40 }}>
+              {cohorts.map((c) => {
+                const seatsLabel = c.max_capacity == null
+                  ? "Open enrollment"
+                  : `${c.seats_left ?? Math.max(0, c.max_capacity - (c.seats_taken ?? 0))} of ${c.max_capacity} seats left`;
+                return (
+                  <div key={c.cohort_id} style={{ ...cardStyle, minHeight: 0 }}>
+                    <Eyebrow color="var(--bw-teal)">Cohort</Eyebrow>
+                    <h3 style={h3Style}>{c.name}</h3>
+                    <div style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 14, color: "var(--bw-slate)", marginTop: 8, fontWeight: 600 }}>
+                      {fmtRange(c.starts_at, c.ends_at)}
+                    </div>
+                    <div style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 13, color: "var(--bw-slate-400)", marginTop: 4 }}>
+                      {seatsLabel}
+                    </div>
+                    {c.description && (
+                      <p style={{ ...bodyStyle, marginTop: 12, fontSize: 14 }}>{c.description}</p>
+                    )}
+                    {c.sessions && c.sessions.length > 0 && (
+                      <div style={{ marginTop: 16, paddingTop: 16, borderTop: "1px solid var(--bw-cream-300)" }}>
+                        <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 13, color: "var(--bw-navy)", textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 10 }}>
+                          Session dates
+                        </div>
+                        <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 8 }}>
+                          {[...c.sessions].sort((a, b) => a.sequence_no - b.sequence_no).map((s) => (
+                            <li key={s.sequence_no} style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 13.5, color: "var(--bw-slate)", lineHeight: 1.45 }}>
+                              <span style={{ color: "var(--bw-navy)", fontWeight: 600 }}>{s.title}:</span>{" "}
+                              {fmtSession(s.starts_at, s.timezone)}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    <div style={{ marginTop: "auto", paddingTop: 20 }}>
+                      <MarketingButton
+                        variant="primary"
+                        size="md"
+                        onClick={() => {
+                          setEnrollFor(c);
+                          setEmail("");
+                          setFirstName("");
+                          setLastName("");
+                        }}
+                      >
+                        Enroll — $1,500
+                      </MarketingButton>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </section>
+
       {/* CLOSING CTA */}
       <section style={{ background: "var(--bw-navy)", padding: `${isMobile ? 72 : 96}px ${padX}px`, position: "relative", overflow: "hidden" }}>
         <DotArc size={540} opacity={0.07} style={{ left: -120, bottom: -120 }} />
