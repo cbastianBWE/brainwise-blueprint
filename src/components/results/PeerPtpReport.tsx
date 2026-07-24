@@ -62,6 +62,10 @@ export default function PeerPtpReport({ targetUserId, ownerName }: Props) {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<RpcPayload | null>(null);
   const [ctx, setCtx] = useState<Ctx>("professional");
+  const [drivingFacets, setDrivingFacets] = useState<{
+    elevated: Array<{ facet_name: string; dimension_id: string; value: number }>;
+    suppressed: Array<{ facet_name: string; dimension_id: string; value: number }>;
+  } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
