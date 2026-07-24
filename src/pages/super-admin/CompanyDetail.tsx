@@ -230,6 +230,7 @@ interface SubscriptionTier {
   dashboard_access_level: "none" | "basic" | "full";
   ai_chat_enabled: boolean;
   seat_count_default: number;
+  price_per_user_annual: number | null;
 }
 
 interface ContractRow {
@@ -248,6 +249,12 @@ interface ContractRow {
   data_retention_mode: "standard" | "strict";
   supervisor_dashboard_enabled: boolean;
   notes: string | null;
+  price_per_user_annual_override: number | null;
+  contract_total_annual_override: number | null;
+  team_reports_included_qty: number;
+  team_reports_unlimited: boolean;
+  paired_reports_included_qty: number;
+  paired_reports_unlimited: boolean;
 }
 
 const INSTRUMENTS = [
@@ -283,6 +290,15 @@ function ContractFeaturesSection({ orgId, onError, onSuccess }: ContractFeatures
   const [coachingValue, setCoachingValue] = useState("");
   const [overrideDashboard, setOverrideDashboard] = useState(false);
   const [dashboardLevel, setDashboardLevel] = useState<"none" | "basic" | "full">("basic");
+
+  const [overridePrice, setOverridePrice] = useState(false);
+  const [priceValue, setPriceValue] = useState("");
+  const [useTotal, setUseTotal] = useState(false);
+  const [totalValue, setTotalValue] = useState("");
+  const [teamIncluded, setTeamIncluded] = useState("0");
+  const [teamUnlimited, setTeamUnlimited] = useState(false);
+  const [pairedIncluded, setPairedIncluded] = useState("0");
+  const [pairedUnlimited, setPairedUnlimited] = useState(false);
 
   const [resetPool, setResetPool] = useState<"chat" | "org_interpretation" | "coaching_query" | null>(null);
   const [resetting, setResetting] = useState(false);
@@ -330,6 +346,15 @@ function ContractFeaturesSection({ orgId, onError, onSuccess }: ContractFeatures
 
       setOverrideDashboard(c.dashboard_access_level_override !== null);
       setDashboardLevel(c.dashboard_access_level_override ?? "basic");
+
+      setOverridePrice(c.price_per_user_annual_override !== null);
+      setPriceValue(c.price_per_user_annual_override !== null ? String(c.price_per_user_annual_override) : "");
+      setUseTotal(c.contract_total_annual_override !== null);
+      setTotalValue(c.contract_total_annual_override !== null ? String(c.contract_total_annual_override) : "");
+      setTeamIncluded(String(c.team_reports_included_qty ?? 0));
+      setTeamUnlimited(!!c.team_reports_unlimited);
+      setPairedIncluded(String(c.paired_reports_included_qty ?? 0));
+      setPairedUnlimited(!!c.paired_reports_unlimited);
     }
 
     setLoading(false);
@@ -380,6 +405,12 @@ function ContractFeaturesSection({ orgId, onError, onSuccess }: ContractFeatures
       p_monthly_coaching_query_allowance_override: overrideCoaching && coachingValue !== "" ? Number(coachingValue) : null,
       p_ai_chat_enabled_override: overrideAiChat ? aiChatEnabled : null,
       p_dashboard_access_level_override: overrideDashboard ? dashboardLevel : null,
+      p_price_per_user_annual_override: overridePrice && priceValue !== "" ? Number(priceValue) : null,
+      p_contract_total_annual_override: useTotal && totalValue !== "" ? Number(totalValue) : null,
+      p_team_reports_included_qty: Number(teamIncluded) || 0,
+      p_team_reports_unlimited: teamUnlimited,
+      p_paired_reports_included_qty: Number(pairedIncluded) || 0,
+      p_paired_reports_unlimited: pairedUnlimited,
     });
     setSaving(false);
 
@@ -490,6 +521,107 @@ function ContractFeaturesSection({ orgId, onError, onSuccess }: ContractFeatures
           </div>
         </CardContent>
       </Card>
+
+      {(() => {
+        const seatNum = Number(seatCount) || 0;
+        const tierPrice = selectedTier?.price_per_user_annual != null ? Number(selectedTier.price_per_user_annual) : 0;
+        const effPerSeat = overridePrice && priceValue !== "" ? Number(priceValue) : tierPrice;
+        const effTotal = useTotal && totalValue !== "" ? Number(totalValue) : seatNum * effPerSeat;
+        const basis = useTotal && totalValue !== "" ? "flat total" : (overridePrice && priceValue !== "" ? "per-seat override" : "tier price");
+        return (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Report Allowances & Pricing</CardTitle>
+              <CardDescription>Per-seat price overrides, flat contract totals, and included team/paired report quantities.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>Override tier per-seat price</Label>
+                    <p className="text-xs text-muted-foreground">
+                      Tier default: ${selectedTier?.price_per_user_annual ?? 0} / seat / yr
+                    </p>
+                  </div>
+                  <Switch checked={overridePrice} onCheckedChange={setOverridePrice} disabled={saving} />
+                </div>
+                {overridePrice && (
+                  <Input
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    value={priceValue}
+                    onChange={(e) => setPriceValue(e.target.value)}
+                    placeholder="Per-seat annual price (USD)"
+                    disabled={saving}
+                  />
+                )}
+
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>Use flat contract total (overrides per-seat)</Label>
+                    <p className="text-xs text-muted-foreground">When on, the contract total is used instead of seat × per-seat price.</p>
+                  </div>
+                  <Switch checked={useTotal} onCheckedChange={setUseTotal} disabled={saving} />
+                </div>
+                {useTotal && (
+                  <Input
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    value={totalValue}
+                    onChange={(e) => setTotalValue(e.target.value)}
+                    placeholder="Flat annual contract total (USD)"
+                    disabled={saving}
+                  />
+                )}
+
+                <p className="text-sm">
+                  Contract value: <strong>${effTotal.toLocaleString()}</strong> / yr ({basis}).
+                </p>
+              </div>
+
+              <div className="border-t pt-4 space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Team reports included / year</Label>
+                    <Input
+                      type="number"
+                      min={0}
+                      value={teamIncluded}
+                      onChange={(e) => setTeamIncluded(e.target.value)}
+                      disabled={saving || teamUnlimited}
+                    />
+                    <div className="flex items-center gap-2 pt-1">
+                      <Switch checked={teamUnlimited} onCheckedChange={setTeamUnlimited} disabled={saving} />
+                      <span className="text-sm">Unlimited team reports</span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Paired reports included / year</Label>
+                    <Input
+                      type="number"
+                      min={0}
+                      value={pairedIncluded}
+                      onChange={(e) => setPairedIncluded(e.target.value)}
+                      disabled={saving || pairedUnlimited}
+                    />
+                    <div className="flex items-center gap-2 pt-1">
+                      <Switch checked={pairedUnlimited} onCheckedChange={setPairedUnlimited} disabled={saving} />
+                      <span className="text-sm">Unlimited paired reports</span>
+                    </div>
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  When an org exceeds these, ordering is blocked and a request is sent to super admins.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        );
+      })()}
+
 
       <Card>
         <CardHeader>
