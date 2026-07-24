@@ -29,7 +29,7 @@ export default function PaidEnrollmentNudgeModal({
 
   const handleContinue = () => {
     onOpenChange(false);
-    navigate("/products#certifications");
+    navigate("/certification");
   };
 
   return (
@@ -43,8 +43,8 @@ export default function PaidEnrollmentNudgeModal({
             <div className="space-y-3">
               <p>
                 This certification is {formattedPrice ?? "a paid program"}. To
-                begin, we'll take you to our certifications page where you can
-                review the full details and complete enrollment.
+                begin, we'll take you to the certification page where you can
+                review the full details, pick a cohort, and complete enrollment.
               </p>
               <p>
                 You'll find everything about what's included, the schedule, and
