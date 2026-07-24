@@ -343,19 +343,21 @@ export async function assemblePtpPdfData(params: {
 
 
     if (contextTab) {
-      // Inline compute mirroring DrivingFacetScores.tsx — driving facets are
-      // not persisted to facet_interpretations, so we recompute from raw responses.
+      // Driving facets are computed from raw responses via the shared
+      // selectDrivingFacets helper (see src/lib/selectDrivingFacets.ts).
       const { data: primaryResponses } = await supabase
         .from("assessment_responses")
         .select("response_value_numeric, is_reverse_scored, item_id")
-        .eq("assessment_id", result.assessment_id);
+        .eq("assessment_id", result.assessment_id)
+        .order("item_id");
 
       let allResponses: any[] = primaryResponses ?? [];
       if (additionalAssessmentId) {
         const { data: extra } = await supabase
           .from("assessment_responses")
           .select("response_value_numeric, is_reverse_scored, item_id")
-          .eq("assessment_id", additionalAssessmentId);
+          .eq("assessment_id", additionalAssessmentId)
+          .order("item_id");
         if (extra?.length) allResponses = [...allResponses, ...extra];
       }
 
@@ -388,18 +390,8 @@ export async function assemblePtpPdfData(params: {
           (contextTab === 'professional' || contextTab === 'personal')
         ) {
           const filtered = scoredItems.filter((s) => s.contextType === contextTab);
-          // Defensive fallback matches DrivingFacetScores.tsx line 109.
           if (filtered.length > 0) filteredItems = filtered;
         }
-
-        const values = filteredItems.map((s) => s.value);
-        const mean = values.reduce((a, b) => a + b, 0) / values.length;
-        const variance =
-          values.reduce((sum, v) => sum + (v - mean) ** 2, 0) / values.length;
-        const stdDev = Math.sqrt(variance);
-
-        const upper = mean + stdDev;
-        const lower = mean - stdDev;
 
         const mapFacet = (s: typeof filteredItems[number]) => ({
           itemNumber: s.itemNumber,
@@ -408,20 +400,11 @@ export async function assemblePtpPdfData(params: {
           score: Math.round(s.value),
           dimensionId: s.dimensionId,
           interpretation: interpretationMap.get(s.facetName) ?? null,
-
         });
 
-        elevatedFacets = filteredItems
-          .filter((s) => s.value > upper)
-          .sort((a, b) => (b.value - mean) - (a.value - mean))
-          .slice(0, 10)
-          .map(mapFacet);
-
-        suppressedFacets = filteredItems
-          .filter((s) => s.value < lower)
-          .sort((a, b) => (a.value - mean) - (b.value - mean))
-          .slice(0, 10)
-          .map(mapFacet);
+        const selection = selectDrivingFacets(filteredItems);
+        elevatedFacets = selection.elevated.map(mapFacet);
+        suppressedFacets = selection.suppressed.map(mapFacet);
       }
     }
 
