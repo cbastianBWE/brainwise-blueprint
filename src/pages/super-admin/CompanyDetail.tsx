@@ -405,6 +405,12 @@ function ContractFeaturesSection({ orgId, onError, onSuccess }: ContractFeatures
       p_monthly_coaching_query_allowance_override: overrideCoaching && coachingValue !== "" ? Number(coachingValue) : null,
       p_ai_chat_enabled_override: overrideAiChat ? aiChatEnabled : null,
       p_dashboard_access_level_override: overrideDashboard ? dashboardLevel : null,
+      p_price_per_user_annual_override: overridePrice && priceValue !== "" ? Number(priceValue) : null,
+      p_contract_total_annual_override: useTotal && totalValue !== "" ? Number(totalValue) : null,
+      p_team_reports_included_qty: Number(teamIncluded) || 0,
+      p_team_reports_unlimited: teamUnlimited,
+      p_paired_reports_included_qty: Number(pairedIncluded) || 0,
+      p_paired_reports_unlimited: pairedUnlimited,
     });
     setSaving(false);
 
