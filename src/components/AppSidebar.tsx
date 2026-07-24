@@ -4,7 +4,7 @@ import {
   Users, Users2, Building2, UsersRound, Activity, Heart, Award, UserCircle,
   ShieldCheck, Briefcase, GitBranch, FlaskConical, LogOut, History, Shield,
   CreditCard, Receipt, ChevronDown, ChevronRight, FileText, Library, Ticket,
-  GraduationCap, Bell, Newspaper, SlidersHorizontal, Wallet, FileMinus2, Repeat, Clock, UserPlus, Mail, Inbox, Webhook, Megaphone, Target, Blocks, HelpCircle, Compass,
+  GraduationCap, Bell, Newspaper, SlidersHorizontal, Wallet, FileMinus2, Repeat, Clock, UserPlus, Mail, Inbox, Webhook, Megaphone, Target, Blocks, HelpCircle, Compass, FileClock,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -115,6 +115,7 @@ const superAdminNav: NavItem[] = [
   { title: "Platform Health", url: "/super-admin/health", icon: Heart },
   { title: "Coach Invitations", url: "/super-admin/coaches", icon: Users },
   { title: "Organizations", url: "/super-admin/companies", icon: Briefcase },
+  { title: "Report Requests", url: "/super-admin/report-requests", icon: FileClock },
   { title: "Version Management", url: "/super-admin/versions", icon: GitBranch },
   { title: "Content Authoring", url: "/super-admin/content-authoring", icon: Library },
   { title: "Learning Report", url: "/super-admin/learning-report", icon: ClipboardList },

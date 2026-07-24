@@ -4765,6 +4765,7 @@ export type Database = {
       corporate_contracts: {
         Row: {
           ai_chat_enabled_override: boolean | null
+          contract_total_annual_override: number | null
           created_at: string
           created_by: string | null
           dashboard_access_level_override: string | null
@@ -4777,14 +4778,20 @@ export type Database = {
           monthly_coaching_query_allowance_override: number | null
           notes: string | null
           organization_id: string
+          paired_reports_included_qty: number
+          paired_reports_unlimited: boolean
+          price_per_user_annual_override: number | null
           seat_count: number
           start_date: string
           supervisor_dashboard_enabled: boolean
+          team_reports_included_qty: number
+          team_reports_unlimited: boolean
           tier_id: string
           updated_at: string
         }
         Insert: {
           ai_chat_enabled_override?: boolean | null
+          contract_total_annual_override?: number | null
           created_at?: string
           created_by?: string | null
           dashboard_access_level_override?: string | null
@@ -4797,14 +4804,20 @@ export type Database = {
           monthly_coaching_query_allowance_override?: number | null
           notes?: string | null
           organization_id: string
+          paired_reports_included_qty?: number
+          paired_reports_unlimited?: boolean
+          price_per_user_annual_override?: number | null
           seat_count: number
           start_date: string
           supervisor_dashboard_enabled?: boolean
+          team_reports_included_qty?: number
+          team_reports_unlimited?: boolean
           tier_id: string
           updated_at?: string
         }
         Update: {
           ai_chat_enabled_override?: boolean | null
+          contract_total_annual_override?: number | null
           created_at?: string
           created_by?: string | null
           dashboard_access_level_override?: string | null
@@ -4817,9 +4830,14 @@ export type Database = {
           monthly_coaching_query_allowance_override?: number | null
           notes?: string | null
           organization_id?: string
+          paired_reports_included_qty?: number
+          paired_reports_unlimited?: boolean
+          price_per_user_annual_override?: number | null
           seat_count?: number
           start_date?: string
           supervisor_dashboard_enabled?: boolean
+          team_reports_included_qty?: number
+          team_reports_unlimited?: boolean
           tier_id?: string
           updated_at?: string
         }
@@ -10978,6 +10996,124 @@ export type Database = {
           },
         ]
       }
+      report_capacity_requests: {
+        Row: {
+          created_at: string
+          id: string
+          included_qty_at_request: number | null
+          organization_id: string
+          reason: string | null
+          relationship_mode: string | null
+          report_type: string
+          requested_by: string
+          resolution_note: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          status: string
+          subject_user_ids: string[]
+          team_id: string | null
+          used_at_request: number | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          included_qty_at_request?: number | null
+          organization_id: string
+          reason?: string | null
+          relationship_mode?: string | null
+          report_type: string
+          requested_by: string
+          resolution_note?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          subject_user_ids?: string[]
+          team_id?: string | null
+          used_at_request?: number | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          included_qty_at_request?: number | null
+          organization_id?: string
+          reason?: string | null
+          relationship_mode?: string | null
+          report_type?: string
+          requested_by?: string
+          resolution_note?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          subject_user_ids?: string[]
+          team_id?: string | null
+          used_at_request?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "report_capacity_requests_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "report_capacity_requests_requested_by_fkey"
+            columns: ["requested_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "report_capacity_requests_requested_by_fkey"
+            columns: ["requested_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "report_capacity_requests_requested_by_fkey"
+            columns: ["requested_by"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "report_capacity_requests_requested_by_fkey"
+            columns: ["requested_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "report_capacity_requests_resolved_by_fkey"
+            columns: ["resolved_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "report_capacity_requests_resolved_by_fkey"
+            columns: ["resolved_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "report_capacity_requests_resolved_by_fkey"
+            columns: ["resolved_by"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "report_capacity_requests_resolved_by_fkey"
+            columns: ["resolved_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       report_commitments: {
         Row: {
           action_text: string
@@ -11043,6 +11179,7 @@ export type Database = {
       report_orders: {
         Row: {
           amount_cents: number
+          billing_mode: string | null
           client_email: string | null
           client_user_id: string | null
           coach_user_id: string
@@ -11063,12 +11200,13 @@ export type Database = {
           status: string
           stripe_checkout_session_id: string | null
           stripe_payment_intent_id: string | null
-          stripe_price_id: string
+          stripe_price_id: string | null
           subject_user_ids: string[]
           team_id: string | null
         }
         Insert: {
           amount_cents: number
+          billing_mode?: string | null
           client_email?: string | null
           client_user_id?: string | null
           coach_user_id: string
@@ -11089,12 +11227,13 @@ export type Database = {
           status?: string
           stripe_checkout_session_id?: string | null
           stripe_payment_intent_id?: string | null
-          stripe_price_id: string
+          stripe_price_id?: string | null
           subject_user_ids: string[]
           team_id?: string | null
         }
         Update: {
           amount_cents?: number
+          billing_mode?: string | null
           client_email?: string | null
           client_user_id?: string | null
           coach_user_id?: string
@@ -11115,7 +11254,7 @@ export type Database = {
           status?: string
           stripe_checkout_session_id?: string | null
           stripe_payment_intent_id?: string | null
-          stripe_price_id?: string
+          stripe_price_id?: string | null
           subject_user_ids?: string[]
           team_id?: string | null
         }
@@ -15122,9 +15261,19 @@ export type Database = {
         Returns: number
       }
       consume_shared_ai_credit: { Args: { p_user: string }; Returns: number }
+      contract_effective_annual_value: {
+        Args: { p_org: string }
+        Returns: {
+          basis: string
+          contract_total: number
+          effective_price_per_user: number
+          seat_count: number
+        }[]
+      }
       contract_upsert: {
         Args: {
           p_ai_chat_enabled_override?: boolean
+          p_contract_total_annual_override?: number
           p_dashboard_access_level_override?: string
           p_data_retention_mode: string
           p_end_date: string
@@ -15134,8 +15283,13 @@ export type Database = {
           p_monthly_coaching_query_allowance_override?: number
           p_notes: string
           p_organization_id: string
+          p_paired_reports_included_qty?: number
+          p_paired_reports_unlimited?: boolean
+          p_price_per_user_annual_override?: number
           p_seat_count: number
           p_start_date: string
+          p_team_reports_included_qty?: number
+          p_team_reports_unlimited?: boolean
           p_tier_id: string
         }
         Returns: string
@@ -16182,6 +16336,26 @@ export type Database = {
           updated_at: string
         }[]
       }
+      list_report_capacity_requests: {
+        Args: { p_status?: string }
+        Returns: {
+          created_at: string
+          id: string
+          included_qty_at_request: number
+          org_name: string
+          organization_id: string
+          relationship_mode: string
+          report_type: string
+          requested_by: string
+          requested_by_name: string
+          resolution_note: string
+          resolved_at: string
+          resolved_by: string
+          status: string
+          subject_user_ids: string[]
+          used_at_request: number
+        }[]
+      }
       list_reports_shared_with_me: {
         Args: never
         Returns: {
@@ -16974,6 +17148,16 @@ export type Database = {
           user_id: string
         }[]
       }
+      org_report_allowance_status: {
+        Args: { p_org: string; p_report_type: string }
+        Returns: {
+          included_qty: number
+          remaining: number
+          report_type: string
+          unlimited: boolean
+          used: number
+        }[]
+      }
       org_set_mfa_required: {
         Args: { p_enabled: boolean; p_organization_id: string }
         Returns: Json
@@ -17235,6 +17419,10 @@ export type Database = {
           p_trainee_user_id: string
         }
         Returns: Json
+      }
+      resolve_report_capacity_request: {
+        Args: { p_note?: string; p_request_id: string; p_status: string }
+        Returns: boolean
       }
       restore_article_version: {
         Args: { p_reason: string; p_version_id: string }
