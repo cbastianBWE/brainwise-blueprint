@@ -271,6 +271,17 @@ export default function GenerateReportDialog({ open, onOpenChange, allowedModes,
         client_name?: string;
       };
 
+      const blockedResult = orderResult as { blocked?: boolean; order_type?: "team" | "paired"; included?: number; used?: number; billing_mode?: string; included_remaining?: number | null };
+      if (blockedResult?.blocked === true) {
+        toast.info(
+          `This organization has reached its included ${kind} report limit. A request has been sent to a BrainWise administrator to add capacity — you can order again once it's approved.`
+        );
+        onGenerated();
+        onOpenChange(false);
+        setSubmitting(false);
+        return;
+      }
+
       // Super admin / free path — preserve original behaviour exactly
       if (result?.requires_payment === false) {
         if (kind === "team") {
@@ -290,6 +301,10 @@ export default function GenerateReportDialog({ open, onOpenChange, allowedModes,
           if (reportLabel.trim()) {
             try { await supabase.rpc("bw_set_report_label" as never, { p_profile: id, p_label: reportLabel.trim() } as never); } catch { /* cosmetic */ }
           }
+          if (blockedResult?.billing_mode === "included") {
+            const rem = blockedResult.included_remaining;
+            toast.success(rem === null || rem === undefined ? "Report generated (covered by your organization)." : `Report generated. ${rem} included ${kind} report${rem === 1 ? "" : "s"} remaining.`);
+          }
           onGenerated();
           onOpenChange(false);
           navigate(`/team-report/${id}`);
@@ -306,6 +321,10 @@ export default function GenerateReportDialog({ open, onOpenChange, allowedModes,
           const id = (data as { paired_profile_id: string }).paired_profile_id;
           if (releaseNow) {
             try { await supabase.rpc("bw_set_report_release" as never, { p_profile: id, p_kind: "paired", p_released: true } as never); } catch { /* held */ }
+          }
+          if (blockedResult?.billing_mode === "included") {
+            const rem = blockedResult.included_remaining;
+            toast.success(rem === null || rem === undefined ? "Report generated (covered by your organization)." : `Report generated. ${rem} included ${kind} report${rem === 1 ? "" : "s"} remaining.`);
           }
           onGenerated();
           onOpenChange(false);
