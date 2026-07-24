@@ -16,6 +16,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { PTP_DIMENSION_COLORS } from "@/lib/ptpDimensionColors";
 import { PtpDimensionLegend } from "@/components/results/PtpDimensionLegend";
+import { selectDrivingFacets } from "@/lib/selectDrivingFacets";
 
 interface FacetItem {
   item_text: string;
