@@ -168,6 +168,7 @@ import AccessHistory from "./pages/AccessHistory";
 import Help from "./pages/Help";
 import ReportPaymentConfirmed from "./pages/ReportPaymentConfirmed";
 import Unsubscribe from "./pages/Unsubscribe";
+import ClaimInvitation from "./pages/ClaimInvitation";
 import CookieConsentBanner from "@/components/CookieConsentBanner";
 import ImpersonationProvider from "@/contexts/ImpersonationProvider";
 import ImpersonationBanner from "@/components/impersonation/ImpersonationBanner";
@@ -192,6 +193,7 @@ const App = () => (
             {/* Public routes */}
             <Route path="/" element={<Home />} />
             <Route path="/pay/:token" element={<PublicInvoicePay />} />
+            <Route path="/claim/:token" element={<ClaimInvitation />} />
             <Route path="/estimate/:token" element={<PublicEstimateRespond />} />
             <Route path="/verify/cert/:certId" element={<VerifyCertification />} />
             <Route path="/coming-soon" element={<ComingSoon />} />
