@@ -291,6 +291,15 @@ function ContractFeaturesSection({ orgId, onError, onSuccess }: ContractFeatures
   const [overrideDashboard, setOverrideDashboard] = useState(false);
   const [dashboardLevel, setDashboardLevel] = useState<"none" | "basic" | "full">("basic");
 
+  const [overridePrice, setOverridePrice] = useState(false);
+  const [priceValue, setPriceValue] = useState("");
+  const [useTotal, setUseTotal] = useState(false);
+  const [totalValue, setTotalValue] = useState("");
+  const [teamIncluded, setTeamIncluded] = useState("0");
+  const [teamUnlimited, setTeamUnlimited] = useState(false);
+  const [pairedIncluded, setPairedIncluded] = useState("0");
+  const [pairedUnlimited, setPairedUnlimited] = useState(false);
+
   const [resetPool, setResetPool] = useState<"chat" | "org_interpretation" | "coaching_query" | null>(null);
   const [resetting, setResetting] = useState(false);
 
