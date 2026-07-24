@@ -76,9 +76,85 @@ export default function Certification() {
   const isMobile = useIsBelow(768);
   const isTablet = useIsBelow(1024);
 
+  type CohortSession = { sequence_no: number; title: string; starts_at: string; ends_at: string; timezone: string };
+  type Cohort = {
+    cohort_id: string;
+    name: string;
+    description: string | null;
+    starts_at: string;
+    ends_at: string;
+    enrollment_opens_at: string | null;
+    enrollment_closes_at: string | null;
+    max_capacity: number | null;
+    seats_taken: number;
+    seats_left: number | null;
+    sessions: CohortSession[];
+  };
+  const [cohorts, setCohorts] = useState<Cohort[]>([]);
+  const [enrollFor, setEnrollFor] = useState<Cohort | null>(null);
+  const [email, setEmail] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [enrolling, setEnrolling] = useState(false);
+  const [showEnrolledBanner, setShowEnrolledBanner] = useState(false);
+
+  useEffect(() => {
+    supabase.rpc("bw_list_open_cohorts" as any).then(({ data }) => {
+      setCohorts((data as Cohort[]) || []);
+    });
+    if (typeof window !== "undefined") {
+      const q = new URLSearchParams(window.location.search);
+      if (q.get("enrolled") === "success") setShowEnrolledBanner(true);
+    }
+  }, []);
+
   const openModal = (source: string) => {
     setModalSource(source);
     setModalOpen(true);
+  };
+
+  const handleEnroll = async () => {
+    if (!enrollFor) return;
+    if (!email.trim()) {
+      toast.error("Please enter your email.");
+      return;
+    }
+    setEnrolling(true);
+    const { data, error } = await supabase.functions.invoke("create-certification-checkout", {
+      body: {
+        cohort_id: enrollFor.cohort_id,
+        email: email.trim(),
+        first_name: firstName.trim() || null,
+        last_name: lastName.trim() || null,
+      },
+    });
+    setEnrolling(false);
+    if (error || !(data as any)?.url) {
+      toast.error("Couldn't start checkout. Please try again.");
+      return;
+    }
+    window.location.href = (data as any).url as string;
+  };
+
+  const fmtRange = (startIso: string, endIso: string) => {
+    const s = new Date(startIso);
+    const e = new Date(endIso);
+    const sameMonth = s.getMonth() === e.getMonth() && s.getFullYear() === e.getFullYear();
+    const optDay: Intl.DateTimeFormatOptions = { month: "short", day: "numeric" };
+    const optYear: Intl.DateTimeFormatOptions = { month: "short", day: "numeric", year: "numeric" };
+    if (sameMonth) return `${s.toLocaleDateString(undefined, optDay)}–${e.toLocaleDateString(undefined, { day: "numeric", year: "numeric" })}`;
+    return `${s.toLocaleDateString(undefined, optDay)} – ${e.toLocaleDateString(undefined, optYear)}`;
+  };
+
+  const fmtSession = (iso: string, tz: string) => {
+    try {
+      return new Date(iso).toLocaleString(undefined, {
+        weekday: "short", month: "short", day: "numeric",
+        hour: "numeric", minute: "2-digit", timeZone: tz, timeZoneName: "short",
+      });
+    } catch {
+      return new Date(iso).toLocaleString();
+    }
   };
 
   useEffect(() => {
