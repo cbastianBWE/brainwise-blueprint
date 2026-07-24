@@ -114,6 +114,7 @@ import AdminResourceAuthoring from "./pages/super-admin/AdminResourceAuthoring";
 import AdminNewsletter from "./pages/super-admin/AdminNewsletter";
 import AdminNewsletterArticle from "./pages/super-admin/AdminNewsletterArticle";
 import CompCouponsManagement from "./pages/super-admin/CompCouponsManagement";
+import ReportCapacityRequests from "./pages/super-admin/ReportCapacityRequests";
 import OperationsCustomers from "./pages/operations/OperationsCustomers";
 import OperationsCustomerDetail from "./pages/operations/OperationsCustomerDetail";
 import OperationsInvoices from "./pages/operations/OperationsInvoices";
