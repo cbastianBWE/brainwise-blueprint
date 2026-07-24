@@ -179,11 +179,11 @@ function CustomTooltip({ active, payload }: any) {
 function FacetSection({
   title,
   items,
-  total,
+  footnote,
 }: {
   title: string;
   items: FacetItem[];
-  total: number;
+  footnote: string | null;
 }) {
   const chartData = items.map((item) => ({
     name: truncate(item.facet_name),
@@ -196,6 +196,9 @@ function FacetSection({
     <div>
       <h3 className="text-sm font-semibold text-foreground mb-2">{title}</h3>
       <PtpDimensionLegend dimensionIds={[...new Set(items.map((i) => i.dimension_id))]} />
+      {footnote && (
+        <p className="text-xs text-muted-foreground mb-2">{footnote}</p>
+      )}
 
       <ScrollArea className="w-full">
         <div
