@@ -110,6 +110,61 @@ export default function PeerPtpReport({ targetUserId, ownerName }: Props) {
     }
   }, [availableContexts, ctx]);
 
+  // Compute driving facets from raw responses via the shared selectDrivingFacets
+  // helper. The legacy driving_facets_${ctx} section row is no longer read.
+  useEffect(() => {
+    let cancelled = false;
+    setDrivingFacets(null);
+    const results = data?.results ?? [];
+    const currentResult = results.find((r) => ctxToSuffix(r.context_type) === ctx) ?? null;
+    if (!currentResult) return;
+
+    (async () => {
+      const { data: responses } = await supabase
+        .from("assessment_responses")
+        .select("response_value_numeric, is_reverse_scored, item_id")
+        .eq("assessment_id", currentResult.assessment_id)
+        .order("item_id");
+      if (cancelled || !responses?.length) return;
+
+      const itemIds = responses.map((r) => r.item_id);
+      const { data: items } = await supabase
+        .from("items_presentation")
+        .select("item_id, dimension_id, facet_name, context_type")
+        .in("item_id", itemIds);
+      if (cancelled) return;
+      const itemMap = new Map((items ?? []).map((i) => [i.item_id, i]));
+
+      let scored = responses.map((r) => {
+        const item = itemMap.get(r.item_id);
+        const raw = Number(r.response_value_numeric);
+        const value = r.is_reverse_scored ? 100 - raw : raw;
+        return {
+          value,
+          facetName: item?.facet_name ?? "",
+          facet_name: item?.facet_name ?? "",
+          dimension_id: item?.dimension_id ?? "",
+          context_type: item?.context_type ?? null,
+        };
+      });
+
+      if (currentResult.context_type === "both" && (ctx === "professional" || ctx === "personal")) {
+        scored = scored.filter((s) => s.context_type === ctx);
+      }
+
+      if (!scored.length) return;
+      const selection = selectDrivingFacets(scored);
+      setDrivingFacets({
+        elevated: selection.elevated.map((s) => ({ facet_name: s.facet_name, dimension_id: s.dimension_id, value: s.value })),
+        suppressed: selection.suppressed.map((s) => ({ facet_name: s.facet_name, dimension_id: s.dimension_id, value: s.value })),
+      });
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [data, ctx]);
+
   if (loading) {
     return (
       <div className="p-8 space-y-4">
