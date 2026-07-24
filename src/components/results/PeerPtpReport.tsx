@@ -256,6 +256,9 @@ export default function PeerPtpReport({ targetUserId, ownerName }: Props) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Card className="p-4">
                 <h3 className="text-sm font-semibold text-foreground mb-3">Highest scoring facets</h3>
+                {drivingFacets.elevatedFootnote && (
+                  <p className="text-xs text-muted-foreground mb-2">{drivingFacets.elevatedFootnote}</p>
+                )}
                 <ul className="space-y-1.5">
                   {(drivingFacets.elevated ?? []).map((f: any, i: number) => (
                     <li key={i} className="flex items-center justify-between text-sm">
@@ -267,6 +270,9 @@ export default function PeerPtpReport({ targetUserId, ownerName }: Props) {
               </Card>
               <Card className="p-4">
                 <h3 className="text-sm font-semibold text-foreground mb-3">Lowest scoring facets</h3>
+                {drivingFacets.suppressedFootnote && (
+                  <p className="text-xs text-muted-foreground mb-2">{drivingFacets.suppressedFootnote}</p>
+                )}
                 <ul className="space-y-1.5">
                   {(drivingFacets.suppressed ?? []).map((f: any, i: number) => (
                     <li key={i} className="flex items-center justify-between text-sm">
