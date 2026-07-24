@@ -346,6 +346,15 @@ function ContractFeaturesSection({ orgId, onError, onSuccess }: ContractFeatures
 
       setOverrideDashboard(c.dashboard_access_level_override !== null);
       setDashboardLevel(c.dashboard_access_level_override ?? "basic");
+
+      setOverridePrice(c.price_per_user_annual_override !== null);
+      setPriceValue(c.price_per_user_annual_override !== null ? String(c.price_per_user_annual_override) : "");
+      setUseTotal(c.contract_total_annual_override !== null);
+      setTotalValue(c.contract_total_annual_override !== null ? String(c.contract_total_annual_override) : "");
+      setTeamIncluded(String(c.team_reports_included_qty ?? 0));
+      setTeamUnlimited(!!c.team_reports_unlimited);
+      setPairedIncluded(String(c.paired_reports_included_qty ?? 0));
+      setPairedUnlimited(!!c.paired_reports_unlimited);
     }
 
     setLoading(false);
