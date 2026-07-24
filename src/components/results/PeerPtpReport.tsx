@@ -261,7 +261,7 @@ export default function PeerPtpReport({ targetUserId, ownerName }: Props) {
                 </ul>
               </Card>
               <Card className="p-4">
-                <h3 className="text-sm font-semibold text-foreground mb-3">Low scoring drivers</h3>
+                <h3 className="text-sm font-semibold text-foreground mb-3">Lowest scoring facets</h3>
                 <ul className="space-y-1.5">
                   {(drivingFacets.suppressed ?? []).map((f: any, i: number) => (
                     <li key={i} className="flex items-center justify-between text-sm">
