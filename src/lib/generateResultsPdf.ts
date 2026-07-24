@@ -63,6 +63,8 @@ export interface PdfData {
   } | null;
   elevatedFacets: FacetWithInterpretation[];
   suppressedFacets: FacetWithInterpretation[];
+  elevatedFacetsFootnote?: string | null;
+  suppressedFacetsFootnote?: string | null;
   assessmentResponses: AssessmentResponse[];
   recommendations: string[];
   isSliderInstrument: boolean;
