@@ -406,8 +406,10 @@ export async function assemblePtpPdfData(params: {
         });
 
         const selection = selectDrivingFacets(filteredItems);
-        elevatedFacets = selection.elevated.map(mapFacet);
-        suppressedFacets = selection.suppressed.map(mapFacet);
+        elevatedFacets = selection.elevated.items.map(mapFacet);
+        suppressedFacets = selection.suppressed.items.map(mapFacet);
+        elevatedFacetsFootnote = drivingFacetFootnote(selection.elevated);
+        suppressedFacetsFootnote = drivingFacetFootnote(selection.suppressed);
       }
     }
 
