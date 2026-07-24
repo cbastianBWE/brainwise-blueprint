@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { AddToDevelopmentPlanModal } from "@/components/results/AddToDevelopmentPlanModal";
 import { HighlightableText } from "@/components/results/ReportHighlight";
 import { useNarrativeGenerator } from "@/hooks/useNarrativeGenerator";
+import { selectDrivingFacets } from "@/lib/selectDrivingFacets";
 
 const PTP_DIMENSION_NAMES: Record<string, string> = {
   "DIM-PTP-01": "Protection",
