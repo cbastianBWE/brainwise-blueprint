@@ -522,6 +522,107 @@ function ContractFeaturesSection({ orgId, onError, onSuccess }: ContractFeatures
         </CardContent>
       </Card>
 
+      {(() => {
+        const seatNum = Number(seatCount) || 0;
+        const tierPrice = selectedTier?.price_per_user_annual != null ? Number(selectedTier.price_per_user_annual) : 0;
+        const effPerSeat = overridePrice && priceValue !== "" ? Number(priceValue) : tierPrice;
+        const effTotal = useTotal && totalValue !== "" ? Number(totalValue) : seatNum * effPerSeat;
+        const basis = useTotal && totalValue !== "" ? "flat total" : (overridePrice && priceValue !== "" ? "per-seat override" : "tier price");
+        return (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Report Allowances & Pricing</CardTitle>
+              <CardDescription>Per-seat price overrides, flat contract totals, and included team/paired report quantities.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>Override tier per-seat price</Label>
+                    <p className="text-xs text-muted-foreground">
+                      Tier default: ${selectedTier?.price_per_user_annual ?? 0} / seat / yr
+                    </p>
+                  </div>
+                  <Switch checked={overridePrice} onCheckedChange={setOverridePrice} disabled={saving} />
+                </div>
+                {overridePrice && (
+                  <Input
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    value={priceValue}
+                    onChange={(e) => setPriceValue(e.target.value)}
+                    placeholder="Per-seat annual price (USD)"
+                    disabled={saving}
+                  />
+                )}
+
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>Use flat contract total (overrides per-seat)</Label>
+                    <p className="text-xs text-muted-foreground">When on, the contract total is used instead of seat × per-seat price.</p>
+                  </div>
+                  <Switch checked={useTotal} onCheckedChange={setUseTotal} disabled={saving} />
+                </div>
+                {useTotal && (
+                  <Input
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    value={totalValue}
+                    onChange={(e) => setTotalValue(e.target.value)}
+                    placeholder="Flat annual contract total (USD)"
+                    disabled={saving}
+                  />
+                )}
+
+                <p className="text-sm">
+                  Contract value: <strong>${effTotal.toLocaleString()}</strong> / yr ({basis}).
+                </p>
+              </div>
+
+              <div className="border-t pt-4 space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Team reports included / year</Label>
+                    <Input
+                      type="number"
+                      min={0}
+                      value={teamIncluded}
+                      onChange={(e) => setTeamIncluded(e.target.value)}
+                      disabled={saving || teamUnlimited}
+                    />
+                    <div className="flex items-center gap-2 pt-1">
+                      <Switch checked={teamUnlimited} onCheckedChange={setTeamUnlimited} disabled={saving} />
+                      <span className="text-sm">Unlimited team reports</span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Paired reports included / year</Label>
+                    <Input
+                      type="number"
+                      min={0}
+                      value={pairedIncluded}
+                      onChange={(e) => setPairedIncluded(e.target.value)}
+                      disabled={saving || pairedUnlimited}
+                    />
+                    <div className="flex items-center gap-2 pt-1">
+                      <Switch checked={pairedUnlimited} onCheckedChange={setPairedUnlimited} disabled={saving} />
+                      <span className="text-sm">Unlimited paired reports</span>
+                    </div>
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  When an org exceeds these, ordering is blocked and a request is sent to super admins.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        );
+      })()}
+
+
       <Card>
         <CardHeader>
           <CardTitle className="text-lg">Instruments</CardTitle>
