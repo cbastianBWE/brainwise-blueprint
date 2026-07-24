@@ -1076,6 +1076,9 @@ export function PTPFacetInsightsElevatedSection(props: PTPNarrativeSectionsProps
     <div>
       <h3 style={sectionHeadingStyle}>Driving facet insights — highest scoring facets</h3>
       <PtpDimensionLegend dimensionIds={[...new Set(data.elevatedFacets.map((f) => f.dimension_id))]} />
+      {data.elevatedFacetsFootnote && (
+        <p style={{ fontSize: 12, color: "var(--fg-3)", margin: "4px 0 8px" }}>{data.elevatedFacetsFootnote}</p>
+      )}
       <FacetList facets={data.elevatedFacets} prefix="elevated" data={data} />
     </div>
   );
@@ -1089,6 +1092,9 @@ export function PTPFacetInsightsSuppressedSection(props: PTPNarrativeSectionsPro
     <div>
       <h3 style={sectionHeadingStyle}>Driving facet insights — lowest scoring facets</h3>
       <PtpDimensionLegend dimensionIds={[...new Set(data.suppressedFacets.map((f) => f.dimension_id))]} />
+      {data.suppressedFacetsFootnote && (
+        <p style={{ fontSize: 12, color: "var(--fg-3)", margin: "4px 0 8px" }}>{data.suppressedFacetsFootnote}</p>
+      )}
       <FacetList facets={data.suppressedFacets} prefix="suppressed" data={data} />
     </div>
   );
