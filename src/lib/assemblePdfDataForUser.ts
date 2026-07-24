@@ -557,6 +557,8 @@ export async function assemblePtpPdfData(params: {
     narrativeSections,
     elevatedFacets,
     suppressedFacets,
+    elevatedFacetsFootnote,
+    suppressedFacetsFootnote,
     assessmentResponses,
     recommendations,
     isSliderInstrument: !!isSliderInstrument,
