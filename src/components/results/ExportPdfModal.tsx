@@ -135,8 +135,8 @@ const PTP_GROUPS: SectionGroup<keyof PdfSections>[] = [
     options: [
       { key: "dimensionHighlights", name: "Dimension Highlights", description: "Per-dimension narrative and key facet contributors" },
       { key: "drivingFacetScores", name: "Driving Facet Scores", description: "Highest and lowest scoring facet tables" },
-      { key: "drivingFacetInsightsElevated", name: "Driving Facet Insights — High Scoring Drivers", description: "Behavioral impacts of high scoring facets" },
-      { key: "drivingFacetInsightsSuppressed", name: "Driving Facet Insights — Low Scoring Drivers", description: "Behavioral impacts of low scoring facets" },
+      { key: "drivingFacetInsightsElevated", name: "Driving Facet Insights — Highest Scoring Facets", description: "Behavioral impacts of the highest scoring facets" },
+      { key: "drivingFacetInsightsSuppressed", name: "Driving Facet Insights — Lowest Scoring Facets", description: "Behavioral impacts of the lowest scoring facets" },
       { key: "fullFacetCharts", name: "Full Facet Charts", description: "Bar charts of every assessed facet, grouped by All/Threat/Reward" },
     ],
   },
