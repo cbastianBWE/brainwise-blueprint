@@ -66,11 +66,6 @@ export default function LimitReached({
             Upgrade to Premium
           </Button>
           {chatPackButton}
-          {canBuyChatPack && (
-            <p className="text-xs text-muted-foreground">
-              Chat packs never expire and work right away.
-            </p>
-          )}
           <button
             onClick={() => navigate("/settings")}
             className="text-xs text-muted-foreground underline hover:text-foreground transition-colors"
