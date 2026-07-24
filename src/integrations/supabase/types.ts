@@ -14927,7 +14927,7 @@ export type Database = {
           p_name: string
           p_starts_at: string
           p_status: string
-          p_welcome_attachment_asset_id: string
+          p_welcome_attachment_url: string
         }
         Returns: string
       }
