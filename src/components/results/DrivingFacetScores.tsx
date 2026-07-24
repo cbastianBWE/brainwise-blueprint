@@ -16,6 +16,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { PTP_DIMENSION_COLORS } from "@/lib/ptpDimensionColors";
 import { PtpDimensionLegend } from "@/components/results/PtpDimensionLegend";
+import { selectDrivingFacets } from "@/lib/selectDrivingFacets";
 
 interface FacetItem {
   item_text: string;
@@ -27,7 +28,7 @@ interface FacetItem {
 interface Props {
   assessmentId: string;
   additionalAssessmentId?: string;
-  contextFilter?: 'professional' | 'personal';
+  contextFilter?: 'professional' | 'personal' | 'combined';
 }
 
 export default function DrivingFacetScores({ assessmentId, additionalAssessmentId, contextFilter }: Props) {
@@ -45,7 +46,8 @@ export default function DrivingFacetScores({ assessmentId, additionalAssessmentI
       const { data: responses, error } = await supabase
         .from("assessment_responses")
         .select("response_value_numeric, is_reverse_scored, item_id")
-        .eq("assessment_id", assessmentId);
+        .eq("assessment_id", assessmentId)
+        .order("item_id");
 
       if (error || !responses?.length) {
         setLoading(false);
@@ -57,7 +59,8 @@ export default function DrivingFacetScores({ assessmentId, additionalAssessmentI
         const { data: additionalResponses } = await supabase
           .from("assessment_responses")
           .select("response_value_numeric, is_reverse_scored, item_id")
-          .eq("assessment_id", additionalAssessmentId);
+          .eq("assessment_id", additionalAssessmentId)
+          .order("item_id");
         if (additionalResponses?.length) {
           allResponses = [...allResponses, ...additionalResponses];
         }
@@ -89,7 +92,7 @@ export default function DrivingFacetScores({ assessmentId, additionalAssessmentI
 
       // Filter by context if specified (for 'both' assessments shown in split tab)
       let filteredItems = scoredItems;
-      if (contextFilter) {
+      if (contextFilter && contextFilter !== 'combined') {
         const { data: contextItems } = await supabase
           .from("items_presentation")
           .select('item_id, context_type')
@@ -102,27 +105,14 @@ export default function DrivingFacetScores({ assessmentId, additionalAssessmentI
         if (!filteredItems.length) filteredItems = scoredItems;
       }
 
-      // Calculate mean and std dev
-      const values = filteredItems.map((s) => s.value);
-      const mean = values.reduce((a, b) => a + b, 0) / values.length;
-      const variance =
-        values.reduce((sum, v) => sum + (v - mean) ** 2, 0) / values.length;
-      const stdDev = Math.sqrt(variance);
+      const selection = selectDrivingFacets(
+        filteredItems.map((s) => ({ ...s, facetName: s.facet_name })),
+      );
 
-      const upperThreshold = mean + stdDev;
-      const lowerThreshold = mean - stdDev;
-
-      const allElevated = filteredItems
-        .filter((s) => s.value > upperThreshold)
-        .sort((a, b) => (b.value - mean) - (a.value - mean));
-      const allSuppressed = filteredItems
-        .filter((s) => s.value < lowerThreshold)
-        .sort((a, b) => (a.value - mean) - (b.value - mean));
-
-      setElevated(allElevated.slice(0, 10));
-      setSuppressed(allSuppressed.slice(0, 10));
-      setTotalElevated(allElevated.length);
-      setTotalSuppressed(allSuppressed.length);
+      setElevated(selection.elevated);
+      setSuppressed(selection.suppressed);
+      setTotalElevated(selection.totalElevated);
+      setTotalSuppressed(selection.totalSuppressed);
       setLoading(false);
     };
 
@@ -157,10 +147,10 @@ export default function DrivingFacetScores({ assessmentId, additionalAssessmentI
         ) : (
           <>
             {elevated.length > 0 && (
-              <FacetSection title="High Scoring Drivers" items={elevated} total={totalElevated} />
+              <FacetSection title="Highest Scoring Facets" items={elevated} total={totalElevated} />
             )}
             {suppressed.length > 0 && (
-              <FacetSection title="Low Scoring Drivers" items={suppressed} total={totalSuppressed} />
+              <FacetSection title="Lowest Scoring Facets" items={suppressed} total={totalSuppressed} />
             )}
           </>
         )}
@@ -245,11 +235,6 @@ function FacetSection({
         </div>
         <ScrollBar orientation="horizontal" />
       </ScrollArea>
-      {total > 10 && (
-        <p className="text-xs text-muted-foreground mt-2">
-          Showing top 10 of {total} {title.toLowerCase()}
-        </p>
-      )}
     </div>
   );
 }

@@ -2064,6 +2064,8 @@ export type Database = {
           instrument_id: string | null
           invitation_source: string
           invitation_status: string
+          invite_token: string
+          invite_token_claimed_at: string | null
           paired_assessment_id: string | null
           refund_amount: number | null
           refund_failure_reason: string | null
@@ -2095,6 +2097,8 @@ export type Database = {
           instrument_id?: string | null
           invitation_source?: string
           invitation_status?: string
+          invite_token?: string
+          invite_token_claimed_at?: string | null
           paired_assessment_id?: string | null
           refund_amount?: number | null
           refund_failure_reason?: string | null
@@ -2126,6 +2130,8 @@ export type Database = {
           instrument_id?: string | null
           invitation_source?: string
           invitation_status?: string
+          invite_token?: string
+          invite_token_claimed_at?: string | null
           paired_assessment_id?: string | null
           refund_amount?: number | null
           refund_failure_reason?: string | null
@@ -15487,6 +15493,20 @@ export type Database = {
           reason: string
           seats_remaining: number
           valid: boolean
+        }[]
+      }
+      coach_client_claim: {
+        Args: { p_token: string }
+        Returns: {
+          out_already_claimed: boolean
+          out_coach_client_id: string
+          out_coach_user_id: string
+          out_duplicate_self_purchase: boolean
+          out_instrument_code: string
+          out_instrument_id: string
+          out_invitation_status: string
+          out_linked_existing_assessment: boolean
+          out_sibling_rows_claimed: number
         }[]
       }
       coach_invitation_revoke: {

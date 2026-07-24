@@ -5,6 +5,7 @@ import { PTP_DIMENSION_COLORS } from "@/lib/ptpDimensionColors";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
+import { selectDrivingFacets } from "@/lib/selectDrivingFacets";
 
 interface Props {
   targetUserId: string;
@@ -61,6 +62,10 @@ export default function PeerPtpReport({ targetUserId, ownerName }: Props) {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<RpcPayload | null>(null);
   const [ctx, setCtx] = useState<Ctx>("professional");
+  const [drivingFacets, setDrivingFacets] = useState<{
+    elevated: Array<{ facet_name: string; dimension_id: string; value: number }>;
+    suppressed: Array<{ facet_name: string; dimension_id: string; value: number }>;
+  } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -105,6 +110,61 @@ export default function PeerPtpReport({ targetUserId, ownerName }: Props) {
     }
   }, [availableContexts, ctx]);
 
+  // Compute driving facets from raw responses via the shared selectDrivingFacets
+  // helper. The legacy driving_facets_${ctx} section row is no longer read.
+  useEffect(() => {
+    let cancelled = false;
+    setDrivingFacets(null);
+    const results = data?.results ?? [];
+    const currentResult = results.find((r) => ctxToSuffix(r.context_type) === ctx) ?? null;
+    if (!currentResult) return;
+
+    (async () => {
+      const { data: responses } = await supabase
+        .from("assessment_responses")
+        .select("response_value_numeric, is_reverse_scored, item_id")
+        .eq("assessment_id", currentResult.assessment_id)
+        .order("item_id");
+      if (cancelled || !responses?.length) return;
+
+      const itemIds = responses.map((r) => r.item_id);
+      const { data: items } = await supabase
+        .from("items_presentation")
+        .select("item_id, dimension_id, facet_name, context_type")
+        .in("item_id", itemIds);
+      if (cancelled) return;
+      const itemMap = new Map((items ?? []).map((i) => [i.item_id, i]));
+
+      let scored = responses.map((r) => {
+        const item = itemMap.get(r.item_id);
+        const raw = Number(r.response_value_numeric);
+        const value = r.is_reverse_scored ? 100 - raw : raw;
+        return {
+          value,
+          facetName: item?.facet_name ?? "",
+          facet_name: item?.facet_name ?? "",
+          dimension_id: item?.dimension_id ?? "",
+          context_type: item?.context_type ?? null,
+        };
+      });
+
+      if (currentResult.context_type === "both" && (ctx === "professional" || ctx === "personal")) {
+        scored = scored.filter((s) => s.context_type === ctx);
+      }
+
+      if (!scored.length) return;
+      const selection = selectDrivingFacets(scored);
+      setDrivingFacets({
+        elevated: selection.elevated.map((s) => ({ facet_name: s.facet_name, dimension_id: s.dimension_id, value: s.value })),
+        suppressed: selection.suppressed.map((s) => ({ facet_name: s.facet_name, dimension_id: s.dimension_id, value: s.value })),
+      });
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [data, ctx]);
+
   if (loading) {
     return (
       <div className="p-8 space-y-4">
@@ -132,7 +192,7 @@ export default function PeerPtpReport({ targetUserId, ownerName }: Props) {
   const currentResult = results.find((r) => ctxToSuffix(r.context_type) === ctx) ?? null;
   const sec = (type: string) => sections.find((s) => s.section_type === type && (currentResult ? s.assessment_result_id === currentResult.assessment_result_id : true));
 
-  const drivingFacets = sec(`driving_facets_${ctx}`)?.facet_data ?? null;
+  
   const profileOverview = sec(`profile_overview_${ctx}`)?.facet_data ?? null;
   const personalSummary = sec(`personal_summary_${ctx}`)?.facet_data ?? null;
   const dimensionHighlights = sec(`dimension_highlights_${ctx}`)?.facet_data ?? null;
@@ -190,7 +250,7 @@ export default function PeerPtpReport({ targetUserId, ownerName }: Props) {
           {drivingFacets && (Array.isArray(drivingFacets.elevated) || Array.isArray(drivingFacets.suppressed)) && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Card className="p-4">
-                <h3 className="text-sm font-semibold text-foreground mb-3">High scoring drivers</h3>
+                <h3 className="text-sm font-semibold text-foreground mb-3">Highest scoring facets</h3>
                 <ul className="space-y-1.5">
                   {(drivingFacets.elevated ?? []).map((f: any, i: number) => (
                     <li key={i} className="flex items-center justify-between text-sm">
@@ -201,7 +261,7 @@ export default function PeerPtpReport({ targetUserId, ownerName }: Props) {
                 </ul>
               </Card>
               <Card className="p-4">
-                <h3 className="text-sm font-semibold text-foreground mb-3">Low scoring drivers</h3>
+                <h3 className="text-sm font-semibold text-foreground mb-3">Lowest scoring facets</h3>
                 <ul className="space-y-1.5">
                   {(drivingFacets.suppressed ?? []).map((f: any, i: number) => (
                     <li key={i} className="flex items-center justify-between text-sm">

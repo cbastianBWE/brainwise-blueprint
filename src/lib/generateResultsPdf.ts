@@ -834,8 +834,8 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
       y += 6;
     };
 
-    if (data.elevatedFacets.length > 0) renderFacetScoreTable("High Scoring Drivers", data.elevatedFacets);
-    if (data.suppressedFacets.length > 0) renderFacetScoreTable("Low Scoring Drivers", data.suppressedFacets);
+    if (data.elevatedFacets.length > 0) renderFacetScoreTable("Highest Scoring Facets", data.elevatedFacets);
+    if (data.suppressedFacets.length > 0) renderFacetScoreTable("Lowest Scoring Facets", data.suppressedFacets);
   }
 
   // ── DRIVING FACET INSIGHTS (shared renderer, used by Elevated + Suppressed blocks) ──
@@ -960,8 +960,8 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
     addFooter();
     doc.addPage();
     y = MARGIN_T;
-    sectionHeading("Driving Facet Insights — High Scoring Drivers");
-    renderFacetInsights("High Scoring Drivers", data.elevatedFacets);
+    sectionHeading("Driving Facet Insights — Highest Scoring Facets");
+    renderFacetInsights("Highest Scoring Facets", data.elevatedFacets);
   }
 
   // ── DRIVING FACET INSIGHTS — SUPPRESSED ──
@@ -969,8 +969,8 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
     addFooter();
     doc.addPage();
     y = MARGIN_T;
-    sectionHeading("Driving Facet Insights — Low Scoring Drivers");
-    renderFacetInsights("Low Scoring Drivers", data.suppressedFacets);
+    sectionHeading("Driving Facet Insights — Lowest Scoring Facets");
+    renderFacetInsights("Lowest Scoring Facets", data.suppressedFacets);
   }
 
   // ── CROSS-ASSESSMENT CONNECTIONS ──
