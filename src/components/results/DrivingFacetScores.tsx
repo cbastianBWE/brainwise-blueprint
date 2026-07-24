@@ -92,7 +92,7 @@ export default function DrivingFacetScores({ assessmentId, additionalAssessmentI
 
       // Filter by context if specified (for 'both' assessments shown in split tab)
       let filteredItems = scoredItems;
-      if (contextFilter) {
+      if (contextFilter && contextFilter !== 'combined') {
         const { data: contextItems } = await supabase
           .from("items_presentation")
           .select('item_id, context_type')
@@ -105,27 +105,14 @@ export default function DrivingFacetScores({ assessmentId, additionalAssessmentI
         if (!filteredItems.length) filteredItems = scoredItems;
       }
 
-      // Calculate mean and std dev
-      const values = filteredItems.map((s) => s.value);
-      const mean = values.reduce((a, b) => a + b, 0) / values.length;
-      const variance =
-        values.reduce((sum, v) => sum + (v - mean) ** 2, 0) / values.length;
-      const stdDev = Math.sqrt(variance);
+      const selection = selectDrivingFacets(
+        filteredItems.map((s) => ({ ...s, facetName: s.facet_name })),
+      );
 
-      const upperThreshold = mean + stdDev;
-      const lowerThreshold = mean - stdDev;
-
-      const allElevated = filteredItems
-        .filter((s) => s.value > upperThreshold)
-        .sort((a, b) => (b.value - mean) - (a.value - mean));
-      const allSuppressed = filteredItems
-        .filter((s) => s.value < lowerThreshold)
-        .sort((a, b) => (a.value - mean) - (b.value - mean));
-
-      setElevated(allElevated.slice(0, 10));
-      setSuppressed(allSuppressed.slice(0, 10));
-      setTotalElevated(allElevated.length);
-      setTotalSuppressed(allSuppressed.length);
+      setElevated(selection.elevated);
+      setSuppressed(selection.suppressed);
+      setTotalElevated(selection.totalElevated);
+      setTotalSuppressed(selection.totalSuppressed);
       setLoading(false);
     };
 
