@@ -413,7 +413,8 @@ export async function assemblePtpPdfData(params: {
       const { data: responses } = await supabase
         .from("assessment_responses")
         .select("response_value_numeric, is_reverse_scored, item_id")
-        .eq("assessment_id", result.assessment_id);
+        .eq("assessment_id", result.assessment_id)
+        .order("item_id");
 
       if (responses?.length) {
         const itemIds = responses.map((r: any) => r.item_id);
