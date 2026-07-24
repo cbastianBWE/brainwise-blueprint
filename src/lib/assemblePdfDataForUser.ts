@@ -483,7 +483,8 @@ export async function assemblePtpPdfData(params: {
     const { data: responsesRaw } = await supabase
       .from("assessment_responses")
       .select("response_value_numeric, is_reverse_scored, item_id")
-      .eq("assessment_id", result.assessment_id);
+      .eq("assessment_id", result.assessment_id)
+      .order("item_id");
 
     let allResponses = responsesRaw ?? [];
 
@@ -491,7 +492,8 @@ export async function assemblePtpPdfData(params: {
       const { data: additionalResponses } = await supabase
         .from("assessment_responses")
         .select("response_value_numeric, is_reverse_scored, item_id")
-        .eq("assessment_id", params.additionalAssessmentId);
+        .eq("assessment_id", params.additionalAssessmentId)
+        .order("item_id");
       if (additionalResponses?.length) {
         allResponses = [...allResponses, ...additionalResponses];
       }
