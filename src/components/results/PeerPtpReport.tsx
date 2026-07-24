@@ -250,7 +250,7 @@ export default function PeerPtpReport({ targetUserId, ownerName }: Props) {
           {drivingFacets && (Array.isArray(drivingFacets.elevated) || Array.isArray(drivingFacets.suppressed)) && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Card className="p-4">
-                <h3 className="text-sm font-semibold text-foreground mb-3">High scoring drivers</h3>
+                <h3 className="text-sm font-semibold text-foreground mb-3">Highest scoring facets</h3>
                 <ul className="space-y-1.5">
                   {(drivingFacets.elevated ?? []).map((f: any, i: number) => (
                     <li key={i} className="flex items-center justify-between text-sm">
