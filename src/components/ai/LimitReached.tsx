@@ -39,9 +39,14 @@ export default function LimitReached({
   };
 
   const chatPackButton = canBuyChatPack ? (
-    <Button onClick={buyChatPack} variant="secondary" className="gap-2">
-      Buy 100 messages{chatPackPrice ? ` — $${chatPackPrice}` : ""}
-    </Button>
+    <div className="flex flex-col items-center gap-1">
+      <Button onClick={buyChatPack} variant="secondary" className="gap-2">
+        Buy 50 messages{chatPackPrice ? ` — $${chatPackPrice}` : ""}
+      </Button>
+      <p className="text-xs text-muted-foreground">
+        50 AI chat messages. For AI chat only, not My Coaching. Never expires.
+      </p>
+    </div>
   ) : null;
 
   if (!subscriptionActive) {
@@ -61,11 +66,6 @@ export default function LimitReached({
             Upgrade to Premium
           </Button>
           {chatPackButton}
-          {canBuyChatPack && (
-            <p className="text-xs text-muted-foreground">
-              Chat packs never expire and work right away.
-            </p>
-          )}
           <button
             onClick={() => navigate("/settings")}
             className="text-xs text-muted-foreground underline hover:text-foreground transition-colors"
