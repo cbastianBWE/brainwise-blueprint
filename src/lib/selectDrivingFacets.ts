@@ -6,25 +6,38 @@
  *
  * Rule:
  *   1. Split the respondent's items at their own median. Items above the median
- *      are high candidates; items below are low candidates. This guarantees the
- *      two lists are disjoint.
- *   2. Within each side, take the top 10 by score, extended to include every
- *      item tied with the 10th. Ties come in whole rather than being truncated
- *      arbitrarily.
- *   3. Order deterministically: by score, then by facetName as a stable
- *      tiebreak, so the same respondent sees the same list on every load.
+ *      are high candidates; items below are low candidates. The median split is
+ *      what guarantees the two lists are disjoint — a plain top-10/bottom-10 on
+ *      a low-variance profile puts the same items in both lists.
+ *   2. Take the top 10 of each side. Hard cap, no tie extension.
+ *   3. Order deterministically: by score, then by itemNumber. itemNumber matches
+ *      the ordering used by the responses accordion, so a facet's relative
+ *      position is consistent across report sections.
+ *
+ * Reported counts:
+ *   - totalCandidates: how many items fall on that side of the median.
+ *   - tiedAtCut: how many items share the score of the 10th-ranked item. When
+ *     this exceeds the slots remaining, the cut is splitting a tie and the UI
+ *     should say so.
  *
  * A perfectly flat profile yields two empty lists, which the callers already
  * render as "Your scores are evenly distributed across all facets."
  */
 
-export const DRIVING_FACET_TARGET_COUNT = 10;
+export const DRIVING_FACET_LIMIT = 10;
+
+export interface DrivingFacetSide<T> {
+  items: T[];
+  totalCandidates: number;
+  /** Score shared by the items at the cut boundary, or null if no tie is split. */
+  cutValue: number | null;
+  /** How many items share cutValue. Only meaningful when cutValue is non-null. */
+  tiedAtCut: number;
+}
 
 export interface DrivingFacetSelection<T> {
-  elevated: T[];
-  suppressed: T[];
-  totalElevated: number;
-  totalSuppressed: number;
+  elevated: DrivingFacetSide<T>;
+  suppressed: DrivingFacetSide<T>;
 }
 
 function median(values: number[]): number {
@@ -33,46 +46,57 @@ function median(values: number[]): number {
   return s.length % 2 === 0 ? (s[mid - 1] + s[mid]) / 2 : s[mid];
 }
 
-/** Take the first `n`, then keep extending while tied with the nth. */
-function takeWithTies<T extends { value: number }>(sorted: T[], n: number): T[] {
-  if (sorted.length <= n) return [...sorted];
-  const cut = sorted[n - 1].value;
-  const result: T[] = [];
-  for (let i = 0; i < sorted.length; i++) {
-    if (i < n || sorted[i].value === cut) result.push(sorted[i]);
-    else break;
+function buildSide<T extends { value: number }>(
+  candidates: T[],
+): DrivingFacetSide<T> {
+  const items = candidates.slice(0, DRIVING_FACET_LIMIT);
+  if (candidates.length <= DRIVING_FACET_LIMIT) {
+    return { items, totalCandidates: candidates.length, cutValue: null, tiedAtCut: 0 };
   }
-  return result;
+  const boundary = candidates[DRIVING_FACET_LIMIT - 1].value;
+  const tiedAtCut = candidates.filter((c) => c.value === boundary).length;
+  // Only report a split tie if the tie actually extends past the cut.
+  const splittingATie = candidates[DRIVING_FACET_LIMIT]?.value === boundary;
+  return {
+    items,
+    totalCandidates: candidates.length,
+    cutValue: splittingATie ? boundary : null,
+    tiedAtCut: splittingATie ? tiedAtCut : 0,
+  };
 }
 
 export function selectDrivingFacets<
-  T extends { value: number; facetName: string }
+  T extends { value: number; itemNumber: number }
 >(items: T[]): DrivingFacetSelection<T> {
-  const empty: DrivingFacetSelection<T> = {
-    elevated: [],
-    suppressed: [],
-    totalElevated: 0,
-    totalSuppressed: 0,
+  const emptySide: DrivingFacetSide<T> = {
+    items: [],
+    totalCandidates: 0,
+    cutValue: null,
+    tiedAtCut: 0,
   };
-  if (!items.length) return empty;
+  if (!items.length) return { elevated: emptySide, suppressed: emptySide };
 
   const med = median(items.map((i) => i.value));
 
   const highCandidates = items
     .filter((i) => i.value > med)
-    .sort((a, b) => b.value - a.value || a.facetName.localeCompare(b.facetName));
+    .sort((a, b) => b.value - a.value || a.itemNumber - b.itemNumber);
 
   const lowCandidates = items
     .filter((i) => i.value < med)
-    .sort((a, b) => a.value - b.value || a.facetName.localeCompare(b.facetName));
-
-  const elevated = takeWithTies(highCandidates, DRIVING_FACET_TARGET_COUNT);
-  const suppressed = takeWithTies(lowCandidates, DRIVING_FACET_TARGET_COUNT);
+    .sort((a, b) => a.value - b.value || a.itemNumber - b.itemNumber);
 
   return {
-    elevated,
-    suppressed,
-    totalElevated: elevated.length,
-    totalSuppressed: suppressed.length,
+    elevated: buildSide(highCandidates),
+    suppressed: buildSide(lowCandidates),
   };
+}
+
+/** Shared footnote copy so the chart, the insights sections, and the PDF agree. */
+export function drivingFacetFootnote<T>(side: DrivingFacetSide<T>): string | null {
+  if (side.totalCandidates <= DRIVING_FACET_LIMIT) return null;
+  if (side.cutValue !== null) {
+    return `${side.tiedAtCut} facets tied at ${Math.round(side.cutValue)} — showing ${DRIVING_FACET_LIMIT}`;
+  }
+  return `Showing ${DRIVING_FACET_LIMIT} of ${side.totalCandidates}`;
 }
