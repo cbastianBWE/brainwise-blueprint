@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { consumePendingNewsletterOptIn } from "@/lib/newsletterOptInIntent";
+import { claimPendingCoachInvite } from "@/lib/coachInviteClaim";
 
 const flushPendingNewsletterOptIn = () => {
   if (!consumePendingNewsletterOptIn()) return;
@@ -111,6 +112,12 @@ export const useRoleRedirect = () => {
   const navigate = useNavigate();
 
   const redirectByRole = async (userId: string) => {
+    // If a coach invite token is stashed, claim it first and route to results.
+    try {
+      const invited = await claimPendingCoachInvite();
+      if (invited) { navigate("/my-results", { replace: true }); return; }
+    } catch { /* ignore and continue with normal redirect */ }
+
     const params = new URLSearchParams(window.location.search);
     const next = params.get("next");
     // Only accept an internal path. Anything starting with "//" or a scheme
