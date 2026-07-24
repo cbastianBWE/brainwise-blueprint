@@ -230,6 +230,7 @@ interface SubscriptionTier {
   dashboard_access_level: "none" | "basic" | "full";
   ai_chat_enabled: boolean;
   seat_count_default: number;
+  price_per_user_annual: number | null;
 }
 
 interface ContractRow {
@@ -248,6 +249,12 @@ interface ContractRow {
   data_retention_mode: "standard" | "strict";
   supervisor_dashboard_enabled: boolean;
   notes: string | null;
+  price_per_user_annual_override: number | null;
+  contract_total_annual_override: number | null;
+  team_reports_included_qty: number;
+  team_reports_unlimited: boolean;
+  paired_reports_included_qty: number;
+  paired_reports_unlimited: boolean;
 }
 
 const INSTRUMENTS = [
