@@ -132,7 +132,7 @@ export default function PeerPtpReport({ targetUserId, ownerName }: Props) {
       const itemIds = responses.map((r) => r.item_id);
       const { data: items } = await supabase
         .from("items_presentation")
-        .select("item_id, dimension_id, facet_name, context_type")
+        .select("item_id, item_number, dimension_id, facet_name, context_type")
         .in("item_id", itemIds);
       if (cancelled) return;
       const itemMap = new Map((items ?? []).map((i) => [i.item_id, i]));
@@ -143,6 +143,7 @@ export default function PeerPtpReport({ targetUserId, ownerName }: Props) {
         const value = r.is_reverse_scored ? 100 - raw : raw;
         return {
           value,
+          itemNumber: item?.item_number ?? 0,
           facetName: item?.facet_name ?? "",
           facet_name: item?.facet_name ?? "",
           dimension_id: item?.dimension_id ?? "",
@@ -157,8 +158,10 @@ export default function PeerPtpReport({ targetUserId, ownerName }: Props) {
       if (!scored.length) return;
       const selection = selectDrivingFacets(scored);
       setDrivingFacets({
-        elevated: selection.elevated.map((s) => ({ facet_name: s.facet_name, dimension_id: s.dimension_id, value: s.value })),
-        suppressed: selection.suppressed.map((s) => ({ facet_name: s.facet_name, dimension_id: s.dimension_id, value: s.value })),
+        elevated: selection.elevated.items.map((s) => ({ facet_name: s.facet_name, dimension_id: s.dimension_id, value: s.value })),
+        suppressed: selection.suppressed.items.map((s) => ({ facet_name: s.facet_name, dimension_id: s.dimension_id, value: s.value })),
+        elevatedFootnote: drivingFacetFootnote(selection.elevated),
+        suppressedFootnote: drivingFacetFootnote(selection.suppressed),
       });
     })();
 
