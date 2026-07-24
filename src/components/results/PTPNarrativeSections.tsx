@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { AddToDevelopmentPlanModal } from "@/components/results/AddToDevelopmentPlanModal";
 import { HighlightableText } from "@/components/results/ReportHighlight";
 import { useNarrativeGenerator } from "@/hooks/useNarrativeGenerator";
-import { selectDrivingFacets } from "@/lib/selectDrivingFacets";
+import { selectDrivingFacets, drivingFacetFootnote } from "@/lib/selectDrivingFacets";
 
 const PTP_DIMENSION_NAMES: Record<string, string> = {
   "DIM-PTP-01": "Protection",
@@ -124,6 +124,8 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
 
   const [elevatedFacets, setElevatedFacets] = useState<FacetItem[]>([]);
   const [suppressedFacets, setSuppressedFacets] = useState<FacetItem[]>([]);
+  const [elevatedFacetsFootnote, setElevatedFacetsFootnote] = useState<string | null>(null);
+  const [suppressedFacetsFootnote, setSuppressedFacetsFootnote] = useState<string | null>(null);
   const [facetInterpretations, setFacetInterpretations] = useState<FacetInterpretation[]>([]);
   const [loadingFacets, setLoadingFacets] = useState(true);
   const [loadingInterpretations, setLoadingInterpretations] = useState(false);
@@ -339,6 +341,7 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
         const value = r.is_reverse_scored ? 100 - raw : raw;
         return {
           value,
+          itemNumber: item?.item_number ?? 0,
           facetName: item?.facet_name ?? "",
           facet_name: item?.facet_name ?? "",
           item_number: item?.item_number ?? 0,
@@ -359,11 +362,13 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
       }
 
       const selection = selectDrivingFacets(scored);
-      const elevated = selection.elevated.map(toFacetItem);
-      const suppressed = selection.suppressed.map(toFacetItem);
+      const elevated = selection.elevated.items.map(toFacetItem);
+      const suppressed = selection.suppressed.items.map(toFacetItem);
 
       setElevatedFacets(elevated);
       setSuppressedFacets(suppressed);
+      setElevatedFacetsFootnote(drivingFacetFootnote(selection.elevated));
+      setSuppressedFacetsFootnote(drivingFacetFootnote(selection.suppressed));
       setLoadingFacets(false);
     };
     fetchFacets();
@@ -514,6 +519,8 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
     loadingNarrativeSections,
     elevatedFacets,
     suppressedFacets,
+    elevatedFacetsFootnote,
+    suppressedFacetsFootnote,
     facetInterpretations,
     loadingFacets,
     loadingInterpretations,
@@ -1069,6 +1076,9 @@ export function PTPFacetInsightsElevatedSection(props: PTPNarrativeSectionsProps
     <div>
       <h3 style={sectionHeadingStyle}>Driving facet insights — highest scoring facets</h3>
       <PtpDimensionLegend dimensionIds={[...new Set(data.elevatedFacets.map((f) => f.dimension_id))]} />
+      {data.elevatedFacetsFootnote && (
+        <p style={{ fontSize: 12, color: "var(--fg-3)", margin: "4px 0 8px" }}>{data.elevatedFacetsFootnote}</p>
+      )}
       <FacetList facets={data.elevatedFacets} prefix="elevated" data={data} />
     </div>
   );
@@ -1082,6 +1092,9 @@ export function PTPFacetInsightsSuppressedSection(props: PTPNarrativeSectionsPro
     <div>
       <h3 style={sectionHeadingStyle}>Driving facet insights — lowest scoring facets</h3>
       <PtpDimensionLegend dimensionIds={[...new Set(data.suppressedFacets.map((f) => f.dimension_id))]} />
+      {data.suppressedFacetsFootnote && (
+        <p style={{ fontSize: 12, color: "var(--fg-3)", margin: "4px 0 8px" }}>{data.suppressedFacetsFootnote}</p>
+      )}
       <FacetList facets={data.suppressedFacets} prefix="suppressed" data={data} />
     </div>
   );

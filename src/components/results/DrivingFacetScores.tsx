@@ -16,13 +16,14 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { PTP_DIMENSION_COLORS } from "@/lib/ptpDimensionColors";
 import { PtpDimensionLegend } from "@/components/results/PtpDimensionLegend";
-import { selectDrivingFacets } from "@/lib/selectDrivingFacets";
+import { selectDrivingFacets, drivingFacetFootnote, type DrivingFacetSide } from "@/lib/selectDrivingFacets";
 
 interface FacetItem {
   item_text: string;
   value: number;
   dimension_id: string;
   facet_name: string;
+  itemNumber: number;
 }
 
 interface Props {
@@ -35,8 +36,8 @@ export default function DrivingFacetScores({ assessmentId, additionalAssessmentI
   const [loading, setLoading] = useState(true);
   const [elevated, setElevated] = useState<FacetItem[]>([]);
   const [suppressed, setSuppressed] = useState<FacetItem[]>([]);
-  const [totalElevated, setTotalElevated] = useState(0);
-  const [totalSuppressed, setTotalSuppressed] = useState(0);
+  const [elevatedSide, setElevatedSide] = useState<DrivingFacetSide<FacetItem> | null>(null);
+  const [suppressedSide, setSuppressedSide] = useState<DrivingFacetSide<FacetItem> | null>(null);
 
   useEffect(() => {
     const fetch = async () => {
@@ -70,7 +71,7 @@ export default function DrivingFacetScores({ assessmentId, additionalAssessmentI
       const itemIds = allResponses.map((r) => r.item_id);
       const { data: items } = await supabase
         .from("items_presentation")
-        .select("item_id, item_text, dimension_id, facet_name")
+        .select("item_id, item_text, item_number, dimension_id, facet_name")
         .in("item_id", itemIds);
 
       const itemMap = new Map(
@@ -78,7 +79,7 @@ export default function DrivingFacetScores({ assessmentId, additionalAssessmentI
       );
 
       // Build scored values with reverse scoring applied
-      const scoredItems = allResponses.map((r) => {
+      const scoredItems: FacetItem[] = allResponses.map((r) => {
         const item = itemMap.get(r.item_id);
         const raw = Number(r.response_value_numeric);
         const value = r.is_reverse_scored ? 100 - raw : raw;
@@ -86,6 +87,7 @@ export default function DrivingFacetScores({ assessmentId, additionalAssessmentI
           item_text: item?.item_text ?? r.item_id,
           dimension_id: item?.dimension_id ?? "",
           facet_name: item?.facet_name ?? "",
+          itemNumber: item?.item_number ?? 0,
           value,
         };
       });
@@ -105,14 +107,12 @@ export default function DrivingFacetScores({ assessmentId, additionalAssessmentI
         if (!filteredItems.length) filteredItems = scoredItems;
       }
 
-      const selection = selectDrivingFacets(
-        filteredItems.map((s) => ({ ...s, facetName: s.facet_name })),
-      );
+      const selection = selectDrivingFacets(filteredItems);
 
-      setElevated(selection.elevated);
-      setSuppressed(selection.suppressed);
-      setTotalElevated(selection.totalElevated);
-      setTotalSuppressed(selection.totalSuppressed);
+      setElevated(selection.elevated.items);
+      setSuppressed(selection.suppressed.items);
+      setElevatedSide(selection.elevated);
+      setSuppressedSide(selection.suppressed);
       setLoading(false);
     };
 
@@ -146,11 +146,11 @@ export default function DrivingFacetScores({ assessmentId, additionalAssessmentI
           </p>
         ) : (
           <>
-            {elevated.length > 0 && (
-              <FacetSection title="Highest Scoring Facets" items={elevated} total={totalElevated} />
+            {elevated.length > 0 && elevatedSide && (
+              <FacetSection title="Highest Scoring Facets" items={elevated} footnote={drivingFacetFootnote(elevatedSide)} />
             )}
-            {suppressed.length > 0 && (
-              <FacetSection title="Lowest Scoring Facets" items={suppressed} total={totalSuppressed} />
+            {suppressed.length > 0 && suppressedSide && (
+              <FacetSection title="Lowest Scoring Facets" items={suppressed} footnote={drivingFacetFootnote(suppressedSide)} />
             )}
           </>
         )}
@@ -179,11 +179,11 @@ function CustomTooltip({ active, payload }: any) {
 function FacetSection({
   title,
   items,
-  total,
+  footnote,
 }: {
   title: string;
   items: FacetItem[];
-  total: number;
+  footnote: string | null;
 }) {
   const chartData = items.map((item) => ({
     name: truncate(item.facet_name),
@@ -196,6 +196,9 @@ function FacetSection({
     <div>
       <h3 className="text-sm font-semibold text-foreground mb-2">{title}</h3>
       <PtpDimensionLegend dimensionIds={[...new Set(items.map((i) => i.dimension_id))]} />
+      {footnote && (
+        <p className="text-xs text-muted-foreground mb-2">{footnote}</p>
+      )}
 
       <ScrollArea className="w-full">
         <div
