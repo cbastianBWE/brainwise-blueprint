@@ -209,9 +209,92 @@ export default function NotificationSettings() {
       </Card>
 
       <NewsletterSubscriptionCard />
+      <LifecycleReminderCard />
     </div>
   );
 }
+
+const LIFECYCLE_KEY = ["lifecycle", "opt_out"] as const;
+
+function LifecycleReminderCard() {
+  const queryClient = useQueryClient();
+  const [pending, setPending] = useState(false);
+
+  const { data, isLoading, isError, refetch } = useQuery({
+    queryKey: LIFECYCLE_KEY,
+    queryFn: async () => {
+      const { data: userRes } = await supabase.auth.getUser();
+      const uid = userRes.user?.id;
+      if (!uid) return { opt_out: false };
+      const { data, error } = await supabase
+        .from("users")
+        .select("lifecycle_email_opt_out")
+        .eq("id", uid)
+        .maybeSingle();
+      if (error) throw error;
+      return { opt_out: Boolean((data as any)?.lifecycle_email_opt_out) };
+    },
+  });
+
+  const enabled = data ? !data.opt_out : true;
+
+  const handleToggle = async (next: boolean) => {
+    if (pending) return;
+    setPending(true);
+    const previous = enabled;
+    queryClient.setQueryData<{ opt_out: boolean }>(LIFECYCLE_KEY, { opt_out: !next });
+    const { error } = await supabase.rpc("bw_set_lifecycle_email_opt_out", {
+      p_opt_out: !next,
+    });
+    if (error) {
+      queryClient.setQueryData<{ opt_out: boolean }>(LIFECYCLE_KEY, { opt_out: !previous });
+      toast.error("Couldn't update preference");
+    } else {
+      toast.success("Preference saved");
+    }
+    setPending(false);
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-lg">Coach subscription reminder emails</CardTitle>
+        <CardDescription>
+          Occasional reminders about your coach subscription status.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        {isLoading && (
+          <div className="flex items-center justify-center py-6">
+            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+          </div>
+        )}
+        {isError && (
+          <div className="py-4 text-center space-y-3">
+            <p className="text-sm text-muted-foreground">Couldn't load preference.</p>
+            <Button size="sm" variant="outline" onClick={() => refetch()}>Retry</Button>
+          </div>
+        )}
+        {!isLoading && !isError && data && (
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex-1 min-w-0">
+              <Label htmlFor="lifecycle-reminder" className="text-sm">
+                Receive coach subscription reminder emails.
+              </Label>
+            </div>
+            <Switch
+              id="lifecycle-reminder"
+              checked={enabled}
+              disabled={pending}
+              onCheckedChange={handleToggle}
+            />
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 
 const NEWSLETTER_KEY = ["newsletter", "subscription"] as const;
 

@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import "@/styles/marketing-tokens.css";
 import MarketingNav from "@/components/marketing/MarketingNav";
 import MarketingFooter from "@/components/marketing/MarketingFooter";
@@ -7,6 +9,17 @@ import MarketingButton from "@/components/marketing/MarketingButton";
 import Eyebrow from "@/components/marketing/Eyebrow";
 import DotArc from "@/components/marketing/DotArc";
 import BriefingModal from "@/components/marketing/BriefingModal";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 
 function useIsBelow(width: number) {
   const [v, setV] = useState(typeof window !== "undefined" ? window.innerWidth < width : false);
@@ -63,9 +76,85 @@ export default function Certification() {
   const isMobile = useIsBelow(768);
   const isTablet = useIsBelow(1024);
 
+  type CohortSession = { sequence_no: number; title: string; starts_at: string; ends_at: string; timezone: string };
+  type Cohort = {
+    cohort_id: string;
+    name: string;
+    description: string | null;
+    starts_at: string;
+    ends_at: string;
+    enrollment_opens_at: string | null;
+    enrollment_closes_at: string | null;
+    max_capacity: number | null;
+    seats_taken: number;
+    seats_left: number | null;
+    sessions: CohortSession[];
+  };
+  const [cohorts, setCohorts] = useState<Cohort[]>([]);
+  const [enrollFor, setEnrollFor] = useState<Cohort | null>(null);
+  const [email, setEmail] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [enrolling, setEnrolling] = useState(false);
+  const [showEnrolledBanner, setShowEnrolledBanner] = useState(false);
+
+  useEffect(() => {
+    supabase.rpc("bw_list_open_cohorts" as any).then(({ data }) => {
+      setCohorts((data as Cohort[]) || []);
+    });
+    if (typeof window !== "undefined") {
+      const q = new URLSearchParams(window.location.search);
+      if (q.get("enrolled") === "success") setShowEnrolledBanner(true);
+    }
+  }, []);
+
   const openModal = (source: string) => {
     setModalSource(source);
     setModalOpen(true);
+  };
+
+  const handleEnroll = async () => {
+    if (!enrollFor) return;
+    if (!email.trim()) {
+      toast.error("Please enter your email.");
+      return;
+    }
+    setEnrolling(true);
+    const { data, error } = await supabase.functions.invoke("create-certification-checkout", {
+      body: {
+        cohort_id: enrollFor.cohort_id,
+        email: email.trim(),
+        first_name: firstName.trim() || null,
+        last_name: lastName.trim() || null,
+      },
+    });
+    setEnrolling(false);
+    if (error || !(data as any)?.url) {
+      toast.error("Couldn't start checkout. Please try again.");
+      return;
+    }
+    window.location.href = (data as any).url as string;
+  };
+
+  const fmtRange = (startIso: string, endIso: string) => {
+    const s = new Date(startIso);
+    const e = new Date(endIso);
+    const sameMonth = s.getMonth() === e.getMonth() && s.getFullYear() === e.getFullYear();
+    const optDay: Intl.DateTimeFormatOptions = { month: "short", day: "numeric" };
+    const optYear: Intl.DateTimeFormatOptions = { month: "short", day: "numeric", year: "numeric" };
+    if (sameMonth) return `${s.toLocaleDateString(undefined, optDay)}–${e.toLocaleDateString(undefined, { day: "numeric", year: "numeric" })}`;
+    return `${s.toLocaleDateString(undefined, optDay)} – ${e.toLocaleDateString(undefined, optYear)}`;
+  };
+
+  const fmtSession = (iso: string, tz: string) => {
+    try {
+      return new Date(iso).toLocaleString(undefined, {
+        weekday: "short", month: "short", day: "numeric",
+        hour: "numeric", minute: "2-digit", timeZone: tz, timeZoneName: "short",
+      });
+    } catch {
+      return new Date(iso).toLocaleString();
+    }
   };
 
   useEffect(() => {
@@ -417,6 +506,100 @@ export default function Certification() {
         </div>
       </section>
 
+      {/* ENROLLMENT */}
+      <section id="enroll" style={{ background: "#fff", padding: `${isMobile ? 80 : 112}px ${padX}px`, borderBottom: "1px solid var(--divider)" }}>
+        <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+          <Eyebrow color="var(--bw-orange)">Enroll</Eyebrow>
+          <h2 style={h2Style}>Pick a cohort and get started.</h2>
+          <p style={{ ...bodyStyle, fontSize: 16, marginTop: 24, maxWidth: 780 }}>
+            Cohorts are small and fill fast. Tuition is $1,500. After checkout, you'll get an email to set your password and see your session invites.
+          </p>
+
+          {showEnrolledBanner && (
+            <div
+              style={{
+                marginTop: 32,
+                padding: "20px 24px",
+                background: "var(--bw-cream)",
+                borderLeft: "4px solid var(--bw-forest)",
+                borderRadius: "var(--r-md)",
+                fontFamily: "'Montserrat', sans-serif",
+                color: "var(--bw-navy)",
+                fontSize: 15,
+                lineHeight: 1.55,
+              }}
+            >
+              Your enrollment is confirmed — check your email to set your password and see your session invites.
+            </div>
+          )}
+
+          {cohorts.length === 0 ? (
+            <div style={{ marginTop: 40, padding: "32px 28px", background: "var(--bw-cream)", borderRadius: "var(--r-lg)", textAlign: "center" }}>
+              <p style={{ ...bodyStyle, marginTop: 0, fontSize: 16 }}>
+                New cohorts are being scheduled — check back soon.
+              </p>
+              <div style={{ marginTop: 20 }}>
+                <MarketingButton variant="primary" size="md" onClick={() => openModal("certification_enroll_briefing")}>
+                  Request a briefing
+                </MarketingButton>
+              </div>
+            </div>
+          ) : (
+            <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fit, minmax(340px, 1fr))", gap: 20, marginTop: 40 }}>
+              {cohorts.map((c) => {
+                const seatsLabel = c.max_capacity == null
+                  ? "Open enrollment"
+                  : `${c.seats_left ?? Math.max(0, c.max_capacity - (c.seats_taken ?? 0))} of ${c.max_capacity} seats left`;
+                return (
+                  <div key={c.cohort_id} style={{ ...cardStyle, minHeight: 0 }}>
+                    <Eyebrow color="var(--bw-teal)">Cohort</Eyebrow>
+                    <h3 style={h3Style}>{c.name}</h3>
+                    <div style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 14, color: "var(--bw-slate)", marginTop: 8, fontWeight: 600 }}>
+                      {fmtRange(c.starts_at, c.ends_at)}
+                    </div>
+                    <div style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 13, color: "var(--bw-slate-400)", marginTop: 4 }}>
+                      {seatsLabel}
+                    </div>
+                    {c.description && (
+                      <p style={{ ...bodyStyle, marginTop: 12, fontSize: 14 }}>{c.description}</p>
+                    )}
+                    {c.sessions && c.sessions.length > 0 && (
+                      <div style={{ marginTop: 16, paddingTop: 16, borderTop: "1px solid var(--bw-cream-300)" }}>
+                        <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 13, color: "var(--bw-navy)", textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 10 }}>
+                          Session dates
+                        </div>
+                        <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 8 }}>
+                          {[...c.sessions].sort((a, b) => a.sequence_no - b.sequence_no).map((s) => (
+                            <li key={s.sequence_no} style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 13.5, color: "var(--bw-slate)", lineHeight: 1.45 }}>
+                              <span style={{ color: "var(--bw-navy)", fontWeight: 600 }}>{s.title}:</span>{" "}
+                              {fmtSession(s.starts_at, s.timezone)}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    <div style={{ marginTop: "auto", paddingTop: 20 }}>
+                      <MarketingButton
+                        variant="primary"
+                        size="md"
+                        onClick={() => {
+                          setEnrollFor(c);
+                          setEmail("");
+                          setFirstName("");
+                          setLastName("");
+                        }}
+                      >
+                        Enroll — $1,500
+                      </MarketingButton>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </section>
+
       {/* CLOSING CTA */}
       <section style={{ background: "var(--bw-navy)", padding: `${isMobile ? 72 : 96}px ${padX}px`, position: "relative", overflow: "hidden" }}>
         <DotArc size={540} opacity={0.07} style={{ left: -120, bottom: -120 }} />
@@ -467,6 +650,39 @@ export default function Certification() {
       <MarketingFooter />
 
       <BriefingModal open={modalOpen} onClose={() => setModalOpen(false)} source={modalSource} />
+
+      <Dialog open={!!enrollFor} onOpenChange={(o) => !o && setEnrollFor(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Enroll — {enrollFor?.name}</DialogTitle>
+            <DialogDescription>
+              Tuition is $1,500. We'll send confirmation and session invites to the email below.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label htmlFor="enroll-email">Email</Label>
+              <Input id="enroll-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label htmlFor="enroll-first">First name</Label>
+                <Input id="enroll-first" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+              </div>
+              <div>
+                <Label htmlFor="enroll-last">Last name</Label>
+                <Input id="enroll-last" value={lastName} onChange={(e) => setLastName(e.target.value)} />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEnrollFor(null)} disabled={enrolling}>Cancel</Button>
+            <Button onClick={handleEnroll} disabled={enrolling || !email.trim()}>
+              {enrolling ? "Starting checkout…" : "Continue to checkout"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

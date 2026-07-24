@@ -3425,6 +3425,289 @@ export type Database = {
           },
         ]
       }
+      cohort_email_templates: {
+        Row: {
+          body_html: string
+          body_text: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          subject: string
+          template_type: string
+          updated_at: string
+        }
+        Insert: {
+          body_html: string
+          body_text?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          subject: string
+          template_type: string
+          updated_at?: string
+        }
+        Update: {
+          body_html?: string
+          body_text?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          subject?: string
+          template_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      cohort_event_attendance: {
+        Row: {
+          event_id: string
+          home_cohort_id: string | null
+          id: string
+          invite_sent_at: string | null
+          registered_at: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          event_id: string
+          home_cohort_id?: string | null
+          id?: string
+          invite_sent_at?: string | null
+          registered_at?: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          event_id?: string
+          home_cohort_id?: string | null
+          id?: string
+          invite_sent_at?: string | null
+          registered_at?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cohort_event_attendance_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "cohort_events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cohort_event_attendance_home_cohort_id_fkey"
+            columns: ["home_cohort_id"]
+            isOneToOne: false
+            referencedRelation: "cohorts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cohort_event_attendance_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cohort_event_attendance_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "cohort_event_attendance_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cohort_event_attendance_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cohort_event_email_schedules: {
+        Row: {
+          audience: string
+          created_at: string
+          id: string
+          is_active: boolean
+          offset_minutes: number
+          scope: string
+          template_type: string
+          updated_at: string
+        }
+        Insert: {
+          audience?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          offset_minutes?: number
+          scope: string
+          template_type: string
+          updated_at?: string
+        }
+        Update: {
+          audience?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          offset_minutes?: number
+          scope?: string
+          template_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      cohort_event_email_sends: {
+        Row: {
+          cohort_id: string | null
+          event_id: string | null
+          id: string
+          send_status: string
+          sent_at: string
+          template_type: string
+          user_id: string
+        }
+        Insert: {
+          cohort_id?: string | null
+          event_id?: string | null
+          id?: string
+          send_status?: string
+          sent_at?: string
+          template_type: string
+          user_id: string
+        }
+        Update: {
+          cohort_id?: string | null
+          event_id?: string | null
+          id?: string
+          send_status?: string
+          sent_at?: string
+          template_type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cohort_event_email_sends_cohort_id_fkey"
+            columns: ["cohort_id"]
+            isOneToOne: false
+            referencedRelation: "cohorts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cohort_event_email_sends_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "cohort_events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cohort_event_email_sends_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cohort_event_email_sends_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "cohort_event_email_sends_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cohort_event_email_sends_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cohort_events: {
+        Row: {
+          cohort_id: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          ends_at: string
+          graph_organizer_id: string | null
+          ics_sequence: number
+          ics_uid: string
+          id: string
+          is_published: boolean
+          sequence_no: number
+          starts_at: string
+          teams_join_url: string | null
+          teams_meeting_id: string | null
+          timezone: string
+          title: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          cohort_id: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          ends_at: string
+          graph_organizer_id?: string | null
+          ics_sequence?: number
+          ics_uid?: string
+          id?: string
+          is_published?: boolean
+          sequence_no: number
+          starts_at: string
+          teams_join_url?: string | null
+          teams_meeting_id?: string | null
+          timezone?: string
+          title: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          cohort_id?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          ends_at?: string
+          graph_organizer_id?: string | null
+          ics_sequence?: number
+          ics_uid?: string
+          id?: string
+          is_published?: boolean
+          sequence_no?: number
+          starts_at?: string
+          teams_join_url?: string | null
+          teams_meeting_id?: string | null
+          timezone?: string
+          title?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cohort_events_cohort_id_fkey"
+            columns: ["cohort_id"]
+            isOneToOne: false
+            referencedRelation: "cohorts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cohort_members: {
         Row: {
           cohort_id: string
@@ -3539,6 +3822,8 @@ export type Database = {
           status: string
           updated_at: string
           updated_by: string | null
+          welcome_attachment_asset_id: string | null
+          welcome_attachment_url: string | null
         }
         Insert: {
           archived_at?: string | null
@@ -3556,6 +3841,8 @@ export type Database = {
           status?: string
           updated_at?: string
           updated_by?: string | null
+          welcome_attachment_asset_id?: string | null
+          welcome_attachment_url?: string | null
         }
         Update: {
           archived_at?: string | null
@@ -3573,6 +3860,8 @@ export type Database = {
           status?: string
           updated_at?: string
           updated_by?: string | null
+          welcome_attachment_asset_id?: string | null
+          welcome_attachment_url?: string | null
         }
         Relationships: [
           {
@@ -3636,6 +3925,13 @@ export type Database = {
             columns: ["updated_by"]
             isOneToOne: false
             referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cohorts_welcome_attachment_asset_id_fkey"
+            columns: ["welcome_attachment_asset_id"]
+            isOneToOne: false
+            referencedRelation: "content_assets"
             referencedColumns: ["id"]
           },
         ]
@@ -13348,6 +13644,7 @@ export type Database = {
           avatar_asset_id: string | null
           bio: string | null
           coach_billing_exempt: boolean
+          coach_free_year_ended_at: string | null
           coach_subscription_free_until: string | null
           coach_subscription_tier: string | null
           conversion_token: string | null
@@ -13366,6 +13663,8 @@ export type Database = {
           is_internal_test: boolean
           is_mentor: boolean
           is_practitioner_coach: boolean
+          lifecycle_email_opt_out: boolean
+          lifecycle_unsub_token: string
           notifications: Json | null
           onboarding_completed_at: string | null
           onboarding_instrument_version: string | null
@@ -13396,6 +13695,7 @@ export type Database = {
           avatar_asset_id?: string | null
           bio?: string | null
           coach_billing_exempt?: boolean
+          coach_free_year_ended_at?: string | null
           coach_subscription_free_until?: string | null
           coach_subscription_tier?: string | null
           conversion_token?: string | null
@@ -13414,6 +13714,8 @@ export type Database = {
           is_internal_test?: boolean
           is_mentor?: boolean
           is_practitioner_coach?: boolean
+          lifecycle_email_opt_out?: boolean
+          lifecycle_unsub_token?: string
           notifications?: Json | null
           onboarding_completed_at?: string | null
           onboarding_instrument_version?: string | null
@@ -13444,6 +13746,7 @@ export type Database = {
           avatar_asset_id?: string | null
           bio?: string | null
           coach_billing_exempt?: boolean
+          coach_free_year_ended_at?: string | null
           coach_subscription_free_until?: string | null
           coach_subscription_tier?: string | null
           conversion_token?: string | null
@@ -13462,6 +13765,8 @@ export type Database = {
           is_internal_test?: boolean
           is_mentor?: boolean
           is_practitioner_coach?: boolean
+          lifecycle_email_opt_out?: boolean
+          lifecycle_unsub_token?: string
           notifications?: Json | null
           onboarding_completed_at?: string | null
           onboarding_instrument_version?: string | null
@@ -14543,8 +14848,25 @@ export type Database = {
         Args: { p_target_user_id: string }
         Returns: undefined
       }
+      admin_reassign_attendee: {
+        Args: {
+          p_from_event_id: string
+          p_to_event_id: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
       admin_remove_org_custom_domain: {
         Args: { p_hostname: string; p_reason?: string }
+        Returns: Json
+      }
+      admin_reschedule_cohort_event: {
+        Args: {
+          p_ends_at: string
+          p_event_id: string
+          p_starts_at: string
+          p_timezone?: string
+        }
         Returns: Json
       }
       admin_reset_user_mfa: {
@@ -14592,6 +14914,37 @@ export type Database = {
           p_reason?: string
         }
         Returns: Json
+      }
+      admin_upsert_cohort: {
+        Args: {
+          p_certification_path_id: string
+          p_description: string
+          p_ends_at: string
+          p_enrollment_closes_at: string
+          p_enrollment_opens_at: string
+          p_id: string
+          p_max_capacity: number
+          p_name: string
+          p_starts_at: string
+          p_status: string
+          p_welcome_attachment_asset_id: string
+        }
+        Returns: string
+      }
+      admin_upsert_cohort_event: {
+        Args: {
+          p_cohort_id: string
+          p_description: string
+          p_ends_at: string
+          p_id: string
+          p_is_published: boolean
+          p_sequence_no: number
+          p_starts_at: string
+          p_teams_join_url: string
+          p_timezone: string
+          p_title: string
+        }
+        Returns: string
       }
       ai_counter_check: {
         Args: { p_pool: string; p_user_id?: string }
@@ -14933,6 +15286,10 @@ export type Database = {
         Args: { p_kind: string; p_profile: string }
         Returns: boolean
       }
+      bw_coach_winback_unsubscribe: {
+        Args: { p_token: string }
+        Returns: boolean
+      }
       bw_get_active_price: {
         Args: { p_billing_period?: string; p_tier: string }
         Returns: {
@@ -14941,6 +15298,7 @@ export type Database = {
           stripe_price_id: string
         }[]
       }
+      bw_get_ms_graph_secret: { Args: never; Returns: string }
       bw_get_my_plan_status: {
         Args: never
         Returns: {
@@ -14993,6 +15351,22 @@ export type Database = {
           subjects: string
         }[]
       }
+      bw_list_open_cohorts: {
+        Args: never
+        Returns: {
+          cohort_id: string
+          description: string
+          ends_at: string
+          enrollment_closes_at: string
+          enrollment_opens_at: string
+          max_capacity: number
+          name: string
+          seats_left: number
+          seats_taken: number
+          sessions: Json
+          starts_at: string
+        }[]
+      }
       bw_list_report_subjects: {
         Args: { p_search?: string }
         Returns: {
@@ -15035,12 +15409,20 @@ export type Database = {
         Args: { p_coach: string; p_comped: boolean; p_reason?: string }
         Returns: Json
       }
+      bw_set_lifecycle_email_opt_out: {
+        Args: { p_opt_out: boolean }
+        Returns: boolean
+      }
       bw_set_report_label: {
         Args: { p_label: string; p_profile: string }
         Returns: undefined
       }
       bw_set_report_release: {
         Args: { p_kind: string; p_profile: string; p_released: boolean }
+        Returns: undefined
+      }
+      bw_sync_event_teams_meeting: {
+        Args: { p_action?: string; p_event_id: string }
         Returns: undefined
       }
       bw_team_profile_distribution: {
@@ -15209,6 +15591,36 @@ export type Database = {
           remaining: number
           source: string
         }[]
+      }
+      cohort_email_queue: {
+        Args: never
+        Returns: {
+          cohort_id: string
+          cohort_name: string
+          email: string
+          event_id: string
+          kind: string
+          payload: Json
+          user_id: string
+          welcome_attachment_url: string
+        }[]
+      }
+      cohort_mark_cohort_invites_sent: {
+        Args: { p_cohort_id: string; p_user: string }
+        Returns: undefined
+      }
+      cohort_mark_invite_sent: {
+        Args: { p_event_id: string; p_user: string }
+        Returns: undefined
+      }
+      cohort_record_email_send: {
+        Args: {
+          p_cohort_id: string
+          p_event_id: string
+          p_template_type: string
+          p_user: string
+        }
+        Returns: boolean
       }
       commit_article_version: {
         Args: { p_article_id: string; p_reason: string; p_version_name: string }
@@ -15612,6 +16024,10 @@ export type Database = {
           p_reason: string
           p_source_module_id: string
         }
+        Returns: Json
+      }
+      enroll_certification: {
+        Args: { p_cohort_id: string; p_payment_ref?: string; p_user_id: string }
         Returns: Json
       }
       enroll_user_in_certification_path: {
@@ -17466,6 +17882,13 @@ export type Database = {
         Returns: Json
       }
       scan_coach_free_year_expiry: {
+        Args: never
+        Returns: {
+          notified: number
+          run_at: string
+        }[]
+      }
+      scan_coach_winback_after: {
         Args: never
         Returns: {
           notified: number

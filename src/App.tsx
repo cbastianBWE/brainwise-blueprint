@@ -167,6 +167,7 @@ import MfaEnrollment from "./pages/MfaEnrollment";
 import AccessHistory from "./pages/AccessHistory";
 import Help from "./pages/Help";
 import ReportPaymentConfirmed from "./pages/ReportPaymentConfirmed";
+import Unsubscribe from "./pages/Unsubscribe";
 import CookieConsentBanner from "@/components/CookieConsentBanner";
 import ImpersonationProvider from "@/contexts/ImpersonationProvider";
 import ImpersonationBanner from "@/components/impersonation/ImpersonationBanner";
@@ -199,6 +200,7 @@ const App = () => (
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/peer-access-responded" element={<PeerAccessResponded />} />
+            <Route path="/unsubscribe" element={<Unsubscribe />} />
             <Route path="/auth/verify-conversion" element={<VerifyConversion />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/terms" element={<Terms />} />
