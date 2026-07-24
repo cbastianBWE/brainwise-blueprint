@@ -192,7 +192,7 @@ export default function PeerPtpReport({ targetUserId, ownerName }: Props) {
   const currentResult = results.find((r) => ctxToSuffix(r.context_type) === ctx) ?? null;
   const sec = (type: string) => sections.find((s) => s.section_type === type && (currentResult ? s.assessment_result_id === currentResult.assessment_result_id : true));
 
-  const drivingFacets = sec(`driving_facets_${ctx}`)?.facet_data ?? null;
+  
   const profileOverview = sec(`profile_overview_${ctx}`)?.facet_data ?? null;
   const personalSummary = sec(`personal_summary_${ctx}`)?.facet_data ?? null;
   const dimensionHighlights = sec(`dimension_highlights_${ctx}`)?.facet_data ?? null;
