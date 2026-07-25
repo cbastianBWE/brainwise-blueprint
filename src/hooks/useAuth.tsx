@@ -112,11 +112,15 @@ export const useRoleRedirect = () => {
   const navigate = useNavigate();
 
   const redirectByRole = async (userId: string) => {
-    // If a coach invite token is stashed, claim it first and route to results.
-    try {
-      const invited = await claimPendingCoachInvite();
-      if (invited) { navigate("/my-results", { replace: true }); return; }
-    } catch { /* ignore and continue with normal redirect */ }
+    // Claim any stashed coach invitation token first. Idempotent and a no-op when
+    // nothing is stashed. Must run before the `next` short-circuit below, or a
+    // login carrying ?next= would skip the claim and re-strand the invitation.
+    const claimedInvite = await claimPendingCoachInvite();
+    if (claimedInvite) {
+      navigate("/my-results", { replace: true });
+      return;
+    }
+
 
     const params = new URLSearchParams(window.location.search);
     const next = params.get("next");

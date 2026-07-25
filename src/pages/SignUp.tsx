@@ -11,7 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { TOS_VERSION, PRIVACY_VERSION } from "@/lib/legalVersions";
 import { setPendingNewsletterOptIn } from "@/lib/newsletterOptInIntent";
 import { stashBulkToken, claimPendingBulkSeat } from "@/lib/bulkSeatClaim";
-import { claimPendingCoachInvite } from "@/lib/coachInviteClaim";
+
 
 const CERT_LABELS: Record<string, string> = {
   ptp_coach: 'PTP Certified Coach',
@@ -87,8 +87,6 @@ const SignUp = () => {
     (async () => {
       const claimed = await claimPendingBulkSeat();
       if (claimed) { navigate("/my-results"); return; }
-      const invited = await claimPendingCoachInvite();
-      if (invited) { navigate("/my-results"); return; }
       const { data } = await supabase.rpc("coach_bulk_link_public_info" as any, { p_token: bulk } as any);
       const row = (data as any[])?.[0];
       if (row) setBulkInfo(row);
