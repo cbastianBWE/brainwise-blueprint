@@ -70,6 +70,9 @@ interface Cohort {
   enrollment_closes_at: string | null;
   max_capacity: number | null;
   welcome_attachment_url: string | null;
+  practitioner_name?: string | null;
+  practitioner_email?: string | null;
+  practitioner_scheduling_url?: string | null;
   certification_paths?: { name: string } | null;
 }
 
