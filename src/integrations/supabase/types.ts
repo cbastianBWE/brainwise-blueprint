@@ -17311,7 +17311,7 @@ export type Database = {
         }[]
       }
       ops_due_outreach_sends: {
-        Args: { p_limit?: number; p_org_id: string }
+        Args: { p_limit?: number; p_org_id: string; p_pool?: string }
         Returns: {
           body: string
           company: string
