@@ -57,6 +57,34 @@ export default function OperationsLeads() {
     },
   });
 
+  const { data: attention = [] } = useQuery({
+    queryKey: ["ops", "outreach_attention"],
+    refetchInterval: 60000,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("ops_outreach_attention" as any, {});
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+  });
+
+  const attentionMap = useMemo(() => {
+    const m = new Map<string, any>();
+    for (const a of attention) m.set(a.lead_id, a);
+    return m;
+  }, [attention]);
+
+  const repliedCount = useMemo(
+    () => attention.filter((a: any) => a.attention === "replied").length,
+    [attention]
+  );
+
+  const failedCount = useMemo(
+    () => attention.filter((a: any) => a.attention === "send_failed").length,
+    [attention]
+  );
+
+
+
   const { data, isLoading, error } = useQuery({
     queryKey: ["ops", "leads", "list", filters],
     queryFn: async () => {
