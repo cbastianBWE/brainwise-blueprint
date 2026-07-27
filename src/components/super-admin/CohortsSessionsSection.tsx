@@ -1071,10 +1071,13 @@ export default function CohortsSessionsSection() {
           </Card>
 
           <Card>
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="flex items-center gap-2">
                 <Users className="h-5 w-5" /> Enrollees — {selectedCohort.name}
               </CardTitle>
+              <Button size="sm" onClick={() => setEnrollDialogOpen(true)}>
+                <Plus className="h-4 w-4 mr-1" /> Enroll a participant
+              </Button>
             </CardHeader>
             <CardContent>
               {members.length === 0 ? (
