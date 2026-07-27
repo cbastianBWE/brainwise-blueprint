@@ -3824,6 +3824,9 @@ export type Database = {
           id: string
           max_capacity: number | null
           name: string
+          practitioner_email: string | null
+          practitioner_name: string | null
+          practitioner_scheduling_url: string | null
           starts_at: string | null
           status: string
           updated_at: string
@@ -3843,6 +3846,9 @@ export type Database = {
           id?: string
           max_capacity?: number | null
           name: string
+          practitioner_email?: string | null
+          practitioner_name?: string | null
+          practitioner_scheduling_url?: string | null
           starts_at?: string | null
           status?: string
           updated_at?: string
@@ -3862,6 +3868,9 @@ export type Database = {
           id?: string
           max_capacity?: number | null
           name?: string
+          practitioner_email?: string | null
+          practitioner_name?: string | null
+          practitioner_scheduling_url?: string | null
           starts_at?: string | null
           status?: string
           updated_at?: string
@@ -10362,6 +10371,27 @@ export type Database = {
           },
         ]
       }
+      program_survey_links: {
+        Row: {
+          label: string | null
+          scope: string
+          updated_at: string
+          url: string | null
+        }
+        Insert: {
+          label?: string | null
+          scope: string
+          updated_at?: string
+          url?: string | null
+        }
+        Update: {
+          label?: string | null
+          scope?: string
+          updated_at?: string
+          url?: string | null
+        }
+        Relationships: []
+      }
       ptp_facet_types: {
         Row: {
           floor_risk: string
@@ -14931,6 +14961,9 @@ export type Database = {
           p_id: string
           p_max_capacity: number
           p_name: string
+          p_practitioner_email?: string
+          p_practitioner_name?: string
+          p_practitioner_scheduling_url?: string
           p_starts_at: string
           p_status: string
           p_welcome_attachment_url: string
@@ -17021,6 +17054,49 @@ export type Database = {
         Returns: string
       }
       ops_admin_get_membership: { Args: { p_user_id: string }; Returns: Json }
+      ops_apollo_budget_available: {
+        Args: { p_org_id: string }
+        Returns: {
+          monthly_cap: number
+          per_run_cap: number
+          remaining: number
+          spent: number
+        }[]
+      }
+      ops_apollo_enrichment_candidates: {
+        Args: { p_limit?: number; p_org_id: string }
+        Returns: {
+          apollo_person_id: string
+          first_name: string
+          id: string
+          organization_name: string
+          pool: string
+          score: number
+          title: string
+        }[]
+      }
+      ops_apollo_record_enrichment: {
+        Args: {
+          p_apollo_org_id: string
+          p_domain: string
+          p_email: string
+          p_error?: string
+          p_id: string
+          p_last_name: string
+          p_linkedin: string
+        }
+        Returns: string
+      }
+      ops_apollo_spend_credits: {
+        Args: {
+          p_discovered_id?: string
+          p_endpoint: string
+          p_note?: string
+          p_org_id: string
+          p_units: number
+        }
+        Returns: boolean
+      }
       ops_apply_credit_note_to_invoice: {
         Args: { p_amount: number; p_credit_note: string; p_invoice: string }
         Returns: string
@@ -17128,6 +17204,25 @@ export type Database = {
         }
         Returns: Json
       }
+      ops_daily_worklist: {
+        Args: { p_limit?: number; p_org_id: string; p_pool?: string }
+        Returns: {
+          company: string
+          crm_score: number
+          days_in_queue: number
+          discovery_score: number
+          email: string
+          full_name: string
+          hunter_status: string
+          is_target_account: boolean
+          last_touched_at: string
+          lead_id: string
+          linkedin_url: string
+          pool: string
+          reason: string
+          title: string
+        }[]
+      }
       ops_decline_estimate_by_token: {
         Args: { p_reason?: string; p_token: string }
         Returns: Json
@@ -17150,6 +17245,22 @@ export type Database = {
       }
       ops_delete_tax_authority: { Args: { p_id: string }; Returns: undefined }
       ops_delete_tax_rate: { Args: { p_id: string }; Returns: undefined }
+      ops_due_apollo_searches: {
+        Args: { p_search_id?: string }
+        Returns: {
+          endpoint: string
+          exclude_name_keywords: string[]
+          filters: Json
+          id: string
+          max_new_per_run: number
+          max_pages: number
+          name: string
+          org_id: string
+          per_page: number
+          pool: string
+          target_tier: number
+        }[]
+      }
       ops_due_day_of_digest: {
         Args: never
         Returns: {
@@ -17353,6 +17464,35 @@ export type Database = {
         Returns: Json
       }
       ops_org_user_list: { Args: never; Returns: Json }
+      ops_outreach_pipeline_summary: {
+        Args: { p_org_id: string }
+        Returns: {
+          credits_cap: number
+          credits_remaining: number
+          credits_spent: number
+          discovered_rejected: number
+          discovered_scored: number
+          discovered_suppressed: number
+          discovered_total: number
+          enriched: number
+          promoted_leads: number
+          sendable: number
+          spine_accounts: number
+          worklist_ready: number
+        }[]
+      }
+      ops_promote_discovered_to_leads: {
+        Args: {
+          p_limit?: number
+          p_org_id: string
+          p_verify_statuses?: string[]
+        }
+        Returns: {
+          promoted: number
+          skipped_duplicate: number
+          skipped_suppressed: number
+        }[]
+      }
       ops_provision_customer_org: {
         Args: {
           p_admin_email: string
@@ -17365,6 +17505,16 @@ export type Database = {
         Returns: Json
       }
       ops_recompute_lead_score: { Args: { p_lead_id: string }; Returns: number }
+      ops_record_apollo_search_run: {
+        Args: {
+          p_error?: string
+          p_new: number
+          p_search_id: string
+          p_seen: number
+          p_status: string
+        }
+        Returns: boolean
+      }
       ops_record_calendar_link: {
         Args: { p_activity: string; p_output_format: string }
         Returns: string
@@ -17424,6 +17574,15 @@ export type Database = {
       ops_run_recurring_expenses: { Args: never; Returns: number }
       ops_run_recurring_invoices: { Args: never; Returns: number }
       ops_score_decay_run: { Args: never; Returns: number }
+      ops_score_pending_discoveries: {
+        Args: { p_limit?: number }
+        Returns: {
+          processed: number
+          promoted_eligible: number
+          rejected: number
+          suppressed: number
+        }[]
+      }
       ops_set_credit_note_status: {
         Args: { p_action: string; p_id: string }
         Returns: string
@@ -17456,6 +17615,7 @@ export type Database = {
         Args: { p_rate: number; p_user_id: string }
         Returns: undefined
       }
+      ops_spine_org_ids: { Args: { p_org_id: string }; Returns: string[] }
       ops_start_timer: {
         Args: {
           p_description?: string
@@ -17497,6 +17657,34 @@ export type Database = {
       ops_update_reminder_settings: {
         Args: { p_patch: Json }
         Returns: undefined
+      }
+      ops_upsert_apollo_discovered_person: {
+        Args: {
+          p_apollo_org_id: string
+          p_apollo_person_id: string
+          p_domain: string
+          p_first_name: string
+          p_has_email?: boolean
+          p_last_name: string
+          p_org_id: string
+          p_org_name: string
+          p_pool: string
+          p_raw: Json
+          p_search_id: string
+          p_title: string
+        }
+        Returns: string
+      }
+      ops_upsert_apollo_target_account: {
+        Args: {
+          p_apollo_id: string
+          p_domain: string
+          p_exclusions: string[]
+          p_name: string
+          p_org_id: string
+          p_website: string
+        }
+        Returns: string
       }
       ops_upsert_currency: {
         Args: { p_id: string; p_patch: Json }
