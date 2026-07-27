@@ -1142,6 +1142,14 @@ export default function CohortsSessionsSection() {
         memberSessions={events}
         onSaved={() => selectedCohortId && loadCohortDetail(selectedCohortId)}
       />
+      {selectedCohortId && (
+        <EnrollParticipantDialog
+          open={enrollDialogOpen}
+          onOpenChange={setEnrollDialogOpen}
+          cohortId={selectedCohortId}
+          onEnrolled={() => { loadCohortDetail(selectedCohortId); loadCohorts(); }}
+        />
+      )}
     </div>
   );
 }
