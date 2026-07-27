@@ -70,6 +70,9 @@ interface Cohort {
   enrollment_closes_at: string | null;
   max_capacity: number | null;
   welcome_attachment_url: string | null;
+  practitioner_name?: string | null;
+  practitioner_email?: string | null;
+  practitioner_scheduling_url?: string | null;
   certification_paths?: { name: string } | null;
 }
 
@@ -140,6 +143,9 @@ function CohortDialog({
     enrollment_closes_at: "",
     max_capacity: "",
     welcome_attachment_url: "",
+    practitioner_name: "",
+    practitioner_email: "",
+    practitioner_scheduling_url: "",
   });
 
   useEffect(() => {
@@ -154,6 +160,9 @@ function CohortDialog({
         enrollment_closes_at: toLocalInput(editing?.enrollment_closes_at),
         max_capacity: editing?.max_capacity != null ? String(editing.max_capacity) : "",
         welcome_attachment_url: editing?.welcome_attachment_url ?? "",
+        practitioner_name: editing?.practitioner_name ?? "",
+        practitioner_email: editing?.practitioner_email ?? "",
+        practitioner_scheduling_url: editing?.practitioner_scheduling_url ?? "",
       });
     }
   }, [open, editing]);
@@ -176,6 +185,9 @@ function CohortDialog({
       p_enrollment_closes_at: fromLocalInput(form.enrollment_closes_at),
       p_max_capacity: form.max_capacity ? Number(form.max_capacity) : null,
       p_welcome_attachment_url: form.welcome_attachment_url || null,
+      p_practitioner_name: form.practitioner_name.trim() || null,
+      p_practitioner_email: form.practitioner_email.trim() || null,
+      p_practitioner_scheduling_url: form.practitioner_scheduling_url.trim() || null,
     });
     setSaving(false);
     if (error) {
@@ -261,6 +273,34 @@ function CohortDialog({
               value={form.welcome_attachment_url}
               onChange={(e) => setForm({ ...form, welcome_attachment_url: e.target.value })}
             />
+          </div>
+          <div className="space-y-3 rounded-md border p-4">
+            <h4 className="text-sm font-semibold">Assigned Practitioner</h4>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Practitioner name</Label>
+                <Input
+                  value={form.practitioner_name}
+                  onChange={(e) => setForm({ ...form, practitioner_name: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Practitioner email</Label>
+                <Input
+                  type="email"
+                  value={form.practitioner_email}
+                  onChange={(e) => setForm({ ...form, practitioner_email: e.target.value })}
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Booking / scheduling link</Label>
+              <Input
+                placeholder="https://…"
+                value={form.practitioner_scheduling_url}
+                onChange={(e) => setForm({ ...form, practitioner_scheduling_url: e.target.value })}
+              />
+            </div>
           </div>
         </div>
         <DialogFooter>
