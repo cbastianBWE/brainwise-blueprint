@@ -143,6 +143,9 @@ function CohortDialog({
     enrollment_closes_at: "",
     max_capacity: "",
     welcome_attachment_url: "",
+    practitioner_name: "",
+    practitioner_email: "",
+    practitioner_scheduling_url: "",
   });
 
   useEffect(() => {
@@ -157,6 +160,9 @@ function CohortDialog({
         enrollment_closes_at: toLocalInput(editing?.enrollment_closes_at),
         max_capacity: editing?.max_capacity != null ? String(editing.max_capacity) : "",
         welcome_attachment_url: editing?.welcome_attachment_url ?? "",
+        practitioner_name: editing?.practitioner_name ?? "",
+        practitioner_email: editing?.practitioner_email ?? "",
+        practitioner_scheduling_url: editing?.practitioner_scheduling_url ?? "",
       });
     }
   }, [open, editing]);
@@ -179,6 +185,9 @@ function CohortDialog({
       p_enrollment_closes_at: fromLocalInput(form.enrollment_closes_at),
       p_max_capacity: form.max_capacity ? Number(form.max_capacity) : null,
       p_welcome_attachment_url: form.welcome_attachment_url || null,
+      p_practitioner_name: form.practitioner_name.trim() || null,
+      p_practitioner_email: form.practitioner_email.trim() || null,
+      p_practitioner_scheduling_url: form.practitioner_scheduling_url.trim() || null,
     });
     setSaving(false);
     if (error) {
