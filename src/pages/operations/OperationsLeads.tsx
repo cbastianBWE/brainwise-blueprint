@@ -9,18 +9,26 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, ArrowRightLeft } from "lucide-react";
+import { Plus, ArrowRightLeft, Mail } from "lucide-react";
 import LeadFormDialog from "./LeadFormDialog";
 import ConvertLeadDialog from "./ConvertLeadDialog";
 import SavedViewsBar from "./SavedViewsBar";
 
-type Filters = { search?: string; status_id?: string; pool?: string };
+type Filters = { search?: string; status_id?: string; pool?: string; attention?: string };
 
 const POOL_LABELS: Record<string, string> = {
   enterprise: "Enterprise",
   coach: "Practitioner",
   faith: "Faith",
   clinical: "Clinical",
+};
+
+const ATTENTION_META: Record<string, { label: string; cls: string; rank: number }> = {
+  replied:        { label: "Replied",   cls: "bg-emerald-100 text-emerald-900", rank: 1 },
+  send_failed:    { label: "Failed",    cls: "bg-red-100 text-red-900",         rank: 2 },
+  sequence_done:  { label: "No reply",  cls: "bg-amber-100 text-amber-900",     rank: 3 },
+  awaiting_reply: { label: "Awaiting",  cls: "bg-slate-100 text-slate-700",     rank: 4 },
+  opted_out:      { label: "Opted out", cls: "bg-slate-100 text-slate-500",     rank: 5 },
 };
 
 export default function OperationsLeads() {
