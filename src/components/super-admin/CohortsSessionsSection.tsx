@@ -34,7 +34,13 @@ import { Plus, Pencil, CalendarClock, Users, Loader2, Mail } from "lucide-react"
 
 const PTP_COACH_PATH_ID = "fa22e4aa-746b-4a1e-994c-ba5a241a0121";
 
-const COHORT_STATUSES = ["planning", "open", "in_progress", "completed", "cancelled"] as const;
+const COHORT_STATUSES = [
+  { value: "planning", label: "Planning" },
+  { value: "enrolling", label: "Enrolling" },
+  { value: "active", label: "Active" },
+  { value: "completed", label: "Completed" },
+  { value: "cancelled", label: "Cancelled" },
+] as const;
 const TEMPLATE_TYPES = [
   {
     key: "welcome",
