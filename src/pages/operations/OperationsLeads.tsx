@@ -191,6 +191,9 @@ export default function OperationsLeads() {
                     </TableCell>
                     <TableCell className="font-medium">{[l.first_name, l.last_name].filter(Boolean).join(" ") || "—"}</TableCell>
                     <TableCell>{l.company_name_text ?? "—"}</TableCell>
+                    <TableCell>
+                      {l.outreach_pool ? (POOL_LABELS[l.outreach_pool] ?? l.outreach_pool) : "—"}
+                    </TableCell>
                     <TableCell>{l.email ?? "—"}</TableCell>
                     <TableCell>{l.status?.name ?? "—"}</TableCell>
                     <TableCell>{l.score ?? "—"}</TableCell>
