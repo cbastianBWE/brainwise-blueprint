@@ -152,6 +152,31 @@ export default function OperationsLeads() {
 
       <SavedViewsBar entityType="lead" filters={filters} onApply={(f) => setFilters(f as Filters)} />
 
+      {(repliedCount > 0 || failedCount > 0) && (
+        <div className="flex items-center justify-between gap-4 rounded-md border border-emerald-300 bg-emerald-50 px-4 py-3">
+          <div className="flex items-center gap-2 text-sm text-emerald-900">
+            <Mail className="h-4 w-4" />
+            <span>
+              {repliedCount > 0 && <strong>{repliedCount} replied</strong>}
+              {repliedCount > 0 && failedCount > 0 && " · "}
+              {failedCount > 0 && <span>{failedCount} failed to send</span>}
+            </span>
+          </div>
+          <div className="flex gap-2">
+            {repliedCount > 0 && (
+              <Button size="sm" onClick={() => setFilters({ ...filters, attention: "replied" })}>
+                Show replies
+              </Button>
+            )}
+            {failedCount > 0 && (
+              <Button size="sm" variant="outline" onClick={() => setFilters({ ...filters, attention: "send_failed" })}>
+                Show failures
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
+
       <div className="flex items-center gap-2 flex-wrap">
         <Button
           variant={filters.pool ? "outline" : "default"}
@@ -173,6 +198,24 @@ export default function OperationsLeads() {
             <span className="ml-2 text-xs opacity-70">{p.untouched}/{p.total}</span>
           </Button>
         ))}
+        <span className="mx-1 h-5 w-px bg-border" />
+        {["replied", "send_failed", "sequence_done", "awaiting_reply"].map((k) => {
+          const n = attention.filter((a: any) => a.attention === k).length;
+          if (n === 0) return null;
+          return (
+            <Button
+              key={k}
+              variant={filters.attention === k ? "default" : "outline"}
+              size="sm"
+              onClick={() =>
+                setFilters({ ...filters, attention: filters.attention === k ? undefined : k })
+              }
+            >
+              {ATTENTION_META[k].label}
+              <span className="ml-2 text-xs opacity-70">{n}</span>
+            </Button>
+          );
+        })}
       </div>
 
       <div className="flex items-center gap-2 flex-wrap">
