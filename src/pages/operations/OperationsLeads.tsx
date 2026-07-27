@@ -104,6 +104,29 @@ export default function OperationsLeads() {
       <SavedViewsBar entityType="lead" filters={filters} onApply={(f) => setFilters(f as Filters)} />
 
       <div className="flex items-center gap-2 flex-wrap">
+        <Button
+          variant={filters.pool ? "outline" : "default"}
+          size="sm"
+          onClick={() => setFilters({ ...filters, pool: undefined })}
+        >
+          All
+        </Button>
+        {poolCounts.map((p: any) => (
+          <Button
+            key={p.pool}
+            variant={filters.pool === p.pool ? "default" : "outline"}
+            size="sm"
+            onClick={() =>
+              setFilters({ ...filters, pool: filters.pool === p.pool ? undefined : p.pool })
+            }
+          >
+            {POOL_LABELS[p.pool] ?? p.pool}
+            <span className="ml-2 text-xs opacity-70">{p.untouched}/{p.total}</span>
+          </Button>
+        ))}
+      </div>
+
+      <div className="flex items-center gap-2 flex-wrap">
         <Input
           placeholder="Search company, name, email…"
           className="w-[260px]"
