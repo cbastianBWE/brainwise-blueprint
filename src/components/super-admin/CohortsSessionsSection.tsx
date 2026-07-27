@@ -887,6 +887,7 @@ export default function CohortsSessionsSection() {
   const [reschedulingSession, setReschedulingSession] = useState<CohortEvent | null>(null);
   const [reassignDialogOpen, setReassignDialogOpen] = useState(false);
   const [reassigningMember, setReassigningMember] = useState<CohortMember | null>(null);
+  const [enrollDialogOpen, setEnrollDialogOpen] = useState(false);
 
   const loadCohorts = useCallback(async () => {
     setLoading(true);
