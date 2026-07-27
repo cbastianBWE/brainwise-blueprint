@@ -105,7 +105,20 @@ export default function OperationsLeads() {
     },
   });
 
-  const allIds = useMemo(() => (data ?? []).map((l: any) => l.id), [data]);
+  const rows = useMemo(() => {
+    let out = data ?? [];
+    if (filters.attention) {
+      out = out.filter((l: any) => attentionMap.get(l.id)?.attention === filters.attention);
+    }
+    return [...out].sort((a: any, b: any) => {
+      const ra = ATTENTION_META[attentionMap.get(a.id)?.attention]?.rank ?? 9;
+      const rb = ATTENTION_META[attentionMap.get(b.id)?.attention]?.rank ?? 9;
+      if (ra !== rb) return ra - rb;
+      return String(b.created_at).localeCompare(String(a.created_at));
+    });
+  }, [data, filters.attention, attentionMap]);
+
+  const allIds = useMemo(() => rows.map((l: any) => l.id), [rows]);
   const allSelected = allIds.length > 0 && selected.size === allIds.length;
   const someSelected = selected.size > 0 && !allSelected;
 
