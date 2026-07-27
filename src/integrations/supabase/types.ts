@@ -17083,6 +17083,7 @@ export type Database = {
           title: string
         }[]
       }
+      ops_apollo_period_start: { Args: never; Returns: string }
       ops_apollo_record_enrichment: {
         Args: {
           p_apollo_org_id: string
@@ -17129,9 +17130,9 @@ export type Database = {
       ops_auto_enroll: {
         Args: { p_days_of_queue?: number; p_org_id: string }
         Returns: {
-          already_active: number
+          allocation: number
           enrolled: number
-          target: number
+          pool: string
         }[]
       }
       ops_bulk_convert_leads: {

@@ -742,6 +742,133 @@ function EmailTemplatesCard() {
   );
 }
 
+// ─── Enroll Participant ───
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function mapEnrollError(payload: { error?: string; detail?: string } | null): string {
+  const code = payload?.error;
+  const detail = payload?.detail ?? "";
+  switch (code) {
+    case "valid_email_required":
+      return "Enter a valid email address.";
+    case "cohort_id_required":
+    case "cohort_not_found":
+      return "Could not resolve this cohort. Refresh and try again.";
+    case "forbidden_not_super_admin":
+      return "You do not have permission to do this.";
+    case "create_user_failed":
+    case "user_exists_but_unlinked":
+      return "Could not create this account. " + detail;
+    case "enroll_failed":
+      return "Enrollment failed. " + detail;
+    default:
+      return code || "Something went wrong.";
+  }
+}
+
+function EnrollParticipantDialog({
+  open,
+  onOpenChange,
+  cohortId,
+  onEnrolled,
+}: {
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+  cohortId: string;
+  onEnrolled: () => void;
+}) {
+  const { toast } = useToast();
+  const [email, setEmail] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  const emailValid = EMAIL_RE.test(email.trim());
+
+  const handleSubmit = async () => {
+    if (submitting || !emailValid) return;
+    setSubmitting(true);
+    const { data, error } = await supabase.functions.invoke("admin-enroll-in-cohort", {
+      body: {
+        email: email.trim(),
+        first_name: firstName.trim() || undefined,
+        last_name: lastName.trim() || undefined,
+        cohort_id: cohortId,
+      },
+    });
+    let payload: any = data;
+    if (error) {
+      try {
+        payload = await (error as any).context.json();
+      } catch {
+        payload = null;
+      }
+      setSubmitting(false);
+      toast({
+        title: "Enrollment failed",
+        description: mapEnrollError(payload),
+        variant: "destructive",
+      });
+      return;
+    }
+    setSubmitting(false);
+    toast({
+      title: payload?.already_enrolled ? "Already enrolled" : "Participant enrolled",
+      description: payload?.message ?? "Done.",
+    });
+    setEmail("");
+    setFirstName("");
+    setLastName("");
+    onOpenChange(false);
+    onEnrolled();
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => { if (!submitting) onOpenChange(o); }}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Enroll a participant</DialogTitle>
+          <DialogDescription>
+            If they don't have an account yet, one is created and they get a set-password link.
+            Enrolling also sends the branded welcome email with the certification reference PDF;
+            calendar invites and reminders follow automatically.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label>Email</Label>
+            <Input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="person@example.com"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>First name (optional)</Label>
+              <Input value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label>Last name (optional)</Label>
+              <Input value={lastName} onChange={(e) => setLastName(e.target.value)} />
+            </div>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={submitting}>
+            Cancel
+          </Button>
+          <Button onClick={handleSubmit} disabled={submitting || !emailValid}>
+            {submitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+            {submitting ? "Enrolling…" : "Enroll"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 // ─── Main Section ───
 export default function CohortsSessionsSection() {
   const { toast } = useToast();
@@ -760,6 +887,7 @@ export default function CohortsSessionsSection() {
   const [reschedulingSession, setReschedulingSession] = useState<CohortEvent | null>(null);
   const [reassignDialogOpen, setReassignDialogOpen] = useState(false);
   const [reassigningMember, setReassigningMember] = useState<CohortMember | null>(null);
+  const [enrollDialogOpen, setEnrollDialogOpen] = useState(false);
 
   const loadCohorts = useCallback(async () => {
     setLoading(true);
@@ -943,10 +1071,13 @@ export default function CohortsSessionsSection() {
           </Card>
 
           <Card>
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="flex items-center gap-2">
                 <Users className="h-5 w-5" /> Enrollees — {selectedCohort.name}
               </CardTitle>
+              <Button size="sm" onClick={() => setEnrollDialogOpen(true)}>
+                <Plus className="h-4 w-4 mr-1" /> Enroll a participant
+              </Button>
             </CardHeader>
             <CardContent>
               {members.length === 0 ? (
@@ -1015,6 +1146,14 @@ export default function CohortsSessionsSection() {
         memberSessions={events}
         onSaved={() => selectedCohortId && loadCohortDetail(selectedCohortId)}
       />
+      {selectedCohortId && (
+        <EnrollParticipantDialog
+          open={enrollDialogOpen}
+          onOpenChange={setEnrollDialogOpen}
+          cohortId={selectedCohortId}
+          onEnrolled={() => { loadCohortDetail(selectedCohortId); loadCohorts(); }}
+        />
+      )}
     </div>
   );
 }
