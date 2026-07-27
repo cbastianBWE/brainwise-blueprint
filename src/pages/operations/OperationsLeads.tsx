@@ -169,6 +169,7 @@ export default function OperationsLeads() {
                   </TableHead>
                   <TableHead>Name</TableHead>
                   <TableHead>Company</TableHead>
+                  <TableHead>Pool</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Score</TableHead>
