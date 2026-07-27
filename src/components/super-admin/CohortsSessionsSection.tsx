@@ -214,10 +214,14 @@ function CohortDialog({
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {COHORT_STATUSES.map((s) => (
-                    <SelectItem key={s} value={s}>{s}</SelectItem>
+                    <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+              <p className="text-xs text-muted-foreground">
+                Status is an internal label. Whether the public certification page shows this cohort is controlled by the Enrollment Opens / Closes dates, not by this status.
+              </p>
+
             </div>
             <div className="space-y-2">
               <Label>Max Capacity (blank = unlimited)</Label>
