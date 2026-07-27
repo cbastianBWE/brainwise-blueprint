@@ -72,7 +72,8 @@ interface Cohort {
   welcome_attachment_url: string | null;
   practitioner_name?: string | null;
   practitioner_email?: string | null;
-  practitioner_scheduling_url?: string | null;
+  practitioner_ptp_debrief_url?: string | null;
+  practitioner_competency_url?: string | null;
   certification_paths?: { name: string } | null;
 }
 
@@ -145,7 +146,8 @@ function CohortDialog({
     welcome_attachment_url: "",
     practitioner_name: "",
     practitioner_email: "",
-    practitioner_scheduling_url: "",
+    practitioner_ptp_debrief_url: "",
+    practitioner_competency_url: "",
   });
 
   useEffect(() => {
@@ -162,7 +164,8 @@ function CohortDialog({
         welcome_attachment_url: editing?.welcome_attachment_url ?? "",
         practitioner_name: editing?.practitioner_name ?? "",
         practitioner_email: editing?.practitioner_email ?? "",
-        practitioner_scheduling_url: editing?.practitioner_scheduling_url ?? "",
+        practitioner_ptp_debrief_url: editing?.practitioner_ptp_debrief_url ?? "",
+        practitioner_competency_url: editing?.practitioner_competency_url ?? "",
       });
     }
   }, [open, editing]);
@@ -187,7 +190,8 @@ function CohortDialog({
       p_welcome_attachment_url: form.welcome_attachment_url || null,
       p_practitioner_name: form.practitioner_name.trim() || null,
       p_practitioner_email: form.practitioner_email.trim() || null,
-      p_practitioner_scheduling_url: form.practitioner_scheduling_url.trim() || null,
+      p_practitioner_ptp_debrief_url: form.practitioner_ptp_debrief_url.trim() || null,
+      p_practitioner_competency_url: form.practitioner_competency_url.trim() || null,
     });
     setSaving(false);
     if (error) {
@@ -294,11 +298,19 @@ function CohortDialog({
               </div>
             </div>
             <div className="space-y-2">
-              <Label>Booking / scheduling link</Label>
+              <Label>PTP debrief booking link (1 hour)</Label>
               <Input
                 placeholder="https://…"
-                value={form.practitioner_scheduling_url}
-                onChange={(e) => setForm({ ...form, practitioner_scheduling_url: e.target.value })}
+                value={form.practitioner_ptp_debrief_url}
+                onChange={(e) => setForm({ ...form, practitioner_ptp_debrief_url: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Competency review booking link (30 min)</Label>
+              <Input
+                placeholder="https://…"
+                value={form.practitioner_competency_url}
+                onChange={(e) => setForm({ ...form, practitioner_competency_url: e.target.value })}
               />
             </div>
           </div>
