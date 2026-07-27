@@ -9,18 +9,26 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, ArrowRightLeft } from "lucide-react";
+import { Plus, ArrowRightLeft, Mail } from "lucide-react";
 import LeadFormDialog from "./LeadFormDialog";
 import ConvertLeadDialog from "./ConvertLeadDialog";
 import SavedViewsBar from "./SavedViewsBar";
 
-type Filters = { search?: string; status_id?: string; pool?: string };
+type Filters = { search?: string; status_id?: string; pool?: string; attention?: string };
 
 const POOL_LABELS: Record<string, string> = {
   enterprise: "Enterprise",
   coach: "Practitioner",
   faith: "Faith",
   clinical: "Clinical",
+};
+
+const ATTENTION_META: Record<string, { label: string; cls: string; rank: number }> = {
+  replied:        { label: "Replied",   cls: "bg-emerald-100 text-emerald-900", rank: 1 },
+  send_failed:    { label: "Failed",    cls: "bg-red-100 text-red-900",         rank: 2 },
+  sequence_done:  { label: "No reply",  cls: "bg-amber-100 text-amber-900",     rank: 3 },
+  awaiting_reply: { label: "Awaiting",  cls: "bg-slate-100 text-slate-700",     rank: 4 },
+  opted_out:      { label: "Opted out", cls: "bg-slate-100 text-slate-500",     rank: 5 },
 };
 
 export default function OperationsLeads() {
@@ -49,6 +57,34 @@ export default function OperationsLeads() {
     },
   });
 
+  const { data: attention = [] } = useQuery({
+    queryKey: ["ops", "outreach_attention"],
+    refetchInterval: 60000,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("ops_outreach_attention" as any, {});
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+  });
+
+  const attentionMap = useMemo(() => {
+    const m = new Map<string, any>();
+    for (const a of attention) m.set(a.lead_id, a);
+    return m;
+  }, [attention]);
+
+  const repliedCount = useMemo(
+    () => attention.filter((a: any) => a.attention === "replied").length,
+    [attention]
+  );
+
+  const failedCount = useMemo(
+    () => attention.filter((a: any) => a.attention === "send_failed").length,
+    [attention]
+  );
+
+
+
   const { data, isLoading, error } = useQuery({
     queryKey: ["ops", "leads", "list", filters],
     queryFn: async () => {
@@ -69,7 +105,20 @@ export default function OperationsLeads() {
     },
   });
 
-  const allIds = useMemo(() => (data ?? []).map((l: any) => l.id), [data]);
+  const rows = useMemo(() => {
+    let out = data ?? [];
+    if (filters.attention) {
+      out = out.filter((l: any) => attentionMap.get(l.id)?.attention === filters.attention);
+    }
+    return [...out].sort((a: any, b: any) => {
+      const ra = ATTENTION_META[attentionMap.get(a.id)?.attention]?.rank ?? 9;
+      const rb = ATTENTION_META[attentionMap.get(b.id)?.attention]?.rank ?? 9;
+      if (ra !== rb) return ra - rb;
+      return String(b.created_at).localeCompare(String(a.created_at));
+    });
+  }, [data, filters.attention, attentionMap]);
+
+  const allIds = useMemo(() => rows.map((l: any) => l.id), [rows]);
   const allSelected = allIds.length > 0 && selected.size === allIds.length;
   const someSelected = selected.size > 0 && !allSelected;
 
@@ -103,6 +152,31 @@ export default function OperationsLeads() {
 
       <SavedViewsBar entityType="lead" filters={filters} onApply={(f) => setFilters(f as Filters)} />
 
+      {(repliedCount > 0 || failedCount > 0) && (
+        <div className="flex items-center justify-between gap-4 rounded-md border border-emerald-300 bg-emerald-50 px-4 py-3">
+          <div className="flex items-center gap-2 text-sm text-emerald-900">
+            <Mail className="h-4 w-4" />
+            <span>
+              {repliedCount > 0 && <strong>{repliedCount} replied</strong>}
+              {repliedCount > 0 && failedCount > 0 && " · "}
+              {failedCount > 0 && <span>{failedCount} failed to send</span>}
+            </span>
+          </div>
+          <div className="flex gap-2">
+            {repliedCount > 0 && (
+              <Button size="sm" onClick={() => setFilters({ ...filters, attention: "replied" })}>
+                Show replies
+              </Button>
+            )}
+            {failedCount > 0 && (
+              <Button size="sm" variant="outline" onClick={() => setFilters({ ...filters, attention: "send_failed" })}>
+                Show failures
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
+
       <div className="flex items-center gap-2 flex-wrap">
         <Button
           variant={filters.pool ? "outline" : "default"}
@@ -124,6 +198,24 @@ export default function OperationsLeads() {
             <span className="ml-2 text-xs opacity-70">{p.untouched}/{p.total}</span>
           </Button>
         ))}
+        <span className="mx-1 h-5 w-px bg-border" />
+        {["replied", "send_failed", "sequence_done", "awaiting_reply"].map((k) => {
+          const n = attention.filter((a: any) => a.attention === k).length;
+          if (n === 0) return null;
+          return (
+            <Button
+              key={k}
+              variant={filters.attention === k ? "default" : "outline"}
+              size="sm"
+              onClick={() =>
+                setFilters({ ...filters, attention: filters.attention === k ? undefined : k })
+              }
+            >
+              {ATTENTION_META[k].label}
+              <span className="ml-2 text-xs opacity-70">{n}</span>
+            </Button>
+          );
+        })}
       </div>
 
       <div className="flex items-center gap-2 flex-wrap">
@@ -154,7 +246,7 @@ export default function OperationsLeads() {
             <p className="text-muted-foreground text-sm">Loading…</p>
           ) : error ? (
             <p className="text-destructive text-sm">Failed to load leads.</p>
-          ) : !data || data.length === 0 ? (
+          ) : rows.length === 0 ? (
             <p className="text-muted-foreground text-sm">No leads yet.</p>
           ) : (
             <Table>
@@ -170,13 +262,14 @@ export default function OperationsLeads() {
                   <TableHead>Name</TableHead>
                   <TableHead>Company</TableHead>
                   <TableHead>Pool</TableHead>
+                  <TableHead>Outreach</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Score</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {data.map((l: any) => (
+                {rows.map((l: any) => (
                   <TableRow
                     key={l.id}
                     className="cursor-pointer"
@@ -193,6 +286,21 @@ export default function OperationsLeads() {
                     <TableCell>{l.company_name_text ?? "—"}</TableCell>
                     <TableCell>
                       {l.outreach_pool ? (POOL_LABELS[l.outreach_pool] ?? l.outreach_pool) : "—"}
+                    </TableCell>
+                    <TableCell>
+                      {(() => {
+                        const a = attentionMap.get(l.id);
+                        if (!a) return <span className="text-muted-foreground">—</span>;
+                        const meta = ATTENTION_META[a.attention];
+                        return (
+                          <span
+                            className={`inline-block rounded px-2 py-0.5 text-xs font-medium ${meta?.cls ?? ""}`}
+                            title={a.detail ?? ""}
+                          >
+                            {meta?.label ?? a.attention}
+                          </span>
+                        );
+                      })()}
                     </TableCell>
                     <TableCell>{l.email ?? "—"}</TableCell>
                     <TableCell>{l.status?.name ?? "—"}</TableCell>

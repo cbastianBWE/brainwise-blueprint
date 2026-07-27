@@ -17126,6 +17126,14 @@ export type Database = {
         Args: { p_lead_id: string }
         Returns: string
       }
+      ops_auto_enroll: {
+        Args: { p_days_of_queue?: number; p_org_id: string }
+        Returns: {
+          already_active: number
+          enrolled: number
+          target: number
+        }[]
+      }
       ops_bulk_convert_leads: {
         Args: { p_lead_ids: string[]; p_options?: Json }
         Returns: Json
@@ -17501,6 +17509,22 @@ export type Database = {
         Returns: Json
       }
       ops_org_user_list: { Args: never; Returns: Json }
+      ops_outreach_attention: {
+        Args: { p_org_id?: string }
+        Returns: {
+          attention: string
+          company: string
+          detail: string
+          email: string
+          full_name: string
+          last_sent_at: string
+          last_step: number
+          lead_id: string
+          pool: string
+          replied_at: string
+          title: string
+        }[]
+      }
       ops_outreach_pipeline_summary: {
         Args: { p_org_id: string }
         Returns: {
