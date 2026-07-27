@@ -3824,8 +3824,10 @@ export type Database = {
           id: string
           max_capacity: number | null
           name: string
+          practitioner_competency_url: string | null
           practitioner_email: string | null
           practitioner_name: string | null
+          practitioner_ptp_debrief_url: string | null
           practitioner_scheduling_url: string | null
           starts_at: string | null
           status: string
@@ -3846,8 +3848,10 @@ export type Database = {
           id?: string
           max_capacity?: number | null
           name: string
+          practitioner_competency_url?: string | null
           practitioner_email?: string | null
           practitioner_name?: string | null
+          practitioner_ptp_debrief_url?: string | null
           practitioner_scheduling_url?: string | null
           starts_at?: string | null
           status?: string
@@ -3868,8 +3872,10 @@ export type Database = {
           id?: string
           max_capacity?: number | null
           name?: string
+          practitioner_competency_url?: string | null
           practitioner_email?: string | null
           practitioner_name?: string | null
+          practitioner_ptp_debrief_url?: string | null
           practitioner_scheduling_url?: string | null
           starts_at?: string | null
           status?: string
@@ -14961,8 +14967,10 @@ export type Database = {
           p_id: string
           p_max_capacity: number
           p_name: string
+          p_practitioner_competency_url?: string
           p_practitioner_email?: string
           p_practitioner_name?: string
+          p_practitioner_ptp_debrief_url?: string
           p_practitioner_scheduling_url?: string
           p_starts_at: string
           p_status: string
@@ -17293,10 +17301,30 @@ export type Database = {
           to_email: string
         }[]
       }
+      ops_due_outreach_sends: {
+        Args: { p_limit?: number; p_org_id: string }
+        Returns: {
+          body: string
+          company: string
+          enrollment_id: string
+          first_name: string
+          lead_id: string
+          step_number: number
+          subject: string
+          to_email: string
+        }[]
+      }
       ops_due_payment_reminders: { Args: never; Returns: Json }
       ops_enqueue_enrichment: {
         Args: { p_kind: string; p_lead: string; p_provider: string }
         Returns: string
+      }
+      ops_enroll_from_worklist: {
+        Args: { p_limit?: number; p_org_id: string; p_sequence_id: string }
+        Returns: {
+          enrolled: number
+          skipped_existing: number
+        }[]
       }
       ops_entity_timeline: {
         Args: { p_entity_id: string; p_entity_type: string; p_limit?: number }
@@ -17376,6 +17404,15 @@ export type Database = {
       ops_ingest_captured_lead: {
         Args: { p_ip: string; p_payload: Json; p_webhook: string }
         Returns: Json
+      }
+      ops_lead_pool_counts: {
+        Args: { p_org_id?: string }
+        Returns: {
+          label: string
+          pool: string
+          total: number
+          untouched: number
+        }[]
       }
       ops_list_activity: {
         Args: { p_entity_id: string; p_entity_type: string }
@@ -17481,6 +17518,24 @@ export type Database = {
           worklist_ready: number
         }[]
       }
+      ops_outreach_reply_watermark: {
+        Args: { p_org_id: string }
+        Returns: string
+      }
+      ops_outreach_send_allowance: {
+        Args: { p_org_id: string }
+        Returns: {
+          effective_cap: number
+          footer: string
+          from_address: string
+          from_display_name: string
+          graph_user_id: string
+          is_enabled: boolean
+          remaining_today: number
+          sent_today: number
+          signature: string
+        }[]
+      }
       ops_promote_discovered_to_leads: {
         Args: {
           p_limit?: number
@@ -17540,6 +17595,30 @@ export type Database = {
           p_user: string
         }
         Returns: boolean
+      }
+      ops_record_outreach_reply: {
+        Args: {
+          p_conversation_id: string
+          p_from_email: string
+          p_is_optout?: boolean
+          p_org_id: string
+          p_received_at: string
+        }
+        Returns: string
+      }
+      ops_record_outreach_send: {
+        Args: {
+          p_body: string
+          p_enrollment_id: string
+          p_error?: string
+          p_graph_conversation_id: string
+          p_graph_message_id: string
+          p_status: string
+          p_step: number
+          p_subject: string
+          p_to: string
+        }
+        Returns: string
       }
       ops_record_payment: {
         Args: { p_invoice: string; p_payment: Json }
@@ -17606,6 +17685,10 @@ export type Database = {
       ops_set_invoice_status: {
         Args: { p_action: string; p_id: string }
         Returns: string
+      }
+      ops_set_reply_watermark: {
+        Args: { p_at: string; p_org_id: string }
+        Returns: boolean
       }
       ops_set_retainer_status: {
         Args: { p_action: string; p_id: string }

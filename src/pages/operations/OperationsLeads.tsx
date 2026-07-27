@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { opsSupabase } from "@/integrations/supabase/operations-types";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -13,7 +14,14 @@ import LeadFormDialog from "./LeadFormDialog";
 import ConvertLeadDialog from "./ConvertLeadDialog";
 import SavedViewsBar from "./SavedViewsBar";
 
-type Filters = { search?: string; status_id?: string };
+type Filters = { search?: string; status_id?: string; pool?: string };
+
+const POOL_LABELS: Record<string, string> = {
+  enterprise: "Enterprise",
+  coach: "Practitioner",
+  faith: "Faith",
+  clinical: "Clinical",
+};
 
 export default function OperationsLeads() {
   const navigate = useNavigate();
@@ -32,18 +40,28 @@ export default function OperationsLeads() {
     },
   });
 
+  const { data: poolCounts = [] } = useQuery({
+    queryKey: ["ops", "lead_pool_counts"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("ops_lead_pool_counts" as any, {});
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+  });
+
   const { data, isLoading, error } = useQuery({
     queryKey: ["ops", "leads", "list", filters],
     queryFn: async () => {
       let q = opsSupabase
         .from("leads" as any)
-        .select("id, salutation, first_name, last_name, company_name_text, email, phone, score, created_at, status:lead_statuses(name,color), source:picklist_values!leads_source_id_fkey(label)")
+        .select("id, salutation, first_name, last_name, company_name_text, email, phone, score, outreach_pool, created_at, status:lead_statuses(name,color), source:picklist_values!leads_source_id_fkey(label)")
         .is("archived_at", null);
       if (filters.search) {
         const s = filters.search.replace(/[,()]/g, "");
         q = q.or(`company_name_text.ilike.%${s}%,last_name.ilike.%${s}%,email.ilike.%${s}%`);
       }
       if (filters.status_id) q = q.eq("status_id", filters.status_id);
+      if (filters.pool) q = q.eq("outreach_pool", filters.pool);
       q = q.order("created_at", { ascending: false });
       const { data, error } = await q;
       if (error) throw error;
@@ -84,6 +102,29 @@ export default function OperationsLeads() {
       </div>
 
       <SavedViewsBar entityType="lead" filters={filters} onApply={(f) => setFilters(f as Filters)} />
+
+      <div className="flex items-center gap-2 flex-wrap">
+        <Button
+          variant={filters.pool ? "outline" : "default"}
+          size="sm"
+          onClick={() => setFilters({ ...filters, pool: undefined })}
+        >
+          All
+        </Button>
+        {poolCounts.map((p: any) => (
+          <Button
+            key={p.pool}
+            variant={filters.pool === p.pool ? "default" : "outline"}
+            size="sm"
+            onClick={() =>
+              setFilters({ ...filters, pool: filters.pool === p.pool ? undefined : p.pool })
+            }
+          >
+            {POOL_LABELS[p.pool] ?? p.pool}
+            <span className="ml-2 text-xs opacity-70">{p.untouched}/{p.total}</span>
+          </Button>
+        ))}
+      </div>
 
       <div className="flex items-center gap-2 flex-wrap">
         <Input
@@ -128,6 +169,7 @@ export default function OperationsLeads() {
                   </TableHead>
                   <TableHead>Name</TableHead>
                   <TableHead>Company</TableHead>
+                  <TableHead>Pool</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Score</TableHead>
@@ -149,6 +191,9 @@ export default function OperationsLeads() {
                     </TableCell>
                     <TableCell className="font-medium">{[l.first_name, l.last_name].filter(Boolean).join(" ") || "—"}</TableCell>
                     <TableCell>{l.company_name_text ?? "—"}</TableCell>
+                    <TableCell>
+                      {l.outreach_pool ? (POOL_LABELS[l.outreach_pool] ?? l.outreach_pool) : "—"}
+                    </TableCell>
                     <TableCell>{l.email ?? "—"}</TableCell>
                     <TableCell>{l.status?.name ?? "—"}</TableCell>
                     <TableCell>{l.score ?? "—"}</TableCell>
