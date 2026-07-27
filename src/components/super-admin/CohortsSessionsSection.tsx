@@ -274,6 +274,34 @@ function CohortDialog({
               onChange={(e) => setForm({ ...form, welcome_attachment_url: e.target.value })}
             />
           </div>
+          <div className="space-y-3 rounded-md border p-4">
+            <h4 className="text-sm font-semibold">Assigned Practitioner</h4>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Practitioner name</Label>
+                <Input
+                  value={form.practitioner_name}
+                  onChange={(e) => setForm({ ...form, practitioner_name: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Practitioner email</Label>
+                <Input
+                  type="email"
+                  value={form.practitioner_email}
+                  onChange={(e) => setForm({ ...form, practitioner_email: e.target.value })}
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Booking / scheduling link</Label>
+              <Input
+                placeholder="https://…"
+                value={form.practitioner_scheduling_url}
+                onChange={(e) => setForm({ ...form, practitioner_scheduling_url: e.target.value })}
+              />
+            </div>
+          </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
