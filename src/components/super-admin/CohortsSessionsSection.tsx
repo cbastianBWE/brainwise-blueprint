@@ -34,7 +34,13 @@ import { Plus, Pencil, CalendarClock, Users, Loader2, Mail } from "lucide-react"
 
 const PTP_COACH_PATH_ID = "fa22e4aa-746b-4a1e-994c-ba5a241a0121";
 
-const COHORT_STATUSES = ["planning", "open", "in_progress", "completed", "cancelled"] as const;
+const COHORT_STATUSES = [
+  { value: "planning", label: "Planning" },
+  { value: "enrolling", label: "Enrolling" },
+  { value: "active", label: "Active" },
+  { value: "completed", label: "Completed" },
+  { value: "cancelled", label: "Cancelled" },
+] as const;
 const TEMPLATE_TYPES = [
   {
     key: "welcome",
@@ -127,7 +133,7 @@ function CohortDialog({
   const [form, setForm] = useState({
     name: "",
     description: "",
-    status: "planning",
+    status: "enrolling",
     starts_at: "",
     ends_at: "",
     enrollment_opens_at: "",
@@ -141,7 +147,7 @@ function CohortDialog({
       setForm({
         name: editing?.name ?? "",
         description: editing?.description ?? "",
-        status: editing?.status ?? "planning",
+        status: editing?.status ?? "enrolling",
         starts_at: toLocalInput(editing?.starts_at),
         ends_at: toLocalInput(editing?.ends_at),
         enrollment_opens_at: toLocalInput(editing?.enrollment_opens_at),
@@ -208,10 +214,14 @@ function CohortDialog({
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {COHORT_STATUSES.map((s) => (
-                    <SelectItem key={s} value={s}>{s}</SelectItem>
+                    <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+              <p className="text-xs text-muted-foreground">
+                Status is an internal label. Whether the public certification page shows this cohort is controlled by the Enrollment Opens / Closes dates, not by this status.
+              </p>
+
             </div>
             <div className="space-y-2">
               <Label>Max Capacity (blank = unlimited)</Label>
