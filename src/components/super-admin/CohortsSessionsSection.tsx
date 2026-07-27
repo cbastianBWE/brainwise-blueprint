@@ -133,7 +133,7 @@ function CohortDialog({
   const [form, setForm] = useState({
     name: "",
     description: "",
-    status: "planning",
+    status: "enrolling",
     starts_at: "",
     ends_at: "",
     enrollment_opens_at: "",
@@ -147,7 +147,7 @@ function CohortDialog({
       setForm({
         name: editing?.name ?? "",
         description: editing?.description ?? "",
-        status: editing?.status ?? "planning",
+        status: editing?.status ?? "enrolling",
         starts_at: toLocalInput(editing?.starts_at),
         ends_at: toLocalInput(editing?.ends_at),
         enrollment_opens_at: toLocalInput(editing?.enrollment_opens_at),
