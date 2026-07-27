@@ -918,7 +918,7 @@ export default function CohortsSessionsSection() {
       supabase.from("cohort_events").select("*").eq("cohort_id", cohortId).order("sequence_no"),
       supabase
         .from("cohort_members")
-        .select("user_id, member_status, users(full_name, email)")
+        .select("user_id, member_status, users!cohort_members_user_id_fkey(full_name, email)")
         .eq("cohort_id", cohortId),
     ]);
     setEvents((ev as CohortEvent[]) || []);
