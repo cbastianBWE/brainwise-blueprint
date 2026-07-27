@@ -246,7 +246,7 @@ export default function OperationsLeads() {
             <p className="text-muted-foreground text-sm">Loading…</p>
           ) : error ? (
             <p className="text-destructive text-sm">Failed to load leads.</p>
-          ) : !data || data.length === 0 ? (
+          ) : rows.length === 0 ? (
             <p className="text-muted-foreground text-sm">No leads yet.</p>
           ) : (
             <Table>
@@ -262,13 +262,14 @@ export default function OperationsLeads() {
                   <TableHead>Name</TableHead>
                   <TableHead>Company</TableHead>
                   <TableHead>Pool</TableHead>
+                  <TableHead>Outreach</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Score</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {data.map((l: any) => (
+                {rows.map((l: any) => (
                   <TableRow
                     key={l.id}
                     className="cursor-pointer"
@@ -285,6 +286,21 @@ export default function OperationsLeads() {
                     <TableCell>{l.company_name_text ?? "—"}</TableCell>
                     <TableCell>
                       {l.outreach_pool ? (POOL_LABELS[l.outreach_pool] ?? l.outreach_pool) : "—"}
+                    </TableCell>
+                    <TableCell>
+                      {(() => {
+                        const a = attentionMap.get(l.id);
+                        if (!a) return <span className="text-muted-foreground">—</span>;
+                        const meta = ATTENTION_META[a.attention];
+                        return (
+                          <span
+                            className={`inline-block rounded px-2 py-0.5 text-xs font-medium ${meta?.cls ?? ""}`}
+                            title={a.detail ?? ""}
+                          >
+                            {meta?.label ?? a.attention}
+                          </span>
+                        );
+                      })()}
                     </TableCell>
                     <TableCell>{l.email ?? "—"}</TableCell>
                     <TableCell>{l.status?.name ?? "—"}</TableCell>
