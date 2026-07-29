@@ -88,9 +88,8 @@ export default function LockNotice({
   const code = (reasonCode || "").trim();
   if (!code || PASS_CODES.has(code)) return null;
 
-  const known = sentenceFor(code, otherName) !== FALLBACK || code === "denied";
   let sentence = sentenceFor(code, otherName);
-  const usesPills = PILL_CODES.has(code) && known;
+  const usesPills = PILL_CODES.has(code);
 
   const detail = usesPills ? (reasonDetail || []).filter(Boolean) : [];
   let pills = detail;
