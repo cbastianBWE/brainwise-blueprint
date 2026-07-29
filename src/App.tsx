@@ -62,6 +62,7 @@ import CoachingActivities from "./pages/coaching/CoachingActivities";
 import CoachingActivityRunner from "./pages/coaching/CoachingActivityRunner";
 import RelationshipJourney from "./pages/couples/RelationshipJourney";
 import RelationshipActivityRunner from "./pages/couples/RelationshipActivityRunner";
+import CoupleJourneyMap from "./pages/couples/JourneyMap";
 import CoachingSessionView from "./pages/coaching/CoachingSessionView";
 import ResourceReader from "./pages/ResourceReader";
 import CertPathDetail from "./pages/learning/CertPathDetail";
@@ -266,6 +267,7 @@ const App = () => (
               <Route path="/coaching/:activityId" element={<CoachingActivityRunner />} />
               <Route path="/coaching/session/:sessionId" element={<CoachingSessionView />} />
               <Route path="/couples/:relationshipId" element={<RelationshipJourney />} />
+              <Route path="/couples/:relationshipId/map" element={<CoupleJourneyMap />} />
               <Route path="/couples/:relationshipId/activity/:activityCode" element={<RelationshipActivityRunner />} />
               <Route path="/ai-chat" element={<SubscriptionGate feature="ai_chat"><AiChat /></SubscriptionGate>} />
               <Route path="/ai-chat/history" element={<SubscriptionGate feature="ai_chat"><AiChatHistory /></SubscriptionGate>} />
