@@ -20055,6 +20055,8 @@ export type Database = {
           own_step: number
           partner_status: string
           reason: string
+          reason_code: string
+          reason_detail: string[]
           repeatable: boolean
           reveal_pending: boolean
           romantic_disclaimer: boolean
