@@ -34,6 +34,13 @@ export interface ModuleBriefingDialogProps {
   startCode: string | null;
   /** Reason from the first blocked activity, when nothing is open yet. */
   blockedReason: string | null;
+  /** Bare reason key for the milestone-level lock sentence. */
+  blockedReasonCode?: string | null;
+  blockedReasonDetail?: string[] | null;
+  /** Partner's first name, for "Opens once {name} has finished". */
+  otherName?: string;
+  /** Resolves a blocking activity title to its code and lock state. */
+  lookupByTitle?: (title: string) => { code: string; allowed: boolean } | null;
   onStart: (code: string) => void;
   /** Optional activity list, shown when the dialog is opened from the map. */
   activities?: MilestoneActivityRow[];
