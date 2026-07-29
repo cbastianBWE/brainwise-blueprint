@@ -96,7 +96,9 @@ export default function RelationshipActivityRunner() {
         otherFirstName: n.other_first_name || "Your partner",
         partnerSubmitted: row?.partner_status === "done",
         barrierCleared: !!row?.barrier_cleared,
+        partnerUserId: (view?.partner_user_id as string | undefined) ?? null,
         partnerView:
+
           view?.visible
             ? { disclosure: (view.disclosure as "full" | "summary") || "full", responses: view.responses || {} }
             : null,
@@ -313,7 +315,7 @@ export default function RelationshipActivityRunner() {
             </div>
           )}
 
-          <div className={readOnly ? "pointer-events-none opacity-90" : undefined}>
+          <div className={readOnly ? "opacity-90" : undefined}>
             {renderer
               ? renderer({
                   step: localizedStep,
@@ -325,9 +327,14 @@ export default function RelationshipActivityRunner() {
                   analysisHtml,
                   analyzing,
                   pendingReason,
+                  responses,
+                  readOnly,
+                  relationshipId,
+                  activityId: activity.id,
                 })
               : <UnknownWidget name={step.widget} />}
           </div>
+
 
           {analysisError && isAnalysisStep && (
             <div className="flex items-center justify-between gap-3 rounded-lg border p-3">
