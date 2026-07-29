@@ -52,6 +52,7 @@ export default function RelationshipActivityRunner() {
   const [analysisHtml, setAnalysisHtml] = useState<string | undefined>(undefined);
   const [pendingReason, setPendingReason] = useState<string | undefined>(undefined);
   const [analysisError, setAnalysisError] = useState(false);
+  const [submitError, setSubmitError] = useState(false);
 
   const allSteps: CoupleStep[] = useMemo(
     () => (activity?.definition?.steps as CoupleStep[]) || [],
@@ -247,17 +248,27 @@ export default function RelationshipActivityRunner() {
   }, [isAnalysisStep, sessionId, stepIndex, analysisHtml, runAnalysis]);
 
   // ---- Submit ----
-  const submit = useCallback(async () => {
-    if (!relationshipId || !activity) return;
+  // Returns true only when the RPC actually succeeded. A failure leaves the
+  // screen unlocked, the badge unchanged, and the caller responsible for
+  // staying put.
+  const submit = useCallback(async (): Promise<boolean> => {
+    if (!relationshipId || !activity) return false;
     setSubmitting(true);
-    await supabase.rpc("relationship_activity_submit", {
+    setSubmitError(false);
+    const { error } = await supabase.rpc("relationship_activity_submit", {
       p_relationship: relationshipId,
       p_activity: activity.id,
       p_run: null,
     });
+    if (error) {
+      setSubmitError(true);
+      setSubmitting(false);
+      return false;
+    }
     await buildContext(activity.id);
     setReadOnly(true);
     setSubmitting(false);
+    return true;
   }, [relationshipId, activity, buildContext]);
 
   const consumeReveal = useCallback(async () => {
@@ -273,9 +284,23 @@ export default function RelationshipActivityRunner() {
   }, [relationshipId, activity, buildContext]);
 
   const goNext = async () => {
-    if (step?.barrier && !readOnly) await submit();
-    if (stepIndex < steps.length - 1) setStepIndex((i) => i + 1);
-    else if (!readOnly) await submit();
+    // A barrier mid-activity must save before it lets you past it.
+    if (step?.barrier && !readOnly) {
+      const ok = await submit();
+      if (!ok) return;
+    }
+
+    if (stepIndex < steps.length - 1) {
+      setStepIndex((i) => i + 1);
+      return;
+    }
+
+    // Last step: submit if there is anything to submit, then always leave.
+    if (!readOnly) {
+      const ok = await submit();
+      if (!ok) return;
+    }
+    navigate(`/couples/${relationshipId}`);
   };
 
   // ---- Render ----
@@ -408,6 +433,20 @@ export default function RelationshipActivityRunner() {
               </Button>
             </div>
           )}
+
+          {submitError && (
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border p-3">
+              <p className="text-sm text-muted-foreground">
+                That didn't save. Nothing was locked in — you can try again.
+              </p>
+              <Button size="sm" variant="outline" disabled={submitting} onClick={() => void goNext()}>
+                <RotateCcw className="h-4 w-4" />
+                Try again
+              </Button>
+            </div>
+          )}
+
+
 
           {(step as any).chat === true && (
             <ChatWidget
