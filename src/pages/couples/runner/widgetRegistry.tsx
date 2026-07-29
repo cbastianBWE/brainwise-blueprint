@@ -28,6 +28,8 @@ import { SynthesisWidget } from "./widgets/SynthesisWidget";
 import { OverlapRevealWidget } from "./widgets/OverlapRevealWidget";
 import { OwnReadbackWidget } from "./widgets/OwnReadbackWidget";
 import { ReusedStepsWidget } from "./widgets/ReusedStepsWidget";
+import { DesireGridWidget } from "./widgets/DesireGridWidget";
+import { CoupleMoleculeWidget, type MoleculeNode } from "./widgets/CoupleMoleculeWidget";
 
 
 import type { CoupleContext, CoupleStep } from "./coupleShared";
@@ -256,6 +258,28 @@ export const widgetRegistry: Record<string, WidgetRenderer> = {
   ),
 
 
+
+  // Picks live in relationship_desire_picks, never in session responses: no onChange here.
+  desire_grid: ({ step, couple, relationshipId, activityId, readOnly }) => (
+    <DesireGridWidget
+      step={step}
+      couple={couple}
+      relationshipId={relationshipId}
+      activityId={activityId}
+      readOnly={readOnly}
+    />
+  ),
+  couple_molecule: ({ step, couple, value, onChange, sessionId, activityCode, readOnly }) => (
+    <CoupleMoleculeWidget
+      step={step}
+      couple={couple}
+      value={(value as MoleculeNode[]) || []}
+      onChange={(v) => onChange(v)}
+      sessionId={sessionId}
+      activityCode={activityCode}
+      readOnly={readOnly}
+    />
+  ),
 
   ai_panel: ({ couple, analysisHtml, analyzing, pendingReason }) => {
     if (pendingReason) {
