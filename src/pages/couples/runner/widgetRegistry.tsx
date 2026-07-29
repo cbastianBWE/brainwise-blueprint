@@ -197,6 +197,60 @@ export const widgetRegistry: Record<string, WidgetRenderer> = {
     />
   ),
 
+  ikigai: ({ step, value, onChange, sessionId, activityCode }) => (
+    <IkigaiWidget
+      step={asStep(step)}
+      session={{ id: sessionId, current_step: 0 } as any}
+      responses={(value as any) || {}}
+      setResponses={(u) => onChange(u(((value as any) || {}) as any))}
+      activityCode={activityCode}
+      setCoachingRemaining={() => {}}
+    />
+  ),
+  image_describe: ({ step, value, onChange, sessionId, activityCode }) => (
+    <ImageDescribeWidget
+      step={asStep(step)}
+      value={(value as any[]) || []}
+      onChange={(v) => onChange(v)}
+      sessionId={sessionId}
+      activityCode={activityCode}
+    />
+  ),
+  couple_timeline: ({ step, couple, value, onChange, sessionId, activityCode, readOnly }) => (
+    <CoupleTimelineWidget
+      step={step}
+      couple={couple}
+      value={(value as TimelineEvent[]) || []}
+      onChange={(v) => onChange(v)}
+      sessionId={sessionId}
+      activityCode={activityCode}
+      readOnly={readOnly}
+    />
+  ),
+  synthesis: ({ step, couple, responses, analysisHtml }) => (
+    <SynthesisWidget step={step} couple={couple} responses={responses || {}} analysisHtml={analysisHtml} />
+  ),
+  overlap_reveal: ({ step, couple, analysisHtml, analyzing }) => (
+    <OverlapRevealWidget step={step} couple={couple} analysisHtml={analysisHtml} analyzing={analyzing} />
+  ),
+  own_readback: ({ step, relationshipId }) => (
+    <OwnReadbackWidget step={step} relationshipId={relationshipId} />
+  ),
+  reused_steps: ({ step, couple, value, onChange, sessionId, activityCode, readOnly, relationshipId, activityId }) => (
+    <ReusedStepsWidget
+      step={step}
+      couple={couple}
+      value={(value as Record<string, unknown>) || {}}
+      onChange={(v) => onChange(v)}
+      sessionId={sessionId}
+      activityCode={activityCode}
+      readOnly={readOnly}
+      relationshipId={relationshipId}
+      activityId={activityId}
+    />
+  ),
+
+
 
   ai_panel: ({ couple, analysisHtml, analyzing, pendingReason }) => {
     if (pendingReason) {
