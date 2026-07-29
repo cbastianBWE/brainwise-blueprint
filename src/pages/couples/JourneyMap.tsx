@@ -178,10 +178,22 @@ function useFit(base: number) {
       // canvas is its child, so this is the exact box it may fill.
       const w = el.getBoundingClientRect().width;
       if (!w) return;
-      console.assert(
-        Math.abs(w - base * lastScale.current) > 0.5 || Math.abs(w - lastW.current) > 0.5,
-        "map fit: measured width is derived from the scale — circular measurement",
-      );
+      // The measured box must be the parent's content box, never a scale-sized
+      // one. If those two ever diverge, the ref is on the wrong element and the
+      // measurement has become circular (w = base * scale ⇒ every scale sticks).
+      const parent = el.parentElement;
+      if (parent) {
+        const cs = getComputedStyle(parent);
+        const avail =
+          parent.getBoundingClientRect().width -
+          parseFloat(cs.paddingLeft || "0") -
+          parseFloat(cs.paddingRight || "0");
+        console.assert(
+          Math.abs(w - avail) < 1.5,
+          "map fit: measured width is derived from the scale — circular measurement",
+          { measured: w, available: avail, scale: lastScale.current },
+        );
+      }
       lastW.current = w;
       // Floor only. The cap sits far above any normal screen so it can never
       // clip: base * scale === w exactly below ~1980px.
