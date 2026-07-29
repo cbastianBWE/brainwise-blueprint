@@ -64,10 +64,10 @@ export default function ModuleBriefingDialog({
         <div className="space-y-4 p-6">
           <DialogHeader className="space-y-2">
             <div className="flex items-center gap-2">
-              <Badge variant="secondary">Module {moduleNumber}</Badge>
+              <Badge variant="secondary">Milestone {moduleNumber}</Badge>
             </div>
             <DialogTitle className="text-xl leading-snug">
-              {module?.title || `Module ${moduleNumber}`}
+              {module?.title || `Milestone ${moduleNumber}`}
             </DialogTitle>
             {module?.description && (
               <DialogDescription>{module.description}</DialogDescription>
@@ -113,7 +113,7 @@ export default function ModuleBriefingDialog({
               <p className="text-xs text-muted-foreground">{blockedReason}</p>
             )}
             {startCode ? (
-              <Button onClick={() => onStart(startCode)}>Start Module {moduleNumber}</Button>
+              <Button onClick={() => onStart(startCode)}>Start Milestone {moduleNumber}</Button>
             ) : (
               <Button disabled>Not open yet</Button>
             )}
