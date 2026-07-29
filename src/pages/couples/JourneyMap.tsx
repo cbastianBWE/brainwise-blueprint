@@ -161,71 +161,84 @@ export const isPartnerDone = (s: string | null | undefined) => PARTNER_DONE.has(
  * ------------------------------------------------------------------ */
 
 function useFit(base: number) {
-  const ref = useRef<HTMLDivElement | null>(null);
   const [scale, setScale] = useState(1);
   // Guard against the circular measurement: the measured element's width must
   // come from CSS only. If it ever tracks the scale, say so loudly.
-  const lastW = useRef(-1);
   const lastScale = useRef(1);
+  // A callback ref, not useRef + useLayoutEffect: the rail mounts only after
+  // the RPCs resolve, well past any effect that runs on the component's mount.
+  // Measuring then means measuring nothing, and the observer never attaches.
+  const cleanup = useRef<(() => void) | null>(null);
 
-  useLayoutEffect(() => {
-    let raf1 = 0;
-    let raf2 = 0;
-    const fit = () => {
-      const el = ref.current;
+  const ref = useCallback(
+    (el: HTMLDivElement | null) => {
+      cleanup.current?.();
+      cleanup.current = null;
       if (!el) return;
-      // Measure the positioned wrapper itself — the absolutely-positioned
-      // canvas is its child, so this is the exact box it may fill.
-      const w = el.getBoundingClientRect().width;
-      if (!w) return;
-      // The measured box must be the parent's content box, never a scale-sized
-      // one. If those two ever diverge, the ref is on the wrong element and the
-      // measurement has become circular (w = base * scale ⇒ every scale sticks).
-      const parent = el.parentElement;
-      if (parent) {
-        const cs = getComputedStyle(parent);
-        const avail =
-          parent.getBoundingClientRect().width -
-          parseFloat(cs.paddingLeft || "0") -
-          parseFloat(cs.paddingRight || "0");
-        console.assert(
-          Math.abs(w - avail) < 1.5,
-          "map fit: measured width is derived from the scale — circular measurement",
-          { measured: w, available: avail, scale: lastScale.current },
-        );
-      }
-      lastW.current = w;
-      // Floor only. The cap sits far above any normal screen so it can never
-      // clip: base * scale === w exactly below ~1980px.
-      const sc = Math.max(0.42, w / base);
-      lastScale.current = sc;
-      setScale((prev) => (Math.abs(sc - prev) > 0.0005 ? sc : prev));
-    };
-    fit();
-    // The observed element's own box may not change when only an ancestor's
-    // max-width does, so recompute a frame (and a frame after that) later.
-    raf1 = requestAnimationFrame(() => {
+
+      const fit = () => {
+        // Measure the positioned wrapper itself — the absolutely-positioned
+        // canvas is its child, so this is the exact box it may fill.
+        const w = el.getBoundingClientRect().width;
+        if (!w) return;
+        // The measured box must be the parent's content box, never a
+        // scale-sized one. If those diverge, the ref is on the wrong element
+        // and the measurement has gone circular (w = base * scale ⇒ stuck).
+        const parent = el.parentElement;
+        if (parent) {
+          const cs = getComputedStyle(parent);
+          const avail =
+            parent.getBoundingClientRect().width -
+            parseFloat(cs.paddingLeft || "0") -
+            parseFloat(cs.paddingRight || "0");
+          console.assert(
+            Math.abs(w - avail) < 1.5,
+            "map fit: measured width is derived from the scale — circular measurement",
+            { measured: w, available: avail, scale: lastScale.current },
+          );
+        }
+        // Floor only. The cap sits far above any normal screen so it can never
+        // clip: base * scale === w exactly below ~1980px.
+        const sc = Math.max(0.42, w / base);
+        lastScale.current = sc;
+        setScale((prev) => (Math.abs(sc - prev) > 0.0005 ? sc : prev));
+      };
+
       fit();
-      raf2 = requestAnimationFrame(fit);
-    });
-    let ro: ResizeObserver | null = null;
-    if (typeof ResizeObserver !== "undefined" && ref.current) {
-      ro = new ResizeObserver(fit);
-      ro.observe(ref.current);
-      if (ref.current.parentElement) ro.observe(ref.current.parentElement);
-    } else {
-      window.addEventListener("resize", fit);
-    }
-    return () => {
-      cancelAnimationFrame(raf1);
-      cancelAnimationFrame(raf2);
-      if (ro) ro.disconnect();
-      else window.removeEventListener("resize", fit);
-    };
-  }, [base]);
+      // Fonts, scrollbars and ancestor max-widths can all settle a frame or
+      // two after attach, so re-fit twice more.
+      let raf2 = 0;
+      const raf1 = requestAnimationFrame(() => {
+        fit();
+        raf2 = requestAnimationFrame(fit);
+      });
+
+      let ro: ResizeObserver | null = null;
+      if (typeof ResizeObserver !== "undefined") {
+        ro = new ResizeObserver(fit);
+        ro.observe(el);
+        // The wrapper's own box may not change when only an ancestor's
+        // max-width does, so watch the parent too.
+        if (el.parentElement) ro.observe(el.parentElement);
+      } else {
+        window.addEventListener("resize", fit);
+      }
+
+      cleanup.current = () => {
+        cancelAnimationFrame(raf1);
+        cancelAnimationFrame(raf2);
+        if (ro) ro.disconnect();
+        else window.removeEventListener("resize", fit);
+      };
+    },
+    [base],
+  );
+
+  useEffect(() => () => cleanup.current?.(), []);
 
   return { ref, scale };
 }
+
 
 
 /* ------------------------------------------------------------------ *

@@ -35,6 +35,8 @@ interface JourneyRow {
   own_status: string | null;
   partner_status: string | null;
   reveal_pending: boolean | null;
+  /** Step to open directly when a reveal is waiting. Never derived. */
+  reveal_step_id: string | null;
 }
 
 const STATUS_LABEL: Record<string, string> = {
