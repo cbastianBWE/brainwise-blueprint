@@ -34,7 +34,11 @@ type Mode = "waiting" | "revealed" | "summary";
  */
 export default function WidgetPreview() {
   const [mode, setMode] = useState<Mode>("waiting");
-  const [values, setValues] = useState<Record<string, Record<string, unknown>>>({});
+  const [values, setValues] = useState<Record<string, Record<string, unknown>>>({
+    // seed the earlier captures these steps compare against
+    "pq-guess": { owned_moves: ["I go quiet.", "I get sharp about small things."] },
+    "pq-compare": { share_estimate: "Feels closer to 50/50 to me, most weeks." },
+  });
 
   const couple = mode === "waiting" ? waitingContext : mode === "revealed" ? revealedContext : summaryContext;
 
