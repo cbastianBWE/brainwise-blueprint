@@ -322,7 +322,7 @@ export function JourneyMap({
       return {
         index: i,
         moduleNumber: m.module_number,
-        title: m.title || `Stop ${i + 1}`,
+        title: m.title || `Milestone ${m.module_number}`,
         description: m.description || "",
         icon: STOP_ICONS[i] || "flag",
         count: acts.length,
@@ -487,7 +487,7 @@ export function JourneyMap({
               <button
                 type="button"
                 onClick={() => setOpen(i)}
-                aria-label={`${s.title}, stop ${i + 1} of ${stopsData.length}`}
+                aria-label={`${s.title}, milestone ${s.moduleNumber} of ${stopsData.length}`}
                 className="om-stop absolute flex items-center justify-center rounded-full"
                 style={{
                   left: pt.x - 28,
@@ -671,7 +671,7 @@ export function JourneyMap({
             <>
               <DialogHeader>
                 <p className="text-xs text-muted-foreground">
-                  Core stop {openStop.index + 1} of {stopsData.length}
+                  Milestone {openStop.moduleNumber} of {stopsData.length}
                 </p>
                 <DialogTitle>{openStop.title}</DialogTitle>
               </DialogHeader>
