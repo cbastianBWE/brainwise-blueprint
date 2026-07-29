@@ -99,7 +99,7 @@ export interface CoupleStep {
   selectMax?: number;
   barrier?: "both_partners_complete" | "both_partners_locked" | "both_partners_signed";
 
-  conditionOn?: string;
+  conditionOn?: { step: string; flag: string; equals?: boolean };
   onComplete?: { writes?: string; touchpoint?: string };
   // paired_qa
   questions?: Array<{ key: string; self: string; read: string; type?: "image_select" }>;
