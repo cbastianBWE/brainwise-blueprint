@@ -569,6 +569,19 @@ export function JourneyMap({
                 >
                   {i + 1}
                 </span>
+                {waiting > 0 && (
+                  <span
+                    className="absolute -bottom-1.5 -left-1.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full px-1 text-[10px] font-semibold"
+                    style={{
+                      background: ACCENT,
+                      color: "#FFFFFF",
+                      border: "2px solid #FFFFFF",
+                      boxShadow: "0 2px 6px rgba(2,31,54,0.18)",
+                    }}
+                  >
+                    {waiting > 1 ? waiting : ""}
+                  </span>
+                )}
               </button>
 
               {/* Label. Markers are the higher-priority object, so the label
