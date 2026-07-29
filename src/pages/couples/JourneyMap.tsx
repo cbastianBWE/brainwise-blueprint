@@ -305,7 +305,7 @@ export function JourneyMap({
         (a, b) => a.module_number - b.module_number || a.sequence - b.sequence,
       ));
       const n = (names.data as any[])?.[0];
-      if (n?.own_first_name) setSelfName(n.own_first_name);
+      if (n?.active_first_name) setSelfName(n.active_first_name);
       if (n?.other_first_name) setOtherName(n.other_first_name);
       if (!mods.error && Array.isArray(mods.data)) setModules(mods.data as ModuleRow[]);
       await loadColors();
