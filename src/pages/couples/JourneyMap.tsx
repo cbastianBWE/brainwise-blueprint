@@ -126,7 +126,10 @@ interface JourneyRow {
   module_number: number;
   sequence: number;
   allowed: boolean;
+  /** Machine key plus payload. Never rendered. */
   reason: string | null;
+  reason_code: string | null;
+  reason_detail: string[] | null;
   own_status: string | null;
   partner_status: string | null;
   reveal_pending: boolean | null;
