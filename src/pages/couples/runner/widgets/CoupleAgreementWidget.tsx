@@ -251,6 +251,27 @@ export function CoupleAgreementWidget({
           </CardContent>
         </Card>
       )}
+
+      {!step.bothMustAgree && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Your commitment</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              This one is yours. It isn't something to negotiate or agree on — it's the change you're choosing to work
+              on.
+            </p>
+            {v.signedByMe ? (
+              <Badge variant="secondary">Committed</Badge>
+            ) : (
+              <Button size="sm" disabled={!complete} onClick={() => set({ signedByMe: true })}>
+                I'm committing to this
+              </Button>
+            )}
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
