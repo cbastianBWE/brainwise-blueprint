@@ -174,23 +174,23 @@ export default function ModuleBriefingDialog({
                     key={r.id}
                     className="rounded-lg border p-1 pl-3 transition-colors hover:bg-muted/50"
                   >
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-start gap-3">
                       {/* The row is the "tell me more" surface… */}
                       <button
                         type="button"
                         onClick={() => onActivitySelect?.(r.code)}
                         className="min-w-0 flex-1 py-2 text-left"
                       >
-                        <p className="flex items-center gap-1.5 text-sm font-medium">
+                        <p className="flex items-start gap-1.5 text-sm font-medium">
                           {!r.allowed && (
-                            <Lock className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                            <Lock className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                           )}
-                          <span className="truncate">
+                          <span className="break-words">
                             {i + 1}. {r.title}
                           </span>
                         </p>
                       </button>
-                      <span className="flex shrink-0 items-center gap-1.5">
+                      <span className="flex shrink-0 items-center gap-1.5 py-3">
                         <i
                           className="inline-block h-2.5 w-2.5 rounded-full"
                           style={{ background: da ? selfColor : ha ? `${selfColor}73` : "#DCD7C8" }}
@@ -202,17 +202,18 @@ export default function ModuleBriefingDialog({
                           }}
                         />
                       </span>
-                      {/* …the button carries the verb. */}
-                      <Button
-                        size="sm"
-                        variant={r.allowed ? "default" : "ghost"}
-                        disabled={!r.allowed}
-                        className="shrink-0"
-                        onClick={() => onActivityOpen?.(r.code)}
-                      >
-                        {r.allowed ? verb : "Locked"}
-                      </Button>
+                      {/* …the button carries the verb. A locked row has no control. */}
+                      {r.allowed && (
+                        <Button
+                          size="sm"
+                          className="shrink-0 whitespace-nowrap"
+                          onClick={() => onActivityOpen?.(r.code)}
+                        >
+                          {verb}
+                        </Button>
+                      )}
                     </div>
+
                     {/* Outside the row button: pills are themselves buttons. */}
                     {!r.allowed && (
                       <LockNotice
