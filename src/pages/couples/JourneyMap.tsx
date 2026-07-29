@@ -676,6 +676,10 @@ export function JourneyMap({
         minutes={minuteRange(openStop?.acts ?? [])}
         startCode={openStop?.acts.find((r) => r.allowed)?.code ?? null}
         blockedReason={openStop?.acts.find((r) => !r.allowed && r.reason)?.reason ?? null}
+        blockedReasonCode={openStop?.acts.find((r) => !r.allowed)?.reason_code ?? null}
+        blockedReasonDetail={openStop?.acts.find((r) => !r.allowed)?.reason_detail ?? null}
+        otherName={otherName}
+        lookupByTitle={lookupByTitle}
         onStart={(code) => {
           setOpen(null);
           navigate(`/couples/${relationshipId}/activity/${code}`);
@@ -686,6 +690,8 @@ export function JourneyMap({
           title: r.title,
           allowed: r.allowed,
           reason: r.reason,
+          reason_code: r.reason_code,
+          reason_detail: r.reason_detail,
           own_status: r.own_status,
           partner_status: r.partner_status,
         }))}
@@ -708,6 +714,8 @@ export function JourneyMap({
                 title: openActivityRow.title,
                 allowed: openActivityRow.allowed,
                 reason: openActivityRow.reason,
+                reason_code: openActivityRow.reason_code,
+                reason_detail: openActivityRow.reason_detail,
                 own_status: openActivityRow.own_status,
                 partner_status: openActivityRow.partner_status,
                 reveal_pending: openActivityRow.reveal_pending ?? null,
@@ -719,6 +727,11 @@ export function JourneyMap({
         catalogue={openActivity ? catalogueByCode.get(openActivity) || null : null}
         moduleTitle={openStop?.title ?? null}
         otherName={otherName}
+        siblingTitles={
+          openActivityRow ? siblingsOf(openActivityRow.module_number, openActivityRow.code) : []
+        }
+        lookupByTitle={lookupByTitle}
+        onOpenActivity={setOpenActivity}
         onGo={(code) => {
           setOpenActivity(null);
           setOpen(null);
