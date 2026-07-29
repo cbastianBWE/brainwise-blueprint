@@ -311,12 +311,14 @@ export default function RelationshipJourney() {
         )
       )}
 
-      {view === "browse" && !submittedQuery && moduleNumbers.map((m) => {
+      {view === "browse" && !submittedQuery && moduleNumbers.map((m, mi) => {
 
         const mod = moduleByNumber.get(m) || null;
         const modRows = rows.filter((r) => r.module_number === m);
         const mins = minuteRange(modRows);
         const hero = mod?.hero_image_url || null;
+        // Display ordinal, 1-based. module_number stays zero-based.
+        const position = mi + 1;
 
         return (
           <Card key={m} className="overflow-hidden">
@@ -339,8 +341,10 @@ export default function RelationshipJourney() {
                 )}
               </div>
               <CardHeader className="pb-3">
-                <p className="text-xs text-muted-foreground">Milestone {m}</p>
-                <CardTitle className="text-base">{mod?.title || `Milestone ${m}`}</CardTitle>
+                <p className="text-xs text-muted-foreground">Milestone {position}</p>
+                <CardTitle className="text-base">
+                  {mod?.title || `Milestone ${position}`}
+                </CardTitle>
                 <p className="text-xs text-muted-foreground">
                   {modRows.length} {modRows.length === 1 ? "activity" : "activities"}
                   {mins ? ` · ${mins.low} to ${mins.high} min` : ""}
