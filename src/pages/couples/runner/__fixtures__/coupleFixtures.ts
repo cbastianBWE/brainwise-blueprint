@@ -86,6 +86,36 @@ export const pairedQaRevealOnly: CoupleStep = {
   barrier: "both_partners_complete",
   reveal: { mode: "side_by_side", order: "alternating", toneRule: "neutral" },
 };
+export const pairedQaGuess: CoupleStep = {
+  widget: "paired_qa",
+  id: "pq-guess",
+  key: "attributed_moves",
+  label: "Which of these do you think {other_first_name} owned?",
+  guessOf: "owned_moves",
+  comparesKey: "owned_moves",
+  capturesHere: true,
+  barrier: "both_partners_complete",
+};
+
+export const pairedQaCompare: CoupleStep = {
+  widget: "paired_qa",
+  id: "pq-compare",
+  key: "fairness",
+  title: "How you each see the share",
+  comparesKey: "share_estimate",
+  capturesHere: false,
+};
+
+export const pairedQaRevealsNothing: CoupleStep = {
+  widget: "paired_qa",
+  id: "pq-nothing",
+  key: "shared_ack",
+  title: "Forgiving",
+  capturesHere: false,
+  revealsNothing: true,
+  exposesLedger: false,
+};
+
 
 // ---- couple_agreement fixtures ----
 
