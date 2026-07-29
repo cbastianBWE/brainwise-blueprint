@@ -1,0 +1,278 @@
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { type CoupleContext, type CoupleStep, substituteNames } from "../coupleShared";
+
+type Rec = Record<string, unknown>;
+
+export function PairedQaWidget({
+  step,
+  couple,
+  value,
+  onChange,
+}: {
+  step: CoupleStep;
+  couple: CoupleContext;
+  value: Record<string, unknown>;
+  onChange: (next: Record<string, unknown>) => void;
+}) {
+  const v = (value || {}) as Rec;
+  const revealed = couple.barrierCleared && !!couple.partnerView;
+  // Once the partner-facing barrier logic applies, your own inputs lock.
+  const locked = revealed || (!!v.__submitted && !couple.partnerSubmitted);
+  const readOnly = locked;
+
+  const setGroup = (group: "self" | "read", key: string, next: string) => {
+    const g = { ...((v[group] as Rec) || {}) };
+    g[key] = next;
+    onChange({ ...v, [group]: g });
+  };
+
+  const setField = (key: string, next: string) => onChange({ ...v, [key]: next });
+
+  const Field = ({
+    id,
+    label,
+    val,
+    onSet,
+    helper,
+  }: {
+    id: string;
+    label: string;
+    val: unknown;
+    onSet: (s: string) => void;
+    helper?: string;
+  }) => (
+    <div className="space-y-1.5">
+      <Label htmlFor={id} className="text-sm font-medium">
+        {label}
+      </Label>
+      {helper && <p className="text-xs text-muted-foreground">{helper}</p>}
+      <Textarea
+        id={id}
+        value={typeof val === "string" ? val : ""}
+        readOnly={readOnly}
+        onChange={(e) => onSet(e.target.value)}
+        rows={3}
+      />
+    </div>
+  );
+
+  // ---- shape a: two-pass questions ----
+  const renderQuestions = () => {
+    const qs = step.questions || [];
+    return (
+      <div className="space-y-6">
+        <section className="space-y-4">
+          {step.selfIntro && (
+            <p className="text-sm text-muted-foreground">{substituteNames(step.selfIntro, couple)}</p>
+          )}
+          {qs.map((q) =>
+            q.type === "image_select" ? (
+              <Card key={`self-${q.key}`} className="border-dashed">
+                <CardContent className="p-4">
+                  <p className="text-sm font-medium">{substituteNames(q.self, couple)}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">Image picker, wired later</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <Field
+                key={`self-${q.key}`}
+                id={`self-${q.key}`}
+                label={substituteNames(q.self, couple)}
+                val={((v.self as Rec) || {})[q.key]}
+                onSet={(s) => setGroup("self", q.key, s)}
+              />
+            ),
+          )}
+        </section>
+
+        <section className="space-y-4 rounded-lg border p-4">
+          <p className="text-sm text-muted-foreground">
+            {step.partnerReadIntro
+              ? substituteNames(step.partnerReadIntro, couple)
+              : `Now your read on ${couple.otherFirstName}.`}
+          </p>
+          {qs.map((q) =>
+            q.type === "image_select" ? (
+              <Card key={`read-${q.key}`} className="border-dashed">
+                <CardContent className="p-4">
+                  <p className="text-sm font-medium">{substituteNames(q.read, couple)}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">Image picker, wired later</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <Field
+                key={`read-${q.key}`}
+                id={`read-${q.key}`}
+                label={substituteNames(q.read, couple)}
+                val={((v.read as Rec) || {})[q.key]}
+                onSet={(s) => setGroup("read", q.key, s)}
+              />
+            ),
+          )}
+        </section>
+      </div>
+    );
+  };
+
+  // ---- shape b: subfield grid ----
+  const renderSubfields = () => (
+    <div className="space-y-4">
+      {step.prefilledFrom && Object.keys(step.prefilledFrom).length > 0 && (
+        <p className="text-xs text-muted-foreground">we can prefill this from your earlier work</p>
+      )}
+      <div className="grid gap-4 md:grid-cols-2">
+        {(step.subfields || []).map((sf) => (
+          <Field
+            key={sf}
+            id={`sf-${sf}`}
+            label={substituteNames(step.subfieldLabels?.[sf] || sf, couple)}
+            val={v[sf]}
+            onSet={(s) => setField(sf, s)}
+          />
+        ))}
+      </div>
+    </div>
+  );
+
+  // ---- shape c: dual rater ----
+  const renderDualRater = () => (
+    <div className="grid gap-4 md:grid-cols-2">
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">Your rating</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Field id="own-rating" label="How you'd rate this" val={v.ownRating} onSet={(s) => setField("ownRating", s)} />
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">What you think theirs is</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Field
+            id="read-rating"
+            label={`How you think ${couple.otherFirstName} would rate it`}
+            val={v.readRating}
+            onSet={(s) => setField("readRating", s)}
+          />
+        </CardContent>
+      </Card>
+    </div>
+  );
+
+  // ---- shape d: reveal only ----
+  const renderRevealOnly = () => (
+    <div className="space-y-4">
+      <div className="rounded-lg border bg-muted/30 p-4">
+        <p className="text-sm text-muted-foreground">
+          Nothing to write here. When you're both ready, you'll see the two sides together.
+        </p>
+      </div>
+      <Button onClick={() => onChange({ ...v, __submitted: true })} disabled={readOnly}>
+        Continue
+      </Button>
+    </div>
+  );
+
+  const body = step.questions?.length
+    ? renderQuestions()
+    : step.subfields?.length && step.innerWidget
+      ? renderSubfields()
+      : step.dualRater
+        ? renderDualRater()
+        : renderRevealOnly();
+
+  const summaryMode = revealed && couple.partnerView?.disclosure === "summary";
+
+  return (
+    <div className="space-y-6">
+      {(step.title || step.label) && (
+        <div className="space-y-1">
+          <h3 className="text-lg font-semibold">{substituteNames(step.title || step.label || "", couple)}</h3>
+        </div>
+      )}
+
+      {body}
+
+      {/* State 2: submitted, waiting */}
+      {!couple.partnerSubmitted && !revealed && (
+        <div className="rounded-lg border bg-muted/30 p-4">
+          <Badge variant="secondary">Waiting</Badge>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Your side is in. You'll see {couple.otherFirstName}'s once they've finished theirs.
+          </p>
+        </div>
+      )}
+
+      {/* State 3: revealed — guarded strictly on barrierCleared */}
+      {revealed && (
+        <div className="space-y-3">
+          <h4 className="text-sm font-medium text-muted-foreground">Both sides</h4>
+          {summaryMode ? (
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">{couple.otherFirstName}</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <p className="text-sm whitespace-pre-wrap">
+                  {String((couple.partnerView?.responses as Rec)?.summary ?? "")}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {couple.otherFirstName} chose to share a summary of this one.
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2">
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base">{couple.ownFirstName}</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  {Object.entries(flatten(v)).map(([k, text]) => (
+                    <div key={k}>
+                      <p className="text-xs text-muted-foreground">{k}</p>
+                      <p className="text-sm whitespace-pre-wrap">{text}</p>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base">{couple.otherFirstName}</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  {Object.entries(flatten((couple.partnerView?.responses || {}) as Rec)).map(([k, text]) => (
+                    <div key={k}>
+                      <p className="text-xs text-muted-foreground">{k}</p>
+                      <p className="text-sm whitespace-pre-wrap">{text}</p>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function flatten(obj: Rec, prefix = ""): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const [k, val] of Object.entries(obj || {})) {
+    if (k.startsWith("__")) continue;
+    const key = prefix ? `${prefix}.${k}` : k;
+    if (val && typeof val === "object" && !Array.isArray(val)) {
+      Object.assign(out, flatten(val as Rec, key));
+    } else if (val !== undefined && val !== null && val !== "") {
+      out[key] = Array.isArray(val) ? val.join(", ") : String(val);
+    }
+  }
+  return out;
+}
