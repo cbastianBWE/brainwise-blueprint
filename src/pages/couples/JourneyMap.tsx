@@ -645,77 +645,68 @@ export function JourneyMap({
         </div>
       </div>
 
-      {/* Stop panel */}
-      <Dialog open={open != null} onOpenChange={(v) => !v && setOpen(null)}>
-        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
-          {openStop && (
-            <>
-              <DialogHeader>
-                <p className="text-xs text-muted-foreground">
-                  Milestone {openStop.moduleNumber} of {stopsData.length}
-                </p>
-                <DialogTitle>{openStop.title}</DialogTitle>
-              </DialogHeader>
-              {openStop.description && (
-                <p className="text-sm text-muted-foreground">{openStop.description}</p>
-              )}
-              <p className="text-xs text-muted-foreground">
-                {openStop.count} {openStop.count === 1 ? "activity" : "activities"}
-              </p>
+      {/* Milestone briefing — the same dialog Browse uses, plus the activity
+          list, so a milestone looks identical from either route. */}
+      <ModuleBriefingDialog
+        open={open != null}
+        onOpenChange={(v) => !v && setOpen(null)}
+        moduleNumber={openStop ? openStop.position : 1}
+        totalModules={stopsData.length}
+        module={openStop?.module ?? null}
+        activityCount={openStop?.acts.length ?? 0}
+        minutes={minuteRange(openStop?.acts ?? [])}
+        startCode={openStop?.acts.find((r) => r.allowed)?.code ?? null}
+        blockedReason={openStop?.acts.find((r) => !r.allowed && r.reason)?.reason ?? null}
+        onStart={(code) => {
+          setOpen(null);
+          navigate(`/couples/${relationshipId}/activity/${code}`);
+        }}
+        activities={(openStop?.acts ?? []).map((r) => ({
+          id: r.activity_id,
+          code: r.code,
+          title: r.title,
+          allowed: r.allowed,
+          reason: r.reason,
+          own_status: r.own_status,
+          partner_status: r.partner_status,
+        }))}
+        onActivitySelect={(code) => setOpenActivity(code)}
+        onActivityOpen={(code) => {
+          setOpen(null);
+          navigate(`/couples/${relationshipId}/activity/${code}`);
+        }}
+        selfColor={colorA}
+        partnerColor={colorB}
+      />
 
-              <div className="space-y-2">
-                {openStop.acts.map((r, i) => {
-                  const da = isDone(r.own_status);
-                  const db = isDone(r.partner_status);
-                  const ha = !da && isTouched(r.own_status);
-                  const hb = !db && isTouched(r.partner_status);
-                  let status: string;
-                  if (da && db) status = "Both of you have done this";
-                  else if (da) status = `${selfName} done · ${otherName} to come`;
-                  else if (db) status = `${otherName} done · ${selfName} to come`;
-                  else if (!r.allowed && r.reason) status = r.reason;
-                  else status = "To come";
-                  return (
-                    <div
-                      key={r.activity_id}
-                      className="flex items-start justify-between gap-3 rounded-lg border p-3"
-                      style={{ borderColor: da || db || ha || hb ? ROUTE : "#DCD7C8" }}
-                    >
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium">
-                          {i + 1}. {r.title}
-                        </p>
-                        <p className="mt-0.5 text-xs text-muted-foreground">{status}</p>
-                      </div>
-                      <div className="flex shrink-0 items-center gap-2">
-                        <span
-                          className="inline-block h-2.5 w-2.5 rounded-full"
-                          style={{ background: da ? colorA : ha ? `${colorA}73` : "#DCD7C8" }}
-                        />
-                        <span
-                          className="inline-block h-2.5 w-2.5 rounded-full"
-                          style={{ background: db ? colorB : hb ? `${colorB}73` : "#DCD7C8" }}
-                        />
-                        <Button
-                          size="sm"
-                          variant={r.allowed ? "default" : "ghost"}
-                          disabled={!r.allowed}
-                          onClick={() => {
-                            setOpen(null);
-                            navigate(`/couples/${relationshipId}/activity/${r.code}`);
-                          }}
-                        >
-                          Open
-                        </Button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
+      <ActivityBriefingDialog
+        open={openActivity != null}
+        onOpenChange={(v) => !v && setOpenActivity(null)}
+        state={
+          openActivityRow
+            ? {
+                code: openActivityRow.code,
+                title: openActivityRow.title,
+                allowed: openActivityRow.allowed,
+                reason: openActivityRow.reason,
+                own_status: openActivityRow.own_status,
+                partner_status: openActivityRow.partner_status,
+                reveal_pending: openActivityRow.reveal_pending ?? null,
+                est_minutes_low: openActivityRow.est_minutes_low ?? null,
+                est_minutes_high: openActivityRow.est_minutes_high ?? null,
+              }
+            : null
+        }
+        catalogue={openActivity ? catalogueByCode.get(openActivity) || null : null}
+        moduleTitle={openStop?.title ?? null}
+        otherName={otherName}
+        onGo={(code) => {
+          setOpenActivity(null);
+          setOpen(null);
+          navigate(`/couples/${relationshipId}/activity/${code}`);
+        }}
+      />
+
     </div>
   );
 }
