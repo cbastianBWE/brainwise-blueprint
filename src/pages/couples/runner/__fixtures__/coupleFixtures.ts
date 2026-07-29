@@ -203,3 +203,20 @@ export const jointBare: CoupleStep = {
   optIn: true,
   coachInterjection: false,
 };
+
+export const agreementPersonal: CoupleStep = {
+  widget: "couple_agreement",
+  id: "ag-personal",
+  key: "replacement",
+  label: "One move you're replacing, starting this week.",
+  bothMustAgree: false,
+};
+
+export const agreementNoStarters: CoupleStep = {
+  widget: "couple_agreement",
+  id: "ag-no-starters",
+  key: "boundaries",
+  label: "What's the boundary you both need to hold?",
+  bothMustAgree: true,
+  requiresEscalationPlan: true,
+};
