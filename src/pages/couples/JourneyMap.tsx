@@ -471,7 +471,7 @@ export function JourneyMap({
               <button
                 type="button"
                 onClick={() => setOpen(i)}
-                aria-label={`${s.title}, milestone ${s.moduleNumber} of ${stopsData.length}`}
+                aria-label={`${s.title}, milestone ${s.position} of ${stopsData.length}`}
                 className="om-stop absolute flex items-center justify-center rounded-full"
                 style={{
                   left: pt.x - 28,
