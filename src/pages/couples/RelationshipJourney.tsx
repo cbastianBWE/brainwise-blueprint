@@ -269,48 +269,59 @@ export default function RelationshipJourney() {
                 const modTitle = moduleByNumber.get(res.module_number)?.title;
                 const locked = row ? !row.allowed : false;
                 return (
-                  <button
+                  <div
                     key={res.activity_id}
-                    type="button"
-                    onClick={() => setOpenActivity(res.code)}
                     className={
-                      "block w-full text-left transition-opacity hover:opacity-90 " +
-                      (locked ? "opacity-60" : "")
+                      "rounded-lg border " + (locked ? "opacity-60" : "")
                     }
                   >
-                    <div className="flex flex-col gap-1.5 rounded-lg border p-3">
-                      <p className="text-xs text-muted-foreground">
-                        Milestone {res.module_number + 1}
-                        {modTitle ? ` · ${modTitle}` : ""}
-                      </p>
-                      <div className="flex flex-wrap items-center gap-2">
-                        {locked && <Lock className="h-3.5 w-3.5 text-muted-foreground" />}
-                        <span className="text-sm font-medium">{res.title}</span>
-                        {row && (
-                          <Badge variant="secondary">
-                            {STATUS_LABEL[row.own_status || "not_started"] || row.own_status}
-                          </Badge>
+                    <button
+                      type="button"
+                      onClick={() => setOpenActivity(res.code)}
+                      className="block w-full text-left transition-opacity hover:opacity-90"
+                    >
+                      <div className="flex flex-col gap-1.5 p-3 pb-1.5">
+                        <p className="text-xs text-muted-foreground">
+                          Milestone {res.module_number + 1}
+                          {modTitle ? ` · ${modTitle}` : ""}
+                        </p>
+                        <div className="flex flex-wrap items-center gap-2">
+                          {locked && <Lock className="h-3.5 w-3.5 text-muted-foreground" />}
+                          <span className="text-sm font-medium">{res.title}</span>
+                          {row && (
+                            <Badge variant="secondary">
+                              {STATUS_LABEL[row.own_status || "not_started"] || row.own_status}
+                            </Badge>
+                          )}
+                        </div>
+                        {res.description && (
+                          <p className="line-clamp-2 text-xs text-muted-foreground">
+                            {res.description}
+                          </p>
+                        )}
+                        {res.tags && res.tags.length > 0 && (
+                          <div className="flex flex-wrap gap-1">
+                            {res.tags.map((t) => (
+                              <Badge key={t} variant="outline" className="text-[10px]">
+                                {t}
+                              </Badge>
+                            ))}
+                          </div>
                         )}
                       </div>
-                      {res.description && (
-                        <p className="line-clamp-2 text-xs text-muted-foreground">
-                          {res.description}
-                        </p>
-                      )}
-                      {locked && row?.reason && (
-                        <p className="text-xs text-muted-foreground">{row.reason}</p>
-                      )}
-                      {res.tags && res.tags.length > 0 && (
-                        <div className="flex flex-wrap gap-1">
-                          {res.tags.map((t) => (
-                            <Badge key={t} variant="outline" className="text-[10px]">
-                              {t}
-                            </Badge>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </button>
+                    </button>
+                    {locked && row && (
+                      <LockNotice
+                        className="px-3 pb-3"
+                        reasonCode={row.reason_code}
+                        reasonDetail={row.reason_detail}
+                        otherName={otherName}
+                        siblingTitles={siblingsOf(row.module_number, row.code)}
+                        lookupByTitle={lookupByTitle}
+                        onOpenActivity={setOpenActivity}
+                      />
+                    )}
+                  </div>
                 );
               })}
             </div>
