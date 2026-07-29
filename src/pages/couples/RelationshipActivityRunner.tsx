@@ -250,6 +250,8 @@ export default function RelationshipActivityRunner() {
 
   const consumeReveal = useCallback(async () => {
     if (!relationshipId || !activity) return;
+    // The RPC returns true when a reveal was actually consumed. Either way we
+    // re-read the journey state so the banner reflects the server, never a guess.
     await supabase.rpc("relationship_consume_reveal", {
       p_relationship: relationshipId,
       p_activity: activity.id,
