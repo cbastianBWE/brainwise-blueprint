@@ -220,8 +220,15 @@ export default function ModuleBriefingDialog({
           )}
 
           <DialogFooter className="flex-col items-stretch gap-2 sm:flex-col sm:items-stretch">
-            {!startCode && blockedReason && (
-              <p className="text-xs text-muted-foreground">{blockedReason}</p>
+            {!startCode && (
+              <LockNotice
+                reasonCode={blockedReasonCode}
+                reasonDetail={blockedReasonDetail}
+                otherName={otherName}
+                siblingTitles={(activities || []).map((a) => a.title)}
+                lookupByTitle={lookupByTitle}
+                onOpenActivity={onActivitySelect}
+              />
             )}
             {startCode ? (
               <Button onClick={() => onStart(startCode)}>Start Milestone {moduleNumber}</Button>
