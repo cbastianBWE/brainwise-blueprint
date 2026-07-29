@@ -362,6 +362,9 @@ export function JourneyMap({
 
   const same = a.cur === b.cur;
   const openStop = open != null ? stopsData[open] : null;
+  const openActivityRow = openActivity
+    ? (rows || []).find((r) => r.code === openActivity) || null
+    : null;
 
   const dotFor = (i: number, side: Side, color: string) =>
     side.done.includes(i) ? color : side.cur === i ? `${color}73` : "#DCD7C8";
