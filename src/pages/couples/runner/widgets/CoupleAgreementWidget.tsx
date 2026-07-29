@@ -108,16 +108,28 @@ export function CoupleAgreementWidget({
         </div>
       )}
 
-      {step.allowCustom && (
+      {(step.allowCustom || !(step.starters && step.starters.length > 0)) && (
         <div className="space-y-2">
-          <Label htmlFor="agreement-custom">Write your own</Label>
-          <div className="flex gap-2">
-            <Input
-              id="agreement-custom"
-              value={draft}
-              onChange={(e) => setDraft(e.target.value)}
-              placeholder="In your own words"
-            />
+          <Label htmlFor="agreement-custom">
+            {step.starters && step.starters.length > 0 ? "Write your own" : "In your own words"}
+          </Label>
+          <div className={step.starters && step.starters.length > 0 ? "flex gap-2" : "space-y-2"}>
+            {step.starters && step.starters.length > 0 ? (
+              <Input
+                id="agreement-custom"
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+                placeholder="In your own words"
+              />
+            ) : (
+              <Textarea
+                id="agreement-custom"
+                rows={4}
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+                placeholder="Say it the way you'd actually say it."
+              />
+            )}
             <Button variant="outline" onClick={addCustom} disabled={!draft.trim()}>
               Add
             </Button>
