@@ -4,7 +4,7 @@ import {
   Users, Users2, Building2, UsersRound, Activity, Heart, Award, UserCircle,
   ShieldCheck, Briefcase, GitBranch, FlaskConical, LogOut, History, Shield,
   CreditCard, Receipt, ChevronDown, ChevronRight, FileText, Library, Ticket,
-  GraduationCap, Bell, Newspaper, SlidersHorizontal, Wallet, FileMinus2, Repeat, Clock, UserPlus, Mail, Inbox, Webhook, Megaphone, Target, Blocks, HelpCircle, Compass, FileClock,
+  GraduationCap, Bell, Newspaper, SlidersHorizontal, Wallet, FileMinus2, Repeat, Clock, UserPlus, Mail, Inbox, Webhook, Megaphone, Target, Blocks, HelpCircle, Compass, FileClock, HeartHandshake,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -260,9 +260,38 @@ export function AppSidebar() {
     return () => { cancelled = true; };
   }, [user, isPrivilegedForReports]);
 
+  const [relationshipId, setRelationshipId] = useState<string | null>(null);
+  useEffect(() => {
+    if (!user) { setRelationshipId(null); return; }
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("relationships")
+        .select("id")
+        .or(`user_one_id.eq.${user.id},user_two_id.eq.${user.id}`)
+        .eq("status", "active")
+        .maybeSingle();
+      if (!cancelled) setRelationshipId((data as { id: string } | null)?.id ?? null);
+    })();
+    return () => { cancelled = true; };
+  }, [user]);
+
   const baseNavItems = getNavItems(profile);
   const navItems = (() => {
     let items = baseNavItems;
+    if (relationshipId) {
+      const coachingIdx = items.findIndex((i) => i.url === "/coaching");
+      if (coachingIdx !== -1) {
+        const copy = [...items];
+        copy.splice(coachingIdx + 1, 0, {
+          title: "My Relationship",
+          url: `/couples/${relationshipId}`,
+          icon: HeartHandshake,
+        });
+        items = copy;
+      }
+    }
+
     if (isMentor || isSuperAdmin) {
       const clientsIdx = items.findIndex((i) => i.url === "/coach/clients");
       if (clientsIdx !== -1) {
