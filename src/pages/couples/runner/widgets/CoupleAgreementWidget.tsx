@@ -3,17 +3,17 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Check } from "lucide-react";
 import { useState } from "react";
-import { type CoupleContext, type CoupleStep, substituteNames } from "../coupleShared";
+import { MultimodalField, mmIsFilled, type MMValue } from "@/components/coaching/MultimodalField";
+import { allowedModes, type CoupleContext, type CoupleStep, substituteNames } from "../coupleShared";
 
 export interface CoupleAgreementValue {
   selected?: string[];
-  custom?: string[];
-  escalationPlan?: string;
-  rainCheck?: string;
-  words?: string;
+  custom?: MMValue[];
+  escalationPlan?: MMValue;
+  rainCheck?: MMValue;
+  words?: MMValue;
   date?: string;
   outcome?: "yes" | "not_now" | "need_to_know_first";
   signedByMe?: boolean;
@@ -24,16 +24,22 @@ export function CoupleAgreementWidget({
   couple,
   value,
   onChange,
+  sessionId,
+  activityCode,
 }: {
   step: CoupleStep;
   couple: CoupleContext;
   value: Record<string, unknown>;
   onChange: (next: Record<string, unknown>) => void;
+  sessionId: string;
+  activityCode: string;
 }) {
   const v = (value || {}) as CoupleAgreementValue;
   const selected = v.selected || [];
   const custom = v.custom || [];
-  const [draft, setDraft] = useState("");
+  const [draft, setDraft] = useState<MMValue>("");
+  const modes = allowedModes(step);
+  const stepKey = step.key || step.id || "agreement";
 
   const set = (patch: Partial<CoupleAgreementValue>) => onChange({ ...(value || {}), ...patch });
 
@@ -49,16 +55,15 @@ export function CoupleAgreementWidget({
   };
 
   const addCustom = () => {
-    const t = draft.trim();
-    if (!t) return;
-    set({ custom: [...custom, t] });
+    if (!mmIsFilled(draft)) return;
+    set({ custom: [...custom, typeof draft === "string" ? draft.trim() : draft] });
     setDraft("");
   };
 
   const missing: string[] = [];
-  if (step.requiresEscalationPlan && !v.escalationPlan?.trim()) missing.push("what happens if it's crossed");
-  if (step.requiresRainCheck && !v.rainCheck?.trim()) missing.push("how you offer another time");
-  if (step.requiresWords && !v.words?.trim()) missing.push("the words you'll use");
+  if (step.requiresEscalationPlan && !mmIsFilled(v.escalationPlan)) missing.push("what happens if it's crossed");
+  if (step.requiresRainCheck && !mmIsFilled(v.rainCheck)) missing.push("how you offer another time");
+  if (step.requiresWords && !mmIsFilled(v.words)) missing.push("the words you'll use");
   if (step.requiresDate && !v.date) missing.push("a date");
   if (typeof cap === "number" && selected.length + custom.length === 0) missing.push("at least one commitment");
   const complete = missing.length === 0;
@@ -110,35 +115,34 @@ export function CoupleAgreementWidget({
 
       {(step.allowCustom || !(step.starters && step.starters.length > 0)) && (
         <div className="space-y-2">
-          <Label htmlFor="agreement-custom">
+          <Label>
             {step.starters && step.starters.length > 0 ? "Write your own" : "In your own words"}
           </Label>
-          <div className={step.starters && step.starters.length > 0 ? "flex gap-2" : "space-y-2"}>
-            {step.starters && step.starters.length > 0 ? (
-              <Input
-                id="agreement-custom"
-                value={draft}
-                onChange={(e) => setDraft(e.target.value)}
-                placeholder="In your own words"
-              />
-            ) : (
-              <Textarea
-                id="agreement-custom"
-                rows={4}
-                value={draft}
-                onChange={(e) => setDraft(e.target.value)}
-                placeholder="Say it the way you'd actually say it."
-              />
-            )}
-            <Button variant="outline" onClick={addCustom} disabled={!draft.trim()}>
+          <div className="space-y-2">
+            <MultimodalField
+              value={draft}
+              onChange={setDraft}
+              sessionId={sessionId}
+              activityCode={activityCode}
+              questionKey={`${stepKey}.custom`}
+              sessionKind="relationship"
+              modes={modes}
+              minRows={step.starters && step.starters.length > 0 ? 2 : 4}
+              placeholder={
+                step.starters && step.starters.length > 0
+                  ? "In your own words"
+                  : "Say it the way you'd actually say it."
+              }
+            />
+            <Button variant="outline" onClick={addCustom} disabled={!mmIsFilled(draft)}>
               Add
             </Button>
           </div>
           {custom.length > 0 && (
             <ul className="space-y-1">
               {custom.map((c, i) => (
-                <li key={`${c}-${i}`} className="rounded-md border bg-muted/30 p-2 text-sm">
-                  {c}
+                <li key={i} className="rounded-md border bg-muted/30 p-2 text-sm">
+                  {typeof c === "string" ? c : `Recorded ${c.mode === "video" ? "video" : "audio"} answer`}
                 </li>
               ))}
             </ul>
@@ -148,32 +152,49 @@ export function CoupleAgreementWidget({
 
       {step.requiresEscalationPlan && (
         <div className="space-y-1.5">
-          <Label htmlFor="escalation">What happens if either of you thinks this has been crossed?</Label>
-          <Textarea
-            id="escalation"
-            rows={3}
-            value={v.escalationPlan || ""}
-            onChange={(e) => set({ escalationPlan: e.target.value })}
+          <Label>What happens if either of you thinks this has been crossed?</Label>
+          <MultimodalField
+            value={v.escalationPlan ?? ""}
+            onChange={(next) => set({ escalationPlan: next })}
+            sessionId={sessionId}
+            activityCode={activityCode}
+            questionKey={`${stepKey}.escalationPlan`}
+            sessionKind="relationship"
+            modes={modes}
+            minRows={3}
           />
         </div>
       )}
 
       {step.requiresRainCheck && (
         <div className="space-y-1.5">
-          <Label htmlFor="raincheck">How do you offer another time?</Label>
-          <Textarea
-            id="raincheck"
-            rows={3}
-            value={v.rainCheck || ""}
-            onChange={(e) => set({ rainCheck: e.target.value })}
+          <Label>How do you offer another time?</Label>
+          <MultimodalField
+            value={v.rainCheck ?? ""}
+            onChange={(next) => set({ rainCheck: next })}
+            sessionId={sessionId}
+            activityCode={activityCode}
+            questionKey={`${stepKey}.rainCheck`}
+            sessionKind="relationship"
+            modes={modes}
+            minRows={3}
           />
         </div>
       )}
 
       {step.requiresWords && (
         <div className="space-y-1.5">
-          <Label htmlFor="words">The actual words you'll both use.</Label>
-          <Textarea id="words" rows={3} value={v.words || ""} onChange={(e) => set({ words: e.target.value })} />
+          <Label>The actual words you'll both use.</Label>
+          <MultimodalField
+            value={v.words ?? ""}
+            onChange={(next) => set({ words: next })}
+            sessionId={sessionId}
+            activityCode={activityCode}
+            questionKey={`${stepKey}.words`}
+            sessionKind="relationship"
+            modes={modes}
+            minRows={3}
+          />
         </div>
       )}
 
