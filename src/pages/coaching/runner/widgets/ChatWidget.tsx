@@ -12,11 +12,13 @@ export function ChatWidget({
   chat,
   onChat,
   onRemainingChange,
+  functionName = "coaching-activity-chat",
 }: {
   sessionId: string;
   chat: ChatMsg[];
   onChat: (next: ChatMsg[]) => void;
   onRemainingChange: (n: number | null) => void;
+  functionName?: string;
 }) {
   const [message, setMessage] = useState("");
   const [sending, setSending] = useState(false);
@@ -29,7 +31,7 @@ export function ChatWidget({
     onChat(nextChat);
     setMessage("");
     try {
-      const { data, error } = await supabase.functions.invoke("coaching-activity-chat", {
+      const { data, error } = await supabase.functions.invoke(functionName, {
         body: { session_id: sessionId, message: text },
       });
       if (error) {

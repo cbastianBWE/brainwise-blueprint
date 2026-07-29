@@ -19831,6 +19831,29 @@ export type Database = {
           reason: string
         }[]
       }
+      relationship_journey_state: {
+        Args: { p_relationship: string }
+        Returns: {
+          activity_id: string
+          allowed: boolean
+          barrier_blocks: string
+          barrier_cleared: boolean
+          code: string
+          est_minutes_high: number
+          est_minutes_low: number
+          module_number: number
+          own_status: string
+          own_step: number
+          partner_status: string
+          reason: string
+          repeatable: boolean
+          reveal_pending: boolean
+          romantic_disclaimer: boolean
+          sequence: number
+          title: string
+          visibility_mode: string
+        }[]
+      }
       relationship_nudge_due_days: {
         Args: { p_relationship: string }
         Returns: number[]
@@ -19884,6 +19907,23 @@ export type Database = {
           categories: string[]
           concern: boolean
           routed_to: number
+        }[]
+      }
+      relationship_session_save: {
+        Args: { p_current_step: number; p_patch: Json; p_session_id: string }
+        Returns: {
+          reason: string
+          saved: boolean
+        }[]
+      }
+      relationship_session_start: {
+        Args: { p_activity: string; p_relationship: string; p_run?: number }
+        Returns: {
+          current_step: number
+          responses: Json
+          resumed: boolean
+          session_id: string
+          status: string
         }[]
       }
       relationship_strip_private: {
