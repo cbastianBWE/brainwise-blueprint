@@ -259,9 +259,13 @@ export default function RelationshipActivityRunner() {
 
   if (!step || !couple || !sessionId || !activity) return null;
 
+  const localizedStep = substituteStep(step, couple);
   const renderer = widgetRegistry[step.widget];
   const valueKey = step.key || step.id || "value";
   const title = substituteNames(step.title || step.label || activity.title, couple);
+  const nextLabel =
+    ((localizedStep as any).buttonLabel as string | undefined) ||
+    (stepIndex === steps.length - 1 ? "Finish" : "Next");
 
   return (
     <div className="mx-auto max-w-3xl space-y-4 p-4 md:p-6">
