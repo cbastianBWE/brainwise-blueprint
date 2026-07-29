@@ -72,7 +72,15 @@ export default function WidgetPreview() {
 
       <section className="space-y-4">
         <h2 className="text-sm font-medium text-muted-foreground">paired_qa</h2>
-        {[pairedQaTwoPass, pairedQaSubfields, pairedQaDualRater, pairedQaRevealOnly].map((step) => (
+        {[
+          pairedQaTwoPass,
+          pairedQaSubfields,
+          pairedQaDualRater,
+          pairedQaRevealOnly,
+          pairedQaGuess,
+          pairedQaCompare,
+          pairedQaRevealsNothing,
+        ].map((step) => (
           <Section key={step.id} title="PairedQaWidget" step={step}>
             <PairedQaWidget
               step={step}
