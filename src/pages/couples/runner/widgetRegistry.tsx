@@ -197,16 +197,21 @@ export const widgetRegistry: Record<string, WidgetRenderer> = {
     />
   ),
 
-  ikigai: ({ step, value, onChange, sessionId, activityCode }) => (
-    <IkigaiWidget
-      step={asStep(step)}
-      session={{ id: sessionId, current_step: 0 } as any}
-      responses={(value as any) || {}}
-      setResponses={(u) => onChange(u(((value as any) || {}) as any))}
-      activityCode={activityCode}
-      setCoachingRemaining={() => {}}
-    />
-  ),
+  ikigai: ({ step, value, onChange, sessionId, activityCode }) => {
+    // The coaching component cannot express a couple overlay; don't fake one.
+    if (step.mode === "couple_overlay" || step.dualLayer) return <UnknownWidget name="ikigai (couple_overlay)" />;
+    return (
+      <IkigaiWidget
+        step={asStep(step)}
+        session={{ id: sessionId, current_step: 0 } as any}
+        responses={(value as any) || {}}
+        setResponses={(u) => onChange(u(((value as any) || {}) as any))}
+        activityCode={activityCode}
+        setCoachingRemaining={() => {}}
+      />
+    );
+  },
+
   image_describe: ({ step, value, onChange, sessionId, activityCode }) => (
     <ImageDescribeWidget
       step={asStep(step)}
