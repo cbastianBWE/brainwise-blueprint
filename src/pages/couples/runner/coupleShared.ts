@@ -78,6 +78,17 @@ export interface CoupleStep {
   gentle?: boolean;
   namesOnly?: boolean;
 
+  // desire_grid
+  gridMode?: "affection" | "desire";
+  storeTo?: string;
+  neverJoined?: boolean;
+  runNumber?: number;
+  items?: Array<string | { key?: string; label?: string; imageUrl?: string }>;
+
+  // couple_molecule
+  centre?: string;
+  bondEffects?: string[];
+
   // ikigai / misc passthrough
   dualLayer?: boolean;
 
