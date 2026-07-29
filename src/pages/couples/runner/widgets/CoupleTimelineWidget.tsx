@@ -14,7 +14,8 @@ export interface TimelineEvent {
 }
 
 const mmText = (v: MMValue | undefined): string =>
-  isMMRec(v) ? (v.transcript || "").trim() : typeof v === "string" ? v.trim() : "";
+  isMMRec(v) ? String((v as any).transcript || "").trim() : typeof v === "string" ? v.trim() : "";
+
 
 const norm = (s: string) => s.toLowerCase().replace(/\s+/g, " ").trim();
 
