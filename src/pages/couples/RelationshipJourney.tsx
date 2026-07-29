@@ -339,8 +339,8 @@ export default function RelationshipJourney() {
                 )}
               </div>
               <CardHeader className="pb-3">
-                <p className="text-xs text-muted-foreground">Module {m}</p>
-                <CardTitle className="text-base">{mod?.title || `Module ${m}`}</CardTitle>
+                <p className="text-xs text-muted-foreground">Milestone {m}</p>
+                <CardTitle className="text-base">{mod?.title || `Milestone ${m}`}</CardTitle>
                 <p className="text-xs text-muted-foreground">
                   {modRows.length} {modRows.length === 1 ? "activity" : "activities"}
                   {mins ? ` · ${mins.low} to ${mins.high} min` : ""}
