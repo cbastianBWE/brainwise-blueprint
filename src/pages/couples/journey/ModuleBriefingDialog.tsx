@@ -15,6 +15,7 @@ import {
   type MilestoneActivityRow,
   type ModuleRow,
 } from "./journeyShared";
+import LockNotice from "./LockNotice";
 
 export interface ModuleBriefingDialogProps {
   open: boolean;
