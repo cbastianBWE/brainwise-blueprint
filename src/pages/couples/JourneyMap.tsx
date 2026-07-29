@@ -163,6 +163,10 @@ export const isPartnerDone = (s: string | null | undefined) => PARTNER_DONE.has(
 function useFit(base: number) {
   const ref = useRef<HTMLDivElement | null>(null);
   const [scale, setScale] = useState(1);
+  // Guard against the circular measurement: the measured element's width must
+  // come from CSS only. If it ever tracks the scale, say so loudly.
+  const lastW = useRef(-1);
+  const lastScale = useRef(1);
 
   useLayoutEffect(() => {
     let raf1 = 0;
@@ -174,9 +178,15 @@ function useFit(base: number) {
       // canvas is its child, so this is the exact box it may fill.
       const w = el.getBoundingClientRect().width;
       if (!w) return;
+      console.assert(
+        Math.abs(w - base * lastScale.current) > 0.5 || Math.abs(w - lastW.current) > 0.5,
+        "map fit: measured width is derived from the scale — circular measurement",
+      );
+      lastW.current = w;
       // Floor only. The cap sits far above any normal screen so it can never
-      // clip: 1240 * scale === w exactly below ~1980px.
+      // clip: base * scale === w exactly below ~1980px.
       const sc = Math.max(0.42, w / base);
+      lastScale.current = sc;
       setScale((prev) => (Math.abs(sc - prev) > 0.0005 ? sc : prev));
     };
     fit();
