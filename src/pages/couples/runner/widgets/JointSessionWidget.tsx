@@ -3,10 +3,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { type CoupleContext, type CoupleStep, substituteNames } from "../coupleShared";
+import { MultimodalField, type MMValue } from "@/components/coaching/MultimodalField";
+import { allowedModes, type CoupleContext, type CoupleStep, substituteNames } from "../coupleShared";
 
-type TurnState = { reflection?: string; done: boolean };
+type TurnState = { reflection?: MMValue; rebuttal?: MMValue; done: boolean };
 type JointValue = { turns?: Record<string, TurnState>; notes?: string };
 
 export function JointSessionWidget({
@@ -14,16 +14,22 @@ export function JointSessionWidget({
   couple,
   value,
   onChange,
+  sessionId,
+  activityCode,
 }: {
   step: CoupleStep;
   couple: CoupleContext;
   value: Record<string, unknown>;
   onChange: (next: Record<string, unknown>) => void;
+  sessionId: string;
+  activityCode: string;
 }) {
   const v = (value || {}) as JointValue;
   const turns = step.turns || [];
   const [index, setIndex] = useState(0);
   const turn = turns[index];
+  const modes = allowedModes(step);
+  const stepKey = step.key || step.id || "joint";
 
   const setTurn = (key: string, patch: Partial<TurnState>) => {
     const prev = v.turns || {};
@@ -92,24 +98,32 @@ export function JointSessionWidget({
 
             {turn.listenerReflects && (
               <div className="space-y-1.5">
-                <Label htmlFor={`reflect-${turn.key}`}>Say back what you heard, in your own words</Label>
-                <Textarea
-                  id={`reflect-${turn.key}`}
-                  rows={3}
-                  value={v.turns?.[turn.key]?.reflection || ""}
-                  onChange={(e) => setTurn(turn.key, { reflection: e.target.value })}
+                <Label>Say back what you heard, in your own words</Label>
+                <MultimodalField
+                  value={v.turns?.[turn.key]?.reflection ?? ""}
+                  onChange={(next) => setTurn(turn.key, { reflection: next })}
+                  sessionId={sessionId}
+                  activityCode={activityCode}
+                  questionKey={`${stepKey}.${turn.key}.reflection`}
+                  sessionKind="relationship"
+                  modes={modes}
+                  minRows={3}
                 />
               </div>
             )}
 
             {step.rebuttalBox && (
               <div className="space-y-1.5">
-                <Label htmlFor={`rebut-${turn.key}`}>Anything you want to put back</Label>
-                <Textarea
-                  id={`rebut-${turn.key}`}
-                  rows={3}
-                  value={(v.turns?.[turn.key] as TurnState & { rebuttal?: string })?.rebuttal || ""}
-                  onChange={(e) => setTurn(turn.key, { rebuttal: e.target.value } as Partial<TurnState>)}
+                <Label>Anything you want to put back</Label>
+                <MultimodalField
+                  value={v.turns?.[turn.key]?.rebuttal ?? ""}
+                  onChange={(next) => setTurn(turn.key, { rebuttal: next })}
+                  sessionId={sessionId}
+                  activityCode={activityCode}
+                  questionKey={`${stepKey}.${turn.key}.rebuttal`}
+                  sessionKind="relationship"
+                  modes={modes}
+                  minRows={3}
                 />
               </div>
             )}

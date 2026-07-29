@@ -99,26 +99,32 @@ export const widgetRegistry: Record<string, WidgetRenderer> = {
       onRecap={(html) => onChange({ html })}
     />
   ),
-  paired_qa: ({ step, couple, value, onChange }) => (
+  paired_qa: ({ step, couple, value, onChange, sessionId, activityCode }) => (
     <PairedQaWidget
       step={step}
       couple={couple}
+      sessionId={sessionId}
+      activityCode={activityCode}
       value={(value as Record<string, unknown>) || {}}
       onChange={(v) => onChange(v)}
     />
   ),
-  couple_agreement: ({ step, couple, value, onChange }) => (
+  couple_agreement: ({ step, couple, value, onChange, sessionId, activityCode }) => (
     <CoupleAgreementWidget
       step={step}
       couple={couple}
+      sessionId={sessionId}
+      activityCode={activityCode}
       value={(value as Record<string, unknown>) || {}}
       onChange={(v) => onChange(v)}
     />
   ),
-  joint_session: ({ step, couple, value, onChange }) => (
+  joint_session: ({ step, couple, value, onChange, sessionId, activityCode }) => (
     <JointSessionWidget
       step={step}
       couple={couple}
+      sessionId={sessionId}
+      activityCode={activityCode}
       value={(value as Record<string, unknown>) || {}}
       onChange={(v) => onChange(v)}
     />
