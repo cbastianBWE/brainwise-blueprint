@@ -50,6 +50,50 @@ export default function RelationshipJourney() {
   const [error, setError] = useState<string | null>(null);
   const [openModule, setOpenModule] = useState<number | null>(null);
   const [openActivity, setOpenActivity] = useState<string | null>(null);
+  // Session-only view preference. Never persisted to the database.
+  const [view, setView] = useState<"map" | "browse">("map");
+  const [query, setQuery] = useState("");
+  const [submittedQuery, setSubmittedQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<SearchResult[] | null>(null);
+  const [searching, setSearching] = useState(false);
+
+  // Debounced semantic search via edge function. No client-side fallback:
+  // a silent downgrade to substring matching reads as a broken search.
+  useEffect(() => {
+    const q = query.trim();
+    if (!q) {
+      setSubmittedQuery("");
+      setSearchResults(null);
+      setSearching(false);
+      return;
+    }
+    const t = setTimeout(() => setSubmittedQuery(q), 400);
+    return () => clearTimeout(t);
+  }, [query]);
+
+  useEffect(() => {
+    const q = submittedQuery.trim();
+    if (!q) return;
+    let cancelled = false;
+    setSearching(true);
+    (async () => {
+      const { data, error: fnErr } = await supabase.functions.invoke(
+        "relationship-activity-search",
+        { body: { query: q } },
+      );
+      if (cancelled) return;
+      if (fnErr || !data?.success) {
+        setSearchResults([]);
+        setSearching(false);
+        return;
+      }
+      setSearchResults((data.results || []) as SearchResult[]);
+      setSearching(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [submittedQuery]);
 
   useEffect(() => {
     if (!relationshipId) return;
