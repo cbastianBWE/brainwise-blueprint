@@ -502,13 +502,16 @@ export function JourneyMap({
                 </span>
               </button>
 
-              {/* Label */}
+              {/* Label. Markers are the higher-priority object, so the label
+                  is pushed clear of the marker band: a partner marker sits
+                  ±44 from the stop centre with a 15px radius, so anything
+                  closer than 68px collides with it. */}
               <div
                 className="pointer-events-none absolute"
                 style={{
-                  left: vert ? (right ? pt.x + 62 : 12) : pt.x - 78,
-                  top: vert ? pt.y - 22 : pt.y < 250 ? pt.y - 86 : pt.y + 34,
-                  width: vert ? (right ? PHONE_W - (pt.x + 62) - 12 : pt.x - 62 - 12) : 156,
+                  left: vert ? (right ? pt.x + 68 : 12) : pt.x - 78,
+                  top: vert ? pt.y - 22 : pt.y < 250 ? pt.y - 120 : pt.y + 72,
+                  width: vert ? (right ? PHONE_W - (pt.x + 68) - 12 : pt.x - 68 - 12) : 156,
                   textAlign: vert ? (right ? "left" : "right") : "center",
                 }}
               >
