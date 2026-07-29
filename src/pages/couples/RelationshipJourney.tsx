@@ -208,7 +208,11 @@ export default function RelationshipJourney() {
       .map((r) => r.title);
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6 p-4 md:p-6">
+    <div
+      className={`mx-auto space-y-6 p-4 md:p-6 ${
+        view === "map" ? "w-full max-w-[1600px]" : "max-w-5xl"
+      }`}
+    >
       <header>
         <h1 className="text-2xl font-semibold">Your journey</h1>
         <p className="text-sm text-muted-foreground">

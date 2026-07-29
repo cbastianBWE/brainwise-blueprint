@@ -83,8 +83,8 @@ export default function ActivityBriefingDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg overflow-hidden p-0">
-        <div className="w-full overflow-hidden bg-muted" style={{ aspectRatio: "2 / 1" }}>
+      <DialogContent className="flex max-h-[88vh] w-[min(960px,94vw)] max-w-none flex-col gap-0 overflow-y-auto overflow-x-hidden p-0">
+        <div className="w-full shrink-0 overflow-hidden bg-muted" style={{ aspectRatio: "2 / 1" }}>
           {hero ? (
             <img
               src={renderImg(hero, 800, 400)}
