@@ -48,6 +48,8 @@ export interface ModuleBriefingDialogProps {
   onActivitySelect?: (code: string) => void;
   /** Row button — goes straight to the runner. */
   onActivityOpen?: (code: string) => void;
+  /** Waiting reveal — opens the activity at its reveal step. */
+  onActivityReveal?: (code: string, stepId: string | null) => void;
   selfColor?: string;
   partnerColor?: string;
 }
@@ -78,6 +80,7 @@ export default function ModuleBriefingDialog({
   activities,
   onActivitySelect,
   onActivityOpen,
+  onActivityReveal,
   selfColor = "#006D77",
   partnerColor = "#3C096C",
 }: ModuleBriefingDialogProps) {
@@ -209,15 +212,26 @@ export default function ModuleBriefingDialog({
                           }}
                         />
                       </span>
-                      {/* …the button carries the verb. A locked row has no control. */}
-                      {r.allowed && (
+                      {/* …the button carries the verb. A waiting reveal
+                          outranks Resume or Open. A locked row has no control. */}
+                      {r.reveal_pending ? (
                         <Button
                           size="sm"
                           className="shrink-0 whitespace-nowrap"
-                          onClick={() => onActivityOpen?.(r.code)}
+                          onClick={() => onActivityReveal?.(r.code, r.reveal_step_id ?? null)}
                         >
-                          {verb}
+                          See what you both said
                         </Button>
+                      ) : (
+                        r.allowed && (
+                          <Button
+                            size="sm"
+                            className="shrink-0 whitespace-nowrap"
+                            onClick={() => onActivityOpen?.(r.code)}
+                          >
+                            {verb}
+                          </Button>
+                        )
                       )}
                     </div>
 

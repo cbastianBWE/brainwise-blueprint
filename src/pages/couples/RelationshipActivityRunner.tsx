@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Loader2, ArrowLeft, ArrowRight, Eye, RotateCcw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -36,6 +36,7 @@ function buildPatch(responses: Responses): Responses {
 export default function RelationshipActivityRunner() {
   const { relationshipId, activityCode } = useParams<{ relationshipId: string; activityCode: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const [loading, setLoading] = useState(true);
   const [blocked, setBlocked] = useState<string | null>(null);
@@ -63,6 +64,17 @@ export default function RelationshipActivityRunner() {
     [allSteps, responses],
   );
   const step = steps[stepIndex];
+
+  // ?step=<id> opens that step directly (a waiting reveal, from the map).
+  // An id that matches nothing here is ignored — we stay on step 1.
+  const wantStep = searchParams.get("step");
+  const appliedWantStep = useRef(false);
+  useEffect(() => {
+    if (appliedWantStep.current || loading || !wantStep || steps.length === 0) return;
+    appliedWantStep.current = true;
+    const idx = steps.findIndex((s) => s.id === wantStep || s.key === wantStep);
+    if (idx >= 0) setStepIndex(idx);
+  }, [wantStep, steps, loading]);
 
   // Keep the cursor inside the visible set when a condition changes the list.
   useEffect(() => {

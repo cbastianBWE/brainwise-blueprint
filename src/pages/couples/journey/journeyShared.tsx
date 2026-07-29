@@ -53,6 +53,10 @@ export interface MilestoneActivityRow {
   reason_detail?: string[] | null;
   own_status: string | null;
   partner_status: string | null;
+  /** Straight from relationship_journey_state — never derived. */
+  reveal_pending?: boolean | null;
+  /** Step id to open directly when a reveal is waiting. */
+  reveal_step_id?: string | null;
 }
 
 

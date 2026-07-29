@@ -133,6 +133,8 @@ interface JourneyRow {
   own_status: string | null;
   partner_status: string | null;
   reveal_pending: boolean | null;
+  /** Step to open for the waiting reveal. From the RPC — never derived. */
+  reveal_step_id: string | null;
   est_minutes_low: number | null;
   est_minutes_high: number | null;
 }
@@ -161,6 +163,10 @@ export const isPartnerDone = (s: string | null | undefined) => PARTNER_DONE.has(
 function useFit(base: number) {
   const ref = useRef<HTMLDivElement | null>(null);
   const [scale, setScale] = useState(1);
+  // Guard against the circular measurement: the measured element's width must
+  // come from CSS only. If it ever tracks the scale, say so loudly.
+  const lastW = useRef(-1);
+  const lastScale = useRef(1);
 
   useLayoutEffect(() => {
     let raf1 = 0;
@@ -172,9 +178,27 @@ function useFit(base: number) {
       // canvas is its child, so this is the exact box it may fill.
       const w = el.getBoundingClientRect().width;
       if (!w) return;
+      // The measured box must be the parent's content box, never a scale-sized
+      // one. If those two ever diverge, the ref is on the wrong element and the
+      // measurement has become circular (w = base * scale ⇒ every scale sticks).
+      const parent = el.parentElement;
+      if (parent) {
+        const cs = getComputedStyle(parent);
+        const avail =
+          parent.getBoundingClientRect().width -
+          parseFloat(cs.paddingLeft || "0") -
+          parseFloat(cs.paddingRight || "0");
+        console.assert(
+          Math.abs(w - avail) < 1.5,
+          "map fit: measured width is derived from the scale — circular measurement",
+          { measured: w, available: avail, scale: lastScale.current },
+        );
+      }
+      lastW.current = w;
       // Floor only. The cap sits far above any normal screen so it can never
-      // clip: 1240 * scale === w exactly below ~1980px.
+      // clip: base * scale === w exactly below ~1980px.
       const sc = Math.max(0.42, w / base);
+      lastScale.current = sc;
       setScale((prev) => (Math.abs(sc - prev) > 0.0005 ? sc : prev));
     };
     fit();
@@ -503,12 +527,20 @@ export function JourneyMap({
           const now = a.cur === i || b.cur === i;
           const right = vert ? pt.x < 195 : false;
           const ink = both ? GROUND : touched ? ROUTE : "#B5B1B9";
+          // Waiting reveals, straight from the RPC. Quiet and warm — a good
+          // thing waiting, never an alert.
+          const waiting = s.acts.filter((r) => r.reveal_pending === true).length;
           return (
             <div key={s.moduleNumber}>
               <button
                 type="button"
                 onClick={() => setOpen(i)}
-                aria-label={`${s.title}, milestone ${s.position} of ${stopsData.length}`}
+                aria-label={
+                  `${s.title}, milestone ${s.position} of ${stopsData.length}` +
+                  (waiting
+                    ? `, ${waiting} ${waiting === 1 ? "thing" : "things"} to review`
+                    : "")
+                }
                 className="om-stop absolute flex items-center justify-center rounded-full"
                 style={{
                   left: pt.x - 28,
@@ -537,6 +569,19 @@ export function JourneyMap({
                 >
                   {i + 1}
                 </span>
+                {waiting > 0 && (
+                  <span
+                    className="absolute -bottom-1.5 -left-1.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full px-1 text-[10px] font-semibold"
+                    style={{
+                      background: ACCENT,
+                      color: "#FFFFFF",
+                      border: "2px solid #FFFFFF",
+                      boxShadow: "0 2px 6px rgba(2,31,54,0.18)",
+                    }}
+                  >
+                    {waiting > 1 ? waiting : ""}
+                  </span>
+                )}
               </button>
 
               {/* Label. Markers are the higher-priority object, so the label
@@ -737,11 +782,21 @@ export function JourneyMap({
           reason_detail: r.reason_detail,
           own_status: r.own_status,
           partner_status: r.partner_status,
+          reveal_pending: r.reveal_pending,
+          reveal_step_id: r.reveal_step_id,
         }))}
         onActivitySelect={(code) => setOpenActivity(code)}
         onActivityOpen={(code) => {
           setOpen(null);
           navigate(`/couples/${relationshipId}/activity/${code}`);
+        }}
+        onActivityReveal={(code, stepId) => {
+          setOpen(null);
+          navigate(
+            `/couples/${relationshipId}/activity/${code}${
+              stepId ? `?step=${encodeURIComponent(stepId)}` : ""
+            }`,
+          );
         }}
         selfColor={colorA}
         partnerColor={colorB}
