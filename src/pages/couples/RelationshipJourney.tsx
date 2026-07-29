@@ -195,6 +195,17 @@ export default function RelationshipJourney() {
     row: rows.find((r) => r.code === res.code) || null,
   }));
 
+  // Blocking activities arrive as titles, so the pill link resolves by title.
+  const lookupByTitle = (title: string) => {
+    const t = title.trim().toLowerCase();
+    const hit = rows.find((r) => r.title.trim().toLowerCase() === t);
+    return hit ? { code: hit.code, allowed: hit.allowed } : null;
+  };
+  const siblingsOf = (moduleNumber: number, exceptCode?: string) =>
+    rows
+      .filter((r) => r.module_number === moduleNumber && r.code !== exceptCode)
+      .map((r) => r.title);
+
   return (
     <div className="mx-auto max-w-5xl space-y-6 p-4 md:p-6">
       <header>
