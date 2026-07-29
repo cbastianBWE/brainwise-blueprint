@@ -347,7 +347,7 @@ export default function RelationshipActivityRunner() {
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          {journeyRow?.reveal_pending && (
+          {showRevealBanner && (
             <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-muted/30 p-3">
               <p className="text-sm">There's something here for you now.</p>
               <Button size="sm" onClick={consumeReveal}>
