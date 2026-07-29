@@ -187,8 +187,13 @@ export default function RelationshipJourney() {
   const openActivityRow = rows.find((r) => r.code === openActivity) || null;
   const openModuleRows = openModule != null ? rows.filter((r) => r.module_number === openModule) : [];
 
+  const searchRows = (searchResults || []).map((res) => ({
+    res,
+    row: rows.find((r) => r.code === res.code) || null,
+  }));
+
   return (
-    <div className="mx-auto max-w-3xl space-y-6 p-4 md:p-6">
+    <div className="mx-auto max-w-5xl space-y-6 p-4 md:p-6">
       <header>
         <h1 className="text-2xl font-semibold">Your journey</h1>
         <p className="text-sm text-muted-foreground">
@@ -196,7 +201,118 @@ export default function RelationshipJourney() {
         </p>
       </header>
 
-      {moduleNumbers.map((m) => {
+      <div className="flex justify-end">
+        <div className="inline-flex rounded-md border bg-muted/40 p-0.5">
+          <Button
+            type="button"
+            size="sm"
+            variant={view === "map" ? "default" : "ghost"}
+            className="h-8"
+            onClick={() => setView("map")}
+          >
+            Map
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant={view === "browse" ? "default" : "ghost"}
+            className="h-8"
+            onClick={() => setView("browse")}
+          >
+            Browse all
+          </Button>
+        </div>
+      </div>
+
+      {view === "map" && relationshipId && <JourneyMap relationshipId={relationshipId} />}
+
+      {view === "browse" && (
+        <div className="relative">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search activities"
+            className="pl-9"
+          />
+        </div>
+      )}
+
+      {view === "browse" && submittedQuery && (
+        searching ? (
+          <div className="flex items-center justify-center gap-2 py-16 text-sm text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Searching…
+          </div>
+        ) : searchRows.length > 0 ? (
+          <section className="space-y-3">
+            <h2 className="text-sm font-semibold text-foreground">
+              Results for "{submittedQuery}"
+            </h2>
+            <div className="space-y-2">
+              {searchRows.map(({ res, row }) => {
+                const modTitle = moduleByNumber.get(res.module_number)?.title;
+                const locked = row ? !row.allowed : false;
+                return (
+                  <button
+                    key={res.activity_id}
+                    type="button"
+                    onClick={() => setOpenActivity(res.code)}
+                    className={
+                      "block w-full text-left transition-opacity hover:opacity-90 " +
+                      (locked ? "opacity-60" : "")
+                    }
+                  >
+                    <div className="flex flex-col gap-1.5 rounded-lg border p-3">
+                      <p className="text-xs text-muted-foreground">
+                        Milestone {res.module_number}
+                        {modTitle ? ` · ${modTitle}` : ""}
+                      </p>
+                      <div className="flex flex-wrap items-center gap-2">
+                        {locked && <Lock className="h-3.5 w-3.5 text-muted-foreground" />}
+                        <span className="text-sm font-medium">{res.title}</span>
+                        {row && (
+                          <Badge variant="secondary">
+                            {STATUS_LABEL[row.own_status || "not_started"] || row.own_status}
+                          </Badge>
+                        )}
+                      </div>
+                      {res.description && (
+                        <p className="line-clamp-2 text-xs text-muted-foreground">
+                          {res.description}
+                        </p>
+                      )}
+                      {locked && row?.reason && (
+                        <p className="text-xs text-muted-foreground">{row.reason}</p>
+                      )}
+                      {res.tags && res.tags.length > 0 && (
+                        <div className="flex flex-wrap gap-1">
+                          {res.tags.map((t) => (
+                            <Badge key={t} variant="outline" className="text-[10px]">
+                              {t}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+        ) : (
+          <Card>
+            <CardContent className="p-10 text-center">
+              <Search className="mx-auto h-8 w-8 text-muted-foreground" />
+              <p className="mt-3 text-sm text-muted-foreground">No matching activities</p>
+            </CardContent>
+          </Card>
+        )
+      )}
+
+      {view === "browse" && !submittedQuery && moduleNumbers.map((m) => {
+
         const mod = moduleByNumber.get(m) || null;
         const modRows = rows.filter((r) => r.module_number === m);
         const mins = minuteRange(modRows);
