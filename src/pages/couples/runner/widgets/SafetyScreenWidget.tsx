@@ -105,14 +105,11 @@ export function SafetyScreenWidget({
   }, [mode]);
 
   // ---------- Mode C: resources ----------
+  // Gating lives in the runner: if this step is rendered at all, its condition is met.
   const [resources, setResources] = useState<Array<Record<string, unknown>> | null>(null);
-  const anyTrigger = Object.values(responses || {}).some(
-    (v) => !!v && typeof v === "object" && (v as any).triggered === true,
-  );
-  const conditionMet = mode === "resource" ? !!responses?.[step.conditionOn as string] || anyTrigger : false;
 
   useEffect(() => {
-    if (mode !== "resource" || !conditionMet || !step.resourcesFrom) return;
+    if (mode !== "resource" || !step.resourcesFrom) return;
     let cancelled = false;
     (async () => {
       const { data } = await (supabase as any).rpc(step.resourcesFrom as string, { p_categories: null });
@@ -121,10 +118,9 @@ export function SafetyScreenWidget({
     return () => {
       cancelled = true;
     };
-  }, [mode, conditionMet, step.resourcesFrom]);
+  }, [mode, step.resourcesFrom]);
 
   if (mode === "resource") {
-    if (!conditionMet) return null;
     return (
       <div className="space-y-4">
         {step.intro && <p className="whitespace-pre-line text-sm text-muted-foreground">{step.intro}</p>}
