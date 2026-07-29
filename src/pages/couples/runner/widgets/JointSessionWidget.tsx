@@ -146,9 +146,10 @@ export function JointSessionWidget({
       {/* c. Bare */}
       {turns.length === 0 && !(step.sessionScaffold?.length ?? 0) && (
         <div className="space-y-4">
+          {/* TODO: driven by relationship-activity-chat session_prompt, wired with the runner */}
           <div className="rounded-lg border bg-muted/30 p-4">
             <p className="text-sm text-muted-foreground">
-              This conversation is yours to have. Take it at your own pace and come back when you're done.
+              Your coach will guide this conversation one step at a time. This is where that appears.
             </p>
           </div>
           <Button onClick={() => onChange({ ...(value || {}), turns: { session: { done: true } } })}>Done</Button>
