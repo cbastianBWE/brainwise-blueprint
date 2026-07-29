@@ -65,7 +65,8 @@ export default function ModuleBriefingDialog({
   activityCount,
   minutes,
   startCode,
-  blockedReason,
+  // `blockedReason` (raw machine key) is deliberately not destructured — the
+  // display path uses blockedReasonCode / blockedReasonDetail only.
   blockedReasonCode,
   blockedReasonDetail,
   otherName = "Your partner",
