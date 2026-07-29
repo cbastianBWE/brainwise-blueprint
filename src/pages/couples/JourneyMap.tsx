@@ -156,7 +156,10 @@ function useFit(base: number) {
       if (!el) return;
       const w = el.clientWidth;
       if (!w) return;
-      const sc = Math.min(1, Math.max(0.42, w / base));
+      // Ceiling raised above the artifact's 1.0: the map should use a large
+      // screen rather than sit at a fixed size. Hysteresis keeps the
+      // ResizeObserver and the scale from feeding each other.
+      const sc = Math.min(1.6, Math.max(0.42, w / base));
       setScale((prev) => (Math.abs(sc - prev) > 0.004 ? sc : prev));
     };
     fit();
