@@ -77,9 +77,9 @@ const DP: Pt[] = [
 ];
 
 const PHONE_W = 390;
-const PHONE_H = 1320;
+const PHONE_H = 1330;
 const DESK_W = 1240;
-const DESK_H = 520;
+const DESK_H = 580;
 
 const GROUND = "#F9F7F1";
 const ROUTE = "#021F36";
