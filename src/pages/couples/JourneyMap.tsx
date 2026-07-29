@@ -527,12 +527,20 @@ export function JourneyMap({
           const now = a.cur === i || b.cur === i;
           const right = vert ? pt.x < 195 : false;
           const ink = both ? GROUND : touched ? ROUTE : "#B5B1B9";
+          // Waiting reveals, straight from the RPC. Quiet and warm — a good
+          // thing waiting, never an alert.
+          const waiting = s.acts.filter((r) => r.reveal_pending === true).length;
           return (
             <div key={s.moduleNumber}>
               <button
                 type="button"
                 onClick={() => setOpen(i)}
-                aria-label={`${s.title}, milestone ${s.position} of ${stopsData.length}`}
+                aria-label={
+                  `${s.title}, milestone ${s.position} of ${stopsData.length}` +
+                  (waiting
+                    ? `, ${waiting} ${waiting === 1 ? "thing" : "things"} to review`
+                    : "")
+                }
                 className="om-stop absolute flex items-center justify-center rounded-full"
                 style={{
                   left: pt.x - 28,
