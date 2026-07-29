@@ -2,13 +2,15 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { useNavigate, useParams } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { TerrainDesktop, TerrainPhone } from "./journey/JourneyTerrain";
+import ModuleBriefingDialog from "./journey/ModuleBriefingDialog";
+import ActivityBriefingDialog from "./journey/ActivityBriefingDialog";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+  minuteRange,
+  type CatalogueActivity,
+  type ModuleRow as BriefingModuleRow,
+} from "./journey/journeyShared";
+
 
 /* ------------------------------------------------------------------ *
  * Geometry and glyphs — ported verbatim from the approved artifact.
