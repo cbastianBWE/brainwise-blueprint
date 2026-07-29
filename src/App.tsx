@@ -34,6 +34,7 @@ import NewsletterConfirm from "./pages/marketing/NewsletterConfirm";
 import NewsletterUnsubscribe from "./pages/marketing/NewsletterUnsubscribe";
 import PricingRouter from "./pages/PricingRouter";
 import TilePreview from "./pages/_dev/TilePreview";
+import CoupleWidgetPreview from "./pages/couples/WidgetPreview";
 import NotFound from "./pages/NotFound";
 import SignUp from "./pages/SignUp";
 import Login from "./pages/Login";
@@ -225,6 +226,8 @@ const App = () => (
             <Route path="/certification" element={<Certification />} />
             <Route path="/pricing" element={<PricingRouter />} />
             <Route path="/_dev/tile-preview" element={<TilePreview />} />
+            <Route path="/dev/couple-widgets" element={<CoupleWidgetPreview />} />
+
 
             {/* Departed route — protected, but ProtectedRoute won't redirect away from /departed */}
             <Route path="/departed" element={<ProtectedRoute><Departed /></ProtectedRoute>} />
