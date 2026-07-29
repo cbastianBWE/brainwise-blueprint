@@ -303,6 +303,30 @@ export default function RelationshipActivityRunner() {
     ((localizedStep as any).buttonLabel as string | undefined) ||
     (stepIndex === steps.length - 1 ? "Finish" : "Next");
 
+  // Status badge comes straight from the RPC, never from local edit state.
+  const ownStatus = journeyRow?.own_status ?? null;
+  const statusBadge =
+    ownStatus === "submitted" ? "Locked in" : ownStatus === "completed" ? "Done" : null;
+
+  // The reveal affordance belongs to the step that carries the reveal.
+  const REVEAL_WIDGETS = [
+    "profile_reveal",
+    "overlap_reveal",
+    "own_readback",
+    "synthesis",
+    "guess_lock",
+  ];
+  const isRevealStep =
+    REVEAL_WIDGETS.includes(step.widget) || !!(step as any).reveal || !!step.comparesKey;
+  const barrierIndex = steps.findIndex((s) => !!s.barrier);
+  const anyRevealStep = steps.some(
+    (s) => REVEAL_WIDGETS.includes(s.widget) || !!(s as any).reveal || !!s.comparesKey,
+  );
+  // Fail closed: no journey row (or a failed state call) means no banner.
+  const showRevealBanner =
+    journeyRow?.reveal_pending === true &&
+    (isRevealStep || (!anyRevealStep && barrierIndex >= 0 && stepIndex >= barrierIndex));
+
   return (
     <div className="mx-auto max-w-3xl space-y-4 p-4 md:p-6">
       <div className="flex items-center justify-between gap-3">
@@ -319,7 +343,7 @@ export default function RelationshipActivityRunner() {
         <CardHeader className="pb-3">
           <div className="flex flex-wrap items-center gap-2">
             <CardTitle className="text-lg">{title}</CardTitle>
-            {readOnly && <Badge variant="secondary">Locked in</Badge>}
+            {statusBadge && <Badge variant="secondary">{statusBadge}</Badge>}
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
