@@ -20059,6 +20059,7 @@ export type Database = {
           reason_detail: string[]
           repeatable: boolean
           reveal_pending: boolean
+          reveal_step_id: string
           romantic_disclaimer: boolean
           sequence: number
           title: string
