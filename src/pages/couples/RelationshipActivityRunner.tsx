@@ -434,6 +434,20 @@ export default function RelationshipActivityRunner() {
             </div>
           )}
 
+          {submitError && (
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border p-3">
+              <p className="text-sm text-muted-foreground">
+                That didn't save. Nothing was locked in — you can try again.
+              </p>
+              <Button size="sm" variant="outline" disabled={submitting} onClick={() => void goNext()}>
+                <RotateCcw className="h-4 w-4" />
+                Try again
+              </Button>
+            </div>
+          )}
+
+
+
           {(step as any).chat === true && (
             <ChatWidget
               sessionId={sessionId}
