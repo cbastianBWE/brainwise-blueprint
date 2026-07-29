@@ -284,9 +284,23 @@ export default function RelationshipActivityRunner() {
   }, [relationshipId, activity, buildContext]);
 
   const goNext = async () => {
-    if (step?.barrier && !readOnly) await submit();
-    if (stepIndex < steps.length - 1) setStepIndex((i) => i + 1);
-    else if (!readOnly) await submit();
+    // A barrier mid-activity must save before it lets you past it.
+    if (step?.barrier && !readOnly) {
+      const ok = await submit();
+      if (!ok) return;
+    }
+
+    if (stepIndex < steps.length - 1) {
+      setStepIndex((i) => i + 1);
+      return;
+    }
+
+    // Last step: submit if there is anything to submit, then always leave.
+    if (!readOnly) {
+      const ok = await submit();
+      if (!ok) return;
+    }
+    navigate(`/couples/${relationshipId}`);
   };
 
   // ---- Render ----
