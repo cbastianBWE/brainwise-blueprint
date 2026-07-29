@@ -404,7 +404,8 @@ export default function RelationshipJourney() {
       <ModuleBriefingDialog
         open={openModule != null}
         onOpenChange={(v) => !v && setOpenModule(null)}
-        moduleNumber={openModule ?? 0}
+        moduleNumber={openModule != null ? moduleNumbers.indexOf(openModule) + 1 : 1}
+        totalModules={moduleNumbers.length}
         module={openModule != null ? moduleByNumber.get(openModule) || null : null}
         activityCount={openModuleRows.length}
         minutes={minuteRange(openModuleRows)}
