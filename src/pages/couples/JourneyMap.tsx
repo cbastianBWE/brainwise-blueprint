@@ -371,7 +371,7 @@ export function JourneyMap({
           viewBox={`0 0 ${vert ? PHONE_W : DESK_W} ${vert ? PHONE_H : DESK_H}`}
           aria-hidden
         >
-          {showTexture && <Terrain vert={vert} />}
+          {showTexture && (vert ? <TerrainPhone /> : <TerrainDesktop />)}
           <path
             d={road(pts, vert)}
             fill="none"
