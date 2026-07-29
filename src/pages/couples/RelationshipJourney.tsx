@@ -386,40 +386,49 @@ export default function RelationshipJourney() {
                       ? `${r.est_minutes_low} min`
                       : null;
                 return (
-                  <button
+                  <div
                     key={r.activity_id}
-                    type="button"
-                    onClick={() => setOpenActivity(r.code)}
-                    className={
-                      "block w-full text-left transition-opacity hover:opacity-90 " +
-                      (r.allowed ? "" : "opacity-60")
-                    }
+                    className={"rounded-lg border " + (r.allowed ? "" : "opacity-60")}
                   >
-                    <div className="flex flex-col gap-1.5 rounded-lg border p-3">
-                      <div className="flex flex-wrap items-center gap-2">
-                        {!r.allowed && <Lock className="h-3.5 w-3.5 text-muted-foreground" />}
-                        <span className="text-sm font-medium">{r.title}</span>
-                        {r.reveal_pending && (
-                          <Badge variant="default" className="gap-1">
-                            <Sparkles className="h-3 w-3" />
-                            Something to see
+                    <button
+                      type="button"
+                      onClick={() => setOpenActivity(r.code)}
+                      className="block w-full text-left transition-opacity hover:opacity-90"
+                    >
+                      <div className="flex flex-col gap-1.5 p-3 pb-1.5">
+                        <div className="flex flex-wrap items-center gap-2">
+                          {!r.allowed && <Lock className="h-3.5 w-3.5 text-muted-foreground" />}
+                          <span className="text-sm font-medium">{r.title}</span>
+                          {r.reveal_pending && (
+                            <Badge variant="default" className="gap-1">
+                              <Sparkles className="h-3 w-3" />
+                              Something to see
+                            </Badge>
+                          )}
+                          <Badge variant="secondary">
+                            {STATUS_LABEL[r.own_status || "not_started"] || r.own_status}
                           </Badge>
-                        )}
-                        <Badge variant="secondary">
-                          {STATUS_LABEL[r.own_status || "not_started"] || r.own_status}
-                        </Badge>
-                        {est && <span className="text-xs text-muted-foreground">{est}</span>}
+                          {est && <span className="text-xs text-muted-foreground">{est}</span>}
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          {otherName}:{" "}
+                          {STATUS_LABEL[r.partner_status || "not_started"]?.toLowerCase() ||
+                            r.partner_status}
+                        </p>
                       </div>
-                      {!r.allowed && r.reason && (
-                        <p className="text-xs text-muted-foreground">{r.reason}</p>
-                      )}
-                      <p className="text-xs text-muted-foreground">
-                        {otherName}:{" "}
-                        {STATUS_LABEL[r.partner_status || "not_started"]?.toLowerCase() ||
-                          r.partner_status}
-                      </p>
-                    </div>
-                  </button>
+                    </button>
+                    {!r.allowed && (
+                      <LockNotice
+                        className="px-3 pb-3"
+                        reasonCode={r.reason_code}
+                        reasonDetail={r.reason_detail}
+                        otherName={otherName}
+                        siblingTitles={siblingsOf(r.module_number, r.code)}
+                        lookupByTitle={lookupByTitle}
+                        onOpenActivity={setOpenActivity}
+                      />
+                    )}
+                  </div>
                 );
               })}
             </CardContent>
