@@ -3150,6 +3150,7 @@ export type Database = {
           mux_upload_id: string | null
           playback_id: string | null
           question_key: string
+          relationship_session_id: string | null
           transcript: string | null
           transcript_status: string
           updated_at: string
@@ -3167,6 +3168,7 @@ export type Database = {
           mux_upload_id?: string | null
           playback_id?: string | null
           question_key: string
+          relationship_session_id?: string | null
           transcript?: string | null
           transcript_status?: string
           updated_at?: string
@@ -3184,12 +3186,20 @@ export type Database = {
           mux_upload_id?: string | null
           playback_id?: string | null
           question_key?: string
+          relationship_session_id?: string | null
           transcript?: string | null
           transcript_status?: string
           updated_at?: string
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "coaching_response_media_relationship_session_id_fkey"
+            columns: ["relationship_session_id"]
+            isOneToOne: false
+            referencedRelation: "relationship_activity_sessions"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "coaching_response_media_user_id_fkey"
             columns: ["user_id"]
