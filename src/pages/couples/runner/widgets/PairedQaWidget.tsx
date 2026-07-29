@@ -238,7 +238,7 @@ export function PairedQaWidget({
       <div className="space-y-4">
         <Field
           id={`guess-${key}`}
-          label={substituteNames(step.label || step.title || "Your guess", couple)}
+          label={step.title ? substituteNames(step.label || "Your guess", couple) : "Your guess"}
           helper={`You're guessing what ${couple.otherFirstName} put. You'll see their real answer once you've both finished.`}
           val={guessVal}
           onSet={(s) => setField(key, s)}
