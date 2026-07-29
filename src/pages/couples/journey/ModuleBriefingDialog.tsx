@@ -90,8 +90,8 @@ export default function ModuleBriefingDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[88vh] max-w-lg overflow-y-auto p-0">
-        <div className="w-full overflow-hidden bg-muted" style={{ aspectRatio: "2 / 1" }}>
+      <DialogContent className="flex max-h-[88vh] w-[min(960px,94vw)] max-w-none flex-col gap-0 overflow-y-auto overflow-x-hidden p-0">
+        <div className="w-full shrink-0 overflow-hidden bg-muted" style={{ aspectRatio: "2 / 1" }}>
           {hero ? (
             <img
               src={renderImg(hero, 800, 400)}
@@ -105,6 +105,7 @@ export default function ModuleBriefingDialog({
           )}
         </div>
         <div className="space-y-4 p-6">
+
           <DialogHeader className="space-y-2">
             <div className="flex items-center gap-2">
               <Badge variant="secondary">
