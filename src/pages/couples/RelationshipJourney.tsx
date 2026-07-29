@@ -42,7 +42,10 @@ const STATUS_LABEL: Record<string, string> = {
   in_progress: "In progress",
   submitted: "Submitted",
   completed: "Completed",
+  // partner_status stops at "done" — submitted and completed collapse there.
+  done: "Done",
 };
+
 
 interface SearchResult {
   activity_id: string;
