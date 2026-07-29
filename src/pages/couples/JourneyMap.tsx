@@ -139,8 +139,7 @@ type ModuleRow = BriefingModuleRow;
 type Side = { cur: number; done: number[] };
 
 const isDone = (s: string | null | undefined) => s === "completed";
-const isTouched = (s: string | null | undefined) =>
-  s === "in_progress" || s === "submitted" || s === "completed";
+
 
 /* ------------------------------------------------------------------ *
  * Fit logic — ported, including the 0.42 floor and 0.004 hysteresis.
