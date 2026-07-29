@@ -11,9 +11,12 @@ import { ScoredFactorsWidget } from "@/pages/coaching/runner/widgets/ScoredFacto
 import { TextSelectWidget } from "@/pages/coaching/runner/widgets/TextSelectWidget";
 import { ImageSelectWidget } from "@/pages/coaching/runner/widgets/ImageSelectWidget";
 import { RecapWidget } from "@/pages/coaching/runner/widgets/RecapWidget";
+import { InnerTeamWidget } from "@/pages/coaching/runner/widgets/InnerTeamWidget";
 import { PairedQaWidget } from "./widgets/PairedQaWidget";
 import { CoupleAgreementWidget } from "./widgets/CoupleAgreementWidget";
 import { JointSessionWidget } from "./widgets/JointSessionWidget";
+import { StatementSelectWidget } from "./widgets/StatementSelectWidget";
+
 import type { CoupleContext, CoupleStep } from "./coupleShared";
 
 export interface WidgetCtx {
@@ -129,6 +132,26 @@ export const widgetRegistry: Record<string, WidgetRenderer> = {
       onChange={(v) => onChange(v)}
     />
   ),
+  statement_select: ({ step, value, onChange, sessionId, activityCode }) => (
+    <StatementSelectWidget
+      step={step}
+      value={(value as string[]) || []}
+      onChange={(v) => onChange(v)}
+      sessionId={sessionId}
+      activityCode={activityCode}
+    />
+  ),
+  inner_team: ({ step, value, onChange, sessionId, activityCode }) => (
+    <InnerTeamWidget
+      step={asStep(step)}
+      session={{ id: sessionId, current_step: 0 } as any}
+      responses={(value as any) || {}}
+      setResponses={(u) => onChange(u(((value as any) || {}) as any))}
+      activityCode={activityCode}
+      setCoachingRemaining={() => {}}
+    />
+  ),
+
   ai_panel: ({ couple, analysisHtml, analyzing, pendingReason }) => {
     if (pendingReason) {
       return (

@@ -17,7 +17,13 @@ export interface CoupleStep {
   key?: string;
   label?: string;
   title?: string;
+  intro?: string;
+  // statement_select
+  options?: string[];
+  selectMin?: number;
+  selectMax?: number;
   barrier?: "both_partners_complete" | "both_partners_locked" | "both_partners_signed";
+
   conditionOn?: string;
   onComplete?: { writes?: string; touchpoint?: string };
   // paired_qa
