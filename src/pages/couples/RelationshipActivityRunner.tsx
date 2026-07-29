@@ -64,6 +64,28 @@ export default function RelationshipActivityRunner() {
   );
   const step = steps[stepIndex];
 
+  // Keep the cursor inside the visible set when a condition changes the list.
+  useEffect(() => {
+    if (steps.length > 0 && stepIndex > steps.length - 1) setStepIndex(steps.length - 1);
+  }, [steps.length, stepIndex]);
+
+  // Silent, computed safety steps render nothing: advance as soon as they resolve.
+  const autoAdvancedRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!step) return;
+    const silent =
+      step.widget === "safety_screen" && !!step.evaluator && !step.intro && !step.itemsSource;
+    if (!silent) return;
+    const key = step.key || step.id || String(stepIndex);
+    const produced = (responses as any)?.[step.selectionKey || step.key || step.id || "value"];
+    if (!produced || typeof produced !== "object") return;
+    if (autoAdvancedRef.current === key) return;
+    autoAdvancedRef.current = key;
+    if (stepIndex < steps.length - 1) setStepIndex((i) => i + 1);
+  }, [step, stepIndex, steps.length, responses]);
+
+
+
 
   // ---- Context assembly (partnerView comes only from the RPC) ----
   const buildContext = useCallback(
