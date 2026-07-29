@@ -1,14 +1,64 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { type CoupleContext, type CoupleStep, substituteNames } from "../coupleShared";
+import { MultimodalField, isMMRec, mmIsFilled, type MMValue } from "@/components/coaching/MultimodalField";
+import { CoachingRecordingPlayer } from "@/components/coaching/CoachingViews";
+import { allowedModes, type CoupleContext, type CoupleStep, substituteNames } from "../coupleShared";
 
 type Rec = Record<string, unknown>;
 
+type MediaAnswer = { mode: "audio" | "video"; media_id: string; transcript?: string };
+
+function asMedia(v: unknown): MediaAnswer | null {
+  return isMMRec(v) ? (v as MediaAnswer) : null;
+}
+
+const modeNoun = (m: "audio" | "video") => (m === "video" ? "by video" : "by voice");
+
+/**
+ * A partner's recording is never playable — the schema gives them no read on the media row.
+ * They read the transcript, or they read nothing.
+ */
+function PartnerMedia({ media, otherFirstName }: { media: MediaAnswer; otherFirstName: string }) {
+  if (!media.transcript) {
+    return (
+      <p className="text-sm text-muted-foreground">
+        {otherFirstName} recorded this one. The words aren't ready yet.
+      </p>
+    );
+  }
+  return (
+    <div className="space-y-1">
+      <p className="text-xs text-muted-foreground">
+        {otherFirstName} answered {modeNoun(media.mode)}
+      </p>
+      <p className="text-sm whitespace-pre-wrap">{media.transcript}</p>
+    </div>
+  );
+}
+
 /** Render a captured value sensibly: paragraph, list, or definition list. Never JSON.stringify. */
-function ValueBlock({ val, empty = "Nothing here yet." }: { val: unknown; empty?: string }) {
+function ValueBlock({
+  val,
+  empty = "Nothing here yet.",
+  partner,
+  otherFirstName,
+}: {
+  val: unknown;
+  empty?: string;
+  partner?: boolean;
+  otherFirstName?: string;
+}) {
+  const media = asMedia(val);
+  if (media) {
+    if (partner) return <PartnerMedia media={media} otherFirstName={otherFirstName || "They"} />;
+    return (
+      <div className="rounded-md border bg-background p-2">
+        <CoachingRecordingPlayer mediaId={media.media_id} />
+      </div>
+    );
+  }
   if (val === undefined || val === null || val === "") {
     return <p className="text-sm text-muted-foreground">{empty}</p>;
   }
@@ -32,7 +82,7 @@ function ValueBlock({ val, empty = "Nothing here yet." }: { val: unknown; empty?
           <div key={k}>
             <dt className="text-xs text-muted-foreground">{k}</dt>
             <dd className="text-sm whitespace-pre-wrap">
-              {Array.isArray(item) ? item.join(", ") : String(item ?? "")}
+              <ValueBlock val={item} empty="—" partner={partner} otherFirstName={otherFirstName} />
             </dd>
           </div>
         ))}
@@ -47,11 +97,15 @@ export function PairedQaWidget({
   couple,
   value,
   onChange,
+  sessionId,
+  activityCode,
 }: {
   step: CoupleStep;
   couple: CoupleContext;
   value: Record<string, unknown>;
   onChange: (next: Record<string, unknown>) => void;
+  sessionId: string;
+  activityCode: string;
 }) {
   const v = (value || {}) as Rec;
   const revealed = couple.barrierCleared && !!couple.partnerView;
@@ -59,42 +113,60 @@ export function PairedQaWidget({
   // Once submitted, your own inputs lock — a guess you can edit after the reveal is not a guess.
   const locked = revealed || !!v.__submitted;
   const readOnly = locked;
+  const modes = allowedModes(step);
+  const stepKey = step.key || step.id || "step";
 
-  const setGroup = (group: "self" | "read", key: string, next: string) => {
+  const setGroup = (group: "self" | "read", key: string, next: MMValue) => {
     const g = { ...((v[group] as Rec) || {}) };
     g[key] = next;
     onChange({ ...v, [group]: g });
   };
 
-  const setField = (key: string, next: string) => onChange({ ...v, [key]: next });
+  const setField = (key: string, next: MMValue) => onChange({ ...v, [key]: next });
 
-  const Field = ({
+  /**
+   * Rendered as a function, not a nested component: a nested component would be a new type on
+   * every render and would remount MultimodalField, losing the selected mode mid-recording.
+   */
+  const renderField = ({
     id,
     label,
+    questionKey,
     val,
     onSet,
     helper,
   }: {
     id: string;
     label: string;
+    questionKey: string;
     val: unknown;
-    onSet: (s: string) => void;
+    onSet: (s: MMValue) => void;
     helper?: string;
-  }) => (
-    <div className="space-y-1.5">
-      <Label htmlFor={id} className="text-sm font-medium">
-        {label}
-      </Label>
-      {helper && <p className="text-xs text-muted-foreground">{helper}</p>}
-      <Textarea
-        id={id}
-        value={typeof val === "string" ? val : ""}
-        readOnly={readOnly}
-        onChange={(e) => onSet(e.target.value)}
-        rows={3}
-      />
-    </div>
-  );
+  }) => {
+    const media = asMedia(val);
+    return (
+      <div key={id} className="space-y-1.5">
+        <Label className="text-sm font-medium">{label}</Label>
+        {helper && <p className="text-xs text-muted-foreground">{helper}</p>}
+        {readOnly ? (
+          <div className="rounded-md border bg-muted/30 p-3">
+            <ValueBlock val={val} empty="Nothing written." />
+          </div>
+        ) : (
+          <MultimodalField
+            value={media ? (media as MMValue) : typeof val === "string" ? val : ""}
+            onChange={onSet}
+            sessionId={sessionId}
+            activityCode={activityCode}
+            questionKey={questionKey}
+            sessionKind="relationship"
+            modes={modes}
+            minRows={3}
+          />
+        )}
+      </div>
+    );
+  };
 
   const SummaryCard = () => (
     <Card>
@@ -102,7 +174,11 @@ export function PairedQaWidget({
         <CardTitle className="text-base">{couple.otherFirstName}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-2">
-        <p className="text-sm whitespace-pre-wrap">{String((couple.partnerView?.responses as Rec)?.summary ?? "")}</p>
+        <ValueBlock
+          val={(couple.partnerView?.responses as Rec)?.summary}
+          partner
+          otherFirstName={couple.otherFirstName}
+        />
         <p className="text-xs text-muted-foreground">
           {couple.otherFirstName} chose to share a summary of this one.
         </p>
@@ -128,13 +204,13 @@ export function PairedQaWidget({
                 </CardContent>
               </Card>
             ) : (
-              <Field
-                key={`self-${q.key}`}
-                id={`self-${q.key}`}
-                label={substituteNames(q.self, couple)}
-                val={((v.self as Rec) || {})[q.key]}
-                onSet={(s) => setGroup("self", q.key, s)}
-              />
+              renderField({
+                id: `self-${q.key}`,
+                label: substituteNames(q.self, couple),
+                questionKey: `${stepKey}.self.${q.key}`,
+                val: ((v.self as Rec) || {})[q.key],
+                onSet: (s) => setGroup("self", q.key, s),
+              })
             ),
           )}
         </section>
@@ -154,13 +230,13 @@ export function PairedQaWidget({
                 </CardContent>
               </Card>
             ) : (
-              <Field
-                key={`read-${q.key}`}
-                id={`read-${q.key}`}
-                label={substituteNames(q.read, couple)}
-                val={((v.read as Rec) || {})[q.key]}
-                onSet={(s) => setGroup("read", q.key, s)}
-              />
+              renderField({
+                id: `read-${q.key}`,
+                label: substituteNames(q.read, couple),
+                questionKey: `${stepKey}.read.${q.key}`,
+                val: ((v.read as Rec) || {})[q.key],
+                onSet: (s) => setGroup("read", q.key, s),
+              })
             ),
           )}
         </section>
@@ -175,15 +251,15 @@ export function PairedQaWidget({
         <p className="text-xs text-muted-foreground">we can prefill this from your earlier work</p>
       )}
       <div className="grid gap-4 md:grid-cols-2">
-        {(step.subfields || []).map((sf) => (
-          <Field
-            key={sf}
-            id={`sf-${sf}`}
-            label={substituteNames(step.subfieldLabels?.[sf] || sf, couple)}
-            val={v[sf]}
-            onSet={(s) => setField(sf, s)}
-          />
-        ))}
+        {(step.subfields || []).map((sf) =>
+          renderField({
+            id: `sf-${sf}`,
+            label: substituteNames(step.subfieldLabels?.[sf] || sf, couple),
+            questionKey: `${stepKey}.${sf}`,
+            val: v[sf],
+            onSet: (s) => setField(sf, s),
+          }),
+        )}
       </div>
     </div>
   );
@@ -196,7 +272,13 @@ export function PairedQaWidget({
           <CardTitle className="text-base">Your rating</CardTitle>
         </CardHeader>
         <CardContent>
-          <Field id="own-rating" label="How you'd rate this" val={v.ownRating} onSet={(s) => setField("ownRating", s)} />
+          {renderField({
+            id: "own-rating",
+            label: "How you'd rate this",
+            questionKey: `${stepKey}.ownRating`,
+            val: v.ownRating,
+            onSet: (s) => setField("ownRating", s),
+          })}
         </CardContent>
       </Card>
       <Card>
@@ -204,12 +286,13 @@ export function PairedQaWidget({
           <CardTitle className="text-base">What you think theirs is</CardTitle>
         </CardHeader>
         <CardContent>
-          <Field
-            id="read-rating"
-            label={`How you think ${couple.otherFirstName} would rate it`}
-            val={v.readRating}
-            onSet={(s) => setField("readRating", s)}
-          />
+          {renderField({
+            id: "read-rating",
+            label: `How you think ${couple.otherFirstName} would rate it`,
+            questionKey: `${stepKey}.readRating`,
+            val: v.readRating,
+            onSet: (s) => setField("readRating", s),
+          })}
         </CardContent>
       </Card>
     </div>
@@ -236,19 +319,17 @@ export function PairedQaWidget({
     const guessVal = v[key];
     return (
       <div className="space-y-4">
-        <Field
-          id={`guess-${key}`}
-          label={step.title ? substituteNames(step.label || "Your guess", couple) : "Your guess"}
-          helper={`You're guessing what ${couple.otherFirstName} put. You'll see their real answer once you've both finished.`}
-          val={guessVal}
-          onSet={(s) => setField(key, s)}
-        />
+        {renderField({
+          id: `guess-${key}`,
+          label: step.title ? substituteNames(step.label || "Your guess", couple) : "Your guess",
+          questionKey: `${stepKey}.guess`,
+          helper: `You're guessing what ${couple.otherFirstName} put. You'll see their real answer once you've both finished.`,
+          val: guessVal,
+          onSet: (s) => setField(key, s),
+        })}
 
         {!locked && (
-          <Button
-            onClick={() => onChange({ ...v, __submitted: true })}
-            disabled={typeof guessVal !== "string" || !guessVal.trim()}
-          >
+          <Button onClick={() => onChange({ ...v, __submitted: true })} disabled={!mmIsFilled(guessVal)}>
             Lock in my guess
           </Button>
         )}
@@ -271,7 +352,11 @@ export function PairedQaWidget({
                   <CardTitle className="text-base">What {couple.otherFirstName} actually put</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <ValueBlock val={(couple.partnerView?.responses as Rec)?.[step.guessOf || ""]} />
+                  <ValueBlock
+                    val={(couple.partnerView?.responses as Rec)?.[step.guessOf || ""]}
+                    partner
+                    otherFirstName={couple.otherFirstName}
+                  />
                 </CardContent>
               </Card>
               {step.comparesKey && (
@@ -317,7 +402,11 @@ export function PairedQaWidget({
               <CardTitle className="text-base">{couple.otherFirstName}</CardTitle>
             </CardHeader>
             <CardContent>
-              <ValueBlock val={(couple.partnerView?.responses as Rec)?.[step.comparesKey || ""]} />
+              <ValueBlock
+                val={(couple.partnerView?.responses as Rec)?.[step.comparesKey || ""]}
+                partner
+                otherFirstName={couple.otherFirstName}
+              />
             </CardContent>
           </Card>
         </div>
@@ -391,10 +480,10 @@ export function PairedQaWidget({
                   <CardTitle className="text-base">{couple.ownFirstName}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
-                  {Object.entries(flatten(v)).map(([k, text]) => (
-                    <div key={k}>
-                      <p className="text-xs text-muted-foreground">{k}</p>
-                      <p className="text-sm whitespace-pre-wrap">{text}</p>
+                  {flatten(v).map(({ key, value: entry }) => (
+                    <div key={key}>
+                      <p className="text-xs text-muted-foreground">{key}</p>
+                      <ValueBlock val={entry} empty="—" />
                     </div>
                   ))}
                 </CardContent>
@@ -404,10 +493,10 @@ export function PairedQaWidget({
                   <CardTitle className="text-base">{couple.otherFirstName}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
-                  {Object.entries(flatten((couple.partnerView?.responses || {}) as Rec)).map(([k, text]) => (
-                    <div key={k}>
-                      <p className="text-xs text-muted-foreground">{k}</p>
-                      <p className="text-sm whitespace-pre-wrap">{text}</p>
+                  {flatten((couple.partnerView?.responses || {}) as Rec).map(({ key, value: entry }) => (
+                    <div key={key}>
+                      <p className="text-xs text-muted-foreground">{key}</p>
+                      <ValueBlock val={entry} partner otherFirstName={couple.otherFirstName} empty="—" />
                     </div>
                   ))}
                 </CardContent>
@@ -420,15 +509,18 @@ export function PairedQaWidget({
   );
 }
 
-function flatten(obj: Rec, prefix = ""): Record<string, string> {
-  const out: Record<string, string> = {};
+/** Flatten nested answers to leaf entries, keeping recordings intact so they render by the rules above. */
+function flatten(obj: Rec, prefix = ""): Array<{ key: string; value: unknown }> {
+  const out: Array<{ key: string; value: unknown }> = [];
   for (const [k, val] of Object.entries(obj || {})) {
     if (k.startsWith("__")) continue;
     const key = prefix ? `${prefix}.${k}` : k;
-    if (val && typeof val === "object" && !Array.isArray(val)) {
-      Object.assign(out, flatten(val as Rec, key));
+    if (isMMRec(val)) {
+      out.push({ key, value: val });
+    } else if (val && typeof val === "object" && !Array.isArray(val)) {
+      out.push(...flatten(val as Rec, key));
     } else if (val !== undefined && val !== null && val !== "") {
-      out[key] = Array.isArray(val) ? val.join(", ") : String(val);
+      out.push({ key, value: Array.isArray(val) ? val.join(", ") : String(val) });
     }
   }
   return out;
