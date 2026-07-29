@@ -104,7 +104,8 @@ export default function WidgetPreview() {
               onChange={setValueFor(step.id!)}
             />
           </Section>
-        ))}
+          ),
+        )}
       </section>
 
       <section className="space-y-4">
