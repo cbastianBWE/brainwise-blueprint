@@ -204,57 +204,8 @@ function Glyph({ name, ink }: { name: string; ink: string }) {
   );
 }
 
-function Terrain({ vert }: { vert: boolean }) {
-  // Decoration only. Carries no state, ever.
-  return (
-    <g aria-hidden opacity={1}>
-      <circle cx={vert ? 322 : 1120} cy={vert ? 96 : 62} r="34" fill={ACCENT} opacity="0.10" />
-      <path
-        d={
-          vert
-            ? "M0 1180 L90 1050 L170 1150 L250 1010 L390 1180 Z"
-            : "M0 470 L150 330 L260 430 L400 300 L540 440 L700 320 L860 450 L1010 340 L1240 470 Z"
-        }
-        fill={ROUTE}
-        opacity="0.06"
-      />
-      <path
-        d={
-          vert
-            ? "M0 1240 L120 1130 L240 1230 L390 1120 L390 1320 L0 1320 Z"
-            : "M0 520 L200 410 L420 500 L640 400 L900 500 L1120 420 L1240 500 L1240 520 L0 520 Z"
-        }
-        fill={ROUTE}
-        opacity="0.04"
-      />
-      <ellipse
-        cx={vert ? 90 : 300}
-        cy={vert ? 950 : 90}
-        rx={vert ? 70 : 120}
-        ry={vert ? 26 : 22}
-        fill="#006D77"
-        opacity="0.07"
-      />
-      <g opacity="0.12" fill={ROUTE}>
-        {(vert
-          ? [
-              { x: 40, y: 300 },
-              { x: 330, y: 640 },
-              { x: 46, y: 860 },
-            ]
-          : [
-              { x: 60, y: 120 },
-              { x: 470, y: 460 },
-              { x: 950, y: 110 },
-              { x: 1180, y: 430 },
-            ]
-        ).map((c, i) => (
-          <path key={i} d={`M ${c.x} ${c.y + 26} L ${c.x + 13} ${c.y} L ${c.x + 26} ${c.y + 26} Z`} />
-        ))}
-      </g>
-    </g>
-  );
-}
+// Terrain lives in ./journey/JourneyTerrain — decoration only, never state.
+
 
 /* ------------------------------------------------------------------ *
  * The map
