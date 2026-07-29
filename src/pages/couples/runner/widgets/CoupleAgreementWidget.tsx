@@ -69,6 +69,10 @@ export function CoupleAgreementWidget({
         <h3 className="text-lg font-semibold">{substituteNames(step.title || step.label || "", couple)}</h3>
       )}
 
+      {!(step.starters && step.starters.length > 0) && (step.label || step.title) && (
+        <p className="text-base">{substituteNames(step.label || step.title || "", couple)}</p>
+      )}
+
       {step.starters && step.starters.length > 0 && (
         <div className="space-y-3">
           {typeof cap === "number" && (
