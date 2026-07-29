@@ -141,7 +141,17 @@ type ModuleRow = BriefingModuleRow;
 
 type Side = { cur: number; done: number[] };
 
-const isDone = (s: string | null | undefined) => s === "completed";
+/**
+ * The RPC does not use one vocabulary for both people. `own_status` is
+ * not_started | in_progress | submitted | completed; `partner_status` is
+ * deliberately coarser — not_started | in_progress | done — so this screen
+ * never reveals how far past submitting the other person has gone.
+ * Never compare one side against the other's words.
+ */
+const OWN_DONE = new Set(["completed"]);
+const PARTNER_DONE = new Set(["done"]);
+export const isOwnDone = (s: string | null | undefined) => OWN_DONE.has(s ?? "");
+export const isPartnerDone = (s: string | null | undefined) => PARTNER_DONE.has(s ?? "");
 
 
 /* ------------------------------------------------------------------ *
@@ -164,7 +174,7 @@ function useFit(base: number) {
       if (!w) return;
       // Floor only. The cap sits far above any normal screen so it can never
       // clip: 1240 * scale === w exactly below ~1980px.
-      const sc = Math.min(w > 1980 ? w / base : Infinity, Math.max(0.42, w / base));
+      const sc = Math.max(0.42, w / base);
       setScale((prev) => (Math.abs(sc - prev) > 0.0005 ? sc : prev));
     };
     fit();
@@ -330,7 +340,8 @@ export function JourneyMap({
   const { a, b } = useMemo<{ a: Side; b: Side }>(() => {
     const doneFor = (idx: number, key: "own_status" | "partner_status") => {
       const acts = stopsData[idx]?.acts || [];
-      return acts.length > 0 && acts.every((r) => isDone(r[key]));
+      const pred = key === "own_status" ? isOwnDone : isPartnerDone;
+      return acts.length > 0 && acts.every((r) => pred(r[key]));
     };
     const build = (key: "own_status" | "partner_status"): Side => {
       const done: number[] = [];
