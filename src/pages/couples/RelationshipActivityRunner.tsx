@@ -101,7 +101,10 @@ export default function RelationshipActivityRunner() {
         }),
       ]);
       const n = (names.data as any[])?.[0] || {};
-      const row = ((state.data as JourneyRow[]) || []).find((r) => r.activity_id === activityId) || null;
+      // Fail closed: if the state call errors we hold no partner signal at all.
+      const row = state.error
+        ? null
+        : ((state.data as JourneyRow[]) || []).find((r) => r.activity_id === activityId) || null;
       const view = (pv.data as any[])?.[0];
       setJourneyRow(row);
       setCouple({
