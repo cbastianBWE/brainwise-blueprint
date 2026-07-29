@@ -133,6 +133,8 @@ interface JourneyRow {
   own_status: string | null;
   partner_status: string | null;
   reveal_pending: boolean | null;
+  /** Step to open for the waiting reveal. From the RPC — never derived. */
+  reveal_step_id: string | null;
   est_minutes_low: number | null;
   est_minutes_high: number | null;
 }
