@@ -129,13 +129,12 @@ interface JourneyRow {
   reason: string | null;
   own_status: string | null;
   partner_status: string | null;
+  reveal_pending: boolean | null;
+  est_minutes_low: number | null;
+  est_minutes_high: number | null;
 }
 
-interface ModuleRow {
-  module_number: number;
-  title: string | null;
-  description: string | null;
-}
+type ModuleRow = BriefingModuleRow;
 
 type Side = { cur: number; done: number[] };
 
