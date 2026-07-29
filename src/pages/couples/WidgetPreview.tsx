@@ -94,7 +94,8 @@ export default function WidgetPreview() {
 
       <section className="space-y-4">
         <h2 className="text-sm font-medium text-muted-foreground">couple_agreement</h2>
-        {[agreementStarters, agreementFullRequirements, agreementOutcomes].map((step) => (
+        {[agreementStarters, agreementFullRequirements, agreementOutcomes, agreementPersonal, agreementNoStarters].map(
+          (step) => (
           <Section key={step.id} title="CoupleAgreementWidget" step={step}>
             <CoupleAgreementWidget
               step={step}
