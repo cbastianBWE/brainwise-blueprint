@@ -18446,6 +18446,15 @@ export type Database = {
         }
         Returns: Json
       }
+      mr_ingest_media: {
+        Args: {
+          p_category: string
+          p_page?: number
+          p_per_page?: number
+          p_query: string
+        }
+        Returns: number
+      }
       my_access_history: {
         Args: { p_limit?: number; p_offset?: number }
         Returns: {
@@ -19748,6 +19757,10 @@ export type Database = {
           waiting_on: string
         }[]
       }
+      relationship_affection_band: {
+        Args: { p_gap: number; p_name: string }
+        Returns: string
+      }
       relationship_ai_record: {
         Args: {
           p_activity: string
@@ -19974,6 +19987,15 @@ export type Database = {
           p_user: string
         }
         Returns: boolean
+      }
+      relationship_token_affection_gaps: {
+        Args: {
+          p_activity: string
+          p_field: string
+          p_relationship: string
+          p_run: number
+        }
+        Returns: string
       }
       relationship_token_baseline_movement: {
         Args: {
