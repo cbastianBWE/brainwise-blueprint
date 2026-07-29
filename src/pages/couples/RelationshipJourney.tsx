@@ -266,7 +266,7 @@ export default function RelationshipJourney() {
                   >
                     <div className="flex flex-col gap-1.5 rounded-lg border p-3">
                       <p className="text-xs text-muted-foreground">
-                        Milestone {res.module_number}
+                        Milestone {res.module_number + 1}
                         {modTitle ? ` · ${modTitle}` : ""}
                       </p>
                       <div className="flex flex-wrap items-center gap-2">
@@ -311,12 +311,14 @@ export default function RelationshipJourney() {
         )
       )}
 
-      {view === "browse" && !submittedQuery && moduleNumbers.map((m) => {
+      {view === "browse" && !submittedQuery && moduleNumbers.map((m, mi) => {
 
         const mod = moduleByNumber.get(m) || null;
         const modRows = rows.filter((r) => r.module_number === m);
         const mins = minuteRange(modRows);
         const hero = mod?.hero_image_url || null;
+        // Display ordinal, 1-based. module_number stays zero-based.
+        const position = mi + 1;
 
         return (
           <Card key={m} className="overflow-hidden">
@@ -339,8 +341,10 @@ export default function RelationshipJourney() {
                 )}
               </div>
               <CardHeader className="pb-3">
-                <p className="text-xs text-muted-foreground">Milestone {m}</p>
-                <CardTitle className="text-base">{mod?.title || `Milestone ${m}`}</CardTitle>
+                <p className="text-xs text-muted-foreground">Milestone {position}</p>
+                <CardTitle className="text-base">
+                  {mod?.title || `Milestone ${position}`}
+                </CardTitle>
                 <p className="text-xs text-muted-foreground">
                   {modRows.length} {modRows.length === 1 ? "activity" : "activities"}
                   {mins ? ` · ${mins.low} to ${mins.high} min` : ""}
@@ -400,7 +404,8 @@ export default function RelationshipJourney() {
       <ModuleBriefingDialog
         open={openModule != null}
         onOpenChange={(v) => !v && setOpenModule(null)}
-        moduleNumber={openModule ?? 0}
+        moduleNumber={openModule != null ? moduleNumbers.indexOf(openModule) + 1 : 1}
+        totalModules={moduleNumbers.length}
         module={openModule != null ? moduleByNumber.get(openModule) || null : null}
         activityCount={openModuleRows.length}
         minutes={minuteRange(openModuleRows)}

@@ -2,13 +2,15 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { useNavigate, useParams } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { TerrainDesktop, TerrainPhone } from "./journey/JourneyTerrain";
+import ModuleBriefingDialog from "./journey/ModuleBriefingDialog";
+import ActivityBriefingDialog from "./journey/ActivityBriefingDialog";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+  minuteRange,
+  type CatalogueActivity,
+  type ModuleRow as BriefingModuleRow,
+} from "./journey/journeyShared";
+
 
 /* ------------------------------------------------------------------ *
  * Geometry and glyphs — ported verbatim from the approved artifact.
@@ -75,9 +77,9 @@ const DP: Pt[] = [
 ];
 
 const PHONE_W = 390;
-const PHONE_H = 1320;
+const PHONE_H = 1330;
 const DESK_W = 1240;
-const DESK_H = 520;
+const DESK_H = 580;
 
 const GROUND = "#F9F7F1";
 const ROUTE = "#021F36";
@@ -127,19 +129,17 @@ interface JourneyRow {
   reason: string | null;
   own_status: string | null;
   partner_status: string | null;
+  reveal_pending: boolean | null;
+  est_minutes_low: number | null;
+  est_minutes_high: number | null;
 }
 
-interface ModuleRow {
-  module_number: number;
-  title: string | null;
-  description: string | null;
-}
+type ModuleRow = BriefingModuleRow;
 
 type Side = { cur: number; done: number[] };
 
 const isDone = (s: string | null | undefined) => s === "completed";
-const isTouched = (s: string | null | undefined) =>
-  s === "in_progress" || s === "submitted" || s === "completed";
+
 
 /* ------------------------------------------------------------------ *
  * Fit logic — ported, including the 0.42 floor and 0.004 hysteresis.
@@ -155,7 +155,10 @@ function useFit(base: number) {
       if (!el) return;
       const w = el.clientWidth;
       if (!w) return;
-      const sc = Math.min(1, Math.max(0.42, w / base));
+      // Ceiling raised above the artifact's 1.0: the map should use a large
+      // screen rather than sit at a fixed size. Hysteresis keeps the
+      // ResizeObserver and the scale from feeding each other.
+      const sc = Math.min(1.6, Math.max(0.42, w / base));
       setScale((prev) => (Math.abs(sc - prev) > 0.004 ? sc : prev));
     };
     fit();
@@ -200,57 +203,8 @@ function Glyph({ name, ink }: { name: string; ink: string }) {
   );
 }
 
-function Terrain({ vert }: { vert: boolean }) {
-  // Decoration only. Carries no state, ever.
-  return (
-    <g aria-hidden opacity={1}>
-      <circle cx={vert ? 322 : 1120} cy={vert ? 96 : 62} r="34" fill={ACCENT} opacity="0.10" />
-      <path
-        d={
-          vert
-            ? "M0 1180 L90 1050 L170 1150 L250 1010 L390 1180 Z"
-            : "M0 470 L150 330 L260 430 L400 300 L540 440 L700 320 L860 450 L1010 340 L1240 470 Z"
-        }
-        fill={ROUTE}
-        opacity="0.06"
-      />
-      <path
-        d={
-          vert
-            ? "M0 1240 L120 1130 L240 1230 L390 1120 L390 1320 L0 1320 Z"
-            : "M0 520 L200 410 L420 500 L640 400 L900 500 L1120 420 L1240 500 L1240 520 L0 520 Z"
-        }
-        fill={ROUTE}
-        opacity="0.04"
-      />
-      <ellipse
-        cx={vert ? 90 : 300}
-        cy={vert ? 950 : 90}
-        rx={vert ? 70 : 120}
-        ry={vert ? 26 : 22}
-        fill="#006D77"
-        opacity="0.07"
-      />
-      <g opacity="0.12" fill={ROUTE}>
-        {(vert
-          ? [
-              { x: 40, y: 300 },
-              { x: 330, y: 640 },
-              { x: 46, y: 860 },
-            ]
-          : [
-              { x: 60, y: 120 },
-              { x: 470, y: 460 },
-              { x: 950, y: 110 },
-              { x: 1180, y: 430 },
-            ]
-        ).map((c, i) => (
-          <path key={i} d={`M ${c.x} ${c.y + 26} L ${c.x + 13} ${c.y} L ${c.x + 26} ${c.y + 26} Z`} />
-        ))}
-      </g>
-    </g>
-  );
-}
+// Terrain lives in ./journey/JourneyTerrain — decoration only, never state.
+
 
 /* ------------------------------------------------------------------ *
  * The map
@@ -268,11 +222,15 @@ export function JourneyMap({
   const navigate = useNavigate();
   const [rows, setRows] = useState<JourneyRow[] | null>(null);
   const [modules, setModules] = useState<ModuleRow[]>([]);
+  const [catalogue, setCatalogue] = useState<CatalogueActivity[]>([]);
   const [selfName, setSelfName] = useState("You");
   const [otherName, setOtherName] = useState("Your partner");
   const [colorA, setColorA] = useState("#006D77");
   const [colorB, setColorB] = useState("#3C096C");
   const [open, setOpen] = useState<number | null>(null);
+  // Activity briefing stacks over the milestone dialog; closing it returns
+  // to the milestone list rather than dismissing both.
+  const [openActivity, setOpenActivity] = useState<string | null>(null);
   const [colorNote, setColorNote] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -291,14 +249,22 @@ export function JourneyMap({
     if (!relationshipId) return;
     let cancelled = false;
     (async () => {
-      const [state, names, mods] = await Promise.all([
+      const [state, names, mods, acts] = await Promise.all([
         supabase.rpc("relationship_journey_state", { p_relationship: relationshipId }),
         supabase.rpc("relationship_first_names", { p_relationship: relationshipId }),
         (supabase as any)
           .from("relationship_modules")
-          .select("module_number,title,description")
+          .select(
+            "module_number,title,description,learning_outcomes,tags,prerequisites,hero_image_url",
+          )
           .eq("active", true)
           .order("module_number"),
+        (supabase as any)
+          .from("relationship_activities")
+          .select(
+            "id,code,title,module_number,sequence,tags,hero_image_url,definition,est_minutes_low,est_minutes_high",
+          )
+          .eq("status", "published"),
       ]);
       if (cancelled) return;
       setRows(((state.data as JourneyRow[]) || []).slice().sort(
@@ -307,7 +273,11 @@ export function JourneyMap({
       const n = (names.data as any[])?.[0];
       if (n?.active_first_name) setSelfName(n.active_first_name);
       if (n?.other_first_name) setOtherName(n.other_first_name);
+      // Catalogue reads are enrichment only — a failure degrades the map,
+      // it must never blank it.
       if (!mods.error && Array.isArray(mods.data)) setModules(mods.data as ModuleRow[]);
+      if (!acts.error && Array.isArray(acts.data))
+        setCatalogue(acts.data as CatalogueActivity[]);
       await loadColors();
     })();
     return () => {
@@ -315,14 +285,23 @@ export function JourneyMap({
     };
   }, [relationshipId, loadColors]);
 
+  const catalogueByCode = useMemo(() => {
+    const m = new Map<string, CatalogueActivity>();
+    for (const a of catalogue) m.set(a.code, a);
+    return m;
+  }, [catalogue]);
+
   const stopsData = useMemo(() => {
     const list = modules.slice(0, 8);
     return list.map((m, i) => {
       const acts = (rows || []).filter((r) => r.module_number === m.module_number);
       return {
         index: i,
+        // Display ordinal, 1-based. `module_number` stays zero-based.
+        position: i + 1,
         moduleNumber: m.module_number,
-        title: m.title || `Milestone ${m.module_number}`,
+        module: m,
+        title: m.title || `Milestone ${i + 1}`,
         description: m.description || "",
         icon: STOP_ICONS[i] || "flag",
         count: acts.length,
@@ -330,6 +309,7 @@ export function JourneyMap({
       };
     });
   }, [modules, rows]);
+
 
   const { a, b } = useMemo<{ a: Side; b: Side }>(() => {
     const doneFor = (idx: number, key: "own_status" | "partner_status") => {
@@ -381,6 +361,9 @@ export function JourneyMap({
 
   const same = a.cur === b.cur;
   const openStop = open != null ? stopsData[open] : null;
+  const openActivityRow = openActivity
+    ? (rows || []).find((r) => r.code === openActivity) || null
+    : null;
 
   const dotFor = (i: number, side: Side, color: string) =>
     side.done.includes(i) ? color : side.cur === i ? `${color}73` : "#DCD7C8";
@@ -416,7 +399,7 @@ export function JourneyMap({
           viewBox={`0 0 ${vert ? PHONE_W : DESK_W} ${vert ? PHONE_H : DESK_H}`}
           aria-hidden
         >
-          {showTexture && <Terrain vert={vert} />}
+          {showTexture && (vert ? <TerrainPhone /> : <TerrainDesktop />)}
           <path
             d={road(pts, vert)}
             fill="none"
@@ -487,7 +470,7 @@ export function JourneyMap({
               <button
                 type="button"
                 onClick={() => setOpen(i)}
-                aria-label={`${s.title}, milestone ${s.moduleNumber} of ${stopsData.length}`}
+                aria-label={`${s.title}, milestone ${s.position} of ${stopsData.length}`}
                 className="om-stop absolute flex items-center justify-center rounded-full"
                 style={{
                   left: pt.x - 28,
@@ -518,13 +501,16 @@ export function JourneyMap({
                 </span>
               </button>
 
-              {/* Label */}
+              {/* Label. Markers are the higher-priority object, so the label
+                  is pushed clear of the marker band: a partner marker sits
+                  ±44 from the stop centre with a 15px radius, so anything
+                  closer than 68px collides with it. */}
               <div
                 className="pointer-events-none absolute"
                 style={{
-                  left: vert ? (right ? pt.x + 62 : 12) : pt.x - 78,
-                  top: vert ? pt.y - 22 : pt.y < 250 ? pt.y - 86 : pt.y + 34,
-                  width: vert ? (right ? PHONE_W - (pt.x + 62) - 12 : pt.x - 62 - 12) : 156,
+                  left: vert ? (right ? pt.x + 68 : 12) : pt.x - 78,
+                  top: vert ? pt.y - 22 : pt.y < 250 ? pt.y - 120 : pt.y + 72,
+                  width: vert ? (right ? PHONE_W - (pt.x + 68) - 12 : pt.x - 68 - 12) : 156,
                   textAlign: vert ? (right ? "left" : "right") : "center",
                 }}
               >
@@ -664,77 +650,68 @@ export function JourneyMap({
         </div>
       </div>
 
-      {/* Stop panel */}
-      <Dialog open={open != null} onOpenChange={(v) => !v && setOpen(null)}>
-        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
-          {openStop && (
-            <>
-              <DialogHeader>
-                <p className="text-xs text-muted-foreground">
-                  Milestone {openStop.moduleNumber} of {stopsData.length}
-                </p>
-                <DialogTitle>{openStop.title}</DialogTitle>
-              </DialogHeader>
-              {openStop.description && (
-                <p className="text-sm text-muted-foreground">{openStop.description}</p>
-              )}
-              <p className="text-xs text-muted-foreground">
-                {openStop.count} {openStop.count === 1 ? "activity" : "activities"}
-              </p>
+      {/* Milestone briefing — the same dialog Browse uses, plus the activity
+          list, so a milestone looks identical from either route. */}
+      <ModuleBriefingDialog
+        open={open != null}
+        onOpenChange={(v) => !v && setOpen(null)}
+        moduleNumber={openStop ? openStop.position : 1}
+        totalModules={stopsData.length}
+        module={openStop?.module ?? null}
+        activityCount={openStop?.acts.length ?? 0}
+        minutes={minuteRange(openStop?.acts ?? [])}
+        startCode={openStop?.acts.find((r) => r.allowed)?.code ?? null}
+        blockedReason={openStop?.acts.find((r) => !r.allowed && r.reason)?.reason ?? null}
+        onStart={(code) => {
+          setOpen(null);
+          navigate(`/couples/${relationshipId}/activity/${code}`);
+        }}
+        activities={(openStop?.acts ?? []).map((r) => ({
+          id: r.activity_id,
+          code: r.code,
+          title: r.title,
+          allowed: r.allowed,
+          reason: r.reason,
+          own_status: r.own_status,
+          partner_status: r.partner_status,
+        }))}
+        onActivitySelect={(code) => setOpenActivity(code)}
+        onActivityOpen={(code) => {
+          setOpen(null);
+          navigate(`/couples/${relationshipId}/activity/${code}`);
+        }}
+        selfColor={colorA}
+        partnerColor={colorB}
+      />
 
-              <div className="space-y-2">
-                {openStop.acts.map((r, i) => {
-                  const da = isDone(r.own_status);
-                  const db = isDone(r.partner_status);
-                  const ha = !da && isTouched(r.own_status);
-                  const hb = !db && isTouched(r.partner_status);
-                  let status: string;
-                  if (da && db) status = "Both of you have done this";
-                  else if (da) status = `${selfName} done · ${otherName} to come`;
-                  else if (db) status = `${otherName} done · ${selfName} to come`;
-                  else if (!r.allowed && r.reason) status = r.reason;
-                  else status = "To come";
-                  return (
-                    <div
-                      key={r.activity_id}
-                      className="flex items-start justify-between gap-3 rounded-lg border p-3"
-                      style={{ borderColor: da || db || ha || hb ? ROUTE : "#DCD7C8" }}
-                    >
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium">
-                          {i + 1}. {r.title}
-                        </p>
-                        <p className="mt-0.5 text-xs text-muted-foreground">{status}</p>
-                      </div>
-                      <div className="flex shrink-0 items-center gap-2">
-                        <span
-                          className="inline-block h-2.5 w-2.5 rounded-full"
-                          style={{ background: da ? colorA : ha ? `${colorA}73` : "#DCD7C8" }}
-                        />
-                        <span
-                          className="inline-block h-2.5 w-2.5 rounded-full"
-                          style={{ background: db ? colorB : hb ? `${colorB}73` : "#DCD7C8" }}
-                        />
-                        <Button
-                          size="sm"
-                          variant={r.allowed ? "default" : "ghost"}
-                          disabled={!r.allowed}
-                          onClick={() => {
-                            setOpen(null);
-                            navigate(`/couples/${relationshipId}/activity/${r.code}`);
-                          }}
-                        >
-                          Open
-                        </Button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
+      <ActivityBriefingDialog
+        open={openActivity != null}
+        onOpenChange={(v) => !v && setOpenActivity(null)}
+        state={
+          openActivityRow
+            ? {
+                code: openActivityRow.code,
+                title: openActivityRow.title,
+                allowed: openActivityRow.allowed,
+                reason: openActivityRow.reason,
+                own_status: openActivityRow.own_status,
+                partner_status: openActivityRow.partner_status,
+                reveal_pending: openActivityRow.reveal_pending ?? null,
+                est_minutes_low: openActivityRow.est_minutes_low ?? null,
+                est_minutes_high: openActivityRow.est_minutes_high ?? null,
+              }
+            : null
+        }
+        catalogue={openActivity ? catalogueByCode.get(openActivity) || null : null}
+        moduleTitle={openStop?.title ?? null}
+        otherName={otherName}
+        onGo={(code) => {
+          setOpenActivity(null);
+          setOpen(null);
+          navigate(`/couples/${relationshipId}/activity/${code}`);
+        }}
+      />
+
     </div>
   );
 }

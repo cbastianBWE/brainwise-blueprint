@@ -39,6 +39,18 @@ export interface ModuleRow {
   hero_image_url: string | null;
 }
 
+/** A single activity row as shown inside a milestone briefing. */
+export interface MilestoneActivityRow {
+  id: string;
+  code: string;
+  title: string;
+  allowed: boolean;
+  reason: string | null;
+  own_status: string | null;
+  partner_status: string | null;
+}
+
+
 export interface ActivityBriefing {
   description?: string;
   learning_outcomes?: string[];
