@@ -87,6 +87,8 @@ export default function WidgetPreview() {
               couple={couple}
               value={valueFor(step.id!)}
               onChange={setValueFor(step.id!)}
+              sessionId="preview-session"
+              activityCode="preview"
             />
           </Section>
         ))}
@@ -102,6 +104,8 @@ export default function WidgetPreview() {
               couple={couple}
               value={valueFor(step.id!)}
               onChange={setValueFor(step.id!)}
+              sessionId="preview-session"
+              activityCode="preview"
             />
           </Section>
           ),
@@ -117,6 +121,8 @@ export default function WidgetPreview() {
               couple={couple}
               value={valueFor(step.id!)}
               onChange={setValueFor(step.id!)}
+              sessionId="preview-session"
+              activityCode="preview"
             />
           </Section>
         ))}

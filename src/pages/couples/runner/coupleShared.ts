@@ -75,3 +75,12 @@ export function substituteNames(text: string, couple: CoupleContext): string {
     .replace(/\{other_first_name\}/g, couple.otherFirstName)
     .replace(/\{own_first_name\}/g, couple.ownFirstName);
 }
+
+/** The four answer modes a couple field may offer, filtered by what the step declares. */
+export type CoupleMode = "text" | "dictate" | "audio" | "video";
+const ALL_MODES: CoupleMode[] = ["text", "dictate", "audio", "video"];
+export function allowedModes(step: CoupleStep): CoupleMode[] {
+  if (!step.modes || step.modes.length === 0) return ALL_MODES;
+  const picked = ALL_MODES.filter((m) => step.modes!.includes(m));
+  return picked.length > 0 ? picked : ["text"];
+}
