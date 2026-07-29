@@ -37,6 +37,9 @@ const STATUS_LABEL: Record<string, string> = {
   in_progress: "In progress",
   submitted: "Submitted",
   completed: "Completed",
+  // partner_status only ever reaches "done" — submitted and completed are
+  // collapsed there on purpose.
+  done: "Done",
 };
 
 export default function ActivityBriefingDialog({
@@ -130,9 +133,11 @@ export default function ActivityBriefingDialog({
                 <span className="text-muted-foreground">{time}</span>
               </div>
             )}
-            {briefing?.prerequisites && (
+            {/* Static lineage when open; when locked the live LockNotice in
+                the footer answers instead, and never both. */}
+            {briefing?.prerequisites && state.allowed && (
               <div className="flex gap-2">
-                <span className="font-medium text-foreground">Prerequisites</span>
+                <span className="font-medium text-foreground">Builds on</span>
                 <span className="text-muted-foreground">{briefing.prerequisites}</span>
               </div>
             )}

@@ -52,9 +52,12 @@ export interface ModuleBriefingDialogProps {
   partnerColor?: string;
 }
 
-const isDone = (s: string | null | undefined) => s === "completed";
+// Two vocabularies: own_status ends at "completed", partner_status at "done".
+// Never compare one side against the other's words.
+const isOwnDone = (s: string | null | undefined) => s === "completed";
+const isPartnerDone = (s: string | null | undefined) => s === "done";
 const isTouched = (s: string | null | undefined) =>
-  s === "in_progress" || s === "submitted" || s === "completed";
+  s === "in_progress" || s === "submitted" || s === "completed" || s === "done";
 
 export default function ModuleBriefingDialog({
   open,
@@ -137,9 +140,13 @@ export default function ModuleBriefingDialog({
               <span className="font-medium text-foreground">Time</span>
               <span className="text-muted-foreground">{timeLine}</span>
             </div>
-            {module?.prerequisites && (
+            {/* Lineage, not a gate: the static field only shows when the
+                milestone is open. When it is locked the live "Opens once…"
+                sentence in the footer is the accurate answer, and the two
+                are never shown together. */}
+            {module?.prerequisites && startCode && (
               <div className="flex gap-2">
-                <span className="font-medium text-foreground">Prerequisites</span>
+                <span className="font-medium text-foreground">Builds on</span>
                 <span className="text-muted-foreground">{module.prerequisites}</span>
               </div>
             )}
@@ -159,8 +166,8 @@ export default function ModuleBriefingDialog({
             <div className="space-y-2">
               <h3 className="text-sm font-semibold">What's inside</h3>
               {activities.map((r, i) => {
-                const da = isDone(r.own_status);
-                const db = isDone(r.partner_status);
+                const da = isOwnDone(r.own_status);
+                const db = isPartnerDone(r.partner_status);
                 const ha = !da && isTouched(r.own_status);
                 const hb = !db && isTouched(r.partner_status);
                 const verb =
