@@ -24,6 +24,9 @@ export const revealedContext: CoupleContext = {
       time: "Sunday mornings are ours.",
       ownRating: "7",
       readRating: "5",
+      owned_moves: ["I go quiet when it gets hard.", "I fix instead of listening."],
+      share_estimate: "I'd say I'm carrying about 60% of it right now.",
+      summary: "Josh says the honest version is that he's tired, and he wants more slow time together.",
     },
   },
 };
