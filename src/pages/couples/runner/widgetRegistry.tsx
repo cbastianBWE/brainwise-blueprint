@@ -16,6 +16,11 @@ import { PairedQaWidget } from "./widgets/PairedQaWidget";
 import { CoupleAgreementWidget } from "./widgets/CoupleAgreementWidget";
 import { JointSessionWidget } from "./widgets/JointSessionWidget";
 import { StatementSelectWidget } from "./widgets/StatementSelectWidget";
+import { JourneyMapWidget } from "./widgets/JourneyMapWidget";
+import { VisibilityExplainerWidget } from "./widgets/VisibilityExplainerWidget";
+import { GuessLockWidget, type GuessValue } from "./widgets/GuessLockWidget";
+import { ProfileRevealWidget } from "./widgets/ProfileRevealWidget";
+import { SafetyScreenWidget } from "./widgets/SafetyScreenWidget";
 
 import type { CoupleContext, CoupleStep } from "./coupleShared";
 
@@ -29,7 +34,12 @@ export interface WidgetCtx {
   analysisHtml?: string;
   analyzing?: boolean;
   pendingReason?: string;
+  responses?: Record<string, unknown>;
+  readOnly?: boolean;
+  relationshipId?: string;
+  activityId?: string;
 }
+
 
 export type WidgetRenderer = (ctx: WidgetCtx) => JSX.Element | null;
 
@@ -151,6 +161,34 @@ export const widgetRegistry: Record<string, WidgetRenderer> = {
       setCoachingRemaining={() => {}}
     />
   ),
+
+  journey_map: ({ step, value, onChange }) => (
+    <JourneyMapWidget step={step} value={(value as string[]) || []} onChange={(v) => onChange(v)} />
+  ),
+  visibility_explainer: ({ step }) => <VisibilityExplainerWidget step={step} />,
+  guess_lock: ({ step, couple, value, onChange, readOnly }) => (
+    <GuessLockWidget
+      step={step}
+      couple={couple}
+      value={(value as GuessValue) || {}}
+      onChange={(v) => onChange(v)}
+      readOnly={readOnly}
+    />
+  ),
+  profile_reveal: ({ step, couple, responses, analysisHtml }) => (
+    <ProfileRevealWidget step={step} couple={couple} responses={responses || {}} analysisHtml={analysisHtml} />
+  ),
+  safety_screen: ({ step, value, onChange, responses, relationshipId, activityId }) => (
+    <SafetyScreenWidget
+      step={step}
+      value={value}
+      onChange={onChange}
+      responses={responses || {}}
+      relationshipId={relationshipId}
+      activityId={activityId}
+    />
+  ),
+
 
   ai_panel: ({ couple, analysisHtml, analyzing, pendingReason }) => {
     if (pendingReason) {
