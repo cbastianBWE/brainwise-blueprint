@@ -80,6 +80,8 @@ export interface CoupleStep {
 
   // desire_grid
   gridMode?: "affection" | "desire";
+  itemsFrom?: { table?: string; bank?: string; groupBy?: string; groupLabel?: string };
+  buckets?: Array<{ key: string; label: string }>;
   storeTo?: string;
   neverJoined?: boolean;
   runNumber?: number;
