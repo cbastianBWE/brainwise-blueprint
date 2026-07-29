@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { ChatWidget } from "@/pages/coaching/runner/widgets/ChatWidget";
 import type { ChatMsg } from "@/pages/coaching/runner/shared";
 import { widgetRegistry, UnknownWidget } from "./runner/widgetRegistry";
-import { type CoupleContext, type CoupleStep, substituteNames, substituteStep } from "./runner/coupleShared";
+import { type CoupleContext, type CoupleStep, conditionMet, substituteNames, substituteStep } from "./runner/coupleShared";
 
 interface JourneyRow {
   activity_id: string;
@@ -56,22 +56,35 @@ export default function RelationshipActivityRunner() {
     () => (activity?.definition?.steps as CoupleStep[]) || [],
     [activity],
   );
-  const anyTrigger = useMemo(
-    () =>
-      Object.values(responses || {}).some(
-        (v) => !!v && typeof v === "object" && (v as any).triggered === true,
-      ),
-    [responses],
-  );
-  // Conditional steps (safety resource screens) are skipped entirely until routed.
+  // Conditional steps (safety resource / gated screens) are skipped entirely
+  // unless the exact step they name produced the exact flag they require.
   const steps: CoupleStep[] = useMemo(
-    () =>
-      allSteps.filter(
-        (s) => !s.conditionOn || !!(responses as any)?.[s.conditionOn] || anyTrigger,
-      ),
-    [allSteps, responses, anyTrigger],
+    () => allSteps.filter((s) => conditionMet(s, responses)),
+    [allSteps, responses],
   );
   const step = steps[stepIndex];
+
+  // Keep the cursor inside the visible set when a condition changes the list.
+  useEffect(() => {
+    if (steps.length > 0 && stepIndex > steps.length - 1) setStepIndex(steps.length - 1);
+  }, [steps.length, stepIndex]);
+
+  // Silent, computed safety steps render nothing: advance as soon as they resolve.
+  const autoAdvancedRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!step) return;
+    const silent =
+      step.widget === "safety_screen" && !!step.evaluator && !step.intro && !step.itemsSource;
+    if (!silent) return;
+    const key = step.key || step.id || String(stepIndex);
+    const produced = (responses as any)?.[step.selectionKey || step.key || step.id || "value"];
+    if (!produced || typeof produced !== "object") return;
+    if (autoAdvancedRef.current === key) return;
+    autoAdvancedRef.current = key;
+    if (stepIndex < steps.length - 1) setStepIndex((i) => i + 1);
+  }, [step, stepIndex, steps.length, responses]);
+
+
 
 
   // ---- Context assembly (partnerView comes only from the RPC) ----

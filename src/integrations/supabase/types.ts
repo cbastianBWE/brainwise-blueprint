@@ -19901,6 +19901,14 @@ export type Database = {
           reason: string
         }[]
       }
+      relationship_partner_labels: {
+        Args: { p_relationship: string }
+        Returns: {
+          ambiguous: boolean
+          label: string
+          user_id: string
+        }[]
+      }
       relationship_partner_view: {
         Args: { p_activity: string; p_relationship: string; p_run?: number }
         Returns: {
@@ -20018,6 +20026,24 @@ export type Database = {
         Returns: string
       }
       relationship_token_ptp_dimension: {
+        Args: {
+          p_activity: string
+          p_field: string
+          p_relationship: string
+          p_run: number
+        }
+        Returns: string
+      }
+      relationship_token_share_sum: {
+        Args: {
+          p_activity: string
+          p_field: string
+          p_relationship: string
+          p_run: number
+        }
+        Returns: string
+      }
+      relationship_token_weakest_trust_factor: {
         Args: {
           p_activity: string
           p_field: string

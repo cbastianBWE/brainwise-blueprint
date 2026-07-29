@@ -43,19 +43,31 @@ function SilentEvaluator({
     if (done || !step.evaluator || !relationshipId || !activityId) return;
     let cancelled = false;
     (async () => {
-      const { data } = await (supabase as any).rpc(step.evaluator as string, {
-        p_relationship: relationshipId,
-        p_activity: activityId,
-        p_run: null,
-        p_answers: {},
-      });
+      let key = "clear";
+      try {
+        const { data, error } = await (supabase as any).rpc(step.evaluator as string, {
+          p_relationship: relationshipId,
+          p_activity: activityId,
+          p_run: null,
+          p_answers: {},
+        });
+        if (cancelled) return;
+        if (error) throw error;
+        const row = Array.isArray(data) ? data[0] : data;
+        const outcome =
+          typeof row === "string" ? row : (row?.outcome ?? row?.result ?? row?.branch ?? (row?.routed ? "routed" : "clear"));
+        if (typeof outcome === "string") key = outcome;
+      } catch {
+        // Safe default: never route someone to a support screen because a call failed.
+        key = "clear";
+      }
       if (cancelled) return;
-      const row = Array.isArray(data) ? data[0] : data;
-      const outcome =
-        typeof row === "string" ? row : (row?.outcome ?? row?.result ?? row?.branch ?? (row?.routed ? "routed" : "clear"));
-      const key = typeof outcome === "string" ? outcome : "clear";
       const target = (step.branches || {})[key];
-      onChange({ branch: key, target, triggered: key !== "clear" && target !== "coach" && target !== "continue" });
+      onChange({
+        branch: key,
+        target,
+        triggered: key !== "clear" && target !== "coach" && target !== "continue",
+      });
     })();
     return () => {
       cancelled = true;
@@ -105,14 +117,11 @@ export function SafetyScreenWidget({
   }, [mode]);
 
   // ---------- Mode C: resources ----------
+  // Gating lives in the runner: if this step is rendered at all, its condition is met.
   const [resources, setResources] = useState<Array<Record<string, unknown>> | null>(null);
-  const anyTrigger = Object.values(responses || {}).some(
-    (v) => !!v && typeof v === "object" && (v as any).triggered === true,
-  );
-  const conditionMet = mode === "resource" ? !!responses?.[step.conditionOn as string] || anyTrigger : false;
 
   useEffect(() => {
-    if (mode !== "resource" || !conditionMet || !step.resourcesFrom) return;
+    if (mode !== "resource" || !step.resourcesFrom) return;
     let cancelled = false;
     (async () => {
       const { data } = await (supabase as any).rpc(step.resourcesFrom as string, { p_categories: null });
@@ -121,10 +130,9 @@ export function SafetyScreenWidget({
     return () => {
       cancelled = true;
     };
-  }, [mode, conditionMet, step.resourcesFrom]);
+  }, [mode, step.resourcesFrom]);
 
   if (mode === "resource") {
-    if (!conditionMet) return null;
     return (
       <div className="space-y-4">
         {step.intro && <p className="whitespace-pre-line text-sm text-muted-foreground">{step.intro}</p>}
