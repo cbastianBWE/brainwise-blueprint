@@ -52,11 +52,27 @@ export default function RelationshipActivityRunner() {
   const [pendingReason, setPendingReason] = useState<string | undefined>(undefined);
   const [analysisError, setAnalysisError] = useState(false);
 
-  const steps: CoupleStep[] = useMemo(
+  const allSteps: CoupleStep[] = useMemo(
     () => (activity?.definition?.steps as CoupleStep[]) || [],
     [activity],
   );
+  const anyTrigger = useMemo(
+    () =>
+      Object.values(responses || {}).some(
+        (v) => !!v && typeof v === "object" && (v as any).triggered === true,
+      ),
+    [responses],
+  );
+  // Conditional steps (safety resource screens) are skipped entirely until routed.
+  const steps: CoupleStep[] = useMemo(
+    () =>
+      allSteps.filter(
+        (s) => !s.conditionOn || !!(responses as any)?.[s.conditionOn] || anyTrigger,
+      ),
+    [allSteps, responses, anyTrigger],
+  );
   const step = steps[stepIndex];
+
 
   // ---- Context assembly (partnerView comes only from the RPC) ----
   const buildContext = useCallback(
