@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Loader2, Lock, Sparkles } from "lucide-react";
+import { Loader2, Lock, Search, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -13,6 +15,8 @@ import {
 } from "./journey/journeyShared";
 import ModuleBriefingDialog from "./journey/ModuleBriefingDialog";
 import ActivityBriefingDialog from "./journey/ActivityBriefingDialog";
+import { JourneyMap } from "./JourneyMap";
+
 
 interface JourneyRow {
   activity_id: string;
