@@ -27,7 +27,10 @@ interface JourneyRow {
   est_minutes_low: number | null;
   est_minutes_high: number | null;
   allowed: boolean;
+  /** Machine key plus payload. Never rendered. */
   reason: string | null;
+  reason_code: string | null;
+  reason_detail: string[] | null;
   own_status: string | null;
   partner_status: string | null;
   reveal_pending: boolean | null;
