@@ -11,9 +11,12 @@ import { ScoredFactorsWidget } from "@/pages/coaching/runner/widgets/ScoredFacto
 import { TextSelectWidget } from "@/pages/coaching/runner/widgets/TextSelectWidget";
 import { ImageSelectWidget } from "@/pages/coaching/runner/widgets/ImageSelectWidget";
 import { RecapWidget } from "@/pages/coaching/runner/widgets/RecapWidget";
+import { InnerTeamWidget } from "@/pages/coaching/runner/widgets/InnerTeamWidget";
 import { PairedQaWidget } from "./widgets/PairedQaWidget";
 import { CoupleAgreementWidget } from "./widgets/CoupleAgreementWidget";
 import { JointSessionWidget } from "./widgets/JointSessionWidget";
+import { StatementSelectWidget } from "./widgets/StatementSelectWidget";
+
 import type { CoupleContext, CoupleStep } from "./coupleShared";
 
 export interface WidgetCtx {
