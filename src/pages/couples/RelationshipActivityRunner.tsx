@@ -300,7 +300,7 @@ export default function RelationshipActivityRunner() {
           <div className={readOnly ? "pointer-events-none opacity-90" : undefined}>
             {renderer
               ? renderer({
-                  step,
+                  step: localizedStep,
                   couple,
                   value: responses[valueKey],
                   onChange: (next) => setResponses((r) => ({ ...r, [valueKey]: next })),
@@ -344,7 +344,7 @@ export default function RelationshipActivityRunner() {
             </Button>
             <Button onClick={goNext} disabled={submitting}>
               {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-              {stepIndex === steps.length - 1 ? "Finish" : "Next"}
+              {nextLabel}
               {stepIndex < steps.length - 1 && <ArrowRight className="h-4 w-4" />}
             </Button>
           </div>
