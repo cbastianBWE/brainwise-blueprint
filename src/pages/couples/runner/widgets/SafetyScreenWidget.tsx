@@ -62,7 +62,11 @@ export function SafetyScreenWidget({
 
   // ---------- Mode C: resources ----------
   const [resources, setResources] = useState<Array<Record<string, unknown>> | null>(null);
-  const conditionMet = mode === "resource" ? !!responses?.[step.conditionOn as string] : false;
+  const anyTrigger = Object.values(responses || {}).some(
+    (v) => !!v && typeof v === "object" && (v as any).triggered === true,
+  );
+  const conditionMet = mode === "resource" ? !!responses?.[step.conditionOn as string] || anyTrigger : false;
+
   useEffect(() => {
     if (mode !== "resource" || !conditionMet || !step.resourcesFrom) return;
     let cancelled = false;
@@ -117,21 +121,24 @@ export function SafetyScreenWidget({
   }
 
   if (mode === "branch") {
-    // Silent, computed branch: no copy at all.
-    if (!step.intro) return null;
-    const branchKeys = Object.keys(step.branches || {});
-    const picked = typeof value === "string" ? value : undefined;
+    const branches = step.branches || {};
+    const isNeutral = (target: string) => target === "continue" || target === "coach" || target === "clear";
+    // Silent, computed branch: no copy at all — evaluate and move on.
+    if (!step.intro) {
+      return <SilentEvaluator step={step} value={value} onChange={onChange} relationshipId={relationshipId} activityId={activityId} />;
+    }
+    const picked = (value && typeof value === "object" ? (value as any).branch : undefined) as string | undefined;
     return (
       <div className="space-y-4">
         <p className="whitespace-pre-line text-sm text-muted-foreground">{step.intro}</p>
         <div className="flex flex-wrap gap-2">
-          {branchKeys.map((k) => (
+          {Object.keys(branches).map((k) => (
             <Button
               key={k}
               type="button"
               size="sm"
               variant={picked === k ? "default" : "outline"}
-              onClick={() => onChange(k)}
+              onClick={() => onChange({ branch: k, target: branches[k], triggered: !isNeutral(branches[k]) })}
               className="capitalize"
             >
               {k}
@@ -141,6 +148,7 @@ export function SafetyScreenWidget({
       </div>
     );
   }
+
 
   // ---------- Mode A render ----------
   const answers: Answers = value && typeof value === "object" ? (value as Answers) : {};
