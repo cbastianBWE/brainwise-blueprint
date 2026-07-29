@@ -15,6 +15,7 @@ import {
   renderImg,
   type CatalogueActivity,
 } from "./journeyShared";
+import LockNotice from "./LockNotice";
 
 export interface ActivityStateRow {
   code: string;
