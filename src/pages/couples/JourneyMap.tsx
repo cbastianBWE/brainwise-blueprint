@@ -153,26 +153,38 @@ function useFit(base: number) {
   const [scale, setScale] = useState(1);
 
   useLayoutEffect(() => {
+    let raf1 = 0;
+    let raf2 = 0;
     const fit = () => {
       const el = ref.current;
       if (!el) return;
-      const w = el.clientWidth;
+      // Measure the positioned wrapper itself — the absolutely-positioned
+      // canvas is its child, so this is the exact box it may fill.
+      const w = el.getBoundingClientRect().width;
       if (!w) return;
-      // Ceiling raised above the artifact's 1.0: the map should use a large
-      // screen rather than sit at a fixed size. Hysteresis keeps the
-      // ResizeObserver and the scale from feeding each other.
-      const sc = Math.min(1.6, Math.max(0.42, w / base));
-      setScale((prev) => (Math.abs(sc - prev) > 0.004 ? sc : prev));
+      // Floor only. The cap sits far above any normal screen so it can never
+      // clip: 1240 * scale === w exactly below ~1980px.
+      const sc = Math.min(w > 1980 ? w / base : Infinity, Math.max(0.42, w / base));
+      setScale((prev) => (Math.abs(sc - prev) > 0.0005 ? sc : prev));
     };
     fit();
+    // The observed element's own box may not change when only an ancestor's
+    // max-width does, so recompute a frame (and a frame after that) later.
+    raf1 = requestAnimationFrame(() => {
+      fit();
+      raf2 = requestAnimationFrame(fit);
+    });
     let ro: ResizeObserver | null = null;
     if (typeof ResizeObserver !== "undefined" && ref.current) {
       ro = new ResizeObserver(fit);
       ro.observe(ref.current);
+      if (ref.current.parentElement) ro.observe(ref.current.parentElement);
     } else {
       window.addEventListener("resize", fit);
     }
     return () => {
+      cancelAnimationFrame(raf1);
+      cancelAnimationFrame(raf2);
       if (ro) ro.disconnect();
       else window.removeEventListener("resize", fit);
     };
@@ -180,6 +192,7 @@ function useFit(base: number) {
 
   return { ref, scale };
 }
+
 
 /* ------------------------------------------------------------------ *
  * Small pieces
