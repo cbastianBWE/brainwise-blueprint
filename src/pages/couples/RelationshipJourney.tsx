@@ -78,6 +78,8 @@ export default function RelationshipJourney() {
   const [submittedQuery, setSubmittedQuery] = useState("");
   const [searchResults, setSearchResults] = useState<SearchResult[] | null>(null);
   const [searching, setSearching] = useState(false);
+  // Bumped by Retry. Re-runs the load without a full page reload.
+  const [reloadKey, setReloadKey] = useState(0);
 
   // Debounced semantic search via edge function. No client-side fallback:
   // a silent downgrade to substring matching reads as a broken search.
@@ -120,6 +122,8 @@ export default function RelationshipJourney() {
   useEffect(() => {
     if (!relationshipId) return;
     let cancelled = false;
+    setError(null);
+    setRows(null);
     (async () => {
       const [state, names, mods, acts] = await Promise.all([
         supabase.rpc("relationship_journey_state", { p_relationship: relationshipId }),
@@ -160,7 +164,7 @@ export default function RelationshipJourney() {
     return () => {
       cancelled = true;
     };
-  }, [relationshipId]);
+  }, [relationshipId, reloadKey]);
 
   const catalogueByCode = useMemo(() => {
     const m = new Map<string, CatalogueActivity>();
@@ -174,6 +178,24 @@ export default function RelationshipJourney() {
     return m;
   }, [modules]);
 
+  // The error state is checked before the loading state: a failed call leaves
+  // rows empty, and an empty page must never read as "still loading".
+  if (error) {
+    return (
+      <div className="mx-auto max-w-2xl p-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">We couldn't load your journey</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground">{error}</p>
+            <Button onClick={() => setReloadKey((k) => k + 1)}>Try again</Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   if (!rows) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -182,13 +204,27 @@ export default function RelationshipJourney() {
     );
   }
 
-  if (error) {
+  if (rows.length === 0) {
     return (
-      <div className="mx-auto max-w-3xl p-6">
-        <p className="text-sm text-muted-foreground">{error}</p>
+      <div className="mx-auto max-w-2xl p-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Nothing here yet</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              There are no activities on your journey right now. If you were expecting some, try
+              again in a moment.
+            </p>
+            <Button variant="outline" onClick={() => setReloadKey((k) => k + 1)}>
+              Try again
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
+
 
   const moduleNumbers = Array.from(new Set(rows.map((r) => r.module_number)));
   const go = (code: string) => navigate(`/couples/${relationshipId}/activity/${code}`);
