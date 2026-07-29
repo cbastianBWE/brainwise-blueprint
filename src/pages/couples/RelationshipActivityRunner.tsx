@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { ChatWidget } from "@/pages/coaching/runner/widgets/ChatWidget";
 import type { ChatMsg } from "@/pages/coaching/runner/shared";
 import { widgetRegistry, UnknownWidget } from "./runner/widgetRegistry";
-import { type CoupleContext, type CoupleStep, substituteNames, substituteStep } from "./runner/coupleShared";
+import { type CoupleContext, type CoupleStep, conditionMet, substituteNames, substituteStep } from "./runner/coupleShared";
 
 interface JourneyRow {
   activity_id: string;
