@@ -11936,6 +11936,54 @@ export type Database = {
           },
         ]
       }
+      relationship_desire_vocabulary: {
+        Row: {
+          active: boolean
+          applies_to_composition: string | null
+          bank: string
+          category: string
+          category_label: string | null
+          created_at: string
+          helper: string | null
+          id: string
+          image_path: string | null
+          item_key: string
+          label: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          applies_to_composition?: string | null
+          bank?: string
+          category: string
+          category_label?: string | null
+          created_at?: string
+          helper?: string | null
+          id?: string
+          image_path?: string | null
+          item_key: string
+          label: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          applies_to_composition?: string | null
+          bank?: string
+          category?: string
+          category_label?: string | null
+          created_at?: string
+          helper?: string | null
+          id?: string
+          image_path?: string | null
+          item_key?: string
+          label?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       relationship_profile: {
         Row: {
           last_session_id: string | null
