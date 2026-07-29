@@ -6415,6 +6415,76 @@ export type Database = {
           },
         ]
       }
+      in_relationship_profile: {
+        Row: {
+          last_session_id: string | null
+          profile: Json
+          relationship_id: string
+          run_number: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          last_session_id?: string | null
+          profile?: Json
+          relationship_id: string
+          run_number?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          last_session_id?: string | null
+          profile?: Json
+          relationship_id?: string
+          run_number?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "in_relationship_profile_last_session_id_fkey"
+            columns: ["last_session_id"]
+            isOneToOne: false
+            referencedRelation: "relationship_activity_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "in_relationship_profile_relationship_id_fkey"
+            columns: ["relationship_id"]
+            isOneToOne: false
+            referencedRelation: "relationships"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "in_relationship_profile_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "in_relationship_profile_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "in_relationship_profile_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "in_relationship_profile_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       instruments: {
         Row: {
           created_at: string
@@ -11241,6 +11311,1375 @@ export type Database = {
           },
         ]
       }
+      relationship_activities: {
+        Row: {
+          area_code: string
+          barrier_blocks: string
+          barrier_mode: string
+          code: string
+          created_at: string
+          definition: Json
+          est_minutes_high: number | null
+          est_minutes_low: number | null
+          hero_image_url: string | null
+          id: string
+          module_number: number | null
+          partner_mode: string
+          practitioner_gated: boolean
+          practitioner_visibility: string
+          prerequisite_codes: string[]
+          repeatable: boolean
+          requires_double_consent: boolean
+          romantic_disclaimer: boolean
+          sequence: number
+          solo_unlock_eligible: boolean
+          status: string
+          title: string
+          updated_at: string
+          version: number
+          visibility_mode: string
+          writes_in_relationship_profile: boolean
+          writes_relationship_profile: boolean
+        }
+        Insert: {
+          area_code: string
+          barrier_blocks?: string
+          barrier_mode?: string
+          code: string
+          created_at?: string
+          definition?: Json
+          est_minutes_high?: number | null
+          est_minutes_low?: number | null
+          hero_image_url?: string | null
+          id?: string
+          module_number?: number | null
+          partner_mode?: string
+          practitioner_gated?: boolean
+          practitioner_visibility?: string
+          prerequisite_codes?: string[]
+          repeatable?: boolean
+          requires_double_consent?: boolean
+          romantic_disclaimer?: boolean
+          sequence: number
+          solo_unlock_eligible?: boolean
+          status?: string
+          title: string
+          updated_at?: string
+          version?: number
+          visibility_mode: string
+          writes_in_relationship_profile?: boolean
+          writes_relationship_profile?: boolean
+        }
+        Update: {
+          area_code?: string
+          barrier_blocks?: string
+          barrier_mode?: string
+          code?: string
+          created_at?: string
+          definition?: Json
+          est_minutes_high?: number | null
+          est_minutes_low?: number | null
+          hero_image_url?: string | null
+          id?: string
+          module_number?: number | null
+          partner_mode?: string
+          practitioner_gated?: boolean
+          practitioner_visibility?: string
+          prerequisite_codes?: string[]
+          repeatable?: boolean
+          requires_double_consent?: boolean
+          romantic_disclaimer?: boolean
+          sequence?: number
+          solo_unlock_eligible?: boolean
+          status?: string
+          title?: string
+          updated_at?: string
+          version?: number
+          visibility_mode?: string
+          writes_in_relationship_profile?: boolean
+          writes_relationship_profile?: boolean
+        }
+        Relationships: []
+      }
+      relationship_activity_artifacts: {
+        Row: {
+          activity_id: string
+          claimed_at: string
+          claimed_by: string | null
+          created_at: string
+          error: string | null
+          generated_at: string | null
+          html: string | null
+          id: string
+          model: string | null
+          relationship_id: string
+          run_number: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          activity_id: string
+          claimed_at?: string
+          claimed_by?: string | null
+          created_at?: string
+          error?: string | null
+          generated_at?: string | null
+          html?: string | null
+          id?: string
+          model?: string | null
+          relationship_id: string
+          run_number?: number
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          activity_id?: string
+          claimed_at?: string
+          claimed_by?: string | null
+          created_at?: string
+          error?: string | null
+          generated_at?: string | null
+          html?: string | null
+          id?: string
+          model?: string | null
+          relationship_id?: string
+          run_number?: number
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "relationship_activity_artifacts_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "relationship_activities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "relationship_activity_artifacts_relationship_id_fkey"
+            columns: ["relationship_id"]
+            isOneToOne: false
+            referencedRelation: "relationships"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      relationship_activity_consent: {
+        Row: {
+          activity_id: string
+          consented_at: string
+          id: string
+          relationship_id: string
+          revoked_at: string | null
+          run_number: number
+          user_id: string
+        }
+        Insert: {
+          activity_id: string
+          consented_at?: string
+          id?: string
+          relationship_id: string
+          revoked_at?: string | null
+          run_number?: number
+          user_id: string
+        }
+        Update: {
+          activity_id?: string
+          consented_at?: string
+          id?: string
+          relationship_id?: string
+          revoked_at?: string | null
+          run_number?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "relationship_activity_consent_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "relationship_activities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "relationship_activity_consent_relationship_id_fkey"
+            columns: ["relationship_id"]
+            isOneToOne: false
+            referencedRelation: "relationships"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "relationship_activity_consent_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "relationship_activity_consent_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "relationship_activity_consent_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "relationship_activity_consent_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      relationship_activity_sessions: {
+        Row: {
+          activity_id: string
+          closed_without_reveal: boolean
+          completed_at: string | null
+          context_snapshot: Json | null
+          created_at: string
+          current_step: number
+          id: string
+          locked_at: string | null
+          parent_session_id: string | null
+          relationship_id: string
+          responses: Json
+          reveal_consumed_at: string | null
+          run_number: number
+          status: string
+          submitted_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          activity_id: string
+          closed_without_reveal?: boolean
+          completed_at?: string | null
+          context_snapshot?: Json | null
+          created_at?: string
+          current_step?: number
+          id?: string
+          locked_at?: string | null
+          parent_session_id?: string | null
+          relationship_id: string
+          responses?: Json
+          reveal_consumed_at?: string | null
+          run_number?: number
+          status?: string
+          submitted_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          activity_id?: string
+          closed_without_reveal?: boolean
+          completed_at?: string | null
+          context_snapshot?: Json | null
+          created_at?: string
+          current_step?: number
+          id?: string
+          locked_at?: string | null
+          parent_session_id?: string | null
+          relationship_id?: string
+          responses?: Json
+          reveal_consumed_at?: string | null
+          run_number?: number
+          status?: string
+          submitted_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "relationship_activity_sessions_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "relationship_activities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "relationship_activity_sessions_parent_session_id_fkey"
+            columns: ["parent_session_id"]
+            isOneToOne: false
+            referencedRelation: "relationship_activity_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "relationship_activity_sessions_relationship_id_fkey"
+            columns: ["relationship_id"]
+            isOneToOne: false
+            referencedRelation: "relationships"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "relationship_activity_sessions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "relationship_activity_sessions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "relationship_activity_sessions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "relationship_activity_sessions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      relationship_activity_state: {
+        Row: {
+          activity_id: string
+          barrier_cleared_at: string | null
+          created_at: string
+          first_lock_at: string | null
+          id: string
+          last_nudge_at: string | null
+          nudge_count: number
+          relationship_id: string
+          run_number: number
+          solo_unlock_available_at: string | null
+          solo_unlocked_at: string | null
+          solo_unlocked_for: string | null
+          updated_at: string
+          user_one_locked_at: string | null
+          user_two_locked_at: string | null
+        }
+        Insert: {
+          activity_id: string
+          barrier_cleared_at?: string | null
+          created_at?: string
+          first_lock_at?: string | null
+          id?: string
+          last_nudge_at?: string | null
+          nudge_count?: number
+          relationship_id: string
+          run_number?: number
+          solo_unlock_available_at?: string | null
+          solo_unlocked_at?: string | null
+          solo_unlocked_for?: string | null
+          updated_at?: string
+          user_one_locked_at?: string | null
+          user_two_locked_at?: string | null
+        }
+        Update: {
+          activity_id?: string
+          barrier_cleared_at?: string | null
+          created_at?: string
+          first_lock_at?: string | null
+          id?: string
+          last_nudge_at?: string | null
+          nudge_count?: number
+          relationship_id?: string
+          run_number?: number
+          solo_unlock_available_at?: string | null
+          solo_unlocked_at?: string | null
+          solo_unlocked_for?: string | null
+          updated_at?: string
+          user_one_locked_at?: string | null
+          user_two_locked_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "relationship_activity_state_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "relationship_activities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "relationship_activity_state_relationship_id_fkey"
+            columns: ["relationship_id"]
+            isOneToOne: false
+            referencedRelation: "relationships"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "relationship_activity_state_solo_unlocked_for_fkey"
+            columns: ["solo_unlocked_for"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "relationship_activity_state_solo_unlocked_for_fkey"
+            columns: ["solo_unlocked_for"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "relationship_activity_state_solo_unlocked_for_fkey"
+            columns: ["solo_unlocked_for"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "relationship_activity_state_solo_unlocked_for_fkey"
+            columns: ["solo_unlocked_for"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      relationship_ai_usage: {
+        Row: {
+          activity_id: string | null
+          created_at: string
+          id: string
+          input_tokens: number | null
+          kind: string
+          output_tokens: number | null
+          relationship_id: string
+          run_number: number
+          user_id: string
+        }
+        Insert: {
+          activity_id?: string | null
+          created_at?: string
+          id?: string
+          input_tokens?: number | null
+          kind: string
+          output_tokens?: number | null
+          relationship_id: string
+          run_number?: number
+          user_id: string
+        }
+        Update: {
+          activity_id?: string | null
+          created_at?: string
+          id?: string
+          input_tokens?: number | null
+          kind?: string
+          output_tokens?: number | null
+          relationship_id?: string
+          run_number?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "relationship_ai_usage_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "relationship_activities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "relationship_ai_usage_relationship_id_fkey"
+            columns: ["relationship_id"]
+            isOneToOne: false
+            referencedRelation: "relationships"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "relationship_ai_usage_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "relationship_ai_usage_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "relationship_ai_usage_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "relationship_ai_usage_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      relationship_config: {
+        Row: {
+          description: string
+          key: string
+          updated_at: string
+          value: Json
+        }
+        Insert: {
+          description: string
+          key: string
+          updated_at?: string
+          value: Json
+        }
+        Update: {
+          description?: string
+          key?: string
+          updated_at?: string
+          value?: Json
+        }
+        Relationships: []
+      }
+      relationship_desire_picks: {
+        Row: {
+          activity_id: string
+          created_at: string
+          grid_mode: string
+          id: string
+          locked_at: string | null
+          picks: Json
+          relationship_id: string
+          run_number: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          activity_id: string
+          created_at?: string
+          grid_mode: string
+          id?: string
+          locked_at?: string | null
+          picks?: Json
+          relationship_id: string
+          run_number?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          activity_id?: string
+          created_at?: string
+          grid_mode?: string
+          id?: string
+          locked_at?: string | null
+          picks?: Json
+          relationship_id?: string
+          run_number?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "relationship_desire_picks_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "relationship_activities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "relationship_desire_picks_relationship_id_fkey"
+            columns: ["relationship_id"]
+            isOneToOne: false
+            referencedRelation: "relationships"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "relationship_desire_picks_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "relationship_desire_picks_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "relationship_desire_picks_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "relationship_desire_picks_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      relationship_profile: {
+        Row: {
+          last_session_id: string | null
+          profile: Json
+          relationship_id: string
+          run_number: number
+          updated_at: string
+        }
+        Insert: {
+          last_session_id?: string | null
+          profile?: Json
+          relationship_id: string
+          run_number?: number
+          updated_at?: string
+        }
+        Update: {
+          last_session_id?: string | null
+          profile?: Json
+          relationship_id?: string
+          run_number?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "relationship_profile_last_session_id_fkey"
+            columns: ["last_session_id"]
+            isOneToOne: false
+            referencedRelation: "relationship_activity_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "relationship_profile_relationship_id_fkey"
+            columns: ["relationship_id"]
+            isOneToOne: false
+            referencedRelation: "relationships"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      relationship_safety_alerts: {
+        Row: {
+          acknowledged_at: string | null
+          acknowledged_by: string | null
+          categories: string[]
+          created_at: string
+          id: string
+          recipient_role: string
+          recipient_user_id: string
+          relationship_id: string
+          subject_user_id: string
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          categories?: string[]
+          created_at?: string
+          id?: string
+          recipient_role: string
+          recipient_user_id: string
+          relationship_id: string
+          subject_user_id: string
+        }
+        Update: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          categories?: string[]
+          created_at?: string
+          id?: string
+          recipient_role?: string
+          recipient_user_id?: string
+          relationship_id?: string
+          subject_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "relationship_safety_alerts_acknowledged_by_fkey"
+            columns: ["acknowledged_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "relationship_safety_alerts_acknowledged_by_fkey"
+            columns: ["acknowledged_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "relationship_safety_alerts_acknowledged_by_fkey"
+            columns: ["acknowledged_by"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "relationship_safety_alerts_acknowledged_by_fkey"
+            columns: ["acknowledged_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "relationship_safety_alerts_recipient_user_id_fkey"
+            columns: ["recipient_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "relationship_safety_alerts_recipient_user_id_fkey"
+            columns: ["recipient_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "relationship_safety_alerts_recipient_user_id_fkey"
+            columns: ["recipient_user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "relationship_safety_alerts_recipient_user_id_fkey"
+            columns: ["recipient_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "relationship_safety_alerts_relationship_id_fkey"
+            columns: ["relationship_id"]
+            isOneToOne: false
+            referencedRelation: "relationships"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "relationship_safety_alerts_subject_user_id_fkey"
+            columns: ["subject_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "relationship_safety_alerts_subject_user_id_fkey"
+            columns: ["subject_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "relationship_safety_alerts_subject_user_id_fkey"
+            columns: ["subject_user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "relationship_safety_alerts_subject_user_id_fkey"
+            columns: ["subject_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      relationship_safety_responses: {
+        Row: {
+          answers: Json
+          concern: boolean
+          concern_categories: string[]
+          disclosure_text: string | null
+          evaluated_at: string
+          id: string
+          items_version: number
+          relationship_id: string
+          resolved_at: string | null
+          run_number: number
+          user_id: string
+        }
+        Insert: {
+          answers: Json
+          concern: boolean
+          concern_categories?: string[]
+          disclosure_text?: string | null
+          evaluated_at?: string
+          id?: string
+          items_version: number
+          relationship_id: string
+          resolved_at?: string | null
+          run_number?: number
+          user_id: string
+        }
+        Update: {
+          answers?: Json
+          concern?: boolean
+          concern_categories?: string[]
+          disclosure_text?: string | null
+          evaluated_at?: string
+          id?: string
+          items_version?: number
+          relationship_id?: string
+          resolved_at?: string | null
+          run_number?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "relationship_safety_responses_relationship_id_fkey"
+            columns: ["relationship_id"]
+            isOneToOne: false
+            referencedRelation: "relationships"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "relationship_safety_responses_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "relationship_safety_responses_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "relationship_safety_responses_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "relationship_safety_responses_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      relationship_safety_screen_items: {
+        Row: {
+          category: string | null
+          concern_at: Json
+          created_at: string
+          id: string
+          is_active: boolean
+          item_key: string
+          item_type: string
+          options: Json
+          prompt: string
+          sort_order: number
+          version: number
+        }
+        Insert: {
+          category?: string | null
+          concern_at?: Json
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          item_key: string
+          item_type: string
+          options?: Json
+          prompt: string
+          sort_order: number
+          version: number
+        }
+        Update: {
+          category?: string | null
+          concern_at?: Json
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          item_key?: string
+          item_type?: string
+          options?: Json
+          prompt?: string
+          sort_order?: number
+          version?: number
+        }
+        Relationships: []
+      }
+      relationship_signals: {
+        Row: {
+          activity_id: string | null
+          captured_at: string
+          id: string
+          is_baseline: boolean
+          meta: Json
+          rater_user_id: string | null
+          relationship_id: string
+          run_number: number
+          signal_key: string
+          subject_user_id: string
+          value_numeric: number | null
+          value_text: string | null
+        }
+        Insert: {
+          activity_id?: string | null
+          captured_at?: string
+          id?: string
+          is_baseline?: boolean
+          meta?: Json
+          rater_user_id?: string | null
+          relationship_id: string
+          run_number?: number
+          signal_key: string
+          subject_user_id: string
+          value_numeric?: number | null
+          value_text?: string | null
+        }
+        Update: {
+          activity_id?: string | null
+          captured_at?: string
+          id?: string
+          is_baseline?: boolean
+          meta?: Json
+          rater_user_id?: string | null
+          relationship_id?: string
+          run_number?: number
+          signal_key?: string
+          subject_user_id?: string
+          value_numeric?: number | null
+          value_text?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "relationship_signals_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "relationship_activities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "relationship_signals_rater_user_id_fkey"
+            columns: ["rater_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "relationship_signals_rater_user_id_fkey"
+            columns: ["rater_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "relationship_signals_rater_user_id_fkey"
+            columns: ["rater_user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "relationship_signals_rater_user_id_fkey"
+            columns: ["rater_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "relationship_signals_relationship_id_fkey"
+            columns: ["relationship_id"]
+            isOneToOne: false
+            referencedRelation: "relationships"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "relationship_signals_subject_user_id_fkey"
+            columns: ["subject_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "relationship_signals_subject_user_id_fkey"
+            columns: ["subject_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "relationship_signals_subject_user_id_fkey"
+            columns: ["subject_user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "relationship_signals_subject_user_id_fkey"
+            columns: ["subject_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      relationship_substance_keywords: {
+        Row: {
+          category: string
+          id: string
+          is_active: boolean
+          keyword: string
+          version: number
+        }
+        Insert: {
+          category: string
+          id?: string
+          is_active?: boolean
+          keyword: string
+          version: number
+        }
+        Update: {
+          category?: string
+          id?: string
+          is_active?: boolean
+          keyword?: string
+          version?: number
+        }
+        Relationships: []
+      }
+      relationship_substance_resources: {
+        Row: {
+          category: string
+          detail: string | null
+          id: string
+          is_active: boolean
+          label: string
+          region: string
+          sort_order: number
+          url: string | null
+          version: number
+        }
+        Insert: {
+          category: string
+          detail?: string | null
+          id?: string
+          is_active?: boolean
+          label: string
+          region?: string
+          sort_order?: number
+          url?: string | null
+          version: number
+        }
+        Update: {
+          category?: string
+          detail?: string | null
+          id?: string
+          is_active?: boolean
+          label?: string
+          region?: string
+          sort_order?: number
+          url?: string | null
+          version?: number
+        }
+        Relationships: []
+      }
+      relationship_substance_responses: {
+        Row: {
+          activity_id: string
+          answers: Json
+          categories: string[]
+          created_at: string
+          id: string
+          relationship_id: string
+          routed: boolean
+          run_number: number
+          user_id: string
+          version: number
+        }
+        Insert: {
+          activity_id: string
+          answers: Json
+          categories?: string[]
+          created_at?: string
+          id?: string
+          relationship_id: string
+          routed?: boolean
+          run_number?: number
+          user_id: string
+          version: number
+        }
+        Update: {
+          activity_id?: string
+          answers?: Json
+          categories?: string[]
+          created_at?: string
+          id?: string
+          relationship_id?: string
+          routed?: boolean
+          run_number?: number
+          user_id?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "relationship_substance_responses_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "relationship_activities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "relationship_substance_responses_relationship_id_fkey"
+            columns: ["relationship_id"]
+            isOneToOne: false
+            referencedRelation: "relationships"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      relationship_substance_screen_items: {
+        Row: {
+          category: string | null
+          concern_at: Json | null
+          created_at: string
+          id: string
+          is_active: boolean
+          item_key: string
+          item_type: string
+          options: Json | null
+          prompt: string
+          sort_order: number
+          version: number
+        }
+        Insert: {
+          category?: string | null
+          concern_at?: Json | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          item_key: string
+          item_type: string
+          options?: Json | null
+          prompt: string
+          sort_order: number
+          version: number
+        }
+        Update: {
+          category?: string | null
+          concern_at?: Json | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          item_key?: string
+          item_type?: string
+          options?: Json | null
+          prompt?: string
+          sort_order?: number
+          version?: number
+        }
+        Relationships: []
+      }
+      relationships: {
+        Row: {
+          ai_allowance: number
+          chosen_focus_areas: string[]
+          couple_composition: string | null
+          created_at: string
+          created_by: string
+          current_paired_profile_id: string | null
+          ended_at: string | null
+          id: string
+          pacing_ceiling_module: number | null
+          pacing_set_at: string | null
+          pacing_set_by: string | null
+          run_number: number
+          session_cadence_days: number | null
+          started_at: string | null
+          status: string
+          updated_at: string
+          user_one_declined_at: string | null
+          user_one_id: string
+          user_one_joined_at: string | null
+          user_two_declined_at: string | null
+          user_two_id: string
+          user_two_joined_at: string | null
+        }
+        Insert: {
+          ai_allowance?: number
+          chosen_focus_areas?: string[]
+          couple_composition?: string | null
+          created_at?: string
+          created_by: string
+          current_paired_profile_id?: string | null
+          ended_at?: string | null
+          id?: string
+          pacing_ceiling_module?: number | null
+          pacing_set_at?: string | null
+          pacing_set_by?: string | null
+          run_number?: number
+          session_cadence_days?: number | null
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+          user_one_declined_at?: string | null
+          user_one_id: string
+          user_one_joined_at?: string | null
+          user_two_declined_at?: string | null
+          user_two_id: string
+          user_two_joined_at?: string | null
+        }
+        Update: {
+          ai_allowance?: number
+          chosen_focus_areas?: string[]
+          couple_composition?: string | null
+          created_at?: string
+          created_by?: string
+          current_paired_profile_id?: string | null
+          ended_at?: string | null
+          id?: string
+          pacing_ceiling_module?: number | null
+          pacing_set_at?: string | null
+          pacing_set_by?: string | null
+          run_number?: number
+          session_cadence_days?: number | null
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+          user_one_declined_at?: string | null
+          user_one_id?: string
+          user_one_joined_at?: string | null
+          user_two_declined_at?: string | null
+          user_two_id?: string
+          user_two_joined_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "relationships_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "relationships_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "relationships_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "relationships_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "relationships_current_paired_profile_id_fkey"
+            columns: ["current_paired_profile_id"]
+            isOneToOne: false
+            referencedRelation: "paired_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "relationships_pacing_set_by_fkey"
+            columns: ["pacing_set_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "relationships_pacing_set_by_fkey"
+            columns: ["pacing_set_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "relationships_pacing_set_by_fkey"
+            columns: ["pacing_set_by"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "relationships_pacing_set_by_fkey"
+            columns: ["pacing_set_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "relationships_user_one_id_fkey"
+            columns: ["user_one_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "relationships_user_one_id_fkey"
+            columns: ["user_one_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "relationships_user_one_id_fkey"
+            columns: ["user_one_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "relationships_user_one_id_fkey"
+            columns: ["user_one_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "relationships_user_two_id_fkey"
+            columns: ["user_two_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "relationships_user_two_id_fkey"
+            columns: ["user_two_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "relationships_user_two_id_fkey"
+            columns: ["user_two_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "relationships_user_two_id_fkey"
+            columns: ["user_two_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       report_access_grants: {
         Row: {
           coach_user_id: string
@@ -15325,6 +16764,10 @@ export type Database = {
         Args: { p_result_id: string }
         Returns: boolean
       }
+      bw_can_read_relationship: {
+        Args: { p_relationship: string }
+        Returns: boolean
+      }
       bw_can_read_team_profile: {
         Args: { p_profile: string }
         Returns: boolean
@@ -15367,6 +16810,14 @@ export type Database = {
         Returns: boolean
       }
       bw_has_shared_credit: { Args: { p_user: string }; Returns: boolean }
+      bw_is_relationship_member: {
+        Args: { p_relationship: string; p_user?: string }
+        Returns: boolean
+      }
+      bw_is_relationship_practitioner: {
+        Args: { p_relationship: string; p_user?: string }
+        Returns: boolean
+      }
       bw_is_team_leader_of: { Args: { p_member: string }; Returns: boolean }
       bw_list_my_report_orders: {
         Args: never
@@ -15441,6 +16892,14 @@ export type Database = {
       }
       bw_product_opened_at: {
         Args: { p_tier: string; p_user: string }
+        Returns: string
+      }
+      bw_relationship_pair_role: {
+        Args: { p_relationship: string; p_user?: string }
+        Returns: string
+      }
+      bw_relationship_partner: {
+        Args: { p_relationship: string; p_user?: string }
         Returns: string
       }
       bw_resolve_price_entitlement: {
@@ -17084,18 +18543,34 @@ export type Database = {
         }[]
       }
       ops_apollo_period_start: { Args: never; Returns: string }
-      ops_apollo_record_enrichment: {
-        Args: {
-          p_apollo_org_id: string
-          p_domain: string
-          p_email: string
-          p_error?: string
-          p_id: string
-          p_last_name: string
-          p_linkedin: string
-        }
-        Returns: string
-      }
+      ops_apollo_record_enrichment:
+        | {
+            Args: {
+              p_apollo_org_id: string
+              p_domain: string
+              p_email: string
+              p_error?: string
+              p_id: string
+              p_last_name: string
+              p_linkedin: string
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              p_apollo_org_id: string
+              p_city?: string
+              p_country?: string
+              p_domain: string
+              p_email: string
+              p_error?: string
+              p_id: string
+              p_last_name: string
+              p_linkedin: string
+              p_state?: string
+            }
+            Returns: string
+          }
       ops_apollo_spend_credits: {
         Args: {
           p_discovered_id?: string
@@ -17140,6 +18615,17 @@ export type Database = {
         Returns: Json
       }
       ops_clone_invoice: { Args: { p_id: string }; Returns: string }
+      ops_composition_candidates: {
+        Args: { p_limit?: number; p_org_id: string }
+        Returns: {
+          company: string
+          facts: Json
+          first_name: string
+          lead_id: string
+          pool: string
+          title: string
+        }[]
+      }
       ops_convert_estimate_to_invoice: {
         Args: { p_estimate: string }
         Returns: string
@@ -17311,16 +18797,23 @@ export type Database = {
         }[]
       }
       ops_due_outreach_sends: {
-        Args: { p_limit?: number; p_org_id: string; p_pool?: string }
+        Args: {
+          p_ignore_window?: boolean
+          p_limit?: number
+          p_org_id: string
+          p_pool?: string
+        }
         Returns: {
           body: string
           company: string
           enrollment_id: string
           first_name: string
           lead_id: string
+          personal: string
           step_number: number
           subject: string
           to_email: string
+          tz: string
         }[]
       }
       ops_due_payment_reminders: { Args: never; Returns: Json }
@@ -17338,6 +18831,22 @@ export type Database = {
       ops_entity_timeline: {
         Args: { p_entity_id: string; p_entity_type: string; p_limit?: number }
         Returns: Json
+      }
+      ops_evidence_is_grounded: {
+        Args: { p_evidence: string; p_page_text: string; p_search_text: string }
+        Returns: boolean
+      }
+      ops_extraction_candidates: {
+        Args: { p_limit?: number; p_org_id: string }
+        Returns: {
+          company: string
+          first_name: string
+          lead_id: string
+          page_text: string
+          pool: string
+          search_text: string
+          title: string
+        }[]
       }
       ops_flag_overdue_invoices: { Args: never; Returns: number }
       ops_get_estimate_send_bundle: {
@@ -17410,10 +18919,12 @@ export type Database = {
         Args: { p_mode?: string; p_on_conflict?: string; p_rows: Json }
         Returns: Json
       }
+      ops_in_send_window: { Args: { p_timezone: string }; Returns: boolean }
       ops_ingest_captured_lead: {
         Args: { p_ip: string; p_payload: Json; p_webhook: string }
         Returns: Json
       }
+      ops_is_boilerplate: { Args: { p_quote: string }; Returns: boolean }
       ops_lead_pool_counts: {
         Args: { p_org_id?: string }
         Returns: {
@@ -17421,6 +18932,17 @@ export type Database = {
           pool: string
           total: number
           untouched: number
+        }[]
+      }
+      ops_lead_search_candidates: {
+        Args: { p_limit?: number; p_org_id: string }
+        Returns: {
+          company: string
+          first_name: string
+          last_name: string
+          lead_id: string
+          pool: string
+          title: string
         }[]
       }
       ops_list_activity: {
@@ -17490,6 +19012,10 @@ export type Database = {
           p_webhook: string
         }
         Returns: undefined
+      }
+      ops_looks_like_autoreply: {
+        Args: { p_preview: string; p_subject: string }
+        Returns: boolean
       }
       ops_mark_invoice_sent: {
         Args: { p_invoice: string; p_org: string }
@@ -17561,6 +19087,39 @@ export type Database = {
           signature: string
         }[]
       }
+      ops_personalization_candidates: {
+        Args: { p_limit?: number; p_org_id: string }
+        Returns: {
+          company: string
+          first_name: string
+          lead_id: string
+          page_text: string
+          pool: string
+          search_text: string
+          title: string
+        }[]
+      }
+      ops_personalization_is_safe: {
+        Args: { p_first_name: string; p_text: string }
+        Returns: boolean
+      }
+      ops_personalization_reject_reason: {
+        Args: { p_first_name: string; p_text: string }
+        Returns: string
+      }
+      ops_personalization_review_candidates: {
+        Args: { p_limit?: number; p_org_id: string }
+        Returns: {
+          company: string
+          first_name: string
+          lead_id: string
+          line: string
+          page_text: string
+          pool: string
+          search_text: string
+          title: string
+        }[]
+      }
       ops_promote_discovered_to_leads: {
         Args: {
           p_limit?: number
@@ -17612,6 +19171,23 @@ export type Database = {
         }
         Returns: boolean
       }
+      ops_record_lead_facts: {
+        Args: { p_facts: Json; p_lead_id: string; p_org_id: string }
+        Returns: {
+          boilerplate: number
+          stored: number
+          ungrounded: number
+        }[]
+      }
+      ops_record_lead_search: {
+        Args: {
+          p_error?: string
+          p_lead_id: string
+          p_org_id: string
+          p_search_text: string
+        }
+        Returns: string
+      }
       ops_record_meeting_reminder_sent: {
         Args: {
           p_activity: string
@@ -17621,16 +19197,29 @@ export type Database = {
         }
         Returns: boolean
       }
-      ops_record_outreach_reply: {
-        Args: {
-          p_conversation_id: string
-          p_from_email: string
-          p_is_optout?: boolean
-          p_org_id: string
-          p_received_at: string
-        }
-        Returns: string
-      }
+      ops_record_outreach_reply:
+        | {
+            Args: {
+              p_conversation_id: string
+              p_from_email: string
+              p_is_optout?: boolean
+              p_org_id: string
+              p_received_at: string
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              p_conversation_id: string
+              p_from_email: string
+              p_is_optout?: boolean
+              p_org_id: string
+              p_preview?: string
+              p_received_at: string
+              p_subject?: string
+            }
+            Returns: string
+          }
       ops_record_outreach_send: {
         Args: {
           p_body: string
@@ -17649,6 +19238,24 @@ export type Database = {
         Args: { p_invoice: string; p_payment: Json }
         Returns: string
       }
+      ops_record_personalization:
+        | {
+            Args: { p_lead_id: string; p_source?: string; p_text: string }
+            Returns: string
+          }
+        | {
+            Args: {
+              p_evidence?: string
+              p_lead_id: string
+              p_source?: string
+              p_text: string
+            }
+            Returns: string
+          }
+      ops_record_personalization_verdict: {
+        Args: { p_lead_id: string; p_reason?: string; p_verdict: string }
+        Returns: string
+      }
       ops_record_reminder_sent: {
         Args: {
           p_invoice: string
@@ -17658,6 +19265,32 @@ export type Database = {
         }
         Returns: string
       }
+      ops_record_web_context:
+        | {
+            Args: {
+              p_domain: string
+              p_error?: string
+              p_http_status: number
+              p_lead_id: string
+              p_org_id: string
+              p_page_text: string
+              p_url: string
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              p_domain: string
+              p_error?: string
+              p_http_status: number
+              p_lead_id: string
+              p_org_id: string
+              p_page_text: string
+              p_pages_tried?: string[]
+              p_url: string
+            }
+            Returns: string
+          }
       ops_refund_credit_note: {
         Args: { p_amount: number; p_id: string }
         Returns: string
@@ -17711,6 +19344,7 @@ export type Database = {
         Args: { p_action: string; p_id: string }
         Returns: string
       }
+      ops_set_lead_timezone: { Args: { p_lead_id: string }; Returns: string }
       ops_set_reply_watermark: {
         Args: { p_at: string; p_org_id: string }
         Returns: boolean
@@ -17736,6 +19370,11 @@ export type Database = {
       ops_stripe_collection_enabled: {
         Args: { p_org: string }
         Returns: boolean
+      }
+      ops_text_norm: { Args: { p: string }; Returns: string }
+      ops_timezone_for_state: {
+        Args: { p_country?: string; p_state: string }
+        Returns: string
       }
       ops_update_card_fee_settings: {
         Args: { p_enabled: boolean; p_fixed: number; p_percent: number }
@@ -17829,6 +19468,16 @@ export type Database = {
       ops_upsert_tax_rate: {
         Args: { p_id: string; p_patch: Json }
         Returns: string
+      }
+      ops_web_context_candidates: {
+        Args: { p_limit?: number; p_org_id: string }
+        Returns: {
+          company: string
+          domain: string
+          lead_id: string
+          pool: string
+          title: string
+        }[]
       }
       ops_webhook_resolve: { Args: { p_token: string }; Returns: Json }
       ops_workflow_engine_run: { Args: never; Returns: Json }
@@ -18056,6 +19705,252 @@ export type Database = {
           p_watch_pct: number
         }
         Returns: Json
+      }
+      relationship_activity_access: {
+        Args: { p_activity: string; p_relationship: string }
+        Returns: {
+          allowed: boolean
+          reason: string
+        }[]
+      }
+      relationship_activity_close_out: {
+        Args: { p_activity: string; p_relationship: string; p_run?: number }
+        Returns: {
+          closed: boolean
+          reason: string
+        }[]
+      }
+      relationship_activity_ids: {
+        Args: { p_codes: string[] }
+        Returns: {
+          code: string
+          id: string
+          partner_mode: string
+          visibility_mode: string
+        }[]
+      }
+      relationship_activity_submit: {
+        Args: { p_activity: string; p_relationship: string; p_run?: number }
+        Returns: {
+          barrier_cleared: boolean
+          close_out_available_at: string
+          session_status: string
+          waiting_on: string
+        }[]
+      }
+      relationship_ai_record: {
+        Args: {
+          p_activity: string
+          p_in?: number
+          p_kind: string
+          p_out?: number
+          p_relationship: string
+          p_run: number
+          p_user: string
+        }
+        Returns: string
+      }
+      relationship_artifact_claim: {
+        Args: {
+          p_activity: string
+          p_relationship: string
+          p_run: number
+          p_user: string
+        }
+        Returns: {
+          claimed: boolean
+          html: string
+          state: string
+        }[]
+      }
+      relationship_artifact_complete: {
+        Args: {
+          p_activity: string
+          p_error?: string
+          p_html: string
+          p_model: string
+          p_relationship: string
+          p_run: number
+        }
+        Returns: undefined
+      }
+      relationship_consume_reveal: {
+        Args: { p_activity: string; p_relationship: string; p_run?: number }
+        Returns: boolean
+      }
+      relationship_couple_material: {
+        Args: { p_activity: string; p_relationship: string; p_run?: number }
+        Returns: {
+          admissible: boolean
+          disclosure: string
+          reason: string
+          user_one_id: string
+          user_one_material: Json
+          user_two_id: string
+          user_two_material: Json
+        }[]
+      }
+      relationship_cross_read_own: {
+        Args: {
+          p_activity: string
+          p_relationship: string
+          p_run: number
+          p_user: string
+        }
+        Returns: Json
+      }
+      relationship_desire_overlap: {
+        Args: { p_activity: string; p_relationship: string; p_run?: number }
+        Returns: {
+          has_boundary_note: boolean
+          ready: boolean
+          reason: string
+          shared_curiosities: string[]
+          shared_likes: string[]
+        }[]
+      }
+      relationship_disclosure_state: {
+        Args: { p_activity: string; p_relationship: string; p_run?: number }
+        Returns: {
+          disclosable: boolean
+          disclosure: string
+          reason: string
+        }[]
+      }
+      relationship_first_names: {
+        Args: { p_relationship: string }
+        Returns: {
+          active_first_name: string
+          other_first_name: string
+        }[]
+      }
+      relationship_journey_access: {
+        Args: { p_relationship: string }
+        Returns: {
+          allowed: boolean
+          reason: string
+        }[]
+      }
+      relationship_nudge_due_days: {
+        Args: { p_relationship: string }
+        Returns: number[]
+      }
+      relationship_nudges_suppressed: {
+        Args: { p_about_user: string; p_relationship: string }
+        Returns: boolean
+      }
+      relationship_own_material_admissible: {
+        Args: {
+          p_activity: string
+          p_relationship: string
+          p_run: number
+          p_user: string
+        }
+        Returns: {
+          admissible: boolean
+          disclosure: string
+          material: Json
+          reason: string
+        }[]
+      }
+      relationship_partner_view: {
+        Args: { p_activity: string; p_relationship: string; p_run?: number }
+        Returns: {
+          disclosure: string
+          partner_user_id: string
+          reason: string
+          responses: Json
+          visible: boolean
+        }[]
+      }
+      relationship_pending_reveals: {
+        Args: { p_relationship: string }
+        Returns: {
+          activity_id: string
+          area_code: string
+          cleared_at: string
+          code: string
+          module_number: number
+          title: string
+        }[]
+      }
+      relationship_safety_disclosure: {
+        Args: { p_relationship: string; p_subject: string }
+        Returns: string
+      }
+      relationship_safety_evaluate: {
+        Args: { p_answers: Json; p_disclosure?: string; p_relationship: string }
+        Returns: {
+          categories: string[]
+          concern: boolean
+          routed_to: number
+        }[]
+      }
+      relationship_strip_private: {
+        Args: { p_activity: string; p_responses: Json }
+        Returns: Json
+      }
+      relationship_substance_evaluate: {
+        Args: {
+          p_activity: string
+          p_answers: Json
+          p_relationship: string
+          p_run: number
+        }
+        Returns: {
+          categories: string[]
+          routed: boolean
+        }[]
+      }
+      relationship_substance_flag: {
+        Args: { p_relationship: string; p_subject: string }
+        Returns: boolean
+      }
+      relationship_substance_resources_for: {
+        Args: { p_categories: string[] }
+        Returns: {
+          category: string
+          detail: string
+          label: string
+          region: string
+          url: string
+        }[]
+      }
+      relationship_substance_routed: {
+        Args: {
+          p_activity: string
+          p_relationship: string
+          p_run: number
+          p_user: string
+        }
+        Returns: boolean
+      }
+      relationship_token_baseline_movement: {
+        Args: {
+          p_activity: string
+          p_field: string
+          p_relationship: string
+          p_run: number
+        }
+        Returns: string
+      }
+      relationship_token_desire_overlap: {
+        Args: {
+          p_activity: string
+          p_field: string
+          p_relationship: string
+          p_run: number
+        }
+        Returns: string
+      }
+      relationship_token_ptp_dimension: {
+        Args: {
+          p_activity: string
+          p_field: string
+          p_relationship: string
+          p_run: number
+        }
+        Returns: string
       }
       release_report_order_claim: {
         Args: { p_order_id: string }
