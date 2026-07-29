@@ -266,7 +266,7 @@ export default function RelationshipJourney() {
                   >
                     <div className="flex flex-col gap-1.5 rounded-lg border p-3">
                       <p className="text-xs text-muted-foreground">
-                        Milestone {res.module_number}
+                        Milestone {res.module_number + 1}
                         {modTitle ? ` · ${modTitle}` : ""}
                       </p>
                       <div className="flex flex-wrap items-center gap-2">
