@@ -69,11 +69,26 @@ export interface CoupleStep {
   rawPicksAccess?: boolean;
 }
 
-/** Replace {other_first_name} (and {own_first_name}) tokens in a prompt string. */
+/** Replace {other_first_name} (and {own_first_name} / {first_name}) tokens in a prompt string. */
 export function substituteNames(text: string, couple: CoupleContext): string {
   return (text || "")
     .replace(/\{other_first_name\}/g, couple.otherFirstName)
-    .replace(/\{own_first_name\}/g, couple.ownFirstName);
+    .replace(/\{own_first_name\}/g, couple.ownFirstName)
+    .replace(/\{first_name\}/g, couple.ownFirstName);
+}
+
+/** Recursively substitute {other_first_name} and {first_name} in every string. */
+export function substituteStep<T>(node: T, couple: CoupleContext): T {
+  if (typeof node === "string") return substituteNames(node, couple) as unknown as T;
+  if (Array.isArray(node)) return node.map((n) => substituteStep(n, couple)) as unknown as T;
+  if (node && typeof node === "object") {
+    const out: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(node as Record<string, unknown>)) {
+      out[k] = substituteStep(v, couple);
+    }
+    return out as T;
+  }
+  return node;
 }
 
 /** The four answer modes a couple field may offer, filtered by what the step declares. */

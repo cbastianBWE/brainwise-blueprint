@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { ChatWidget } from "@/pages/coaching/runner/widgets/ChatWidget";
 import type { ChatMsg } from "@/pages/coaching/runner/shared";
 import { widgetRegistry, UnknownWidget } from "./runner/widgetRegistry";
-import { type CoupleContext, type CoupleStep, substituteNames } from "./runner/coupleShared";
+import { type CoupleContext, type CoupleStep, substituteNames, substituteStep } from "./runner/coupleShared";
 
 interface JourneyRow {
   activity_id: string;
@@ -259,9 +259,13 @@ export default function RelationshipActivityRunner() {
 
   if (!step || !couple || !sessionId || !activity) return null;
 
+  const localizedStep = substituteStep(step, couple);
   const renderer = widgetRegistry[step.widget];
   const valueKey = step.key || step.id || "value";
   const title = substituteNames(step.title || step.label || activity.title, couple);
+  const nextLabel =
+    ((localizedStep as any).buttonLabel as string | undefined) ||
+    (stepIndex === steps.length - 1 ? "Finish" : "Next");
 
   return (
     <div className="mx-auto max-w-3xl space-y-4 p-4 md:p-6">
@@ -296,7 +300,7 @@ export default function RelationshipActivityRunner() {
           <div className={readOnly ? "pointer-events-none opacity-90" : undefined}>
             {renderer
               ? renderer({
-                  step,
+                  step: localizedStep,
                   couple,
                   value: responses[valueKey],
                   onChange: (next) => setResponses((r) => ({ ...r, [valueKey]: next })),
@@ -340,7 +344,7 @@ export default function RelationshipActivityRunner() {
             </Button>
             <Button onClick={goNext} disabled={submitting}>
               {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-              {stepIndex === steps.length - 1 ? "Finish" : "Next"}
+              {nextLabel}
               {stepIndex < steps.length - 1 && <ArrowRight className="h-4 w-4" />}
             </Button>
           </div>
