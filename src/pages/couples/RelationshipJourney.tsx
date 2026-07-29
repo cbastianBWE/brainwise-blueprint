@@ -499,11 +499,39 @@ export default function RelationshipJourney() {
         }
         otherName={otherName}
         lookupByTitle={lookupByTitle}
+        activities={openModuleRows.map((r) => ({
+          id: r.activity_id,
+          code: r.code,
+          title: r.title,
+          allowed: r.allowed,
+          reason: r.reason,
+          reason_code: r.reason_code,
+          reason_detail: r.reason_detail,
+          own_status: r.own_status,
+          partner_status: r.partner_status,
+          reveal_pending: r.reveal_pending,
+          reveal_step_id: r.reveal_step_id,
+        }))}
+        onActivitySelect={(code) => setOpenActivity(code)}
+        onActivityOpen={(code) => {
+          setOpenModule(null);
+          go(code);
+        }}
+        onActivityReveal={(code, stepId) => {
+          setOpenModule(null);
+          // Only build ?step= from a real id — never the string "undefined".
+          navigate(
+            `/couples/${relationshipId}/activity/${code}${
+              stepId ? `?step=${encodeURIComponent(stepId)}` : ""
+            }`,
+          );
+        }}
         onStart={(code) => {
           setOpenModule(null);
           go(code);
         }}
       />
+
 
       <ActivityBriefingDialog
         open={openActivity != null}
