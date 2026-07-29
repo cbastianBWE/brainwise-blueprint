@@ -142,6 +142,8 @@ export function DesireGridWidget({
 }) {
   const mode = step.gridMode === "affection" ? "affection" : "desire";
   const runNumber = typeof step.runNumber === "number" ? step.runNumber : 1;
+  // The table stores the 4.3 grid under its catalogue name.
+  const dbMode = mode === "affection" ? "affection" : "desire_vocabulary";
 
   const items: GridItem[] = useMemo(() => {
     const fromStep = Array.isArray(step.items) ? step.items : null;
@@ -194,7 +196,7 @@ export function DesireGridWidget({
         .eq("activity_id", activityId)
         .eq("user_id", uid)
         .eq("run_number", runNumber)
-        .eq("grid_mode", mode)
+        .eq("grid_mode", dbMode)
         .maybeSingle();
       if (cancelled) return;
       if (err) setError("We couldn't load your answers just now.");
@@ -205,7 +207,7 @@ export function DesireGridWidget({
     return () => {
       cancelled = true;
     };
-  }, [relationshipId, activityId, runNumber, mode]);
+  }, [relationshipId, activityId, runNumber, mode, dbMode]);
 
   const persist = useCallback(
     async (next: Record<string, unknown>) => {
@@ -217,20 +219,22 @@ export function DesireGridWidget({
       const { error: err } = await supabase
         .from("relationship_desire_picks")
         .upsert(
-          {
-            relationship_id: relationshipId,
-            activity_id: activityId,
-            user_id: uid,
-            run_number: runNumber,
-            grid_mode: mode,
-            picks: next,
-          },
-          { onConflict: "relationship_id,user_id,activity_id,run_number,grid_mode" },
+          [
+            {
+              relationship_id: relationshipId,
+              activity_id: activityId,
+              user_id: uid,
+              run_number: runNumber,
+              grid_mode: dbMode,
+              picks: next as never,
+            },
+          ],
+          { onConflict: "relationship_id,user_id,activity_id,run_number" },
         );
       setSaving(false);
       setError(err ? "That didn't save. It'll try again when you make the next change." : null);
     },
-    [relationshipId, activityId, runNumber, mode],
+    [relationshipId, activityId, runNumber, dbMode],
   );
 
   const update = (nextPicks: Record<string, unknown>) => {
