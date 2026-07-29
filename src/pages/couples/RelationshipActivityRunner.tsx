@@ -64,6 +64,17 @@ export default function RelationshipActivityRunner() {
   );
   const step = steps[stepIndex];
 
+  // ?step=<id> opens that step directly (a waiting reveal, from the map).
+  // An id that matches nothing here is ignored — we stay on step 1.
+  const wantStep = searchParams.get("step");
+  const appliedWantStep = useRef(false);
+  useEffect(() => {
+    if (appliedWantStep.current || loading || !wantStep || steps.length === 0) return;
+    appliedWantStep.current = true;
+    const idx = steps.findIndex((s) => s.id === wantStep || s.key === wantStep);
+    if (idx >= 0) setStepIndex(idx);
+  }, [wantStep, steps, loading]);
+
   // Keep the cursor inside the visible set when a condition changes the list.
   useEffect(() => {
     if (steps.length > 0 && stepIndex > steps.length - 1) setStepIndex(steps.length - 1);
