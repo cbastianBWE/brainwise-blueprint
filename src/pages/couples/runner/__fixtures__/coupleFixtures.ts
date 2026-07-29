@@ -86,6 +86,7 @@ export const pairedQaRevealOnly: CoupleStep = {
   barrier: "both_partners_complete",
   reveal: { mode: "side_by_side", order: "alternating", toneRule: "neutral" },
 };
+
 export const pairedQaGuess: CoupleStep = {
   widget: "paired_qa",
   id: "pq-guess",
