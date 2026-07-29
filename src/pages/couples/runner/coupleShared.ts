@@ -51,6 +51,37 @@ export interface CoupleStep {
   resourcesFrom?: string;
   routesTo?: string;
 
+  // couple_timeline
+  eventFields?: string[];
+  eventFieldLabels?: Record<string, string>;
+  valenceOptions?: string[];
+  valenceLabels?: Record<string, string>;
+  minEvents?: number;
+  softTarget?: number;
+  forwardLooking?: boolean;
+
+  // synthesis
+  displayOnly?: boolean;
+  columns?: Array<{ key: string; label: string; from: string }>;
+  rule?: string;
+
+  // overlap_reveal
+  computedBy?: string;
+
+  // own_readback
+  readback?: { from: string; key: string; emptyCopy?: string };
+  ownOnly?: boolean;
+
+  // reused_steps
+  reuse_from?: string;
+  reworked_from?: string;
+  gentle?: boolean;
+  namesOnly?: boolean;
+
+  // ikigai / misc passthrough
+  dualLayer?: boolean;
+
+
   // statement_select
   options?: string[];
   selectMin?: number;
