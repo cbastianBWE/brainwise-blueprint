@@ -40,6 +40,19 @@ const STATUS_LABEL: Record<string, string> = {
   completed: "Completed",
 };
 
+interface SearchResult {
+  activity_id: string;
+  code: string;
+  title: string;
+  module_number: number;
+  description: string | null;
+  hero_image_url: string | null;
+  tags: string[] | null;
+  similarity: number;
+}
+
+
+
 export default function RelationshipJourney() {
   const { relationshipId } = useParams<{ relationshipId: string }>();
   const navigate = useNavigate();
