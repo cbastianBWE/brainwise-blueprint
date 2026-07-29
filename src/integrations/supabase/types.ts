@@ -19099,11 +19099,13 @@ export type Database = {
           footer: string
           from_address: string
           from_display_name: string
+          from_title: string
           graph_user_id: string
           is_enabled: boolean
           remaining_today: number
           sent_today: number
           signature: string
+          website: string
         }[]
       }
       ops_personalization_candidates: {
