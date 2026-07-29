@@ -51,6 +51,37 @@ export interface CoupleStep {
   resourcesFrom?: string;
   routesTo?: string;
 
+  // couple_timeline
+  eventFields?: string[];
+  eventFieldLabels?: Record<string, string>;
+  valenceOptions?: string[];
+  valenceLabels?: Record<string, string>;
+  minEvents?: number;
+  softTarget?: number;
+  forwardLooking?: boolean;
+
+  // synthesis
+  displayOnly?: boolean;
+  columns?: Array<{ key: string; label: string; from: string }>;
+  rule?: string;
+
+  // overlap_reveal
+  computedBy?: string;
+
+  // own_readback
+  readback?: { from: string; key: string; emptyCopy?: string };
+  ownOnly?: boolean;
+
+  // reused_steps
+  reuse_from?: string;
+  reworked_from?: string;
+  gentle?: boolean;
+  namesOnly?: boolean;
+
+  // ikigai / misc passthrough
+  dualLayer?: boolean;
+
+
   // statement_select
   options?: string[];
   selectMin?: number;
@@ -69,7 +100,7 @@ export interface CoupleStep {
   prefilledFrom?: Record<string, string>;
   modes?: string[];
   dualRater?: boolean;
-  reveal?: { mode?: string; order?: string; toneRule?: string; generateReads?: boolean; drawCycle?: boolean };
+  reveal?: { mode?: string; order?: string; toneRule?: string; generateReads?: boolean; drawCycle?: boolean; highlight?: string[] };
   comparesKey?: string;     // the earlier capture key this step reveals
   guessOf?: string;         // if present, this step captures a PREDICTION of the partner's answer to that key
   capturesHere?: boolean;   // true when this step collects input
@@ -94,7 +125,7 @@ export interface CoupleStep {
   listenerRule?: string;
   pacing?: string;
   mode?: string;
-  drawsFrom?: string[];
+  drawsFrom?: string[] | string;
   aiRole?: string;
   aiRestraint?: string;
   coachInterjection?: boolean;

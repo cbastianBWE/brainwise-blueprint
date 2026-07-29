@@ -21,6 +21,14 @@ import { VisibilityExplainerWidget } from "./widgets/VisibilityExplainerWidget";
 import { GuessLockWidget, type GuessValue } from "./widgets/GuessLockWidget";
 import { ProfileRevealWidget } from "./widgets/ProfileRevealWidget";
 import { SafetyScreenWidget } from "./widgets/SafetyScreenWidget";
+import { IkigaiWidget } from "@/pages/coaching/runner/widgets/IkigaiWidget";
+import { ImageDescribeWidget } from "@/pages/coaching/runner/widgets/ImageDescribeWidget";
+import { CoupleTimelineWidget, type TimelineEvent } from "./widgets/CoupleTimelineWidget";
+import { SynthesisWidget } from "./widgets/SynthesisWidget";
+import { OverlapRevealWidget } from "./widgets/OverlapRevealWidget";
+import { OwnReadbackWidget } from "./widgets/OwnReadbackWidget";
+import { ReusedStepsWidget } from "./widgets/ReusedStepsWidget";
+
 
 import type { CoupleContext, CoupleStep } from "./coupleShared";
 
@@ -188,6 +196,65 @@ export const widgetRegistry: Record<string, WidgetRenderer> = {
       activityId={activityId}
     />
   ),
+
+  ikigai: ({ step, value, onChange, sessionId, activityCode }) => {
+    // The coaching component cannot express a couple overlay; don't fake one.
+    if (step.mode === "couple_overlay" || step.dualLayer) return <UnknownWidget name="ikigai (couple_overlay)" />;
+    return (
+      <IkigaiWidget
+        step={asStep(step)}
+        session={{ id: sessionId, current_step: 0 } as any}
+        responses={(value as any) || {}}
+        setResponses={(u) => onChange(u(((value as any) || {}) as any))}
+        activityCode={activityCode}
+        setCoachingRemaining={() => {}}
+      />
+    );
+  },
+
+  image_describe: ({ step, value, onChange, sessionId, activityCode }) => (
+    <ImageDescribeWidget
+      step={asStep(step)}
+      value={(value as any[]) || []}
+      onChange={(v) => onChange(v)}
+      sessionId={sessionId}
+      activityCode={activityCode}
+    />
+  ),
+  couple_timeline: ({ step, couple, value, onChange, sessionId, activityCode, readOnly }) => (
+    <CoupleTimelineWidget
+      step={step}
+      couple={couple}
+      value={(value as TimelineEvent[]) || []}
+      onChange={(v) => onChange(v)}
+      sessionId={sessionId}
+      activityCode={activityCode}
+      readOnly={readOnly}
+    />
+  ),
+  synthesis: ({ step, couple, responses, analysisHtml }) => (
+    <SynthesisWidget step={step} couple={couple} responses={responses || {}} analysisHtml={analysisHtml} />
+  ),
+  overlap_reveal: ({ step, couple, analysisHtml, analyzing }) => (
+    <OverlapRevealWidget step={step} couple={couple} analysisHtml={analysisHtml} analyzing={analyzing} />
+  ),
+  own_readback: ({ step, relationshipId }) => (
+    <OwnReadbackWidget step={step} relationshipId={relationshipId} />
+  ),
+  reused_steps: ({ step, couple, value, onChange, sessionId, activityCode, readOnly, relationshipId, activityId }) => (
+    <ReusedStepsWidget
+      step={step}
+      couple={couple}
+      value={(value as Record<string, unknown>) || {}}
+      onChange={(v) => onChange(v)}
+      sessionId={sessionId}
+      activityCode={activityCode}
+      readOnly={readOnly}
+      relationshipId={relationshipId}
+      activityId={activityId}
+    />
+  ),
+
 
 
   ai_panel: ({ couple, analysisHtml, analyzing, pendingReason }) => {
