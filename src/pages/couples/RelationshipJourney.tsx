@@ -15,6 +15,7 @@ import {
 } from "./journey/journeyShared";
 import ModuleBriefingDialog from "./journey/ModuleBriefingDialog";
 import ActivityBriefingDialog from "./journey/ActivityBriefingDialog";
+import LockNotice from "./journey/LockNotice";
 import { JourneyMap } from "./JourneyMap";
 
 
