@@ -223,11 +223,15 @@ export function JourneyMap({
   const navigate = useNavigate();
   const [rows, setRows] = useState<JourneyRow[] | null>(null);
   const [modules, setModules] = useState<ModuleRow[]>([]);
+  const [catalogue, setCatalogue] = useState<CatalogueActivity[]>([]);
   const [selfName, setSelfName] = useState("You");
   const [otherName, setOtherName] = useState("Your partner");
   const [colorA, setColorA] = useState("#006D77");
   const [colorB, setColorB] = useState("#3C096C");
   const [open, setOpen] = useState<number | null>(null);
+  // Activity briefing stacks over the milestone dialog; closing it returns
+  // to the milestone list rather than dismissing both.
+  const [openActivity, setOpenActivity] = useState<string | null>(null);
   const [colorNote, setColorNote] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -246,14 +250,22 @@ export function JourneyMap({
     if (!relationshipId) return;
     let cancelled = false;
     (async () => {
-      const [state, names, mods] = await Promise.all([
+      const [state, names, mods, acts] = await Promise.all([
         supabase.rpc("relationship_journey_state", { p_relationship: relationshipId }),
         supabase.rpc("relationship_first_names", { p_relationship: relationshipId }),
         (supabase as any)
           .from("relationship_modules")
-          .select("module_number,title,description")
+          .select(
+            "module_number,title,description,learning_outcomes,tags,prerequisites,hero_image_url",
+          )
           .eq("active", true)
           .order("module_number"),
+        (supabase as any)
+          .from("relationship_activities")
+          .select(
+            "id,code,title,module_number,sequence,tags,hero_image_url,definition,est_minutes_low,est_minutes_high",
+          )
+          .eq("status", "published"),
       ]);
       if (cancelled) return;
       setRows(((state.data as JourneyRow[]) || []).slice().sort(
@@ -262,7 +274,11 @@ export function JourneyMap({
       const n = (names.data as any[])?.[0];
       if (n?.active_first_name) setSelfName(n.active_first_name);
       if (n?.other_first_name) setOtherName(n.other_first_name);
+      // Catalogue reads are enrichment only — a failure degrades the map,
+      // it must never blank it.
       if (!mods.error && Array.isArray(mods.data)) setModules(mods.data as ModuleRow[]);
+      if (!acts.error && Array.isArray(acts.data))
+        setCatalogue(acts.data as CatalogueActivity[]);
       await loadColors();
     })();
     return () => {
@@ -270,14 +286,23 @@ export function JourneyMap({
     };
   }, [relationshipId, loadColors]);
 
+  const catalogueByCode = useMemo(() => {
+    const m = new Map<string, CatalogueActivity>();
+    for (const a of catalogue) m.set(a.code, a);
+    return m;
+  }, [catalogue]);
+
   const stopsData = useMemo(() => {
     const list = modules.slice(0, 8);
     return list.map((m, i) => {
       const acts = (rows || []).filter((r) => r.module_number === m.module_number);
       return {
         index: i,
+        // Display ordinal, 1-based. `module_number` stays zero-based.
+        position: i + 1,
         moduleNumber: m.module_number,
-        title: m.title || `Milestone ${m.module_number}`,
+        module: m,
+        title: m.title || `Milestone ${i + 1}`,
         description: m.description || "",
         icon: STOP_ICONS[i] || "flag",
         count: acts.length,
@@ -285,6 +310,7 @@ export function JourneyMap({
       };
     });
   }, [modules, rows]);
+
 
   const { a, b } = useMemo<{ a: Side; b: Side }>(() => {
     const doneFor = (idx: number, key: "own_status" | "partner_status") => {
