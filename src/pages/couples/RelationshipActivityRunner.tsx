@@ -56,20 +56,11 @@ export default function RelationshipActivityRunner() {
     () => (activity?.definition?.steps as CoupleStep[]) || [],
     [activity],
   );
-  const anyTrigger = useMemo(
-    () =>
-      Object.values(responses || {}).some(
-        (v) => !!v && typeof v === "object" && (v as any).triggered === true,
-      ),
-    [responses],
-  );
-  // Conditional steps (safety resource screens) are skipped entirely until routed.
+  // Conditional steps (safety resource / gated screens) are skipped entirely
+  // unless the exact step they name produced the exact flag they require.
   const steps: CoupleStep[] = useMemo(
-    () =>
-      allSteps.filter(
-        (s) => !s.conditionOn || !!(responses as any)?.[s.conditionOn] || anyTrigger,
-      ),
-    [allSteps, responses, anyTrigger],
+    () => allSteps.filter((s) => conditionMet(s, responses)),
+    [allSteps, responses],
   );
   const step = steps[stepIndex];
 
