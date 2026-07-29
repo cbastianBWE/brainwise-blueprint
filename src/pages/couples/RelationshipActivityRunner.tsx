@@ -279,7 +279,7 @@ export default function RelationshipActivityRunner() {
 
   const localizedStep = substituteStep(step, couple);
   const renderer = widgetRegistry[step.widget];
-  const valueKey = step.key || step.id || "value";
+  const valueKey = step.selectionKey || step.key || step.id || "value";
   const title = substituteNames(step.title || step.label || activity.title, couple);
   const nextLabel =
     ((localizedStep as any).buttonLabel as string | undefined) ||
@@ -315,7 +315,16 @@ export default function RelationshipActivityRunner() {
             </div>
           )}
 
-          <div className={readOnly ? "opacity-90" : undefined}>
+          <div
+            className={
+              readOnly && !["guess_lock", "profile_reveal", "ai_panel", "recap"].includes(step.widget)
+                ? "pointer-events-none opacity-90"
+                : readOnly
+                  ? "opacity-90"
+                  : undefined
+            }
+          >
+
             {renderer
               ? renderer({
                   step: localizedStep,
