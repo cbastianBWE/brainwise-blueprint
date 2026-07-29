@@ -446,6 +446,14 @@ export default function RelationshipJourney() {
         minutes={minuteRange(openModuleRows)}
         startCode={openModuleRows.find((r) => r.allowed)?.code ?? null}
         blockedReason={openModuleRows.find((r) => !r.allowed && r.reason)?.reason ?? null}
+        blockedReasonCode={
+          openModuleRows.find((r) => !r.allowed)?.reason_code ?? null
+        }
+        blockedReasonDetail={
+          openModuleRows.find((r) => !r.allowed)?.reason_detail ?? null
+        }
+        otherName={otherName}
+        lookupByTitle={lookupByTitle}
         onStart={(code) => {
           setOpenModule(null);
           go(code);
@@ -461,6 +469,11 @@ export default function RelationshipJourney() {
           openActivityRow ? moduleByNumber.get(openActivityRow.module_number)?.title ?? null : null
         }
         otherName={otherName}
+        siblingTitles={
+          openActivityRow ? siblingsOf(openActivityRow.module_number, openActivityRow.code) : []
+        }
+        lookupByTitle={lookupByTitle}
+        onOpenActivity={setOpenActivity}
         onGo={(code) => {
           setOpenActivity(null);
           go(code);
