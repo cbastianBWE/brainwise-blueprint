@@ -52,11 +52,27 @@ export default function RelationshipActivityRunner() {
   const [pendingReason, setPendingReason] = useState<string | undefined>(undefined);
   const [analysisError, setAnalysisError] = useState(false);
 
-  const steps: CoupleStep[] = useMemo(
+  const allSteps: CoupleStep[] = useMemo(
     () => (activity?.definition?.steps as CoupleStep[]) || [],
     [activity],
   );
+  const anyTrigger = useMemo(
+    () =>
+      Object.values(responses || {}).some(
+        (v) => !!v && typeof v === "object" && (v as any).triggered === true,
+      ),
+    [responses],
+  );
+  // Conditional steps (safety resource screens) are skipped entirely until routed.
+  const steps: CoupleStep[] = useMemo(
+    () =>
+      allSteps.filter(
+        (s) => !s.conditionOn || !!(responses as any)?.[s.conditionOn] || anyTrigger,
+      ),
+    [allSteps, responses, anyTrigger],
+  );
   const step = steps[stepIndex];
+
 
   // ---- Context assembly (partnerView comes only from the RPC) ----
   const buildContext = useCallback(
@@ -80,7 +96,9 @@ export default function RelationshipActivityRunner() {
         otherFirstName: n.other_first_name || "Your partner",
         partnerSubmitted: row?.partner_status === "done",
         barrierCleared: !!row?.barrier_cleared,
+        partnerUserId: (view?.partner_user_id as string | undefined) ?? null,
         partnerView:
+
           view?.visible
             ? { disclosure: (view.disclosure as "full" | "summary") || "full", responses: view.responses || {} }
             : null,
@@ -261,7 +279,7 @@ export default function RelationshipActivityRunner() {
 
   const localizedStep = substituteStep(step, couple);
   const renderer = widgetRegistry[step.widget];
-  const valueKey = step.key || step.id || "value";
+  const valueKey = step.selectionKey || step.key || step.id || "value";
   const title = substituteNames(step.title || step.label || activity.title, couple);
   const nextLabel =
     ((localizedStep as any).buttonLabel as string | undefined) ||
@@ -297,7 +315,16 @@ export default function RelationshipActivityRunner() {
             </div>
           )}
 
-          <div className={readOnly ? "pointer-events-none opacity-90" : undefined}>
+          <div
+            className={
+              readOnly && !["guess_lock", "profile_reveal", "ai_panel", "recap"].includes(step.widget)
+                ? "pointer-events-none opacity-90"
+                : readOnly
+                  ? "opacity-90"
+                  : undefined
+            }
+          >
+
             {renderer
               ? renderer({
                   step: localizedStep,
@@ -309,9 +336,14 @@ export default function RelationshipActivityRunner() {
                   analysisHtml,
                   analyzing,
                   pendingReason,
+                  responses,
+                  readOnly,
+                  relationshipId,
+                  activityId: activity.id,
                 })
               : <UnknownWidget name={step.widget} />}
           </div>
+
 
           {analysisError && isAnalysisStep && (
             <div className="flex items-center justify-between gap-3 rounded-lg border p-3">

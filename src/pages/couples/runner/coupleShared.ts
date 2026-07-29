@@ -7,6 +7,8 @@ export interface CoupleContext {
   otherFirstName: string;      // "Josh"
   partnerSubmitted: boolean;   // has the partner finished their side
   barrierCleared: boolean;     // may the reveal be shown
+  /** Partner's auth user id, when the backend exposes it. */
+  partnerUserId?: string | null;
   /** Null until the barrier clears. Never fabricate this client-side. */
   partnerView: { disclosure: Disclosure; responses: Record<string, unknown> } | null;
 }
@@ -18,6 +20,37 @@ export interface CoupleStep {
   label?: string;
   title?: string;
   intro?: string;
+  body?: string;
+  buttonLabel?: string;
+  waitingCopy?: string;
+  revealIntro?: string;
+  // journey_map
+  selectionKey?: string;
+  practitionerGatedAreas?: string[];
+  // visibility_explainer
+  visibilityModes?: Array<{ key: string; label: string; example: string }>;
+  // guess_lock / profile_reveal
+  dimensions?: string[];
+  instrument?: string;
+  subject?: string;
+  showOwnScoresAsReference?: boolean;
+  confidenceTap?: string[];
+  guessSource?: string;
+  truthSource?: string;
+  revealMode?: string;
+  order?: string;
+  generateReads?: boolean;
+  // safety_screen
+  itemsSource?: string;
+  private?: boolean;
+  concernRouting?: string;
+  practitionerFlag?: string;
+  branches?: Record<string, string>;
+  evaluator?: string;
+  deterministic?: boolean;
+  resourcesFrom?: string;
+  routesTo?: string;
+
   // statement_select
   options?: string[];
   selectMin?: number;
