@@ -180,3 +180,16 @@ export function allowedModes(step: CoupleStep): CoupleMode[] {
   const picked = ALL_MODES.filter((m) => step.modes!.includes(m));
   return picked.length > 0 ? picked : ["text"];
 }
+
+/**
+ * A step's condition may only be satisfied by the exact step it names.
+ * No global scan of the response bag.
+ */
+export function conditionMet(step: CoupleStep, responses: Record<string, unknown> | null | undefined): boolean {
+  const c = step.conditionOn;
+  if (!c) return true;
+  const want = c.equals ?? true;
+  const produced = responses?.[c.step];
+  const actual = !!(produced && typeof produced === "object" && (produced as any)[c.flag] === true);
+  return actual === want;
+}
