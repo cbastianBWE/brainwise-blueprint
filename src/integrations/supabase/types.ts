@@ -11344,6 +11344,7 @@ export type Database = {
           sequence: number
           solo_unlock_eligible: boolean
           status: string
+          tags: string[]
           title: string
           updated_at: string
           version: number
@@ -11373,6 +11374,7 @@ export type Database = {
           sequence: number
           solo_unlock_eligible?: boolean
           status?: string
+          tags?: string[]
           title: string
           updated_at?: string
           version?: number
@@ -11402,6 +11404,7 @@ export type Database = {
           sequence?: number
           solo_unlock_eligible?: boolean
           status?: string
+          tags?: string[]
           title?: string
           updated_at?: string
           version?: number
@@ -11980,6 +11983,45 @@ export type Database = {
           item_key?: string
           label?: string
           sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      relationship_modules: {
+        Row: {
+          active: boolean
+          created_at: string
+          description: string
+          hero_image_url: string | null
+          learning_outcomes: string[]
+          module_number: number
+          prerequisites: string | null
+          tags: string[]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          description: string
+          hero_image_url?: string | null
+          learning_outcomes?: string[]
+          module_number: number
+          prerequisites?: string | null
+          tags?: string[]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          description?: string
+          hero_image_url?: string | null
+          learning_outcomes?: string[]
+          module_number?: number
+          prerequisites?: string | null
+          tags?: string[]
+          title?: string
           updated_at?: string
         }
         Relationships: []
@@ -18494,6 +18536,7 @@ export type Database = {
         }
         Returns: Json
       }
+      mr_cleanup_media: { Args: { p_apply?: boolean }; Returns: number }
       mr_ingest_media: {
         Args: {
           p_category: string

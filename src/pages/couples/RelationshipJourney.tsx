@@ -1,9 +1,18 @@
-import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { Loader2, Lock, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import {
+  BrandedPlaceholder,
+  minuteRange,
+  renderImg,
+  type CatalogueActivity,
+  type ModuleRow,
+} from "./journey/journeyShared";
+import ModuleBriefingDialog from "./journey/ModuleBriefingDialog";
+import ActivityBriefingDialog from "./journey/ActivityBriefingDialog";
 
 interface JourneyRow {
   activity_id: string;
@@ -29,17 +38,35 @@ const STATUS_LABEL: Record<string, string> = {
 
 export default function RelationshipJourney() {
   const { relationshipId } = useParams<{ relationshipId: string }>();
+  const navigate = useNavigate();
   const [rows, setRows] = useState<JourneyRow[] | null>(null);
+  const [modules, setModules] = useState<ModuleRow[]>([]);
+  const [catalogue, setCatalogue] = useState<CatalogueActivity[]>([]);
   const [otherName, setOtherName] = useState<string>("Your partner");
   const [error, setError] = useState<string | null>(null);
+  const [openModule, setOpenModule] = useState<number | null>(null);
+  const [openActivity, setOpenActivity] = useState<string | null>(null);
 
   useEffect(() => {
     if (!relationshipId) return;
     let cancelled = false;
     (async () => {
-      const [state, names] = await Promise.all([
+      const [state, names, mods, acts] = await Promise.all([
         supabase.rpc("relationship_journey_state", { p_relationship: relationshipId }),
         supabase.rpc("relationship_first_names", { p_relationship: relationshipId }),
+        (supabase as any)
+          .from("relationship_modules")
+          .select(
+            "module_number,title,description,learning_outcomes,tags,prerequisites,hero_image_url",
+          )
+          .eq("active", true)
+          .order("module_number"),
+        (supabase as any)
+          .from("relationship_activities")
+          .select(
+            "id,code,title,module_number,sequence,tags,hero_image_url,definition,est_minutes_low,est_minutes_high",
+          )
+          .eq("status", "published"),
       ]);
       if (cancelled) return;
       if (state.error) {
@@ -47,16 +74,35 @@ export default function RelationshipJourney() {
         setRows([]);
         return;
       }
-      setRows(((state.data as JourneyRow[]) || []).slice().sort(
-        (a, b) => a.module_number - b.module_number || a.sequence - b.sequence,
-      ));
+      setRows(
+        ((state.data as JourneyRow[]) || [])
+          .slice()
+          .sort((a, b) => a.module_number - b.module_number || a.sequence - b.sequence),
+      );
       const n = (names.data as any[])?.[0];
       if (n?.other_first_name) setOtherName(n.other_first_name);
+      // Catalogue reads are enrichment only — a failure degrades the page,
+      // it must never blank it.
+      if (!mods.error && Array.isArray(mods.data)) setModules(mods.data as ModuleRow[]);
+      if (!acts.error && Array.isArray(acts.data))
+        setCatalogue(acts.data as CatalogueActivity[]);
     })();
     return () => {
       cancelled = true;
     };
   }, [relationshipId]);
+
+  const catalogueByCode = useMemo(() => {
+    const m = new Map<string, CatalogueActivity>();
+    for (const a of catalogue) m.set(a.code, a);
+    return m;
+  }, [catalogue]);
+
+  const moduleByNumber = useMemo(() => {
+    const m = new Map<number, ModuleRow>();
+    for (const r of modules) m.set(r.module_number, r);
+    return m;
+  }, [modules]);
 
   if (!rows) {
     return (
@@ -74,7 +120,11 @@ export default function RelationshipJourney() {
     );
   }
 
-  const modules = Array.from(new Set(rows.map((r) => r.module_number)));
+  const moduleNumbers = Array.from(new Set(rows.map((r) => r.module_number)));
+  const go = (code: string) => navigate(`/couples/${relationshipId}/activity/${code}`);
+
+  const openActivityRow = rows.find((r) => r.code === openActivity) || null;
+  const openModuleRows = openModule != null ? rows.filter((r) => r.module_number === openModule) : [];
 
   return (
     <div className="mx-auto max-w-3xl space-y-6 p-4 md:p-6">
@@ -85,60 +135,120 @@ export default function RelationshipJourney() {
         </p>
       </header>
 
-      {modules.map((m) => (
-        <Card key={m}>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">Module {m}</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {rows
-              .filter((r) => r.module_number === m)
-              .map((r) => {
+      {moduleNumbers.map((m) => {
+        const mod = moduleByNumber.get(m) || null;
+        const modRows = rows.filter((r) => r.module_number === m);
+        const mins = minuteRange(modRows);
+        const hero = mod?.hero_image_url || null;
+
+        return (
+          <Card key={m} className="overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setOpenModule(m)}
+              className="block w-full text-left transition-opacity hover:opacity-90"
+            >
+              <div className="aspect-video w-full overflow-hidden bg-muted">
+                {hero ? (
+                  <img
+                    src={renderImg(hero, 480, 270)}
+                    alt=""
+                    className="h-full w-full object-cover"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                ) : (
+                  <BrandedPlaceholder />
+                )}
+              </div>
+              <CardHeader className="pb-3">
+                <p className="text-xs text-muted-foreground">Module {m}</p>
+                <CardTitle className="text-base">{mod?.title || `Module ${m}`}</CardTitle>
+                <p className="text-xs text-muted-foreground">
+                  {modRows.length} {modRows.length === 1 ? "activity" : "activities"}
+                  {mins ? ` · ${mins.low} to ${mins.high} min` : ""}
+                </p>
+              </CardHeader>
+            </button>
+            <CardContent className="space-y-2">
+              {modRows.map((r) => {
                 const est =
                   r.est_minutes_low && r.est_minutes_high
                     ? `${r.est_minutes_low}–${r.est_minutes_high} min`
                     : r.est_minutes_low
                       ? `${r.est_minutes_low} min`
                       : null;
-                const inner = (
-                  <div className="flex flex-col gap-1.5 rounded-lg border p-3">
-                    <div className="flex flex-wrap items-center gap-2">
-                      {!r.allowed && <Lock className="h-3.5 w-3.5 text-muted-foreground" />}
-                      <span className="text-sm font-medium">{r.title}</span>
-                      {r.reveal_pending && (
-                        <Badge variant="default" className="gap-1">
-                          <Sparkles className="h-3 w-3" />
-                          Something to see
-                        </Badge>
-                      )}
-                      <Badge variant="secondary">{STATUS_LABEL[r.own_status || "not_started"] || r.own_status}</Badge>
-                      {est && <span className="text-xs text-muted-foreground">{est}</span>}
-                    </div>
-                    {!r.allowed && r.reason && (
-                      <p className="text-xs text-muted-foreground">{r.reason}</p>
-                    )}
-                    <p className="text-xs text-muted-foreground">
-                      {otherName}: {STATUS_LABEL[r.partner_status || "not_started"]?.toLowerCase() || r.partner_status}
-                    </p>
-                  </div>
-                );
-                return r.allowed ? (
-                  <Link
+                return (
+                  <button
                     key={r.activity_id}
-                    to={`/couples/${relationshipId}/activity/${r.code}`}
-                    className="block transition-opacity hover:opacity-90"
+                    type="button"
+                    onClick={() => setOpenActivity(r.code)}
+                    className={
+                      "block w-full text-left transition-opacity hover:opacity-90 " +
+                      (r.allowed ? "" : "opacity-60")
+                    }
                   >
-                    {inner}
-                  </Link>
-                ) : (
-                  <div key={r.activity_id} className="opacity-60">
-                    {inner}
-                  </div>
+                    <div className="flex flex-col gap-1.5 rounded-lg border p-3">
+                      <div className="flex flex-wrap items-center gap-2">
+                        {!r.allowed && <Lock className="h-3.5 w-3.5 text-muted-foreground" />}
+                        <span className="text-sm font-medium">{r.title}</span>
+                        {r.reveal_pending && (
+                          <Badge variant="default" className="gap-1">
+                            <Sparkles className="h-3 w-3" />
+                            Something to see
+                          </Badge>
+                        )}
+                        <Badge variant="secondary">
+                          {STATUS_LABEL[r.own_status || "not_started"] || r.own_status}
+                        </Badge>
+                        {est && <span className="text-xs text-muted-foreground">{est}</span>}
+                      </div>
+                      {!r.allowed && r.reason && (
+                        <p className="text-xs text-muted-foreground">{r.reason}</p>
+                      )}
+                      <p className="text-xs text-muted-foreground">
+                        {otherName}:{" "}
+                        {STATUS_LABEL[r.partner_status || "not_started"]?.toLowerCase() ||
+                          r.partner_status}
+                      </p>
+                    </div>
+                  </button>
                 );
               })}
-          </CardContent>
-        </Card>
-      ))}
+            </CardContent>
+          </Card>
+        );
+      })}
+
+      <ModuleBriefingDialog
+        open={openModule != null}
+        onOpenChange={(v) => !v && setOpenModule(null)}
+        moduleNumber={openModule ?? 0}
+        module={openModule != null ? moduleByNumber.get(openModule) || null : null}
+        activityCount={openModuleRows.length}
+        minutes={minuteRange(openModuleRows)}
+        startCode={openModuleRows.find((r) => r.allowed)?.code ?? null}
+        blockedReason={openModuleRows.find((r) => !r.allowed && r.reason)?.reason ?? null}
+        onStart={(code) => {
+          setOpenModule(null);
+          go(code);
+        }}
+      />
+
+      <ActivityBriefingDialog
+        open={openActivity != null}
+        onOpenChange={(v) => !v && setOpenActivity(null)}
+        state={openActivityRow}
+        catalogue={openActivity ? catalogueByCode.get(openActivity) || null : null}
+        moduleTitle={
+          openActivityRow ? moduleByNumber.get(openActivityRow.module_number)?.title ?? null : null
+        }
+        otherName={otherName}
+        onGo={(code) => {
+          setOpenActivity(null);
+          go(code);
+        }}
+      />
     </div>
   );
 }
