@@ -225,7 +225,9 @@ const App = () => (
             <Route path="/for-enterprise" element={<ForEnterprise />} />
             <Route path="/certification" element={<Certification />} />
             <Route path="/pricing" element={<PricingRouter />} />
+            <Route path="/_dev/tile-preview" element={<TilePreview />} />
             <Route path="/dev/couple-widgets" element={<CoupleWidgetPreview />} />
+
 
             {/* Departed route — protected, but ProtectedRoute won't redirect away from /departed */}
             <Route path="/departed" element={<ProtectedRoute><Departed /></ProtectedRoute>} />
