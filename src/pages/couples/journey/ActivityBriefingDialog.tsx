@@ -46,6 +46,9 @@ export default function ActivityBriefingDialog({
   moduleTitle,
   otherName,
   onGo,
+  siblingTitles,
+  lookupByTitle,
+  onOpenActivity,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
@@ -54,6 +57,10 @@ export default function ActivityBriefingDialog({
   moduleTitle: string | null;
   otherName: string;
   onGo: (code: string) => void;
+  /** Other activity titles in the same milestone, for the collapse rule. */
+  siblingTitles?: string[];
+  lookupByTitle?: (title: string) => { code: string; allowed: boolean } | null;
+  onOpenActivity?: (code: string) => void;
 }) {
   if (!state) return null;
 
