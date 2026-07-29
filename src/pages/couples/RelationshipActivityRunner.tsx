@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Loader2, ArrowLeft, ArrowRight, Eye, RotateCcw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -36,6 +36,7 @@ function buildPatch(responses: Responses): Responses {
 export default function RelationshipActivityRunner() {
   const { relationshipId, activityCode } = useParams<{ relationshipId: string; activityCode: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const [loading, setLoading] = useState(true);
   const [blocked, setBlocked] = useState<string | null>(null);
