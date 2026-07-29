@@ -187,8 +187,18 @@ export default function ModuleBriefingDialog({
                           {i + 1}. {r.title}
                         </span>
                       </p>
-                      {!r.allowed && r.reason && (
-                        <p className="mt-0.5 text-xs text-muted-foreground">{r.reason}</p>
+                      {!r.allowed && (
+                        <LockNotice
+                          className="mt-0.5"
+                          reasonCode={r.reason_code}
+                          reasonDetail={r.reason_detail}
+                          otherName={otherName}
+                          siblingTitles={(activities || [])
+                            .filter((a) => a.code !== r.code)
+                            .map((a) => a.title)}
+                          lookupByTitle={lookupByTitle}
+                          onOpenActivity={onActivitySelect}
+                        />
                       )}
                     </button>
                     <span className="flex shrink-0 items-center gap-1.5">
