@@ -39,6 +39,8 @@ export function MediaRecorderPane({
   onConfirm: (blob: Blob) => void;
   uploading: boolean;
   disabled?: boolean;
+  /** Which session table the recording belongs to. Presentational no-op here; kept for API parity. */
+  sessionKind?: "coaching" | "relationship";
 }) {
   const [permError, setPermError] = useState<string | null>(null);
   const [recording, setRecording] = useState(false);
@@ -241,11 +243,14 @@ export async function uploadCoachingRecording(args: {
   questionKey: string;
   kind: "audio" | "video";
   blob: Blob;
+  sessionKind?: "coaching" | "relationship";
 }): Promise<{ media_id: string }> {
-  const { sessionId, activityCode, questionKey, kind, blob } = args;
+  const { sessionId, activityCode, questionKey, kind, blob, sessionKind = "coaching" } = args;
   const { data, error } = await supabase.functions.invoke("coaching-response-upload", {
     body: {
-      coaching_session_id: sessionId,
+      ...(sessionKind === "relationship"
+        ? { relationship_session_id: sessionId }
+        : { coaching_session_id: sessionId }),
       activity_code: activityCode,
       question_key: questionKey,
       kind,
@@ -287,6 +292,7 @@ export function MultimodalField({
   modes,
   placeholder,
   minRows,
+  sessionKind = "coaching",
 }: {
   value: MMValue | undefined;
   onChange: (v: MMValue) => void;
@@ -294,6 +300,7 @@ export function MultimodalField({
   activityCode: string;
   questionKey: string;
   modes?: MMMode[];
+  sessionKind?: "coaching" | "relationship";
   placeholder?: string;
   minRows?: number;
 }) {
@@ -327,6 +334,7 @@ export function MultimodalField({
         questionKey,
         kind,
         blob,
+        sessionKind,
       });
       onChange({ mode: kind, media_id });
       setRerecording(false);
@@ -397,6 +405,7 @@ export function MultimodalField({
           ) : (
             <MediaRecorderPane
               kind="audio"
+              sessionKind={sessionKind}
               uploading={uploading}
               onConfirm={(blob) => doUpload(blob, "audio")}
             />
@@ -440,6 +449,7 @@ export function MultimodalField({
               {videoSource === "record" ? (
                 <MediaRecorderPane
                   kind="video"
+                  sessionKind={sessionKind}
                   uploading={uploading}
                   onConfirm={(blob) => doUpload(blob, "video")}
                 />
