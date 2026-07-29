@@ -15,12 +15,16 @@ import {
   renderImg,
   type CatalogueActivity,
 } from "./journeyShared";
+import LockNotice from "./LockNotice";
 
 export interface ActivityStateRow {
   code: string;
   title: string;
   allowed: boolean;
+  /** Machine key plus payload. Never rendered — see LockNotice. */
   reason: string | null;
+  reason_code?: string | null;
+  reason_detail?: string[] | null;
   own_status: string | null;
   partner_status: string | null;
   reveal_pending: boolean | null;
@@ -43,6 +47,9 @@ export default function ActivityBriefingDialog({
   moduleTitle,
   otherName,
   onGo,
+  siblingTitles,
+  lookupByTitle,
+  onOpenActivity,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
@@ -51,6 +58,10 @@ export default function ActivityBriefingDialog({
   moduleTitle: string | null;
   otherName: string;
   onGo: (code: string) => void;
+  /** Other activity titles in the same milestone, for the collapse rule. */
+  siblingTitles?: string[];
+  lookupByTitle?: (title: string) => { code: string; allowed: boolean } | null;
+  onOpenActivity?: (code: string) => void;
 }) {
   if (!state) return null;
 
@@ -149,8 +160,15 @@ export default function ActivityBriefingDialog({
           )}
 
           <DialogFooter className="flex-col items-stretch gap-2 sm:flex-col sm:items-stretch">
-            {!state.allowed && state.reason && (
-              <p className="text-xs text-muted-foreground">{state.reason}</p>
+            {!state.allowed && (
+              <LockNotice
+                reasonCode={state.reason_code}
+                reasonDetail={state.reason_detail}
+                otherName={otherName}
+                siblingTitles={siblingTitles}
+                lookupByTitle={lookupByTitle}
+                onOpenActivity={onOpenActivity}
+              />
             )}
             {state.allowed ? (
               <Button onClick={() => onGo(state.code)}>{actionLabel}</Button>

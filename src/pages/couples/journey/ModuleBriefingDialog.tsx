@@ -15,6 +15,7 @@ import {
   type MilestoneActivityRow,
   type ModuleRow,
 } from "./journeyShared";
+import LockNotice from "./LockNotice";
 
 export interface ModuleBriefingDialogProps {
   open: boolean;
@@ -33,6 +34,13 @@ export interface ModuleBriefingDialogProps {
   startCode: string | null;
   /** Reason from the first blocked activity, when nothing is open yet. */
   blockedReason: string | null;
+  /** Bare reason key for the milestone-level lock sentence. */
+  blockedReasonCode?: string | null;
+  blockedReasonDetail?: string[] | null;
+  /** Partner's first name, for "Opens once {name} has finished". */
+  otherName?: string;
+  /** Resolves a blocking activity title to its code and lock state. */
+  lookupByTitle?: (title: string) => { code: string; allowed: boolean } | null;
   onStart: (code: string) => void;
   /** Optional activity list, shown when the dialog is opened from the map. */
   activities?: MilestoneActivityRow[];
@@ -57,7 +65,12 @@ export default function ModuleBriefingDialog({
   activityCount,
   minutes,
   startCode,
-  blockedReason,
+  // `blockedReason` (raw machine key) is deliberately not destructured — the
+  // display path uses blockedReasonCode / blockedReasonDetail only.
+  blockedReasonCode,
+  blockedReasonDetail,
+  otherName = "Your partner",
+  lookupByTitle,
   onStart,
   activities,
   onActivitySelect,
@@ -158,48 +171,61 @@ export default function ModuleBriefingDialog({
                 return (
                   <div
                     key={r.id}
-                    className="flex items-center gap-3 rounded-lg border p-1 pl-3 transition-colors hover:bg-muted/50"
+                    className="rounded-lg border p-1 pl-3 transition-colors hover:bg-muted/50"
                   >
-                    {/* The row is the "tell me more" surface… */}
-                    <button
-                      type="button"
-                      onClick={() => onActivitySelect?.(r.code)}
-                      className="min-w-0 flex-1 py-2 text-left"
-                    >
-                      <p className="flex items-center gap-1.5 text-sm font-medium">
-                        {!r.allowed && (
-                          <Lock className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                        )}
-                        <span className="truncate">
-                          {i + 1}. {r.title}
-                        </span>
-                      </p>
-                      {!r.allowed && r.reason && (
-                        <p className="mt-0.5 text-xs text-muted-foreground">{r.reason}</p>
-                      )}
-                    </button>
-                    <span className="flex shrink-0 items-center gap-1.5">
-                      <i
-                        className="inline-block h-2.5 w-2.5 rounded-full"
-                        style={{ background: da ? selfColor : ha ? `${selfColor}73` : "#DCD7C8" }}
+                    <div className="flex items-center gap-3">
+                      {/* The row is the "tell me more" surface… */}
+                      <button
+                        type="button"
+                        onClick={() => onActivitySelect?.(r.code)}
+                        className="min-w-0 flex-1 py-2 text-left"
+                      >
+                        <p className="flex items-center gap-1.5 text-sm font-medium">
+                          {!r.allowed && (
+                            <Lock className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                          )}
+                          <span className="truncate">
+                            {i + 1}. {r.title}
+                          </span>
+                        </p>
+                      </button>
+                      <span className="flex shrink-0 items-center gap-1.5">
+                        <i
+                          className="inline-block h-2.5 w-2.5 rounded-full"
+                          style={{ background: da ? selfColor : ha ? `${selfColor}73` : "#DCD7C8" }}
+                        />
+                        <i
+                          className="inline-block h-2.5 w-2.5 rounded-full"
+                          style={{
+                            background: db ? partnerColor : hb ? `${partnerColor}73` : "#DCD7C8",
+                          }}
+                        />
+                      </span>
+                      {/* …the button carries the verb. */}
+                      <Button
+                        size="sm"
+                        variant={r.allowed ? "default" : "ghost"}
+                        disabled={!r.allowed}
+                        className="shrink-0"
+                        onClick={() => onActivityOpen?.(r.code)}
+                      >
+                        {r.allowed ? verb : "Locked"}
+                      </Button>
+                    </div>
+                    {/* Outside the row button: pills are themselves buttons. */}
+                    {!r.allowed && (
+                      <LockNotice
+                        className="pb-2 pr-2"
+                        reasonCode={r.reason_code}
+                        reasonDetail={r.reason_detail}
+                        otherName={otherName}
+                        siblingTitles={(activities || [])
+                          .filter((a) => a.code !== r.code)
+                          .map((a) => a.title)}
+                        lookupByTitle={lookupByTitle}
+                        onOpenActivity={onActivitySelect}
                       />
-                      <i
-                        className="inline-block h-2.5 w-2.5 rounded-full"
-                        style={{
-                          background: db ? partnerColor : hb ? `${partnerColor}73` : "#DCD7C8",
-                        }}
-                      />
-                    </span>
-                    {/* …the button carries the verb. */}
-                    <Button
-                      size="sm"
-                      variant={r.allowed ? "default" : "ghost"}
-                      disabled={!r.allowed}
-                      className="shrink-0"
-                      onClick={() => onActivityOpen?.(r.code)}
-                    >
-                      {r.allowed ? verb : "Locked"}
-                    </Button>
+                    )}
                   </div>
                 );
               })}
@@ -207,8 +233,15 @@ export default function ModuleBriefingDialog({
           )}
 
           <DialogFooter className="flex-col items-stretch gap-2 sm:flex-col sm:items-stretch">
-            {!startCode && blockedReason && (
-              <p className="text-xs text-muted-foreground">{blockedReason}</p>
+            {!startCode && (
+              <LockNotice
+                reasonCode={blockedReasonCode}
+                reasonDetail={blockedReasonDetail}
+                otherName={otherName}
+                siblingTitles={(activities || []).map((a) => a.title)}
+                lookupByTitle={lookupByTitle}
+                onOpenActivity={onActivitySelect}
+              />
             )}
             {startCode ? (
               <Button onClick={() => onStart(startCode)}>Start Milestone {moduleNumber}</Button>

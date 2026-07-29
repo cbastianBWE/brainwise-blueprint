@@ -126,7 +126,10 @@ interface JourneyRow {
   module_number: number;
   sequence: number;
   allowed: boolean;
+  /** Machine key plus payload. Never rendered. */
   reason: string | null;
+  reason_code: string | null;
+  reason_detail: string[] | null;
   own_status: string | null;
   partner_status: string | null;
   reveal_pending: boolean | null;
@@ -364,6 +367,17 @@ export function JourneyMap({
   const openActivityRow = openActivity
     ? (rows || []).find((r) => r.code === openActivity) || null
     : null;
+
+  // Blocking activities arrive as titles, so pills resolve by title.
+  const lookupByTitle = (title: string) => {
+    const t = title.trim().toLowerCase();
+    const hit = (rows || []).find((r) => r.title.trim().toLowerCase() === t);
+    return hit ? { code: hit.code, allowed: hit.allowed } : null;
+  };
+  const siblingsOf = (moduleNumber: number, exceptCode?: string) =>
+    (rows || [])
+      .filter((r) => r.module_number === moduleNumber && r.code !== exceptCode)
+      .map((r) => r.title);
 
   const dotFor = (i: number, side: Side, color: string) =>
     side.done.includes(i) ? color : side.cur === i ? `${color}73` : "#DCD7C8";
@@ -662,6 +676,10 @@ export function JourneyMap({
         minutes={minuteRange(openStop?.acts ?? [])}
         startCode={openStop?.acts.find((r) => r.allowed)?.code ?? null}
         blockedReason={openStop?.acts.find((r) => !r.allowed && r.reason)?.reason ?? null}
+        blockedReasonCode={openStop?.acts.find((r) => !r.allowed)?.reason_code ?? null}
+        blockedReasonDetail={openStop?.acts.find((r) => !r.allowed)?.reason_detail ?? null}
+        otherName={otherName}
+        lookupByTitle={lookupByTitle}
         onStart={(code) => {
           setOpen(null);
           navigate(`/couples/${relationshipId}/activity/${code}`);
@@ -672,6 +690,8 @@ export function JourneyMap({
           title: r.title,
           allowed: r.allowed,
           reason: r.reason,
+          reason_code: r.reason_code,
+          reason_detail: r.reason_detail,
           own_status: r.own_status,
           partner_status: r.partner_status,
         }))}
@@ -694,6 +714,8 @@ export function JourneyMap({
                 title: openActivityRow.title,
                 allowed: openActivityRow.allowed,
                 reason: openActivityRow.reason,
+                reason_code: openActivityRow.reason_code,
+                reason_detail: openActivityRow.reason_detail,
                 own_status: openActivityRow.own_status,
                 partner_status: openActivityRow.partner_status,
                 reveal_pending: openActivityRow.reveal_pending ?? null,
@@ -705,6 +727,11 @@ export function JourneyMap({
         catalogue={openActivity ? catalogueByCode.get(openActivity) || null : null}
         moduleTitle={openStop?.title ?? null}
         otherName={otherName}
+        siblingTitles={
+          openActivityRow ? siblingsOf(openActivityRow.module_number, openActivityRow.code) : []
+        }
+        lookupByTitle={lookupByTitle}
+        onOpenActivity={setOpenActivity}
         onGo={(code) => {
           setOpenActivity(null);
           setOpen(null);

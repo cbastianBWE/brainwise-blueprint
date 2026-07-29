@@ -45,7 +45,12 @@ export interface MilestoneActivityRow {
   code: string;
   title: string;
   allowed: boolean;
+  /** Machine key plus payload. Never rendered — see LockNotice. */
   reason: string | null;
+  /** Bare reason key, for display mapping. */
+  reason_code?: string | null;
+  /** Blocking activity titles, journey order. */
+  reason_detail?: string[] | null;
   own_status: string | null;
   partner_status: string | null;
 }

@@ -15,6 +15,7 @@ import {
 } from "./journey/journeyShared";
 import ModuleBriefingDialog from "./journey/ModuleBriefingDialog";
 import ActivityBriefingDialog from "./journey/ActivityBriefingDialog";
+import LockNotice from "./journey/LockNotice";
 import { JourneyMap } from "./JourneyMap";
 
 
@@ -27,7 +28,10 @@ interface JourneyRow {
   est_minutes_low: number | null;
   est_minutes_high: number | null;
   allowed: boolean;
+  /** Machine key plus payload. Never rendered. */
   reason: string | null;
+  reason_code: string | null;
+  reason_detail: string[] | null;
   own_status: string | null;
   partner_status: string | null;
   reveal_pending: boolean | null;
@@ -192,6 +196,17 @@ export default function RelationshipJourney() {
     row: rows.find((r) => r.code === res.code) || null,
   }));
 
+  // Blocking activities arrive as titles, so the pill link resolves by title.
+  const lookupByTitle = (title: string) => {
+    const t = title.trim().toLowerCase();
+    const hit = rows.find((r) => r.title.trim().toLowerCase() === t);
+    return hit ? { code: hit.code, allowed: hit.allowed } : null;
+  };
+  const siblingsOf = (moduleNumber: number, exceptCode?: string) =>
+    rows
+      .filter((r) => r.module_number === moduleNumber && r.code !== exceptCode)
+      .map((r) => r.title);
+
   return (
     <div className="mx-auto max-w-5xl space-y-6 p-4 md:p-6">
       <header>
@@ -255,48 +270,59 @@ export default function RelationshipJourney() {
                 const modTitle = moduleByNumber.get(res.module_number)?.title;
                 const locked = row ? !row.allowed : false;
                 return (
-                  <button
+                  <div
                     key={res.activity_id}
-                    type="button"
-                    onClick={() => setOpenActivity(res.code)}
                     className={
-                      "block w-full text-left transition-opacity hover:opacity-90 " +
-                      (locked ? "opacity-60" : "")
+                      "rounded-lg border " + (locked ? "opacity-60" : "")
                     }
                   >
-                    <div className="flex flex-col gap-1.5 rounded-lg border p-3">
-                      <p className="text-xs text-muted-foreground">
-                        Milestone {res.module_number + 1}
-                        {modTitle ? ` · ${modTitle}` : ""}
-                      </p>
-                      <div className="flex flex-wrap items-center gap-2">
-                        {locked && <Lock className="h-3.5 w-3.5 text-muted-foreground" />}
-                        <span className="text-sm font-medium">{res.title}</span>
-                        {row && (
-                          <Badge variant="secondary">
-                            {STATUS_LABEL[row.own_status || "not_started"] || row.own_status}
-                          </Badge>
+                    <button
+                      type="button"
+                      onClick={() => setOpenActivity(res.code)}
+                      className="block w-full text-left transition-opacity hover:opacity-90"
+                    >
+                      <div className="flex flex-col gap-1.5 p-3 pb-1.5">
+                        <p className="text-xs text-muted-foreground">
+                          Milestone {res.module_number + 1}
+                          {modTitle ? ` · ${modTitle}` : ""}
+                        </p>
+                        <div className="flex flex-wrap items-center gap-2">
+                          {locked && <Lock className="h-3.5 w-3.5 text-muted-foreground" />}
+                          <span className="text-sm font-medium">{res.title}</span>
+                          {row && (
+                            <Badge variant="secondary">
+                              {STATUS_LABEL[row.own_status || "not_started"] || row.own_status}
+                            </Badge>
+                          )}
+                        </div>
+                        {res.description && (
+                          <p className="line-clamp-2 text-xs text-muted-foreground">
+                            {res.description}
+                          </p>
+                        )}
+                        {res.tags && res.tags.length > 0 && (
+                          <div className="flex flex-wrap gap-1">
+                            {res.tags.map((t) => (
+                              <Badge key={t} variant="outline" className="text-[10px]">
+                                {t}
+                              </Badge>
+                            ))}
+                          </div>
                         )}
                       </div>
-                      {res.description && (
-                        <p className="line-clamp-2 text-xs text-muted-foreground">
-                          {res.description}
-                        </p>
-                      )}
-                      {locked && row?.reason && (
-                        <p className="text-xs text-muted-foreground">{row.reason}</p>
-                      )}
-                      {res.tags && res.tags.length > 0 && (
-                        <div className="flex flex-wrap gap-1">
-                          {res.tags.map((t) => (
-                            <Badge key={t} variant="outline" className="text-[10px]">
-                              {t}
-                            </Badge>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </button>
+                    </button>
+                    {locked && row && (
+                      <LockNotice
+                        className="px-3 pb-3"
+                        reasonCode={row.reason_code}
+                        reasonDetail={row.reason_detail}
+                        otherName={otherName}
+                        siblingTitles={siblingsOf(row.module_number, row.code)}
+                        lookupByTitle={lookupByTitle}
+                        onOpenActivity={setOpenActivity}
+                      />
+                    )}
+                  </div>
                 );
               })}
             </div>
@@ -360,40 +386,49 @@ export default function RelationshipJourney() {
                       ? `${r.est_minutes_low} min`
                       : null;
                 return (
-                  <button
+                  <div
                     key={r.activity_id}
-                    type="button"
-                    onClick={() => setOpenActivity(r.code)}
-                    className={
-                      "block w-full text-left transition-opacity hover:opacity-90 " +
-                      (r.allowed ? "" : "opacity-60")
-                    }
+                    className={"rounded-lg border " + (r.allowed ? "" : "opacity-60")}
                   >
-                    <div className="flex flex-col gap-1.5 rounded-lg border p-3">
-                      <div className="flex flex-wrap items-center gap-2">
-                        {!r.allowed && <Lock className="h-3.5 w-3.5 text-muted-foreground" />}
-                        <span className="text-sm font-medium">{r.title}</span>
-                        {r.reveal_pending && (
-                          <Badge variant="default" className="gap-1">
-                            <Sparkles className="h-3 w-3" />
-                            Something to see
+                    <button
+                      type="button"
+                      onClick={() => setOpenActivity(r.code)}
+                      className="block w-full text-left transition-opacity hover:opacity-90"
+                    >
+                      <div className="flex flex-col gap-1.5 p-3 pb-1.5">
+                        <div className="flex flex-wrap items-center gap-2">
+                          {!r.allowed && <Lock className="h-3.5 w-3.5 text-muted-foreground" />}
+                          <span className="text-sm font-medium">{r.title}</span>
+                          {r.reveal_pending && (
+                            <Badge variant="default" className="gap-1">
+                              <Sparkles className="h-3 w-3" />
+                              Something to see
+                            </Badge>
+                          )}
+                          <Badge variant="secondary">
+                            {STATUS_LABEL[r.own_status || "not_started"] || r.own_status}
                           </Badge>
-                        )}
-                        <Badge variant="secondary">
-                          {STATUS_LABEL[r.own_status || "not_started"] || r.own_status}
-                        </Badge>
-                        {est && <span className="text-xs text-muted-foreground">{est}</span>}
+                          {est && <span className="text-xs text-muted-foreground">{est}</span>}
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          {otherName}:{" "}
+                          {STATUS_LABEL[r.partner_status || "not_started"]?.toLowerCase() ||
+                            r.partner_status}
+                        </p>
                       </div>
-                      {!r.allowed && r.reason && (
-                        <p className="text-xs text-muted-foreground">{r.reason}</p>
-                      )}
-                      <p className="text-xs text-muted-foreground">
-                        {otherName}:{" "}
-                        {STATUS_LABEL[r.partner_status || "not_started"]?.toLowerCase() ||
-                          r.partner_status}
-                      </p>
-                    </div>
-                  </button>
+                    </button>
+                    {!r.allowed && (
+                      <LockNotice
+                        className="px-3 pb-3"
+                        reasonCode={r.reason_code}
+                        reasonDetail={r.reason_detail}
+                        otherName={otherName}
+                        siblingTitles={siblingsOf(r.module_number, r.code)}
+                        lookupByTitle={lookupByTitle}
+                        onOpenActivity={setOpenActivity}
+                      />
+                    )}
+                  </div>
                 );
               })}
             </CardContent>
@@ -411,6 +446,14 @@ export default function RelationshipJourney() {
         minutes={minuteRange(openModuleRows)}
         startCode={openModuleRows.find((r) => r.allowed)?.code ?? null}
         blockedReason={openModuleRows.find((r) => !r.allowed && r.reason)?.reason ?? null}
+        blockedReasonCode={
+          openModuleRows.find((r) => !r.allowed)?.reason_code ?? null
+        }
+        blockedReasonDetail={
+          openModuleRows.find((r) => !r.allowed)?.reason_detail ?? null
+        }
+        otherName={otherName}
+        lookupByTitle={lookupByTitle}
         onStart={(code) => {
           setOpenModule(null);
           go(code);
@@ -426,6 +469,11 @@ export default function RelationshipJourney() {
           openActivityRow ? moduleByNumber.get(openActivityRow.module_number)?.title ?? null : null
         }
         otherName={otherName}
+        siblingTitles={
+          openActivityRow ? siblingsOf(openActivityRow.module_number, openActivityRow.code) : []
+        }
+        lookupByTitle={lookupByTitle}
+        onOpenActivity={setOpenActivity}
         onGo={(code) => {
           setOpenActivity(null);
           go(code);
