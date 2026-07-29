@@ -159,8 +159,15 @@ export default function ActivityBriefingDialog({
           )}
 
           <DialogFooter className="flex-col items-stretch gap-2 sm:flex-col sm:items-stretch">
-            {!state.allowed && state.reason && (
-              <p className="text-xs text-muted-foreground">{state.reason}</p>
+            {!state.allowed && (
+              <LockNotice
+                reasonCode={state.reason_code}
+                reasonDetail={state.reason_detail}
+                otherName={otherName}
+                siblingTitles={siblingTitles}
+                lookupByTitle={lookupByTitle}
+                onOpenActivity={onOpenActivity}
+              />
             )}
             {state.allowed ? (
               <Button onClick={() => onGo(state.code)}>{actionLabel}</Button>
