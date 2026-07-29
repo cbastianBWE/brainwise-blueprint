@@ -782,11 +782,21 @@ export function JourneyMap({
           reason_detail: r.reason_detail,
           own_status: r.own_status,
           partner_status: r.partner_status,
+          reveal_pending: r.reveal_pending,
+          reveal_step_id: r.reveal_step_id,
         }))}
         onActivitySelect={(code) => setOpenActivity(code)}
         onActivityOpen={(code) => {
           setOpen(null);
           navigate(`/couples/${relationshipId}/activity/${code}`);
+        }}
+        onActivityReveal={(code, stepId) => {
+          setOpen(null);
+          navigate(
+            `/couples/${relationshipId}/activity/${code}${
+              stepId ? `?step=${encodeURIComponent(stepId)}` : ""
+            }`,
+          );
         }}
         selfColor={colorA}
         partnerColor={colorB}
