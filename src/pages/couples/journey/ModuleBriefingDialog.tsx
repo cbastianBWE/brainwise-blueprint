@@ -48,6 +48,8 @@ export interface ModuleBriefingDialogProps {
   onActivitySelect?: (code: string) => void;
   /** Row button — goes straight to the runner. */
   onActivityOpen?: (code: string) => void;
+  /** Waiting reveal — opens the activity at its reveal step. */
+  onActivityReveal?: (code: string, stepId: string | null) => void;
   selfColor?: string;
   partnerColor?: string;
 }
@@ -78,6 +80,7 @@ export default function ModuleBriefingDialog({
   activities,
   onActivitySelect,
   onActivityOpen,
+  onActivityReveal,
   selfColor = "#006D77",
   partnerColor = "#3C096C",
 }: ModuleBriefingDialogProps) {
