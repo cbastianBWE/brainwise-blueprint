@@ -594,38 +594,57 @@ export function JourneyMap({
 
       <div className="om-map rounded-xl p-3 md:p-4" style={{ background: GROUND }}>
         {/* Phone rail */}
-        <div ref={phone.ref} className="md:hidden">
-          <div style={{ height: Math.round(PHONE_H * phone.scale), overflow: "hidden" }}>
-            <div
-              className="relative"
-              style={{
-                width: PHONE_W,
-                height: PHONE_H,
-                transform: `scale(${phone.scale})`,
-                transformOrigin: "top left",
-              }}
-            >
-              {renderRail(PP, true)}
-            </div>
+        <div
+          ref={phone.ref}
+          className="md:hidden"
+          style={{
+            position: "relative",
+            width: "100%",
+            overflow: "hidden",
+            height: Math.round(PHONE_H * phone.scale),
+          }}
+        >
+          <div
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: PHONE_W,
+              height: PHONE_H,
+              transform: `scale(${phone.scale})`,
+              transformOrigin: "top left",
+            }}
+          >
+            {renderRail(PP, true)}
           </div>
         </div>
 
         {/* Desktop rail */}
-        <div ref={desk.ref} className="hidden md:block">
-          <div style={{ height: Math.round(DESK_H * desk.scale), overflow: "hidden" }}>
-            <div
-              className="relative"
-              style={{
-                width: DESK_W,
-                height: DESK_H,
-                transform: `scale(${desk.scale})`,
-                transformOrigin: "top left",
-              }}
-            >
-              {renderRail(DP, false)}
-            </div>
+        <div
+          ref={desk.ref}
+          className="hidden md:block"
+          style={{
+            position: "relative",
+            width: "100%",
+            overflow: "hidden",
+            height: Math.round(DESK_H * desk.scale),
+          }}
+        >
+          <div
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: DESK_W,
+              height: DESK_H,
+              transform: `scale(${desk.scale})`,
+              transformOrigin: "top left",
+            }}
+          >
+            {renderRail(DP, false)}
           </div>
         </div>
+
 
         {/* Legend + marker colour */}
         <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-3 border-t pt-3 text-xs" style={{ borderColor: "#E4DFD3" }}>
