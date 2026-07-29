@@ -21,6 +21,14 @@ import { VisibilityExplainerWidget } from "./widgets/VisibilityExplainerWidget";
 import { GuessLockWidget, type GuessValue } from "./widgets/GuessLockWidget";
 import { ProfileRevealWidget } from "./widgets/ProfileRevealWidget";
 import { SafetyScreenWidget } from "./widgets/SafetyScreenWidget";
+import { IkigaiWidget } from "@/pages/coaching/runner/widgets/IkigaiWidget";
+import { ImageDescribeWidget } from "@/pages/coaching/runner/widgets/ImageDescribeWidget";
+import { CoupleTimelineWidget, type TimelineEvent } from "./widgets/CoupleTimelineWidget";
+import { SynthesisWidget } from "./widgets/SynthesisWidget";
+import { OverlapRevealWidget } from "./widgets/OverlapRevealWidget";
+import { OwnReadbackWidget } from "./widgets/OwnReadbackWidget";
+import { ReusedStepsWidget } from "./widgets/ReusedStepsWidget";
+
 
 import type { CoupleContext, CoupleStep } from "./coupleShared";
 
