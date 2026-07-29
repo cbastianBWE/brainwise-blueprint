@@ -11550,6 +11550,35 @@ export type Database = {
           },
         ]
       }
+      relationship_activity_embeddings: {
+        Row: {
+          activity_id: string
+          content: string
+          embedding: string
+          updated_at: string
+        }
+        Insert: {
+          activity_id: string
+          content: string
+          embedding: string
+          updated_at?: string
+        }
+        Update: {
+          activity_id?: string
+          content?: string
+          embedding?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "relationship_activity_embeddings_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: true
+            referencedRelation: "relationship_activities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       relationship_activity_sessions: {
         Row: {
           activity_id: string
@@ -11986,6 +12015,66 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      relationship_marker_prefs: {
+        Row: {
+          created_at: string
+          marker_color: string
+          relationship_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          marker_color: string
+          relationship_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          marker_color?: string
+          relationship_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "relationship_marker_prefs_relationship_id_fkey"
+            columns: ["relationship_id"]
+            isOneToOne: false
+            referencedRelation: "relationships"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "relationship_marker_prefs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "relationship_marker_prefs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "relationship_marker_prefs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "relationship_marker_prefs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       relationship_modules: {
         Row: {
@@ -18537,6 +18626,10 @@ export type Database = {
         Returns: Json
       }
       mr_cleanup_media: { Args: { p_apply?: boolean }; Returns: number }
+      mr_embed_activities: {
+        Args: { p_force?: boolean; p_limit?: number }
+        Returns: number
+      }
       mr_ingest_media: {
         Args: {
           p_category: string
@@ -19970,6 +20063,14 @@ export type Database = {
           visibility_mode: string
         }[]
       }
+      relationship_marker_colors: {
+        Args: { p_relationship: string }
+        Returns: {
+          is_self: boolean
+          marker_color: string
+          user_id: string
+        }[]
+      }
       relationship_nudge_due_days: {
         Args: { p_relationship: string }
         Returns: number[]
@@ -20049,6 +20150,10 @@ export type Database = {
           session_id: string
           status: string
         }[]
+      }
+      relationship_set_marker_color: {
+        Args: { p_color: string; p_relationship: string }
+        Returns: Json
       }
       relationship_strip_private: {
         Args: { p_activity: string; p_responses: Json }
@@ -20355,6 +20460,23 @@ export type Database = {
           total_count: number
           user_id: string
           worst_certification_status: string
+        }[]
+      }
+      search_relationship_activities: {
+        Args: {
+          p_match_count?: number
+          p_min_similarity?: number
+          p_query_embedding: string
+        }
+        Returns: {
+          activity_id: string
+          code: string
+          description: string
+          hero_image_url: string
+          module_number: number
+          similarity: number
+          tags: string[]
+          title: string
         }[]
       }
       seat_count_available: { Args: { p_org: string }; Returns: number }
