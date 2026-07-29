@@ -25,17 +25,61 @@ function optionLabels(options: unknown): string[] {
   return [];
 }
 
+function SilentEvaluator({
+  step,
+  value,
+  onChange,
+  relationshipId,
+  activityId,
+}: {
+  step: CoupleStep;
+  value: unknown;
+  onChange: (next: unknown) => void;
+  relationshipId?: string;
+  activityId?: string;
+}) {
+  const done = !!value && typeof value === "object";
+  useEffect(() => {
+    if (done || !step.evaluator || !relationshipId || !activityId) return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await (supabase as any).rpc(step.evaluator as string, {
+        p_relationship: relationshipId,
+        p_activity: activityId,
+        p_run: null,
+        p_answers: {},
+      });
+      if (cancelled) return;
+      const row = Array.isArray(data) ? data[0] : data;
+      const outcome =
+        typeof row === "string" ? row : (row?.outcome ?? row?.result ?? row?.branch ?? (row?.routed ? "routed" : "clear"));
+      const key = typeof outcome === "string" ? outcome : "clear";
+      const target = (step.branches || {})[key];
+      onChange({ branch: key, target, triggered: key !== "clear" && target !== "coach" && target !== "continue" });
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [done, step.evaluator, relationshipId, activityId]);
+  return null;
+}
+
 export function SafetyScreenWidget({
   step,
   value,
   onChange,
   responses,
+  relationshipId,
+  activityId,
 }: {
   step: CoupleStep;
   value: unknown;
   onChange: (next: unknown) => void;
   responses: Record<string, unknown>;
+  relationshipId?: string;
+  activityId?: string;
 }) {
+
   const mode: "items" | "branch" | "resource" = step.itemsSource
     ? "items"
     : step.conditionOn
