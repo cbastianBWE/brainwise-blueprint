@@ -12,9 +12,14 @@ import {
   pairedQaSubfields,
   pairedQaDualRater,
   pairedQaRevealOnly,
+  pairedQaGuess,
+  pairedQaCompare,
+  pairedQaRevealsNothing,
   agreementStarters,
   agreementFullRequirements,
   agreementOutcomes,
+  agreementPersonal,
+  agreementNoStarters,
   jointTurns,
   jointScaffold,
   jointBare,
@@ -29,7 +34,11 @@ type Mode = "waiting" | "revealed" | "summary";
  */
 export default function WidgetPreview() {
   const [mode, setMode] = useState<Mode>("waiting");
-  const [values, setValues] = useState<Record<string, Record<string, unknown>>>({});
+  const [values, setValues] = useState<Record<string, Record<string, unknown>>>({
+    // seed the earlier captures these steps compare against
+    "pq-guess": { owned_moves: ["I go quiet.", "I get sharp about small things."] },
+    "pq-compare": { share_estimate: "Feels closer to 50/50 to me, most weeks." },
+  });
 
   const couple = mode === "waiting" ? waitingContext : mode === "revealed" ? revealedContext : summaryContext;
 
@@ -63,7 +72,15 @@ export default function WidgetPreview() {
 
       <section className="space-y-4">
         <h2 className="text-sm font-medium text-muted-foreground">paired_qa</h2>
-        {[pairedQaTwoPass, pairedQaSubfields, pairedQaDualRater, pairedQaRevealOnly].map((step) => (
+        {[
+          pairedQaTwoPass,
+          pairedQaSubfields,
+          pairedQaDualRater,
+          pairedQaRevealOnly,
+          pairedQaGuess,
+          pairedQaCompare,
+          pairedQaRevealsNothing,
+        ].map((step) => (
           <Section key={step.id} title="PairedQaWidget" step={step}>
             <PairedQaWidget
               step={step}
@@ -77,7 +94,8 @@ export default function WidgetPreview() {
 
       <section className="space-y-4">
         <h2 className="text-sm font-medium text-muted-foreground">couple_agreement</h2>
-        {[agreementStarters, agreementFullRequirements, agreementOutcomes].map((step) => (
+        {[agreementStarters, agreementFullRequirements, agreementOutcomes, agreementPersonal, agreementNoStarters].map(
+          (step) => (
           <Section key={step.id} title="CoupleAgreementWidget" step={step}>
             <CoupleAgreementWidget
               step={step}
@@ -86,7 +104,8 @@ export default function WidgetPreview() {
               onChange={setValueFor(step.id!)}
             />
           </Section>
-        ))}
+          ),
+        )}
       </section>
 
       <section className="space-y-4">

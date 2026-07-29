@@ -7,6 +7,41 @@ import { type CoupleContext, type CoupleStep, substituteNames } from "../coupleS
 
 type Rec = Record<string, unknown>;
 
+/** Render a captured value sensibly: paragraph, list, or definition list. Never JSON.stringify. */
+function ValueBlock({ val, empty = "Nothing here yet." }: { val: unknown; empty?: string }) {
+  if (val === undefined || val === null || val === "") {
+    return <p className="text-sm text-muted-foreground">{empty}</p>;
+  }
+  if (Array.isArray(val)) {
+    return (
+      <ul className="list-disc space-y-1 pl-5">
+        {val.map((item, i) => (
+          <li key={i} className="text-sm whitespace-pre-wrap">
+            {String(item)}
+          </li>
+        ))}
+      </ul>
+    );
+  }
+  if (typeof val === "object") {
+    const entries = Object.entries(val as Rec).filter(([k]) => !k.startsWith("__"));
+    if (entries.length === 0) return <p className="text-sm text-muted-foreground">{empty}</p>;
+    return (
+      <dl className="space-y-2">
+        {entries.map(([k, item]) => (
+          <div key={k}>
+            <dt className="text-xs text-muted-foreground">{k}</dt>
+            <dd className="text-sm whitespace-pre-wrap">
+              {Array.isArray(item) ? item.join(", ") : String(item ?? "")}
+            </dd>
+          </div>
+        ))}
+      </dl>
+    );
+  }
+  return <p className="text-sm whitespace-pre-wrap">{String(val)}</p>;
+}
+
 export function PairedQaWidget({
   step,
   couple,
@@ -20,8 +55,9 @@ export function PairedQaWidget({
 }) {
   const v = (value || {}) as Rec;
   const revealed = couple.barrierCleared && !!couple.partnerView;
-  // Once the partner-facing barrier logic applies, your own inputs lock.
-  const locked = revealed || (!!v.__submitted && !couple.partnerSubmitted);
+  const summaryMode = revealed && couple.partnerView?.disclosure === "summary";
+  // Once submitted, your own inputs lock — a guess you can edit after the reveal is not a guess.
+  const locked = revealed || !!v.__submitted;
   const readOnly = locked;
 
   const setGroup = (group: "self" | "read", key: string, next: string) => {
@@ -58,6 +94,20 @@ export function PairedQaWidget({
         rows={3}
       />
     </div>
+  );
+
+  const SummaryCard = () => (
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base">{couple.otherFirstName}</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-2">
+        <p className="text-sm whitespace-pre-wrap">{String((couple.partnerView?.responses as Rec)?.summary ?? "")}</p>
+        <p className="text-xs text-muted-foreground">
+          {couple.otherFirstName} chose to share a summary of this one.
+        </p>
+      </CardContent>
+    </Card>
   );
 
   // ---- shape a: two-pass questions ----
@@ -165,8 +215,118 @@ export function PairedQaWidget({
     </div>
   );
 
-  // ---- shape d: reveal only ----
-  const renderRevealOnly = () => (
+  // ---- branch 1: reveals nothing. Partner content is never rendered here. ----
+  const renderRevealsNothing = () => (
+    <div className="space-y-4">
+      <div className="rounded-lg border bg-muted/30 p-4">
+        <p className="text-sm text-muted-foreground">
+          You've both done this one on your own, and it stays that way. Nothing you wrote is shown to{" "}
+          {couple.otherFirstName}, and nothing of theirs is shown to you. It's enough that you both did it.
+        </p>
+      </div>
+      <Button onClick={() => onChange({ ...v, __submitted: true })} disabled={!!v.__submitted}>
+        Continue
+      </Button>
+    </div>
+  );
+
+  // ---- branch 2: this step captures a prediction of the partner's answer ----
+  const renderGuess = () => {
+    const key = step.key || "guess";
+    const guessVal = v[key];
+    return (
+      <div className="space-y-4">
+        <Field
+          id={`guess-${key}`}
+          label={step.title ? substituteNames(step.label || "Your guess", couple) : "Your guess"}
+          helper={`You're guessing what ${couple.otherFirstName} put. You'll see their real answer once you've both finished.`}
+          val={guessVal}
+          onSet={(s) => setField(key, s)}
+        />
+
+        {!locked && (
+          <Button
+            onClick={() => onChange({ ...v, __submitted: true })}
+            disabled={typeof guessVal !== "string" || !guessVal.trim()}
+          >
+            Lock in my guess
+          </Button>
+        )}
+
+        {revealed &&
+          (summaryMode ? (
+            <SummaryCard />
+          ) : (
+            <div className="grid gap-4 md:grid-cols-3">
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base">What you guessed</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ValueBlock val={guessVal} empty="You didn't put a guess in." />
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base">What {couple.otherFirstName} actually put</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ValueBlock val={(couple.partnerView?.responses as Rec)?.[step.guessOf || ""]} />
+                </CardContent>
+              </Card>
+              {step.comparesKey && (
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base">What you put yourself</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ValueBlock val={v[step.comparesKey]} />
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          ))}
+      </div>
+    );
+  };
+
+  // ---- branch 3: captures nothing, compares an earlier answer ----
+  const renderCompare = () => (
+    <div className="space-y-4">
+      {!revealed ? (
+        <div className="rounded-lg border bg-muted/30 p-4">
+          <p className="text-sm text-muted-foreground">
+            Nothing to write here. This puts what you each said earlier next to each other, and it waits until you've
+            both finished.
+          </p>
+        </div>
+      ) : summaryMode ? (
+        <SummaryCard />
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">{couple.ownFirstName}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ValueBlock val={v[step.comparesKey || ""]} />
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">{couple.otherFirstName}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ValueBlock val={(couple.partnerView?.responses as Rec)?.[step.comparesKey || ""]} />
+            </CardContent>
+          </Card>
+        </div>
+      )}
+    </div>
+  );
+
+  // ---- legacy fallback for steps with none of the above ----
+  const renderPlain = () => (
     <div className="space-y-4">
       <div className="rounded-lg border bg-muted/30 p-4">
         <p className="text-sm text-muted-foreground">
@@ -179,15 +339,24 @@ export function PairedQaWidget({
     </div>
   );
 
-  const body = step.questions?.length
-    ? renderQuestions()
-    : step.subfields?.length && step.innerWidget
-      ? renderSubfields()
-      : step.dualRater
-        ? renderDualRater()
-        : renderRevealOnly();
+  const isRevealsNothing = !!step.revealsNothing;
+  const isGuess = !isRevealsNothing && !!step.guessOf;
+  const isCompare = !isRevealsNothing && !isGuess && !!step.comparesKey && step.capturesHere === false;
+  const handledLocally = isRevealsNothing || isGuess || isCompare;
 
-  const summaryMode = revealed && couple.partnerView?.disclosure === "summary";
+  const body = isRevealsNothing
+    ? renderRevealsNothing()
+    : isGuess
+      ? renderGuess()
+      : isCompare
+        ? renderCompare()
+        : step.questions?.length
+          ? renderQuestions()
+          : step.subfields?.length && step.innerWidget
+            ? renderSubfields()
+            : step.dualRater
+              ? renderDualRater()
+              : renderPlain();
 
   return (
     <div className="space-y-6">
@@ -200,7 +369,7 @@ export function PairedQaWidget({
       {body}
 
       {/* State 2: submitted, waiting */}
-      {!couple.partnerSubmitted && !revealed && (
+      {!isRevealsNothing && !couple.partnerSubmitted && !revealed && (
         <div className="rounded-lg border bg-muted/30 p-4">
           <Badge variant="secondary">Waiting</Badge>
           <p className="mt-2 text-sm text-muted-foreground">
@@ -210,23 +379,11 @@ export function PairedQaWidget({
       )}
 
       {/* State 3: revealed — guarded strictly on barrierCleared */}
-      {revealed && (
+      {revealed && !handledLocally && (
         <div className="space-y-3">
           <h4 className="text-sm font-medium text-muted-foreground">Both sides</h4>
           {summaryMode ? (
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base">{couple.otherFirstName}</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <p className="text-sm whitespace-pre-wrap">
-                  {String((couple.partnerView?.responses as Rec)?.summary ?? "")}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {couple.otherFirstName} chose to share a summary of this one.
-                </p>
-              </CardContent>
-            </Card>
+            <SummaryCard />
           ) : (
             <div className="grid gap-4 md:grid-cols-2">
               <Card>

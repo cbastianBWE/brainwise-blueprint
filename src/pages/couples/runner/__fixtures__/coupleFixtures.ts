@@ -24,6 +24,9 @@ export const revealedContext: CoupleContext = {
       time: "Sunday mornings are ours.",
       ownRating: "7",
       readRating: "5",
+      owned_moves: ["I go quiet when it gets hard.", "I fix instead of listening."],
+      share_estimate: "I'd say I'm carrying about 60% of it right now.",
+      summary: "Josh says the honest version is that he's tired, and he wants more slow time together.",
     },
   },
 };
@@ -83,6 +86,37 @@ export const pairedQaRevealOnly: CoupleStep = {
   barrier: "both_partners_complete",
   reveal: { mode: "side_by_side", order: "alternating", toneRule: "neutral" },
 };
+
+export const pairedQaGuess: CoupleStep = {
+  widget: "paired_qa",
+  id: "pq-guess",
+  key: "attributed_moves",
+  label: "Which of these do you think {other_first_name} owned?",
+  guessOf: "owned_moves",
+  comparesKey: "owned_moves",
+  capturesHere: true,
+  barrier: "both_partners_complete",
+};
+
+export const pairedQaCompare: CoupleStep = {
+  widget: "paired_qa",
+  id: "pq-compare",
+  key: "fairness",
+  title: "How you each see the share",
+  comparesKey: "share_estimate",
+  capturesHere: false,
+};
+
+export const pairedQaRevealsNothing: CoupleStep = {
+  widget: "paired_qa",
+  id: "pq-nothing",
+  key: "shared_ack",
+  title: "Forgiving",
+  capturesHere: false,
+  revealsNothing: true,
+  exposesLedger: false,
+};
+
 
 // ---- couple_agreement fixtures ----
 
@@ -168,4 +202,21 @@ export const jointBare: CoupleStep = {
   listenerRule: "No decisions tonight.",
   optIn: true,
   coachInterjection: false,
+};
+
+export const agreementPersonal: CoupleStep = {
+  widget: "couple_agreement",
+  id: "ag-personal",
+  key: "replacement",
+  label: "One move you're replacing, starting this week.",
+  bothMustAgree: false,
+};
+
+export const agreementNoStarters: CoupleStep = {
+  widget: "couple_agreement",
+  id: "ag-no-starters",
+  key: "boundaries",
+  label: "What's the boundary you both need to hold?",
+  bothMustAgree: true,
+  requiresEscalationPlan: true,
 };

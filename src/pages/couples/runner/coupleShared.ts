@@ -31,6 +31,10 @@ export interface CoupleStep {
   modes?: string[];
   dualRater?: boolean;
   reveal?: { mode?: string; order?: string; toneRule?: string; generateReads?: boolean; drawCycle?: boolean };
+  comparesKey?: string;     // the earlier capture key this step reveals
+  guessOf?: string;         // if present, this step captures a PREDICTION of the partner's answer to that key
+  capturesHere?: boolean;   // true when this step collects input
+  revealsNothing?: boolean; // true when nothing of the partner's is ever shown
   exposesLedger?: boolean;
   // couple_agreement
   starters?: string[];

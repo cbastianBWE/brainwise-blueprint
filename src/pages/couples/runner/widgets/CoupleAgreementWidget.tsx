@@ -69,6 +69,10 @@ export function CoupleAgreementWidget({
         <h3 className="text-lg font-semibold">{substituteNames(step.title || step.label || "", couple)}</h3>
       )}
 
+      {!(step.starters && step.starters.length > 0) && (step.label || step.title) && (
+        <p className="text-base">{substituteNames(step.label || step.title || "", couple)}</p>
+      )}
+
       {step.starters && step.starters.length > 0 && (
         <div className="space-y-3">
           {typeof cap === "number" && (
@@ -104,16 +108,28 @@ export function CoupleAgreementWidget({
         </div>
       )}
 
-      {step.allowCustom && (
+      {(step.allowCustom || !(step.starters && step.starters.length > 0)) && (
         <div className="space-y-2">
-          <Label htmlFor="agreement-custom">Write your own</Label>
-          <div className="flex gap-2">
-            <Input
-              id="agreement-custom"
-              value={draft}
-              onChange={(e) => setDraft(e.target.value)}
-              placeholder="In your own words"
-            />
+          <Label htmlFor="agreement-custom">
+            {step.starters && step.starters.length > 0 ? "Write your own" : "In your own words"}
+          </Label>
+          <div className={step.starters && step.starters.length > 0 ? "flex gap-2" : "space-y-2"}>
+            {step.starters && step.starters.length > 0 ? (
+              <Input
+                id="agreement-custom"
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+                placeholder="In your own words"
+              />
+            ) : (
+              <Textarea
+                id="agreement-custom"
+                rows={4}
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+                placeholder="Say it the way you'd actually say it."
+              />
+            )}
             <Button variant="outline" onClick={addCustom} disabled={!draft.trim()}>
               Add
             </Button>
@@ -232,6 +248,27 @@ export function CoupleAgreementWidget({
               <span className="text-sm">{couple.otherFirstName}</span>
               <Badge variant="secondary">{couple.partnerSubmitted ? "Signed" : "Not yet"}</Badge>
             </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {!step.bothMustAgree && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Your commitment</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              This one is yours. It isn't something to negotiate or agree on — it's the change you're choosing to work
+              on.
+            </p>
+            {v.signedByMe ? (
+              <Badge variant="secondary">Committed</Badge>
+            ) : (
+              <Button size="sm" disabled={!complete} onClick={() => set({ signedByMe: true })}>
+                I'm committing to this
+              </Button>
+            )}
           </CardContent>
         </Card>
       )}
