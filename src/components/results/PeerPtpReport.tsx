@@ -5,7 +5,7 @@ import { PTP_DIMENSION_COLORS } from "@/lib/ptpDimensionColors";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
-import { selectDrivingFacets, drivingFacetFootnote } from "@/lib/selectDrivingFacets";
+import { selectDrivingFacets } from "@/lib/selectDrivingFacets";
 
 interface Props {
   targetUserId: string;
@@ -65,8 +65,6 @@ export default function PeerPtpReport({ targetUserId, ownerName }: Props) {
   const [drivingFacets, setDrivingFacets] = useState<{
     elevated: Array<{ facet_name: string; dimension_id: string; value: number }>;
     suppressed: Array<{ facet_name: string; dimension_id: string; value: number }>;
-    elevatedFootnote: string | null;
-    suppressedFootnote: string | null;
   } | null>(null);
 
   useEffect(() => {
@@ -160,8 +158,6 @@ export default function PeerPtpReport({ targetUserId, ownerName }: Props) {
       setDrivingFacets({
         elevated: selection.elevated.items.map((s) => ({ facet_name: s.facet_name, dimension_id: s.dimension_id, value: s.value })),
         suppressed: selection.suppressed.items.map((s) => ({ facet_name: s.facet_name, dimension_id: s.dimension_id, value: s.value })),
-        elevatedFootnote: drivingFacetFootnote(selection.elevated),
-        suppressedFootnote: drivingFacetFootnote(selection.suppressed),
       });
     })();
 
@@ -256,9 +252,6 @@ export default function PeerPtpReport({ targetUserId, ownerName }: Props) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Card className="p-4">
                 <h3 className="text-sm font-semibold text-foreground mb-3">Highest scoring facets</h3>
-                {drivingFacets.elevatedFootnote && (
-                  <p className="text-xs text-muted-foreground mb-2">{drivingFacets.elevatedFootnote}</p>
-                )}
                 <ul className="space-y-1.5">
                   {(drivingFacets.elevated ?? []).map((f: any, i: number) => (
                     <li key={i} className="flex items-center justify-between text-sm">
@@ -270,9 +263,6 @@ export default function PeerPtpReport({ targetUserId, ownerName }: Props) {
               </Card>
               <Card className="p-4">
                 <h3 className="text-sm font-semibold text-foreground mb-3">Lowest scoring facets</h3>
-                {drivingFacets.suppressedFootnote && (
-                  <p className="text-xs text-muted-foreground mb-2">{drivingFacets.suppressedFootnote}</p>
-                )}
                 <ul className="space-y-1.5">
                   {(drivingFacets.suppressed ?? []).map((f: any, i: number) => (
                     <li key={i} className="flex items-center justify-between text-sm">

@@ -63,8 +63,6 @@ export interface PdfData {
   } | null;
   elevatedFacets: FacetWithInterpretation[];
   suppressedFacets: FacetWithInterpretation[];
-  elevatedFacetsFootnote?: string | null;
-  suppressedFacetsFootnote?: string | null;
   assessmentResponses: AssessmentResponse[];
   recommendations: string[];
   isSliderInstrument: boolean;
@@ -836,23 +834,11 @@ export async function generateResultsPdf(data: PdfData, sections: PdfSections, o
       y += 6;
     };
 
-    const renderFootnote = (text?: string | null) => {
-      if (!text) return;
-      doc.setFontSize(8);
-      doc.setTextColor(120, 120, 120);
-      doc.text(text, MARGIN_L, y);
-      doc.setTextColor(...BLACK);
-      doc.setFontSize(10);
-      y += 6;
-    };
-
     if (data.elevatedFacets.length > 0) {
       renderFacetScoreTable("Highest Scoring Facets", data.elevatedFacets);
-      renderFootnote(data.elevatedFacetsFootnote);
     }
     if (data.suppressedFacets.length > 0) {
       renderFacetScoreTable("Lowest Scoring Facets", data.suppressedFacets);
-      renderFootnote(data.suppressedFacetsFootnote);
     }
   }
 

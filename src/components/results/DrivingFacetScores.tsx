@@ -16,7 +16,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { PTP_DIMENSION_COLORS } from "@/lib/ptpDimensionColors";
 import { PtpDimensionLegend } from "@/components/results/PtpDimensionLegend";
-import { selectDrivingFacets, drivingFacetFootnote, type DrivingFacetSide } from "@/lib/selectDrivingFacets";
+import { selectDrivingFacets } from "@/lib/selectDrivingFacets";
 
 interface FacetItem {
   item_text: string;
@@ -36,8 +36,6 @@ export default function DrivingFacetScores({ assessmentId, additionalAssessmentI
   const [loading, setLoading] = useState(true);
   const [elevated, setElevated] = useState<FacetItem[]>([]);
   const [suppressed, setSuppressed] = useState<FacetItem[]>([]);
-  const [elevatedSide, setElevatedSide] = useState<DrivingFacetSide<FacetItem> | null>(null);
-  const [suppressedSide, setSuppressedSide] = useState<DrivingFacetSide<FacetItem> | null>(null);
 
   useEffect(() => {
     const fetch = async () => {
@@ -111,8 +109,6 @@ export default function DrivingFacetScores({ assessmentId, additionalAssessmentI
 
       setElevated(selection.elevated.items);
       setSuppressed(selection.suppressed.items);
-      setElevatedSide(selection.elevated);
-      setSuppressedSide(selection.suppressed);
       setLoading(false);
     };
 
@@ -146,11 +142,11 @@ export default function DrivingFacetScores({ assessmentId, additionalAssessmentI
           </p>
         ) : (
           <>
-            {elevated.length > 0 && elevatedSide && (
-              <FacetSection title="Highest Scoring Facets" items={elevated} footnote={drivingFacetFootnote(elevatedSide)} />
+            {elevated.length > 0 && (
+              <FacetSection title="Highest Scoring Facets" items={elevated} />
             )}
-            {suppressed.length > 0 && suppressedSide && (
-              <FacetSection title="Lowest Scoring Facets" items={suppressed} footnote={drivingFacetFootnote(suppressedSide)} />
+            {suppressed.length > 0 && (
+              <FacetSection title="Lowest Scoring Facets" items={suppressed} />
             )}
           </>
         )}
@@ -179,11 +175,9 @@ function CustomTooltip({ active, payload }: any) {
 function FacetSection({
   title,
   items,
-  footnote,
 }: {
   title: string;
   items: FacetItem[];
-  footnote: string | null;
 }) {
   const chartData = items.map((item) => ({
     name: truncate(item.facet_name),
@@ -196,9 +190,7 @@ function FacetSection({
     <div>
       <h3 className="text-sm font-semibold text-foreground mb-2">{title}</h3>
       <PtpDimensionLegend dimensionIds={[...new Set(items.map((i) => i.dimension_id))]} />
-      {footnote && (
-        <p className="text-xs text-muted-foreground mb-2">{footnote}</p>
-      )}
+
 
       <ScrollArea className="w-full">
         <div

@@ -14,11 +14,11 @@
  *      the ordering used by the responses accordion, so a facet's relative
  *      position is consistent across report sections.
  *
- * Reported counts:
+ * Reported counts (computed but not currently displayed anywhere — kept so the
+ * metadata is available if we resurface it later):
  *   - totalCandidates: how many items fall on that side of the median.
- *   - tiedAtCut: how many items share the score of the 10th-ranked item. When
- *     this exceeds the slots remaining, the cut is splitting a tie and the UI
- *     should say so.
+ *   - tiedAtCut: how many items share the score of the 10th-ranked item, when
+ *     the cut splits a tie.
  *
  * A perfectly flat profile yields two empty lists, which the callers already
  * render as "Your scores are evenly distributed across all facets."
@@ -90,13 +90,4 @@ export function selectDrivingFacets<
     elevated: buildSide(highCandidates),
     suppressed: buildSide(lowCandidates),
   };
-}
-
-/** Shared footnote copy so the chart, the insights sections, and the PDF agree. */
-export function drivingFacetFootnote<T>(side: DrivingFacetSide<T>): string | null {
-  if (side.totalCandidates <= DRIVING_FACET_LIMIT) return null;
-  if (side.cutValue !== null) {
-    return `${side.tiedAtCut} facets tied at ${Math.round(side.cutValue)} — showing ${DRIVING_FACET_LIMIT}`;
-  }
-  return `Showing ${DRIVING_FACET_LIMIT} of ${side.totalCandidates}`;
 }

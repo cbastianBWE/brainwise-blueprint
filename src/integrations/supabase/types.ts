@@ -671,6 +671,24 @@ export type Database = {
           },
         ]
       }
+      app_config: {
+        Row: {
+          key: string
+          updated_at: string
+          value: string | null
+        }
+        Insert: {
+          key: string
+          updated_at?: string
+          value?: string | null
+        }
+        Update: {
+          key?: string
+          updated_at?: string
+          value?: string | null
+        }
+        Relationships: []
+      }
       assessment_acknowledgments: {
         Row: {
           acknowledged_at: string
@@ -3669,6 +3687,7 @@ export type Database = {
           starts_at: string
           teams_join_url: string | null
           teams_meeting_id: string | null
+          teams_meeting_kind: string | null
           timezone: string
           title: string
           updated_at: string
@@ -3689,6 +3708,7 @@ export type Database = {
           starts_at: string
           teams_join_url?: string | null
           teams_meeting_id?: string | null
+          teams_meeting_kind?: string | null
           timezone?: string
           title: string
           updated_at?: string
@@ -3709,6 +3729,7 @@ export type Database = {
           starts_at?: string
           teams_join_url?: string | null
           teams_meeting_id?: string | null
+          teams_meeting_kind?: string | null
           timezone?: string
           title?: string
           updated_at?: string

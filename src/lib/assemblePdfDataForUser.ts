@@ -13,7 +13,7 @@ import { PTP_ITEM_FACET_NAMES } from "./ptpFacetNames";
 import type { NaiPdfData } from "./generateNaiPdf";
 import type { AirsaPdfData } from "./generateAirsaPdf";
 import type { PdfSections } from "@/components/results/ExportPdfModal";
-import { selectDrivingFacets, drivingFacetFootnote } from "./selectDrivingFacets";
+import { selectDrivingFacets } from "./selectDrivingFacets";
 
 interface DimensionScore {
   mean?: number;
@@ -261,8 +261,6 @@ export async function assemblePtpPdfData(params: {
   // Narrative + facet sections
   let elevatedFacets: PdfData["elevatedFacets"] = [];
   let suppressedFacets: PdfData["suppressedFacets"] = [];
-  let elevatedFacetsFootnote: string | null = null;
-  let suppressedFacetsFootnote: string | null = null;
   let assessmentResponses: PdfData["assessmentResponses"] = [];
   let narrativeSections: PdfData["narrativeSections"] = null;
 
@@ -408,8 +406,6 @@ export async function assemblePtpPdfData(params: {
         const selection = selectDrivingFacets(filteredItems);
         elevatedFacets = selection.elevated.items.map(mapFacet);
         suppressedFacets = selection.suppressed.items.map(mapFacet);
-        elevatedFacetsFootnote = drivingFacetFootnote(selection.elevated);
-        suppressedFacetsFootnote = drivingFacetFootnote(selection.suppressed);
       }
     }
 
@@ -557,8 +553,6 @@ export async function assemblePtpPdfData(params: {
     narrativeSections,
     elevatedFacets,
     suppressedFacets,
-    elevatedFacetsFootnote,
-    suppressedFacetsFootnote,
     assessmentResponses,
     recommendations,
     isSliderInstrument: !!isSliderInstrument,
