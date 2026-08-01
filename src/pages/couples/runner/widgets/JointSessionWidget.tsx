@@ -42,6 +42,20 @@ export function JointSessionWidget({
   const speakerName = (s: "a" | "b" | "both") =>
     s === "a" ? couple.ownFirstName : s === "b" ? couple.otherFirstName : "Both of you";
 
+  const introText = typeof step.intro === "string" ? step.intro.trim() : "";
+  const Intro = () =>
+    introText ? (
+      <div className="space-y-2">
+        {substituteNames(introText, couple)
+          .split(/\n\s*\n/)
+          .map((p, i) => (
+            <p key={i} className="whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">
+              {p}
+            </p>
+          ))}
+      </div>
+    ) : null;
+
   const Rules = () => (
     <div className="space-y-2">
       {step.listenerRule && (
@@ -65,6 +79,8 @@ export function JointSessionWidget({
       )}
 
       <Rules />
+
+      <Intro />
 
       {/* a. Turn list */}
       {turns.length > 0 && turn && (
@@ -161,11 +177,13 @@ export function JointSessionWidget({
       {turns.length === 0 && !(step.sessionScaffold?.length ?? 0) && (
         <div className="space-y-4">
           {/* TODO: driven by relationship-activity-chat session_prompt, wired with the runner */}
-          <div className="rounded-lg border bg-muted/30 p-4">
-            <p className="text-sm text-muted-foreground">
-              Your coach will guide this conversation one step at a time. This is where that appears.
-            </p>
-          </div>
+          {!introText && (
+            <div className="rounded-lg border bg-muted/30 p-4">
+              <p className="text-sm text-muted-foreground">
+                Your coach will guide this conversation one step at a time. This is where that appears.
+              </p>
+            </div>
+          )}
           <Button onClick={() => onChange({ ...(value || {}), turns: { session: { done: true } } })}>Done</Button>
         </div>
       )}
