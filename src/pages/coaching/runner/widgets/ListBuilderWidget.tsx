@@ -14,6 +14,7 @@ export function ListBuilderWidget({
   reference,
   sessionId,
   activityCode,
+  sessionKind = "coaching",
 }: {
   step: Step;
   items: MMValue[];
@@ -21,6 +22,7 @@ export function ListBuilderWidget({
   reference?: { title: string; items: string[] };
   sessionId: string;
   activityCode: string;
+  sessionKind?: "coaching" | "relationship";
 }) {
   const min = step.min ?? 0;
   const [draft, setDraft] = useState<MMValue>("");
@@ -90,6 +92,7 @@ export function ListBuilderWidget({
           }}
           sessionId={sessionId}
           activityCode={activityCode}
+                  sessionKind={sessionKind}
           questionKey={`${step.key || "items"}:${(items || []).length}:${nonce}`}
           placeholder="Add an item…"
           minRows={2}

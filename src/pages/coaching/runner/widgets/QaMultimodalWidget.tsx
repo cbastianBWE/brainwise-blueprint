@@ -17,12 +17,14 @@ export function QaMultimodalWidget({
   activityCode,
   value,
   onChange,
+  sessionKind = "coaching",
 }: {
   step: Step;
   sessionId: string;
   activityCode: string;
   value: Record<string, QaAnswer>;
   onChange: (next: Record<string, QaAnswer>) => void;
+  sessionKind?: "coaching" | "relationship";
 }) {
   const questions = (step.questions as Array<{ key: string; prompt: string }>) || [];
   const modes = (step.modes && step.modes.length > 0 ? step.modes : ["text"]) as Array<
@@ -85,6 +87,7 @@ export function QaMultimodalWidget({
         questionKey: q.key,
         kind,
         blob,
+        sessionKind,
       });
       const next = { ...value, [q.key]: { mode: kind, media_id } as QaAnswer };
       onChange(next);
