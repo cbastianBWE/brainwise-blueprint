@@ -104,7 +104,15 @@ export interface CoupleStep {
   conditionOn?: { step: string; flag: string; equals?: boolean };
   onComplete?: { writes?: string; touchpoint?: string };
   // paired_qa
-  questions?: Array<{ key: string; self: string; read: string; type?: "image_select" }>;
+  questions?: Array<{
+    key: string;
+    self: string;
+    read: string;
+    type?: "image_select";
+    source?: { library?: string };
+    pageSize?: number;
+    selectMin?: number;
+  }>;
   selfIntro?: string;
   partnerReadIntro?: string;
   subfields?: string[];
