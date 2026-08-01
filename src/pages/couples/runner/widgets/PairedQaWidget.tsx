@@ -64,6 +64,8 @@ function ValueBlock({
     return <p className="text-sm text-muted-foreground">{empty}</p>;
   }
   if (Array.isArray(val)) {
+    const picks = asPickedImages(val);
+    if (picks.length > 0) return <PickedImageStrip picks={picks} empty={empty} />;
     return (
       <ul className="list-disc space-y-1 pl-5">
         {val.map((item, i) => (
