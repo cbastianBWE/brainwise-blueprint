@@ -80,6 +80,8 @@ export function JointSessionWidget({
 
       <Rules />
 
+      <Intro />
+
       {/* a. Turn list */}
       {turns.length > 0 && turn && (
         <Card>
