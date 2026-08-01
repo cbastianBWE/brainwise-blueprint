@@ -32,7 +32,7 @@ import { DesireGridWidget } from "./widgets/DesireGridWidget";
 import { CoupleMoleculeWidget, type MoleculeNode } from "./widgets/CoupleMoleculeWidget";
 import { ConsentGateWidget, consentedItems } from "./widgets/ConsentGateWidget";
 import { FeelingImageSelectWidget } from "./widgets/FeelingImageSelectWidget";
-import { EvidenceCallout } from "./EvidenceCallout";
+import { EvidenceCallout } from "./widgets/EvidenceCallout";
 
 
 import { allowedModes, type CoupleContext, type CoupleStep } from "./coupleShared";
