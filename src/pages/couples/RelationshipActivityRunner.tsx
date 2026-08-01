@@ -13,8 +13,10 @@ import CatchUpNotice, { nextCatchUpHref } from "./journey/CatchUpNotice";
 import { isSinglePartner, privacyCopy, type ActivityRow } from "./runner/privacy";
 import { PrivacyBanner } from "./runner/widgets/PrivacyBanner";
 import { SupportResourcePanel } from "./runner/widgets/SupportResourcePanel";
-import { firedSignals, hasStandingFooter } from "./runner/supportResources";
-import { evidenceGateFor } from "./runner/evidenceGates";
+import { firedSignals, hasStandingFooter, panelsForSignalKeys } from "./runner/supportResources";
+import { evidenceGateFor, curatedEvidenceFor } from "./runner/evidenceGates";
+import { EvidenceCallout } from "./runner/widgets/EvidenceCallout";
+
 
 interface JourneyRow {
   activity_id: string;
@@ -65,6 +67,13 @@ export default function RelationshipActivityRunner() {
   const [pendingReason, setPendingReason] = useState<string | undefined>(undefined);
   const [analysisError, setAnalysisError] = useState(false);
   const [submitError, setSubmitError] = useState(false);
+  /**
+   * Deterministic safety signals for THIS activity, written server-side into
+   * `relationship_signals` (and echoed by relationship-activity-analyze). The
+   * UI only reads them — it never computes a signal.
+   */
+  const [serverSignals, setServerSignals] = useState<string[]>([]);
+
 
   const allSteps: CoupleStep[] = useMemo(
     () => (activity?.definition?.steps as CoupleStep[]) || [],
@@ -219,6 +228,32 @@ export default function RelationshipActivityRunner() {
     };
   }, [relationshipId, activityCode, buildContext]);
 
+  // ---- Server-side safety signals ----
+  // One row per (relationship, run, activity, signal_key). A row existing means
+  // the signal is SET for this activity. Latest run wins.
+  useEffect(() => {
+    if (!relationshipId || !activity?.id) return;
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await supabase
+        .from("relationship_signals")
+        .select("signal_key, run_number")
+        .eq("relationship_id", relationshipId)
+        .eq("activity_id", activity.id)
+        .order("run_number", { ascending: false });
+      if (cancelled || error || !data) return;
+      const latestRun = (data as any[])[0]?.run_number ?? null;
+      const keys = (data as any[])
+        .filter((r) => r.run_number === latestRun)
+        .map((r) => String(r.signal_key));
+      setServerSignals((prev) => Array.from(new Set([...prev, ...keys])));
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [relationshipId, activity?.id]);
+
+
   // ---- Debounced save ----
   const timer = useRef<number | null>(null);
   const roRef = useRef(readOnly);
@@ -257,6 +292,12 @@ export default function RelationshipActivityRunner() {
       return;
     }
     const d = data as any;
+    // The analyze response echoes the signals the server holds for this activity.
+    if (Array.isArray(d?.signals)) {
+      const keys = d.signals.filter((s: unknown) => typeof s === "string") as string[];
+      setServerSignals((prev) => Array.from(new Set([...prev, ...keys])));
+    }
+
     if (d?.pending) {
       setPendingReason(d.reason || "waiting_for_partner");
       return;
@@ -413,9 +454,32 @@ export default function RelationshipActivityRunner() {
   const single = isSinglePartner(activity);
   const privacy = privacyCopy(activity);
   // The server decides whether a support signal fired; the UI only reads it.
-  const fired = firedSignals(activity.definition, responses);
+  // `relationship_signals` rows (and the analyze echo) are merged with anything
+  // the session responses already carry.
+  const signalResponses: Responses = {
+    ...responses,
+    signals: Array.from(
+      new Set([
+        ...(Array.isArray((responses as any).signals)
+          ? ((responses as any).signals as unknown[]).filter((s) => typeof s === "string")
+          : []),
+        ...serverSignals,
+      ]),
+    ) as string[],
+  };
+  const firedFromDefinition = firedSignals(activity.definition, signalResponses);
+  const fired = [
+    ...panelsForSignalKeys(serverSignals),
+    ...firedFromDefinition.filter(
+      (f) => !panelsForSignalKeys(serverSignals).some((p) => p.signal === f.signal),
+    ),
+  ].sort((a, b) => (a.signal === "crisis_signal" ? -1 : b.signal === "crisis_signal" ? 1 : 0));
   const standingFooter = hasStandingFooter(activity.code);
   const evidence = evidenceGateFor(activity.code, localizedStep as any);
+  // Verbatim, clinically-approved copy carried on the step itself. Taken from
+  // the RAW step so nothing substitutes, trims, or rewrites it.
+  const curated = curatedEvidenceFor(step as any);
+
 
   // Fail closed: no journey row (or a failed state call) means no banner.
   const showRevealBanner =
@@ -448,6 +512,9 @@ export default function RelationshipActivityRunner() {
           {/* "This needs a person" comes before the analysis, and crisis leads. */}
           {fired.length > 0 && <SupportResourcePanel fired={fired} />}
 
+          {/* Curated, clinically-approved statement. Verbatim, read-only. */}
+          {curated && <EvidenceCallout label={curated.label} text={curated.text} />}
+
           {showRevealBanner && (
             <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-muted/30 p-3">
               <p className="text-sm">There's something here for you now.</p>
@@ -479,7 +546,7 @@ export default function RelationshipActivityRunner() {
                   analysisHtml,
                   analyzing,
                   pendingReason,
-                  responses,
+                  responses: signalResponses,
                   readOnly,
                   relationshipId,
                   activityId: activity.id,
