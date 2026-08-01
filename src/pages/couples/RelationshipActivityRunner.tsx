@@ -300,6 +300,13 @@ export default function RelationshipActivityRunner() {
       const ok = await submit();
       if (!ok) return;
     }
+    // Catch-up walk: if they came here to clear a waiting reveal, hand them the
+    // next one still waiting, and only then their original destination.
+    if (relationshipId && intendedNext) {
+      const href = await nextCatchUpHref(relationshipId, intendedNext, activityCode || null);
+      navigate(href);
+      return;
+    }
     navigate(`/couples/${relationshipId}`);
   };
 
