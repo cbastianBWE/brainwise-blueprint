@@ -96,7 +96,8 @@ export function usePrefill({
           ? { target, from: spec.from, key: spec.key, subkey: spec.subkey }
           : null,
       )
-      .filter((s): s is { target: string } & PrefillSpec => !!s)
+      .filter((s) => !!s)
+      .map((s) => s as { target: string } & PrefillSpec)
       .filter((s) => isEmptyRef.current(s.target));
     if (specs.length === 0) return;
 
