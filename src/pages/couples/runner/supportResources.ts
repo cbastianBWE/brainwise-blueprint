@@ -172,3 +172,18 @@ export function hasStandingFooter(activityCode: string | null | undefined): bool
 
 export const STANDING_FOOTER_COPY =
   "If you or your partner are struggling to cope, please reach out to the support services listed here, and to your practitioner.";
+
+/**
+ * True when the SERVER wrote a named non-resource signal (e.g.
+ * `practitioner_required`) into the session responses. Same shape rules as
+ * `firedSignals`; the client never infers these.
+ */
+export function serverSignal(
+  responses: Record<string, unknown> | null | undefined,
+  key: string,
+): boolean {
+  const raw = (responses as any)?.signals;
+  if (Array.isArray(raw)) return raw.includes(key);
+  if (raw && typeof raw === "object") return (raw as any)[key] === true;
+  return false;
+}
