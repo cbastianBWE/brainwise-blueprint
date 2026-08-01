@@ -12037,6 +12037,69 @@ export type Database = {
         }
         Relationships: []
       }
+      relationship_focus_areas: {
+        Row: {
+          active: boolean
+          area_code: string
+          c_number: number
+          cluster: string
+          content_ready: boolean
+          core_prereq_label: string | null
+          created_at: string
+          description: string | null
+          gate: string
+          hero_image_url: string | null
+          learning_outcomes: string[]
+          planned_activity_count: number | null
+          practitioner_gated: boolean
+          self_selectable: boolean
+          sort_order: number
+          tags: string[]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          area_code: string
+          c_number: number
+          cluster: string
+          content_ready?: boolean
+          core_prereq_label?: string | null
+          created_at?: string
+          description?: string | null
+          gate?: string
+          hero_image_url?: string | null
+          learning_outcomes?: string[]
+          planned_activity_count?: number | null
+          practitioner_gated?: boolean
+          self_selectable?: boolean
+          sort_order?: number
+          tags?: string[]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          area_code?: string
+          c_number?: number
+          cluster?: string
+          content_ready?: boolean
+          core_prereq_label?: string | null
+          created_at?: string
+          description?: string | null
+          gate?: string
+          hero_image_url?: string | null
+          learning_outcomes?: string[]
+          planned_activity_count?: number | null
+          practitioner_gated?: boolean
+          self_selectable?: boolean
+          sort_order?: number
+          tags?: string[]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       relationship_marker_prefs: {
         Row: {
           created_at: string
@@ -20004,6 +20067,13 @@ export type Database = {
         }
         Returns: undefined
       }
+      relationship_choose_focus_area: {
+        Args: { p_area_code: string; p_relationship: string }
+        Returns: {
+          ok: boolean
+          reason: string
+        }[]
+      }
       relationship_consume_reveal: {
         Args: { p_activity: string; p_relationship: string; p_run?: number }
         Returns: boolean
@@ -20052,6 +20122,54 @@ export type Database = {
         Returns: {
           active_first_name: string
           other_first_name: string
+        }[]
+      }
+      relationship_focus_areas_state: {
+        Args: { p_relationship: string }
+        Returns: {
+          area_code: string
+          available_activities: number
+          c_number: number
+          cluster: string
+          content_ready: boolean
+          core_prereq_label: string
+          description: string
+          done_activities: number
+          gate: string
+          hero_image_url: string
+          planned_activity_count: number
+          practitioner_gated: boolean
+          selected: boolean
+          self_selectable: boolean
+          sort_order: number
+          title: string
+          total_activities: number
+        }[]
+      }
+      relationship_focus_state: {
+        Args: { p_area_code: string; p_relationship: string }
+        Returns: {
+          activity_id: string
+          allowed: boolean
+          barrier_blocks: string
+          barrier_cleared: boolean
+          code: string
+          est_minutes_high: number
+          est_minutes_low: number
+          module_number: number
+          own_status: string
+          own_step: number
+          partner_status: string
+          reason: string
+          reason_code: string
+          reason_detail: string[]
+          repeatable: boolean
+          reveal_pending: boolean
+          reveal_step_id: string
+          romantic_disclaimer: boolean
+          sequence: number
+          title: string
+          visibility_mode: string
         }[]
       }
       relationship_journey_access: {
@@ -20271,6 +20389,13 @@ export type Database = {
           p_run: number
         }
         Returns: string
+      }
+      relationship_unchoose_focus_area: {
+        Args: { p_area_code: string; p_relationship: string }
+        Returns: {
+          ok: boolean
+          reason: string
+        }[]
       }
       release_report_order_claim: {
         Args: { p_order_id: string }
