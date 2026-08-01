@@ -102,6 +102,7 @@ export function PairedQaWidget({
   onChange,
   sessionId,
   activityCode,
+  relationshipId,
 }: {
   step: CoupleStep;
   couple: CoupleContext;
@@ -109,6 +110,7 @@ export function PairedQaWidget({
   onChange: (next: Record<string, unknown>) => void;
   sessionId: string;
   activityCode: string;
+  relationshipId?: string;
 }) {
   const v = (value || {}) as Rec;
   const revealed = couple.barrierCleared && !!couple.partnerView;
