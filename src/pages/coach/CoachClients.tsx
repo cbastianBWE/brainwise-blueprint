@@ -28,6 +28,7 @@ import BulkInviteModal from "@/components/coach/BulkInviteModal";
 import ShareableLinkModal from "@/components/coach/ShareableLinkModal";
 import BulkSeatLinkModal from "@/components/coach/BulkSeatLinkModal";
 import PendingInvitations from "@/components/coach/PendingInvitations";
+import CouplesTab from "@/components/coach/relationship/CouplesTab";
 import { INSTRUMENTS as CANONICAL_INSTRUMENTS } from "@/lib/instruments";
 import { escHtml } from "@/lib/escHtml";
 
