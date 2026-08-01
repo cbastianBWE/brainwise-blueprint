@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { MultimodalField, isMMRec, mmIsFilled, type MMValue } from "@/components/coaching/MultimodalField";
 import { CoachingRecordingPlayer } from "@/components/coaching/CoachingViews";
 import { allowedModes, type CoupleContext, type CoupleStep, substituteNames } from "../coupleShared";
+import { CoupleImagePicker, PickedImageStrip, asPickedImages } from "./CoupleImagePicker";
 
 type Rec = Record<string, unknown>;
 
