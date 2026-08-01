@@ -548,8 +548,11 @@ function flatten(obj: Rec, prefix = ""): Array<{ key: string; value: unknown }> 
       out.push({ key, value: val });
     } else if (val && typeof val === "object" && !Array.isArray(val)) {
       out.push(...flatten(val as Rec, key));
+    } else if (Array.isArray(val)) {
+      if (asPickedImages(val).length > 0) out.push({ key, value: val });
+      else if (val.length > 0) out.push({ key, value: val.join(", ") });
     } else if (val !== undefined && val !== null && val !== "") {
-      out.push({ key, value: Array.isArray(val) ? val.join(", ") : String(val) });
+      out.push({ key, value: String(val) });
     }
   }
   return out;
