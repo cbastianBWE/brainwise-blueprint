@@ -1,5 +1,6 @@
 import { useParams } from "react-router-dom";
 import { JourneyMap } from "../../JourneyMap";
+import { FocusAreaPicker } from "../../journey/FocusAreaPicker";
 import type { CoupleStep } from "../coupleShared";
 
 /**
