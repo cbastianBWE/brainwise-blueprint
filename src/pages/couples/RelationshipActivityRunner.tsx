@@ -38,9 +38,13 @@ export default function RelationshipActivityRunner() {
   const { relationshipId, activityCode } = useParams<{ relationshipId: string; activityCode: string }>();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  // Where the person was actually headed when a catch-up gate diverted them.
+  const intendedNext = searchParams.get("next");
 
   const [loading, setLoading] = useState(true);
   const [blocked, setBlocked] = useState<string | null>(null);
+  /** Reason code for the block, so the catch-up gate can offer a way forward. */
+  const [blockedCode, setBlockedCode] = useState<string | null>(null);
   const [activity, setActivity] = useState<{ id: string; title: string; definition: any } | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [stepIndex, setStepIndex] = useState(0);
