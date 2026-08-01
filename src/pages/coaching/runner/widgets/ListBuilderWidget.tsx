@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { CoachingRecordingPlayer } from "@/components/coaching/CoachingViews";
 import { MultimodalField, isMMRec, mmIsFilled, type MMValue } from "@/components/coaching/MultimodalField";
 import { type Step } from "../shared";
+import { usePrefill, type PrefillSpec } from "@/pages/couples/runner/usePrefill";
 
 export function ListBuilderWidget({
   step,
@@ -15,6 +16,8 @@ export function ListBuilderWidget({
   sessionId,
   activityCode,
   sessionKind = "coaching",
+  relationshipId,
+  responses,
 }: {
   step: Step;
   items: MMValue[];
@@ -23,8 +26,31 @@ export function ListBuilderWidget({
   sessionId: string;
   activityCode: string;
   sessionKind?: "coaching" | "relationship";
+  /** Couples-only: enables `step.prefilledFrom`. Coaching steps declare none, so nothing runs. */
+  relationshipId?: string;
+  responses?: Record<string, unknown>;
 }) {
   const min = step.min ?? 0;
+  const prefilledFrom = (step as { prefilledFrom?: Record<string, PrefillSpec> }).prefilledFrom;
+  const listKey = step.key || "items";
+  const itemsRef = useRef(items);
+  itemsRef.current = items;
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
+  const prefilled = usePrefill({
+    prefilledFrom,
+    relationshipId,
+    activityCode,
+    runNumber: (step as { runNumber?: number }).runNumber,
+    responses,
+    isEmptyTarget: () => (itemsRef.current || []).length === 0,
+    apply: (seeds) => {
+      const seed = seeds[listKey] || Object.values(seeds)[0];
+      if (!seed || seed.items.length === 0) return;
+      onChangeRef.current(seed.items as MMValue[]);
+    },
+  });
+  const wasPrefilled = Object.keys(prefilled).length > 0;
   const [draft, setDraft] = useState<MMValue>("");
   const [nonce, setNonce] = useState(0);
   const add = () => {
@@ -49,6 +75,11 @@ export function ListBuilderWidget({
         </Card>
       )}
       {step.helper && <p className="text-sm text-muted-foreground">{step.helper}</p>}
+      {wasPrefilled && (
+        <p className="text-xs text-muted-foreground">
+          Prefilled from what you said earlier, edit if you like.
+        </p>
+      )}
       <div className="space-y-2">
         {(items || []).map((v, i) => (
           <div key={i} className="flex items-start gap-2">
