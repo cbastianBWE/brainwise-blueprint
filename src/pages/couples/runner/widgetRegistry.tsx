@@ -70,7 +70,7 @@ export const widgetRegistry: Record<string, WidgetRenderer> = {
           sessionKind="relationship"
     />
   ),
-  list_builder: ({ step, value, onChange, sessionId, activityCode }) => (
+  list_builder: ({ step, value, onChange, sessionId, activityCode, relationshipId, responses }) => (
     <ListBuilderWidget
       step={asStep(step)}
       items={(value as MMValue[]) || []}
@@ -78,6 +78,8 @@ export const widgetRegistry: Record<string, WidgetRenderer> = {
       sessionId={sessionId}
       activityCode={activityCode}
           sessionKind="relationship"
+      relationshipId={relationshipId}
+      responses={responses}
     />
   ),
   risk_blocks: ({ step, value, onChange, sessionId, activityCode }) => (
@@ -90,7 +92,7 @@ export const widgetRegistry: Record<string, WidgetRenderer> = {
           sessionKind="relationship"
     />
   ),
-  qa_multimodal: ({ step, value, onChange, sessionId, activityCode }) => (
+  qa_multimodal: ({ step, value, onChange, sessionId, activityCode, relationshipId, responses }) => (
     <QaMultimodalWidget
       step={asStep({ ...step, modes: allowedModes(step) })}
       sessionId={sessionId}
@@ -98,6 +100,8 @@ export const widgetRegistry: Record<string, WidgetRenderer> = {
       value={(value as any) || {}}
       onChange={(v) => onChange(v)}
           sessionKind="relationship"
+      relationshipId={relationshipId}
+      responses={responses}
     />
   ),
   scored_factors: ({ step, value, onChange }) => (
@@ -127,7 +131,7 @@ export const widgetRegistry: Record<string, WidgetRenderer> = {
       onRecap={(html) => onChange({ html })}
     />
   ),
-  paired_qa: ({ step, couple, value, onChange, sessionId, activityCode, relationshipId }) => (
+  paired_qa: ({ step, couple, value, onChange, sessionId, activityCode, relationshipId, responses }) => (
     <PairedQaWidget
       step={step}
       couple={couple}
