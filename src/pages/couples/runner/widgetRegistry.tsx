@@ -215,6 +215,10 @@ export const widgetRegistry: Record<string, WidgetRenderer> = {
           ? consentedItems((responses || {})["consent_selection"])
           : undefined
       }
+      // Server-fired signal only — the client never works out whether the
+      // required_if condition (e.g. C19.4 on the path) held.
+      practitionerRequired={serverSignal(responses, "practitioner_required")}
+
     />
   ),
   statement_select: ({ step, value, onChange, sessionId, activityCode }) => (
