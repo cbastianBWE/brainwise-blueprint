@@ -40,3 +40,18 @@ export function evidenceGateFor(
   if (!activityCode || !key) return null;
   return GATES[`${activityCode}:${key}`] || null;
 }
+
+/**
+ * Generic curated-evidence block carried on the step itself:
+ *   step.curated_evidence = { label, text, phil_gated: true }
+ * Read verbatim from the RAW step (never the name-substituted copy) so the
+ * clinically-approved string renders exactly as stored.
+ */
+export function curatedEvidenceFor(step: any): { label: string; text: string } | null {
+  const ce = step?.curated_evidence;
+  if (!ce || typeof ce !== "object") return null;
+  const text = typeof ce.text === "string" ? ce.text : "";
+  if (!text.trim()) return null;
+  return { label: typeof ce.label === "string" && ce.label ? ce.label : "The evidence", text };
+}
+
